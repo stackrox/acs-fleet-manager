@@ -1,0 +1,10 @@
+---
+supported_providers:
+  - name: aws
+    default: true
+    regions:
+      - name: us-east-1
+        default: true
+        supported_instance_type:
+          standard: {}
+          eval: {}

@@ -1,0 +1,38 @@
+name: Dispatch OpenAPI File Change event
+on:
+  push:
+    branches: 
+      - main
+    paths:
+      - "openapi/*.yaml"
+
+jobs:
+  dispatch:
+    if: github.repository == 'bf2fc6cc711aee1a0c2a/fleet-manager' # TODO change the repository URL to match your url
+    env:
+      APP_SERVICES_CI_TOKEN: ${{ secrets.GH_CI_TOKEN }}
+    strategy:
+      matrix:
+        repo:
+          - "redhat-developer/app-services-sdk-go"
+          - "redhat-developer/app-services-sdk-js"
+          - "redhat-developer/app-services-sdk-java"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          base: main
+          list-files: json
+          filters: |
+            openapi:
+              - 'openapi/*.yaml'
+      - if: contains(steps.filter.outputs.openapi_files, 'openapi/fleet-manager.yaml')
+        name: Fleet Manager OpenAPI changed
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ env.APP_SERVICES_CI_TOKEN }}
+          repository: ${{ matrix.repo }}
+          event-type: openapi-spec-change
+          client-payload: '{ "id": "dinosaur-mgmt/v1", "download_url":"https://raw.githubusercontent.com/bf2fc6cc711aee1a0c2a/fleet-manager/main/openapi/fleet-manager.yaml"}' #TODO change the repository URL to match your fleet manager URL

@@ -1,0 +1,125 @@
+# This runs checks to verify if code is properly formated and that tests (unit and integration against a mocked environment) are passing.
+name: Lint & Test
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '*.md'
+      - '*.sh'
+      - '.github/*.md'
+      - '.github/workflows/openapi_update.yaml'
+      - '.github/CODEOWNERS'
+      - 'templates/**'
+      - '.openapi-generator-ignore'
+      - 'openapi/**'
+      - 'docs/**'
+      - 'pkg/api/openapi/docs/**'
+      - 'pkg/api/openapi/.openapi-generator-ignore'
+      
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '*.md'
+      - '*.sh'
+      - '.github/*.md'
+      - '.github/workflows/openapi_update.yaml'
+      - '.github/CODEOWNERS'
+      - 'templates/**'
+      - '.openapi-generator-ignore'
+      - 'openapi/**'
+      - 'docs/**'
+      - 'pkg/api/openapi/docs/**'
+      - 'pkg/api/openapi/.openapi-generator-ignore'
+
+# TODO make sure that the secrets are configured for your repository
+env:
+  # set ocm env to integration
+  OCM_ENV: integration
+  # GORM env variables. These values are defined in the postgres service definition above
+  GORM_DIALECT: postgres
+  GORM_HOST: 127.0.0.1
+  GORM_PORT: 5432
+  GORM_NAME: serviceapitests
+  GORM_USERNAME: fleet_manager
+  GORM_PASSWORD: foobar-bizz-buzz
+  GORM_SSLMODE: disable
+  GORM_DEBUG: false
+  # Dummy SSO variables
+  SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
+  SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
+  OSD_IDP_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_SSO_CLIENT_ID }}
+  OSD_IDP_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_SSO_CLIENT_SECRET }}
+  # Dummy AWS credentials 
+  AWS_ACCOUNT_ID: aws_accountid
+  AWS_ACCESS_KEY: aws_accesskey
+  AWS_SECRET_ACCESS_KEY: aws_secretaccesskey
+  ROUTE53_ACCESS_KEY: aws_route53_access_key
+  ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key
+  # Dummy Dinosaur TLS env variables
+  DINOSAUR_TLS_CERT: dinosaur_tls_cert
+  DINOSAUR_TLS_KEY: dinosaur_tls_key
+  # So that OCM secrets are initialised
+  DOCKER_PR_CHECK: true
+  TEST_TIMEOUT: 30m
+
+jobs:
+  lint-test:
+    name: "Lint & Test"
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:11
+        env:
+          POSTGRES_PASSWORD: foobar-bizz-buzz
+          POSTGRES_USER: fleet_manager
+          POSTGRES_DB: serviceapitests
+        ports:
+          - 5432:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+     
+    steps:
+      - name: Cancel Previous Runs
+        uses: n1hility/cancel-previous-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.16"
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Cache go module
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Run Migration Script
+        run: make db/migrate
+      - name: Setup tests secrets
+        run: |
+          make ocm/setup aws/setup keycloak/setup dinosaurcert/setup observatorium/setup
+      - name: Lint & Test
+        run: |
+          export GOPATH=$(go env GOPATH)
+          export PATH=${PATH}:$GOPATH/bin
+          make verify lint binary test test/integration
+        timeout-minutes: 14
+      - name: Build and publish image to quay.io
+        if: github.event_name == 'push'
+        env:
+          QUAY_USER_NAME: ${{ secrets.QUAY_BF2_USERNAME }}
+          QUAY_USER_PASSWORD: ${{ secrets.QUAY_BF2_PASSWORD }}
+          QUAY_ORG_NAME: "bf2fc6cc711aee1a0c2a82e312df7f2e6b37baa12bd9b1f2fd752e260d93a6f8144ac730947f25caa2bfe6ad0f410da360940ee6d28d6c1688d3822c4055650e"
+        run: |
+          chmod +x ./build_deploy.sh
+          ./build_deploy.sh
+

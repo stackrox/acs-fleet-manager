@@ -1,0 +1,20 @@
+---
+#- A list of clusters for fleet manager
+#- The `cluster_id` field can not be empty
+#- All clusters in fleet manager DB already but are missing in the list will be marked as
+#  'deprovisioning' and will later be deleted.
+#- This list is ordered, any new cluster should be appended at the end.
+#e.g.:
+#clusters:
+#  - name: anyname # This field is required for a standalone cluster i.e when the provider_type is "standalone". The value has to match the cluster / context name in the given kubeconfig file via the `--kubeconfig` flag.
+#    cluster_id: 1jp6kdr7k0sjbe5adck2prjur8f39378  #This field is required
+#    cloud_provider: aws
+#    region: us-east-1
+#    multi_az: true
+#    schedulable: true
+#    dinosaur_instance_limit: 2
+#    status: "cluster_provisioning" #Valid values are `cluster_provisioning`, `cluster_provisioned` and `ready`. `cluster_provisioning` will be used if not specified.
+#    provider_type: "ocm" #Valid values are `ocm` and `standalone`. `ocm` will be used if not specified.
+#    cluster_dns: apps.example.com #Valid cluster DNS. This will be used to build dinosaur host url and to communicate with standalone clusters. Required when "provider_type" is "standalone" 
+#    supported_instance_type: "eval" # could be "eval", "standard" or both i.e "standard,eval" or "eval,standard". Defaults to "standard,eval" if not set 
+clusters: []

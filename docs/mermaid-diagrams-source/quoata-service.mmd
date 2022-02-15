@@ -1,0 +1,40 @@
+classDiagram
+  class QuotaService {
+      <<Interface>>
+      + CheckIfQuotaIsDefinedForInstanceType(dinosaur)
+      + ReserveQuota(dinosaur)
+      + DeleteQuota(subscriptionId)
+  }
+
+  class QuotaServiceFactory {
+      <<Interface>>
+      +GetQuotaService(type QuotaType) QuotaService
+  }
+
+  class AmsQuotaService {
+      -OCMClient ocmClient
+  }
+  class QuotaManagementListQuotaService {
+      - DinosaurService dinosaurService
+  }
+
+  class DinosaurService {
+      <<Service>>
+      + RegisterDinosaurJob()
+      + OtherMethods...
+  }
+
+  class AcceptedDinosaurManager {
+      + Reconcile()
+  }
+
+  class DeletingDinosaurManager {
+      + Reconcile()
+  }
+
+  QuotaService <|.. AmsQuotaService: Implements
+  QuotaService <|.. QuotaManagementListQuotaService: Implements
+  DinosaurService ..> QuotaServiceFactory: Depends
+  QuotaServiceFactory --|> QuotaService: Return concrete impl based on QuotaService
+  AcceptedDinosaurManager ..> QuotaServiceFactory: Depends
+  DeletingDinosaurManager ..> QuotaServiceFactory: Depends

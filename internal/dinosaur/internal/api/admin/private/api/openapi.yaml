@@ -1,0 +1,449 @@
+openapi: 3.0.0
+info:
+  description: The admin APIs for the fleet manager of Dinosaur service
+  title: Dinosaur Service Fleet Manager Admin APIs
+  version: 0.0.2
+servers:
+- description: Main (production) server
+  url: https://api.openshift.com
+- description: Staging server
+  url: https://api.stage.openshift.com
+- description: localhost
+  url: http://localhost:8000
+- description: current domain
+  url: /
+tags:
+- name: Admin APIs
+paths:
+  /api/dinosaurs_mgmt/v1/admin/dinosaurs:
+    get:
+      operationId: getDinosaurs
+      parameters:
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+      - description: |-
+          Specifies the order by criteria. The syntax of this parameter is
+          similar to the syntax of the `order by` clause of an SQL statement.
+          Each query can be ordered by any of the following `dinosaurRequests` fields:
+
+          * host
+          * cloud_provider
+          * cluster_id
+          * created_at
+          * href
+          * id
+          * instance_type
+          * multi_az
+          * name
+          * organisation_id
+          * owner
+          * region
+          * status
+          * updated_at
+          * version
+
+          For example, to return all Dinosaur instances ordered by their name, use the following syntax:
+
+          ```sql
+          name asc
+          ```
+
+          To return all Dinosaur instances ordered by their name _and_ created date, use the following syntax:
+
+          ```sql
+          name asc, created_at asc
+          ```
+
+          If the parameter isn't provided, or if the value is empty, then
+          the results are ordered by name.
+        examples:
+          orderBy:
+            value: name asc
+        explode: true
+        in: query
+        name: orderBy
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: |
+          Search criteria.
+
+          The syntax of this parameter is similar to the syntax of the `where` clause of an
+          SQL statement. Allowed fields in the search are `cloud_provider`, `name`, `owner`, `region`, and `status`. Allowed comparators are `<>`, `=`, or `LIKE`.
+          Allowed joins are `AND` and `OR`. However, you can use a maximum of 10 joins in a search query.
+
+          Examples:
+
+          To return a Dinosaur instance with the name `my-dinosaur` and the region `aws`, use the following syntax:
+
+          ```
+          name = my-dinosaur and cloud_provider = aws
+          ```[p-]
+
+          To return a Dinosaur instance with a name that starts with `my`, use the following syntax:
+
+          ```
+          name like my%25
+          ```
+
+          If the parameter isn't provided, or if the value is empty, then all the Dinosaur instances
+          that the user has permission to see are returned.
+
+          Note. If the query is invalid, an error is returned.
+        examples:
+          search:
+            value: name = my-dinosaur and cloud_provider = aws
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DinosaurList'
+          description: Return a list of Dinosaur instances. This endpoint will return
+            all Dinosaur instances that are stored in the database and the are not
+            filtered based on user ids or org ids.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns a list of Dinosaurs
+  /api/dinosaurs_mgmt/v1/admin/dinosaurs/{id}:
+    delete:
+      operationId: deleteDinosaurById
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: Perform the action in an asynchronous manner
+        explode: true
+        in: query
+        name: async
+        required: true
+        schema:
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dinosaur'
+          description: Dinosaur updated by ID
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Dinosaur found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Delete a Dinosaur by ID
+    get:
+      operationId: getDinosaurById
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dinosaur'
+          description: Dinosaur found by ID
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Dinosaur found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Return the details of Dinosaur instance by id
+    patch:
+      operationId: updateDinosaurById
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DinosaurUpdateRequest'
+        description: Dinosaur update data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dinosaur'
+          description: Dinosaur updated by ID
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Dinosaur found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Update a Dinosaur instance by id
+components:
+  schemas:
+    Dinosaur:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - required:
+        - dinosaur_operator_upgrading
+        - dinosaur_upgrading
+        - multi_az
+      - $ref: '#/components/schemas/Dinosaur_allOf'
+    DinosaurList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/DinosaurList_allOf'
+    DinosaurUpdateRequest:
+      example:
+        dinosaur_version: dinosaur_version
+        dinosaur_operator_version: dinosaur_operator_version
+      properties:
+        dinosaur_operator_version:
+          type: string
+        dinosaur_version:
+          type: string
+      type: object
+    Error:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/Error_allOf'
+    ObjectReference:
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+      type: object
+    List:
+      properties:
+        kind:
+          type: string
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+      required:
+      - items
+      - kind
+      - page
+      - size
+      - total
+      type: object
+    Dinosaur_allOf_routes:
+      properties:
+        domain:
+          type: string
+        router:
+          type: string
+    Dinosaur_allOf:
+      properties:
+        status:
+          description: 'Values: [accepted, preparing, provisioning, ready, failed,
+            deprovision, deleting] '
+          type: string
+        cloud_provider:
+          description: Name of Cloud used to deploy. For example AWS
+          type: string
+        multi_az:
+          type: boolean
+        region:
+          description: 'Values will be regions of specific cloud provider. For example:
+            us-east-1 for AWS'
+          type: string
+        owner:
+          type: string
+        name:
+          type: string
+        host:
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        failed_reason:
+          type: string
+        actual_dinosaur_version:
+          type: string
+        actual_dinosaur_operator_version:
+          type: string
+        desired_dinosaur_version:
+          type: string
+        desired_dinosaur_operator_version:
+          type: string
+        dinosaur_upgrading:
+          type: boolean
+        dinosaur_operator_upgrading:
+          type: boolean
+        organisation_id:
+          type: string
+        subscription_id:
+          type: string
+        owner_account_id:
+          type: string
+        account_number:
+          type: string
+        instance_type:
+          type: string
+        quota_type:
+          type: string
+        routes:
+          items:
+            $ref: '#/components/schemas/Dinosaur_allOf_routes'
+          type: array
+        routes_created:
+          type: boolean
+        cluster_id:
+          type: string
+        namespace:
+          type: string
+    DinosaurList_allOf:
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/Dinosaur'
+          type: array
+    Error_allOf:
+      properties:
+        code:
+          type: string
+        reason:
+          type: string
+        operation_id:
+          type: string
+  securitySchemes:
+    Bearer:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http

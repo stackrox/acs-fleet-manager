@@ -1,0 +1,1260 @@
+openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an openapi document.
+# All endpoints defined here will be discoverable by all users. If there is a need to keep some endpoints "private", add them to the "managed-services-api-private.yaml" file
+info:
+  title: Dinosaur Service Fleet Manager
+  version: 1.2.0
+  description: Dinosaur Service Fleet Manager is a Rest API to manage Dinosaur instances.
+servers:
+  - url: https://api.openshift.com
+    description: Main (production) server
+  - url: https://api.stage.openshift.com
+    description: Staging server
+  - url: http://localhost:8000
+    description: localhost
+  - url: /
+    description: current domain
+paths:
+  /api/dinosaurs_mgmt/v1:
+    get:
+      operationId: getVersionMetadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionMetadata'
+          description: Version metadata
+      summary: Returns the version metadata
+
+  /api/dinosaurs_mgmt/v1/errors/{id}:
+    get:
+      operationId: getErrorById
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Get error by Id
+      summary: Returns the error by id
+      tags:
+        - errors
+      parameters:
+        - $ref: "#/components/parameters/id"
+
+  /api/dinosaurs_mgmt/v1/errors:
+    get:
+      operationId: getErrors
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorList'
+          description: List of possible errors
+      summary: Returns the list of possible API errors
+      tags:
+        - errors
+
+  /api/dinosaurs_mgmt/v1/status:
+    get:
+      operationId: getServiceStatus
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceStatus'
+          description: Ok
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+      summary: Returns the status of resources, such as whether maximum service capacity has been reached
+      security:
+        - Bearer: [ ]
+  /api/dinosaurs_mgmt/v1/dinosaurs/{id}:
+    get:
+      operationId: getDinosaurById
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DinosaurRequest'
+              examples:
+                DinosaurRequestGetResponseExample:
+                  $ref: '#/components/examples/DinosaurRequestExample'
+                DinosaurRequestGetResponseWithFailedCreationStatusExample:
+                  $ref: '#/components/examples/DinosaurRequestFailedCreationStatusExample'
+          description: Dinosaur request found by ID
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                403Example:
+                  $ref: '#/components/examples/403Example'
+          description: User not authorized to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: '#/components/examples/404Example'
+          description: No Dinosaur request with specified ID exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      summary: Returns a Dinosaur request by ID
+    delete:
+      operationId: deleteDinosaurById
+      parameters:
+        - in: query
+          name: async
+          description: Perform the action in an asynchronous manner
+          schema:
+            type: boolean
+          required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+              #No Content
+          description: Deleted
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                400DeletionExample:
+                  $ref: '#/components/examples/400DeletionExample'
+          description: Validation errors occurred
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                403Example:
+                  $ref: '#/components/examples/403Example'
+          description: User not authorized to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                404DeleteExample:
+                  $ref: '#/components/examples/404DeleteExample'
+          description: No Dinosaur request with specified ID exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500DeleteExample:
+                  $ref: '#/components/examples/500DeleteExample'
+          description: Unexpected error occurred
+      summary: Deletes a Dinosaur request by ID
+      security:
+        - Bearer: [ ]
+    patch:
+      summary: Update a Dinosaur instance by id
+      security:
+        - Bearer: [ ]
+      operationId: updateDinosaurById
+      requestBody:
+        description: Update owner of dinosaur
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DinosaurUpdateRequest'
+        required: true
+      responses:
+        "200":
+          description: Dinosaur updated by ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DinosaurRequest'
+              examples:
+                DinosaurRequestPostResponseExample:
+                  $ref: '#/components/examples/DinosaurRequestExample'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: No Dinosaur found with the specified ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - $ref: "#/components/parameters/id"
+  /api/dinosaurs_mgmt/v1/dinosaurs:
+    post:
+      operationId: createDinosaur
+      parameters:
+        - in: query
+          name: async
+          description: Perform the action in an asynchronous manner
+          schema:
+            type: boolean
+          required: true
+      requestBody:
+        description: Dinosaur data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DinosaurRequestPayload'
+            examples:
+              USRegion:
+                $ref: '#/components/examples/USRegionExample'
+              EURegion:
+                $ref: '#/components/examples/EURegionExample'
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DinosaurRequest'
+              examples:
+                DinosaurRequestPostResponseExample:
+                  $ref: '#/components/examples/DinosaurRequestExample'
+          description: Accepted
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                400CreationExample:
+                  $ref: '#/components/examples/400CreationExample'
+          description: Validation errors occurred
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                403Example:
+                  $ref: '#/components/examples/403Example'
+                403MaxAllowedInstanceReachedExample:
+                  $ref: '#/components/examples/403MaxAllowedInstanceReachedExample'
+                403TermsNotAcceptedExample:
+                  $ref: '#/components/examples/403TermsNotAcceptedExample'
+          description: User forbidden either because the user is not authorized to access the service or because the maximum number of instances that can be created by this user has been reached.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: '#/components/examples/404Example'
+          description: The requested resource doesn't exist
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                409NameConflictExample:
+                  $ref: '#/components/examples/409NameConflictExample'
+          description: A conflict has been detected in the creation of this resource
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+          description: An unexpected error occurred while creating the Dinosaur request
+      security:
+        - Bearer: [ ]
+      summary: Creates a Dinosaur request
+    get:
+      summary: Returns a list of Dinosaur requests
+      operationId: getDinosaurs
+      security:
+        - Bearer: [ ]
+      responses:
+        "200":
+          description: A list of Dinosaur requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DinosaurRequestList'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                InvalidQueryExample:
+                  $ref: '#/components/examples/400InvalidQueryExample'
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                403Example:
+                  $ref: '#/components/examples/403Example'
+          description: User not authorized to access the service
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - $ref: '#/components/parameters/orderBy'
+        - $ref: '#/components/parameters/search'
+  /api/dinosaurs_mgmt/v1/cloud_providers:
+    get:
+      summary: Returns the list of supported cloud providers
+      operationId: getCloudProviders
+      security:
+        - Bearer: [ ]
+      responses:
+        '200':
+          description: Returned list of supported cloud providers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudProviderList'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+  /api/dinosaurs_mgmt/v1/cloud_providers/{id}/regions:
+    get:
+      summary: Returns the list of supported regions of the supported cloud provider
+      operationId: getCloudProviderRegions
+      security:
+        - Bearer: [ ]
+      responses:
+        '200':
+          description: Returned list of supported cloud provider regions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudRegionList'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - $ref: '#/components/parameters/instance_type'
+  #
+  # These are the user-facing related endpoints
+  #
+  /api/dinosaurs_mgmt/v1/dinosaurs/{id}/metrics/query_range:
+    get:
+      summary: Returns metrics with timeseries range query by Dinosaur ID
+      operationId: getMetricsByRangeQuery
+      security:
+        - Bearer: [ ]
+      responses:
+        '200':
+          description: Returned JSON array of Prometheus metrics objects from observatorium
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsRangeQueryList'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/duration"
+        - $ref: "#/components/parameters/interval"
+        - $ref: "#/components/parameters/filters"
+  /api/dinosaurs_mgmt/v1/dinosaurs/{id}/metrics/query:
+    get:
+      summary: Returns metrics with instant query by Dinosaur ID
+      operationId: getMetricsByInstantQuery
+      security:
+        - Bearer: [ ]
+      responses:
+        '200':
+          description: Returned JSON array of Prometheus metrics objects from observatorium
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsInstantQueryList'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/filters"
+  /api/dinosaurs_mgmt/v1/dinosaurs/{id}/metrics/federate:
+    get:
+      summary: Returns all metrics in scrapeable format for a given dinosaur id
+      operationId: federateMetrics
+      security:
+        - Bearer: [ ]
+      responses:
+        '200':
+          description: Returned Dinosaur metrics in a Prometheus text format
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                MissingParameterExample:
+                  $ref: '#/components/examples/400MissingParameterExample'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+        '404':
+          description: Dinosaur id not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: '#/components/examples/404Example'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+      parameters:
+        - $ref: "#/components/parameters/id"
+
+components:
+  schemas:
+    ObjectReference:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+    List:
+      required:
+        - kind
+        - page
+        - size
+        - total
+        - items
+      type: object
+      properties:
+        kind:
+          type: string
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+    Error:
+      allOf:
+        - $ref: "#/components/schemas/ObjectReference"
+        - type: object
+          properties:
+            code:
+              type: string
+            reason:
+              type: string
+            operation_id:
+              type: string
+    ErrorList:
+      allOf:
+        - $ref: "#/components/schemas/List"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Error"
+    DinosaurRequest:
+      allOf:
+        - $ref: "#/components/schemas/ObjectReference"
+        - type: object
+          required:
+            - multi_az
+          properties:
+            status:
+              description: "Values: [accepted, preparing, provisioning, ready, failed, deprovision, deleting] "
+              type: string
+            cloud_provider:
+              description: "Name of Cloud used to deploy. For example AWS"
+              type: string
+            multi_az:
+              type: boolean
+            region:
+              description: "Values will be regions of specific cloud provider. For example: us-east-1 for AWS"
+              type: string
+            owner:
+              type: string
+            name:
+              type: string
+            host:
+              type: string
+            created_at:
+              format: date-time
+              type: string
+            updated_at:
+              format: date-time
+              type: string
+            failed_reason:
+              type: string
+            version:
+              type: string
+            instance_type:
+              type: string
+          example:
+            $ref: "#/components/examples/DinosaurRequestExample"
+    DinosaurRequestList:
+      allOf:
+        - $ref: "#/components/schemas/List"
+        - type: object
+          example:
+            kind: "DinosaurRequestList"
+            page: "1"
+            size: "1"
+            total: "1"
+            item:
+              $ref: '#/components/examples/DinosaurRequestExample'
+          properties:
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/DinosaurRequest"
+    VersionMetadata:
+      allOf:
+        - $ref: "#/components/schemas/ObjectReference"
+        - type: object
+          example:
+            kind: "APIVersion"
+            id: "v1"
+            href: "/api/dinosaurs_mgmt/v1"
+            collections:
+              - id: "dinosaurs"
+                href: "/api/dinosaurs_mgmt/v1/dinosaurs"
+                kind: "DinosaurList"
+          properties:
+            collections:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/ObjectReference"
+    ServiceStatus:
+      description: Schema for the service status response body
+      example:
+        dinosaurs:
+          max_capacity_reached: true
+      type: object
+      properties:
+        dinosaurs:
+          description: The Dinosaur resource api status
+          type: object
+          required:
+            - max_capacity_reached
+          properties:
+            max_capacity_reached:
+              description: Indicates whether we have reached Dinosaur maximum capacity
+              type: boolean
+    DinosaurRequestPayload:
+      description: Schema for the request body sent to /dinosaurs POST
+      required:
+        - name
+      type: object
+      properties:
+        cloud_provider:
+          description: The cloud provider where the Dinosaur cluster will be created in
+          type: string
+        multi_az:
+          description: Set this to true to configure the Dinosaur cluster to be multiAZ
+          type: boolean
+        name:
+          description: 'The name of the Dinosaur cluster. It must consist of lower-case alphanumeric characters or ''-'', start with an alphabetic character, and end with an alphanumeric character, and can not be longer than 32 characters.'
+          type: string
+        region:
+          description: The region where the Dinosaur cluster will be created in
+          type: string
+    CloudProviderList:
+      allOf:
+        - $ref: "#/components/schemas/List"
+        - type: object
+          example:
+            kind: "CloudProviderList"
+            page: "1"
+            size: "1"
+            total: "1"
+            item:
+              $ref: '#/components/examples/CloudProviderExample'
+          properties:
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/CloudProvider"
+    CloudRegionList:
+      allOf:
+        - $ref: "#/components/schemas/List"
+        - type: object
+          example:
+            kind: "CloudRegionList"
+            page: "1"
+            size: "1"
+            total: "1"
+            item:
+              $ref: '#/components/examples/CloudRegionExample'
+          properties:
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/CloudRegion"
+    CloudProvider:
+      description: 'Cloud provider.'
+      properties:
+        kind:
+          description: 'Indicates the type of this object. Will be ''CloudProvider'' link.'
+          type: string
+        id:
+          description: 'Unique identifier of the object.'
+          type: string
+        display_name:
+          description: 'Name of the cloud provider for display purposes.'
+          type: string
+        name:
+          description: 'Human friendly identifier of the cloud provider, for example `aws`.'
+          type: string
+        enabled:
+          description: 'Whether the cloud provider is enabled for deploying an OSD cluster.'
+          type: boolean
+      required:
+        - enabled
+    CloudRegion:
+      description: 'Description of a region of a cloud provider.'
+      properties:
+        kind:
+          description: 'Indicates the type of this object. Will be ''CloudRegion''.'
+          type: string
+        id:
+          description: 'Unique identifier of the object.'
+          type: string
+        display_name:
+          description: 'Name of the region for display purposes, for example `N. Virginia`.'
+          type: string
+        enabled:
+          description: 'Whether the region is enabled for deploying an OSD cluster.'
+          type: boolean
+          default: false
+        supported_instance_types:
+          description: 'The Dinosaur instance types supported by this region.'
+          type: array
+          items: 
+            type: string
+      required:
+        - enabled
+        - supported_instance_types
+    # user-facing metrics related #
+    MetricsRangeQueryList:
+      allOf:
+        - type: object
+          example:
+            kind: "MetricsRangeQueryList"
+            id: "1nbpS70HduPe4l0to8jSg2CLzfu"
+            items:
+              $ref: '#/components/examples/MetricsRangeQueryExample'
+          properties:
+            kind:
+              type: string
+            id:
+              type: string
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/RangeQuery"
+    RangeQuery:
+      type: object
+      properties:
+        metric:
+          type: object
+          additionalProperties:
+            type: string
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/values'
+    values:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          format: int64
+        value:
+          type: number
+          format: double
+      required:
+        - value
+    MetricsInstantQueryList:
+      allOf:
+        - type: object
+          example:
+            kind: "MetricsInstantQueryList"
+            id: "1nbpS70HduPe4l0to8jSg2CLzfu"
+            items:
+              $ref: '#/components/examples/MetricsInstantQueryExample'
+          properties:
+            kind:
+              type: string
+            id:
+              type: string
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/InstantQuery"
+    MetricsFederationResult:
+      type: string
+    InstantQuery:
+      type: object
+      properties:
+        metric:
+          type: object
+          additionalProperties:
+            type: string
+        timestamp:
+          type: integer
+          format: int64
+        value:
+          type: number
+          format: double
+      required:
+        - value
+    DinosaurUpdateRequest:
+      type: object
+      properties:
+        # for now owner is the only supported field for update
+        owner:
+          type: string
+          nullable: true 
+
+  parameters:
+    id:
+      name: id
+      description: The ID of record
+      schema:
+        type: string
+      in: path
+      required: true
+    duration:
+      name: duration
+      in: query
+      description: The length of time in minutes for which to return the metrics
+      required: true
+      schema:
+        type: integer
+        format: int64
+        default: 5
+        minimum: 1
+        maximum: 4320
+      examples:
+        duration:
+          value: 5
+    interval:
+      name: interval
+      in: query
+      description: The interval in seconds between data points
+      required: true
+      schema:
+        type: integer
+        format: int64
+        default: 30
+        minimum: 1
+        maximum: 10800
+      examples:
+        interval:
+          value: 30
+    filters:
+      name: filters
+      in: query
+      description: List of metrics to fetch. Fetch all metrics when empty. List entries are Dinosaur internal metric names.
+      schema:
+        type: array
+        items:
+          type: string
+        default: [ ]
+    page:
+      name: page
+      in: query
+      description: Page index
+      required: false
+      schema:
+        type: string
+      examples:
+        page:
+          value: "1"
+    size:
+      name: size
+      in: query
+      description: Number of items in each page
+      required: false
+      schema:
+        type: string
+      examples:
+        size:
+          value: "100"
+    orderBy:
+      description: |-
+        Specifies the order by criteria. The syntax of this parameter is
+        similar to the syntax of the `order by` clause of an SQL statement.
+        Each query can be ordered by any of the following `dinosaurRequests` fields:
+
+        * host
+        * cloud_provider
+        * cluster_id
+        * created_at
+        * href
+        * id
+        * instance_type
+        * multi_az
+        * name
+        * organisation_id
+        * owner
+        * region
+        * status
+        * updated_at
+        * version
+
+        For example, to return all Dinosaur instances ordered by their name, use the following syntax:
+
+        ```sql
+        name asc
+        ```
+
+        To return all Dinosaur instances ordered by their name _and_ created date, use the following syntax:
+
+        ```sql
+        name asc, created_at asc
+        ```
+
+        If the parameter isn't provided, or if the value is empty, then
+        the results are ordered by name.
+      explode: true
+      examples:
+        orderBy:
+          value: "name asc"
+      in: query
+      name: orderBy
+      required: false
+      schema:
+        type: string
+      style: form
+    search:
+      description: |
+        Search criteria.
+
+        The syntax of this parameter is similar to the syntax of the `where` clause of an
+        SQL statement. Allowed fields in the search are `cloud_provider`, `name`, `owner`, `region`, and `status`. Allowed comparators are `<>`, `=`, or `LIKE`.
+        Allowed joins are `AND` and `OR`. However, you can use a maximum of 10 joins in a search query.
+
+        Examples:
+
+        To return a Dinosaur instance with the name `my-dinosaur` and the region `aws`, use the following syntax:
+
+        ```
+        name = my-dinosaur and cloud_provider = aws
+        ```[p-]
+
+        To return a Dinosaur instance with a name that starts with `my`, use the following syntax:
+
+        ```
+        name like my%25
+        ```
+
+        If the parameter isn't provided, or if the value is empty, then all the Dinosaur instances
+        that the user has permission to see are returned.
+
+        Note. If the query is invalid, an error is returned.
+      explode: true
+      name: search
+      in: query
+      required: false
+      examples:
+        search:
+          value: "name = my-dinosaur and cloud_provider = aws"
+      schema:
+        type: string
+      style: form
+    instance_type:
+      name: instance_type
+      description: The Dinosaur instance type to filter the results by
+      in: query
+      schema:
+        type: string
+      required: false
+      examples:
+        eval_instance_type:
+          value: "eval"
+        standard_instance_type:
+          value: "standard"
+  securitySchemes:
+    Bearer:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
+  examples:
+    USRegionExample:
+      value:
+        region: "us-east-1"
+        cloud_provider: "aws"
+        name: "serviceapitest"
+    EURegionExample:
+      value:
+        region: "eu-west-1"
+        cloud_provider: "aws"
+        name: "serviceapitest"
+    DinosaurRequestExample:
+      value:
+        id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
+        kind: "dinosaur"
+        href: "/api/dinosaurs_mgmt/v1/dinosaurs/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
+        status: "ready"
+        cloud_provider: "aws"
+        multi_az: true
+        region: "us-east-1"
+        owner: "api_dinosaur_service"
+        name: "serviceapi"
+        host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.dinosaur.com"
+        created_at: "2020-10-05T12:51:24.053142Z"
+        updated_at: "2020-10-05T12:56:36.362208Z"
+        version: "2.6.0"
+        instance_type: standard
+    DinosaurRequestFailedCreationStatusExample:
+      value:
+        id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
+        kind: "dinosaur"
+        href: "/api/dinosaurs_mgmt/v1/dinosaurs/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
+        status: "failed"
+        cloud_provider: "aws"
+        multi_az: true
+        region: "us-east-1"
+        owner: "api_dinosaur_service"
+        name: "serviceapi"
+        host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.dinosaur.com"
+        created_at: "2020-10-05T12:51:24.053142Z"
+        updated_at: "2020-10-05T12:56:36.362208Z"
+        failed_reason: "a reason the Dinosaur request creation failed"
+        instance_type: standard
+    CloudProviderExample:
+      value:
+        kind: "CloudProvider"
+        id: "aws"
+        name: "aws"
+        display_name: "Amazon Web Services"
+        enabled: true
+    CloudRegionExample:
+      value:
+        kind: "CloudRegion"
+        id: "us-east-1"
+        display_name: "US East, N. Virginia"
+        enabled: true
+        supported_instance_types: ["standard", "eval"]
+    MetricsRangeQueryExample:
+      value:
+        metric:
+          __name__: dinosaur_server_brokertopicmetrics_bytes_in_total
+          dinosaur_operator_io_cluster: dinosaur-service
+          topic: __consumer_offsets
+        values:
+          - timestamp: 1611670230000
+            value: 84154
+          - timestamp: 1611670260000
+            value: 85888
+          - timestamp: 1611670290000
+            value: 87622
+    MetricsInstantQueryExample:
+      value:
+        metric:
+          __name__: dinosaur_server_brokertopicmetrics_bytes_in_total
+          dinosaur_operator_io_cluster: dinosaur-service
+          topic: __consumer_offsets
+        timestamp: 1611670230000
+        value: 84154
+    400DeletionExample:
+      value:
+        id: "103"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/103"
+        code: "DINOSAURS-MGMT-103"
+        reason: "Synchronous action is not supported, use async=true parameter"
+        operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
+    400CreationExample:
+      value:
+        id: "103"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/103"
+        code: "DINOSAURS-MGMT-103"
+        reason: "Synchronous action is not supported, use async=true parameter"
+        operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
+    400InvalidQueryExample:
+      value:
+        id: "23"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/23"
+        code: "DINOSAURS-MGMT-23"
+        reason: "Failed to parse search query: Unable to list Dinosaur requests for api_dinosaur_service: DINOSAURS-MGMT-23: Failed to parse search query: Unsupported column name for search: 'id'. Supported column names are: region, name, cloud_provider, name, status. Query invalid: id = 123"
+        operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
+    400MissingParameterExample:
+      value:
+        id: "21"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/21"
+        code: "DINOSAURS-MGMT-21"
+        reason: "missing path parameter: dinosaur id"
+        operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
+    404Example:
+      value:
+        id: "7"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/7"
+        code: "DINOSAURS-MGMT-7"
+        reason: "The requested resource doesn't exist"
+    404DeleteExample:
+      value:
+        id: "7"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/7"
+        code: "DINOSAURS-MGMT-7"
+        reason: "DinosaurResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found"
+        operation_id: "1iYO7g2g6HTdUKUa2ksH82kQD3y"
+    401Example:
+      value:
+        id: "11"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/11"
+        code: "DINOSAURS-MGMT-11"
+        reason: "Unable to verify JWT token: Required authorization token not found"
+        operation_id: "1iY3UhEhwmXBpWPfI2lNekpd4ZD"
+    403Example:
+      value:
+        id: "4"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/4"
+        code: "DINOSAURS-MGMT-4"
+        reason: "User 'foo-bar' is not authorized to access the service."
+        operation_id: "1lY3UiEhznXBpWPfI2lNejpd4YC"
+    403MaxAllowedInstanceReachedExample:
+      value:
+        id: "5"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/5"
+        code: "DINOSAURS-MGMT-5"
+        reason: "User 'foo-bar' has reached a maximum number of 6 allowed instances."
+        operation_id: "1lY3UiEkxnXBpVPeI2oNejd3XB"
+    403TermsNotAcceptedExample:
+      value:
+        id: "12"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/12"
+        code: "DINOSAURS-MGMT-12"
+        reason: "Required terms have not been accepted"
+        operation_id: "kXCzWPeI2oXBpVPeI2LvF9jMQY"
+    409NameConflictExample:
+      value:
+        id: "36"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/36"
+        code: "DINOSAURS-MGMT-36"
+        reason: "Dinosaur cluster name is already used"
+        operation_id: "6kY0UiEkzkXCzWPeI2oYehd3ED"
+    500Example:
+      value:
+        id: "9"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/9"
+        code: "DINOSAURS-MGMT-9"
+        reason: "Unspecified error"
+        operation_id: "1ieELvF9jMQY6YghfM9gGRsHvEW"
+    500DeleteExample:
+      value:
+        id: "9"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/9"
+        code: "DINOSAURS-MGMT-9"
+        reason: "error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e
+          for cluster id: 1g5d88q0lrcdv4g7alb7slfgnj3dhbsj%!(EXTRA *errors.Error=identifier
+          is '404', code is 'CLUSTERS-MGMT-404' and operation identifier is '1g5or50viu07oealuehrkc26dgftj1ac':
+          Cluster '1g5d88q0lrcdv4g7alb7slfgnj3dhbsj' not found)"
+        operation_id: "1iYTsWry6nsqb2sNmFj5bXpD7Ca"

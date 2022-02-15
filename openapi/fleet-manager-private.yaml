@@ -1,0 +1,438 @@
+openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an openapi document.
+# Warning: This file should only be used if the endpoints are not yet ready to be public, or not suitable for public consumption (like the data plane endpoints).
+# In most cases, you shouldn't need to add the endpoints here.
+# Only add endpoints here when it is an explicit requirement, or if you know what you are doing.
+# There should be no duplicated endpoints or schemas in these 2 files. They should only defined in one of them.
+info:
+  title: Dinosaur Service Fleet Manager
+  version: 1.4.0
+  description: Dinosaur Service Fleet Manager APIs that are used by internal services e.g fleetshard operators.
+servers:
+  - url: https://api.openshift.com
+    description: Main (production) server
+  - url: https://api.stage.openshift.com
+    description: Staging server
+  - url: http://localhost:8000
+    description: localhost
+  - url: /
+    description: current domain
+tags:
+  - name: Agent Clusters
+    description: ""
+
+paths:
+  # Endpoints for data plane communications
+  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/status':
+    put:
+      tags:
+        - Agent Clusters
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+      requestBody:
+        description: Cluster status update data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest'
+        required: true
+      responses:
+        '200':
+          description: Cluster status is updated
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                400InvalidIdExample:
+                  $ref: '#/components/examples/400InvalidIdExample'
+          description: id value is not valid
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
+          # This is deliberate to hide the endpoints for unauthorised users
+          description: Auth token is not valid.
+      security:
+        - Bearer: [ ]
+      operationId: updateAgentClusterStatus
+      summary: Update the status of an agent cluster
+
+  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs/status':
+    put:
+      tags:
+        - Agent Clusters
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+      requestBody:
+        description: Dinosaur clusters status update data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataPlaneDinosaurStatusUpdateRequest'
+        required: true
+      responses:
+        '200':
+          description: Status is updated for Dinosaur clusters
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                400InvalidIdExample:
+                  $ref: '#/components/examples/400InvalidIdExample'
+          description: id value is not valid
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
+          # This is deliberate to hide the endpoints for unauthorised users
+          description: Auth token is not valid.
+      security:
+        - Bearer: [ ]
+      operationId: updateDinosaurClusterStatus
+      summary: Update the status of Dinosaur clusters on an agent cluster
+
+  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs':
+    get:
+      tags:
+        - Agent Clusters
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+      responses:
+        '200':
+          description: The list of the ManagedDinosaurs for the specified agent cluster
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedDinosaurList'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                400InvalidIdExample:
+                  $ref: '#/components/examples/400InvalidIdExample'
+          description: id value is not valid
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
+          # This is deliberate to hide the endpoints for unauthorised users
+          description: Auth token is not valid.
+      security:
+        - Bearer: [ ]
+      operationId: getDinosaurs
+      summary: Get the list of ManagedaDinosaurs for the specified agent cluster
+
+  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}':
+    get:
+      tags:
+        - Agent Clusters
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+      responses:
+        '200':
+          description: The Data Plane Cluster Agent configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataplaneClusterAgentConfig'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                400InvalidIdExample:
+                  $ref: '#/components/examples/400InvalidIdExample'
+          description: id value is not valid
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
+          # This is deliberate to hide the endpoints for unauthorised users
+          description: Auth token is not valid.
+      security:
+        - Bearer: [ ]
+      operationId: getDataPlaneClusterAgentConfig
+      summary: Get the data plane cluster agent configuration
+
+components:
+  schemas:
+
+    ListReference:
+      required:
+        - kind
+        - items
+      type: object
+      properties:
+        kind:
+          type: string
+
+    PrivateObjectReference:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+
+    ManagedDinosaurVersions:
+      type: object
+      properties:
+        dinosaur:
+          type: string
+        dinosaurOperator:
+          type: string
+
+    ManagedDinosaur:
+      allOf:
+        - $ref: "#/components/schemas/PrivateObjectReference"
+        - type: object
+          properties:
+            metadata:
+              type: object
+              properties:
+                name:
+                  type: string
+                namespace:
+                  type: string
+                annotations:
+                  type: object
+                  required:
+                    - mas/placementId
+                    - mas/id
+                  properties:
+                    mas/id:
+                      type: string
+                    mas/placementId:
+                      type: string
+
+            spec:
+              type: object
+              properties:   
+                owners:
+                  type: array
+                  items:
+                    type: string
+                endpoint:
+                  type: object
+                  properties:
+                    host:
+                      type: string
+                    tls:
+                      type: object
+                      nullable: true
+                      properties:
+                        cert:
+                          type: string
+                        key:
+                          type: string
+                versions:
+                  $ref: "#/components/schemas/ManagedDinosaurVersions"
+                deleted:
+                  type: boolean
+              required:
+                - deleted
+
+    ManagedDinosaurList:
+      description: >-
+        A list of ManagedDinosaur
+      allOf:
+        - $ref: "#/components/schemas/ListReference"
+        - type: object
+          example:
+            kind: "ManagedDinosaurList"
+            items:
+              $ref: '#/components/examples/ManagedDinosaurExample'
+          properties:
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/ManagedDinosaur"
+
+    DataPlaneClusterUpdateStatusRequest:
+      # TODO are there any fields that should be required?
+      # TODO are there any fields that should be nullable? (this is, a pointer in the resulting generated Go code)
+      description: "Schema for the request to update a data plane cluster's status"
+      type: object
+      properties:
+        conditions:
+          description: "The cluster data plane conditions"
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              reason:
+                type: string
+              message:
+                type: string
+              status:
+                type: string
+        dinosaurOperator:
+          type: array
+          items:
+            type: object
+            properties:
+              ready:
+                type: boolean
+              version:
+                type: string
+              dinosaurVersions:
+                type: array
+                items:
+                  type: string
+            required:
+            - ready
+            - version
+    DataPlaneDinosaurStatus:
+      description: "Schema of the status object for a Dinosaur cluster"
+      type: object
+      properties:
+        conditions:
+          description: "The status conditions of a Dinosaur cluster"
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              reason:
+                type: string
+              message:
+                type: string
+              status:
+                type: string
+        versions:
+          description: "Version information related to a Dinosaur cluster"
+          type: object
+          properties:
+            dinosaur:
+              type: string
+            dinosaurOperator:
+              type: string
+        routes:
+          description: "Routes created for a Dinosaur cluster"
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              prefix:
+                type: string
+              router:
+                type: string
+      example:
+        $ref: '#/components/examples/DataPlaneDinosaurStatusRequestExample'
+
+    DataPlaneDinosaurStatusUpdateRequest:
+      description: "Schema for the request to update the statuses of Dinosaur clusters from data plane"
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/DataPlaneDinosaurStatus'
+
+    DataplaneClusterAgentConfig:
+      description: "Configuration for the data plane cluster agent"
+      type: object
+      properties:
+        spec:
+          description: "Data plane cluster agent spec"
+          type: object
+          properties:
+            observability:
+              description: "Observability configurations"
+              type: object
+              properties:
+                accessToken:
+                  type: string
+                  nullable: true
+                channel:
+                  type: string
+                repository:
+                  type: string
+                tag:
+                  type: string
+
+    WatchEvent:
+      required:
+        - type
+      type: object
+      properties:
+        type:
+          type: string
+        error:
+          nullable: true
+          $ref: "fleet-manager.yaml#/components/schemas/Error"
+        object:
+          type: object
+          nullable: true
+
+  securitySchemes:
+    Bearer:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
+
+  examples:
+    ManagedDinosaurExample:
+      value:
+        kind: "ManagedDinosaur"
+        metadata:
+          name: "example-dinosaur"
+          namespace: "example-dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac"
+          annotations:
+            mas/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
+            mas/placementId: ""
+        spec:
+          endpoint:
+            host: "example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.example.dinosaur.com"
+            tls:
+              cert: ""
+              key: ""
+          versions:
+            dinosaur: 2.7.0
+            dinosaurOperator: 0.21.2
+          deleted: false
+    DataPlaneDinosaurStatusRequestExample:
+      value:
+        conditions:
+          - type: Ready
+            reason: DinosaurInstanceReady
+            message: installing
+            status: "False"
+            lastTransitionTime: "2018-01-01T00:00:00Z"
+        versions:
+          dinosaur: 2.4.1
+          dinosaurOperator: 0.21.2
+    400InvalidIdExample:
+      value:
+        id: "21"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/21"
+        code: "DINOSAURS-MGMT-21"
+        reason: "Bad request"
+        operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"

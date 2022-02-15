@@ -1,0 +1,43 @@
+# This file contains an OpenShift template that creates a route helping to
+# directly access the service in the development environment.
+#
+# This route uses a self signed certificate certificate for the wildcard
+# `*.apps-crc.testing', generated using the following command:
+#
+# openssl req \
+# -x509 \
+# -newkey rsa:4096 \
+# -keyout my.key \
+# -nodes \
+# -out my.crt \
+# -subj '/CN=*.apps-crc.testing' \
+# -days 3650
+#
+# Note that the CaCertificate is the same value as the Certificate
+#
+# In production no such route exists, all access is through gateway.
+
+---
+
+apiVersion: template.openshift.io/v1
+kind: Template
+name: fleet-manager-routes
+metadata:
+  name: route
+
+objects:
+
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: fleet-manager
+    labels:
+      app: fleet-manager
+  spec:
+    to:
+      kind: Service
+      name: fleet-manager-envoy
+    tls:
+      termination: reencrypt
+      insecureEdgeTerminationPolicy: Redirect
+      

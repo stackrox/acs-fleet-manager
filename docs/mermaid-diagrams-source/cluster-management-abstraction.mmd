@@ -1,0 +1,59 @@
+classDiagram
+  class Cluster {
+      +ProviderType providerType
+      +ProviderSpec JSON
+      +ClusterSpec JSON
+      +OtherFields...
+  }
+
+  class Provider {
+      <<Interface>>
+      + Create()
+      + Get()
+      + AddIdentityProvider()
+      + ListIdentityProviders()
+      + ApplyResources()
+      + DeleteResources()
+      + ScaleUp()
+      + ScaleDown()
+      + InstallDinosaurOperator()
+      + InstallFleetshard()
+      + OtherMethods...()
+  }
+
+  class ProviderFactory {
+      <<Interface>>
+      +GetProvider(providerType) Provider
+  }
+
+  class OCMProvider{
+      -OCMClient ocmClient
+  }
+  class StandaloneProvider {
+
+  }
+
+  class ConnectionFactory {
+      <<Service>>
+  }
+
+  class ClusterService {
+      <<Service>>
+      + Create()
+      + Update()
+      + Delete()
+      + Find()
+      + UpdateStatus()
+      + OtherMethods...
+  }
+
+  class ClusterManager {
+      + Reconcile()
+  }
+
+  Provider <|.. OCMProvider: Implements
+  Provider <|.. StandaloneProvider: Implements
+  ProviderFactory --|> Provider: Return concrete impl based on ProviderType
+  ClusterService ..> ProviderFactory: Depends
+  ClusterService ..> ConnectionFactory: Depends
+  ClusterManager ..> ClusterService: Depends

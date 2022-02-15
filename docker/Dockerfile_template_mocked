@@ -1,0 +1,77 @@
+FROM quay.io/app-sre/postgres
+
+ENV POSTGRES_PASSWORD foobar-bizz-buzz
+ENV POSTGRES_USER fleet_manager
+ENV POSTGRES_DB serviceapitests
+
+ENV GORM_DIALECT postgres
+ENV GORM_HOST 127.0.0.1
+ENV GORM_PORT 5432
+ENV GORM_NAME serviceapitests
+ENV GORM_USERNAME fleet_manager
+ENV GORM_PASSWORD foobar-bizz-buzz
+ENV GORM_SSLMODE disable
+ENV GORM_DEBUG false
+ENV OCM_ENV integration
+ENV SSO_CLIENT_ID <sso_client_id>
+ENV SSO_CLIENT_SECRET <sso_client_secret>
+ENV OSD_IDP_SSO_CLIENT_ID <osd_idp_sso_client_id>
+ENV OSD_IDP_SSO_CLIENT_SECRET <osd_idp_sso_client_secret>
+ENV ROUTE53_ACCESS_KEY <aws_route53_access_key>
+ENV ROUTE53_SECRET_ACCESS_KEY <aws_route53_secret_access_key>
+ENV DINOSAUR_TLS_CERT <dinosaur_tls_cert>
+ENV DINOSAUR_TLS_KEY <dinosaur_tls_key>
+ENV OBSERVATORIUM_CONFIG_ACCESS_TOKEN <observatorium_config_access_token>
+ENV DOCKER_PR_CHECK true
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update
+RUN apt-get install -y make sudo git wget curl ca-certificates
+
+# install jq to parse json within bash scripts
+RUN curl -o /usr/local/bin/jq http://stedolan.github.io/jq/download/linux64/jq && \
+  chmod +x /usr/local/bin/jq
+
+# install OCM CLI
+RUN curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/download/v0.1.60/ocm-linux-amd64 && \
+  chmod +x ocm && sudo mv ocm /usr/local/bin/
+
+COPY test/support/jwt_ca.pem /usr/local/share/ca-certificates/jwt_ca.pem
+COPY test/support/gitlab-ca.crt /usr/local/share/ca-certificates/gitlab-ca.crt
+RUN update-ca-certificates
+
+# copy the setup scripts and the pr check script
+COPY db_setup_docker.sql /docker-entrypoint-initdb.d/
+COPY pr_check_docker.sh /docker-entrypoint-initdb.d/
+
+# install go 1.16.13
+RUN curl -O -J https://dl.google.com/go/go1.16.13.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf go1.16.13.linux-amd64.tar.gz
+
+ENV PATH="/fleet-manager/bin:/usr/local/go/bin:${PATH}"
+ENV GOPATH="/fleet-manager"
+ENV CGO_ENABLED=0
+
+# install NPM and java for openapi-generator
+RUN wget -qO- https://deb.nodesource.com/setup_14.x | bash -
+RUN apt install -y nodejs build-essential default-jre
+
+# copy over the fleet-manager workdir
+RUN mkdir -p /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
+COPY . /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
+
+# create credential files
+WORKDIR /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
+RUN make aws/setup
+RUN make ocm/setup
+RUN make keycloak/setup
+RUN make dinosaurcert/setup
+RUN make observatorium/setup
+
+# Docker built / owned  as 'root' but the 'postgres' user runs the image
+RUN chown -R postgres:postgres /fleet-manager /usr/local/go
+WORKDIR /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+CMD ["postgres"]

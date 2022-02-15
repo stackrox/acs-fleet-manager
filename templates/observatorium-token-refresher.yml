@@ -1,0 +1,123 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: observatorium-token-refresher
+  annotations:
+    description: "Token refresher for Observatorium"
+parameters:
+
+- name: ISSUER_URL
+  description: URL of the token issuer
+
+- name: OBSERVATORIUM_URL
+  description: URL of the observatorium instance
+
+- name: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE
+  description: Observatorium token refresher image
+  value: quay.io/rhoas/mk-token-refresher
+
+- name: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG
+  description: Observatorium token refresher image tag
+  value: latest
+
+objects:
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      labels:
+        app.kubernetes.io/component: authentication-proxy
+        app.kubernetes.io/name: token-refresher
+        app.kubernetes.io/version: ${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG}
+      name: token-refresher
+    spec:
+      ports:
+        - name: http
+          port: 80
+          targetPort: 8080
+        - name: internal
+          port: 8081
+          targetPort: 8081
+          protocol: TCP
+      selector:
+        app.kubernetes.io/component: authentication-proxy
+        app.kubernetes.io/name: token-refresher
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      labels:
+        app.kubernetes.io/component: authentication-proxy
+        app.kubernetes.io/name: token-refresher
+        app.kubernetes.io/version: ${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG}
+      name: token-refresher
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: authentication-proxy
+          app.kubernetes.io/name: token-refresher
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/component: authentication-proxy
+            app.kubernetes.io/name: token-refresher
+            app.kubernetes.io/version: master-2020-12-04-5504078
+        spec:
+          containers:
+          - name: token-refresher
+            image: ${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE}:${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG}
+            imagePullPolicy: Always
+            ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 8081
+              name: internal
+            env:
+            - name: CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: fleet-manager-observatorium-configuration-red-hat-sso
+                  key: grafana.clientId
+            - name: CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: fleet-manager-observatorium-configuration-red-hat-sso
+                  key: grafana.clientSecret
+            - name: ISSUER_URL
+              value: ${ISSUER_URL}
+            - name: OBSERVATORIUM_URL
+              value: ${OBSERVATORIUM_URL}
+            command:
+              - /bin/token-refresher
+              - --web.listen=0.0.0.0:8080
+              - --web.internal.listen=0.0.0.0:8081
+              - --oidc.audience=observatorium-telemeter
+              - --oidc.client-id=$(CLIENT_ID)
+              - --oidc.client-secret=$(CLIENT_SECRET)
+              - --oidc.issuer-url=$(ISSUER_URL)
+              - --url=$(OBSERVATORIUM_URL)
+  - kind: NetworkPolicy
+    apiVersion: networking.k8s.io/v1
+    metadata:
+      labels:
+        app.kubernetes.io/component: authentication-proxy
+        app.kubernetes.io/name: token-refresher
+      name: token-refresher
+    spec:
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/component: authentication-proxy
+          app.kubernetes.io/name: token-refresher
+      policyTypes:
+      - Ingress
+      ingress:
+      - from:
+        - podSelector:
+            matchLabels:
+              app: fleet-manager
+        - podSelector:
+            matchLabels:
+              prometheus: dinosaur-prometheus
+          namespaceSelector:
+            matchLabels:
+              name: managed-application-services-observability
