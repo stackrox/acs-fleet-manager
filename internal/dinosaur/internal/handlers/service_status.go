@@ -3,13 +3,13 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/presenters"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/acl"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/handlers"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/acl"
+	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/auth"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/golang/glog"
 )
 

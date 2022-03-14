@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/dinosaurs/types"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )

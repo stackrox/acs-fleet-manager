@@ -1,7 +1,7 @@
 package sentry
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"time"
 
 	"github.com/spf13/pflag"

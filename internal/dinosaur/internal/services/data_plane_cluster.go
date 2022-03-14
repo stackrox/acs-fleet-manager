@@ -5,15 +5,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/observatorium"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/goava/di"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/golang/glog"
 )
 

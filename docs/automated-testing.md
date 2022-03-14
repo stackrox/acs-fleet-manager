@@ -160,7 +160,7 @@ import (
     "testing"
     "time"
 
-    utils "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/common"
+    utils "github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/common"
 )
 
 func MyTestFunction(t *testing.T) {
@@ -196,9 +196,9 @@ import (
     "testing"
     "time"
 
-    "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
-    "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/mocks"
-    "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/mocks/fleetshardsync"
+    "github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
+    "github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/mocks"
+    "github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/mocks/fleetshardsync"
 )
 
 func MyTestFunction(t *testing.T) {
@@ -228,7 +228,7 @@ These default behaviours can be changed by setting the update status implementat
 import(
     //...
 
-    privateopenapi "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/private/openapi"
+    privateopenapi "github.com/stackrox/acs-fleet-manager/pkg/api/private/openapi"
 )
 
 func MyTestFunction(t *testing.T) {

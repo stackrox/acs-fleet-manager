@@ -1,8 +1,8 @@
 package presenters
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/private"
-	v1 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/private"
+	v1 "github.com/stackrox/acs-fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
 )
 
 func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {

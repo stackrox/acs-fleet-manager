@@ -3,8 +3,8 @@ package auth
 import (
 	"net/http"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 type RequireIssuerMiddleware interface {

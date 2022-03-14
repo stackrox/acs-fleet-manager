@@ -3,7 +3,7 @@ package secrets
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/santhosh-tekuri/jsonschema/v3"
 	"github.com/spyzhov/ajson"
 	"reflect"

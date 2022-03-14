@@ -2,7 +2,7 @@ package logging
 
 import (
 	"context"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/gorilla/mux"
 	"net/http"
 	"time"

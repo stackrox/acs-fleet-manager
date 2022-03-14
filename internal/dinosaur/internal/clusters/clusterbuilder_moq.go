@@ -4,7 +4,7 @@
 package clusters
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/clusters/types"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/clusters/types"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"sync"
 )

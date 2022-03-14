@@ -1,14 +1,14 @@
 package auth
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"net/http"
 	"time"
 
 	"github.com/patrickmn/go-cache"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 type RequireTermsAcceptanceMiddleware interface {

@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
+	"github.com/stackrox/acs-fleet-manager/pkg/auth"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/test/mocks"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/golang-jwt/jwt/v4"

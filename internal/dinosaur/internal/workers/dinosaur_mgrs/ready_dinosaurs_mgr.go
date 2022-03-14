@@ -1,11 +1,11 @@
 package dinosaur_mgrs
 
 import (
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
+	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"

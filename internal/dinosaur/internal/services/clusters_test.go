@@ -7,19 +7,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/clusters/types"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/converters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/clusters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/clusters/types"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/converters"
 
 	"github.com/pkg/errors"
 
-	apiErrors "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	apiErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 
 	"github.com/onsi/gomega"
 	"gorm.io/gorm"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	mocket "github.com/selvatico/go-mocket"
 )
 

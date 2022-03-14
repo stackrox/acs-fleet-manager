@@ -19,7 +19,7 @@ import (
 
 	"time"
 
-	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	ocmErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"

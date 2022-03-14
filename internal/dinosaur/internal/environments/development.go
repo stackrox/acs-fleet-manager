@@ -1,6 +1,6 @@
 package environments
 
-import "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
+import "github.com/stackrox/acs-fleet-manager/pkg/environments"
 
 // The development environment is intended for use while developing features, requiring manual verification
 func NewDevelopmentEnvLoader() environments.EnvLoader {

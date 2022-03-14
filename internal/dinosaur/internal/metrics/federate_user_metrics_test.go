@@ -3,8 +3,8 @@ package metrics
 import (
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/observatorium"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/prometheus/client_golang/prometheus"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	pModel "github.com/prometheus/common/model"

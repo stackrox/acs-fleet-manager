@@ -2,7 +2,7 @@ package errors
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 	"net/http"
 	"strconv"
 

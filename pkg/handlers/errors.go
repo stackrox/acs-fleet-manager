@@ -1,14 +1,14 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/compat"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"net/http"
 	"sort"
 	"strconv"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	"github.com/stackrox/acs-fleet-manager/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/gorilla/mux"
 )
 

@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"time"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
+	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
 	"github.com/prometheus/client_golang/prometheus"
 )

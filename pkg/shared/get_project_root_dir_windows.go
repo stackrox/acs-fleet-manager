@@ -13,7 +13,7 @@ import (
 
 // GetProjectRootDir returns the root directory of the project.
 // The root directory of the project is the directory that contains the go.mod file which contains
-// the "github.com/bf2fc6cc711aee1a0c2a/fleet-manager" module name.
+// the "github.com/stackrox/acs-fleet-manager" module name.
 func GetProjectRootDir() string {
 	workingDir, err := os.Getwd()
 	if err != nil {
@@ -36,9 +36,9 @@ func GetProjectRootDir() string {
 			continue
 		}
 		// The project root directory is obtained based on the assumption that module name,
-		// "github.com/bf2fc6cc711aee1a0c2a/fleet-manager", is contained in the 'go.mod' file.
+		// "github.com/stackrox/acs-fleet-manager", is contained in the 'go.mod' file.
 		// Should the module name change in the code repo then it needs to be changed here too.
-		if strings.Contains(string(goModFile), "github.com/bf2fc6cc711aee1a0c2a/fleet-manager") {
+		if strings.Contains(string(goModFile), "github.com/stackrox/acs-fleet-manager") {
 			break
 		}
 	}

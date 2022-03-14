@@ -1,15 +1,15 @@
 package auth
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/onsi/gomega"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 func TestRequireTermsAcceptanceMiddleware(t *testing.T) {

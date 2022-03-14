@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/antihax/optional"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"

@@ -1,12 +1,12 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/presenters"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/handlers"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/metrics"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
@@ -16,8 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/observatorium"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
 )
 

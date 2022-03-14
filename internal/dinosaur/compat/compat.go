@@ -1,8 +1,8 @@
 package compat
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/private"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
 )
 
 // We expose some internal types here for compatability with code that still under `pkg`,

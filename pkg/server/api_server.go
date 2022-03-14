@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server/logging"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/sentry"
+	"github.com/stackrox/acs-fleet-manager/pkg/server/logging"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 	"github.com/goava/di"
 
 	"github.com/openshift-online/ocm-sdk-go/authentication"
@@ -23,8 +23,8 @@ import (
 	gorillahandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )
 
 type ApiServerReadyCondition interface {

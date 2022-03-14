@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 )

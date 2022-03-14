@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 	"net/http"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 // HandlerConfig defines the common things each REST controller must do.

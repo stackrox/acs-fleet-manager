@@ -1,4 +1,4 @@
-module github.com/bf2fc6cc711aee1a0c2a/fleet-manager
+module github.com/stackrox/acs-fleet-manager
 
 go 1.16
 

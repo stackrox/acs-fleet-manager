@@ -1,7 +1,7 @@
 package converters
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
 )
 
 func ConvertDinosaurRequest(request *dbapi.DinosaurRequest) []map[string]interface{} {

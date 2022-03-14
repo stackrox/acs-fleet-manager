@@ -3,8 +3,8 @@ package shared
 import (
 	"net/http"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )
 
 // HandleError handles a service error by returning an appropriate HTTP response with error reason

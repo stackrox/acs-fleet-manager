@@ -3,15 +3,15 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/account"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/admin/private"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/presenters"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/handlers"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/admin/private"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
+	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 )
 

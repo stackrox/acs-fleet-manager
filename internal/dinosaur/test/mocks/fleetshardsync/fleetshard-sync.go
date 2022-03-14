@@ -6,15 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/private"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	coreTest "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	coreTest "github.com/stackrox/acs-fleet-manager/test"
 	"github.com/golang-jwt/jwt/v4"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"

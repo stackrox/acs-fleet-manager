@@ -3,18 +3,18 @@ package dinosaur_mgrs
 import (
 	"time"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
+	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
 	"github.com/google/uuid"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/pkg/errors"
 
 	"github.com/golang/glog"
 
-	serviceErr "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	serviceErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
 // PreparingDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests

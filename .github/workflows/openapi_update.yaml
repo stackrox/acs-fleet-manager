@@ -8,7 +8,7 @@ on:
 
 jobs:
   dispatch:
-    if: github.repository == 'bf2fc6cc711aee1a0c2a/fleet-manager' # TODO change the repository URL to match your url
+    if: github.repository == 'stackrox/acs-fleet-manager' # TODO change the repository URL to match your url
     env:
       APP_SERVICES_CI_TOKEN: ${{ secrets.GH_CI_TOKEN }}
     strategy:
@@ -35,4 +35,4 @@ jobs:
           token: ${{ env.APP_SERVICES_CI_TOKEN }}
           repository: ${{ matrix.repo }}
           event-type: openapi-spec-change
-          client-payload: '{ "id": "dinosaur-mgmt/v1", "download_url":"https://raw.githubusercontent.com/bf2fc6cc711aee1a0c2a/fleet-manager/main/openapi/fleet-manager.yaml"}' #TODO change the repository URL to match your fleet manager URL
+          client-payload: '{ "id": "dinosaur-mgmt/v1", "download_url":"https://raw.githubusercontent.com/stackrox/acs-fleet-manager/main/openapi/fleet-manager.yaml"}' #TODO change the repository URL to match your fleet manager URL

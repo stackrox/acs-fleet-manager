@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"gorm.io/gorm/logger"
 )
 

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
 
 	"k8s.io/apimachinery/pkg/util/validation"
 )

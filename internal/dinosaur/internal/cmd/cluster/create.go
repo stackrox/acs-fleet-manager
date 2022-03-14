@@ -1,10 +1,10 @@
 package cluster
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/flags"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )

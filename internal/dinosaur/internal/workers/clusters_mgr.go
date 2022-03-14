@@ -3,25 +3,25 @@ package workers
 import (
 	"fmt"
 
-	dinosaurConstants "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/clusters/types"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/observatorium"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
+	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/clusters/types"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	"github.com/stackrox/acs-fleet-manager/pkg/constants"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 
 	"strings"
 	"sync"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 	"github.com/google/uuid"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
+	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 
 	authv1 "github.com/openshift/api/authorization/v1"
