@@ -3,10 +3,10 @@ package main
 import (
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	"github.com/stackrox/acs-fleet-manager/pkg/server"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	. "github.com/onsi/gomega"
 )
 

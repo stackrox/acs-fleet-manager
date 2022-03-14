@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/clusters/types"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/clusters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/clusters/types"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	. "github.com/onsi/gomega"
 	"github.com/patrickmn/go-cache"
 	mocket "github.com/selvatico/go-mocket"

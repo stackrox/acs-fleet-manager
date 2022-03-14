@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/quota_management"
+	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
 
 	. "github.com/onsi/gomega"
 )

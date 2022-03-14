@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
+	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/pkg/errors"
 
 	"github.com/Nerzal/gocloak/v8"

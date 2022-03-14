@@ -3,14 +3,14 @@ package clusters
 import (
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/clusters/types"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/clusters/types"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha2 "github.com/operator-framework/api/pkg/operators/v1alpha2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	mocket "github.com/selvatico/go-mocket"

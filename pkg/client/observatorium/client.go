@@ -10,8 +10,8 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/pkg/errors"
 	pAPI "github.com/prometheus/client_golang/api"
 	pV1 "github.com/prometheus/client_golang/api/prometheus/v1"

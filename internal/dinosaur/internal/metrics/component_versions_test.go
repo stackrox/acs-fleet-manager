@@ -3,7 +3,7 @@ package metrics
 import (
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

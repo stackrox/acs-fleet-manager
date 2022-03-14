@@ -6,31 +6,31 @@ import (
 	"strings"
 	"sync"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/dinosaurs/types"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
+	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/services"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/authorization"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/queryparser"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
+	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
 
 	"time"
 
 	"github.com/golang/glog"
 
-	manageddinosaur "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
+	manageddinosaur "github.com/stackrox/acs-fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/aws"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/auth"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/aws"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
 var dinosaurDeletionStatuses = []string{constants2.DinosaurRequestStatusDeleting.String(), constants2.DinosaurRequestStatusDeprovision.String()}

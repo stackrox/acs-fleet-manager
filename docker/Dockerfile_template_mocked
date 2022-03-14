@@ -57,11 +57,11 @@ RUN wget -qO- https://deb.nodesource.com/setup_14.x | bash -
 RUN apt install -y nodejs build-essential default-jre
 
 # copy over the fleet-manager workdir
-RUN mkdir -p /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
-COPY . /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
+RUN mkdir -p /fleet-manager/src/github.com/stackrox/acs-fleet-manager
+COPY . /fleet-manager/src/github.com/stackrox/acs-fleet-manager
 
 # create credential files
-WORKDIR /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
+WORKDIR /fleet-manager/src/github.com/stackrox/acs-fleet-manager
 RUN make aws/setup
 RUN make ocm/setup
 RUN make keycloak/setup
@@ -70,7 +70,7 @@ RUN make observatorium/setup
 
 # Docker built / owned  as 'root' but the 'postgres' user runs the image
 RUN chown -R postgres:postgres /fleet-manager /usr/local/go
-WORKDIR /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
+WORKDIR /fleet-manager/src/github.com/stackrox/acs-fleet-manager
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 

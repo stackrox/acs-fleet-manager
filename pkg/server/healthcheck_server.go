@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/sentry"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 	"net"
 	"net/http"
 	"time"

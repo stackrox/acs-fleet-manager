@@ -9,14 +9,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/acl"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
+	"github.com/stackrox/acs-fleet-manager/pkg/acl"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"github.com/golang/glog"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
+	"github.com/stackrox/acs-fleet-manager/pkg/auth"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 
 	. "github.com/onsi/gomega"
 )

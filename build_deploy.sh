@@ -42,7 +42,7 @@ DOCKER_CONFIG="${PWD}/.docker"
 # Set the Go path:
 export GOPATH="${PWD}/.gopath"
 export PATH="${PATH}:${GOPATH}/bin"
-LINK="${GOPATH}/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager" #TODO change repo url to match yours
+LINK="${GOPATH}/src/github.com/stackrox/acs-fleet-manager" #TODO change repo url to match yours
 
 # print go version
 go version  

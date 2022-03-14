@@ -1,9 +1,9 @@
 package presenters
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/observatorium"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	pmod "github.com/prometheus/common/model"
 )
 

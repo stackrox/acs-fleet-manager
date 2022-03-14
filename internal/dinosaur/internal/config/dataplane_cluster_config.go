@@ -5,11 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	"github.com/stackrox/acs-fleet-manager/pkg/constants"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/pkg/errors"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"

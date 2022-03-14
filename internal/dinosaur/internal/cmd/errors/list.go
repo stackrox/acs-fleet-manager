@@ -2,17 +2,17 @@ package errors
 
 import (
 	"encoding/json"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/flags"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/handlers"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	"github.com/stackrox/acs-fleet-manager/pkg/flags"
+	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	"os"
 	"sort"
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 
-	svcErr "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	svcErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
 const (

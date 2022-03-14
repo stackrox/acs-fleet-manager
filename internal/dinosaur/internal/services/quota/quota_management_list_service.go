@@ -2,12 +2,12 @@ package quota
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/quota_management"
+	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/dinosaurs/types"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
 type QuotaManagementListService struct {

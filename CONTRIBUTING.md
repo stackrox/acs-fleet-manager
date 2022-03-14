@@ -41,7 +41,7 @@ cause a painful big-bang update.
 * PR has been merged and announcement sent
 
 ## Project Source
-Fork fleet-manager to your own Github repository: https://github.com/bf2fc6cc711aee1a0c2a/fleet-manager/fork
+Fork fleet-manager to your own Github repository: https://github.com/stackrox/acs-fleet-manager/fork
 
 Project source is to be found under `$GOPATH/src` by a distinct directory path.
 ```plain

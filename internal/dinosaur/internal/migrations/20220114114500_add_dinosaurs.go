@@ -6,8 +6,8 @@ package migrations
 // is done here, even though the same type is defined in pkg/api
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
 )

@@ -3,7 +3,7 @@ package observatorium
 import (
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 )
 
