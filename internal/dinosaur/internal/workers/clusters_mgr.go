@@ -268,6 +268,35 @@ func (c *ClusterManager) processProvisioningClusters() []error {
 	return errs
 }
 
+func (c *ClusterManager) insertASecret(cluster api.Cluster) error {
+	secret := &k8sCoreV1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: metav1.SchemeGroupVersion.Version,
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "mytestsecret",
+			Namespace: "",  // Just create in the default namespace for now
+		},
+		Type: k8sCoreV1.SecretTypeOpaque,
+		Data: map[string][]byte {
+			"username": []byte("evan"),
+			"password": []byte("evanisawesome"),
+		},
+	}
+
+	resourceSet := types.ResourceSet{
+		Name:      syncsetName,
+		Resources: []interface{}{&secret},
+	}
+	if err := c.ClusterService.ApplyResources(&cluster, resourceSet); err != nil {
+		errFailedToApply := errors.Wrapf(err, "failed to apply resources for cluster %s", cluster.ClusterID)
+		return errors.WithMessagef(errFailedToApply, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, errFailedToApply.Error())
+	}
+
+	return nil
+}
+
 func (c *ClusterManager) processProvisionedClusters() []error {
 	var errs []error
 	/*
@@ -285,7 +314,8 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 	for _, provisionedCluster := range provisionedClusters {
 		glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterProvisioned)
-		err := c.reconcileProvisionedCluster(provisionedCluster)
+		//err := c.reconcileProvisionedCluster(provisionedCluster)
+		err := c.insertASecret(provisionedCluster)
 		if err != nil {
 			errs = append(errs, errors.Wrapf(err, "failed to reconcile provisioned cluster %s", provisionedCluster.ClusterID))
 			continue
