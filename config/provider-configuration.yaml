@@ -8,3 +8,14 @@ supported_providers:
         supported_instance_type:
           standard: {}
           eval: {}
+      - name: us-west-2  # Added to support infra.rox.systems default AWS OSD cluster region
+        supported_instance_type:
+          standard: {}
+          eval: {}
+  - name: standalone
+    regions:
+      - name: standalone
+        default: true
+        supported_instance_type:
+          standard: {}
+          eval: {}
