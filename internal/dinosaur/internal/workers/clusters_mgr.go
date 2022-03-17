@@ -14,15 +14,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 	"github.com/google/uuid"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
-	"github.com/golang/glog"
 
 	authv1 "github.com/openshift/api/authorization/v1"
 	userv1 "github.com/openshift/api/user/v1"
@@ -276,7 +276,7 @@ func (c *ClusterManager) insertASecret(cluster api.Cluster) error {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "mytestsecret",
-			Namespace: "",  // Just create in the default namespace for now
+			Namespace: "default",  // Just create in the default namespace for now
 		},
 		Type: k8sCoreV1.SecretTypeOpaque,
 		Data: map[string][]byte {
