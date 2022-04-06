@@ -187,6 +187,8 @@ components:
       properties:
         kind:
           type: string
+      discriminator:
+        propertyName: kind 
 
     PrivateObjectReference:
       type: object
@@ -195,6 +197,11 @@ components:
           type: string
         kind:
           type: string
+      required:
+        - id
+        - kind
+      discriminator:
+        propertyName: kind
 
     ManagedDinosaurVersions:
       type: object
@@ -376,20 +383,6 @@ components:
                   type: string
                 tag:
                   type: string
-
-    WatchEvent:
-      required:
-        - type
-      type: object
-      properties:
-        type:
-          type: string
-        error:
-          nullable: true
-          $ref: "fleet-manager.yaml#/components/schemas/Error"
-        object:
-          type: object
-          nullable: true
 
   securitySchemes:
     Bearer:
