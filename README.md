@@ -27,6 +27,9 @@ Here are the key directories to know about:
 
 make binary
 
+# Generate the necessary secret files (empty placeholders)
+make secrets/touch
+
 # make db/teardown # If necessary, tear down the existing db:
 make db/setup && make db/migrate
 make db/login
