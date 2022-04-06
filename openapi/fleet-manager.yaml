@@ -604,6 +604,11 @@ components:
           type: string
         href:
           type: string
+      required:
+        - id
+        - kind
+      discriminator:
+        propertyName: kind          
     List:
       required:
         - kind
@@ -621,6 +626,8 @@ components:
           type: integer
         total:
           type: integer
+      discriminator:
+        propertyName: kind
     Error:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
@@ -885,8 +892,6 @@ components:
               items:
                 allOf:
                   - $ref: "#/components/schemas/InstantQuery"
-    MetricsFederationResult:
-      type: string
     InstantQuery:
       type: object
       properties:
