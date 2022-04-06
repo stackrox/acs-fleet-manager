@@ -22,9 +22,8 @@ Here are the key directories to know about:
 # Install the prereqs:
 # Golang 1.16+
 # Docker
-# ocm cli
-# Node.js v12.20+
-# oc -> Don't worry about it if using Code Ready Containers
+# ocm cli: https://github.com/openshift-online/ocm-cli  (brew/dnf)
+# Node.js v12.20+  (brew/dnf)
 
 make binary
 
