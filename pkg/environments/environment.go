@@ -68,18 +68,18 @@ func GetEnvironmentStrFromEnv() string {
 //
 // Then flag defaults will set by getting defaults for the Env.Name by looking up a EnvLoader
 // tagged with that name in the  Env.ConfigContainer.
-func (e *Env) AddFlags(flags *pflag.FlagSet) error {
+func (env *Env) AddFlags(flags *pflag.FlagSet) error {
 
 	flags.AddGoFlagSet(flag.CommandLine)
 
 	var namedEnv EnvLoader
-	err := e.ConfigContainer.Resolve(&namedEnv, di.Tags{"env": e.Name})
+	err := env.ConfigContainer.Resolve(&namedEnv, di.Tags{"env": env.Name})
 	if err != nil {
-		return errors.Errorf("unsupported environment %q", e.Name)
+		return errors.Errorf("unsupported environment %q", env.Name)
 	}
 
 	modules := []ConfigModule{}
-	if err := e.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
+	if err := env.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
 		return err
 	}
 	for i := range modules {
