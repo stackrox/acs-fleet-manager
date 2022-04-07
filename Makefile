@@ -146,7 +146,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/spectral 2> /dev/null))
 	mkdir -p ${LOCAL_BIN_PATH} ;\
 	mkdir -p ${LOCAL_BIN_PATH}/spectral-installation ;\
 	cd ${LOCAL_BIN_PATH} ;\
-	${NPM} install --prefix ${LOCAL_BIN_PATH}/spectral-installation @stoplight/spectral ;\
+	${NPM} install --prefix ${LOCAL_BIN_PATH}/spectral-installation @stoplight/spectral-cli ;\
 	${NPM} i --prefix ${LOCAL_BIN_PATH}/spectral-installation @rhoas/spectral-ruleset ;\
 	ln -s spectral-installation/node_modules/.bin/spectral spectral ;\
 	}
