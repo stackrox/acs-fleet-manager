@@ -19,12 +19,25 @@ paths:
     get:
       operationId: getDinosaurs
       parameters:
-      - description: Page index
-        examples:
-          page:
-            value: "1"
+      - description: Name of the request
         in: query
-        name: page
+        name: name
+        required: false
+        schema:
+          type: string
+      - description: User that owns the request
+        in: query
+        name: owner_user
+        required: false
+        schema:
+          type: string
+      - description: Page cursor, provided with each page in case more pages are remaining.
+          If missing then the first page is returned.
+        examples:
+          page_cursor:
+            value: ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg==
+        in: query
+        name: page_cursor
         required: false
         schema:
           type: string
@@ -37,86 +50,6 @@ paths:
         required: false
         schema:
           type: string
-      - description: |-
-          Specifies the order by criteria. The syntax of this parameter is
-          similar to the syntax of the `order by` clause of an SQL statement.
-          Each query can be ordered by any of the following `dinosaurRequests` fields:
-
-          * host
-          * cloud_provider
-          * cluster_id
-          * created_at
-          * href
-          * id
-          * instance_type
-          * multi_az
-          * name
-          * organisation_id
-          * owner
-          * region
-          * status
-          * updated_at
-          * version
-
-          For example, to return all Dinosaur instances ordered by their name, use the following syntax:
-
-          ```sql
-          name asc
-          ```
-
-          To return all Dinosaur instances ordered by their name _and_ created date, use the following syntax:
-
-          ```sql
-          name asc, created_at asc
-          ```
-
-          If the parameter isn't provided, or if the value is empty, then
-          the results are ordered by name.
-        examples:
-          orderBy:
-            value: name asc
-        explode: true
-        in: query
-        name: orderBy
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: |
-          Search criteria.
-
-          The syntax of this parameter is similar to the syntax of the `where` clause of an
-          SQL statement. Allowed fields in the search are `cloud_provider`, `name`, `owner`, `region`, and `status`. Allowed comparators are `<>`, `=`, or `LIKE`.
-          Allowed joins are `AND` and `OR`. However, you can use a maximum of 10 joins in a search query.
-
-          Examples:
-
-          To return a Dinosaur instance with the name `my-dinosaur` and the region `aws`, use the following syntax:
-
-          ```
-          name = my-dinosaur and cloud_provider = aws
-          ```[p-]
-
-          To return a Dinosaur instance with a name that starts with `my`, use the following syntax:
-
-          ```
-          name like my%25
-          ```
-
-          If the parameter isn't provided, or if the value is empty, then all the Dinosaur instances
-          that the user has permission to see are returned.
-
-          Note. If the query is invalid, an error is returned.
-        examples:
-          search:
-            value: name = my-dinosaur and cloud_provider = aws
-        explode: true
-        in: query
-        name: search
-        required: false
-        schema:
-          type: string
-        style: form
       responses:
         "200":
           content:
@@ -306,65 +239,7 @@ paths:
       summary: Update a Dinosaur instance by id
 components:
   schemas:
-    Dinosaur:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - required:
-        - dinosaur_operator_upgrading
-        - dinosaur_upgrading
-        - multi_az
-      - $ref: '#/components/schemas/Dinosaur_allOf'
-    DinosaurList:
-      allOf:
-      - $ref: '#/components/schemas/List'
-      - $ref: '#/components/schemas/DinosaurList_allOf'
-    DinosaurUpdateRequest:
-      example:
-        dinosaur_version: dinosaur_version
-        dinosaur_operator_version: dinosaur_operator_version
-      properties:
-        dinosaur_operator_version:
-          type: string
-        dinosaur_version:
-          type: string
-      type: object
-    Error:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/Error_allOf'
-    ObjectReference:
-      properties:
-        id:
-          type: string
-        kind:
-          type: string
-        href:
-          type: string
-      type: object
-    List:
-      properties:
-        kind:
-          type: string
-        page:
-          type: integer
-        size:
-          type: integer
-        total:
-          type: integer
-      required:
-      - items
-      - kind
-      - page
-      - size
-      - total
-      type: object
-    Dinosaur_allOf_routes:
-      properties:
-        domain:
-          type: string
-        router:
-          type: string
-    Dinosaur_allOf:
+    DinosaurDetails:
       properties:
         status:
           description: 'Values: [accepted, preparing, provisioning, ready, failed,
@@ -419,13 +294,75 @@ components:
           type: string
         routes:
           items:
-            $ref: '#/components/schemas/Dinosaur_allOf_routes'
+            $ref: '#/components/schemas/DinosaurDetails_routes'
           type: array
         routes_created:
           type: boolean
         cluster_id:
           type: string
         namespace:
+          type: string
+      type: object
+    Dinosaur:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/DinosaurDetails'
+      required:
+      - dinosaur_operator_upgrading
+      - dinosaur_upgrading
+      - multi_az
+    DinosaurList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/DinosaurList_allOf'
+    DinosaurUpdateRequest:
+      example:
+        dinosaur_version: dinosaur_version
+        dinosaur_operator_version: dinosaur_operator_version
+      properties:
+        dinosaur_operator_version:
+          type: string
+        dinosaur_version:
+          type: string
+      type: object
+    Error:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/Error_allOf'
+    ObjectReference:
+      discriminator:
+        propertyName: kind
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+      required:
+      - id
+      - kind
+      type: object
+    List:
+      discriminator:
+        propertyName: kind
+      properties:
+        kind:
+          type: string
+        next_page_cursor:
+          type: string
+        size:
+          type: integer
+      required:
+      - items
+      - kind
+      - size
+      type: object
+    DinosaurDetails_routes:
+      properties:
+        domain:
+          type: string
+        router:
           type: string
     DinosaurList_allOf:
       properties:

@@ -262,20 +262,20 @@ func (a *DefaultApiService) GetDinosaurById(ctx _context.Context, id string) (Di
 
 // GetDinosaursOpts Optional parameters for the method 'GetDinosaurs'
 type GetDinosaursOpts struct {
-	Page    optional.String
-	Size    optional.String
-	OrderBy optional.String
-	Search  optional.String
+	Name       optional.String
+	OwnerUser  optional.String
+	PageCursor optional.String
+	Size       optional.String
 }
 
 /*
 GetDinosaurs Returns a list of Dinosaurs
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param optional nil or *GetDinosaursOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
+ * @param "Name" (optional.String) -  Name of the request
+ * @param "OwnerUser" (optional.String) -  User that owns the request
+ * @param "PageCursor" (optional.String) -  Page cursor, provided with each page in case more pages are remaining. If missing then the first page is returned.
  * @param "Size" (optional.String) -  Number of items in each page
- * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the following `dinosaurRequests` fields:  * host * cloud_provider * cluster_id * created_at * href * id * instance_type * multi_az * name * organisation_id * owner * region * status * updated_at * version  For example, to return all Dinosaur instances ordered by their name, use the following syntax:  ```sql name asc ```  To return all Dinosaur instances ordered by their name _and_ created date, use the following syntax:  ```sql name asc, created_at asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
- * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of an SQL statement. Allowed fields in the search are `cloud_provider`, `name`, `owner`, `region`, and `status`. Allowed comparators are `<>`, `=`, or `LIKE`. Allowed joins are `AND` and `OR`. However, you can use a maximum of 10 joins in a search query.  Examples:  To return a Dinosaur instance with the name `my-dinosaur` and the region `aws`, use the following syntax:  ``` name = my-dinosaur and cloud_provider = aws ```[p-]  To return a Dinosaur instance with a name that starts with `my`, use the following syntax:  ``` name like my%25 ```  If the parameter isn't provided, or if the value is empty, then all the Dinosaur instances that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
 @return DinosaurList
 */
 func (a *DefaultApiService) GetDinosaurs(ctx _context.Context, localVarOptionals *GetDinosaursOpts) (DinosaurList, *_nethttp.Response, error) {
@@ -294,17 +294,17 @@ func (a *DefaultApiService) GetDinosaurs(ctx _context.Context, localVarOptionals
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	if localVarOptionals != nil && localVarOptionals.Page.IsSet() {
-		localVarQueryParams.Add("page", parameterToString(localVarOptionals.Page.Value(), ""))
+	if localVarOptionals != nil && localVarOptionals.Name.IsSet() {
+		localVarQueryParams.Add("name", parameterToString(localVarOptionals.Name.Value(), ""))
+	}
+	if localVarOptionals != nil && localVarOptionals.OwnerUser.IsSet() {
+		localVarQueryParams.Add("owner_user", parameterToString(localVarOptionals.OwnerUser.Value(), ""))
+	}
+	if localVarOptionals != nil && localVarOptionals.PageCursor.IsSet() {
+		localVarQueryParams.Add("page_cursor", parameterToString(localVarOptionals.PageCursor.Value(), ""))
 	}
 	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
 		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))
-	}
-	if localVarOptionals != nil && localVarOptionals.OrderBy.IsSet() {
-		localVarQueryParams.Add("orderBy", parameterToString(localVarOptionals.OrderBy.Value(), ""))
-	}
-	if localVarOptionals != nil && localVarOptionals.Search.IsSet() {
-		localVarQueryParams.Add("search", parameterToString(localVarOptionals.Search.Value(), ""))
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

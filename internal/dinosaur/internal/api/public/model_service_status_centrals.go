@@ -9,10 +9,8 @@
 
 package public
 
-// CloudProviderList struct for CloudProviderList
-type CloudProviderList struct {
-	Kind           string          `json:"kind"`
-	NextPageCursor string          `json:"next_page_cursor,omitempty"`
-	Size           int32           `json:"size"`
-	Items          []CloudProvider `json:"items"`
+// ServiceStatusCentrals The RHACS resource api status
+type ServiceStatusCentrals struct {
+	// Indicates whether maximum service capacity has been reached
+	MaxCapacityReached bool `json:"max_capacity_reached"`
 }

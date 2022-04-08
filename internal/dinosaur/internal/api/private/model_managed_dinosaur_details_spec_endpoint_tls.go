@@ -9,9 +9,8 @@
 
 package private
 
-// WatchEvent struct for WatchEvent
-type WatchEvent struct {
-	Type   string                  `json:"type"`
-	Error  Error                   `json:"error,omitempty"`
-	Object *map[string]interface{} `json:"object,omitempty"`
+// ManagedDinosaurDetailsSpecEndpointTls struct for ManagedDinosaurDetailsSpecEndpointTls
+type ManagedDinosaurDetailsSpecEndpointTls struct {
+	Cert string `json:"cert,omitempty"`
+	Key  string `json:"key,omitempty"`
 }

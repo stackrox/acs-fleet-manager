@@ -26,12 +26,12 @@ var (
 type AgentClustersApiService service
 
 /*
-GetDinosaurAgent Get the spec of the ManagedDinosaurAgent CR spec
+GetDataPlaneClusterAgentConfig Get the data plane cluster agent configuration
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
 @return DataplaneClusterAgentConfig
 */
-func (a *AgentClustersApiService) GetDinosaurAgent(ctx _context.Context, id string) (DataplaneClusterAgentConfig, *_nethttp.Response, error) {
+func (a *AgentClustersApiService) GetDataPlaneClusterAgentConfig(ctx _context.Context, id string) (DataplaneClusterAgentConfig, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}

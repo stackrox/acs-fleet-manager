@@ -9,8 +9,8 @@
 
 package private
 
-// DinosaurAllOfRoutes struct for DinosaurAllOfRoutes
-type DinosaurAllOfRoutes struct {
+// DinosaurDetailsRoutes struct for DinosaurDetailsRoutes
+type DinosaurDetailsRoutes struct {
 	Domain string `json:"domain,omitempty"`
 	Router string `json:"router,omitempty"`
 }

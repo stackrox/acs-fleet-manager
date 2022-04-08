@@ -9,8 +9,8 @@
 
 package private
 
-// ManagedDinosaurAllOfMetadataAnnotations struct for ManagedDinosaurAllOfMetadataAnnotations
-type ManagedDinosaurAllOfMetadataAnnotations struct {
-	MasId          string `json:"mas/id"`
-	MasPlacementId string `json:"mas/placementId"`
+// ManagedDinosaurDetails struct for ManagedDinosaurDetails
+type ManagedDinosaurDetails struct {
+	Metadata ManagedDinosaurDetailsMetadata `json:"metadata,omitempty"`
+	Spec     ManagedDinosaurDetailsSpec     `json:"spec,omitempty"`
 }

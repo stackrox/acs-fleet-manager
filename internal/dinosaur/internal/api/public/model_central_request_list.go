@@ -9,10 +9,10 @@
 
 package public
 
-// CloudProviderList struct for CloudProviderList
-type CloudProviderList struct {
-	Kind           string          `json:"kind"`
-	NextPageCursor string          `json:"next_page_cursor,omitempty"`
-	Size           int32           `json:"size"`
-	Items          []CloudProvider `json:"items"`
+// CentralRequestList struct for CentralRequestList
+type CentralRequestList struct {
+	Kind           string           `json:"kind"`
+	NextPageCursor string           `json:"next_page_cursor,omitempty"`
+	Size           int32            `json:"size"`
+	Items          []CentralRequest `json:"items"`
 }

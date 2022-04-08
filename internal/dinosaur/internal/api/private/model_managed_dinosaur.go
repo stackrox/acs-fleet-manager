@@ -11,8 +11,8 @@ package private
 
 // ManagedDinosaur struct for ManagedDinosaur
 type ManagedDinosaur struct {
-	Id       string                       `json:"id,omitempty"`
-	Kind     string                       `json:"kind,omitempty"`
-	Metadata ManagedDinosaurAllOfMetadata `json:"metadata,omitempty"`
-	Spec     ManagedDinosaurAllOfSpec     `json:"spec,omitempty"`
+	Id       string                         `json:"id"`
+	Kind     string                         `json:"kind"`
+	Metadata ManagedDinosaurDetailsMetadata `json:"metadata,omitempty"`
+	Spec     ManagedDinosaurDetailsSpec     `json:"spec,omitempty"`
 }

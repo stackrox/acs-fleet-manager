@@ -9,8 +9,8 @@
 
 package private
 
-// ManagedDinosaurAllOfSpecEndpointTls struct for ManagedDinosaurAllOfSpecEndpointTls
-type ManagedDinosaurAllOfSpecEndpointTls struct {
-	Cert string `json:"cert,omitempty"`
-	Key  string `json:"key,omitempty"`
+// ManagedDinosaurDetailsMetadataAnnotations struct for ManagedDinosaurDetailsMetadataAnnotations
+type ManagedDinosaurDetailsMetadataAnnotations struct {
+	MasId          string `json:"mas/id"`
+	MasPlacementId string `json:"mas/placementId"`
 }

@@ -11,8 +11,8 @@ package private
 
 // Error struct for Error
 type Error struct {
-	Id          string `json:"id,omitempty"`
-	Kind        string `json:"kind,omitempty"`
+	Id          string `json:"id"`
+	Kind        string `json:"kind"`
 	Href        string `json:"href,omitempty"`
 	Code        string `json:"code,omitempty"`
 	Reason      string `json:"reason,omitempty"`

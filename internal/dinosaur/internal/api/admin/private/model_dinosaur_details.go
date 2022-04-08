@@ -13,16 +13,13 @@ import (
 	"time"
 )
 
-// Dinosaur struct for Dinosaur
-type Dinosaur struct {
-	Id   string `json:"id"`
-	Kind string `json:"kind"`
-	Href string `json:"href,omitempty"`
+// DinosaurDetails struct for DinosaurDetails
+type DinosaurDetails struct {
 	// Values: [accepted, preparing, provisioning, ready, failed, deprovision, deleting]
 	Status string `json:"status,omitempty"`
 	// Name of Cloud used to deploy. For example AWS
 	CloudProvider string `json:"cloud_provider,omitempty"`
-	MultiAz       bool   `json:"multi_az"`
+	MultiAz       bool   `json:"multi_az,omitempty"`
 	// Values will be regions of specific cloud provider. For example: us-east-1 for AWS
 	Region                         string                  `json:"region,omitempty"`
 	Owner                          string                  `json:"owner,omitempty"`
@@ -35,8 +32,8 @@ type Dinosaur struct {
 	ActualDinosaurOperatorVersion  string                  `json:"actual_dinosaur_operator_version,omitempty"`
 	DesiredDinosaurVersion         string                  `json:"desired_dinosaur_version,omitempty"`
 	DesiredDinosaurOperatorVersion string                  `json:"desired_dinosaur_operator_version,omitempty"`
-	DinosaurUpgrading              bool                    `json:"dinosaur_upgrading"`
-	DinosaurOperatorUpgrading      bool                    `json:"dinosaur_operator_upgrading"`
+	DinosaurUpgrading              bool                    `json:"dinosaur_upgrading,omitempty"`
+	DinosaurOperatorUpgrading      bool                    `json:"dinosaur_operator_upgrading,omitempty"`
 	OrganisationId                 string                  `json:"organisation_id,omitempty"`
 	SubscriptionId                 string                  `json:"subscription_id,omitempty"`
 	OwnerAccountId                 string                  `json:"owner_account_id,omitempty"`

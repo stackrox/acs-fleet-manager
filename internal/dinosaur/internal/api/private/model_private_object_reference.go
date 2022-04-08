@@ -11,6 +11,6 @@ package private
 
 // PrivateObjectReference struct for PrivateObjectReference
 type PrivateObjectReference struct {
-	Id   string `json:"id,omitempty"`
-	Kind string `json:"kind,omitempty"`
+	Id   string `json:"id"`
+	Kind string `json:"kind"`
 }
