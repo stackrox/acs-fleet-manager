@@ -733,34 +733,6 @@ components:
         type: string
       in: path
       required: true
-    duration:
-      name: duration
-      in: query
-      description: The length of time in minutes for which to return the metrics
-      required: true
-      schema:
-        type: integer
-        format: int64
-        default: 5
-        minimum: 1
-        maximum: 4320
-      examples:
-        duration:
-          value: 5
-    interval:
-      name: interval
-      in: query
-      description: The interval in seconds between data points
-      required: true
-      schema:
-        type: integer
-        format: int64
-        default: 30
-        minimum: 1
-        maximum: 10800
-      examples:
-        interval:
-          value: 30
     filters:
       name: filters
       in: query
