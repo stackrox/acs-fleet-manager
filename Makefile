@@ -146,7 +146,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/spectral 2> /dev/null))
 	mkdir -p ${LOCAL_BIN_PATH} ;\
 	mkdir -p ${LOCAL_BIN_PATH}/spectral-installation ;\
 	cd ${LOCAL_BIN_PATH} ;\
-	${NPM} install --prefix ${LOCAL_BIN_PATH}/spectral-installation @stoplight/spectral ;\
+	${NPM} install --prefix ${LOCAL_BIN_PATH}/spectral-installation @stoplight/spectral-cli ;\
 	${NPM} i --prefix ${LOCAL_BIN_PATH}/spectral-installation @rhoas/spectral-ruleset ;\
 	ln -s spectral-installation/node_modules/.bin/spectral spectral ;\
 	}
@@ -211,6 +211,7 @@ help:
 	@echo "make image/build                 build docker image"
 	@echo "make image/push                  push docker image"
 	@echo "make setup/git/hooks             setup git hooks"
+	@echo "make secrets/touch               touch all required secret files"
 	@echo "make keycloak/setup              setup mas sso clientId, clientSecret & crt"
 	@echo "make dinosaurcert/setup          setup the dinosaur TLS certificate used for Managed Dinosaur Service"
 	@echo "make observatorium/setup         setup observatorium secrets used by CI"
@@ -449,6 +450,36 @@ image/build/test: binary
 test/run: image/build/test
 	docker run -u $(shell id -u) --net=host -p 9876:9876 -i "$(test_image)"
 .PHONY: test/run
+
+# Touch all necessary secret files for fleet manager to start up
+secrets/touch:
+	touch secrets/aws.accesskey \
+          secrets/aws.accountid \
+          secrets/aws.route53accesskey \
+          secrets/aws.route53secretaccesskey \
+          secrets/aws.secretaccesskey \
+          secrets/db.host \
+          secrets/db.name \
+          secrets/db.password \
+          secrets/db.port \
+          secrets/db.user \
+          secrets/dinosaur-tls.crt \
+          secrets/dinosaur-tls.key \
+          secrets/image-pull.dockerconfigjson \
+          secrets/keycloak-service.clientId \
+          secrets/keycloak-service.clientSecret \
+          secrets/observability-config-access.token \
+          secrets/ocm-service.clientId \
+          secrets/ocm-service.clientSecret \
+          secrets/ocm-service.token \
+          secrets/osd-idp-keycloak-service.clientId \
+          secrets/osd-idp-keycloak-service.clientSecret \
+          secrets/rhsso-logs.clientId \
+          secrets/rhsso-logs.clientSecret \
+          secrets/rhsso-metrics.clientId \
+          secrets/rhsso-metrics.clientSecret \
+          secrets/sentry.key
+.PHONY: secrets/touch
 
 # Setup for AWS credentials
 aws/setup:

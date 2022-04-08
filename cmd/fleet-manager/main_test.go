@@ -3,11 +3,11 @@ package main
 import (
 	"testing"
 
+	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
-	. "github.com/onsi/gomega"
 )
 
 func TestInjections(t *testing.T) {
