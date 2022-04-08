@@ -399,9 +399,10 @@ paths:
                 500Example:
                   $ref: '#/components/examples/500Example'
       parameters:
+        - $ref: '#/components/parameters/name'
+        - $ref: '#/components/parameters/owner-user'
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/size'
-        - $ref: '#/components/parameters/search'
   /api/rhacs/v1/cloud_providers:
     get:
       summary: Returns the list of supported cloud providers
@@ -761,42 +762,20 @@ components:
       examples:
         size:
           value: "100"
-    search:
-      description: |
-        Search criteria.
-
-        The syntax of this parameter is similar to the syntax of the `where` clause of an
-        SQL statement. Allowed fields in the search are `cloud_provider`, `name`, `owner`, `region`, and `status`. Allowed comparators are `<>`, `=`, or `LIKE`.
-        Allowed joins are `AND` and `OR`. However, you can use a maximum of 10 joins in a search query.
-
-        Examples:
-
-        To return a Central instance with the name `my-central` and the region `aws`, use the following syntax:
-
-        ```
-        name = my-central and cloud_provider = aws
-        ```[p-]
-
-        To return a Central instance with a name that starts with `my`, use the following syntax:
-
-        ```
-        name like my%25
-        ```
-
-        If the parameter isn't provided, or if the value is empty, then all the Central instances
-        that the user has permission to see are returned.
-
-        Note. If the query is invalid, an error is returned.
-      explode: true
-      name: search
+    name:
+      name: name
       in: query
+      description: Name of the request
       required: false
-      examples:
-        search:
-          value: "name = my-central and cloud_provider = aws"
       schema:
         type: string
-      style: form
+    owner-user:
+      name: owner-user
+      in: query
+      description: User that owns the request
+      required: false
+      schema:
+        type: string
     instance_type:
       name: instance_type
       description: The Central instance type to filter the results by
@@ -910,14 +889,6 @@ components:
         code: "CENTRALS-MGMT-103"
         reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
-    400InvalidQueryExample:
-      value:
-        id: "23"
-        kind: "Error"
-        href: "/api/rhacs/v1/errors/23"
-        code: "CENTRALS-MGMT-23"
-        reason: "Failed to parse search query: Unable to list Central requests for api_central_service: CENTRALS-MGMT-23: Failed to parse search query: Unsupported column name for search: 'id'. Supported column names are: region, name, cloud_provider, name, status. Query invalid: id = 123"
-        operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
     400MissingParameterExample:
       value:
         id: "21"
