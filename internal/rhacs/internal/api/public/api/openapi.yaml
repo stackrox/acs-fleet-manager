@@ -1,0 +1,1152 @@
+openapi: 3.0.0
+info:
+  description: Red Hat Advanced Cluster Security (RHACS) Service Fleet Manager is
+    a Rest API to manage instances of ACS components.
+  title: Red Hat Advanced Cluster Security Service Fleet Manager
+  version: 1.2.0
+servers:
+- description: Main (production) server
+  url: https://api.openshift.com
+- description: Staging server
+  url: https://api.stage.openshift.com
+- description: localhost
+  url: http://localhost:8000
+- description: current domain
+  url: /
+paths:
+  /api/rhacs/v1:
+    get:
+      operationId: getVersionMetadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionMetadata'
+          description: Version metadata
+      summary: Returns the version metadata
+  /api/rhacs/v1/errors/{id}:
+    get:
+      operationId: getErrorById
+      parameters:
+      - description: The ID of record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Get error by Id
+      summary: Returns the error by id
+      tags:
+      - errors
+  /api/rhacs/v1/errors:
+    get:
+      operationId: getErrors
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorList'
+          description: List of possible errors
+      summary: Returns the list of possible API errors
+      tags:
+      - errors
+  /api/rhacs/v1/status:
+    get:
+      operationId: getServiceStatus
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceStatus'
+          description: Ok
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns the status of resources, such as whether maximum service capacity
+        has been reached
+  /api/rhacs/v1/centrals/{id}:
+    delete:
+      description: |
+        The only users authorized for this operation are:
+        1) The administrator of the owner organisation of the specified Central.
+        2) The owner user, and only if it is also part of the owner organisation of the specified Central.
+      operationId: deleteCentralById
+      parameters:
+      - description: The ID of record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Perform the action in an asynchronous manner
+        explode: true
+        in: query
+        name: async
+        required: true
+        schema:
+          type: boolean
+        style: form
+      responses:
+        "202":
+          description: Deleted
+        "400":
+          content:
+            application/json:
+              examples:
+                "400DeletionExample":
+                  $ref: '#/components/examples/400DeletionExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Validation errors occurred
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  $ref: '#/components/examples/403Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User not authorized to access the service
+        "404":
+          content:
+            application/json:
+              examples:
+                "404DeleteExample":
+                  $ref: '#/components/examples/404DeleteExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central request with specified ID exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500DeleteExample":
+                  $ref: '#/components/examples/500DeleteExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Deletes a Central request by ID
+    get:
+      description: This operation is only authorized to users in the same organisation
+        as the owner organisation of the specified Central.
+      operationId: getCentralById
+      parameters:
+      - description: The ID of record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                CentralRequestGetResponseExample:
+                  $ref: '#/components/examples/CentralRequestExample'
+                CentralRequestGetResponseWithFailedCreationStatusExample:
+                  $ref: '#/components/examples/CentralRequestFailedCreationStatusExample'
+              schema:
+                $ref: '#/components/schemas/CentralRequest'
+          description: Central request found by ID
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  $ref: '#/components/examples/403Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User not authorized to access the service
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central request with specified ID exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns a Central request by ID
+    patch:
+      description: |
+        The only users authorized for this operation are:
+        1) The administrator of the owner organisation of the specified Central.
+        2) The owner user, and only if it is also part of the owner organisation of the specified Central.
+      operationId: updateCentralById
+      parameters:
+      - description: The ID of record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CentralUpdateRequest'
+        description: Update owner of Central
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                CentralRequestPostResponseExample:
+                  $ref: '#/components/examples/CentralRequestExample'
+              schema:
+                $ref: '#/components/schemas/CentralRequest'
+          description: Central updated by ID
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Update a Central instance by id
+  /api/rhacs/v1/centrals:
+    get:
+      description: Only returns those centrals that are owned by the organisation
+        of the user authenticated for the request.
+      operationId: getCentrals
+      parameters:
+      - description: Name of the request
+        explode: true
+        in: query
+        name: name
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: User that owns the request
+        explode: true
+        in: query
+        name: owner_user
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Page cursor, provided with each page in case more pages are remaining.
+          If missing then the first page is returned.
+        examples:
+          page_cursor:
+            value: ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg==
+        explode: true
+        in: query
+        name: page_cursor
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        explode: true
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                CentralRequestListExample:
+                  $ref: '#/components/examples/CentralRequestListExample'
+              schema:
+                $ref: '#/components/schemas/CentralRequestList'
+          description: A list of Central requests
+        "400":
+          content:
+            application/json:
+              examples:
+                InvalidQueryExample:
+                  $ref: '#/components/examples/400MalformedPageCursorExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  $ref: '#/components/examples/403Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User not authorized to access the service
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns a list of Central requests
+    post:
+      description: Each central has a single owner organisation and a single owner
+        user. Creates a new Central that is owned by the user and organisation authenticated
+        for the request.
+      operationId: createCentral
+      parameters:
+      - description: Perform the action in an asynchronous manner
+        explode: true
+        in: query
+        name: async
+        required: true
+        schema:
+          type: boolean
+        style: form
+      requestBody:
+        content:
+          application/json:
+            examples:
+              USRegion:
+                $ref: '#/components/examples/USRegionExample'
+              EURegion:
+                $ref: '#/components/examples/EURegionExample'
+            schema:
+              $ref: '#/components/schemas/CentralRequestPayload'
+        description: Central data
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              examples:
+                CentralRequestPostResponseExample:
+                  $ref: '#/components/examples/CentralRequestExample'
+              schema:
+                $ref: '#/components/schemas/CentralRequest'
+          description: Accepted
+        "400":
+          content:
+            application/json:
+              examples:
+                "400CreationExample":
+                  $ref: '#/components/examples/400CreationExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Validation errors occurred
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  $ref: '#/components/examples/403Example'
+                "403MaxAllowedInstanceReachedExample":
+                  $ref: '#/components/examples/403MaxAllowedInstanceReachedExample'
+                "403TermsNotAcceptedExample":
+                  $ref: '#/components/examples/403TermsNotAcceptedExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User forbidden either because the user is not authorized to
+            access the service or because the maximum number of instances that can
+            be created by this user has been reached.
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The requested resource doesn't exist
+        "409":
+          content:
+            application/json:
+              examples:
+                "409NameConflictExample":
+                  $ref: '#/components/examples/409NameConflictExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: A conflict has been detected in the creation of this resource
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: An unexpected error occurred while creating the Central request
+      security:
+      - Bearer: []
+      summary: Creates a Central request
+  /api/rhacs/v1/cloud_providers:
+    get:
+      operationId: getCloudProviders
+      parameters:
+      - description: Page cursor, provided with each page in case more pages are remaining.
+          If missing then the first page is returned.
+        examples:
+          page_cursor:
+            value: ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg==
+        explode: true
+        in: query
+        name: page_cursor
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        explode: true
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudProviderList'
+          description: Returned list of supported cloud providers
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns the list of supported cloud providers
+  /api/rhacs/v1/cloud_providers/{id}/regions:
+    get:
+      operationId: getCloudProviderRegions
+      parameters:
+      - description: The ID of record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page cursor, provided with each page in case more pages are remaining.
+          If missing then the first page is returned.
+        examples:
+          page_cursor:
+            value: ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg==
+        explode: true
+        in: query
+        name: page_cursor
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        explode: true
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: The Central instance type to filter the results by
+        examples:
+          eval_instance_type:
+            value: eval
+          standard_instance_type:
+            value: standard
+        explode: true
+        in: query
+        name: instance_type
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudRegionList'
+          description: Returned list of supported cloud provider regions
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns the list of supported regions of the supported cloud provider
+components:
+  examples:
+    USRegionExample:
+      value:
+        region: us-east-1
+        cloud_provider: aws
+        name: serviceapitest
+    EURegionExample:
+      value:
+        region: eu-west-1
+        cloud_provider: aws
+        name: serviceapitest
+    CentralRequestExample:
+      value:
+        id: 1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
+        kind: central
+        href: /api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
+        status: ready
+        cloud_provider: aws
+        multi_az: true
+        region: us-east-1
+        owner_user: alice
+        owner_organisation: my_org
+        name: serviceapi
+        host: serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.rhacs.com
+        created_at: 2020-10-05T12:51:24.053142Z
+        updated_at: 2020-10-05T12:56:36.362208Z
+        version: 2.6.0
+        instance_type: standard
+    CentralRequestFailedCreationStatusExample:
+      value:
+        id: 1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
+        kind: central
+        href: /api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
+        status: failed
+        cloud_provider: aws
+        multi_az: true
+        region: us-east-1
+        owner_user: bob
+        owner_organisation: my_org
+        name: serviceapi
+        host: serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.rhacs.com
+        created_at: 2020-10-05T12:51:24.053142Z
+        updated_at: 2020-10-05T12:56:36.362208Z
+        failed_reason: a reason the Central request creation failed
+        instance_type: standard
+    CentralRequestListExample:
+      value:
+        kind: CentralRequestList
+        size: "1"
+        next_page_cursor: ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg==
+        items:
+        - id: 1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
+          kind: central
+          href: /api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
+          status: ready
+          cloud_provider: aws
+          multi_az: true
+          region: us-east-1
+          owner_user: alice
+          owner_organisation: my_org
+          name: serviceapi
+          host: serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.rhacs.com
+          created_at: 2020-10-05T12:51:24.053142Z
+          updated_at: 2020-10-05T12:56:36.362208Z
+          version: 2.6.0
+          instance_type: standard
+    CloudProviderExample:
+      value:
+        kind: CloudProvider
+        id: aws
+        name: aws
+        display_name: Amazon Web Services
+        enabled: true
+    CloudRegionExample:
+      value:
+        kind: CloudRegion
+        id: us-east-1
+        display_name: US East, N. Virginia
+        enabled: true
+        supported_instance_types:
+        - standard
+        - eval
+    MetricsRangeQueryExample:
+      value:
+        metric:
+          __name__: central_server_brokertopicmetrics_bytes_in_total
+          central_operator_io_cluster: central-service
+          topic: __consumer_offsets
+        values:
+        - timestamp: 1611670230000
+          value: 84154
+        - timestamp: 1611670260000
+          value: 85888
+        - timestamp: 1611670290000
+          value: 87622
+    MetricsInstantQueryExample:
+      value:
+        metric:
+          __name__: central_server_brokertopicmetrics_bytes_in_total
+          central_operator_io_cluster: central-service
+          topic: __consumer_offsets
+        timestamp: 1611670230000
+        value: 84154
+    "400DeletionExample":
+      value:
+        id: "103"
+        kind: Error
+        href: /api/rhacs/v1/errors/103
+        code: CENTRALS-MGMT-103
+        reason: Synchronous action is not supported, use async=true parameter
+        operation_id: 1iWIimqGcrDuL61aUxIZqBTqNRa
+    "400CreationExample":
+      value:
+        id: "103"
+        kind: Error
+        href: /api/rhacs/v1/errors/103
+        code: CENTRALS-MGMT-103
+        reason: Synchronous action is not supported, use async=true parameter
+        operation_id: 1iWIimqGcrDuL61aUxIZqBTqNRa
+    "400MalformedPageCursorExample":
+      value:
+        id: "23"
+        kind: Error
+        href: /api/rhacs/v1/errors/23
+        code: CENTRALS-MGMT-23
+        reason: Malformed page cursor
+        operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
+    "400MissingParameterExample":
+      value:
+        id: "21"
+        kind: Error
+        href: /api/rhacs/v1/errors/21
+        code: CENTRALS-MGMT-21
+        reason: 'missing path parameter: central id'
+        operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
+    "404Example":
+      value:
+        id: "7"
+        kind: Error
+        href: /api/rhacs/v1/errors/7
+        code: CENTRALS-MGMT-7
+        reason: The requested resource doesn't exist
+    "404DeleteExample":
+      value:
+        id: "7"
+        kind: Error
+        href: /api/rhacs/v1/errors/7
+        code: CENTRALS-MGMT-7
+        reason: CentralResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found
+        operation_id: 1iYO7g2g6HTdUKUa2ksH82kQD3y
+    "401Example":
+      value:
+        id: "11"
+        kind: Error
+        href: /api/rhacs/v1/errors/11
+        code: CENTRALS-MGMT-11
+        reason: 'Unable to verify JWT token: Required authorization token not found'
+        operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+    "403Example":
+      value:
+        id: "4"
+        kind: Error
+        href: /api/rhacs/v1/errors/4
+        code: CENTRALS-MGMT-4
+        reason: User 'bob' is not authorized to access the service.
+        operation_id: 1lY3UiEhznXBpWPfI2lNejpd4YC
+    "403MaxAllowedInstanceReachedExample":
+      value:
+        id: "5"
+        kind: Error
+        href: /api/rhacs/v1/errors/5
+        code: CENTRALS-MGMT-5
+        reason: User 'bob' has reached a maximum number of 6 allowed instances.
+        operation_id: 1lY3UiEkxnXBpVPeI2oNejd3XB
+    "403TermsNotAcceptedExample":
+      value:
+        id: "12"
+        kind: Error
+        href: /api/rhacs/v1/errors/12
+        code: CENTRALS-MGMT-12
+        reason: Required terms have not been accepted
+        operation_id: kXCzWPeI2oXBpVPeI2LvF9jMQY
+    "409NameConflictExample":
+      value:
+        id: "36"
+        kind: Error
+        href: /api/rhacs/v1/errors/36
+        code: CENTRALS-MGMT-36
+        reason: Central component name is already used
+        operation_id: 6kY0UiEkzkXCzWPeI2oYehd3ED
+    "500Example":
+      value:
+        id: "9"
+        kind: Error
+        href: /api/rhacs/v1/errors/9
+        code: CENTRALS-MGMT-9
+        reason: Unspecified error
+        operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
+    "500DeleteExample":
+      value:
+        id: "9"
+        kind: Error
+        href: /api/rhacs/v1/errors/9
+        code: CENTRALS-MGMT-9
+        reason: 'error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e
+          for cluster id: 1g5d88q0lrcdv4g7alb7slfgnj3dhbsj%!(EXTRA *errors.Error=identifier
+          is ''404'', code is ''CLUSTERS-MGMT-404'' and operation identifier is ''1g5or50viu07oealuehrkc26dgftj1ac'':
+          Cluster ''1g5d88q0lrcdv4g7alb7slfgnj3dhbsj'' not found)'
+        operation_id: 1iYTsWry6nsqb2sNmFj5bXpD7Ca
+  parameters:
+    id:
+      description: The ID of record
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
+    filters:
+      description: List of metrics to fetch. Fetch all metrics when empty. List entries
+        are Central internal metric names.
+      explode: true
+      in: query
+      name: filters
+      required: false
+      schema:
+        default: []
+        items:
+          type: string
+        type: array
+      style: form
+    page_cursor:
+      description: Page cursor, provided with each page in case more pages are remaining.
+        If missing then the first page is returned.
+      examples:
+        page_cursor:
+          value: ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg==
+      explode: true
+      in: query
+      name: page_cursor
+      required: false
+      schema:
+        type: string
+      style: form
+    size:
+      description: Number of items in each page
+      examples:
+        size:
+          value: "100"
+      explode: true
+      in: query
+      name: size
+      required: false
+      schema:
+        type: string
+      style: form
+    name:
+      description: Name of the request
+      explode: true
+      in: query
+      name: name
+      required: false
+      schema:
+        type: string
+      style: form
+    owner_user:
+      description: User that owns the request
+      explode: true
+      in: query
+      name: owner_user
+      required: false
+      schema:
+        type: string
+      style: form
+    instance_type:
+      description: The Central instance type to filter the results by
+      examples:
+        eval_instance_type:
+          value: eval
+        standard_instance_type:
+          value: standard
+      explode: true
+      in: query
+      name: instance_type
+      required: false
+      schema:
+        type: string
+      style: form
+  schemas:
+    ObjectReference:
+      discriminator:
+        propertyName: kind
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+      required:
+      - id
+      - kind
+      type: object
+    List:
+      discriminator:
+        propertyName: kind
+      properties:
+        kind:
+          type: string
+        next_page_cursor:
+          type: string
+        size:
+          type: integer
+      required:
+      - items
+      - kind
+      - size
+      type: object
+    Error:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/Error_allOf'
+    ErrorList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ErrorList_allOf'
+    CentralRequest:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/CentralRequest_allOf'
+    CentralRequestList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/CentralRequestList_allOf'
+    VersionMetadata:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/VersionMetadata_allOf'
+    ServiceStatus:
+      description: Schema for the service status response body
+      example:
+        centrals:
+          max_capacity_reached: true
+      properties:
+        centrals:
+          $ref: '#/components/schemas/ServiceStatus_centrals'
+      type: object
+    CentralRequestPayload:
+      description: Schema for the request body sent to /centrals POST
+      example:
+        multi_az: true
+        name: name
+        cloud_provider: cloud_provider
+        region: region
+      properties:
+        cloud_provider:
+          description: The cloud provider where the RHACS Central component will be
+            created in
+          type: string
+        multi_az:
+          description: Set this to true to configure the RHACS Central component to
+            be multiAZ
+          type: boolean
+        name:
+          description: The name of the RHACS Central component. It must consist of
+            lower-case alphanumeric characters or '-', start with an alphabetic character,
+            and end with an alphanumeric character, and can not be longer than 32
+            characters.
+          type: string
+        region:
+          description: The region where the RHACS Central component will be created
+            in
+          type: string
+      required:
+      - name
+      type: object
+    CloudProviderList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/CloudProviderList_allOf'
+    CloudRegionList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/CloudRegionList_allOf'
+    CloudProvider:
+      description: Cloud provider.
+      properties:
+        kind:
+          description: Indicates the type of this object. Will be 'CloudProvider'
+            link.
+          type: string
+        id:
+          description: Unique identifier of the object.
+          type: string
+        display_name:
+          description: Name of the cloud provider for display purposes.
+          type: string
+        name:
+          description: Human friendly identifier of the cloud provider, for example
+            `aws`.
+          type: string
+        enabled:
+          description: Whether the cloud provider is enabled for deploying an OSD
+            cluster.
+          type: boolean
+      required:
+      - enabled
+    CloudRegion:
+      description: Description of a region of a cloud provider.
+      properties:
+        kind:
+          description: Indicates the type of this object. Will be 'CloudRegion'.
+          type: string
+        id:
+          description: Unique identifier of the object.
+          type: string
+        display_name:
+          description: Name of the region for display purposes, for example `N. Virginia`.
+          type: string
+        enabled:
+          default: false
+          description: Whether the region is enabled for deploying an OSD cluster.
+          type: boolean
+        supported_instance_types:
+          description: The RHACS Central component instance types supported by this
+            region.
+          items:
+            type: string
+          type: array
+      required:
+      - enabled
+      - supported_instance_types
+    CentralUpdateRequest:
+      example:
+        owner_user: owner_user
+      properties:
+        owner_user:
+          nullable: true
+          type: string
+      type: object
+    Error_allOf:
+      properties:
+        code:
+          type: string
+        reason:
+          type: string
+        operation_id:
+          type: string
+    ErrorList_allOf:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Error'
+          type: array
+    CentralRequest_allOf:
+      example: '{"$ref":"#/components/examples/CentralRequestExample"}'
+      properties:
+        status:
+          description: 'Values: [accepted, preparing, provisioning, ready, failed,
+            deprovision, deleting] '
+          type: string
+        cloud_provider:
+          description: Name of Cloud used to deploy. For example AWS
+          type: string
+        multi_az:
+          type: boolean
+        region:
+          description: 'Values will be regions of specific cloud provider. For example:
+            us-east-1 for AWS'
+          type: string
+        owner_user:
+          type: string
+        owner_organisation:
+          type: string
+        name:
+          type: string
+        host:
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        failed_reason:
+          type: string
+        version:
+          type: string
+        instance_type:
+          type: string
+      required:
+      - multi_az
+      - owner_organisation
+    CentralRequestList_allOf:
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/CentralRequest'
+          type: array
+    VersionMetadata_allOf:
+      example: '{"kind":"APIVersion","id":"v1","href":"/api/rhacs/v1","collections":[{"id":"centrals","href":"/api/rhacs/v1/centrals","kind":"CentralList"}]}'
+      properties:
+        collections:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/ObjectReference'
+          type: array
+    ServiceStatus_centrals:
+      description: The RHACS resource api status
+      properties:
+        max_capacity_reached:
+          description: Indicates whether maximum service capacity has been reached
+          type: boolean
+      required:
+      - max_capacity_reached
+    CloudProviderList_allOf:
+      example: '{"kind":"CloudProviderList","size":"1","item":{"$ref":"#/components/examples/CloudProviderExample"}}'
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/CloudProvider'
+          type: array
+    CloudRegionList_allOf:
+      example: '{"kind":"CloudRegionList","size":"1","item":{"$ref":"#/components/examples/CloudRegionExample"}}'
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/CloudRegion'
+          type: array
+  securitySchemes:
+    Bearer:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
