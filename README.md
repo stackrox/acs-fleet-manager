@@ -2,6 +2,8 @@
 
 This repository started as a fork of the Fleet Manager Golang Template. Its original README is preserved in its own section below.
 
+TODO: Clean up and make this ACS Fleet Manager specific.
+
 ## Quickstart
 
 ### Rough map
