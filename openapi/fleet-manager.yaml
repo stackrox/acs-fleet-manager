@@ -81,6 +81,7 @@ paths:
   /api/rhacs/v1/centrals/{id}:
     get:
       operationId: getCentralById
+      description: This operation is only authorized to users in the same organisation as the owner organisation of this Central.
       responses:
         "200":
           content:
@@ -534,6 +535,7 @@ components:
         - type: object
           required:
             - multi_az
+            - owner_organisation
           properties:
             status:
               description: "Values: [accepted, preparing, provisioning, ready, failed, deprovision, deleting] "
@@ -546,7 +548,9 @@ components:
             region:
               description: "Values will be regions of specific cloud provider. For example: us-east-1 for AWS"
               type: string
-            owner:
+            owner_user:
+              type: string
+            owner_organisation:
               type: string
             name:
               type: string
@@ -716,8 +720,8 @@ components:
     CentralUpdateRequest:
       type: object
       properties:
-        # for now owner is the only supported field for update
-        owner:
+        # for now owner user is the only supported field for update
+        owner_user:
           type: string
           nullable: true 
 
@@ -905,7 +909,8 @@ components:
         cloud_provider: "aws"
         multi_az: true
         region: "us-east-1"
-        owner: "api_rhacs_service"
+        owner_user: "alice"
+        owner_organisation: "my_org"
         name: "serviceapi"
         host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.rhacs.com"
         created_at: "2020-10-05T12:51:24.053142Z"
@@ -921,7 +926,8 @@ components:
         cloud_provider: "aws"
         multi_az: true
         region: "us-east-1"
-        owner: "api_rhacs_service"
+        owner_user: "bob"
+        owner_organisation: "my_org"
         name: "serviceapi"
         host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.rhacs.com"
         created_at: "2020-10-05T12:51:24.053142Z"
