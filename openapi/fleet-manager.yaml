@@ -534,7 +534,7 @@ components:
         - type: object
           required:
             - multi_az
-            - owner_organisation
+            - owner-organisation
           properties:
             status:
               description: "Values: [accepted, preparing, provisioning, ready, failed, deprovision, deleting] "
@@ -547,9 +547,9 @@ components:
             region:
               description: "Values will be regions of specific cloud provider. For example: us-east-1 for AWS"
               type: string
-            owner_user:
+            owner-user:
               type: string
-            owner_organisation:
+            owner-organisation:
               type: string
             name:
               type: string
@@ -720,7 +720,7 @@ components:
       type: object
       properties:
         # for now owner user is the only supported field for update
-        owner_user:
+        owner-user:
           type: string
           nullable: true 
 
@@ -834,8 +834,8 @@ components:
         cloud_provider: "aws"
         multi_az: true
         region: "us-east-1"
-        owner_user: "alice"
-        owner_organisation: "my_org"
+        owner-user: "alice"
+        owner-organisation: "my_org"
         name: "serviceapi"
         host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.rhacs.com"
         created_at: "2020-10-05T12:51:24.053142Z"
@@ -851,8 +851,8 @@ components:
         cloud_provider: "aws"
         multi_az: true
         region: "us-east-1"
-        owner_user: "bob"
-        owner_organisation: "my_org"
+        owner-user: "bob"
+        owner-organisation: "my_org"
         name: "serviceapi"
         host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.rhacs.com"
         created_at: "2020-10-05T12:51:24.053142Z"
