@@ -211,55 +211,59 @@ components:
         dinosaurOperator:
           type: string
 
+    ManagedDinosaurDetails:
+      type: object
+      properties:
+        metadata:
+          type: object
+          properties:
+            name:
+              type: string
+            namespace:
+              type: string
+            annotations:
+              type: object
+              required:
+                - mas/placementId
+                - mas/id
+              properties:
+                mas/id:
+                  type: string
+                mas/placementId:
+                  type: string
+        spec:
+          type: object
+          properties:   
+            owners:
+              type: array
+              items:
+                type: string
+            endpoint:
+              type: object
+              properties:
+                host:
+                  type: string
+                tls:
+                  type: object
+                  nullable: true
+                  properties:
+                    cert:
+                      type: string
+                    key:
+                      type: string
+            versions:
+              $ref: "#/components/schemas/ManagedDinosaurVersions"
+            deleted:
+              type: boolean
+          required:
+            - deleted
+
+
+
     ManagedDinosaur:
       allOf:
         - $ref: "#/components/schemas/PrivateObjectReference"
-        - type: object
-          properties:
-            metadata:
-              type: object
-              properties:
-                name:
-                  type: string
-                namespace:
-                  type: string
-                annotations:
-                  type: object
-                  required:
-                    - mas/placementId
-                    - mas/id
-                  properties:
-                    mas/id:
-                      type: string
-                    mas/placementId:
-                      type: string
-
-            spec:
-              type: object
-              properties:   
-                owners:
-                  type: array
-                  items:
-                    type: string
-                endpoint:
-                  type: object
-                  properties:
-                    host:
-                      type: string
-                    tls:
-                      type: object
-                      nullable: true
-                      properties:
-                        cert:
-                          type: string
-                        key:
-                          type: string
-                versions:
-                  $ref: "#/components/schemas/ManagedDinosaurVersions"
-                deleted:
-                  type: boolean
-              required:
-                - deleted
+        - $ref: "#/components/schemas/ManagedDinosaurDetails"
 
     ManagedDinosaurList:
       description: >-
