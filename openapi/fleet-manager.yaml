@@ -81,7 +81,7 @@ paths:
   /api/rhacs/v1/centrals/{id}:
     get:
       operationId: getCentralById
-      description: This operation is only authorized to users in the same organisation as the owner organisation of this Central.
+      description: This operation is only authorized to users in the same organisation as the owner organisation of the specified Central.
       responses:
         "200":
           content:
@@ -135,7 +135,10 @@ paths:
       summary: Returns a Central request by ID
     delete:
       operationId: deleteCentralById
-      description: The only users authorized for this operation are 1) the administrator of the owner organisation of this Central; and 2) the owner user only if it is also part of the owner organisation.
+      description: |
+        The only users authorized for this operation are:
+        1) The administrator of the owner organisation of the specified Central.
+        2) The owner user, and only if it is also part of the owner organisation of the specified Central.
       parameters:
         - in: query
           name: async
@@ -145,12 +148,6 @@ paths:
           required: true
       responses:
         "202":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-              #No Content
           description: Deleted
         "400":
           content:
@@ -202,7 +199,10 @@ paths:
         - Bearer: [ ]
     patch:
       summary: Update a Central instance by id
-      description: The only users authorized for this operation are 1) the administrator of the owner organisation of this Central; and 2) the owner user only if it is also part of the owner organisation.
+      description: |
+        The only users authorized for this operation are:
+        1) The administrator of the owner organisation of the specified Central.
+        2) The owner user, and only if it is also part of the owner organisation of the specified Central.
       security:
         - Bearer: [ ]
       operationId: updateCentralById
@@ -362,6 +362,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CentralRequestList'
+              examples:
+                CentralRequestListExample:
+                  $ref: '#/components/examples/CentralRequestListExample'
         "400":
           description: Bad request
           content:
@@ -370,7 +373,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               examples:
                 InvalidQueryExample:
-                  $ref: '#/components/examples/400InvalidQueryExample'
+                  $ref: '#/components/examples/400MalformedPageCursorExample'
         "401":
           description: Auth token is invalid
           content:
@@ -570,12 +573,6 @@ components:
       allOf:
         - $ref: "#/components/schemas/List"
         - type: object
-          example:
-            kind: "CentralRequestList"
-            next_page_cursor: "ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg=="
-            size: "1"
-            item:
-              $ref: '#/components/examples/CentralRequestExample'
           properties:
             items:
               type: array
@@ -829,6 +826,27 @@ components:
         updated_at: "2020-10-05T12:56:36.362208Z"
         failed_reason: "a reason the Central request creation failed"
         instance_type: standard
+    CentralRequestListExample:
+      value:
+        kind: "CentralRequestList"
+        size: "1"
+        next_page_cursor: "ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg=="
+        items:
+          - id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
+            kind: "central"
+            href: "/api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
+            status: "ready"
+            cloud_provider: "aws"
+            multi_az: true
+            region: "us-east-1"
+            owner_user: "alice"
+            owner_organisation: "my_org"
+            name: "serviceapi"
+            host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.rhacs.com"
+            created_at: "2020-10-05T12:51:24.053142Z"
+            updated_at: "2020-10-05T12:56:36.362208Z"
+            version: "2.6.0"
+            instance_type: standard
     CloudProviderExample:
       value:
         kind: "CloudProvider"
@@ -880,6 +898,14 @@ components:
         code: "CENTRALS-MGMT-103"
         reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
+    400MalformedPageCursorExample:
+      value:
+        id: "23"
+        kind: "Error"
+        href: "/api/rhacs/v1/errors/23"
+        code: "CENTRALS-MGMT-23"
+        reason: "Malformed page cursor"
+        operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
     400MissingParameterExample:
       value:
         id: "21"
@@ -917,7 +943,7 @@ components:
         kind: "Error"
         href: "/api/rhacs/v1/errors/4"
         code: "CENTRALS-MGMT-4"
-        reason: "User 'foo-bar' is not authorized to access the service."
+        reason: "User 'bob' is not authorized to access the service."
         operation_id: "1lY3UiEhznXBpWPfI2lNejpd4YC"
     403MaxAllowedInstanceReachedExample:
       value:
@@ -925,7 +951,7 @@ components:
         kind: "Error"
         href: "/api/rhacs/v1/errors/5"
         code: "CENTRALS-MGMT-5"
-        reason: "User 'foo-bar' has reached a maximum number of 6 allowed instances."
+        reason: "User 'bob' has reached a maximum number of 6 allowed instances."
         operation_id: "1lY3UiEkxnXBpVPeI2oNejd3XB"
     403TermsNotAcceptedExample:
       value:
