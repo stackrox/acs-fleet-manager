@@ -1,3 +1,79 @@
+# ACS Fleet Manager
+
+This repository started as a fork of the Fleet Manager Golang Template. Its original README is preserved in its own section below.
+
+TODO: Clean up and make this ACS Fleet Manager specific.
+
+## Quickstart
+
+### Rough map
+
+Here are the key directories to know about:
+
+- docs/ Documentation
+- internal/ ACS Fleet Management specific logic
+- openapi/ Public, private (admin), and fleet synchronizer APIs
+- pkg/ Non-ACS specific Fleet Management logic.
+  - Examples include authentication, error handling, database connections, and more
+- templates/
+  - These are actually OpenShift templates for deploying jobs to OpenShift clusters
+
+### Commands
+
+```bash
+# Install the prereqs:
+# Golang 1.16+
+# Docker
+# ocm cli: https://github.com/openshift-online/ocm-cli  (brew/dnf)
+# Node.js v12.20+  (brew/dnf)
+
+make binary
+
+# Generate the necessary secret files (empty placeholders)
+make secrets/touch
+
+# make db/teardown # If necessary, tear down the existing db:
+make db/setup && make db/migrate
+make db/login
+# Postgresql commands:
+  \dt                        # List tables in postgresql database
+  select * from migrations;  # Run a query to view the migrations
+  quit
+  
+# By default web (no TLS) at localhost:8000, metrics at localhost:8080, healthcheck (no TLS) at localhost:8083
+./fleet-manager serve
+
+# Debugging:
+# I0308 13:36:58.977437   29044 leader_election_mgr.go:115] failed to acquire leader lease: failed to retrieve leader leases: failed to connect to `host=localhost user=fleet_manager database=serviceapitests`: dial error (dial tcp 127.0.0.1:5432: connect: connection refused); failed to connect to `host=localhost user=fleet_manager database=serviceapitests`: dial error (dial tcp 127.0.0.1:5432: connect: connection refused)
+# => Check that the fleet-manager-db docker image is running
+# docker ps --all
+# docker restart fleet-manager-db
+
+# Run some commands against the API.
+# See ./docs/populating-configuration.md#interacting-with-the-fleet-manager-api
+# TL;DR: Sign in to https://cloud.redhat.com, get token at https://console.redhat.com/openshift/token, login:
+ocm login --token <ocm-offline-token>
+# Generate a new OCM token (will expire, unlike the ocm-offline-token):
+OCM_TOKEN=$(ocm token)
+# Use the token in an API request, for example:
+curl -H "Authorization: Bearer ${OCM_TOKEN}" http://127.0.0.1:/8000/api/dinosaurs_mgmt
+```
+
+```bash
+# Running on a local CRC cluster:
+crc setup  # Takes some time to uncompress (12 GiB?!)
+# Increase CRC resources (4 CPU and 9 GiB RAM seems to be too little, never comes up)
+crc config set cpus 10
+crc config set memory 18432
+crc start  # Requires a pull secret from https://cloud.redhat.com/openshift/create/local
+crc console --credentials  # (Optional) Get your login credentials, use them to login, e.g.:
+# CRC includes a cached OpenShift `oc` client binary, this will set up the environment to use the cached `oc` binary:
+eval $(crc oc-env)
+# Login as a developer to test:
+oc login -u developer -p developer https://api.crc.testing:6443
+```
+
+
 # Fleet Manager Golang Template
 
 This project is an example fleet management service. Fleet managers govern service 
