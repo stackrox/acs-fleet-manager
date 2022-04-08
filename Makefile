@@ -211,7 +211,7 @@ help:
 	@echo "make image/build                 build docker image"
 	@echo "make image/push                  push docker image"
 	@echo "make setup/git/hooks             setup git hooks"
-	@echo "make secrets/touch touch all required secret files"
+	@echo "make secrets/touch               touch all required secret files"
 	@echo "make keycloak/setup              setup mas sso clientId, clientSecret & crt"
 	@echo "make dinosaurcert/setup          setup the dinosaur TLS certificate used for Managed Dinosaur Service"
 	@echo "make observatorium/setup         setup observatorium secrets used by CI"
