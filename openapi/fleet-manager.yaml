@@ -134,6 +134,7 @@ paths:
       summary: Returns a Central request by ID
     delete:
       operationId: deleteCentralById
+      description: The only users authorized for this operation are 1) the administrator of the owner organisation of this Central; and 2) the owner user only if it is also part of the owner organisation.
       parameters:
         - in: query
           name: async
@@ -200,6 +201,7 @@ paths:
         - Bearer: [ ]
     patch:
       summary: Update a Central instance by id
+      description: The only users authorized for this operation are 1) the administrator of the owner organisation of this Central; and 2) the owner user only if it is also part of the owner organisation.
       security:
         - Bearer: [ ]
       operationId: updateCentralById
@@ -255,6 +257,7 @@ paths:
   /api/rhacs/v1/centrals:
     post:
       operationId: createCentral
+      description: Each central has a single owner organisation and a single owner user. Creates a new Central that is owned by the user and organisation authenticated for the request.
       parameters:
         - in: query
           name: async
@@ -347,6 +350,7 @@ paths:
       summary: Creates a Central request
     get:
       summary: Returns a list of Central requests
+      description: Only returns those centrals that are owned by the organisation of the user authenticated for the request.
       operationId: getCentrals
       security:
         - Bearer: [ ]
