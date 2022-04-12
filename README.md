@@ -48,8 +48,10 @@ make db/login
 # => Check that the fleet-manager-db docker image is running
 # docker ps --all
 # docker restart fleet-manager-db
+```
 
-# Run some commands against the API.
+```bash
+# Run some commands against the API:
 # See ./docs/populating-configuration.md#interacting-with-the-fleet-manager-api
 # TL;DR: Sign in to https://cloud.redhat.com, get token at https://console.redhat.com/openshift/token, login:
 ocm login --token <ocm-offline-token>
@@ -60,7 +62,7 @@ curl -H "Authorization: Bearer ${OCM_TOKEN}" http://127.0.0.1:/8000/api/dinosaur
 ```
 
 ```bash
-# Running on a local CRC cluster:
+# Setting up a local CRC cluster:
 crc setup  # Takes some time to uncompress (12 GiB?!)
 # Increase CRC resources (4 CPU and 9 GiB RAM seems to be too little, never comes up)
 crc config set cpus 10
@@ -72,6 +74,18 @@ eval $(crc oc-env)
 # Login as a developer to test:
 oc login -u developer -p developer https://api.crc.testing:6443
 ```
+
+```bash
+# OpenShift clusters have the Operator Lifecycle Manager installed by default.
+# If running with a non-OpenShift Kubernetes cluster, you'll need to install the
+# OLM yourself for the ACS Operator installation to work.
+# Instructions: https://sdk.operatorframework.io/docs/installation/
+# TL;DR:
+brew install operator-sdk   # Install the operator SDK
+operator-sdk olm install    # Install the OLM operator to your cluster
+kubectl -n olm get pods -w  # Verify installation of OLM
+```
+
 
 
 # Fleet Manager Golang Template
