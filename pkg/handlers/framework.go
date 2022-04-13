@@ -3,8 +3,8 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/rhacs/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/dinosaur_compat"
 	"net/http"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -25,13 +25,6 @@ type HandlerConfig struct {
 	Validate     []Validate
 	Action       HttpAction
 	ErrorHandler ErrorHandlerFunc
-}
-
-type EventStream struct {
-	ContentType string
-	// GetNextEvent should block until there is an event to return.  GetNextEvent should unblock and return io.EOF when if context is canceled.
-	GetNextEvent HttpAction
-	Close        func()
 }
 
 type Validate func() *errors.ServiceError
@@ -149,7 +142,6 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 		cfg.ErrorHandler = shared.HandleError
 	}
 
-	ctx := r.Context()
 	for _, v := range cfg.Validate {
 		err := v()
 		if err != nil {
@@ -163,51 +155,11 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 		errorHandler(r, w, cfg, serviceError)
 		return
 	}
-
-	if stream, ok := results.(EventStream); ok {
-		if stream.Close != nil {
-			defer stream.Close()
-		}
-		flusher, ok := w.(http.Flusher)
-		if !ok {
-			errorHandler(r, w, cfg, errors.BadRequest("streaming unsupported"))
-			return
-		}
-
-		shared.WriteStreamJSONResponseWithContentType(w, http.StatusOK, nil, stream.ContentType)
-		for {
-			result, err := stream.GetNextEvent()
-			if err != nil {
-				ulog := logger.NewUHCLogger(ctx)
-				operationID := logger.GetOperationID(ctx)
-				// If this is a 400 error, its the user's issue, log as info rather than error
-				if err.HttpCode >= 400 && err.HttpCode <= 499 {
-					ulog.Infof(err.Error())
-				} else {
-					ulog.Error(err)
-				}
-				result := compat.WatchEvent{
-					Type:  "error",
-					Error: ConvertToPrivateError(err.AsOpenapiError(operationID, r.RequestURI)),
-				}
-				_ = json.NewEncoder(w).Encode(result)
-				return
-			} else {
-				if result == nil {
-					return // the event stream was done.
-				}
-				_ = json.NewEncoder(w).Encode(result)
-				_, _ = fmt.Fprint(w, "\n")
-				flusher.Flush() // sends the result to the client (forces Transfer-Encoding: chunked)
-			}
-		}
-	} else {
-		shared.WriteJSONResponse(w, http.StatusOK, results)
-	}
+	shared.WriteJSONResponse(w, http.StatusOK, results)
 	success(r)
 }
-func ConvertToPrivateError(e compat.Error) compat.PrivateError {
-	return compat.PrivateError{
+func ConvertToPrivateError(e compat.Error) dinosaur_compat.PrivateError {
+	return dinosaur_compat.PrivateError{
 		Id:          e.Id,
 		Kind:        e.Kind,
 		Href:        e.Href,

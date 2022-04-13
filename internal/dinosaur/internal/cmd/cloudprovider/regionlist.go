@@ -1,11 +1,11 @@
 package cloudprovider
 
 import (
-	"encoding/json"
+	//"encoding/json"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	//"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
+	//"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
@@ -31,17 +31,20 @@ func NewRegionsListCommand(env *environments.Env) *cobra.Command {
 func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
-	instanceTypeFilter := flags.MustGetString(FlagInstanceType, cmd.Flags())
+	// instanceTypeFilter := flags.MustGetString(FlagInstanceType, cmd.Flags())
+	_ = flags.MustGetString(FlagInstanceType, cmd.Flags())
 
 	var providerConfig *config.ProviderConfig
 	var cloudProviderService services.CloudProvidersService
 	env.MustResolveAll(&providerConfig, &cloudProviderService)
 
-	cloudRegions, err := cloudProviderService.ListCloudProviderRegions(id)
+	// cloudRegions, err := cloudProviderService.ListCloudProviderRegions(id)
+	_, err := cloudProviderService.ListCloudProviderRegions(id)
 	if err != nil {
 		glog.Fatalf("Unable to list cloud provider regions: %s", err.Error())
 	}
 
+	/* FIXME
 	regionList := public.CloudRegionList{
 		Kind:  "CloudRegionList",
 		Total: int32(len(cloudRegions)),
@@ -72,5 +75,5 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 
 	glog.V(10).Infof("%s", output)
-
+*/
 }

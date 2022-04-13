@@ -1,5 +1,7 @@
 package presenters
 
+/* FIXME implement analogon for rhacs
+
 import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/private"
 	v1 "github.com/stackrox/acs-fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
@@ -24,3 +26,4 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {
 	}
 	return res
 }
+*/

@@ -2,11 +2,11 @@ package dinosaur
 
 import (
 	"context"
-	"encoding/json"
+	//"encoding/json"
 	"net/url"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
+	//"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	//"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 
@@ -61,11 +61,13 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	query.Add(FlagSize, size)
 	listArgs := coreServices.NewListArguments(query)
 
-	dinosaurList, paging, err := dinosaurService.List(ctx, listArgs)
+	// dinosaurList, paging, err := dinosaurService.List(ctx, listArgs)
+	_, _, err := dinosaurService.List(ctx, listArgs)
 	if err != nil {
 		glog.Fatalf("Unable to list dinosaur request: %s", err.Error())
 	}
 
+	/* FIXME
 	// format output
 	dinosaurRequestList := public.DinosaurRequestList{
 		Kind:  "DinosaurRequestList",
@@ -86,4 +88,5 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 
 	glog.V(10).Infof("%s", output)
+	*/
 }

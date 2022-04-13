@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/rhacs/compat"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"net/http"
 	"sort"
@@ -35,17 +35,14 @@ func (h ErrorHandler) List(w http.ResponseWriter, r *http.Request) {
 				return allErrors[i].Code < allErrors[j].Code
 			})
 
-			list, total := DetermineListRange(allErrors, listArgs.Page, listArgs.Size)
 			errorList := compat.ErrorList{
 				Kind:  "ErrorList",
-				Page:  int32(listArgs.Page),
-				Size:  int32(len(list)),
-				Total: int32(total),
+				NextPageCursor: listArgs.NextPageCursor,
+				Size:  int32(len(allErrors)),
 				Items: []compat.Error{},
 			}
-			for _, e := range list {
-				err := e.(errors.ServiceError)
-				errorList.Items = append(errorList.Items, PresentError(&err, r.RequestURI))
+			for _, e := range allErrors {
+				errorList.Items = append(errorList.Items, PresentError(&e, r.RequestURI))
 			}
 
 			return errorList, nil

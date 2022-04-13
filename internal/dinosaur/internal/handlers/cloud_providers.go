@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	//"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
+	//"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 
@@ -50,10 +50,13 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			if cached {
 				return cachedRegionList, nil
 			}
-			cloudRegions, err := h.service.ListCloudProviderRegions(id)
+			// cloudRegions, err := h.service.ListCloudProviderRegions(id)
+			_, err := h.service.ListCloudProviderRegions(id)
 			if err != nil {
 				return nil, err
 			}
+			return nil, nil 
+			/* FIXME
 			regionList := public.CloudRegionList{
 				Kind:  "CloudRegionList",
 				Page:  int32(1),
@@ -81,6 +84,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 
 			h.cache.Set(cacheId, regionList, cache.DefaultExpiration)
 			return regionList, nil
+			*/
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -93,10 +97,12 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 			if cached {
 				return cachedCloudProviderList, nil
 			}
-			cloudProviders, err := h.service.ListCloudProviders()
+			// cloudProviders, err := h.service.ListCloudProviders()
+			_, err := h.service.ListCloudProviders()
 			if err != nil {
 				return nil, err
 			}
+			/* FIXME 
 			cloudProviderList := public.CloudProviderList{
 				Kind:  "CloudProviderList",
 				Total: int32(len(cloudProviders)),
@@ -112,6 +118,8 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 			}
 			h.cache.Set(cloudProvidersCacheKey, cloudProviderList, cache.DefaultExpiration)
 			return cloudProviderList, nil
+			*/
+			return nil, nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)

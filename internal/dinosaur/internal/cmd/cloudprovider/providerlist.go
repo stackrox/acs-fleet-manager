@@ -1,13 +1,13 @@
 package cloudprovider
 
 import (
-	"encoding/json"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	//"encoding/json"
+	//"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
+	//"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-	"github.com/golang/glog"
+	//"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +28,7 @@ func runProviderList(
 	providerConfig *config.ProviderConfig,
 	cloudProviderService services.CloudProvidersService,
 ) {
-
+/* FIXME
 	cloudProviders, err := cloudProviderService.ListCloudProviders()
 	if err != nil {
 		glog.Fatalf("Unable to list cloud providers: %s", err.Error())
@@ -53,4 +53,5 @@ func runProviderList(
 	}
 
 	glog.V(10).Infof("%s", output)
+	*/
 }

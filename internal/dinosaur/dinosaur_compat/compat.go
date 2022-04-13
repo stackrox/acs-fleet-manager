@@ -1,4 +1,4 @@
-package compat
+package dinosaur_compat
 
 import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/private"
@@ -11,7 +11,6 @@ import (
 type Error = public.Error
 type GenericOpenAPIError = public.GenericOpenAPIError
 type PrivateError = private.Error
-type WatchEvent = private.WatchEvent
 type ErrorList = public.ErrorList
 type ObjectReference = public.ObjectReference
 

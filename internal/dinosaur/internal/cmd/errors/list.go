@@ -5,7 +5,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
-	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	"os"
 	"sort"
 
@@ -45,9 +44,10 @@ func runList(cmd *cobra.Command, _ []string) {
 	})
 
 	// add code prefix to service error code
+	/* FIXME
 	for _, err := range errors {
 		svcErrors = append(svcErrors, handlers.PresentError(&err, ""))
-	}
+	}*/
 
 	svcErrorsJson, err := json.MarshalIndent(svcErrors, "", "\t")
 	if err != nil {

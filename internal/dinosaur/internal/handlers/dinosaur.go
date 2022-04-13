@@ -3,11 +3,11 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
+	// "github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	// "github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
+	// "github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
@@ -33,6 +33,7 @@ func NewDinosaurHandler(service services.DinosaurService, providerConfig *config
 }
 
 func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
+	/* FIXME 
 	var dinosaurRequest public.DinosaurRequestPayload
 	ctx := r.Context()
 	convDinosaur := &dbapi.DinosaurRequest{}
@@ -59,9 +60,11 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// return 202 status accepted
 	handlers.Handle(w, r, cfg, http.StatusAccepted)
+	*/
 }
 
 func (h dinosaurHandler) Get(w http.ResponseWriter, r *http.Request) {
+	/* FIXME
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
@@ -74,6 +77,7 @@ func (h dinosaurHandler) Get(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
+	*/
 }
 
 // Delete is the handler for deleting a dinosaur request
@@ -104,11 +108,13 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list dinosaur requests: %s", err.Error())
 			}
 
-			dinosaurRequests, paging, err := h.service.List(ctx, listArgs)
+			// dinosaurRequests, paging, err := h.service.List(ctx, listArgs)
+			_, _, err := h.service.List(ctx, listArgs)
 			if err != nil {
 				return nil, err
 			}
 
+			/* FIXME
 			dinosaurRequestList := public.DinosaurRequestList{
 				Kind:  "DinosaurRequestList",
 				Page:  int32(paging.Page),
@@ -123,6 +129,8 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			return dinosaurRequestList, nil
+			*/ 
+			return nil, nil
 		},
 	}
 
@@ -131,6 +139,7 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // Update is the handler for updating a dinosaur request
 func (h dinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
+	/* FIXME
 	var dinosaurUpdateReq public.DinosaurUpdateRequest
 	id := mux.Vars(r)["id"]
 	ctx := r.Context()
@@ -157,4 +166,5 @@ func (h dinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
+	*/
 }

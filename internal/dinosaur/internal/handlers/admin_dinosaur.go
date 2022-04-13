@@ -55,11 +55,13 @@ func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list dinosaur requests: %s", err.Error())
 			}
 
-			dinosaurRequests, paging, err := h.service.List(ctx, listArgs)
+			//dinosaurRequests, paging, err := h.service.List(ctx, listArgs)
+			_, _, err := h.service.List(ctx, listArgs)
 			if err != nil {
 				return nil, err
 			}
 
+			/* FIXME
 			dinosaurRequestList := private.DinosaurList{
 				Kind:  "DinosaurList",
 				Page:  int32(paging.Page),
@@ -77,6 +79,8 @@ func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			return dinosaurRequestList, nil
+			*/
+			return nil, nil
 		},
 	}
 

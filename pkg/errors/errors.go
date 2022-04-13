@@ -2,7 +2,7 @@ package errors
 
 import (
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/rhacs/compat"
 	"net/http"
 	"strconv"
 
@@ -15,10 +15,10 @@ type stackTracer interface {
 }
 
 const (
-	ERROR_CODE_PREFIX = "DINOSAURS-MGMT"
+	ERROR_CODE_PREFIX = "RHACS-MGMT"
 
 	// HREF for API errors
-	ERROR_HREF = "/api/dinosaurs_mgmt/v1/errors/"
+	ERROR_HREF = "/api/rhacs/v1/errors/"
 
 	// Forbidden occurs when a user is not allowed to access the service
 	ErrorForbidden       ServiceErrorCode = 4

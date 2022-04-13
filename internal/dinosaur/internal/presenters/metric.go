@@ -1,5 +1,7 @@
 package presenters
 
+/* FIXME implement analogon for rhacs
+
 import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
@@ -102,3 +104,4 @@ func isAllowedLabel(lable string) bool {
 func getSupportedLables() []string {
 	return []string{"__name__", "dinosaur_operator_io_cluster", "topic", "persistentvolumeclaim", "statefulset_kubernetes_io_pod_name", "exported_service", "exported_pod", "route"}
 }
+*/

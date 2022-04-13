@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	// "github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/metrics"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
+	// "github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
+	// "github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
@@ -75,6 +75,7 @@ func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Request) {
+	/* FIXME
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}
 	query := r.URL.Query()
@@ -106,9 +107,11 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
+	*/
 }
 
 func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.Request) {
+	/* FIXME
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}
 	cfg := &handlers.HandlerConfig{
@@ -135,6 +138,7 @@ func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
+	*/
 }
 
 func extractMetricsQueryParams(r *http.Request, q *observatorium.MetricsReqParams) {

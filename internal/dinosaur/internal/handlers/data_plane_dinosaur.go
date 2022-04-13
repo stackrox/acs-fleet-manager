@@ -48,7 +48,8 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 			handlers.ValidateLength(&clusterID, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			managedDinosaurs, err := h.dinosaurService.GetManagedDinosaurByClusterID(clusterID)
+			// managedDinosaurs, err := h.dinosaurService.GetManagedDinosaurByClusterID(clusterID)
+			_, err := h.dinosaurService.GetManagedDinosaurByClusterID(clusterID)
 			if err != nil {
 				return nil, err
 			}
@@ -58,10 +59,12 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 				Items: []private.ManagedDinosaur{},
 			}
 
+			/* FIXME
 			for _, mk := range managedDinosaurs {
 				converted := presenters.PresentManagedDinosaur(&mk)
 				managedDinosaurList.Items = append(managedDinosaurList.Items, converted)
 			}
+			*/
 			return managedDinosaurList, nil
 		},
 	}

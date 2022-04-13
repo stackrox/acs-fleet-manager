@@ -887,7 +887,7 @@ components:
         id: "103"
         kind: "Error"
         href: "/api/rhacs/v1/errors/103"
-        code: "CENTRALS-MGMT-103"
+        code: "RHACS-MGMT-103"
         reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
     400CreationExample:
@@ -895,7 +895,7 @@ components:
         id: "103"
         kind: "Error"
         href: "/api/rhacs/v1/errors/103"
-        code: "CENTRALS-MGMT-103"
+        code: "RHACS-MGMT-103"
         reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
     400MalformedPageCursorExample:
@@ -903,7 +903,7 @@ components:
         id: "23"
         kind: "Error"
         href: "/api/rhacs/v1/errors/23"
-        code: "CENTRALS-MGMT-23"
+        code: "RHACS-MGMT-23"
         reason: "Malformed page cursor"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
     400MissingParameterExample:
@@ -911,7 +911,7 @@ components:
         id: "21"
         kind: "Error"
         href: "/api/rhacs/v1/errors/21"
-        code: "CENTRALS-MGMT-21"
+        code: "RHACS-MGMT-21"
         reason: "missing path parameter: central id"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
     404Example:
@@ -919,14 +919,14 @@ components:
         id: "7"
         kind: "Error"
         href: "/api/rhacs/v1/errors/7"
-        code: "CENTRALS-MGMT-7"
+        code: "RHACS-MGMT-7"
         reason: "The requested resource doesn't exist"
     404DeleteExample:
       value:
         id: "7"
         kind: "Error"
         href: "/api/rhacs/v1/errors/7"
-        code: "CENTRALS-MGMT-7"
+        code: "RHACS-MGMT-7"
         reason: "CentralResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found"
         operation_id: "1iYO7g2g6HTdUKUa2ksH82kQD3y"
     401Example:
@@ -934,7 +934,7 @@ components:
         id: "11"
         kind: "Error"
         href: "/api/rhacs/v1/errors/11"
-        code: "CENTRALS-MGMT-11"
+        code: "RHACS-MGMT-11"
         reason: "Unable to verify JWT token: Required authorization token not found"
         operation_id: "1iY3UhEhwmXBpWPfI2lNekpd4ZD"
     403Example:
@@ -942,7 +942,7 @@ components:
         id: "4"
         kind: "Error"
         href: "/api/rhacs/v1/errors/4"
-        code: "CENTRALS-MGMT-4"
+        code: "RHACS-MGMT-4"
         reason: "User 'bob' is not authorized to access the service."
         operation_id: "1lY3UiEhznXBpWPfI2lNejpd4YC"
     403MaxAllowedInstanceReachedExample:
@@ -950,7 +950,7 @@ components:
         id: "5"
         kind: "Error"
         href: "/api/rhacs/v1/errors/5"
-        code: "CENTRALS-MGMT-5"
+        code: "RHACS-MGMT-5"
         reason: "User 'bob' has reached a maximum number of 6 allowed instances."
         operation_id: "1lY3UiEkxnXBpVPeI2oNejd3XB"
     403TermsNotAcceptedExample:
@@ -958,7 +958,7 @@ components:
         id: "12"
         kind: "Error"
         href: "/api/rhacs/v1/errors/12"
-        code: "CENTRALS-MGMT-12"
+        code: "RHACS-MGMT-12"
         reason: "Required terms have not been accepted"
         operation_id: "kXCzWPeI2oXBpVPeI2LvF9jMQY"
     409NameConflictExample:
@@ -966,7 +966,7 @@ components:
         id: "36"
         kind: "Error"
         href: "/api/rhacs/v1/errors/36"
-        code: "CENTRALS-MGMT-36"
+        code: "RHACS-MGMT-36"
         reason: "Central component name is already used"
         operation_id: "6kY0UiEkzkXCzWPeI2oYehd3ED"
     500Example:
@@ -974,7 +974,7 @@ components:
         id: "9"
         kind: "Error"
         href: "/api/rhacs/v1/errors/9"
-        code: "CENTRALS-MGMT-9"
+        code: "RHACS-MGMT-9"
         reason: "Unspecified error"
         operation_id: "1ieELvF9jMQY6YghfM9gGRsHvEW"
     500DeleteExample:
@@ -982,7 +982,7 @@ components:
         id: "9"
         kind: "Error"
         href: "/api/rhacs/v1/errors/9"
-        code: "CENTRALS-MGMT-9"
+        code: "RHACS-MGMT-9"
         reason: "error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e
           for cluster id: 1g5d88q0lrcdv4g7alb7slfgnj3dhbsj%!(EXTRA *errors.Error=identifier
           is '404', code is 'CLUSTERS-MGMT-404' and operation identifier is '1g5or50viu07oealuehrkc26dgftj1ac':

@@ -1,9 +1,11 @@
 package presenters
 
+/* FIXME implement analogon for rhacs
 import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
 )
+
 
 // ConvertDinosaurRequest from payload to DinosaurRequest
 func ConvertDinosaurRequest(dinosaurRequestPayload public.DinosaurRequestPayload, dbDinosaurrequest ...*dbapi.DinosaurRequest) *dbapi.DinosaurRequest {
@@ -25,3 +27,4 @@ func PresentDinosaurRequest(dinosaurRequest *dbapi.DinosaurRequest) public.Dinos
 
 	return res
 }
+*/

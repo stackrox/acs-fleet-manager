@@ -14,7 +14,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
-	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
+	// FIXME coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
 
 	"time"
 
@@ -477,7 +477,7 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 	var dinosaurRequestList dbapi.DinosaurList
 	dbConn := k.connectionFactory.New()
 	pagingMeta := &api.PagingMeta{
-		Page: listArgs.Page,
+		Page: 0, // FIXME listArgs.Page,
 		Size: listArgs.Size,
 	}
 
@@ -505,6 +505,7 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 		}
 	}
 
+	/* FIXME
 	// Apply search query
 	if len(listArgs.Search) > 0 {
 		searchDbQuery, err := coreServices.NewQueryParser().Parse(listArgs.Search)
@@ -523,6 +524,7 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 	for _, orderByArg := range listArgs.OrderBy {
 		dbConn = dbConn.Order(orderByArg)
 	}
+	*/
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
 	total := int64(pagingMeta.Total)

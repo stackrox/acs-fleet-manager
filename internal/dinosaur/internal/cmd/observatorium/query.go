@@ -2,10 +2,10 @@ package observatorium
 
 import (
 	"context"
-	"encoding/json"
+	// "encoding/json"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
+	//"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	//"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
@@ -46,11 +46,13 @@ func runGetMetricsByInstantQuery(env *environments.Env, cmd *cobra.Command, _arg
 	params := observatorium.MetricsReqParams{}
 	params.ResultType = observatorium.Query
 
-	dinosaurId, err := observatoriumService.GetMetricsByDinosaurId(ctx, dinosaurMetrics, id, params)
+	// dinosaurId, err := observatoriumService.GetMetricsByDinosaurId(ctx, dinosaurMetrics, id, params)
+	_, err := observatoriumService.GetMetricsByDinosaurId(ctx, dinosaurMetrics, id, params)
 	if err != nil {
 		glog.Error("An error occurred while attempting to get metrics data ", err.Error())
 		return
 	}
+	/* FIXME
 	metricsList := public.MetricsInstantQueryList{
 		Kind: "MetricsInstantQueryList",
 		Id:   dinosaurId,
@@ -67,5 +69,5 @@ func runGetMetricsByInstantQuery(env *environments.Env, cmd *cobra.Command, _arg
 	}
 
 	glog.V(10).Infof("%s %s", dinosaurId, output)
-
+*/
 }

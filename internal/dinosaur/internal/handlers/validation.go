@@ -2,19 +2,19 @@ package handlers
 
 import (
 	"context"
-	"fmt"
+	//"fmt"
 	"regexp"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
+	// "github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	// "github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/auth"
+	// "github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
-	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
+	// coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 )
 
 var ValidDinosaurClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
@@ -33,7 +33,7 @@ func ValidDinosaurClusterName(value *string, field string) handlers.Validate {
 // ValidateDinosaurClusterNameIsUnique returns a validator that validates that the dinosaur cluster name is unique
 func ValidateDinosaurClusterNameIsUnique(name *string, dinosaurService services.DinosaurService, context context.Context) handlers.Validate {
 	return func() *errors.ServiceError {
-
+		/* FIXME
 		_, pageMeta, err := dinosaurService.List(context, &coreServices.ListArguments{Page: 1, Size: 1, Search: fmt.Sprintf("name = %s", *name)})
 		if err != nil {
 			return err
@@ -42,7 +42,7 @@ func ValidateDinosaurClusterNameIsUnique(name *string, dinosaurService services.
 		if pageMeta.Total > 0 {
 			return errors.DuplicateDinosaurClusterName()
 		}
-
+*/
 		return nil
 	}
 }
@@ -89,9 +89,10 @@ func ValidateCloudProvider(dinosaurService *services.DinosaurService, dinosaurRe
 		return nil
 	}
 }
-
+/* FIXME
 func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.DinosaurRequestPayload, dinosaurRequest *dbapi.DinosaurRequest) handlers.Validate {
 	return func() *errors.ServiceError {
+		
 		dinosaurRequest = presenters.ConvertDinosaurRequest(*dinosaurRequestPayload, dinosaurRequest)
 		claims, err := auth.GetClaimsFromContext(ctx)
 		if err != nil {
@@ -100,7 +101,7 @@ func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.
 		(*dinosaurRequest).Owner = auth.GetUsernameFromClaims(claims)
 		(*dinosaurRequest).OrganisationId = auth.GetOrgIdFromClaims(claims)
 		(*dinosaurRequest).OwnerAccountId = auth.GetAccountIdFromClaims(claims)
-
 		return nil
 	}
 }
+*/

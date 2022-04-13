@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/rhacs/compat"
 )
 
 func PresentReferenceWith(id, obj interface{}, ObjectKind func(i interface{}) string, ObjectPath func(id string, obj interface{}) string) compat.ObjectReference {

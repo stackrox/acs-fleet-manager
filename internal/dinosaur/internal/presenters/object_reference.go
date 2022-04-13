@@ -1,9 +1,10 @@
 package presenters
+/* FIXME implement analogon for rhacs
 
 import (
 	"fmt"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	compat "github.com/stackrox/acs-fleet-manager/internal/dinosaur/dinosaur_compat"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -54,3 +55,4 @@ func objectPath(id string, obj interface{}) string {
 		return ""
 	}
 }
+*/

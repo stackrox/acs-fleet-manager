@@ -1,5 +1,6 @@
 package presenters
 
+/* FIXME adapt for rhacs
 import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
@@ -25,3 +26,4 @@ func PresentCloudRegion(cloudRegion *api.CloudRegion) public.CloudRegion {
 		SupportedInstanceTypes: cloudRegion.SupportedInstanceTypes,
 	}
 }
+*/
