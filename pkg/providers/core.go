@@ -18,7 +18,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
-	"github.com/stackrox/acs-fleet-manager/pkg/workers"
+	// "github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 )
 
@@ -89,6 +89,8 @@ func ServiceProviders() di.Option {
 		di.Provide(server.NewAPIServer, di.As(new(environments.BootService))),
 		di.Provide(server.NewMetricsServer, di.As(new(environments.BootService))),
 		di.Provide(server.NewHealthCheckServer, di.As(new(environments.BootService))),
-		di.Provide(workers.NewLeaderElectionManager, di.As(new(environments.BootService))),
+		// TODO: see `i.Provide(dinosaur_mgrs.NewDinosaurManager, di.As(new(workers.Worker)))` in internal/dinosaur/providers.go
+		// to eventually enabling it when we have a central_mgrs package
+		// TODO di.Provide(workers.NewLeaderElectionManager, di.As(new(environments.BootService))),
 	)
 }

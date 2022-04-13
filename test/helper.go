@@ -14,7 +14,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/rhacs/compat"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/goava/di"

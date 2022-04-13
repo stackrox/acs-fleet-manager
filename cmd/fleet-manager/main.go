@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
+	"github.com/stackrox/acs-fleet-manager/internal/rhacs"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
@@ -23,7 +23,7 @@ func main() {
 	}
 
 	env, err := environments.New(environments.GetEnvironmentStrFromEnv(),
-		dinosaur.ConfigProviders(),
+		rhacs.ConfigProviders(),
 	)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)
@@ -32,13 +32,15 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:  "fleet-manager",
-		Long: "fleet-manager is a service that exposes a Rest API to manage Dinosaur instances.",
+		Long: "fleet-manager is a service that exposes a Rest API to manage RHACS Centrsal instances.",
 	}
 
+	/* TODO determine what this is
 	err = env.AddFlags(rootCmd.PersistentFlags())
 	if err != nil {
 		glog.Fatalf("Unable to add global flags: %s", err.Error())
 	}
+	*/
 
 	env.MustInvoke(func(subcommands []*cobra.Command) {
 		rootCmd.AddCommand(subcommands...)
