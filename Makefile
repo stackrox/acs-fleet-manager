@@ -42,7 +42,7 @@ DOCKER_CONFIG="${PWD}/.docker"
 # Default Variables
 ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
-JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
+JWKS_URL ?= "https://sso.stage.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
 SSO_BASE_URL ?="https://identity.api.stage.openshift.com"
 SSO_REALM ?="rhoas" # update your realm here
 
@@ -514,7 +514,7 @@ observatorium/setup:
 
 observatorium/token-refresher/setup: PORT ?= 8085
 observatorium/token-refresher/setup: IMAGE_TAG ?= latest
-observatorium/token-refresher/setup: ISSUER_URL ?= https://sso.redhat.com/auth/realms/redhat-external
+observatorium/token-refresher/setup: ISSUER_URL ?= https://sso.stage.redhat.com/auth/realms/redhat-external
 observatorium/token-refresher/setup: OBSERVATORIUM_URL ?= https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/manageddinosaur
 observatorium/token-refresher/setup:
 	@docker run -d -p ${PORT}:${PORT} \
@@ -611,7 +611,7 @@ deploy/service: SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy/service: SSO_REALM ?= "rhoas"
 deploy/service: MAX_LIMIT_FOR_SSO_GET_CLIENTS ?= "100"
 deploy/service: OSD_IDP_SSO_REALM ?= "rhoas-dinosaur-sre"
-deploy/service: TOKEN_ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
+deploy/service: TOKEN_ISSUER_URL ?= "https://sso.stage.redhat.com/auth/realms/redhat-external"
 deploy/service: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
 deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
 deploy/service: ENABLE_DENY_LIST ?= "false"
@@ -684,7 +684,7 @@ undeploy:
 .PHONY: undeploy
 
 # Deploys an Observatorium token refresher on an OpenShift cluster
-deploy/token-refresher: ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
+deploy/token-refresher: ISSUER_URL ?= "https://sso.stage.redhat.com/auth/realms/redhat-external"
 deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE ?= "quay.io/rhoas/mk-token-refresher"
 deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG ?= "latest"
 deploy/token-refresher: OBSERVATORIUM_URL ?= "https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/manageddinosaur"

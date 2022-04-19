@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	defaultOcmTokenIssuer = "https://sso.redhat.com/auth/realms/redhat-external"
+	defaultOcmTokenIssuer = "https://sso.stage.redhat.com/auth/realms/redhat-external"
 	tokenClaimType        = "Bearer"
 	TokenExpMin           = 30
 	JwkKID                = "kastestkey"

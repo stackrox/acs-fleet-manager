@@ -24,9 +24,9 @@ func NewServerConfig() *ServerConfig {
 	return &ServerConfig{
 		BindAddress:    "localhost:8000",
 		EnableHTTPS:    false,
-		JwksURL:        "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
+		JwksURL:        "https://sso.stage.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
 		JwksFile:       "config/jwks-file.json",
-		TokenIssuerURL: "https://sso.redhat.com/auth/realms/redhat-external",
+		TokenIssuerURL: "https://sso.stage.redhat.com/auth/realms/redhat-external",
 		HTTPSCertFile:  "",
 		HTTPSKeyFile:   "",
 		PublicHostURL:  "http://localhost",

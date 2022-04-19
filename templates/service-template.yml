@@ -379,7 +379,7 @@ parameters:
 - name: TOKEN_ISSUER_URL
   displayName: A token issuer url
   description: A token issuer url used to validate if JWT token used are coming from the given issuer
-  value: "https://sso.redhat.com/auth/realms/redhat-external"
+  value: "https://sso.stage.redhat.com/auth/realms/redhat-external"
 
 objects:
   - kind: ConfigMap
