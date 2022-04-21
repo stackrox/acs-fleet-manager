@@ -12,6 +12,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 
+	"github.com/gorilla/mux"
+
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 )
 
@@ -56,8 +58,18 @@ func (h centralHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h centralHandler) Get(w http.ResponseWriter, r *http.Request) {
 	// TODO
 	logger.Logger.Warningf("Central get request received")
-	// return 202 status accepted
-	handlers.Handle(w, r, noopHandlerConfig, http.StatusAccepted)
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			ctx := r.Context()
+			request, err := h.service.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return presenters.PresentCentralRequest(request), nil
+		},
+	}
+	handlers.HandleGet(w, r, cfg)
 }
 
 func (h centralHandler) Delete(w http.ResponseWriter, r *http.Request) {

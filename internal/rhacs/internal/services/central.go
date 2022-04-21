@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/stackrox/acs-fleet-manager/internal/rhacs/internal/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
@@ -16,6 +17,7 @@ import (
 type CentralService interface {
 	// TODO following internal/dinosaur/internal/services/dinosaur.go
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError)
+	Get(ctx context.Context, id string) (*dbapi.CentralRequest, *errors.ServiceError)
 }
 
 var _ CentralService = &centralService{}
@@ -51,4 +53,9 @@ func (k *centralService) List(ctx context.Context, listArgs *services.ListArgume
 	}
 
 	return centralRequestList, pagingMeta, nil
+}
+
+// Get returns the Central request that has the specified id.
+func (k *centralService) Get(ctx context.Context, id string) (*dbapi.CentralRequest, *errors.ServiceError) {
+	return nil, errors.Validation(fmt.Sprintf("id %q is undefined", id))
 }
