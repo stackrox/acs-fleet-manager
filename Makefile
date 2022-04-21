@@ -328,6 +328,7 @@ openapi/validate: openapi-generator
 
 # generate the openapi schema and generated package
 openapi/generate: openapi/generate/public openapi/generate/private openapi/generate/admin
+	find internal/rhacs/internal -name go.mod -delete
 .PHONY: openapi/generate
 
 openapi/generate/public: go-bindata openapi-generator
