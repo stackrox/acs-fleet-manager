@@ -67,7 +67,6 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	return nil
 }
 
-// TODO change /dinosaurs path param and any reference to Dinosaur to correspond to your own service Rest resource
 func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, openApiFilePath string) error {
 	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, openApiFilePath)
 	if err != nil {
@@ -126,9 +125,9 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1CentralsRouter.Use(requireOrgID)
 	apiV1CentralsRouter.Use(authorizeMiddleware)
 
-	apiV1DinosaursCreateRouter := apiV1CentralsRouter.NewRoute().Subrouter()
-	apiV1DinosaursCreateRouter.HandleFunc("", centralHandler.Create).Methods(http.MethodPost)
-	apiV1DinosaursCreateRouter.Use(requireTermsAcceptance)
+	apiV1CentralsCreateRouter := apiV1CentralsRouter.NewRoute().Subrouter()
+	apiV1CentralsCreateRouter.HandleFunc("", centralHandler.Create).Methods(http.MethodPost)
+	apiV1CentralsCreateRouter.Use(requireTermsAcceptance)
 
 	/* TODO
 	//  /cloud_providers

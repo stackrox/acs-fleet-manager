@@ -227,7 +227,7 @@ components:
         id: "7"
         kind: Error
         href: /api/rhacs/v1/errors/7
-        code: CENTRALS-MGMT-7
+        code: RHACS-MGMT-7
         reason: The requested resource doesn't exist
   schemas:
     ListReference:
