@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/google/uuid"
 
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
-	"github.com/pkg/errors"
 
 	"github.com/golang/glog"
 )
@@ -78,6 +78,8 @@ func (k *AcceptedDinosaurManager) Reconcile() []error {
 }
 
 func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.DinosaurRequest) error {
+	glog.Infof("AcceptedDinosaurManager: %+v", k)
+	glog.Infof("PLACEMENT: %+v", k.clusterPlmtStrategy)
 	cluster, err := k.clusterPlmtStrategy.FindCluster(dinosaur)
 	if err != nil {
 		return errors.Wrapf(err, "failed to find cluster for dinosaur request %s", dinosaur.ID)
