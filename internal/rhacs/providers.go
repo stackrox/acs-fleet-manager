@@ -4,6 +4,7 @@ import 	(
 	"github.com/stackrox/acs-fleet-manager/internal/rhacs/internal/config"
 	"github.com/stackrox/acs-fleet-manager/internal/rhacs/internal/routes"
 	"github.com/stackrox/acs-fleet-manager/internal/rhacs/internal/environments"
+	"github.com/stackrox/acs-fleet-manager/internal/rhacs/internal/handlers"
 	environments2 "github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/internal/rhacs/internal/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/providers"
@@ -35,6 +36,7 @@ func EnvConfigProviders() di.Option {
 func ServiceProviders() di.Option {
 	return di.Options(
 		di.Provide(routes.NewRouteLoader),
+		di.Provide(handlers.NewAuthenticationBuilder),
 		di.Provide(services.NewCentralService, di.As(new(services.CentralService))),
 	)
 }
