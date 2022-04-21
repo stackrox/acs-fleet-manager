@@ -3,9 +3,8 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"github.com/golang/glog"
 	"regexp"
-
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
@@ -50,6 +49,7 @@ func ValidateDinosaurClusterNameIsUnique(name *string, dinosaurService services.
 // ValidateCloudProvider returns a validator that sets default cloud provider details if needed and validates provided
 // provider and region
 func ValidateCloudProvider(dinosaurService *services.DinosaurService, dinosaurRequest *dbapi.DinosaurRequest, providerConfig *config.ProviderConfig, action string) handlers.Validate {
+	glog.Infof("VALID CLOUD PROVIDER: %+v", dinosaurRequest)
 	return func() *errors.ServiceError {
 		// Set Cloud Provider default if not received in the request
 		supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
@@ -92,14 +92,18 @@ func ValidateCloudProvider(dinosaurService *services.DinosaurService, dinosaurRe
 
 func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.DinosaurRequestPayload, dinosaurRequest *dbapi.DinosaurRequest) handlers.Validate {
 	return func() *errors.ServiceError {
-		dinosaurRequest = presenters.ConvertDinosaurRequest(*dinosaurRequestPayload, dinosaurRequest)
+		dinosaurRequest.Region = dinosaurRequestPayload.Region
+		dinosaurRequest.Name = dinosaurRequestPayload.Name
+		dinosaurRequest.CloudProvider = dinosaurRequestPayload.CloudProvider
+		dinosaurRequest.MultiAZ = dinosaurRequestPayload.MultiAz
+
 		claims, err := auth.GetClaimsFromContext(ctx)
 		if err != nil {
 			return errors.Unauthenticated("user not authenticated")
 		}
-		(*dinosaurRequest).Owner = auth.GetUsernameFromClaims(claims)
-		(*dinosaurRequest).OrganisationId = auth.GetOrgIdFromClaims(claims)
-		(*dinosaurRequest).OwnerAccountId = auth.GetAccountIdFromClaims(claims)
+		dinosaurRequest.Owner = auth.GetUsernameFromClaims(claims)
+		dinosaurRequest.OrganisationId = auth.GetOrgIdFromClaims(claims)
+		dinosaurRequest.OwnerAccountId = auth.GetAccountIdFromClaims(claims)
 
 		return nil
 	}

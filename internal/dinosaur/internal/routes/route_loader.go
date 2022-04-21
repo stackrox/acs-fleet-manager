@@ -11,6 +11,10 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
 
+	"github.com/goava/di"
+	gorillaHandlers "github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/generated"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/handlers"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
@@ -26,10 +30,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"github.com/goava/di"
-	gorillaHandlers "github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
-	pkgerrors "github.com/pkg/errors"
 )
 
 type options struct {
@@ -90,7 +90,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	// /v1
 	apiV1Router := apiRouter.PathPrefix("/v1").Subrouter()
-
 	//  /openapi
 	apiV1Router.HandleFunc("/openapi", coreHandlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
 

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/golang/glog"
 	"net/http"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
@@ -49,6 +50,7 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating dinosaur requests"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
+			glog.Infof("DINOSAUR_REQUEST: %+v", convDinosaur)
 			svcErr := h.service.RegisterDinosaurJob(convDinosaur)
 			if svcErr != nil {
 				return nil, svcErr

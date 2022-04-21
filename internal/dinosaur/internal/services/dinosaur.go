@@ -135,6 +135,8 @@ func (k *dinosaurService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 }
 
 func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.DinosaurRequest) (bool, *errors.ServiceError) {
+	glog.Infof("REGION: %s", dinosaurRequest.Region)
+	glog.Infof("cluster config: %+v", k.dataplaneClusterConfig.ClusterConfig)
 	regionCapacity := int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(dinosaurRequest.Region))
 	if regionCapacity <= 0 {
 		return false, nil
