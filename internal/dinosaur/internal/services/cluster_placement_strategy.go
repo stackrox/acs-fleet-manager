@@ -26,6 +26,7 @@ func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneCluster
 	return clusterSelection
 }
 
+// TODO(create-ticket): Revisit placement strategy before going live.
 var _ ClusterPlacementStrategy = (*FirstDBClusterPlacementStrategy)(nil)
 
 type FirstDBClusterPlacementStrategy struct {
