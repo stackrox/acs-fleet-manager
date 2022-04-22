@@ -20,7 +20,6 @@ func ConvertDinosaurRequest(dinosaurRequestPayload public.DinosaurRequestPayload
 
 // PresentDinosaurRequest - create DinosaurRequest in an appropriate format ready to be returned by the API
 func PresentDinosaurRequest(dinosaurRequest *dbapi.DinosaurRequest) public.DinosaurRequest {
-	// TODO implement presenter
 	var res public.DinosaurRequest
 	res.Name = dinosaurRequest.Name
 	res.Status = dinosaurRequest.Status
