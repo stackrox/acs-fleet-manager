@@ -51,14 +51,27 @@ make db/login
 ```
 
 ```bash
-# Run some commands against the API:
-# See ./docs/populating-configuration.md#interacting-with-the-fleet-manager-api
-# TL;DR: Sign in to https://cloud.redhat.com, get token at https://console.redhat.com/openshift/token, login:
-ocm login --token <ocm-offline-token>
+# Run some commands against the API (requires `ocm` token).
+# See ./docs/populating-configuration.md#interacting-with-the-fleet-manager-api.
+# TL;DR:
+
+# Check if you have an `ocm` token:
+ocm token
+
+# If it doesn't work then login using a cached token:
+ocm login --token=$(cat ~/.rh/RH_TOKEN) --url https://sso.redhat.com
+
+# If that doesn't work then login into https://console.redhat.com/ with
+# your Red Hat email and visit https://console.redhat.com/openshift/token
+# to get your ocm offline token, and use it to replace the contents of 
+# the file ~/.rh/RH_TOKEN then try to ocm login again. 
+
 # Generate a new OCM token (will expire, unlike the ocm-offline-token):
 OCM_TOKEN=$(ocm token)
 # Use the token in an API request, for example:
-curl -H "Authorization: Bearer ${OCM_TOKEN}" http://127.0.0.1:/8000/api/dinosaurs_mgmt
+curl -H "Authorization: Bearer ${OCM_TOKEN}" http://127.0.0.1:8000/api/dinosaurs_mgmt
+# Or if using httpie:
+http --auth-type=bearer --auth="${OCM_TOKEN}" http://127.0.0.1:8000/api/dinosaurs_mgmt
 ```
 
 ```bash
