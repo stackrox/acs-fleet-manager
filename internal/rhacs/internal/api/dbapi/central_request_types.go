@@ -4,10 +4,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 )
 
-const (
-	CentralRequestListKind = "CentralRequestList"
-)
-
 type CentralRequest struct {
 	api.Meta
 
