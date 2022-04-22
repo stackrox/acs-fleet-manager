@@ -17,9 +17,7 @@ type ClusterPlacementStrategy interface {
 // placement configuration. An appropriate ClusterPlacementStrategy implementation
 // is returned based on the received parameters content
 func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneClusterConfig *config.DataplaneClusterConfig) ClusterPlacementStrategy {
-	var clusterSelection ClusterPlacementStrategy
-
-	clusterSelection = FirstDBClusterPlacementStrategy{
+	var clusterSelection ClusterPlacementStrategy = FirstDBClusterPlacementStrategy{
 		clusterService: clusterService,
 	}
 
