@@ -8,9 +8,12 @@ TODO: Clean up and make this ACS Fleet Manager specific.
 
 ### Contributing
 
-The default branch is set to `prototype` (on https://github.com/stackrox/acs-fleet-manager/settings/branches).
+- Pull `prototype` branch updates at the start of every working day
+- Develop on top of `prototype` branch
+- Add `// TODO(create-ticket): some explanation` near your work so we can come back and refine it
+- Merge your PRs to `prototype` branch
 
-Please merge work fixing the end-to-end flow on the `prototype` branch. This is where we will be applying rapid fixes in order to complete the template end-to-end flow with anything possible - returning the first element from the cluster list, putting in default values to avoid segfault on nil, etc. When you commit something please add `// TODO(create-ticket): Some short description of your work e.g. create a placement strategy for tenants onto our clusters`. We can then assign each piece, develop and test it, and merge to main when it's ready. Otherwise it's the wild west, cutting edge, latest and greatest <3
+Context: We want to fix the e2e flow in parallel across many engineers quickly, but don't want to push untested, potentially minimal / simplified code to `main`. So we will develop in `prototype` and later on clean things up and bring them into `main`.
 
 ### Rough map
 
