@@ -78,8 +78,6 @@ func (k *AcceptedDinosaurManager) Reconcile() []error {
 }
 
 func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.DinosaurRequest) error {
-	glog.Infof("AcceptedDinosaurManager: %+v", k)
-	glog.Infof("PLACEMENT: %+v", k.clusterPlmtStrategy)
 	cluster, err := k.clusterPlmtStrategy.FindCluster(dinosaur)
 	if err != nil {
 		return errors.Wrapf(err, "failed to find cluster for dinosaur request %s", dinosaur.ID)

@@ -16,7 +16,8 @@
 #    status: "cluster_provisioning" #Valid values are `cluster_provisioning`, `cluster_provisioned` and `ready`. `cluster_provisioning` will be used if not specified.
 #    provider_type: "ocm" #Valid values are `ocm` and `standalone`. `ocm` will be used if not specified.
 #    cluster_dns: apps.example.com #Valid cluster DNS. This will be used to build dinosaur host url and to communicate with standalone clusters. Required when "provider_type" is "standalone" 
-#    supported_instance_type: "eval" # could be "eval", "standard" or both i.e "standard,eval" or "eval,standard". Defaults to "standard,eval" if not set 
+#    supported_instance_type: "eval" # could be "eval", "standard" or both i.e "standard,eval" or "eval,standard". Defaults to "standard,eval" if not set
+# read and parsed here: https://github.com/stackrox/acs-fleet-manager/blob/master/internal/dinosaur/internal/config/dataplane_cluster_config.go#L69-L69
 clusters:
   - name: minikube  # Uncomment if using minikube
     cluster_id: 1234567890abcdef1234567890abcdef

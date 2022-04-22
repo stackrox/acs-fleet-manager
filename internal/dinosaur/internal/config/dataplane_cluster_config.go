@@ -82,7 +82,7 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 		DinosaurOperatorOLMConfig: OperatorInstallationConfig{
 			IndexImage:             "quay.io/osd-addons/managed-dinosaur:production-82b42db",
 			CatalogSourceNamespace: "openshift-marketplace",
-			Namespace:              constants.DinosaurOperatorNamespace,
+			Namespace:              constants.OperatorNamespace,
 			SubscriptionChannel:    "alpha",
 			Package:                "managed-dinosaur",
 		},

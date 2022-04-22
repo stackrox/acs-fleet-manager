@@ -14,15 +14,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 	"github.com/google/uuid"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
-	"github.com/golang/glog"
 
 	authv1 "github.com/openshift/api/authorization/v1"
 	userv1 "github.com/openshift/api/user/v1"
@@ -45,7 +45,7 @@ const (
 	observatoriumAuthType            = "redhat"
 	syncsetName                      = "ext-managedservice-cluster-mgr"
 	imagePullSecretName              = "rhoas-image-pull-secret"
-	dinosaurOperatorAddonNamespace   = constants.DinosaurOperatorNamespace
+	dinosaurOperatorAddonNamespace   = constants.OperatorNamespace
 	dinosaurOperatorQEAddonNamespace = "redhat-managed-dinosaur-operator-qe"
 	fleetshardAddonNamespace         = constants.FleetShardOperatorNamespace
 	fleetshardQEAddonNamespace       = "redhat-fleetshard-operator-qe"
