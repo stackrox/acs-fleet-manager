@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"sort"
 
-	fleetmanagererrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/pkg/errors"
+	fleetmanagererrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -251,6 +251,17 @@ func (s *DinosaurOperatorVersion) DeepCopy() *DinosaurOperatorVersion {
 // and ready versions or an error. An empty list is returned if there are no
 // available and ready versions
 func (cluster *Cluster) GetAvailableAndReadyDinosaurOperatorVersions() ([]DinosaurOperatorVersion, error) {
+	return []DinosaurOperatorVersion{
+		DinosaurOperatorVersion{
+			Version: "3.69.0",
+			Ready:   true,
+			DinosaurVersions: []DinosaurVersion{
+				DinosaurVersion{
+					Version: "3.69.0",
+				},
+			},
+		},
+	}, nil
 	dinosaurOperatorVersions, err := cluster.GetAvailableDinosaurOperatorVersions()
 	if err != nil {
 		return nil, err
