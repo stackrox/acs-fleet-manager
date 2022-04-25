@@ -3,11 +3,12 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/golang/glog"
 	"regexp"
 	"sort"
 
-	fleetmanagererrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/pkg/errors"
+	fleetmanagererrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -251,6 +252,19 @@ func (s *DinosaurOperatorVersion) DeepCopy() *DinosaurOperatorVersion {
 // and ready versions or an error. An empty list is returned if there are no
 // available and ready versions
 func (cluster *Cluster) GetAvailableAndReadyDinosaurOperatorVersions() ([]DinosaurOperatorVersion, error) {
+	// TODO(create-ticket): add correct operator versions with cluster syncer from the fleetshard-syncer
+	glog.Warningf("RETURNING FAKE DINOSAUR OPERATOR VERSION")
+	return []DinosaurOperatorVersion{
+		DinosaurOperatorVersion{
+			Version: "3.69.0",
+			Ready:   true,
+			DinosaurVersions: []DinosaurVersion{
+				DinosaurVersion{
+					Version: "3.69.0",
+				},
+			},
+		},
+	}, nil
 	dinosaurOperatorVersions, err := cluster.GetAvailableDinosaurOperatorVersions()
 	if err != nil {
 		return nil, err
