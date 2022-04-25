@@ -86,6 +86,19 @@ ifeq (, $(shell which $(LOCAL_BIN_PATH)/gotestsum 2> /dev/null))
 	}
 endif
 
+ginkgo:
+ifeq (, $(shell which $(LOCAL_BIN_PATH)/ginkgo 2> /dev/null))
+	@{ \
+	set -e ;\
+	GINKGO_TMP_DIR=$$(mktemp -d) ;\
+	cd $$GINKGO_TMP_DIR ;\
+	$(GO) mod init tmp ;\
+	$(GO) install -mod=mod github.com/onsi/ginkgo/v2/ginkgo ;\
+	cp $$(go env GOPATH)/bin/ginkgo ${LOCAL_BIN_PATH}/ginkgo ;\
+	rm -rf $$GINKGO_TMP_DIR ;\
+	}
+endif
+
 MOQ ?= ${LOCAL_BIN_PATH}/moq
 moq:
 ifeq (, $(shell which ${LOCAL_BIN_PATH}/moq 2> /dev/null))

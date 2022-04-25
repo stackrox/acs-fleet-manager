@@ -57,5 +57,5 @@ func (k *centralService) List(ctx context.Context, listArgs *services.ListArgume
 
 // Get returns the Central request that has the specified id.
 func (k *centralService) Get(ctx context.Context, id string) (*dbapi.CentralRequest, *errors.ServiceError) {
-	return nil, errors.Validation(fmt.Sprintf("id %q is undefined", id))
+	return nil, errors.NotFound(fmt.Sprintf("No central found with id %q", id))
 }
