@@ -35,5 +35,4 @@ func TestCentralGet(t *testing.T) {
 
 	central, response, _ := client.DefaultApi.GetCentralById(ctx, "missingId")
 	fmt.Printf("central %v, response %v", central, response)
-	fmt.Println("bye for now")
 }

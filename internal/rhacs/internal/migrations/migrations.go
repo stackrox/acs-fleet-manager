@@ -3,6 +3,7 @@ package migrations
 import (
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 // gormigrate is a wrapper for gorm's migration functions that adds schema versioning and rollback capabilities.
@@ -21,7 +22,17 @@ import (
 //    See $project_home/db/README.md
 //
 // 4. Create one function in a separate file that returns your Migration. Add that single function call to this list.
-var migrations = []*gormigrate.Migration{}
+var migrations = []*gormigrate.Migration{
+	{
+		ID: "NOOP",
+		Migrate: func(tx *gorm.DB) error {
+			return nil
+		},
+		Rollback: func(tx *gorm.DB) error {
+			return nil
+		},
+	},
+}
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
 	return db.NewMigration(dbConfig, &gormigrate.Options{
