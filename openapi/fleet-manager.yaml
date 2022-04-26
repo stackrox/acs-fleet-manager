@@ -404,7 +404,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/name'
         - $ref: '#/components/parameters/owner_user'
-        - $ref: '#/components/parameters/page_cursor'
+        - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/size'
   /api/rhacs/v1/cloud_providers:
     get:
@@ -438,7 +438,7 @@ paths:
                 500Example:
                   $ref: '#/components/examples/500Example'
       parameters:
-        - $ref: '#/components/parameters/page_cursor'
+        - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/size'
   /api/rhacs/v1/cloud_providers/{id}/regions:
     get:
@@ -473,7 +473,7 @@ paths:
                   $ref: '#/components/examples/500Example'
       parameters:
         - $ref: "#/components/parameters/id"
-        - $ref: '#/components/parameters/page_cursor'
+        - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/size'
         - $ref: '#/components/parameters/instance_type'
 
@@ -496,14 +496,15 @@ components:
     List:
       required:
         - kind
+        - page
         - size
         - items
       type: object
       properties:
         kind:
           type: string
-        next_page_cursor:
-          type: string
+        page:
+          type: integer
         size:
           type: integer
       discriminator:
@@ -637,6 +638,7 @@ components:
         - type: object
           example:
             kind: "CloudProviderList"
+            page: "1"
             size: "1"
             item:
               $ref: '#/components/examples/CloudProviderExample'
@@ -652,6 +654,7 @@ components:
         - type: object
           example:
             kind: "CloudRegionList"
+            page: "1"
             size: "1"
             item:
               $ref: '#/components/examples/CloudRegionExample'
@@ -730,16 +733,16 @@ components:
         items:
           type: string
         default: [ ]
-    page_cursor:
-      name: page_cursor
+    page:
+      name: page
       in: query
-      description: Page cursor, provided with each page in case more pages are remaining. If missing then the first page is returned.
+      description: Page index
       required: false
       schema:
         type: string
       examples:
-        page_cursor:
-          value: "ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg=="
+        page:
+          value: "1"
     size:
       name: size
       in: query
@@ -830,7 +833,7 @@ components:
       value:
         kind: "CentralRequestList"
         size: "1"
-        next_page_cursor: "ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg=="
+        page: "1"
         items:
           - id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
             kind: "central"

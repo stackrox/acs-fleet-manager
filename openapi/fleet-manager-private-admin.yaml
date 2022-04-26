@@ -57,7 +57,7 @@ paths:
       parameters:
         - $ref: 'fleet-manager.yaml#/components/parameters/name'
         - $ref: 'fleet-manager.yaml#/components/parameters/owner_user'
-        - $ref: 'fleet-manager.yaml#/components/parameters/page_cursor'
+        - $ref: 'fleet-manager.yaml#/components/parameters/page'
         - $ref: 'fleet-manager.yaml#/components/parameters/size'
   '/api/dinosaurs_mgmt/v1/admin/dinosaurs/{id}':
     get:
