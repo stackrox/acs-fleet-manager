@@ -76,7 +76,7 @@ var _ = g.Describe("API resources", func() {
 
 	g.Context("Root API resources", func() {
 		g.When("getting the version metadata", func() {
-			g.It("returns the expected version and collections", func ()  {
+			g.It("returns the expected version and collections", func()  {
 				metadata, response, err := client.DefaultApi.GetVersionMetadata(ctx)
 				Expect(err).NotTo(HaveOccurred(), "Error getting version metadata: %v", err)
 				Expect(response.StatusCode).To(Equal(http.StatusOK))
@@ -88,6 +88,15 @@ var _ = g.Describe("API resources", func() {
 					Kind: "CentralList",
 					Href: "/api/rhacs/v1/centrals",
 				}))
+			})
+		})
+
+		g.When("getting the service status", func() {
+			g.It("returns capacity is not reached", func() {
+				status, response, err := client.DefaultApi.GetServiceStatus(ctx)
+				Expect(err).NotTo(HaveOccurred(), "Error getting version metadata: %v", err)
+				Expect(response.StatusCode).To(Equal(http.StatusOK))
+				Expect(status.Centrals.MaxCapacityReached).To(BeFalse())
 			})
 		})
 	})

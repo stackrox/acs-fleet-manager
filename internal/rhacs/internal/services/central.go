@@ -16,6 +16,7 @@ import (
 //go:generate moq -out centralservice_moq.go . CentralService
 type CentralService interface {
 	// TODO following internal/dinosaur/internal/services/dinosaur.go
+	HasAvailableCapacity() (bool, *errors.ServiceError)
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError)
 	Get(ctx context.Context, id string) (*dbapi.CentralRequest, *errors.ServiceError)
 }
@@ -49,7 +50,7 @@ func (k *centralService) List(ctx context.Context, listArgs *services.ListArgume
 		orgId := auth.GetOrgIdFromClaims(claims)
 		logger.Logger.Warningf("Request identified with user=%q and organisation=%q", user, orgId)
 		// TODO filter by organisation id, see `func (k *dinosaurService) List` at internal/dinosaur/internal/services/dinosaur.go 
-		// FIXME: document behaviour implemented there, this affects the ownership model
+		// FIXME: document behaviour implemented there, this affects the ownership model, therefore the API definition
 	}
 
 	return centralRequestList, pagingMeta, nil
@@ -58,4 +59,9 @@ func (k *centralService) List(ctx context.Context, listArgs *services.ListArgume
 // Get returns the Central request that has the specified id.
 func (k *centralService) Get(ctx context.Context, id string) (*dbapi.CentralRequest, *errors.ServiceError) {
 	return nil, errors.NotFound(fmt.Sprintf("No central found with id %q", id))
+}
+
+func (k *centralService) HasAvailableCapacity() (bool, *errors.ServiceError) {
+	// FIXME
+	return true, nil
 }

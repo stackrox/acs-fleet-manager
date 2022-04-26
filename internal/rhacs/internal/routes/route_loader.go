@@ -74,6 +74,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	}
 
 	centralHandler := handlers.NewCentralHandler(s.CentralService, s.ProviderConfig, s.AuthService)
+	serviceStatusHandler := handlers.NewServiceStatusHandler(s.CentralService, s.AccessControlListConfig)
 	// TODO cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	
@@ -97,9 +98,9 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1ErrorsRouter.HandleFunc("/{id}", errorsHandler.Get).Methods(http.MethodGet)
 
 	// /status
-	// TODO apiV1Status := apiV1Router.PathPrefix("/status").Subrouter()
-	// apiV1Status.HandleFunc("", serviceStatusHandler.Get).Methods(http.MethodGet)
-	// apiV1Status.Use(requireIssuer)
+	apiV1Status := apiV1Router.PathPrefix("/status").Subrouter()
+	apiV1Status.HandleFunc("", serviceStatusHandler.Get).Methods(http.MethodGet)
+	apiV1Status.Use(requireIssuer)
 
 	v1Collections := []api.CollectionMetadata{}
 
