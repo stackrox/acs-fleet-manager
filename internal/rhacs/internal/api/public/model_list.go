@@ -11,7 +11,7 @@ package public
 
 // List struct for List
 type List struct {
-	Kind           string `json:"kind"`
-	NextPageCursor string `json:"next_page_cursor,omitempty"`
-	Size           int32  `json:"size"`
+	Kind string `json:"kind"`
+	Page int32  `json:"page"`
+	Size int32  `json:"size"`
 }

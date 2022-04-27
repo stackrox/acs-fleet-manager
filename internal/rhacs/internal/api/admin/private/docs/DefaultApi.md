@@ -99,7 +99,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **name** | **optional.String**| Name of the request | 
  **ownerUser** | **optional.String**| User that owns the request | 
- **pageCursor** | **optional.String**| Page cursor, provided with each page in case more pages are remaining. If missing then the first page is returned. | 
+ **page** | **optional.String**| Page index | 
  **size** | **optional.String**| Number of items in each page | 
 
 ### Return type

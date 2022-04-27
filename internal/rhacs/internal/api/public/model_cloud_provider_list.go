@@ -11,8 +11,8 @@ package public
 
 // CloudProviderList struct for CloudProviderList
 type CloudProviderList struct {
-	Kind           string          `json:"kind"`
-	NextPageCursor string          `json:"next_page_cursor,omitempty"`
-	Size           int32           `json:"size"`
-	Items          []CloudProvider `json:"items"`
+	Kind  string          `json:"kind"`
+	Page  int32           `json:"page"`
+	Size  int32           `json:"size"`
+	Items []CloudProvider `json:"items"`
 }

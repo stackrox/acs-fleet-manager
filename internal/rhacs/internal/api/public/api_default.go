@@ -402,10 +402,10 @@ func (a *DefaultApiService) GetCentralById(ctx _context.Context, id string) (Cen
 
 // GetCentralsOpts Optional parameters for the method 'GetCentrals'
 type GetCentralsOpts struct {
-	Name       optional.String
-	OwnerUser  optional.String
-	PageCursor optional.String
-	Size       optional.String
+	Name      optional.String
+	OwnerUser optional.String
+	Page      optional.String
+	Size      optional.String
 }
 
 /*
@@ -415,7 +415,7 @@ Only returns those centrals that are owned by the organisation of the user authe
  * @param optional nil or *GetCentralsOpts - Optional Parameters:
  * @param "Name" (optional.String) -  Name of the request
  * @param "OwnerUser" (optional.String) -  User that owns the request
- * @param "PageCursor" (optional.String) -  Page cursor, provided with each page in case more pages are remaining. If missing then the first page is returned.
+ * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
 @return CentralRequestList
 */
@@ -441,8 +441,8 @@ func (a *DefaultApiService) GetCentrals(ctx _context.Context, localVarOptionals 
 	if localVarOptionals != nil && localVarOptionals.OwnerUser.IsSet() {
 		localVarQueryParams.Add("owner_user", parameterToString(localVarOptionals.OwnerUser.Value(), ""))
 	}
-	if localVarOptionals != nil && localVarOptionals.PageCursor.IsSet() {
-		localVarQueryParams.Add("page_cursor", parameterToString(localVarOptionals.PageCursor.Value(), ""))
+	if localVarOptionals != nil && localVarOptionals.Page.IsSet() {
+		localVarQueryParams.Add("page", parameterToString(localVarOptionals.Page.Value(), ""))
 	}
 	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
 		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))
@@ -541,7 +541,7 @@ func (a *DefaultApiService) GetCentrals(ctx _context.Context, localVarOptionals 
 
 // GetCloudProviderRegionsOpts Optional parameters for the method 'GetCloudProviderRegions'
 type GetCloudProviderRegionsOpts struct {
-	PageCursor   optional.String
+	Page         optional.String
 	Size         optional.String
 	InstanceType optional.String
 }
@@ -551,7 +551,7 @@ GetCloudProviderRegions Returns the list of supported regions of the supported c
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
  * @param optional nil or *GetCloudProviderRegionsOpts - Optional Parameters:
- * @param "PageCursor" (optional.String) -  Page cursor, provided with each page in case more pages are remaining. If missing then the first page is returned.
+ * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
  * @param "InstanceType" (optional.String) -  The Central instance type to filter the results by
 @return CloudRegionList
@@ -574,8 +574,8 @@ func (a *DefaultApiService) GetCloudProviderRegions(ctx _context.Context, id str
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	if localVarOptionals != nil && localVarOptionals.PageCursor.IsSet() {
-		localVarQueryParams.Add("page_cursor", parameterToString(localVarOptionals.PageCursor.Value(), ""))
+	if localVarOptionals != nil && localVarOptionals.Page.IsSet() {
+		localVarQueryParams.Add("page", parameterToString(localVarOptionals.Page.Value(), ""))
 	}
 	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
 		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))
@@ -657,15 +657,15 @@ func (a *DefaultApiService) GetCloudProviderRegions(ctx _context.Context, id str
 
 // GetCloudProvidersOpts Optional parameters for the method 'GetCloudProviders'
 type GetCloudProvidersOpts struct {
-	PageCursor optional.String
-	Size       optional.String
+	Page optional.String
+	Size optional.String
 }
 
 /*
 GetCloudProviders Returns the list of supported cloud providers
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param optional nil or *GetCloudProvidersOpts - Optional Parameters:
- * @param "PageCursor" (optional.String) -  Page cursor, provided with each page in case more pages are remaining. If missing then the first page is returned.
+ * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
 @return CloudProviderList
 */
@@ -685,8 +685,8 @@ func (a *DefaultApiService) GetCloudProviders(ctx _context.Context, localVarOpti
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	if localVarOptionals != nil && localVarOptionals.PageCursor.IsSet() {
-		localVarQueryParams.Add("page_cursor", parameterToString(localVarOptionals.PageCursor.Value(), ""))
+	if localVarOptionals != nil && localVarOptionals.Page.IsSet() {
+		localVarQueryParams.Add("page", parameterToString(localVarOptionals.Page.Value(), ""))
 	}
 	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
 		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))

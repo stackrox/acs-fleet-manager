@@ -145,7 +145,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **name** | **optional.String**| Name of the request | 
  **ownerUser** | **optional.String**| User that owns the request | 
- **pageCursor** | **optional.String**| Page cursor, provided with each page in case more pages are remaining. If missing then the first page is returned. | 
+ **page** | **optional.String**| Page index | 
  **size** | **optional.String**| Number of items in each page | 
 
 ### Return type
@@ -189,7 +189,7 @@ Optional parameters are passed through a pointer to a GetCloudProviderRegionsOpt
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **pageCursor** | **optional.String**| Page cursor, provided with each page in case more pages are remaining. If missing then the first page is returned. | 
+ **page** | **optional.String**| Page index | 
  **size** | **optional.String**| Number of items in each page | 
  **instanceType** | **optional.String**| The Central instance type to filter the results by | 
 
@@ -232,7 +232,7 @@ Optional parameters are passed through a pointer to a GetCloudProvidersOpts stru
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **pageCursor** | **optional.String**| Page cursor, provided with each page in case more pages are remaining. If missing then the first page is returned. | 
+ **page** | **optional.String**| Page index | 
  **size** | **optional.String**| Number of items in each page | 
 
 ### Return type

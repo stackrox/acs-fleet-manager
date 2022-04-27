@@ -31,13 +31,12 @@ paths:
         required: false
         schema:
           type: string
-      - description: Page cursor, provided with each page in case more pages are remaining.
-          If missing then the first page is returned.
+      - description: Page index
         examples:
-          page_cursor:
-            value: ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg==
+          page:
+            value: "1"
         in: query
-        name: page_cursor
+        name: page
         required: false
         schema:
           type: string
@@ -349,13 +348,14 @@ components:
       properties:
         kind:
           type: string
-        next_page_cursor:
-          type: string
+        page:
+          type: integer
         size:
           type: integer
       required:
       - items
       - kind
+      - page
       - size
       type: object
     DinosaurDetails_routes:

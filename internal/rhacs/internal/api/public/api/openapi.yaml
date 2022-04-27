@@ -309,14 +309,13 @@ paths:
         schema:
           type: string
         style: form
-      - description: Page cursor, provided with each page in case more pages are remaining.
-          If missing then the first page is returned.
+      - description: Page index
         examples:
-          page_cursor:
-            value: ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg==
+          page:
+            value: "1"
         explode: true
         in: query
-        name: page_cursor
+        name: page
         required: false
         schema:
           type: string
@@ -346,8 +345,8 @@ paths:
           content:
             application/json:
               examples:
-                InvalidQueryExample:
-                  $ref: '#/components/examples/400MalformedPageCursorExample'
+                MissingParameterExample:
+                  $ref: '#/components/examples/400MissingParameterExample'
               schema:
                 $ref: '#/components/schemas/Error'
           description: Bad request
@@ -484,14 +483,13 @@ paths:
     get:
       operationId: getCloudProviders
       parameters:
-      - description: Page cursor, provided with each page in case more pages are remaining.
-          If missing then the first page is returned.
+      - description: Page index
         examples:
-          page_cursor:
-            value: ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg==
+          page:
+            value: "1"
         explode: true
         in: query
-        name: page_cursor
+        name: page
         required: false
         schema:
           type: string
@@ -547,14 +545,13 @@ paths:
         schema:
           type: string
         style: simple
-      - description: Page cursor, provided with each page in case more pages are remaining.
-          If missing then the first page is returned.
+      - description: Page index
         examples:
-          page_cursor:
-            value: ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg==
+          page:
+            value: "1"
         explode: true
         in: query
-        name: page_cursor
+        name: page
         required: false
         schema:
           type: string
@@ -661,7 +658,7 @@ components:
       value:
         kind: CentralRequestList
         size: "1"
-        next_page_cursor: ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg==
+        page: "1"
         items:
         - id: 1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
           kind: central
@@ -731,14 +728,6 @@ components:
         code: RHACS-MGMT-103
         reason: Synchronous action is not supported, use async=true parameter
         operation_id: 1iWIimqGcrDuL61aUxIZqBTqNRa
-    "400MalformedPageCursorExample":
-      value:
-        id: "23"
-        kind: Error
-        href: /api/rhacs/v1/errors/23
-        code: RHACS-MGMT-23
-        reason: Malformed page cursor
-        operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
     "400MissingParameterExample":
       value:
         id: "21"
@@ -844,15 +833,14 @@ components:
           type: string
         type: array
       style: form
-    page_cursor:
-      description: Page cursor, provided with each page in case more pages are remaining.
-        If missing then the first page is returned.
+    page:
+      description: Page index
       examples:
-        page_cursor:
-          value: ODBEN0RDQzgtNzE5MS00QzM2LUJCQjgtNTFEQzIzQjhCOUFECg==
+        page:
+          value: "1"
       explode: true
       in: query
-      name: page_cursor
+      name: page
       required: false
       schema:
         type: string
@@ -922,13 +910,14 @@ components:
       properties:
         kind:
           type: string
-        next_page_cursor:
-          type: string
+        page:
+          type: integer
         size:
           type: integer
       required:
       - items
       - kind
+      - page
       - size
       type: object
     Error:
@@ -1130,7 +1119,7 @@ components:
       required:
       - max_capacity_reached
     CloudProviderList_allOf:
-      example: '{"kind":"CloudProviderList","size":"1","item":{"$ref":"#/components/examples/CloudProviderExample"}}'
+      example: '{"kind":"CloudProviderList","page":"1","size":"1","item":{"$ref":"#/components/examples/CloudProviderExample"}}'
       properties:
         items:
           items:
@@ -1138,7 +1127,7 @@ components:
             - $ref: '#/components/schemas/CloudProvider'
           type: array
     CloudRegionList_allOf:
-      example: '{"kind":"CloudRegionList","size":"1","item":{"$ref":"#/components/examples/CloudRegionExample"}}'
+      example: '{"kind":"CloudRegionList","page":"1","size":"1","item":{"$ref":"#/components/examples/CloudRegionExample"}}'
       properties:
         items:
           items:

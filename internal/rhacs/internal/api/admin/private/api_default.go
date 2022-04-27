@@ -262,10 +262,10 @@ func (a *DefaultApiService) GetDinosaurById(ctx _context.Context, id string) (Di
 
 // GetDinosaursOpts Optional parameters for the method 'GetDinosaurs'
 type GetDinosaursOpts struct {
-	Name       optional.String
-	OwnerUser  optional.String
-	PageCursor optional.String
-	Size       optional.String
+	Name      optional.String
+	OwnerUser optional.String
+	Page      optional.String
+	Size      optional.String
 }
 
 /*
@@ -274,7 +274,7 @@ GetDinosaurs Returns a list of Dinosaurs
  * @param optional nil or *GetDinosaursOpts - Optional Parameters:
  * @param "Name" (optional.String) -  Name of the request
  * @param "OwnerUser" (optional.String) -  User that owns the request
- * @param "PageCursor" (optional.String) -  Page cursor, provided with each page in case more pages are remaining. If missing then the first page is returned.
+ * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
 @return DinosaurList
 */
@@ -300,8 +300,8 @@ func (a *DefaultApiService) GetDinosaurs(ctx _context.Context, localVarOptionals
 	if localVarOptionals != nil && localVarOptionals.OwnerUser.IsSet() {
 		localVarQueryParams.Add("owner_user", parameterToString(localVarOptionals.OwnerUser.Value(), ""))
 	}
-	if localVarOptionals != nil && localVarOptionals.PageCursor.IsSet() {
-		localVarQueryParams.Add("page_cursor", parameterToString(localVarOptionals.PageCursor.Value(), ""))
+	if localVarOptionals != nil && localVarOptionals.Page.IsSet() {
+		localVarQueryParams.Add("page", parameterToString(localVarOptionals.Page.Value(), ""))
 	}
 	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
 		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))

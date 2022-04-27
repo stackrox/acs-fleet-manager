@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Kind** | **string** |  | 
-**NextPageCursor** | **string** |  | [optional] 
+**Page** | **int32** |  | 
 **Size** | **int32** |  | 
 **Items** | [**[]CloudProvider**](CloudProvider.md) |  | 
 

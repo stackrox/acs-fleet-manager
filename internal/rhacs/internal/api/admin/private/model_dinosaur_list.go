@@ -11,8 +11,8 @@ package private
 
 // DinosaurList struct for DinosaurList
 type DinosaurList struct {
-	Kind           string     `json:"kind"`
-	NextPageCursor string     `json:"next_page_cursor,omitempty"`
-	Size           int32      `json:"size"`
-	Items          []Dinosaur `json:"items"`
+	Kind  string     `json:"kind"`
+	Page  int32      `json:"page"`
+	Size  int32      `json:"size"`
+	Items []Dinosaur `json:"items"`
 }
