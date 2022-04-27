@@ -35,12 +35,10 @@ func main() {
 		Long: "fleet-manager is a service that exposes a Rest API to manage RHACS Centrsal instances.",
 	}
 
-	/* TODO determine what this is
 	err = env.AddFlags(rootCmd.PersistentFlags())
 	if err != nil {
 		glog.Fatalf("Unable to add global flags: %s", err.Error())
 	}
-	*/
 
 	env.MustInvoke(func(subcommands []*cobra.Command) {
 		rootCmd.AddCommand(subcommands...)
