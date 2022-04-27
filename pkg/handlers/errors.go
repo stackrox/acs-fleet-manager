@@ -37,7 +37,7 @@ func (h ErrorHandler) List(w http.ResponseWriter, r *http.Request) {
 
 			errorList := compat.ErrorList{
 				Kind:  "ErrorList",
-				NextPageCursor: listArgs.NextPageCursor,
+				Page: int32(listArgs.Page),
 				Size:  int32(len(allErrors)),
 				Items: []compat.Error{},
 			}

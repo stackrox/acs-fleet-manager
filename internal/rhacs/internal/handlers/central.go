@@ -97,17 +97,17 @@ func (h centralHandler) List(w http.ResponseWriter, r *http.Request) {
 			listArgs := coreServices.NewListArguments(r.URL.Query())
 
 			if err := listArgs.Validate(); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list dinosaur requests: %s", err.Error())
+				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list central requests: %s", err.Error())
 			}
 
-			centralRequests, _, err := h.service.List(ctx, listArgs)
+			centralRequests, paging, err := h.service.List(ctx, listArgs)
 			if err != nil {
 				return nil, err
 			}
 			centralRequestList := public.CentralRequestList{
 				Kind: presenters.CentralRequestListKind,
-				NextPageCursor: "",
-				Size: 0, 
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
 				Items: []public.CentralRequest{},
 			}
 			for _, centralRequest := range centralRequests {

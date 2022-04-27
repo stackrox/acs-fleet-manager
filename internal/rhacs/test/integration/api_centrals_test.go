@@ -59,8 +59,8 @@ var _ = g.Describe("API resources", func() {
 					Expect(response.StatusCode).To(Equal(http.StatusOK))
 					Expect(centrals.Kind).To(Equal("CentralRequestList"))
 					Expect(centrals.Items).To(BeEmpty())
-					Expect(centrals.NextPageCursor).To(BeEmpty())
-					Expect(centrals.Size).To(BeEquivalentTo(0))
+					Expect(centrals.Page).To(BeEquivalentTo(1))
+					Expect(centrals.Size).To(BeEquivalentTo(100))
 				})
 			})
 	

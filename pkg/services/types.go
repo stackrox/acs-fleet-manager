@@ -10,15 +10,18 @@ import (
 // ListArguments are arguments relevant for listing objects.
 // This struct is common to all service List funcs in this package
 type ListArguments struct {
+	Page     int
 	Size     int
-	NextPageCursor string
 }
 
 // NewListArguments - Create ListArguments from url query parameters with sane defaults
 func NewListArguments(params url.Values) *ListArguments {
 	listArgs := &ListArguments{
+		Page: 	1,
 		Size:   100,
-		NextPageCursor: "",
+	}
+	if v := params.Get("page"); v != "" {
+		listArgs.Page, _ = strconv.Atoi(v)
 	}
 	if v := params.Get("size"); v != "" {
 		listArgs.Size, _ = strconv.Atoi(v)
@@ -27,9 +30,6 @@ func NewListArguments(params url.Values) *ListArguments {
 		// 65500 is the maximum number of parameters that can be provided to a postgres WHERE IN clause
 		// Use it as a sane max
 		listArgs.Size = 65500
-	}
-	if v := params.Get("next_page_cursor"); v != "" {
-		listArgs.NextPageCursor = v
 	}
 
 	return listArgs

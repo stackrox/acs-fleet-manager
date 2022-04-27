@@ -33,7 +33,10 @@ func NewCentralService() *centralService {
 func (k *centralService) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError) {
 	// FIXME
 	var centralRequestList dbapi.CentralList
-	pagingMeta := &api.PagingMeta{} // FIXME PagingMeta makes no sense for cursor pagination, so it is ignored in centralHandler.List
+	pagingMeta := &api.PagingMeta{
+		Page: listArgs.Page,
+		Size: listArgs.Size,
+	}
 
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
