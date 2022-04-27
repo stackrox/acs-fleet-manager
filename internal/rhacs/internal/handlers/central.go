@@ -82,6 +82,10 @@ func (h centralHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 func (h centralHandler) Update(w http.ResponseWriter, r *http.Request) {
 	// TODO
+	// TODO take https://github.com/bf2fc6cc711aee1a0c2a/ffm-fleet-manager-go-template/pull/37 and
+	// https://bf2.zulipchat.com/#narrow/stream/315461-factorized-fleet-manager/topic/How.20is.20listing.20kafkas.20restricted.20by.20customer.3F/near/280317885
+	// into account when implementing authorization
+
 	logger.Logger.Warningf("Central update request received")
 	var updateRequest public.CentralUpdateRequest
 	id := mux.Vars(r)["id"]
