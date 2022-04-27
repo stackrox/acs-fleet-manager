@@ -69,7 +69,15 @@ var _ = g.Describe("API resources", func() {
 					_, response, err := client.DefaultApi.GetCentralById(ctx, "missing ID")
 					Expect(err).Error()
 					Expect(response.StatusCode).To(Equal(http.StatusNotFound))
-				})	
+				})
+			})
+
+			g.When("updating a missing central", func() {
+				g.It("returns not found error", func() {
+					_, response, err := client.DefaultApi.GetCentralById(ctx, "missing ID")
+					Expect(err).Error()
+					Expect(response.StatusCode).To(Equal(http.StatusNotFound))
+				})
 			})
 		})
 	})

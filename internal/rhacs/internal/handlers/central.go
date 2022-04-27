@@ -3,9 +3,10 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/stackrox/acs-fleet-manager/internal/rhacs/internal/presenters"
+	"github.com/stackrox/acs-fleet-manager/internal/rhacs/internal/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/rhacs/internal/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/rhacs/internal/config"
+	"github.com/stackrox/acs-fleet-manager/internal/rhacs/internal/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/rhacs/internal/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
@@ -82,6 +83,35 @@ func (h centralHandler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h centralHandler) Update(w http.ResponseWriter, r *http.Request) {
 	// TODO
 	logger.Logger.Warningf("Central update request received")
+	var updateRequest public.CentralUpdateRequest
+	id := mux.Vars(r)["id"]
+	ctx := r.Context()
+	tenantRequest, tenantGetError := h.service.Get(ctx, id)
+	validateTenantFound := func() handlers.Validate {
+		return func() *errors.ServiceError {
+			return tenantGetError
+		}
+	}
+	cfg := &handlers.HandlerConfig{
+		MarshalInto: &updateRequest,
+		Validate: []handlers.Validate{
+			validateTenantFound(),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			// TODO implement update logic
+			var updateTenantRequest *dbapi.CentralRequest
+			svcErr := h.service.Update(updateTenantRequest)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+
+			// FIXME: tenantRequest should be updated according to the request params
+			return presenters.PresentCentralRequest(tenantRequest), nil
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
+
+
 	// return 202 status accepted
 	handlers.Handle(w, r, noopHandlerConfig, http.StatusAccepted)
 }
