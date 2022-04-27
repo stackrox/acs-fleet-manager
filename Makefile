@@ -293,7 +293,7 @@ install: verify lint
 #   make test TESTFLAGS="-run TestSomething"
 test: gotestsum
 	OCM_ENV=testing $(GOTESTSUM) --junitfile data/results/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
-		$(shell go list ./... | grep -v /test)
+		$(shell go list ./... | grep -v /test | grep -v /dinosaur)
 .PHONY: test
 
 # Precompile everything required for development/test.
