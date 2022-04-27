@@ -3,5 +3,8 @@ run:
     - internal/dinosaur/internal/api/public
     - internal/dinosaur/internal/api/private
     - internal/dinosaur/internal/api/admin/private
+    - internal/rhacs/internal/api/public
+    - internal/rhacs/internal/api/private
+    - internal/rhacs/internal/api/admin/private
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 10m
