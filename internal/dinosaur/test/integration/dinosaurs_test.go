@@ -20,10 +20,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/common"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/mocks/fleetshardsync"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/test/mocks"
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/test/mocks"
 )
 
 const (
@@ -35,6 +35,8 @@ const (
 
 // TestDinosaurCreate_Success validates the happy path of the dinosaur post endpoint:
 func TestDinosaurCreate_Success(t *testing.T) {
+	skipNotFullyImplementedYet(t)
+
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -148,6 +150,8 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 //
 // these could also be unit tests
 func TestDinosaurPost_Validations(t *testing.T) {
+	skipNotFullyImplementedYet(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -233,6 +237,8 @@ func TestDinosaurPost_Validations(t *testing.T) {
 
 // TestDinosaurPost_NameUniquenessValidations tests dinosaur cluster name uniqueness verification during its creation by the API
 func TestDinosaurPost_NameUniquenessValidations(t *testing.T) {
+	skipNotFullyImplementedYet(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -282,6 +288,8 @@ func TestDinosaurPost_NameUniquenessValidations(t *testing.T) {
 
 // TestDinosaurGet tests getting dinosaurs via the API endpoint
 func TestDinosaurGet(t *testing.T) {
+	skipNotFullyImplementedYet(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -476,6 +484,8 @@ func TestDinosaur_Delete(t *testing.T) {
 
 // TestDinosaurList_Success tests getting dinosaur requests list
 func TestDinosaurList_Success(t *testing.T) {
+	skipNotFullyImplementedYet(t)
+
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()

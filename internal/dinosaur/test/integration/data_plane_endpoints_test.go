@@ -18,12 +18,12 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/common"
 
-	coreTest "github.com/stackrox/acs-fleet-manager/test"
-	"github.com/stackrox/acs-fleet-manager/test/mocks"
 	"github.com/golang-jwt/jwt/v4"
 	. "github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	coreTest "github.com/stackrox/acs-fleet-manager/test"
+	"github.com/stackrox/acs-fleet-manager/test/mocks"
 )
 
 const (
@@ -100,6 +100,8 @@ func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer 
 }
 
 func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
+	skipNotFullyImplementedYet(t)
+
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{

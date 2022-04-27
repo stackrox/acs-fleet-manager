@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/golang-jwt/jwt/v4"
+	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	adminprivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
@@ -15,8 +17,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
 	coreTest "github.com/stackrox/acs-fleet-manager/test"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
-	"github.com/golang-jwt/jwt/v4"
-	. "github.com/onsi/gomega"
 )
 
 func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []string) context.Context {
@@ -38,6 +38,8 @@ func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []s
 }
 
 func TestAdminDinosaur_Get(t *testing.T) {
+	skipNotFullyImplementedYet(t)
+
 	sampleDinosaurID := api.NewID()
 	desiredDinosaurOperatorVersion := "test"
 	type args struct {
