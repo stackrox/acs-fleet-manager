@@ -372,8 +372,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               examples:
-                InvalidQueryExample:
-                  $ref: '#/components/examples/400MalformedPageCursorExample'
+                MissingParameterExample:
+                  $ref: '#/components/examples/400MissingParameterExample'
         "401":
           description: Auth token is invalid
           content:
@@ -901,14 +901,6 @@ components:
         code: "RHACS-MGMT-103"
         reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
-    400MalformedPageCursorExample:
-      value:
-        id: "23"
-        kind: "Error"
-        href: "/api/rhacs/v1/errors/23"
-        code: "RHACS-MGMT-23"
-        reason: "Malformed page cursor"
-        operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
     400MissingParameterExample:
       value:
         id: "21"
