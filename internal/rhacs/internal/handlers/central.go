@@ -76,8 +76,20 @@ func (h centralHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (h centralHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	// TODO
 	logger.Logger.Warningf("Central delete request received")
-	// return 202 status accepted
-	handlers.Handle(w, r, noopHandlerConfig, http.StatusAccepted)
+
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.ValidateAsyncEnabled(r, "deleting central requests"),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			ctx := r.Context()
+
+			err := h.service.RegisterCentralDeprovisionJob(ctx, id)
+			return nil, err
+		},
+	}
+	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
 }
 
 func (h centralHandler) Update(w http.ResponseWriter, r *http.Request) {

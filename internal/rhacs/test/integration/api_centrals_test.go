@@ -79,6 +79,22 @@ var _ = g.Describe("API resources", func() {
 					Expect(response.StatusCode).To(Equal(http.StatusNotFound))
 				})
 			})
+
+			g.When("deleting a missing central asynchronously", func() {
+				g.It("accepts the request", func() {
+					response, err := client.DefaultApi.DeleteCentralById(ctx, "missing central", true)
+					Expect(err).NotTo(HaveOccurred(), "Error deleting central: %v", err)
+					Expect(response.StatusCode).To(Equal(http.StatusAccepted))
+				})
+			})
+
+			g.When("deleting a missing central synchronously", func() {
+				g.It("rejects the request", func() {
+					response, err := client.DefaultApi.DeleteCentralById(ctx, "missing central", false)
+					Expect(err).Error()
+					Expect(response.StatusCode).To(Equal(http.StatusBadRequest))
+				})
+			})
 		})
 	})
 

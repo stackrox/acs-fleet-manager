@@ -20,6 +20,7 @@ type CentralService interface {
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError)
 	Get(ctx context.Context, id string) (*dbapi.CentralRequest, *errors.ServiceError)
 	Update(centralRequest *dbapi.CentralRequest) *errors.ServiceError
+	RegisterCentralDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 }
 
 var _ CentralService = &centralService{}
@@ -73,5 +74,13 @@ func (k *centralService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 func (k *centralService) Update(centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	// TODO
 	// FIXME: how can this work without taking a ctx?
+	return nil
+}
+
+func (k *centralService) RegisterCentralDeprovisionJob(ctx context.Context, id string) *errors.ServiceError {
+	if id == "" {
+		return errors.Validation("id is undefined")
+	}
+	// TODO implement
 	return nil
 }
