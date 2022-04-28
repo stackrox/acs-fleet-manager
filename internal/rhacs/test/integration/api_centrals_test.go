@@ -146,7 +146,7 @@ var _ = g.Describe("API resources", func() {
 		})
 	})
 
-	g.Context("Cloud providers resources", func() {
+	g.Context("Cloud providers resource", func() {
 		g.When("listing the cloud providers", func() {
 			g.It("returns an empty list", func() {
 				providers, response, err := client.DefaultApi.GetCloudProviders(ctx, nil)
@@ -168,6 +168,33 @@ var _ = g.Describe("API resources", func() {
 				Expect(providers.Items).To(BeEmpty())
 				Expect(providers.Page).To(BeEquivalentTo(1))
 				Expect(providers.Size).To(BeEquivalentTo(expectedDefaultPageSize))
+			})
+		})
+	})
+
+	g.Context("errors resource", func() {
+		g.When("listing all errors", func() {
+			g.It("returns the expected list of errors", func() {
+				errorList, response, err := client.ErrorsApi.GetErrors(ctx)
+				Expect(err).NotTo(HaveOccurred(), "Error listing errors: %v", err)
+				Expect(response.StatusCode).To(Equal(http.StatusOK))
+				Expect(errorList.Kind).To(Equal("ErrorList"))
+				Expect(errorList.Items).To(Not(BeEmpty()))
+				Expect(errorList.Page).To(BeEquivalentTo(1))
+				Expect(errorList.Size).To(BeEquivalentTo(40))
+			})
+		})
+
+		g.When("getting details for error 429", func() {
+			g.It("successfully returns the expected details", func() {
+				errorInfo, response, err := client.ErrorsApi.GetErrorById(ctx, "429")
+				Expect(err).NotTo(HaveOccurred(), "Error getting information for error '429': %v", err)
+				Expect(response.StatusCode).To(Equal(http.StatusOK))
+				Expect(errorInfo.Kind).To(Equal("Error"))
+				Expect(errorInfo.Id).To(Equal("429"))
+				Expect(errorInfo.Href).To(Equal("/api/rhacs/v1/errors/429"))
+				Expect(errorInfo.Code).To(Equal("RHACS-MGMT-429"))
+				Expect(errorInfo.Reason).To(Equal("Too Many requests"))
 			})
 		})
 	})
