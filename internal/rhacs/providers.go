@@ -44,6 +44,7 @@ func ServiceProviders() di.Option {
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(handlers.NewAuthenticationBuilder),
 		di.Provide(services.NewCentralService, di.As(new(services.CentralService))),
+		di.Provide(services.NewCloudProvidersService),
 	)
 }
 

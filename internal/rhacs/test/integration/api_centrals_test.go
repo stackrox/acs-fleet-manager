@@ -16,6 +16,10 @@ import (
 	itest "github.com/stackrox/acs-fleet-manager/internal/rhacs/test"
 )
 
+const (
+	expectedDefaultPageSize = 100
+)
+
 // Hack as in https://github.com/operator-framework/operator-sdk/issues/2913 and suggested in https://github.com/onsi/ginkgo/issues/9
 var Testing *testing.T
 
@@ -60,7 +64,7 @@ var _ = g.Describe("API resources", func() {
 					Expect(centrals.Kind).To(Equal("CentralRequestList"))
 					Expect(centrals.Items).To(BeEmpty())
 					Expect(centrals.Page).To(BeEquivalentTo(1))
-					Expect(centrals.Size).To(BeEquivalentTo(100))
+					Expect(centrals.Size).To(BeEquivalentTo(expectedDefaultPageSize))
 				})
 			})
 
@@ -141,5 +145,30 @@ var _ = g.Describe("API resources", func() {
 			})
 		})
 	})
-})
 
+	g.Context("Cloud providers resources", func() {
+		g.When("listing the cloud providers", func() {
+			g.It("returns an empty list", func() {
+				providers, response, err := client.DefaultApi.GetCloudProviders(ctx, nil)
+				Expect(err).NotTo(HaveOccurred(), "Error listing cloud providers: %v", err)
+				Expect(response.StatusCode).To(Equal(http.StatusOK))
+				Expect(providers.Kind).To(Equal("CloudProviderList"))
+				Expect(providers.Items).To(BeEmpty())
+				Expect(providers.Page).To(BeEquivalentTo(1))
+				Expect(providers.Size).To(BeEquivalentTo(expectedDefaultPageSize))
+			})
+		})
+
+		g.When("listing the regions for the 'aws' provider", func() {
+			g.It("returns an empty list", func() {
+				providers, response, err := client.DefaultApi.GetCloudProviders(ctx, nil)
+				Expect(err).NotTo(HaveOccurred(), "Error listing cloud providers: %v", err)
+				Expect(response.StatusCode).To(Equal(http.StatusOK))
+				Expect(providers.Kind).To(Equal("CloudProviderList"))
+				Expect(providers.Items).To(BeEmpty())
+				Expect(providers.Page).To(BeEquivalentTo(1))
+				Expect(providers.Size).To(BeEquivalentTo(expectedDefaultPageSize))
+			})
+		})
+	})
+})

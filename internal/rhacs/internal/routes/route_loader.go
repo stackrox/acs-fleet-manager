@@ -40,7 +40,7 @@ type options struct {
 
 	AMSClient                ocm.AMSClient
 	CentralService                 services.CentralService
-	// FIXME CloudProviders           services.CloudProvidersService
+	CloudProviders           services.CloudProvidersService
 	// FIXME Observatorium            services.ObservatoriumService
 	Keycloak                 coreServices.DinosaurKeycloakService
 	// FIXME DataPlaneCluster         services.DataPlaneClusterService
@@ -75,7 +75,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	centralHandler := handlers.NewCentralHandler(s.CentralService, s.ProviderConfig, s.AuthService)
 	serviceStatusHandler := handlers.NewServiceStatusHandler(s.CentralService, s.AccessControlListConfig)
-	// TODO cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
+	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
@@ -130,7 +130,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1CentralsCreateRouter.HandleFunc("", centralHandler.Create).Methods(http.MethodPost)
 	apiV1CentralsCreateRouter.Use(requireTermsAcceptance)
 
-	/* TODO
 	//  /cloud_providers
 	v1Collections = append(v1Collections, api.CollectionMetadata{
 		ID:   "cloud_providers",
@@ -143,7 +142,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1CloudProvidersRouter.HandleFunc("/{id}/regions", cloudProvidersHandler.ListCloudProviderRegions).
 		Name(logger.NewLogEvent("list-regions", "list cloud provider regions").ToString()).
 		Methods(http.MethodGet)
-	*/
 
 	v1Metadata := api.VersionMetadata{
 		ID:          "v1",
