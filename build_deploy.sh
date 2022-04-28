@@ -28,7 +28,7 @@
 # The machines that run this script need to have access to internet, so that
 # the built images can be pushed to quay.io.
 
-# The version should be the short hash from git. This is what the deployent process expects.
+# The version should be the short hash from git. This is what the deployment process expects.
 VERSION="$(git log --pretty=format:'%h' -n 1)"
 
 # Set the variable required to login and push images to the registry
@@ -42,7 +42,7 @@ DOCKER_CONFIG="${PWD}/.docker"
 # Set the Go path:
 export GOPATH="${PWD}/.gopath"
 export PATH="${PATH}:${GOPATH}/bin"
-LINK="${GOPATH}/src/github.com/stackrox/acs-fleet-manager" #TODO change repo url to match yours
+LINK="${GOPATH}/src/github.com/stackrox/acs-fleet-manager"
 
 # print go version
 go version  
@@ -86,7 +86,7 @@ make \
   version="${VERSION}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="$QUAY_ORG/fleet-manager" \ #TODO change quay repo to match yours
+  image_repository="$QUAY_ORG/fleet-manager" \
   docker/login \
   image/push
 
@@ -97,6 +97,6 @@ make \
   version="${BRANCH}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="$QUAY_ORG/fleet-manager" \ #TODO change quay repo to match yours
+  image_repository="$QUAY_ORG/fleet-manager" \
   docker/login \
   image/push
