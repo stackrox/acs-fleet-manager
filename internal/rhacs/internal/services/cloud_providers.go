@@ -7,14 +7,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 )
 
-const keyCloudProvidersWithRegions = "cloudProviderWithRegions"
-
-var cloudPoviderIdToDisplayNameMapping map[string]string = map[string]string{
-	"aws":   "Amazon Web Services",
-	"azure": "Microsoft Azure",
-	"gcp":   "Google Cloud Platform",
-}
-
 //go:generate moq -out cloud_providers_moq.go . CloudProvidersService
 type CloudProvidersService interface {
 	GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError)
