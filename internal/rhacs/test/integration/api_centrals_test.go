@@ -95,7 +95,8 @@ var _ = g.Describe("API resources", func() {
 
 			g.When("updating a missing central", func() {
 				g.It("returns not found error", func() {
-					_, response, err := client.DefaultApi.GetCentralById(ctx, "missing ID")
+					request := public.CentralUpdateRequest{}
+					_, response, err := client.DefaultApi.UpdateCentralById(ctx, "missing ID", request)
 					Expect(err).Error()
 					Expect(response.StatusCode).To(Equal(http.StatusNotFound))
 				})
