@@ -63,6 +63,23 @@ var _ = g.Describe("API resources", func() {
 					Expect(centrals.Size).To(BeEquivalentTo(100))
 				})
 			})
+
+			g.When("creating a new cental", func() {
+				payload := public.CentralRequestPayload{}
+
+				g.DescribeTable("it accepts the request", func(async bool) {
+						centralRequest, response, err := client.DefaultApi.CreateCentral(ctx, async, payload)
+						Expect(err).NotTo(HaveOccurred(), "Error creating central: %v", err)
+						Expect(response.StatusCode).To(Equal(http.StatusAccepted))
+						Expect(centralRequest.CloudProvider).To(Equal(payload.CloudProvider))
+						Expect(centralRequest.MultiAz).To(Equal(payload.MultiAz))
+						Expect(centralRequest.Name).To(Equal(payload.Name))
+						Expect(centralRequest.Region).To(Equal(payload.Region))				
+					},
+					g.Entry("for a synchronous request", false),
+					g.Entry("for an asynchronous request", true),
+				)	
+			})
 	
 			g.When("getting a missing central", func() {
 				g.It("returns not found error", func() {
