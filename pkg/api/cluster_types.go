@@ -265,6 +265,8 @@ func (cluster *Cluster) GetAvailableAndReadyDinosaurOperatorVersions() ([]Dinosa
 			},
 		},
 	}, nil
+
+	// TODO: Unreachable because of the fake implementation. Should be removed if fleet-shard set versions correctly.
 	dinosaurOperatorVersions, err := cluster.GetAvailableDinosaurOperatorVersions()
 	if err != nil {
 		return nil, err
