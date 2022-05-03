@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.4
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.5
 
 COPY \
     fleet-manager \
@@ -12,4 +12,4 @@ LABEL name="fleet-manager" \
       vendor="Red Hat" \
       version="0.0.1" \
       summary="FleetManager" \
-      description="Dinosaur Service Fleet Manager"
+      description="Red Hat Advanced Cluster Security Fleet Manager"
