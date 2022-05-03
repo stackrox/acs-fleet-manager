@@ -267,18 +267,18 @@ func (cluster *Cluster) GetAvailableAndReadyDinosaurOperatorVersions() ([]Dinosa
 	}, nil
 
 	// TODO: Unreachable because of the fake implementation. Should be removed if fleet-shard set versions correctly.
-	dinosaurOperatorVersions, err := cluster.GetAvailableDinosaurOperatorVersions()
-	if err != nil {
-		return nil, err
-	}
-
-	res := []DinosaurOperatorVersion{}
-	for _, val := range dinosaurOperatorVersions {
-		if val.Ready {
-			res = append(res, val)
-		}
-	}
-	return res, nil
+	//dinosaurOperatorVersions, err := cluster.GetAvailableDinosaurOperatorVersions()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//res := []DinosaurOperatorVersion{}
+	//for _, val := range dinosaurOperatorVersions {
+	//	if val.Ready {
+	//		res = append(res, val)
+	//	}
+	//}
+	//return res, nil
 }
 
 // GetAvailableDinosaurOperatorVersions returns the cluster's list of available dinosaur operator
