@@ -19,8 +19,8 @@ import (
 
 	"time"
 
-	ocmErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
+	ocmErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -527,7 +527,7 @@ func buildMockRequestHandler(successType interface{}, serviceErr *ocmErrors.Serv
 
 // marshalOCMType marshals known ocm types to a provided io.Writer using the ocm sdk marshallers
 func marshalOCMType(t interface{}, w io.Writer) error {
-	switch v := t.(type) { //nolint
+	switch v := t.(type) {
 	// handle cluster types
 	case *clustersmgmtv1.Cluster:
 		return clustersmgmtv1.MarshalCluster(v, w)

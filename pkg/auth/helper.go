@@ -155,7 +155,7 @@ func ParseJWTKeys(jwtKeyFilePath, jwtCAFilePath string) (*rsa.PrivateKey, *rsa.P
 	}
 
 	// Parse keys
-	privateKey, err := jwt.ParseRSAPrivateKeyFromPEMWithPassword(privateBytes, "passwd") //nolint
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEMWithPassword(privateBytes, "passwd")
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to parse JWT private key: %s", err.Error())
 	}

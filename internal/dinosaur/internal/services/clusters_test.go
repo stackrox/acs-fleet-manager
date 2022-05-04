@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strings"
 	"testing"
@@ -18,9 +19,9 @@ import (
 	"github.com/onsi/gomega"
 	"gorm.io/gorm"
 
+	mocket "github.com/selvatico/go-mocket"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
-	mocket "github.com/selvatico/go-mocket"
 )
 
 var (
@@ -1198,9 +1199,7 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ListAllClusterIds() got = %v, want %v", got, tt.want)
 			}
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("ListAllClusterIds() got1 = %v, want %v", got1, tt.want1)
-			}
+			assert.ErrorIs(t, got1, tt.want1)
 		})
 	}
 }
