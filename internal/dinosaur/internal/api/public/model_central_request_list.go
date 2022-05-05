@@ -9,9 +9,11 @@
 
 package public
 
-// MetricsRangeQueryList struct for MetricsRangeQueryList
-type MetricsRangeQueryList struct {
-	Kind  string       `json:"kind,omitempty"`
-	Id    string       `json:"id,omitempty"`
-	Items []RangeQuery `json:"items,omitempty"`
+// CentralRequestList struct for CentralRequestList
+type CentralRequestList struct {
+	Kind  string           `json:"kind"`
+	Page  int32            `json:"page"`
+	Size  int32            `json:"size"`
+	Total int32            `json:"total"`
+	Items []CentralRequest `json:"items"`
 }
