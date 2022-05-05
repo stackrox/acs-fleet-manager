@@ -90,7 +90,7 @@ func ValidateCloudProvider(dinosaurService *services.DinosaurService, dinosaurRe
 	}
 }
 
-func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.DinosaurRequestPayload, dinosaurRequest *dbapi.DinosaurRequest) handlers.Validate {
+func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.CentralRequestPayload, dinosaurRequest *dbapi.DinosaurRequest) handlers.Validate {
 	return func() *errors.ServiceError {
 		dinosaurRequest = presenters.ConvertDinosaurRequest(*dinosaurRequestPayload, dinosaurRequest)
 		claims, err := auth.GetClaimsFromContext(ctx)

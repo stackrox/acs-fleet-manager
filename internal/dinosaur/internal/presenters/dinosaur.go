@@ -6,7 +6,7 @@ import (
 )
 
 // ConvertDinosaurRequest from payload to DinosaurRequest
-func ConvertDinosaurRequest(dinosaurRequestPayload public.DinosaurRequestPayload, dbDinosaurrequest ...*dbapi.DinosaurRequest) *dbapi.DinosaurRequest {
+func ConvertDinosaurRequest(dinosaurRequestPayload public.CentralRequestPayload, dbDinosaurrequest ...*dbapi.DinosaurRequest) *dbapi.DinosaurRequest {
 	// TODO implement converter
 	var dinosaur *dbapi.DinosaurRequest = &dbapi.DinosaurRequest{}
 
@@ -18,10 +18,10 @@ func ConvertDinosaurRequest(dinosaurRequestPayload public.DinosaurRequestPayload
 	return dinosaur
 }
 
-// PresentDinosaurRequest - create DinosaurRequest in an appropriate format ready to be returned by the API
-func PresentDinosaurRequest(dinosaurRequest *dbapi.DinosaurRequest) public.DinosaurRequest {
+// PresentDinosaurRequest - create CentralRequest in an appropriate format ready to be returned by the API
+func PresentDinosaurRequest(dinosaurRequest *dbapi.DinosaurRequest) public.CentralRequest {
 	// TODO implement presenter
-	var res public.DinosaurRequest
+	var res public.CentralRequest
 
 	return res
 }
