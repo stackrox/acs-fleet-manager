@@ -187,6 +187,8 @@ components:
       properties:
         kind:
           type: string
+      discriminator:
+        propertyName: kind
 
     PrivateObjectReference:
       type: object
@@ -203,6 +205,11 @@ components:
           type: string
         dinosaurOperator:
           type: string
+      required:
+        - id
+        - kind
+      discriminator:
+        propertyName: kind
 
     ManagedDinosaur:
       allOf:
