@@ -110,7 +110,7 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			dinosaurRequestList := public.CentralRequestList{
-				Kind:  "DinosaurRequestList",
+				Kind:  "CentralRequestList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
 				Total: int32(paging.Total),

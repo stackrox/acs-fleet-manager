@@ -1,6 +1,12 @@
 package integration
 
 import (
+	"github.com/stackrox/acs-fleet-manager/test/mocks"
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+)
+
+/* TODO(ROX-10709)
+import (
 	"context"
 	"fmt"
 	"net/http"
@@ -350,6 +356,7 @@ func findManagedDinosaurByID(slice []private.ManagedDinosaur, dinosaurId string)
 	}
 	return nil
 }
+*/
 
 func mockedClusterWithMetricsInfo(computeNodes int) (*clustersmgmtv1.Cluster, error) {
 	clusterBuilder := mocks.GetMockClusterBuilder(nil)
