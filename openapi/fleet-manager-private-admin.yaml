@@ -196,81 +196,79 @@ paths:
 
 components:
   schemas:
-    DinosaurDetails:
-      type: object
-      properties:
-        status:
-          description: "Values: [accepted, preparing, provisioning, ready, failed, deprovision, deleting] "
-          type: string
-        cloud_provider:
-          description: "Name of Cloud used to deploy. For example AWS"
-          type: string
-        multi_az:
-          type: boolean
-        region:
-          description: "Values will be regions of specific cloud provider. For example: us-east-1 for AWS"
-          type: string
-        owner:
-          type: string
-        name:
-          type: string
-        host:
-          type: string
-        created_at:
-          format: date-time
-          type: string
-        updated_at:
-          format: date-time
-          type: string
-        failed_reason:
-          type: string
-        actual_dinosaur_version:
-          type: string
-        actual_dinosaur_operator_version:
-          type: string
-        desired_dinosaur_version:
-          type: string
-        desired_dinosaur_operator_version:
-          type: string
-        dinosaur_upgrading:
-          type: boolean
-        dinosaur_operator_upgrading:
-          type: boolean
-        organisation_id:
-          type: string
-        subscription_id:
-          type: string
-        owner_account_id:
-          type: string
-        account_number:
-          type: string
-        instance_type:
-          type: string
-        quota_type:
-          type: string
-        routes:
-          type: array
-          items:
-            type: object
-            properties:
-              domain:
-                type: string
-              router:
-                type: string
-        routes_created:
-          type: boolean
-        cluster_id:
-          type: string
-        namespace:
-          type: string
     Dinosaur:
       allOf:
         - $ref: 'fleet-manager.yaml#/components/schemas/ObjectReference'
-        - $ref: "#/components/schemas/DinosaurDetails"
         - required:
           - multi_az
           - dinosaur_operator_upgrading
           - dinosaur_upgrading
+        - type: object
+          properties:
+            status:
+              description: "Values: [accepted, preparing, provisioning, ready, failed, deprovision, deleting] "
+              type: string
+            cloud_provider:
+              description: "Name of Cloud used to deploy. For example AWS"
+              type: string
+            multi_az:
+              type: boolean
+            region:
+              description: "Values will be regions of specific cloud provider. For example: us-east-1 for AWS"
+              type: string
+            owner:
+              type: string
+            name:
+              type: string
+            host:
+              type: string
+            created_at:
+              format: date-time
+              type: string
+            updated_at:
+              format: date-time
+              type: string
+            failed_reason:
+              type: string
+            actual_dinosaur_version:
+              type: string
+            actual_dinosaur_operator_version:
+              type: string
+            desired_dinosaur_version:
+              type: string
+            desired_dinosaur_operator_version:
+              type: string
+            dinosaur_upgrading:
+              type: boolean
+            dinosaur_operator_upgrading:
+              type: boolean
+            organisation_id:
+              type: string
+            subscription_id:
+              type: string
+            owner_account_id:
+              type: string
+            account_number:
+              type: string
+            instance_type:
+              type: string
+            quota_type:
+              type: string
+            routes:
+              type: array
+              items:
+                type: object
+                properties:
+                  domain:
+                    type: string
+                  router:
+                    type: string
+            routes_created:
+              type: boolean
+            cluster_id:
+              type: string
+            namespace:
+              type: string
     DinosaurList:
       allOf:
         - $ref: "fleet-manager.yaml#/components/schemas/List"
