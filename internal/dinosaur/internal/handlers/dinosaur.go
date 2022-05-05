@@ -33,7 +33,7 @@ func NewDinosaurHandler(service services.DinosaurService, providerConfig *config
 }
 
 func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var dinosaurRequest public.DinosaurRequestPayload
+	var dinosaurRequest public.CentralRequestPayload
 	ctx := r.Context()
 	convDinosaur := &dbapi.DinosaurRequest{}
 
@@ -109,12 +109,12 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			dinosaurRequestList := public.DinosaurRequestList{
+			dinosaurRequestList := public.CentralRequestList{
 				Kind:  "DinosaurRequestList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
 				Total: int32(paging.Total),
-				Items: []public.DinosaurRequest{},
+				Items: []public.CentralRequest{},
 			}
 
 			for _, dinosaurRequest := range dinosaurRequests {
@@ -131,7 +131,7 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // Update is the handler for updating a dinosaur request
 func (h dinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
-	var dinosaurUpdateReq public.DinosaurUpdateRequest
+	var dinosaurUpdateReq public.CentralUpdateRequest
 	id := mux.Vars(r)["id"]
 	ctx := r.Context()
 	dinosaurRequest, dinosaurGetError := h.service.Get(ctx, id)
