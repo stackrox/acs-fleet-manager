@@ -9,9 +9,8 @@
 
 package public
 
-// MetricsRangeQueryList struct for MetricsRangeQueryList
-type MetricsRangeQueryList struct {
-	Kind  string       `json:"kind,omitempty"`
-	Id    string       `json:"id,omitempty"`
-	Items []RangeQuery `json:"items,omitempty"`
+// ServiceStatusCentrals The RHACS resource api status
+type ServiceStatusCentrals struct {
+	// Indicates whether maximum service capacity has been reached
+	MaxCapacityReached bool `json:"max_capacity_reached"`
 }
