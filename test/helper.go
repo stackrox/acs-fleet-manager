@@ -199,7 +199,7 @@ func (helper *Helper) RestURL(path string) string {
 	if serverConfig.EnableHTTPS {
 		protocol = "https"
 	}
-	return fmt.Sprintf("%s://%s/api/dinosaurs_mgmt/v1%s", protocol, serverConfig.BindAddress, path)
+	return fmt.Sprintf("%s://%s/api/rhacs/v1%s", protocol, serverConfig.BindAddress, path)
 }
 
 func (helper *Helper) MetricsURL(path string) string {

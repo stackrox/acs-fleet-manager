@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
+	// TODO(ROX-10709) "github.com/stackrox/acs-fleet-manager/pkg/quota_management"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -20,7 +20,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/common"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/mocks/fleetshardsync"
 
-	"github.com/bxcodec/faker/v3"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/test/mocks"
+	// TODO(ROX-10709)  "github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
@@ -73,8 +75,8 @@ func TestDinosaurCreate_Success(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(dinosaur.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(dinosaur.Kind).To(Equal(presenters.KindDinosaur))
-	Expect(dinosaur.Href).To(Equal(fmt.Sprintf("/api/dinosaurs_mgmt/v1/dinosaurs/%s", dinosaur.Id)))
-	Expect(dinosaur.InstanceType).To(Equal(types.STANDARD.String()))
+	Expect(dinosaur.Href).To(Equal(fmt.Sprintf("/api/rhacs/v1/centrals/%s", dinosaur.Id)))
+	 // TODO(ROX-10709) Expect(dinosaur.InstanceType).To(Equal(types.STANDARD.String()))
 }
 
 func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
@@ -149,6 +151,7 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 // TestDinosaurPost_Validations tests the API validations performed by the dinosaur creation endpoint
 //
 // these could also be unit tests
+/* TODO(ROX-10709)
 func TestDinosaurPost_Validations(t *testing.T) {
 	skipNotFullyImplementedYet(t)
 
@@ -234,7 +237,9 @@ func TestDinosaurPost_Validations(t *testing.T) {
 		})
 	}
 }
+*/
 
+/* TODO(ROX-10709)
 // TestDinosaurPost_NameUniquenessValidations tests dinosaur cluster name uniqueness verification during its creation by the API
 func TestDinosaurPost_NameUniquenessValidations(t *testing.T) {
 	skipNotFullyImplementedYet(t)
@@ -285,7 +290,9 @@ func TestDinosaurPost_NameUniquenessValidations(t *testing.T) {
 	Expect(resp2.StatusCode).To(Equal(http.StatusConflict))
 
 }
+*/
 
+/* TODO(ROX-10709)
 // TestDinosaurGet tests getting dinosaurs via the API endpoint
 func TestDinosaurGet(t *testing.T) {
 	skipNotFullyImplementedYet(t)
@@ -357,6 +364,7 @@ func TestDinosaurGet(t *testing.T) {
 	_, resp, _ = client.DefaultApi.GetCentralById(ctx, seedDinosaur.Id)
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
+*/
 
 func TestDinosaur_Delete(t *testing.T) {
 	owner := "test-user"
@@ -482,6 +490,7 @@ func TestDinosaur_Delete(t *testing.T) {
 	}
 }
 
+/* TODO(ROX-10709)
 // TestDinosaurList_Success tests getting dinosaur requests list
 func TestDinosaurList_Success(t *testing.T) {
 	skipNotFullyImplementedYet(t)
@@ -595,3 +604,4 @@ func TestDinosaurList_Success(t *testing.T) {
 	Expect(newUserList.Size).To(Equal(int32(0)), "Expected Size == 0")
 	Expect(newUserList.Total).To(Equal(int32(0)), "Expected Total == 0")
 }
+*/
