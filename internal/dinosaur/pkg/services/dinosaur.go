@@ -106,9 +106,10 @@ type dinosaurService struct {
 	awsClientFactory       aws.ClientFactory
 	authService            authorization.Authorization
 	dataplaneClusterConfig *config.DataplaneClusterConfig
+	clusterPlacementStrategy ClusterPlacementStrategy
 }
 
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services.DinosaurKeycloakService, dinosaurConfig *config.DinosaurConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization) *dinosaurService {
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services.DinosaurKeycloakService, dinosaurConfig *config.DinosaurConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy) *dinosaurService {
 	return &dinosaurService{
 		connectionFactory:      connectionFactory,
 		clusterService:         clusterService,
@@ -119,6 +120,7 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		awsClientFactory:       awsClientFactory,
 		authService:            authorizationService,
 		dataplaneClusterConfig: dataplaneClusterConfig,
+		clusterPlacementStrategy: clusterPlacementStrategy,
 	}
 }
 
@@ -221,6 +223,13 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.DinosaurReq
 
 	dinosaurRequest.InstanceType = instanceType.String()
 
+	cluster, e := k.clusterPlacementStrategy.FindCluster(dinosaurRequest)
+	if e != nil || cluster == nil {
+		msg := fmt.Sprintf("No available cluster found for '%s' Kafka instance in region: '%s'", dinosaurRequest.InstanceType, dinosaurRequest.Region)
+		logger.Logger.Errorf(msg)
+		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", dinosaurRequest.Region, dinosaurRequest.InstanceType))
+	}
+	dinosaurRequest.ClusterID = cluster.ClusterID
 	subscriptionId, err := k.reserveQuota(dinosaurRequest)
 
 	if err != nil {
