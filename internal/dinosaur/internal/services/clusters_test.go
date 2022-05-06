@@ -828,7 +828,7 @@ func Test_ScaleUpComputeNodes(t *testing.T) {
 			},
 			checkError: checkError{
 				wantErr: true,
-				error:   "DINOSAURS-MGMT-9: failed to scale up cluster",
+				error:   "RHACS-MGMT-9: failed to scale up cluster",
 			},
 		},
 	}
@@ -912,7 +912,7 @@ func Test_ScaleDownComputeNodes(t *testing.T) {
 			},
 			errorCheck: errorCheck{
 				wantErr:   true,
-				expectErr: "DINOSAURS-MGMT-9: failed to scale down cluster",
+				expectErr: "RHACS-MGMT-9: failed to scale down cluster",
 			},
 		},
 	}
