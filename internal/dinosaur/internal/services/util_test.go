@@ -69,7 +69,7 @@ func Test_HandleGetError(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := services.HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err)
-			assert.ErrorIs(t, err, tt.want)
+			assert.Equal(t, err, tt.want)
 		})
 	}
 }
@@ -104,7 +104,7 @@ func Test_handleCreateError(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := services.HandleCreateError(tt.args.resourceType, tt.args.err)
-			assert.ErrorIs(t, err, tt.want)
+			assert.Equal(t, err, tt.want)
 		})
 	}
 }
@@ -139,7 +139,7 @@ func Test_handleUpdateError(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := services.HandleUpdateError(tt.args.resourceType, tt.args.err)
-			assert.ErrorIs(t, err, tt.want)
+			assert.Equal(t, err, tt.want)
 		})
 	}
 }
