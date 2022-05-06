@@ -29,8 +29,8 @@ import (
 const (
 	mockDinosaurName    = "test-dinosaur1"
 	testMultiAZ         = true
-	invalidDinosaurName = "Test_Cluster9"
-	longDinosaurName    = "thisisaninvaliddinosaurclusternamethatexceedsthenamesizelimit"
+	// TODO(ROX-10709) invalidDinosaurName = "Test_Cluster9"
+	// TODO(ROX-10709) longDinosaurName    = "thisisaninvaliddinosaurclusternamethatexceedsthenamesizelimit"
 )
 
 // TestDinosaurCreate_Success validates the happy path of the dinosaur post endpoint:
