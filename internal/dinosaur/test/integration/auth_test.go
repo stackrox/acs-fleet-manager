@@ -81,7 +81,7 @@ func TestAuthSuccess_usingSSORHToken(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
-		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
+		Get(h.RestURL("/centrals"))
 	Expect(err).NotTo(HaveOccurred())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
 }
@@ -95,7 +95,7 @@ func TestAuthFailure_withoutToken(t *testing.T) {
 
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
-		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
+		Get(h.RestURL("/centrals"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
@@ -103,7 +103,7 @@ func TestAuthFailure_withoutToken(t *testing.T) {
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
 
-func TestAuthFailure_invalidTokenWithTypMissing(t *testing.T) {
+func TestAuthFailure_invalidTokenWithInvalidTyp(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -111,7 +111,7 @@ func TestAuthFailure_invalidTokenWithTypMissing(t *testing.T) {
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
-		"typ": nil,
+		"typ": "Invalid",
 	}
 
 	token := h.CreateJWTStringWithClaim(serviceAccount, claims)
@@ -119,11 +119,11 @@ func TestAuthFailure_invalidTokenWithTypMissing(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
-		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
+		Get(h.RestURL("/centrals"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
-	Expect(re.Reason).To(Equal("Bearer token doesn't contain required claim 'typ'"))
+	Expect(re.Reason).To(Equal("Bearer token type 'Invalid' isn't allowed"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
 
@@ -142,7 +142,7 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
-		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
+		Get(h.RestURL("/centrals"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
@@ -165,7 +165,7 @@ func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
-		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
+		Get(h.RestURL("/centrals"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
@@ -196,7 +196,7 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(strToken).
-		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
+		Get(h.RestURL("/centrals"))
 	Expect(err).To(BeNil())
 
 	re := parseResponse(restyResp)
@@ -227,7 +227,7 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(strToken).
-		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
+		Get(h.RestURL("/centrals"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))

@@ -28,7 +28,7 @@ func TestSQLTranslationFailure(t *testing.T) {
 	Expect(err).To(HaveOccurred())
 	serviceErr := err.(*errors.ServiceError)
 	Expect(serviceErr.Code).To(Equal(errors.ErrorBadRequest))
-	Expect(serviceErr.Error()).To(Equal("DINOSAURS-MGMT-21: Failed to parse search query: garbage"))
+	Expect(serviceErr.Error()).To(Equal("RHACS-MGMT-21: Failed to parse search query: garbage"))
 }
 
 func TestDisallowedFields(t *testing.T) {
@@ -41,7 +41,7 @@ func TestDisallowedFields(t *testing.T) {
 	Expect(err).To(HaveOccurred())
 	serviceErr := err.(*errors.ServiceError)
 	Expect(serviceErr.Code).To(Equal(errors.ErrorBadRequest))
-	Expect(serviceErr.Error()).To(Equal("DINOSAURS-MGMT-21: id is not a valid field name"))
+	Expect(serviceErr.Error()).To(Equal("RHACS-MGMT-21: id is not a valid field name"))
 }
 
 func TestTableNameInFields(t *testing.T) {
@@ -63,7 +63,7 @@ func TestTableNameInFields(t *testing.T) {
 	Expect(err).To(HaveOccurred())
 	serviceErr := err.(*errors.ServiceError)
 	Expect(serviceErr.Code).To(Equal(errors.ErrorBadRequest))
-	Expect(serviceErr.Error()).To(Equal("DINOSAURS-MGMT-21: Failed to parse search query: accounts.subscriptions.id"))
+	Expect(serviceErr.Error()).To(Equal("RHACS-MGMT-21: Failed to parse search query: accounts.subscriptions.id"))
 
 	// it should fail for disallowed fields
 	disallowedFields = map[string]string{
@@ -73,5 +73,5 @@ func TestTableNameInFields(t *testing.T) {
 	Expect(err).To(HaveOccurred())
 	serviceErr = err.(*errors.ServiceError)
 	Expect(serviceErr.Code).To(Equal(errors.ErrorBadRequest))
-	Expect(serviceErr.Error()).To(Equal("DINOSAURS-MGMT-21: accounts.id is not a valid field name"))
+	Expect(serviceErr.Error()).To(Equal("RHACS-MGMT-21: accounts.id is not a valid field name"))
 }

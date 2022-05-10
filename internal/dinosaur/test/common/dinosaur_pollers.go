@@ -33,7 +33,7 @@ func WaitForNumberOfDinosaurToBeGivenCount(ctx context.Context, db *db.Connectio
 			}
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			if list, _, err := client.DefaultApi.GetDinosaurs(ctx, nil); err != nil {
+			if list, _, err := client.DefaultApi.GetCentrals(ctx, nil); err != nil {
 				return false, err
 			} else {
 				currentCount = list.Size
@@ -44,7 +44,7 @@ func WaitForNumberOfDinosaurToBeGivenCount(ctx context.Context, db *db.Connectio
 }
 
 // WaitForDinosaurCreateToBeAccepted - Creates a dinosaur and awaits for the request to be accepted
-func WaitForDinosaurCreateToBeAccepted(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, k public.DinosaurRequestPayload) (dinosaur public.DinosaurRequest, resp *http.Response, err error) {
+func WaitForDinosaurCreateToBeAccepted(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, k public.CentralRequestPayload) (dinosaur public.CentralRequest, resp *http.Response, err error) {
 	currentStatus := ""
 
 	err = NewPollerBuilder(db).
@@ -57,7 +57,7 @@ func WaitForDinosaurCreateToBeAccepted(ctx context.Context, db *db.ConnectionFac
 			}
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			dinosaur, resp, err = client.DefaultApi.CreateDinosaur(ctx, true, k)
+			dinosaur, resp, err = client.DefaultApi.CreateCentral(ctx, true, k)
 			if err != nil {
 				return true, err
 			}
@@ -68,7 +68,7 @@ func WaitForDinosaurCreateToBeAccepted(ctx context.Context, db *db.ConnectionFac
 }
 
 // WaitForDinosaurToReachStatus - Awaits for a dinosaur to reach a specified status
-func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, dinosaurId string, status constants2.DinosaurStatus) (dinosaur public.DinosaurRequest, err error) {
+func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, dinosaurId string, status constants2.DinosaurStatus) (dinosaur public.CentralRequest, err error) {
 	currentStatus := ""
 
 	glog.Infof("status: " + status.String())
@@ -83,7 +83,7 @@ func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory,
 			}
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			dinosaur, _, err = client.DefaultApi.GetDinosaurById(ctx, dinosaurId)
+			dinosaur, _, err = client.DefaultApi.GetCentralById(ctx, dinosaurId)
 			if err != nil {
 				return true, err
 			}
@@ -110,7 +110,7 @@ func WaitForDinosaurToBeDeleted(ctx context.Context, db *db.ConnectionFactory, c
 		IntervalAndTimeout(defaultPollInterval, defaultDinosaurReadyTimeout).
 		RetryLogMessagef("Waiting for dinosaur '%s' to be deleted", dinosaurId).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			if _, _, err := client.DefaultApi.GetDinosaurById(ctx, dinosaurId); err != nil {
+			if _, _, err := client.DefaultApi.GetCentralById(ctx, dinosaurId); err != nil {
 				if err.Error() == "404 Not Found" {
 					return true, nil
 				}
