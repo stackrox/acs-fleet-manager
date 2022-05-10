@@ -2,7 +2,7 @@ package services
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -68,8 +68,9 @@ func Test_HandleGetError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := services.HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err)
-			assert.Equal(t, err, tt.want)
+			if got := services.HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err); !reflect.DeepEqual(got, tt.want) { //nolint:govet
+				t.Errorf("HandleGetError() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
@@ -103,8 +104,9 @@ func Test_handleCreateError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := services.HandleCreateError(tt.args.resourceType, tt.args.err)
-			assert.Equal(t, err, tt.want)
+			if got := services.HandleCreateError(tt.args.resourceType, tt.args.err); !reflect.DeepEqual(got, tt.want) { //nolint:govet
+				t.Errorf("handleCreateError() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
@@ -138,8 +140,9 @@ func Test_handleUpdateError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := services.HandleUpdateError(tt.args.resourceType, tt.args.err)
-			assert.Equal(t, err, tt.want)
+			if got := services.HandleUpdateError(tt.args.resourceType, tt.args.err); !reflect.DeepEqual(got, tt.want) { //nolint:govet
+				t.Errorf("handleUpdateError() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

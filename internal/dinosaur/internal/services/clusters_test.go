@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strings"
 	"testing"
@@ -1199,7 +1198,9 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ListAllClusterIds() got = %v, want %v", got, tt.want)
 			}
-			assert.ErrorIs(t, got1, tt.want1)
+			if !reflect.DeepEqual(got1, tt.want1) { //nolint:govet
+				t.Errorf("ListAllClusterIds() got1 = %v, want %v", got1, tt.want1)
+			}
 		})
 	}
 }
