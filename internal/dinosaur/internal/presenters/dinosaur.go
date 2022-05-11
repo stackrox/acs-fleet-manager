@@ -1,12 +1,13 @@
 package presenters
 
 import (
+	"fmt"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
 )
 
 // ConvertDinosaurRequest from payload to DinosaurRequest
-func ConvertDinosaurRequest(dinosaurRequestPayload public.DinosaurRequestPayload, dbDinosaurrequest ...*dbapi.DinosaurRequest) *dbapi.DinosaurRequest {
+func ConvertDinosaurRequest(dinosaurRequestPayload public.CentralRequestPayload, dbDinosaurrequest ...*dbapi.DinosaurRequest) *dbapi.DinosaurRequest {
 	// TODO implement converter
 	var dinosaur = &dbapi.DinosaurRequest{}
 
@@ -18,22 +19,23 @@ func ConvertDinosaurRequest(dinosaurRequestPayload public.DinosaurRequestPayload
 	return dinosaur
 }
 
-// PresentDinosaurRequest - create DinosaurRequest in an appropriate format ready to be returned by the API
-func PresentDinosaurRequest(dinosaurRequest *dbapi.DinosaurRequest) public.DinosaurRequest {
-	var res public.DinosaurRequest
-	res.Name = dinosaurRequest.Name
-	res.Status = dinosaurRequest.Status
-	res.Host = dinosaurRequest.Host
-	res.Region = dinosaurRequest.Region
-	res.CreatedAt = dinosaurRequest.CreatedAt
-	res.CloudProvider = dinosaurRequest.CloudProvider
-	res.FailedReason = dinosaurRequest.FailedReason
-	res.Status = dinosaurRequest.Status
-	res.InstanceType = dinosaurRequest.InstanceType
-	res.Id = dinosaurRequest.ID
-	res.MultiAz = dinosaurRequest.MultiAZ
-	res.Version = dinosaurRequest.ActualDinosaurVersion
-	res.Owner = dinosaurRequest.Owner
-
-	return res
+// PresentDinosaurRequest - create CentralRequest in an appropriate format ready to be returned by the API
+func PresentDinosaurRequest(request *dbapi.DinosaurRequest) public.CentralRequest {
+	return public.CentralRequest{
+		Id: request.ID,
+		Kind: "CentralRequest",
+		Href: fmt.Sprintf("/api/rhacs/v1/centrals/%s", request.ID),
+		Status: request.Status,
+		CloudProvider: request.CloudProvider,
+		MultiAz: request.MultiAZ,
+		Region: request.Region,
+		Owner: request.Owner,
+		Name: request.Name,
+		Host: request.Host,
+		CreatedAt: request.CreatedAt,
+		UpdatedAt: request.UpdatedAt,
+		FailedReason: request.FailedReason,
+		Version: request.ActualDinosaurVersion,
+		InstanceType: request.InstanceType,
+	}
 }

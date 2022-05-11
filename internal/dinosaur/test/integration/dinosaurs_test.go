@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
+	// TODO(ROX-10709) "github.com/stackrox/acs-fleet-manager/pkg/quota_management"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -20,17 +20,17 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/common"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/mocks/fleetshardsync"
 
-	"github.com/bxcodec/faker/v3"
-	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
+	// TODO(ROX-10709)  "github.com/bxcodec/faker/v3"
+	. "github.com/onsi/gomega"
 )
 
 const (
 	mockDinosaurName    = "test-dinosaur1"
 	testMultiAZ         = true
-	invalidDinosaurName = "Test_Cluster9"
-	longDinosaurName    = "thisisaninvaliddinosaurclusternamethatexceedsthenamesizelimit"
+	// TODO(ROX-10709) invalidDinosaurName = "Test_Cluster9"
+	// TODO(ROX-10709) longDinosaurName    = "thisisaninvaliddinosaurclusternamethatexceedsthenamesizelimit"
 )
 
 // TestDinosaurCreate_Success validates the happy path of the dinosaur post endpoint:
@@ -59,7 +59,7 @@ func TestDinosaurCreate_Success(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, nil)
 
 	// POST responses per openapi spec: 201, 409, 500
-	k := public.DinosaurRequestPayload{
+	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockDinosaurName,
@@ -73,8 +73,8 @@ func TestDinosaurCreate_Success(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(dinosaur.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(dinosaur.Kind).To(Equal(presenters.KindDinosaur))
-	Expect(dinosaur.Href).To(Equal(fmt.Sprintf("/api/dinosaurs_mgmt/v1/dinosaurs/%s", dinosaur.Id)))
-	Expect(dinosaur.InstanceType).To(Equal(types.STANDARD.String()))
+	Expect(dinosaur.Href).To(Equal(fmt.Sprintf("/api/rhacs/v1/centrals/%s", dinosaur.Id)))
+	 // TODO(ROX-10709) Expect(dinosaur.InstanceType).To(Equal(types.STANDARD.String()))
 }
 
 func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
@@ -133,14 +133,14 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 		return
 	}
 
-	k := public.DinosaurRequestPayload{
+	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockDinosaurName,
 		MultiAz:       testMultiAZ,
 	}
 
-	_, resp, err := client.DefaultApi.CreateDinosaur(ctx, true, k)
+	_, resp, err := client.DefaultApi.CreateCentral(ctx, true, k)
 
 	Expect(err).To(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
@@ -149,6 +149,7 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 // TestDinosaurPost_Validations tests the API validations performed by the dinosaur creation endpoint
 //
 // these could also be unit tests
+/* TODO(ROX-10709)
 func TestDinosaurPost_Validations(t *testing.T) {
 	skipNotFullyImplementedYet(t)
 
@@ -163,12 +164,12 @@ func TestDinosaurPost_Validations(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		body     public.DinosaurRequestPayload
+		body     public.CentralRequestPayload
 		wantCode int
 	}{
 		{
 			name: "HTTP 400 when region not supported",
-			body: public.DinosaurRequestPayload{
+			body: public.CentralRequestPayload{
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				Region:        "us-east-3",
@@ -178,7 +179,7 @@ func TestDinosaurPost_Validations(t *testing.T) {
 		},
 		{
 			name: "HTTP 400 when provider not supported",
-			body: public.DinosaurRequestPayload{
+			body: public.CentralRequestPayload{
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				CloudProvider: "azure",
 				Region:        mocks.MockCluster.Region().ID(),
@@ -188,7 +189,7 @@ func TestDinosaurPost_Validations(t *testing.T) {
 		},
 		{
 			name: "HTTP 400 when MultiAZ false provided",
-			body: public.DinosaurRequestPayload{
+			body: public.CentralRequestPayload{
 				MultiAz:       false,
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				Region:        mocks.MockCluster.Region().ID(),
@@ -198,7 +199,7 @@ func TestDinosaurPost_Validations(t *testing.T) {
 		},
 		{
 			name: "HTTP 400 when name not provided",
-			body: public.DinosaurRequestPayload{
+			body: public.CentralRequestPayload{
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				Region:        mocks.MockCluster.Region().ID(),
@@ -207,7 +208,7 @@ func TestDinosaurPost_Validations(t *testing.T) {
 		},
 		{
 			name: "HTTP 400 when name is not valid",
-			body: public.DinosaurRequestPayload{
+			body: public.CentralRequestPayload{
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				Region:        mocks.MockCluster.Region().ID(),
@@ -217,7 +218,7 @@ func TestDinosaurPost_Validations(t *testing.T) {
 		},
 		{
 			name: "HTTP 400 when name is too long",
-			body: public.DinosaurRequestPayload{
+			body: public.CentralRequestPayload{
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				Region:        mocks.MockCluster.Region().ID(),
@@ -229,12 +230,14 @@ func TestDinosaurPost_Validations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			_, resp, _ := client.DefaultApi.CreateDinosaur(ctx, true, tt.body)
+			_, resp, _ := client.DefaultApi.CreateCentral(ctx, true, tt.body)
 			Expect(resp.StatusCode).To(Equal(tt.wantCode))
 		})
 	}
 }
+*/
 
+/* TODO(ROX-10709)
 // TestDinosaurPost_NameUniquenessValidations tests dinosaur cluster name uniqueness verification during its creation by the API
 func TestDinosaurPost_NameUniquenessValidations(t *testing.T) {
 	skipNotFullyImplementedYet(t)
@@ -261,7 +264,7 @@ func TestDinosaurPost_NameUniquenessValidations(t *testing.T) {
 	accountFromAnotherOrg := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), anotherOrgID)
 	ctx3 := h.NewAuthenticatedContext(accountFromAnotherOrg, nil)
 
-	k := public.DinosaurRequestPayload{
+	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockDinosaurName,
@@ -269,13 +272,13 @@ func TestDinosaurPost_NameUniquenessValidations(t *testing.T) {
 	}
 
 	// create the first dinosaur
-	_, resp1, _ := client.DefaultApi.CreateDinosaur(ctx1, true, k)
+	_, resp1, _ := client.DefaultApi.CreateCentral(ctx1, true, k)
 
 	// attempt to create the second dinosaur with same name
-	_, resp2, _ := client.DefaultApi.CreateDinosaur(ctx2, true, k)
+	_, resp2, _ := client.DefaultApi.CreateCentral(ctx2, true, k)
 
 	// create another dinosaur with same name for different org
-	_, resp3, _ := client.DefaultApi.CreateDinosaur(ctx3, true, k)
+	_, resp3, _ := client.DefaultApi.CreateCentral(ctx3, true, k)
 
 	// verify that the first and third requests were accepted
 	Expect(resp1.StatusCode).To(Equal(http.StatusAccepted))
@@ -285,7 +288,9 @@ func TestDinosaurPost_NameUniquenessValidations(t *testing.T) {
 	Expect(resp2.StatusCode).To(Equal(http.StatusConflict))
 
 }
+*/
 
+/* TODO(ROX-10709)
 // TestDinosaurGet tests getting dinosaurs via the API endpoint
 func TestDinosaurGet(t *testing.T) {
 	skipNotFullyImplementedYet(t)
@@ -300,20 +305,20 @@ func TestDinosaurGet(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	k := public.DinosaurRequestPayload{
+	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockDinosaurName,
 		MultiAz:       testMultiAZ,
 	}
 
-	seedDinosaur, _, err := client.DefaultApi.CreateDinosaur(ctx, true, k)
+	seedDinosaur, _, err := client.DefaultApi.CreateCentral(ctx, true, k)
 	if err != nil {
 		t.Fatalf("failed to create seeded dinosaur request: %s", err.Error())
 	}
 
 	// 200 OK
-	dinosaur, resp, err := client.DefaultApi.GetDinosaurById(ctx, seedDinosaur.Id)
+	dinosaur, resp, err := client.DefaultApi.GetCentralById(ctx, seedDinosaur.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get dinosaur request:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(dinosaur.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
@@ -330,7 +335,7 @@ func TestDinosaurGet(t *testing.T) {
 	Expect(dinosaur.Version).To(Equal(""))
 
 	// 404 Not Found
-	dinosaur, resp, _ = client.DefaultApi.GetDinosaurById(ctx, fmt.Sprintf("not-%s", seedDinosaur.Id))
+	dinosaur, resp, _ = client.DefaultApi.GetCentralById(ctx, fmt.Sprintf("not-%s", seedDinosaur.Id))
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	// A different account than the one used to create the Dinosaur instance, within
@@ -338,7 +343,7 @@ func TestDinosaurGet(t *testing.T) {
 	// should be able to read the Dinosaur cluster
 	account = h.NewRandAccount()
 	ctx = h.NewAuthenticatedContext(account, nil)
-	dinosaur, _, _ = client.DefaultApi.GetDinosaurById(ctx, seedDinosaur.Id)
+	dinosaur, _, _ = client.DefaultApi.GetCentralById(ctx, seedDinosaur.Id)
 	Expect(dinosaur.Id).NotTo(BeEmpty())
 
 	// An account in a different organization than the one used to create the
@@ -347,16 +352,17 @@ func TestDinosaurGet(t *testing.T) {
 	anotherOrgID := "12147054"
 	account = h.NewAccountWithNameAndOrg(faker.Name(), anotherOrgID)
 	ctx = h.NewAuthenticatedContext(account, nil)
-	_, resp, _ = client.DefaultApi.GetDinosaurById(ctx, seedDinosaur.Id)
+	_, resp, _ = client.DefaultApi.GetCentralById(ctx, seedDinosaur.Id)
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	// An allowed serviceaccount in config/quota-management-list-configuration.yaml
 	// without an organization ID should get a 401 Unauthorized
 	account = h.NewAllowedServiceAccount()
 	ctx = h.NewAuthenticatedContext(account, nil)
-	_, resp, _ = client.DefaultApi.GetDinosaurById(ctx, seedDinosaur.Id)
+	_, resp, _ = client.DefaultApi.GetCentralById(ctx, seedDinosaur.Id)
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
+*/
 
 func TestDinosaur_Delete(t *testing.T) {
 	owner := "test-user"
@@ -476,12 +482,13 @@ func TestDinosaur_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := test.NewApiClient(h)
-			_, resp, err := client.DefaultApi.DeleteDinosaurById(tt.args.ctx, tt.args.dinosaurID, tt.args.async)
+			resp, err := client.DefaultApi.DeleteCentralById(tt.args.ctx, tt.args.dinosaurID, tt.args.async)
 			tt.verifyResponse(resp, err)
 		})
 	}
 }
 
+/* TODO(ROX-10709)
 // TestDinosaurList_Success tests getting dinosaur requests list
 func TestDinosaurList_Success(t *testing.T) {
 	skipNotFullyImplementedYet(t)
@@ -508,14 +515,14 @@ func TestDinosaurList_Success(t *testing.T) {
 	initCtx := h.NewAuthenticatedContext(account, nil)
 
 	// get initial list (should be empty)
-	initList, resp, err := client.DefaultApi.GetDinosaurs(initCtx, nil)
+	initList, resp, err := client.DefaultApi.GetCentrals(initCtx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list dinosaur requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(initList.Items).To(BeEmpty(), "Expected empty dinosaur requests list")
 	Expect(initList.Size).To(Equal(int32(0)), "Expected Size == 0")
 	Expect(initList.Total).To(Equal(int32(0)), "Expected Total == 0")
 
-	k := public.DinosaurRequestPayload{
+	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockDinosaurName,
@@ -523,13 +530,13 @@ func TestDinosaurList_Success(t *testing.T) {
 	}
 
 	// POST dinosaur request to populate the list
-	seedDinosaur, _, err := client.DefaultApi.CreateDinosaur(initCtx, true, k)
+	seedDinosaur, _, err := client.DefaultApi.CreateCentral(initCtx, true, k)
 	if err != nil {
 		t.Fatalf("failed to create seeded DinosaurRequest: %s", err.Error())
 	}
 
 	// get populated list of dinosaur requests
-	afterPostList, _, err := client.DefaultApi.GetDinosaurs(initCtx, nil)
+	afterPostList, _, err := client.DefaultApi.GetCentrals(initCtx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list dinosaur requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(afterPostList.Items)).To(Equal(1), "Expected dinosaur requests list length to be 1")
@@ -558,7 +565,7 @@ func TestDinosaurList_Success(t *testing.T) {
 
 	// get populated list of dinosaur requests
 
-	afterPostList, _, err = client.DefaultApi.GetDinosaurs(ctx, nil)
+	afterPostList, _, err = client.DefaultApi.GetCentrals(ctx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list dinosaur requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(afterPostList.Items)).To(Equal(1), "Expected dinosaur requests list length to be 1")
@@ -588,10 +595,11 @@ func TestDinosaurList_Success(t *testing.T) {
 	ctx = h.NewAuthenticatedContext(account, nil)
 
 	// expecting empty list for user that hasn't created any dinosaurs yet
-	newUserList, _, err := client.DefaultApi.GetDinosaurs(ctx, nil)
+	newUserList, _, err := client.DefaultApi.GetCentrals(ctx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list dinosaur requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(newUserList.Items)).To(Equal(0), "Expected dinosaur requests list length to be 0")
 	Expect(newUserList.Size).To(Equal(int32(0)), "Expected Size == 0")
 	Expect(newUserList.Total).To(Equal(int32(0)), "Expected Total == 0")
 }
+*/

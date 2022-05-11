@@ -144,7 +144,7 @@ paths:
       - Agent Clusters
   /api/dinosaurs_mgmt/v1/agent-clusters/{id}:
     get:
-      operationId: getDinosaurAgent
+      operationId: getDataPlaneClusterAgentConfig
       parameters:
       - description: The ID of record
         in: path
@@ -158,7 +158,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataplaneClusterAgentConfig'
-          description: The ManagedDinosaurAgent CR Spec
+          description: The Data Plane Cluster Agent configuration
         "400":
           content:
             application/json:
@@ -179,7 +179,7 @@ paths:
           description: Auth token is not valid.
       security:
       - Bearer: []
-      summary: Get the spec of the ManagedDinosaurAgent CR spec
+      summary: Get the data plane cluster agent configuration
       tags:
       - Agent Clusters
 components:
@@ -226,8 +226,8 @@ components:
       value:
         id: "7"
         kind: Error
-        href: /api/dinosaurs_mgmt/v1/errors/7
-        code: DINOSAURS-MGMT-7
+        href: /api/rhacs/v1/errors/7
+        code: RHACS-MGMT-7
         reason: The requested resource doesn't exist
   schemas:
     ListReference:

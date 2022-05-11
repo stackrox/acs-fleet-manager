@@ -67,12 +67,12 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 
 	// format output
-	dinosaurRequestList := public.DinosaurRequestList{
+	dinosaurRequestList := public.CentralRequestList{
 		Kind:  "DinosaurRequestList",
 		Page:  int32(paging.Page),
 		Size:  int32(paging.Size),
 		Total: int32(paging.Total),
-		Items: []public.DinosaurRequest{},
+		Items: []public.CentralRequest{},
 	}
 
 	for _, dinosaurRequest := range dinosaurList {
