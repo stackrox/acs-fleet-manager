@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/golang-jwt/jwt/v4"
-	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	adminprivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
@@ -17,7 +16,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
 	coreTest "github.com/stackrox/acs-fleet-manager/test"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
-	"github.com/golang-jwt/jwt/v4"
 	// TODO(ROX-9821) restore when admin API is properly implemented . "github.com/onsi/gomega"
 )
 
