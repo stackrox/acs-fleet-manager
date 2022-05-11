@@ -24,8 +24,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
 	// TODO(ROX-10709)  "github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/test/mocks"
 )
 
 const (
