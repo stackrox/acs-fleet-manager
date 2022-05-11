@@ -157,7 +157,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 	type result struct {
 		wantErr         bool
 		reason          string
-		dinosaurRequest public.DinosaurRequest
+		dinosaurRequest public.CentralRequest
 	}
 
 	tests := []struct {
@@ -194,7 +194,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			},
 			want: result{
 				wantErr: false,
-				dinosaurRequest: public.DinosaurRequest{
+				dinosaurRequest: public.CentralRequest{
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
@@ -239,7 +239,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			},
 			want: result{
 				wantErr: false,
-				dinosaurRequest: public.DinosaurRequest{
+				dinosaurRequest: public.CentralRequest{
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},

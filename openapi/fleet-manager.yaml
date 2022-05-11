@@ -1,9 +1,9 @@
 openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an openapi document.
 # All endpoints defined here will be discoverable by all users. If there is a need to keep some endpoints "private", add them to the "managed-services-api-private.yaml" file
 info:
-  title: Dinosaur Service Fleet Manager
+  title: Red Hat Advanced Cluster Security Service Fleet Manager
   version: 1.2.0
-  description: Dinosaur Service Fleet Manager is a Rest API to manage Dinosaur instances.
+  description: Red Hat Advanced Cluster Security (RHACS) Service Fleet Manager is a Rest API to manage instances of ACS components.
 servers:
   - url: https://api.openshift.com
     description: Main (production) server
@@ -14,7 +14,7 @@ servers:
   - url: /
     description: current domain
 paths:
-  /api/dinosaurs_mgmt/v1:
+  /api/rhacs/v1:
     get:
       operationId: getVersionMetadata
       responses:
@@ -26,7 +26,7 @@ paths:
           description: Version metadata
       summary: Returns the version metadata
 
-  /api/dinosaurs_mgmt/v1/errors/{id}:
+  /api/rhacs/v1/errors/{id}:
     get:
       operationId: getErrorById
       responses:
@@ -42,7 +42,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/id"
 
-  /api/dinosaurs_mgmt/v1/errors:
+  /api/rhacs/v1/errors:
     get:
       operationId: getErrors
       responses:
@@ -56,7 +56,7 @@ paths:
       tags:
         - errors
 
-  /api/dinosaurs_mgmt/v1/status:
+  /api/rhacs/v1/status:
     get:
       operationId: getServiceStatus
       responses:
@@ -78,21 +78,22 @@ paths:
       summary: Returns the status of resources, such as whether maximum service capacity has been reached
       security:
         - Bearer: [ ]
-  /api/dinosaurs_mgmt/v1/dinosaurs/{id}:
+  /api/rhacs/v1/centrals/{id}:
     get:
-      operationId: getDinosaurById
+      operationId: getCentralById
+      description: This operation is only authorized to users in the same organisation as the owner organisation of the specified Central.
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DinosaurRequest'
+                $ref: '#/components/schemas/CentralRequest'
               examples:
-                DinosaurRequestGetResponseExample:
-                  $ref: '#/components/examples/DinosaurRequestExample'
-                DinosaurRequestGetResponseWithFailedCreationStatusExample:
-                  $ref: '#/components/examples/DinosaurRequestFailedCreationStatusExample'
-          description: Dinosaur request found by ID
+                CentralRequestGetResponseExample:
+                  $ref: '#/components/examples/CentralRequestExample'
+                CentralRequestGetResponseWithFailedCreationStatusExample:
+                  $ref: '#/components/examples/CentralRequestFailedCreationStatusExample'
+          description: Central request found by ID
         "401":
           content:
             application/json:
@@ -119,7 +120,7 @@ paths:
               examples:
                 404Example:
                   $ref: '#/components/examples/404Example'
-          description: No Dinosaur request with specified ID exists
+          description: No Central request with specified ID exists
         "500":
           content:
             application/json:
@@ -131,9 +132,13 @@ paths:
           description: Unexpected error occurred
       security:
         - Bearer: [ ]
-      summary: Returns a Dinosaur request by ID
+      summary: Returns a Central request by ID
     delete:
-      operationId: deleteDinosaurById
+      operationId: deleteCentralById
+      description: |
+        The only users authorized for this operation are:
+        1) The administrator of the owner organisation of the specified Central.
+        2) The owner user, and only if it is also part of the owner organisation of the specified Central.
       parameters:
         - in: query
           name: async
@@ -143,12 +148,6 @@ paths:
           required: true
       responses:
         "202":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-              #No Content
           description: Deleted
         "400":
           content:
@@ -185,7 +184,7 @@ paths:
               examples:
                 404DeleteExample:
                   $ref: '#/components/examples/404DeleteExample'
-          description: No Dinosaur request with specified ID exists
+          description: No Central request with specified ID exists
         "500":
           content:
             application/json:
@@ -195,31 +194,35 @@ paths:
                 500DeleteExample:
                   $ref: '#/components/examples/500DeleteExample'
           description: Unexpected error occurred
-      summary: Deletes a Dinosaur request by ID
+      summary: Deletes a Central request by ID
       security:
         - Bearer: [ ]
     patch:
-      summary: Update a Dinosaur instance by id
+      summary: Update a Central instance by id
+      description: |
+        The only users authorized for this operation are:
+        1) The administrator of the owner organisation of the specified Central.
+        2) The owner user, and only if it is also part of the owner organisation of the specified Central.
       security:
         - Bearer: [ ]
-      operationId: updateDinosaurById
+      operationId: updateCentralById
       requestBody:
-        description: Update owner of dinosaur
+        description: Update owner of Cental
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DinosaurUpdateRequest'
+              $ref: '#/components/schemas/CentralUpdateRequest'
         required: true
       responses:
         "200":
-          description: Dinosaur updated by ID
+          description: Cental updated by ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DinosaurRequest'
+                $ref: '#/components/schemas/CentralRequest'
               examples:
-                DinosaurRequestPostResponseExample:
-                  $ref: '#/components/examples/DinosaurRequestExample'
+                CentralRequestPostResponseExample:
+                  $ref: '#/components/examples/CentralRequestExample'
         "400":
           description: Bad request
           content:
@@ -239,7 +242,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         "404":
-          description: No Dinosaur found with the specified ID
+          description: No Central found with the specified ID
           content:
             application/json:
               schema:
@@ -252,9 +255,10 @@ paths:
                 $ref: '#/components/schemas/Error'
     parameters:
       - $ref: "#/components/parameters/id"
-  /api/dinosaurs_mgmt/v1/dinosaurs:
+  /api/rhacs/v1/centrals:
     post:
-      operationId: createDinosaur
+      operationId: createCentral
+      description: Each central has a single owner organisation and a single owner user. Creates a new Central that is owned by the user and organisation authenticated for the request.
       parameters:
         - in: query
           name: async
@@ -263,11 +267,11 @@ paths:
             type: boolean
           required: true
       requestBody:
-        description: Dinosaur data
+        description: Central data
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DinosaurRequestPayload'
+              $ref: '#/components/schemas/CentralRequestPayload'
             examples:
               USRegion:
                 $ref: '#/components/examples/USRegionExample'
@@ -279,10 +283,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DinosaurRequest'
+                $ref: '#/components/schemas/CentralRequest'
               examples:
-                DinosaurRequestPostResponseExample:
-                  $ref: '#/components/examples/DinosaurRequestExample'
+                CentralRequestPostResponseExample:
+                  $ref: '#/components/examples/CentralRequestExample'
           description: Accepted
         "400":
           content:
@@ -341,22 +345,26 @@ paths:
               examples:
                 500Example:
                   $ref: '#/components/examples/500Example'
-          description: An unexpected error occurred while creating the Dinosaur request
+          description: An unexpected error occurred while creating the Central request
       security:
         - Bearer: [ ]
-      summary: Creates a Dinosaur request
+      summary: Creates a Central request
     get:
-      summary: Returns a list of Dinosaur requests
-      operationId: getDinosaurs
+      summary: Returns a list of Central requests
+      description: Only returns those centrals that are owned by the organisation of the user authenticated for the request.
+      operationId: getCentrals
       security:
         - Bearer: [ ]
       responses:
         "200":
-          description: A list of Dinosaur requests
+          description: A list of Central requests
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DinosaurRequestList'
+                $ref: '#/components/schemas/CentralRequestList'
+              examples:
+                CentralRequestListExample:
+                  $ref: '#/components/examples/CentralRequestListExample'
         "400":
           description: Bad request
           content:
@@ -398,7 +406,7 @@ paths:
         - $ref: '#/components/parameters/size'
         - $ref: '#/components/parameters/orderBy'
         - $ref: '#/components/parameters/search'
-  /api/dinosaurs_mgmt/v1/cloud_providers:
+  /api/rhacs/v1/cloud_providers:
     get:
       summary: Returns the list of supported cloud providers
       operationId: getCloudProviders
@@ -432,7 +440,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/size'
-  /api/dinosaurs_mgmt/v1/cloud_providers/{id}/regions:
+  /api/rhacs/v1/cloud_providers/{id}/regions:
     get:
       summary: Returns the list of supported regions of the supported cloud provider
       operationId: getCloudProviderRegions
@@ -471,9 +479,9 @@ paths:
   #
   # These are the user-facing related endpoints
   #
-  /api/dinosaurs_mgmt/v1/dinosaurs/{id}/metrics/query_range:
+  /api/rhacs/v1/centrals/{id}/metrics/query_range:
     get:
-      summary: Returns metrics with timeseries range query by Dinosaur ID
+      summary: Returns metrics with timeseries range query by Central ID
       operationId: getMetricsByRangeQuery
       security:
         - Bearer: [ ]
@@ -507,9 +515,9 @@ paths:
         - $ref: "#/components/parameters/duration"
         - $ref: "#/components/parameters/interval"
         - $ref: "#/components/parameters/filters"
-  /api/dinosaurs_mgmt/v1/dinosaurs/{id}/metrics/query:
+  /api/rhacs/v1/centrals/{id}/metrics/query:
     get:
-      summary: Returns metrics with instant query by Dinosaur ID
+      summary: Returns metrics with instant query by Central ID
       operationId: getMetricsByInstantQuery
       security:
         - Bearer: [ ]
@@ -541,15 +549,15 @@ paths:
       parameters:
         - $ref: "#/components/parameters/id"
         - $ref: "#/components/parameters/filters"
-  /api/dinosaurs_mgmt/v1/dinosaurs/{id}/metrics/federate:
+  /api/rhacs/v1/centrals/{id}/metrics/federate:
     get:
-      summary: Returns all metrics in scrapeable format for a given dinosaur id
+      summary: Returns all metrics in scrapeable format for a given Central ID
       operationId: federateMetrics
       security:
         - Bearer: [ ]
       responses:
         '200':
-          description: Returned Dinosaur metrics in a Prometheus text format
+          description: Returned Central metrics in a Prometheus text format
           content:
             text/plain:
               schema:
@@ -573,7 +581,7 @@ paths:
                 401Example:
                   $ref: '#/components/examples/401Example'
         '404':
-          description: Dinosaur id not found
+          description: Central ID not found
           content:
             application/json:
               schema:
@@ -641,7 +649,7 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/Error"
-    DinosaurRequest:
+    CentralRequest:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
         - type: object
@@ -678,24 +686,24 @@ components:
             instance_type:
               type: string
           example:
-            $ref: "#/components/examples/DinosaurRequestExample"
-    DinosaurRequestList:
+            $ref: "#/components/examples/CentralRequestExample"
+    CentralRequestList:
       allOf:
         - $ref: "#/components/schemas/List"
         - type: object
           example:
-            kind: "DinosaurRequestList"
+            kind: "CentralRequestList"
             page: "1"
             size: "1"
             total: "1"
             item:
-              $ref: '#/components/examples/DinosaurRequestExample'
+              $ref: '#/components/examples/CentralRequestExample'
           properties:
             items:
               type: array
               items:
                 allOf:
-                  - $ref: "#/components/schemas/DinosaurRequest"
+                  - $ref: "#/components/schemas/CentralRequest"
     VersionMetadata:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
@@ -703,11 +711,11 @@ components:
           example:
             kind: "APIVersion"
             id: "v1"
-            href: "/api/dinosaurs_mgmt/v1"
+            href: "/api/rhacs/v1"
             collections:
-              - id: "dinosaurs"
-                href: "/api/dinosaurs_mgmt/v1/dinosaurs"
-                kind: "DinosaurList"
+              - id: "centrals"
+                href: "/api/rhacs/v1/centrals"
+                kind: "CentralList"
           properties:
             collections:
               type: array
@@ -717,36 +725,36 @@ components:
     ServiceStatus:
       description: Schema for the service status response body
       example:
-        dinosaurs:
+        centrals:
           max_capacity_reached: true
       type: object
       properties:
-        dinosaurs:
-          description: The Dinosaur resource api status
+        centrals:
+          description: The RHACS resource api status
           type: object
           required:
             - max_capacity_reached
           properties:
             max_capacity_reached:
-              description: Indicates whether we have reached Dinosaur maximum capacity
+              description: Indicates whether maximum service capacity has been reached
               type: boolean
-    DinosaurRequestPayload:
-      description: Schema for the request body sent to /dinosaurs POST
+    CentralRequestPayload:
+      description: Schema for the request body sent to /centrals POST
       required:
         - name
       type: object
       properties:
         cloud_provider:
-          description: The cloud provider where the Dinosaur cluster will be created in
+          description: The cloud provider where the Central component will be created in
           type: string
         multi_az:
-          description: Set this to true to configure the Dinosaur cluster to be multiAZ
+          description: Set this to true to configure the Central component to be multiAZ
           type: boolean
         name:
-          description: 'The name of the Dinosaur cluster. It must consist of lower-case alphanumeric characters or ''-'', start with an alphabetic character, and end with an alphanumeric character, and can not be longer than 32 characters.'
+          description: 'The name of the Central component. It must consist of lower-case alphanumeric characters or ''-'', start with an alphabetic character, and end with an alphanumeric character, and can not be longer than 32 characters.'
           type: string
         region:
-          description: The region where the Dinosaur cluster will be created in
+          description: The region where the Central component cluster will be created in
           type: string
     CloudProviderList:
       allOf:
@@ -819,7 +827,7 @@ components:
           type: boolean
           default: false
         supported_instance_types:
-          description: 'The Dinosaur instance types supported by this region.'
+          description: 'The Central component instance types supported by this region.'
           type: array
           items: 
             type: string
@@ -902,7 +910,7 @@ components:
           format: double
       required:
         - value
-    DinosaurUpdateRequest:
+    CentralUpdateRequest:
       type: object
       properties:
         # for now owner is the only supported field for update
@@ -949,7 +957,7 @@ components:
     filters:
       name: filters
       in: query
-      description: List of metrics to fetch. Fetch all metrics when empty. List entries are Dinosaur internal metric names.
+      description: List of metrics to fetch. Fetch all metrics when empty. List entries are Central internal metric names.
       schema:
         type: array
         items:
@@ -979,7 +987,7 @@ components:
       description: |-
         Specifies the order by criteria. The syntax of this parameter is
         similar to the syntax of the `order by` clause of an SQL statement.
-        Each query can be ordered by any of the following `dinosaurRequests` fields:
+        Each query can be ordered by any of the following `centralRequests` fields:
 
         * host
         * cloud_provider
@@ -997,13 +1005,13 @@ components:
         * updated_at
         * version
 
-        For example, to return all Dinosaur instances ordered by their name, use the following syntax:
+        For example, to return all Central instances ordered by their name, use the following syntax:
 
         ```sql
         name asc
         ```
 
-        To return all Dinosaur instances ordered by their name _and_ created date, use the following syntax:
+        To return all Central instances ordered by their name _and_ created date, use the following syntax:
 
         ```sql
         name asc, created_at asc
@@ -1031,19 +1039,19 @@ components:
 
         Examples:
 
-        To return a Dinosaur instance with the name `my-dinosaur` and the region `aws`, use the following syntax:
+        To return a Central instance with the name `my-central` and the region `aws`, use the following syntax:
 
         ```
-        name = my-dinosaur and cloud_provider = aws
+        name = my-central and cloud_provider = aws
         ```[p-]
 
-        To return a Dinosaur instance with a name that starts with `my`, use the following syntax:
+        To return a Central instance with a name that starts with `my`, use the following syntax:
 
         ```
         name like my%25
         ```
 
-        If the parameter isn't provided, or if the value is empty, then all the Dinosaur instances
+        If the parameter isn't provided, or if the value is empty, then all the Central instances
         that the user has permission to see are returned.
 
         Note. If the query is invalid, an error is returned.
@@ -1053,13 +1061,13 @@ components:
       required: false
       examples:
         search:
-          value: "name = my-dinosaur and cloud_provider = aws"
+          value: "name = my-central and cloud_provider = aws"
       schema:
         type: string
       style: form
     instance_type:
       name: instance_type
-      description: The Dinosaur instance type to filter the results by
+      description: The Central instance type to filter the results by
       in: query
       schema:
         type: string
@@ -1085,38 +1093,59 @@ components:
         region: "eu-west-1"
         cloud_provider: "aws"
         name: "serviceapitest"
-    DinosaurRequestExample:
+    CentralRequestExample:
       value:
         id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
-        kind: "dinosaur"
-        href: "/api/dinosaurs_mgmt/v1/dinosaurs/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
+        kind: "central"
+        href: "/api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
         status: "ready"
         cloud_provider: "aws"
         multi_az: true
         region: "us-east-1"
-        owner: "api_dinosaur_service"
+        owner: "api_central_service"
         name: "serviceapi"
-        host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.dinosaur.com"
+        host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.rhacs.com"
         created_at: "2020-10-05T12:51:24.053142Z"
         updated_at: "2020-10-05T12:56:36.362208Z"
         version: "2.6.0"
         instance_type: standard
-    DinosaurRequestFailedCreationStatusExample:
+    CentralRequestFailedCreationStatusExample:
       value:
         id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
-        kind: "dinosaur"
-        href: "/api/dinosaurs_mgmt/v1/dinosaurs/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
+        kind: "central"
+        href: "/api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
         status: "failed"
         cloud_provider: "aws"
         multi_az: true
         region: "us-east-1"
-        owner: "api_dinosaur_service"
+        owner: "api_central_service"
         name: "serviceapi"
-        host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.dinosaur.com"
+        host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.rhacs.com"
         created_at: "2020-10-05T12:51:24.053142Z"
         updated_at: "2020-10-05T12:56:36.362208Z"
-        failed_reason: "a reason the Dinosaur request creation failed"
+        failed_reason: "a reason the Central request creation failed"
         instance_type: standard
+    CentralRequestListExample:
+      value:
+        kind: "CentralRequestList"
+        size: "1"
+        page: "1"
+        total: "1"
+        items:
+          - id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
+            kind: "central"
+            href: "/api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
+            status: "ready"
+            cloud_provider: "aws"
+            multi_az: true
+            region: "us-east-1"
+            owner: "alice"
+            name: "serviceapi"
+            host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.example.rhacs.com"
+            created_at: "2020-10-05T12:51:24.053142Z"
+            updated_at: "2020-10-05T12:56:36.362208Z"
+            version: "2.6.0"
+            instance_type: standard        
     CloudProviderExample:
       value:
         kind: "CloudProvider"
@@ -1134,8 +1163,8 @@ components:
     MetricsRangeQueryExample:
       value:
         metric:
-          __name__: dinosaur_server_brokertopicmetrics_bytes_in_total
-          dinosaur_operator_io_cluster: dinosaur-service
+          __name__: central_server_brokertopicmetrics_bytes_in_total
+          central_operator_io_cluster: central-service
           topic: __consumer_offsets
         values:
           - timestamp: 1611670230000
@@ -1147,8 +1176,8 @@ components:
     MetricsInstantQueryExample:
       value:
         metric:
-          __name__: dinosaur_server_brokertopicmetrics_bytes_in_total
-          dinosaur_operator_io_cluster: dinosaur-service
+          __name__: central_server_brokertopicmetrics_bytes_in_total
+          central_operator_io_cluster: central-service
           topic: __consumer_offsets
         timestamp: 1611670230000
         value: 84154
@@ -1156,103 +1185,103 @@ components:
       value:
         id: "103"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/103"
-        code: "DINOSAURS-MGMT-103"
+        href: "/api/rhacs/v1/errors/103"
+        code: "RHACS-MGMT-103"
         reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
     400CreationExample:
       value:
         id: "103"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/103"
-        code: "DINOSAURS-MGMT-103"
+        href: "/api/rhacs/v1/errors/103"
+        code: "RHACS-MGMT-103"
         reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
     400InvalidQueryExample:
       value:
         id: "23"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/23"
-        code: "DINOSAURS-MGMT-23"
-        reason: "Failed to parse search query: Unable to list Dinosaur requests for api_dinosaur_service: DINOSAURS-MGMT-23: Failed to parse search query: Unsupported column name for search: 'id'. Supported column names are: region, name, cloud_provider, name, status. Query invalid: id = 123"
+        href: "/api/rhacs/v1/errors/23"
+        code: "RHACS-MGMT-23"
+        reason: "Failed to parse search query: Unable to list Central requests for api_central_service: RHACS-MGMT-23: Failed to parse search query: Unsupported column name for search: 'id'. Supported column names are: region, name, cloud_provider, name, status. Query invalid: id = 123"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
     400MissingParameterExample:
       value:
         id: "21"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/21"
-        code: "DINOSAURS-MGMT-21"
-        reason: "missing path parameter: dinosaur id"
+        href: "/api/rhacs/v1/errors/21"
+        code: "RHACS-MGMT-21"
+        reason: "missing path parameter: central id"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
     404Example:
       value:
         id: "7"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/7"
-        code: "DINOSAURS-MGMT-7"
+        href: "/api/rhacs/v1/errors/7"
+        code: "RHACS-MGMT-7"
         reason: "The requested resource doesn't exist"
     404DeleteExample:
       value:
         id: "7"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/7"
-        code: "DINOSAURS-MGMT-7"
-        reason: "DinosaurResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found"
+        href: "/api/rhacs/v1/errors/7"
+        code: "RHACS-MGMT-7"
+        reason: "CentralResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found"
         operation_id: "1iYO7g2g6HTdUKUa2ksH82kQD3y"
     401Example:
       value:
         id: "11"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/11"
-        code: "DINOSAURS-MGMT-11"
+        href: "/api/rhacs/v1/errors/11"
+        code: "RHACS-MGMT-11"
         reason: "Unable to verify JWT token: Required authorization token not found"
         operation_id: "1iY3UhEhwmXBpWPfI2lNekpd4ZD"
     403Example:
       value:
         id: "4"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/4"
-        code: "DINOSAURS-MGMT-4"
+        href: "/api/rhacs/v1/errors/4"
+        code: "RHACS-MGMT-4"
         reason: "User 'foo-bar' is not authorized to access the service."
         operation_id: "1lY3UiEhznXBpWPfI2lNejpd4YC"
     403MaxAllowedInstanceReachedExample:
       value:
         id: "5"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/5"
-        code: "DINOSAURS-MGMT-5"
+        href: "/api/rhacs/v1/errors/5"
+        code: "RHACS-MGMT-5"
         reason: "User 'foo-bar' has reached a maximum number of 6 allowed instances."
         operation_id: "1lY3UiEkxnXBpVPeI2oNejd3XB"
     403TermsNotAcceptedExample:
       value:
         id: "12"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/12"
-        code: "DINOSAURS-MGMT-12"
+        href: "/api/rhacs/v1/errors/12"
+        code: "RHACS-MGMT-12"
         reason: "Required terms have not been accepted"
         operation_id: "kXCzWPeI2oXBpVPeI2LvF9jMQY"
     409NameConflictExample:
       value:
         id: "36"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/36"
-        code: "DINOSAURS-MGMT-36"
-        reason: "Dinosaur cluster name is already used"
+        href: "/api/rhacs/v1/errors/36"
+        code: "RHACS-MGMT-36"
+        reason: "Cental name is already used"
         operation_id: "6kY0UiEkzkXCzWPeI2oYehd3ED"
     500Example:
       value:
         id: "9"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/9"
-        code: "DINOSAURS-MGMT-9"
+        href: "/api/rhacs/v1/errors/9"
+        code: "RHACS-MGMT-9"
         reason: "Unspecified error"
         operation_id: "1ieELvF9jMQY6YghfM9gGRsHvEW"
     500DeleteExample:
       value:
         id: "9"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/9"
-        code: "DINOSAURS-MGMT-9"
+        href: "/api/rhacs/v1/errors/9"
+        code: "RHACS-MGMT-9"
         reason: "error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e
           for cluster id: 1g5d88q0lrcdv4g7alb7slfgnj3dhbsj%!(EXTRA *errors.Error=identifier
           is '404', code is 'CLUSTERS-MGMT-404' and operation identifier is '1g5or50viu07oealuehrkc26dgftj1ac':

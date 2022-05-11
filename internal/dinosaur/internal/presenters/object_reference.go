@@ -11,9 +11,8 @@ import (
 )
 
 const (
-	// TODO change kind to correspond to your own service
 	// KindDinosaur is a string identifier for the type api.DinosaurRequest
-	KindDinosaur = "Dinosaur"
+	KindDinosaur = "CentralRequest"
 	// CloudRegion is a string identifier for the type api.CloudRegion
 	KindCloudRegion = "CloudRegion"
 	// KindCloudProvider is a string identifier for the type api.CloudProvider
@@ -22,7 +21,7 @@ const (
 	KindError = "Error"
 
 	// TODO change base path to correspond to your service
-	BasePath = "/api/dinosaurs_mgmt/v1"
+	BasePath = "/api/rhacs/v1"
 )
 
 func PresentReference(id, obj interface{}) compat.ObjectReference {

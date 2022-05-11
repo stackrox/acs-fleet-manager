@@ -62,14 +62,14 @@ func TestTermsRequired_CreateDinosaurTermsRequired(t *testing.T) {
 	account := env.helper.NewRandAccount()
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
 
-	k := public.DinosaurRequestPayload{
+	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockDinosaurName,
 		MultiAz:       testMultiAZ,
 	}
 
-	_, resp, err := env.client.DefaultApi.CreateDinosaur(ctx, true, k)
+	_, resp, err := env.client.DefaultApi.CreateCentral(ctx, true, k)
 
 	Expect(err).To(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
@@ -87,14 +87,14 @@ func TestTermsRequired_CreateDinosaur_TermsNotRequired(t *testing.T) {
 	account := env.helper.NewRandAccount()
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
 
-	k := public.DinosaurRequestPayload{
+	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockDinosaurName,
 		MultiAz:       testMultiAZ,
 	}
 
-	_, resp, err := env.client.DefaultApi.CreateDinosaur(ctx, true, k)
+	_, resp, err := env.client.DefaultApi.CreateCentral(ctx, true, k)
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))

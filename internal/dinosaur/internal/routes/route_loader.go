@@ -67,7 +67,6 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	return nil
 }
 
-// TODO change /dinosaurs path param and any reference to Dinosaur to correspond to your own service Rest resource
 func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, openApiFilePath string) error {
 	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, openApiFilePath)
 	if err != nil {
@@ -106,23 +105,23 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	v1Collections := []api.CollectionMetadata{}
 
-	//  /dinosaurs
+	//  /centrals
 	v1Collections = append(v1Collections, api.CollectionMetadata{
-		ID:   "dinosaurs",
-		Kind: "DinosaurList",
+		ID:   "centrals",
+		Kind: "CentralList",
 	})
-	apiV1DinosaursRouter := apiV1Router.PathPrefix("/dinosaurs").Subrouter()
+	apiV1DinosaursRouter := apiV1Router.PathPrefix("/centrals").Subrouter()
 	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Get).
-		Name(logger.NewLogEvent("get-dinosaur", "get a dinosaur instance").ToString()).
+		Name(logger.NewLogEvent("get-central", "get a central instance").ToString()).
 		Methods(http.MethodGet)
 	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Delete).
-		Name(logger.NewLogEvent("delete-dinosaur", "delete a dinosaur instance").ToString()).
+		Name(logger.NewLogEvent("delete-central", "delete a central instance").ToString()).
 		Methods(http.MethodDelete)
 	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Update).
-		Name(logger.NewLogEvent("update-dinosaur", "update a dinosaur instance").ToString()).
+		Name(logger.NewLogEvent("update-central", "update a central instance").ToString()).
 		Methods(http.MethodPatch)
 	apiV1DinosaursRouter.HandleFunc("", dinosaurHandler.List).
-		Name(logger.NewLogEvent("list-dinosaur", "list all dinosaurs").ToString()).
+		Name(logger.NewLogEvent("list-central", "list all central").ToString()).
 		Methods(http.MethodGet)
 	apiV1DinosaursRouter.Use(requireIssuer)
 	apiV1DinosaursRouter.Use(requireOrgID)
@@ -141,10 +140,10 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		Name(logger.NewLogEvent("get-metrics-instant", "get metrics by instant").ToString()).
 		Methods(http.MethodGet)
 
-	// /dinosaurs/{id}/metrics/federate
-	// federate endpoint separated from the rest of the /dinosaurs endpoints as it needs to support auth from both sso.redhat.com and mas-sso
+	// /centrals/{id}/metrics/federate
+	// federate endpoint separated from the rest of the /centrals endpoints as it needs to support auth from both sso.redhat.com and mas-sso
 	// NOTE: this is only a temporary solution. MAS SSO auth support should be removed once we migrate to sso.redhat.com (TODO: to be done as part of MGDSTRM-6159)
-	apiV1MetricsFederateRouter := apiV1Router.PathPrefix("/dinosaurs/{id}/metrics/federate").Subrouter()
+	apiV1MetricsFederateRouter := apiV1Router.PathPrefix("/centrals/{id}/metrics/federate").Subrouter()
 	apiV1MetricsFederateRouter.HandleFunc("", metricsHandler.FederateMetrics).
 		Name(logger.NewLogEvent("get-federate-metrics", "get federate metrics by id").ToString()).
 		Methods(http.MethodGet)
@@ -170,7 +169,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		Collections: v1Collections,
 	}
 	apiMetadata := api.Metadata{
-		ID: "dinosaurs_mgmt",
+		ID: "rhacs",
 		Versions: []api.VersionMetadata{
 			v1Metadata,
 		},
