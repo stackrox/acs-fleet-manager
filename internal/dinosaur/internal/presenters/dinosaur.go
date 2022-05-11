@@ -35,7 +35,7 @@ func PresentDinosaurRequest(request *dbapi.DinosaurRequest) public.CentralReques
 		CreatedAt: request.CreatedAt,
 		UpdatedAt: request.UpdatedAt,
 		FailedReason: request.FailedReason,
-		Version: "", // TODO(ROX-10709)
+		Version: request.ActualDinosaurVersion,
 		InstanceType: request.InstanceType,
 	}
 }
