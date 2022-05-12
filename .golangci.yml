@@ -5,3 +5,122 @@ run:
     - internal/dinosaur/internal/api/admin/private
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 10m
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - wrapcheck
+    - linters:
+        - revive
+      text: "should have a package comment, unless it's in another file for this package"
+    - linters:
+        - revive
+      text: "should not use dot imports"
+    - linters:
+        - revive
+      text: "returns unexported type .* which can be annoying to use"
+    - linters:
+        - revive
+      text: "error strings should not be capitalized or end with punctuation or a newline"
+    - linters:
+        - revive
+      text: "should omit type int from declaration"
+    - linters:
+        - revive
+      text: "don't use leading k in Go names"
+
+linters-settings:
+  gosec:
+    includes:
+    - G601
+  revive:
+    min-confidence: 0
+  govet:
+    enable-all: true
+    disable:
+      - shadow
+      - fieldalignment
+    settings:
+      printf: # analyzer name, run `go tool vet help` to see all analyzers
+        funcs: # run `go tool vet help printf` to see available settings for `printf` analyzer
+          - Print
+          - Printf
+          - Println
+          - Debug
+          - Debugf
+          - Info
+          - Infof
+          - Warn
+          - Warnf
+          - Error
+          - Errorf
+  gocritic:
+    enabled-checks:
+      - commentFormatting
+  nolintlint:
+    allow-leading-space: false # require machine-readable nolint directives (i.e. with no leading space)
+    allow-unused: false # report any unused nolint directives
+    require-explanation: false # don't require an explanation for nolint directives
+    require-specific: true # require nolint directives to be specific about which linter is being skipped
+  staticcheck:
+    go: "1.16"
+    checks: [ all,-ST1000,-ST1001,-ST1003,-ST1005,-SA1019,-SA4001,-ST1016 ]
+  wrapcheck:
+    # ignoreSigRegexps: uncomment to add ignore rules
+
+linters:
+  # please, do not use `enable-all`: it's deprecated and will be removed soon.
+  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
+  disable-all: true
+  enable:
+    - asciicheck
+    # - bodyclose
+    # - deadcode
+    # - depguard
+    # - dogsled
+    # - dupl
+    # - errcheck
+    # - funlen
+    # - gochecknoglobals
+    # - gochecknoinits
+    # - gocognit
+    # - goconst
+    - exportloopref
+    # - gocritic TODO(ROX-10833): enable gocritic checks
+    # - gocyclo
+    # - godot
+    # - godox
+    # - goerr113
+    # - gofmt TODO(ROX-10832): enable gofmt checks
+    # - goimports TODO(ROX-10832): enable goimports checks
+    # - revive # replaces golint TODO(ROX-10828): enable revive checks
+    # - gomnd
+    # - goprintffuncname
+    # - gosec TODO(ROX-10835): enable gosec checks
+    - gosimple
+    - govet
+    - ineffassign
+    # - interfacer
+    # - lll
+    # - maligned
+    # - misspell
+    # - nakedret
+    # - nestif
+    - nolintlint
+    # - prealloc
+    - rowserrcheck
+    # - scopelint
+    - staticcheck
+    # - structcheck
+    # - stylecheck
+    # - testpackage
+    # - typecheck
+    # - unconvert
+    # - unparam
+    # - unused
+    # - varcheck
+    # - whitespace
+    # - wrapcheck TODO(ROX-10829): enable wrapcheck checks
+    # - wsl
