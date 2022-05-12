@@ -10,9 +10,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 
+	pkgErr "github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
-	pkgErr "github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -68,7 +68,7 @@ func Test_HandleGetError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := services.HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err); !reflect.DeepEqual(got, tt.want) {
+			if got := services.HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err); !reflect.DeepEqual(got, tt.want) { //nolint:govet
 				t.Errorf("HandleGetError() = %v, want %v", got, tt.want)
 			}
 		})
@@ -104,7 +104,7 @@ func Test_handleCreateError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := services.HandleCreateError(tt.args.resourceType, tt.args.err); !reflect.DeepEqual(got, tt.want) {
+			if got := services.HandleCreateError(tt.args.resourceType, tt.args.err); !reflect.DeepEqual(got, tt.want) { //nolint:govet
 				t.Errorf("handleCreateError() = %v, want %v", got, tt.want)
 			}
 		})
@@ -140,7 +140,7 @@ func Test_handleUpdateError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := services.HandleUpdateError(tt.args.resourceType, tt.args.err); !reflect.DeepEqual(got, tt.want) {
+			if got := services.HandleUpdateError(tt.args.resourceType, tt.args.err); !reflect.DeepEqual(got, tt.want) { //nolint:govet
 				t.Errorf("handleUpdateError() = %v, want %v", got, tt.want)
 			}
 		})

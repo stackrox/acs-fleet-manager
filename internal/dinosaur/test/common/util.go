@@ -101,7 +101,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 		if ocmConfig.MockMode != ocm.MockModeEmulateServer {
 			pErr := PersistClusterStruct(*foundCluster, api.ClusterProvisioning)
 			if pErr != nil {
-				t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))
+				t.Logf("Unable to persist struct for cluster: %s", foundCluster.ID)
 			}
 		}
 	}
@@ -143,7 +143,7 @@ func findFirstValidCluster(h *test.Helper) (*api.Cluster, *ocmErrors.ServiceErro
 func fileExists(filename string, t *testing.T) bool {
 	info, err := os.Stat(filename)
 	if os.IsNotExist(err) {
-		t.Log(fmt.Sprintf("%s not found", filename))
+		t.Logf("%s not found", filename)
 		return false
 	}
 	return !info.IsDir()

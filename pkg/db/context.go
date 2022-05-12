@@ -25,7 +25,7 @@ func (c *ConnectionFactory) NewContext(ctx context.Context) (context.Context, er
 
 	// adding txid explicitly to context with a simple string key and int value
 	// due to a cyclical import cycle between pkg/db and pkg/logging
-	ctx = context.WithValue(ctx, "txid", tx.txid) //nolint
+	ctx = context.WithValue(ctx, "txid", tx.txid) //nolint:staticcheck
 	ctx = context.WithValue(ctx, transactionKey, tx)
 
 	return ctx, nil

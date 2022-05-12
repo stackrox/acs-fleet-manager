@@ -9,11 +9,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
-	"github.com/golang/glog"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
@@ -115,7 +115,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 
 // NextHandler is a dummy handler that returns OK when QuotaList middleware has passed
 func NextHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK) //nolint
+	w.WriteHeader(http.StatusOK)
 	_, err := io.WriteString(w, "OK")
 	if err != nil {
 		panic(err)
