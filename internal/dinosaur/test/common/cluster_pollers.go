@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/pkg/errors"

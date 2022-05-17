@@ -8,8 +8,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-	adminprivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/admin/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
+	adminprivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	// TODO(ROX-9821) restore when admin API is properly implemented "github.com/stackrox/acs-fleet-manager/pkg/auth"

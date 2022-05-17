@@ -43,7 +43,7 @@ This means that test cases for a function are defined as a set of structs and ex
 loop one by one. For an example of writing a table driven test, see:
 
 - [The table driven test documentation](https://github.com/golang/go/wiki/TableDrivenTests) which has examples
-- [The Test_dinosaurService_Get test in this repository](../internal/dinosaur/internal/services/dinosaur_test.go)
+- [The Test_dinosaurService_Get test in this repository](../internal/dinosaur/pkg/services/dinosaur_test.go)
 
 
 Unit tests can be run using the following command
