@@ -8,3 +8,12 @@
 - [ ] CI and all relevant tests are passing
 
 ## Test manual
+
+TODO: Add manual testing efforts
+
+```
+# To run tests locally run:
+make db/teardown db/setup db/migrate
+make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
+make verify lint binary test test/integration
+```
