@@ -32,6 +32,7 @@
 # Ignore built binaries
 /fleet-manager
 cmd/fleet-manager/fleet-manager
+/fleetshard-sync
 
 # Ignore generated templates
 /templates/*-template.json
