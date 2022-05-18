@@ -243,7 +243,8 @@ verify: check-gopath openapi/validate
 		./cmd/... \
 		./pkg/... \
 		./internal/... \
-		./test/...
+		./test/... \
+		./fleetshard/...
 .PHONY: verify
 
 # Runs linter against go files and .y(a)ml files in the templates directory
@@ -254,7 +255,8 @@ lint: golangci-lint specinstall
 		./cmd/... \
 		./pkg/... \
 		./internal/... \
-		./test/...
+		./test/... \
+		./fleetshard/...
 
 	spectral lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
 .PHONY: lint
@@ -703,6 +705,11 @@ docs/generate/mermaid:
 		docker run -it -v $(DOCS_DIR)/mermaid-diagrams-source:/data -v $(DOCS_DIR)/images:/output minlag/mermaid-cli -i /data/`basename $${f}` -o /output/`basename $${f} .mmd`.png; \
 	done
 .PHONY: docs/generate/mermaid
+
+fleetshard/build:
+	$(GO) build  -o fleetshard-sync ./fleetshard
+.PHONY: fleetshard/build
+
 
 # TODO CRC Deployment stuff
 
