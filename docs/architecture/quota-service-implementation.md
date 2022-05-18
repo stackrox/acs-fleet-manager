@@ -12,12 +12,12 @@ When it is enabled, the following diagram describes the architecture for quota m
 
 ![Quota Service Interface](../images/quoata-service.png)
 
-The `QuotaService` is defined in the [services package](../../internal/dinosaur/internal/services/quota.go). 
+The `QuotaService` is defined in the [services package](../../internal/dinosaur/pkg/services/quota.go). 
 
 The `QuotaServiceFactory` provides the concrete implementation of the `QuotaService` to be used. 
 The decision is based on the type provided - an enum, currently accepting `ams` and `quota-management-list`.
-- The `ams` quota service is implemented using OCM. The implementation can be found in [ams_quota_service.go](../../internal/dinosaur/internal/services/quota/ams_quota_service.go)
-- The `quota-management-list` quota service is implemented using the quota list configuration. The implementation can be found in [quota_management_list_service.go](../../internal/dinosaur/internal/services/quota/quota_management_list_service.go). 
+- The `ams` quota service is implemented using OCM. The implementation can be found in [ams_quota_service.go](../../internal/dinosaur/pkg/services/quota/ams_quota_service.go)
+- The `quota-management-list` quota service is implemented using the quota list configuration. The implementation can be found in [quota_management_list_service.go](../../internal/dinosaur/pkg/services/quota/quota_management_list_service.go). 
    The quota list based quota service can be disabled by setting the flag `enable-instance-limit-control` to `false`.
 
 

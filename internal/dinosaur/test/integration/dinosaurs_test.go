@@ -11,11 +11,11 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/dinosaurs/types"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/presenters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/common"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test/mocks/fleetshardsync"
@@ -27,8 +27,8 @@ import (
 )
 
 const (
-	mockDinosaurName    = "test-dinosaur1"
-	testMultiAZ         = true
+	mockDinosaurName = "test-dinosaur1"
+	testMultiAZ      = true
 	// TODO(ROX-10709) invalidDinosaurName = "Test_Cluster9"
 	// TODO(ROX-10709) longDinosaurName    = "thisisaninvaliddinosaurclusternamethatexceedsthenamesizelimit"
 )
@@ -74,7 +74,7 @@ func TestDinosaurCreate_Success(t *testing.T) {
 	Expect(dinosaur.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(dinosaur.Kind).To(Equal(presenters.KindDinosaur))
 	Expect(dinosaur.Href).To(Equal(fmt.Sprintf("/api/rhacs/v1/centrals/%s", dinosaur.Id)))
-	 // TODO(ROX-10709) Expect(dinosaur.InstanceType).To(Equal(types.STANDARD.String()))
+	// TODO(ROX-10709) Expect(dinosaur.InstanceType).To(Equal(types.STANDARD.String()))
 }
 
 func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {

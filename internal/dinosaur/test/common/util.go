@@ -13,7 +13,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 
 	. "github.com/onsi/gomega"
 
