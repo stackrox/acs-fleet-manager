@@ -3,17 +3,10 @@ package main
 import (
 	"flag"
 	"github.com/golang/glog"
-	"time"
+	"golang.org/x/sys/unix"
+	"os"
+	"os/signal"
 )
-
-func play(sender chan<- int, receiver <-chan int, text string, sleepDuration time.Duration) {
-	for {
-		<-receiver
-		glog.Info(text)
-		time.Sleep(sleepDuration)
-		sender <- 1
-	}
-}
 
 func main() {
 	// This is needed to make `glog` believe that the flags have already been parsed, otherwise
@@ -26,17 +19,12 @@ func main() {
 		glog.Info("Unable to set logtostderr to true")
 	}
 
-	ping := make(chan int)
-	pong := make(chan int)
-
-	go play(ping, pong, "ping", 1*time.Second)
-	go play(pong, ping, "pong", 2*time.Second)
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, unix.SIGTERM)
 
 	glog.Info("fleetshard application has been started")
 
-	ping <- 1
-
-	for {
-		time.Sleep(time.Second)
-	}
+	sig := <-sigs
+	glog.Infof("Caught %s signal", sig)
+	glog.Info("fleetshard application has been stopped")
 }
