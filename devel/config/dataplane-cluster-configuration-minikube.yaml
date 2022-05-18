@@ -34,4 +34,4 @@ clusters:
    status: ready
    dinosaur_instance_limit: 5
    provider_type: standalone
-   cluster_dns: kubernetes.docker.internal
+   cluster_dns: cluster.local
