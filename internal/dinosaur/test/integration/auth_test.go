@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/internal/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"

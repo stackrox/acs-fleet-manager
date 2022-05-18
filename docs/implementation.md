@@ -32,7 +32,7 @@ The Rest endpoints are of three categories.
 - [The admin endpoints](../openapi/fleet-manager-private-admin.yaml) to perform some admin tasks like upgrades. The endpoint is not visible to the normal user and it requires special permissions to be accessed
 - [The fleetshard synchronisation endpoints](../openapi/fleet-manager-private.yaml) for communication between the fleetshard operator and the fleet manager. The endpoint is not visible to the user and it requires a special _service account_ in sso to be accessed.
 
-They are all setup in the [route_loder.go](../internal/dinosaur/internal/routes/route_loader.go) file.
+They are all setup in the [route_loder.go](../internal/dinosaur/pkg/routes/route_loader.go) file.
 
 The OpenAPI spec for this API can be seen by running:
 
@@ -61,14 +61,14 @@ See [adding a new endpoint](./adding-a-new-endpoint.md) documentation for more i
 ## Dinosaur Workers
 
 The Dinosaur Workers are responsible for reconciling Dinosaurs as requested by an end-user. 
-There are currently 7 dinosaur workers, which are located in the [dinosaurs_mgrs folder](../internal/dinosaur/internal/workers/dinosaurs_mgrs):
-- [`dinosaurs_mgr.go`](../internal/dinosaur/internal/workers/dinosaurs_mgrs/dinosaurs_mgr.go) responsible for reconciling dinosaur metrics and performing cleanup of trial dinosaurs, and cleanup of dinosaurs of denied owners. 
-- [`deleting_dinosaurs_mgr.go`](../internal/dinosaur/internal/workers/dinosaurs_mgrs/deleting_dinosaurs_mgr.go) responsible for handling the deletion of dinosaurs e.g removing resources like AWS Route53 entry, Keycloak secrets client
-- [`accepted_dinosaurs_mgr.go`](../internal/dinosaur/internal/workers/dinosaurs_mgrs/accepted_dinosaurs_mgr.go) responsible for checking if user is within Quota before provisioning a dinosaur. Afterwards, it will periodically reconcile on all pending Dinosaur resources, attempt to find a valid OpenShift cluster to fit it's requirements (cloud provider, region, etc.) and provision a Dinosaur instance to the cluster. Once a suitable Dataplane cluster has been found, we'll update the status of the Dinosaur resource to reflect it's current progress. 
-- [`preparing_dinosaurs_mgr.go`](../internal/dinosaur/internal/workers/dinosaurs_mgrs/preparing_dinosaurs_mgr.go) responsible for creating external resources e.g AWS Route53 DNS, Keycloak authentication secrets 
-- [`provisioning_dinosaurs_mgr.go`](../internal/dinosaur/internal/workers/dinosaurs_mgrs/provisioning_dinosaurs_mgr.go) responsible for checking if a provisioned dinosaur is ready as reported by the fleetshard-operator
-- [`ready_dinosaurs_mgr.go`](../internal/dinosaur/internal/workers/dinosaurs_mgrs/ready_dinosaurs_mgr.go) responsible for reconciling external resources of a ready dinosaurs
-- [`dinosaurs_routes_cname_mgr.go`](../internal/dinosaur/internal/workers/dinosaurs_mgrs/dinosaurs_routes_cname_mgr.go) responsible for reconciliation of DNS records for each dinosaurs' routes.
+There are currently 7 dinosaur workers, which are located in the [dinosaurs_mgrs folder](../internal/dinosaur/pkg/workers/dinosaurs_mgrs):
+- [`dinosaurs_mgr.go`](../internal/dinosaur/pkg/workers/dinosaurs_mgrs/dinosaurs_mgr.go) responsible for reconciling dinosaur metrics and performing cleanup of trial dinosaurs, and cleanup of dinosaurs of denied owners. 
+- [`deleting_dinosaurs_mgr.go`](../internal/dinosaur/pkg/workers/dinosaurs_mgrs/deleting_dinosaurs_mgr.go) responsible for handling the deletion of dinosaurs e.g removing resources like AWS Route53 entry, Keycloak secrets client
+- [`accepted_dinosaurs_mgr.go`](../internal/dinosaur/pkg/workers/dinosaurs_mgrs/accepted_dinosaurs_mgr.go) responsible for checking if user is within Quota before provisioning a dinosaur. Afterwards, it will periodically reconcile on all pending Dinosaur resources, attempt to find a valid OpenShift cluster to fit it's requirements (cloud provider, region, etc.) and provision a Dinosaur instance to the cluster. Once a suitable Dataplane cluster has been found, we'll update the status of the Dinosaur resource to reflect it's current progress. 
+- [`preparing_dinosaurs_mgr.go`](../internal/dinosaur/pkg/workers/dinosaurs_mgrs/preparing_dinosaurs_mgr.go) responsible for creating external resources e.g AWS Route53 DNS, Keycloak authentication secrets 
+- [`provisioning_dinosaurs_mgr.go`](../internal/dinosaur/pkg/workers/dinosaurs_mgrs/provisioning_dinosaurs_mgr.go) responsible for checking if a provisioned dinosaur is ready as reported by the fleetshard-operator
+- [`ready_dinosaurs_mgr.go`](../internal/dinosaur/pkg/workers/dinosaurs_mgrs/ready_dinosaurs_mgr.go) responsible for reconciling external resources of a ready dinosaurs
+- [`dinosaurs_routes_cname_mgr.go`](../internal/dinosaur/pkg/workers/dinosaurs_mgrs/dinosaurs_routes_cname_mgr.go) responsible for reconciliation of DNS records for each dinosaurs' routes.
 
 Once the Dinosaur Workers have set up a Dinosaur resource, the status of the Dinosaur request will be `ready`.
 If provisioning of a dinosaur fails, the status will be `failed` and a failed reason will be capture in the database. 
@@ -80,7 +80,7 @@ The end-user has no way to directly interact with the Dinosaur worker, managemen
 
 The Cluster Worker is responsible for reconciling OpenShift clusters and ensuring they are in a
 state capable of hosting Dinosaur instances, this process is referred to as terraforming in this
-service. The reconciler is located on [`cluster_mgr.go`](../internal/dinosaur/internal/workers/clusters_mgr.go)
+service. The reconciler is located on [`cluster_mgr.go`](../internal/dinosaur/pkg/workers/clusters_mgr.go)
 
 Once a cluster has been provisioned and terraformed, it is considered capable of hosting Dinosaur
 resources as it's status will be marked as `ready`. This cluster will then be visible to the Dinosaur
