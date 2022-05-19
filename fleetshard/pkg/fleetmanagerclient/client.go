@@ -1,10 +1,9 @@
-package pkg
+package fleetmanagerclient
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"io"
@@ -13,12 +12,8 @@ import (
 	"os"
 )
 
-//TODO: Set cluster ID dynamically
-const ClusterID = "1234567890abcdef1234567890abcdef"
-
-var (
+const (
 	uri         = "api/dinosaurs_mgmt/v1/agent-clusters/%s/dinosaurs"
-	endpoint    = "http://127.0.0.1:8000"
 	statusRoute = "status"
 )
 
@@ -70,26 +65,24 @@ func (c *Client) GetManagedCentralList() (*private.ManagedDinosaurList, error) {
 	return list, nil
 }
 
-func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneDinosaurStatus) error {
+func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneDinosaurStatus) ([]byte, error) {
 	updateBody, err := json.Marshal(statuses)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	bufUpdateBody := &bytes.Buffer{}
 	_, err = bufUpdateBody.Write(updateBody)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/%s", c.endpoint, statusRoute), bufUpdateBody)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	body, _ := ioutil.ReadAll(resp.Body)
-	glog.Info(body)
-	return nil
+	return ioutil.ReadAll(resp.Body)
 }
 
 func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Response, error) {
