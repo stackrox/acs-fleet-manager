@@ -12,8 +12,10 @@ import (
 	"golang.org/x/sys/unix"
 	"io/ioutil"
 	v1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"log"
 	"net/http"
 	"os"
@@ -72,7 +74,7 @@ func synchronize() {
 	}
 
 	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", ocmToken))
-	// TODO(???): Support pagination
+	// TODO: Support pagination
 	client := http.Client{}
 
 	glog.Info("Calling the Fleet Manager to get the list of Centrals")
@@ -154,19 +156,32 @@ type ClusterReconciler struct {
 }
 
 func (r ClusterReconciler) Create(central *v1alpha1.Central) error {
-
-	namespace := &v1.Namespace{}
-	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: central.GetNamespace()}, namespace)
+	err := r.createNamespaceIfAbsent(central.Namespace)
 	if err != nil {
-		// TODO: check for not found error
 		return err
 	}
 	return r.client.Create(context.Background(), central)
 }
 
+func (r ClusterReconciler) createNamespaceIfAbsent(name string) error {
+	namespace := &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			err = r.client.Create(context.Background(), namespace)
+		}
+	}
+	return err
+}
+
 func NewClusterReconciler() *ClusterReconciler {
 	scheme := runtime.NewScheme()
-	v1alpha1.AddToScheme(scheme)
+	_ = clientgoscheme.AddToScheme(scheme)
+	_ = v1alpha1.AddToScheme(scheme)
 	config := ctrl.GetConfigOrDie()
 	client, err := ctrlClient.New(config, ctrlClient.Options{
 		Scheme: scheme,
