@@ -2,18 +2,21 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/apis/platform/v1alpha1"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"golang.org/x/sys/unix"
 	"io/ioutil"
-	"k8s.io/client-go/kubernetes"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	ctrl "sigs.k8s.io/controller-runtime"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const ClusterID = "1234567890abcdef1234567890abcdef"
@@ -103,7 +106,17 @@ func synchronize() {
 	}
 
 	glog.Infof("Calling to update %d statuses %q", len(statuses), URLPutCentralStatus)
+	// Create resource
 
+	reocnciler := NewClusterReconciler()
+	central := &v1alpha1.Central{}
+
+	err = reocnciler.Create(central)
+	if err != nil {
+		glog.Fatal("NOOO", err)
+	}
+
+	// Update request to fleet-manager
 	updateBody, err := json.Marshal(statuses)
 	if err != nil {
 		glog.Fatal(err)
@@ -126,17 +139,22 @@ func synchronize() {
 	glog.Infof(string(body))
 }
 
-type ClusterReconciliator struct {
-	client kubernetes.Interface
+type ClusterReconciler struct {
+	client ctrlClient.Client
 }
 
-func (s ClusterReconciliator) reconcileCentralDeployment(r public.CentralRequest) {
-	//secret := &coreV1.Secret{}
-	//key := client.ObjectKey{Namespace: r.Namespace(), Name: name}
-	//if err := r.Client().Get(ctx, key, secret); err != nil {
-	//	if !apiErrors.IsNotFound(err) {
-	//		return errors.Wrapf(err, "checking existence of %s secret", name)
-	//	}
-	//	secret = nil
-	//}
+func (r ClusterReconciler) Create(central *v1alpha1.Central) error {
+	return r.client.Create(context.Background(), central)
+}
+
+func NewClusterReconciler() *ClusterReconciler {
+	config := ctrl.GetConfigOrDie()
+	client, err := ctrlClient.New(config, ctrlClient.Options{})
+	if err != nil {
+		log.Fatal("fail", err)
+	}
+
+	return &ClusterReconciler{
+		client: client,
+	}
 }
