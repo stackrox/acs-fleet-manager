@@ -50,6 +50,9 @@ func NewConnectionFactory(config *DatabaseConfig) (*ConnectionFactory, func()) {
 	if sqlDBErr != nil {
 		panic(fmt.Errorf("Unexpected connection error: %s", sqlDBErr))
 	}
+	if err := sqlDB.Ping(); err != nil {
+		panic(fmt.Errorf("unexpected connection error: %s", err))
+	}
 
 	sqlDB.SetMaxOpenConns(config.MaxOpenConnections)
 	dbFactory := &ConnectionFactory{Config: config, DB: db}
