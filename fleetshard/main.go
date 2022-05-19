@@ -19,8 +19,8 @@ import (
 const ClusterID = "1234567890abcdef1234567890abcdef"
 
 var (
-	URLGetCentrals      = fmt.Sprintf("http://127.0.0.1:8000/api/dinosaurs_mgmt/v1/agent-clusters/%s/dinosaurs", ClusterID)
-	URLPutCentralStatus = fmt.Sprintf("http://127.0.0.1:8000/api/dinosaurs_mgmt/v1/agent-clusters/%s/dinosaurs/status", ClusterID)
+	URLGetCentrals      = fmt.Sprintf("http://127.0.0.1:8000/api/rhacs/v1/agent-clusters/%s/dinosaurs", ClusterID)
+	URLPutCentralStatus = fmt.Sprintf("http://127.0.0.1:8000/api/rhacs/v1/agent-clusters/%s/dinosaurs/status", ClusterID)
 )
 
 /**
