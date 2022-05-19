@@ -25,7 +25,10 @@ import (
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const ClusterID = "1234567890abcdef1234567890abcdef"
+const (
+	ClusterID   = "1234567890abcdef1234567890abcdef"
+	DevEndpoint = "http://127.0.0.1:8000"
+)
 
 var (
 	URLGetCentrals      = fmt.Sprintf("http://127.0.0.1:8000/api/rhacs/v1/agent-clusters/%s/dinosaurs", ClusterID)
