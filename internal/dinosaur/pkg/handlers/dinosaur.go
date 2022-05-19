@@ -40,13 +40,13 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &dinosaurRequest,
 		Validate: []handlers.Validate{
-			handlers.ValidateAsyncEnabled(r, "creating dinosaur requests"),
+			handlers.ValidateAsyncEnabled(r, "creating central requests"),
 			handlers.ValidateLength(&dinosaurRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxDinosaurNameLength),
 			ValidDinosaurClusterName(&dinosaurRequest.Name, "name"),
 			ValidateDinosaurClusterNameIsUnique(&dinosaurRequest.Name, h.service, r.Context()),
 			ValidateDinosaurClaims(ctx, &dinosaurRequest, convDinosaur),
-			ValidateCloudProvider(&h.service, convDinosaur, h.providerConfig, "creating dinosaur requests"),
-			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating dinosaur requests"),
+			ValidateCloudProvider(&h.service, convDinosaur, h.providerConfig, "creating central requests"),
+			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating central requests"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(convDinosaur)
@@ -80,7 +80,7 @@ func (h dinosaurHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (h dinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateAsyncEnabled(r, "deleting dinosaur requests"),
+			handlers.ValidateAsyncEnabled(r, "deleting central requests"),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
@@ -101,7 +101,7 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 			listArgs := coreServices.NewListArguments(r.URL.Query())
 
 			if err := listArgs.Validate(); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list dinosaur requests: %s", err.Error())
+				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list central requests: %s", err.Error())
 			}
 
 			dinosaurRequests, paging, err := h.service.List(ctx, listArgs)
