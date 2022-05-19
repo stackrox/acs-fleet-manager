@@ -15,19 +15,27 @@ TODO: Clean up and make this ACS Fleet Manager specific.
 
 Context: We want to fix the e2e flow in parallel across many engineers quickly, but don't want to push untested, potentially minimal / simplified code to `main`. So we will develop in `prototype` and later on clean things up and bring them into `main`.
 
-### Rough map
+### Directory map
 
 Here are the key directories to know about:
 
-- docs/ Documentation
-- internal/ ACS Fleet Management specific logic
-- openapi/ Public, private (admin), and fleet synchronizer APIs
-- pkg/ Non-ACS specific Fleet Management logic.
+- `docs/` Documentation
+- `internal/` ACS Fleet Management specific logic
+- `openapi/` Public, private (admin), and fleet synchronizer APIs
+- `pkg/` Non-ACS specific Fleet Management logic.
   - Examples include authentication, error handling, database connections, and more
-- templates/
+- `templates/`
   - These are actually OpenShift templates for deploying jobs to OpenShift clusters
+- `fleetshard/` Contains all logic for the fleetshard-synchronizer
 
-### Commands
+## Prerequisites
+
+* [Golang 1.16+](https://golang.org/dl/)
+* [Docker](https://docs.docker.com/get-docker/) - to create database
+* [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
+* [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+
+### Start fleet-manager
 
 ```bash
 # Install the prereqs:
@@ -36,6 +44,9 @@ Here are the key directories to know about:
 # ocm cli: https://github.com/openshift-online/ocm-cli  (brew/dnf)
 # Node.js v12.20+  (brew/dnf)
 
+# Create OCM token
+
+# Build the binary
 make binary
 
 # Generate the necessary secret files (empty placeholders)
@@ -95,39 +106,17 @@ operator-sdk olm install    # Install the OLM operator to your cluster
 kubectl -n olm get pods -w  # Verify installation of OLM
 ```
 
-
-
-# Fleet Manager Golang Template
-
-This project is an example fleet management service. Fleet managers govern service 
-instances across a range of cloud provider infrastructure and regions. They are 
-responsible for service placement, service lifecycle including blast radius aware 
-upgrades,control of the operators handling each service instance, DNS management, 
-infrastructure scaling and pre-flight checks such as quota entitlement, export control, 
-terms acceptance and authorization. They also provide the public APIs of our platform 
-for provisioning and managing service instances.
-
-
-To help you while reading the code the example service implements a simple collection
-of _dinosaurs_ and their provisioning, so you can immediately know when something is 
-infrastructure or business logic. Anything that talks about dinosaurs is business logic, 
-which you will want to replace with your our concepts. The rest is infrastructure, and you
-will probably want to preserve without change.
+###  fleet-manager introduction
 
 For a real service written using the same fleet management pattern see the
 [kas-fleet-manager](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager).
 
 To contact the people that created this template go to [zulip](https://bf2.zulipchat.com/).
 
-## Prerequisites
-* [Golang 1.16+](https://golang.org/dl/)
-* [Docker](https://docs.docker.com/get-docker/) - to create database
-* [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
-* [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+The [implementation](./docs/implementation.md) talks about the main components of this template.
+To bootstrap your application, after cloning the repository.
 
-## Using the template for the first time
-The [implementation](./docs/implementation.md) talks about the main components of this template. 
-To bootstrap your application, after cloning the repository. 
+#### Using the template for the first time
 
 1. Replace _dinosaurs_ placeholder with your own business entity / objects
 1. Implement code that have TODO comments
@@ -203,18 +192,6 @@ make run/docs
 # Remove Swagger UI conainer
 make run/docs/teardown
 ```
-
-### Running additional CLI commands
-
-In addition to starting and running a Fleet Manager server, the Fleet Manager
-binary provides additional commands to interact with the service (i.e. cluster
-creation/scaling, Dinosaur creation, Errors list, etc.) without having to use a
-REST API client.
-
-To use these commands, run `make binary` to create the `./fleet-manager` binary.
-
-Then run `./fleet-manager -h` for information on the additional available
-commands.
 
 ### Fleet Manager Environments
 
