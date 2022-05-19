@@ -11,6 +11,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"golang.org/x/sys/unix"
 	"io/ioutil"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"log"
 	"net/http"
 	"os"
@@ -103,17 +106,24 @@ func synchronize() {
 				},
 			},
 		}
-	}
 
-	glog.Infof("Calling to update %d statuses %q", len(statuses), URLPutCentralStatus)
-	// Create resource
+		glog.Infof("Calling to update %d statuses %q", len(statuses), URLPutCentralStatus)
 
-	reocnciler := NewClusterReconciler()
-	central := &v1alpha1.Central{}
+		// Create namespace
+		reocnciler := NewClusterReconciler()
 
-	err = reocnciler.Create(central)
-	if err != nil {
-		glog.Fatal("NOOO", err)
+		// Create resource
+		central := &v1alpha1.Central{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      v.Metadata.Name,
+				Namespace: v.Metadata.Name, //TODO: temporarly use the name
+			},
+		}
+
+		err = reocnciler.Create(central)
+		if err != nil {
+			glog.Fatal("NOOO", err)
+		}
 	}
 
 	// Update request to fleet-manager
@@ -144,12 +154,23 @@ type ClusterReconciler struct {
 }
 
 func (r ClusterReconciler) Create(central *v1alpha1.Central) error {
+
+	namespace := &v1.Namespace{}
+	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: central.GetNamespace()}, namespace)
+	if err != nil {
+		// TODO: check for not found error
+		return err
+	}
 	return r.client.Create(context.Background(), central)
 }
 
 func NewClusterReconciler() *ClusterReconciler {
+	scheme := runtime.NewScheme()
+	v1alpha1.AddToScheme(scheme)
 	config := ctrl.GetConfigOrDie()
-	client, err := ctrlClient.New(config, ctrlClient.Options{})
+	client, err := ctrlClient.New(config, ctrlClient.Options{
+		Scheme: scheme,
+	})
 	if err != nil {
 		log.Fatal("fail", err)
 	}
