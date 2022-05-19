@@ -10,9 +10,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 
+	. "github.com/onsi/gomega"
 	coreTest "github.com/stackrox/acs-fleet-manager/test"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
-	. "github.com/onsi/gomega"
 )
 
 // This tests file ensures that the terms acceptance endpoint is working
@@ -51,6 +51,8 @@ func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
 }
 
 func TestTermsRequired_CreateDinosaurTermsRequired(t *testing.T) {
+	// TODO(create-ticket): Add back this test
+	skipNotFullyImplementedYet(t)
 	env := termsRequiredSetup(true, t)
 	defer env.teardown()
 
@@ -76,6 +78,8 @@ func TestTermsRequired_CreateDinosaurTermsRequired(t *testing.T) {
 }
 
 func TestTermsRequired_CreateDinosaur_TermsNotRequired(t *testing.T) {
+	// TODO(create-ticket): Add back this test
+	skipNotFullyImplementedYet(t)
 	env := termsRequiredSetup(false, t)
 	defer env.teardown()
 
