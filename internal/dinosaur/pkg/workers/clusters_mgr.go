@@ -14,15 +14,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 	"github.com/google/uuid"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
-	"github.com/golang/glog"
 
 	authv1 "github.com/openshift/api/authorization/v1"
 	userv1 "github.com/openshift/api/user/v1"
@@ -385,42 +385,43 @@ func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
 }
 
 func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
-	if !c.DataplaneClusterConfig.IsReadyDataPlaneClustersReconcileEnabled() {
-		glog.Infof("Reconcile of dataplane ready clusters is disabled. Skipped reconcile of ready ClusterID '%s'", cluster.ClusterID)
-		return nil
-	}
-
-	var err error
-
-	err = c.reconcileClusterInstanceType(cluster)
-	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile instance type ready cluster %s: %s", cluster.ClusterID, err.Error())
-	}
-
-	// resources update if needed
-	if err := c.reconcileClusterResources(cluster); err != nil {
-		return errors.WithMessagef(err, "failed to reconcile ready cluster resources %s ", cluster.ClusterID)
-	}
-
-	err = c.reconcileClusterIdentityProvider(cluster)
-	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile identity provider of ready cluster %s: %s", cluster.ClusterID, err.Error())
-	}
-
-	err = c.reconcileClusterDNS(cluster)
-	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile cluster dns of ready cluster %s: %s", cluster.ClusterID, err.Error())
-	}
-
-	if c.FleetshardOperatorAddon != nil {
-		if err := c.FleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
-			if err.IsBadRequest() {
-				glog.Infof("fleetshard operator is not found on cluster %s", cluster.ClusterID)
-			} else {
-				return errors.WithMessagef(err, "failed to reconcile fleet-shard parameters of ready cluster %s: %s", cluster.ClusterID, err.Error())
-			}
-		}
-	}
+	// TODO(create-ticket): We do no reconciliation of Ready clusters.
+	//if !c.DataplaneClusterConfig.IsReadyDataPlaneClustersReconcileEnabled() {
+	//	glog.Infof("Reconcile of dataplane ready clusters is disabled. Skipped reconcile of ready ClusterID '%s'", cluster.ClusterID)
+	//	return nil
+	//}
+	//
+	//var err error
+	//
+	//err = c.reconcileClusterInstanceType(cluster)
+	//if err != nil {
+	//	return errors.WithMessagef(err, "failed to reconcile instance type ready cluster %s: %s", cluster.ClusterID, err.Error())
+	//}
+	//
+	//// resources update if needed
+	//if err := c.reconcileClusterResources(cluster); err != nil {
+	//	return errors.WithMessagef(err, "failed to reconcile ready cluster resources %s ", cluster.ClusterID)
+	//}
+	//
+	//err = c.reconcileClusterIdentityProvider(cluster)
+	//if err != nil {
+	//	return errors.WithMessagef(err, "failed to reconcile identity provider of ready cluster %s: %s", cluster.ClusterID, err.Error())
+	//}
+	//
+	//err = c.reconcileClusterDNS(cluster)
+	//if err != nil {
+	//	return errors.WithMessagef(err, "failed to reconcile cluster dns of ready cluster %s: %s", cluster.ClusterID, err.Error())
+	//}
+	//
+	//if c.FleetshardOperatorAddon != nil {
+	//	if err := c.FleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
+	//		if err.IsBadRequest() {
+	//			glog.Infof("fleetshard operator is not found on cluster %s", cluster.ClusterID)
+	//		} else {
+	//			return errors.WithMessagef(err, "failed to reconcile fleet-shard parameters of ready cluster %s: %s", cluster.ClusterID, err.Error())
+	//		}
+	//	}
+	//}
 
 	return nil
 }
