@@ -198,8 +198,8 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		Name(logger.NewLogEvent("list-dataplane-dinosaurs", "list all dataplane dinosaurs").ToString()).
 		Methods(http.MethodGet)
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
-	// TODO(ROX-????): Enable internal api authorization
-	//auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, s.Keycloak.GetConfig().DinosaurRealm.ValidIssuerURI, "id")
+	// TODO(create-ticket): We need to authn/authz requests to the internal API.
+	// auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, s.Keycloak.GetConfig().DinosaurRealm.ValidIssuerURI, "id")
 
 	adminDinosaurHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()

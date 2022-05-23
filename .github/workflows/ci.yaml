@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-      - prototype
+      - release
     paths-ignore:
       - '*.md'
       - '*.sh'

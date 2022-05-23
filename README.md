@@ -8,12 +8,11 @@ TODO: Clean up and make this ACS Fleet Manager specific.
 
 ### Contributing
 
-- Pull `prototype` branch updates at the start of every working day
-- Develop on top of `prototype` branch
-- Add `// TODO(create-ticket): some explanation` near your work so we can come back and refine it
-- Merge your PRs to `prototype` branch
+- Develop on top of `main` branch
+- Add `// TODO(create-ticket): some explanation` near your work, so we can come back and refine it
+- Merge your PRs to `main` branch
 
-Context: We want to fix the e2e flow in parallel across many engineers quickly, but don't want to push untested, potentially minimal / simplified code to `main`. So we will develop in `prototype` and later on clean things up and bring them into `main`.
+Context: We want to fix the e2e flow in parallel across many engineers quickly, but don't want to push untested, potentially minimal / simplified code to `release`. So we will develop in `main` and later on clean things up and bring them into `release`.
 
 ### Rough map
 
