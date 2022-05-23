@@ -267,6 +267,10 @@ binary:
 	$(GO) build ./cmd/fleet-manager
 .PHONY: binary
 
+dbg-binary:
+	$(GO) build -gcflags=all="-N -l" ./cmd/fleet-manager
+.PHONY: dbg-binary
+
 # Install
 install: verify lint
 	$(GO) install ./cmd/fleet-manager
