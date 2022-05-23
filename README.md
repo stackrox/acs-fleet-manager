@@ -33,18 +33,16 @@ The API consists of:
 - Private, mainly Fleetshard Synchronizer use
 - Admin, mainly sysop use
 
-Description of Private API around 2022-05-23 for quick reference, will be out of date but we can clean this up later:
+Private API summary (2022-05-23) for quick reference, will be out of date but we can clean this up later:
 
-```
-- /api/rhacs/v1/agent-clusters/{id}
+- `/api/rhacs/v1/agent-clusters/{id}`
   - GET get data cluster agent config for a cluster agent: I understand this agent is the fleet shard syncrhonizer, and it uniquely identifies an OSD cluster.
-- /api/rhacs/v1/agent-clusters/{id}/status
-  - PUT update the status of the cluster agent  /api/rhacs/v1/agent-clusters/{id}
-- /api/rhacs/v1/agent-clusters/{id}/dinosaurs: refers to the tenants managed by a cluster agent, in our case the centrals
+- `/api/rhacs/v1/agent-clusters/{id}/status`
+  - PUT update the status of the cluster agent  `/api/rhacs/v1/agent-clusters/{id}`
+- `/api/rhacs/v1/agent-clusters/{id}/dinosaurs`: refers to the tenants managed by a cluster agent, in our case the centrals
   - GET get the list of dinosaurs managed by a cluster agent
-- /api/rhacs/v1/agent-clusters/{id}/dinosaurs/status
+- `/api/rhacs/v1/agent-clusters/{id}/dinosaurs/status`
   - PUT update the status of the dinosaurs managed by a cluster agent (edited) 
-```
 
 ### Commands
 
