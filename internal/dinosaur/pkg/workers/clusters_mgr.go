@@ -14,15 +14,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 	"github.com/google/uuid"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
-	"github.com/golang/glog"
 
 	authv1 "github.com/openshift/api/authorization/v1"
 	userv1 "github.com/openshift/api/user/v1"
@@ -425,8 +425,8 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	return nil
 }
 
-// reconcileClusterInstanceType checks wether a cluster has an instance type, if not, set to the instance type provided in the manual cluster configuration
-// If the cluster does not exists, assume the cluster supports both instance types
+// reconcileClusterInstanceType checks whether a cluster has an instance type, if not, set to the instance type provided in the manual cluster configuration
+// If the cluster does not exist, assume the cluster supports both instance types
 func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error {
 	logger.Logger.Infof("reconciling cluster = %s instance type", cluster.ClusterID)
 	supportedInstanceType := api.AllInstanceTypeSupport.String()
@@ -729,7 +729,7 @@ func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 		c.buildReadOnlyGroupResource(),
 		c.buildDedicatedReaderClusterRoleBindingResource(),
 		c.buildDinosaurSREGroupResource(),
-		c.buildDinosaurSreClusterRoleBindingResource(),
+		c.buildDinosaurSREClusterRoleBindingResource(),
 		c.buildObservabilityNamespaceResource(),
 		c.buildObservatoriumSSOSecretResource(),
 		c.buildObservabilityCatalogSourceResource(),
@@ -927,7 +927,7 @@ func (c *ClusterManager) buildDinosaurSREGroupResource() *userv1.Group {
 }
 
 // buildClusterAdminClusterRoleBindingResource creates a cluster role binding, associates it with the dinosaur-sre group, and attaches the cluster-admin role.
-func (c *ClusterManager) buildDinosaurSreClusterRoleBindingResource() *authv1.ClusterRoleBinding {
+func (c *ClusterManager) buildDinosaurSREClusterRoleBindingResource() *authv1.ClusterRoleBinding {
 	return &authv1.ClusterRoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "rbac.authorization.k8s.io/v1",
