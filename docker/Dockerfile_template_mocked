@@ -44,9 +44,9 @@ RUN update-ca-certificates
 COPY db_setup_docker.sql /docker-entrypoint-initdb.d/
 COPY pr_check_docker.sh /docker-entrypoint-initdb.d/
 
-# install go 1.16.13
-RUN curl -O -J https://dl.google.com/go/go1.16.13.linux-amd64.tar.gz
-RUN tar -C /usr/local -xzf go1.16.13.linux-amd64.tar.gz
+# install go 1.17.10
+RUN curl -O -J https://dl.google.com/go/go1.17.10.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf go1.17.10.linux-amd64.tar.gz
 
 ENV PATH="/fleet-manager/bin:/usr/local/go/bin:${PATH}"
 ENV GOPATH="/fleet-manager"
