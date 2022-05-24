@@ -2,6 +2,36 @@ package workers
 
 import (
 	"fmt"
+	"github.com/goava/di"
+	"github.com/golang/glog"
+	"github.com/google/uuid"
+	authv1 "github.com/openshift/api/authorization/v1"
+	userv1 "github.com/openshift/api/user/v1"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/api/pkg/operators/v1alpha2"
+	"github.com/pkg/errors"
+	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	"github.com/stackrox/acs-fleet-manager/pkg/constants"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
+	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
+	k8sCoreV1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
+	"sync"
+)
+
+package workers
+
+import (
+	"fmt"
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
@@ -397,30 +427,33 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 		return errors.WithMessagef(err, "failed to reconcile instance type ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
-	// resources update if needed
-	if err := c.reconcileClusterResources(cluster); err != nil {
-		return errors.WithMessagef(err, "failed to reconcile ready cluster resources %s ", cluster.ClusterID)
-	}
+	// TODO(create-ticket): Install necessary OSD cluster resources.
+	//// resources update if needed
+	//if err := c.reconcileClusterResources(cluster); err != nil {
+	//	return errors.WithMessagef(err, "failed to reconcile ready cluster resources %s ", cluster.ClusterID)
+	//}
 
-	err = c.reconcileClusterIdentityProvider(cluster)
-	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile identity provider of ready cluster %s: %s", cluster.ClusterID, err.Error())
-	}
+	// TODO(create-ticket): Register what is necessary for SSO authn/authz.
+	//err = c.reconcileClusterIdentityProvider(cluster)
+	//if err != nil {
+	//	return errors.WithMessagef(err, "failed to reconcile identity provider of ready cluster %s: %s", cluster.ClusterID, err.Error())
+	//}
 
 	err = c.reconcileClusterDNS(cluster)
 	if err != nil {
 		return errors.WithMessagef(err, "failed to reconcile cluster dns of ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
-	if c.FleetshardOperatorAddon != nil {
-		if err := c.FleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
-			if err.IsBadRequest() {
-				glog.Infof("fleetshard operator is not found on cluster %s", cluster.ClusterID)
-			} else {
-				return errors.WithMessagef(err, "failed to reconcile fleet-shard parameters of ready cluster %s: %s", cluster.ClusterID, err.Error())
-			}
-		}
-	}
+	// TODO(create-ticket): Install the ACS Operator and Fleetshard Operator (Add-Ons)
+	//if c.FleetshardOperatorAddon != nil {
+	//	if err := c.FleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
+	//		if err.IsBadRequest() {
+	//			glog.Infof("fleetshard operator is not found on cluster %s", cluster.ClusterID)
+	//		} else {
+	//			return errors.WithMessagef(err, "failed to reconcile fleet-shard parameters of ready cluster %s: %s", cluster.ClusterID, err.Error())
+	//		}
+	//	}
+	//}
 
 	return nil
 }
@@ -490,19 +523,21 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 }
 
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
-	if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
-		return err
-	}
+	// TODO(create-ticket): Register what is necessary for SSO authn/authz.
+	//if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
+	//	return err
+	//}
 
 	if err := c.reconcileClusterDNS(cluster); err != nil {
 		return err
 	}
 
-	// SyncSet creation step
-	syncSetErr := c.reconcileClusterResources(cluster) //OSD cluster itself
-	if syncSetErr != nil {
-		return errors.WithMessagef(syncSetErr, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
-	}
+	// TODO(create-ticket): Install necessary OSD cluster resources.
+	//// SyncSet creation step
+	//syncSetErr := c.reconcileClusterResources(cluster) //OSD cluster itself
+	//if syncSetErr != nil {
+	//	return errors.WithMessagef(syncSetErr, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
+	//}
 
 	// Addon installation step
 	// TODO this is currently the responsible of setting the status of the cluster
@@ -510,10 +545,11 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	// installed. The logic to set the status of the cluster should probably done
 	// independently of the installation of the addon, and it should use the
 	// result of the addon/s reconciliation to set the status of the cluster
-	addOnErr := c.reconcileAddonOperator(cluster)
-	if addOnErr != nil {
-		return errors.WithMessagef(addOnErr, "failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
-	}
+	// TODO(create-ticket): Install the ACS Operator and Fleetshard Operator (Add-Ons)
+	//addOnErr := c.reconcileAddonOperator(cluster)
+	//if addOnErr != nil {
+	//	return errors.WithMessagef(addOnErr, "failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
+	//}
 
 	return nil
 }
@@ -726,16 +762,17 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 
 func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 	r := []interface{}{
-		c.buildReadOnlyGroupResource(),
-		c.buildDedicatedReaderClusterRoleBindingResource(),
-		c.buildDinosaurSREGroupResource(),
-		c.buildDinosaurSREClusterRoleBindingResource(),
-		c.buildObservabilityNamespaceResource(),
-		c.buildObservatoriumSSOSecretResource(),
-		c.buildObservabilityCatalogSourceResource(),
-		c.buildObservabilityOperatorGroupResource(),
-		c.buildObservabilitySubscriptionResource(),
+		//c.buildReadOnlyGroupResource(),
+		//c.buildDedicatedReaderClusterRoleBindingResource(),
+		//c.buildDinosaurSREGroupResource(),
+		//c.buildDinosaurSREClusterRoleBindingResource(),
+		//c.buildObservabilityNamespaceResource(),
+		//c.buildObservatoriumSSOSecretResource(),
+		//c.buildObservabilityCatalogSourceResource(),
+		//c.buildObservabilityOperatorGroupResource(),
+		//c.buildObservabilitySubscriptionResource(),
 	}
+
 	managedDinosaurOperatorNamespace := dinosaurOperatorAddonNamespace
 	if c.OCMConfig.DinosaurOperatorAddonID == "managed-dinosaur-qe" {
 		managedDinosaurOperatorNamespace = dinosaurOperatorQEAddonNamespace
