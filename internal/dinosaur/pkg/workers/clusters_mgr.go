@@ -2,36 +2,6 @@ package workers
 
 import (
 	"fmt"
-	"github.com/goava/di"
-	"github.com/golang/glog"
-	"github.com/google/uuid"
-	authv1 "github.com/openshift/api/authorization/v1"
-	userv1 "github.com/openshift/api/user/v1"
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/api/pkg/operators/v1alpha2"
-	"github.com/pkg/errors"
-	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
-	"github.com/stackrox/acs-fleet-manager/pkg/constants"
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
-	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/workers"
-	k8sCoreV1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
-	"sync"
-)
-
-package workers
-
-import (
-	"fmt"
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
