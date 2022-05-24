@@ -43,8 +43,7 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 		},
 	}
 
-	// TODO do we always to return HTTP 204 No Content?
-	handlers.Handle(w, r, cfg, http.StatusNoContent)
+	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
 func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWriter, r *http.Request) {
