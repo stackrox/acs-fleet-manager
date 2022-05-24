@@ -5,13 +5,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/constants"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"github.com/pkg/errors"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/spf13/pflag"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -136,7 +136,10 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			return errors.Errorf("Standalone cluster with id %s does not have the name field provided", c.ClusterId)
 		}
 
-		c.Status = api.ClusterProvisioning // force to cluster provisioning status as we do not want to call StandaloneProvider to create the cluster.
+		if c.Status != api.ClusterProvisioning && c.Status != api.ClusterProvisioned && c.Status != api.ClusterReady {
+			// Force to cluster provisioning status as we do not want to call StandaloneProvider to create the cluster.
+			c.Status = api.ClusterProvisioning
+		}
 	}
 
 	if c.SupportedInstanceType == "" {
