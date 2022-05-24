@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -o pipefail
+set -x
+
+resource=${1}
+shift
+
+# Normalize
+resource=$(echo "$resource" | sed -e 's/^\///;')
+
+curl -LH "Authorization: Bearer ${OCM_TOKEN}" http://localhost:8000/api/${resource} "$@" | jq .

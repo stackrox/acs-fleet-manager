@@ -1,0 +1,24 @@
+{
+    "$ID": {
+        "conditions": [
+            {
+                "type": "Ready",
+                "reason": "DinosaurInstanceReady",
+                "message": "Installing",
+                "status": "True",
+                "lastTransitionTime": "2018-01-01T00:00:00Z"
+            }
+        ],
+        "routes": [
+            {
+                "name": "test-route-name",
+                "prefix": "test-route-prefix",
+                "router": "cluster.local"
+            }
+        ],
+        "versions": {
+            "dinosaur": "2.4.1",
+            "dinosaurOperator": "0.21.2"
+        }
+    }
+}
