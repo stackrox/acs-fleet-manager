@@ -6,10 +6,10 @@ import (
 )
 
 func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneDinosaurStatus) []*dbapi.DataPlaneDinosaurStatus {
-	var res []*dbapi.DataPlaneDinosaurStatus
+	res := make([]*dbapi.DataPlaneDinosaurStatus, len(status))
 
 	for k, v := range status {
-		var c []dbapi.DataPlaneDinosaurStatusCondition
+		c := make([]dbapi.DataPlaneDinosaurStatusCondition, len(v.Conditions))
 		var routes []dbapi.DataPlaneDinosaurRouteRequest
 		for _, s := range v.Conditions {
 			c = append(c, dbapi.DataPlaneDinosaurStatusCondition{
@@ -20,6 +20,7 @@ func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneDinosaurS
 			})
 		}
 		if v.Routes != nil {
+			routes = make([]dbapi.DataPlaneDinosaurRouteRequest, len(*v.Routes))
 			for _, ro := range *v.Routes {
 				routes = append(routes, dbapi.DataPlaneDinosaurRouteRequest{
 					Name:   ro.Name,
