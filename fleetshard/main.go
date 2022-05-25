@@ -176,6 +176,7 @@ func (r ClusterReconciler) Reconcile(ctx context.Context, newCentral *v1alpha1.C
 		}
 	} else {
 		newCentral.ResourceVersion = central.ResourceVersion
+		// TODO(yury): implement update logic
 		if err := r.client.Update(ctx, newCentral); err != nil {
 			return errors.Wrapf(err, "updating central %q", newCentral.GetName())
 		}
