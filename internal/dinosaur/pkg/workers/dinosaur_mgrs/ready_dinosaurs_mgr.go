@@ -1,26 +1,26 @@
 package dinosaur_mgrs
 
 import (
-	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
-	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
 // ReadyDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type ReadyDinosaurManager struct {
 	workers.BaseWorker
 	dinosaurService services.DinosaurService
-	keycloakService coreServices.KeycloakService
+	keycloakService sso.KeycloakService
 	keycloakConfig  *keycloak.KeycloakConfig
 }
 
 // NewReadyDinosaurManager creates a new dinosaur manager
-func NewReadyDinosaurManager(dinosaurService services.DinosaurService, keycloakService coreServices.DinosaurKeycloakService, keycloakConfig *keycloak.KeycloakConfig) *ReadyDinosaurManager {
+func NewReadyDinosaurManager(dinosaurService services.DinosaurService, keycloakService sso.DinosaurKeycloakService, keycloakConfig *keycloak.KeycloakConfig) *ReadyDinosaurManager {
 	return &ReadyDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),

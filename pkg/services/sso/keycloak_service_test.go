@@ -1,13 +1,12 @@
-package services
+package sso
 
 import (
 	"fmt"
 	"net/http"
-	"reflect"
 	"testing"
 
 	gocloak "github.com/Nerzal/gocloak/v11"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
@@ -21,116 +20,6 @@ const (
 	testClientID = "12221"
 	secret       = "secret"
 )
-
-func TestKeycloakService_RegisterDinosaurClientInSSO(t *testing.T) {
-	type fields struct {
-		kcClient keycloak.KcClient
-	}
-
-	tests := []struct {
-		name    string
-		fields  fields
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "fetch dinosaur client secret from sso when client already exists",
-			fields: fields{
-				kcClient: &keycloak.KcClientMock{
-					GetTokenFunc: func() (string, error) {
-						return token, nil
-					},
-					GetConfigFunc: func() *keycloak.KeycloakConfig {
-						return keycloak.NewKeycloakConfig()
-					},
-					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
-						return testClientID, nil
-					},
-					GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
-						return secret, nil
-					},
-				},
-			},
-			want:    secret,
-			wantErr: false,
-		},
-		{
-			name: "successfully register a new sso client for the dinosaur cluster",
-			fields: fields{
-				kcClient: &keycloak.KcClientMock{
-					GetTokenFunc: func() (string, error) {
-						return token, nil
-					},
-					GetConfigFunc: func() *keycloak.KeycloakConfig {
-						return keycloak.NewKeycloakConfig()
-					},
-					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
-						return "", nil
-					},
-					GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
-						return secret, nil
-					},
-					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-						return testClientID, nil
-					},
-					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
-						testID := "12221"
-						return gocloak.Client{
-							ClientID: &testID,
-						}
-					},
-				},
-			},
-			want:    secret,
-			wantErr: false,
-		},
-		{
-			name: "failed to register sso client for the dinosaur cluster",
-			fields: fields{
-				kcClient: &keycloak.KcClientMock{
-					GetTokenFunc: func() (string, error) {
-						return token, nil
-					},
-					GetConfigFunc: func() *keycloak.KeycloakConfig {
-						return keycloak.NewKeycloakConfig()
-					},
-					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
-						return "", nil
-					},
-					GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
-						return secret, nil
-					},
-					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-						return "", errors.GeneralError("failed to create the sso client")
-					},
-					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
-						testID := "12221"
-						return gocloak.Client{
-							ClientID: &testID,
-						}
-					},
-				},
-			},
-			want:    "",
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := keycloakService{
-				tt.fields.kcClient,
-			}
-			got, err := keycloakService.RegisterDinosaurClientInSSO("dinosaur-12212", "121212")
-			if (err != nil) != tt.wantErr {
-				t.Errorf("RegisterDinosaurClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RegisterDinosaurClientInSSO() got = %+v, want %+v", got, tt.want)
-			}
-		})
-	}
-
-}
 
 func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 	tokenErr := pkgErr.New("token error")
@@ -155,7 +44,7 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 				},
 			},
 			want:    "",
-			wantErr: errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register OSD cluster Client in SSO"),
+			wantErr: errors.NewWithCause(errors.ErrorGeneral, tokenErr, "error getting access token"),
 		},
 		{
 			name: "fetch osd client secret from sso when client already exists",
@@ -179,7 +68,7 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "successfully register a new sso client for the dinosaur cluster",
+			name: "successfully register a new sso client for the ACS cluster",
 			fields: fields{
 				kcClient: &keycloak.KcClientMock{
 					GetTokenFunc: func() (string, error) {
@@ -240,94 +129,28 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
-			keycloakService := keycloakService{
-				tt.fields.kcClient,
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
-			got, err := keycloakService.RegisterOSDClusterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
-			gomega.Expect(got).To(gomega.Equal(tt.want))
-			gomega.Expect(err).To(gomega.Equal(tt.wantErr))
+			got, err := keycloakService.RegisterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
+			Expect(got).To(Equal(tt.want))
+			Expect(err).To(Equal(tt.wantErr))
 		})
 	}
 
 }
 
-func TestNewKeycloakService_DeRegisterClientInSSO(t *testing.T) {
-	type fields struct {
-		kcClient keycloak.KcClient
-	}
-
-	tests := []struct {
-		name    string
-		fields  fields
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "successful deleted the dinosaur client in sso",
-			fields: fields{
-				kcClient: &keycloak.KcClientMock{
-					GetTokenFunc: func() (string, error) {
-						return token, nil
-					},
-					GetConfigFunc: func() *keycloak.KeycloakConfig {
-						return keycloak.NewKeycloakConfig()
-					},
-					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
-						return testClientID, nil
-					},
-					DeleteClientFunc: func(internalClientID string, accessToken string) error {
-						return nil
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "failed to delete the dinosaur client from sso",
-			fields: fields{
-				kcClient: &keycloak.KcClientMock{
-					GetTokenFunc: func() (string, error) {
-						return token, nil
-					},
-					GetConfigFunc: func() *keycloak.KeycloakConfig {
-						return keycloak.NewKeycloakConfig()
-					},
-					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
-						return testClientID, nil
-					},
-					DeleteClientFunc: func(internalClientID string, accessToken string) error {
-						return errors.GeneralError("failed to delete")
-					},
-				},
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := keycloakService{
-				tt.fields.kcClient,
-			}
-			err := keycloakService.DeRegisterClientInSSO(testClientID)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("RegisterDinosaurClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-
-}
-
-func TestKeycloakService_RegisterFleetshardOperatorServiceAccount(t *testing.T) {
+func TestKeycloakService_RegisterAcsFleetshardOperatorServiceAccount(t *testing.T) {
 	type fields struct {
 		kcClient keycloak.KcClient
 	}
 	type args struct {
 		clusterId string
-		roleName  string
 	}
 	fakeRoleId := "1234"
 	fakeClientId := "test-client-id"
@@ -388,13 +211,12 @@ func TestKeycloakService_RegisterFleetshardOperatorServiceAccount(t *testing.T) 
 			},
 			args: args{
 				clusterId: "test-cluster-id",
-				roleName:  "test-role-name",
 			},
 			want: &api.ServiceAccount{
 				ID:           fakeClientId,
-				ClientID:     "fleetshard-agent-test-cluster-id",
+				ClientID:     "acs-fleetshard-agent-test-cluster-id",
 				ClientSecret: fakeClientSecret,
-				Name:         "fleetshard-agent-test-cluster-id",
+				Name:         "acs-fleetshard-agent-test-cluster-id",
 				Description:  "service account for agent on cluster test-cluster-id",
 			},
 			wantErr: false,
@@ -418,7 +240,7 @@ func TestKeycloakService_RegisterFleetshardOperatorServiceAccount(t *testing.T) 
 						return &gocloak.User{
 							ID: &fakeUserId,
 							Attributes: &map[string][]string{
-								clusterId: {"test-cluster-id"},
+								acsClusterId: {"test-cluster-id"},
 							},
 						}, nil
 					},
@@ -445,35 +267,36 @@ func TestKeycloakService_RegisterFleetshardOperatorServiceAccount(t *testing.T) 
 			},
 			args: args{
 				clusterId: "test-cluster-id",
-				roleName:  "test-role-name",
 			},
 			want: &api.ServiceAccount{
 				ID:           fakeClientId,
-				ClientID:     "fleetshard-agent-test-cluster-id",
+				ClientID:     "acs-fleetshard-agent-test-cluster-id",
 				ClientSecret: fakeClientSecret,
-				Name:         "fleetshard-agent-test-cluster-id",
+				Name:         "acs-fleetshard-agent-test-cluster-id",
 				Description:  "service account for agent on cluster test-cluster-id",
 			},
 			wantErr: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := keycloakService{
-				tt.fields.kcClient,
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
-			got, err := keycloakService.RegisterFleetshardOperatorServiceAccount(tt.args.clusterId, tt.args.roleName)
+			got, err := keycloakService.RegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterId)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("RegisterFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("RegisterAcsFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RegisterFleetshardOperatorServiceAccount() got = %+v, want %+v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestKeycloakService_DeRegisterFleetshardOperatorServiceAccount(t *testing.T) {
+func TestKeycloakService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testing.T) {
 	type fields struct {
 		kcClient keycloak.KcClient
 	}
@@ -569,12 +392,275 @@ func TestKeycloakService_DeRegisterFleetshardOperatorServiceAccount(t *testing.T
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
-			keycloakService := keycloakService{
-				tt.fields.kcClient,
+			RegisterTestingT(t)
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
-			err := keycloakService.DeRegisterFleetshardOperatorServiceAccount(tt.args.clusterId)
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			err := keycloakService.DeRegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterId)
+			Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestKeycloakService_RegisterConnectorFleetshardOperatorServiceAccount(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		clusterId string
+		roleName  string
+	}
+	fakeRoleId := "1234"
+	fakeClientId := "test-client-id"
+	fakeClientSecret := "test-client-secret"
+	fakeUserId := "test-user-id"
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *api.ServiceAccount
+		wantErr bool
+	}{
+		{
+			name: "test registering serviceaccount for agent operator first time",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					AddRealmRoleToUserFunc: func(accessToken string, userId string, role gocloak.Role) error {
+						return nil
+					},
+					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
+						return fakeClientId, nil
+					},
+					GetClientFunc: func(clientId string, accessToken string) (*gocloak.Client, error) {
+						return nil, nil
+					},
+					GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
+						return fakeClientSecret, nil
+					},
+					GetClientServiceAccountFunc: func(accessToken string, internalClient string) (*gocloak.User, error) {
+						return &gocloak.User{
+							ID: &fakeUserId,
+						}, nil
+					},
+					GetRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
+						return &gocloak.Role{
+							ID:   &fakeRoleId,
+							Name: &roleName,
+						}, nil
+					},
+					UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
+						return nil
+					},
+					UserHasRealmRoleFunc: func(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
+						return nil, nil
+					},
+					CreateProtocolMapperConfigFunc: func(in1 string) []gocloak.ProtocolMapperRepresentation {
+						return []gocloak.ProtocolMapperRepresentation{{}}
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						return gocloak.Client{}
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+				roleName:  "test-role-name",
+			},
+			want: &api.ServiceAccount{
+				ID:           fakeClientId,
+				ClientID:     "connector-fleetshard-agent-test-cluster-id",
+				ClientSecret: fakeClientSecret,
+				Name:         "connector-fleetshard-agent-test-cluster-id",
+				Description:  "service account for agent on cluster test-cluster-id",
+			},
+			wantErr: false,
+		},
+		{
+			name: "test registering serviceaccount for agent operator second time",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetClientFunc: func(clientId string, accessToken string) (*gocloak.Client, error) {
+						return &gocloak.Client{
+							ID: &fakeClientId,
+						}, nil
+					},
+					GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
+						return fakeClientSecret, nil
+					},
+					GetClientServiceAccountFunc: func(accessToken string, internalClient string) (*gocloak.User, error) {
+						return &gocloak.User{
+							ID: &fakeUserId,
+							Attributes: &map[string][]string{
+								connectorClusterId: {"test-cluster-id"},
+							},
+						}, nil
+					},
+					GetRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
+						return &gocloak.Role{
+							ID: &fakeRoleId,
+						}, nil
+					},
+					UserHasRealmRoleFunc: func(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
+						return &gocloak.Role{
+							ID: &fakeRoleId,
+						}, nil
+					},
+					CreateProtocolMapperConfigFunc: func(in1 string) []gocloak.ProtocolMapperRepresentation {
+						return []gocloak.ProtocolMapperRepresentation{{}}
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						return gocloak.Client{}
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+				roleName:  "test-role-name",
+			},
+			want: &api.ServiceAccount{
+				ID:           fakeClientId,
+				ClientID:     "connector-fleetshard-agent-test-cluster-id",
+				ClientSecret: fakeClientSecret,
+				Name:         "connector-fleetshard-agent-test-cluster-id",
+				Description:  "service account for agent on cluster test-cluster-id",
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
+			}
+			got, err := keycloakService.RegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("RegisterConnectorFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestKeycloakService_DeRegisterConnectorFleetshardOperatorServiceAccount(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		clusterId string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "should receive an error when retrieving the token fails",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return "", fmt.Errorf("some errors")
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return fmt.Errorf("some error")
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should receive an error when service account deletion fails",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "testclietid", nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return fmt.Errorf("some error")
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should delete the service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "testclientid", nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+			},
+			wantErr: false,
+		},
+		{
+			name: "should not call delete if client doesn't exist",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return fmt.Errorf("this should not be called")
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
+			}
+			err := keycloakService.DeRegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId)
+			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -660,12 +746,13 @@ func TestKeycloakService_DeleteServiceAccountInternal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
-			keycloakService := keycloakService{
-				tt.fields.kcClient,
+			RegisterTestingT(t)
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
 			err := keycloakService.DeleteServiceAccountInternal("account-id")
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 
@@ -763,19 +850,153 @@ func TestKeycloakService_CreateServiceAccountInternal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
-			keycloakService := keycloakService{
-				tt.fields.kcClient,
+			RegisterTestingT(t)
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
 			serviceAccount, err := keycloakService.CreateServiceAccountInternal(request)
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-			gomega.Expect(serviceAccount != nil).To(gomega.Equal(tt.serviceAccountCreated))
+			Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(serviceAccount != nil).To(Equal(tt.serviceAccountCreated))
 			if tt.serviceAccountCreated {
-				gomega.Expect(serviceAccount.ClientSecret).To(gomega.Equal("secret"))
-				gomega.Expect(serviceAccount.ClientID).To(gomega.Equal(request.ClientId))
-				gomega.Expect(serviceAccount.ID).To(gomega.Equal("dsd"))
+				Expect(serviceAccount.ClientSecret).To(Equal("secret"))
+				Expect(serviceAccount.ClientID).To(Equal(request.ClientId))
+				Expect(serviceAccount.ID).To(Equal("dsd"))
 			}
 		})
 	}
 
+}
+
+func TestKeycloakService_checkAllowedServiceAccountsLimits(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		accessToken string
+		maxAllowed  int
+		orgId       string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    bool
+		wantErr bool
+	}{
+		{
+			name: "Org ID present in the skip list, so no limits apply",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						config := keycloak.NewKeycloakConfig()
+						config.ServiceAccounttLimitCheckSkipOrgIdList = []string{"01234", "56789"}
+						return config
+					},
+					GetClientsFunc: func(accesstoken string, first int, max int, searchAttr string) ([]*gocloak.Client, error) {
+						var clientArr []*gocloak.Client
+
+						for i := 0; i < 2; i++ {
+							client := gocloak.Client{}
+							idStr := fmt.Sprintf("srvc-acct-%d", i)
+							client.ClientID = &idStr
+							clientArr = append(clientArr, &client)
+						}
+						return clientArr, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: "bearer: some-random-token",
+				maxAllowed:  2,
+				orgId:       "01234",
+			},
+
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "Org ID not present in the skip list, limit allows creation of service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						config := keycloak.NewKeycloakConfig()
+						config.ServiceAccounttLimitCheckSkipOrgIdList = []string{"01234", "56789"}
+						return config
+					},
+					GetClientsFunc: func(accesstoken string, first int, max int, searchAttr string) ([]*gocloak.Client, error) {
+						var clientArr []*gocloak.Client
+
+						for i := 0; i < 2; i++ {
+							client := gocloak.Client{}
+							idStr := fmt.Sprintf("srvc-acct-%d", i)
+							client.ClientID = &idStr
+							clientArr = append(clientArr, &client)
+						}
+						return clientArr, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: "bearer: some-random-token",
+				maxAllowed:  3,
+				orgId:       "012345",
+			},
+
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "Org ID not present in the skip list, limit disallows creation of service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						config := keycloak.NewKeycloakConfig()
+						config.ServiceAccounttLimitCheckSkipOrgIdList = []string{"01234", "56789"}
+						return config
+					},
+					GetClientsFunc: func(accesstoken string, first int, max int, searchAttr string) ([]*gocloak.Client, error) {
+						var clientArr []*gocloak.Client
+
+						for i := 0; i < 2; i++ {
+							client := gocloak.Client{}
+							idStr := fmt.Sprintf("srvc-acct-%d", i)
+							client.ClientID = &idStr
+							clientArr = append(clientArr, &client)
+						}
+						return clientArr, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: "bearer: some-random-token",
+				maxAllowed:  2,
+				orgId:       "012345",
+			},
+			want:    false,
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := masService{
+				kcClient: tt.fields.kcClient,
+			}
+			got, err := service.checkAllowedServiceAccountsLimits(tt.args.accessToken, tt.args.maxAllowed, tt.args.orgId)
+			Expect(err != nil).To(Equal(tt.wantErr), "checkAllowedServiceAccountsLimits() error = %v, wantErr %v", err, tt.wantErr)
+			Expect(tt.want).To(Equal(got))
+		})
+	}
 }

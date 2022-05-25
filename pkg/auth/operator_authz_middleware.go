@@ -3,9 +3,9 @@ package auth
 import (
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"github.com/gorilla/mux"
 )
 
 func UseOperatorAuthorisationMiddleware(router *mux.Router, jwkValidIssuerURI string, clusterIdVar string) {
@@ -28,7 +28,7 @@ func checkClusterId(clusterIdVar string) mux.MiddlewareFunc {
 			claims, err := GetClaimsFromContext(ctx)
 			if err != nil {
 				// deliberately return 404 here so that it will appear as the endpoint doesn't exist if requests are not authorised
-				shared.HandleError(request, writer, errors.NotFound(""))
+				shared.HandleError(request, writer, errors.BadRequest(""))
 				return
 			}
 			if clusterIdInClaim, ok := claims[clusterIdClaimKey].(string); ok {
@@ -37,7 +37,7 @@ func checkClusterId(clusterIdVar string) mux.MiddlewareFunc {
 					return
 				}
 			}
-			shared.HandleError(request, writer, errors.NotFound(""))
+			shared.HandleError(request, writer, errors.DuplicateDinosaurClusterName())
 		})
 	}
 }

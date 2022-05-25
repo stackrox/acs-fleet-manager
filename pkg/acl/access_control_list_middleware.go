@@ -29,7 +29,7 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 			return
 		}
 
-		username := auth.GetUsernameFromClaims(claims)
+		username, _ := claims.GetUsername()
 
 		if middleware.accessControlListConfig.EnableDenyList {
 			userIsDenied := middleware.accessControlListConfig.DenyList.IsUserDenied(username)
@@ -39,7 +39,7 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 			}
 		}
 
-		orgId := auth.GetOrgIdFromClaims(claims)
+		orgId, _ := claims.GetOrgId()
 
 		// If the users claim has an orgId, resources should be filtered by their organisation. Otherwise, filter them by owner.
 		context = auth.SetFilterByOrganisationContext(context, orgId != "")

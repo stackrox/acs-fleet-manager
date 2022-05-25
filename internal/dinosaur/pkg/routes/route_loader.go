@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"net/http"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
@@ -28,7 +29,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	coreHandlers "github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
-	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
@@ -42,7 +42,7 @@ type options struct {
 	Dinosaur                 services.DinosaurService
 	CloudProviders           services.CloudProvidersService
 	Observatorium            services.ObservatoriumService
-	Keycloak                 coreServices.DinosaurKeycloakService
+	Keycloak                 sso.DinosaurKeycloakService
 	DataPlaneCluster         services.DataPlaneClusterService
 	DataPlaneDinosaurService services.DataPlaneDinosaurService
 	AccountService           account.AccountService

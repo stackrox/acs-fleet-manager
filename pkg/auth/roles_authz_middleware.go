@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 	"strings"
 
@@ -8,7 +9,6 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 const (
@@ -89,7 +89,7 @@ func (m *rolesAuthMiddleware) RequireRolesForMethods(roles map[string][]string, 
 	}
 }
 
-func getRealmRolesClaim(claims jwt.MapClaims) []string {
+func getRealmRolesClaim(claims ACSClaims) []string {
 	if realmRoles, ok := claims["realm_access"]; ok {
 		if roles, ok := realmRoles.(map[string]interface{}); ok {
 			if arr, ok := roles["roles"].([]interface{}); ok {
@@ -105,10 +105,7 @@ func getRealmRolesClaim(claims jwt.MapClaims) []string {
 }
 
 func hasRole(roles []string, roleName string) bool {
-	for _, role := range roles {
-		if strings.EqualFold(role, roleName) {
-			return true
-		}
-	}
-	return false
+	return arrays.FindFirstString(roles, func(role string) bool {
+		return strings.EqualFold(role, roleName)
+	}) != -1
 }

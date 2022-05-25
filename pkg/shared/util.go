@@ -16,3 +16,10 @@ func SafeString(ptr *string) string {
 	}
 	return *ptr
 }
+
+func SafeInt64(ptr *int64) int64 {
+	if ptr == nil {
+		return 0
+	}
+	return *ptr
+}
