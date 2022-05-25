@@ -219,7 +219,7 @@ components:
         id: "21"
         kind: Error
         href: /api/rhacs/v1/errors/21
-        code: DINOSAURS-MGMT-21
+        code: RHACS-MGMT-21
         reason: Bad request
         operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
     "404Example":

@@ -22,7 +22,7 @@ tags:
 
 paths:
   # Endpoints for data plane communications
-  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/status':
+  '/api/rhacs/v1/agent-clusters/{id}/status':
     put:
       tags:
         - Agent Clusters
@@ -62,7 +62,7 @@ paths:
       operationId: updateAgentClusterStatus
       summary: Update the status of an agent cluster
 
-  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs/status':
+  '/api/rhacs/v1/agent-clusters/{id}/dinosaurs/status':
     put:
       tags:
         - Agent Clusters
@@ -102,7 +102,7 @@ paths:
       operationId: updateDinosaurClusterStatus
       summary: Update the status of Dinosaur clusters on an agent cluster
 
-  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs':
+  '/api/rhacs/v1/agent-clusters/{id}/dinosaurs':
     get:
       tags:
         - Agent Clusters
@@ -139,7 +139,7 @@ paths:
       operationId: getDinosaurs
       summary: Get the list of ManagedaDinosaurs for the specified agent cluster
 
-  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}':
+  '/api/rhacs/v1/agent-clusters/{id}':
     get:
       tags:
         - Agent Clusters
@@ -432,7 +432,7 @@ components:
       value:
         id: "21"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/21"
-        code: "DINOSAURS-MGMT-21"
+        href: "/api/rhacs/v1/errors/21"
+        code: "RHACS-MGMT-21"
         reason: "Bad request"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
