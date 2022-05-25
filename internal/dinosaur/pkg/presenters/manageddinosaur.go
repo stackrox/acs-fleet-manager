@@ -6,7 +6,6 @@ import (
 )
 
 func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {
-	// TODO implement presenter
 	res := private.ManagedDinosaur{
 		Id:   from.Annotations["mas/id"],
 		Kind: from.Kind,
@@ -19,7 +18,16 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {
 			},
 		},
 		Spec: private.ManagedDinosaurAllOfSpec{
-			// TODO implement your spec fields here
+			Owners: from.Spec.Owners,
+			Endpoint: private.ManagedDinosaurAllOfSpecEndpoint{
+				Host: from.Spec.Endpoint.Host,
+				Tls:  &private.ManagedDinosaurAllOfSpecEndpointTls{},
+			},
+			Versions: private.ManagedDinosaurVersions{
+				Dinosaur:         from.Spec.Versions.Dinosaur,
+				DinosaurOperator: from.Spec.Versions.DinosaurOperator,
+			},
+			Deleted: from.Spec.Deleted,
 		},
 	}
 	return res
