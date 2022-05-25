@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"golang.org/x/sys/unix"
@@ -122,7 +123,7 @@ func synchronize() {
 			},
 		}
 
-		err = reocnciler.Create(central)
+		err = reocnciler.Reconcile(central)
 		if err != nil {
 			glog.Fatal("NOOO", err)
 		}
@@ -151,19 +152,39 @@ func synchronize() {
 	glog.Infof(string(body))
 }
 
+// ClusterReconciler reconciles the central cluster
 type ClusterReconciler struct {
 	client ctrlClient.Client
 }
 
-func (r ClusterReconciler) Create(central *v1alpha1.Central) error {
-	err := r.createNamespaceIfAbsent(central.Namespace)
-	if err != nil {
-		return err
+func (r ClusterReconciler) Reconcile(newCentral *v1alpha1.Central) error {
+	if err := r.ensureNamespace(newCentral.Namespace); err != nil {
+		return errors.Wrapf(err, "unable to ensure that namespace %s exists", newCentral.Namespace)
 	}
-	return r.client.Create(context.Background(), central)
+	centralKey := ctrlClient.ObjectKey{Namespace: newCentral.GetNamespace(), Name: newCentral.GetName()}
+	central := &v1alpha1.Central{}
+	if err := r.client.Get(context.Background(), centralKey, central); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return errors.Wrapf(err, "unable to check the existence of central %q", newCentral.GetName())
+		}
+		central = nil
+	}
+
+	if central == nil {
+		if err := r.client.Create(context.Background(), central); err != nil {
+			return errors.Wrapf(err, "creating new central %q", newCentral.GetName())
+		}
+	} else {
+		newCentral.ResourceVersion = central.ResourceVersion
+		if err := r.client.Update(context.Background(), newCentral); err != nil {
+			return errors.Wrapf(err, "updating central %q", newCentral.GetName())
+		}
+	}
+
+	return nil
 }
 
-func (r ClusterReconciler) createNamespaceIfAbsent(name string) error {
+func (r ClusterReconciler) ensureNamespace(name string) error {
 	namespace := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
