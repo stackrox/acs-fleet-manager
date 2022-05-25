@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
@@ -23,13 +22,8 @@ import (
 )
 
 const (
-	ClusterID   = "1234567890abcdef1234567890abcdef"
-	DevEndpoint = "http://127.0.0.1:8000"
-)
-
-var (
-	URLGetCentrals      = fmt.Sprintf("http://127.0.0.1:8000/api/rhacs/v1/agent-clusters/%s/dinosaurs", ClusterID)
-	URLPutCentralStatus = fmt.Sprintf("http://127.0.0.1:8000/api/rhacs/v1/agent-clusters/%s/dinosaurs/status", ClusterID)
+	clusterID   = "1234567890abcdef1234567890abcdef"
+	devEndpoint = "http://127.0.0.1:8000"
 )
 
 /**
@@ -63,7 +57,7 @@ func main() {
 }
 
 func synchronize() {
-	client, err := fleetmanager.NewClient(DevEndpoint, ClusterID)
+	client, err := fleetmanager.NewClient(devEndpoint, clusterID)
 	if err != nil {
 		glog.Fatal("failed to create fleetmanager client", err)
 	}
@@ -71,7 +65,7 @@ func synchronize() {
 	// TODO(create-ticket): Add filter in the REST Client to only receive a specific state
 	list, err := client.GetManagedCentralList()
 	if err != nil {
-		glog.Fatalf("failed to list centrals for cluster %s: %s", ClusterID, err)
+		glog.Fatalf("failed to list centrals for cluster %s: %s", clusterID, err)
 	}
 
 	statuses := make(map[string]private.DataPlaneDinosaurStatus)
