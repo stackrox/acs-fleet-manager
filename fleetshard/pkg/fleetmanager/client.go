@@ -1,4 +1,4 @@
-package fleetmanagerclient
+package fleetmanager
 
 import (
 	"bytes"
@@ -25,6 +25,7 @@ type Client struct {
 }
 
 func NewClient(endpoint string, clusterID string) (*Client, error) {
+	//TODO(create-ticket): Add authentication SSO
 	ocmToken := os.Getenv("OCM_TOKEN")
 	if ocmToken == "" {
 		return nil, errors.New("empty ocm token")
@@ -40,7 +41,6 @@ func NewClient(endpoint string, clusterID string) (*Client, error) {
 
 	return &Client{
 		client:    http.Client{},
-		ocmToken:  ocmToken,
 		clusterID: clusterID,
 		endpoint:  fmt.Sprintf("%s/%s/%s/%s", endpoint, uri, clusterID, "dinosaurs"),
 	}, nil

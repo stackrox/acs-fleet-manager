@@ -1,4 +1,4 @@
-package fleetmanagerclient
+package fleetmanager
 
 import (
 	"encoding/json"

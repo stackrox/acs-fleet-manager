@@ -1,24 +1,21 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"golang.org/x/sys/unix"
-	"io/ioutil"
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -66,93 +63,35 @@ func main() {
 }
 
 func synchronize() {
-	ocmToken := os.Getenv("OCM_TOKEN")
-	if ocmToken == "" {
-		glog.Fatal("empty ocm token")
+	client, err := fleetmanager.NewClient(DevEndpoint, ClusterID)
+	if err != nil {
+		glog.Fatal("failed to create fleetmanager client", err)
 	}
 
-	buf := bytes.Buffer{}
-	r, err := http.NewRequest(http.MethodGet, URLGetCentrals, &buf)
+	// TODO(create-ticket): Add filter in the REST Client to only receive a specific state
+	list, err := client.GetManagedCentralList()
 	if err != nil {
-		glog.Fatal(err)
-	}
-
-	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", ocmToken))
-	// TODO: Support pagination
-	client := http.Client{}
-
-	glog.Info("Calling the Fleet Manager to get the list of Centrals")
-
-	resp, err := client.Do(r)
-	if err != nil {
-		glog.Fatal(err)
-	}
-
-	respBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		glog.Fatal(err)
-	}
-
-	glog.Infof("GOT RESPONSE: %s\n\n", string(respBody))
-
-	list := private.ManagedDinosaurList{}
-	err = json.Unmarshal(respBody, &list)
-	if err != nil {
-		glog.Fatal(err)
+		glog.Fatalf("failed to list centrals for cluster %s: %s", ClusterID, err)
 	}
 
 	statuses := make(map[string]private.DataPlaneDinosaurStatus)
-	for _, v := range list.Items {
-		glog.Infof("received cluster: %s", v.Metadata.Name)
-		statuses[v.Id] = private.DataPlaneDinosaurStatus{
-			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
-				{
-					Type:   "Ready",
-					Status: "True",
-				},
-			},
-		}
+	for _, remoteCentral := range list.Items {
+		glog.Infof("received cluster: %s", remoteCentral.Metadata.Name)
 
-		glog.Infof("Calling to update %d statuses %q", len(statuses), URLPutCentralStatus)
-
-		// Create namespace
-		reocnciler := NewClusterReconciler()
-
-		// Create resource
-		central := &v1alpha1.Central{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      v.Metadata.Name,
-				Namespace: v.Metadata.Name, //TODO: temporarly use the name
-			},
-		}
-
-		err = reocnciler.Reconcile(context.Background(), central)
+		reconciler := NewClusterReconciler()
+		status, err := reconciler.Reconcile(context.Background(), remoteCentral)
 		if err != nil {
-			glog.Fatal("NOOO", err)
+			glog.Fatalf("failed to reconcile central %s: %s", remoteCentral.Metadata.Name, err)
 		}
+
+		statuses[remoteCentral.Id] = *status
 	}
 
-	// Update request to fleet-manager
-	updateBody, err := json.Marshal(statuses)
+	resp, err := client.UpdateStatus(statuses)
 	if err != nil {
 		glog.Fatal(err)
 	}
-
-	bufUpdateBody := &bytes.Buffer{}
-	bufUpdateBody.Write(updateBody)
-	updateReq, err := http.NewRequest(http.MethodPut, URLPutCentralStatus, bufUpdateBody)
-	if err != nil {
-		glog.Fatal(err)
-	}
-
-	updateReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", ocmToken))
-	resp, err = client.Do(updateReq)
-	if err != nil {
-		glog.Fatal(err)
-	}
-	body, _ := ioutil.ReadAll(resp.Body)
-
-	glog.Infof(string(body))
+	glog.Infof(string(resp))
 }
 
 // ClusterReconciler reconciles the central cluster
@@ -160,32 +99,42 @@ type ClusterReconciler struct {
 	client ctrlClient.Client
 }
 
-func (r ClusterReconciler) Reconcile(ctx context.Context, newCentral *v1alpha1.Central) error {
-	if err := r.ensureNamespace(newCentral.Namespace); err != nil {
-		return errors.Wrapf(err, "unable to ensure that namespace %s exists", newCentral.Namespace)
-	}
-	centralKey := ctrlClient.ObjectKey{Namespace: newCentral.GetNamespace(), Name: newCentral.GetName()}
-	central := &v1alpha1.Central{}
-	if err := r.client.Get(ctx, centralKey, central); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return errors.Wrapf(err, "unable to check the existence of central %q", newCentral.GetName())
-		}
-		central = nil
+func (r ClusterReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedDinosaur) (*private.DataPlaneDinosaurStatus, error) {
+	remoteNamespace := remoteCentral.Metadata.Namespace
+	if err := r.ensureNamespace(remoteNamespace); err != nil {
+		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteNamespace)
 	}
 
-	if central == nil {
+	centralExists := false
+	central := &v1alpha1.Central{}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentral.Metadata.Name}, central)
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return nil, errors.Wrapf(err, "unable to check the existence of central %q", central.GetName())
+		}
+		centralExists = true
+	}
+
+	if !centralExists {
 		if err := r.client.Create(ctx, central); err != nil {
-			return errors.Wrapf(err, "creating new central %q", newCentral.GetName())
+			return nil, errors.Wrapf(err, "creating new central %q", remoteCentral.Metadata.Name)
 		}
 	} else {
-		newCentral.ResourceVersion = central.ResourceVersion
 		// TODO(yury): implement update logic
-		if err := r.client.Update(ctx, newCentral); err != nil {
-			return errors.Wrapf(err, "updating central %q", newCentral.GetName())
-		}
+		//if err := r.client.Update(ctx, central); err != nil {
+		//	return errors.Wrapf(err, "updating central %q", remoteCentral.GetName())
+		//}
 	}
 
-	return nil
+	// TODO(create-ticket): When should we create failed conditions for the reconciler?
+	return &private.DataPlaneDinosaurStatus{
+		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+			{
+				Type:   "Ready",
+				Status: "True",
+			},
+		},
+	}, nil
 }
 
 func (r ClusterReconciler) ensureNamespace(name string) error {
