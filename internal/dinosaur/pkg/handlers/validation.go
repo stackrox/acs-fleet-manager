@@ -99,9 +99,10 @@ func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.
 		if err != nil {
 			return errors.Unauthenticated("user not authenticated")
 		}
-		dinosaurRequest.Owner = auth.GetUsernameFromClaims(claims)
-		dinosaurRequest.OrganisationId = auth.GetOrgIdFromClaims(claims)
-		dinosaurRequest.OwnerAccountId = auth.GetAccountIdFromClaims(claims)
+
+		dinosaurRequest.Owner, _ = claims.GetUsername()
+		dinosaurRequest.OrganisationId, _ = claims.GetOrgId()
+		dinosaurRequest.OwnerAccountId, _ = claims.GetAccountId()
 
 		return nil
 	}

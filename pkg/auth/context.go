@@ -103,15 +103,15 @@ func SetTokenInContext(ctx context.Context, token *jwt.Token) context.Context {
 	return authentication.ContextWithToken(ctx, token)
 }
 
-func GetClaimsFromContext(ctx context.Context) (jwt.MapClaims, error) {
-	var claims jwt.MapClaims
+func GetClaimsFromContext(ctx context.Context) (ACSClaims, error) {
+	var claims ACSClaims
 	token, err := authentication.TokenFromContext(ctx)
 	if err != nil {
 		return claims, fmt.Errorf("failed to get jwt token from context: %v", err)
 	}
 
 	if token != nil && token.Claims != nil {
-		claims = token.Claims.(jwt.MapClaims)
+		claims = ACSClaims(token.Claims.(jwt.MapClaims))
 	}
 	return claims, nil
 }

@@ -8,9 +8,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/golang/glog"
 )
 
 type serviceStatusHandler struct {
@@ -34,7 +34,7 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 				return presenters.PresentServiceStatus(true, false), nil
 			}
 
-			username := auth.GetUsernameFromClaims(claims)
+			username, _ := claims.GetUsername()
 			accessControlListConfig := h.accessControlList
 			if accessControlListConfig.EnableDenyList {
 				userIsDenied := accessControlListConfig.DenyList.IsUserDenied(username)

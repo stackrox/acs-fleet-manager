@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"github.com/goava/di"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/aws"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
@@ -14,12 +15,11 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
-	"github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
-	"github.com/goava/di"
 )
 
 func CoreConfigProviders() di.Option {
@@ -78,11 +78,18 @@ func ServiceProviders() di.Option {
 
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
-		di.Provide(func(c *keycloak.KeycloakConfig) services.DinosaurKeycloakService {
-			return services.NewKeycloakService(c, c.DinosaurRealm)
+		di.Provide(func(c *keycloak.KeycloakConfig) sso.DinosaurKeycloakService {
+			return sso.NewKeycloakServiceBuilder().
+				ForACS().
+				WithConfiguration(c).
+				Build()
 		}),
-		di.Provide(func(c *keycloak.KeycloakConfig) services.OsdKeycloakService {
-			return services.NewKeycloakService(c, c.OSDClusterIDPRealm)
+		di.Provide(func(c *keycloak.KeycloakConfig) sso.OsdKeycloakService {
+			return sso.NewKeycloakServiceBuilder().
+				ForOSD().
+				WithConfiguration(c).
+				WithRealmConfig(c.OSDClusterIDPRealm).
+				Build()
 		}),
 
 		// Types registered as a BootService are started when the env is started

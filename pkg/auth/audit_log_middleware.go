@@ -42,7 +42,7 @@ func (a *auditLogMiddleware) AuditLog(code errors.ServiceErrorCode) func(handler
 				shared.HandleError(request, writer, serviceErr)
 				return
 			}
-			username := GetUsernameFromClaims(claims)
+			username, _ := claims.GetUsername()
 			info := auditInfo{
 				Type:       "audit",
 				Username:   username,
