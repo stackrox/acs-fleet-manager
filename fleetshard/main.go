@@ -115,6 +115,7 @@ func (r ClusterReconciler) Reconcile(ctx context.Context, remoteCentral private.
 		}
 	} else {
 		// TODO(yury): implement update logic
+		glog.Info("Implement update logic for Centrals")
 		//if err := r.client.Update(ctx, central); err != nil {
 		//	return errors.Wrapf(err, "updating central %q", remoteCentral.GetName())
 		//}
