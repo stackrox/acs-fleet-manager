@@ -123,7 +123,7 @@ func synchronize() {
 			},
 		}
 
-		err = reocnciler.Reconcile(central)
+		err = reocnciler.Reconcile(context.Background(), central)
 		if err != nil {
 			glog.Fatal("NOOO", err)
 		}
@@ -157,13 +157,13 @@ type ClusterReconciler struct {
 	client ctrlClient.Client
 }
 
-func (r ClusterReconciler) Reconcile(newCentral *v1alpha1.Central) error {
+func (r ClusterReconciler) Reconcile(ctx context.Context, newCentral *v1alpha1.Central) error {
 	if err := r.ensureNamespace(newCentral.Namespace); err != nil {
 		return errors.Wrapf(err, "unable to ensure that namespace %s exists", newCentral.Namespace)
 	}
 	centralKey := ctrlClient.ObjectKey{Namespace: newCentral.GetNamespace(), Name: newCentral.GetName()}
 	central := &v1alpha1.Central{}
-	if err := r.client.Get(context.Background(), centralKey, central); err != nil {
+	if err := r.client.Get(ctx, centralKey, central); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return errors.Wrapf(err, "unable to check the existence of central %q", newCentral.GetName())
 		}
@@ -171,12 +171,12 @@ func (r ClusterReconciler) Reconcile(newCentral *v1alpha1.Central) error {
 	}
 
 	if central == nil {
-		if err := r.client.Create(context.Background(), central); err != nil {
+		if err := r.client.Create(ctx, central); err != nil {
 			return errors.Wrapf(err, "creating new central %q", newCentral.GetName())
 		}
 	} else {
 		newCentral.ResourceVersion = central.ResourceVersion
-		if err := r.client.Update(context.Background(), newCentral); err != nil {
+		if err := r.client.Update(ctx, newCentral); err != nil {
 			return errors.Wrapf(err, "updating central %q", newCentral.GetName())
 		}
 	}
