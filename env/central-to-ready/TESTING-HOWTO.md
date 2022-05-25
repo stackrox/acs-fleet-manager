@@ -1,63 +1,36 @@
 # Transitioning a central to "ready" state
 
-install olm:
-$ brew install operator-sdk   # Install the operator SDK
-$ operator-sdk olm install    # Install the OLM operator to your cluster
-$ kubectl -n olm get pods -w  # Verify installation of OLM
+## Prepare
 
-install certmanager cluster:
-$ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
+Reset DB:
 
-## setup operator (from stackrox/operator/README.md)
+```
+$ make db/teardown; make db/setup; make db/migrate
+```
 
-0. Make sure you have [cert-manager installed](https://cert-manager.io/docs/installation/).
-   It takes care of the TLS aspects of the connection from k8s API server to the webhook server
-   embedded in the manager binary.
+Run:
 
-1. Build operator image
-   ```bash
-   $ make docker-build
-   ```
-2. Make the image available for the cluster, this depends on k8s distribution you use.  
-   You don't need to do anything when using KIND.  
-   For minikube it could be done like this
-   ```bash
-   $ docker save stackrox/stackrox-operator:$(make tag) | ssh -o StrictHostKeyChecking=no -i $(minikube ssh-key) docker@$(minikube ip) docker load
-   ```
-3. Install CRDs and deploy operator resources
-   ```bash
-   $ make deploy
-   ```
-4. Validate that the operator's pod has started successfully
-   ```bash
-   $ kubectl -n stackrox-operator-system describe pods
-   ```
-   Check logs
-   ```bash
-   $ kubectl -n stackrox-operator-system logs deploy/rhacs-operator-controller-manager manager -f
-   ```
-
-FIX image in controller pod, wrong version information (0.0.1) instead of referencing newly build image?
-....
-
-reset
-$ make db/teardown
-$ make db/setup
-$ make db/migrate
-
-run
+```
 $ fleet-manager serve
+```
+
+(Wait until `clusters` table is populated with test cluster, e.g. Minikube.)
 
 ## Test
 
+```
 $ fmcurl rhacs/v1/agent-clusters/1234567890abcdef1234567890abcdef/dinosaurs
+```
 => empty list
 
+```
 $ fmcurl '/rhacs/v1/centrals?async=true' -XPOST --data-binary '@./central-request.json'
+```
 => Central created
 
+```
 $ make db/psql
-
+[...]
 serviceapitests=# select * from dinosaur_requests ;
 ┌─[ RECORD 1 ]──────────────────────┬──────────────────────────────────┐
 │ id                                │ ca6duifafa3g1gsiu3jg             │
@@ -90,19 +63,15 @@ serviceapitests=# select * from dinosaur_requests ;
 │ namespace                         │                                  │
 │ routes_creation_id                │                                  │
 └───────────────────────────────────┴──────────────────────────────────┘
+```
 
-serviceapitests=# 
+### Transition Dinosaur to provisioning
 
-### transition to provisioning
+```
+PGPASSWORD=$(cat secrets/db.password) psql -h localhost -d $(cat secrets/db.name) -U $(cat secrets/db.user) -f env/central-to-ready/prepare-dinosaur-request-entry.sql
+```
 
-serviceapitests=# update dinosaur_requests set status = 'provisioning';
-UPDATE 1
-serviceapitests=# 
-
-serviceapitests=# update dinosaur_requests set host = 'foo';
-UPDATE 1
-serviceapitests=# 
-
+```
 $ fmcurl rhacs/v1/agent-clusters/1234567890abcdef1234567890abcdef/dinosaurs
 =>
 {
@@ -126,19 +95,21 @@ $ fmcurl rhacs/v1/agent-clusters/1234567890abcdef1234567890abcdef/dinosaurs
     }
   ]
 }
+```
 
-### transition to ready
+### Transition Dinosaur to ready
 
+```
 $ export ID=$(fmcurl rhacs/v1/agent-clusters/1234567890abcdef1234567890abcdef/dinosaurs | jq -r '.items[0].id')
-
 $ fmcurl rhacs/v1/agent-clusters/1234567890abcdef1234567890abcdef/dinosaurs/status -XPUT --data-binary @<(envsubst < dinosaur-status-update-ready.json)
-
 $ fmcurl rhacs/v1/agent-clusters/1234567890abcdef1234567890abcdef/dinosaurs/status -XPUT --data-binary @<(envsubst < dinosaur-status-update-ready.json)
+```
 
-Yes, I have to do the PUT twice, I don't know yet why this is the case.
+Yes, this needs to be called twice to reflect fleetshard-sync's expected behaviour of periodically continuously calling fleet-manager.
 
-But then I have:
+Yields:
 
+```
 serviceapitests=# select * from dinosaur_requests ;
 ┌─[ RECORD 1 ]──────────────────────┬──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │ id                                │ ca6e9bnafa3gja5a36pg                                                                                                         │
@@ -171,5 +142,4 @@ serviceapitests=# select * from dinosaur_requests ;
 │ namespace                         │                                                                                                                              │
 │ routes_creation_id                │                                                                                                                              │
 └───────────────────────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-serviceapitests=# 
+```
