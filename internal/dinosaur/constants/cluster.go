@@ -11,8 +11,8 @@ const (
 	ClusterOperationDelete ClusterOperation = "delete"
 
 	// The DNS prefixes used for traffic ingress
-	ManagedDinosaurIngressDnsNamePrefix = "kas"
-	DefaultIngressDnsNamePrefix         = "apps"
+	ManagedRhacsIngressDnsNamePrefix = "acs"
+	DefaultIngressDnsNamePrefix      = "apps"
 )
 
 func (c ClusterOperation) String() string {

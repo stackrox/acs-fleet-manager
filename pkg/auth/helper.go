@@ -12,7 +12,6 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 
-	"github.com/golang-jwt/jwt/v4"
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
 
@@ -20,7 +19,7 @@ const (
 	defaultOcmTokenIssuer = "https://sso.redhat.com/auth/realms/redhat-external"
 	tokenClaimType        = "Bearer"
 	TokenExpMin           = 30
-	JwkKID                = "kastestkey"
+	JwkKID                = "testkey"
 )
 
 type AuthHelper struct {
