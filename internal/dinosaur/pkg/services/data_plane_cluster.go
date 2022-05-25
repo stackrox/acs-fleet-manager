@@ -2,19 +2,20 @@ package services
 
 import (
 	"context"
+	"reflect"
 	"strconv"
 	"time"
 
+	"github.com/goava/di"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
-	"github.com/goava/di"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/golang/glog"
 )
 
 type DataPlaneClusterService interface {
@@ -68,10 +69,12 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 		return errors.BadRequest("Cluster agent with ID '%s' not found", clusterID)
 	}
 
+	// TODO(create-ticket): restore when cluster transition to ready is implemented
+	/*
 	if !d.clusterCanProcessStatusReports(cluster) {
 		glog.V(10).Infof("Cluster with ID '%s' is in '%s' state. Ignoring status report...", clusterID, cluster.Status)
 		return nil
-	}
+	}*/
 
 	fleetShardOperatorReady, err := d.isFleetShardOperatorReady(status)
 	if err != nil {
@@ -101,6 +104,23 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 }
 
 func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) error {
+	prevAvailableDinosaurOperatorVersions, err := cluster.GetAvailableDinosaurOperatorVersions()
+	if err != nil {
+		return err
+	}
+	if len(status.AvailableDinosaurOperatorVersions) > 0 && !reflect.DeepEqual(prevAvailableDinosaurOperatorVersions, status.AvailableDinosaurOperatorVersions) {
+		err := cluster.SetAvailableDinosaurOperatorVersions(status.AvailableDinosaurOperatorVersions)
+		if err != nil {
+			return err
+		}
+		glog.Infof("Updating Dinosaur operator available versions for cluster ID '%s'. From versions '%v' to versions '%v'\n",
+			cluster.ClusterID, prevAvailableDinosaurOperatorVersions, status.AvailableDinosaurOperatorVersions)
+		svcErr := d.ClusterService.Update(*cluster)
+		if svcErr != nil {
+			return err
+		}
+	}
+
 	if cluster.Status != api.ClusterReady {
 		clusterIsWaitingForFleetShardOperator := cluster.Status == api.ClusterWaitingForFleetShardOperator
 		err := d.ClusterService.UpdateStatus(*cluster, api.ClusterReady)
