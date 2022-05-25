@@ -2,31 +2,31 @@ package dinosaur
 
 import (
 	"encoding/json"
+	"github.com/golang/glog"
+	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
-	"github.com/golang/glog"
-	"github.com/spf13/cobra"
 )
 
 // NewCreateCommand creates a new command for creating dinosaurs.
 func NewCreateCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "Create a new dinosaur request",
-		Long:  "Create a new dinosaur request.",
+		Short: "Create a new rhacs request",
+		Long:  "Create a new rhacs request.",
 		Run: func(cmd *cobra.Command, args []string) {
 			runCreate(env, cmd, args)
 		},
 	}
 
-	cmd.Flags().String(FlagName, "", "Dinosaur request name")
+	cmd.Flags().String(FlagName, "", "RHACS request name")
 	cmd.Flags().String(FlagRegion, "us-east-1", "OCM region ID")
 	cmd.Flags().String(FlagProvider, "aws", "OCM provider ID")
 	cmd.Flags().String(FlagOwner, "test-user", "User name")
-	cmd.Flags().String(FlagClusterID, "000", "Dinosaur  request cluster ID")
-	cmd.Flags().Bool(FlagMultiAZ, true, "Whether Dinosaur request should be Multi AZ or not")
+	cmd.Flags().String(FlagClusterID, "000", "RHACS  request cluster ID")
+	cmd.Flags().Bool(FlagMultiAZ, true, "Whether RHACS request should be Multi AZ or not")
 	cmd.Flags().String(FlagOrgID, "", "OCM org id")
 
 	return cmd

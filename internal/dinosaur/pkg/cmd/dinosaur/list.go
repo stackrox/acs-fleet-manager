@@ -28,15 +28,15 @@ const (
 func NewListCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "lists all managed dinosaur requests",
-		Long:  "lists all managed dinosaur requests",
+		Short: "lists all managed RHACS requests",
+		Long:  "lists all managed RHACS requests",
 		Run: func(cmd *cobra.Command, args []string) {
 			runList(env, cmd, args)
 		},
 	}
 	cmd.Flags().String(FlagOwner, "test-user", "Username")
 	cmd.Flags().String(FlagPage, "1", "Page index")
-	cmd.Flags().String(FlagSize, "100", "Number of dinosaur requests per page")
+	cmd.Flags().String(FlagSize, "100", "Number of RHACS requests per page")
 
 	return cmd
 }
