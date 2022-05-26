@@ -54,7 +54,7 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 			}
 
 			managedDinosaurList := private.ManagedCentralList{
-				Kind:  "ManagedDinosaurList",
+				Kind:  "ManagedCentralList",
 				Items: []private.ManagedCentral{},
 			}
 
