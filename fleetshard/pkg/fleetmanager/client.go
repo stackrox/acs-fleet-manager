@@ -46,7 +46,7 @@ func NewClient(endpoint string, clusterID string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) GetManagedCentralList() (*private.ManagedDinosaurList, error) {
+func (c *Client) GetManagedCentralList() (*private.ManagedCentralList, error) {
 	resp, err := c.newRequest(http.MethodGet, c.endpoint, &bytes.Buffer{})
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (c *Client) GetManagedCentralList() (*private.ManagedDinosaurList, error) {
 		return nil, err
 	}
 
-	list := &private.ManagedDinosaurList{}
+	list := &private.ManagedCentralList{}
 	err = json.Unmarshal(respBody, &list)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (c *Client) GetManagedCentralList() (*private.ManagedDinosaurList, error) {
 	return list, nil
 }
 
-func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneDinosaurStatus) ([]byte, error) {
+func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus) ([]byte, error) {
 	updateBody, err := json.Marshal(statuses)
 	if err != nil {
 		return nil, err
