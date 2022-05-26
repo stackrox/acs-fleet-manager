@@ -4,9 +4,9 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # Only add endpoints here when it is an explicit requirement, or if you know what you are doing.
 # There should be no duplicated endpoints or schemas in these 2 files. They should only defined in one of them.
 info:
-  title: Dinosaur Service Fleet Manager
+  title: Red Hat Advanced Cluster Security Service Fleet Manager
   version: 1.4.0
-  description: Dinosaur Service Fleet Manager APIs that are used by internal services e.g fleetshard operators.
+  description: Red Hat Advanced Cluster Security (RHACS) Service Fleet Manager APIs that are used by internal services e.g fleetshard operators.
 servers:
   - url: https://api.openshift.com
     description: Main (production) server
@@ -22,7 +22,7 @@ tags:
 
 paths:
   # Endpoints for data plane communications
-  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/status':
+  '/api/rhacs/v1/agent-clusters/{id}/status':
     put:
       tags:
         - Agent Clusters
@@ -62,22 +62,22 @@ paths:
       operationId: updateAgentClusterStatus
       summary: Update the status of an agent cluster
 
-  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs/status':
+  '/api/rhacs/v1/agent-clusters/{id}/centrals/status':
     put:
       tags:
         - Agent Clusters
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       requestBody:
-        description: Dinosaur clusters status update data
+        description: Centrals status update data
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DataPlaneDinosaurStatusUpdateRequest'
+              $ref: '#/components/schemas/DataPlaneCentralStatusUpdateRequest'
         required: true
       responses:
         '200':
-          description: Status is updated for Dinosaur clusters
+          description: Status is updated for Centrals
         '400':
           content:
             application/json:
@@ -99,10 +99,10 @@ paths:
           description: Auth token is not valid.
       security:
         - Bearer: [ ]
-      operationId: updateDinosaurClusterStatus
-      summary: Update the status of Dinosaur clusters on an agent cluster
+      operationId: updateCentralClusterStatus
+      summary: Update the status of Centrals on an agent cluster
 
-  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs':
+  '/api/rhacs/v1/agent-clusters/{id}/centrals':
     get:
       tags:
         - Agent Clusters
@@ -110,11 +110,11 @@ paths:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       responses:
         '200':
-          description: The list of the ManagedDinosaurs for the specified agent cluster
+          description: The list of the ManagedCentrals for the specified agent cluster
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ManagedDinosaurList'
+                $ref: '#/components/schemas/ManagedCentralList'
         '400':
           content:
             application/json:
@@ -136,10 +136,10 @@ paths:
           description: Auth token is not valid.
       security:
         - Bearer: [ ]
-      operationId: getDinosaurs
-      summary: Get the list of ManagedaDinosaurs for the specified agent cluster
+      operationId: getCentrals
+      summary: Get the list of ManagedaCentrals for the specified agent cluster
 
-  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}':
+  '/api/rhacs/v1/agent-clusters/{id}':
     get:
       tags:
         - Agent Clusters
@@ -196,15 +196,15 @@ components:
         kind:
           type: string
 
-    ManagedDinosaurVersions:
+    ManagedCentralVersions:
       type: object
       properties:
-        dinosaur:
+        central:
           type: string
-        dinosaurOperator:
+        centralOperator:
           type: string
 
-    ManagedDinosaur:
+    ManagedCentral:
       allOf:
         - $ref: "#/components/schemas/PrivateObjectReference"
         - type: object
@@ -248,28 +248,28 @@ components:
                         key:
                           type: string
                 versions:
-                  $ref: "#/components/schemas/ManagedDinosaurVersions"
+                  $ref: "#/components/schemas/ManagedCentralVersions"
                 deleted:
                   type: boolean
               required:
                 - deleted
 
-    ManagedDinosaurList:
+    ManagedCentralList:
       description: >-
-        A list of ManagedDinosaur
+        A list of ManagedCentral
       allOf:
         - $ref: "#/components/schemas/ListReference"
         - type: object
           example:
-            kind: "ManagedDinosaurList"
+            kind: "ManagedCentralList"
             items:
-              $ref: '#/components/examples/ManagedDinosaurExample'
+              $ref: '#/components/examples/ManagedCentralExample'
           properties:
             items:
               type: array
               items:
                 allOf:
-                  - $ref: "#/components/schemas/ManagedDinosaur"
+                  - $ref: "#/components/schemas/ManagedCentral"
 
     DataPlaneClusterUpdateStatusRequest:
       # TODO are there any fields that should be required?
@@ -291,7 +291,7 @@ components:
                 type: string
               status:
                 type: string
-        dinosaurOperator:
+        centralOperator:
           type: array
           items:
             type: object
@@ -300,19 +300,19 @@ components:
                 type: boolean
               version:
                 type: string
-              dinosaurVersions:
+              centralVersions:
                 type: array
                 items:
                   type: string
             required:
             - ready
             - version
-    DataPlaneDinosaurStatus:
-      description: "Schema of the status object for a Dinosaur cluster"
+    DataPlaneCentralStatus:
+      description: "Schema of the status object for a Central"
       type: object
       properties:
         conditions:
-          description: "The status conditions of a Dinosaur cluster"
+          description: "The status conditions of a Central"
           type: array
           items:
             type: object
@@ -326,15 +326,15 @@ components:
               status:
                 type: string
         versions:
-          description: "Version information related to a Dinosaur cluster"
+          description: "Version information related to a Central"
           type: object
           properties:
-            dinosaur:
+            central:
               type: string
-            dinosaurOperator:
+            centralOperator:
               type: string
         routes:
-          description: "Routes created for a Dinosaur cluster"
+          description: "Routes created for a Central"
           type: array
           nullable: true
           items:
@@ -347,13 +347,13 @@ components:
               router:
                 type: string
       example:
-        $ref: '#/components/examples/DataPlaneDinosaurStatusRequestExample'
+        $ref: '#/components/examples/DataPlaneCentralStatusRequestExample'
 
-    DataPlaneDinosaurStatusUpdateRequest:
-      description: "Schema for the request to update the statuses of Dinosaur clusters from data plane"
+    DataPlaneCentralStatusUpdateRequest:
+      description: "Schema for the request to update the statuses of Central clusters from data plane"
       type: object
       additionalProperties:
-        $ref: '#/components/schemas/DataPlaneDinosaurStatus'
+        $ref: '#/components/schemas/DataPlaneCentralStatus'
 
     DataplaneClusterAgentConfig:
       description: "Configuration for the data plane cluster agent"
@@ -398,41 +398,41 @@ components:
       type: http
 
   examples:
-    ManagedDinosaurExample:
+    ManagedCentralExample:
       value:
-        kind: "ManagedDinosaur"
+        kind: "ManagedCentral"
         metadata:
-          name: "example-dinosaur"
-          namespace: "example-dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac"
+          name: "example-central"
+          namespace: "example-central-1rfpsqbvq1em2u9u0z54ymjcwac"
           annotations:
             mas/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
             mas/placementId: ""
         spec:
           endpoint:
-            host: "example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.example.dinosaur.com"
+            host: "example-central--rfpsqbvq-em-u-u-z--ymjcwac.example.central.com"
             tls:
               cert: ""
               key: ""
           versions:
-            dinosaur: 2.7.0
-            dinosaurOperator: 0.21.2
+            central: 2.7.0
+            centralOperator: 0.21.2
           deleted: false
-    DataPlaneDinosaurStatusRequestExample:
+    DataPlaneCentralStatusRequestExample:
       value:
         conditions:
           - type: Ready
-            reason: DinosaurInstanceReady
+            reason: CentralInstanceReady
             message: installing
             status: "False"
             lastTransitionTime: "2018-01-01T00:00:00Z"
         versions:
-          dinosaur: 2.4.1
-          dinosaurOperator: 0.21.2
+          central: 2.4.1
+          centralOperator: 0.21.2
     400InvalidIdExample:
       value:
         id: "21"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/21"
-        code: "DINOSAURS-MGMT-21"
+        href: "/api/rhacs/v1/errors/21"
+        code: "RHACS-MGMT-21"
         reason: "Bad request"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
