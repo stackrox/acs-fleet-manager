@@ -9,7 +9,8 @@
 
 package private
 
-// DataplaneClusterAgentConfigSpec Data plane cluster agent spec
-type DataplaneClusterAgentConfigSpec struct {
-	Observability DataplaneClusterAgentConfigSpecObservability `json:"observability,omitempty"`
+// ManagedCentralAllOfSpecEndpoint struct for ManagedCentralAllOfSpecEndpoint
+type ManagedCentralAllOfSpecEndpoint struct {
+	Host string                              `json:"host,omitempty"`
+	Tls  *ManagedCentralAllOfSpecEndpointTls `json:"tls,omitempty"`
 }

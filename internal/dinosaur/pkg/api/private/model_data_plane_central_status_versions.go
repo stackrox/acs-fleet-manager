@@ -9,7 +9,8 @@
 
 package private
 
-// DataplaneClusterAgentConfigSpec Data plane cluster agent spec
-type DataplaneClusterAgentConfigSpec struct {
-	Observability DataplaneClusterAgentConfigSpecObservability `json:"observability,omitempty"`
+// DataPlaneCentralStatusVersions Version information related to a Central
+type DataPlaneCentralStatusVersions struct {
+	Central         string `json:"central,omitempty"`
+	CentralOperator string `json:"centralOperator,omitempty"`
 }
