@@ -42,7 +42,7 @@ func (a *AgentClustersApiService) GetDataPlaneClusterAgentConfig(ctx _context.Co
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/agent-clusters/{id}"
+	localVarPath := a.client.cfg.BasePath + "/api/dinosaurs_mgmt/v1/agent-clusters/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -138,7 +138,7 @@ func (a *AgentClustersApiService) GetDinosaurs(ctx _context.Context, id string) 
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/agent-clusters/{id}/dinosaurs"
+	localVarPath := a.client.cfg.BasePath + "/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -233,7 +233,7 @@ func (a *AgentClustersApiService) UpdateAgentClusterStatus(ctx _context.Context,
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/agent-clusters/{id}/status"
+	localVarPath := a.client.cfg.BasePath + "/api/dinosaurs_mgmt/v1/agent-clusters/{id}/status"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -321,7 +321,7 @@ func (a *AgentClustersApiService) UpdateDinosaurClusterStatus(ctx _context.Conte
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/agent-clusters/{id}/dinosaurs/status"
+	localVarPath := a.client.cfg.BasePath + "/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs/status"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
