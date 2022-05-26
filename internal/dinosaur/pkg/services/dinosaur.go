@@ -791,7 +791,7 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.DinosaurRequest, dinosaurConf
 	managedDinosaurCR := &manageddinosaur.ManagedDinosaur{
 		Id: dinosaurRequest.ID,
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "ManagedDinosaur",
+			Kind:       "ManagedCentral",
 			APIVersion: "manageddinosaur.mas/v1alpha1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
