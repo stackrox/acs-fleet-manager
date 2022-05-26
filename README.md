@@ -239,6 +239,29 @@ details.
 The `OCM_ENV` environment variable should be set before running any Fleet
 Manager binary command or Makefile target
 
+### Running the fleet manager with an OSD cluster form infractl
+
+Write a Cloud provider configuration file that matches the cloud provider and region used for the cluster, see `dev/config/provider-configuration-infractl-osd.yaml` for an example OSD cluster running in GCP. See the logs for the cluster in infra.rox.system to locate the provider and region. See `internal/dinosaur/pkg/services/cloud_providers.go` for the provider constant. 
+
+Write a cluster configuration file for the cluster, see `dev/config/dataplane-cluster-configuration-infractl-osd.yaml` for an example an example OSD cluster running in GCP. Again the logs for the cluster for required fields. 
+
+Download the kubeconfig for the cluster. Without this the fleet manager will refuse to use the cluster.
+
+```bash
+CLUSTER=... # your cluster's name
+infractl artifacts $CLUSTER --download-dir ~/infra/$CLUSTER
+```
+
+Launch the fleet manager using those configuration files:
+
+```bash
+make binary && ./fleet-manager serve \
+   --dataplane-cluster-config-file=$(pwd)/dev/config/dataplane-cluster-configuration-infractl-osd.yaml \
+   --providers-config-file=$(pwd)/dev/config/provider-configuration-infractl-osd.yaml \
+   --kubeconfig=${HOME}/infra/${CLUSTER}/kubeconfig \
+   2>&1 | tee fleet-manager-serve.log
+```
+
 ## Additional documentation
 - [Adding new endpoint](docs/adding-a-new-endpoint.md)
 - [Adding new CLI flag](docs/adding-new-flags.md)

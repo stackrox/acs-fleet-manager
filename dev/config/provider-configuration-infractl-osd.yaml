@@ -1,0 +1,28 @@
+---
+supported_providers:
+  - name: aws
+    default: true
+    regions:
+      - name: us-east-1
+        default: true
+        supported_instance_type:
+          standard: {}
+          eval: {}
+      - name: us-west-2  # Added to support infra.rox.systems default AWS OSD cluster region
+        supported_instance_type:
+          standard: {}
+          eval: {}
+  - name: gcp
+    regions:
+      - name: us-east1
+        default: true
+        supported_instance_type:
+          standard: {}
+          eval: {}
+  - name: standalone
+    regions:
+      - name: standalone
+        default: true
+        supported_instance_type:
+          standard: {}
+          eval: {}
