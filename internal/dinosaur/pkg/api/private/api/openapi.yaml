@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
-  description: Dinosaur Service Fleet Manager APIs that are used by internal services
-    e.g fleetshard operators.
-  title: Dinosaur Service Fleet Manager
+  description: Red Hat Advanced Cluster Security (RHACS) Service Fleet Manager APIs
+    that are used by internal services e.g fleetshard operators.
+  title: Red Hat Advanced Cluster Security Service Fleet Manager
   version: 1.4.0
 servers:
 - description: Main (production) server
@@ -16,7 +16,7 @@ servers:
 tags:
 - name: Agent Clusters
 paths:
-  /api/dinosaurs_mgmt/v1/agent-clusters/{id}/status:
+  /api/rhacs/v1/agent-clusters/{id}/status:
     put:
       operationId: updateAgentClusterStatus
       parameters:
@@ -59,9 +59,9 @@ paths:
       summary: Update the status of an agent cluster
       tags:
       - Agent Clusters
-  /api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs/status:
+  /api/rhacs/v1/agent-clusters/{id}/centrals/status:
     put:
-      operationId: updateDinosaurClusterStatus
+      operationId: updateCentralClusterStatus
       parameters:
       - description: The ID of record
         in: path
@@ -73,12 +73,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DataPlaneDinosaurStatusUpdateRequest'
-        description: Dinosaur clusters status update data
+              $ref: '#/components/schemas/DataPlaneCentralStatusUpdateRequest'
+        description: Centrals status update data
         required: true
       responses:
         "200":
-          description: Status is updated for Dinosaur clusters
+          description: Status is updated for Centrals
         "400":
           content:
             application/json:
@@ -99,12 +99,12 @@ paths:
           description: Auth token is not valid.
       security:
       - Bearer: []
-      summary: Update the status of Dinosaur clusters on an agent cluster
+      summary: Update the status of Centrals on an agent cluster
       tags:
       - Agent Clusters
-  /api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs:
+  /api/rhacs/v1/agent-clusters/{id}/centrals:
     get:
-      operationId: getDinosaurs
+      operationId: getCentrals
       parameters:
       - description: The ID of record
         in: path
@@ -117,8 +117,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ManagedDinosaurList'
-          description: The list of the ManagedDinosaurs for the specified agent cluster
+                $ref: '#/components/schemas/ManagedCentralList'
+          description: The list of the ManagedCentrals for the specified agent cluster
         "400":
           content:
             application/json:
@@ -139,10 +139,10 @@ paths:
           description: Auth token is not valid.
       security:
       - Bearer: []
-      summary: Get the list of ManagedaDinosaurs for the specified agent cluster
+      summary: Get the list of ManagedaCentrals for the specified agent cluster
       tags:
       - Agent Clusters
-  /api/dinosaurs_mgmt/v1/agent-clusters/{id}:
+  /api/rhacs/v1/agent-clusters/{id}:
     get:
       operationId: getDataPlaneClusterAgentConfig
       parameters:
@@ -184,42 +184,42 @@ paths:
       - Agent Clusters
 components:
   examples:
-    ManagedDinosaurExample:
+    ManagedCentralExample:
       value:
-        kind: ManagedDinosaur
+        kind: ManagedCentral
         metadata:
-          name: example-dinosaur
-          namespace: example-dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac
+          name: example-central
+          namespace: example-central-1rfpsqbvq1em2u9u0z54ymjcwac
           annotations:
             mas/id: 1rfpsqbvq1em2u9u0z54ymjcwac
             mas/placementId: ""
         spec:
           endpoint:
-            host: example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.example.dinosaur.com
+            host: example-central--rfpsqbvq-em-u-u-z--ymjcwac.example.central.com
             tls:
               cert: ""
               key: ""
           versions:
-            dinosaur: 2.7.0
-            dinosaurOperator: 0.21.2
+            central: 2.7.0
+            centralOperator: 0.21.2
           deleted: false
-    DataPlaneDinosaurStatusRequestExample:
+    DataPlaneCentralStatusRequestExample:
       value:
         conditions:
         - type: Ready
-          reason: DinosaurInstanceReady
+          reason: CentralInstanceReady
           message: installing
           status: "False"
           lastTransitionTime: 2018-01-01T00:00:00Z
         versions:
-          dinosaur: 2.4.1
-          dinosaurOperator: 0.21.2
+          central: 2.4.1
+          centralOperator: 0.21.2
     "400InvalidIdExample":
       value:
         id: "21"
         kind: Error
-        href: /api/dinosaurs_mgmt/v1/errors/21
-        code: DINOSAURS-MGMT-21
+        href: /api/rhacs/v1/errors/21
+        code: RHACS-MGMT-21
         reason: Bad request
         operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
     "404Example":
@@ -245,22 +245,22 @@ components:
         kind:
           type: string
       type: object
-    ManagedDinosaurVersions:
+    ManagedCentralVersions:
       properties:
-        dinosaur:
+        central:
           type: string
-        dinosaurOperator:
+        centralOperator:
           type: string
       type: object
-    ManagedDinosaur:
+    ManagedCentral:
       allOf:
       - $ref: '#/components/schemas/PrivateObjectReference'
-      - $ref: '#/components/schemas/ManagedDinosaur_allOf'
-    ManagedDinosaurList:
+      - $ref: '#/components/schemas/ManagedCentral_allOf'
+    ManagedCentralList:
       allOf:
       - $ref: '#/components/schemas/ListReference'
-      - $ref: '#/components/schemas/ManagedDinosaurList_allOf'
-      description: A list of ManagedDinosaur
+      - $ref: '#/components/schemas/ManagedCentralList_allOf'
+      description: A list of ManagedCentral
     DataPlaneClusterUpdateStatusRequest:
       description: Schema for the request to update a data plane cluster's status
       example:
@@ -273,16 +273,16 @@ components:
           type: type
           message: message
           status: status
-        dinosaurOperator:
-        - dinosaurVersions:
-          - dinosaurVersions
-          - dinosaurVersions
-          ready: true
+        centralOperator:
+        - ready: true
+          centralVersions:
+          - centralVersions
+          - centralVersions
           version: version
-        - dinosaurVersions:
-          - dinosaurVersions
-          - dinosaurVersions
-          ready: true
+        - ready: true
+          centralVersions:
+          - centralVersions
+          - centralVersions
           version: version
       properties:
         conditions:
@@ -290,34 +290,34 @@ components:
           items:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
           type: array
-        dinosaurOperator:
+        centralOperator:
           items:
-            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_dinosaurOperator'
+            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_centralOperator'
           type: array
       type: object
-    DataPlaneDinosaurStatus:
-      description: Schema of the status object for a Dinosaur cluster
+    DataPlaneCentralStatus:
+      description: Schema of the status object for a Central
       example:
-        $ref: '#/components/examples/DataPlaneDinosaurStatusRequestExample'
+        $ref: '#/components/examples/DataPlaneCentralStatusRequestExample'
       properties:
         conditions:
-          description: The status conditions of a Dinosaur cluster
+          description: The status conditions of a Central
           items:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
           type: array
         versions:
-          $ref: '#/components/schemas/DataPlaneDinosaurStatus_versions'
+          $ref: '#/components/schemas/DataPlaneCentralStatus_versions'
         routes:
-          description: Routes created for a Dinosaur cluster
+          description: Routes created for a Central
           items:
-            $ref: '#/components/schemas/DataPlaneDinosaurStatus_routes'
+            $ref: '#/components/schemas/DataPlaneCentralStatus_routes'
           nullable: true
           type: array
       type: object
-    DataPlaneDinosaurStatusUpdateRequest:
+    DataPlaneCentralStatusUpdateRequest:
       additionalProperties:
-        $ref: '#/components/schemas/DataPlaneDinosaurStatus'
-      description: Schema for the request to update the statuses of Dinosaur clusters
+        $ref: '#/components/schemas/DataPlaneCentralStatus'
+      description: Schema for the request to update the statuses of Central clusters
         from data plane
       type: object
     DataplaneClusterAgentConfig:
@@ -358,7 +358,7 @@ components:
         href:
           type: string
       type: object
-    ManagedDinosaur_allOf_metadata_annotations:
+    ManagedCentral_allOf_metadata_annotations:
       properties:
         mas/id:
           type: string
@@ -367,54 +367,54 @@ components:
       required:
       - mas/id
       - mas/placementId
-    ManagedDinosaur_allOf_metadata:
+    ManagedCentral_allOf_metadata:
       properties:
         name:
           type: string
         namespace:
           type: string
         annotations:
-          $ref: '#/components/schemas/ManagedDinosaur_allOf_metadata_annotations'
-    ManagedDinosaur_allOf_spec_endpoint_tls:
+          $ref: '#/components/schemas/ManagedCentral_allOf_metadata_annotations'
+    ManagedCentral_allOf_spec_endpoint_tls:
       nullable: true
       properties:
         cert:
           type: string
         key:
           type: string
-    ManagedDinosaur_allOf_spec_endpoint:
+    ManagedCentral_allOf_spec_endpoint:
       properties:
         host:
           type: string
         tls:
-          $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_endpoint_tls'
-    ManagedDinosaur_allOf_spec:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_endpoint_tls'
+    ManagedCentral_allOf_spec:
       properties:
         owners:
           items:
             type: string
           type: array
         endpoint:
-          $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_endpoint'
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_endpoint'
         versions:
-          $ref: '#/components/schemas/ManagedDinosaurVersions'
+          $ref: '#/components/schemas/ManagedCentralVersions'
         deleted:
           type: boolean
       required:
       - deleted
-    ManagedDinosaur_allOf:
+    ManagedCentral_allOf:
       properties:
         metadata:
-          $ref: '#/components/schemas/ManagedDinosaur_allOf_metadata'
+          $ref: '#/components/schemas/ManagedCentral_allOf_metadata'
         spec:
-          $ref: '#/components/schemas/ManagedDinosaur_allOf_spec'
-    ManagedDinosaurList_allOf:
-      example: '{"kind":"ManagedDinosaurList","items":{"$ref":"#/components/examples/ManagedDinosaurExample"}}'
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec'
+    ManagedCentralList_allOf:
+      example: '{"kind":"ManagedCentralList","items":{"$ref":"#/components/examples/ManagedCentralExample"}}'
       properties:
         items:
           items:
             allOf:
-            - $ref: '#/components/schemas/ManagedDinosaur'
+            - $ref: '#/components/schemas/ManagedCentral'
           type: array
     DataPlaneClusterUpdateStatusRequest_conditions:
       example:
@@ -431,33 +431,33 @@ components:
           type: string
         status:
           type: string
-    DataPlaneClusterUpdateStatusRequest_dinosaurOperator:
+    DataPlaneClusterUpdateStatusRequest_centralOperator:
       example:
-        dinosaurVersions:
-        - dinosaurVersions
-        - dinosaurVersions
         ready: true
+        centralVersions:
+        - centralVersions
+        - centralVersions
         version: version
       properties:
         ready:
           type: boolean
         version:
           type: string
-        dinosaurVersions:
+        centralVersions:
           items:
             type: string
           type: array
       required:
       - ready
       - version
-    DataPlaneDinosaurStatus_versions:
-      description: Version information related to a Dinosaur cluster
+    DataPlaneCentralStatus_versions:
+      description: Version information related to a Central
       properties:
-        dinosaur:
+        central:
           type: string
-        dinosaurOperator:
+        centralOperator:
           type: string
-    DataPlaneDinosaurStatus_routes:
+    DataPlaneCentralStatus_routes:
       properties:
         name:
           type: string
