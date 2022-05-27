@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -o pipefail
+
+resource=${1}
+
+if [[ -z "${resource}" ]]; then
+    echo "Usage: $0 <URI> [ <curl flag> ... ]" >&2
+    exit 1
+fi
+
+shift
+
+# Normalize
+resource=$(echo "$resource" | sed -e 's/^\///;')
+
+curl -LH "Authorization: Bearer ${OCM_TOKEN}" http://localhost:8000/api/${resource} "$@" | jq .

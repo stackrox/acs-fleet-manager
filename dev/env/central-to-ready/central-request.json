@@ -1,0 +1,7 @@
+{
+    "region": "standalone",
+    "cloud_provider": "standalone",
+    "name": "test1",
+    "host": "needs-to-be-filled-in",
+    "multi_az": true
+}
