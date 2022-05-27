@@ -57,6 +57,7 @@ cmd/fleet-manager/fleet-manager
 /secrets/rhsso-logs.*
 /secrets/rhsso-metrics.*
 /secrets/sentry.*
+/secrets/redhatsso-service.*
 
 # cluster details (used for testing)
 /internal/dinosaur/test/integration/test_cluster.json

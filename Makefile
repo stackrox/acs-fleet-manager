@@ -218,9 +218,10 @@ help:
 	@echo "make observatorium/token-refresher/setup" setup a local observatorium token refresher
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
 	@echo "make image/build/push/internal   build and push image to an openshift cluster image registry."
-	@echo "deploy/project                   deploy the service via templates to an openshift cluster"
+	@echo "make deploy/project              deploy the service via templates to an openshift cluster"
 	@echo "make undeploy                    remove the service deployments from an openshift cluster"
-	@echo "openapi/spec/validate            validate OpenAPI spec using spectral"
+	@echo "make redhatsso/setup             setup sso clientId & clientSecret"
+	@echo "make openapi/spec/validate       validate OpenAPI spec using spectral"
 	@echo "$(fake)"
 .PHONY: help
 
@@ -492,6 +493,8 @@ secrets/touch:
           secrets/rhsso-logs.clientSecret \
           secrets/rhsso-metrics.clientId \
           secrets/rhsso-metrics.clientSecret \
+          secrets/redhatsso-service.clientId \
+          secrets/redhatsso-service.clientSecret \
           secrets/sentry.key
 .PHONY: secrets/touch
 
@@ -511,6 +514,11 @@ keycloak/setup:
 	@echo -n "$(OSD_IDP_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
 	@echo -n "$(OSD_IDP_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
 .PHONY:keycloak/setup
+
+redhatsso/setup:
+	@echo -n "$(SSO_CLIENT_ID)" > secrets/redhatsso-service.clientId
+	@echo -n "$(SSO_CLIENT_SECRET)" > secrets/redhatsso-service.clientSecret
+.PHONY:redhatsso/setup
 
 # Setup for the dinosaur broker certificate
 dinosaurcert/setup:

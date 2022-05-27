@@ -71,7 +71,7 @@ func (authHelper *AuthHelper) NewAccount(username, name, email string, orgId str
 
 	acct, err := builder.Build()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to build account: %s", err.Error())
+		return nil, fmt.Errorf("unable to build account: %s", err.Error())
 	}
 	return acct, nil
 }
@@ -100,14 +100,14 @@ func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClai
 	if jwtClaims == nil || jwtClaims["iss"] == nil || jwtClaims["iss"] == "" || jwtClaims["iss"] == authHelper.ocmTokenIssuer {
 		// Set default claim values for ocm tokens
 		claims["iss"] = authHelper.ocmTokenIssuer
-		claims[ocmUsernameKey] = account.Username()
+		claims[tenantUsernameClaim] = account.Username()
 		claims["first_name"] = account.FirstName()
 		claims["last_name"] = account.LastName()
 		claims["account_id"] = account.ID()
 		claims["rh-user-id"] = account.ID()
 		org, ok := account.GetOrganization()
 		if ok {
-			claims[ocmOrgIdKey] = org.ExternalID()
+			claims[tenantIdClaim] = org.ExternalID()
 		}
 
 		if account.Email() != "" {
@@ -147,21 +147,21 @@ func ParseJWTKeys(jwtKeyFilePath, jwtCAFilePath string) (*rsa.PrivateKey, *rsa.P
 	projectRootDir := shared.GetProjectRootDir()
 	privateBytes, err := ioutil.ReadFile(filepath.Join(projectRootDir, jwtKeyFilePath))
 	if err != nil {
-		return nil, nil, fmt.Errorf("Unable to read JWT key file %s: %s", jwtKeyFilePath, err.Error())
+		return nil, nil, fmt.Errorf("unable to read JWT key file %s: %s", jwtKeyFilePath, err.Error())
 	}
 	pubBytes, err := ioutil.ReadFile(filepath.Join(projectRootDir, jwtCAFilePath))
 	if err != nil {
-		return nil, nil, fmt.Errorf("Unable to read JWT ca file %s: %s", jwtCAFilePath, err.Error())
+		return nil, nil, fmt.Errorf("unable to read JWT ca file %s: %s", jwtCAFilePath, err.Error())
 	}
 
 	// Parse keys
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEMWithPassword(privateBytes, "passwd")
 	if err != nil {
-		return nil, nil, fmt.Errorf("Unable to parse JWT private key: %s", err.Error())
+		return nil, nil, fmt.Errorf("nable to parse JWT private key: %s", err.Error())
 	}
 	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubBytes)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Unable to parse JWT ca: %s", err.Error())
+		return nil, nil, fmt.Errorf("unable to parse JWT ca: %s", err.Error())
 	}
 
 	return privateKey, pubKey, nil

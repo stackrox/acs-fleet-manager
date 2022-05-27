@@ -41,6 +41,7 @@ func TestMain(m *testing.M) {
 }
 
 func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
+	RegisterTestingT(t)
 	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, serverConfig.TokenIssuerURL)
 	Expect(err).NotTo(HaveOccurred())
 

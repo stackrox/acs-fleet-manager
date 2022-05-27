@@ -9,20 +9,14 @@ import (
 )
 
 const (
-	MAS_SSO                       string = "mas_sso"
-	REDHAT_SSO                    string = "redhat_sso"
-	SSO_SPEICAL_MGMT_ORG_ID_STAGE string = "13640203"
-	//AUTH_SSO SSOProvider ="auth_sso"
+	REDHAT_SSO string = "redhat_sso"
 )
 
 type KeycloakConfig struct {
-	EnableAuthenticationOnAcs                  bool                 `json:"enable_auth"`
 	BaseURL                                    string               `json:"base_url"`
 	SsoBaseUrl                                 string               `json:"sso_base_url"`
 	Debug                                      bool                 `json:"debug"`
 	InsecureSkipVerify                         bool                 `json:"insecure-skip-verify"`
-	UserNameClaim                              string               `json:"user_name_claim"`
-	FallBackUserNameClaim                      string               `json:"fall_back_user_name_claim"`
 	TLSTrustedCertificatesKey                  string               `json:"tls_trusted_certificates_key"`
 	TLSTrustedCertificatesValue                string               `json:"tls_trusted_certificates_value"`
 	TLSTrustedCertificatesFile                 string               `json:"tls_trusted_certificates_file"`
@@ -32,10 +26,8 @@ type KeycloakConfig struct {
 	MaxAllowedServiceAccounts                  int                  `json:"max_allowed_service_accounts"`
 	MaxLimitForGetClients                      int                  `json:"max_limit_for_get_clients"`
 	SelectSSOProvider                          string               `json:"select_sso_provider"`
-	SSOSpecialManagementOrgID                  string               `json:"-"`
 	ServiceAccounttLimitCheckSkipOrgIdListFile string               `json:"-"`
 	ServiceAccounttLimitCheckSkipOrgIdList     []string             `json:"-"`
-	KeycloakClientExpire                       bool                 `json:"-"`
 }
 
 type KeycloakRealmConfig struct {
@@ -55,8 +47,6 @@ type KeycloakRealmConfig struct {
 func (kc *KeycloakConfig) SSOProviderRealm() *KeycloakRealmConfig {
 	provider := kc.SelectSSOProvider
 	switch provider {
-	case MAS_SSO:
-		return kc.DinosaurRealm
 	case REDHAT_SSO:
 		return kc.RedhatSSORealm
 	default:
@@ -73,8 +63,7 @@ func (c *KeycloakRealmConfig) setDefaultURIs(baseURL string) {
 
 func NewKeycloakConfig() *KeycloakConfig {
 	kc := &KeycloakConfig{
-		SsoBaseUrl:                "https://sso.redhat.com",
-		EnableAuthenticationOnAcs: true,
+		SsoBaseUrl: "https://sso.redhat.com",
 		DinosaurRealm: &KeycloakRealmConfig{
 			ClientIDFile:     "secrets/keycloak-service.clientId",
 			ClientSecretFile: "secrets/keycloak-service.clientSecret",
@@ -88,7 +77,6 @@ func NewKeycloakConfig() *KeycloakConfig {
 		Debug:                 false,
 		InsecureSkipVerify:    false,
 		MaxLimitForGetClients: 100,
-		KeycloakClientExpire:  false,
 		RedhatSSORealm: &KeycloakRealmConfig{
 			APIEndpointURI:   "/auth/realms/redhat-external",
 			Realm:            "redhat-external",
@@ -97,19 +85,15 @@ func NewKeycloakConfig() *KeycloakConfig {
 			GrantType:        "client_credentials",
 		},
 		TLSTrustedCertificatesFile:                 "secrets/keycloak-service.crt",
-		UserNameClaim:                              "clientId",
-		FallBackUserNameClaim:                      "preferred_username",
 		TLSTrustedCertificatesKey:                  "keycloak.crt",
 		MaxAllowedServiceAccounts:                  50,
-		SelectSSOProvider:                          MAS_SSO,
-		SSOSpecialManagementOrgID:                  SSO_SPEICAL_MGMT_ORG_ID_STAGE,
+		SelectSSOProvider:                          REDHAT_SSO,
 		ServiceAccounttLimitCheckSkipOrgIdListFile: "config/service-account-limits-check-skip-org-id-list.yaml",
 	}
 	return kc
 }
 
 func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.BoolVar(&kc.EnableAuthenticationOnAcs, "mas-sso-enable-auth", kc.EnableAuthenticationOnAcs, "Enable authentication mas-sso integration, enabled by default")
 	fs.StringVar(&kc.DinosaurRealm.ClientIDFile, "sso-client-id-file", kc.DinosaurRealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the Dinosaur service accounts realm")
 	fs.StringVar(&kc.DinosaurRealm.ClientSecretFile, "sso-client-secret-file", kc.DinosaurRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the Dinosaur service accounts realm")
 	fs.StringVar(&kc.BaseURL, "sso-base-url", kc.BaseURL, "The base URL of the sso, integration by default")
@@ -122,14 +106,10 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.OSDClusterIDPRealm.Realm, "osd-idp-sso-realm", kc.OSDClusterIDPRealm.Realm, "Realm for OSD cluster IDP clients in the sso")
 	fs.IntVar(&kc.MaxAllowedServiceAccounts, "max-allowed-service-accounts", kc.MaxAllowedServiceAccounts, "Max allowed service accounts per org")
 	fs.IntVar(&kc.MaxLimitForGetClients, "max-limit-for-sso-get-clients", kc.MaxLimitForGetClients, "Max limits for SSO get clients")
-	fs.StringVar(&kc.UserNameClaim, "user-name-claim", kc.UserNameClaim, "Human readable username token claim")
-	fs.StringVar(&kc.FallBackUserNameClaim, "fall-back-user-name-claim", kc.FallBackUserNameClaim, "Fall back username token claim")
 	fs.StringVar(&kc.RedhatSSORealm.ClientIDFile, "redhat-sso-client-id-file", kc.RedhatSSORealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&kc.RedhatSSORealm.ClientSecretFile, "redhat-sso-client-secret-file", kc.RedhatSSORealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
-	fs.StringVar(&kc.SsoBaseUrl, "redhat-sso-base-url", kc.SsoBaseUrl, "The base URL of the mas-sso, integration by default")
-	fs.StringVar(&kc.SSOSpecialManagementOrgID, "sso-special-management-org-id", SSO_SPEICAL_MGMT_ORG_ID_STAGE, "The Special Management Organization ID used for creating internal Service accounts")
+	fs.StringVar(&kc.SsoBaseUrl, "redhat-sso-base-url", kc.SsoBaseUrl, "The base URL of the SSO, integration by default")
 	fs.StringVar(&kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "service-account-limits-check-skip-org-id-list-file", kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "File containing a list of Org IDs for which service account limits check will be skipped")
-	fs.BoolVar(&kc.KeycloakClientExpire, "keycloak-client-expire", kc.KeycloakClientExpire, "Whether or not to tag Keycloak created Client to expire in 2 hours (useful for cleaning up after integrations tests)")
 }
 
 func (kc *KeycloakConfig) ReadFiles() error {
@@ -187,5 +167,6 @@ func (kc *KeycloakConfig) ReadFiles() error {
 	kc.DinosaurRealm.setDefaultURIs(kc.BaseURL)
 	kc.OSDClusterIDPRealm.setDefaultURIs(kc.BaseURL)
 	kc.RedhatSSORealm.setDefaultURIs(kc.SsoBaseUrl)
+
 	return nil
 }

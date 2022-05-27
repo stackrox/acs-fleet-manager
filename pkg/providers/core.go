@@ -3,6 +3,7 @@ package providers
 import (
 	"github.com/goava/di"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
+	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/aws"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
@@ -37,6 +38,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(acl.NewAccessControlListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(quota_management.NewQuotaManagementListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(server.NewMetricsConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(auth.NewContextConfig, di.As(new(environments.ConfigModule))),
 
 		// Add common CLI sub commands
 		di.Provide(serve.NewServeCommand),

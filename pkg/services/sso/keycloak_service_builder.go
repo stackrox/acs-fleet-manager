@@ -98,8 +98,7 @@ func build(providerName string, keycloakConfig *keycloak.KeycloakConfig, realmCo
 
 	// Temporary: if a realm configuration different from the one into the config is specified
 	// we always instantiate MAS_SSO irrespective of the selected provider
-	if providerName == keycloak.MAS_SSO ||
-		realmConfig != nil {
+	if providerName != keycloak.REDHAT_SSO || realmConfig != nil {
 		_, realmConfig := arrays.FindFirst(notNilPredicate, realmConfig, keycloakConfig.DinosaurRealm)
 		return newKeycloakService(keycloakConfig, realmConfig.(*keycloak.KeycloakRealmConfig))
 	} else {
