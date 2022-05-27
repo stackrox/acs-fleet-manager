@@ -570,7 +570,7 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 }
 
 func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) error {
-	// TODO: Activate dinosaur reconcilation and FleetshardOperatorAddon Provision
+	// TODO(create-ticket): Activate dinosaur reconcilation and FleetshardOperatorAddon.Provision
 	// as soon as this components are available
 	dinosaurOperatorIsReady := true
 	// dinosaurOperatorIsReady, err := c.reconcileDinosaurOperator(provisionedCluster)
