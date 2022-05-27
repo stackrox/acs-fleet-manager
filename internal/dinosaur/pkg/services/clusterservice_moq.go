@@ -6,7 +6,6 @@ package services
 import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"sync"
 )
@@ -68,9 +67,6 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			},
 // 			GetExternalIDFunc: func(clusterID string) (string, *serviceError.ServiceError) {
 // 				panic("mock out the GetExternalID method")
-// 			},
-// 			InstallClusterLoggingFunc: func(cluster *api.Cluster, params []ocm.Parameter) (bool, *serviceError.ServiceError) {
-// 				panic("mock out the InstallClusterLogging method")
 // 			},
 // 			InstallDinosaurOperatorFunc: func(cluster *api.Cluster) (bool, *serviceError.ServiceError) {
 // 				panic("mock out the InstallDinosaurOperator method")
@@ -162,9 +158,6 @@ type ClusterServiceMock struct {
 
 	// GetExternalIDFunc mocks the GetExternalID method.
 	GetExternalIDFunc func(clusterID string) (string, *serviceError.ServiceError)
-
-	// InstallClusterLoggingFunc mocks the InstallClusterLogging method.
-	InstallClusterLoggingFunc func(cluster *api.Cluster, params []ocm.Parameter) (bool, *serviceError.ServiceError)
 
 	// InstallDinosaurOperatorFunc mocks the InstallDinosaurOperator method.
 	InstallDinosaurOperatorFunc func(cluster *api.Cluster) (bool, *serviceError.ServiceError)
@@ -290,13 +283,6 @@ type ClusterServiceMock struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
-		// InstallClusterLogging holds details about calls to the InstallClusterLogging method.
-		InstallClusterLogging []struct {
-			// Cluster is the cluster argument value.
-			Cluster *api.Cluster
-			// Params is the params argument value.
-			Params []ocm.Parameter
-		}
 		// InstallDinosaurOperator holds details about calls to the InstallDinosaurOperator method.
 		InstallDinosaurOperator []struct {
 			// Cluster is the cluster argument value.
@@ -390,7 +376,6 @@ type ClusterServiceMock struct {
 	lockGetClusterDNS                       sync.RWMutex
 	lockGetComputeNodes                     sync.RWMutex
 	lockGetExternalID                       sync.RWMutex
-	lockInstallClusterLogging               sync.RWMutex
 	lockInstallDinosaurOperator             sync.RWMutex
 	lockIsDinosaurVersionAvailableInCluster sync.RWMutex
 	lockListAllClusterIds                   sync.RWMutex
@@ -910,41 +895,6 @@ func (mock *ClusterServiceMock) GetExternalIDCalls() []struct {
 	mock.lockGetExternalID.RLock()
 	calls = mock.calls.GetExternalID
 	mock.lockGetExternalID.RUnlock()
-	return calls
-}
-
-// InstallClusterLogging calls InstallClusterLoggingFunc.
-func (mock *ClusterServiceMock) InstallClusterLogging(cluster *api.Cluster, params []ocm.Parameter) (bool, *serviceError.ServiceError) {
-	if mock.InstallClusterLoggingFunc == nil {
-		panic("ClusterServiceMock.InstallClusterLoggingFunc: method is nil but ClusterService.InstallClusterLogging was just called")
-	}
-	callInfo := struct {
-		Cluster *api.Cluster
-		Params  []ocm.Parameter
-	}{
-		Cluster: cluster,
-		Params:  params,
-	}
-	mock.lockInstallClusterLogging.Lock()
-	mock.calls.InstallClusterLogging = append(mock.calls.InstallClusterLogging, callInfo)
-	mock.lockInstallClusterLogging.Unlock()
-	return mock.InstallClusterLoggingFunc(cluster, params)
-}
-
-// InstallClusterLoggingCalls gets all the calls that were made to InstallClusterLogging.
-// Check the length with:
-//     len(mockedClusterService.InstallClusterLoggingCalls())
-func (mock *ClusterServiceMock) InstallClusterLoggingCalls() []struct {
-	Cluster *api.Cluster
-	Params  []ocm.Parameter
-} {
-	var calls []struct {
-		Cluster *api.Cluster
-		Params  []ocm.Parameter
-	}
-	mock.lockInstallClusterLogging.RLock()
-	calls = mock.calls.InstallClusterLogging
-	mock.lockInstallClusterLogging.RUnlock()
 	return calls
 }
 

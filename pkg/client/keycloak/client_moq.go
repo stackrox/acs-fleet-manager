@@ -4,7 +4,7 @@
 package keycloak
 
 import (
-	"github.com/Nerzal/gocloak/v8"
+	"github.com/Nerzal/gocloak/v11"
 	"sync"
 )
 
