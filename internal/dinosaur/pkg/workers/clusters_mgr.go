@@ -516,10 +516,10 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	// independently of the installation of the addon, and it should use the
 	// result of the addon/s reconciliation to set the status of the cluster
 	// TODO(create-ticket): Install the ACS Operator and Fleetshard Operator (Add-Ons)
-	//addOnErr := c.reconcileAddonOperator(cluster)
-	//if addOnErr != nil {
-	//	return errors.WithMessagef(addOnErr, "failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
-	//}
+	addOnErr := c.reconcileAddonOperator(cluster)
+	if addOnErr != nil {
+		return errors.WithMessagef(addOnErr, "failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
+	}
 
 	return nil
 }
@@ -570,16 +570,20 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 }
 
 func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) error {
-	dinosaurOperatorIsReady, err := c.reconcileDinosaurOperator(provisionedCluster)
-	if err != nil {
-		return err
-	}
+	// TODO(create-ticket): Activate dinosaur reconcilation and FleetshardOperatorAddon.Provision
+	// as soon as this components are available
+	dinosaurOperatorIsReady := true
+	// dinosaurOperatorIsReady, err := c.reconcileDinosaurOperator(provisionedCluster)
+	// if err != nil {
+	// 	return err
+	// }
 
 	glog.Infof("Provisioning fleetshard-operator as it is enabled")
-	fleetshardOperatorIsReady, errs := c.FleetshardOperatorAddon.Provision(provisionedCluster)
-	if errs != nil {
-		return errs
-	}
+	fleetshardOperatorIsReady := true
+	// fleetshardOperatorIsReady, errs := c.FleetshardOperatorAddon.Provision(provisionedCluster)
+	// if errs != nil {
+	// 	return errs
+	// }
 
 	if dinosaurOperatorIsReady && fleetshardOperatorIsReady {
 		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForFleetShardOperator, provisionedCluster.ClusterID)
