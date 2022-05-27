@@ -68,7 +68,7 @@ serviceapitests=# select * from dinosaur_requests ;
 ### Transition Dinosaur to provisioning
 
 ```
-PGPASSWORD=$(cat secrets/db.password) psql -h localhost -d $(cat secrets/db.name) -U $(cat secrets/db.user) -f env/central-to-ready/prepare-dinosaur-request-entry.sql
+PGPASSWORD=$(cat secrets/db.password) psql -h localhost -d $(cat secrets/db.name) -U $(cat secrets/db.user) -f dev/env/central-to-ready/prepare-dinosaur-request-entry.sql
 ```
 
 ```
