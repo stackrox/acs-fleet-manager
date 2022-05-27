@@ -27,6 +27,7 @@ clusters:
 #    provider_type: standalone
 #    supported_instance_type: "eval,standard"
 #    cluster_dns: kubernetes.docker.internal
+#    dinosaur_instance_limit: 5
  - name: minikube  # Uncomment if using minikube
    cluster_id: 1234567890abcdef1234567890abcdef
    cloud_provider: standalone
