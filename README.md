@@ -241,9 +241,9 @@ Manager binary command or Makefile target
 
 ### Running the fleet manager with an OSD cluster form infractl
 
-Write a Cloud provider configuration file that matches the cloud provider and region used for the cluster, see `dev/config/provider-configuration-infractl-osd.yaml` for an example OSD cluster running in GCP. See the logs for the cluster in infra.rox.system to locate the provider and region. See `internal/dinosaur/pkg/services/cloud_providers.go` for the provider constant. 
+Write a Cloud provider configuration file that matches the cloud provider and region used for the cluster, see `dev/config/provider-configuration-infractl-osd.yaml` for an example OSD cluster running in GCP. See the cluster creation logs in https://infra.rox.systems/cluster/YOUR_CLUSTER to locate the provider and region. See `internal/dinosaur/pkg/services/cloud_providers.go` for the provider constant. 
 
-Write a cluster configuration file for the cluster, see `dev/config/dataplane-cluster-configuration-infractl-osd.yaml` for an example an example OSD cluster running in GCP. Again the logs for the cluster for required fields. 
+Enable a cluster configuration file for the OSD cluster, see `dev/config/dataplane-cluster-configuration-infractl-osd.yaml` for an example OSD cluster running in GCP. Again, see the cluster creation logs for possibly missing required fields. 
 
 Download the kubeconfig for the cluster. Without this the fleet manager will refuse to use the cluster.
 
