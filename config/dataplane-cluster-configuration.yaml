@@ -17,24 +17,4 @@
 #    provider_type: "ocm" #Valid values are `ocm` and `standalone`. `ocm` will be used if not specified.
 #    cluster_dns: apps.example.com #Valid cluster DNS. This will be used to build dinosaur host url and to communicate with standalone clusters. Required when "provider_type" is "standalone" 
 #    supported_instance_type: "eval" # could be "eval", "standard" or both i.e "standard,eval" or "eval,standard". Defaults to "standard,eval" if not set 
-clusters:
-#  - name: docker-desktop  # Uncomment if using docker-desktop
-#    cluster_id: 1234567890abcdef1234567890abcdef
-#    cloud_provider: standalone
-#    region: standalone
-#    schedulable: true
-#    status: ready
-#    provider_type: standalone
-#    supported_instance_type: "eval,standard"
-#    cluster_dns: kubernetes.docker.internal
-#    dinosaur_instance_limit: 5
- - name: minikube  # Uncomment if using minikube
-   cluster_id: 1234567890abcdef1234567890abcdef
-   cloud_provider: standalone
-   region: standalone
-   schedulable: true
-   status: ready
-   dinosaur_instance_limit: 5
-   provider_type: standalone
-   supported_instance_type: "eval,standard"
-   cluster_dns: cluster.local
+clusters: []  # For a list of development clusters see dev/config/dataplane-cluster-configuration.yaml
