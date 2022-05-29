@@ -10,7 +10,7 @@ set -e
 
 docker network create fleet-manager-network || true
 
-docker run \
+docker run --restart \
   --name=fleet-manager-db \
   --net fleet-manager-network \
   -e POSTGRES_PASSWORD=$(cat secrets/db.password) \

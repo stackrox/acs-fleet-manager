@@ -393,6 +393,10 @@ db/setup:
 	./scripts/local_db_setup.sh
 .PHONY: db/setup
 
+db/start:
+
+.PHONY: db/start
+
 db/migrate:
 	OCM_ENV=integration $(GO) run ./cmd/fleet-manager migrate
 .PHONY: db/migrate
