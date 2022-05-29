@@ -2,5 +2,5 @@
 set -eo pipefail
 
 resource=${1}
- shift
- curl -v -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/${resource} $@
+shift
+curl -v -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/${resource} $@

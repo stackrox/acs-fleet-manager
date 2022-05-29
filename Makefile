@@ -394,7 +394,7 @@ db/setup:
 .PHONY: db/setup
 
 db/start:
-
+	docker start fleet-manager-db
 .PHONY: db/start
 
 db/migrate:

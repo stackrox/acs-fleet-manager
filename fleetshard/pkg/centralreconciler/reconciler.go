@@ -29,7 +29,7 @@ func Synchronize(devEndpoint string, clusterID string) {
 		glog.Fatalf("failed to list centrals for cluster %s: %s", clusterID, err)
 	}
 
-	glog.Infof("Received %d centrals", len(list.Items))
+	glog.Infof("Received %+v", list)
 	os.Exit(1)
 
 	statuses := make(map[string]private.DataPlaneDinosaurStatus)

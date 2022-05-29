@@ -43,6 +43,7 @@ func NewClient(endpoint string, clusterID string) (*Client, error) {
 	return &Client{
 		client:    http.Client{},
 		clusterID: clusterID,
+		ocmToken:  ocmToken,
 		endpoint:  fmt.Sprintf("%s/%s/%s/%s", endpoint, uri, clusterID, "dinosaurs"),
 	}, nil
 }
