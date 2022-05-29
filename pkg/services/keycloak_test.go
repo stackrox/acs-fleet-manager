@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	gocloak "github.com/Nerzal/gocloak/v8"
+	gocloak "github.com/Nerzal/gocloak/v11"
 	"github.com/onsi/gomega"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"

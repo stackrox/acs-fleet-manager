@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Nerzal/gocloak/v8"
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
+	"github.com/Nerzal/gocloak/v11"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 const (

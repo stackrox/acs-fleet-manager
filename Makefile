@@ -321,7 +321,7 @@ test/cluster/cleanup:
 generate: moq openapi/generate
 	$(GO) generate ./...
 	$(GO) mod vendor
-	$(MOQ) -out ./pkg/client/keycloak/gocloak_moq.go -pkg keycloak vendor/github.com/Nerzal/gocloak/v8 GoCloak:GoCloakMock
+	$(MOQ) -out ./pkg/client/keycloak/gocloak_moq.go -pkg keycloak vendor/github.com/Nerzal/gocloak/v11 GoCloak:GoCloakMock
 .PHONY: generate
 
 # validate the openapi schema

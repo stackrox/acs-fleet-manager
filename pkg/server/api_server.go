@@ -10,13 +10,13 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 
+	"github.com/goava/di"
 	"github.com/stackrox/acs-fleet-manager/pkg/server/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
-	"github.com/goava/di"
 
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 
-	_ "github.com/auth0/go-jwt-middleware"
+	_ "github.com/auth0/go-jwt-middleware/v2"
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	_ "github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
