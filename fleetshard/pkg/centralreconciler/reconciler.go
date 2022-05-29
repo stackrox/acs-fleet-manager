@@ -12,7 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -28,9 +27,6 @@ func Synchronize(devEndpoint string, clusterID string) {
 	if err != nil {
 		glog.Fatalf("failed to list centrals for cluster %s: %s", clusterID, err)
 	}
-
-	glog.Infof("Received %+v", list)
-	os.Exit(1)
 
 	statuses := make(map[string]private.DataPlaneDinosaurStatus)
 	for _, remoteCentral := range list.Items {
@@ -58,27 +54,35 @@ type ClusterReconciler struct {
 }
 
 func (r ClusterReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedDinosaur) (*private.DataPlaneDinosaurStatus, error) {
-	remoteNamespace := remoteCentral.Metadata.Namespace
-	if err := r.ensureNamespace(remoteNamespace); err != nil {
+	remoteNamespace := remoteCentral.Metadata.Name
+	if err := r.ensureNamespace(remoteCentral.Metadata.Name); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteNamespace)
 	}
 
-	centralExists := false
-	central := &v1alpha1.Central{}
+	centralExists := true
+	central := &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      remoteCentral.Metadata.Name,
+			Namespace: remoteNamespace,
+		},
+	}
+
 	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentral.Metadata.Name}, central)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return nil, errors.Wrapf(err, "unable to check the existence of central %q", central.GetName())
 		}
-		centralExists = true
+		centralExists = false
 	}
 
 	if !centralExists {
+		glog.Infof("Creating central tenant %s", central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
 			return nil, errors.Wrapf(err, "creating new central %q", remoteCentral.Metadata.Name)
 		}
 	} else {
 		// TODO(yury): implement update logic
+		glog.Info("Update central tenant %s", central.GetName())
 		glog.Info("Implement update logic for Centrals")
 		//if err := r.client.Update(ctx, central); err != nil {
 		//	return errors.Wrapf(err, "updating central %q", remoteCentral.GetName())
@@ -106,6 +110,9 @@ func (r ClusterReconciler) ensureNamespace(name string) error {
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			err = r.client.Create(context.Background(), namespace)
+			if err != nil {
+				return nil
+			}
 		}
 	}
 	return err
@@ -122,6 +129,8 @@ func NewClusterReconciler() *ClusterReconciler {
 	if err != nil {
 		glog.Fatal("fail", err)
 	}
+
+	glog.Infof("Connected to k8s cluster: %s", config.Host)
 
 	return &ClusterReconciler{
 		client: client,
