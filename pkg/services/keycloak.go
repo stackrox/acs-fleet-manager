@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Nerzal/gocloak/v8"
+	"github.com/Nerzal/gocloak/v11"
 	"github.com/golang/glog"
 
+	"github.com/google/uuid"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/google/uuid"
 )
 
 const (
