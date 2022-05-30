@@ -28,7 +28,7 @@
 # The machines that run this script need to have access to internet, so that
 # the built images can be pushed to quay.io.
 
-# The version should be the short hash from git. This is what the deployment process expects.
+# The version should be a 7-char hash from git. This is what the deployment process in app-interface expects.
 VERSION=`git rev-parse --short=7 HEAD`
 
 # Set the directory for docker configuration:
