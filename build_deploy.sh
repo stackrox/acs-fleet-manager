@@ -59,7 +59,7 @@ if [ -z "${QUAY_TOKEN}" ]; then
 fi
 if [ -z "${QUAY_IMAGE_REPOSITORY}" ]; then
   echo "The quay.io image repository hasn't been provided."
-  echo "Make sure to set the QUAY_IMAGE_REPOSITORY environment variable."
+  echo "Make sure to set the QUAY_IMAGE_REPOSITORY environment variable to '<org>/<repo>'."
   exit 1
 fi
 
