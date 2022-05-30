@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"sort"
 
-	fleetmanagererrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/pkg/errors"
+	fleetmanagererrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -190,7 +190,7 @@ func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 type DinosaurOperatorVersion struct {
 	Version          string            `json:"version"`
 	Ready            bool              `json:"ready"`
-	DinosaurVersions []DinosaurVersion `json:"dinosaurVersions"`
+	DinosaurVersions []DinosaurVersion `json:"dinosaurVersions" yaml:"dinosaur_versions"`
 }
 
 type DinosaurVersion struct {

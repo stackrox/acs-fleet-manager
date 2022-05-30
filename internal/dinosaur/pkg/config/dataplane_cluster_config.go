@@ -97,17 +97,18 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 
 //manual cluster configuration
 type ManualCluster struct {
-	Name                  string                  `yaml:"name"`
-	ClusterId             string                  `yaml:"cluster_id"`
-	CloudProvider         string                  `yaml:"cloud_provider"`
-	Region                string                  `yaml:"region"`
-	MultiAZ               bool                    `yaml:"multi_az"`
-	Schedulable           bool                    `yaml:"schedulable"`
-	DinosaurInstanceLimit int                     `yaml:"dinosaur_instance_limit"`
-	Status                api.ClusterStatus       `yaml:"status"`
-	ProviderType          api.ClusterProviderType `yaml:"provider_type"`
-	ClusterDNS            string                  `yaml:"cluster_dns"`
-	SupportedInstanceType string                  `yaml:"supported_instance_type"`
+	Name                              string                        `yaml:"name"`
+	ClusterId                         string                        `yaml:"cluster_id"`
+	CloudProvider                     string                        `yaml:"cloud_provider"`
+	Region                            string                        `yaml:"region"`
+	MultiAZ                           bool                          `yaml:"multi_az"`
+	Schedulable                       bool                          `yaml:"schedulable"`
+	DinosaurInstanceLimit             int                           `yaml:"dinosaur_instance_limit"`
+	Status                            api.ClusterStatus             `yaml:"status"`
+	ProviderType                      api.ClusterProviderType       `yaml:"provider_type"`
+	ClusterDNS                        string                        `yaml:"cluster_dns"`
+	SupportedInstanceType             string                        `yaml:"supported_instance_type"`
+	AvailableDinosaurOperatorVersions []api.DinosaurOperatorVersion `yaml:"available_dinosaur_operator_versions"`
 }
 
 func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {

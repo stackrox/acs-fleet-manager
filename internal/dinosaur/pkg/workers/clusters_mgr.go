@@ -637,6 +637,13 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			ClusterDNS:            p.ClusterDNS,
 			SupportedInstanceType: p.SupportedInstanceType,
 		}
+
+		if len(p.AvailableDinosaurOperatorVersions) > 0 {
+			if err := clusterRequest.SetAvailableDinosaurOperatorVersions(p.AvailableDinosaurOperatorVersions); err != nil {
+				return []error{errors.Wrapf(err, "Failed to set operator versions for manual cluster %s with config file", p.ClusterId)}
+			}
+		}
+
 		if err := c.ClusterService.RegisterClusterJob(&clusterRequest); err != nil {
 			return []error{errors.Wrapf(err, "Failed to register new cluster %s with config file", p.ClusterId)}
 		} else {

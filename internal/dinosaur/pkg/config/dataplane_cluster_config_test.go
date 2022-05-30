@@ -1,9 +1,10 @@
 package config
 
 import (
+	"testing"
+
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"gopkg.in/yaml.v2"
-	"testing"
 )
 
 // TODO(create-ticket): Add testing for config file marshaling or switch to a simpler format / parsing logic.
@@ -19,6 +20,11 @@ dinosaur_instance_limit: 5
 provider_type: standalone
 supported_instance_type: "eval,standard"
 cluster_dns: cluster.local
+available_dinosaur_operator_versions:
+  - version: "0.1.0"
+    ready: true
+    dinosaur_versions:
+      - version: "0.1.0"
 `)
 
 	c := ManualCluster{}
