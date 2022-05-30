@@ -76,7 +76,7 @@ else
 fi
 
 # Push the image:
-echo "Quay.io user and token is set, will push images to $QUAY_IMAGE_REPOSITORY"
+echo "Quay.io user and token is set, will push images to $IMAGE_REPOSITORY"
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
