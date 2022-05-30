@@ -28,13 +28,8 @@
 # The machines that run this script need to have access to internet, so that
 # the built images can be pushed to quay.io.
 
-# The version should be the short hash from git. This is what the deployment process expects.
-VERSION="$(git log --pretty=format:'%h' -n 1)"
-
-# Set the variable required to login and push images to the registry
-QUAY_USER=${QUAY_USER_NAME:-$RHOAS_QUAY_USER}
-QUAY_TOKEN=${QUAY_USER_PASSWORD:-$RHOAS_QUAY_TOKEN}
-QUAY_ORG=${QUAY_ORG_NAME:-rhoas}
+# The version should be a 7-char hash from git. This is what the deployment process in app-interface expects.
+VERSION=`git rev-parse --short=7 HEAD`
 
 # Set the directory for docker configuration:
 DOCKER_CONFIG="${PWD}/.docker"
@@ -54,12 +49,17 @@ cd "${LINK}"
 # Log in to the image registry:
 if [ -z "${QUAY_USER}" ]; then
   echo "The quay.io push user name hasn't been provided."
-  echo "Make sure to set the QUAY_USER_NAME environment variable."
+  echo "Make sure to set the QUAY_USER environment variable."
   exit 1
 fi
 if [ -z "${QUAY_TOKEN}" ]; then
   echo "The quay.io push token hasn't been provided."
-  echo "Make sure to set the QUAY_USER_PASSWORD environment variable."
+  echo "Make sure to set the QUAY_TOKEN environment variable."
+  exit 1
+fi
+if [ -z "${QUAY_IMAGE_REPOSITORY}" ]; then
+  echo "The quay.io image repository hasn't been provided."
+  echo "Make sure to set the QUAY_IMAGE_REPOSITORY environment variable to '<org>/<repo>'."
   exit 1
 fi
 
@@ -78,7 +78,7 @@ else
 fi
 
 # Push the image:
-echo "Quay.io user and token is set, will push images to $QUAY_ORG org"
+echo "Quay.io user and token is set, will push images to $QUAY_IMAGE_REPOSITORY"
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
@@ -86,7 +86,7 @@ make \
   version="${VERSION}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="$QUAY_ORG/fleet-manager" \
+  image_repository="${QUAY_IMAGE_REPOSITORY}" \
   docker/login \
   image/push
 
@@ -97,6 +97,6 @@ make \
   version="${BRANCH}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="$QUAY_ORG/fleet-manager" \
+  image_repository="${QUAY_IMAGE_REPOSITORY}" \
   docker/login \
   image/push
