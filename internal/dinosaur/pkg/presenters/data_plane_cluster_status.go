@@ -17,14 +17,14 @@ func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRe
 			Message: cond.Message,
 		}
 	}
-	res.AvailableDinosaurOperatorVersions = make([]api.DinosaurOperatorVersion, len(status.DinosaurOperator))
-	for i, op := range status.DinosaurOperator {
+	res.AvailableDinosaurOperatorVersions = make([]api.DinosaurOperatorVersion, len(status.CentralOperator))
+	for i, op := range status.CentralOperator {
 		res.AvailableDinosaurOperatorVersions[i] = api.DinosaurOperatorVersion{
 			Version: op.Version,
 			Ready:   op.Ready,
 		}
-		res.AvailableDinosaurOperatorVersions[i].DinosaurVersions = make([]api.DinosaurVersion, len(op.DinosaurVersions))
-		for j, v := range op.DinosaurVersions {
+		res.AvailableDinosaurOperatorVersions[i].DinosaurVersions = make([]api.DinosaurVersion, len(op.CentralVersions))
+		for j, v := range op.CentralVersions {
 			res.AvailableDinosaurOperatorVersions[i].DinosaurVersions[j] = api.DinosaurVersion{Version: v}
 		}
 	}

@@ -9,7 +9,8 @@
 
 package private
 
-// DataplaneClusterAgentConfigSpec Data plane cluster agent spec
-type DataplaneClusterAgentConfigSpec struct {
-	Observability DataplaneClusterAgentConfigSpecObservability `json:"observability,omitempty"`
+// ManagedCentralAllOfMetadataAnnotations struct for ManagedCentralAllOfMetadataAnnotations
+type ManagedCentralAllOfMetadataAnnotations struct {
+	MasId          string `json:"mas/id"`
+	MasPlacementId string `json:"mas/placementId"`
 }
