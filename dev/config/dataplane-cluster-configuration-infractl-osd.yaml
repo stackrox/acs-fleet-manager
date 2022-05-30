@@ -5,13 +5,13 @@
 #  'deprovisioning' and will later be deleted.
 #- This list is ordered, any new cluster should be appended at the end.
 clusters:
- - name: default/api-evan-acsms-fm-d-0a51-s2-devshift-org:6443/admin
-   cluster_id: 1sdu4lati28ifrnk73d3o4qa720rb5ek
-   cloud_provider: gcp
-   region: us-east1
+ - name: default/api-juan-fm-dev-94xt-s1-devshift-org:6443/admin
+   cluster_id: 1sh266ouf8lipuid2c0rna877eou6ecc
+   cloud_provider: aws
+   region: us-west-2
    schedulable: true
    status: ready
    dinosaur_instance_limit: 10
    provider_type: standalone
    supported_instance_type: "eval,standard"
-   cluster_dns: evan-acsms-fm-d.0a51.s2.devshift.org
+   cluster_dns: juan-fm-dev.94xt.s1.devshift.org

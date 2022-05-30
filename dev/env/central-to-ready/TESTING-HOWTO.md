@@ -143,3 +143,87 @@ serviceapitests=# select * from dinosaur_requests ;
 │ routes_creation_id                │                                                                                                                              │
 └───────────────────────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+## Central to ready using an OSD cluster and only with API calls
+
+```bash
+# Assuming KUBECONFIG is set for the cluster
+make db/teardown db/setup db/migrate
+make binary && ./fleet-manager serve \
+   --dataplane-cluster-config-file=$(pwd)/dev/config/dataplane-cluster-configuration-infractl-osd.yaml \
+   --providers-config-file=$(pwd)/dev/config/provider-configuration-infractl-osd.yaml \
+   --kubeconfig=${KUBECONFIG} \
+   2>&1 | tee fleet-manager-serve.log
+
+# should return 200 and no central
+curl -v -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/rhacs/v1/centrals | jq .
+
+cluster_id=$(grep cluster_id $(pwd)/dev/config/dataplane-cluster-configuration-infractl-osd.yaml | tail -n1 | tr -s ' '  | cut -d ' ' -f 3)
+# wait for leader election
+# check cluster is there: should return 200
+curl -v -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/rhacs/v1/agent-clusters/${cluster_id} | jq .
+
+# register operator version for cluster 
+curl -v -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/rhacs/v1/agent-clusters/${cluster_id}/status?async=true -X PUT -d '
+{
+  "centralOperator": [
+    {
+      "ready": true,
+      "version": "0.1.0",
+      "centralVersions": ["0.1.0"]
+    } 
+  ],
+  "conditions": [
+    {
+      "type": "Ready",
+      "status": "true",
+      "message": "fully operational",
+      "reason": "this is a test"
+    }
+  ]
+}' | jq .
+
+# create a central for the same cloud provider and region as the cluster
+curl -v -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/rhacs/v1/centrals?async=true -X POST -d '{"name": "foo-central", "multi_az": true, "cloud_provider": "aws", "region": "us-west-2"}' | jq .
+
+# Central eventually gets to accepted state
+curl -v -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/rhacs/v1/centrals | jq .
+
+central_id=$(curl -v -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/rhacs/v1/centrals | jq -r '.items[0].id')
+cluster_dns=$(grep cluster_dns $(pwd)/dev/config/dataplane-cluster-configuration-infractl-osd.yaml | tail -n1 | tr -s ' '  | cut -d ' ' -f 3)
+# Simulate fleetshard-sync moving to ready
+# this needs to be called twice to reflect fleetshard-sync's expected behaviour of periodically continuously calling fleet-manager.
+for i in $(seq 2)
+do
+    curl -v -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/rhacs/v1/agent-clusters/${cluster_id}/centrals/status -X PUT -d "
+    {
+    \"${central_id}\": {
+        \"conditions\": [
+            {
+                \"type\": \"Ready\",
+                \"reason\": \"CentralInstanceReady\",
+                \"message\": \"Installing\",
+                \"status\": \"True\",
+                \"lastTransitionTime\": \"2018-01-01T00:00:00Z\"
+            }
+        ],
+        \"routes\": [
+            {
+                \"name\": \"test-route-name\",
+                \"prefix\": \"test-route-prefix\",
+                \"router\": \"${cluster_dns}\"
+            }
+        ],
+        \"versions\": {
+            \"dinosaur\": \"0.1.0\",
+            \"dinosaurOperator\": \"0.1.0\"
+        }
+       }
+    }
+    " | jq .
+    sleep 30
+done
+
+# central should be in ready state
+curl -v -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/rhacs/v1/centrals | jq .
+```
