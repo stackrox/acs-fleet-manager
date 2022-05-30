@@ -5,7 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 )
 
-func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneDinosaurStatus) []*dbapi.DataPlaneDinosaurStatus {
+func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralStatus) []*dbapi.DataPlaneDinosaurStatus {
 	res := make([]*dbapi.DataPlaneDinosaurStatus, 0, len(status))
 
 	for k, v := range status {
@@ -33,8 +33,8 @@ func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneDinosaurS
 			DinosaurClusterId:       k,
 			Conditions:              c,
 			Routes:                  routes,
-			DinosaurVersion:         v.Versions.Dinosaur,
-			DinosaurOperatorVersion: v.Versions.DinosaurOperator,
+			DinosaurVersion:         v.Versions.Central,
+			DinosaurOperatorVersion: v.Versions.CentralOperator,
 		})
 	}
 

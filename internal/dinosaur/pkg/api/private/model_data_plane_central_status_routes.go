@@ -9,7 +9,9 @@
 
 package private
 
-// DataplaneClusterAgentConfigSpec Data plane cluster agent spec
-type DataplaneClusterAgentConfigSpec struct {
-	Observability DataplaneClusterAgentConfigSpecObservability `json:"observability,omitempty"`
+// DataPlaneCentralStatusRoutes struct for DataPlaneCentralStatusRoutes
+type DataPlaneCentralStatusRoutes struct {
+	Name   string `json:"name,omitempty"`
+	Prefix string `json:"prefix,omitempty"`
+	Router string `json:"router,omitempty"`
 }

@@ -5,27 +5,27 @@ import (
 	v1 "github.com/stackrox/acs-fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
 )
 
-func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {
-	res := private.ManagedDinosaur{
+func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
+	res := private.ManagedCentral{
 		Id:   from.Annotations["mas/id"],
 		Kind: from.Kind,
-		Metadata: private.ManagedDinosaurAllOfMetadata{
+		Metadata: private.ManagedCentralAllOfMetadata{
 			Name:      from.Name,
 			Namespace: from.Namespace,
-			Annotations: private.ManagedDinosaurAllOfMetadataAnnotations{
+			Annotations: private.ManagedCentralAllOfMetadataAnnotations{
 				MasId:          from.Annotations["mas/id"],
 				MasPlacementId: from.Annotations["mas/placementId"],
 			},
 		},
-		Spec: private.ManagedDinosaurAllOfSpec{
+		Spec: private.ManagedCentralAllOfSpec{
 			Owners: from.Spec.Owners,
-			Endpoint: private.ManagedDinosaurAllOfSpecEndpoint{
+			Endpoint: private.ManagedCentralAllOfSpecEndpoint{
 				Host: from.Spec.Endpoint.Host,
-				Tls:  &private.ManagedDinosaurAllOfSpecEndpointTls{},
+				Tls:  &private.ManagedCentralAllOfSpecEndpointTls{},
 			},
-			Versions: private.ManagedDinosaurVersions{
-				Dinosaur:         from.Spec.Versions.Dinosaur,
-				DinosaurOperator: from.Spec.Versions.DinosaurOperator,
+			Versions: private.ManagedCentralVersions{
+				Central:         from.Spec.Versions.Dinosaur,
+				CentralOperator: from.Spec.Versions.DinosaurOperator,
 			},
 			Deleted: from.Spec.Deleted,
 		},

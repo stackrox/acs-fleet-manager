@@ -14,7 +14,7 @@ import (
 func TestClientGetManagedCentralList(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		assert.Contains(t, request.RequestURI, "/api/dinosaurs_mgmt/v1/agent-clusters/cluster-id/dinosaurs")
-		bytes, err := json.Marshal(private.ManagedDinosaurList{})
+		bytes, err := json.Marshal(private.ManagedCentralList{})
 		require.NoError(t, err)
 		_, err = writer.Write(bytes)
 		require.NoError(t, err)
@@ -29,13 +29,13 @@ func TestClientGetManagedCentralList(t *testing.T) {
 
 	result, err := client.GetManagedCentralList()
 	require.NoError(t, err)
-	assert.Equal(t, &private.ManagedDinosaurList{}, result)
+	assert.Equal(t, &private.ManagedCentralList{}, result)
 }
 
 func TestClientUpdateStatus(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		assert.Contains(t, request.RequestURI, "/api/dinosaurs_mgmt/v1/agent-clusters/cluster-id/dinosaurs")
-		bytes, err := json.Marshal(private.ManagedDinosaurList{})
+		bytes, err := json.Marshal(private.ManagedCentralList{})
 		require.NoError(t, err)
 		_, err = writer.Write(bytes)
 		require.NoError(t, err)

@@ -191,11 +191,11 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).
 		Name(logger.NewLogEvent("update-dataplane-cluster-status", "update dataplane cluster status by id").ToString()).
 		Methods(http.MethodPut)
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/dinosaurs/status", dataPlaneDinosaurHandler.UpdateDinosaurStatuses).
-		Name(logger.NewLogEvent("update-dataplane-dinosaur-status", "update dataplane dinosaur status by id").ToString()).
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/centrals/status", dataPlaneDinosaurHandler.UpdateDinosaurStatuses).
+		Name(logger.NewLogEvent("update-dataplane-centrals-status", "update dataplane centrals status by id").ToString()).
 		Methods(http.MethodPut)
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/dinosaurs", dataPlaneDinosaurHandler.GetAll).
-		Name(logger.NewLogEvent("list-dataplane-dinosaurs", "list all dataplane dinosaurs").ToString()).
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/centrals", dataPlaneDinosaurHandler.GetAll).
+		Name(logger.NewLogEvent("list-dataplane-centrals", "list all dataplane centrals").ToString()).
 		Methods(http.MethodGet)
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	// TODO(create-ticket): We need to authn/authz requests to the internal API.

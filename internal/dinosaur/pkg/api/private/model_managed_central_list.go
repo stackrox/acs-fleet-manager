@@ -9,7 +9,8 @@
 
 package private
 
-// DataplaneClusterAgentConfigSpec Data plane cluster agent spec
-type DataplaneClusterAgentConfigSpec struct {
-	Observability DataplaneClusterAgentConfigSpecObservability `json:"observability,omitempty"`
+// ManagedCentralList A list of ManagedCentral
+type ManagedCentralList struct {
+	Kind  string           `json:"kind"`
+	Items []ManagedCentral `json:"items"`
 }
