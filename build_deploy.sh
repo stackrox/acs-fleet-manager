@@ -49,12 +49,17 @@ cd "${LINK}"
 # Log in to the image registry:
 if [ -z "${QUAY_USER}" ]; then
   echo "The quay.io push user name hasn't been provided."
-  echo "Make sure to set the QUAY_USER_NAME environment variable."
+  echo "Make sure to set the QUAY_USER environment variable."
   exit 1
 fi
 if [ -z "${QUAY_TOKEN}" ]; then
   echo "The quay.io push token hasn't been provided."
-  echo "Make sure to set the QUAY_USER_PASSWORD environment variable."
+  echo "Make sure to set the QUAY_TOKEN environment variable."
+  exit 1
+fi
+if [ -z "${QUAY_IMAGE_REPOSITORY}" ]; then
+  echo "The quay.io image repository hasn't been provided."
+  echo "Make sure to set the QUAY_IMAGE_REPOSITORY environment variable."
   exit 1
 fi
 
