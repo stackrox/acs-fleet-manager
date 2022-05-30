@@ -31,11 +31,6 @@
 # The version should be the short hash from git. This is what the deployment process expects.
 VERSION="$(git log --pretty=format:'%h' -n 1)"
 
-# Set the variable required to login and push images to the registry
-QUAY_USER=${QUAY_USER_NAME:-$RHOAS_QUAY_USER}
-QUAY_TOKEN=${QUAY_USER_PASSWORD:-$RHOAS_QUAY_TOKEN}
-QUAY_ORG=${QUAY_ORG_NAME:-rhoas}
-
 # Set the directory for docker configuration:
 DOCKER_CONFIG="${PWD}/.docker"
 
@@ -78,7 +73,7 @@ else
 fi
 
 # Push the image:
-echo "Quay.io user and token is set, will push images to $QUAY_ORG org"
+echo "Quay.io user and token is set, will push images to $QUAY_IMAGE_REPOSITORY"
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
@@ -86,7 +81,7 @@ make \
   version="${VERSION}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="$QUAY_ORG/fleet-manager" \
+  image_repository="${QUAY_IMAGE_REPOSITORY}" \
   docker/login \
   image/push
 
@@ -97,6 +92,6 @@ make \
   version="${BRANCH}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="$QUAY_ORG/fleet-manager" \
+  image_repository="${QUAY_IMAGE_REPOSITORY}" \
   docker/login \
   image/push
