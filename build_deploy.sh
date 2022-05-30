@@ -31,6 +31,9 @@
 # The version should be a 7-char hash from git. This is what the deployment process in app-interface expects.
 VERSION=`git rev-parse --short=7 HEAD`
 
+# Set image repository to default value if it is not passed via env
+IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/fleet-manager}"
+
 # Set the directory for docker configuration:
 DOCKER_CONFIG="${PWD}/.docker"
 
@@ -57,11 +60,6 @@ if [ -z "${QUAY_TOKEN}" ]; then
   echo "Make sure to set the QUAY_TOKEN environment variable."
   exit 1
 fi
-if [ -z "${QUAY_IMAGE_REPOSITORY}" ]; then
-  echo "The quay.io image repository hasn't been provided."
-  echo "Make sure to set the QUAY_IMAGE_REPOSITORY environment variable to '<org>/<repo>'."
-  exit 1
-fi
 
 # Set up the docker config directory
 mkdir -p "${DOCKER_CONFIG}"
@@ -86,7 +84,7 @@ make \
   version="${VERSION}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="${QUAY_IMAGE_REPOSITORY}" \
+  image_repository="${IMAGE_REPOSITORY}" \
   docker/login \
   image/push
 
@@ -97,6 +95,6 @@ make \
   version="${BRANCH}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="${QUAY_IMAGE_REPOSITORY}" \
+  image_repository="${IMAGE_REPOSITORY}" \
   docker/login \
   image/push
