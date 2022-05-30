@@ -29,7 +29,7 @@
 # the built images can be pushed to quay.io.
 
 # The version should be the short hash from git. This is what the deployment process expects.
-VERSION="$(git log --pretty=format:'%h' -n 1)"
+VERSION=`git rev-parse --short=7 HEAD`
 
 # Set the directory for docker configuration:
 DOCKER_CONFIG="${PWD}/.docker"
