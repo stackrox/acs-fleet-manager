@@ -94,8 +94,6 @@ operator-sdk olm install    # Install the OLM operator to your cluster
 kubectl -n olm get pods -w  # Verify installation of OLM
 ```
 
-
-
 # Fleet Manager Golang Template
 
 This project is an example fleet management service. Fleet managers govern service 
