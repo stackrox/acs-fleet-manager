@@ -3,14 +3,14 @@ package handlers
 import (
 	"fmt"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/routes"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"github.com/golang/glog"
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 	pkgErrors "github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/routes"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/server"
 )
 
 func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig *keycloak.KeycloakConfig) (*authentication.HandlerBuilder, error) {
@@ -28,7 +28,7 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig 
 			Logger(authnLogger).
 			KeysURL(ServerConfig.JwksURL).                              //ocm JWK JSON web token signing certificates URL
 			KeysFile(ServerConfig.JwksFile).                            //ocm JWK backup JSON web token signing certificates
-			KeysURL(KeycloakConfig.DinosaurRealm.JwksEndpointURI).      // sso JWK Cert URL
+			KeysURL(KeycloakConfig.SSOProviderRealm().JwksEndpointURI). // sso JWK Cert URL
 			KeysURL(KeycloakConfig.OSDClusterIDPRealm.JwksEndpointURI). // sso SRE realm cert URL
 			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
 			Service(errors.ERROR_CODE_PREFIX).
