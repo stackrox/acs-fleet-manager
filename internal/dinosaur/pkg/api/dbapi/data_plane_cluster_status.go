@@ -4,7 +4,7 @@ import "github.com/stackrox/acs-fleet-manager/pkg/api"
 
 type DataPlaneClusterStatus struct {
 	Conditions                        []DataPlaneClusterStatusCondition
-	AvailableDinosaurOperatorVersions []api.DinosaurOperatorVersion
+	AvailableDinosaurOperatorVersions []api.CentralOperatorVersion
 }
 
 type DataPlaneClusterStatusCondition struct {

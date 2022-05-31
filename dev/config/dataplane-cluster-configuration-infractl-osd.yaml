@@ -11,7 +11,7 @@ clusters:
    region: us-east1
    schedulable: true
    status: ready
-   dinosaur_instance_limit: 10
+   central_instance_limit: 10
    provider_type: standalone
    supported_instance_type: "eval,standard"
    cluster_dns: evan-acsms-fm-d.0a51.s2.devshift.org

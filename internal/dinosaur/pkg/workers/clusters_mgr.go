@@ -638,8 +638,8 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			SupportedInstanceType: p.SupportedInstanceType,
 		}
 
-		if len(p.AvailableDinosaurOperatorVersions) > 0 {
-			if err := clusterRequest.SetAvailableDinosaurOperatorVersions(p.AvailableDinosaurOperatorVersions); err != nil {
+		if len(p.AvailableCentralOperatorVersions) > 0 {
+			if err := clusterRequest.SetAvailableDinosaurOperatorVersions(p.AvailableCentralOperatorVersions); err != nil {
 				return []error{errors.Wrapf(err, "Failed to set operator versions for manual cluster %s with config file", p.ClusterId)}
 			}
 		}
@@ -1007,7 +1007,7 @@ func (c *ClusterManager) setClusterStatusMaxCapacityMetrics() {
 		supportedInstanceTypes := strings.Split(cluster.SupportedInstanceType, ",")
 		for _, instanceType := range supportedInstanceTypes {
 			if instanceType != "" {
-				capacity := float64(cluster.DinosaurInstanceLimit)
+				capacity := float64(cluster.CentralInstanceLimit)
 				metrics.UpdateClusterStatusCapacityMaxCount(cluster.Region, instanceType, cluster.ClusterId, capacity)
 			}
 		}
