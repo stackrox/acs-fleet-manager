@@ -34,7 +34,6 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"enable-instance-limit-control":        "true",
 		"max-allowed-instances":                "1",
 		"sso-base-url":                         "https://identity.api.stage.openshift.com",
-		"sso-realm":                            "rhoas",
 		"osd-idp-sso-realm":                    "rhoas-dinosaur-sre",
 		"enable-dinosaur-external-certificate": "false",
 		"cluster-compute-machine-type":         "m5.xlarge",

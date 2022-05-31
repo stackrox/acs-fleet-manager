@@ -10,7 +10,6 @@ func NewStageEnvLoader() environments.EnvLoader {
 		"enable-deny-list":                     "true",
 		"max-allowed-instances":                "1",
 		"sso-base-url":                         "https://identity.api.stage.openshift.com",
-		"sso-realm":                            "rhoas",
 		"enable-dinosaur-external-certificate": "true",
 		"cluster-compute-machine-type":         "m5.2xlarge",
 	}
