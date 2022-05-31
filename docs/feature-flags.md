@@ -54,8 +54,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 ## Keycloak
 - **sso-debug** [Optional] Enables Keycloak debug logging.
 - **sso-base-url** [Required]: The base URL of the Keycloak instance.
-- **sso-client-id-file** [Required]: The path to the file containing a Keycloak account client ID that has access to the Dinosaur service accounts realm (default: `'secrets/keycloak-service.clientId'`).
-- **sso-client-secret-file** [Required]: The path to the file containing a Keycloak account client secret that has access to the Dinosaur service accounts realm (default: `'secrets/keycloak-service.clientSecret'`).
 - **sso-realm** [Required]: Realm for Dinosaur service accounts in the SSO Keycloak server
 - **osd-idp-sso-client-id-file** [Required]: The path to the file containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm (default `'secrets/osd-idp-keycloak-service.clientId'`)
 - **osd-idp-sso-client-secret-file** [Required]: The path to the file containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm (default `'secrets/osd-idp-keycloak-service.clientSecret'`)

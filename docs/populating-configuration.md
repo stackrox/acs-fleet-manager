@@ -133,8 +133,6 @@ This additional SSO server must be based on Keycloak.
 
 In order for the Fleet Manager to be able to start, create the following files:
 ```
-touch secrets/keycloak-service.clientId
-touch secrets/keycloak-service.clientSecret
 touch secrets/osd-idp-keycloak-service.clientId
 touch secrets/osd-idp-keycloak-service.clientSecret
 ```

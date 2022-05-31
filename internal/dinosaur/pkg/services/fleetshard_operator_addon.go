@@ -18,7 +18,7 @@ const (
 	FleetshardOperatorRoleName = "fleetshard_operator"
 
 	//parameter names for the fleetshard-operator service account
-	fleetshardOperatorParamMasSSOBaseUrl        = "sso-auth-server-url"
+	fleetshardOperatorParamSSOBaseUrl           = "sso-auth-server-url"
 	fleetshardOperatorParamServiceAccountId     = "sso-client-id"
 	fleetshardOperatorParamServiceAccountSecret = "sso-secret"
 	// parameter names for the cluster id
@@ -122,8 +122,8 @@ func (o *fleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAc
 	p := []types.Parameter{
 
 		{
-			Id:    fleetshardOperatorParamMasSSOBaseUrl,
-			Value: o.KeycloakConfig.DinosaurRealm.ValidIssuerURI,
+			Id:    fleetshardOperatorParamSSOBaseUrl,
+			Value: o.KeycloakConfig.RedhatSSORealm.ValidIssuerURI,
 		},
 		{
 			Id:    fleetshardOperatorParamServiceAccountId,

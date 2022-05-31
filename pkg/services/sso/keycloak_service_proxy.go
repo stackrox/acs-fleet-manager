@@ -53,7 +53,7 @@ func (r *keycloakServiceProxy) IsAcsClientExist(clientId string) *errors.Service
 }
 
 func (r *keycloakServiceProxy) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := tokenForServiceAPIHandler(ctx, r); err != nil {
+	if token, err := tokenForServiceAPIHandler(ctx); err != nil {
 		return nil, err
 	} else {
 		return r.service.CreateServiceAccount(token, serviceAccountRequest, ctx)
@@ -61,7 +61,7 @@ func (r *keycloakServiceProxy) CreateServiceAccount(serviceAccountRequest *api.S
 }
 
 func (r *keycloakServiceProxy) DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError {
-	if token, err := tokenForServiceAPIHandler(ctx, r); err != nil {
+	if token, err := tokenForServiceAPIHandler(ctx); err != nil {
 		return err
 	} else {
 		return r.service.DeleteServiceAccount(token, ctx, clientId)
@@ -69,7 +69,7 @@ func (r *keycloakServiceProxy) DeleteServiceAccount(ctx context.Context, clientI
 }
 
 func (r *keycloakServiceProxy) ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := tokenForServiceAPIHandler(ctx, r); err != nil {
+	if token, err := tokenForServiceAPIHandler(ctx); err != nil {
 		return nil, err
 	} else {
 		return r.service.ResetServiceAccountCredentials(token, ctx, clientId)
@@ -77,7 +77,7 @@ func (r *keycloakServiceProxy) ResetServiceAccountCredentials(ctx context.Contex
 }
 
 func (r *keycloakServiceProxy) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
-	if token, err := tokenForServiceAPIHandler(ctx, r); err != nil {
+	if token, err := tokenForServiceAPIHandler(ctx); err != nil {
 		return nil, err
 	} else {
 		return r.service.ListServiceAcc(token, ctx, first, max)
@@ -101,7 +101,7 @@ func (r *keycloakServiceProxy) DeRegisterAcsFleetshardOperatorServiceAccount(age
 }
 
 func (r *keycloakServiceProxy) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := tokenForServiceAPIHandler(ctx, r); err != nil {
+	if token, err := tokenForServiceAPIHandler(ctx); err != nil {
 		return nil, err
 	} else {
 		return r.service.GetServiceAccountById(token, ctx, id)
@@ -109,7 +109,7 @@ func (r *keycloakServiceProxy) GetServiceAccountById(ctx context.Context, id str
 }
 
 func (r *keycloakServiceProxy) GetServiceAccountByClientId(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := tokenForServiceAPIHandler(ctx, r); err != nil {
+	if token, err := tokenForServiceAPIHandler(ctx); err != nil {
 		return nil, err
 	} else {
 		return r.service.GetServiceAccountByClientId(token, ctx, clientId)
@@ -171,14 +171,8 @@ func retrieveUserToken(ctx context.Context) (string, *errors.ServiceError) {
 	return token, nil
 }
 
-func tokenForServiceAPIHandler(ctx context.Context, r *keycloakServiceProxy) (string, *errors.ServiceError) {
-	var token string
-	var err *errors.ServiceError
-	if r.GetConfig().SelectSSOProvider == keycloak.REDHAT_SSO {
-		token, err = retrieveUserToken(ctx)
-	} else {
-		token, err = r.retrieveToken()
-	}
+func tokenForServiceAPIHandler(ctx context.Context) (string, *errors.ServiceError) {
+	token, err := retrieveUserToken(ctx)
 	if err != nil {
 		return "", err
 	}
