@@ -88,7 +88,7 @@ func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus
 }
 
 func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Response, error) {
-	glog.Infof("Send request to %s;", url)
+	glog.Infof("Send request to %s", url)
 	r, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
