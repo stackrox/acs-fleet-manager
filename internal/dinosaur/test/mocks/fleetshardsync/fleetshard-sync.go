@@ -13,9 +13,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	coreTest "github.com/stackrox/acs-fleet-manager/test"
-	"github.com/golang-jwt/jwt/v4"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
@@ -215,7 +215,7 @@ func NewAuthenticatedContextForDataPlaneCluster(h *coreTest.Helper, clusterID st
 
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
-		"iss": keycloakConfig.DinosaurRealm.ValidIssuerURI,
+		"iss": keycloakConfig.SSOProviderRealm().ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": {"fleetshard_operator"},
 		},
