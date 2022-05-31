@@ -3,7 +3,7 @@ package sso
 import (
 	"context"
 	"fmt"
-	"github.com/Nerzal/gocloak/v8"
+	"github.com/Nerzal/gocloak/v11"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 	"strings"
