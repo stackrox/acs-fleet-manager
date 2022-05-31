@@ -1,13 +1,13 @@
 ManagedCentral:
   Version: 0.1.0
-  DNS:
+  DNS: "central-customer1.rhacs.com"
   TLS: # should end user be able to specify additional root CA's in managed service?
-    Cert:
-    Key: 
+    Cert: "cert data"
+    Key: "key data"
     AdditionalCAs:
       #...
-  Name:
-  Namespace:
+  Name: test1
+  Namespace: testnamespace1
   Central:
     # Assumption: AdminPasswordSecret, AdminPasswordGenerationDisabled, Exposure, DefaultTLSSecret not configurable for managed central end user
     Persistence: # does it make sense for users to set this values on managed service?
