@@ -13,7 +13,7 @@ import (
 
 func TestClientGetManagedCentralList(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		assert.Contains(t, request.RequestURI, "/api/dinosaurs_mgmt/v1/agent-clusters/cluster-id/dinosaurs")
+		assert.Contains(t, request.RequestURI, "/api/rhacs/v1/agent-clusters/cluster-id/centrals")
 		bytes, err := json.Marshal(private.ManagedCentralList{})
 		require.NoError(t, err)
 		_, err = writer.Write(bytes)

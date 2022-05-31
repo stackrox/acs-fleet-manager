@@ -393,6 +393,10 @@ db/setup:
 	./scripts/local_db_setup.sh
 .PHONY: db/setup
 
+db/start:
+	docker start fleet-manager-db
+.PHONY: db/start
+
 db/migrate:
 	OCM_ENV=integration $(GO) run ./cmd/fleet-manager migrate
 .PHONY: db/migrate
