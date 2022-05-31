@@ -55,7 +55,7 @@ func (r *Runtime) Start() error {
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		list, err := r.client.GetManagedCentralList()
 		if err != nil {
-			glog.Errorf("failed to list central", err)
+			glog.Error("failed to list central", err)
 			return 0, err
 		}
 
@@ -79,7 +79,7 @@ func (r *Runtime) Start() error {
 func (r *Runtime) watchReconcilerResults() {
 	for result := range r.reconcilerResultCh {
 		if result.Err != nil {
-			glog.Errorf("error occurred %s: %s", result.Central.Metadata.Name, result)
+			glog.Errorf("error occurred %s: %s", result.Central.Metadata.Name, result.Err.Error())
 			continue
 		}
 
@@ -87,7 +87,7 @@ func (r *Runtime) watchReconcilerResults() {
 			result.Central.Id: result.Status,
 		})
 		if err != nil {
-			glog.Errorf("error occurred %s: %s", result.Central.Metadata.Name, result)
+			glog.Errorf("error occurred %s: %s", result.Central.Metadata.Name, err.Error())
 		}
 		glog.Infof(string(resp))
 	}
