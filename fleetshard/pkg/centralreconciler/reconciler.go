@@ -28,7 +28,7 @@ func Synchronize(devEndpoint string, clusterID string) {
 		glog.Fatalf("failed to list centrals for cluster %s: %s", clusterID, err)
 	}
 
-	statuses := make(map[string]private.DataPlaneDinosaurStatus)
+	statuses := make(map[string]private.DataPlaneCentralStatus)
 	for _, remoteCentral := range list.Items {
 		glog.Infof("received cluster: %s", remoteCentral.Metadata.Name)
 
@@ -53,7 +53,7 @@ type ClusterReconciler struct {
 	client ctrlClient.Client
 }
 
-func (r ClusterReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedDinosaur) (*private.DataPlaneDinosaurStatus, error) {
+func (r ClusterReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	remoteNamespace := remoteCentral.Metadata.Name
 	if err := r.ensureNamespace(remoteCentral.Metadata.Name); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteNamespace)
@@ -90,7 +90,7 @@ func (r ClusterReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	}
 
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
-	return &private.DataPlaneDinosaurStatus{
+	return &private.DataPlaneCentralStatus{
 		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
 			{
 				Type:   "Ready",
