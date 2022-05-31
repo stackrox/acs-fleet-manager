@@ -21,42 +21,9 @@ const (
 
 // CentralReconciler reconciles the central cluster
 type CentralReconciler struct {
-	client     ctrlClient.Client
-	central    private.ManagedCentral
-	inputCh    chan *private.ManagedCentral
-	resultCh   chan ReconcilerResult
-	stopCh     chan struct{}
-	status     *int32
-	responseCh chan private.DataPlaneCentralStatus
-}
-
-// TODO: Correct error creation?
-type ReconcilerResult struct {
-	Central private.ManagedCentral
-	Err     error
-	Status  private.DataPlaneCentralStatus
-}
-
-// TODO(create-ticket): Setup local watch on Central's kube API resources to set new updates statues?
-// TODO(create-ticket): Graceful shutdown?
-func (r CentralReconciler) Start() {
-	// TODO: prevent multiple starts
-	for {
-		select {
-		case central := <-r.inputCh:
-			go func() {
-				//TODO: cancellation?
-				status, err := r.Reconcile(context.Background(), *central)
-				r.resultCh <- ReconcilerResult{Err: err, Status: *status, Central: *central}
-			}()
-		case <-r.stopCh:
-			return
-		}
-	}
-}
-
-func (r CentralReconciler) InputChannel() chan *private.ManagedCentral {
-	return r.inputCh
+	client  ctrlClient.Client
+	central private.ManagedCentral
+	status  *int32
 }
 
 func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
@@ -130,12 +97,10 @@ func (r CentralReconciler) ensureNamespace(name string) error {
 	return err
 }
 
-func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, resultCh chan ReconcilerResult) *CentralReconciler {
+func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral) *CentralReconciler {
 	return &CentralReconciler{
-		client:   k8sClient,
-		central:  central,
-		resultCh: resultCh,
-		inputCh:  make(chan *private.ManagedCentral),
-		status:   pointer.Int32(FreeStatus),
+		client:  k8sClient,
+		central: central,
+		status:  pointer.Int32(FreeStatus),
 	}
 }

@@ -27,11 +27,10 @@ var backoff = wait.Backoff{
 }
 
 type Runtime struct {
-	client             *fleetmanager.Client
-	reconcilers        reconcilerRegistry //TODO(yury): remove central instance after deletion
-	k8sClient          ctrlClient.Client
-	reconcilerResultCh chan centralreconciler.ReconcilerResult
-	statusResponseCh   chan private.DataPlaneCentralStatus
+	client           *fleetmanager.Client
+	reconcilers      reconcilerRegistry //TODO(yury): remove central instance after deletion
+	k8sClient        ctrlClient.Client
+	statusResponseCh chan private.DataPlaneCentralStatus
 }
 
 func NewRuntime(devEndpoint string, clusterID string, k8sClient ctrlClient.Client) (*Runtime, error) {
@@ -41,10 +40,9 @@ func NewRuntime(devEndpoint string, clusterID string, k8sClient ctrlClient.Clien
 	}
 
 	return &Runtime{
-		k8sClient:          k8sClient,
-		client:             client,
-		reconcilerResultCh: make(chan centralreconciler.ReconcilerResult),
-		reconcilers:        make(reconcilerRegistry),
+		k8sClient:   k8sClient,
+		client:      client,
+		reconcilers: make(reconcilerRegistry),
 	}, nil
 }
 
@@ -53,8 +51,6 @@ func (r *Runtime) Stop() {
 
 func (r *Runtime) Start() error {
 	glog.Infof("fleetshard runtime started")
-
-	go r.watchReconcilerResults()
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		list, err := r.client.GetManagedCentralList()
@@ -66,12 +62,14 @@ func (r *Runtime) Start() error {
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Metadata.Name]; !ok {
-				r.reconcilers[central.Metadata.Name] = centralreconciler.NewCentralReconciler(r.k8sClient, central, r.reconcilerResultCh)
-				go r.reconcilers[central.Metadata.Name].Start()
+				r.reconcilers[central.Metadata.Name] = centralreconciler.NewCentralReconciler(r.k8sClient, central)
 			}
 
 			reconciler := r.reconcilers[central.Metadata.Name]
-			reconciler.InputChannel() <- &central
+			go func() {
+				status, err := reconciler.Reconcile(context.Background(), central)
+				r.handleReconcileResult(central, status, err)
+			}()
 		}
 
 		return 1 * time.Second, nil
@@ -80,20 +78,18 @@ func (r *Runtime) Start() error {
 	return ticker.Start()
 }
 
-func (r *Runtime) watchReconcilerResults() {
-	for result := range r.reconcilerResultCh {
-		if result.Err != nil {
-			glog.Errorf("error occurred %s: %s", result.Central.Metadata.Name, result.Err.Error())
-			continue
-		}
-
-		resp, err := r.client.UpdateStatus(map[string]private.DataPlaneCentralStatus{
-			result.Central.Id: result.Status,
-		})
-		if err != nil {
-			glog.Errorf("error occurred %s: %s", result.Central.Metadata.Name, err.Error())
-		}
-		//TODO: handle response correctly
-		glog.Infof(string(resp))
+func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error) {
+	if err != nil {
+		glog.Errorf("error occurred %s: %s", central.Metadata.Name, err.Error())
+		return
 	}
+
+	resp, err := r.client.UpdateStatus(map[string]private.DataPlaneCentralStatus{
+		central.Id: *status,
+	})
+	if err != nil {
+		glog.Errorf("error occurred %s: %s", central.Metadata.Name, err.Error())
+	}
+	//TODO: handle response correctly
+	glog.Infof(string(resp))
 }
