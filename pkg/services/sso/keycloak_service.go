@@ -203,7 +203,7 @@ func (kc *masService) CreateServiceAccountInternal(accessToken string, request C
 	if updateErr != nil { //5xx
 		return nil, errors.NewWithCause(errors.ErrorFailedToCreateServiceAccount, updateErr, "failed to create service account")
 	}
-	serviceAcc.Owner = request.Owner
+	serviceAcc.CreatedBy = request.Owner
 	creationTime, err := time.Parse(time.RFC3339, createdAt)
 	if err != nil {
 		creationTime = time.Time{}
@@ -243,7 +243,7 @@ func (kc *masService) ListServiceAcc(accessToken string, ctx context.Context, fi
 			createdAt = time.Time{}
 		}
 		acc.ID = *client.ID
-		acc.Owner = att["username"]
+		acc.CreatedBy = att["username"]
 		acc.CreatedAt = createdAt
 		acc.ClientID = *client.ClientID
 		acc.Name = shared.SafeString(client.Name)
@@ -339,7 +339,7 @@ func (kc *masService) ResetServiceAccountCredentials(accessToken string, ctx con
 			ID:           *c.ID,
 			ClientID:     *c.ClientID,
 			CreatedAt:    createdAt,
-			Owner:        att["username"],
+			CreatedBy:    att["username"],
 			ClientSecret: value,
 			Name:         shared.SafeString(c.Name),
 			Description:  shared.SafeString(c.Description),
@@ -378,7 +378,7 @@ func (kc *masService) getServiceAccount(accessToken string, ctx context.Context,
 	//http requester's info.
 	orgId, _ := claims.GetOrgId()
 	userId, _ := claims.GetAccountId()
-	owner, _ := claims.GetUsername()
+	createdBy, _ := claims.GetUsername()
 	attributes := c.Attributes
 	att := *attributes
 	createdAt, err := time.Parse(time.RFC3339, att["created_at"])
@@ -390,7 +390,7 @@ func (kc *masService) getServiceAccount(accessToken string, ctx context.Context,
 			ID:          *c.ID,
 			ClientID:    *c.ClientID,
 			CreatedAt:   createdAt,
-			Owner:       owner,
+			CreatedBy:   createdBy,
 			Name:        shared.SafeString(c.Name),
 			Description: shared.SafeString(c.Description),
 		}, nil
