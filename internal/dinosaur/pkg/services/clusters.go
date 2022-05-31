@@ -10,8 +10,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
 	"gorm.io/gorm"
 
@@ -711,7 +711,7 @@ func (c clusterService) IsDinosaurVersionAvailableInCluster(cluster *api.Cluster
 	for _, version := range readyDinosaurOperatorVersions {
 		if version.Version == dinosaurOperatorVersion {
 			kVvalid := false
-			for _, kversion := range version.DinosaurVersions {
+			for _, kversion := range version.CentralVersions {
 				if kversion.Version == dinosaurVersion {
 					kVvalid = true
 					break

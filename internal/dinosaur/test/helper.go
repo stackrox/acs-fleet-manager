@@ -8,6 +8,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
 
+	"github.com/goava/di"
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	adminprivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
@@ -23,8 +25,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	coreWorkers "github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/stackrox/acs-fleet-manager/test"
-	"github.com/goava/di"
-	"github.com/golang/glog"
 )
 
 type Services struct {
@@ -108,7 +108,7 @@ func NewMockDataplaneCluster(name string, capacity int) config.ManualCluster {
 		Region:                mocks.MockCluster.Region().ID(),
 		MultiAZ:               true,
 		Schedulable:           true,
-		DinosaurInstanceLimit: capacity,
+		CentralInstanceLimit:  capacity,
 		Status:                api.ClusterReady,
 		SupportedInstanceType: "eval,standard",
 	}

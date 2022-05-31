@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"sort"
 
-	fleetmanagererrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/pkg/errors"
+	fleetmanagererrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -187,17 +187,17 @@ func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-type DinosaurOperatorVersion struct {
-	Version          string            `json:"version"`
-	Ready            bool              `json:"ready"`
-	DinosaurVersions []DinosaurVersion `json:"dinosaurVersions"`
+type CentralOperatorVersion struct {
+	Version         string           `json:"version"`
+	Ready           bool             `json:"ready"`
+	CentralVersions []CentralVersion `json:"centralVersions" yaml:"central_versions"`
 }
 
-type DinosaurVersion struct {
+type CentralVersion struct {
 	Version string `json:"version"`
 }
 
-func (s *DinosaurVersion) Compare(other DinosaurVersion) (int, error) {
+func (s *CentralVersion) Compare(other CentralVersion) (int, error) {
 	return buildAwareSemanticVersioningCompare(s.Version, other.Version)
 }
 
@@ -212,7 +212,7 @@ var DinosaurOperatorVersionNumberPartRegex = regexp.MustCompile(`\d+\.\d+\.\d+-\
 // If s.Version is equal than other.Version 0 is returned. If s.Version is greater
 // than other.Version 1 is returned. If there is an error during the comparison
 // an error is returned
-func (s *DinosaurOperatorVersion) Compare(other DinosaurOperatorVersion) (int, error) {
+func (s *CentralOperatorVersion) Compare(other CentralOperatorVersion) (int, error) {
 	v1VersionNumber := DinosaurOperatorVersionNumberPartRegex.FindString(s.Version)
 	if v1VersionNumber == "" {
 		return 0, fmt.Errorf("'%s' does not follow expected Dinosaur Operator Version format", s.Version)
@@ -234,14 +234,14 @@ func CompareSemanticVersionsMajorAndMinor(current, desired string) (int, error) 
 	return checkIfMinorDowngrade(current, desired)
 }
 
-func (s *DinosaurOperatorVersion) DeepCopy() *DinosaurOperatorVersion {
-	var res DinosaurOperatorVersion = *s
-	res.DinosaurVersions = nil
+func (s *CentralOperatorVersion) DeepCopy() *CentralOperatorVersion {
+	var res CentralOperatorVersion = *s
+	res.CentralVersions = nil
 
-	if s.DinosaurVersions != nil {
-		dinosaurVersionsCopy := make([]DinosaurVersion, len(s.DinosaurVersions))
-		copy(dinosaurVersionsCopy, s.DinosaurVersions)
-		res.DinosaurVersions = dinosaurVersionsCopy
+	if s.CentralVersions != nil {
+		dinosaurVersionsCopy := make([]CentralVersion, len(s.CentralVersions))
+		copy(dinosaurVersionsCopy, s.CentralVersions)
+		res.CentralVersions = dinosaurVersionsCopy
 	}
 
 	return &res
@@ -250,13 +250,13 @@ func (s *DinosaurOperatorVersion) DeepCopy() *DinosaurOperatorVersion {
 // GetAvailableAndReadyDinosaurOperatorVersions returns the cluster's list of available
 // and ready versions or an error. An empty list is returned if there are no
 // available and ready versions
-func (cluster *Cluster) GetAvailableAndReadyDinosaurOperatorVersions() ([]DinosaurOperatorVersion, error) {
+func (cluster *Cluster) GetAvailableAndReadyDinosaurOperatorVersions() ([]CentralOperatorVersion, error) {
 	dinosaurOperatorVersions, err := cluster.GetAvailableDinosaurOperatorVersions()
 	if err != nil {
 		return nil, err
 	}
 
-	res := []DinosaurOperatorVersion{}
+	res := []CentralOperatorVersion{}
 	for _, val := range dinosaurOperatorVersions {
 		if val.Ready {
 			res = append(res, val)
@@ -270,8 +270,8 @@ func (cluster *Cluster) GetAvailableAndReadyDinosaurOperatorVersions() ([]Dinosa
 // This returns the available versions in the cluster independently on whether
 // they are ready or not. If you want to only get the available and ready
 // versions use the GetAvailableAndReadyDinosaurOperatorVersions method
-func (cluster *Cluster) GetAvailableDinosaurOperatorVersions() ([]DinosaurOperatorVersion, error) {
-	versions := []DinosaurOperatorVersion{}
+func (cluster *Cluster) GetAvailableDinosaurOperatorVersions() ([]CentralOperatorVersion, error) {
+	versions := []CentralOperatorVersion{}
 	if cluster.AvailableDinosaurOperatorVersions == nil {
 		return versions, nil
 	}
@@ -288,15 +288,15 @@ func (cluster *Cluster) GetAvailableDinosaurOperatorVersions() ([]DinosaurOperat
 // in the versions slice. The following elements are sorted in ascending order:
 // - The dinosaur operator versions
 // - For each dinosaur operator version, their Dinosaur Versions
-func DinosaurOperatorVersionsDeepSort(versions []DinosaurOperatorVersion) ([]DinosaurOperatorVersion, error) {
+func DinosaurOperatorVersionsDeepSort(versions []CentralOperatorVersion) ([]CentralOperatorVersion, error) {
 	if versions == nil {
 		return versions, nil
 	}
 	if len(versions) == 0 {
-		return []DinosaurOperatorVersion{}, nil
+		return []CentralOperatorVersion{}, nil
 	}
 
-	var versionsToSet []DinosaurOperatorVersion
+	var versionsToSet []CentralOperatorVersion
 	for idx := range versions {
 		version := &versions[idx]
 		copiedDinosaurOperatorVersion := version.DeepCopy()
@@ -320,8 +320,8 @@ func DinosaurOperatorVersionsDeepSort(versions []DinosaurOperatorVersion) ([]Din
 	for idx := range versionsToSet {
 
 		// Sort DinosaurVersions
-		sort.Slice(versionsToSet[idx].DinosaurVersions, func(i, j int) bool {
-			res, err := versionsToSet[idx].DinosaurVersions[i].Compare(versionsToSet[idx].DinosaurVersions[j])
+		sort.Slice(versionsToSet[idx].CentralVersions, func(i, j int) bool {
+			res, err := versionsToSet[idx].CentralVersions[i].Compare(versionsToSet[idx].CentralVersions[j])
 			if err != nil {
 				errors = append(errors, err)
 			}
@@ -346,13 +346,13 @@ func DinosaurOperatorVersionsDeepSort(versions []DinosaurOperatorVersion) ([]Din
 // If availableDinosaurOperatorVersions is nil an empty list is set. See
 // DinosaurOperatorVersionNumberPartRegex for details on the expected dinosaur operator version
 // format
-func (cluster *Cluster) SetAvailableDinosaurOperatorVersions(availableDinosaurOperatorVersions []DinosaurOperatorVersion) error {
+func (cluster *Cluster) SetAvailableDinosaurOperatorVersions(availableDinosaurOperatorVersions []CentralOperatorVersion) error {
 	sortedVersions, err := DinosaurOperatorVersionsDeepSort(availableDinosaurOperatorVersions)
 	if err != nil {
 		return err
 	}
 	if sortedVersions == nil {
-		sortedVersions = []DinosaurOperatorVersion{}
+		sortedVersions = []CentralOperatorVersion{}
 	}
 
 	if v, err := json.Marshal(sortedVersions); err != nil {
