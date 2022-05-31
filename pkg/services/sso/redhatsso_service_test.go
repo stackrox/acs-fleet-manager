@@ -168,7 +168,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 							Secret:      &fakeClientSecret,
 							Name:        &name,
 							Description: &description,
-							OwnerId:     nil,
+							CreatedBy:   nil,
 							CreatedAt:   &createdAt,
 						}, nil
 					},
@@ -204,7 +204,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 							Secret:      &fakeClientSecret,
 							Name:        &name,
 							Description: &description,
-							OwnerId:     nil,
+							CreatedBy:   nil,
 							CreatedAt:   &createdAt,
 						}, nil
 					},
@@ -385,7 +385,7 @@ func TestRedhatSSOService_RegisterConnectorFleetshardOperatorServiceAccount(t *t
 							Secret:      &fakeClientSecret,
 							Name:        &name,
 							Description: &description,
-							OwnerId:     nil,
+							CreatedBy:   nil,
 							CreatedAt:   &createdAt,
 						}, nil
 					},
