@@ -1,39 +1,9 @@
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 DOCS_DIR := $(PROJECT_PATH)/docs
-BUILD_IMAGE := quay.io/stackrox-io/apollo-ci:$(shell sed 's/\s*\#.*//' BUILD_IMAGE_VERSION)
 
 .DEFAULT_GOAL := help
 SHELL = bash
-
-# Figure out whether to use standalone Docker volume for GOPATH/Go build cache, or bind
-# mount one from the host filesystem.
-# The latter is painfully slow on Mac OS X with Docker Desktop, so we default to using a
-# standalone volume in that case, and to bind mounting otherwise.
-UNAME_S := $(shell uname -s)
-
-ifeq ($(UNAME_S),Darwin)
-BIND_GOCACHE ?= 0
-BIND_GOPATH ?= 0
-else
-BIND_GOCACHE ?= 1
-BIND_GOPATH ?= 1
-endif
-
-ifeq ($(BIND_GOCACHE),1)
-GOCACHE_VOLUME_SRC := $(CURDIR)/linux-gocache
-else
-GOCACHE_VOLUME_SRC := $(GOCACHE_VOLUME_NAME)
-endif
-
-ifeq ($(BIND_GOPATH),1)
-GOPATH_VOLUME_SRC := $(GOPATH)
-else
-GOPATH_VOLUME_SRC := $(GOPATH_VOLUME_NAME)
-endif
-
-LOCAL_VOLUME_ARGS := -v$(CURDIR):/src:delegated -v $(GOCACHE_VOLUME_SRC):/linux-gocache:delegated -v $(GOPATH_VOLUME_SRC):/go:delegated
-GOPATH_WD_OVERRIDES := -w /src -e GOPATH=/go -e GOCACHE=/linux-gocache
 
 # The details of the application:
 binary:=fleet-manager
@@ -457,14 +427,11 @@ docker/login/internal:
 .PHONY: docker/login/internal
 
 # Build the binary and image
-image/build: build-dockerized
+image/build:
+	GOOS=linux GOARCH=amd64 $(GO) build ./cmd/fleet-manager
+	GOOS=linux GOARCH=amd64 $(GO) build -o fleetshard-sync ./fleetshard
 	docker --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
 .PHONY: image/build
-
-build-dockerized:
-	@echo "+ $@"
-	docker run -i -e RACE -e CI -e CIRCLE_TAG -e GOTAGS -e DEBUG_BUILD -e CGO_ENABLED=0 --rm $(GOPATH_WD_OVERRIDES) $(LOCAL_VOLUME_ARGS) $(BUILD_IMAGE) make binary
-.PHONY: build-dockerized
 
 # Build and push the image
 image/push: image/build
