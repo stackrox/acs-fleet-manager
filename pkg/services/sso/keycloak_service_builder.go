@@ -71,7 +71,7 @@ type osdKeycloackServiceBuilder keycloakServiceBuilder
 // If a custom realm is configured (WithRealmConfig called), then always Keycloak provider is used
 // irrespective of the `builder.config.SelectSSOProvider` value
 func (builder *keycloakServiceBuilder) Build() KeycloakService {
-	return build(builder.config.SelectSSOProvider, builder.config, builder.realmConfig)
+	return build(builder.config, builder.realmConfig)
 }
 
 func (builder *keycloakServiceBuilder) WithRealmConfig(realmConfig *keycloak.KeycloakRealmConfig) KeycloakServiceBuilder {
@@ -83,7 +83,7 @@ func (builder *keycloakServiceBuilder) WithRealmConfig(realmConfig *keycloak.Key
 // If a custom realm is configured (WithRealmConfig called), then always Keycloak provider is used
 // irrespective of the `builder.config.SelectSSOProvider` value
 func (builder *osdKeycloackServiceBuilder) Build() OSDKeycloakService {
-	return build(builder.config.SelectSSOProvider, builder.config, builder.realmConfig).(OSDKeycloakService)
+	return build(builder.config, builder.realmConfig).(OSDKeycloakService)
 }
 
 func (builder *osdKeycloackServiceBuilder) WithRealmConfig(realmConfig *keycloak.KeycloakRealmConfig) OSDKeycloakServiceBuilder {
@@ -91,24 +91,17 @@ func (builder *osdKeycloackServiceBuilder) WithRealmConfig(realmConfig *keycloak
 	return builder
 }
 
-func build(providerName string, keycloakConfig *keycloak.KeycloakConfig, realmConfig *keycloak.KeycloakRealmConfig) KeycloakService {
+func build(keycloakConfig *keycloak.KeycloakConfig, realmConfig *keycloak.KeycloakRealmConfig) KeycloakService {
 	notNilPredicate := func(x interface{}) bool {
 		return x.(*keycloak.KeycloakRealmConfig) != nil
 	}
 
-	// Temporary: if a realm configuration different from the one into the config is specified
-	// we always instantiate MAS_SSO irrespective of the selected provider
-	if providerName != keycloak.REDHAT_SSO || realmConfig != nil {
-		_, realmConfig := arrays.FindFirst(notNilPredicate, realmConfig, keycloakConfig.DinosaurRealm)
-		return newKeycloakService(keycloakConfig, realmConfig.(*keycloak.KeycloakRealmConfig))
-	} else {
-		_, realmConfig := arrays.FindFirst(notNilPredicate, realmConfig, keycloakConfig.RedhatSSORealm)
-		client := redhatsso.NewSSOClient(keycloakConfig, realmConfig.(*keycloak.KeycloakRealmConfig))
-		return &keycloakServiceProxy{
-			accessTokenProvider: client,
-			service: &redhatssoService{
-				client: client,
-			},
-		}
+	_, newRealmConfig := arrays.FindFirst(notNilPredicate, realmConfig, keycloakConfig.RedhatSSORealm)
+	client := redhatsso.NewSSOClient(keycloakConfig, newRealmConfig.(*keycloak.KeycloakRealmConfig))
+	return &keycloakServiceProxy{
+		accessTokenProvider: client,
+		service: &redhatssoService{
+			client: client,
+		},
 	}
 }

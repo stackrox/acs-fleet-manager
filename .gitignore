@@ -48,7 +48,6 @@ cmd/fleet-manager/fleet-manager
 /secrets/aws.*
 /secrets/ocm-service.*
 /secrets/dinosaur-tls.*
-/secrets/keycloak-service.*
 /secrets/dx.*
 /secrets/observatorium.*
 /secrets/observability-config-access.token
@@ -58,6 +57,7 @@ cmd/fleet-manager/fleet-manager
 /secrets/rhsso-metrics.*
 /secrets/sentry.*
 /secrets/redhatsso-service.*
+/secrets/keycloak-service.crt
 
 # cluster details (used for testing)
 /internal/dinosaur/test/integration/test_cluster.json

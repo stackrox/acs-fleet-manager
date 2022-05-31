@@ -687,8 +687,6 @@ objects:
             - --enable-db-debug=${ENABLE_DB_DEBUG}
             - --ocm-client-id-file=/secrets/service/ocm-service.clientId
             - --ocm-client-secret-file=/secrets/service/ocm-service.clientSecret
-            - --sso-client-id-file=/secrets/service/keycloak-service.clientId
-            - --sso-client-secret-file=/secrets/service/keycloak-service.clientSecret
             - --sso-base-url=${SSO_BASE_URL}
             - --sso-realm=${SSO_REALM}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
