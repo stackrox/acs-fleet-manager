@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"io"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	uri         = "api/dinosaurs_mgmt/v1/agent-clusters"
+	uri         = "api/rhacs/v1/agent-clusters"
 	statusRoute = "status"
 )
 
@@ -42,6 +43,7 @@ func NewClient(endpoint string, clusterID string) (*Client, error) {
 	return &Client{
 		client:    http.Client{},
 		clusterID: clusterID,
+		ocmToken:  ocmToken,
 		endpoint:  fmt.Sprintf("%s/%s/%s/%s", endpoint, uri, clusterID, "dinosaurs"),
 	}, nil
 }
@@ -86,6 +88,7 @@ func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus
 }
 
 func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Response, error) {
+	glog.Infof("Send request to %s;", url)
 	r, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
