@@ -688,7 +688,6 @@ objects:
             - --ocm-client-id-file=/secrets/service/ocm-service.clientId
             - --ocm-client-secret-file=/secrets/service/ocm-service.clientSecret
             - --sso-base-url=${SSO_BASE_URL}
-            - --sso-realm=${SSO_REALM}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
             - --osd-idp-sso-realm=${OSD_IDP_SSO_REALM}
             - --osd-idp-sso-client-id-file=/secrets/service/osd-idp-keycloak-service.clientId
