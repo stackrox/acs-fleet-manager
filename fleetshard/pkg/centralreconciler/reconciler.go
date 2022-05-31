@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -22,14 +21,13 @@ const (
 
 // CentralReconciler reconciles the central cluster
 type CentralReconciler struct {
-	client             ctrlClient.Client
-	central            private.ManagedCentral
-	fleetManagerClient *fleetmanager.Client
-	inputCh            chan *private.ManagedCentral
-	resultCh           chan ReconcilerResult
-	stopCh             chan struct{}
-	status             *int32
-	responseCh         chan private.DataPlaneCentralStatus
+	client     ctrlClient.Client
+	central    private.ManagedCentral
+	inputCh    chan *private.ManagedCentral
+	resultCh   chan ReconcilerResult
+	stopCh     chan struct{}
+	status     *int32
+	responseCh chan private.DataPlaneCentralStatus
 }
 
 // TODO: Correct error creation?
@@ -132,13 +130,12 @@ func (r CentralReconciler) ensureNamespace(name string) error {
 	return err
 }
 
-func NewCentralReconciler(k8sClient ctrlClient.Client, client *fleetmanager.Client, central private.ManagedCentral, resultCh chan ReconcilerResult) *CentralReconciler {
+func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, resultCh chan ReconcilerResult) *CentralReconciler {
 	return &CentralReconciler{
-		client:             k8sClient,
-		central:            central,
-		fleetManagerClient: client,
-		resultCh:           resultCh,
-		inputCh:            make(chan *private.ManagedCentral),
-		status:             pointer.Int32(FreeStatus),
+		client:   k8sClient,
+		central:  central,
+		resultCh: resultCh,
+		inputCh:  make(chan *private.ManagedCentral),
+		status:   pointer.Int32(FreeStatus),
 	}
 }
