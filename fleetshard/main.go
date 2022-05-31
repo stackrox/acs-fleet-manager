@@ -44,11 +44,8 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, unix.SIGTERM)
 
-	select {
-	case <-sigs:
-		runtime.Stop()
-	}
 	sig := <-sigs
+	runtime.Stop()
 	glog.Infof("Caught %s signal", sig)
 	glog.Info("fleetshard application has been stopped")
 }
