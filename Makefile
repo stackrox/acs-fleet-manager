@@ -161,6 +161,10 @@ else
         PGHOST:="172.18.0.22"
 endif
 
+ifeq ($(shell echo ${DEBUG}), 1)
+	GOARGS := $(GOARGS) -gcflags=all="-N -l"
+endif
+
 ### Environment-sourced variables with defaults
 # Can be overriden by setting environment var before running
 # Example:
@@ -263,20 +267,23 @@ lint: golangci-lint specinstall
 
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
-binary:
-	$(GO) build ./cmd/fleet-manager
-	$(GO) build -o fleetshard-sync ./fleetshard
-.PHONY: binary
 
-dbg-binary:
-	$(GO) build -gcflags=all="-N -l" ./cmd/fleet-manager
-	$(GO) build -gcflags=all="-N -l" -o fleetshard-sync ./fleetshard
-.PHONY: dbg-binary
+fleet-manager:
+	$(GO) build $(GOARGS) ./cmd/fleet-manager
+
+fleetshard-sync:
+	$(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
+
+binary: fleet-manager fleetshard-sync
+.PHONY: binary
 
 # Install
 install: verify lint
 	$(GO) install ./cmd/fleet-manager
 .PHONY: install
+
+clean:
+	rm -f fleet-manager fleetshard-sync
 
 # Runs the unit tests.
 #
@@ -427,9 +434,10 @@ docker/login/internal:
 .PHONY: docker/login/internal
 
 # Build the binary and image
+# TODO(create-ticket): Revisit decision to use a combined-image-approach, where the image contains both the fleet-manager and the fleetshard-sync.
 image/build:
-	GOOS=linux GOARCH=amd64 $(GO) build ./cmd/fleet-manager
-	GOOS=linux GOARCH=amd64 $(GO) build -o fleetshard-sync ./fleetshard
+	GOOS=linux GOARCH=amd64 $(GO) build $(GOARGS) ./cmd/fleet-manager
+	GOOS=linux GOARCH=amd64 $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
 	docker --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
 .PHONY: image/build
 
