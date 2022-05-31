@@ -66,10 +66,10 @@ func (r *Runtime) Start() error {
 			}
 
 			reconciler := r.reconcilers[central.Metadata.Name]
-			go func() {
+			go func(reconciler *centralreconciler.CentralReconciler, central private.ManagedCentral) {
 				status, err := reconciler.Reconcile(context.Background(), central)
 				r.handleReconcileResult(central, status, err)
-			}()
+			}(reconciler, central)
 		}
 
 		return 1 * time.Second, nil
