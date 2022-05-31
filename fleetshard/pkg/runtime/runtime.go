@@ -66,7 +66,7 @@ func (r *Runtime) Start() error {
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Metadata.Name]; !ok {
-				r.reconcilers[central.Metadata.Name] = centralreconciler.NewCentralReconciler(r.k8sClient, r.client, central, r.reconcilerResultCh)
+				r.reconcilers[central.Metadata.Name] = centralreconciler.NewCentralReconciler(r.k8sClient, central, r.reconcilerResultCh)
 				go r.reconcilers[central.Metadata.Name].Start()
 			}
 
