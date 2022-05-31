@@ -152,11 +152,9 @@ Create/Have available two client-id/client-secret pair of credentials (called Ke
 in the SSO Keycloak server, one for each previously mentioned functionality, and
 then set Fleet Manager to use them by running the following command:
 ```
- SSO_CLIENT_ID="<sso-client-id>" \
- SSO_CLIENT_SECRET="<sso-client-secret>" \
  OSD_IDP_SSO_CLIENT_ID="<osd-idp-sso-client-id>" \
  OSD_IDP_SSO_CLIENT_SECRET="<osd-idp-sso-client-secret" \
- make keycloak/setup
+ make osd/setup
 ```
 
 Additionally, make sure you start the Fleet Manager server with the appropriate

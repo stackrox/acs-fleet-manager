@@ -64,7 +64,7 @@ COPY . /fleet-manager/src/github.com/stackrox/acs-fleet-manager
 WORKDIR /fleet-manager/src/github.com/stackrox/acs-fleet-manager
 RUN make aws/setup
 RUN make ocm/setup
-RUN make keycloak/setup
+RUN make osd/setup
 RUN make dinosaurcert/setup
 RUN make observatorium/setup
 

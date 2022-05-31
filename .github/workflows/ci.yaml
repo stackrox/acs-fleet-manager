@@ -18,7 +18,7 @@ on:
       - 'docs/**'
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
-      
+
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
@@ -52,7 +52,7 @@ env:
   SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
   OSD_IDP_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_SSO_CLIENT_ID }}
   OSD_IDP_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_SSO_CLIENT_SECRET }}
-  # Dummy AWS credentials 
+  # Dummy AWS credentials
   AWS_ACCOUNT_ID: aws_accountid
   AWS_ACCESS_KEY: aws_accesskey
   AWS_SECRET_ACCESS_KEY: aws_secretaccesskey
@@ -84,7 +84,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-     
+
     steps:
       - name: Cancel Previous Runs
         uses: n1hility/cancel-previous-runs@v2
@@ -107,7 +107,7 @@ jobs:
         run: make db/migrate
       - name: Setup tests secrets
         run: |
-          make ocm/setup aws/setup keycloak/setup dinosaurcert/setup observatorium/setup secrets/touch
+          make ocm/setup aws/setup osd/setup dinosaurcert/setup observatorium/setup secrets/touch
       - name: Lint & Test
         run: |
           export GOPATH=$(go env GOPATH)
