@@ -637,6 +637,13 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			ClusterDNS:            p.ClusterDNS,
 			SupportedInstanceType: p.SupportedInstanceType,
 		}
+
+		if len(p.AvailableCentralOperatorVersions) > 0 {
+			if err := clusterRequest.SetAvailableDinosaurOperatorVersions(p.AvailableCentralOperatorVersions); err != nil {
+				return []error{errors.Wrapf(err, "Failed to set operator versions for manual cluster %s with config file", p.ClusterId)}
+			}
+		}
+
 		if err := c.ClusterService.RegisterClusterJob(&clusterRequest); err != nil {
 			return []error{errors.Wrapf(err, "Failed to register new cluster %s with config file", p.ClusterId)}
 		} else {
@@ -1000,7 +1007,7 @@ func (c *ClusterManager) setClusterStatusMaxCapacityMetrics() {
 		supportedInstanceTypes := strings.Split(cluster.SupportedInstanceType, ",")
 		for _, instanceType := range supportedInstanceTypes {
 			if instanceType != "" {
-				capacity := float64(cluster.DinosaurInstanceLimit)
+				capacity := float64(cluster.CentralInstanceLimit)
 				metrics.UpdateClusterStatusCapacityMaxCount(cluster.Region, instanceType, cluster.ClusterId, capacity)
 			}
 		}

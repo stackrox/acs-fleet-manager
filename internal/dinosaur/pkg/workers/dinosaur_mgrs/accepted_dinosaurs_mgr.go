@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/google/uuid"
 
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
-	"github.com/pkg/errors"
 
 	"github.com/golang/glog"
 )
@@ -91,7 +91,7 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Dino
 	dinosaur.ClusterID = cluster.ClusterID
 
 	// Set desired dinosaur operator version
-	var selectedDinosaurOperatorVersion *api.DinosaurOperatorVersion
+	var selectedDinosaurOperatorVersion *api.CentralOperatorVersion
 
 	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyDinosaurOperatorVersions()
 	if err != nil || len(readyDinosaurOperatorVersions) == 0 {
@@ -120,10 +120,10 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Dino
 	dinosaur.DesiredDinosaurOperatorVersion = selectedDinosaurOperatorVersion.Version
 
 	// Set desired Dinosaur version
-	if len(selectedDinosaurOperatorVersion.DinosaurVersions) == 0 {
+	if len(selectedDinosaurOperatorVersion.CentralVersions) == 0 {
 		return errors.New(fmt.Sprintf("failed to get Dinosaur version %s", dinosaur.ID))
 	}
-	dinosaur.DesiredDinosaurVersion = selectedDinosaurOperatorVersion.DinosaurVersions[len(selectedDinosaurOperatorVersion.DinosaurVersions)-1].Version
+	dinosaur.DesiredDinosaurVersion = selectedDinosaurOperatorVersion.CentralVersions[len(selectedDinosaurOperatorVersion.CentralVersions)-1].Version
 
 	glog.Infof("Dinosaur instance with id %s is assigned to cluster with id %s", dinosaur.ID, dinosaur.ClusterID)
 	dinosaur.Status = constants2.DinosaurRequestStatusPreparing.String()
