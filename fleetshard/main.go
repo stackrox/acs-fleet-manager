@@ -3,7 +3,8 @@ package main
 import (
 	"flag"
 	"github.com/golang/glog"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/centralreconciler"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/runtime"
 	"golang.org/x/sys/unix"
 	"os"
 	"os/signal"
@@ -32,12 +33,21 @@ func main() {
 		glog.Info("Unable to set logtostderr to true")
 	}
 
+	runtime := runtime.NewRuntime(devEndpoint, clusterID, k8s.CreateClientOrDie())
+	go func() {
+		err := runtime.Start()
+		if err != nil {
+			glog.Fatal(err)
+		}
+	}()
+
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, unix.SIGTERM)
 
-	glog.Info("fleetshard application has been started")
-	centralreconciler.Synchronize(devEndpoint, clusterID)
-
+	select {
+	case <-sigs:
+		runtime.Stop()
+	}
 	sig := <-sigs
 	glog.Infof("Caught %s signal", sig)
 	glog.Info("fleetshard application has been stopped")
