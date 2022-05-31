@@ -1,4 +1,13 @@
-CentralSpec:
+ManagedCentral:
+  Version: 0.1.0
+  DNS:
+  TLS: # should end user be able to specify additional root CA's in managed service?
+    Cert:
+    Key: 
+    AdditionalCAs:
+      #...
+  Name:
+  Namespace:
   Central:
     # Assumption: AdminPasswordSecret, AdminPasswordGenerationDisabled, Exposure, DefaultTLSSecret not configurable for managed central end user
     Persistence: # does it make sense for users to set this values on managed service?
@@ -29,9 +38,6 @@ CentralSpec:
         #...
   Egress:
     ConnectivityPool: Online
-  TLS: # should end user be able to specify additional root CA's in managed service?
-    AdditionalCAs:
-      #...
   # user can't create additional secrets in cluster, should we omit this or 
   # restructure the field so they can provide secret content and name, so secrets 
   # get created for them?
