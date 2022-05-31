@@ -1,0 +1,43 @@
+CentralSpec:
+  Central:
+    # Assumption: AdminPasswordSecret, AdminPasswordGenerationDisabled, Exposure, DefaultTLSSecret not configurable for managed central end user
+    Persistence: # does it make sense for users to set this values on managed service?
+    # inline DeploymentSpec
+    # Assumption: NodeSelector and Tolerations should not be configurable by managed service end user
+    Resources:
+      Requests:
+        #...
+      Limits:
+        #...
+  Scanner:
+    ScannerComponent: enabled
+    Analyzer:
+      Scaling:
+        AutoScaling: enabled
+        Replicas: 3
+        MinReplicas: 1
+        MaxReplicas: 3
+        # inline DeploymentSpec
+        # Assumption: NodeSelector and Tolerations should not be configurable by managed service end user
+      Resources:
+        #...
+    # DB Deployment spec, AFAIK this should be replaced by an external psql instance
+    # maybe we should omit it for now and add it as soon as we know what data is required here
+    DB: 
+      # Assumption: NodeSelector and Tolerations should not be configurable by managed service end user
+      Resources:
+        #...
+  Egress:
+    ConnectivityPool: Online
+  TLS: # should end user be able to specify additional root CA's in managed service?
+    AdditionalCAs:
+      #...
+  # user can't create additional secrets in cluster, should we omit this or 
+  # restructure the field so they can provide secret content and name, so secrets 
+  # get created for them?
+  ImagePullSecrets:
+    # ...
+  Customize:
+    # drop Labels and Annotations here
+    EnvVars:
+      # additional env configuration for central components
