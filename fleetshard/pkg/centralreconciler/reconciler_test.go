@@ -12,9 +12,9 @@ func TestTriggerOnlyOneReconcile(t *testing.T) {
 	t.Skip("skipping test...")
 	errors := make(chan ReconcilerResult, 25)
 	reconciler := CentralReconciler{
-		resultCh:  errors,
-		receiveCh: make(chan *private.ManagedCentral, 10),
-		blocked:   pointer.Int32(0),
+		resultCh: errors,
+		inputCh:  make(chan *private.ManagedCentral, 10),
+		status:   pointer.Int32(0),
 	}
 
 	go reconciler.Start()
@@ -22,7 +22,7 @@ func TestTriggerOnlyOneReconcile(t *testing.T) {
 	for i := 0; i < 99; i++ {
 		count := i
 		go func() {
-			reconciler.ReceiveCh() <- &private.ManagedCentral{Id: fmt.Sprint(count)}
+			reconciler.InputChannel() <- &private.ManagedCentral{Id: fmt.Sprint(count)}
 			fmt.Println("send request")
 		}()
 	}

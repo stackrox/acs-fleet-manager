@@ -3,6 +3,7 @@ package runtime
 import (
 	"context"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/centralreconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
@@ -12,6 +13,9 @@ import (
 	"time"
 )
 
+// reconcilerRegistry contains a registry of a reconciler for each Central tenant. The key is the identifier of the
+// Central instance.
+// TODO(SimonBaeumer): set a unique identifier for the map key, currently the instance name is used
 type reconcilerRegistry map[string]*centralreconciler.CentralReconciler
 
 var backoff = wait.Backoff{
@@ -30,10 +34,10 @@ type Runtime struct {
 	statusResponseCh   chan private.DataPlaneCentralStatus
 }
 
-func NewRuntime(devEndpoint string, clusterID string, k8sClient ctrlClient.Client) *Runtime {
+func NewRuntime(devEndpoint string, clusterID string, k8sClient ctrlClient.Client) (*Runtime, error) {
 	client, err := fleetmanager.NewClient(devEndpoint, clusterID)
 	if err != nil {
-		glog.Fatal("failed to create fleetmanager client", err)
+		return nil, errors.Wrap(err, "failed to create fleetmanager client")
 	}
 
 	return &Runtime{
@@ -41,14 +45,14 @@ func NewRuntime(devEndpoint string, clusterID string, k8sClient ctrlClient.Clien
 		client:             client,
 		reconcilerResultCh: make(chan centralreconciler.ReconcilerResult),
 		reconcilers:        make(reconcilerRegistry),
-	}
+	}, nil
 }
 
 func (r *Runtime) Stop() {
 }
 
 func (r *Runtime) Start() error {
-	glog.Info("fleetshard runtime started")
+	glog.Infof("fleetshard runtime started")
 
 	go r.watchReconcilerResults()
 
@@ -67,7 +71,7 @@ func (r *Runtime) Start() error {
 			}
 
 			reconciler := r.reconcilers[central.Metadata.Name]
-			reconciler.ReceiveCh() <- &central
+			reconciler.InputChannel() <- &central
 		}
 
 		return 1 * time.Second, nil
@@ -89,6 +93,7 @@ func (r *Runtime) watchReconcilerResults() {
 		if err != nil {
 			glog.Errorf("error occurred %s: %s", result.Central.Metadata.Name, err.Error())
 		}
+		//TODO: handle response correctly
 		glog.Infof(string(resp))
 	}
 }

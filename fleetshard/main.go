@@ -33,7 +33,11 @@ func main() {
 		glog.Info("Unable to set logtostderr to true")
 	}
 
-	runtime := runtime.NewRuntime(devEndpoint, clusterID, k8s.CreateClientOrDie())
+	runtime, err := runtime.NewRuntime(devEndpoint, clusterID, k8s.CreateClientOrDie())
+	if err != nil {
+		glog.Fatal(err)
+	}
+
 	go func() {
 		err := runtime.Start()
 		if err != nil {

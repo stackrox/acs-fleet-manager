@@ -25,10 +25,10 @@ type CentralReconciler struct {
 	client             ctrlClient.Client
 	central            private.ManagedCentral
 	fleetManagerClient *fleetmanager.Client
-	receiveCh          chan *private.ManagedCentral
+	inputCh            chan *private.ManagedCentral
 	resultCh           chan ReconcilerResult
 	stopCh             chan struct{}
-	blocked            *int32
+	status             *int32
 	responseCh         chan private.DataPlaneCentralStatus
 }
 
@@ -45,7 +45,7 @@ func (r CentralReconciler) Start() {
 	// TODO: prevent multiple starts
 	for {
 		select {
-		case central := <-r.receiveCh:
+		case central := <-r.inputCh:
 			go func() {
 				//TODO: cancellation?
 				status, err := r.Reconcile(context.Background(), *central)
@@ -57,16 +57,16 @@ func (r CentralReconciler) Start() {
 	}
 }
 
-func (r CentralReconciler) ReceiveCh() chan *private.ManagedCentral {
-	return r.receiveCh
+func (r CentralReconciler) InputChannel() chan *private.ManagedCentral {
+	return r.inputCh
 }
 
 func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	// Only allow to start reconcile function once
-	if !atomic.CompareAndSwapInt32(r.blocked, FreeStatus, BlockedStatus) {
+	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
 		return nil, errors.New("Reconciler still busy, skipping reconciliation attempt.")
 	}
-	defer atomic.StoreInt32(r.blocked, FreeStatus)
+	defer atomic.StoreInt32(r.status, FreeStatus)
 
 	remoteNamespace := remoteCentral.Metadata.Name
 	if err := r.ensureNamespace(remoteCentral.Metadata.Name); err != nil {
@@ -138,7 +138,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, client *fleetmanager.Clie
 		central:            central,
 		fleetManagerClient: client,
 		resultCh:           resultCh,
-		receiveCh:          make(chan *private.ManagedCentral),
-		blocked:            pointer.Int32(FreeStatus),
+		inputCh:            make(chan *private.ManagedCentral),
+		status:             pointer.Int32(FreeStatus),
 	}
 }
