@@ -110,7 +110,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 				err = json.Unmarshal(body, &data)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(data["kind"]).To(Equal("Error"))
-				Expect(data["reason"]).To(Equal("User 'username' is not authorized to access the service."))
+				Expect(data["reason"]).To(Equal("User \"username\" is not authorized to access the service."))
 				// verify that context about user being allowed as service account is set to false always
 				ctxAfterMiddleware := req.Context()
 				Expect(auth.GetFilterByOrganisationFromContext(ctxAfterMiddleware)).To(Equal(false))

@@ -65,6 +65,7 @@ WORKDIR /fleet-manager/src/github.com/stackrox/acs-fleet-manager
 RUN make aws/setup
 RUN make ocm/setup
 RUN make osd/setup
+RUN make redhatsso/setup
 RUN make dinosaurcert/setup
 RUN make observatorium/setup
 
