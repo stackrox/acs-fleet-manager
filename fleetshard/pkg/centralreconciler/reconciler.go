@@ -60,7 +60,7 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 			return nil, errors.Wrapf(err, "creating new central %q", remoteCentral.Metadata.Name)
 		}
 	} else {
-		// TODO(yury): implement update logic
+		// TODO(create-ticket): implement update logic
 		glog.Infof("Update central tenant %s", central.GetName())
 		glog.Info("Implement update logic for Centrals")
 		//if err := r.client.Update(ctx, central); err != nil {
