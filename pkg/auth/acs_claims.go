@@ -16,14 +16,14 @@ func (c *ACSClaims) GetUsername() (string, error) {
 	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil }, (*c)[tenantUsernameClaim], (*c)[alternateTenantUsernameClaim]); idx != -1 {
 		return val.(string), nil
 	}
-	return "", fmt.Errorf("can't find neither '%s' or '%s' attribute in claims", tenantUsernameClaim, alternateTenantUsernameClaim)
+	return "", fmt.Errorf("can't find neither %q or %q attribute in claims", tenantUsernameClaim, alternateTenantUsernameClaim)
 }
 
 func (c *ACSClaims) GetAccountId() (string, error) {
 	if (*c)[tenantUserIdClaim] != nil {
 		return (*c)[tenantUserIdClaim].(string), nil
 	}
-	return "", fmt.Errorf("can't find '%s' attribute in claims", tenantUserIdClaim)
+	return "", fmt.Errorf("can't find %q attribute in claims", tenantUserIdClaim)
 }
 
 func (c *ACSClaims) GetOrgId() (string, error) {
@@ -40,7 +40,7 @@ func (c *ACSClaims) GetOrgId() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("can't find neither '%s' or '%s' attribute in claims", tenantIdClaim, alternateTenantIdClaim)
+	return "", fmt.Errorf("can't find neither %q or %q attribute in claims", tenantIdClaim, alternateTenantIdClaim)
 }
 
 func (c *ACSClaims) IsOrgAdmin() bool {
