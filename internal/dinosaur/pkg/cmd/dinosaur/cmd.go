@@ -3,16 +3,16 @@
 package dinosaur
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
-func NewDinosaurCommand(env *environments.Env) *cobra.Command {
+func NewRHACSCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "dinosaur",
-		Short: "Perform dinosaur CRUD actions directly",
-		Long:  "Perform dinosaur CRUD actions directly.",
+		Use:   "rhacs",
+		Short: "Perform rhacs CRUD actions directly",
+		Long:  "Perform rhacs CRUD actions directly.",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			err := env.CreateServices()
 			if err != nil {
