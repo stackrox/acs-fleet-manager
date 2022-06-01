@@ -128,13 +128,6 @@ func TestContext_GetOrgIdFromClaims(t *testing.T) {
 			},
 			want: "Test Tenant ID",
 		},
-		{
-			name: "Should return alternateTenantIdClaim when alternateTenantIdClaim is not empty",
-			claims: ACSClaims{
-				alternateTenantIdClaim: "Test alternate Tenant ID",
-			},
-			want: "Test alternate Tenant ID",
-		},
 	}
 
 	RegisterTestingT(t)

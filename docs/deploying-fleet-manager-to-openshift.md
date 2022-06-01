@@ -68,6 +68,8 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `ROUTE53_ACCESS_KEY`: The access key of an AWS account that has Route53 permissions. Defaults to value read from _./secrets/aws.route53accesskey_
 - `ROUTE53_SECRET_ACCESS_KEY`: The secret access key of an AWS account that has Route53 permissions. Defaults to value read from _./secrets/aws.route53secretaccesskey_
 value read from _./secrets/dex.secret_
+- `SSO_CLIENT_ID`: The client id for a RedHat SSO service account. Defaults to value read from _./secrets/redhatsso-service.clientId_
+- `SSO_CLIENT_SECRET`: The client secret for a RedHat SSO service account. Defaults to value read from _./secrets/redhatsso-service.clientSecret_
 - `OSD_IDP_SSO_CLIENT_ID`: The client id for a SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientId_
 - `OSD_IDP_SSO_CLIENT_SECRET`: The client secret for a SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientSecret_
 - `IMAGE_PULL_DOCKER_CONFIG`: Docker config content for pulling private images. Defaults to value read from _./secrets/image-pull.dockerconfigjson_

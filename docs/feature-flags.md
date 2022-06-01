@@ -54,6 +54,8 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 ## Keycloak
 - **sso-debug** [Optional] Enables Keycloak debug logging.
 - **sso-base-url** [Required]: The base URL of the Keycloak instance.
+- **redhat-sso-client-id-file** [Required]: The path to the file containing a RedHat SSO account client ID that has access to the ACS service accounts (default: `'secrets/redhatsso-service.clientId'`).
+- **redhat-sso-client-secret-file** [Required]: The path to the file containing a RedHat SSO account client secret that has access to the ACS service accounts (default: `'secrets/redhatsso-service.clientSecret'`).
 - **osd-idp-sso-client-id-file** [Required]: The path to the file containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm (default `'secrets/osd-idp-keycloak-service.clientId'`)
 - **osd-idp-sso-client-secret-file** [Required]: The path to the file containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm (default `'secrets/osd-idp-keycloak-service.clientSecret'`)
 - **osd-idp-sso-realm** [Required]:  Realm for OSD cluster IDP clients in the SSO Keycloak server
