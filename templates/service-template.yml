@@ -5,7 +5,7 @@ metadata:
   name: fleet-manager-service
   annotations:
     openshift.io/display-name: Fleet Manager API
-    description: Dinosaur Services Fleet Manager API to managed Dinosaur
+    description: ACS Services Fleet Manager API
     tags: golang
     iconClass: icon-shadowman
     template.openshift.io/provider-display-name: Red Hat, Inc.
@@ -16,7 +16,7 @@ parameters:
 
 - name: ENVIRONMENT
   displayName: Environment
-  description: Which Dinosaur Service Fleet Manager environment to use for this deployment
+  description: Which ACS Service Fleet Manager environment to use for this deployment
   value: production
 
 - name: IMAGE_REGISTRY
@@ -241,11 +241,6 @@ parameters:
   description: A list of read only users. A user is identified by its username.
   value: "[]"
 
-- name: DINOSAUR_SRE_USERS
-  displayName: A list of dinosaur-sre admin users given by their usernames
-  description: A list of dinosaur-sre admin users. A user is identified by its username.
-  value: "[]"
-
 - name: SSO_DEBUG
   displayName: SSO API Debug mode
   description: Debug mode for SSO API client
@@ -313,11 +308,6 @@ parameters:
   displayName: The public HTTP host URL of the service
   description: The public HTTP host URL of the service
   value: "https://api.openshift.com"
-
-- name: DINOSAUR_CAPACITY_MAX_CAPACITY
-  displayName: Maximum number of clusters
-  description: Maximum number of allowed dinosaur clusters
-  value: "1000"
 
 - name: DINOSAUR_LIFE_SPAN
   displayName: Dinosaur life span expiration in hours
@@ -419,24 +409,6 @@ objects:
     data:
       read-only-user-list.yaml: |-
         ${READ_ONLY_USERS}
-  - kind: ConfigMap
-    apiVersion: v1
-    metadata:
-      name: fleet-manager-dinosaur-sre-user-list
-      annotations:
-        qontract.recycle: "true"
-    data:
-      dinosaur-sre-user-list.yaml: |-
-        ${DINOSAUR_SRE_USERS}
-  - kind: ConfigMap
-    apiVersion: v1
-    metadata:
-      name: fleet-manager-dinosaur-capacity-config
-      annotations:
-        qontract.recycle: "true"
-    data:
-      dinosaur-capacity-config.yaml: |-
-        maxCapacity: ${DINOSAUR_CAPACITY_MAX_CAPACITY}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -557,12 +529,6 @@ objects:
           - name: fleet-manager-read-only-user-list
             configMap:
               name: fleet-manager-read-only-user-list
-          - name: fleet-manager-dinosaur-sre-user-list
-            configMap:
-              name: fleet-manager-dinosaur-sre-user-list
-          - name: fleet-manager-dinosaur-capacity-config
-            configMap:
-              name: fleet-manager-dinosaur-capacity-config
           - name: fleet-manager-authentication
             configMap:
               name: fleet-manager-authentication
@@ -631,12 +597,6 @@ objects:
             - name: fleet-manager-read-only-user-list
               mountPath: /config/read-only-user-list.yaml
               subPath: read-only-user-list.yaml
-            - name: fleet-manager-dinosaur-sre-user-list
-              mountPath: /config/dinosaur-sre-user-list.yaml
-              subPath: dinosaur-sre-user-list.yaml
-            - name: fleet-manager-dinosaur-capacity-config
-              mountPath: /config/dinosaur-capacity-config.yaml
-              subPath: dinosaur-capacity-config.yaml
             - name: fleet-manager-authentication
               mountPath: /config/authentication
             - name: fleet-manager-dataplane-cluster-scaling-config
@@ -655,8 +615,6 @@ objects:
             - --quota-management-list-config-file=/config/quota-management-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml
             - --read-only-user-list-file=/config/read-only-user-list.yaml
-            - --dinosaur-sre-user-list-file=/config/dinosaur-sre-user-list.yaml
-            - --dinosaur-capacity-config-file=/config/dinosaur-capacity-config.yaml
             - --dinosaur-lifespan=${DINOSAUR_LIFE_SPAN}
             - --enable-deletion-of-expired-dinosaur=${ENABLE_DINOSAUR_LIFE_SPAN}
             - --aws-access-key-file=/secrets/service/aws.accesskey
