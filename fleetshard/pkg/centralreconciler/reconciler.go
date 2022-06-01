@@ -33,20 +33,30 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
-	remoteNamespace := remoteCentral.Metadata.Name
-	if err := r.ensureNamespace(remoteCentral.Metadata.Name); err != nil {
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteNamespace := remoteCentralName
+
+	if remoteCentral.Metadata.DeletionTimestamp != "" {
+		glog.Infof("Deleting central %s", remoteCentralName)
+		if err := r.deleteNamespace(remoteNamespace); err != nil {
+			return nil, errors.Wrapf(err, "unable to delete central namespace %s", remoteNamespace)
+		}
+		return deletedStatus(), nil
+	}
+
+	if err := r.ensureNamespace(remoteCentralName); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteNamespace)
 	}
 
 	centralExists := true
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      remoteCentral.Metadata.Name,
+			Name:      remoteCentralName,
 			Namespace: remoteNamespace,
 		},
 	}
 
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentral.Metadata.Name}, central)
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentralName}, central)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return nil, errors.Wrapf(err, "unable to check the existence of central %q", central.GetName())
@@ -57,7 +67,7 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	if !centralExists {
 		glog.Infof("Creating central tenant %s", central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
-			return nil, errors.Wrapf(err, "creating new central %q", remoteCentral.Metadata.Name)
+			return nil, errors.Wrapf(err, "creating new central %q", remoteCentralName)
 		}
 	} else {
 		// TODO(create-ticket): implement update logic
@@ -69,14 +79,7 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	}
 
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
-	return &private.DataPlaneCentralStatus{
-		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
-			{
-				Type:   "Ready",
-				Status: "True",
-			},
-		},
-	}, nil
+	return readyStatus(), nil
 }
 
 func (r CentralReconciler) ensureNamespace(name string) error {
@@ -95,6 +98,15 @@ func (r CentralReconciler) ensureNamespace(name string) error {
 		}
 	}
 	return err
+}
+
+func (r CentralReconciler) deleteNamespace(name string) error {
+	namespace := &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+	return r.client.Delete(context.Background(), namespace)
 }
 
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral) *CentralReconciler {
