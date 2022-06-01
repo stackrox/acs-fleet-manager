@@ -32,7 +32,7 @@
 VERSION=`git rev-parse --short=7 HEAD`
 
 # Set image repository to default value if it is not passed via env
-IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/fleet-manager}"
+IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/acs-fleet-manager}"
 
 # Set the directory for docker configuration:
 DOCKER_CONFIG="${PWD}/.docker"
