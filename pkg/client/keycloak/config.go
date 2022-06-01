@@ -114,7 +114,7 @@ func (kc *KeycloakConfig) ReadFiles() error {
 	err = shared.ReadFileValueString(kc.TLSTrustedCertificatesFile, &kc.TLSTrustedCertificatesValue)
 	if err != nil {
 		if os.IsNotExist(err) {
-			glog.V(10).Infof("Specified OSD SSO TLS certificate file '%s' does not exist. Proceeding as if OSD SSO TLS certificate was not provided", kc.TLSTrustedCertificatesFile)
+			glog.V(10).Infof("Specified OSD SSO TLS certificate file %q does not exist. Proceeding as if OSD SSO TLS certificate was not provided", kc.TLSTrustedCertificatesFile)
 		} else {
 			return err
 		}
@@ -124,7 +124,7 @@ func (kc *KeycloakConfig) ReadFiles() error {
 	err = shared.ReadYamlFile(kc.ServiceAccounttLimitCheckSkipOrgIdListFile, &kc.ServiceAccounttLimitCheckSkipOrgIdList)
 	if err != nil {
 		if os.IsNotExist(err) {
-			glog.V(10).Infof("Specified service account limits skip org IDs  file '%s' does not exist. Proceeding as if no service account org ID skip list was provided", kc.ServiceAccounttLimitCheckSkipOrgIdListFile)
+			glog.V(10).Infof("Specified service account limits skip org IDs  file %q does not exist. Proceeding as if no service account org ID skip list was provided", kc.ServiceAccounttLimitCheckSkipOrgIdListFile)
 		} else {
 			return err
 		}

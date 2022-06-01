@@ -34,7 +34,7 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 		if middleware.accessControlListConfig.EnableDenyList {
 			userIsDenied := middleware.accessControlListConfig.DenyList.IsUserDenied(username)
 			if userIsDenied {
-				shared.HandleError(r, w, errors.New(errors.ErrorForbidden, "User '%s' is not authorized to access the service.", username))
+				shared.HandleError(r, w, errors.New(errors.ErrorForbidden, "User %q is not authorized to access the service.", username))
 				return
 			}
 		}
