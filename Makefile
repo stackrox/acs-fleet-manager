@@ -284,6 +284,7 @@ install: verify lint
 
 clean:
 	rm -f fleet-manager fleetshard-sync
+.PHONY: clean
 
 # Runs the unit tests.
 #
