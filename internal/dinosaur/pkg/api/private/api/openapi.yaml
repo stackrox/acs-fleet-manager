@@ -375,6 +375,8 @@ components:
           type: string
         annotations:
           $ref: '#/components/schemas/ManagedCentral_allOf_metadata_annotations'
+        deletionTimestamp:
+          type: string
     ManagedCentral_allOf_spec_endpoint_tls:
       nullable: true
       properties:
