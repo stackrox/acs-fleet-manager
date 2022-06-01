@@ -71,7 +71,7 @@ func (authHelper *AuthHelper) NewAccount(username, name, email string, orgId str
 
 	acct, err := builder.Build()
 	if err != nil {
-		return nil, fmt.Errorf("unable to build account: %s", err.Error())
+		return nil, fmt.Errorf("unable to build account: %w", err)
 	}
 	return acct, nil
 }
@@ -147,21 +147,21 @@ func ParseJWTKeys(jwtKeyFilePath, jwtCAFilePath string) (*rsa.PrivateKey, *rsa.P
 	projectRootDir := shared.GetProjectRootDir()
 	privateBytes, err := ioutil.ReadFile(filepath.Join(projectRootDir, jwtKeyFilePath))
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read JWT key file %s: %s", jwtKeyFilePath, err.Error())
+		return nil, nil, fmt.Errorf("unable to read JWT key file %q: %w", jwtKeyFilePath, err)
 	}
 	pubBytes, err := ioutil.ReadFile(filepath.Join(projectRootDir, jwtCAFilePath))
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read JWT ca file %s: %s", jwtCAFilePath, err.Error())
+		return nil, nil, fmt.Errorf("unable to read JWT ca file %q: %w", jwtCAFilePath, err)
 	}
 
 	// Parse keys
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEMWithPassword(privateBytes, "passwd")
 	if err != nil {
-		return nil, nil, fmt.Errorf("nable to parse JWT private key: %s", err.Error())
+		return nil, nil, fmt.Errorf("nable to parse JWT private key: %w", err)
 	}
 	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubBytes)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to parse JWT ca: %s", err.Error())
+		return nil, nil, fmt.Errorf("unable to parse JWT ca: %w", err)
 	}
 
 	return privateKey, pubKey, nil
