@@ -33,14 +33,7 @@ func (c *ACSClaims) GetOrgId() (string, error) {
 		}
 	}
 
-	// NOTE: This should be removed once we migrate to sso.redhat.com as it will no longer be needed (TODO: to be removed as part of MGDSTRM-6159)
-	if (*c)[alternateTenantIdClaim] != nil {
-		if orgId, ok := (*c)[alternateTenantIdClaim].(string); ok {
-			return orgId, nil
-		}
-	}
-
-	return "", fmt.Errorf("can't find neither %q or %q attribute in claims", tenantIdClaim, alternateTenantIdClaim)
+	return "", fmt.Errorf("can't find %q attribute in claims", tenantIdClaim)
 }
 
 func (c *ACSClaims) IsOrgAdmin() bool {
