@@ -41,18 +41,6 @@ func (r *redhatssoService) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 	return r.client.GetRealmConfig()
 }
 
-func (r *redhatssoService) IsAcsClientExist(accessToken string, clientId string) *errors.ServiceError {
-	_, found, err := r.client.GetServiceAccount(accessToken, clientId)
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clientId)
-	}
-
-	if !found {
-		return errors.New(errors.ErrorNotFound, "sso client with id: %s not found", clientId)
-	}
-	return nil
-}
-
 func (r *redhatssoService) CreateServiceAccount(accessToken string, serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
 	serviceAccount, err := r.client.CreateServiceAccount(accessToken, serviceAccountRequest.Name, serviceAccountRequest.Description)
 	if err != nil {
@@ -134,25 +122,7 @@ func (r *redhatssoService) GetServiceAccountByClientId(accessToken string, ctx c
 	}
 	return convertServiceAccountDataToAPIServiceAccount(serviceAccount), nil
 }
-func (r *redhatssoService) RegisterConnectorFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
-	return r.registerAgentServiceAccount(accessToken, agentClusterId)
-}
-func (r *redhatssoService) DeRegisterConnectorFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) *errors.ServiceError {
-	if _, found, err := r.client.GetServiceAccount(accessToken, agentClusterId); err != nil {
-		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
-	} else {
-		if !found {
-			// If the account does not exists, simply exit without errors
-			return nil
-		}
-	}
 
-	err := r.client.DeleteServiceAccount(accessToken, agentClusterId)
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
-	}
-	return nil
-}
 func (r *redhatssoService) GetAcsClientSecret(accessToken string, clientId string) (string, *errors.ServiceError) {
 	serviceAccount, found, err := r.client.GetServiceAccount(accessToken, clientId)
 	if err != nil {

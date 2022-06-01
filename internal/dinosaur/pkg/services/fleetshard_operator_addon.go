@@ -43,7 +43,7 @@ func NewFleetshardOperatorAddon(o fleetshardOperatorAddon) FleetshardOperatorAdd
 
 type fleetshardOperatorAddon struct {
 	di.Inject
-	SsoService       sso.DinosaurKeycloakService
+	SsoService       sso.ACSKeycloakService
 	ProviderFactory  clusters.ProviderFactory
 	ServerConfig     *server.ServerConfig
 	FleetShardConfig *config.FleetshardConfig

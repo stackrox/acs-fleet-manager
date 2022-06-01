@@ -80,7 +80,7 @@ func ServiceProviders() di.Option {
 
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
-		di.Provide(func(c *keycloak.KeycloakConfig) sso.DinosaurKeycloakService {
+		di.Provide(func(c *keycloak.KeycloakConfig) sso.ACSKeycloakService {
 			return sso.NewKeycloakServiceBuilder().
 				ForACS().
 				WithConfiguration(c).
