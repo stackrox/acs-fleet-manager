@@ -245,6 +245,20 @@ components:
         kind:
           type: string
       type: object
+    ResourceReference:
+      properties:
+        cpu:
+          type: string
+        memory:
+          type: string
+      type: object
+    Resources:
+      properties:
+        requests:
+          $ref: '#/components/schemas/ResourceReference'
+        limits:
+          $ref: '#/components/schemas/ResourceReference'
+      type: object
     ManagedCentralVersions:
       properties:
         central:
@@ -375,6 +389,8 @@ components:
           type: string
         annotations:
           $ref: '#/components/schemas/ManagedCentral_allOf_metadata_annotations'
+        deletedAt:
+          type: string
     ManagedCentral_allOf_spec_endpoint_tls:
       nullable: true
       properties:
@@ -388,6 +404,48 @@ components:
           type: string
         tls:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_endpoint_tls'
+    ManagedCentral_allOf_spec_additionalCAs:
+      properties:
+        name:
+          type: string
+        content:
+          type: string
+    ManagedCentral_allOf_spec_central:
+      properties:
+        resources:
+          $ref: '#/components/schemas/Resources'
+    ManagedCentral_allOf_spec_scanner_analyzer_scaling:
+      properties:
+        autoScaling:
+          type: string
+        replicas:
+          format: int32
+          minimum: 1
+          type: integer
+        minReplicas:
+          format: int32
+          minimum: 1
+          type: integer
+        maxReplicas:
+          format: int32
+          minimum: 1
+          type: integer
+    ManagedCentral_allOf_spec_scanner_analyzer:
+      properties:
+        scaling:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner_analyzer_scaling'
+        resources:
+          $ref: '#/components/schemas/Resources'
+    ManagedCentral_allOf_spec_scanner_db:
+      properties:
+        host:
+          type: string
+    ManagedCentral_allOf_spec_scanner:
+      properties:
+        analyzer:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner_analyzer'
+        db:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner_db'
     ManagedCentral_allOf_spec:
       properties:
         owners:
@@ -398,6 +456,14 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_endpoint'
         versions:
           $ref: '#/components/schemas/ManagedCentralVersions'
+        additionalCAs:
+          items:
+            $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalCAs'
+          type: array
+        central:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_central'
+        scanner:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner'
         deleted:
           type: boolean
       required:

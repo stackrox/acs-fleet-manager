@@ -196,6 +196,22 @@ components:
         kind:
           type: string
 
+    ResourceReference:
+      type: object
+      properties:
+        cpu:
+          type: string
+        memory:
+          type: string
+
+    Resources:
+      type: object
+      properties:
+        requests:
+          $ref: "#/components/schemas/ResourceReference"
+        limits:
+          $ref: "#/components/schemas/ResourceReference"
+
     ManagedCentralVersions:
       type: object
       properties:
@@ -226,6 +242,8 @@ components:
                       type: string
                     mas/placementId:
                       type: string
+                deletedAt:
+                      type: string
 
             spec:
               type: object
@@ -249,6 +267,51 @@ components:
                           type: string
                 versions:
                   $ref: "#/components/schemas/ManagedCentralVersions"
+                additionalCAs:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      content:
+                        type: string
+                central:
+                  type: object
+                  properties:
+                    resources:
+                      $ref: "#/components/schemas/Resources"
+                scanner:
+                  type: object
+                  properties:
+                    analyzer:
+                      type: object
+                      properties:
+                        scaling:
+                          type: object
+                          properties:
+                            autoScaling:
+                              type: string
+                            replicas:
+                              type: integer
+                              format: int32
+                              minimum: 1
+                            minReplicas:
+                              type: integer
+                              format: int32
+                              minimum: 1
+                            maxReplicas:
+                              type: integer
+                              format: int32
+                              minimum: 1
+                        resources:
+                          $ref: "#/components/schemas/Resources"
+                    db:
+                      type: object
+                      properties:
+                        host:
+                          type: string
+                              
                 deleted:
                   type: boolean
               required:

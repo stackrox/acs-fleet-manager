@@ -14,4 +14,5 @@ type ManagedCentralAllOfMetadata struct {
 	Name        string                                 `json:"name,omitempty"`
 	Namespace   string                                 `json:"namespace,omitempty"`
 	Annotations ManagedCentralAllOfMetadataAnnotations `json:"annotations,omitempty"`
+	DeletedAt   string                                 `json:"deletedAt,omitempty"`
 }
