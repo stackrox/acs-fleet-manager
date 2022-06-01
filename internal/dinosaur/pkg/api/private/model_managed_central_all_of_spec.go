@@ -17,5 +17,4 @@ type ManagedCentralAllOfSpec struct {
 	AdditionalCAs []ManagedCentralAllOfSpecAdditionalCAs `json:"additionalCAs,omitempty"`
 	Central       ManagedCentralAllOfSpecCentral         `json:"central,omitempty"`
 	Scanner       ManagedCentralAllOfSpecScanner         `json:"scanner,omitempty"`
-	Deleted       bool                                   `json:"deleted"`
 }

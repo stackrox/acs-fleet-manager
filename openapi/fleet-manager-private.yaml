@@ -311,11 +311,6 @@ components:
                       properties:
                         host:
                           type: string
-                              
-                deleted:
-                  type: boolean
-              required:
-                - deleted
 
     ManagedCentralList:
       description: >-
@@ -463,6 +458,7 @@ components:
   examples:
     ManagedCentralExample:
       value:
+        id: "1rfpsqbvq1em2u9u0z54ymjcwac"
         kind: "ManagedCentral"
         metadata:
           name: "example-central"
@@ -470,7 +466,11 @@ components:
           annotations:
             mas/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
             mas/placementId: ""
+          deletionTimestamp: "2022-06-01T11:04:09Z"
         spec:
+          owners: [
+            "central-owner1"
+          ]
           endpoint:
             host: "example-central--rfpsqbvq-em-u-u-z--ymjcwac.example.central.com"
             tls:
@@ -479,7 +479,30 @@ components:
           versions:
             central: 2.7.0
             centralOperator: 0.21.2
-          deleted: false
+          central:
+            resources:
+              requests:
+                cpu: 1000m
+                memory: 1Gi
+              limtis:
+                cpu: 1000m
+                memory: 4Gi
+          scanner:
+            analyzer:
+              scaling:
+                autoScaling: enabled
+                replicas: 1
+                minReplicas: 1
+                maxReplicas: 3
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 500Mi
+                limtis:
+                  cpu: 500m
+                  memory: 2500Mi             
+          db:
+            host: dbhost.rhacs-psql-instance 
     DataPlaneCentralStatusRequestExample:
       value:
         conditions:

@@ -33,19 +33,22 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 				MasPlacementId: from.Annotations["mas/placementId"],
 			},
 			//TODO(create-ticket): set deletion timestamp in deletion process
-			DeletionTimestamp: "TODO get deletion timestamp",
+			DeletionTimestamp: "",
 		},
 		Spec: private.ManagedCentralAllOfSpec{
 			Owners: from.Spec.Owners,
 			Endpoint: private.ManagedCentralAllOfSpecEndpoint{
 				Host: from.Spec.Endpoint.Host,
-				Tls:  &private.ManagedCentralAllOfSpecEndpointTls{},
+				Tls: &private.ManagedCentralAllOfSpecEndpointTls{
+					Cert: "cert-data",
+					Key:  "key-data",
+				},
 			},
 			Versions: private.ManagedCentralVersions{
 				Central:         from.Spec.Versions.Dinosaur,
 				CentralOperator: from.Spec.Versions.DinosaurOperator,
 			},
-			// TODO(create-ticket): add additional cas to public create/get centrals api and internal models
+			// TODO(create-ticket): add additional CAs to public create/get centrals api and internal models
 			AdditionalCAs: []private.ManagedCentralAllOfSpecAdditionalCAs{},
 			Central: private.ManagedCentralAllOfSpecCentral{
 				Resources: private.Resources{
@@ -83,7 +86,6 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 					Host: "dbhost.rhacs-psql-instance",
 				},
 			},
-			Deleted: from.Spec.Deleted,
 		},
 	}
 	return res
