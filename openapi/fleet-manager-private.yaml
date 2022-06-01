@@ -242,7 +242,7 @@ components:
                       type: string
                     mas/placementId:
                       type: string
-                deletedAt:
+                deletionTimestamp:
                       type: string
 
             spec:

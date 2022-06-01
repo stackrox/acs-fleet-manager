@@ -33,7 +33,7 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 				MasPlacementId: from.Annotations["mas/placementId"],
 			},
 			//TODO(create-ticket): set deletion timestamp in deletion process
-			DeletedAt: "",
+			DeletionTimestamp: "TODO get deletion timestamp",
 		},
 		Spec: private.ManagedCentralAllOfSpec{
 			Owners: from.Spec.Owners,
