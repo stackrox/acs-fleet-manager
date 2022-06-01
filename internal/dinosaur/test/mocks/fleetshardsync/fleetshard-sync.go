@@ -13,9 +13,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	coreTest "github.com/stackrox/acs-fleet-manager/test"
-	"github.com/golang-jwt/jwt/v4"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
@@ -94,7 +94,7 @@ var defaultUpdateDinosaurStatusFunc = func(helper *coreTest.Helper, privateClien
 		dinosaurStatusList := make(map[string]private.DataPlaneCentralStatus)
 		for _, dinosaur := range dinosaurList.Items {
 			id := dinosaur.Metadata.Annotations.MasId
-			if dinosaur.Spec.Deleted {
+			if dinosaur.Metadata.DeletionTimestamp != "" {
 				dinosaurStatusList[id] = GetDeletedDinosaurStatusResponse()
 			} else {
 				// Update any other clusters not in a 'deprovisioning' state to 'ready'
