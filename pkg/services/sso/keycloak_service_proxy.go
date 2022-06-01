@@ -44,14 +44,6 @@ func (r *keycloakServiceProxy) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 	return r.service.GetRealmConfig()
 }
 
-func (r *keycloakServiceProxy) IsAcsClientExist(clientId string) *errors.ServiceError {
-	if token, err := r.retrieveToken(); err != nil {
-		return err
-	} else {
-		return r.service.IsAcsClientExist(token, clientId)
-	}
-}
-
 func (r *keycloakServiceProxy) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
 	if token, err := tokenForServiceAPIHandler(ctx); err != nil {
 		return nil, err
@@ -116,20 +108,6 @@ func (r *keycloakServiceProxy) GetServiceAccountByClientId(ctx context.Context, 
 	}
 }
 
-func (r *keycloakServiceProxy) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := r.retrieveToken(); err != nil {
-		return nil, err
-	} else {
-		return r.service.RegisterConnectorFleetshardOperatorServiceAccount(token, agentClusterId)
-	}
-}
-func (r *keycloakServiceProxy) DeRegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
-	if token, err := r.retrieveToken(); err != nil {
-		return err
-	} else {
-		return r.service.DeRegisterConnectorFleetshardOperatorServiceAccount(token, agentClusterId)
-	}
-}
 func (r *keycloakServiceProxy) GetAcsClientSecret(clientId string) (string, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return "", err
