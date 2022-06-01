@@ -39,7 +39,9 @@ DOCKER_CONFIG="${PWD}/.docker"
 
 # Set the Go path:
 export GOPATH="${PWD}/.gopath"
-export PATH="${PATH}:${GOPATH}/bin"
+# TODO(porridge): clean up this quick hack needed to get build working on jenkins
+jenkins_go117="/opt/go/1.17.8"
+export PATH="${jenkins_go117}/bin:${PATH}:${GOPATH}/bin"
 LINK="${GOPATH}/src/github.com/stackrox/acs-fleet-manager"
 
 # print go version
