@@ -8,7 +8,11 @@ Reset DB:
 $ make db/teardown; make db/setup; make db/migrate
 ```
 
-Run:
+Configure:
+
+Make sure that the configuration file `config/dataplane-cluster-config.yaml` contains one of the available example configurations for a dataplane cluster. Otherwise any attempt to create a new central will be rejected by the fleet-manager.
+
+Run the fleet-manager:
 
 ```
 $ fleet-manager serve
