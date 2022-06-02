@@ -418,7 +418,7 @@ db/migrate:
 .PHONY: db/migrate
 
 db/teardown:
-	./scripts/local_db_teardown.sh
+	./scripts/local_db_teardown.sh || echo "Tearing down DB failed, maybe there was no DB running?"
 .PHONY: db/teardown
 
 db/login:
