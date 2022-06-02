@@ -1,0 +1,3 @@
+OCM_TOKEN: 123
+fleetmanager:
+  endpoint: "fleetmanager.fleetmanager-rhacs:8080"

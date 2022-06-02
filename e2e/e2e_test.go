@@ -1,27 +1,27 @@
 package e2e
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"os"
 )
 
-var cfg *rest.Config
-var k8sClient client.Client
+var _ = Describe("Central creation", func() {
+	var _ = Describe("new", func() {
+		It("should be created", func() {
+			client, err := fleetmanager.NewClient("localhost:8080", os.Getenv("OCM_TOKEN"))
+			Expect(err).To(BeNil())
 
-var _ = BeforeSuite(func() {
-	k8sClient = k8s.CreateClientOrDie()
-	test := "test"
-	Expect(test).To(Equal("test"))
+			request := public.CentralRequestPayload{
+				Name:          "e2e-test-central",
+				MultiAz:       false,
+				CloudProvider: "standalone",
+				Region:        "standalone",
+			}
+			err = client.CreateCentral(request)
+			Expect(err).To(BeNil())
+		})
+	})
 })
-
-var _ = AfterSuite(func() {
-
-})
-
-func TestFleetManager(t *testing.T) {
-
-}
