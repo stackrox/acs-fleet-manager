@@ -430,12 +430,12 @@ db/generate/insert/cluster:
 
 # Login to docker
 docker/login:
-	docker --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
+	docker --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
 .PHONY: docker/login
 
 # Login to the OpenShift internal registry
 docker/login/internal:
-	docker login -u kubeadmin -p $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
+	docker login -u kubeadmin --password-stdin <<< $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
 .PHONY: docker/login/internal
 
 # Build the binary and image
