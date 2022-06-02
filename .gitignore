@@ -61,6 +61,9 @@ cmd/fleet-manager/fleet-manager
 # cluster details (used for testing)
 /internal/dinosaur/test/integration/test_cluster.json
 
+# cluster configuration, overwritten locally to custom clusters
+config/dataplane-cluster-configuration.yaml
+
 # integration test's results
 /data/results/*
 !/data/results/.keep

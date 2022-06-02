@@ -19,10 +19,10 @@ import (
 type reconcilerRegistry map[string]*centralreconciler.CentralReconciler
 
 var backoff = wait.Backoff{
-	Duration: 5 * time.Second,
-	Factor:   3.0,
+	Duration: 1 * time.Second,
+	Factor:   1.5,
 	Jitter:   0.1,
-	Steps:    5,
+	Steps:    15,
 	Cap:      10 * time.Minute,
 }
 
@@ -59,7 +59,8 @@ func (r *Runtime) Start() error {
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		list, err := r.client.GetManagedCentralList()
 		if err != nil {
-			glog.Error("failed to list central", err)
+			err = errors.Wrapf(err, "failed to list centrals")
+			glog.Error(err)
 			return 0, err
 		}
 
@@ -76,7 +77,7 @@ func (r *Runtime) Start() error {
 			}(reconciler, central)
 		}
 
-		return 1 * time.Second, nil
+		return 10 * time.Second, nil
 	}, 10*time.Minute, backoff)
 
 	return ticker.Start()
@@ -88,12 +89,11 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 		return
 	}
 
-	resp, err := r.client.UpdateStatus(map[string]private.DataPlaneCentralStatus{
+	err = r.client.UpdateStatus(map[string]private.DataPlaneCentralStatus{
 		central.Id: *status,
 	})
 	if err != nil {
-		glog.Errorf("error occurred %s: %s", central.Metadata.Name, err.Error())
+		err = errors.Wrapf(err, "updating central status %s", central.Metadata.Name)
+		glog.Error(err)
 	}
-	//TODO: handle response correctly
-	glog.Infof(string(resp))
 }
