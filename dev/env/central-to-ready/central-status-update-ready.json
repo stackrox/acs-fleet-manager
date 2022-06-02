@@ -1,9 +1,9 @@
 {
-    "$ID": {
+    "$CENTRAL_ID": {
         "conditions": [
             {
                 "type": "Ready",
-                "reason": "DinosaurInstanceReady",
+                "reason": "CentralInstanceReady",
                 "message": "Installing",
                 "status": "True",
                 "lastTransitionTime": "2018-01-01T00:00:00Z"
@@ -17,8 +17,8 @@
             }
         ],
         "versions": {
-            "dinosaur": "2.4.1",
-            "dinosaurOperator": "0.21.2"
+            "dinosaur": "0.1.0",
+            "dinosaurOperator": "0.1.0"
         }
     }
 }
