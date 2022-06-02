@@ -2,6 +2,7 @@ package dbapi
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"gorm.io/gorm"
@@ -43,6 +44,8 @@ type CentralRequest struct {
 	// We store this in the database to ensure that old centrals whose namespace contained "owner-<central-id>" information will continue to work.
 	Namespace        string `json:"namespace"`
 	RoutesCreationId string `json:"routes_creation_id"`
+	// DeletionTimestamp stores the timestamp of the DELETE api call for the resource
+	DeletionTimestamp time.Time `json:"deletionTimestamp"`
 }
 
 type CentralList []*CentralRequest
