@@ -2,18 +2,20 @@ package main
 
 import (
 	"flag"
+	"os"
+	"os/signal"
+
+	"github.com/caarlos0/env/v6"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/runtime"
 	"golang.org/x/sys/unix"
-	"os"
-	"os/signal"
 )
 
-const (
-	clusterID   = "1234567890abcdef1234567890abcdef"
-	devEndpoint = "http://127.0.0.1:8000"
-)
+type Config struct {
+	FleetManagerEndpoint string `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
+	ClusterID            string `env:"CLUSTER_ID"`
+}
 
 /**
 - 1. setting up fleet-manager
@@ -28,12 +30,25 @@ func main() {
 	// parsed.
 	_ = flag.CommandLine.Parse([]string{})
 
-	// Always log to stderr by default
+	// Always log to stderr by default, required for glog.
 	if err := flag.Set("logtostderr", "true"); err != nil {
 		glog.Info("Unable to set logtostderr to true")
 	}
 
-	runtime, err := runtime.NewRuntime(devEndpoint, clusterID, k8s.CreateClientOrDie())
+	var config Config
+	if err := env.Parse(&config); err != nil {
+		glog.Fatalf("Unable to parse runtime configuration from environment: %v", err)
+	}
+	if config.ClusterID == "" {
+		glog.Fatal("CLUSTER_ID unset in the environment")
+	}
+	if config.FleetManagerEndpoint == "" {
+		glog.Fatal("FLEET_MANAGER_ENDPOINT unset in the environment")
+	}
+
+	glog.Infof("Starting application with configuration: %+v\n", config)
+
+	runtime, err := runtime.NewRuntime(config.FleetManagerEndpoint, config.ClusterID, k8s.CreateClientOrDie())
 	if err != nil {
 		glog.Fatal(err)
 	}
