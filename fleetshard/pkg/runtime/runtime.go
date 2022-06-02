@@ -76,7 +76,7 @@ func (r *Runtime) Start() error {
 			}(reconciler, central)
 		}
 
-		return 1 * time.Second, nil
+		return 5 * time.Second, nil
 	}, 10*time.Minute, backoff)
 
 	return ticker.Start()

@@ -12,9 +12,9 @@ $ ./scripts/setup-dev-env.sh
 $ make fleetshard/build
 $ OCM_TOKEN=$(ocm token) ./fleetshard-sync
 
-$ export OCM_TOKEN=$(ocm token)
-$ go test ./e2e/...
+# Run e2e tests
+$ OCM_TOKEN=$(ocm token) go test ./e2e/...
 
-# To clean up the environment run:
+# To clean up the environment run
 $ ./e2e/cleanup.sh
 ```

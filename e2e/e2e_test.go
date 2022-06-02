@@ -14,6 +14,7 @@ import (
 	"time"
 )
 
+// TODO(create-ticket): Why is a central always created as a "eval" instance type?
 var centralName = fmt.Sprintf("%s-%d", "e2e-test-central", time.Now().UnixMilli())
 
 var _ = Describe("Central creation", func() {
@@ -33,9 +34,6 @@ var _ = Describe("Central creation", func() {
 			It("created a central", func() {
 				createdCentral, err = client.CreateCentral(request)
 				Expect(err).To(BeNil())
-				if err != nil {
-					AbortSuite("Error while creating Central")
-				}
 				Expect(constants.DinosaurRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
 			})
 
@@ -44,29 +42,24 @@ var _ = Describe("Central creation", func() {
 					provisioningCentral, err := client.GetCentral(createdCentral.Id)
 					Expect(err).To(BeNil())
 					return provisioningCentral.Status
-				}, 1*time.Minute).Should(Equal(constants.DinosaurRequestStatusProvisioning.String()))
+				}).WithTimeout(2 * time.Minute).Should(Equal(constants.DinosaurRequestStatusProvisioning.String()))
 			})
 
 			It("should create central namespace", func() {
-				Eventually(func() string {
+				Eventually(func() error {
 					ns := &v1.Namespace{}
-					err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName}, ns)
-					Expect(err).To(BeNil())
-					fmt.Println("BLAAAAAA")
-					return ns.GetName()
-				}).WithTimeout(5 * time.Minute).WithPolling(1 * time.Second).Should(Equal(centralName))
+					return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName}, ns)
+				}).WithTimeout(5 * time.Minute).WithPolling(1 * time.Second).Should(Succeed())
 			})
 
 			It("should create central in managed cluster", func() {
-				Eventually(func() string {
+				Eventually(func() error {
 					central := &v1alpha1.Central{}
-					err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: centralName}, central)
-					Expect(err).To(BeNil())
-					return central.GetName()
-				}, 5*time.Minute, 1*time.Second).Should(Equal(centralName))
+					return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: centralName}, central)
+				}).WithTimeout(5 * time.Minute).WithPolling(1 * time.Second).Should(Succeed())
 			})
 
-			//TODO: Add test to eventually reach ready state
+			//TODO(create-ticket): Add test to eventually reach ready state
 		})
 	})
 })
