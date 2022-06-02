@@ -49,6 +49,7 @@ func NewRuntime(devEndpoint string, clusterID string, k8sClient ctrlClient.Clien
 func (r *Runtime) Stop() {
 }
 
+// Start starts the fleetshard runtime and schedules
 func (r *Runtime) Start() error {
 	glog.Infof("fleetshard runtime started")
 
