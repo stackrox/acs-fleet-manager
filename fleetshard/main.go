@@ -35,7 +35,10 @@ func main() {
 		glog.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	glog.Infof("Starting application with configuration: %+v\n", *config)
+	glog.Info("Starting application")
+	glog.Infof("FleetManagerEndpoint: %s", config.FleetManagerEndpoint)
+	glog.Infof("ClusterID: %s", config.ClusterID)
+	glog.Infof("RuntimePollPeriod: %s", config.RuntimePollPeriod.String())
 
 	runtime, err := runtime.NewRuntime(config, k8s.CreateClientOrDie())
 	if err != nil {
