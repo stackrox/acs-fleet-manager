@@ -8,8 +8,8 @@ clusters:
     status: ready
     provider_type: standalone
     supported_instance_type: "eval,standard"
-    cluster_dns: kubernetes.docker.internal
-    dinosaur_instance_limit: 5
+    cluster_dns: cluster.local
+    central_instance_limit: 5
     available_central_operator_versions:
       - version: "0.1.0"
         ready: true
