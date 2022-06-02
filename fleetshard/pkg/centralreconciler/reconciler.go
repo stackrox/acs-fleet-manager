@@ -32,9 +32,11 @@ type CentralReconciler struct {
 	status  *int32
 }
 
-// Reconcile takes in a
-// TODO: Check correct Central gets reconciled
-// TODO: Should an initial ManagedCentral be added on reconciler creation?
+// Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
+// It tries to create a namespace for the Central and applies necessary updates to the resource.
+// TODO(create-ticket): Check correct Central gets reconciled
+// TODO(create-ticket): Should an initial ManagedCentral be added on reconciler creation?
+// TODO(create-ticket): Add cache to only reconcile if a change to the ManagedCentral was made
 func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	// Only allow to start reconcile function once
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {

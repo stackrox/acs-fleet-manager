@@ -18,6 +18,7 @@ const (
 	statusRoute = "status"
 )
 
+// Client represents the client to REST client to connect to fleet-manager
 type Client struct {
 	client    http.Client
 	ocmToken  string
@@ -25,6 +26,7 @@ type Client struct {
 	endpoint  string
 }
 
+// NewClient creates a new client
 func NewClient(endpoint string, clusterID string) (*Client, error) {
 	//TODO(create-ticket): Add authentication SSO
 	ocmToken := os.Getenv("OCM_TOKEN")
@@ -48,6 +50,7 @@ func NewClient(endpoint string, clusterID string) (*Client, error) {
 	}, nil
 }
 
+// GetManagedCentralList returns a list of centrals from fleet-manager which should be managed by this fleetshard.
 func (c *Client) GetManagedCentralList() (*private.ManagedCentralList, error) {
 	resp, err := c.newRequest(http.MethodGet, c.endpoint, &bytes.Buffer{})
 	if err != nil {
@@ -67,6 +70,8 @@ func (c *Client) GetManagedCentralList() (*private.ManagedCentralList, error) {
 	return list, nil
 }
 
+// UpdateStatus batch updates the status of managed centrals. The status param takes a map of DataPlaneCentralStatus indexed by
+// the Centrals ID.
 func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus) ([]byte, error) {
 	updateBody, err := json.Marshal(statuses)
 	if err != nil {
