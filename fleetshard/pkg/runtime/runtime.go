@@ -26,6 +26,7 @@ var backoff = wait.Backoff{
 	Cap:      10 * time.Minute,
 }
 
+// Runtime represents the runtime to reconcile all centrals associated with the given cluster.
 type Runtime struct {
 	client           *fleetmanager.Client
 	reconcilers      reconcilerRegistry //TODO(yury): remove central instance after deletion
@@ -33,6 +34,7 @@ type Runtime struct {
 	statusResponseCh chan private.DataPlaneCentralStatus
 }
 
+// NewRuntime creates a new runtime
 func NewRuntime(devEndpoint string, clusterID string, k8sClient ctrlClient.Client) (*Runtime, error) {
 	client, err := fleetmanager.NewClient(devEndpoint, clusterID)
 	if err != nil {
@@ -46,9 +48,11 @@ func NewRuntime(devEndpoint string, clusterID string, k8sClient ctrlClient.Clien
 	}, nil
 }
 
+// Stop stops the runtime
 func (r *Runtime) Stop() {
 }
 
+// Start starts the fleetshard runtime and schedules
 func (r *Runtime) Start() error {
 	glog.Infof("fleetshard runtime started")
 
