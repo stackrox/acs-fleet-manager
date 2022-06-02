@@ -17,8 +17,8 @@
             }
         ],
         "versions": {
-            "dinosaur": "0.1.0",
-            "dinosaurOperator": "0.1.0"
+            "central": "0.1.0",
+            "centralOperator": "0.1.0"
         }
     }
 }
