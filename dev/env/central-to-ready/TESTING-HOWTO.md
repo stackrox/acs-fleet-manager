@@ -1,5 +1,7 @@
 # Transitioning a central to "ready" state
 
+The following instructions reference `fmcurl`, which is a script contained in this repospitory. If you happen to have `direnv` installed, navigating into the directory `dev/env` (and below) will automatically load this script into your `$PATH` (after a one-time `direnv allow` in that directory).
+
 ## Prepare
 
 Reset DB:
@@ -28,7 +30,7 @@ $ fmcurl rhacs/v1/agent-clusters/1234567890abcdef1234567890abcdef/centrals
 => empty list
 
 ```
-$ fmcurl '/rhacs/v1/centrals?async=true' -XPOST --data-binary '@./central-request.json'
+$ fmcurl 'rhacs/v1/centrals?async=true' -XPOST --data-binary '@./central-request.json'
 ```
 => Central created
 
