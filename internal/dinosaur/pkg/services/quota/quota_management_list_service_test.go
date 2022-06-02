@@ -1,17 +1,18 @@
 package quota
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
 	"net/http"
 	"testing"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
+
+	"github.com/onsi/gomega"
+	mocket "github.com/selvatico/go-mocket"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/onsi/gomega"
-	mocket "github.com/selvatico/go-mocket"
 )
 
 func Test_QuotaManagementListCheckQuota(t *testing.T) {
@@ -143,7 +144,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 
 			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList)
 			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
-			dinosaur := &dbapi.DinosaurRequest{
+			dinosaur := &dbapi.CentralRequest{
 				Owner:          "username",
 				OrganisationId: "org-id",
 			}
@@ -365,7 +366,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			}
 			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList)
 			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
-			dinosaur := &dbapi.DinosaurRequest{
+			dinosaur := &dbapi.CentralRequest{
 				Owner:          "username",
 				OrganisationId: "org-id",
 			}

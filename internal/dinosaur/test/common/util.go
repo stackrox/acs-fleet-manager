@@ -183,7 +183,7 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 		}
 
 		// ignore certain fields, these should be set by each test if needed
-		cluster.AvailableDinosaurOperatorVersions = nil
+		cluster.AvailableCentralOperatorVersions = nil
 
 		dbConn := h.DBFactory().New()
 		if err := dbConn.FirstOrCreate(cluster, &api.Cluster{ClusterID: cluster.ClusterID}).Error; err != nil {

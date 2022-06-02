@@ -189,7 +189,7 @@ func Test_buildTruncateDinosaurIdentifier(t *testing.T) {
 	mockLongDinosaurName := "sample-dinosaur-name-long"
 
 	type args struct {
-		dinosaurRequest *dbapi.DinosaurRequest
+		dinosaurRequest *dbapi.CentralRequest
 	}
 	tests := []struct {
 		name string
@@ -199,7 +199,7 @@ func Test_buildTruncateDinosaurIdentifier(t *testing.T) {
 		{
 			name: "build dinosaur identifier with a short name successfully",
 			args: args{
-				dinosaurRequest: &dbapi.DinosaurRequest{
+				dinosaurRequest: &dbapi.CentralRequest{
 					Name: mockShortDinosaurName,
 				},
 			},
@@ -208,7 +208,7 @@ func Test_buildTruncateDinosaurIdentifier(t *testing.T) {
 		{
 			name: "build dinosaur identifier with a long name successfully",
 			args: args{
-				dinosaurRequest: &dbapi.DinosaurRequest{
+				dinosaurRequest: &dbapi.CentralRequest{
 					Name: mockLongDinosaurName,
 				},
 			},

@@ -1,13 +1,13 @@
 package dinosaur_mgrs
 
 import (
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
@@ -93,7 +93,7 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.DinosaurRequest) error {
+func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.CentralRequest) error {
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(dinosaur.QuotaType))
 	if factoryErr != nil {
 		return factoryErr

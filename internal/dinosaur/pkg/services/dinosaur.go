@@ -50,46 +50,46 @@ type CNameRecordStatus struct {
 type DinosaurService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
 	// HasAvailableCapacityInRegion checks if there is capacity in the clusters for a given region
-	HasAvailableCapacityInRegion(dinosaurRequest *dbapi.DinosaurRequest) (bool, *errors.ServiceError)
+	HasAvailableCapacityInRegion(dinosaurRequest *dbapi.CentralRequest) (bool, *errors.ServiceError)
 	// PrepareDinosaurRequest sets any required information (i.e. dinosaur host, sso client id and secret)
 	// to the Dinosaur Request record in the database. The dinosaur request will also be updated with an updated_at
 	// timestamp and the corresponding cluster identifier.
-	PrepareDinosaurRequest(dinosaurRequest *dbapi.DinosaurRequest) *errors.ServiceError
+	PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	// Get method will retrieve the dinosaurRequest instance that the give ctx has access to from the database.
 	// This should be used when you want to make sure the result is filtered based on the request context.
-	Get(ctx context.Context, id string) (*dbapi.DinosaurRequest, *errors.ServiceError)
+	Get(ctx context.Context, id string) (*dbapi.CentralRequest, *errors.ServiceError)
 	// GetById method will retrieve the DinosaurRequest instance from the database without checking any permissions.
 	// You should only use this if you are sure permission check is not required.
-	GetById(id string) (*dbapi.DinosaurRequest, *errors.ServiceError)
+	GetById(id string) (*dbapi.CentralRequest, *errors.ServiceError)
 	// Delete cleans up all dependencies for a Dinosaur request and soft deletes the Dinosaur Request record from the database.
 	// The Dinosaur Request in the database will be updated with a deleted_at timestamp.
-	Delete(*dbapi.DinosaurRequest) *errors.ServiceError
-	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.DinosaurList, *api.PagingMeta, *errors.ServiceError)
+	Delete(*dbapi.CentralRequest) *errors.ServiceError
+	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError)
 	GetManagedDinosaurByClusterID(clusterID string) ([]manageddinosaur.ManagedDinosaur, *errors.ServiceError)
-	RegisterDinosaurJob(dinosaurRequest *dbapi.DinosaurRequest) *errors.ServiceError
-	ListByStatus(status ...constants2.DinosaurStatus) ([]*dbapi.DinosaurRequest, *errors.ServiceError)
+	RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
+	ListByStatus(status ...constants2.DinosaurStatus) ([]*dbapi.CentralRequest, *errors.ServiceError)
 	// UpdateStatus change the status of the Dinosaur cluster
 	// The returned boolean is to be used to know if the update has been tried or not. An update is not tried if the
 	// original status is 'deprovision' (cluster in deprovision state can't be change state) or if the final status is the
 	// same as the original status. The error will contain any error encountered when attempting to update or the reason
 	// why no attempt has been done
 	UpdateStatus(id string, status constants2.DinosaurStatus) (bool, *errors.ServiceError)
-	Update(dinosaurRequest *dbapi.DinosaurRequest) *errors.ServiceError
+	Update(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	// Updates() updates the given fields of a dinosaur. This takes in a map so that even zero-fields can be updated.
 	// Use this only when you want to update the multiple columns that may contain zero-fields, otherwise use the `DinosaurService.Update()` method.
 	// See https://gorm.io/docs/update.html#Updates-multiple-columns for more info
-	Updates(dinosaurRequest *dbapi.DinosaurRequest, values map[string]interface{}) *errors.ServiceError
-	ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.DinosaurRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
-	GetCNAMERecordStatus(dinosaurRequest *dbapi.DinosaurRequest) (*CNameRecordStatus, error)
-	DetectInstanceType(dinosaurRequest *dbapi.DinosaurRequest) (types.DinosaurInstanceType, *errors.ServiceError)
+	Updates(dinosaurRequest *dbapi.CentralRequest, values map[string]interface{}) *errors.ServiceError
+	ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
+	GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error)
+	DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError)
 	RegisterDinosaurDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionDinosaurForUsers registers all dinosaurs for deprovisioning given the list of owners
 	DeprovisionDinosaurForUsers(users []string) *errors.ServiceError
 	DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *errors.ServiceError
 	CountByStatus(status []constants2.DinosaurStatus) ([]DinosaurStatusCount, error)
 	CountByRegionAndInstanceType() ([]DinosaurRegionCount, error)
-	ListDinosaursWithRoutesNotCreated() ([]*dbapi.DinosaurRequest, *errors.ServiceError)
-	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.DinosaurRequest) *errors.ServiceError
+	ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
+	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	ListComponentVersions() ([]DinosaurComponentVersions, error)
 }
 
@@ -128,7 +128,7 @@ func (k *dinosaurService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 	var count int64
 
-	if err := dbConn.Model(&dbapi.DinosaurRequest{}).Count(&count).Error; err != nil {
+	if err := dbConn.Model(&dbapi.CentralRequest{}).Count(&count).Error; err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count dinosaur request")
 	}
 
@@ -136,7 +136,7 @@ func (k *dinosaurService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 	return count < k.dinosaurConfig.MaxCapacity.MaxCapacity, nil
 }
 
-func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.DinosaurRequest) (bool, *errors.ServiceError) {
+func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.CentralRequest) (bool, *errors.ServiceError) {
 	regionCapacity := int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(dinosaurRequest.Region))
 	if regionCapacity <= 0 {
 		return false, nil
@@ -144,7 +144,7 @@ func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.Di
 
 	dbConn := k.connectionFactory.New()
 	var count int64
-	if err := dbConn.Model(&dbapi.DinosaurRequest{}).Where("region = ?", dinosaurRequest.Region).Count(&count).Error; err != nil {
+	if err := dbConn.Model(&dbapi.CentralRequest{}).Where("region = ?", dinosaurRequest.Region).Count(&count).Error; err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count dinosaur request")
 	}
 
@@ -152,7 +152,7 @@ func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.Di
 	return count < regionCapacity, nil
 }
 
-func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.DinosaurRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
+func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.dinosaurConfig.Quota.Type))
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
@@ -170,7 +170,7 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.DinosaurRequ
 }
 
 // reserveQuota - reserves quota for the given dinosaur request. If a RHOSAK quota has been assigned, it will try to reserve RHOSAK quota, otherwise it will try with RHOSAKTrial
-func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.DinosaurRequest) (subscriptionId string, err *errors.ServiceError) {
+func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (subscriptionId string, err *errors.ServiceError) {
 	if dinosaurRequest.InstanceType == types.EVAL.String() {
 		if !k.dinosaurConfig.Quota.AllowEvaluatorInstance {
 			return "", errors.NewWithCause(errors.ErrorForbidden, err, "dinosaur eval instances are not allowed")
@@ -179,7 +179,7 @@ func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.DinosaurRequest) (
 		// Only one EVAL instance is admitted. Let's check if the user already owns one
 		dbConn := k.connectionFactory.New()
 		var count int64
-		if err := dbConn.Model(&dbapi.DinosaurRequest{}).
+		if err := dbConn.Model(&dbapi.CentralRequest{}).
 			Where("instance_type = ?", types.EVAL).
 			Where("owner = ?", dinosaurRequest.Owner).
 			Where("organisation_id = ?", dinosaurRequest.OrganisationId).
@@ -202,7 +202,7 @@ func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.DinosaurRequest) (
 }
 
 // RegisterDinosaurJob registers a new job in the dinosaur table
-func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.DinosaurRequest) *errors.ServiceError {
+func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	// we need to pre-populate the ID to be able to reserve the quota
@@ -252,7 +252,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.DinosaurReq
 	return nil
 }
 
-func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.DinosaurRequest) *errors.ServiceError {
+func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	truncatedDinosaurIdentifier := buildTruncateDinosaurIdentifier(dinosaurRequest)
 	truncatedDinosaurIdentifier, replaceErr := replaceHostSpecialChar(truncatedDinosaurIdentifier)
 	if replaceErr != nil {
@@ -275,7 +275,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.Dinosaur
 
 	// Update the Dinosaur Request record in the database
 	// Only updates the fields below
-	updatedDinosaurRequest := &dbapi.DinosaurRequest{
+	updatedDinosaurRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
 		},
@@ -291,22 +291,22 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.Dinosaur
 	return nil
 }
 
-func (k *dinosaurService) ListByStatus(status ...constants2.DinosaurStatus) ([]*dbapi.DinosaurRequest, *errors.ServiceError) {
+func (k *dinosaurService) ListByStatus(status ...constants2.DinosaurStatus) ([]*dbapi.CentralRequest, *errors.ServiceError) {
 	if len(status) == 0 {
 		return nil, errors.GeneralError("no status provided")
 	}
 	dbConn := k.connectionFactory.New()
 
-	var dinosaurs []*dbapi.DinosaurRequest
+	var dinosaurs []*dbapi.CentralRequest
 
-	if err := dbConn.Model(&dbapi.DinosaurRequest{}).Where("status IN (?)", status).Scan(&dinosaurs).Error; err != nil {
+	if err := dbConn.Model(&dbapi.CentralRequest{}).Where("status IN (?)", status).Scan(&dinosaurs).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list by status")
 	}
 
 	return dinosaurs, nil
 }
 
-func (k *dinosaurService) Get(ctx context.Context, id string) (*dbapi.DinosaurRequest, *errors.ServiceError) {
+func (k *dinosaurService) Get(ctx context.Context, id string) (*dbapi.CentralRequest, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("id is undefined")
 	}
@@ -336,7 +336,7 @@ func (k *dinosaurService) Get(ctx context.Context, id string) (*dbapi.DinosaurRe
 		}
 	}
 
-	var dinosaurRequest dbapi.DinosaurRequest
+	var dinosaurRequest dbapi.CentralRequest
 	if err := dbConn.First(&dinosaurRequest).Error; err != nil {
 		resourceTypeStr := "DinosaurResource"
 		if user != "" {
@@ -347,13 +347,13 @@ func (k *dinosaurService) Get(ctx context.Context, id string) (*dbapi.DinosaurRe
 	return &dinosaurRequest, nil
 }
 
-func (k *dinosaurService) GetById(id string) (*dbapi.DinosaurRequest, *errors.ServiceError) {
+func (k *dinosaurService) GetById(id string) (*dbapi.CentralRequest, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("id is undefined")
 	}
 
 	dbConn := k.connectionFactory.New()
-	var dinosaurRequest dbapi.DinosaurRequest
+	var dinosaurRequest dbapi.CentralRequest
 	if err := dbConn.Where("id = ?", id).First(&dinosaurRequest).Error; err != nil {
 		return nil, services.HandleGetError("DinosaurResource", "id", id, err)
 	}
@@ -384,7 +384,7 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 		dbConn = dbConn.Where("id = ?", id).Where("owner = ? ", user)
 	}
 
-	var dinosaurRequest dbapi.DinosaurRequest
+	var dinosaurRequest dbapi.CentralRequest
 	if err := dbConn.First(&dinosaurRequest).Error; err != nil {
 		return services.HandleGetError("DinosaurResource", "id", id, err)
 	}
@@ -405,7 +405,7 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 
 func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
-		Model(&dbapi.DinosaurRequest{}).
+		Model(&dbapi.CentralRequest{}).
 		Where("owner IN (?)", users).
 		Where("status NOT IN (?)", dinosaurDeletionStatuses).
 		Update("status", constants2.DinosaurRequestStatusDeprovision)
@@ -429,7 +429,7 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 
 func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
-		Model(&dbapi.DinosaurRequest{}).
+		Model(&dbapi.CentralRequest{}).
 		Where("instance_type = ?", types.EVAL.String()).
 		Where("created_at  <=  ?", time.Now().Add(-1*time.Duration(dinosaurAgeInHours)*time.Hour)).
 		Where("status NOT IN (?)", dinosaurDeletionStatuses)
@@ -452,7 +452,7 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *e
 	return nil
 }
 
-func (k *dinosaurService) Delete(dinosaurRequest *dbapi.DinosaurRequest) *errors.ServiceError {
+func (k *dinosaurService) Delete(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
 	// if the we don't have the clusterID we can only delete the row from the database
@@ -482,8 +482,8 @@ func (k *dinosaurService) Delete(dinosaurRequest *dbapi.DinosaurRequest) *errors
 }
 
 // List returns all Dinosaur requests belonging to a user.
-func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.DinosaurList, *api.PagingMeta, *errors.ServiceError) {
-	var dinosaurRequestList dbapi.DinosaurList
+func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError) {
+	var dinosaurRequestList dbapi.CentralList
 	dbConn := k.connectionFactory.New()
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,
@@ -556,7 +556,7 @@ func (k *dinosaurService) GetManagedDinosaurByClusterID(clusterID string) ([]man
 		Where("status IN (?)", dinosaurManagedCRStatuses).
 		Where("host != ''")
 
-	var dinosaurRequestList dbapi.DinosaurList
+	var dinosaurRequestList dbapi.CentralList
 	if err := dbConn.Find(&dinosaurRequestList).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list dinosaur requests")
 	}
@@ -571,7 +571,7 @@ func (k *dinosaurService) GetManagedDinosaurByClusterID(clusterID string) ([]man
 	return res, nil
 }
 
-func (k *dinosaurService) Update(dinosaurRequest *dbapi.DinosaurRequest) *errors.ServiceError {
+func (k *dinosaurService) Update(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(dinosaurRequest).
 		Where("status not IN (?)", dinosaurDeletionStatuses) // ignore updates of dinosaur under deletion
@@ -583,7 +583,7 @@ func (k *dinosaurService) Update(dinosaurRequest *dbapi.DinosaurRequest) *errors
 	return nil
 }
 
-func (k *dinosaurService) Updates(dinosaurRequest *dbapi.DinosaurRequest, fields map[string]interface{}) *errors.ServiceError {
+func (k *dinosaurService) Updates(dinosaurRequest *dbapi.CentralRequest, fields map[string]interface{}) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(dinosaurRequest).
 		Where("status not IN (?)", dinosaurDeletionStatuses) // ignore updates of dinosaur under deletion
@@ -595,7 +595,7 @@ func (k *dinosaurService) Updates(dinosaurRequest *dbapi.DinosaurRequest, fields
 	return nil
 }
 
-func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.DinosaurRequest) *errors.ServiceError {
+func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	if auth.GetIsAdminFromContext(ctx) {
 		cluster, err := k.clusterService.FindClusterByID(dinosaurRequest.ClusterID)
 		if err != nil {
@@ -605,33 +605,33 @@ func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dino
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to get cluster for dinosaur %s", dinosaurRequest.ID))
 		}
 
-		dinosaurVersionAvailable, err2 := k.clusterService.IsDinosaurVersionAvailableInCluster(cluster, dinosaurRequest.DesiredDinosaurOperatorVersion, dinosaurRequest.DesiredDinosaurVersion)
+		dinosaurVersionAvailable, err2 := k.clusterService.IsDinosaurVersionAvailableInCluster(cluster, dinosaurRequest.DesiredCentralOperatorVersion, dinosaurRequest.DesiredCentralVersion)
 		if err2 != nil {
 			return errors.Validation(err2.Error())
 		}
 
 		if !dinosaurVersionAvailable {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update dinosaur: %s with dinosaur version: %s", dinosaurRequest.ID, dinosaurRequest.DesiredDinosaurVersion))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update dinosaur: %s with dinosaur version: %s", dinosaurRequest.ID, dinosaurRequest.DesiredCentralVersion))
 		}
 
-		dinosaruOperatorVersionReady, err2 := k.clusterService.CheckDinosaurOperatorVersionReady(cluster, dinosaurRequest.DesiredDinosaurOperatorVersion)
+		dinosaruOperatorVersionReady, err2 := k.clusterService.CheckDinosaurOperatorVersionReady(cluster, dinosaurRequest.DesiredCentralOperatorVersion)
 		if err2 != nil {
 			return errors.Validation(err2.Error())
 		}
 
 		if !dinosaruOperatorVersionReady {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update dinosaur: %s with dinosaur operator version: %s", dinosaurRequest.ID, dinosaurRequest.DesiredDinosaurOperatorVersion))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update dinosaur: %s with dinosaur operator version: %s", dinosaurRequest.ID, dinosaurRequest.DesiredCentralOperatorVersion))
 		}
 
-		vCompDinosaur, ek := api.CompareSemanticVersionsMajorAndMinor(dinosaurRequest.ActualDinosaurVersion, dinosaurRequest.DesiredDinosaurVersion)
+		vCompDinosaur, ek := api.CompareSemanticVersionsMajorAndMinor(dinosaurRequest.ActualCentralVersion, dinosaurRequest.DesiredCentralVersion)
 
 		if ek != nil {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare desired dinosaur version: %s with actual dinosaur version: %s", dinosaurRequest.DesiredDinosaurVersion, dinosaurRequest.ActualDinosaurVersion))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare desired dinosaur version: %s with actual dinosaur version: %s", dinosaurRequest.DesiredCentralVersion, dinosaurRequest.ActualCentralVersion))
 		}
 
 		// no minor/ major version downgrades allowed for dinosaur version
 		if vCompDinosaur > 0 {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade dinosaur: %s version: %s to the following dinosaur version: %s", dinosaurRequest.ID, dinosaurRequest.ActualDinosaurVersion, dinosaurRequest.DesiredDinosaurVersion))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade dinosaur: %s version: %s to the following dinosaur version: %s", dinosaurRequest.ID, dinosaurRequest.ActualCentralVersion, dinosaurRequest.DesiredCentralVersion))
 		}
 
 		return k.Update(dinosaurRequest)
@@ -657,14 +657,14 @@ func (k *dinosaurService) UpdateStatus(id string, status constants2.DinosaurStat
 		}
 	}
 
-	if err := dbConn.Model(&dbapi.DinosaurRequest{Meta: api.Meta{ID: id}}).Update("status", status).Error; err != nil {
+	if err := dbConn.Model(&dbapi.CentralRequest{Meta: api.Meta{ID: id}}).Update("status", status).Error; err != nil {
 		return true, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update dinosaur status")
 	}
 
 	return true, nil
 }
 
-func (k *dinosaurService) ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.DinosaurRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
+func (k *dinosaurService) ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
 	routes, err := dinosaurRequest.GetRoutes()
 	if routes == nil || err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
@@ -690,7 +690,7 @@ func (k *dinosaurService) ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.Dino
 	return changeRecordsOutput, nil
 }
 
-func (k *dinosaurService) GetCNAMERecordStatus(dinosaurRequest *dbapi.DinosaurRequest) (*CNameRecordStatus, error) {
+func (k *dinosaurService) GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error) {
 	awsConfig := aws.Config{
 		AccessKeyID:     k.awsConfig.Route53AccessKey,
 		SecretAccessKey: k.awsConfig.Route53SecretAccessKey,
@@ -727,7 +727,7 @@ func (k *dinosaurService) CountByRegionAndInstanceType() ([]DinosaurRegionCount,
 	dbConn := k.connectionFactory.New()
 	var results []DinosaurRegionCount
 
-	if err := dbConn.Model(&dbapi.DinosaurRequest{}).Select("region as Region, instance_type, cluster_id, count(1) as Count").Group("region,instance_type,cluster_id").Scan(&results).Error; err != nil {
+	if err := dbConn.Model(&dbapi.CentralRequest{}).Select("region as Region, instance_type, cluster_id, count(1) as Count").Group("region,instance_type,cluster_id").Scan(&results).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count dinosaurs")
 	}
 
@@ -737,7 +737,7 @@ func (k *dinosaurService) CountByRegionAndInstanceType() ([]DinosaurRegionCount,
 func (k *dinosaurService) CountByStatus(status []constants2.DinosaurStatus) ([]DinosaurStatusCount, error) {
 	dbConn := k.connectionFactory.New()
 	var results []DinosaurStatusCount
-	if err := dbConn.Model(&dbapi.DinosaurRequest{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
+	if err := dbConn.Model(&dbapi.CentralRequest{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count dinosaurs")
 	}
 
@@ -772,22 +772,22 @@ type DinosaurComponentVersions struct {
 func (k *dinosaurService) ListComponentVersions() ([]DinosaurComponentVersions, error) {
 	dbConn := k.connectionFactory.New()
 	var results []DinosaurComponentVersions
-	if err := dbConn.Model(&dbapi.DinosaurRequest{}).Select("id", "cluster_id", "desired_dinosaur_operator_version", "actual_dinosaur_operator_version", "dinosaur_operator_upgrading", "desired_dinosaur_version", "actual_dinosaur_version", "dinosaur_upgrading").Scan(&results).Error; err != nil {
+	if err := dbConn.Model(&dbapi.CentralRequest{}).Select("id", "cluster_id", "desired_dinosaur_operator_version", "actual_dinosaur_operator_version", "dinosaur_operator_upgrading", "desired_dinosaur_version", "actual_dinosaur_version", "dinosaur_upgrading").Scan(&results).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list component versions")
 	}
 	return results, nil
 }
 
-func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.DinosaurRequest, *errors.ServiceError) {
+func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
-	var results []*dbapi.DinosaurRequest
+	var results []*dbapi.CentralRequest
 	if err := dbConn.Where("routes IS NOT NULL").Where("routes_created = ?", "no").Find(&results).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list dinosaur requests")
 	}
 	return results, nil
 }
 
-func BuildManagedDinosaurCR(dinosaurRequest *dbapi.DinosaurRequest, dinosaurConfig *config.DinosaurConfig, keycloakConfig *keycloak.KeycloakConfig) *manageddinosaur.ManagedDinosaur {
+func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfig *config.DinosaurConfig, keycloakConfig *keycloak.KeycloakConfig) *manageddinosaur.ManagedDinosaur {
 	managedDinosaurCR := &manageddinosaur.ManagedDinosaur{
 		Id: dinosaurRequest.ID,
 		TypeMeta: metav1.TypeMeta{
@@ -807,8 +807,8 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.DinosaurRequest, dinosaurConf
 				Host: dinosaurRequest.Host,
 			},
 			Versions: manageddinosaur.VersionsSpec{
-				Dinosaur:         dinosaurRequest.DesiredDinosaurVersion,
-				DinosaurOperator: dinosaurRequest.DesiredDinosaurOperatorVersion,
+				Dinosaur:         dinosaurRequest.DesiredCentralVersion,
+				DinosaurOperator: dinosaurRequest.DesiredCentralOperatorVersion,
 			},
 			Deleted: dinosaurRequest.Status == constants2.DinosaurRequestStatusDeprovision.String(),
 			Owners: []string{
@@ -828,7 +828,7 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.DinosaurRequest, dinosaurConf
 	return managedDinosaurCR
 }
 
-func buildDinosaurClusterCNAMESRecordBatch(routes []dbapi.DataPlaneDinosaurRoute, action string) *route53.ChangeBatch {
+func buildDinosaurClusterCNAMESRecordBatch(routes []dbapi.DataPlaneCentralRoute, action string) *route53.ChangeBatch {
 	var changes []*route53.Change
 	for _, r := range routes {
 		c := buildResourceRecordChange(r.Domain, r.Router, action)

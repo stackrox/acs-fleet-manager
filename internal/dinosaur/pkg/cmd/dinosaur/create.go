@@ -2,12 +2,13 @@ package dinosaur
 
 import (
 	"encoding/json"
+
+	"github.com/golang/glog"
+	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
-	"github.com/golang/glog"
-	"github.com/spf13/cobra"
 )
 
 // NewCreateCommand creates a new command for creating dinosaurs.
@@ -44,7 +45,7 @@ func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
 	var dinosaurService services.DinosaurService
 	env.MustResolveAll(&dinosaurService)
 
-	dinosaurRequest := &dbapi.DinosaurRequest{
+	dinosaurRequest := &dbapi.CentralRequest{
 		Region:         region,
 		ClusterID:      clusterID,
 		CloudProvider:  provider,

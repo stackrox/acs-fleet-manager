@@ -71,10 +71,10 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 
 	// TODO(create-ticket): restore when cluster transition to ready is implemented
 	/*
-	if !d.clusterCanProcessStatusReports(cluster) {
-		glog.V(10).Infof("Cluster with ID '%s' is in '%s' state. Ignoring status report...", clusterID, cluster.Status)
-		return nil
-	}*/
+		if !d.clusterCanProcessStatusReports(cluster) {
+			glog.V(10).Infof("Cluster with ID '%s' is in '%s' state. Ignoring status report...", clusterID, cluster.Status)
+			return nil
+		}*/
 
 	fleetShardOperatorReady, err := d.isFleetShardOperatorReady(status)
 	if err != nil {
@@ -104,12 +104,12 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 }
 
 func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) error {
-	prevAvailableDinosaurOperatorVersions, err := cluster.GetAvailableDinosaurOperatorVersions()
+	prevAvailableDinosaurOperatorVersions, err := cluster.GetAvailableCentralOperatorVersions()
 	if err != nil {
 		return err
 	}
 	if len(status.AvailableDinosaurOperatorVersions) > 0 && !reflect.DeepEqual(prevAvailableDinosaurOperatorVersions, status.AvailableDinosaurOperatorVersions) {
-		err := cluster.SetAvailableDinosaurOperatorVersions(status.AvailableDinosaurOperatorVersions)
+		err := cluster.SetAvailableCentralOperatorVersions(status.AvailableDinosaurOperatorVersions)
 		if err != nil {
 			return err
 		}

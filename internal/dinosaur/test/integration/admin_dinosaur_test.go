@@ -12,6 +12,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
+
 	// TODO(ROX-9821) restore when admin API is properly implemented "github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
 	coreTest "github.com/stackrox/acs-fleet-manager/test"
@@ -180,16 +181,16 @@ func TestAdminDinosaur_Get(t *testing.T) {
 	h, _, tearDown := test.NewDinosaurHelper(t, ocmServer)
 	defer tearDown()
 	db := test.TestServices.DBFactory.New()
-	dinosaur := &dbapi.DinosaurRequest{
-		MultiAZ:                        false,
-		Owner:                          "test-user",
-		Region:                         "test",
-		CloudProvider:                  "test",
-		Name:                           "test-dinosaur",
-		OrganisationId:                 "13640203",
-		DesiredDinosaurOperatorVersion: desiredDinosaurOperatorVersion,
-		Status:                         constants.DinosaurRequestStatusReady.String(),
-		Namespace:                      fmt.Sprintf("dinosaur-%s", sampleDinosaurID),
+	dinosaur := &dbapi.CentralRequest{
+		MultiAZ:                       false,
+		Owner:                         "test-user",
+		Region:                        "test",
+		CloudProvider:                 "test",
+		Name:                          "test-dinosaur",
+		OrganisationId:                "13640203",
+		DesiredCentralOperatorVersion: desiredDinosaurOperatorVersion,
+		Status:                        constants.DinosaurRequestStatusReady.String(),
+		Namespace:                     fmt.Sprintf("dinosaur-%s", sampleDinosaurID),
 	}
 	dinosaur.ID = sampleDinosaurID
 

@@ -77,7 +77,7 @@ func (k *AcceptedDinosaurManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.DinosaurRequest) error {
+func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.CentralRequest) error {
 	cluster, err := k.clusterPlmtStrategy.FindCluster(dinosaur)
 	if err != nil {
 		return errors.Wrapf(err, "failed to find cluster for dinosaur request %s", dinosaur.ID)
@@ -93,7 +93,7 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Dino
 	// Set desired dinosaur operator version
 	var selectedDinosaurOperatorVersion *api.CentralOperatorVersion
 
-	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyDinosaurOperatorVersions()
+	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
 	if err != nil || len(readyDinosaurOperatorVersions) == 0 {
 		// Dinosaur Operator version may not be available at the start (i.e. during upgrade of Dinosaur operator).
 		// We need to allow the reconciler to retry getting and setting of the desired Dinosaur Operator version for a Dinosaur request
@@ -117,13 +117,13 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Dino
 	}
 
 	selectedDinosaurOperatorVersion = &readyDinosaurOperatorVersions[len(readyDinosaurOperatorVersions)-1]
-	dinosaur.DesiredDinosaurOperatorVersion = selectedDinosaurOperatorVersion.Version
+	dinosaur.DesiredCentralOperatorVersion = selectedDinosaurOperatorVersion.Version
 
 	// Set desired Dinosaur version
 	if len(selectedDinosaurOperatorVersion.CentralVersions) == 0 {
 		return errors.New(fmt.Sprintf("failed to get Dinosaur version %s", dinosaur.ID))
 	}
-	dinosaur.DesiredDinosaurVersion = selectedDinosaurOperatorVersion.CentralVersions[len(selectedDinosaurOperatorVersion.CentralVersions)-1].Version
+	dinosaur.DesiredCentralVersion = selectedDinosaurOperatorVersion.CentralVersions[len(selectedDinosaurOperatorVersion.CentralVersions)-1].Version
 
 	glog.Infof("Dinosaur instance with id %s is assigned to cluster with id %s", dinosaur.ID, dinosaur.ClusterID)
 	dinosaur.Status = constants2.DinosaurRequestStatusPreparing.String()
