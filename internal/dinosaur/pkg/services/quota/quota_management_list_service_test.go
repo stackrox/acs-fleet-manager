@@ -228,7 +228,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "dinosaur_requests" WHERE instance_type = $1 AND (organisation_id = $2)`).
+					WithQuery(`SELECT count(1) FROM "central_requests" WHERE instance_type = $1 AND (organisation_id = $2)`).
 					WithArgs(types.STANDARD.String(), "org-id").
 					WithReply([]map[string]interface{}{{"count": "4"}})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -264,7 +264,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "dinosaur_requests" WHERE instance_type = $1 AND owner = $2`).
+					WithQuery(`SELECT count(1) FROM "central_requests" WHERE instance_type = $1 AND owner = $2`).
 					WithArgs(types.EVAL.String(), "username").
 					WithReply([]map[string]interface{}{{"count": "0"}})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -291,7 +291,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "dinosaur_requests" WHERE instance_type = $1 AND owner = $2`).
+					WithQuery(`SELECT count(1) FROM "central_requests" WHERE instance_type = $1 AND owner = $2`).
 					WithArgs(types.EVAL.String(), "username").
 					WithReply([]map[string]interface{}{{"count": "1"}})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -325,7 +325,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "dinosaur_requests" WHERE instance_type = $1 AND (organisation_id = $2)`).
+					WithQuery(`SELECT count(1) FROM "central_requests" WHERE instance_type = $1 AND (organisation_id = $2)`).
 					WithArgs(types.STANDARD.String(), "org-id").
 					WithReply([]map[string]interface{}{{"count": "1"}})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -346,7 +346,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "dinosaur_requests" WHERE instance_type = $1 AND owner = $2`).
+					WithQuery(`SELECT count(1) FROM "central_requests" WHERE instance_type = $1 AND owner = $2`).
 					WithArgs(types.EVAL.String(), "username").
 					WithReply([]map[string]interface{}{{"count": "0"}})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()

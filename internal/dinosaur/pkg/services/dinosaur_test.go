@@ -136,7 +136,7 @@ func Test_dinosaurService_Get(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "dinosaur_requests" WHERE id = $1 AND owner = $2`).
+					WithQuery(`SELECT * FROM "central_requests" WHERE id = $1 AND owner = $2`).
 					WithArgs(testID, testUser).
 					WithReply(converters.ConvertDinosaurRequest(buildDinosaurRequest(nil)))
 			},

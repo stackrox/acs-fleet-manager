@@ -772,7 +772,7 @@ type DinosaurComponentVersions struct {
 func (k *dinosaurService) ListComponentVersions() ([]DinosaurComponentVersions, error) {
 	dbConn := k.connectionFactory.New()
 	var results []DinosaurComponentVersions
-	if err := dbConn.Model(&dbapi.CentralRequest{}).Select("id", "cluster_id", "desired_dinosaur_operator_version", "actual_dinosaur_operator_version", "dinosaur_operator_upgrading", "desired_dinosaur_version", "actual_dinosaur_version", "dinosaur_upgrading").Scan(&results).Error; err != nil {
+	if err := dbConn.Model(&dbapi.CentralRequest{}).Select("id", "cluster_id", "desired_central_operator_version", "actual_central_operator_version", "central_operator_upgrading", "desired_central_version", "actual_central_version", "central_upgrading").Scan(&results).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list component versions")
 	}
 	return results, nil

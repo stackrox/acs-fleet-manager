@@ -1123,7 +1123,7 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 			want: &api.Cluster{ClusterID: testClusterID, Meta: api.Meta{CreatedAt: now, UpdatedAt: now, DeletedAt: gorm.DeletedAt{Valid: true}}},
 			setupFn: func() {
 				mockedResponse := []map[string]interface{}{{"cluster_id": testClusterID, "created_at": now, "updated_at": now, "deleted_at": gorm.DeletedAt{Valid: true}.Time}}
-				query := `SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1 AND cluster_id IN (SELECT "cluster_id" FROM "dinosaur_requests" WHERE (status != $2 AND cluster_id = $3) AND "dinosaur_requests"."deleted_at" IS NULL) AND "clusters"."deleted_at" IS NULL ORDER BY "clusters"."id" LIMIT 1%`
+				query := `SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1 AND cluster_id IN (SELECT "cluster_id" FROM "central_requests" WHERE (status != $2 AND cluster_id = $3) AND "central_requests"."deleted_at" IS NULL) AND "clusters"."deleted_at" IS NULL ORDER BY "clusters"."id" LIMIT 1%`
 				mocket.Catcher.Reset().NewMock().WithQuery(query).WithReply(mockedResponse)
 			},
 		},

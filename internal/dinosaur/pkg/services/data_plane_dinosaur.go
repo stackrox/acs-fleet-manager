@@ -181,10 +181,10 @@ func (d *dataPlaneDinosaurService) setDinosaurRequestVersionFields(dinosaur *dba
 
 	if needsUpdate {
 		versionFields := map[string]interface{}{
-			"actual_dinosaur_operator_version": dinosaur.ActualCentralOperatorVersion,
-			"actual_dinosaur_version":          dinosaur.ActualCentralVersion,
-			"dinosaur_operator_upgrading":      dinosaur.CentralOperatorUpgrading,
-			"dinosaur_upgrading":               dinosaur.CentralUpgrading,
+			"actual_central_operator_version": dinosaur.ActualCentralOperatorVersion,
+			"actual_central_version":          dinosaur.ActualCentralVersion,
+			"central_operator_upgrading":      dinosaur.CentralOperatorUpgrading,
+			"central_upgrading":               dinosaur.CentralUpgrading,
 		}
 
 		if err := d.dinosaurService.Updates(dinosaur, versionFields); err != nil {
