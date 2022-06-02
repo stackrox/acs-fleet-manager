@@ -269,10 +269,10 @@ lint: golangci-lint specinstall
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 
 fleet-manager:
-	$(GO) build $(GOARGS) ./cmd/fleet-manager
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) ./cmd/fleet-manager
 
 fleetshard-sync:
-	$(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
 
 binary: fleet-manager fleetshard-sync
 .PHONY: binary
@@ -436,9 +436,9 @@ docker/login/internal:
 
 # Build the binary and image
 # TODO(create-ticket): Revisit decision to use a combined-image-approach, where the image contains both the fleet-manager and the fleetshard-sync.
-image/build:
-	GOOS=linux GOARCH=amd64 $(GO) build $(GOARGS) ./cmd/fleet-manager
-	GOOS=linux GOARCH=amd64 $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
+image/build: GOOS=linux
+image/build: GOARCH=amd64
+image/build: fleet-manager fleetshard-sync
 	docker --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
 .PHONY: image/build
 
