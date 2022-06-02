@@ -260,6 +260,39 @@ make binary && ./fleet-manager serve \
    2>&1 | tee fleet-manager-serve.log
 ```
 
+### Running containerized fleet-manager and fleetshard-sync
+
+The makefile target `image/build` builds a combined image, containing both applications, `fleet-manager` and `fleetshard-sync`.
+
+So far only `fleet-manager` can be successfully spawned from this image, because `fleetshard-sync` tries to reach `fleet-manager` at `127.0.0.1` (hard-coded).
+
+Using e.g. the Docker CLI, `fleet-manager` can be spawned as follows:
+
+```
+docker run -it --rm -p 8000:8000 \
+   -v "$(git rev-parse --show-toplevel)/config":/config \
+   -v "$(git rev-parse --show-toplevel)/secrets":/secrets \
+   <IMAGE REFERENCE> \
+   --db-host-file secrets/db.host.internal-docker \
+   --api-server-bindaddress 0.0.0.0:8000
+```
+
+Using the above command the `fleet-manager` application tries to access its database running on the host system and its API server is
+reachable at `localhost` (host system).
+
+In principle `fleetshard-sync` will be able to spawned using a command similar to the following:
+
+```
+docker run -it -e OCM_TOKEN --rm -p 8000:8000 \
+   --entrypoint /usr/local/bin/fleetshard-sync \
+   -v "$(git rev-parse --show-toplevel)/config":/config \
+   -v "$(git rev-parse --show-toplevel)/secrets":/secrets \
+   <IMAGE REFERENCE>
+```
+
+For this to work `fleetshard-sync` has to be modified so that `fleet-manager`'s endpoint is configurable and both containers have to be
+running using a shared network so that they can access each other (TODO).
+
 ## Additional documentation
 - [Adding new endpoint](docs/adding-a-new-endpoint.md)
 - [Adding new CLI flag](docs/adding-new-flags.md)
