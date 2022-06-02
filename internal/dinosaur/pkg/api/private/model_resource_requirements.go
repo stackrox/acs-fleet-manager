@@ -9,8 +9,8 @@
 
 package private
 
-// ManagedCentralAllOfSpecAdditionalCAs struct for ManagedCentralAllOfSpecAdditionalCAs
-type ManagedCentralAllOfSpecAdditionalCAs struct {
-	Name    string `json:"name,omitempty"`
-	Content string `json:"content,omitempty"`
+// ResourceRequirements struct for ResourceRequirements
+type ResourceRequirements struct {
+	Requests ResourceList `json:"requests,omitempty"`
+	Limits   ResourceList `json:"limits,omitempty"`
 }

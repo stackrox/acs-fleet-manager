@@ -196,7 +196,7 @@ components:
         kind:
           type: string
 
-    ResourceReference:
+    ResourceList:
       type: object
       properties:
         cpu:
@@ -204,13 +204,13 @@ components:
         memory:
           type: string
 
-    Resources:
+    ResourceRequirements:
       type: object
       properties:
         requests:
-          $ref: "#/components/schemas/ResourceReference"
+          $ref: "#/components/schemas/ResourceList"
         limits:
-          $ref: "#/components/schemas/ResourceReference"
+          $ref: "#/components/schemas/ResourceList"
 
     ManagedCentralVersions:
       type: object
@@ -267,20 +267,11 @@ components:
                           type: string
                 versions:
                   $ref: "#/components/schemas/ManagedCentralVersions"
-                additionalCAs:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      content:
-                        type: string
                 central:
                   type: object
                   properties:
                     resources:
-                      $ref: "#/components/schemas/Resources"
+                      $ref: "#/components/schemas/ResourceRequirements"
                 scanner:
                   type: object
                   properties:
@@ -305,7 +296,7 @@ components:
                               format: int32
                               minimum: 1
                         resources:
-                          $ref: "#/components/schemas/Resources"
+                          $ref: "#/components/schemas/ResourceRequirements"
                     db:
                       type: object
                       properties:
@@ -482,8 +473,8 @@ components:
           central:
             resources:
               requests:
-                cpu: 1000m
-                memory: 1Gi
+                cpu: 250m
+                memory: 250Mi
               limtis:
                 cpu: 1000m
                 memory: 4Gi
@@ -496,8 +487,8 @@ components:
                 maxReplicas: 3
               resources:
                 requests:
-                  cpu: 500m
-                  memory: 500Mi
+                  cpu: 250m
+                  memory: 100Mi
                 limtis:
                   cpu: 500m
                   memory: 2500Mi             

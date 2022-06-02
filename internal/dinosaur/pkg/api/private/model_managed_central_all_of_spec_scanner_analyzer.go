@@ -12,5 +12,5 @@ package private
 // ManagedCentralAllOfSpecScannerAnalyzer struct for ManagedCentralAllOfSpecScannerAnalyzer
 type ManagedCentralAllOfSpecScannerAnalyzer struct {
 	Scaling   ManagedCentralAllOfSpecScannerAnalyzerScaling `json:"scaling,omitempty"`
-	Resources Resources                                     `json:"resources,omitempty"`
+	Resources ResourceRequirements                          `json:"resources,omitempty"`
 }

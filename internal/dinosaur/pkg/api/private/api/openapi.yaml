@@ -209,8 +209,8 @@ components:
           central:
             resources:
               requests:
-                cpu: 1000m
-                memory: 1Gi
+                cpu: 250m
+                memory: 250Mi
               limtis:
                 cpu: 1000m
                 memory: 4Gi
@@ -223,8 +223,8 @@ components:
                 maxReplicas: 3
               resources:
                 requests:
-                  cpu: 500m
-                  memory: 500Mi
+                  cpu: 250m
+                  memory: 100Mi
                 limtis:
                   cpu: 500m
                   memory: 2500Mi
@@ -272,19 +272,19 @@ components:
         kind:
           type: string
       type: object
-    ResourceReference:
+    ResourceList:
       properties:
         cpu:
           type: string
         memory:
           type: string
       type: object
-    Resources:
+    ResourceRequirements:
       properties:
         requests:
-          $ref: '#/components/schemas/ResourceReference'
+          $ref: '#/components/schemas/ResourceList'
         limits:
-          $ref: '#/components/schemas/ResourceReference'
+          $ref: '#/components/schemas/ResourceList'
       type: object
     ManagedCentralVersions:
       properties:
@@ -431,16 +431,10 @@ components:
           type: string
         tls:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_endpoint_tls'
-    ManagedCentral_allOf_spec_additionalCAs:
-      properties:
-        name:
-          type: string
-        content:
-          type: string
     ManagedCentral_allOf_spec_central:
       properties:
         resources:
-          $ref: '#/components/schemas/Resources'
+          $ref: '#/components/schemas/ResourceRequirements'
     ManagedCentral_allOf_spec_scanner_analyzer_scaling:
       properties:
         autoScaling:
@@ -462,7 +456,7 @@ components:
         scaling:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner_analyzer_scaling'
         resources:
-          $ref: '#/components/schemas/Resources'
+          $ref: '#/components/schemas/ResourceRequirements'
     ManagedCentral_allOf_spec_scanner_db:
       properties:
         host:
@@ -483,10 +477,6 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_endpoint'
         versions:
           $ref: '#/components/schemas/ManagedCentralVersions'
-        additionalCAs:
-          items:
-            $ref: '#/components/schemas/ManagedCentral_allOf_spec_additionalCAs'
-          type: array
         central:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_central'
         scanner:

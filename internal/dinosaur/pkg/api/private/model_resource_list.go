@@ -9,8 +9,8 @@
 
 package private
 
-// Resources struct for Resources
-type Resources struct {
-	Requests ResourceReference `json:"requests,omitempty"`
-	Limits   ResourceReference `json:"limits,omitempty"`
+// ResourceList struct for ResourceList
+type ResourceList struct {
+	Cpu    string `json:"cpu,omitempty"`
+	Memory string `json:"memory,omitempty"`
 }

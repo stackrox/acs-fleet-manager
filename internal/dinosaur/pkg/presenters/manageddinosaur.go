@@ -6,20 +6,22 @@ import (
 )
 
 // TODO(create-ticket): implement configurable central and scanner resources
-const defaultCentralRequestMemory = "1Gi"
-const defaultCentralRequestCpu = "1000m"
-const defaultCentralLimitMemory = "4Gi"
-const defaultCentralLimitCpu = "1000m"
+const (
+	defaultCentralRequestMemory = "250Mi"
+	defaultCentralRequestCpu    = "250m"
+	defaultCentralLimitMemory   = "4Gi"
+	defaultCentralLimitCpu      = "1000m"
 
-const defaultScannerAnalyzerRequestMemory = "500Mi"
-const defaultScannerAnalyzerRequestCpu = "500m"
-const defaultScannerAnalyzerLimitMemory = "2500Mi"
-const defaultScannerAnalyzerLimitCpu = "2000m"
+	defaultScannerAnalyzerRequestMemory = "100Mi"
+	defaultScannerAnalyzerRequestCpu    = "250m"
+	defaultScannerAnalyzerLimitMemory   = "2500Mi"
+	defaultScannerAnalyzerLimitCpu      = "2000m"
 
-const defaultScannerAnalyzerAutoScaling = "enabled"
-const defaultScannerAnalyzerScalingReplicas = 1
-const defaultScannerAnalyzerScalingMinReplicas = 1
-const defaultScannerAnalyzerScalingMaxReplicas = 3
+	defaultScannerAnalyzerAutoScaling        = "enabled"
+	defaultScannerAnalyzerScalingReplicas    = 1
+	defaultScannerAnalyzerScalingMinReplicas = 1
+	defaultScannerAnalyzerScalingMaxReplicas = 3
+)
 
 func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 	res := private.ManagedCentral{
@@ -49,14 +51,13 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 				CentralOperator: from.Spec.Versions.DinosaurOperator,
 			},
 			// TODO(create-ticket): add additional CAs to public create/get centrals api and internal models
-			AdditionalCAs: []private.ManagedCentralAllOfSpecAdditionalCAs{},
 			Central: private.ManagedCentralAllOfSpecCentral{
-				Resources: private.Resources{
-					Requests: private.ResourceReference{
+				Resources: private.ResourceRequirements{
+					Requests: private.ResourceList{
 						Cpu:    defaultCentralRequestCpu,
 						Memory: defaultCentralRequestMemory,
 					},
-					Limits: private.ResourceReference{
+					Limits: private.ResourceList{
 						Cpu:    defaultCentralLimitCpu,
 						Memory: defaultCentralLimitMemory,
 					},
@@ -70,12 +71,12 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 						MinReplicas: defaultScannerAnalyzerScalingMinReplicas,
 						MaxReplicas: defaultScannerAnalyzerScalingMaxReplicas,
 					},
-					Resources: private.Resources{
-						Requests: private.ResourceReference{
+					Resources: private.ResourceRequirements{
+						Requests: private.ResourceList{
 							Cpu:    defaultScannerAnalyzerRequestCpu,
 							Memory: defaultScannerAnalyzerRequestMemory,
 						},
-						Limits: private.ResourceReference{
+						Limits: private.ResourceList{
 							Cpu:    defaultScannerAnalyzerLimitCpu,
 							Memory: defaultScannerAnalyzerLimitMemory,
 						},
