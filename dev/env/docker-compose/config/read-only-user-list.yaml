@@ -1,0 +1,5 @@
+---
+# A list of users with read-only permissions for data plane clusters
+# A user is represented in the below list by their Kerboros ID
+- read-only-user-1
+- read-only-user-2

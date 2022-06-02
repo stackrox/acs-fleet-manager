@@ -1,0 +1,5 @@
+---
+# A list of dinosaur-sre users with cluster-admin permissions for data plane clusters
+# A dinosaur-sre user is represented in the below list by their Kerboros ID
+- dinosaur-sre-user-1
+- dinosaur-sre-user-2
