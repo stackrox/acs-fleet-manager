@@ -97,22 +97,49 @@ func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus
 	return ioutil.ReadAll(resp.Body)
 }
 
-func (c *Client) CreateCentral(request public.CentralRequestPayload) error {
+func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.CentralRequest, error) {
 	reqBody, err := json.Marshal(request)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	resp, err := c.newRequest(http.MethodPost, c.publicAPIEndpoint, bytes.NewBuffer(reqBody))
+	resp, err := c.newRequest(http.MethodPost, fmt.Sprintf("%s?async=true", c.publicAPIEndpoint), bytes.NewBuffer(reqBody))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	all, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	fmt.Println("%+v", all)
+
+	fmt.Println(string(all))
+	result := public.CentralRequest{}
+	err = json.Unmarshal(all, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (c *Client) GetCentral(id string) (*public.CentralRequest, error) {
+	resp, err := c.newRequest(http.MethodGet, fmt.Sprintf("%s/%s", c.publicAPIEndpoint, id), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	central := public.CentralRequest{}
+	err = json.Unmarshal(respBody, &central)
+	if err != nil {
+		return nil, err
+	}
+
+	return &central, nil
 }
 
 func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Response, error) {

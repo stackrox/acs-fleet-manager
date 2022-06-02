@@ -10,7 +10,7 @@ $ ./scripts/setup-dev-env.sh
 
 # Build and run fleetshard-sync
 $ make fleetshard/build
-$ ./fleetshard-sync
+$ OCM_TOKEN=$(ocm token) ./fleetshard-sync
 
 # Create a central instace
 $ ./scripts/create-central.sh
