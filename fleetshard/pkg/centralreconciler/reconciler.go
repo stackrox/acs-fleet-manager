@@ -22,6 +22,7 @@ const (
 	BlockedStatus
 
 	revisionAnnotationKey = "rhacs.redhat.com/revision"
+	k8sManagedByLabelKey  = "app.kubernetes.io/managed-by"
 )
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -54,7 +55,7 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentral.Metadata.Name,
 			Namespace: remoteNamespace,
-			Labels:    map[string]string{"app.kubernetes.io/managed-by": "rhacs-fleetshard"},
+			Labels:    map[string]string{k8sManagedByLabelKey: "rhacs-fleetshard"},
 		},
 	}
 
