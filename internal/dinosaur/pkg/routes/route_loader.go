@@ -42,7 +42,7 @@ type options struct {
 	Dinosaur                 services.DinosaurService
 	CloudProviders           services.CloudProvidersService
 	Observatorium            services.ObservatoriumService
-	Keycloak                 sso.ACSKeycloakService
+	Keycloak                 sso.KeycloakService
 	DataPlaneCluster         services.DataPlaneClusterService
 	DataPlaneDinosaurService services.DataPlaneDinosaurService
 	AccountService           account.AccountService

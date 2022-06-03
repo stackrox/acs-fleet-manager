@@ -8,10 +8,10 @@ var (
 	// ocm token claim keys
 	tenantUsernameClaim string = "username"
 	tenantIdClaim       string = "org_id"
-	tenantOrgAdminClaim string = "is_org_admin" // same key used in mas-sso tokens
+	tenantOrgAdminClaim string = "is_org_admin"
 
 	// sso.redhat.com token claim keys
-	alternateTenantUsernameClaim string = "preferred_username" // same key used in mas-sso tokens
+	alternateTenantUsernameClaim string = "preferred_username"
 	tenantUserIdClaim            string = "account_id"
 )
 
