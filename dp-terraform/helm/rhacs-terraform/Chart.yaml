@@ -1,6 +1,6 @@
 apiVersion: v2
-name: terraform
-description: Chart to terraform dataplane OSD clusters running on AWS.
+name: rhacs-terraform
+description: Chart to terraform dataplane OSD clusters
 
 # A chart can be either an 'application' or a 'library' chart.
 #
