@@ -1,7 +1,9 @@
+// Package centralreconciler provides update, delete and create logic for managing Central instances.
 package centralreconciler
 
 import (
 	"context"
+	"fmt"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
@@ -11,21 +13,31 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"strconv"
 	"sync/atomic"
 )
 
 const (
 	FreeStatus int32 = iota
 	BlockedStatus
+
+	revisionAnnotationKey = "rhacs.redhat.com/revision"
+	k8sManagedByLabelKey  = "app.kubernetes.io/managed-by"
 )
 
-// CentralReconciler reconciles the central cluster
+// CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
+// in its Reconcile function.
 type CentralReconciler struct {
 	client  ctrlClient.Client
 	central private.ManagedCentral
 	status  *int32
 }
 
+// Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
+// It tries to create a namespace for the Central and applies necessary updates to the resource.
+// TODO(create-ticket): Check correct Central gets reconciled
+// TODO(create-ticket): Should an initial ManagedCentral be added on reconciler creation?
+// TODO(create-ticket): Add cache to only reconcile if a change to the ManagedCentral was made
 func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	// Only allow to start reconcile function once
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
@@ -40,6 +52,7 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
 			Namespace: remoteNamespace,
+			Labels:    map[string]string{k8sManagedByLabelKey: "rhacs-fleetshard"},
 		},
 	}
 
@@ -65,6 +78,8 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	}
 
 	if !centralExists {
+		central.Annotations = map[string]string{revisionAnnotationKey: "1"}
+
 		glog.Infof("Creating central tenant %s", central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
 			return nil, errors.Wrapf(err, "creating new central %q", remoteCentralName)
@@ -73,9 +88,15 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 		// TODO(create-ticket): implement update logic
 		glog.Infof("Update central tenant %s", central.GetName())
 		glog.Info("Implement update logic for Centrals")
-		//if err := r.client.Update(ctx, central); err != nil {
-		//	return errors.Wrapf(err, "updating central %q", remoteCentral.GetName())
-		//}
+
+		err = r.incrementCentralRevision(central)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := r.client.Update(ctx, central); err != nil {
+			return nil, errors.Wrapf(err, "updating central %q", central.GetName())
+		}
 	}
 
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
@@ -99,6 +120,16 @@ func (r CentralReconciler) deleteCentral(central *v1alpha1.Central) error {
 	if err := r.deleteNamespace(central.GetNamespace()); err != nil {
 		return errors.Wrapf(err, "delete central namespace %s", central.GetNamespace())
 	}
+	return nil
+}
+
+func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) error {
+	revision, err := strconv.Atoi(central.Annotations[revisionAnnotationKey])
+	if err != nil {
+		return errors.Wrapf(err, "failed incerement central revision %s", central.GetName())
+	}
+	revision++
+	central.Annotations[revisionAnnotationKey] = fmt.Sprintf("%d", revision)
 	return nil
 }
 

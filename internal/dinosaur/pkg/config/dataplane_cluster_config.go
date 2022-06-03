@@ -67,12 +67,13 @@ func getDefaultKubeconfig() string {
 
 func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	return &DataplaneClusterConfig{
-		OpenshiftVersion:                      "",
-		ComputeMachineType:                    "m5.2xlarge",
-		ImagePullDockerConfigContent:          "",
-		ImagePullDockerConfigFile:             "secrets/image-pull.dockerconfigjson",
-		DataPlaneClusterConfigFile:            "config/dataplane-cluster-configuration.yaml",
-		ReadOnlyUserListFile:                  "config/read-only-user-list.yaml",
+		OpenshiftVersion:             "",
+		ComputeMachineType:           "m5.2xlarge",
+		ImagePullDockerConfigContent: "",
+		ImagePullDockerConfigFile:    "secrets/image-pull.dockerconfigjson",
+		DataPlaneClusterConfigFile:   "config/dataplane-cluster-configuration.yaml",
+		ReadOnlyUserListFile:         "config/read-only-user-list.yaml",
+		// TODO drop DinosaurSREUsersFile
 		DinosaurSREUsersFile:                  "config/dinosaur-sre-user-list.yaml",
 		DataPlaneClusterScalingType:           ManualScaling,
 		ClusterConfig:                         &ClusterConfig{},

@@ -2,6 +2,7 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:8.5
 
 COPY \
     fleet-manager \
+    fleetshard-sync \
     /usr/local/bin/
 
 EXPOSE 8000

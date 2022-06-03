@@ -1,9 +1,9 @@
 package config
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/pflag"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 type DinosaurCapacityConfig struct {
@@ -30,9 +30,10 @@ func NewDinosaurConfig() *DinosaurConfig {
 		DinosaurTLSKeyFile:                "secrets/dinosaur-tls.key",
 		EnableDinosaurExternalCertificate: false,
 		DinosaurDomainName:                "dinosaur.devshift.org",
-		DinosaurCapacityConfigFile:        "config/dinosaur-capacity-config.yaml",
-		DinosaurLifespan:                  NewDinosaurLifespanConfig(),
-		Quota:                             NewDinosaurQuotaConfig(),
+		// TODO drop DinosaurCapacityConfigFile
+		DinosaurCapacityConfigFile: "config/dinosaur-capacity-config.yaml",
+		DinosaurLifespan:           NewDinosaurLifespanConfig(),
+		Quota:                      NewDinosaurQuotaConfig(),
 	}
 }
 
