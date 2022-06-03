@@ -20,7 +20,7 @@ type ReadyDinosaurManager struct {
 }
 
 // NewReadyDinosaurManager creates a new dinosaur manager
-func NewReadyDinosaurManager(dinosaurService services.DinosaurService, keycloakService sso.ACSKeycloakService, keycloakConfig *keycloak.KeycloakConfig) *ReadyDinosaurManager {
+func NewReadyDinosaurManager(dinosaurService services.DinosaurService, keycloakService sso.KeycloakService, keycloakConfig *keycloak.KeycloakConfig) *ReadyDinosaurManager {
 	return &ReadyDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),

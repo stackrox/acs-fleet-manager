@@ -110,7 +110,7 @@ type dinosaurService struct {
 	clusterPlacementStrategy ClusterPlacementStrategy
 }
 
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService sso.ACSKeycloakService, dinosaurConfig *config.DinosaurConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy) *dinosaurService {
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService sso.KeycloakService, dinosaurConfig *config.DinosaurConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy) *dinosaurService {
 	return &dinosaurService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,

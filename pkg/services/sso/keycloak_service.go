@@ -1,4 +1,0 @@
-package sso
-
-type ACSKeycloakService KeycloakService
-type OsdKeycloakService OSDKeycloakService

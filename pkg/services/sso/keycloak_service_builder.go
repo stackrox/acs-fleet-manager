@@ -8,15 +8,15 @@ import (
 
 var _ KeycloakServiceBuilderSelector = &keycloakServiceBuilderSelector{}
 var _ KeycloakServiceBuilder = &keycloakServiceBuilder{}
-var _ KFMKeycloakServiceBuilderConfigurator = &keycloakBuilderConfigurator{}
+var _ ACSKeycloakServiceBuilderConfigurator = &keycloakBuilderConfigurator{}
 var _ OSDKeycloakServiceBuilderConfigurator = &osdBuilderConfigurator{}
 
 type KeycloakServiceBuilderSelector interface {
 	ForOSD() OSDKeycloakServiceBuilderConfigurator
-	ForACS() KFMKeycloakServiceBuilderConfigurator
+	ForACS() ACSKeycloakServiceBuilderConfigurator
 }
 
-type KFMKeycloakServiceBuilderConfigurator interface {
+type ACSKeycloakServiceBuilderConfigurator interface {
 	WithConfiguration(config *keycloak.KeycloakConfig) KeycloakServiceBuilder
 }
 
@@ -41,7 +41,7 @@ func (s *keycloakServiceBuilderSelector) ForOSD() OSDKeycloakServiceBuilderConfi
 	return &osdBuilderConfigurator{}
 }
 
-func (s *keycloakServiceBuilderSelector) ForACS() KFMKeycloakServiceBuilderConfigurator {
+func (s *keycloakServiceBuilderSelector) ForACS() ACSKeycloakServiceBuilderConfigurator {
 	return &keycloakBuilderConfigurator{}
 }
 

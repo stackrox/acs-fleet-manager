@@ -94,7 +94,7 @@ type ClusterManagerOptions struct {
 	ClusterService             services.ClusterService
 	CloudProvidersService      services.CloudProvidersService
 	FleetshardOperatorAddon    services.FleetshardOperatorAddon
-	OsdIdpKeycloakService      sso.OsdKeycloakService
+	OsdIdpKeycloakService      sso.OSDKeycloakService
 }
 
 type processor func() []error
