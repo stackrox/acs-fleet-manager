@@ -63,7 +63,7 @@ func (r *Runtime) Start() error {
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		list, err := r.client.GetManagedCentralList()
 		if err != nil {
-			err = errors.Wrapf(err, "failed to list centrals")
+			err = errors.Wrapf(err, "retrieving list of managed centrals")
 			glog.Error(err)
 			return 0, err
 		}
@@ -97,7 +97,7 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 		central.Id: *status,
 	})
 	if err != nil {
-		err = errors.Wrapf(err, "updating central status %s", central.Metadata.Name)
+		err = errors.Wrapf(err, "updating status for Central %s", central.Metadata.Name)
 		glog.Error(err)
 	}
 }
