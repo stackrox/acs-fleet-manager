@@ -9,7 +9,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 )
@@ -61,7 +60,7 @@ func (c *Client) GetManagedCentralList() (*private.ManagedCentralList, error) {
 	list := &private.ManagedCentralList{}
 	err = c.unmarshalResponse(resp.Body, &list)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error calling %s", c.endpoint)
+		return nil, errors.Wrapf(err, "calling %s", c.endpoint)
 	}
 
 	return list, nil
@@ -86,9 +85,8 @@ func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus
 		return err
 	}
 
-	into := make(map[string]interface{})
-	if err := c.unmarshalResponse(resp.Body, &into); err != nil {
-		return errors.Wrapf(err, "failed to updates status")
+	if err := c.unmarshalResponse(resp.Body, &struct{}{}); err != nil {
+		return errors.Wrapf(err, "updating status")
 	}
 	return nil
 }
@@ -109,19 +107,21 @@ func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Re
 }
 
 func (c *Client) unmarshalResponse(body io.Reader, v interface{}) error {
-	data, err := ioutil.ReadAll(body)
+	data, err := io.ReadAll(body)
 	if err != nil {
 		return err
 	}
 
-	into := make(map[string]interface{})
+	into := struct {
+		Kind string `json:"kind"`
+	}{}
 	err = json.Unmarshal(data, &into)
 	if err != nil {
 		return err
 	}
 
 	// Unmarshal error
-	if into["kind"] == "Error" {
+	if into.Kind == "error" {
 		apiError := compat.Error{}
 		err = json.Unmarshal(data, &apiError)
 		if err != nil {
