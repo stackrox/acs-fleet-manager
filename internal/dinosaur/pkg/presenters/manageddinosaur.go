@@ -24,6 +24,7 @@ const (
 )
 
 func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
+	// TODO(create-ticket): present DeletionTimestamp
 	res := private.ManagedCentral{
 		Id:   from.Annotations["mas/id"],
 		Kind: from.Kind,

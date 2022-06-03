@@ -659,7 +659,8 @@ func (k *dinosaurService) UpdateStatus(id string, status constants2.DinosaurStat
 
 	update := &dbapi.CentralRequest{Status: status.String()}
 	if status.String() == constants2.DinosaurRequestStatusDeprovision.String() {
-		update.DeletionTimestamp = time.Now()
+		now := time.Now()
+		update.DeletionTimestamp = &now
 	}
 
 	if err := dbConn.Model(&dbapi.CentralRequest{Meta: api.Meta{ID: id}}).Updates(update).Error; err != nil {

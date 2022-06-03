@@ -45,7 +45,7 @@ type CentralRequest struct {
 	Namespace        string `json:"namespace"`
 	RoutesCreationId string `json:"routes_creation_id"`
 	// DeletionTimestamp stores the timestamp of the DELETE api call for the resource
-	DeletionTimestamp time.Time `json:"deletionTimestamp"`
+	DeletionTimestamp *time.Time `json:"deletionTimestamp"`
 }
 
 type CentralList []*CentralRequest
