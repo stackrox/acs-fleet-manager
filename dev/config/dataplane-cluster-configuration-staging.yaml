@@ -1,0 +1,17 @@
+---
+#- A list of clusters for fleet manager
+#- The `cluster_id` field can not be empty
+#- All clusters in fleet manager DB already but are missing in the list will be marked as
+#  'deprovisioning' and will later be deleted.
+#- This list is ordered, any new cluster should be appended at the end.
+clusters:
+ - name: default/api-acs-dp-1-y2vo-s1-devshift-org:6443/acsms-admin
+   cluster_id: 1sii8ba1joon73n3d9n938sjf2e4joha
+   cloud_provider: aws
+   region: us-east-1
+   schedulable: true
+   status: ready
+   central_instance_limit: 10
+   provider_type: standalone
+   supported_instance_type: "eval,standard"
+   cluster_dns: acs-dp-1.y2vo.s1.devshift.org
