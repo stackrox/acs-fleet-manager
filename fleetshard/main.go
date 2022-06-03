@@ -2,17 +2,14 @@ package main
 
 import (
 	"flag"
+	"os"
+	"os/signal"
+
 	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/runtime"
 	"golang.org/x/sys/unix"
-	"os"
-	"os/signal"
-)
-
-const (
-	clusterID   = "1234567890abcdef1234567890abcdef"
-	devEndpoint = "http://127.0.0.1:8000"
 )
 
 /**
@@ -28,12 +25,22 @@ func main() {
 	// parsed.
 	_ = flag.CommandLine.Parse([]string{})
 
-	// Always log to stderr by default
+	// Always log to stderr by default, required for glog.
 	if err := flag.Set("logtostderr", "true"); err != nil {
 		glog.Info("Unable to set logtostderr to true")
 	}
 
-	runtime, err := runtime.NewRuntime(devEndpoint, clusterID, k8s.CreateClientOrDie())
+	config, err := config.Load()
+	if err != nil {
+		glog.Fatalf("Failed to load configuration: %v", err)
+	}
+
+	glog.Info("Starting application")
+	glog.Infof("FleetManagerEndpoint: %s", config.FleetManagerEndpoint)
+	glog.Infof("ClusterID: %s", config.ClusterID)
+	glog.Infof("RuntimePollPeriod: %s", config.RuntimePollPeriod.String())
+
+	runtime, err := runtime.NewRuntime(config, k8s.CreateClientOrDie())
 	if err != nil {
 		glog.Fatal(err)
 	}
