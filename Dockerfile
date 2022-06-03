@@ -9,9 +9,12 @@ RUN ln -s /usr/local/go/bin/go /usr/local/bin/go
 
 WORKDIR /workspace
 
+COPY go.mod ./
+COPY go.sum ./
+RUN go mod download
+
 COPY . ./
 
-RUN go mod vendor
 RUN make clean binary
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.5

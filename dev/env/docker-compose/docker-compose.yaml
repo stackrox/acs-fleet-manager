@@ -64,5 +64,8 @@ services:
     environment:
       - OCM_TOKEN=${OCM_TOKEN}
       - KUBECONFIG=/kubeconfig
+      - FLEET_MANAGER_ENDPOINT=http://fleet-manager:8000
+      - CLUSTER_ID=test
+      - RUNTIME_POLL_PERIOD=10s
     entrypoint:
       - /usr/local/bin/fleetshard-sync

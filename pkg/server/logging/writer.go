@@ -3,8 +3,8 @@ package logging
 import (
 	"net/http"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )
 
 func NewLoggingWriter(w http.ResponseWriter, r *http.Request, f LogFormatter) *loggingWriter {
