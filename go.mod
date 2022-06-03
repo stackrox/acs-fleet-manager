@@ -7,9 +7,10 @@ require (
 	github.com/Nerzal/gocloak/v11 v11.2.0
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware/v2 v2.0.1
-	github.com/aws/aws-sdk-go v1.44.6
+	github.com/aws/aws-sdk-go v1.44.27
 	github.com/blang/semver/v4 v4.0.0
 	github.com/bxcodec/faker/v3 v3.2.0
+	github.com/caarlos0/env/v6 v6.9.3
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
