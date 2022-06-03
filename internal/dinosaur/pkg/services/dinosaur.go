@@ -831,6 +831,10 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfi
 		}
 	}
 
+	if dinosaurRequest.DeletionTimestamp != nil {
+		managedDinosaurCR.DeletionTimestamp = &metav1.Time{Time: *dinosaurRequest.DeletionTimestamp}
+	}
+
 	return managedDinosaurCR
 }
 
