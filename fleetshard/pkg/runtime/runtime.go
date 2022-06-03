@@ -2,15 +2,17 @@ package runtime
 
 import (
 	"context"
+	"time"
+
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/centralreconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 // reconcilerRegistry contains a registry of a reconciler for each Central tenant. The key is the identifier of the
@@ -28,6 +30,7 @@ var backoff = wait.Backoff{
 
 // Runtime represents the runtime to reconcile all centrals associated with the given cluster.
 type Runtime struct {
+	config           *config.Config
 	client           *fleetmanager.Client
 	reconcilers      reconcilerRegistry //TODO(yury): remove central instance after deletion
 	k8sClient        ctrlClient.Client
@@ -35,13 +38,14 @@ type Runtime struct {
 }
 
 // NewRuntime creates a new runtime
-func NewRuntime(devEndpoint string, clusterID string, k8sClient ctrlClient.Client) (*Runtime, error) {
-	client, err := fleetmanager.NewClient(devEndpoint, clusterID)
+func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
+	client, err := fleetmanager.NewClient(config.FleetManagerEndpoint, config.ClusterID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleetmanager client")
 	}
 
 	return &Runtime{
+		config:      config,
 		k8sClient:   k8sClient,
 		client:      client,
 		reconcilers: make(reconcilerRegistry),
@@ -76,7 +80,7 @@ func (r *Runtime) Start() error {
 			}(reconciler, central)
 		}
 
-		return 1 * time.Second, nil
+		return r.config.RuntimePollPeriod, nil
 	}, 10*time.Minute, backoff)
 
 	return ticker.Start()
