@@ -36,10 +36,17 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteNamespace := remoteCentralName
 
+	central := &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      remoteCentralName,
+			Namespace: remoteNamespace,
+		},
+	}
+
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
 		glog.Infof("Deleting central %s", remoteCentralName)
-		if err := r.deleteNamespace(remoteNamespace); err != nil {
-			return nil, errors.Wrapf(err, "unable to delete central namespace %s", remoteNamespace)
+		if err := r.deleteCentral(central); err != nil {
+			return nil, errors.Wrapf(err, "delete central %s", remoteCentralName)
 		}
 		return deletedStatus(), nil
 	}
@@ -49,13 +56,6 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	}
 
 	centralExists := true
-	central := &v1alpha1.Central{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      remoteCentralName,
-			Namespace: remoteNamespace,
-		},
-	}
-
 	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentralName}, central)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -82,6 +82,26 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	return readyStatus(), nil
 }
 
+func (r CentralReconciler) deleteCentral(central *v1alpha1.Central) error {
+	pvcs, err := r.getOwnedPVCs(central)
+	// get used PVCs before deleting the CR because operator erases the PVC ownerReference after CR deletion
+	if err != nil {
+		return errors.Wrapf(err, "get central PVCS %s/%s", central.GetName(), central.GetNamespace())
+	}
+	if err := r.deleteCentralCR(central); err != nil {
+		return errors.Wrapf(err, "delete central CR %s/%s", central.GetName(), central.GetNamespace())
+	}
+	for _, pvc := range pvcs {
+		if err := r.deleteCentralPVC(pvc); err != nil {
+			return errors.Wrapf(err, "delete PVC %s/%s", pvc.GetName(), pvc.GetNamespace())
+		}
+	}
+	if err := r.deleteNamespace(central.GetNamespace()); err != nil {
+		return errors.Wrapf(err, "delete central namespace %s", central.GetNamespace())
+	}
+	return nil
+}
+
 func (r CentralReconciler) ensureNamespace(name string) error {
 	namespace := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -100,6 +120,11 @@ func (r CentralReconciler) ensureNamespace(name string) error {
 	return err
 }
 
+func (r CentralReconciler) deleteCentralCR(central *v1alpha1.Central) error {
+	return r.client.Delete(context.Background(), central)
+
+}
+
 func (r CentralReconciler) deleteNamespace(name string) error {
 	namespace := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -107,6 +132,28 @@ func (r CentralReconciler) deleteNamespace(name string) error {
 		},
 	}
 	return r.client.Delete(context.Background(), namespace)
+}
+
+func (r CentralReconciler) deleteCentralPVC(pvc *v1.PersistentVolumeClaim) error {
+	return r.client.Delete(context.Background(), pvc)
+}
+
+func (r CentralReconciler) getOwnedPVCs(central *v1alpha1.Central) ([]*v1.PersistentVolumeClaim, error) {
+	pvcList := &v1.PersistentVolumeClaimList{}
+	if err := r.client.List(context.Background(), pvcList, ctrlClient.InNamespace(central.GetNamespace())); err != nil {
+		return nil, errors.Wrapf(err, "receiving list PVC list for %s %s", central.GroupVersionKind(), central.GetName())
+	}
+
+	var ownedPVCs []*v1.PersistentVolumeClaim
+	for i := range pvcList.Items {
+		item := pvcList.Items[i]
+		if metav1.IsControlledBy(&item, central) {
+			tmp := item
+			ownedPVCs = append(ownedPVCs, &tmp)
+		}
+	}
+
+	return ownedPVCs, nil
 }
 
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral) *CentralReconciler {
