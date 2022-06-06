@@ -516,7 +516,7 @@ objects:
               secretName: fleet-manager-dataplane-certificate
           - name: rds
             secret:
-              secretName: fleet-manager-rds
+              secretName: acs-fleet-manager-rds
           - name: fleet-manager-providers-config
             configMap:
               name: fleet-manager-providers-config
