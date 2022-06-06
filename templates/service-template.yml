@@ -469,6 +469,8 @@ objects:
       name: fleet-manager
       labels:
         app: fleet-manager
+    imagePullSecrets:
+    - name: quay.io
   - kind: Deployment
     apiVersion: apps/v1
     metadata:
