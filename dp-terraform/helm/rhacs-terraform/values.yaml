@@ -6,3 +6,6 @@ fleetshardSync:
   ocmToken: ""
   fleetManagerEndpoint: ""
   clusterId: ""
+acsOperator:
+  enabled: false
+  startingCSV: rhacs-operator.v3.70.0
