@@ -12,7 +12,7 @@ require (
 	github.com/bxcodec/faker/v3 v3.2.0
 	github.com/caarlos0/env/v6 v6.9.3
 	github.com/docker/go-healthcheck v0.1.0
-	github.com/getsentry/sentry-go v0.3.1
+	github.com/getsentry/sentry-go v0.13.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-resty/resty/v2 v2.7.0
@@ -64,7 +64,6 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/caarlos0/env/v6 v6.9.3 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
