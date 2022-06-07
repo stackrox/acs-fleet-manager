@@ -60,5 +60,6 @@ var _ = Describe("Central", func() {
 		})
 
 		//TODO(create-ticket): Add test to eventually reach ready state
+		//TODO(yury): Add removal test
 	})
 })
