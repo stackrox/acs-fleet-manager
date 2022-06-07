@@ -1,0 +1,8 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: observability-operator-group
+  namespace: {{ include "observability.namespace" . }}
+spec:
+  targetNamespaces:
+  - rhacs-observability

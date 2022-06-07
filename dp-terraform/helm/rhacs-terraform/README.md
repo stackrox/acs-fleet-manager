@@ -15,3 +15,5 @@ helm -n rhacs install rhacs-terraform dp-terraform/helm/rhacs-terraform/ \
       --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
       --set fleetshardSync.clusterId=${cluster_id}
 ```
+
+FIXME: use values file, and insist in putting in to safe location: refer to subchart for subchart config
