@@ -1,0 +1,6 @@
+{
+    "region": "standalone",
+    "cloud_provider": "standalone",
+    "name": "test-central-1",
+    "multi_az": true
+}
