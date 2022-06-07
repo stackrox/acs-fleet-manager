@@ -52,7 +52,7 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(5 * time.Minute).WithPolling(1 * time.Second).Should(Succeed())
 		})
 
-		It("should create central in managed cluster", func() {
+		It("should create central in its namespace on a managed cluster", func() {
 			Eventually(func() error {
 				central := &v1alpha1.Central{}
 				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: centralName}, central)

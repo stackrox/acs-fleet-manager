@@ -21,7 +21,7 @@ const (
 	publicCentralURI = "api/rhacs/v1/centrals"
 )
 
-// Client represents the client to REST client to connect to fleet-manager
+// Client represents the REST client for connecting to fleet-manager
 type Client struct {
 	client             http.Client
 	ocmToken           string
@@ -96,6 +96,7 @@ func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus
 	return nil
 }
 
+// CreateCentral creates a central from the public fleet-manager API
 func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.CentralRequest, error) {
 	reqBody, err := json.Marshal(request)
 	if err != nil {
@@ -115,6 +116,7 @@ func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.Ce
 	return result, nil
 }
 
+// GetCentral returns a Central from the public fleet-manager API
 func (c *Client) GetCentral(id string) (*public.CentralRequest, error) {
 	resp, err := c.newRequest(http.MethodGet, fmt.Sprintf("%s/%s", c.publicAPIEndpoint, id), nil)
 	if err != nil {
