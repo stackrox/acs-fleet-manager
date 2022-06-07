@@ -495,27 +495,6 @@ objects:
   - apiVersion: v1
     kind: ConfigMap
     metadata:
-      name: fake-fleet-manager-secret
-    data:
-      ocm-service.clientId: badger
-      ocm-service.clientSecret: badger
-      ocm-service.token: badger
-      sentry.key: badger
-      aws.accesskey: badger
-      aws.accountid: badger
-      aws.secretaccesskey: badger
-      keycloak-service.clientId: badger
-      keycloak-service.clientSecret: badger
-      osd-idp-keycloak-service.clientId: badger
-      osd-idp-keycloak-service.clientSecret: badger
-      aws.route53accesskey: badger
-      aws.route53secretaccesskey: badger
-      observability-config-access.token: badger
-      image-pull.dockerconfigjson: badger
-      kubeconfig: badger
-  - apiVersion: v1
-    kind: ConfigMap
-    metadata:
       name: fake-fleet-manager-observatorium-secret
     data:
       logs.clientId: badger
