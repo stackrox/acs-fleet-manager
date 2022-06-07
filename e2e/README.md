@@ -9,8 +9,8 @@
 $ ./scripts/setup-dev-env.sh
 
 # Run fleetshard-sync locally
-$ make fleetshard/build
-$ OCM_TOKEN=$(ocm token) ./fleetshard-sync
+$ make fleetshard-sync
+$ CLUSTER_ID=1234567890abcdef1234567890abcdef OCM_TOKEN=$(ocm token) ./fleetshard-sync
 
 # Run e2e tests
 $ OCM_TOKEN=$(ocm token) go test ./e2e/...

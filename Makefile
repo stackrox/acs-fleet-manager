@@ -270,9 +270,11 @@ lint: golangci-lint specinstall
 
 fleet-manager:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) ./cmd/fleet-manager
+.PHONY: fleet-manager
 
 fleetshard-sync:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
+.PHONY: fleetshard-sync
 
 binary: fleet-manager fleetshard-sync
 .PHONY: binary

@@ -65,7 +65,7 @@ func (c *Client) GetManagedCentralList() (*private.ManagedCentralList, error) {
 	list := &private.ManagedCentralList{}
 	err = c.unmarshalResponse(resp.Body, &list)
 	if err != nil {
-		return nil, errors.Wrapf(err, "calling %s", c.endpoint)
+		return nil, errors.Wrapf(err, "calling %s", c.privateAPIEndpoint)
 	}
 
 	return list, nil
@@ -107,18 +107,12 @@ func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.Ce
 		return nil, err
 	}
 
-	all, err := io.ReadAll(resp.Body)
+	result := &public.CentralRequest{}
+	err = c.unmarshalResponse(resp.Body, result)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(string(all))
-	result := public.CentralRequest{}
-	err = json.Unmarshal(all, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return result, nil
 }
 
 func (c *Client) GetCentral(id string) (*public.CentralRequest, error) {
@@ -127,18 +121,13 @@ func (c *Client) GetCentral(id string) (*public.CentralRequest, error) {
 		return nil, err
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	central := &public.CentralRequest{}
+	err = c.unmarshalResponse(resp.Body, central)
 	if err != nil {
 		return nil, err
 	}
 
-	central := public.CentralRequest{}
-	err = json.Unmarshal(respBody, &central)
-	if err != nil {
-		return nil, err
-	}
-
-	return &central, nil
+	return central, nil
 }
 
 func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Response, error) {
@@ -171,7 +160,7 @@ func (c *Client) unmarshalResponse(body io.Reader, v interface{}) error {
 	}
 
 	// Unmarshal error
-	if into.Kind == "error" {
+	if into.Kind == "Error" || into.Kind == "error" {
 		apiError := compat.Error{}
 		err = json.Unmarshal(data, &apiError)
 		if err != nil {
