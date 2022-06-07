@@ -2,8 +2,14 @@
 package centralreconciler
 
 import (
+	"bytes"
 	"context"
+	"crypto/md5"
+	"encoding/json"
 	"fmt"
+	"strconv"
+	"sync/atomic"
+
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
@@ -13,8 +19,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
-	"sync/atomic"
 )
 
 const (
@@ -28,9 +32,10 @@ const (
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client  ctrlClient.Client
-	central private.ManagedCentral
-	status  *int32
+	client          ctrlClient.Client
+	central         private.ManagedCentral
+	status          *int32
+	lastCentralHash [16]byte
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -38,15 +43,19 @@ type CentralReconciler struct {
 // TODO(create-ticket): Check correct Central gets reconciled
 // TODO(create-ticket): Should an initial ManagedCentral be added on reconciler creation?
 // TODO(create-ticket): Add cache to only reconcile if a change to the ManagedCentral was made
-func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
+func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	// Only allow to start reconcile function once
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
 		return nil, errors.New("Reconciler still busy, skipping reconciliation attempt.")
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
+	if err := r.setLastCentralHash(remoteCentral); err != nil {
+		return nil, errors.Wrapf(err, "filling central reconcilation cache")
+	}
+
+	remoteNamespace := remoteCentral.Metadata.Name
 	remoteCentralName := remoteCentral.Metadata.Name
-	remoteNamespace := remoteCentralName
 
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
@@ -115,6 +124,27 @@ func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1
 	}
 	glog.Infof("All central resources were deleted: %s/%s", central.GetNamespace(), central.GetName())
 	return true, nil
+}
+
+// CentralChanged compares the given central to the last central Reconciled using a hash
+func (r *CentralReconciler) CentralChanged(central private.ManagedCentral) (bool, error) {
+	centralBytes, err := json.Marshal(&central)
+	if err != nil {
+		return true, errors.Wrapf(err, "marshaling central")
+	}
+	currentHash := md5.Sum(centralBytes)
+
+	return bytes.Equal(r.lastCentralHash[:], currentHash[:]), nil
+}
+
+func (r *CentralReconciler) setLastCentralHash(central private.ManagedCentral) error {
+	centralBytes, err := json.Marshal(&central)
+	if err != nil {
+		return err
+	}
+
+	r.lastCentralHash = md5.Sum(centralBytes)
+	return nil
 }
 
 func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) error {
