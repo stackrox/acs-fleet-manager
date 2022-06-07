@@ -5,7 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
-type DinosaurCapacityConfig struct {
+type MaxCapacityConfig struct {
 	MaxCapacity int64 `json:"maxCapacity"`
 }
 
@@ -16,8 +16,8 @@ type DinosaurConfig struct {
 	DinosaurTLSKeyFile                string `json:"dinosaur_tls_key_file"`
 	EnableDinosaurExternalCertificate bool   `json:"enable_dinosaur_external_certificate"`
 	DinosaurDomainName                string `json:"dinosaur_domain_name"`
-	// TODO drop DinosaurCapacity
-	DinosaurCapacity DinosaurCapacityConfig `json:"dinosaur_capacity_config"`
+	// TODO ROX-11289 drop MaxCapacity
+	MaxCapacity MaxCapacityConfig `json:"max_capacity_config"`
 
 	DinosaurLifespan *DinosaurLifespanConfig `json:"dinosaur_lifespan"`
 	Quota            *DinosaurQuotaConfig    `json:"dinosaur_quota"`
@@ -54,6 +54,9 @@ func (c *DinosaurConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-	c.DinosaurCapacity = DinosaurCapacityConfig{1000}
+	// TODO ROX-11289 drop MaxCapacity
+	// MaxCapacity is deprecated and will not be used.
+	// Temporary set MaxCapacity manually in order to simplify app start.
+	c.MaxCapacity = MaxCapacityConfig{1000}
 	return nil
 }
