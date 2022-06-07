@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 )
@@ -57,39 +57,38 @@ func (c *Client) GetManagedCentralList() (*private.ManagedCentralList, error) {
 		return nil, err
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	list := &private.ManagedCentralList{}
+	err = c.unmarshalResponse(resp.Body, &list)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "calling %s", c.endpoint)
 	}
 
-	list := &private.ManagedCentralList{}
-	err = json.Unmarshal(respBody, &list)
-	if err != nil {
-		return nil, err
-	}
 	return list, nil
 }
 
 // UpdateStatus batch updates the status of managed centrals. The status param takes a map of DataPlaneCentralStatus indexed by
 // the Centrals ID.
-func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus) ([]byte, error) {
+func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus) error {
 	updateBody, err := json.Marshal(statuses)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	bufUpdateBody := &bytes.Buffer{}
 	_, err = bufUpdateBody.Write(updateBody)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	resp, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/%s", c.endpoint, statusRoute), bufUpdateBody)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return ioutil.ReadAll(resp.Body)
+	if err := c.unmarshalResponse(resp.Body, &struct{}{}); err != nil {
+		return errors.Wrapf(err, "updating status")
+	}
+	return nil
 }
 
 func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Response, error) {
@@ -105,4 +104,31 @@ func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Re
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (c *Client) unmarshalResponse(body io.Reader, v interface{}) error {
+	data, err := io.ReadAll(body)
+	if err != nil {
+		return err
+	}
+
+	into := struct {
+		Kind string `json:"kind"`
+	}{}
+	err = json.Unmarshal(data, &into)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal error
+	if into.Kind == "error" {
+		apiError := compat.Error{}
+		err = json.Unmarshal(data, &apiError)
+		if err != nil {
+			return err
+		}
+		return errors.Errorf("API error occured %s: %s", apiError.Code, apiError.Reason)
+	}
+
+	return json.Unmarshal(data, v)
 }
