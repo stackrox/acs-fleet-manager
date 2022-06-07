@@ -501,6 +501,13 @@ objects:
       logs.clientSecret: badger
       metrics.clientId: badger
       metrics.clientSecret: badger
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: fake-fleet-manager-dataplane-cert-secret
+    data:
+      tls.crt: badger
+      tls.key: badger
   - kind: Deployment
     apiVersion: apps/v1
     metadata:
@@ -544,8 +551,8 @@ objects:
             configMap:
               name: fake-fleet-manager-secret
           - name: dataplane-certificate
-            secret:
-              secretName: fleet-manager-dataplane-certificate
+            configMap:
+              name: fake-fleet-manager-dataplane-cert-secret
           - name: rds
             secret:
               secretName: acs-fleet-manager-rds
