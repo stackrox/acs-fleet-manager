@@ -471,6 +471,27 @@ objects:
         app: fleet-manager
     imagePullSecrets:
     - name: quay.io
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: fake-fleet-manager-secret
+    data:
+      ocm-service.clientId: badger
+      ocm-service.clientSecret: badger
+      ocm-service.token: badger
+      sentry.key: badger
+      aws.accesskey: badger
+      aws.accountid: badger
+      aws.secretaccesskey: badger
+      keycloak-service.clientId: badger
+      keycloak-service.clientSecret: badger
+      osd-idp-keycloak-service.clientId: badger
+      osd-idp-keycloak-service.clientSecret: badger
+      aws.route53accesskey: badger
+      aws.route53secretaccesskey: badger
+      observability-config-access.token: badger
+      image-pull.dockerconfigjson: badger
+      kubeconfig: badger
   - kind: Deployment
     apiVersion: apps/v1
     metadata:
@@ -511,8 +532,8 @@ objects:
             secret:
               secretName: fleet-manager-tls
           - name: service
-            secret:
-              secretName: fleet-manager
+            configMap:
+              name: fake-fleet-manager-secret
           - name: dataplane-certificate
             secret:
               secretName: fleet-manager-dataplane-certificate
