@@ -54,7 +54,7 @@ func (c *DinosaurConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-	// TODO ROX-11289 drop MaxCapacity
+	// TODO(ROX-11289): drop MaxCapacity
 	// MaxCapacity is deprecated and will not be used.
 	// Temporary set MaxCapacity manually in order to simplify app start.
 	c.MaxCapacity = MaxCapacityConfig{1000}
