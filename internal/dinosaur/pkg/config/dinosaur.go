@@ -16,7 +16,7 @@ type DinosaurConfig struct {
 	DinosaurTLSKeyFile                string `json:"dinosaur_tls_key_file"`
 	EnableDinosaurExternalCertificate bool   `json:"enable_dinosaur_external_certificate"`
 	DinosaurDomainName                string `json:"dinosaur_domain_name"`
-	// TODO ROX-11289 drop MaxCapacity
+	// TODO(ROX-11289): drop MaxCapacity
 	MaxCapacity MaxCapacityConfig `json:"max_capacity_config"`
 
 	DinosaurLifespan *DinosaurLifespanConfig `json:"dinosaur_lifespan"`
