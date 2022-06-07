@@ -74,10 +74,10 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 		if err := r.client.Create(ctx, central); err != nil {
 			return nil, errors.Wrapf(err, "creating new central %q", remoteCentral.Metadata.Name)
 		}
+		glog.Infof("Central %s created", central.GetName())
 	} else {
 		// TODO(yury): implement update logic
 		glog.Infof("Update central tenant %s", central.GetName())
-		glog.Info("Implement update logic for Centrals")
 
 		err = r.incrementCentralRevision(central)
 		if err != nil {
