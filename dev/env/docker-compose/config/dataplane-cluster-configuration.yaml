@@ -1,6 +1,6 @@
 ---
 clusters:
-  - name: docker-desktop # Uncomment if using docker-desktop
+  - name: docker-compose
     cluster_id: 1234567890abcdef1234567890abcdef
     cloud_provider: standalone
     region: standalone
