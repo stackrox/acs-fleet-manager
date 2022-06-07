@@ -1,7 +1,25 @@
 # fleetshard-sync
 
+## Prerequisites
+
+The sample configuration for a dataplane cluster used in the instructions below requires Minikube to be running.
+
+Therefore, make sure that Minikube is running:
+```
+$ minikube start
+```
+(specific settings depend on your environment, see e.g. https://minikube.sigs.k8s.io/docs/drivers/)
+
+Proceed by running the RHACS operator:
+```
+$ cdrox
+$ make -C operator install run
+```
+
 ## Quickstart
 
+```
+export CLUSTER_ID=1234567890abcdef1234567890abcdef
 ```
 # Start commands from git root directory
 
