@@ -134,7 +134,7 @@ func (r *CentralReconciler) CentralChanged(central private.ManagedCentral) (bool
 	}
 	currentHash := md5.Sum(centralBytes)
 
-	return bytes.Equal(r.lastCentralHash[:], currentHash[:]), nil
+	return !bytes.Equal(r.lastCentralHash[:], currentHash[:]), nil
 }
 
 func (r *CentralReconciler) setLastCentralHash(central private.ManagedCentral) error {
