@@ -23,11 +23,11 @@ const (
 
 // Client represents the REST client for connecting to fleet-manager
 type Client struct {
-	client             http.Client
-	ocmToken           string
-	clusterID          string
-	privateAPIEndpoint string
-	publicAPIEndpoint  string
+	client                http.Client
+	ocmToken              string
+	clusterID             string
+	fleetshardAPIEndpoint string
+	consoleAPIEndpoint    string
 }
 
 // NewClient creates a new client
@@ -43,21 +43,21 @@ func NewClient(endpoint string, clusterID string) (*Client, error) {
 	}
 
 	if endpoint == "" {
-		return nil, errors.New("privateAPIEndpoint is empty")
+		return nil, errors.New("fleetshardAPIEndpoint is empty")
 	}
 
 	return &Client{
-		client:             http.Client{},
-		clusterID:          clusterID,
-		ocmToken:           ocmToken,
-		privateAPIEndpoint: fmt.Sprintf("%s/%s/%s/%s", endpoint, uri, clusterID, "centrals"),
-		publicAPIEndpoint:  fmt.Sprintf("%s/%s", endpoint, publicCentralURI),
+		client:                http.Client{},
+		clusterID:             clusterID,
+		ocmToken:              ocmToken,
+		fleetshardAPIEndpoint: fmt.Sprintf("%s/%s/%s/%s", endpoint, uri, clusterID, "centrals"),
+		consoleAPIEndpoint:    fmt.Sprintf("%s/%s", endpoint, publicCentralURI),
 	}, nil
 }
 
 // GetManagedCentralList returns a list of centrals from fleet-manager which should be managed by this fleetshard.
 func (c *Client) GetManagedCentralList() (*private.ManagedCentralList, error) {
-	resp, err := c.newRequest(http.MethodGet, c.privateAPIEndpoint, &bytes.Buffer{})
+	resp, err := c.newRequest(http.MethodGet, c.fleetshardAPIEndpoint, &bytes.Buffer{})
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (c *Client) GetManagedCentralList() (*private.ManagedCentralList, error) {
 	list := &private.ManagedCentralList{}
 	err = c.unmarshalResponse(resp.Body, &list)
 	if err != nil {
-		return nil, errors.Wrapf(err, "calling %s", c.privateAPIEndpoint)
+		return nil, errors.Wrapf(err, "calling %s", c.fleetshardAPIEndpoint)
 	}
 
 	return list, nil
@@ -85,7 +85,7 @@ func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus
 		return err
 	}
 
-	resp, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/%s", c.privateAPIEndpoint, statusRoute), bufUpdateBody)
+	resp, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/%s", c.fleetshardAPIEndpoint, statusRoute), bufUpdateBody)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.Ce
 		return nil, err
 	}
 
-	resp, err := c.newRequest(http.MethodPost, fmt.Sprintf("%s?async=true", c.publicAPIEndpoint), bytes.NewBuffer(reqBody))
+	resp, err := c.newRequest(http.MethodPost, fmt.Sprintf("%s?async=true", c.consoleAPIEndpoint), bytes.NewBuffer(reqBody))
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.Ce
 
 // GetCentral returns a Central from the public fleet-manager API
 func (c *Client) GetCentral(id string) (*public.CentralRequest, error) {
-	resp, err := c.newRequest(http.MethodGet, fmt.Sprintf("%s/%s", c.publicAPIEndpoint, id), nil)
+	resp, err := c.newRequest(http.MethodGet, fmt.Sprintf("%s/%s", c.consoleAPIEndpoint, id), nil)
 	if err != nil {
 		return nil, err
 	}
