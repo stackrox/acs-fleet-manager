@@ -268,12 +268,10 @@ lint: golangci-lint specinstall
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 
-.PHONY: fleet-manager
 fleet-manager:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) ./cmd/fleet-manager
 .PHONY: fleet-manager
 
-.PHONY: fleetshard-sync
 fleetshard-sync:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
 .PHONY: fleetshard-sync
