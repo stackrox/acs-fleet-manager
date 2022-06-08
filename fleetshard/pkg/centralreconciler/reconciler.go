@@ -23,6 +23,7 @@ const (
 
 	revisionAnnotationKey = "rhacs.redhat.com/revision"
 	k8sManagedByLabelKey  = "app.kubernetes.io/managed-by"
+	k8sComponentLabelKey  = "app.kubernetes.io/component"
 )
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -166,7 +167,7 @@ func (r CentralReconciler) getCentralPVCs(ctx context.Context, central *v1alpha1
 	pvcList := &v1.PersistentVolumeClaimList{}
 	err := r.client.List(ctx, pvcList,
 		ctrlClient.InNamespace(central.GetNamespace()),
-		ctrlClient.MatchingLabels{"app.kubernetes.io/component": "central"})
+		ctrlClient.MatchingLabels{k8sComponentLabelKey: "central"})
 	if err != nil {
 		return nil, errors.Wrapf(err, "receiving list PVC list for %s %s", central.GroupVersionKind(), central.GetName())
 	}
