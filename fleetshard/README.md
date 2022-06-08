@@ -19,7 +19,6 @@ $ make -C operator install run
 ## Quickstart
 
 ```
-export CLUSTER_ID=1234567890abcdef1234567890abcdef
 ```
 # Start commands from git root directory
 
