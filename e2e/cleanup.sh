@@ -6,4 +6,4 @@ for namespace in $(echo "$namespaces");
 do
   kubectl delete namespace "$namespace" &
 done
-docker stop fleet-manager-db && docker rm fleet-manager-db
+make db/teardown

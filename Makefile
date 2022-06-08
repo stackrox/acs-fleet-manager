@@ -329,6 +329,10 @@ test/cluster/cleanup:
 	./scripts/cleanup_test_cluster.sh
 .PHONY: test/cluster/cleanup
 
+test/e2e/cleanup:
+	./e2e/cleanup.sh
+.PHONY: test/e2e/cleanup
+
 # generate files
 generate: moq openapi/generate
 	$(GO) generate ./...
