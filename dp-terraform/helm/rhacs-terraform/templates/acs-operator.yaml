@@ -1,4 +1,4 @@
-{{ if .Values.acsOperator.enabled }}
+{{- if .Values.acsOperator.enabled }}
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
@@ -17,4 +17,4 @@ spec:
   source: redhat-operators
   sourceNamespace: openshift-marketplace
   startingCSV: {{ .Values.acsOperator.startingCSV }}
-{{ end }}
+{{- end }}
