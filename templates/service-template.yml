@@ -469,6 +469,115 @@ objects:
       name: fleet-manager
       labels:
         app: fleet-manager
+    imagePullSecrets:
+    - name: quay.io
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: fake-fleet-manager-secret
+    data:
+      ocm-service.clientId: badger
+      ocm-service.clientSecret: badger
+      ocm-service.token: badger
+      sentry.key: badger
+      aws.accesskey: badger
+      aws.accountid: badger
+      aws.secretaccesskey: badger
+      keycloak-service.clientId: badger
+      keycloak-service.clientSecret: badger
+      osd-idp-keycloak-service.clientId: badger
+      osd-idp-keycloak-service.clientSecret: badger
+      aws.route53accesskey: badger
+      aws.route53secretaccesskey: badger
+      observability-config-access.token: badger
+      image-pull.dockerconfigjson: badger
+      kubeconfig: badger
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: fake-fleet-manager-observatorium-secret
+    data:
+      logs.clientId: badger
+      logs.clientSecret: badger
+      metrics.clientId: badger
+      metrics.clientSecret: badger
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: fake-fleet-manager-dataplane-cert-secret
+    data:
+      tls.crt: badger
+      tls.key: badger
+
+  # This is a copy of the configmap from envoy-config-configmap.yml but only containing the parts
+  # which are strictly necessary to get readiness/liveness probes to pass.
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: fleet-manager-envoy-config-cd
+      annotations:
+        qontract.recycle: "true"
+    data:
+      main.yaml: |
+        # The administration endpoint uses a Unix socket instead of TCP in order
+        # to avoid exposing it outside of the pod. Requests for metrics and
+        # probes will go via an HTTP listener that only accepts requests for the
+        # /metrics and /ready paths.
+        admin:
+          access_log_path: /dev/null
+          address:
+            pipe:
+              path: /sockets/admin.socket
+    
+        static_resources:
+    
+          clusters:
+            
+            # This backend is used to send metrics and probes requests to the
+            # administration endpoint.
+            - name: admin
+              connect_timeout: 1s
+              type: STATIC
+              lb_policy: ROUND_ROBIN
+              load_assignment:
+                cluster_name: admin
+                endpoints:
+                  - lb_endpoints:
+                      - endpoint:
+                          address:
+                            pipe:
+                              path: /sockets/admin.socket
+            
+          listeners:
+            
+            # This listener is used to accept /ready requests.
+            # Everything else will be rejected.
+            - name: admin
+              address:
+                socket_address:
+                  address: 0.0.0.0
+                  port_value: 9000
+              filter_chains:
+                - filters:
+                    - name: envoy.filters.network.http_connection_manager
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                        stat_prefix: admin
+                        route_config:
+                          name: admin
+                          virtual_hosts:
+                            - name: admin
+                              domains:
+                                - "*"
+                              routes:
+                                - name: ready
+                                  match:
+                                    path: /ready
+                                  route:
+                                    cluster: admin
+                        http_filters:
+                          - name: envoy.filters.http.router
+
   - kind: Deployment
     apiVersion: apps/v1
     metadata:
@@ -509,14 +618,14 @@ objects:
             secret:
               secretName: fleet-manager-tls
           - name: service
-            secret:
-              secretName: fleet-manager
+            configMap:
+              name: fake-fleet-manager-secret
           - name: dataplane-certificate
-            secret:
-              secretName: fleet-manager-dataplane-certificate
+            configMap:
+              name: fake-fleet-manager-dataplane-cert-secret
           - name: rds
             secret:
-              secretName: fleet-manager-rds
+              secretName: acs-fleet-manager-rds
           - name: fleet-manager-providers-config
             configMap:
               name: fleet-manager-providers-config
@@ -537,7 +646,9 @@ objects:
               name: fleet-manager-dataplane-cluster-scaling-config
           - name: envoy-config
             configMap:
-              name: fleet-manager-envoy-config
+              # Temporarily use a minimum version of the configmap deployed from this file
+              # (-cd for Continuous Deployment).
+              name: fleet-manager-envoy-config-cd
           - name: envoy-tls
             secret:
               secretName: fleet-manager-envoy-tls
@@ -545,8 +656,8 @@ objects:
             emptyDir:
               medium: Memory
           - name: fleet-manager-observatorium-configuration-red-hat-sso
-            secret:
-              secretName: fleet-manager-observatorium-configuration-red-hat-sso
+            configMap:
+              name: fake-fleet-manager-observatorium-secret
           initContainers:
           - name: migration
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
@@ -711,11 +822,15 @@ objects:
               limits:
                 cpu: ${CPU_LIMIT}
                 memory: ${MEMORY_LIMIT}
+            # TODO ROX-11309 Use /api based endpoint for livenessProbe
             livenessProbe:
               httpGet:
-                path: /api/dinosaurs_mgmt
-                port: 8000
+                path: /healthcheck
+                port: 8083
                 scheme: HTTPS
+                httpHeaders:
+                  - name: User-Agent
+                    value: Probe
               initialDelaySeconds: 15
               periodSeconds: 5
             readinessProbe:

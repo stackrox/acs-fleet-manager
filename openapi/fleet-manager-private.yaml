@@ -196,6 +196,22 @@ components:
         kind:
           type: string
 
+    ResourceList:
+      type: object
+      properties:
+        cpu:
+          type: string
+        memory:
+          type: string
+
+    ResourceRequirements:
+      type: object
+      properties:
+        requests:
+          $ref: "#/components/schemas/ResourceList"
+        limits:
+          $ref: "#/components/schemas/ResourceList"
+
     ManagedCentralVersions:
       type: object
       properties:
@@ -227,7 +243,7 @@ components:
                     mas/placementId:
                       type: string
                 deletionTimestamp:
-                  type: string
+                      type: string
 
             spec:
               type: object
@@ -251,10 +267,41 @@ components:
                           type: string
                 versions:
                   $ref: "#/components/schemas/ManagedCentralVersions"
-                deleted:
-                  type: boolean
-              required:
-                - deleted
+                central:
+                  type: object
+                  properties:
+                    resources:
+                      $ref: "#/components/schemas/ResourceRequirements"
+                scanner:
+                  type: object
+                  properties:
+                    analyzer:
+                      type: object
+                      properties:
+                        scaling:
+                          type: object
+                          properties:
+                            autoScaling:
+                              type: string
+                            replicas:
+                              type: integer
+                              format: int32
+                              minimum: 1
+                            minReplicas:
+                              type: integer
+                              format: int32
+                              minimum: 1
+                            maxReplicas:
+                              type: integer
+                              format: int32
+                              minimum: 1
+                        resources:
+                          $ref: "#/components/schemas/ResourceRequirements"
+                    db:
+                      type: object
+                      properties:
+                        host:
+                          type: string
 
     ManagedCentralList:
       description: >-
@@ -402,6 +449,7 @@ components:
   examples:
     ManagedCentralExample:
       value:
+        id: "1rfpsqbvq1em2u9u0z54ymjcwac"
         kind: "ManagedCentral"
         metadata:
           name: "example-central"
@@ -409,7 +457,11 @@ components:
           annotations:
             mas/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
             mas/placementId: ""
+          deletionTimestamp: "2022-06-01T11:04:09Z"
         spec:
+          owners: [
+            "central-owner1"
+          ]
           endpoint:
             host: "example-central--rfpsqbvq-em-u-u-z--ymjcwac.example.central.com"
             tls:
@@ -418,7 +470,30 @@ components:
           versions:
             central: 2.7.0
             centralOperator: 0.21.2
-          deleted: false
+          central:
+            resources:
+              requests:
+                cpu: 250m
+                memory: 250Mi
+              limtis:
+                cpu: 1000m
+                memory: 4Gi
+          scanner:
+            analyzer:
+              scaling:
+                autoScaling: enabled
+                replicas: 1
+                minReplicas: 1
+                maxReplicas: 3
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 100Mi
+                limtis:
+                  cpu: 500m
+                  memory: 2500Mi             
+          db:
+            host: dbhost.rhacs-psql-instance 
     DataPlaneCentralStatusRequestExample:
       value:
         conditions:

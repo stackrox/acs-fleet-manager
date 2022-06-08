@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -o pipefail
 
 SCRIPT="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "${BASH_SOURCE[0]}")"
 DIRNAME=$(dirname "$SCRIPT")
 
-if docker ps | grep -vq fleet-manager-db; then
+$(docker ps | grep -q fleet-manager-db)
+setup_db_container=$?
+if [[ "$setup_db_container" -ne "0" ]]; then
   echo "Setting up fleet-manager database"
   make db/setup
 else

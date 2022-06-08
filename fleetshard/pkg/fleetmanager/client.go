@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 )
@@ -16,19 +17,23 @@ import (
 const (
 	uri         = "api/rhacs/v1/agent-clusters"
 	statusRoute = "status"
+
+	publicCentralURI = "api/rhacs/v1/centrals"
 )
 
-// Client represents the client to REST client to connect to fleet-manager
+// Client represents the REST client for connecting to fleet-manager
 type Client struct {
-	client    http.Client
-	ocmToken  string
-	clusterID string
-	endpoint  string
+	client                http.Client
+	ocmToken              string
+	clusterID             string
+	fleetshardAPIEndpoint string
+	consoleAPIEndpoint    string
 }
 
 // NewClient creates a new client
 func NewClient(endpoint string, clusterID string) (*Client, error) {
 	//TODO(create-ticket): Add authentication SSO
+	//TODO(create-ticket): Different auth tokens for fleetshard and console API
 	ocmToken := os.Getenv("OCM_TOKEN")
 	if ocmToken == "" {
 		return nil, errors.New("empty ocm token")
@@ -39,57 +44,87 @@ func NewClient(endpoint string, clusterID string) (*Client, error) {
 	}
 
 	if endpoint == "" {
-		return nil, errors.New("endpoint is empty")
+		return nil, errors.New("fleetshardAPIEndpoint is empty")
 	}
 
 	return &Client{
-		client:    http.Client{},
-		clusterID: clusterID,
-		ocmToken:  ocmToken,
-		endpoint:  fmt.Sprintf("%s/%s/%s/%s", endpoint, uri, clusterID, "centrals"),
+		client:                http.Client{},
+		clusterID:             clusterID,
+		ocmToken:              ocmToken,
+		fleetshardAPIEndpoint: fmt.Sprintf("%s/%s/%s/%s", endpoint, uri, clusterID, "centrals"),
+		consoleAPIEndpoint:    fmt.Sprintf("%s/%s", endpoint, publicCentralURI),
 	}, nil
 }
 
 // GetManagedCentralList returns a list of centrals from fleet-manager which should be managed by this fleetshard.
 func (c *Client) GetManagedCentralList() (*private.ManagedCentralList, error) {
-	resp, err := c.newRequest(http.MethodGet, c.endpoint, &bytes.Buffer{})
-	if err != nil {
-		return nil, err
-	}
-
-	respBody, err := ioutil.ReadAll(resp.Body)
+	resp, err := c.newRequest(http.MethodGet, c.fleetshardAPIEndpoint, &bytes.Buffer{})
 	if err != nil {
 		return nil, err
 	}
 
 	list := &private.ManagedCentralList{}
-	err = json.Unmarshal(respBody, &list)
+	err = c.unmarshalResponse(resp, &list)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "calling %s", c.fleetshardAPIEndpoint)
 	}
+
 	return list, nil
 }
 
 // UpdateStatus batch updates the status of managed centrals. The status param takes a map of DataPlaneCentralStatus indexed by
 // the Centrals ID.
-func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus) ([]byte, error) {
+func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus) error {
 	updateBody, err := json.Marshal(statuses)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	bufUpdateBody := &bytes.Buffer{}
-	_, err = bufUpdateBody.Write(updateBody)
+	resp, err := c.newRequest(http.MethodPut, fmt.Sprintf("%s/%s", c.fleetshardAPIEndpoint, statusRoute), bytes.NewBuffer(updateBody))
+	if err != nil {
+		return err
+	}
+
+	if err := c.unmarshalResponse(resp, &struct{}{}); err != nil {
+		return errors.Wrapf(err, "updating status")
+	}
+	return nil
+}
+
+// CreateCentral creates a central from the public fleet-manager API
+func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.CentralRequest, error) {
+	reqBody, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/%s", c.endpoint, statusRoute), bufUpdateBody)
+	resp, err := c.newRequest(http.MethodPost, fmt.Sprintf("%s?async=true", c.consoleAPIEndpoint), bytes.NewBuffer(reqBody))
 	if err != nil {
 		return nil, err
 	}
 
-	return ioutil.ReadAll(resp.Body)
+	result := &public.CentralRequest{}
+	err = c.unmarshalResponse(resp, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetCentral returns a Central from the public fleet-manager API
+func (c *Client) GetCentral(id string) (*public.CentralRequest, error) {
+	resp, err := c.newRequest(http.MethodGet, fmt.Sprintf("%s/%s", c.consoleAPIEndpoint, id), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	central := &public.CentralRequest{}
+	err = c.unmarshalResponse(resp, central)
+	if err != nil {
+		return nil, err
+	}
+
+	return central, nil
 }
 
 func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Response, error) {
@@ -105,4 +140,33 @@ func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Re
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
+	defer func() { _ = resp.Body.Close() }()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	into := struct {
+		Kind string `json:"kind"`
+	}{}
+	err = json.Unmarshal(data, &into)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal error
+	if into.Kind == "Error" || into.Kind == "error" {
+		apiError := compat.Error{}
+		err = json.Unmarshal(data, &apiError)
+		if err != nil {
+			return err
+		}
+		return errors.Errorf("API error occured %s: %s", apiError.Code, apiError.Reason)
+	}
+
+	return json.Unmarshal(data, v)
 }

@@ -14,5 +14,6 @@ type ManagedCentralAllOfSpec struct {
 	Owners   []string                        `json:"owners,omitempty"`
 	Endpoint ManagedCentralAllOfSpecEndpoint `json:"endpoint,omitempty"`
 	Versions ManagedCentralVersions          `json:"versions,omitempty"`
-	Deleted  bool                            `json:"deleted"`
+	Central  ManagedCentralAllOfSpecCentral  `json:"central,omitempty"`
+	Scanner  ManagedCentralAllOfSpecScanner  `json:"scanner,omitempty"`
 }

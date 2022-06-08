@@ -133,6 +133,7 @@ func (c *ClusterManager) Start() {
 
 // Stop causes the process for reconciling osd clusters to stop.
 func (c *ClusterManager) Stop() {
+	glog.Infof("Stopping reconciling cluster manager id = %s", c.id)
 	c.Reconciler.Stop(c)
 	metrics.ResetMetricsForClusterManagers()
 	metrics.SetLeaderWorkerMetric(c.workerType, false)
@@ -745,7 +746,7 @@ func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 	r := []interface{}{
 		//c.buildReadOnlyGroupResource(),
 		//c.buildDedicatedReaderClusterRoleBindingResource(),
-		//c.buildDinosaurSREGroupResource(),
+		//c.buildSREGroupResource(),
 		//c.buildDinosaurSREClusterRoleBindingResource(),
 		//c.buildObservabilityNamespaceResource(),
 		//c.buildObservatoriumSSOSecretResource(),
@@ -931,7 +932,7 @@ func (c *ClusterManager) buildDedicatedReaderClusterRoleBindingResource() *authv
 }
 
 // buildReadOnlyGroupResource creates a group to which read-only cluster users are added.
-func (c *ClusterManager) buildDinosaurSREGroupResource() *userv1.Group {
+func (c *ClusterManager) buildSREGroupResource() *userv1.Group {
 	return &userv1.Group{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: userv1.SchemeGroupVersion.String(),
@@ -940,7 +941,7 @@ func (c *ClusterManager) buildDinosaurSREGroupResource() *userv1.Group {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: mkSREGroupName,
 		},
-		Users: c.DataplaneClusterConfig.DinosaurSREUsers,
+		Users: c.DataplaneClusterConfig.SREUsers,
 	}
 }
 
