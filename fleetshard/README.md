@@ -28,7 +28,7 @@ $ ./scripts/setup-dev-env.sh
 
 # Build and run fleetshard-sync
 $ make fleetshard/build
-$ OCM_TOKEN=$(ocm token) ./fleetshard-sync
+$ OCM_TOKEN=$(ocm token) CLUSTER_ID=1234567890abcdef1234567890abcdef ./fleetshard-sync
 
 # Create a central instace
 $ ./scripts/create-central.sh
