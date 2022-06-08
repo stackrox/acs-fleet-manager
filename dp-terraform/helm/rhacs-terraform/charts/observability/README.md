@@ -15,7 +15,4 @@ The Makefile in this directory has targets for typical tasks:
 - Install the chart: `make install ns=rhacs values=~/.rh/obs-values.yaml`
 - Uninstall the chart and cleanup all created resouces: `make uninstall ns=rhacs`.
 
-
----
-
-TODO install from top
+See internal wiki for an example file `~/.rh/obs-values.yaml`.
