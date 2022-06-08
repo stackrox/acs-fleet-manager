@@ -33,6 +33,7 @@ type Client struct {
 // NewClient creates a new client
 func NewClient(endpoint string, clusterID string) (*Client, error) {
 	//TODO(create-ticket): Add authentication SSO
+	//TODO(create-ticket): Different auth tokens for fleetshard and console API
 	ocmToken := os.Getenv("OCM_TOKEN")
 	if ocmToken == "" {
 		return nil, errors.New("empty ocm token")
@@ -63,7 +64,7 @@ func (c *Client) GetManagedCentralList() (*private.ManagedCentralList, error) {
 	}
 
 	list := &private.ManagedCentralList{}
-	err = c.unmarshalResponse(resp.Body, &list)
+	err = c.unmarshalResponse(resp, &list)
 	if err != nil {
 		return nil, errors.Wrapf(err, "calling %s", c.fleetshardAPIEndpoint)
 	}
@@ -79,18 +80,12 @@ func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus
 		return err
 	}
 
-	bufUpdateBody := &bytes.Buffer{}
-	_, err = bufUpdateBody.Write(updateBody)
+	resp, err := c.newRequest(http.MethodPut, fmt.Sprintf("%s/%s", c.fleetshardAPIEndpoint, statusRoute), bytes.NewBuffer(updateBody))
 	if err != nil {
 		return err
 	}
 
-	resp, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/%s", c.fleetshardAPIEndpoint, statusRoute), bufUpdateBody)
-	if err != nil {
-		return err
-	}
-
-	if err := c.unmarshalResponse(resp.Body, &struct{}{}); err != nil {
+	if err := c.unmarshalResponse(resp, &struct{}{}); err != nil {
 		return errors.Wrapf(err, "updating status")
 	}
 	return nil
@@ -109,7 +104,7 @@ func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.Ce
 	}
 
 	result := &public.CentralRequest{}
-	err = c.unmarshalResponse(resp.Body, result)
+	err = c.unmarshalResponse(resp, result)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +119,7 @@ func (c *Client) GetCentral(id string) (*public.CentralRequest, error) {
 	}
 
 	central := &public.CentralRequest{}
-	err = c.unmarshalResponse(resp.Body, central)
+	err = c.unmarshalResponse(resp, central)
 	if err != nil {
 		return nil, err
 	}
@@ -147,8 +142,10 @@ func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Re
 	return resp, nil
 }
 
-func (c *Client) unmarshalResponse(body io.Reader, v interface{}) error {
-	data, err := io.ReadAll(body)
+func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
+	defer func() { _ = resp.Body.Close() }()
+
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
