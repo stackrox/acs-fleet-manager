@@ -170,7 +170,7 @@ func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 		if err != nil {
 			return err
 		}
-		return errors.Errorf("API error occured %s: %s", apiError.Code, apiError.Reason)
+		return errors.Errorf("API error (HTTP status %d) occured %s: %s", resp.StatusCode, apiError.Code, apiError.Reason)
 	}
 
 	if v == nil {
