@@ -4,14 +4,13 @@ package centralreconciler
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"sync/atomic"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -49,10 +48,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.New("Reconciler still busy, skipping reconciliation attempt.")
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
-
-	if err := r.setLastCentralHash(remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "filling central reconcilation cache")
-	}
 
 	remoteNamespace := remoteCentral.Metadata.Name
 	remoteCentralName := remoteCentral.Metadata.Name
@@ -111,6 +106,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
+	if err := r.setLastCentralHash(remoteCentral); err != nil {
+		return nil, errors.Wrapf(err, "setting central reconcilation cache")
+	}
+
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
 	return readyStatus(), nil
 }
@@ -128,22 +127,21 @@ func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1
 
 // CentralChanged compares the given central to the last central Reconciled using a hash
 func (r *CentralReconciler) CentralChanged(central private.ManagedCentral) (bool, error) {
-	centralBytes, err := json.Marshal(&central)
+	currentHash, err := util.MD5SumFromJSONStruct(&central)
 	if err != nil {
-		return true, errors.Wrapf(err, "marshaling central")
+		return true, errors.Wrap(err, "hashing central")
 	}
-	currentHash := md5.Sum(centralBytes)
 
 	return !bytes.Equal(r.lastCentralHash[:], currentHash[:]), nil
 }
 
 func (r *CentralReconciler) setLastCentralHash(central private.ManagedCentral) error {
-	centralBytes, err := json.Marshal(&central)
+	hash, err := util.MD5SumFromJSONStruct(&central)
 	if err != nil {
 		return err
 	}
 
-	r.lastCentralHash = md5.Sum(centralBytes)
+	r.lastCentralHash = hash
 	return nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/assert"
@@ -71,6 +72,53 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, centralName, central.GetName())
 	assert.Equal(t, "4", central.GetAnnotations()[revisionAnnotationKey])
+}
+
+func TestReconcileLastHashEmptyOnError(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      centralName,
+			Namespace: centralName,
+			// most straighforward way to simulat Reconcile returning an error
+			// is setting this value to something that is not a number
+			Annotations: map[string]string{revisionAnnotationKey: "NaN"},
+		},
+	}).Build()
+
+	r := CentralReconciler{
+		status:  pointer.Int32(0),
+		client:  fakeClient,
+		central: private.ManagedCentral{},
+	}
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.Error(t, err)
+
+	assert.Equal(t, [16]byte{}, r.lastCentralHash)
+}
+
+func TestReconicleLastHashSetOnSuccess(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        centralName,
+			Namespace:   centralName,
+			Annotations: map[string]string{revisionAnnotationKey: "3"},
+		},
+	}).Build()
+
+	r := CentralReconciler{
+		status:  pointer.Int32(0),
+		client:  fakeClient,
+		central: private.ManagedCentral{},
+	}
+
+	expectedHash, err := util.MD5SumFromJSONStruct(&simpleManagedCentral)
+	require.NoError(t, err)
+
+	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+
+	assert.Equal(t, expectedHash, r.lastCentralHash)
 }
 
 func TestCentralChanged(t *testing.T) {
