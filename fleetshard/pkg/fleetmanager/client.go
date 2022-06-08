@@ -85,7 +85,7 @@ func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus
 		return err
 	}
 
-	if err := c.unmarshalResponse(resp, &struct{}{}); err != nil {
+	if err := c.unmarshalResponse(resp, nil); err != nil {
 		return errors.Wrapf(err, "updating status")
 	}
 	return nil
@@ -142,12 +142,17 @@ func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Re
 	return resp, nil
 }
 
+// unmarshalResponse unmarshalls a fleet-manager response. It returns an error if
+// fleet-manager returns errors from its API.
+// If the value v is nil the response is not marshalled into a struct, instead only checked for an API error.
 func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 	defer func() { _ = resp.Body.Close() }()
-
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
+	}
+	if len(data) == 0 {
+		return nil
 	}
 
 	into := struct {
@@ -166,6 +171,10 @@ func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 			return err
 		}
 		return errors.Errorf("API error occured %s: %s", apiError.Code, apiError.Reason)
+	}
+
+	if v == nil {
+		return nil
 	}
 
 	return json.Unmarshal(data, v)

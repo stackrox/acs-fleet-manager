@@ -59,11 +59,17 @@ func TestClientReturnsError(t *testing.T) {
 
 func TestClientUpdateStatus(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		assert.Contains(t, request.RequestURI, "/api/dinosaurs_mgmt/v1/agent-clusters/cluster-id/dinosaurs")
-		bytes, err := json.Marshal(private.ManagedCentralList{})
-		require.NoError(t, err)
-		_, err = writer.Write(bytes)
-		require.NoError(t, err)
+		assert.Contains(t, request.RequestURI, "/api/rhacs/v1/agent-clusters/cluster-id/centrals")
 	}))
 	defer ts.Close()
+
+	err := os.Setenv("OCM_TOKEN", "token")
+	require.NoError(t, err)
+
+	client, err := NewClient(ts.URL, "cluster-id")
+	require.NoError(t, err)
+
+	statuses := map[string]private.DataPlaneCentralStatus{}
+	err = client.UpdateStatus(statuses)
+	require.NoError(t, err)
 }
