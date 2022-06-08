@@ -11,6 +11,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	apiWatch "k8s.io/apimachinery/pkg/watch"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
@@ -29,7 +31,7 @@ const (
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client  ctrlClient.Client
+	client  ctrlClient.WithWatch
 	central private.ManagedCentral
 	status  *int32
 }
@@ -120,11 +122,36 @@ func (r CentralReconciler) deleteCentral(ctx context.Context, central *v1alpha1.
 		}
 	}
 
+	watch, err := r.watchNamespace(ctx, central.GetNamespace())
+	if err != nil {
+		return errors.Wrapf(err, "create watch of namespace %s", central.GetNamespace())
+	}
+	defer watch.Stop()
+
 	if err := r.deleteNamespace(ctx, central.GetNamespace()); err != nil {
 		return errors.Wrapf(err, "delete central namespace %s", central.GetNamespace())
 	}
 
-	return nil
+	for {
+		// TODO(create-ticket): add timeout
+		event, ok := <-watch.ResultChan()
+		if !ok {
+			return fmt.Errorf("watch central deletion - channel closed")
+		}
+
+		switch event.Type {
+		case apiWatch.Deleted:
+			return nil
+		case apiWatch.Error:
+			return fmt.Errorf("watch central deletion - error returned")
+		}
+	}
+}
+
+func (r CentralReconciler) watchNamespace(ctx context.Context, namespace string) (apiWatch.Interface, error) {
+	return r.client.Watch(ctx, &v1.NamespaceList{}, &ctrlClient.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("metadata.name", namespace),
+	})
 }
 
 func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) error {
@@ -181,7 +208,7 @@ func (r CentralReconciler) getCentralPVCs(ctx context.Context, central *v1alpha1
 	return centralPvcs, nil
 }
 
-func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral) *CentralReconciler {
+func NewCentralReconciler(k8sClient ctrlClient.WithWatch, central private.ManagedCentral) *CentralReconciler {
 	return &CentralReconciler{
 		client:  k8sClient,
 		central: central,
