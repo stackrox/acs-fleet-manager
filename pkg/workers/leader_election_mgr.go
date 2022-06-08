@@ -61,7 +61,7 @@ func (s *LeaderElectionManager) Start() {
 				ticker.Stop()
 				for _, worker := range s.workers {
 					if worker.IsRunning() {
-						glog.V(1).Infoln(fmt.Sprintf("Stop running worker %T [%s]", worker, worker.GetID()))
+						glog.V(1).Infoln(fmt.Sprintf("Stopping running worker %T [%s]", worker, worker.GetID()))
 						worker.Stop()
 						s.workerGrp.Done()
 					}
