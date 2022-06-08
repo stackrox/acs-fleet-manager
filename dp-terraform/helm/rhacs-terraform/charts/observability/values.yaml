@@ -9,7 +9,7 @@ github:
   accessToken: ""
   repository: ""
   tag: "master"
-# Credentuials for your observatorium https://observatorium.io/ instance 
+# Credentials for your observatorium https://observatorium.io/ instance 
 observatorium:
   tenant: ""
   gateway: ""

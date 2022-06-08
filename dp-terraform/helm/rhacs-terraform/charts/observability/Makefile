@@ -18,10 +18,14 @@ helm/post-install:
 install: helm/install helm/post-install
 	helm -n ${ns} list
 
-.PHONY: uninstall
-
-uninstall: # Example: make uninstall ns=rhacs
+.PHONY: helm/uninstall
+helm/uninstall:
 	helm -n ${ns} uninstall $(CHART_NAME)
-# The Observability CRD is not correctly deleted. A workaround is removing the finalizer in the only Observability instance, and then deleting it
+
+.PHONY: helm/post-uninstall
+helm/post-uninstall: # The Observability CRD is not correctly deleted. A workaround is removing the finalizer in the only Observability instance, and then deleting it
 	oc -n "${ns}-observability" patch observabilities.observability.redhat.com rhacs-observability-stack --type json --patch='[ { "op": "remove", "path": "/metadata/finalizers" } ]' 
 	oc delete customresourcedefinition observabilities.observability.redhat.com
+
+.PHONY: uninstall
+uninstall: helm/uninstall helm/post-uninstall # Example: make uninstall ns=rhacs

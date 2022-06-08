@@ -9,3 +9,17 @@ fleetshardSync:
 acsOperator:
   enabled: false
   startingCSV: rhacs-operator.v3.70.0
+# See parameters in charts/observability/values.yaml
+observability:
+  github:
+    accessToken: ""
+    repository: ""
+    tag: "master"
+  observatorium:
+    tenant: ""
+    gateway: ""
+    authType: ""
+    redHatSsoAuthServerUrl: ""
+    redHatSsoRealm: ""
+    metricsClientId: ""
+    metricsSecret: ""
