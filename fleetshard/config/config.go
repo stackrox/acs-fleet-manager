@@ -11,7 +11,7 @@ import (
 type Config struct {
 	FleetManagerEndpoint string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
 	ClusterID            string        `env:"CLUSTER_ID"`
-	RuntimePollPeriod    time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"1s"`
+	RuntimePollPeriod    time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
 }
 
 // Load retrieves the current runtime configuration from the environment and returns it.

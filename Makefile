@@ -270,9 +270,11 @@ lint: golangci-lint specinstall
 
 fleet-manager:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) ./cmd/fleet-manager
+.PHONY: fleet-manager
 
 fleetshard-sync:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
+.PHONY: fleetshard-sync
 
 binary: fleet-manager fleetshard-sync
 .PHONY: binary
@@ -326,6 +328,10 @@ test/integration: test/integration/dinosaur
 test/cluster/cleanup:
 	./scripts/cleanup_test_cluster.sh
 .PHONY: test/cluster/cleanup
+
+test/e2e/cleanup:
+	./e2e/cleanup.sh
+.PHONY: test/e2e/cleanup
 
 # generate files
 generate: moq openapi/generate
