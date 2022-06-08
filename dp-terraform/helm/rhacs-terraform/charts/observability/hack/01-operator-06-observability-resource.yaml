@@ -2,16 +2,13 @@ apiVersion: observability.redhat.com/v1
 kind: Observability
 metadata:
   name: rhacs-observability-stack
-  namespace: {{ include "observability.namespace" . }}
 spec:
   configurationSelector:
     matchLabels:
       configures: observability-operator
-  # ERROR controllers.Observability Failed to remove pre-existing operand with missing or incorrect managed label {"error": "admission webhook \"vobservability.kb.io\" denied the request: cannot update AlertManagerDefaultName after cr creation"}
-  # alertManagerDefaultName: 'rhacs-alertmanager'
-  #  ERROR controllers.Observability Failed to remove pre-existing operand with missing or incorrect managed label {"error": "admission webhook \"vobservability.kb.io\" denied the request: cannot update GrafanaDefaultName after cr creation"}
-  # grafanaDefaultName: 'rhacs-grafana'
-  # prometheusDefaultName: 'rhacs-prometheus'
+  alertManagerDefaultName: 'rhacs-alertmanager'
+  grafanaDefaultName: 'rhacs-grafana'
+  prometheusDefaultName: 'rhacs-prometheus'
   resyncPeriod: 1h
   retention: 45d
   selfContained:
