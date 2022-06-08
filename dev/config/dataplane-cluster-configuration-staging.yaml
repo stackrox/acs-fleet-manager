@@ -5,8 +5,9 @@
 #  'deprovisioning' and will later be deleted.
 #- This list is ordered, any new cluster should be appended at the end.
 clusters:
- - name: default/api-acs-dp-1-y2vo-s1-devshift-org:6443/acsms-admin
-   cluster_id: 1sii8ba1joon73n3d9n938sjf2e4joha
+ - name: default/api-acs-dp-01-ce55-p1-openshiftapps-com:6443/acsms-admin
+   # With OCM logged, given the cluster name get cluster id: `ocm get /api/clusters_mgmt/v1/clusters --parameter search="name = 'acs-dp-01'" | jq -r .items[].id`
+   cluster_id: 1smhq7nc0ncfv2jbjgf48q7e6qb943ou
    cloud_provider: aws
    region: us-east-1
    schedulable: true
@@ -14,4 +15,9 @@ clusters:
    central_instance_limit: 10
    provider_type: standalone
    supported_instance_type: "eval,standard"
-   cluster_dns: acs-dp-1.y2vo.s1.devshift.org
+   cluster_dns: acs-dp-01.ce55.p1.openshiftapps.com
+   available_central_operator_versions:
+    - version: "3.70.0"
+      ready: true
+      central_versions:
+       - version: "3.70.0"
