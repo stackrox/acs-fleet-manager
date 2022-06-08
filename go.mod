@@ -25,6 +25,7 @@ require (
 	github.com/lib/pq v1.10.6
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/olekukonko/tablewriter v0.0.5
+	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
 	github.com/openshift-online/ocm-sdk-go v0.1.270
 	github.com/openshift/api v3.9.1-0.20191201231411-9f834e337466+incompatible
@@ -64,7 +65,6 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/caarlos0/env/v6 v6.9.3 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
