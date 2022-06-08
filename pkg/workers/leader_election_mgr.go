@@ -5,10 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"gorm.io/gorm"
 )
 
@@ -60,8 +60,8 @@ func (s *LeaderElectionManager) Start() {
 			case <-s.tearDown:
 				ticker.Stop()
 				for _, worker := range s.workers {
-					//stopping all of the running workers.
 					if worker.IsRunning() {
+						glog.V(1).Infoln(fmt.Sprintf("Stop running worker %T [%s]", worker, worker.GetID()))
 						worker.Stop()
 						s.workerGrp.Done()
 					}

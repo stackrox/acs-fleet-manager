@@ -133,6 +133,7 @@ func (c *ClusterManager) Start() {
 
 // Stop causes the process for reconciling osd clusters to stop.
 func (c *ClusterManager) Stop() {
+	glog.Infof("stop reconciling cluster manager id = %s", c.id)
 	c.Reconciler.Stop(c)
 	metrics.ResetMetricsForClusterManagers()
 	metrics.SetLeaderWorkerMetric(c.workerType, false)

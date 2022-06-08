@@ -1,6 +1,7 @@
 package workers
 
 import (
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"sync"
 )
@@ -57,6 +58,7 @@ func (b *BaseWorker) StartWorker(w Worker) {
 }
 
 func (b *BaseWorker) StopWorker(w Worker) {
+	glog.Infof("stop reconciling worker id = %s", b.Id)
 	b.Reconciler.Stop(w)
 	metrics.ResetMetricsForDinosaurManagers()
 	metrics.SetLeaderWorkerMetric(b.WorkerType, false)

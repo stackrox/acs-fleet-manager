@@ -244,6 +244,7 @@ func (env *Env) Start() {
 
 // Stop calls all the BootService.Stop functions found in the dependency injection containers.
 func (env *Env) Stop() {
+	glog.Infof("Stop all boot services")
 	env.MustInvoke(func(services []BootService) {
 		for i := range services {
 			i = len(services) - 1 - i // to stop in reverse order
