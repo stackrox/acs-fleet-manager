@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	centralName = "test-central"
+	centralName        = "test-central"
+	conditionTypeReady = "Ready"
 )
 
 var simpleManagedCentral = private.ManagedCentral{
@@ -22,6 +23,15 @@ var simpleManagedCentral = private.ManagedCentral{
 		Name:      centralName,
 		Namespace: centralName,
 	},
+}
+
+func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestConditions, conditionType string) (*private.DataPlaneClusterUpdateStatusRequestConditions, bool) {
+	for _, c := range conditions {
+		if c.Type == conditionType {
+			return &c, true
+		}
+	}
+	return nil, false
 }
 
 func TestReconcileCreate(t *testing.T) {
@@ -35,14 +45,18 @@ func TestReconcileCreate(t *testing.T) {
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
 
-	assert.Equal(t, "True", status.Conditions[0].Status)
+	if readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady); ok {
+		assert.Equal(t, "True", readyCondition.Status)
+	} else {
+		assert.Fail(t, "Ready condition not found in conditions", status.Conditions)
+	}
 
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralName}, central)
 	require.NoError(t, err)
 	assert.Equal(t, centralName, central.GetName())
 	assert.Equal(t, "1", central.GetAnnotations()[revisionAnnotationKey])
-
+	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
 }
 
 func TestReconcileUpdateSucceeds(t *testing.T) {
