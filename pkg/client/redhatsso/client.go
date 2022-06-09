@@ -20,7 +20,7 @@ import (
 const (
 	// access token duration before expiration
 	tokenLifeDuration    = 5 * time.Minute
-	cacheCleanupInterval = 5 * time.Minute
+	cacheCleanupInterval = 299 * time.Second
 )
 
 //go:generate moq -out client_moq.go . SSOClient
@@ -40,7 +40,16 @@ func NewSSOClient(config *keycloak.KeycloakConfig, realmConfig *keycloak.Keycloa
 	return &rhSSOClient{
 		config:      config,
 		realmConfig: realmConfig,
-		cache:       cache.New(tokenLifeDuration, cacheCleanupInterval),
+		configuration: &serviceaccountsclient.Configuration{
+			UserAgent: "OpenAPI-Generator/1.0.0/go",
+			Debug:     false,
+			Servers: serviceaccountsclient.ServerConfigurations{
+				{
+					URL: realmConfig.BaseURL + realmConfig.APIEndpointURI,
+				},
+			},
+		},
+		cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 	}
 }
 
@@ -63,21 +72,20 @@ type tokenResponse struct {
 }
 
 func (c *rhSSOClient) getConfiguration(accessToken string) *serviceaccountsclient.Configuration {
-	if c.configuration == nil {
-		c.configuration = &serviceaccountsclient.Configuration{
-			DefaultHeader: map[string]string{
-				"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-				"Content-Type":  "application/json",
+	c.configuration = &serviceaccountsclient.Configuration{
+		DefaultHeader: map[string]string{
+			"Authorization": fmt.Sprintf("Bearer %s", accessToken),
+			"Content-Type":  "application/json",
+		},
+		UserAgent: "OpenAPI-Generator/1.0.0/go",
+		Debug:     false,
+		Servers: serviceaccountsclient.ServerConfigurations{
+			{
+				URL: c.realmConfig.BaseURL + c.realmConfig.APIEndpointURI,
 			},
-			UserAgent: "OpenAPI-Generator/1.0.0/go",
-			Debug:     false,
-			Servers: serviceaccountsclient.ServerConfigurations{
-				{
-					URL: c.realmConfig.BaseURL + c.realmConfig.APIEndpointURI,
-				},
-			},
-		}
+		},
 	}
+
 	return c.configuration
 }
 
@@ -131,6 +139,7 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	c.cache.Set(cachedTokenKey, tokenData.AccessToken, cacheCleanupInterval)
 
 	return tokenData.AccessToken, nil
 }
