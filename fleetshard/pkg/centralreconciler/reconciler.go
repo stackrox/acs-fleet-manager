@@ -41,7 +41,6 @@ type CentralReconciler struct {
 // It tries to create a namespace for the Central and applies necessary updates to the resource.
 // TODO(create-ticket): Check correct Central gets reconciled
 // TODO(create-ticket): Should an initial ManagedCentral be added on reconciler creation?
-// TODO(create-ticket): Add cache to only reconcile if a change to the ManagedCentral was made
 func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	// Only allow to start reconcile function once
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
@@ -51,6 +50,15 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	remoteNamespace := remoteCentral.Metadata.Name
 	remoteCentralName := remoteCentral.Metadata.Name
+
+	changed, err := r.centralChanged(remoteCentral)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checking if central changed")
+	}
+
+	if !changed {
+		return nil, errors.New("Central not changed, skipping reconcilation")
+	}
 
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
@@ -76,7 +84,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	centralExists := true
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentralName}, central)
+	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentralName}, central)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return nil, errors.Wrapf(err, "unable to check the existence of central %q", central.GetName())
@@ -125,8 +133,8 @@ func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1
 	return true, nil
 }
 
-// CentralChanged compares the given central to the last central Reconciled using a hash
-func (r *CentralReconciler) CentralChanged(central private.ManagedCentral) (bool, error) {
+// centralChanged compares the given central to the last central Reconciled using a hash
+func (r *CentralReconciler) centralChanged(central private.ManagedCentral) (bool, error) {
 	currentHash, err := util.MD5SumFromJSONStruct(&central)
 	if err != nil {
 		return true, errors.Wrap(err, "hashing central")

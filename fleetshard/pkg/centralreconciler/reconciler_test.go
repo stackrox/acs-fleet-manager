@@ -119,6 +119,9 @@ func TestReconicleLastHashSetOnSuccess(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, expectedHash, r.lastCentralHash)
+
+	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.Error(t, err)
 }
 
 func TestCentralChanged(t *testing.T) {
@@ -171,7 +174,7 @@ func TestCentralChanged(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			got, err := reconciler.CentralChanged(test.currentCentral)
+			got, err := reconciler.centralChanged(test.currentCentral)
 			require.NoError(t, err)
 			assert.Equal(t, test.want, got)
 		})
