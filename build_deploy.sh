@@ -32,14 +32,16 @@
 VERSION=`git rev-parse --short=7 HEAD`
 
 # Set image repository to default value if it is not passed via env
-IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/fleet-manager}"
+IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/acs-fleet-manager}"
 
 # Set the directory for docker configuration:
 DOCKER_CONFIG="${PWD}/.docker"
 
 # Set the Go path:
 export GOPATH="${PWD}/.gopath"
-export PATH="${PATH}:${GOPATH}/bin"
+# TODO(porridge): clean up this quick hack needed to get build working on jenkins
+jenkins_go117="/opt/go/1.17.8"
+export PATH="${jenkins_go117}/bin:${PATH}:${GOPATH}/bin"
 LINK="${GOPATH}/src/github.com/stackrox/acs-fleet-manager"
 
 # print go version

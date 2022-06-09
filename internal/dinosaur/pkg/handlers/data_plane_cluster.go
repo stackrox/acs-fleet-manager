@@ -8,8 +8,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
 type dataPlaneClusterHandler struct {

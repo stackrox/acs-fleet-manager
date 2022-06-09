@@ -26,12 +26,12 @@ type DataplaneClusterConfig struct {
 	// 'manual' to use OSD Cluster configuration file,
 	// 'auto' to use dynamic scaling
 	// 'none' to disabled scaling all together, useful in testing
-	DataPlaneClusterScalingType           string `json:"dataplane_cluster_scaling_type"`
-	DataPlaneClusterConfigFile            string `json:"dataplane_cluster_config_file"`
-	ReadOnlyUserList                      userv1.OptionalNames
-	ReadOnlyUserListFile                  string
-	DinosaurSREUsers                      userv1.OptionalNames
-	DinosaurSREUsersFile                  string
+	DataPlaneClusterScalingType string `json:"dataplane_cluster_scaling_type"`
+	DataPlaneClusterConfigFile  string `json:"dataplane_cluster_config_file"`
+	ReadOnlyUserList            userv1.OptionalNames
+	ReadOnlyUserListFile        string
+	// TODO ROX-11294 adjust or drop sre user list
+	SREUsers                              userv1.OptionalNames
 	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
 	Kubeconfig                            string         `json:"kubeconfig"`
@@ -73,7 +73,6 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 		ImagePullDockerConfigFile:             "secrets/image-pull.dockerconfigjson",
 		DataPlaneClusterConfigFile:            "config/dataplane-cluster-configuration.yaml",
 		ReadOnlyUserListFile:                  "config/read-only-user-list.yaml",
-		DinosaurSREUsersFile:                  "config/dinosaur-sre-user-list.yaml",
 		DataPlaneClusterScalingType:           ManualScaling,
 		ClusterConfig:                         &ClusterConfig{},
 		EnableReadyDataPlaneClustersReconcile: true,
@@ -243,7 +242,6 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", c.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
 	fs.StringVar(&c.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", c.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
 	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")
-	fs.StringVar(&c.DinosaurSREUsersFile, "dinosaur-sre-user-list-file", c.DinosaurSREUsersFile, "File contains a list of dinosaur-sre users with cluster-admin permissions to data plane clusters")
 	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
 	fs.StringVar(&c.Kubeconfig, "kubeconfig", c.Kubeconfig, "A path to kubeconfig file used for communication with standalone clusters")
 	fs.StringVar(&c.DinosaurOperatorOLMConfig.CatalogSourceNamespace, "dinosaur-operator-cs-namespace", c.DinosaurOperatorOLMConfig.CatalogSourceNamespace, "Dinosaur operator catalog source namespace.")
@@ -294,11 +292,6 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 	}
 
 	err := readOnlyUserListFile(c.ReadOnlyUserListFile, &c.ReadOnlyUserList)
-	if err != nil {
-		return err
-	}
-
-	err = readDinosaurSREUserFile(c.DinosaurSREUsersFile, &c.DinosaurSREUsers)
 	if err != nil {
 		return err
 	}

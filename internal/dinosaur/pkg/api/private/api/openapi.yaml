@@ -186,6 +186,7 @@ components:
   examples:
     ManagedCentralExample:
       value:
+        id: 1rfpsqbvq1em2u9u0z54ymjcwac
         kind: ManagedCentral
         metadata:
           name: example-central
@@ -193,7 +194,10 @@ components:
           annotations:
             mas/id: 1rfpsqbvq1em2u9u0z54ymjcwac
             mas/placementId: ""
+          deletionTimestamp: 2022-06-01T11:04:09Z
         spec:
+          owners:
+          - central-owner1
           endpoint:
             host: example-central--rfpsqbvq-em-u-u-z--ymjcwac.example.central.com
             tls:
@@ -202,7 +206,30 @@ components:
           versions:
             central: 2.7.0
             centralOperator: 0.21.2
-          deleted: false
+          central:
+            resources:
+              requests:
+                cpu: 250m
+                memory: 250Mi
+              limtis:
+                cpu: 1000m
+                memory: 4Gi
+          scanner:
+            analyzer:
+              scaling:
+                autoScaling: enabled
+                replicas: 1
+                minReplicas: 1
+                maxReplicas: 3
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 100Mi
+                limtis:
+                  cpu: 500m
+                  memory: 2500Mi
+          db:
+            host: dbhost.rhacs-psql-instance
     DataPlaneCentralStatusRequestExample:
       value:
         conditions:
@@ -244,6 +271,20 @@ components:
           type: string
         kind:
           type: string
+      type: object
+    ResourceList:
+      properties:
+        cpu:
+          type: string
+        memory:
+          type: string
+      type: object
+    ResourceRequirements:
+      properties:
+        requests:
+          $ref: '#/components/schemas/ResourceList'
+        limits:
+          $ref: '#/components/schemas/ResourceList'
       type: object
     ManagedCentralVersions:
       properties:
@@ -375,6 +416,8 @@ components:
           type: string
         annotations:
           $ref: '#/components/schemas/ManagedCentral_allOf_metadata_annotations'
+        deletionTimestamp:
+          type: string
     ManagedCentral_allOf_spec_endpoint_tls:
       nullable: true
       properties:
@@ -388,6 +431,42 @@ components:
           type: string
         tls:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_endpoint_tls'
+    ManagedCentral_allOf_spec_central:
+      properties:
+        resources:
+          $ref: '#/components/schemas/ResourceRequirements'
+    ManagedCentral_allOf_spec_scanner_analyzer_scaling:
+      properties:
+        autoScaling:
+          type: string
+        replicas:
+          format: int32
+          minimum: 1
+          type: integer
+        minReplicas:
+          format: int32
+          minimum: 1
+          type: integer
+        maxReplicas:
+          format: int32
+          minimum: 1
+          type: integer
+    ManagedCentral_allOf_spec_scanner_analyzer:
+      properties:
+        scaling:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner_analyzer_scaling'
+        resources:
+          $ref: '#/components/schemas/ResourceRequirements'
+    ManagedCentral_allOf_spec_scanner_db:
+      properties:
+        host:
+          type: string
+    ManagedCentral_allOf_spec_scanner:
+      properties:
+        analyzer:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner_analyzer'
+        db:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner_db'
     ManagedCentral_allOf_spec:
       properties:
         owners:
@@ -398,10 +477,10 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_endpoint'
         versions:
           $ref: '#/components/schemas/ManagedCentralVersions'
-        deleted:
-          type: boolean
-      required:
-      - deleted
+        central:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_central'
+        scanner:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner'
     ManagedCentral_allOf:
       properties:
         metadata:
