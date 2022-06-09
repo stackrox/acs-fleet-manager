@@ -57,6 +57,15 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 			Namespace: remoteNamespace,
 			Labels:    map[string]string{k8sManagedByLabelKey: "rhacs-fleetshard"},
 		},
+		Spec: v1alpha1.CentralSpec{
+			Central: &v1alpha1.CentralComponentSpec{
+				Exposure: &v1alpha1.Exposure{
+					Route: &v1alpha1.ExposureRoute{
+						Enabled: pointer.BoolPtr(true),
+					},
+				},
+			},
+		},
 	}
 
 	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentral.Metadata.Name}, central)
