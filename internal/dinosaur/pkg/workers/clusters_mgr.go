@@ -640,7 +640,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		}
 
 		if len(p.AvailableCentralOperatorVersions) > 0 {
-			if err := clusterRequest.SetAvailableDinosaurOperatorVersions(p.AvailableCentralOperatorVersions); err != nil {
+			if err := clusterRequest.SetAvailableCentralOperatorVersions(p.AvailableCentralOperatorVersions); err != nil {
 				return []error{errors.Wrapf(err, "Failed to set operator versions for manual cluster %s with config file", p.ClusterId)}
 			}
 		}

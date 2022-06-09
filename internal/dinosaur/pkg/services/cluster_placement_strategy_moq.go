@@ -19,7 +19,7 @@ var _ ClusterPlacementStrategy = &ClusterPlacementStrategyMock{}
 //
 // 		// make and configure a mocked ClusterPlacementStrategy
 // 		mockedClusterPlacementStrategy := &ClusterPlacementStrategyMock{
-// 			FindClusterFunc: func(dinosaur *dbapi.DinosaurRequest) (*api.Cluster, error) {
+// 			FindClusterFunc: func(dinosaur *dbapi.CentralRequest) (*api.Cluster, error) {
 // 				panic("mock out the FindCluster method")
 // 			},
 // 		}
@@ -30,26 +30,26 @@ var _ ClusterPlacementStrategy = &ClusterPlacementStrategyMock{}
 // 	}
 type ClusterPlacementStrategyMock struct {
 	// FindClusterFunc mocks the FindCluster method.
-	FindClusterFunc func(dinosaur *dbapi.DinosaurRequest) (*api.Cluster, error)
+	FindClusterFunc func(dinosaur *dbapi.CentralRequest) (*api.Cluster, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// FindCluster holds details about calls to the FindCluster method.
 		FindCluster []struct {
 			// Dinosaur is the dinosaur argument value.
-			Dinosaur *dbapi.DinosaurRequest
+			Dinosaur *dbapi.CentralRequest
 		}
 	}
 	lockFindCluster sync.RWMutex
 }
 
 // FindCluster calls FindClusterFunc.
-func (mock *ClusterPlacementStrategyMock) FindCluster(dinosaur *dbapi.DinosaurRequest) (*api.Cluster, error) {
+func (mock *ClusterPlacementStrategyMock) FindCluster(dinosaur *dbapi.CentralRequest) (*api.Cluster, error) {
 	if mock.FindClusterFunc == nil {
 		panic("ClusterPlacementStrategyMock.FindClusterFunc: method is nil but ClusterPlacementStrategy.FindCluster was just called")
 	}
 	callInfo := struct {
-		Dinosaur *dbapi.DinosaurRequest
+		Dinosaur *dbapi.CentralRequest
 	}{
 		Dinosaur: dinosaur,
 	}
@@ -63,10 +63,10 @@ func (mock *ClusterPlacementStrategyMock) FindCluster(dinosaur *dbapi.DinosaurRe
 // Check the length with:
 //     len(mockedClusterPlacementStrategy.FindClusterCalls())
 func (mock *ClusterPlacementStrategyMock) FindClusterCalls() []struct {
-	Dinosaur *dbapi.DinosaurRequest
+	Dinosaur *dbapi.CentralRequest
 } {
 	var calls []struct {
-		Dinosaur *dbapi.DinosaurRequest
+		Dinosaur *dbapi.CentralRequest
 	}
 	mock.lockFindCluster.RLock()
 	calls = mock.calls.FindCluster

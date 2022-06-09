@@ -3,11 +3,11 @@ package quota
 import (
 	"fmt"
 
+	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
 
 type amsQuotaService struct {
@@ -30,7 +30,7 @@ var supportedAMSBillingModels map[string]struct{} = map[string]struct{}{
 	string(amsv1.BillingModelStandard):    {},
 }
 
-func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.DinosaurRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(dinosaur.OrganisationId)
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", dinosaur.OrganisationId))
@@ -112,7 +112,7 @@ func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(extern
 	return billingModel, nil
 }
 
-func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.DinosaurRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
+func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
 	dinosaurId := dinosaur.ID
 
 	rr := newBaseQuotaReservedResourceResourceBuilder()

@@ -5,12 +5,12 @@ import (
 	"reflect"
 	"testing"
 
+	mocket "github.com/selvatico/go-mocket"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
-	mocket "github.com/selvatico/go-mocket"
 	"gorm.io/gorm"
 )
 
@@ -30,8 +30,8 @@ var (
 )
 
 // build a test dinosaur request
-func buildDinosaurRequest(modifyFn func(dinosaurRequest *dbapi.DinosaurRequest)) *dbapi.DinosaurRequest {
-	dinosaurRequest := &dbapi.DinosaurRequest{
+func buildDinosaurRequest(modifyFn func(dinosaurRequest *dbapi.CentralRequest)) *dbapi.CentralRequest {
+	dinosaurRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID:        testID,
 			DeletedAt: gorm.DeletedAt{Valid: true},
@@ -89,7 +89,7 @@ func Test_dinosaurService_Get(t *testing.T) {
 		args   args
 		// want (there can be more than one) is the outputs that we expect, they can be compared after the test
 		// function has been executed
-		want *dbapi.DinosaurRequest
+		want *dbapi.CentralRequest
 		// wantErr is similar to want, but instead of testing the actual returned error, we're just testing than any
 		// error has been returned
 		wantErr bool
@@ -136,7 +136,7 @@ func Test_dinosaurService_Get(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "dinosaur_requests" WHERE id = $1 AND owner = $2`).
+					WithQuery(`SELECT * FROM "central_requests" WHERE id = $1 AND owner = $2`).
 					WithArgs(testID, testUser).
 					WithReply(converters.ConvertDinosaurRequest(buildDinosaurRequest(nil)))
 			},

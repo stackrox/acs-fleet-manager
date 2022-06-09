@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
-	"github.com/golang/glog"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -122,8 +122,8 @@ func WaitForDinosaurToBeDeleted(ctx context.Context, db *db.ConnectionFactory, c
 		Build().Poll()
 }
 
-func WaitForDinosaurClusterIDToBeAssigned(dbFactory *db.ConnectionFactory, dinosaurRequestName string) (*dbapi.DinosaurRequest, error) {
-	dinosaurFound := &dbapi.DinosaurRequest{}
+func WaitForDinosaurClusterIDToBeAssigned(dbFactory *db.ConnectionFactory, dinosaurRequestName string) (*dbapi.CentralRequest, error) {
+	dinosaurFound := &dbapi.CentralRequest{}
 
 	dinosaurErr := NewPollerBuilder(dbFactory).
 		IntervalAndTimeout(defaultPollInterval, defaultDinosaurClusterAssignmentTimeout).

@@ -2,14 +2,15 @@ package presenters
 
 import (
 	"fmt"
+
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 )
 
 // ConvertDinosaurRequest from payload to DinosaurRequest
-func ConvertDinosaurRequest(dinosaurRequestPayload public.CentralRequestPayload, dbDinosaurrequest ...*dbapi.DinosaurRequest) *dbapi.DinosaurRequest {
+func ConvertDinosaurRequest(dinosaurRequestPayload public.CentralRequestPayload, dbDinosaurrequest ...*dbapi.CentralRequest) *dbapi.CentralRequest {
 	// TODO implement converter
-	var dinosaur = &dbapi.DinosaurRequest{}
+	var dinosaur = &dbapi.CentralRequest{}
 
 	dinosaur.Region = dinosaurRequestPayload.Region
 	dinosaur.Name = dinosaurRequestPayload.Name
@@ -20,7 +21,7 @@ func ConvertDinosaurRequest(dinosaurRequestPayload public.CentralRequestPayload,
 }
 
 // PresentDinosaurRequest - create CentralRequest in an appropriate format ready to be returned by the API
-func PresentDinosaurRequest(request *dbapi.DinosaurRequest) public.CentralRequest {
+func PresentDinosaurRequest(request *dbapi.CentralRequest) public.CentralRequest {
 	return public.CentralRequest{
 		Id:            request.ID,
 		Kind:          "CentralRequest",
@@ -35,7 +36,7 @@ func PresentDinosaurRequest(request *dbapi.DinosaurRequest) public.CentralReques
 		CreatedAt:     request.CreatedAt,
 		UpdatedAt:     request.UpdatedAt,
 		FailedReason:  request.FailedReason,
-		Version:       request.ActualDinosaurVersion,
+		Version:       request.ActualCentralVersion,
 		InstanceType:  request.InstanceType,
 	}
 }
