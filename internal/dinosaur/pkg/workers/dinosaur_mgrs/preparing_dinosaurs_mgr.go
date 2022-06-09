@@ -3,14 +3,14 @@ package dinosaur_mgrs
 import (
 	"time"
 
+	"github.com/google/uuid"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/google/uuid"
 
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
-	"github.com/pkg/errors"
 
 	"github.com/golang/glog"
 
@@ -70,7 +70,7 @@ func (k *PreparingDinosaurManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *PreparingDinosaurManager) reconcilePreparingDinosaur(dinosaur *dbapi.DinosaurRequest) error {
+func (k *PreparingDinosaurManager) reconcilePreparingDinosaur(dinosaur *dbapi.CentralRequest) error {
 	if err := k.dinosaurService.PrepareDinosaurRequest(dinosaur); err != nil {
 		return k.handleDinosaurRequestCreationError(dinosaur, err)
 	}
@@ -78,7 +78,7 @@ func (k *PreparingDinosaurManager) reconcilePreparingDinosaur(dinosaur *dbapi.Di
 	return nil
 }
 
-func (k *PreparingDinosaurManager) handleDinosaurRequestCreationError(dinosaurRequest *dbapi.DinosaurRequest, err *serviceErr.ServiceError) error {
+func (k *PreparingDinosaurManager) handleDinosaurRequestCreationError(dinosaurRequest *dbapi.CentralRequest, err *serviceErr.ServiceError) error {
 	if err.IsServerErrorClass() {
 		// retry the dinosaur creation request only if the failure is caused by server errors
 		// and the time elapsed since its db record was created is still within the threshold.

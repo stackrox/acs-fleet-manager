@@ -1,6 +1,8 @@
 package presenters
 
 import (
+	"time"
+
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	v1 "github.com/stackrox/acs-fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
 )
@@ -34,8 +36,6 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 				MasId:          from.Annotations["mas/id"],
 				MasPlacementId: from.Annotations["mas/placementId"],
 			},
-			//TODO(create-ticket): set deletion timestamp in deletion process
-			DeletionTimestamp: "",
 		},
 		Spec: private.ManagedCentralAllOfSpec{
 			Owners: from.Spec.Owners,
@@ -89,5 +89,10 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 			},
 		},
 	}
+
+	if from.DeletionTimestamp != nil {
+		res.Metadata.DeletionTimestamp = from.DeletionTimestamp.Format(time.RFC3339)
+	}
+
 	return res
 }

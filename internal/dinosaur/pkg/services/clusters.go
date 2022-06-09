@@ -429,7 +429,7 @@ func (c clusterService) FindNonEmptyClusterById(clusterID string) (*api.Cluster,
 		ClusterID: clusterID,
 	}
 
-	subQuery := dbConn.Select("cluster_id").Where("status != ? AND cluster_id = ?", constants2.DinosaurRequestStatusFailed, clusterID).Model(dbapi.DinosaurRequest{})
+	subQuery := dbConn.Select("cluster_id").Where("status != ? AND cluster_id = ?", constants2.DinosaurRequestStatusFailed, clusterID).Model(dbapi.CentralRequest{})
 	if err := dbConn.Where(clusterDetails).Where("cluster_id IN (?)", subQuery).First(cluster).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -478,7 +478,7 @@ func (c clusterService) GetExternalID(clusterID string) (string, *apiErrors.Serv
 func (c clusterService) FindDinosaurInstanceCount(clusterIDs []string) ([]ResDinosaurInstanceCount, *apiErrors.ServiceError) {
 	var res []ResDinosaurInstanceCount
 	query := c.connectionFactory.New().
-		Model(&dbapi.DinosaurRequest{}).
+		Model(&dbapi.CentralRequest{}).
 		Select("cluster_id as Clusterid, count(1) as Count").
 		Where("status != ?", constants2.DinosaurRequestStatusAccepted.String()) // dinosaur in accepted state do not have a cluster_id assigned to them
 
@@ -691,7 +691,7 @@ func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
 }
 
 func (c clusterService) CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error) {
-	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyDinosaurOperatorVersions()
+	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
 	if err != nil {
 		return false, err
 	}
@@ -704,7 +704,7 @@ func (c clusterService) CheckDinosaurOperatorVersionReady(cluster *api.Cluster, 
 }
 
 func (c clusterService) IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error) {
-	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyDinosaurOperatorVersions()
+	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
 	if err != nil {
 		return false, err
 	}
