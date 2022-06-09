@@ -94,7 +94,7 @@ var defaultUpdateDinosaurStatusFunc = func(helper *coreTest.Helper, privateClien
 		dinosaurStatusList := make(map[string]private.DataPlaneCentralStatus)
 		for _, dinosaur := range dinosaurList.Items {
 			id := dinosaur.Metadata.Annotations.MasId
-			if dinosaur.Spec.Deleted {
+			if dinosaur.Metadata.DeletionTimestamp != "" {
 				dinosaurStatusList[id] = GetDeletedDinosaurStatusResponse()
 			} else {
 				// Update any other clusters not in a 'deprovisioning' state to 'ready'

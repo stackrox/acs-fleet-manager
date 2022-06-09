@@ -161,6 +161,10 @@ else
         PGHOST:="172.18.0.22"
 endif
 
+ifeq ($(shell echo ${DEBUG}), 1)
+	GOARGS := $(GOARGS) -gcflags=all="-N -l"
+endif
+
 ### Environment-sourced variables with defaults
 # Can be overriden by setting environment var before running
 # Example:
@@ -264,18 +268,26 @@ lint: golangci-lint specinstall
 
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
-binary:
-	$(GO) build ./cmd/fleet-manager
-.PHONY: binary
 
-dbg-binary:
-	$(GO) build -gcflags=all="-N -l" ./cmd/fleet-manager
-.PHONY: dbg-binary
+fleet-manager:
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) ./cmd/fleet-manager
+.PHONY: fleet-manager
+
+fleetshard-sync:
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
+.PHONY: fleetshard-sync
+
+binary: fleet-manager fleetshard-sync
+.PHONY: binary
 
 # Install
 install: verify lint
 	$(GO) install ./cmd/fleet-manager
 .PHONY: install
+
+clean:
+	rm -f fleet-manager fleetshard-sync
+.PHONY: clean
 
 # Runs the unit tests.
 #
@@ -317,6 +329,10 @@ test/integration: test/integration/dinosaur
 test/cluster/cleanup:
 	./scripts/cleanup_test_cluster.sh
 .PHONY: test/cluster/cleanup
+
+test/e2e/cleanup:
+	./e2e/cleanup.sh
+.PHONY: test/e2e/cleanup
 
 # generate files
 generate: moq openapi/generate
@@ -421,16 +437,19 @@ db/generate/insert/cluster:
 
 # Login to docker
 docker/login:
-	docker --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
+	docker --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
 .PHONY: docker/login
 
 # Login to the OpenShift internal registry
 docker/login/internal:
-	docker login -u kubeadmin -p $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
+	docker login -u kubeadmin --password-stdin <<< $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
 .PHONY: docker/login/internal
 
 # Build the binary and image
-image/build: binary
+# TODO(create-ticket): Revisit decision to use a combined-image-approach, where the image contains both the fleet-manager and the fleetshard-sync.
+image/build: GOOS=linux
+image/build: GOARCH=amd64
+image/build: fleet-manager fleetshard-sync
 	docker --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
 .PHONY: image/build
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-echo "Created central tenant: test-central-1"
+echo "Creating central tenant: test-central-1"
 
 curl -X POST -H "Authorization: Bearer $(ocm token)" -H "Content-Type: application/json" \
   http://127.0.0.1:8000/api/rhacs/v1/centrals\?async\=true \

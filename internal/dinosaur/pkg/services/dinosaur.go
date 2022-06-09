@@ -133,8 +133,8 @@ func (k *dinosaurService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count dinosaur request")
 	}
 
-	glog.Infof("%d of %d dinosaur clusters currently instantiated", count, k.dinosaurConfig.DinosaurCapacity.MaxCapacity)
-	return count < k.dinosaurConfig.DinosaurCapacity.MaxCapacity, nil
+	glog.Infof("%d of %d dinosaur clusters currently instantiated", count, k.dinosaurConfig.MaxCapacity.MaxCapacity)
+	return count < k.dinosaurConfig.MaxCapacity.MaxCapacity, nil
 }
 
 func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.DinosaurRequest) (bool, *errors.ServiceError) {

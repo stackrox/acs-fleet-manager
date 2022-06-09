@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleetshard-sync
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: fleetshard-sync
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fleetshard-sync
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: fleetshard-sync
+    spec:
+      serviceAccountName: fleetshard-sync
+      containers:
+      - name: fleetshard-sync
+        image: quay.io/app-sre/acs-fleet-manager:main
+        imagePullPolicy: Always
+        command: 
+        - /usr/local/bin/fleetshard-sync
+        env:
+        - name: OCM_TOKEN
+          value: {{ .Values.fleetshardSync.ocmToken }}
+        - name: FLEET_MANAGER_ENDPOINT
+          value: {{ .Values.fleetshardSync.fleetManagerEndpoint }}
+        - name: CLUSTER_ID
+          value: {{ .Values.fleetshardSync.clusterId }}
