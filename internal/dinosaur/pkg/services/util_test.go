@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strings"
 	"testing"
@@ -349,6 +350,43 @@ func Test_contains(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("contains() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func Test_formatNamespace(t *testing.T) {
+	type testCase struct {
+		id        string
+		namespace string
+		error     bool
+	}
+	cases := map[string]testCase{
+		"should add prefix when id is correct": {
+			id:        "cahlua287d5oaeogt8kg",
+			namespace: "rhacs-cahlua287d5oaeogt8kg",
+		},
+		"should cut namespace name when id is too long": {
+			id:        "qwelkjwelrjktwlekrjgwaowejkhrlksjerhgfskejfghsoidukcjvhbewmrntbwi2384938492iuekhrfakjsndf",
+			namespace: "rhacs-qwelkjwelrjktwlekrjgwaowejkhrlksjerhgfskejfghsoidukcjvhbe",
+		},
+		"should trim dash when id is too long": {
+			id:        "test---------------------------------------------------------------------124r038oi4rtuolkjh",
+			namespace: "rhacs-test",
+		},
+		"should fail when id is not RFC1123 compliant": {
+			id:    "ns!#$%",
+			error: true,
+		},
+	}
+	for name, test := range cases {
+		t.Run(name, func(t *testing.T) {
+			namespace, err := formatNamespace(test.id)
+			if test.error {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, test.namespace, namespace)
 		})
 	}
 }

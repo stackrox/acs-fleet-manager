@@ -19,6 +19,11 @@ const (
 	appendChar                = "a"
 )
 
+const dns1123LabelFmt string = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+const dns1123LabelErrMsg string = "a lowercase RFC 1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character"
+
+var dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")
+
 // All OpenShift route hosts must confirm to DNS1035. This will inverse the validation RE from k8s (https://github.com/kubernetes/apimachinery/blob/master/pkg/util/validation/validation.go#L219)
 var dns1035ReplacementRE = regexp.MustCompile(`[^a-z]([^-a-z0-9]*[^a-z0-9])?`)
 
@@ -62,4 +67,13 @@ func replaceHostSpecialChar(name string) (string, error) {
 	}
 
 	return replacedName, nil
+}
+
+// formatNamespace adds the rhacs prefix to the namespace name and performs the necessary validation and formatting to comply with RFC1123 that namespace names must follow.
+func formatNamespace(text string) (string, error) {
+	if !dns1123LabelRegexp.MatchString(text) {
+		return "", fmt.Errorf("invalid namespace %s: %s", text, validation.RegexError(dns1123LabelErrMsg, dns1123LabelFmt, "my-name", "123-abc"))
+	}
+	truncatedNamespace := truncateString("rhacs-"+text, validation.LabelValueMaxLength)
+	return strings.TrimRight(truncatedNamespace, "-"), nil
 }

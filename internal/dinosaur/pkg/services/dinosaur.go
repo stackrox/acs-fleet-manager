@@ -264,7 +264,11 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
 	}
 
-	dinosaurRequest.Namespace = fmt.Sprintf("dinosaur-%s", strings.ToLower(dinosaurRequest.ID))
+	namespace, formatErr := formatNamespace(dinosaurRequest.ID)
+	if formatErr != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, formatErr, "invalid id format")
+	}
+	dinosaurRequest.Namespace = namespace
 	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedDinosaurIngressDnsNamePrefix, 1)
 	dinosaurRequest.Host = fmt.Sprintf("%s.%s", truncatedDinosaurIdentifier, clusterDNS)
 

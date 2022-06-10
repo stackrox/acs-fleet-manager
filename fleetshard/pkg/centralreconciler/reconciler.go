@@ -45,21 +45,22 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
-	remoteNamespace := remoteCentral.Metadata.Name
-	if err := r.ensureNamespace(remoteCentral.Metadata.Name); err != nil {
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteNamespace := remoteCentral.Metadata.Namespace
+	if err := r.ensureNamespace(remoteNamespace); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteNamespace)
 	}
 
 	centralExists := true
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      remoteCentral.Metadata.Name,
+			Name:      remoteCentralName,
 			Namespace: remoteNamespace,
 			Labels:    map[string]string{k8sManagedByLabelKey: "rhacs-fleetshard"},
 		},
 	}
 
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentral.Metadata.Name}, central)
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentralName}, central)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return nil, errors.Wrapf(err, "unable to check the existence of central %q", central.GetName())
@@ -72,7 +73,7 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 
 		glog.Infof("Creating central tenant %s", central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
-			return nil, errors.Wrapf(err, "creating new central %q", remoteCentral.Metadata.Name)
+			return nil, errors.Wrapf(err, "creating new central %s/%s", remoteNamespace, remoteCentralName)
 		}
 		glog.Infof("Central %s created", central.GetName())
 	} else {
