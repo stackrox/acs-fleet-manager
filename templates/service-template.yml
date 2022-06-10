@@ -483,8 +483,8 @@ objects:
       aws.accesskey: badger
       aws.accountid: badger
       aws.secretaccesskey: badger
-      keycloak-service.clientId: badger
-      keycloak-service.clientSecret: badger
+      redhatsso-service.clientId: badger
+      redhatsso-service.clientSecret: badger
       osd-idp-keycloak-service.clientId: badger
       osd-idp-keycloak-service.clientSecret: badger
       aws.route53accesskey: badger
