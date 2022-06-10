@@ -265,7 +265,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 	}
 
 	dinosaurRequest.Namespace = fmt.Sprintf("dinosaur-%s", strings.ToLower(dinosaurRequest.ID))
-	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedDinosaurIngressDnsNamePrefix, 1)
+	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedRhacsIngressDnsNamePrefix, 1)
 	dinosaurRequest.Host = fmt.Sprintf("%s.%s", truncatedDinosaurIdentifier, clusterDNS)
 
 	if k.dinosaurConfig.EnableDinosaurExternalCertificate {
