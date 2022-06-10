@@ -11,8 +11,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	apiWatch "k8s.io/apimachinery/pkg/watch"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
@@ -60,14 +58,17 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	}
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
-		glog.Infof("Deleting central %s", remoteCentralName)
-		if err := r.deleteCentral(context.Background(), central); err != nil {
+		deleted, err := r.ensureCentralDeleted(context.Background(), central)
+		if err != nil {
 			return nil, errors.Wrapf(err, "delete central %s", remoteCentralName)
 		}
-		return deletedStatus(), nil
+		if deleted {
+			return deletedStatus(), nil
+		}
+		return nil, nil
 	}
 
-	if err := r.ensureNamespace(remoteCentralName); err != nil {
+	if err := r.ensureNamespaceExists(remoteCentralName); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteNamespace)
 	}
 
@@ -106,52 +107,27 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	return readyStatus(), nil
 }
 
-func (r CentralReconciler) deleteCentral(ctx context.Context, central *v1alpha1.Central) error {
-	pvcs, err := r.getCentralPVCs(ctx, central)
-	if err != nil {
-		return errors.Wrapf(err, "get central PVCs %s/%s", central.GetName(), central.GetNamespace())
+func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+	deleted := true
+	if crDeleted, err := r.ensureCentralCRDeleted(ctx, central); err != nil {
+		return false, err
+	} else {
+		deleted = deleted && crDeleted
 	}
-
-	if err := r.client.Delete(ctx, central); err != nil {
-		return errors.Wrapf(err, "delete central CR %s/%s", central.GetName(), central.GetNamespace())
+	if pvcDeleted, err := r.ensureCentralPVCsDeleted(ctx, central); err != nil {
+		return false, err
+	} else {
+		deleted = deleted && pvcDeleted
 	}
-
-	for _, pvc := range pvcs {
-		if err := r.client.Delete(ctx, pvc); err != nil {
-			return errors.Wrapf(err, "delete PVC %s/%s", pvc.GetName(), pvc.GetNamespace())
-		}
+	if namespaceDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace()); err != nil {
+		return false, err
+	} else {
+		deleted = deleted && namespaceDeleted
 	}
-
-	watch, err := r.watchNamespace(ctx, central.GetNamespace())
-	if err != nil {
-		return errors.Wrapf(err, "create watch of namespace %s", central.GetNamespace())
+	if deleted {
+		glog.Infof("All central resources were deleted: %s/%s", central.GetNamespace(), central.GetName())
 	}
-	defer watch.Stop()
-
-	if err := r.deleteNamespace(ctx, central.GetNamespace()); err != nil {
-		return errors.Wrapf(err, "delete central namespace %s", central.GetNamespace())
-	}
-
-	for {
-		// TODO(create-ticket): add timeout
-		event, ok := <-watch.ResultChan()
-		if !ok {
-			return fmt.Errorf("watch central deletion - channel closed")
-		}
-
-		switch event.Type {
-		case apiWatch.Deleted:
-			return nil
-		case apiWatch.Error:
-			return fmt.Errorf("watch central deletion - error returned")
-		}
-	}
-}
-
-func (r CentralReconciler) watchNamespace(ctx context.Context, namespace string) (apiWatch.Interface, error) {
-	return r.client.Watch(ctx, &v1.NamespaceList{}, &ctrlClient.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("metadata.name", namespace),
-	})
+	return deleted, nil
 }
 
 func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) error {
@@ -164,13 +140,18 @@ func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) 
 	return nil
 }
 
-func (r CentralReconciler) ensureNamespace(name string) error {
+func (r CentralReconciler) getNamespace(name string) (*v1.Namespace, error) {
 	namespace := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 	}
 	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace)
+	return namespace, err
+}
+
+func (r CentralReconciler) ensureNamespaceExists(name string) error {
+	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			err = r.client.Create(context.Background(), namespace)
@@ -182,12 +163,21 @@ func (r CentralReconciler) ensureNamespace(name string) error {
 	return err
 }
 
-func (r CentralReconciler) deleteNamespace(ctx context.Context, name string) error {
-	return r.client.Delete(ctx, &v1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-	})
+func (r CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name string) (bool, error) {
+	namespace, err := r.getNamespace(name)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return true, nil
+		}
+		return false, errors.Wrapf(err, "delete central namespace %s", name)
+	}
+	if namespace.Status.Phase == v1.NamespaceTerminating {
+		return false, nil // Deletion is already in progress, skipping deletion request
+	}
+	if err = r.client.Delete(ctx, namespace); err != nil {
+		return false, errors.Wrapf(err, "delete central namespace %s", name)
+	}
+	return false, nil
 }
 
 func (r CentralReconciler) getCentralPVCs(ctx context.Context, central *v1alpha1.Central) ([]*v1.PersistentVolumeClaim, error) {
@@ -206,6 +196,34 @@ func (r CentralReconciler) getCentralPVCs(ctx context.Context, central *v1alpha1
 	}
 
 	return centralPvcs, nil
+}
+
+func (r CentralReconciler) ensureCentralPVCsDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+	pvcs, err := r.getCentralPVCs(ctx, central)
+	if err != nil {
+		return false, errors.Wrapf(err, "get central PVCs %s/%s", central.GetNamespace(), central.GetName())
+	}
+	for _, pvc := range pvcs {
+		if err := r.client.Delete(ctx, pvc); err != nil {
+			return false, errors.Wrapf(err, "delete PVC %s/%s", pvc.GetNamespace(), pvc.GetName())
+		}
+	}
+	return true, nil
+}
+
+func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: central.GetNamespace(), Name: central.GetName()}, central)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return true, nil
+		}
+		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
+	}
+	glog.Infof("CR: %+v\\n", *central)
+	if err := r.client.Delete(ctx, central); err != nil {
+		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
+	}
+	return true, nil
 }
 
 func NewCentralReconciler(k8sClient ctrlClient.WithWatch, central private.ManagedCentral) *CentralReconciler {
