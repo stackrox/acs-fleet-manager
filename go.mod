@@ -14,7 +14,7 @@ require (
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-gormigrate/gormigrate/v2 v2.0.0
+	github.com/go-gormigrate/gormigrate/v2 v2.0.2
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/goava/di v1.11.0
 	github.com/golang-jwt/jwt/v4 v4.4.1
@@ -52,8 +52,8 @@ require (
 	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
-	gorm.io/driver/postgres v1.0.8
-	gorm.io/gorm v1.21.7
+	gorm.io/driver/postgres v1.3.7
+	gorm.io/gorm v1.23.5
 	k8s.io/api v0.24.1
 	k8s.io/apimachinery v0.24.1
 	k8s.io/client-go v0.24.1
@@ -96,7 +96,7 @@ require (
 	github.com/jackc/pgtype v1.11.0 // indirect
 	github.com/jackc/pgx/v4 v4.16.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.2 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
