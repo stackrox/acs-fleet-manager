@@ -4,7 +4,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 )
 
-func ConvertDinosaurRequest(request *dbapi.DinosaurRequest) []map[string]interface{} {
+func ConvertDinosaurRequest(request *dbapi.CentralRequest) []map[string]interface{} {
 	return []map[string]interface{}{
 		{
 			"id":             request.ID,
@@ -24,7 +24,7 @@ func ConvertDinosaurRequest(request *dbapi.DinosaurRequest) []map[string]interfa
 }
 
 // ConvertDinosaurRequestList converts a DinosaurRequestList to the response type expected by mocket
-func ConvertDinosaurRequestList(dinosaurList dbapi.DinosaurList) []map[string]interface{} {
+func ConvertDinosaurRequestList(dinosaurList dbapi.CentralList) []map[string]interface{} {
 	var dinosaurRequestList []map[string]interface{}
 
 	for _, dinosaurRequest := range dinosaurList {

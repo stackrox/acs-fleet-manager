@@ -5,14 +5,14 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 )
 
-func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralStatus) []*dbapi.DataPlaneDinosaurStatus {
-	res := make([]*dbapi.DataPlaneDinosaurStatus, 0, len(status))
+func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralStatus) []*dbapi.DataPlaneCentralStatus {
+	res := make([]*dbapi.DataPlaneCentralStatus, 0, len(status))
 
 	for k, v := range status {
-		c := make([]dbapi.DataPlaneDinosaurStatusCondition, 0, len(v.Conditions))
-		var routes []dbapi.DataPlaneDinosaurRouteRequest
+		c := make([]dbapi.DataPlaneCentralStatusCondition, 0, len(v.Conditions))
+		var routes []dbapi.DataPlaneCentralRouteRequest
 		for _, s := range v.Conditions {
-			c = append(c, dbapi.DataPlaneDinosaurStatusCondition{
+			c = append(c, dbapi.DataPlaneCentralStatusCondition{
 				Type:    s.Type,
 				Reason:  s.Reason,
 				Status:  s.Status,
@@ -20,21 +20,21 @@ func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralSt
 			})
 		}
 		if v.Routes != nil {
-			routes = make([]dbapi.DataPlaneDinosaurRouteRequest, 0, len(*v.Routes))
+			routes = make([]dbapi.DataPlaneCentralRouteRequest, 0, len(*v.Routes))
 			for _, ro := range *v.Routes {
-				routes = append(routes, dbapi.DataPlaneDinosaurRouteRequest{
+				routes = append(routes, dbapi.DataPlaneCentralRouteRequest{
 					Name:   ro.Name,
 					Prefix: ro.Prefix,
 					Router: ro.Router,
 				})
 			}
 		}
-		res = append(res, &dbapi.DataPlaneDinosaurStatus{
-			DinosaurClusterId:       k,
-			Conditions:              c,
-			Routes:                  routes,
-			DinosaurVersion:         v.Versions.Central,
-			DinosaurOperatorVersion: v.Versions.CentralOperator,
+		res = append(res, &dbapi.DataPlaneCentralStatus{
+			CentralClusterId:       k,
+			Conditions:             c,
+			Routes:                 routes,
+			CentralVersion:         v.Versions.Central,
+			CentralOperatorVersion: v.Versions.CentralOperator,
 		})
 	}
 

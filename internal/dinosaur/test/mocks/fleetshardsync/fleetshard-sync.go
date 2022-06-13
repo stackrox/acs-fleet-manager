@@ -215,7 +215,7 @@ func NewAuthenticatedContextForDataPlaneCluster(h *coreTest.Helper, clusterID st
 
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
-		"iss": keycloakConfig.DinosaurRealm.ValidIssuerURI,
+		"iss": keycloakConfig.RedhatSSORealm.ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": {"fleetshard_operator"},
 		},

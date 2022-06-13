@@ -30,7 +30,7 @@ func PresentReference(id, obj interface{}) compat.ObjectReference {
 
 func objectKind(i interface{}) string {
 	switch i.(type) {
-	case dbapi.DinosaurRequest, *dbapi.DinosaurRequest:
+	case dbapi.CentralRequest, *dbapi.CentralRequest:
 		return KindDinosaur
 	case api.CloudRegion, *api.CloudRegion:
 		return KindCloudRegion
@@ -45,7 +45,7 @@ func objectKind(i interface{}) string {
 
 func objectPath(id string, obj interface{}) string {
 	switch obj.(type) {
-	case dbapi.DinosaurRequest, *dbapi.DinosaurRequest:
+	case dbapi.CentralRequest, *dbapi.CentralRequest:
 		return fmt.Sprintf("%s/dinosaurs/%s", BasePath, id) // TODO change /dinosaurs to match your rest resource
 	case errors.ServiceError, *errors.ServiceError:
 		return fmt.Sprintf("%s/errors/%s", BasePath, id)

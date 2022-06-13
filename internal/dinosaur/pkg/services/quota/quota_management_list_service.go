@@ -2,6 +2,7 @@ package quota
 
 import (
 	"fmt"
+
 	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -15,7 +16,7 @@ type QuotaManagementListService struct {
 	quotaManagementList *quota_management.QuotaManagementListConfig
 }
 
-func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.DinosaurRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 	username := dinosaur.Owner
 	orgId := dinosaur.OrganisationId
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(orgId)
@@ -37,7 +38,7 @@ func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(dinosau
 	return false, nil
 }
 
-func (q QuotaManagementListService) ReserveQuota(dinosaur *dbapi.DinosaurRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
+func (q QuotaManagementListService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
 	if !q.quotaManagementList.EnableInstanceLimitControl {
 		return "", nil
 	}
@@ -62,7 +63,7 @@ func (q QuotaManagementListService) ReserveQuota(dinosaur *dbapi.DinosaurRequest
 
 	var count int64
 	dbConn := q.connectionFactory.New().
-		Model(&dbapi.DinosaurRequest{}).
+		Model(&dbapi.CentralRequest{}).
 		Where("instance_type = ?", instanceType.String())
 
 	if instanceType == types.STANDARD && filterByOrd {

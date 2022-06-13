@@ -25,7 +25,7 @@ func TestGetAvailableDinosaurOperatorVersions(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				res := Cluster{AvailableDinosaurOperatorVersions: inputDinosaurOperatorVersionsJSON}
+				res := Cluster{AvailableCentralOperatorVersions: inputDinosaurOperatorVersionsJSON}
 				return &res
 			},
 			want: []CentralOperatorVersion{
@@ -43,7 +43,7 @@ func TestGetAvailableDinosaurOperatorVersions(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				res := Cluster{AvailableDinosaurOperatorVersions: inputDinosaurOperatorVersionsJSON}
+				res := Cluster{AvailableCentralOperatorVersions: inputDinosaurOperatorVersionsJSON}
 				return &res
 			},
 			want:    []CentralOperatorVersion{},
@@ -52,7 +52,7 @@ func TestGetAvailableDinosaurOperatorVersions(t *testing.T) {
 		{
 			name: "When cluster has a nil list of available dinosaur operator the empty list is returned",
 			cluster: func() *Cluster {
-				res := Cluster{AvailableDinosaurOperatorVersions: nil}
+				res := Cluster{AvailableCentralOperatorVersions: nil}
 				return &res
 			},
 			want:    []CentralOperatorVersion{},
@@ -61,7 +61,7 @@ func TestGetAvailableDinosaurOperatorVersions(t *testing.T) {
 		{
 			name: "When cluster has an invalid JSON an error is returned",
 			cluster: func() *Cluster {
-				res := Cluster{AvailableDinosaurOperatorVersions: []byte(`"keyone": valueone`)}
+				res := Cluster{AvailableCentralOperatorVersions: []byte(`"keyone": valueone`)}
 				return &res
 			},
 			wantErr: true,
@@ -70,7 +70,7 @@ func TestGetAvailableDinosaurOperatorVersions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := tt.cluster().GetAvailableDinosaurOperatorVersions()
+			res, err := tt.cluster().GetAvailableCentralOperatorVersions()
 			gotErr := err != nil
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("wantErr: %v got: %v", tt.wantErr, err)
@@ -101,7 +101,7 @@ func TestGetAvailableAndReadyDinosaurOperatorVersions(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				res := Cluster{AvailableDinosaurOperatorVersions: inputDinosaurOperatorVersionsJSON}
+				res := Cluster{AvailableCentralOperatorVersions: inputDinosaurOperatorVersionsJSON}
 				return &res
 			},
 			want: []CentralOperatorVersion{
@@ -118,7 +118,7 @@ func TestGetAvailableAndReadyDinosaurOperatorVersions(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				res := Cluster{AvailableDinosaurOperatorVersions: inputDinosaurOperatorVersionsJSON}
+				res := Cluster{AvailableCentralOperatorVersions: inputDinosaurOperatorVersionsJSON}
 				return &res
 			},
 			want:    []CentralOperatorVersion{},
@@ -127,7 +127,7 @@ func TestGetAvailableAndReadyDinosaurOperatorVersions(t *testing.T) {
 		{
 			name: "When cluster has a nil list of available dinosaur operator the empty list is returned",
 			cluster: func() *Cluster {
-				res := Cluster{AvailableDinosaurOperatorVersions: nil}
+				res := Cluster{AvailableCentralOperatorVersions: nil}
 				return &res
 			},
 			want:    []CentralOperatorVersion{},
@@ -136,7 +136,7 @@ func TestGetAvailableAndReadyDinosaurOperatorVersions(t *testing.T) {
 		{
 			name: "When cluster has an invalid JSON an error is returned",
 			cluster: func() *Cluster {
-				res := Cluster{AvailableDinosaurOperatorVersions: []byte(`"keyone": valueone`)}
+				res := Cluster{AvailableCentralOperatorVersions: []byte(`"keyone": valueone`)}
 				return &res
 			},
 			wantErr: true,
@@ -145,7 +145,7 @@ func TestGetAvailableAndReadyDinosaurOperatorVersions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := tt.cluster().GetAvailableAndReadyDinosaurOperatorVersions()
+			res, err := tt.cluster().GetAvailableAndReadyCentralOperatorVersions()
 			gotErr := err != nil
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("wantErr: %v got: %v", tt.wantErr, err)
@@ -279,7 +279,7 @@ func TestSetAvailableDinosaurOperatorVersions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cluster := &Cluster{}
-			err := cluster.SetAvailableDinosaurOperatorVersions(tt.inputDinosaurOperatorVersions)
+			err := cluster.SetAvailableCentralOperatorVersions(tt.inputDinosaurOperatorVersions)
 			gotErr := err != nil
 			errResultTestFailed := false
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
@@ -289,7 +289,7 @@ func TestSetAvailableDinosaurOperatorVersions(t *testing.T) {
 
 			if !errResultTestFailed {
 				var got []CentralOperatorVersion
-				err := json.Unmarshal(cluster.AvailableDinosaurOperatorVersions, &got)
+				err := json.Unmarshal(cluster.AvailableCentralOperatorVersions, &got)
 				if err != nil {
 					panic(err)
 				}
@@ -489,7 +489,7 @@ func Test_DinosaurOperatorVersionsDeepSort(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := DinosaurOperatorVersionsDeepSort(tt.args.versions)
+			got, err := CentralOperatorVersionsDeepSort(tt.args.versions)
 			gotErr := err != nil
 			errResultTestFailed := false
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
