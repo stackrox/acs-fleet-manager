@@ -12,7 +12,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
@@ -42,15 +41,15 @@ func TestMain(m *testing.M) {
 }
 
 func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
+	RegisterTestingT(t)
 	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, serverConfig.TokenIssuerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
+	Expect(err).NotTo(HaveOccurred())
 
 	tests := []struct {
-		name string
-		arg  *acl.AccessControlListConfig
-		want *errors.ServiceError
+		name           string
+		arg            *acl.AccessControlListConfig
+		wantErr        bool
+		wantHttpStatus int
 	}{
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service",
@@ -58,17 +57,31 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 				EnableDenyList: true,
 				DenyList:       acl.DeniedUsers{"username"},
 			},
+			wantErr:        true,
+			wantHttpStatus: http.StatusForbidden,
+		},
+		{
+			name: "returns 200 status if denyList is disabled",
+			arg: &acl.AccessControlListConfig{
+				EnableDenyList: false,
+			},
+			wantErr:        false,
+			wantHttpStatus: http.StatusOK,
+		},
+		{
+			name: "returns 200 status if denyList is enabled and deny list is empty",
+			arg: &acl.AccessControlListConfig{
+				EnableDenyList: true,
+			},
+			wantErr:        false,
+			wantHttpStatus: http.StatusOK,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
-
 			req, err := http.NewRequest("GET", "/api/dinosaurs_mgmt/dinosaurs", nil) // TODO change here to call your fleet manager endpoint
-			if err != nil {
-				t.Fatal(err)
-			}
+			Expect(err).NotTo(HaveOccurred())
 
 			rr := httptest.NewRecorder()
 
@@ -78,37 +91,30 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 			// create a jwt and set it in the context
 			ctx := req.Context()
 			acc, err := authHelper.NewAccount("username", "test-user", "", "org-id-0")
-			if err != nil {
-				t.Fatal(err)
-			}
+			Expect(err).NotTo(HaveOccurred())
 
 			token, err := authHelper.CreateJWTWithClaims(acc, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			Expect(err).NotTo(HaveOccurred())
 
 			ctx = auth.SetTokenInContext(ctx, token)
 			req = req.WithContext(ctx)
 			handler.ServeHTTP(rr, req)
 
 			body, err := ioutil.ReadAll(rr.Body)
-			if err != nil {
-				t.Fatal(err)
-			}
+			Expect(err).NotTo(HaveOccurred())
+			Expect(rr.Code).To(Equal(tt.wantHttpStatus))
 
-			Expect(rr.Code).To(Equal(http.StatusForbidden))
-			Expect(rr.Header().Get("Content-Type")).To(Equal("application/json"))
-
-			var data map[string]string
-			err = json.Unmarshal(body, &data)
-			if err != nil {
-				t.Fatal(err)
+			if tt.wantErr {
+				Expect(rr.Header().Get("Content-Type")).To(Equal("application/json"))
+				var data map[string]string
+				err = json.Unmarshal(body, &data)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(data["kind"]).To(Equal("Error"))
+				Expect(data["reason"]).To(Equal("User \"username\" is not authorized to access the service."))
+				// verify that context about user being allowed as service account is set to false always
+				ctxAfterMiddleware := req.Context()
+				Expect(auth.GetFilterByOrganisationFromContext(ctxAfterMiddleware)).To(Equal(false))
 			}
-			Expect(data["kind"]).To(Equal("Error"))
-			Expect(data["reason"]).To(Equal("User 'username' is not authorized to access the service."))
-			// verify that context about user being allowed as service account is set to false always
-			ctxAfterMiddleware := req.Context()
-			Expect(auth.GetFilterByOrganisationFromContext(ctxAfterMiddleware)).To(Equal(false))
 		})
 	}
 }
@@ -117,7 +123,5 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 func NextHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, err := io.WriteString(w, "OK")
-	if err != nil {
-		panic(err)
-	}
+	Expect(err).NotTo(HaveOccurred())
 }
