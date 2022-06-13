@@ -5,6 +5,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 
+	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
@@ -12,7 +13,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
-	"github.com/gorilla/mux"
 )
 
 type adminDinosaurHandler struct {
@@ -73,7 +73,10 @@ func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					return nil, err
 				}
-				dinosaurRequestList.Items = append(dinosaurRequestList.Items, *converted)
+
+				if converted != nil {
+					dinosaurRequestList.Items = append(dinosaurRequestList.Items, *converted)
+				}
 			}
 
 			return dinosaurRequestList, nil

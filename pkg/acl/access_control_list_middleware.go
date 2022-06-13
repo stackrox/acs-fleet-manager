@@ -29,17 +29,17 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 			return
 		}
 
-		username := auth.GetUsernameFromClaims(claims)
+		username, _ := claims.GetUsername()
 
 		if middleware.accessControlListConfig.EnableDenyList {
 			userIsDenied := middleware.accessControlListConfig.DenyList.IsUserDenied(username)
 			if userIsDenied {
-				shared.HandleError(r, w, errors.New(errors.ErrorForbidden, "User '%s' is not authorized to access the service.", username))
+				shared.HandleError(r, w, errors.New(errors.ErrorForbidden, "User %q is not authorized to access the service.", username))
 				return
 			}
 		}
 
-		orgId := auth.GetOrgIdFromClaims(claims)
+		orgId, _ := claims.GetOrgId()
 
 		// If the users claim has an orgId, resources should be filtered by their organisation. Otherwise, filter them by owner.
 		context = auth.SetFilterByOrganisationContext(context, orgId != "")

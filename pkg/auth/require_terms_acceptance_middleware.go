@@ -40,7 +40,7 @@ func (m *requireTermsAcceptanceMiddleware) RequireTermsAcceptance(enabled bool, 
 					shared.HandleError(request, writer, errors.NewWithCause(code, err, ""))
 					return
 				}
-				username := GetUsernameFromClaims(claims)
+				username, _ := claims.GetUsername()
 				termsRequired, cached := m.cache.Get(username)
 				if !cached {
 					termsRequired, _, err = amsClient.GetRequiresTermsAcceptance(username)

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"strings"
 	"sync"
 
@@ -98,7 +99,7 @@ var _ DinosaurService = &dinosaurService{}
 type dinosaurService struct {
 	connectionFactory        *db.ConnectionFactory
 	clusterService           ClusterService
-	keycloakService          services.KeycloakService
+	keycloakService          sso.KeycloakService
 	dinosaurConfig           *config.DinosaurConfig
 	awsConfig                *config.AWSConfig
 	quotaServiceFactory      QuotaServiceFactory
@@ -109,7 +110,7 @@ type dinosaurService struct {
 	clusterPlacementStrategy ClusterPlacementStrategy
 }
 
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services.DinosaurKeycloakService, dinosaurConfig *config.DinosaurConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy) *dinosaurService {
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService sso.KeycloakService, dinosaurConfig *config.DinosaurConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy) *dinosaurService {
 	return &dinosaurService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
@@ -320,12 +321,12 @@ func (k *dinosaurService) Get(ctx context.Context, id string) (*dbapi.CentralReq
 
 	var user string
 	if !auth.GetIsAdminFromContext(ctx) {
-		user = auth.GetUsernameFromClaims(claims)
+		user, _ = claims.GetUsername()
 		if user == "" {
 			return nil, errors.Unauthenticated("user not authenticated")
 		}
 
-		orgId := auth.GetOrgIdFromClaims(claims)
+		orgId, _ := claims.GetOrgId()
 		filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
 
 		// filter by organisationId if a user is part of an organisation and is not allowed as a service account
@@ -376,11 +377,11 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 
 	if auth.GetIsAdminFromContext(ctx) {
 		dbConn = dbConn.Where("id = ?", id)
-	} else if auth.GetIsOrgAdminFromClaims(claims) {
-		orgId := auth.GetOrgIdFromClaims(claims)
+	} else if claims.IsOrgAdmin() {
+		orgId, _ := claims.GetOrgId()
 		dbConn = dbConn.Where("id = ?", id).Where("organisation_id = ?", orgId)
 	} else {
-		user := auth.GetUsernameFromClaims(claims)
+		user, _ := claims.GetUsername()
 		dbConn = dbConn.Where("id = ?", id).Where("owner = ? ", user)
 	}
 
@@ -496,12 +497,12 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 	}
 
 	if !auth.GetIsAdminFromContext(ctx) {
-		user := auth.GetUsernameFromClaims(claims)
+		user, _ := claims.GetUsername()
 		if user == "" {
 			return nil, nil, errors.Unauthenticated("user not authenticated")
 		}
 
-		orgId := auth.GetOrgIdFromClaims(claims)
+		orgId, _ := claims.GetOrgId()
 		filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
 
 		// filter by organisationId if a user is part of an organisation and is not allowed as a service account

@@ -1,6 +1,8 @@
 package services
 
 import (
+	"github.com/goava/di"
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -9,16 +11,14 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
-	"github.com/stackrox/acs-fleet-manager/pkg/services"
-	"github.com/goava/di"
-	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 )
 
 const (
 	FleetshardOperatorRoleName = "fleetshard_operator"
 
 	//parameter names for the fleetshard-operator service account
-	fleetshardOperatorParamMasSSOBaseUrl        = "sso-auth-server-url"
+	fleetshardOperatorParamSSOBaseUrl           = "sso-auth-server-url"
 	fleetshardOperatorParamServiceAccountId     = "sso-client-id"
 	fleetshardOperatorParamServiceAccountSecret = "sso-secret"
 	// parameter names for the cluster id
@@ -43,7 +43,7 @@ func NewFleetshardOperatorAddon(o fleetshardOperatorAddon) FleetshardOperatorAdd
 
 type fleetshardOperatorAddon struct {
 	di.Inject
-	SsoService       services.DinosaurKeycloakService
+	SsoService       sso.KeycloakService
 	ProviderFactory  clusters.ProviderFactory
 	ServerConfig     *server.ServerConfig
 	FleetShardConfig *config.FleetshardConfig
@@ -115,15 +115,15 @@ func (o *fleetshardOperatorAddon) getAddonParams(cluster api.Cluster) ([]types.P
 
 func (o *fleetshardOperatorAddon) provisionServiceAccount(clusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	glog.V(5).Infof("Provisioning service account for cluster %s", clusterId)
-	return o.SsoService.RegisterFleetshardOperatorServiceAccount(clusterId, FleetshardOperatorRoleName)
+	return o.SsoService.RegisterAcsFleetshardOperatorServiceAccount(clusterId)
 }
 
 func (o *fleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []types.Parameter {
 	p := []types.Parameter{
 
 		{
-			Id:    fleetshardOperatorParamMasSSOBaseUrl,
-			Value: o.KeycloakConfig.DinosaurRealm.ValidIssuerURI,
+			Id:    fleetshardOperatorParamSSOBaseUrl,
+			Value: o.KeycloakConfig.RedhatSSORealm.ValidIssuerURI,
 		},
 		{
 			Id:    fleetshardOperatorParamServiceAccountId,
@@ -155,5 +155,5 @@ func (o *fleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAc
 
 func (o *fleetshardOperatorAddon) RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError {
 	glog.V(5).Infof("Removing fleetshard-operator service account for cluster %s", cluster.ClusterID)
-	return o.SsoService.DeRegisterFleetshardOperatorServiceAccount(cluster.ClusterID)
+	return o.SsoService.DeRegisterAcsFleetshardOperatorServiceAccount(cluster.ClusterID)
 }
