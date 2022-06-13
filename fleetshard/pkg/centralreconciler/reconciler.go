@@ -28,6 +28,8 @@ const (
 	k8sManagedByLabelKey  = "app.kubernetes.io/managed-by"
 )
 
+var ErrTypeCentralNotChanged = errors.New("central not changed, skipping reconcilation")
+
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
@@ -57,7 +59,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	if !changed {
-		return nil, errors.New("Central not changed, skipping reconcilation")
+		return nil, ErrTypeCentralNotChanged
 	}
 
 	central := &v1alpha1.Central{

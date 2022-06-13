@@ -6,13 +6,10 @@ import (
 )
 
 func MD5SumFromJSONStruct(in interface{}) ([16]byte, error) {
-	var sum [16]byte
-
 	b, err := json.Marshal(in)
 	if err != nil {
-		return sum, err
+		return [16]byte{}, err
 	}
 
-	sum = md5.Sum(b)
-	return sum, nil
+	return md5.Sum(b), nil
 }

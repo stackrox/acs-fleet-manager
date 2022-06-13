@@ -121,7 +121,7 @@ func TestReconicleLastHashSetOnSuccess(t *testing.T) {
 	assert.Equal(t, expectedHash, r.lastCentralHash)
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.Error(t, err)
+	require.ErrorIs(t, err, ErrTypeCentralNotChanged)
 }
 
 func TestCentralChanged(t *testing.T) {
