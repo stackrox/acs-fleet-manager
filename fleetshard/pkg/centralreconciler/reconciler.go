@@ -2,10 +2,15 @@
 package centralreconciler
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"strconv"
+	"sync/atomic"
+
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -13,8 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
-	"sync/atomic"
 )
 
 const (
@@ -25,33 +28,41 @@ const (
 	k8sManagedByLabelKey  = "app.kubernetes.io/managed-by"
 )
 
+// ErrTypeCentralNotChanged is an error returned when reconcilation runs more then once in a row with equal central
+var ErrTypeCentralNotChanged = errors.New("central not changed, skipping reconcilation")
+
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client  ctrlClient.Client
-	central private.ManagedCentral
-	status  *int32
+	client          ctrlClient.Client
+	central         private.ManagedCentral
+	status          *int32
+	lastCentralHash [16]byte
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
 // It tries to create a namespace for the Central and applies necessary updates to the resource.
 // TODO(create-ticket): Check correct Central gets reconciled
 // TODO(create-ticket): Should an initial ManagedCentral be added on reconciler creation?
-// TODO(create-ticket): Add cache to only reconcile if a change to the ManagedCentral was made
-func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
+func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	// Only allow to start reconcile function once
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
 		return nil, errors.New("Reconciler still busy, skipping reconciliation attempt.")
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
-	remoteCentralName := remoteCentral.Metadata.Name
-	remoteNamespace := remoteCentral.Metadata.Namespace
-	if err := r.ensureNamespace(remoteNamespace); err != nil {
-		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteNamespace)
+	changed, err := r.centralChanged(remoteCentral)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checking if central changed")
 	}
 
-	centralExists := true
+	if !changed {
+		return nil, ErrTypeCentralNotChanged
+	}
+
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteNamespace := remoteCentral.Metadata.Namespace
+
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
@@ -60,7 +71,23 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 		},
 	}
 
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentralName}, central)
+	if remoteCentral.Metadata.DeletionTimestamp != "" {
+		deleted, err := r.ensureCentralDeleted(context.Background(), central)
+		if err != nil {
+			return nil, errors.Wrapf(err, "delete central %s", remoteCentralName)
+		}
+		if deleted {
+			return deletedStatus(), nil
+		}
+		return nil, nil
+	}
+
+	if err := r.ensureNamespaceExists(remoteCentralName); err != nil {
+		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteNamespace)
+	}
+
+	centralExists := true
+	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentralName}, central)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return nil, errors.Wrapf(err, "unable to check the existence of central %q", central.GetName())
@@ -77,7 +104,7 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 		}
 		glog.Infof("Central %s created", central.GetName())
 	} else {
-		// TODO(yury): implement update logic
+		// TODO(create-ticket): implement update logic
 		glog.Infof("Update central tenant %s", central.GetName())
 
 		err = r.incrementCentralRevision(central)
@@ -90,15 +117,43 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 		}
 	}
 
+	if err := r.setLastCentralHash(remoteCentral); err != nil {
+		return nil, errors.Wrapf(err, "setting central reconcilation cache")
+	}
+
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
-	return &private.DataPlaneCentralStatus{
-		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
-			{
-				Type:   "Ready",
-				Status: "True",
-			},
-		},
-	}, nil
+	return readyStatus(), nil
+}
+
+func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+	if crDeleted, err := r.ensureCentralCRDeleted(ctx, central); err != nil || !crDeleted {
+		return false, err
+	}
+	if namespaceDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace()); err != nil || !namespaceDeleted {
+		return false, err
+	}
+	glog.Infof("All central resources were deleted: %s/%s", central.GetNamespace(), central.GetName())
+	return true, nil
+}
+
+// centralChanged compares the given central to the last central reconciled using a hash
+func (r *CentralReconciler) centralChanged(central private.ManagedCentral) (bool, error) {
+	currentHash, err := util.MD5SumFromJSONStruct(&central)
+	if err != nil {
+		return true, errors.Wrap(err, "hashing central")
+	}
+
+	return !bytes.Equal(r.lastCentralHash[:], currentHash[:]), nil
+}
+
+func (r *CentralReconciler) setLastCentralHash(central private.ManagedCentral) error {
+	hash, err := util.MD5SumFromJSONStruct(&central)
+	if err != nil {
+		return err
+	}
+
+	r.lastCentralHash = hash
+	return nil
 }
 
 func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) error {
@@ -111,13 +166,18 @@ func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) 
 	return nil
 }
 
-func (r CentralReconciler) ensureNamespace(name string) error {
+func (r CentralReconciler) getNamespace(name string) (*v1.Namespace, error) {
 	namespace := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 	}
 	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace)
+	return namespace, err
+}
+
+func (r CentralReconciler) ensureNamespaceExists(name string) error {
+	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			err = r.client.Create(context.Background(), namespace)
@@ -127,6 +187,39 @@ func (r CentralReconciler) ensureNamespace(name string) error {
 		}
 	}
 	return err
+}
+
+func (r CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name string) (bool, error) {
+	namespace, err := r.getNamespace(name)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return true, nil
+		}
+		return false, errors.Wrapf(err, "delete central namespace %s", name)
+	}
+	if namespace.Status.Phase == v1.NamespaceTerminating {
+		return false, nil // Deletion is already in progress, skipping deletion request
+	}
+	if err = r.client.Delete(ctx, namespace); err != nil {
+		return false, errors.Wrapf(err, "delete central namespace %s", name)
+	}
+	glog.Infof("Central namespace %s is marked for deletion", name)
+	return false, nil
+}
+
+func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: central.GetNamespace(), Name: central.GetName()}, central)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return true, nil
+		}
+		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
+	}
+	if err := r.client.Delete(ctx, central); err != nil {
+		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
+	}
+	glog.Infof("Central CR %s/%s is marked for deletion", central.GetNamespace(), central.GetName())
+	return false, nil
 }
 
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral) *CentralReconciler {
