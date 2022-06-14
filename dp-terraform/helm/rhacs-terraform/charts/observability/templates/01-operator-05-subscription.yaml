@@ -10,5 +10,5 @@ spec:
   installPlanApproval: Automatic
   name: observability-operator
   source: observability-operator-manifests
-  sourceNamespace: rhacs-observability
-  startingCSV: observability-operator.v3.0.10
+  sourceNamespace: {{ include "observability.namespace" . }}
+  startingCSV: observability-operator.{{ .Values.observabilityOperatorVersion }}

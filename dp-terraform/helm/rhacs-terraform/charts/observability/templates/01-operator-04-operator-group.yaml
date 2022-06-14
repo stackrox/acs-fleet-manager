@@ -5,4 +5,4 @@ metadata:
   namespace: {{ include "observability.namespace" . }}
 spec:
   targetNamespaces:
-  - rhacs-observability
+  - {{ include "observability.namespace" . }}
