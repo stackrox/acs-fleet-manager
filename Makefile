@@ -741,10 +741,6 @@ docs/generate/mermaid:
 	done
 .PHONY: docs/generate/mermaid
 
-fleetshard/build:
-	$(GO) build  -o fleetshard-sync ./fleetshard
-.PHONY: fleetshard/build
-
 
 # TODO CRC Deployment stuff
 

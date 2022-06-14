@@ -93,6 +93,10 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 		glog.Errorf("error occurred %s: %s", central.Metadata.Name, err.Error())
 		return
 	}
+	if status == nil {
+		glog.Infof("No status update for Central %s", central.Metadata.Name)
+		return
+	}
 
 	err = r.client.UpdateStatus(map[string]private.DataPlaneCentralStatus{
 		central.Id: *status,
