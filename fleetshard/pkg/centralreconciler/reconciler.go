@@ -45,21 +45,34 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
-	remoteNamespace := remoteCentral.Metadata.Name
-	if err := r.ensureNamespace(remoteCentral.Metadata.Name); err != nil {
-		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteNamespace)
-	}
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteNamespace := remoteCentralName
 
-	centralExists := true
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      remoteCentral.Metadata.Name,
+			Name:      remoteCentralName,
 			Namespace: remoteNamespace,
 			Labels:    map[string]string{k8sManagedByLabelKey: "rhacs-fleetshard"},
 		},
 	}
 
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentral.Metadata.Name}, central)
+	if remoteCentral.Metadata.DeletionTimestamp != "" {
+		deleted, err := r.ensureCentralDeleted(context.Background(), central)
+		if err != nil {
+			return nil, errors.Wrapf(err, "delete central %s", remoteCentralName)
+		}
+		if deleted {
+			return deletedStatus(), nil
+		}
+		return nil, nil
+	}
+
+	if err := r.ensureNamespaceExists(remoteCentralName); err != nil {
+		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteNamespace)
+	}
+
+	centralExists := true
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentralName}, central)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return nil, errors.Wrapf(err, "unable to check the existence of central %q", central.GetName())
@@ -72,11 +85,11 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 
 		glog.Infof("Creating central tenant %s", central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
-			return nil, errors.Wrapf(err, "creating new central %q", remoteCentral.Metadata.Name)
+			return nil, errors.Wrapf(err, "creating new central %q", remoteCentralName)
 		}
 		glog.Infof("Central %s created", central.GetName())
 	} else {
-		// TODO(yury): implement update logic
+		// TODO(create-ticket): implement update logic
 		glog.Infof("Update central tenant %s", central.GetName())
 
 		err = r.incrementCentralRevision(central)
@@ -90,14 +103,18 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 	}
 
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
-	return &private.DataPlaneCentralStatus{
-		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
-			{
-				Type:   "Ready",
-				Status: "True",
-			},
-		},
-	}, nil
+	return readyStatus(), nil
+}
+
+func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+	if crDeleted, err := r.ensureCentralCRDeleted(ctx, central); err != nil || !crDeleted {
+		return false, err
+	}
+	if namespaceDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace()); err != nil || !namespaceDeleted {
+		return false, err
+	}
+	glog.Infof("All central resources were deleted: %s/%s", central.GetNamespace(), central.GetName())
+	return true, nil
 }
 
 func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) error {
@@ -110,13 +127,18 @@ func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) 
 	return nil
 }
 
-func (r CentralReconciler) ensureNamespace(name string) error {
+func (r CentralReconciler) getNamespace(name string) (*v1.Namespace, error) {
 	namespace := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 	}
 	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace)
+	return namespace, err
+}
+
+func (r CentralReconciler) ensureNamespaceExists(name string) error {
+	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			err = r.client.Create(context.Background(), namespace)
@@ -126,6 +148,39 @@ func (r CentralReconciler) ensureNamespace(name string) error {
 		}
 	}
 	return err
+}
+
+func (r CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name string) (bool, error) {
+	namespace, err := r.getNamespace(name)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return true, nil
+		}
+		return false, errors.Wrapf(err, "delete central namespace %s", name)
+	}
+	if namespace.Status.Phase == v1.NamespaceTerminating {
+		return false, nil // Deletion is already in progress, skipping deletion request
+	}
+	if err = r.client.Delete(ctx, namespace); err != nil {
+		return false, errors.Wrapf(err, "delete central namespace %s", name)
+	}
+	glog.Infof("Central namespace %s is marked for deletion", name)
+	return false, nil
+}
+
+func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: central.GetNamespace(), Name: central.GetName()}, central)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return true, nil
+		}
+		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
+	}
+	if err := r.client.Delete(ctx, central); err != nil {
+		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
+	}
+	glog.Infof("Central CR %s/%s is marked for deletion", central.GetNamespace(), central.GetName())
+	return false, nil
 }
 
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral) *CentralReconciler {
