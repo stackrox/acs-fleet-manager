@@ -108,26 +108,17 @@ func (r CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.
 }
 
 func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
-	deleted := true
-	if crDeleted, err := r.ensureCentralCRDeleted(ctx, central); err != nil {
+	if crDeleted, err := r.ensureCentralCRDeleted(ctx, central); err != nil || !crDeleted {
 		return false, err
-	} else {
-		deleted = deleted && crDeleted
 	}
-	if pvcDeleted, err := r.ensureCentralPVCsDeleted(ctx, central); err != nil {
+	if pvcDeleted, err := r.ensureCentralPVCsDeleted(ctx, central); err != nil || !pvcDeleted {
 		return false, err
-	} else {
-		deleted = deleted && pvcDeleted
 	}
-	if namespaceDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace()); err != nil {
+	if namespaceDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace()); err != nil || !namespaceDeleted {
 		return false, err
-	} else {
-		deleted = deleted && namespaceDeleted
 	}
-	if deleted {
-		glog.Infof("All central resources were deleted: %s/%s", central.GetNamespace(), central.GetName())
-	}
-	return deleted, nil
+	glog.Infof("All central resources were deleted: %s/%s", central.GetNamespace(), central.GetName())
+	return true, nil
 }
 
 func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) error {
@@ -219,11 +210,10 @@ func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *
 		}
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
-	glog.Infof("CR: %+v\\n", *central)
 	if err := r.client.Delete(ctx, central); err != nil {
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
-	return true, nil
+	return false, nil
 }
 
 func NewCentralReconciler(k8sClient ctrlClient.WithWatch, central private.ManagedCentral) *CentralReconciler {
