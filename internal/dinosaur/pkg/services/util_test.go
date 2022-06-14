@@ -356,9 +356,9 @@ func Test_contains(t *testing.T) {
 
 func Test_formatNamespace(t *testing.T) {
 	type testCase struct {
-		id        string
-		namespace string
-		error     bool
+		id          string
+		namespace   string
+		expectError bool
 	}
 	cases := map[string]testCase{
 		"should add prefix when id is correct": {
@@ -374,14 +374,14 @@ func Test_formatNamespace(t *testing.T) {
 			namespace: "rhacs-test",
 		},
 		"should fail when id is not RFC1123 compliant": {
-			id:    "ns!#$%",
-			error: true,
+			id:          "ns!#$%",
+			expectError: true,
 		},
 	}
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
 			namespace, err := formatNamespace(test.id)
-			if test.error {
+			if test.expectError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)

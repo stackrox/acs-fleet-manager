@@ -17,15 +17,15 @@ const (
 	// Set the truncate index to 35 to ensure that the namespace name does not go over the maximum limit.
 	replacementForSpecialChar = "-"
 	appendChar                = "a"
+	dns1123LabelFmt           = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+	dns1123LabelErrMsg        = "a lowercase RFC 1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character"
 )
 
-const dns1123LabelFmt string = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
-const dns1123LabelErrMsg string = "a lowercase RFC 1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character"
-
-var dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")
-
-// All OpenShift route hosts must confirm to DNS1035. This will inverse the validation RE from k8s (https://github.com/kubernetes/apimachinery/blob/master/pkg/util/validation/validation.go#L219)
-var dns1035ReplacementRE = regexp.MustCompile(`[^a-z]([^-a-z0-9]*[^a-z0-9])?`)
+var (
+	dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")
+	// All OpenShift route hosts must confirm to DNS1035. This will inverse the validation RE from k8s (https://github.com/kubernetes/apimachinery/blob/master/pkg/util/validation/validation.go#L219)
+	dns1035ReplacementRE = regexp.MustCompile(`[^a-z]([^-a-z0-9]*[^a-z0-9])?`)
+)
 
 func truncateString(str string, num int) string {
 	truncatedString := str
