@@ -23,7 +23,6 @@ const (
 
 	revisionAnnotationKey = "rhacs.redhat.com/revision"
 	k8sManagedByLabelKey  = "app.kubernetes.io/managed-by"
-	k8sComponentLabelKey  = "app.kubernetes.io/component"
 )
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -111,9 +110,6 @@ func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1
 	if crDeleted, err := r.ensureCentralCRDeleted(ctx, central); err != nil || !crDeleted {
 		return false, err
 	}
-	if pvcDeleted, err := r.ensureCentralPVCsDeleted(ctx, central); err != nil || !pvcDeleted {
-		return false, err
-	}
 	if namespaceDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace()); err != nil || !namespaceDeleted {
 		return false, err
 	}
@@ -170,38 +166,6 @@ func (r CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name stri
 	}
 	glog.Infof("Central namespace %s is marked for deletion", name)
 	return false, nil
-}
-
-func (r CentralReconciler) getCentralPVCs(ctx context.Context, central *v1alpha1.Central) ([]*v1.PersistentVolumeClaim, error) {
-	pvcList := &v1.PersistentVolumeClaimList{}
-	err := r.client.List(ctx, pvcList,
-		ctrlClient.InNamespace(central.GetNamespace()),
-		ctrlClient.MatchingLabels{k8sComponentLabelKey: "central"})
-	if err != nil {
-		return nil, errors.Wrapf(err, "receiving list PVC list for %s %s", central.GroupVersionKind(), central.GetName())
-	}
-
-	var centralPvcs []*v1.PersistentVolumeClaim
-	for i := range pvcList.Items {
-		item := pvcList.Items[i]
-		centralPvcs = append(centralPvcs, &item)
-	}
-
-	return centralPvcs, nil
-}
-
-func (r CentralReconciler) ensureCentralPVCsDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
-	pvcs, err := r.getCentralPVCs(ctx, central)
-	if err != nil {
-		return false, errors.Wrapf(err, "get central PVCs %s/%s", central.GetNamespace(), central.GetName())
-	}
-	for _, pvc := range pvcs {
-		if err := r.client.Delete(ctx, pvc); err != nil {
-			return false, errors.Wrapf(err, "delete PVC %s/%s", pvc.GetNamespace(), pvc.GetName())
-		}
-		glog.Infof("Central PVC %s/%s is marked for deletion", pvc.GetNamespace(), pvc.GetName())
-	}
-	return true, nil
 }
 
 func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
