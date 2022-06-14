@@ -511,6 +511,7 @@ objects:
 
   # This is a copy of the configmap from envoy-config-configmap.yml but only containing the parts
   # which are strictly necessary to get readiness/liveness probes to pass.
+  # TODO(porridge): consider folding this back into app-interface/data/services/acs-fleet-manager/stage/fleet-manager-envoy.configmap.yaml
   - apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -548,9 +549,52 @@ objects:
                             pipe:
                               path: /sockets/admin.socket
             
+          # This cluster is used to send requests to the backend. Note that
+          # currently it uses TLS, but that doesn't make much sense in this
+          # context because this communication is completely iside the pod. We
+          # should change this to use plain TCP and maybe even Unix sockets.
+          - name: backend
+            connect_timeout: 1s
+            type: STATIC
+            lb_policy: ROUND_ROBIN
+            load_assignment:
+              cluster_name: backend
+              endpoints:
+              - lb_endpoints:
+                - endpoint:
+                    address:
+                      socket_address:
+                        address: 127.0.0.1
+                        port_value: 8000 # Fleet Manager port
+            transport_socket:
+              name: envoy.transport_sockets.tls
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+                common_tls_context:
+                  validation_context:
+                    trusted_ca:
+                      filename: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+    
+# TODO(ROX-11395): enable rate limiting post-MVP
+#          # This cluster is used to send request to the rate limiting service.
+#          - name: limiter
+#            connect_timeout: 1s
+#            type: STRICT_DNS
+#            lb_policy: ROUND_ROBIN
+#            http2_protocol_options: {}
+#            load_assignment:
+#              cluster_name: limiter
+#              endpoints:
+#              - lb_endpoints:
+#                - endpoint:
+#                    address:
+#                      socket_address:
+#                        address: limitador.app-sre-rate-limiting.svc
+#                        port_value: 8081
+    
           listeners:
             
-            # This listener is used to accept /ready requests.
+            # This listener is used to accept /metrics and /ready requests.
             # Everything else will be rejected.
             - name: admin
               address:
@@ -575,8 +619,132 @@ objects:
                                     path: /ready
                                   route:
                                     cluster: admin
+                                - name: metrics
+                                  match:
+                                    path: /metrics
+                                  route:
+                                    cluster: admin
+                                    prefix_rewrite: /stats/prometheus
                         http_filters:
                           - name: envoy.filters.http.router
+    
+          # This listener is used to accept inbound API requests.
+          - name: ingress
+            address:
+              socket_address:
+                address: 0.0.0.0
+                port_value: 9001
+            filter_chains:
+            - transport_socket:
+                name: envoy.transport_sockets.tls
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+                  common_tls_context:
+                    tls_certificates:
+                    - certificate_chain:
+                        filename: /secrets/tls/tls.crt
+                      private_key:
+                        filename: /secrets/tls/tls.key
+              filters:
+              - name: envoy.filters.network.http_connection_manager
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                  access_log:
+                  - name: envoy.access_loggers.file
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
+                      path: /dev/stdout
+                  stat_prefix: ingress
+                  route_config:
+                    name: backend
+                    virtual_hosts:
+                    - name: all
+                      domains:
+                      - "*"
+                      routes:
+
+# TODO(ROX-11395): enable rate limiting post-MVP
+#                      # Route fleet-manager's agent-cluster related endpoints
+#                      # directly to the service without rate limiting
+#                      - name: fleet-shard-operator-agent-cluster-routes
+#                        match:
+#                          prefix: /api/rhacs/v1/agent-clusters
+#                        route:
+#                          cluster: backend
+#
+#                      # Apply rate limit to all other fleet-manager endpoints
+#                      - name: fleet-manager-v1-routes
+#                        match:
+#                          prefix: /api/rhacs/v1
+#                        route:
+#                          cluster: backend
+#                          rate_limits:
+#                          - actions:
+#                            - generic_key:
+#                                descriptor_key: path
+#                                descriptor_value: fleet_manager_v1
+#
+#                      # This is an example of how to define a rate limit for a
+#                      # specific path.
+#                      # - name: my_path
+#                      #   match:
+#                      #     path: /my_path
+#                      #   route:
+#                      #     cluster: backend
+#                      #     rate_limits:
+#                      #     - actions:
+#                      #       - generic_key:
+#                      #           descriptor_key: example_descriptor_key
+#                      #           descriptor_value: example_descriptor_value
+#
+#                      # Everything else not matching one of the rules above goes
+#                      # directly to the backend, without rate limits.
+
+                      - name: default
+                        match:
+                          prefix: /
+                        route:
+                          cluster: backend
+    
+                  http_filters:
+
+# TODO(ROX-11395): enable rate limiting post-MVP
+#                  # This is needed to enable the rate limiter:
+#                  - name: envoy.filters.http.ratelimit
+#                    typed_config:
+#                      "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+#                      domain: development:fleet_manager # This changes by environment
+#                      failure_mode_deny: false
+#                      timeout: 0.05s
+#                      rate_limit_service:
+#                        grpc_service:
+#                          envoy_grpc:
+#                            cluster_name: limiter
+#                        transport_api_version: V3
+    
+                  # This is mandatory in order to have the HTTP routes above.
+                  - name: envoy.filters.http.router
+
+# TODO(ROX-11395): enable rate limiting post-MVP
+#                  # We need this in order to generate JSON responses according to
+#                  # our API guidelines, otherwise Envoy will generate plain text
+#                  # responses.
+#                  local_reply_config:
+#                    mappers:
+#                    - filter:
+#                        status_code_filter:
+#                          comparison:
+#                            op: EQ
+#                            value:
+#                              default_value: 429
+#                              runtime_key: none
+#                      body_format_override:
+#                        json_format:
+#                          kind: "Error"
+#                          id: "429"
+#                          href: "/api/rhacs/v1/errors/429"
+#                          code: "DINOSAURS-MGMT-429"
+#                          reason: "Too Many Requests"
 
   - kind: Deployment
     apiVersion: apps/v1
