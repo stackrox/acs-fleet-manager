@@ -511,7 +511,7 @@ objects:
 
   # This is a copy of the configmap from envoy-config-configmap.yml but only containing the parts
   # which are strictly necessary to get readiness/liveness probes to pass.
-  # TODO(porridge): consider folding this back into envoy-config-configmap.yml
+  # TODO(porridge): consider folding this back into app-interface/data/services/acs-fleet-manager/stage/fleet-manager-envoy.configmap.yaml
   - apiVersion: v1
     kind: ConfigMap
     metadata:
