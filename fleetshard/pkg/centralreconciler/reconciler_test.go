@@ -74,14 +74,12 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 	assert.Equal(t, "4", central.GetAnnotations()[revisionAnnotationKey])
 }
 
-func TestReconcileLastHashEmptyOnError(t *testing.T) {
+func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralName,
-			Namespace: centralName,
-			// most straighforward way to simulat Reconcile returning an error
-			// is setting this value to something that is not a number
-			Annotations: map[string]string{revisionAnnotationKey: "NaN"},
+			Name:        centralName,
+			Namespace:   centralName,
+			Annotations: map[string]string{revisionAnnotationKey: "invalid annotation"},
 		},
 	}).Build()
 

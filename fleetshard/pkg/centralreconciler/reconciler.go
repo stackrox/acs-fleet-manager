@@ -28,6 +28,7 @@ const (
 	k8sManagedByLabelKey  = "app.kubernetes.io/managed-by"
 )
 
+// ErrTypeCentralNotChanged is an error returned when reconcilation runs more then once in a row with equal central
 var ErrTypeCentralNotChanged = errors.New("central not changed, skipping reconcilation")
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -135,7 +136,7 @@ func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1
 	return true, nil
 }
 
-// centralChanged compares the given central to the last central Reconciled using a hash
+// centralChanged compares the given central to the last central reconciled using a hash
 func (r *CentralReconciler) centralChanged(central private.ManagedCentral) (bool, error) {
 	currentHash, err := util.MD5SumFromJSONStruct(&central)
 	if err != nil {
