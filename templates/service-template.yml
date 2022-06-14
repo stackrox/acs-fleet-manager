@@ -534,20 +534,20 @@ objects:
     
           clusters:
             
-            # This backend is used to send metrics and probes requests to the
-            # administration endpoint.
-            - name: admin
-              connect_timeout: 1s
-              type: STATIC
-              lb_policy: ROUND_ROBIN
-              load_assignment:
-                cluster_name: admin
-                endpoints:
-                  - lb_endpoints:
-                      - endpoint:
-                          address:
-                            pipe:
-                              path: /sockets/admin.socket
+          # This backend is used to send metrics and probes requests to the
+          # administration endpoint.
+          - name: admin
+            connect_timeout: 1s
+            type: STATIC
+            lb_policy: ROUND_ROBIN
+            load_assignment:
+              cluster_name: admin
+              endpoints:
+                - lb_endpoints:
+                    - endpoint:
+                        address:
+                          pipe:
+                            path: /sockets/admin.socket
             
           # This cluster is used to send requests to the backend. Note that
           # currently it uses TLS, but that doesn't make much sense in this
@@ -594,39 +594,39 @@ objects:
 
           listeners:
             
-            # This listener is used to accept /metrics and /ready requests.
-            # Everything else will be rejected.
-            - name: admin
-              address:
-                socket_address:
-                  address: 0.0.0.0
-                  port_value: 9000
-              filter_chains:
-                - filters:
-                    - name: envoy.filters.network.http_connection_manager
-                      typed_config:
-                        "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-                        stat_prefix: admin
-                        route_config:
-                          name: admin
-                          virtual_hosts:
-                            - name: admin
-                              domains:
-                                - "*"
-                              routes:
-                                - name: ready
-                                  match:
-                                    path: /ready
-                                  route:
-                                    cluster: admin
-                                - name: metrics
-                                  match:
-                                    path: /metrics
-                                  route:
-                                    cluster: admin
-                                    prefix_rewrite: /stats/prometheus
-                        http_filters:
-                          - name: envoy.filters.http.router
+          # This listener is used to accept /metrics and /ready requests.
+          # Everything else will be rejected.
+          - name: admin
+            address:
+              socket_address:
+                address: 0.0.0.0
+                port_value: 9000
+            filter_chains:
+              - filters:
+                  - name: envoy.filters.network.http_connection_manager
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                      stat_prefix: admin
+                      route_config:
+                        name: admin
+                        virtual_hosts:
+                          - name: admin
+                            domains:
+                              - "*"
+                            routes:
+                              - name: ready
+                                match:
+                                  path: /ready
+                                route:
+                                  cluster: admin
+                              - name: metrics
+                                match:
+                                  path: /metrics
+                                route:
+                                  cluster: admin
+                                  prefix_rewrite: /stats/prometheus
+                      http_filters:
+                        - name: envoy.filters.http.router
     
           # This listener is used to accept inbound API requests.
           - name: ingress
