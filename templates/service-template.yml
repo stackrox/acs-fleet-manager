@@ -575,23 +575,23 @@ objects:
                     trusted_ca:
                       filename: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
     
-# TODO(ROX-11395): enable rate limiting post-MVP
-#          # This cluster is used to send request to the rate limiting service.
-#          - name: limiter
-#            connect_timeout: 1s
-#            type: STRICT_DNS
-#            lb_policy: ROUND_ROBIN
-#            http2_protocol_options: {}
-#            load_assignment:
-#              cluster_name: limiter
-#              endpoints:
-#              - lb_endpoints:
-#                - endpoint:
-#                    address:
-#                      socket_address:
-#                        address: limitador.app-sre-rate-limiting.svc
-#                        port_value: 8081
-    
+          # TODO(ROX-11395): enable rate limiting post-MVP
+          # # This cluster is used to send request to the rate limiting service.
+          # - name: limiter
+          #   connect_timeout: 1s
+          #   type: STRICT_DNS
+          #   lb_policy: ROUND_ROBIN
+          #   http2_protocol_options: {}
+          #   load_assignment:
+          #     cluster_name: limiter
+          #     endpoints:
+          #     - lb_endpoints:
+          #       - endpoint:
+          #           address:
+          #             socket_address:
+          #               address: limitador.app-sre-rate-limiting.svc
+          #               port_value: 8081
+
           listeners:
             
             # This listener is used to accept /metrics and /ready requests.
@@ -663,42 +663,42 @@ objects:
                       - "*"
                       routes:
 
-# TODO(ROX-11395): enable rate limiting post-MVP
-#                      # Route fleet-manager's agent-cluster related endpoints
-#                      # directly to the service without rate limiting
-#                      - name: fleet-shard-operator-agent-cluster-routes
-#                        match:
-#                          prefix: /api/rhacs/v1/agent-clusters
-#                        route:
-#                          cluster: backend
-#
-#                      # Apply rate limit to all other fleet-manager endpoints
-#                      - name: fleet-manager-v1-routes
-#                        match:
-#                          prefix: /api/rhacs/v1
-#                        route:
-#                          cluster: backend
-#                          rate_limits:
-#                          - actions:
-#                            - generic_key:
-#                                descriptor_key: path
-#                                descriptor_value: fleet_manager_v1
-#
-#                      # This is an example of how to define a rate limit for a
-#                      # specific path.
-#                      # - name: my_path
-#                      #   match:
-#                      #     path: /my_path
-#                      #   route:
-#                      #     cluster: backend
-#                      #     rate_limits:
-#                      #     - actions:
-#                      #       - generic_key:
-#                      #           descriptor_key: example_descriptor_key
-#                      #           descriptor_value: example_descriptor_value
-#
-#                      # Everything else not matching one of the rules above goes
-#                      # directly to the backend, without rate limits.
+                      # TODO(ROX-11395): enable rate limiting post-MVP
+                      # # Route fleet-manager's agent-cluster related endpoints
+                      # # directly to the service without rate limiting
+                      # - name: fleet-shard-operator-agent-cluster-routes
+                      #   match:
+                      #     prefix: /api/rhacs/v1/agent-clusters
+                      #   route:
+                      #     cluster: backend
+                      #
+                      # # Apply rate limit to all other fleet-manager endpoints
+                      # - name: fleet-manager-v1-routes
+                      #   match:
+                      #     prefix: /api/rhacs/v1
+                      #   route:
+                      #     cluster: backend
+                      #     rate_limits:
+                      #     - actions:
+                      #       - generic_key:
+                      #           descriptor_key: path
+                      #           descriptor_value: fleet_manager_v1
+                      #
+                      # # This is an example of how to define a rate limit for a
+                      # # specific path.
+                      # # - name: my_path
+                      # #   match:
+                      # #     path: /my_path
+                      # #   route:
+                      # #     cluster: backend
+                      # #     rate_limits:
+                      # #     - actions:
+                      # #       - generic_key:
+                      # #           descriptor_key: example_descriptor_key
+                      # #           descriptor_value: example_descriptor_value
+                      #
+                      # # Everything else not matching one of the rules above goes
+                      # # directly to the backend, without rate limits.
 
                       - name: default
                         match:
@@ -708,43 +708,43 @@ objects:
     
                   http_filters:
 
-# TODO(ROX-11395): enable rate limiting post-MVP
-#                  # This is needed to enable the rate limiter:
-#                  - name: envoy.filters.http.ratelimit
-#                    typed_config:
-#                      "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
-#                      domain: development:fleet_manager # This changes by environment
-#                      failure_mode_deny: false
-#                      timeout: 0.05s
-#                      rate_limit_service:
-#                        grpc_service:
-#                          envoy_grpc:
-#                            cluster_name: limiter
-#                        transport_api_version: V3
+                  # TODO(ROX-11395): enable rate limiting post-MVP
+                  # # This is needed to enable the rate limiter:
+                  # - name: envoy.filters.http.ratelimit
+                  #   typed_config:
+                  #     "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+                  #     domain: development:fleet_manager # This changes by environment
+                  #     failure_mode_deny: false
+                  #     timeout: 0.05s
+                  #     rate_limit_service:
+                  #       grpc_service:
+                  #         envoy_grpc:
+                  #           cluster_name: limiter
+                  #       transport_api_version: V3
     
                   # This is mandatory in order to have the HTTP routes above.
                   - name: envoy.filters.http.router
 
-# TODO(ROX-11395): enable rate limiting post-MVP
-#                  # We need this in order to generate JSON responses according to
-#                  # our API guidelines, otherwise Envoy will generate plain text
-#                  # responses.
-#                  local_reply_config:
-#                    mappers:
-#                    - filter:
-#                        status_code_filter:
-#                          comparison:
-#                            op: EQ
-#                            value:
-#                              default_value: 429
-#                              runtime_key: none
-#                      body_format_override:
-#                        json_format:
-#                          kind: "Error"
-#                          id: "429"
-#                          href: "/api/rhacs/v1/errors/429"
-#                          code: "DINOSAURS-MGMT-429"
-#                          reason: "Too Many Requests"
+                  # TODO(ROX-11395): enable rate limiting post-MVP
+                  # # We need this in order to generate JSON responses according to
+                  # # our API guidelines, otherwise Envoy will generate plain text
+                  # # responses.
+                  # local_reply_config:
+                  #   mappers:
+                  #   - filter:
+                  #       status_code_filter:
+                  #         comparison:
+                  #           op: EQ
+                  #           value:
+                  #             default_value: 429
+                  #             runtime_key: none
+                  #     body_format_override:
+                  #       json_format:
+                  #         kind: "Error"
+                  #         id: "429"
+                  #         href: "/api/rhacs/v1/errors/429"
+                  #         code: "DINOSAURS-MGMT-429"
+                  #         reason: "Too Many Requests"
 
   - kind: Deployment
     apiVersion: apps/v1
