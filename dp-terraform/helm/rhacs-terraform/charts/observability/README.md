@@ -1,9 +1,4 @@
-# Dataplane terraform observability Helm chart
-
-## Requirements
-
-`oc` CLI installed with credentials configured. 
-`helm` CLI installed. 
+# Data plane terraform observability Helm chart
 
 ## Usage
 
@@ -29,7 +24,7 @@ helm install rhacs-terraform-obs \
 **Uninstall the chart and cleanup all created resources**
 
 ```bash
-helm install rhacs-terraform-obs --namespace rhacs
+helm uninstall rhacs-terraform-obs --namespace rhacs
 ```
 
 See internal wiki for an example file `~/.rh/obs-values.yaml`.
