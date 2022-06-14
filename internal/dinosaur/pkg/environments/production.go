@@ -10,8 +10,7 @@ func NewProductionEnvLoader() environments.EnvLoader {
 		"enable-sentry":                        "true",
 		"enable-deny-list":                     "true",
 		"max-allowed-instances":                "1",
-		"sso-realm":                            "rhoas",
-		"sso-base-url":                         "https://identity.api.openshift.com",
+		"sso-base-url":                         "https://sso.redhat.com",
 		"enable-dinosaur-external-certificate": "true",
 		"cluster-compute-machine-type":         "m5.2xlarge",
 	}

@@ -1,26 +1,22 @@
 package auth
 
 import (
+	"github.com/golang/glog"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"github.com/gorilla/mux"
 )
 
-func UseOperatorAuthorisationMiddleware(router *mux.Router, jwkValidIssuerURI string, clusterIdVar string) {
-	var requiredRole = "fleetshard_operator"
-
+func UseOperatorAuthorisationMiddleware(router *mux.Router, jwkValidIssuerURI string, clusterIdVar string, clusterService AuthAgentService) {
 	router.Use(
-		NewRolesAuhzMiddleware().RequireRealmRole(requiredRole, errors.ErrorNotFound),
-		checkClusterId(clusterIdVar),
+		checkClusterId(clusterIdVar, clusterService),
 		NewRequireIssuerMiddleware().RequireIssuer([]string{jwkValidIssuerURI}, errors.ErrorNotFound),
 	)
 }
 
-func checkClusterId(clusterIdVar string) mux.MiddlewareFunc {
-	var clusterIdClaimKey = "fleetshard-operator-cluster-id"
-
+func checkClusterId(clusterIdVar string, authAgentService AuthAgentService) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			ctx := request.Context()
@@ -31,12 +27,20 @@ func checkClusterId(clusterIdVar string) mux.MiddlewareFunc {
 				shared.HandleError(request, writer, errors.NotFound(""))
 				return
 			}
-			if clusterIdInClaim, ok := claims[clusterIdClaimKey].(string); ok {
-				if clusterIdInClaim == clusterId {
+
+			savedClientId, err := authAgentService.GetClientId(clusterId)
+			if err != nil {
+				glog.Errorf("unable to get clientID for cluster with ID %q: %v", clusterId, err)
+				shared.HandleError(request, writer, errors.GeneralError("unable to get clientID for cluster with ID %q", clusterId))
+			}
+
+			if clientId, ok := claims["clientId"].(string); ok {
+				if clientId == savedClientId {
 					next.ServeHTTP(writer, request)
 					return
 				}
 			}
+
 			shared.HandleError(request, writer, errors.NotFound(""))
 		})
 	}

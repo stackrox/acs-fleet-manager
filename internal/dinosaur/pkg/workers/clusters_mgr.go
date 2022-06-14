@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
@@ -22,7 +23,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
-	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 
 	authv1 "github.com/openshift/api/authorization/v1"
 	userv1 "github.com/openshift/api/user/v1"
@@ -94,7 +94,7 @@ type ClusterManagerOptions struct {
 	ClusterService             services.ClusterService
 	CloudProvidersService      services.CloudProvidersService
 	FleetshardOperatorAddon    services.FleetshardOperatorAddon
-	OsdIdpKeycloakService      coreServices.OsdKeycloakService
+	OsdIdpKeycloakService      sso.OSDKeycloakService
 }
 
 type processor func() []error
@@ -983,7 +983,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 	}
 
 	callbackUri := fmt.Sprintf("https://oauth-openshift.%s/oauth2callback/%s", clusterDNS, openIDIdentityProviderName)
-	clientSecret, ssoErr := c.OsdIdpKeycloakService.RegisterOSDClusterClientInSSO(cluster.ID, callbackUri)
+	clientSecret, ssoErr := c.OsdIdpKeycloakService.RegisterClientInSSO(cluster.ID, callbackUri)
 	if ssoErr != nil {
 		return errors.WithMessagef(ssoErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, ssoErr.Error())
 	}
