@@ -33,12 +33,12 @@ type Runtime struct {
 	config           *config.Config
 	client           *fleetmanager.Client
 	reconcilers      reconcilerRegistry //TODO(yury): remove central instance after deletion
-	k8sClient        ctrlClient.WithWatch
+	k8sClient        ctrlClient.Client
 	statusResponseCh chan private.DataPlaneCentralStatus
 }
 
 // NewRuntime creates a new runtime
-func NewRuntime(config *config.Config, k8sClient ctrlClient.WithWatch) (*Runtime, error) {
+func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
 	client, err := fleetmanager.NewClient(config.FleetManagerEndpoint, config.ClusterID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleetmanager client")

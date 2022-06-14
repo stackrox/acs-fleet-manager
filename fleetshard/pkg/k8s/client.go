@@ -10,13 +10,13 @@ import (
 )
 
 // CreateClientOrDie creates a new kubernetes client or dies
-func CreateClientOrDie() ctrlClient.WithWatch {
+func CreateClientOrDie() ctrlClient.Client {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = v1alpha1.AddToScheme(scheme)
 	config := ctrl.GetConfigOrDie()
 
-	k8sClient, err := ctrlClient.NewWithWatch(config, ctrlClient.Options{
+	k8sClient, err := ctrlClient.New(config, ctrlClient.Options{
 		Scheme: scheme,
 	})
 	if err != nil {

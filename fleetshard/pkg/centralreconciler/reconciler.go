@@ -29,7 +29,7 @@ const (
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client  ctrlClient.WithWatch
+	client  ctrlClient.Client
 	central private.ManagedCentral
 	status  *int32
 }
@@ -216,7 +216,7 @@ func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *
 	return false, nil
 }
 
-func NewCentralReconciler(k8sClient ctrlClient.WithWatch, central private.ManagedCentral) *CentralReconciler {
+func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral) *CentralReconciler {
 	return &CentralReconciler{
 		client:  k8sClient,
 		central: central,
