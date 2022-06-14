@@ -11,7 +11,7 @@ To get the cluster id for staging use `export CLUSTER_ID=$(grep cluster_id ../..
 
 **Create values file**
 
-Create a file `obs-values.yaml` with the values for the parameters in [values.yaml](./values.yaml) that are missing or that you want to override. That file will contain credentials, so make sure you put it in a safe location, and with suitable permissions. 
+Create a file `terraform-values.yaml` with the values for the parameters in [values.yaml](./values.yaml) that are missing or that you want to override. That file will contain credentials, so make sure you put it in a safe location, and with suitable permissions. 
 
 **Render the chart to see the generated templates during development**
 
@@ -41,7 +41,7 @@ helm install rhacs-terraform \
 **Uninstall the chart and cleanup all created resources**
 
 ```bash
-helm install rhacs-terraform --namespace rhacs
+helm uninstall rhacs-terraform --namespace rhacs
 ```
 
 See internal wiki for an example file `~/.rh/terraform-values.yaml`.
