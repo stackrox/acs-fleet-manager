@@ -10,8 +10,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/runtime"
 	"golang.org/x/sys/unix"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 /**
@@ -26,10 +24,6 @@ func main() {
 	// every log messages is prefixed by an error message stating the the flags haven't been
 	// parsed.
 	_ = flag.CommandLine.Parse([]string{})
-
-	// This sets a logger with default options for the controller-runtime. It is required
-	// to get log output when operations like creating a new k8s client fail.
-	ctrl.SetLogger(zap.New())
 
 	// Always log to stderr by default, required for glog.
 	if err := flag.Set("logtostderr", "true"); err != nil {
