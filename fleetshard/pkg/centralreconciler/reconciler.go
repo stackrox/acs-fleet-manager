@@ -168,6 +168,7 @@ func (r CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name stri
 	if err = r.client.Delete(ctx, namespace); err != nil {
 		return false, errors.Wrapf(err, "delete central namespace %s", name)
 	}
+	glog.Infof("Central namespace %s is marked for deletion", name)
 	return false, nil
 }
 
@@ -198,6 +199,7 @@ func (r CentralReconciler) ensureCentralPVCsDeleted(ctx context.Context, central
 		if err := r.client.Delete(ctx, pvc); err != nil {
 			return false, errors.Wrapf(err, "delete PVC %s/%s", pvc.GetNamespace(), pvc.GetName())
 		}
+		glog.Infof("Central PVC %s/%s is marked for deletion", pvc.GetNamespace(), pvc.GetName())
 	}
 	return true, nil
 }
@@ -213,6 +215,7 @@ func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *
 	if err := r.client.Delete(ctx, central); err != nil {
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
+	glog.Infof("Central CR %s/%s is marked for deletion", central.GetNamespace(), central.GetName())
 	return false, nil
 }
 

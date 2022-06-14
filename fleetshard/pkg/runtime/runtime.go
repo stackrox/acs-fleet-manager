@@ -94,7 +94,7 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 		return
 	}
 	if status == nil {
-		glog.Infof("no status update for Central %s", central.Metadata.Name)
+		glog.Infof("No status update for Central %s", central.Metadata.Name)
 		return
 	}
 
