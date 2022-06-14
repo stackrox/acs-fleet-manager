@@ -51,9 +51,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
-	remoteNamespace := remoteCentral.Metadata.Name
-	remoteCentralName := remoteCentral.Metadata.Name
-
 	changed, err := r.centralChanged(remoteCentral)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checking if central changed")
@@ -62,6 +59,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if !changed {
 		return nil, ErrTypeCentralNotChanged
 	}
+
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteNamespace := remoteCentralName
 
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
