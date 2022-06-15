@@ -16,10 +16,10 @@ github:
 
 # Credentials for Observatorium https://observatorium.io/ instance
 observatorium:
-  tenant: ""
+  tenant: "rhacs"
+  authType: "redhat"
+  redHatSsoAuthServerUrl: "https://sso.redhat.com/auth/"
+  redHatSsoRealm: "redhat-external"
   gateway: ""
-  authType: ""
-  redHatSsoAuthServerUrl: ""
-  redHatSsoRealm: ""
   metricsClientId: ""
   metricsSecret: ""
