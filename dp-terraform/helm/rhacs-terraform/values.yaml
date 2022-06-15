@@ -10,20 +10,14 @@ acsOperator:
   enabled: false
   startingCSV: rhacs-operator.v3.70.0
 
-# See parameters in charts/observability/values.yaml
+# See available parameters in charts/observability/values.yaml
 # - enabled flag is used to completely enable/disable observability sub-chart
 observability:
   enabled: true
-  observabilityOperatorVersion: 'v3.0.11'
   github:
     accessToken: ""
     repository: ""
-    tag: "master"
   observatorium:
-    tenant: "rhacs"
-    authType: "redhat"
-    redHatSsoAuthServerUrl: "https://sso.redhat.com/auth/"
-    redHatSsoRealm: "redhat-external"
     gateway: ""
     metricsClientId: ""
     metricsSecret: ""
