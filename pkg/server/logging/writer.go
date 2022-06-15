@@ -2,12 +2,34 @@ package logging
 
 import (
 	"net/http"
+	"strings"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )
 
+func redactRequest(request *http.Request) *http.Request {
+	secretNames := []string{"authorization"}
+	redacted := "REDACTED"
+	requestCopy := *request
+
+	requestCopy.Header = make(map[string][]string, len(request.Header))
+NEXT_HEADER:
+	for headerName, _ := range request.Header {
+		for _, secretName := range secretNames {
+			if strings.EqualFold(headerName, secretName) {
+				// Redact this header.
+				requestCopy.Header[headerName] = []string{redacted}
+				continue NEXT_HEADER
+			}
+		}
+		requestCopy.Header[headerName] = request.Header[headerName]
+	}
+	return &requestCopy
+}
+
 func NewLoggingWriter(w http.ResponseWriter, r *http.Request, f LogFormatter) *loggingWriter {
+	r = redactRequest(r)
 	return &loggingWriter{ResponseWriter: w, request: r, formatter: f}
 }
 
