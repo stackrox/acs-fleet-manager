@@ -6,7 +6,7 @@ fleetshardSync:
   ocmToken: ""
   fleetManagerEndpoint: ""
   clusterId: ""
-  redHatSso:
+  redHatSSO:
     user: 
     password: ""
   

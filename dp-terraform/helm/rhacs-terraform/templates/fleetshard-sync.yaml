@@ -31,7 +31,7 @@ spec:
           value: {{ .Values.fleetshardSync.fleetManagerEndpoint }}
         - name: CLUSTER_ID
           value: {{ .Values.fleetshardSync.clusterId }}
-        {{- if and .Values.fleetshardSync.redHatSso.user .Values.fleetshardSync.redHatSso.password }}
+        {{- if and .Values.fleetshardSync.redHatSSO.user .Values.fleetshardSync.redHatSSO.password }}
         volumeMounts:
         - name: rhsso-creds
           mountPath: /run/secrets/rhsso-creds
@@ -42,7 +42,7 @@ spec:
             secretName: fleetshard-sync-rhsso-creds
         {{- end }}
 ---
-{{- if and .Values.fleetshardSync.redHatSso.user .Values.fleetshardSync.redHatSso.password }}
+{{- if and .Values.fleetshardSync.redHatSSO.user .Values.fleetshardSync.redHatSSO.password }}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -53,7 +53,7 @@ metadata:
 type: Opaque
 stringData:
   user: |
-    {{ .Values.fleetshardSync.redHatSso.user | nindent 4 }}
+    {{ .Values.fleetshardSync.redHatSSO.user | nindent 4 }}
   password: |
-    {{ .Values.fleetshardSync.redHatSso.password | nindent 4 }}
+    {{ .Values.fleetshardSync.redHatSSO.password | nindent 4 }}
 {{- end }}
