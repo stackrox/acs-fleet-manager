@@ -14,7 +14,11 @@ func CreateClientOrDie() ctrlClient.Client {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = v1alpha1.AddToScheme(scheme)
-	config := ctrl.GetConfigOrDie()
+
+	config, err := ctrl.GetConfig()
+	if err != nil {
+		glog.Fatal("failed to get k8s client config", err)
+	}
 
 	k8sClient, err := ctrlClient.New(config, ctrlClient.Options{
 		Scheme: scheme,
