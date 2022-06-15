@@ -1,17 +1,34 @@
 # fleetshard-sync
 
+## Prerequisites
+
+Start minikube, see environment specific setting e.g.  https://minikube.sigs.k8s.io/docs/drivers/:
+```
+$ minikube start
+```
+
+Start the RHACS operator:
+```
+$ cdrox
+$ make -C operator install run
+```
+
 ## Quickstart
 
-```
-# Start commands from git root directory
+Execute all commands from git root directory.
 
-# Start fleet manager
-$ ./scripts/setup-dev-env.sh
+1. Start fleet manager:
+    ```
+    $ ./scripts/setup-dev-env.sh
+    ```
 
-# Build and run fleetshard-sync
-$ make fleetshard/build
-$ OCM_TOKEN=$(ocm token) ./fleetshard-sync
+1. Build and run fleetshard-sync:
+    ```
+    $ make fleetshard/build
+    $ OCM_TOKEN=$(ocm token) CLUSTER_ID=1234567890abcdef1234567890abcdef ./fleetshard-sync
+    ```
 
-# Create a central instace
-$ ./scripts/create-central.sh
-```
+1. Create a central instance:
+    ```
+    $ ./scripts/create-central.sh
+    ```
