@@ -61,7 +61,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	remoteCentralName := remoteCentral.Metadata.Name
-	remoteNamespace := remoteCentralName
+	remoteNamespace := remoteCentral.Metadata.Namespace
 
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
@@ -100,7 +100,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 		glog.Infof("Creating central tenant %s", central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
-			return nil, errors.Wrapf(err, "creating new central %q", remoteCentralName)
+			return nil, errors.Wrapf(err, "creating new central %s/%s", remoteNamespace, remoteCentralName)
 		}
 		glog.Infof("Central %s created", central.GetName())
 	} else {
