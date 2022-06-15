@@ -8,6 +8,7 @@ Algorithm RS256: RSASSA-PKCS1-v1_5 using SHA-256
 Key ID SHA-256
 ```
 **be sure to enable: Show X.509**
+
 2. Copy `Public and Private Keypair Set` field and paste it into new file. i.e. `config/jwks-file-test.json`
 3. Copy `Public Key` field. Open: https://jwt.io/ and paste the data into `HEADER` field
 4. Copy and paste public and private keys **X.509 PEM Format** into: jwt.io related parts in `VERIFY SIGNATURE` field
@@ -51,5 +52,6 @@ Key ID SHA-256
 }
 ```
 **NOTE**: important parts could be `realm_access.roles`, `iss`, etc.
+
 6. Use generated Token from jwt.io
 7. Start application with JWKS file param: `--jwks-file config/jwks-file-test.json`
