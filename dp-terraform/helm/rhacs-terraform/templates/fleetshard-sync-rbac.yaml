@@ -7,7 +7,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: fleetshard-sync-rolebinding
+  name: {{ printf "%s-%s" "fleetshard-sync-rb" .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -17,6 +17,7 @@ subjects:
   name: fleetshard-sync
   namespace: {{ .Release.Namespace }}
 ---
+{{- if not (lookup "rbac.authorization.k8s.io/v1" "ClusterRole" "" "fleetshard-sync-role") }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -29,3 +30,4 @@ rules:
   - '*'
   verbs:
   - '*'
+{{- end }}
