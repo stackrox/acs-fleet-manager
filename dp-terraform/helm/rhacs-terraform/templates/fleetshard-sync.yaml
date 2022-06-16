@@ -31,3 +31,29 @@ spec:
           value: {{ .Values.fleetshardSync.fleetManagerEndpoint }}
         - name: CLUSTER_ID
           value: {{ .Values.fleetshardSync.clusterId }}
+        {{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret }}
+        volumeMounts:
+        - name: rhsso-creds
+          mountPath: /run/secrets/rhsso-creds
+          readOnly: true
+      volumes:
+        - name: rhsso-creds
+          secret:
+            secretName: fleetshard-sync-rhsso-creds
+        {{- end }}
+---
+{{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: fleetshard-sync-rhsso-creds
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: fleetshard-sync
+type: Opaque
+stringData:
+  clientId: |
+    {{ .Values.fleetshardSync.redHatSSO.clientId | nindent 4 }}
+  clientSecret: |
+    {{ .Values.fleetshardSync.redHatSSO.clientSecret | nindent 4 }}
+{{- end }}
