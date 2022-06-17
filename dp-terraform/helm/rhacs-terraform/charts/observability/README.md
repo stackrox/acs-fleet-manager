@@ -13,10 +13,10 @@ helm template rhacs-terraform-obs \
   --values ~/.rh/obs-values.yaml .
 ```
 
-**Install the chart**
+**Install or update the chart**
 
 ```bash
-helm install rhacs-terraform-obs \
+helm upgrade --install rhacs-terraform-obs \
   --namespace rhacs \
   --values ~/.rh/obs-values.yaml .
 ```
