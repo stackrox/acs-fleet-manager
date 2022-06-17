@@ -989,15 +989,11 @@ objects:
               limits:
                 cpu: ${CPU_LIMIT}
                 memory: ${MEMORY_LIMIT}
-            # TODO ROX-11309 Use /api based endpoint for livenessProbe
             livenessProbe:
               httpGet:
-                path: /healthcheck
-                port: 8083
+                path: /api/dinosaurs_mgmt
+                port: 8000
                 scheme: HTTPS
-                httpHeaders:
-                  - name: User-Agent
-                    value: Probe
               initialDelaySeconds: 15
               periodSeconds: 5
             readinessProbe:
