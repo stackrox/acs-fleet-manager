@@ -26,10 +26,10 @@ helm template rhacs-terraform \
   --set acsOperator.enabled=true .
 ```
 
-**Install the chart** 
+**Install or update the chart**
 
 ```bash
-helm install rhacs-terraform \
+helm upgrade --install rhacs-terraform \
   --namespace rhacs \
   --values ~/.rh/terraform-values.yaml \
   --set fleetshardSync.ocmToken=$(ocm token) \
