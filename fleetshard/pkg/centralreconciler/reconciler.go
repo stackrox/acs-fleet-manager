@@ -82,7 +82,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, nil
 	}
 
-	if err := r.ensureNamespaceExists(remoteCentralName); err != nil {
+	if err := r.ensureNamespaceExists(remoteNamespace); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteNamespace)
 	}
 
