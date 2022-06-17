@@ -17,10 +17,15 @@ const (
 	// Set the truncate index to 35 to ensure that the namespace name does not go over the maximum limit.
 	replacementForSpecialChar = "-"
 	appendChar                = "a"
+	dns1123LabelFmt           = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+	dns1123LabelErrMsg        = "a lowercase RFC 1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character"
 )
 
-// All OpenShift route hosts must confirm to DNS1035. This will inverse the validation RE from k8s (https://github.com/kubernetes/apimachinery/blob/master/pkg/util/validation/validation.go#L219)
-var dns1035ReplacementRE = regexp.MustCompile(`[^a-z]([^-a-z0-9]*[^a-z0-9])?`)
+var (
+	dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")
+	// All OpenShift route hosts must confirm to DNS1035. This will inverse the validation RE from k8s (https://github.com/kubernetes/apimachinery/blob/master/pkg/util/validation/validation.go#L219)
+	dns1035ReplacementRE = regexp.MustCompile(`[^a-z]([^-a-z0-9]*[^a-z0-9])?`)
+)
 
 func truncateString(str string, num int) string {
 	truncatedString := str
@@ -32,7 +37,7 @@ func truncateString(str string, num int) string {
 
 // buildTruncateDinosaurIdentifier creates a unique identifier for a dinosaur cluster given
 // the dinosaur request object
-func buildTruncateDinosaurIdentifier(dinosaurRequest *dbapi.DinosaurRequest) string {
+func buildTruncateDinosaurIdentifier(dinosaurRequest *dbapi.CentralRequest) string {
 	return fmt.Sprintf("%s-%s", truncateString(dinosaurRequest.Name, truncatedNameLen), strings.ToLower(dinosaurRequest.ID))
 }
 
@@ -62,4 +67,13 @@ func replaceHostSpecialChar(name string) (string, error) {
 	}
 
 	return replacedName, nil
+}
+
+// formatNamespace adds the rhacs prefix to the namespace name and performs the necessary validation and formatting to comply with RFC1123 that namespace names must follow.
+func formatNamespace(text string) (string, error) {
+	if !dns1123LabelRegexp.MatchString(text) {
+		return "", fmt.Errorf("invalid namespace %s: %s", text, validation.RegexError(dns1123LabelErrMsg, dns1123LabelFmt, "my-name", "123-abc"))
+	}
+	truncatedNamespace := truncateString("rhacs-"+text, validation.LabelValueMaxLength)
+	return strings.TrimRight(truncatedNamespace, "-"), nil
 }

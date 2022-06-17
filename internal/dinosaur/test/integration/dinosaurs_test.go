@@ -22,6 +22,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
+
 	// TODO(ROX-10709)  "github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
 )
@@ -105,7 +106,7 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 
 	// create dummy dinosaurs
 	db := test.TestServices.DBFactory.New()
-	dinosaurs := []*dbapi.DinosaurRequest{
+	dinosaurs := []*dbapi.CentralRequest{
 		{
 			MultiAZ:        false,
 			Owner:          "dummyuser1",
@@ -456,23 +457,23 @@ func TestDinosaur_Delete(t *testing.T) {
 	}
 
 	// create a dinosaur that will be updated
-	dinosaur := &dbapi.DinosaurRequest{
+	dinosaur := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: sampleDinosaurID,
 		},
-		MultiAZ:                        true,
-		Owner:                          owner,
-		Region:                         "test",
-		CloudProvider:                  "test",
-		Name:                           "test-dinosaur",
-		OrganisationId:                 orgId,
-		Status:                         constants.DinosaurRequestStatusReady.String(),
-		ClusterID:                      cluster.ClusterID,
-		ActualDinosaurVersion:          "2.6.0",
-		DesiredDinosaurVersion:         "2.6.0",
-		ActualDinosaurOperatorVersion:  "v.23.0",
-		DesiredDinosaurOperatorVersion: "v0.23.0",
-		InstanceType:                   types.EVAL.String(),
+		MultiAZ:                       true,
+		Owner:                         owner,
+		Region:                        "test",
+		CloudProvider:                 "test",
+		Name:                          "test-dinosaur",
+		OrganisationId:                orgId,
+		Status:                        constants.DinosaurRequestStatusReady.String(),
+		ClusterID:                     cluster.ClusterID,
+		ActualCentralVersion:          "2.6.0",
+		DesiredCentralVersion:         "2.6.0",
+		ActualCentralOperatorVersion:  "v.23.0",
+		DesiredCentralOperatorVersion: "v0.23.0",
+		InstanceType:                  types.EVAL.String(),
 	}
 
 	if err := db.Create(dinosaur).Error; err != nil {

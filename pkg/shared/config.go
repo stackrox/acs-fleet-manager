@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
@@ -77,4 +78,12 @@ func BuildFullFilePath(filename string) string {
 		absFilePath = filepath.Join(projectRootDirectory, unquotedFile)
 	}
 	return absFilePath
+}
+
+func ReadYamlFile(filename string, out interface{}) (err error) {
+	fileContents, err := ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	return yaml.UnmarshalStrict([]byte(fileContents), out)
 }

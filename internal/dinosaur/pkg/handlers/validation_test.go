@@ -7,6 +7,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 
+	"github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -14,7 +15,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
-	"github.com/onsi/gomega"
 )
 
 func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
@@ -33,7 +33,7 @@ func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
 			name: "throw an error when the DinosaurService call throws an error",
 			arg: args{
 				dinosaurService: &services.DinosaurServiceMock{
-					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.DinosaurList, *api.PagingMeta, *errors.ServiceError) {
+					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 4}, errors.GeneralError("count failed from database")
 					},
 				},
@@ -46,7 +46,7 @@ func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
 			name: "throw an error when name is already used",
 			arg: args{
 				dinosaurService: &services.DinosaurServiceMock{
-					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.DinosaurList, *api.PagingMeta, *errors.ServiceError) {
+					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 1}, nil
 					},
 				},
@@ -63,7 +63,7 @@ func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
 			name: "does not throw an error when name is unique",
 			arg: args{
 				dinosaurService: &services.DinosaurServiceMock{
-					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.DinosaurList, *api.PagingMeta, *errors.ServiceError) {
+					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 0}, nil
 					},
 				},
@@ -149,7 +149,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		},
 	}
 	type args struct {
-		dinosaurRequest dbapi.DinosaurRequest
+		dinosaurRequest dbapi.CentralRequest
 		ProviderConfig  *config.ProviderConfig
 		dinosaurService services.DinosaurService
 	}
@@ -169,11 +169,11 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
 				dinosaurService: &services.DinosaurServiceMock{
-					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.DinosaurRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
+					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
 				},
-				dinosaurRequest: dbapi.DinosaurRequest{},
+				dinosaurRequest: dbapi.CentralRequest{},
 				ProviderConfig: &config.ProviderConfig{
 					ProvidersConfig: config.ProviderConfiguration{
 						SupportedProviders: config.ProviderList{
@@ -204,11 +204,11 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "do not throw an error when cloud provider and region matches",
 			arg: args{
 				dinosaurService: &services.DinosaurServiceMock{
-					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.DinosaurRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
+					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
 				},
-				dinosaurRequest: dbapi.DinosaurRequest{
+				dinosaurRequest: dbapi.CentralRequest{
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
@@ -249,11 +249,11 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "throws an error when cloud provider and region do not match",
 			arg: args{
 				dinosaurService: &services.DinosaurServiceMock{
-					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.DinosaurRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
+					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
 				},
-				dinosaurRequest: dbapi.DinosaurRequest{
+				dinosaurRequest: dbapi.CentralRequest{
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
@@ -282,11 +282,11 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "throws an error when instance type is not supported",
 			arg: args{
 				dinosaurService: &services.DinosaurServiceMock{
-					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.DinosaurRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
+					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
 				},
-				dinosaurRequest: dbapi.DinosaurRequest{
+				dinosaurRequest: dbapi.CentralRequest{
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
