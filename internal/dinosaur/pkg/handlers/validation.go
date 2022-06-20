@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
+
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 )
@@ -104,6 +107,79 @@ func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.
 		dinosaurRequest.OrganisationId, _ = claims.GetOrgId()
 		dinosaurRequest.OwnerAccountId, _ = claims.GetAccountId()
 
+		return nil
+	}
+}
+
+func validateQuantity(qty string, path string) *errors.ServiceError {
+	_, err := resource.ParseQuantity(qty)
+	return errors.Validation("invalid resources: failed to parse quantity %q at %s due to: %v", qty, path, err)
+}
+
+func ValidateCentralSpec(ctx context.Context, centralRequestPayload *public.CentralRequestPayload, field string, dbCentral *dbapi.CentralRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		// Validate Central resources.
+		if err := validateQuantity(centralRequestPayload.Central.Resources.Requests.Cpu, "Central.Resources.Requests.Cpu"); err != nil {
+			return err
+		}
+		if err := validateQuantity(centralRequestPayload.Central.Resources.Requests.Memory, "Central.Resources.Requests.Memory"); err != nil {
+			return err
+		}
+		if err := validateQuantity(centralRequestPayload.Central.Resources.Limits.Cpu, "Central.Resources.Limits.Cpu"); err != nil {
+			return err
+		}
+		if err := validateQuantity(centralRequestPayload.Central.Resources.Limits.Cpu, "Central.Resources.Limits.Memory"); err != nil {
+			return err
+		}
+		central, err := json.Marshal(centralRequestPayload.Central)
+		if err != nil {
+			return errors.Validation("marshaling Central spec failed: %v", err)
+		}
+
+		dbCentral.Central = central
+		return nil
+	}
+}
+
+func ValidateScannerSpec(ctx context.Context, centralRequestPayload *public.CentralRequestPayload, field string, dbCentral *dbapi.CentralRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		// Validate Scanner Analyzer resources and scaling settings.
+		if err := validateQuantity(centralRequestPayload.Scanner.Analyzer.Resources.Requests.Cpu, "Scanner.Analyzer.Resources.Requests.Cpu"); err != nil {
+			return err
+		}
+		if err := validateQuantity(centralRequestPayload.Scanner.Analyzer.Resources.Requests.Memory, "Scanner.Analyzer.Resources.Requests.Memory"); err != nil {
+			return err
+		}
+		if err := validateQuantity(centralRequestPayload.Scanner.Analyzer.Resources.Limits.Cpu, "Scanner.Analyzer.Resources.Limits.Cpu"); err != nil {
+			return err
+		}
+		if err := validateQuantity(centralRequestPayload.Scanner.Analyzer.Resources.Limits.Cpu, "Scanner.Analyzer.Resources.Limits.Memory"); err != nil {
+			return err
+		}
+		if centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "Enabled" && centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "Disabled" {
+			return errors.Validation("invalid AutoScaling setting at Scanner.Analyzer.Scaling.AutoScaling, expected 'Enabled' or 'Disabled'")
+		}
+
+		// Validate Scanner DB resources.
+		if err := validateQuantity(centralRequestPayload.Scanner.Db.Resources.Requests.Cpu, "Scanner.Db.Resources.Requests.Cpu"); err != nil {
+			return err
+		}
+		if err := validateQuantity(centralRequestPayload.Scanner.Db.Resources.Requests.Memory, "Scanner.Db.Resources.Requests.Memory"); err != nil {
+			return err
+		}
+		if err := validateQuantity(centralRequestPayload.Scanner.Db.Resources.Limits.Cpu, "Scanner.Db.Resources.Limits.Cpu"); err != nil {
+			return err
+		}
+		if err := validateQuantity(centralRequestPayload.Scanner.Db.Resources.Limits.Cpu, "Scanner.Db.Resources.Limits.Memory"); err != nil {
+			return err
+		}
+
+		scanner, err := json.Marshal(centralRequestPayload.Scanner)
+		if err != nil {
+			return errors.Validation("marshaling Scanner spec failed: %v", err)
+		}
+
+		dbCentral.Scanner = scanner
 		return nil
 	}
 }

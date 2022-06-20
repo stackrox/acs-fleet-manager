@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -41,11 +42,36 @@ type EndpointSpec struct {
 	Tls  *TlsSpec `json:"tls,omitempty"`
 }
 
+type CentralSpec struct {
+	Resources corev1.ResourceRequirements `json:"resources"`
+}
+
+type ScannerAnalyzerScaling struct {
+	AutoScaling string `json:"autoScaling,omitempty"`
+	Replicas    int32  `json:"replicas,omitempty"`
+	MinReplicas int32  `json:"minReplicas,omitempty"`
+	MaxReplicas int32  `json:"maxReplicas,omitempty"`
+}
+type ScannerAnalyzerSpec struct {
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	Scaling   ScannerAnalyzerScaling      `json:"scaling,omitempty"`
+}
+
+type ScannerDbSpec struct {
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+}
+type ScannerSpec struct {
+	Analyzer ScannerAnalyzerSpec `json:"analyzer,omitempty"`
+	Db       ScannerDbSpec       `json:"db,omitempty"`
+}
+
 type ManagedDinosaurSpec struct {
 	Endpoint EndpointSpec `json:"endpoint"`
 	Versions VersionsSpec `json:"versions"`
 	Deleted  bool         `json:"deleted"`
 	Owners   []string     `json:"owners"`
+	Central  CentralSpec  `json:"central"`
+	Scanner  ScannerSpec  `json:"scanner"`
 }
 
 type ManagedDinosaur struct {

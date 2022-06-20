@@ -1,0 +1,50 @@
+{
+    "name": "test-central-1",
+    "multi_az": true,
+    "cloud_provider": "standalone",
+    "region": "standalone",
+    "central": {
+        "resources": {
+            "requests": {
+                "cpu": "1",
+                "memory": "250Mi"
+            },
+            "limits": {
+                "cpu": "1",
+                "memory": "250Mi"
+            }
+        }
+    },
+    "scanner": {
+        "db": {
+            "resources": {
+                "requests": {
+                    "cpu": "0.5",
+                    "memory": "250Mi"
+                },
+                "limits": {
+                    "cpu": "0.5",
+                    "memory": "250Mi"
+                }
+            }
+        },
+        "analyzer": {
+            "scaling": {
+                "autoScaling": "Disabled",
+                "replicas": 1,
+                "minReplicas": 1,
+                "maxReplicas": 1
+            },
+            "resources": {
+                "requests": {
+                    "cpu": "0.5",
+                    "memory": "250Mi"
+                },
+                "limits": {
+                    "cpu": "0.5",
+                    "memory": "250Mi"
+                }
+            }
+        }
+    }
+}

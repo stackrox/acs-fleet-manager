@@ -24,7 +24,9 @@ type CentralRequest struct {
 	OrganisationId string `json:"organisation_id" gorm:"index"`
 	FailedReason   string `json:"failed_reason"`
 	// PlacementId field should be updated every time when a CentralRequest is assigned to an OSD cluster (even if it's the same one again)
-	PlacementId string `json:"placement_id"`
+	PlacementId string   `json:"placement_id"`
+	Central     api.JSON `json:"central"` // Schema is defined by #/components/schemas/CentralSpec from the public API.
+	Scanner     api.JSON `json:"scanner"` // Schema is defined by #/components/schemas/ScannerSpec from the public API.
 
 	DesiredCentralVersion         string `json:"desired_central_version"`
 	ActualCentralVersion          string `json:"actual_central_version"`

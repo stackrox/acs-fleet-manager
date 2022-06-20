@@ -13,8 +13,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -63,11 +65,46 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteNamespace := remoteCentral.Metadata.Namespace
 
+	centralResources, err := convertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Central.Resources)
+	if err != nil {
+		return nil, errors.Wrap(err, "converting Central resources")
+	}
+	scannerAnalyzerResources, err := convertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Scanner.Analyzer.Resources)
+	if err != nil {
+		return nil, errors.Wrap(err, "converting Scanner Analyzer resources")
+	}
+	scannerAnalyzerScaling, err := convertPrivateScalingToV1(&remoteCentral.Spec.Scanner.Analyzer.Scaling)
+	if err != nil {
+		return nil, errors.Wrap(err, "converting Scanner Scaling resources")
+	}
+	scannerDbResources, err := convertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Scanner.Db.Resources)
+	if err != nil {
+		return nil, errors.Wrap(err, "converting Scanner DB resources")
+	}
+
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
 			Namespace: remoteNamespace,
 			Labels:    map[string]string{k8sManagedByLabelKey: "rhacs-fleetshard"},
+		},
+		Spec: v1alpha1.CentralSpec{
+			Central: &v1alpha1.CentralComponentSpec{
+				DeploymentSpec: v1alpha1.DeploymentSpec{
+					Resources: centralResources,
+				},
+			},
+			Scanner: &v1alpha1.ScannerComponentSpec{
+				Analyzer: &v1alpha1.ScannerAnalyzerComponent{
+					DeploymentSpec: v1alpha1.DeploymentSpec{
+						Resources: scannerAnalyzerResources,
+					},
+					Scaling: scannerAnalyzerScaling,
+				},
+				DB: &v1alpha1.DeploymentSpec{
+					Resources: scannerDbResources,
+				},
+			},
 		},
 	}
 
@@ -228,4 +265,57 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		central: central,
 		status:  pointer.Int32(FreeStatus),
 	}
+}
+
+// We need some helper functions for converting the generated types for `ResourceRequirements` from our own API into the
+// proper `ResourceRequirements` type from the Kubernetes core/v1 API, because the latter is used within the `v1alpha1.Central` type,
+// while at the same time OpenAPI does not provide a way for referencing official Kubernetes type schemas.
+
+func convertPrivateResourceListToCoreV1(r *private.ResourceList) (corev1.ResourceList, error) {
+	if r == nil {
+		return corev1.ResourceList{}, nil
+	}
+	cpuQty, err := resource.ParseQuantity(r.Cpu)
+	if err != nil {
+		return corev1.ResourceList{}, errors.Wrap(err, "parsing CPU quantity")
+	}
+	memQty, err := resource.ParseQuantity(r.Memory)
+	if err != nil {
+		return corev1.ResourceList{}, errors.Wrap(err, "parsing memory quantity")
+	}
+	return corev1.ResourceList{
+		corev1.ResourceCPU:    cpuQty,
+		corev1.ResourceMemory: memQty,
+	}, nil
+}
+
+func convertPrivateResourceRequirementsToCoreV1(res *private.ResourceRequirements) (*corev1.ResourceRequirements, error) {
+	if res == nil {
+		return nil, nil
+	}
+	requests, err := convertPrivateResourceListToCoreV1(&res.Requests)
+	if err != nil {
+		return nil, errors.Wrap(err, "parsing resource requests")
+	}
+	limits, err := convertPrivateResourceListToCoreV1(&res.Limits)
+	if err != nil {
+		return nil, errors.Wrap(err, "parsing resource limits")
+	}
+	return &corev1.ResourceRequirements{
+		Requests: requests,
+		Limits:   limits,
+	}, nil
+}
+
+func convertPrivateScalingToV1(scaling *private.ManagedCentralAllOfSpecScannerAnalyzerScaling) (*v1alpha1.ScannerAnalyzerScaling, error) {
+	if scaling == nil {
+		return nil, nil
+	}
+	autoScaling := scaling.AutoScaling
+	return &v1alpha1.ScannerAnalyzerScaling{
+		AutoScaling: (*v1alpha1.AutoScalingPolicy)(&autoScaling), // TODO: Validation?
+		Replicas:    &scaling.Replicas,
+		MinReplicas: &scaling.MinReplicas,
+		MaxReplicas: &scaling.MaxReplicas,
+	}, nil
 }

@@ -43,6 +43,8 @@ func addCentralRequest() *gormigrate.Migration {
 		Namespace                     string     `json:"namespace"`
 		RoutesCreationId              string     `json:"routes_creation_id"`
 		DeletionTimestamp             *time.Time `json:"deletionTimestamp"`
+		Central                       api.JSON   `json:"central"`
+		Scanner                       api.JSON   `json:"scanner"`
 	}
 
 	return &gormigrate.Migration{

@@ -2,13 +2,16 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"strings"
 	"sync"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
+
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
@@ -22,6 +25,7 @@ import (
 	"github.com/golang/glog"
 
 	manageddinosaur "github.com/stackrox/acs-fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/aws-sdk-go/service/route53"
@@ -798,7 +802,48 @@ func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralR
 	return results, nil
 }
 
+type CentralSpec struct {
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+}
+
+// ScannerSpec struct for ScannerSpec
+type ScannerSpec struct {
+	Analyzer ScannerSpecAnalyzer `json:"analyzer,omitempty"`
+	Db       ScannerSpecDb       `json:"db,omitempty"`
+}
+
+// ScannerSpecAnalyzer struct for ScannerSpecAnalyzer
+type ScannerSpecAnalyzer struct {
+	Resources corev1.ResourceRequirements       `json:"resources,omitempty"`
+	Scaling   public.ScannerSpecAnalyzerScaling `json:"scaling,omitempty"`
+}
+
+// ScannerSpecDb struct for ScannerSpecDb
+type ScannerSpecDb struct {
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+}
+
 func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfig *config.DinosaurConfig, keycloakConfig *keycloak.KeycloakConfig) *manageddinosaur.ManagedDinosaur {
+	var central CentralSpec
+	var scanner ScannerSpec
+
+	err := json.Unmarshal(dinosaurRequest.Central, &central)
+	if err != nil {
+		// In case of a JSON unmarshaling problem we don't interrupt the complete workflow, instead we drop the resources
+		// specification as a way of defensive programing.
+		// TOOD: return error?
+		glog.Errorf("Failed to unmarshal Central specification for Central request %q/%s: %v", dinosaurRequest.Name, dinosaurRequest.ClusterID, err)
+		glog.Errorf("Ignoring Central specification for Central request %q/%s", dinosaurRequest.Name, dinosaurRequest.ClusterID)
+	}
+	err = json.Unmarshal(dinosaurRequest.Scanner, &scanner)
+	if err != nil {
+		// In case of a JSON unmarshaling problem we don't interrupt the complete workflow, instead we drop the resources
+		// specification as a way of defensive programing.
+		// TOOD: return error?
+		glog.Errorf("Failed to unmarshal Scanner specification for Central request %q/%s: %v", dinosaurRequest.Name, dinosaurRequest.ClusterID, err)
+		glog.Errorf("Ignoring Scanner specification for Central request %q/%s", dinosaurRequest.Name, dinosaurRequest.ClusterID)
+	}
+
 	managedDinosaurCR := &manageddinosaur.ManagedDinosaur{
 		Id: dinosaurRequest.ID,
 		TypeMeta: metav1.TypeMeta{
@@ -824,6 +869,23 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfi
 			Deleted: dinosaurRequest.Status == constants2.DinosaurRequestStatusDeprovision.String(),
 			Owners: []string{
 				dinosaurRequest.Owner,
+			},
+			Central: manageddinosaur.CentralSpec{
+				Resources: (central.Resources),
+			},
+			Scanner: manageddinosaur.ScannerSpec{
+				Analyzer: manageddinosaur.ScannerAnalyzerSpec{
+					Resources: scanner.Analyzer.Resources,
+					Scaling: manageddinosaur.ScannerAnalyzerScaling{
+						AutoScaling: scanner.Analyzer.Scaling.AutoScaling,
+						Replicas:    scanner.Analyzer.Scaling.Replicas,
+						MinReplicas: scanner.Analyzer.Scaling.MinReplicas,
+						MaxReplicas: scanner.Analyzer.Scaling.MaxReplicas,
+					},
+				},
+				Db: manageddinosaur.ScannerDbSpec{
+					Resources: scanner.Db.Resources,
+				},
 			},
 		},
 		Status: manageddinosaur.ManagedDinosaurStatus{},
