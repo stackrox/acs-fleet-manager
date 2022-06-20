@@ -159,7 +159,9 @@ func ValidateScannerSpec(ctx context.Context, centralRequestPayload *public.Cent
 		if err := validateQuantity(centralRequestPayload.Scanner.Analyzer.Resources.Limits.Cpu, "Scanner.Analyzer.Resources.Limits.Memory"); err != nil {
 			return err
 		}
-		if centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "Enabled" && centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "Disabled" {
+		if centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "" &&
+			centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "Enabled" &&
+			centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "Disabled" {
 			return errors.Validation("invalid AutoScaling setting at Scanner.Analyzer.Scaling.AutoScaling, expected 'Enabled' or 'Disabled'")
 		}
 
