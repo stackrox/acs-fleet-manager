@@ -272,16 +272,23 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 // while at the same time OpenAPI does not provide a way for referencing official Kubernetes type schemas.
 
 func convertPrivateResourceListToCoreV1(r *private.ResourceList) (corev1.ResourceList, error) {
+	var cpuQty resource.Quantity
+	var memQty resource.Quantity
+	var err error
 	if r == nil {
 		return corev1.ResourceList{}, nil
 	}
-	cpuQty, err := resource.ParseQuantity(r.Cpu)
-	if err != nil {
-		return corev1.ResourceList{}, errors.Wrap(err, "parsing CPU quantity")
+	if r.Cpu != "" {
+		cpuQty, err = resource.ParseQuantity(r.Cpu)
+		if err != nil {
+			return corev1.ResourceList{}, errors.Wrapf(err, "parsing CPU quantity %q", r.Cpu)
+		}
 	}
-	memQty, err := resource.ParseQuantity(r.Memory)
-	if err != nil {
-		return corev1.ResourceList{}, errors.Wrap(err, "parsing memory quantity")
+	if r.Memory != "" {
+		memQty, err = resource.ParseQuantity(r.Memory)
+		if err != nil {
+			return corev1.ResourceList{}, errors.Wrapf(err, "parsing memory quantity %q", r.Memory)
+		}
 	}
 	return corev1.ResourceList{
 		corev1.ResourceCPU:    cpuQty,

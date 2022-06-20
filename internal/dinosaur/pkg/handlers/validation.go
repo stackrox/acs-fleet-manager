@@ -112,6 +112,9 @@ func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.
 }
 
 func validateQuantity(qty string, path string) *errors.ServiceError {
+	if qty == "" {
+		return nil
+	}
 	_, err := resource.ParseQuantity(qty)
 	return errors.Validation("invalid resources: failed to parse quantity %q at %s due to: %v", qty, path, err)
 }
