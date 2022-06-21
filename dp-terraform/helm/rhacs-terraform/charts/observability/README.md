@@ -2,7 +2,7 @@
 
 ## Usage
 
-Create a file `obs-values.yaml` with the values for the parameters in [values.yaml](./values.yaml) that are missing or that you want to override. That file will contain credentials, so make sure you put it in a safe location, and with suitable permissions. 
+Create a file `~/acs-terraform-obs-values.yaml` with the values for the parameters in [values.yaml](./values.yaml) that are missing or that you want to override. That file will contain credentials, so make sure you put it in a safe location, and with suitable permissions. 
 
 **Render the chart to see the generated templates during development**
 
@@ -10,7 +10,7 @@ Create a file `obs-values.yaml` with the values for the parameters in [values.ya
 helm template rhacs-terraform-obs \
   --debug \
   --namespace rhacs \
-  --values ~/.rh/obs-values.yaml .
+  --values ~/acs-terraform-obs-values.yaml .
 ```
 
 **Install or update the chart**
@@ -18,7 +18,7 @@ helm template rhacs-terraform-obs \
 ```bash
 helm upgrade --install rhacs-terraform-obs \
   --namespace rhacs \
-  --values ~/.rh/obs-values.yaml .
+  --values ~/acs-terraform-obs-values.yaml .
 ```
 
 **Uninstall the chart and cleanup all created resources**

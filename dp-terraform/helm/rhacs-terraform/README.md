@@ -11,7 +11,7 @@ To get the cluster id for staging use `export CLUSTER_ID=$(grep cluster_id ../..
 
 **Create values file**
 
-Create a file `terraform-values.yaml` with the values for the parameters in [values.yaml](./values.yaml) that are missing or that you want to override. That file will contain credentials, so make sure you put it in a safe location, and with suitable permissions. 
+Create a file `~/acs-terraform-values.yaml` with the values for the parameters in [values.yaml](./values.yaml) that are missing or that you want to override. That file will contain credentials, so make sure you put it in a safe location, and with suitable permissions. 
 
 **Render the chart to see the generated templates during development**
 
@@ -19,7 +19,7 @@ Create a file `terraform-values.yaml` with the values for the parameters in [val
 helm template rhacs-terraform \
   --debug \
   --namespace rhacs \
-  --values ~/.rh/terraform-values.yaml \
+  --values ~/acs-terraform-values.yaml \
   --set fleetshardSync.ocmToken=$(ocm token) \
   --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
   --set fleetshardSync.clusterId=${CLUSTER_ID} \
@@ -31,7 +31,7 @@ helm template rhacs-terraform \
 ```bash
 helm upgrade --install rhacs-terraform \
   --namespace rhacs \
-  --values ~/.rh/terraform-values.yaml \
+  --values ~/acs-terraform-values.yaml \
   --set fleetshardSync.ocmToken=$(ocm token) \
   --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
   --set fleetshardSync.clusterId=${CLUSTER_ID} \
