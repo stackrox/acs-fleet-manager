@@ -229,7 +229,7 @@ help:
 	@echo "$(fake)"
 .PHONY: help
 
-all: openapi/generate fleet-manager fleetshard-sync
+all: openapi/generate binary
 .PHONY: all
 
 # Set git hook path to .githooks/
