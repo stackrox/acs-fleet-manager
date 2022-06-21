@@ -39,9 +39,10 @@ func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestCo
 func TestReconcileCreate(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := CentralReconciler{
-		status:  pointer.Int32(0),
-		client:  fakeClient,
-		central: private.ManagedCentral{},
+		status:    pointer.Int32(0),
+		client:    fakeClient,
+		central:   private.ManagedCentral{},
+		useRoutes: true,
 	}
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
