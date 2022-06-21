@@ -12,13 +12,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-/**
-- 1. setting up fleet-manager
-- 2. calling API to get Centrals/Dinosaurs
-- 3. Applying Dinosaurs into the Kubernetes API
-- 4. Implement polling
-- 5. Report status to fleet-manager
-*/
 func main() {
 	// This is needed to make `glog` believe that the flags have already been parsed, otherwise
 	// every log messages is prefixed by an error message stating the the flags haven't been
