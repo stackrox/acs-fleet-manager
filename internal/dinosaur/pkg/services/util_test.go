@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strings"
 	"testing"
@@ -189,7 +190,7 @@ func Test_buildTruncateDinosaurIdentifier(t *testing.T) {
 	mockLongDinosaurName := "sample-dinosaur-name-long"
 
 	type args struct {
-		dinosaurRequest *dbapi.DinosaurRequest
+		dinosaurRequest *dbapi.CentralRequest
 	}
 	tests := []struct {
 		name string
@@ -199,7 +200,7 @@ func Test_buildTruncateDinosaurIdentifier(t *testing.T) {
 		{
 			name: "build dinosaur identifier with a short name successfully",
 			args: args{
-				dinosaurRequest: &dbapi.DinosaurRequest{
+				dinosaurRequest: &dbapi.CentralRequest{
 					Name: mockShortDinosaurName,
 				},
 			},
@@ -208,7 +209,7 @@ func Test_buildTruncateDinosaurIdentifier(t *testing.T) {
 		{
 			name: "build dinosaur identifier with a long name successfully",
 			args: args{
-				dinosaurRequest: &dbapi.DinosaurRequest{
+				dinosaurRequest: &dbapi.CentralRequest{
 					Name: mockLongDinosaurName,
 				},
 			},
@@ -349,6 +350,43 @@ func Test_contains(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("contains() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func Test_formatNamespace(t *testing.T) {
+	type testCase struct {
+		id          string
+		namespace   string
+		expectError bool
+	}
+	cases := map[string]testCase{
+		"should add prefix when id is correct": {
+			id:        "cahlua287d5oaeogt8kg",
+			namespace: "rhacs-cahlua287d5oaeogt8kg",
+		},
+		"should cut namespace name when id is too long": {
+			id:        "qwelkjwelrjktwlekrjgwaowejkhrlksjerhgfskejfghsoidukcjvhbewmrntbwi2384938492iuekhrfakjsndf",
+			namespace: "rhacs-qwelkjwelrjktwlekrjgwaowejkhrlksjerhgfskejfghsoidukcjvhbe",
+		},
+		"should trim dash when id is too long": {
+			id:        "test---------------------------------------------------------------------124r038oi4rtuolkjh",
+			namespace: "rhacs-test",
+		},
+		"should fail when id is not RFC1123 compliant": {
+			id:          "ns!#$%",
+			expectError: true,
+		},
+	}
+	for name, test := range cases {
+		t.Run(name, func(t *testing.T) {
+			namespace, err := formatNamespace(test.id)
+			if test.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, test.namespace, namespace)
 		})
 	}
 }

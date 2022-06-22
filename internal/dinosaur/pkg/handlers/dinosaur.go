@@ -35,7 +35,7 @@ func NewDinosaurHandler(service services.DinosaurService, providerConfig *config
 func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var dinosaurRequest public.CentralRequestPayload
 	ctx := r.Context()
-	convDinosaur := &dbapi.DinosaurRequest{}
+	convDinosaur := &dbapi.CentralRequest{}
 
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &dinosaurRequest,
@@ -147,7 +147,7 @@ func (h dinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			// TODO implement update logic
-			var updDinosaurRequest *dbapi.DinosaurRequest
+			var updDinosaurRequest *dbapi.CentralRequest
 			svcErr := h.service.Update(updDinosaurRequest)
 			if svcErr != nil {
 				return nil, svcErr

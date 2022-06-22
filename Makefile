@@ -216,15 +216,16 @@ help:
 	@echo "make image/push                  push docker image"
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make secrets/touch               touch all required secret files"
-	@echo "make keycloak/setup              setup mas sso clientId, clientSecret & crt"
+	@echo "make osd/setup                   setup OSD SSO clientId, clientSecret & crt"
 	@echo "make dinosaurcert/setup          setup the dinosaur TLS certificate used for Managed Dinosaur Service"
 	@echo "make observatorium/setup         setup observatorium secrets used by CI"
 	@echo "make observatorium/token-refresher/setup" setup a local observatorium token refresher
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
 	@echo "make image/build/push/internal   build and push image to an openshift cluster image registry."
-	@echo "deploy/project                   deploy the service via templates to an openshift cluster"
+	@echo "make deploy/project              deploy the service via templates to an openshift cluster"
 	@echo "make undeploy                    remove the service deployments from an openshift cluster"
-	@echo "openapi/spec/validate            validate OpenAPI spec using spectral"
+	@echo "make redhatsso/setup             setup sso clientId & clientSecret"
+	@echo "make openapi/spec/validate       validate OpenAPI spec using spectral"
 	@echo "$(fake)"
 .PHONY: help
 
@@ -499,8 +500,6 @@ secrets/touch:
           secrets/dinosaur-tls.crt \
           secrets/dinosaur-tls.key \
           secrets/image-pull.dockerconfigjson \
-          secrets/keycloak-service.clientId \
-          secrets/keycloak-service.clientSecret \
           secrets/observability-config-access.token \
           secrets/ocm-service.clientId \
           secrets/ocm-service.clientSecret \
@@ -511,6 +510,8 @@ secrets/touch:
           secrets/rhsso-logs.clientSecret \
           secrets/rhsso-metrics.clientId \
           secrets/rhsso-metrics.clientSecret \
+          secrets/redhatsso-service.clientId \
+          secrets/redhatsso-service.clientSecret \
           secrets/sentry.key
 .PHONY: secrets/touch
 
@@ -523,13 +524,16 @@ aws/setup:
 	@echo -n "$(ROUTE53_SECRET_ACCESS_KEY)" > secrets/aws.route53secretaccesskey
 .PHONY: aws/setup
 
-# Setup for mas sso credentials
-keycloak/setup:
-	@echo -n "$(SSO_CLIENT_ID)" > secrets/keycloak-service.clientId
-	@echo -n "$(SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
+# Setup for osd sso credentials
+osd/setup:
 	@echo -n "$(OSD_IDP_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
 	@echo -n "$(OSD_IDP_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
-.PHONY:keycloak/setup
+.PHONY:osd/setup
+
+redhatsso/setup:
+	@echo -n "$(SSO_CLIENT_ID)" > secrets/redhatsso-service.clientId
+	@echo -n "$(SSO_CLIENT_SECRET)" > secrets/redhatsso-service.clientSecret
+.PHONY:redhatsso/setup
 
 # Setup for the dinosaur broker certificate
 dinosaurcert/setup:
@@ -605,8 +609,8 @@ deploy/secrets:
 		-p AWS_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.secretaccesskey' ] && [ -z '${AWS_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.secretaccesskey || echo '${AWS_SECRET_ACCESS_KEY}')" \
 		-p ROUTE53_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53accesskey' ] && [ -z '${ROUTE53_ACCESS_KEY}' ]) && cat ./secrets/aws.route53accesskey || echo '${ROUTE53_ACCESS_KEY}')" \
 		-p ROUTE53_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53secretaccesskey' ] && [ -z '${ROUTE53_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.route53secretaccesskey || echo '${ROUTE53_SECRET_ACCESS_KEY}')" \
-		-p SSO_CLIENT_ID="$(shell ([ -s './secrets/keycloak-service.clientId' ] && [ -z '${SSO_CLIENT_ID}' ]) && cat ./secrets/keycloak-service.clientId || echo '${SSO_CLIENT_ID}')" \
-		-p SSO_CLIENT_SECRET="$(shell ([ -s './secrets/keycloak-service.clientSecret' ] && [ -z '${SSO_CLIENT_SECRET}' ]) && cat ./secrets/keycloak-service.clientSecret || echo '${SSO_CLIENT_SECRET}')" \
+		-p SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${SSO_CLIENT_ID}')" \
+		-p SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${SSO_CLIENT_SECRET}')" \
 		-p OSD_IDP_SSO_CLIENT_ID="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientId' ] && [ -z '${OSD_IDP_SSO_CLIENT_ID}' ]) && cat ./secrets/osd-idp-keycloak-service.clientId || echo '${OSD_IDP_SSO_CLIENT_ID}')" \
 		-p OSD_IDP_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientSecret' ] && [ -z '${OSD_IDP_SSO_CLIENT_SECRET}' ]) && cat ./secrets/osd-idp-keycloak-service.clientSecret || echo '${OSD_IDP_SSO_CLIENT_SECRET}')" \
 		-p DINOSAUR_TLS_CERT="$(shell ([ -s './secrets/dinosaur-tls.crt' ] && [ -z '${DINOSAUR_TLS_CERT}' ]) && cat ./secrets/dinosaur-tls.crt || echo '${DINOSAUR_TLS_CERT}')" \
@@ -736,10 +740,6 @@ docs/generate/mermaid:
 		docker run -it -v $(DOCS_DIR)/mermaid-diagrams-source:/data -v $(DOCS_DIR)/images:/output minlag/mermaid-cli -i /data/`basename $${f}` -o /output/`basename $${f} .mmd`.png; \
 	done
 .PHONY: docs/generate/mermaid
-
-fleetshard/build:
-	$(GO) build  -o fleetshard-sync ./fleetshard
-.PHONY: fleetshard/build
 
 
 # TODO CRC Deployment stuff

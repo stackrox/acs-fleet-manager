@@ -1,21 +1,18 @@
 package acl
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 	"gopkg.in/yaml.v2"
 )
 
 type DeniedUsers []string
 
 func (deniedAccounts DeniedUsers) IsUserDenied(username string) bool {
-	for _, user := range deniedAccounts {
-		if username == user {
-			return true
-		}
-	}
-
-	return false
+	return arrays.FindFirstString(deniedAccounts, func(user string) bool {
+		return username == user
+	}) != -1
 }
 
 type AccessControlListConfig struct {
@@ -38,10 +35,10 @@ func (c *AccessControlListConfig) AddFlags(fs *pflag.FlagSet) {
 
 func (c *AccessControlListConfig) ReadFiles() (err error) {
 	if c.EnableDenyList {
-		err = readDenyListConfigFile(c.DenyListConfigFile, &c.DenyList)
+		return readDenyListConfigFile(c.DenyListConfigFile, &c.DenyList)
 	}
 
-	return err
+	return nil
 }
 
 // Read the contents of file into the deny list config

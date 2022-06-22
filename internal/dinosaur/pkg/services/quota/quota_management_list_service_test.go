@@ -1,17 +1,18 @@
 package quota
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
 	"net/http"
 	"testing"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
+
+	"github.com/onsi/gomega"
+	mocket "github.com/selvatico/go-mocket"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/onsi/gomega"
-	mocket "github.com/selvatico/go-mocket"
 )
 
 func Test_QuotaManagementListCheckQuota(t *testing.T) {
@@ -143,7 +144,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 
 			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList)
 			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
-			dinosaur := &dbapi.DinosaurRequest{
+			dinosaur := &dbapi.CentralRequest{
 				Owner:          "username",
 				OrganisationId: "org-id",
 			}
@@ -227,7 +228,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "dinosaur_requests" WHERE instance_type = $1 AND (organisation_id = $2)`).
+					WithQuery(`SELECT count(1) FROM "central_requests" WHERE instance_type = $1 AND (organisation_id = $2)`).
 					WithArgs(types.STANDARD.String(), "org-id").
 					WithReply([]map[string]interface{}{{"count": "4"}})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -263,7 +264,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "dinosaur_requests" WHERE instance_type = $1 AND owner = $2`).
+					WithQuery(`SELECT count(1) FROM "central_requests" WHERE instance_type = $1 AND owner = $2`).
 					WithArgs(types.EVAL.String(), "username").
 					WithReply([]map[string]interface{}{{"count": "0"}})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -290,7 +291,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "dinosaur_requests" WHERE instance_type = $1 AND owner = $2`).
+					WithQuery(`SELECT count(1) FROM "central_requests" WHERE instance_type = $1 AND owner = $2`).
 					WithArgs(types.EVAL.String(), "username").
 					WithReply([]map[string]interface{}{{"count": "1"}})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -324,7 +325,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "dinosaur_requests" WHERE instance_type = $1 AND (organisation_id = $2)`).
+					WithQuery(`SELECT count(1) FROM "central_requests" WHERE instance_type = $1 AND (organisation_id = $2)`).
 					WithArgs(types.STANDARD.String(), "org-id").
 					WithReply([]map[string]interface{}{{"count": "1"}})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -345,7 +346,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "dinosaur_requests" WHERE instance_type = $1 AND owner = $2`).
+					WithQuery(`SELECT count(1) FROM "central_requests" WHERE instance_type = $1 AND owner = $2`).
 					WithArgs(types.EVAL.String(), "username").
 					WithReply([]map[string]interface{}{{"count": "0"}})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -365,7 +366,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			}
 			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList)
 			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
-			dinosaur := &dbapi.DinosaurRequest{
+			dinosaur := &dbapi.CentralRequest{
 				Owner:          "username",
 				OrganisationId: "org-id",
 			}

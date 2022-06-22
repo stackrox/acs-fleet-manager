@@ -8,10 +8,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
 func Test_AMSCheckQuota(t *testing.T) {
@@ -171,7 +171,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
-			dinosaur := &dbapi.DinosaurRequest{
+			dinosaur := &dbapi.CentralRequest{
 				Meta: api.Meta{
 					ID: tt.args.dinosaurID,
 				},
@@ -474,7 +474,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
-			dinosaur := &dbapi.DinosaurRequest{
+			dinosaur := &dbapi.CentralRequest{
 				Meta: api.Meta{
 					ID: tt.args.dinosaurID,
 				},
@@ -559,7 +559,7 @@ func Test_Delete_Quota(t *testing.T) {
 
 func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 	type args struct {
-		dinosaurRequest      *dbapi.DinosaurRequest
+		dinosaurRequest      *dbapi.CentralRequest
 		dinosaurInstanceType types.DinosaurInstanceType
 	}
 
@@ -581,7 +581,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.DinosaurRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			want:    false,
@@ -604,7 +604,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.DinosaurRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			want:    false,
@@ -627,7 +627,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.DinosaurRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			want:    true,
@@ -655,7 +655,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.DinosaurRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			want:    true,
@@ -682,7 +682,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.DinosaurRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			want:    false,
@@ -699,7 +699,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.DinosaurRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			wantErr: true,
@@ -715,7 +715,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.DinosaurRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			wantErr: true,

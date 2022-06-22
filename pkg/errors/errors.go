@@ -5,6 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -19,6 +20,10 @@ const (
 
 	// HREF for API errors
 	ERROR_HREF = "/api/rhacs/v1/errors/"
+
+	// To support connector errors too..
+	CONNECTOR_MGMT_ERROR_CODE_PREFIX = "CONNECTOR-MGMT"
+	CONNECTOR_MGMT_ERROR_HREF        = "/api/connector_mgmt/v1/errors/"
 
 	// Forbidden occurs when a user is not allowed to access the service
 	ErrorForbidden       ServiceErrorCode = 4
@@ -117,6 +122,9 @@ const (
 	ErrorServiceAccountNotFound       ServiceErrorCode = 113
 	ErrorServiceAccountNotFoundReason string           = "Failed to find service account"
 
+	ErrorMaxLimitForServiceAccountsReached       ServiceErrorCode = 115
+	ErrorMaxLimitForServiceAccountsReachedReason string           = "Max limit for the service account creation has reached"
+
 	// Insufficient quota
 	ErrorInsufficientQuota       ServiceErrorCode = 120
 	ErrorInsufficientQuotaReason string           = "Insufficient quota"
@@ -174,6 +182,10 @@ const (
 	// Region not supported
 	ErrorInstanceTypeNotSupported       ServiceErrorCode = 41
 	ErrorInstanceTypeNotSupportedReason string           = "Instance Type not supported"
+
+	// Instance plan not supported
+	ErrorInstancePlanNotSupported       ServiceErrorCode = 42
+	ErrorInstancePlanNotSupportedReason string           = "Instance plan not supported"
 
 	// Too Many requests error. Used by rate limiting
 	ErrorTooManyRequests       ServiceErrorCode = 429
@@ -247,6 +259,8 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMalformedServiceAccountName, ErrorMalformedServiceAccountNameReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
+		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil},
 	}
 }
 
@@ -416,6 +430,10 @@ func (e *ServiceError) IsServiceAccountNotFound() bool {
 	return e.Code == ServiceAccountNotFound("").Code
 }
 
+func (e *ServiceError) IsMaxLimitForServiceAccountReached() bool {
+	return e.Code == ErrorMaxLimitForServiceAccountsReached
+}
+
 func (e *ServiceError) IsBadRequest() bool {
 	return e.Code == BadRequest("").Code
 }
@@ -427,9 +445,18 @@ func (e *ServiceError) IsFailedToCheckQuota() bool {
 	return e.Code == FailedToCheckQuota("").Code
 }
 
+func (e *ServiceError) IsInstanceTypeNotSupported() bool {
+	return e.Code == ErrorInstanceTypeNotSupported
+}
+
 func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compat.Error {
 	href := Href(e.Code)
 	code := CodeStr(e.Code)
+
+	if strings.Contains(basePath, "/api/connector_mgmt/") {
+		href = strings.Replace(href, ERROR_HREF, CONNECTOR_MGMT_ERROR_HREF, 1)
+		code = strings.Replace(code, ERROR_CODE_PREFIX, CONNECTOR_MGMT_ERROR_CODE_PREFIX, 1)
+	}
 
 	// end-temporary code
 	return compat.Error{
@@ -539,6 +566,10 @@ func FailedToDeleteServiceAccount(reason string, values ...interface{}) *Service
 	return New(ErrorFailedToDeleteServiceAccount, reason, values...)
 }
 
+func MaxLimitForServiceAccountReached(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorMaxLimitForServiceAccountsReached, reason, values...)
+}
+
 func FailedToGetServiceAccount(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToGetServiceAccount, reason, values...)
 }
@@ -561,6 +592,10 @@ func ProviderNotSupported(reason string, values ...interface{}) *ServiceError {
 
 func MalformedDinosaurClusterName(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMalformedDinosaurClusterName, reason, values...)
+}
+
+func InstancePlanNotSupported(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorInstancePlanNotSupported, reason, values...)
 }
 
 func MalformedServiceAccountName(reason string, values ...interface{}) *ServiceError {

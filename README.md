@@ -30,7 +30,7 @@ Here are the key directories to know about:
 
 ```bash
 # Install the prereqs:
-# Golang 1.16+
+# Golang 1.17+
 # Docker
 # ocm cli: https://github.com/openshift-online/ocm-cli  (brew/dnf)
 # Node.js v12.20+  (brew/dnf)

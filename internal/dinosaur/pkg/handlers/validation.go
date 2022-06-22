@@ -47,7 +47,7 @@ func ValidateDinosaurClusterNameIsUnique(name *string, dinosaurService services.
 
 // ValidateCloudProvider returns a validator that sets default cloud provider details if needed and validates provided
 // provider and region
-func ValidateCloudProvider(dinosaurService *services.DinosaurService, dinosaurRequest *dbapi.DinosaurRequest, providerConfig *config.ProviderConfig, action string) handlers.Validate {
+func ValidateCloudProvider(dinosaurService *services.DinosaurService, dinosaurRequest *dbapi.CentralRequest, providerConfig *config.ProviderConfig, action string) handlers.Validate {
 	return func() *errors.ServiceError {
 		// Set Cloud Provider default if not received in the request
 		supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
@@ -88,7 +88,7 @@ func ValidateCloudProvider(dinosaurService *services.DinosaurService, dinosaurRe
 	}
 }
 
-func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.CentralRequestPayload, dinosaurRequest *dbapi.DinosaurRequest) handlers.Validate {
+func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.CentralRequestPayload, dinosaurRequest *dbapi.CentralRequest) handlers.Validate {
 	return func() *errors.ServiceError {
 		dinosaurRequest.Region = dinosaurRequestPayload.Region
 		dinosaurRequest.Name = dinosaurRequestPayload.Name
@@ -99,9 +99,10 @@ func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.
 		if err != nil {
 			return errors.Unauthenticated("user not authenticated")
 		}
-		dinosaurRequest.Owner = auth.GetUsernameFromClaims(claims)
-		dinosaurRequest.OrganisationId = auth.GetOrgIdFromClaims(claims)
-		dinosaurRequest.OwnerAccountId = auth.GetAccountIdFromClaims(claims)
+
+		dinosaurRequest.Owner, _ = claims.GetUsername()
+		dinosaurRequest.OrganisationId, _ = claims.GetOrgId()
+		dinosaurRequest.OwnerAccountId, _ = claims.GetAccountId()
 
 		return nil
 	}

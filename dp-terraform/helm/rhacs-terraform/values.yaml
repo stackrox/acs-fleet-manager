@@ -6,6 +6,10 @@ fleetshardSync:
   ocmToken: ""
   fleetManagerEndpoint: ""
   clusterId: ""
+  redHatSSO:
+    clientId: ""
+    clientSecret: ""
+  
 acsOperator:
   enabled: false
   startingCSV: rhacs-operator.v3.70.0
