@@ -229,6 +229,9 @@ help:
 	@echo "$(fake)"
 .PHONY: help
 
+all: openapi/generate binary
+.PHONY: all
+
 # Set git hook path to .githooks/
 .PHONY: setup/git/hooks
 setup/git/hooks:
