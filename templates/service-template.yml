@@ -782,6 +782,9 @@ objects:
           serviceAccount: fleet-manager
           serviceAccountName: fleet-manager
           volumes:
+          - name: rhsso-client-secret
+            secret:
+              secretName: fleet-manager-central-rhsso-client-secret
           - name: tls
             secret:
               secretName: fleet-manager-tls
@@ -856,6 +859,8 @@ objects:
             volumeMounts:
             - name: tls
               mountPath: /secrets/tls
+            - name: rhsso-client-secret
+              mountPath: /secrets/rhsso-client-secret
             - name: service
               mountPath: /secrets/service
             - name: dataplane-certificate
@@ -901,6 +906,7 @@ objects:
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
             - --aws-route53-access-key-file=/secrets/service/aws.route53accesskey
             - --aws-route53-secret-access-key-file=/secrets/service/aws.route53secretaccesskey
+            - --rhsso-client-secret-file=/secrets/rhsso-client-secret/clientSecret
             - --observatorium-debug=${ENABLE_OBSERVATORIUM_DEBUG}
             - --observatorium-ignore-ssl=${OBSERVATORIUM_INSECURE}
             - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
@@ -19,8 +20,10 @@ type DinosaurConfig struct {
 	// TODO(ROX-11289): drop MaxCapacity
 	MaxCapacity MaxCapacityConfig `json:"max_capacity_config"`
 
-	DinosaurLifespan *DinosaurLifespanConfig `json:"dinosaur_lifespan"`
-	Quota            *DinosaurQuotaConfig    `json:"dinosaur_quota"`
+	DinosaurLifespan      *DinosaurLifespanConfig `json:"dinosaur_lifespan"`
+	Quota                 *DinosaurQuotaConfig    `json:"dinosaur_quota"`
+	RhSsoClientSecretFile string                  `json:"rhsso_client_secret_file"`
+	RhSsoClientSecret     string                  `json:"rhsso_client_secret"`
 }
 
 func NewDinosaurConfig() *DinosaurConfig {
@@ -43,6 +46,7 @@ func (c *DinosaurConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.DinosaurDomainName, "dinosaur-domain-name", c.DinosaurDomainName, "The domain name to use for Dinosaur instances")
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
 	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of dinosaur evaluator instances")
+	fs.StringVar(&c.RhSsoClientSecretFile, "rhsso-client-secret-file", c.RhSsoClientSecretFile, "File containing OIDC client secret of sso.redhat.com client")
 }
 
 func (c *DinosaurConfig) ReadFiles() error {
@@ -53,6 +57,15 @@ func (c *DinosaurConfig) ReadFiles() error {
 	err = shared.ReadFileValueString(c.DinosaurTLSKeyFile, &c.DinosaurTLSKey)
 	if err != nil {
 		return err
+	}
+	err = shared.ReadFileValueString(c.RhSsoClientSecretFile, &c.RhSsoClientSecret)
+	if err != nil {
+		return err
+	}
+	if c.RhSsoClientSecret != "" {
+		glog.Info("Central OIDC client secret is configured.")
+	} else {
+		glog.Infof("Central OIDC client secret from secret file %q is missing.", c.RhSsoClientSecretFile)
 	}
 	// TODO(ROX-11289): drop MaxCapacity
 	// MaxCapacity is deprecated and will not be used.
