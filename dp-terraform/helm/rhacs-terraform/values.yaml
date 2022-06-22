@@ -13,3 +13,15 @@ fleetshardSync:
 acsOperator:
   enabled: false
   startingCSV: rhacs-operator.v3.70.0
+
+# See available parameters in charts/observability/values.yaml
+# - enabled flag is used to completely enable/disable observability sub-chart
+observability:
+  enabled: true
+  github:
+    accessToken: ""
+    repository: ""
+  observatorium:
+    gateway: ""
+    metricsClientId: ""
+    metricsSecret: ""
