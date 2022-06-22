@@ -26,8 +26,8 @@ var _ = Describe("Central", func() {
 		request := public.CentralRequestPayload{
 			Name:          centralName,
 			MultiAz:       true,
-			CloudProvider: "standalone",
-			Region:        "standalone",
+			CloudProvider: dpCloudProvider,
+			Region:        dpRegion,
 		}
 
 		var createdCentral *public.CentralRequest
@@ -39,6 +39,7 @@ var _ = Describe("Central", func() {
 
 		It("should transition central's state to provisioning", func() {
 			Eventually(func() string {
+				Expect(createdCentral).NotTo(BeNil())
 				provisioningCentral, err := client.GetCentral(createdCentral.Id)
 				Expect(err).To(BeNil())
 				return provisioningCentral.Status
@@ -49,14 +50,14 @@ var _ = Describe("Central", func() {
 			Eventually(func() error {
 				ns := &v1.Namespace{}
 				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName}, ns)
-			}).WithTimeout(5 * time.Minute).WithPolling(1 * time.Second).Should(Succeed())
+			}).WithTimeout(waitTimeout).WithPolling(1 * time.Second).Should(Succeed())
 		})
 
 		It("should create central in its namespace on a managed cluster", func() {
 			Eventually(func() error {
 				central := &v1alpha1.Central{}
 				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: centralName}, central)
-			}).WithTimeout(5 * time.Minute).WithPolling(1 * time.Second).Should(Succeed())
+			}).WithTimeout(waitTimeout).WithPolling(1 * time.Second).Should(Succeed())
 		})
 
 		//TODO(create-ticket): Add test to eventually reach ready state
