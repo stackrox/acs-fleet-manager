@@ -1,0 +1,25 @@
+# Default values for observability.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Version of observability operator
+# https://github.com/redhat-developer/observability-operator/releases
+observabilityOperatorVersion: "v3.0.11"
+
+github:
+  # You can generate a new one at https://github.com/settings/tokens/new, for a user
+  # with access to the repository specified at `github.repository`, and with "repo" scope.
+  # Be mindful of the token expiration.
+  accessToken: ""
+  repository: ""
+  tag: "master"
+
+# Credentials for Observatorium https://observatorium.io/ instance
+observatorium:
+  tenant: "rhacs"
+  authType: "redhat"
+  redHatSsoAuthServerUrl: "https://sso.redhat.com/auth/"
+  redHatSsoRealm: "redhat-external"
+  gateway: ""
+  metricsClientId: ""
+  metricsSecret: ""
