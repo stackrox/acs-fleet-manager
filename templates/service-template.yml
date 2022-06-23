@@ -371,6 +371,16 @@ parameters:
   description: A token issuer url used to validate if JWT token used are coming from the given issuer
   value: "https://sso.redhat.com/auth/realms/redhat-external"
 
+- name: DATAPLANE_CLUSTER_CONFIG_FILE
+  displayName: This file contains properties for manually configuring OSD cluster
+  description: This file contains properties for manually configuring OSD cluster, and it's passed to the fleet manager executable in the flag --dataplane-cluster-config-file
+  value: /config/dataplane-cluster-configuration.yaml
+
+- name: PROVIDERS_CONFIG_FILE
+  displayName: SupportedProviders configuration file
+  description: SupportedProviders configuration file, that it's passed to the fleet manager executable in the flag --providers-config-file
+  value: /config/provider-configuration.yaml
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -890,7 +900,7 @@ objects:
             - --dinosaur-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --dinosaur-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-dinosaur-external-certificate=${ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE}
-            - --providers-config-file=/config/provider-configuration.yaml
+            - --providers-config-file=${PROVIDERS_CONFIG_FILE}
             - --quota-management-list-config-file=/config/quota-management-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml
             - --read-only-user-list-file=/config/read-only-user-list.yaml
@@ -962,7 +972,7 @@ objects:
             - --max-allowed-instances=${MAX_ALLOWED_INSTANCES}
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
             - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
-            - --dataplane-cluster-config-file=/config/dataplane-cluster-configuration.yaml
+            - --dataplane-cluster-config-file=${DATAPLANE_CLUSTER_CONFIG_FILE}
             - --kubeconfig=/secrets/service/kubeconfig
             - --fleetshard-poll-interval=${FLEETSHARD_POLL_INTERVAL}
             - --fleetshard-resync-interval=${FLEETSHARD_RESYNC_INTERVAL}
