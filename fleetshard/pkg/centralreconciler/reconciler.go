@@ -5,6 +5,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	openshiftRouteV1 "github.com/openshift/api/route/v1"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/tls"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"strconv"
 	"sync/atomic"
 
@@ -24,8 +27,12 @@ const (
 	FreeStatus int32 = iota
 	BlockedStatus
 
-	revisionAnnotationKey = "rhacs.redhat.com/revision"
-	k8sManagedByLabelKey  = "app.kubernetes.io/managed-by"
+	revisionAnnotationKey  = "rhacs.redhat.com/revision"
+	k8sManagedByLabelKey   = "app.kubernetes.io/managed-by"
+	k8sManagedByLabelValue = "rhacs-fleetshard"
+
+	centralReencryptRouteName = "central-reencrypt"
+	centralTLSSecretName      = "central-tls"
 )
 
 // ErrTypeCentralNotChanged is an error returned when reconcilation runs more then once in a row with equal central
@@ -68,7 +75,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
 			Namespace: remoteNamespace,
-			Labels:    map[string]string{k8sManagedByLabelKey: "rhacs-fleetshard"},
+			Labels:    map[string]string{k8sManagedByLabelKey: k8sManagedByLabelValue},
 		},
 		Spec: v1alpha1.CentralSpec{
 			Central: &v1alpha1.CentralComponentSpec{
@@ -127,6 +134,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
+	if err := r.ensureReencryptRouteExists(ctx, remoteCentral); err != nil {
+		return nil, errors.Wrapf(err, "updating re-encrypt route")
+	}
+
 	if err := r.setLastCentralHash(remoteCentral); err != nil {
 		return nil, errors.Wrapf(err, "setting central reconcilation cache")
 	}
@@ -136,6 +147,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 }
 
 func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+	if reencryptRouteDeleted, err := r.ensureReencryptRouteDeleted(ctx, central.GetNamespace()); err != nil || !reencryptRouteDeleted {
+		return false, err
+	}
 	if crDeleted, err := r.ensureCentralCRDeleted(ctx, central); err != nil || !crDeleted {
 		return false, err
 	}
@@ -229,6 +243,81 @@ func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
 	glog.Infof("Central CR %s/%s is marked for deletion", central.GetNamespace(), central.GetName())
+	return false, nil
+}
+
+// TODO(ROX-9310): Move re-encrypt route reconciliation to the StackRox operator
+func (r CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	if !r.useRoutes {
+		return nil
+	}
+	namespace := remoteCentral.Metadata.Namespace
+	route := &openshiftRouteV1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      centralReencryptRouteName,
+			Namespace: namespace,
+			Labels:    map[string]string{k8sManagedByLabelKey: k8sManagedByLabelValue},
+		},
+	}
+	err := r.findRoute(ctx, route)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			centralTLSSecret := &v1.Secret{}
+			err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: centralTLSSecretName}, centralTLSSecret)
+			if err != nil {
+				return errors.Wrapf(err, "get central TLS secret %s/%s", namespace, remoteCentral.Metadata.Name)
+			}
+			centralCA, ok := centralTLSSecret.Data["ca.pem"]
+			if !ok {
+				return errors.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
+			}
+			route.Spec = openshiftRouteV1.RouteSpec{
+				Port: &openshiftRouteV1.RoutePort{
+					TargetPort: intstr.IntOrString{Type: intstr.String, StrVal: "https"},
+				},
+				To: openshiftRouteV1.RouteTargetReference{
+					Kind: "Service",
+					Name: "central",
+				},
+				TLS: &openshiftRouteV1.TLSConfig{
+					Termination:              openshiftRouteV1.TLSTerminationReencrypt,
+					Key:                      tls.SelfSignedKey(),  // TODO(ROX-11523): Load from fleet manager
+					Certificate:              tls.SelfSignedCert(), // TODO(ROX-11523): Load from fleet manager
+					CACertificate:            tls.SelfSignedCA(),   // TODO(ROX-11523): Load from fleet manager
+					DestinationCACertificate: string(centralCA),
+				},
+			}
+			err = r.client.Create(ctx, route)
+		}
+	}
+	return err
+}
+
+func (r CentralReconciler) findRoute(ctx context.Context, route *openshiftRouteV1.Route) error {
+	return r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: route.GetNamespace(), Name: route.GetName()}, route)
+}
+
+// TODO(ROX-9310): Move re-encrypt route reconciliation to the StackRox operator
+func (r CentralReconciler) ensureReencryptRouteDeleted(ctx context.Context, namespace string) (bool, error) {
+	if !r.useRoutes {
+		return true, nil
+	}
+	route := &openshiftRouteV1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      centralReencryptRouteName,
+			Namespace: namespace,
+			Labels:    map[string]string{k8sManagedByLabelKey: k8sManagedByLabelValue},
+		},
+	}
+	if err := r.findRoute(ctx, route); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return true, nil
+		}
+		return false, errors.Wrapf(err, "get central re-encrypt route %s/%s", namespace, route.GetName())
+	}
+	if err := r.client.Delete(ctx, route); err != nil {
+		return false, errors.Wrapf(err, "delete central re-encrypt route %s/%s", namespace, route.GetName())
+	}
 	return false, nil
 }
 
