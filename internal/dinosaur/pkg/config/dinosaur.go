@@ -22,8 +22,8 @@ type DinosaurConfig struct {
 
 	DinosaurLifespan      *DinosaurLifespanConfig `json:"dinosaur_lifespan"`
 	Quota                 *DinosaurQuotaConfig    `json:"dinosaur_quota"`
-	RhSsoClientSecretFile string                  `json:"rhsso_client_secret_file"`
 	RhSsoClientSecret     string                  `json:"rhsso_client_secret"`
+	RhSsoClientSecretFile string                  `json:"rhsso_client_secret_file"`
 }
 
 func NewDinosaurConfig() *DinosaurConfig {
@@ -63,9 +63,9 @@ func (c *DinosaurConfig) ReadFiles() error {
 		return err
 	}
 	if c.RhSsoClientSecret != "" {
-		glog.Info("Central OIDC client secret is configured.")
+		glog.Info("Central Red Hat OIDC client secret is configured.")
 	} else {
-		glog.Infof("Central OIDC client secret from secret file %q is missing.", c.RhSsoClientSecretFile)
+		glog.Infof("Central Red Hat OIDC client secret from secret file %q is missing.", c.RhSsoClientSecretFile)
 	}
 	// TODO(ROX-11289): drop MaxCapacity
 	// MaxCapacity is deprecated and will not be used.
