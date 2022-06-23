@@ -17,7 +17,7 @@ import (
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// TODO(create-ticket): Why is a central always created as a "eval" instance type?
+// TODO(ROX-11468): Why is a central always created as a "eval" instance type?
 var (
 	centralName = fmt.Sprintf("%s-%d", "e2e-test-central", time.Now().UnixMilli())
 )
