@@ -6,4 +6,12 @@ plugins:
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: rhacs-terraform
 repo: github.com/stackrox/acs-fleet-manager/dp-terraform/add-on/rhacs-terraform
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: acs.rhcloud.com
+  group: dataplane
+  kind: Terraform
+  version: v1alpha1
 version: "3"

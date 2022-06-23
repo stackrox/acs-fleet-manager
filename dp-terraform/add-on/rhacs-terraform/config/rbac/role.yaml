@@ -28,4 +28,35 @@ rules:
   verbs:
   - create
 
+##
+## Rules for dataplane.acs.rhcloud.com/v1alpha1, Kind: Terraform
+##
+- apiGroups:
+  - dataplane.acs.rhcloud.com
+  resources:
+  - terraforms
+  - terraforms/status
+  - terraforms/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- verbs:
+  - "*"
+  apiGroups:
+  - ""
+  resources:
+  - "serviceaccounts"
+  - "services"
+- verbs:
+  - "*"
+  apiGroups:
+  - "apps"
+  resources:
+  - "deployments"
+
 #+kubebuilder:scaffold:rules
