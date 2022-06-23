@@ -27,7 +27,7 @@ const (
 	defaultPolling = 1 * time.Second
 )
 
-// TODO(create-ticket): Use correct OCM_TOKEN for different clients (console.redhat.com, fleetshard)
+// TODO(ROX-11465): Use correct OCM_TOKEN for different clients (console.redhat.com, fleetshard)
 var _ = Describe("Central", func() {
 	var client *fleetmanager.Client
 
@@ -97,6 +97,9 @@ var _ = Describe("Central", func() {
 				return centralStatus(createdCentral, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusReady.String()))
 		})
+		//TODO(ROX-11368): Add test to eventually reach ready state
+		//TODO(ROX-11368): create test to check that Central and Scanner are healthy
+		//TODO(ROX-11368): Create test to check Central is correctly exposed
 
 		It("should transition central to deprovisioning state", func() {
 			err = client.DeleteCentral(createdCentral.Id)
