@@ -16,11 +16,6 @@ import (
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	// routeDefaultName is a default name for the auto created Route k8s custom resource on OpenShift.
-	routeDefaultName = "route"
-)
-
 // reconcilerRegistry contains a registry of a reconciler for each Central tenant. The key is the identifier of the
 // Central instance.
 // TODO(SimonBaeumer): set a unique identifier for the map key, currently the instance name is used
