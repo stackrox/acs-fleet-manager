@@ -6,7 +6,7 @@ metadata:
   labels:
     grafana_dashboard: "true"
   annotations:
-    grafana-folder: /grafana-dashboard-definitions
+    grafana-folder: /grafana-dashboard-definitions/ACS
 data:
   dashboard-acs-fleet-manager.json: |
     {
@@ -654,6 +654,7 @@ data:
       "timepicker": {},
       "timezone": "",
       "title": "ACS Fleet Manager",
-      "version": 0,
+      "uid": "D1C839d82",
+      "version": 1,
       "weekStart": ""
     }
