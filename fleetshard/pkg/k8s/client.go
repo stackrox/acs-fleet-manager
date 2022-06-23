@@ -2,12 +2,22 @@ package k8s
 
 import (
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+var routesGVK = schema.GroupVersionResource{
+	Group:    "route.openshift.io",
+	Version:  "v1",
+	Resource: "routes",
+}
 
 // CreateClientOrDie creates a new kubernetes client or dies
 func CreateClientOrDie() ctrlClient.Client {
@@ -29,4 +39,26 @@ func CreateClientOrDie() ctrlClient.Client {
 
 	glog.Infof("Connected to k8s cluster: %s", config.Host)
 	return k8sClient
+}
+
+func newClientGoClientSet() (client kubernetes.Interface, err error) {
+	config, err := ctrl.GetConfig()
+	if err != nil {
+		return client, err
+	}
+
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return client, err
+	}
+
+	return clientSet, err
+}
+
+func IsRoutesResourceEnabled() (bool, error) {
+	clientSet, err := newClientGoClientSet()
+	if err != nil {
+		return false, errors.Wrapf(err, "create client-go k8s client set")
+	}
+	return discovery.IsResourceEnabled(clientSet.Discovery(), routesGVK)
 }

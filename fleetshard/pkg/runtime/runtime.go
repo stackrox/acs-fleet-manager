@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"time"
 
 	"github.com/golang/glog"
@@ -120,7 +121,7 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 }
 
 func routesAvailable() bool {
-	available, err := centralreconciler.IsRoutesResourceEnabled()
+	available, err := k8s.IsRoutesResourceEnabled()
 	if err != nil {
 		glog.Errorf("Skip checking OpenShift routes availability due to an error: %v", err)
 		return true // make an optimistic assumption that routes can be created despite the error
