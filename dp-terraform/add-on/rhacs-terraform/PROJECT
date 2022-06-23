@@ -1,0 +1,9 @@
+domain: acs.rhcloud.com
+layout:
+- hybrid.helm.sdk.operatorframework.io/v1-alpha
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: rhacs-terraform
+repo: github.com/stackrox/acs-fleet-manager/dp-terraform/add-on/rhacs-terraform
+version: "3"
