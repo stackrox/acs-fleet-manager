@@ -18,3 +18,10 @@ $ RUN_E2E=true OCM_TOKEN=$(ocm token) go test ./e2e/...
 # To clean up the environment run
 $ ./e2e/cleanup.sh
 ```
+
+The following env vars can also be adjusted for using a different types of dataplane clusters. If not set the test will assume a local minikube cluster:
+
+- `DP_CLOUD_PROVIDER`: cloud provider for the data plane cluster.
+- `DP_REGION`: region for the data plane cluster.
+
+The env var `WAIT_TIMEOUT` can be used to adjust the timeout of each individual tests, using a string compatible with Golang's `time.ParseDuration`, e.g. `WAIT_TIMEOUT=20s`. If not set all tests use 5 minutes as timeout.
