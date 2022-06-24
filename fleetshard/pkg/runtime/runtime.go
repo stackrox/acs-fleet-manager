@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"time"
 
 	"github.com/golang/glog"
@@ -60,6 +61,8 @@ func (r *Runtime) Stop() {
 func (r *Runtime) Start() error {
 	glog.Infof("fleetshard runtime started")
 
+	routesAvailable := routesAvailable()
+
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		list, err := r.client.GetManagedCentralList()
 		if err != nil {
@@ -71,7 +74,7 @@ func (r *Runtime) Start() error {
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Metadata.Name]; !ok {
-				r.reconcilers[central.Metadata.Name] = centralreconciler.NewCentralReconciler(r.k8sClient, central)
+				r.reconcilers[central.Metadata.Name] = centralreconciler.NewCentralReconciler(r.k8sClient, central, routesAvailable)
 			}
 
 			reconciler := r.reconcilers[central.Metadata.Name]
@@ -110,4 +113,19 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 		err = errors.Wrapf(err, "updating status for Central %s", central.Metadata.Name)
 		glog.Error(err)
 	}
+}
+
+func routesAvailable() bool {
+	available, err := k8s.IsRoutesResourceEnabled()
+	if err != nil {
+		glog.Errorf("Skip checking OpenShift routes availability due to an error: %v", err)
+		return true // make an optimistic assumption that routes can be created despite the error
+	}
+	glog.Infof("OpenShift Routes available: %t", available)
+	if !available {
+		glog.Warning("Most likely the application is running on a plain Kubernetes cluster. " +
+			"Such setup is unsupported and can be used for development only!")
+		return false
+	}
+	return true
 }

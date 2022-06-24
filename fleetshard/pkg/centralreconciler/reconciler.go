@@ -38,6 +38,7 @@ type CentralReconciler struct {
 	central         private.ManagedCentral
 	status          *int32
 	lastCentralHash [16]byte
+	useRoutes       bool
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -68,6 +69,15 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			Name:      remoteCentralName,
 			Namespace: remoteNamespace,
 			Labels:    map[string]string{k8sManagedByLabelKey: "rhacs-fleetshard"},
+		},
+		Spec: v1alpha1.CentralSpec{
+			Central: &v1alpha1.CentralComponentSpec{
+				Exposure: &v1alpha1.Exposure{
+					Route: &v1alpha1.ExposureRoute{
+						Enabled: pointer.BoolPtr(r.useRoutes),
+					},
+				},
+			},
 		},
 	}
 
@@ -222,10 +232,11 @@ func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *
 	return false, nil
 }
 
-func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral) *CentralReconciler {
+func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, useRoutes bool) *CentralReconciler {
 	return &CentralReconciler{
-		client:  k8sClient,
-		central: central,
-		status:  pointer.Int32(FreeStatus),
+		client:    k8sClient,
+		central:   central,
+		status:    pointer.Int32(FreeStatus),
+		useRoutes: useRoutes,
 	}
 }
