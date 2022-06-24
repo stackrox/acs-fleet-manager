@@ -198,6 +198,11 @@ components:
         spec:
           owners:
           - central-owner1
+          auth:
+            clientSecret: ""
+            clientId: client-id
+            ownerUserId: f:ac4bcdb5-1fb1-41c5-9323-349698b9b757:username
+            orgId: "13442309"
           endpoint:
             host: example-central--rfpsqbvq-em-u-u-z--ymjcwac.example.central.com
             tls:
@@ -418,6 +423,16 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_metadata_annotations'
         deletionTimestamp:
           type: string
+    ManagedCentral_allOf_spec_auth:
+      properties:
+        clientSecret:
+          type: string
+        clientId:
+          type: string
+        ownerUserId:
+          type: string
+        ownerOrgId:
+          type: string
     ManagedCentral_allOf_spec_endpoint_tls:
       nullable: true
       properties:
@@ -473,6 +488,8 @@ components:
           items:
             type: string
           type: array
+        auth:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_auth'
         endpoint:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_endpoint'
         versions:
