@@ -2,6 +2,8 @@ package centralreconciler
 
 import (
 	"context"
+	appsv1 "k8s.io/api/apps/v1"
+
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
@@ -40,12 +42,13 @@ func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestCo
 }
 
 func TestReconcileCreate(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
 	r := CentralReconciler{
-		status:    pointer.Int32(0),
-		client:    fakeClient,
-		central:   private.ManagedCentral{},
-		useRoutes: true,
+		status:             pointer.Int32(0),
+		controllerClient:   fakeClient,
+		central:            private.ManagedCentral{},
+		useRoutes:          true,
+		createAuthProvider: false,
 	}
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -79,12 +82,13 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 			Namespace:   centralName,
 			Annotations: map[string]string{revisionAnnotationKey: "3"},
 		},
-	}).Build()
+	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:  pointer.Int32(0),
-		client:  fakeClient,
-		central: private.ManagedCentral{},
+		status:             pointer.Int32(0),
+		controllerClient:   fakeClient,
+		central:            private.ManagedCentral{},
+		createAuthProvider: false,
 	}
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -106,12 +110,13 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 			Namespace:   centralName,
 			Annotations: map[string]string{revisionAnnotationKey: "invalid annotation"},
 		},
-	}).Build()
+	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:  pointer.Int32(0),
-		client:  fakeClient,
-		central: private.ManagedCentral{},
+		status:             pointer.Int32(0),
+		controllerClient:   fakeClient,
+		central:            private.ManagedCentral{},
+		createAuthProvider: false,
 	}
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -127,12 +132,13 @@ func TestReconicleLastHashSetOnSuccess(t *testing.T) {
 			Namespace:   centralName,
 			Annotations: map[string]string{revisionAnnotationKey: "3"},
 		},
-	}).Build()
+	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:  pointer.Int32(0),
-		client:  fakeClient,
-		central: private.ManagedCentral{},
+		status:             pointer.Int32(0),
+		controllerClient:   fakeClient,
+		central:            private.ManagedCentral{},
+		createAuthProvider: false,
 	}
 
 	managedCentral := simpleManagedCentral
@@ -157,12 +163,13 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 			Namespace:   centralName,
 			Annotations: map[string]string{revisionAnnotationKey: "3"},
 		},
-	}).Build()
+	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:  pointer.Int32(0),
-		client:  fakeClient,
-		central: private.ManagedCentral{},
+		status:             pointer.Int32(0),
+		controllerClient:   fakeClient,
+		central:            private.ManagedCentral{},
+		createAuthProvider: false,
 	}
 
 	managedCentral := simpleManagedCentral
@@ -254,14 +261,15 @@ func TestCentralChanged(t *testing.T) {
 		},
 	}
 
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			reconciler := CentralReconciler{
-				status:  pointer.Int32(0),
-				client:  fakeClient,
-				central: test.currentCentral,
+				status:             pointer.Int32(0),
+				controllerClient:   fakeClient,
+				central:            test.currentCentral,
+				createAuthProvider: false,
 			}
 
 			if test.lastCentral != nil {
@@ -275,4 +283,13 @@ func TestCentralChanged(t *testing.T) {
 		})
 	}
 
+}
+
+func centralDeploymentObject() *appsv1.Deployment {
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "central",
+			Namespace: centralName,
+		},
+	}
 }

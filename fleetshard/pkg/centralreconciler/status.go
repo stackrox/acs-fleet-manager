@@ -24,3 +24,15 @@ func deletedStatus() *private.DataPlaneCentralStatus {
 		},
 	}
 }
+
+func installingStatus() *private.DataPlaneCentralStatus {
+	return &private.DataPlaneCentralStatus{
+		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+			{
+				Type:   "Ready",
+				Status: "False",
+				Reason: "Installing",
+			},
+		},
+	}
+}

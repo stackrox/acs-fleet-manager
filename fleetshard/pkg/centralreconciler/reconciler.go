@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 	"sync/atomic"
 
@@ -17,7 +18,8 @@ import (
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	v1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
@@ -42,11 +44,13 @@ var ErrTypeCentralNotChanged = errors.New("central not changed, skipping reconci
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client          ctrlClient.Client
-	central         private.ManagedCentral
-	status          *int32
-	lastCentralHash [16]byte
-	useRoutes       bool
+	controllerClient   ctrlClient.Client
+	httpClient         http.Client
+	central            private.ManagedCentral
+	status             *int32
+	lastCentralHash    [16]byte
+	useRoutes          bool
+	createAuthProvider bool
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -65,7 +69,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "checking if central changed")
 	}
 
-	if !changed && remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String() {
+	if !changed && !r.createAuthProvider && remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String() {
 		return nil, ErrTypeCentralNotChanged
 	}
 
@@ -105,7 +109,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	centralExists := true
-	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentralName}, central)
+	err = r.controllerClient.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentralName}, central)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return nil, errors.Wrapf(err, "unable to check the existence of central %q", central.GetName())
@@ -117,7 +121,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		central.Annotations = map[string]string{revisionAnnotationKey: "1"}
 
 		glog.Infof("Creating central tenant %s", central.GetName())
-		if err := r.client.Create(ctx, central); err != nil {
+		if err := r.controllerClient.Create(ctx, central); err != nil {
 			return nil, errors.Wrapf(err, "creating new central %s/%s", remoteNamespace, remoteCentralName)
 		}
 		glog.Infof("Central %s created", central.GetName())
@@ -130,7 +134,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			return nil, err
 		}
 
-		if err := r.client.Update(ctx, central); err != nil {
+		if err := r.controllerClient.Update(ctx, central); err != nil {
 			return nil, errors.Wrapf(err, "updating central %q", central.GetName())
 		}
 	}
@@ -143,8 +147,44 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "setting central reconcilation cache")
 	}
 
+	// Check whether deployment is ready.
+	err, centralReady := isCentralReady(ctx, r.controllerClient, remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+	if !centralReady {
+		return installingStatus(), nil
+	}
+
+	// Skip auth provider initialisation if:
+	// 1. Auth provider is created by this specific reconciler
+	// 2. OR reconciler creator specified auth provider not to be created
+	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
+	if r.createAuthProvider && remoteCentral.RequestStatus != centralConstants.DinosaurRequestStatusReady.String() {
+		err = InitRHSSOAuthProvider(ctx, remoteCentral, r.controllerClient, &r.httpClient)
+		if err != nil {
+			return nil, err
+		} else {
+			r.createAuthProvider = false
+		}
+	}
+
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
 	return readyStatus(), nil
+}
+
+func isCentralReady(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (error, bool) {
+	deployment := &appsv1.Deployment{}
+	err := client.Get(ctx,
+		ctrlClient.ObjectKey{Name: "central", Namespace: central.Metadata.Namespace},
+		deployment)
+	if err != nil {
+		return err, false
+	}
+	if deployment.Status.UnavailableReplicas == 0 {
+		return nil, true
+	}
+	return nil, false
 }
 
 func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
@@ -201,13 +241,13 @@ func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) 
 	return nil
 }
 
-func (r CentralReconciler) getNamespace(name string) (*v1.Namespace, error) {
-	namespace := &v1.Namespace{
+func (r CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) {
+	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 	}
-	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace)
+	err := r.controllerClient.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace)
 	return namespace, err
 }
 
@@ -215,7 +255,7 @@ func (r CentralReconciler) ensureNamespaceExists(name string) error {
 	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			err = r.client.Create(context.Background(), namespace)
+			err = r.controllerClient.Create(context.Background(), namespace)
 			if err != nil {
 				return nil
 			}
@@ -232,10 +272,10 @@ func (r CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name stri
 		}
 		return false, errors.Wrapf(err, "delete central namespace %s", name)
 	}
-	if namespace.Status.Phase == v1.NamespaceTerminating {
+	if namespace.Status.Phase == corev1.NamespaceTerminating {
 		return false, nil // Deletion is already in progress, skipping deletion request
 	}
-	if err = r.client.Delete(ctx, namespace); err != nil {
+	if err = r.controllerClient.Delete(ctx, namespace); err != nil {
 		return false, errors.Wrapf(err, "delete central namespace %s", name)
 	}
 	glog.Infof("Central namespace %s is marked for deletion", name)
@@ -243,14 +283,14 @@ func (r CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name stri
 }
 
 func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: central.GetNamespace(), Name: central.GetName()}, central)
+	err := r.controllerClient.Get(ctx, ctrlClient.ObjectKey{Namespace: central.GetNamespace(), Name: central.GetName()}, central)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return true, nil
 		}
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
-	if err := r.client.Delete(ctx, central); err != nil {
+	if err := r.controllerClient.Delete(ctx, central); err != nil {
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
 	glog.Infof("Central CR %s/%s is marked for deletion", central.GetNamespace(), central.GetName())
@@ -331,9 +371,14 @@ func (r CentralReconciler) ensureReencryptRouteDeleted(ctx context.Context, name
 
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, useRoutes bool) *CentralReconciler {
 	return &CentralReconciler{
-		client:    k8sClient,
-		central:   central,
-		status:    pointer.Int32(FreeStatus),
-		useRoutes: useRoutes,
+		controllerClient: k8sClient,
+		httpClient: http.Client{
+			// TODO: once certificates will be added, we probably will be able to replace with secure transport
+			Transport: insecureTransport,
+		},
+		central:            central,
+		status:             pointer.Int32(FreeStatus),
+		useRoutes:          useRoutes,
+		createAuthProvider: true,
 	}
 }
