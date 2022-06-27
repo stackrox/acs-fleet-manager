@@ -42,8 +42,8 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 			Endpoint: private.ManagedCentralAllOfSpecEndpoint{
 				Host: from.Spec.Endpoint.Host,
 				Tls: &private.ManagedCentralAllOfSpecEndpointTls{
-					Cert: "cert-data",
-					Key:  "key-data",
+					Cert: from.Spec.Endpoint.Tls.Cert,
+					Key:  from.Spec.Endpoint.Tls.Key,
 				},
 			},
 			Versions: private.ManagedCentralVersions{
