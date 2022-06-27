@@ -380,7 +380,7 @@ func Test_formatNamespace(t *testing.T) {
 	}
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
-			namespace, err := formatNamespace(test.id)
+			namespace, err := FormatNamespace(test.id)
 			if test.expectError {
 				assert.Error(t, err)
 			} else {

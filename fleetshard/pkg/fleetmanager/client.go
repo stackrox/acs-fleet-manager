@@ -127,6 +127,20 @@ func (c *Client) GetCentral(id string) (*public.CentralRequest, error) {
 	return central, nil
 }
 
+// DeleteCentral deletes a central from the public fleet-manager API
+func (c *Client) DeleteCentral(id string) error {
+	resp, err := c.newRequest(http.MethodDelete, fmt.Sprintf("%s/%s?async=true", c.consoleAPIEndpoint, id), nil)
+	if err != nil {
+		return err
+	}
+
+	err = c.unmarshalResponse(resp, nil)
+	if err != nil {
+		return errors.Wrapf(err, "deleting central %s", id)
+	}
+	return nil
+}
+
 func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Response, error) {
 	glog.Infof("Send request to %s", url)
 	r, err := http.NewRequest(method, url, body)
