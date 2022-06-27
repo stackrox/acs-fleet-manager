@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 // TODO(create-ticket): Why is a central always created as a "eval" instance type?
@@ -23,7 +23,6 @@ var (
 )
 
 const (
-	defaultTimeout = 2 * time.Minute
 	defaultPolling = 1 * time.Second
 )
 
@@ -56,26 +55,25 @@ var _ = Describe("Central", func() {
 				provisioningCentral, err := client.GetCentral(createdCentral.Id)
 				Expect(err).To(BeNil())
 				return provisioningCentral.Status
-			}).WithTimeout(defaultTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusProvisioning.String()))
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusProvisioning.String()))
 		})
 
-		/*
 		//TODO(create-ticket): fails because the namespace is not centralName anymore but `formatNamespace(dinosaurRequest.ID)`
 		// and that is not accessible from a value `*public.CentralRequest`
 		It("should create central namespace", func() {
 			Eventually(func() error {
 				ns := &v1.Namespace{}
 				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
-			}).WithTimeout(defaultTimeout).WithPolling(defaultPolling).Should(Succeed())
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
 		It("should create central in its namespace on a managed cluster", func() {
 			Eventually(func() error {
 				central := &v1alpha1.Central{}
 				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: namespaceName}, central)
-			}).WithTimeout(defaultTimeout).WithPolling(defaultPolling).Should(Succeed())
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
-		*/
+
 		//TODO(create-ticket): Add test to eventually reach ready state
 		//TODO(create-ticket): create test to check that Central and Scanner are healthy
 		//TODO(create-ticket): Create test to check Central is correctly exposed
@@ -87,7 +85,7 @@ var _ = Describe("Central", func() {
 				deprovisioningCentral, err := client.GetCentral(createdCentral.Id)
 				Expect(err).To(BeNil())
 				return deprovisioningCentral.Status
-			}).WithTimeout(defaultTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusDeprovision.String()))
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusDeprovision.String()))
 		})
 
 		It("should delete central CR", func() {
@@ -95,7 +93,7 @@ var _ = Describe("Central", func() {
 				central := &v1alpha1.Central{}
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: centralName}, central)
 				return apiErrors.IsNotFound(err)
-			}).WithTimeout(defaultTimeout).WithPolling(defaultPolling).Should(BeTrue())
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
 		})
 
 		It("should remove central namespace", func() {
@@ -103,7 +101,7 @@ var _ = Describe("Central", func() {
 				ns := &v1.Namespace{}
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
 				return apiErrors.IsNotFound(err)
-			}).WithTimeout(defaultTimeout).WithPolling(defaultPolling).Should(BeTrue())
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
 		})
 
 	})
