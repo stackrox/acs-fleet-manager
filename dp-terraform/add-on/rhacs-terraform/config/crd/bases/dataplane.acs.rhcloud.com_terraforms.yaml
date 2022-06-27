@@ -50,8 +50,8 @@ spec:
                       clientSecret:
                         type: string
                     required:
-                    - clientId
-                    - clientSecret
+                      - clientId
+                      - clientSecret
                 required:
                   - ocmToken
                   - fleetManagerEndpoint
@@ -64,6 +64,8 @@ spec:
                     type: boolean
                   startingCSV:
                     type: string
+                required:
+                  - enabled
               observability:
                 type: object
                 properties:
@@ -85,8 +87,12 @@ spec:
                         type: string
                       metricsSecret:
                         type: string
+                required:
+                  - enabled
             required:
               - fleetshardSync
+              - acsOperator
+              - observability
             x-kubernetes-preserve-unknown-fields: true
           status:
             description: Status defines the observed state of Terraform
