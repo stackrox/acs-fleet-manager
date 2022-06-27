@@ -265,7 +265,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
 	}
 
-	namespace, formatErr := formatNamespace(dinosaurRequest.ID)
+	namespace, formatErr := FormatNamespace(dinosaurRequest.ID)
 	if formatErr != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, formatErr, "invalid id format")
 	}
