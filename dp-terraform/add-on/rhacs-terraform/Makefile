@@ -92,8 +92,13 @@ help: ## Display this help.
 
 ##@ Build
 
-run: helm-operator helm-charts ## Run against the configured Kubernetes cluster in ~/.kube/config
-	$(HELM_OPERATOR) run 2>&1 | tee operator.log
+
+CONTROLLER_EXEC := $(ROOT_DIR)/bin/controller-manager
+build:
+	CGO_ENABLED=0 go build -o $(CONTROLLER_EXEC) main.go
+
+run: build helm-charts ## Run against the configured Kubernetes cluster in ~/.kube/config
+	$(CONTROLLER_EXEC) 2>&1 | tee "$(CONTROLLER_EXEC).log"
 
 HELM_CHARTS_ROOT := $(realpath $(ROOT_DIR)/../../helm)
 OPERATOR_HELM_CHARTS_ROOT := $(ROOT_DIR)/helm-charts
