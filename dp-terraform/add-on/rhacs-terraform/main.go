@@ -22,6 +22,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/stackrox/acs-fleet-manager/dp-terraform/add-on/rhacs-terraform/pkg/terraform/values/translation"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	"github.com/operator-framework/helm-operator-plugins/pkg/annotation"
 	"github.com/operator-framework/helm-operator-plugins/pkg/reconciler"
@@ -58,7 +59,6 @@ func main() {
 		probeAddr            string
 		enableLeaderElection bool
 	)
-
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&watchesPath, "watches-file", "watches.yaml", "path to watches file")
@@ -119,6 +119,7 @@ func main() {
 		r, err := reconciler.New(
 			reconciler.WithChart(*w.Chart),
 			reconciler.WithGroupVersionKind(w.GroupVersionKind),
+			reconciler.WithValueTranslator(translation.NewTranslator(w.ChartPath)),
 			reconciler.WithOverrideValues(w.OverrideValues),
 			reconciler.SkipDependentWatches(w.WatchDependentResources != nil && !*w.WatchDependentResources),
 			reconciler.WithMaxConcurrentReconciles(maxConcurrentReconciles),
