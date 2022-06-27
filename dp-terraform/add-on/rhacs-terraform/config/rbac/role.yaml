@@ -6,6 +6,13 @@ rules:
 ##
 ## Base operator rules
 ##
+# // TODO(create-ticket): Replace with least privileges permissions
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
 # We need to get namespaces so the operator can read namespaces to ensure they exist
 - apiGroups:
   - ""
