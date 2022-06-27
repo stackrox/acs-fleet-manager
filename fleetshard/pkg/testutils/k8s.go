@@ -27,6 +27,8 @@ var (
 	}
 )
 
+const CentralCA = "test CA"
+
 type reconcileTracker struct {
 	k8sTesting.ObjectTracker
 }
@@ -59,7 +61,7 @@ func (t reconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.Ob
 				Namespace: ns,
 			},
 			Data: map[string][]byte{
-				"ca.pem": []byte("test CA"),
+				"ca.pem": []byte(CentralCA),
 			},
 		}
 		return t.ObjectTracker.Create(secretsGVR, centralTlsSecret, ns)

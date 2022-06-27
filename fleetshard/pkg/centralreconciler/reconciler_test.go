@@ -2,6 +2,7 @@ package centralreconciler
 
 import (
 	"context"
+	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"testing"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
@@ -60,6 +61,13 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, centralName, central.GetName())
 	assert.Equal(t, "1", central.GetAnnotations()[revisionAnnotationKey])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
+
+	route := &openshiftRouteV1.Route{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralName}, route)
+	require.NoError(t, err)
+	assert.Equal(t, centralReencryptRouteName, route.GetName())
+	assert.Equal(t, openshiftRouteV1.TLSTerminationReencrypt, route.Spec.TLS.Termination)
+	assert.Equal(t, testutils.CentralCA, route.Spec.TLS.DestinationCACertificate)
 }
 
 func TestReconcileUpdateSucceeds(t *testing.T) {
