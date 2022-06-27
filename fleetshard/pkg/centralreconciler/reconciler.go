@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"k8s.io/kubernetes/pkg/apis/apps"
 	"strconv"
 	"sync/atomic"
 
@@ -127,12 +128,21 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
-	if err := r.setLastCentralHash(remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "setting central reconcilation cache")
+	centralDeployment := &apps.Deployment{}
+	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentralName}, centralDeployment)
+	if err != nil {
+		return nil, errors.Wrapf(err, "receiving central")
 	}
 
-	// TODO(create-ticket): When should we create failed conditions for the reconciler?
-	return readyStatus(), nil
+	if centralDeployment.Status.ReadyReplicas == centralDeployment.Status.Replicas {
+		if err := r.setLastCentralHash(remoteCentral); err != nil {
+			return nil, errors.Wrapf(err, "setting central reconcilation cache")
+		}
+
+		// TODO(create-ticket): When should we create failed conditions for the reconciler?
+		return readyStatus(), nil
+	}
+	return nil, nil
 }
 
 func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
