@@ -49,6 +49,14 @@ spec:
                         type: string
                       clientSecret:
                         type: string
+                    required:
+                    - clientId
+                    - clientSecret
+                required:
+                  - ocmToken
+                  - fleetManagerEndpoint
+                  - clusterId
+                  - redHatSSO
               acsOperator:
                 type: object
                 properties:
@@ -77,6 +85,8 @@ spec:
                         type: string
                       metricsSecret:
                         type: string
+            required:
+              - fleetshardSync
             x-kubernetes-preserve-unknown-fields: true
           status:
             description: Status defines the observed state of Terraform
