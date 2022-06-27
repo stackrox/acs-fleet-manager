@@ -32,6 +32,51 @@ spec:
           spec:
             description: Spec defines the desired state of Terraform
             type: object
+            properties:
+              fleetshardSync:
+                type: object
+                properties:
+                  ocmToken:
+                    type: string
+                  fleetManagerEndpoint:
+                    type: string
+                  clusterId:
+                    type: string
+                  redHatSSO:
+                    type: object
+                    properties:
+                      clientId:
+                        type: string
+                      clientSecret:
+                        type: string
+              acsOperator:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                  startingCSV:
+                    type: string
+              observability:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                  github:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                      repository:
+                        type: string
+                  observatorium:
+                    type: object
+                    properties:
+                      gateway: 
+                        type: string
+                      metricsClientId:
+                        type: string
+                      metricsSecret:
+                        type: string
             x-kubernetes-preserve-unknown-fields: true
           status:
             description: Status defines the observed state of Terraform
