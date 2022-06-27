@@ -93,7 +93,7 @@ help: ## Display this help.
 ##@ Build
 
 run: helm-operator helm-charts ## Run against the configured Kubernetes cluster in ~/.kube/config
-	$(HELM_OPERATOR) run
+	$(HELM_OPERATOR) run 2>&1 | tee operator.log
 
 HELM_CHARTS_ROOT := $(realpath $(ROOT_DIR)/../../helm)
 OPERATOR_HELM_CHARTS_ROOT := $(ROOT_DIR)/helm-charts
@@ -132,6 +132,9 @@ test: manifests generate fmt vet envtest ## Run tests.
 	
 logs/controller:
 	kubectl -n rhacs-terraform-system logs deployment/rhacs-terraform-controller-manager -f
+
+logs/fleetshard-sync: # Usage: make logs/fleetshard-sync ns=MY_NAMESPACE
+	kubectl -n ${ns} logs deployment/fleetshard-sync -f
 
 ##@ Deployment
 
