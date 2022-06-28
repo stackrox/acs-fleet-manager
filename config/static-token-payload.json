@@ -1,0 +1,35 @@
+{
+  "iat": 1656293927,
+  "jti": "03f0bd7b-003f-43cc-a169-fc4a7a582655",
+  "iss": "https://sso.redhat.com/auth/realms/redhat-external",
+  "exp": 7955112142,
+  "aud": "cloud-services",
+  "sub": "f:528d76ff-f708-43ed-8cd5-fe16f4fe0ce6:rhacs-ms-test@redhat.com",
+  "typ": "Bearer",
+  "azp": "cloud-services",
+  "nonce": "eb1485d6-8351-4494-978d-8b62bebe126b",
+  "session_state": "20873d12-aae8-4d3b-9c14-44a5a253c367",
+  "acr": "0",
+  "realm_access": {
+    "roles": [
+      "authenticated",
+      "fleet-manager-admin-full"
+    ]
+  },
+  "scope": "openid iam.clients.service_accounts offline_access",
+  "sid": "20873d12-aae8-4d3b-9c14-44a5a253c367",
+  "account_number": "1234567",
+  "is_internal": true,
+  "is_active": true,
+  "last_name": "Test",
+  "preferred_username": "rhacs-ms-test@redhat.com",
+  "type": "User",
+  "locale": "en_us",
+  "is_org_admin": true,
+  "account_id": "12345678",
+  "user_id": "12345678",
+  "org_id": "12345678",
+  "first_name": "Test",
+  "email": "rhacs-ms-test@redhat.com",
+  "username": "rhacs-ms-test@redhat.com"
+}

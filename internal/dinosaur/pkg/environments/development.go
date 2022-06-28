@@ -32,5 +32,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"observability-red-hat-sso-token-refresher-url":   "http://localhost:8085",
 		"observability-red-hat-sso-observatorium-gateway": "https://observatorium-mst.api.stage.openshift.com",
 		"observability-red-hat-sso-tenant":                "manageddinosaur",
+		"jwks-file":                                       "config/jwks-file-static.json",
 	}
 }
