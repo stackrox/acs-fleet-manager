@@ -25,7 +25,7 @@ Execute all commands from git root directory.
 1. Build and run fleetshard-sync:
     ```
     $ make fleetshard/build
-    $ OCM_TOKEN=$(ocm token) CLUSTER_ID=1234567890abcdef1234567890abcdef ./fleetshard-sync
+    $ OCM_TOKEN=$(ocm token --refresh) AUTH_TYPE=OCM CLUSTER_ID=1234567890abcdef1234567890abcdef ./fleetshard-sync
     ```
 
 1. Create a central instance:

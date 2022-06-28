@@ -40,9 +40,14 @@ type Runtime struct {
 
 // NewRuntime creates a new runtime
 func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
-	client, err := fleetmanager.NewClient(config.FleetManagerEndpoint, config.ClusterID)
+	auth, err := fleetmanager.NewAuth(fleetmanager.AuthTypeFromString(config.AuthType))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create fleetmanager client")
+		return nil, errors.Wrap(err, "failed to create fleet manager authentication")
+	}
+	client, err := fleetmanager.NewClient(config.FleetManagerEndpoint, config.ClusterID,
+		auth)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create fleet manager client")
 	}
 
 	return &Runtime{

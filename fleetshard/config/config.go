@@ -12,6 +12,7 @@ type Config struct {
 	FleetManagerEndpoint string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
 	ClusterID            string        `env:"CLUSTER_ID"`
 	RuntimePollPeriod    time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
+	AuthType             string        `env:"AUTH_TYPE" envDefault:"OCM"`
 }
 
 // Load retrieves the current runtime configuration from the environment and returns it.
@@ -26,6 +27,8 @@ func Load() (*Config, error) {
 	if c.FleetManagerEndpoint == "" {
 		return nil, errors.New("FLEET_MANAGER_ENDPOINT unset in the environment")
 	}
-
+	if c.AuthType == "" {
+		return nil, errors.New("AUTH_TYPE unset in the environment")
+	}
 	return &c, nil
 }
