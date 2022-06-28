@@ -419,7 +419,6 @@ components:
         deletionTimestamp:
           type: string
     ManagedCentral_allOf_spec_endpoint_tls:
-      nullable: true
       properties:
         cert:
           type: string

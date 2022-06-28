@@ -5,11 +5,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	openshiftRouteV1 "github.com/openshift/api/route/v1"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/tls"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"strconv"
 	"sync/atomic"
+
+	openshiftRouteV1 "github.com/openshift/api/route/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -280,9 +280,8 @@ func (r CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remot
 			},
 			TLS: &openshiftRouteV1.TLSConfig{
 				Termination:              openshiftRouteV1.TLSTerminationReencrypt,
-				Key:                      tls.SelfSignedKey(),  // TODO(ROX-11523): Load from fleet manager
-				Certificate:              tls.SelfSignedCert(), // TODO(ROX-11523): Load from fleet manager
-				CACertificate:            tls.SelfSignedCA(),   // TODO(ROX-11523): Load from fleet manager
+				Key:                      remoteCentral.Spec.Endpoint.Tls.Key,
+				Certificate:              remoteCentral.Spec.Endpoint.Tls.Cert,
 				DestinationCACertificate: string(centralCA),
 			},
 		}
