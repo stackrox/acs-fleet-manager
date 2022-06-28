@@ -41,3 +41,6 @@ Fleetshard sync provides different authentication types that can be used when ca
 - RH SSO
   - This will use the client_credentials grant to obtain an access token. Additionally, it uses the [token-refresher](https://gitlab.cee.redhat.com/mk-ci-cd/mk-token-refresher)
     for obtaining new access tokens before expiring. Currently, the token-refresher is deployed via helm.
+- Static token
+  - This will use a static token. It's payload can be viewed within `config/jwks-file-static.json`. The token will have
+    no expiration and can be used to authenticate against all APIs within the development environment.
