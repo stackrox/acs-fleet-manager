@@ -26,6 +26,7 @@ func addCentralRequest() *gormigrate.Migration {
 		SubscriptionId                string     `json:"subscription_id"`
 		Owner                         string     `json:"owner" gorm:"index"`
 		OwnerAccountId                string     `json:"owner_account_id"`
+		OwnerUserid                   string     `json:"owner_userid"`
 		Host                          string     `json:"host"`
 		OrganisationId                string     `json:"organisation_id" gorm:"index"`
 		FailedReason                  string     `json:"failed_reason"`
