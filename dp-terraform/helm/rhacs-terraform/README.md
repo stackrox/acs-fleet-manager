@@ -20,7 +20,7 @@ helm template rhacs-terraform \
   --debug \
   --namespace rhacs \
   --values ~/acs-terraform-values.yaml \
-  --set fleetshardSync.ocmToken=$(ocm token) \
+  --set fleetshardSync.ocmToken=$(ocm token --refresh) \
   --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
   --set fleetshardSync.clusterId=${CLUSTER_ID} \
   --set acsOperator.enabled=true .
@@ -32,7 +32,7 @@ helm template rhacs-terraform \
 helm upgrade --install rhacs-terraform \
   --namespace rhacs \
   --values ~/acs-terraform-values.yaml \
-  --set fleetshardSync.ocmToken=$(ocm token) \
+  --set fleetshardSync.ocmToken=$(ocm token --refresh) \
   --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
   --set fleetshardSync.clusterId=${CLUSTER_ID} \
   --set acsOperator.enabled=true .
