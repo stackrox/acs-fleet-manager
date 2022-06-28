@@ -25,7 +25,7 @@ func TestClientGetManagedCentralList(t *testing.T) {
 	err := os.Setenv("OCM_TOKEN", "token")
 	require.NoError(t, err)
 
-	client, err := NewClient(ts.URL, "cluster-id")
+	client, err := NewClient(ts.URL, "cluster-id", &noAuth{})
 	require.NoError(t, err)
 
 	result, err := client.GetManagedCentralList()
@@ -49,7 +49,7 @@ func TestClientReturnsError(t *testing.T) {
 	err := os.Setenv("OCM_TOKEN", "token")
 	require.NoError(t, err)
 
-	client, err := NewClient(ts.URL, "cluster-id")
+	client, err := NewClient(ts.URL, "cluster-id", &noAuth{})
 	require.NoError(t, err)
 
 	_, err = client.GetManagedCentralList()
@@ -66,7 +66,7 @@ func TestClientUpdateStatus(t *testing.T) {
 	err := os.Setenv("OCM_TOKEN", "token")
 	require.NoError(t, err)
 
-	client, err := NewClient(ts.URL, "cluster-id")
+	client, err := NewClient(ts.URL, "cluster-id", &noAuth{})
 	require.NoError(t, err)
 
 	statuses := map[string]private.DataPlaneCentralStatus{}

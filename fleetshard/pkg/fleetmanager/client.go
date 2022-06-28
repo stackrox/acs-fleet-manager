@@ -11,7 +11,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"io"
 	"net/http"
-	"os"
 )
 
 const (
@@ -24,6 +23,7 @@ const (
 // Client represents the REST client for connecting to fleet-manager
 type Client struct {
 	client                http.Client
+	auth                  Auth
 	ocmToken              string
 	clusterID             string
 	fleetshardAPIEndpoint string
@@ -31,14 +31,7 @@ type Client struct {
 }
 
 // NewClient creates a new client
-func NewClient(endpoint string, clusterID string) (*Client, error) {
-	//TODO(create-ticket): Add authentication SSO
-	//TODO(create-ticket): Different auth tokens for fleetshard and console API
-	ocmToken := os.Getenv("OCM_TOKEN")
-	if ocmToken == "" {
-		return nil, errors.New("empty ocm token")
-	}
-
+func NewClient(endpoint string, clusterID string, auth Auth) (*Client, error) {
 	if clusterID == "" {
 		return nil, errors.New("cluster id is empty")
 	}
@@ -50,7 +43,7 @@ func NewClient(endpoint string, clusterID string) (*Client, error) {
 	return &Client{
 		client:                http.Client{},
 		clusterID:             clusterID,
-		ocmToken:              ocmToken,
+		auth:                  auth,
 		fleetshardAPIEndpoint: fmt.Sprintf("%s/%s/%s/%s", endpoint, uri, clusterID, "centrals"),
 		consoleAPIEndpoint:    fmt.Sprintf("%s/%s", endpoint, publicCentralURI),
 	}, nil
@@ -147,7 +140,9 @@ func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Re
 	if err != nil {
 		return nil, err
 	}
-	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.ocmToken))
+	if err := c.auth.AddAuth(r); err != nil {
+		return nil, err
+	}
 
 	resp, err := c.client.Do(r)
 	if err != nil {
