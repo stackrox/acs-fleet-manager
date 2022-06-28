@@ -3,8 +3,8 @@ package fleetmanager
 import (
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -18,7 +18,8 @@ type ocmAuth struct {
 }
 
 func newOcmAuth() (*ocmAuth, error) {
-	initialToken := os.Getenv("OCM_TOKEN")
+	cfg, err := config.Singleton()
+	initialToken := cfg.OCMRefreshToken
 	if initialToken == "" {
 		return nil, errors.New("empty ocm token")
 	}
