@@ -40,7 +40,6 @@ type AcsOperatorSpec struct {
 
 type ObservabilitySpec struct {
 	Enabled bool `json:"enabled,omitempty"`
-	StartingCSV string `json:"startingCSV,omitempty"`
 	Github *GithubSpec `json:"github,omitempty"`
 	Observatorium *ObservatoriumSpec `json:"observatorium,omitempty"`
 }
