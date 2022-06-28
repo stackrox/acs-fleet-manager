@@ -3,9 +3,9 @@
 # Declare variables to be passed into your templates.
 
 fleetshardSync:
+<<<<<<< HEAD
   # Can be either OCM, RHSSO, STATIC_TOKEN. When choosing RHSSO, make sure the clientId/secret is set. By default, uses OCM.
   authType: "OCM"
-  # OCM refresh token, only required in combination with authType=OCM.
   ocmToken: ""
   fleetManagerEndpoint: ""
   clusterId: ""

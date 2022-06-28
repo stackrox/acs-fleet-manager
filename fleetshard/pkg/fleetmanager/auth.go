@@ -1,7 +1,6 @@
 package fleetmanager
 
 import (
-	_ "embed"
 	"fmt"
 	"github.com/pkg/errors"
 	"net/http"
@@ -65,6 +64,12 @@ func NewAuth(t AuthType) (Auth, error) {
 	default:
 		return newOcmAuth()
 	}
+}
+
+type noAuth struct{}
+
+func (n noAuth) AddAuth(_ *http.Request) error {
+	return nil
 }
 
 // setBearer is a helper to set a bearer token as authorization header on the http.Request.

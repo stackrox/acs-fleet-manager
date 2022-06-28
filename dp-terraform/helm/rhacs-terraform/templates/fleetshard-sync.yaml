@@ -20,8 +20,8 @@ spec:
       serviceAccountName: fleetshard-sync
       containers:
       - name: fleetshard-sync
-        image: quay.io/app-sre/acs-fleet-manager:main
-        imagePullPolicy: Always
+        image: fleetsync:latest
+        imagePullPolicy: Never
         command: 
         - /usr/local/bin/fleetshard-sync
         env:
