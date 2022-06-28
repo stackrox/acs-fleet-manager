@@ -35,12 +35,42 @@ Execute all commands from git root directory.
 
 ## Authentication types
 
-Fleetshard sync provides different authentication types that can be used when calling the fleet manager's API:
-- OCM refresh token
-  - This will use the OCM refresh token obtained via `ocm token --refresh` and will be refreshed before expiring.
-- RH SSO
-  - This will use the client_credentials grant to obtain an access token. Additionally, it uses the [token-refresher](https://gitlab.cee.redhat.com/mk-ci-cd/mk-token-refresher)
-    for obtaining new access tokens before expiring. Currently, the token-refresher is deployed via helm.
-- Static token
-  - This will use a static token. It's payload can be viewed within `config/jwks-file-static.json`. The token will have
-    no expiration and can be used to authenticate against all APIs within the development environment.
+Fleetshard sync provides different authentication types that can be used when calling the fleet manager's API.
+
+### OCM Refresh token
+
+This is the default authentication type used.
+To run fleetshard-sync with the OCM refresh token, use the following:
+```
+$ OCM_TOKEN=$(ocm token --refresh) AUTH_TYPE=OCM ./fleetshard-sync
+```
+
+### Red Hat SSO
+
+This will use the client_credentials grant to obtain an access token.
+The access token will be obtained via the [token-refresher](https://gitlab.cee.redhat.com/mk-ci-cd/mk-token-refresher).
+
+The token-refresher is deployed only within the Helm-based deployment:
+```
+$ helm install \
+  --set fleetshardSync.authType=RHSSO \
+  --set fleetshardSync.redhatSSO.clientId=<client-id> \
+  --set fleetshardSync.redhatSSO.clientSecret=<client-secret> \
+  fleetshard dp-terraform/helm/rhacs-terraform
+```
+
+If you want to test it locally, you can do the following:
+```
+$ http --form --auth <client-id>:<client-secret> POST https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token grant_type=client_credentials > path/to/token/file
+$ AUTH_TYPE=RHSSO RHSSO_TOKEN_FILE=path/to/token/file ./fleetshard-sync
+```
+
+### Static token
+
+A static token has been created which is non-expiring. The JWKS certs are by default added to fleet manager.
+The token's claims can be viewed under `config/static-token-payload.json`.
+You can either generate your own token following the documentation under `docs/acs/test-locally-static-token.md` or
+use the token found within Bitwarden (`ACS Fleet* static token`):
+```
+$ STATIC_TOKEN=<generated value | bitwarden value> AUTH_TYPE=STATIC_TOKEN ./fleetshard-sync
+```

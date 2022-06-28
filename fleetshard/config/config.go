@@ -23,6 +23,7 @@ type Config struct {
 	AuthType             string        `env:"AUTH_TYPE" envDefault:"OCM"`
 	RHSSOTokenFilePath   string        `env:"RHSSO_TOKEN_FILE" envDefault:"/run/secrets/rhsso-token/token"`
 	OCMRefreshToken      string        `env:"OCM_TOKEN"`
+	StaticToken          string        `env:"STATIC_TOKEN"`
 }
 
 func loadConfig() {

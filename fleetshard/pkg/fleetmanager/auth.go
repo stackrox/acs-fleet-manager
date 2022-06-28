@@ -21,6 +21,9 @@ const (
 	// NOTE: It can only be used in conjunction with the token-refresher.
 	// See dp-terraform/helm/rhacs-terraform/templates/fleetshard-sync.yaml for more information.
 	RHSSOAuthType
+	// StaticTokenAuthType supports authentication via injecting a static token. The static token has static claims,
+	// more details can be found within config/static-token-payload.json. The access token will not expire.
+	StaticTokenAuthType
 )
 
 func (a AuthType) String() string {
@@ -55,6 +58,8 @@ func NewAuth(t AuthType) (Auth, error) {
 	switch t {
 	case RHSSOAuthType:
 		return newRHSSOAuth()
+	case StaticTokenAuthType:
+		return newStaticTokenAuth()
 	default:
 		return newOcmAuth()
 	}
