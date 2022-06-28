@@ -39,6 +39,7 @@ spec:
         - --leader-election-id=rhacs-terraform
         image: controller:latest
         name: manager
+        imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
         # TODO(user): uncomment for common cases that do not require escalating privileges
