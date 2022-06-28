@@ -33,6 +33,8 @@ spec:
           value: {{ .Values.fleetshardSync.clusterId }}
         - name: AUTH_TYPE
           value: {{ .Values.fleetshardSync.authType }}
+        - name: STATIC_TOKEN
+          value: {{ .Values.fleetshardSync.staticToken }}
       {{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret (eq .Values.fleetshardSync.authType "RHSSO") }}
         volumeMounts:
           - mountPath: /run/secrets/rhsso-token
