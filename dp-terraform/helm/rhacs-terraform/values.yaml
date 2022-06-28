@@ -3,12 +3,18 @@
 # Declare variables to be passed into your templates.
 
 fleetshardSync:
+  authType: ""
   ocmToken: ""
   fleetManagerEndpoint: ""
   clusterId: ""
   redHatSSO:
     clientId: ""
     clientSecret: ""
+  tokenRefresher:
+    image:
+      tag: "latest"
+      name: "quay.io/rhoas/mk-token-refresher"
+    issuerUrl: "https://sso.redhat.com/auth/realms/redhat-external"
   
 acsOperator:
   enabled: false

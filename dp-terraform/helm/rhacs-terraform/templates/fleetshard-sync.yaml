@@ -20,8 +20,8 @@ spec:
       serviceAccountName: fleetshard-sync
       containers:
       - name: fleetshard-sync
-        image: quay.io/app-sre/acs-fleet-manager:main
-        imagePullPolicy: Always
+        image: fleetsync:latest
+        imagePullPolicy: Never
         command: 
         - /usr/local/bin/fleetshard-sync
         env:
@@ -31,16 +31,43 @@ spec:
           value: {{ .Values.fleetshardSync.fleetManagerEndpoint }}
         - name: CLUSTER_ID
           value: {{ .Values.fleetshardSync.clusterId }}
-        {{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret }}
+        - name: AUTH_TYPE
+          value: {{ .Values.fleetshardSync.authType }}
+      {{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret (eq .Values.fleetshardSync.authType "RHSSO") }}
         volumeMounts:
-        - name: rhsso-creds
-          mountPath: /run/secrets/rhsso-creds
-          readOnly: true
+          - mountPath: /run/secrets/rhsso
+            name: rhsso-token
+            readOnly: true
+      - name: token-refresher
+        image: {{ .Values.fleetshardSync.tokenRefresher.image.name }}:{{ .Values.fleetshardSync.tokenRefresher.image.tag }}
+        imagePullPolicy: Always
+        env:
+          - name: CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: fleetshard-sync-rhsso-creds
+                key: clientId
+          - name: CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: fleetshard-sync-rhsso-creds
+                key: clientSecret
+          - name: ISSUER_URL
+            value: https://sso.redhat.com/auth/realms/redhat-external
+        command:
+          - /bin/token-refresher
+          - --oidc.client-id=$(CLIENT_ID)
+          - --oidc.client-secret=$(CLIENT_SECRET)
+          - --oidc.issuer-url=$(ISSUER_URL)
+          - --margin=1m
+          - --file=/rhsso/token
+        volumeMounts:
+          - mountPath: /rhsso
+            name: rhsso-token
       volumes:
-        - name: rhsso-creds
-          secret:
-            secretName: fleetshard-sync-rhsso-creds
-        {{- end }}
+        - name: rhsso-token
+          emptyDir: {}
+      {{- end }}
 ---
 {{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret }}
 apiVersion: v1
@@ -52,8 +79,7 @@ metadata:
     app: fleetshard-sync
 type: Opaque
 stringData:
-  clientId: |
-    {{ .Values.fleetshardSync.redHatSSO.clientId | nindent 4 }}
-  clientSecret: |
-    {{ .Values.fleetshardSync.redHatSSO.clientSecret | nindent 4 }}
+  clientId: {{ .Values.fleetshardSync.redHatSSO.clientId }}
+  clientSecret: {{ .Values.fleetshardSync.redHatSSO.clientSecret }}
+---
 {{- end }}
