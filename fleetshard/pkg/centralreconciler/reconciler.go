@@ -89,7 +89,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
-		deleted, err := r.ensureCentralDeleted(context.Background(), central)
+		deleted, err := r.ensureCentralDeleted(ctx, central)
 		if err != nil {
 			return nil, errors.Wrapf(err, "delete central %s", remoteCentralName)
 		}
@@ -260,35 +260,33 @@ func (r CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remot
 		},
 	}
 	err := r.findRoute(ctx, route)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			centralTLSSecret := &v1.Secret{}
-			err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: centralTLSSecretName}, centralTLSSecret)
-			if err != nil {
-				return errors.Wrapf(err, "get central TLS secret %s/%s", namespace, remoteCentral.Metadata.Name)
-			}
-			centralCA, ok := centralTLSSecret.Data["ca.pem"]
-			if !ok {
-				return errors.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
-			}
-			route.Spec = openshiftRouteV1.RouteSpec{
-				Port: &openshiftRouteV1.RoutePort{
-					TargetPort: intstr.IntOrString{Type: intstr.String, StrVal: "https"},
-				},
-				To: openshiftRouteV1.RouteTargetReference{
-					Kind: "Service",
-					Name: "central",
-				},
-				TLS: &openshiftRouteV1.TLSConfig{
-					Termination:              openshiftRouteV1.TLSTerminationReencrypt,
-					Key:                      tls.SelfSignedKey(),  // TODO(ROX-11523): Load from fleet manager
-					Certificate:              tls.SelfSignedCert(), // TODO(ROX-11523): Load from fleet manager
-					CACertificate:            tls.SelfSignedCA(),   // TODO(ROX-11523): Load from fleet manager
-					DestinationCACertificate: string(centralCA),
-				},
-			}
-			err = r.client.Create(ctx, route)
+	if apiErrors.IsNotFound(err) {
+		centralTLSSecret := &v1.Secret{}
+		err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: centralTLSSecretName}, centralTLSSecret)
+		if err != nil {
+			return errors.Wrapf(err, "get central TLS secret %s/%s", namespace, remoteCentral.Metadata.Name)
 		}
+		centralCA, ok := centralTLSSecret.Data["ca.pem"]
+		if !ok {
+			return errors.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
+		}
+		route.Spec = openshiftRouteV1.RouteSpec{
+			Port: &openshiftRouteV1.RoutePort{
+				TargetPort: intstr.IntOrString{Type: intstr.String, StrVal: "https"},
+			},
+			To: openshiftRouteV1.RouteTargetReference{
+				Kind: "Service",
+				Name: "central",
+			},
+			TLS: &openshiftRouteV1.TLSConfig{
+				Termination:              openshiftRouteV1.TLSTerminationReencrypt,
+				Key:                      tls.SelfSignedKey(),  // TODO(ROX-11523): Load from fleet manager
+				Certificate:              tls.SelfSignedCert(), // TODO(ROX-11523): Load from fleet manager
+				CACertificate:            tls.SelfSignedCA(),   // TODO(ROX-11523): Load from fleet manager
+				DestinationCACertificate: string(centralCA),
+			},
+		}
+		err = r.client.Create(ctx, route)
 	}
 	return err
 }

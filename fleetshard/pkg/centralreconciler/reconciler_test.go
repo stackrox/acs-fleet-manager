@@ -3,17 +3,17 @@ package centralreconciler
 import (
 	"context"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
-	"testing"
-
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"testing"
 )
 
 const (
@@ -143,6 +143,49 @@ func TestReconicleLastHashSetOnSuccess(t *testing.T) {
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.ErrorIs(t, err, ErrTypeCentralNotChanged)
+}
+
+func TestReconcileDelete(t *testing.T) {
+	// given
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	r := CentralReconciler{
+		status:    pointer.Int32(0),
+		client:    fakeClient,
+		central:   private.ManagedCentral{},
+		useRoutes: true,
+	}
+
+	_, _ = r.Reconcile(context.TODO(), simpleManagedCentral)
+	// when
+	deletedCentral := simpleManagedCentral
+	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
+
+	maxReconcileAttempts := 10
+	attempt := 0
+	var status *private.DataPlaneCentralStatus
+	var err error
+	for attempt < maxReconcileAttempts && status == nil {
+		status, err = r.Reconcile(context.TODO(), deletedCentral)
+		attempt++
+	}
+	// then
+	require.NoError(t, err)
+	require.NotNil(t, status)
+
+	if readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady); ok {
+		assert.Equal(t, "False", readyCondition.Status)
+		assert.Equal(t, "Deleted", readyCondition.Reason)
+	} else {
+		assert.Fail(t, "Ready condition not found in conditions", status.Conditions)
+	}
+
+	central := &v1alpha1.Central{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralName}, central)
+	assert.True(t, errors.IsNotFound(err))
+
+	route := &openshiftRouteV1.Route{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralName}, route)
+	assert.True(t, errors.IsNotFound(err))
 }
 
 func TestCentralChanged(t *testing.T) {
