@@ -3,6 +3,7 @@
 # Declare variables to be passed into your templates.
 
 fleetshardSync:
+  # Can be either OCM, RHSSO. When choosing RHSSO, make sure the clientId/secret is set.
   authType: ""
   ocmToken: ""
   fleetManagerEndpoint: ""
@@ -10,6 +11,8 @@ fleetshardSync:
   redHatSSO:
     clientId: ""
     clientSecret: ""
+  # Will be created when the auth type RHSSO is used. It will handle obtaining access tokens and storing those within a
+  # shared volume of token-refresher and fleetshard-sync.
   tokenRefresher:
     image:
       tag: "latest"
