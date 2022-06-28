@@ -1,10 +1,17 @@
 package config
 
 import (
+	"github.com/stackrox/rox/pkg/sync"
 	"time"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/pkg/errors"
+)
+
+var (
+	once   sync.Once
+	cfg    *Config
+	cfgErr error
 )
 
 // Config contains this application's runtime configuration.
@@ -13,22 +20,34 @@ type Config struct {
 	ClusterID            string        `env:"CLUSTER_ID"`
 	RuntimePollPeriod    time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
 	AuthType             string        `env:"AUTH_TYPE" envDefault:"OCM"`
+	RHSSOTokenFilePath   string        `env:"RHSSO_TOKEN_FILE" envDefault:"/run/secrets/rhsso-token/token"`
+	OCMRefreshToken      string        `env:"OCM_TOKEN"`
 }
 
-// Load retrieves the current runtime configuration from the environment and returns it.
-func Load() (*Config, error) {
+func loadConfig() {
 	c := Config{}
 	if err := env.Parse(&c); err != nil {
-		return nil, errors.Wrapf(err, "Unable to parse runtime configuration from environment")
+		cfgErr = errors.Wrapf(err, "Unable to parse runtime configuration from environment")
+		return
 	}
 	if c.ClusterID == "" {
-		return nil, errors.New("CLUSTER_ID unset in the environment")
+		cfgErr = errors.New("CLUSTER_ID unset in the environment")
+		return
 	}
 	if c.FleetManagerEndpoint == "" {
-		return nil, errors.New("FLEET_MANAGER_ENDPOINT unset in the environment")
+		cfgErr = errors.New("FLEET_MANAGER_ENDPOINT unset in the environment")
+		return
 	}
 	if c.AuthType == "" {
-		return nil, errors.New("AUTH_TYPE unset in the environment")
+		cfgErr = errors.New("AUTH_TYPE unset in the environment")
+		return
 	}
-	return &c, nil
+	cfg = &c
+	return
+}
+
+// Singleton retrieves the current runtime configuration from the environment and returns it.
+func Singleton() (*Config, error) {
+	once.Do(loadConfig)
+	return cfg, cfgErr
 }
