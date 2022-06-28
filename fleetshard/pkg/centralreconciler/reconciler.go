@@ -280,12 +280,9 @@ func (r CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remot
 					Name: "central",
 				},
 				TLS: &openshiftRouteV1.TLSConfig{
-					Termination: openshiftRouteV1.TLSTerminationReencrypt,
-					Key:         remoteCentral.Spec.Endpoint.Tls.Key,
-					Certificate: remoteCentral.Spec.Endpoint.Tls.Cert,
-					// TODO: should we even set that? There is no config in fleet-manager template and we probably
-					// won't need it because it should be a publicly trusted certificate
-					// CACertificate:            tls.SelfSignedCA(),   // TODO(ROX-11523): Load from fleet manager
+					Termination:              openshiftRouteV1.TLSTerminationReencrypt,
+					Key:                      remoteCentral.Spec.Endpoint.Tls.Key,
+					Certificate:              remoteCentral.Spec.Endpoint.Tls.Cert,
 					DestinationCACertificate: string(centralCA),
 				},
 			}
