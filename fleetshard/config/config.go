@@ -43,7 +43,6 @@ func loadConfig() {
 		return
 	}
 	cfg = &c
-	return
 }
 
 // Singleton retrieves the current runtime configuration from the environment and returns it.

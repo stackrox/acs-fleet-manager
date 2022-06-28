@@ -19,6 +19,9 @@ type ocmAuth struct {
 
 func newOcmAuth() (*ocmAuth, error) {
 	cfg, err := config.Singleton()
+	if err != nil {
+		return nil, err
+	}
 	initialToken := cfg.OCMRefreshToken
 	if initialToken == "" {
 		return nil, errors.New("empty ocm token")
