@@ -50,41 +50,53 @@ func (t Translator) Translate(ctx context.Context, u *unstructured.Unstructured)
 func translate(t v1alpha1.Terraform) (chartutil.Values, error) {
 	v := translation.NewValuesBuilder()
 
-	fleetshardSync := translation.NewValuesBuilder()
-	// Not checking for zero value for fields declaraded as mandatory in config/crd
-	fleetshardSync.SetString("ocmToken", &t.Spec.FleetshardSync.OcmToken)
-	fleetshardSync.SetString("fleetManagerEndpoint", &t.Spec.FleetshardSync.FleetManagerEndpoint)
-	fleetshardSync.SetString("clusterId", &t.Spec.FleetshardSync.ClusterId)
-	redHatSSO := translation.NewValuesBuilder()
-	redHatSSO.SetString("clientId", &t.Spec.FleetshardSync.RedHatSSO.ClientId)
-	redHatSSO.SetString("clientSecret", &t.Spec.FleetshardSync.RedHatSSO.ClientSecret)
-	fleetshardSync.AddChild("redHatSSO", &redHatSSO)
-	v.AddChild("fleetshardSync", &fleetshardSync)
+	if t.Spec.FleetshardSync != nil {
+		fleetshardSync := translation.NewValuesBuilder()
+		// Not checking for zero value for fields declaraded as mandatory in config/crd
+		fleetshardSync.SetString("ocmToken", &t.Spec.FleetshardSync.OcmToken)
+		fleetshardSync.SetString("fleetManagerEndpoint", &t.Spec.FleetshardSync.FleetManagerEndpoint)
+		fleetshardSync.SetString("clusterId", &t.Spec.FleetshardSync.ClusterId)
+		if t.Spec.FleetshardSync.RedHatSSO != nil {
+			redHatSSO := translation.NewValuesBuilder()
+			redHatSSO.SetString("clientId", &t.Spec.FleetshardSync.RedHatSSO.ClientId)
+			redHatSSO.SetString("clientSecret", &t.Spec.FleetshardSync.RedHatSSO.ClientSecret)
+			fleetshardSync.AddChild("redHatSSO", &redHatSSO)
+		}
+		v.AddChild("fleetshardSync", &fleetshardSync)
+	}
 
-	acsOperator := translation.NewValuesBuilder()
-	acsOperator.SetBool("enabled", &t.Spec.AcsOperator.Enabled)
-	if t.Spec.AcsOperator.StartingCSV != "" {
-		acsOperator.SetString("startingCSV", &t.Spec.AcsOperator.StartingCSV)
+	if t.Spec.AcsOperator != nil {
+		acsOperator := translation.NewValuesBuilder()
+		acsOperator.SetBool("enabled", &t.Spec.AcsOperator.Enabled)
+		if t.Spec.AcsOperator.StartingCSV != "" {
+			acsOperator.SetString("startingCSV", &t.Spec.AcsOperator.StartingCSV)
+		}
+		v.AddChild("acsOperator", &acsOperator)
 	}
-	v.AddChild("acsOperator", &acsOperator)
 	
-	observability := translation.NewValuesBuilder()
-	observability.SetBool("enabled", &t.Spec.Observability.Enabled)
-	// TODO(create-ticket): validate fields that should be mandatory if obs is enabled
-	github := translation.NewValuesBuilder()
-	github.SetString("accessToken", &t.Spec.Observability.Github.AccessToken)
-	if t.Spec.Observability.Github.Repository != "" {
-		github.SetString("repository", &t.Spec.Observability.Github.Repository)
+	if t.Spec.Observability != nil {
+		observability := translation.NewValuesBuilder()
+		observability.SetBool("enabled", &t.Spec.Observability.Enabled)
+		// TODO(create-ticket): validate fields that should be mandatory if obs is enabled
+		if t.Spec.Observability.Github != nil {
+			github := translation.NewValuesBuilder()
+			github.SetString("accessToken", &t.Spec.Observability.Github.AccessToken)
+			if t.Spec.Observability.Github.Repository != "" {
+				github.SetString("repository", &t.Spec.Observability.Github.Repository)
+			}
+			observability.AddChild("github", &github)
+		}
+		if t.Spec.Observability.Observatorium != nil {
+			observatorium := translation.NewValuesBuilder()
+			if t.Spec.Observability.Observatorium.Gateway != "" {
+				observatorium.SetString("gateway", &t.Spec.Observability.Observatorium.Gateway)
+			}
+			observatorium.SetString("metricsClientId", &t.Spec.Observability.Observatorium.MetricsClientId)
+			observatorium.SetString("metricsSecret", &t.Spec.Observability.Observatorium.MetricsSecret)
+			observability.AddChild("observatorium", &observatorium)
+		}
+		v.AddChild("observability", &observability)
 	}
-	observability.AddChild("github", &github)
-	observatorium := translation.NewValuesBuilder()
-	if t.Spec.Observability.Observatorium.Gateway != "" {
-		observatorium.SetString("gateway", &t.Spec.Observability.Observatorium.Gateway)
-	}
-	observatorium.SetString("metricsClientId", &t.Spec.Observability.Observatorium.MetricsClientId)
-	observatorium.SetString("metricsSecret", &t.Spec.Observability.Observatorium.MetricsSecret)
-	observability.AddChild("observatorium", &observatorium)
-	v.AddChild("observability", &observability)
 
 	return v.Build()
 }
