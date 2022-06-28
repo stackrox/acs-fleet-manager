@@ -814,6 +814,13 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfi
 			},
 		},
 		Spec: manageddinosaur.ManagedDinosaurSpec{
+			Auth: manageddinosaur.AuthSpec{
+				ClientSecret: dinosaurConfig.RhSsoClientSecret,
+				// TODO: make part of dinosaurConfig
+				ClientId:    "rhacs-ms-dev",
+				OwnerOrgId:  dinosaurRequest.OrganisationId,
+				OwnerUserId: dinosaurRequest.OwnerUserid,
+			},
 			Endpoint: manageddinosaur.EndpointSpec{
 				Host: dinosaurRequest.Host,
 			},

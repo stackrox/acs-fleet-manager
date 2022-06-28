@@ -36,6 +36,16 @@ func (c *ACSClaims) GetOrgId() (string, error) {
 	return "", fmt.Errorf("can't find %q attribute in claims", tenantIdClaim)
 }
 
+func (c *ACSClaims) GetSub() (string, error) {
+	if (*c)[subClaim] != nil {
+		if sub, ok := (*c)[subClaim].(string); ok {
+			return sub, nil
+		}
+	}
+
+	return "", fmt.Errorf("can't find %q attribute in claims", subClaim)
+}
+
 func (c *ACSClaims) IsOrgAdmin() bool {
 	if (*c)[tenantOrgAdminClaim] != nil {
 		return (*c)[tenantOrgAdminClaim].(bool)
