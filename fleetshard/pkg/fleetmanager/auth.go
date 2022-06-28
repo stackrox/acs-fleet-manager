@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -59,34 +58,10 @@ type Auth interface {
 func NewAuth(t AuthType) (Auth, error) {
 	switch t {
 	case RHSSOAuthType:
-		return newRHSSOAuth(tokenPath)
+		return newRHSSOAuth()
 	default:
 		return newOcmAuth()
 	}
-}
-
-type rhSSOAuth struct {
-	tokenFilePath string
-}
-
-func newRHSSOAuth(tokenFilePath string) (*rhSSOAuth, error) {
-	if _, err := os.Stat(tokenFilePath); err != nil {
-		return nil, err
-	}
-	return &rhSSOAuth{
-		tokenFilePath: tokenFilePath,
-	}, nil
-}
-
-func (r *rhSSOAuth) AddAuth(req *http.Request) error {
-	// The file is populated by the token-refresher, which will ensure the token is not expired.
-	contents, err := os.ReadFile(r.tokenFilePath)
-	if err != nil {
-		return err
-	}
-
-	setBearer(req, string(contents))
-	return nil
 }
 
 type noAuth struct{}

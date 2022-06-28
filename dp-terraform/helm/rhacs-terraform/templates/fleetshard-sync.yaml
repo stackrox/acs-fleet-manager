@@ -20,8 +20,8 @@ spec:
       serviceAccountName: fleetshard-sync
       containers:
       - name: fleetshard-sync
-        image: fleetsync:latest
-        imagePullPolicy: Never
+        image: quay.io/app-sre/acs-fleet-manager:main
+        imagePullPolicy: Always
         command: 
         - /usr/local/bin/fleetshard-sync
         env:
@@ -35,11 +35,11 @@ spec:
           value: {{ .Values.fleetshardSync.authType }}
       {{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret (eq .Values.fleetshardSync.authType "RHSSO") }}
         volumeMounts:
-          - mountPath: /run/secrets/rhsso
+          - mountPath: /run/secrets/rhsso-token
             name: rhsso-token
             readOnly: true
       - name: token-refresher
-        image: {{ .Values.fleetshardSync.tokenRefresher.image.name }}:{{ .Values.fleetshardSync.tokenRefresher.image.tag }}
+        image: {{ .Values.fleetshardSync.tokenRefresher.image }}
         imagePullPolicy: Always
         env:
           - name: CLIENT_ID
@@ -53,16 +53,16 @@ spec:
                 name: fleetshard-sync-rhsso-creds
                 key: clientSecret
           - name: ISSUER_URL
-            value: https://sso.redhat.com/auth/realms/redhat-external
+            value: {{ .Values.fleetshardSync.tokenRefresher.issuerUrl }}
         command:
           - /bin/token-refresher
           - --oidc.client-id=$(CLIENT_ID)
           - --oidc.client-secret=$(CLIENT_SECRET)
           - --oidc.issuer-url=$(ISSUER_URL)
           - --margin=1m
-          - --file=/rhsso/token
+          - --file=/rhsso-token/token
         volumeMounts:
-          - mountPath: /rhsso
+          - mountPath: /rhsso-token
             name: rhsso-token
       volumes:
         - name: rhsso-token
@@ -78,8 +78,8 @@ metadata:
   labels:
     app: fleetshard-sync
 type: Opaque
-stringData:
-  clientId: {{ .Values.fleetshardSync.redHatSSO.clientId }}
-  clientSecret: {{ .Values.fleetshardSync.redHatSSO.clientSecret }}
+data:
+  clientId: {{ .Values.fleetshardSync.redHatSSO.clientId | b64enc | quote }}
+  clientSecret: {{ .Values.fleetshardSync.redHatSSO.clientSecret | b64enc | quote }}
 ---
 {{- end }}

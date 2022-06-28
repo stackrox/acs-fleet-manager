@@ -14,9 +14,7 @@ fleetshardSync:
   # Will be created when the auth type RHSSO is used. It will handle obtaining access tokens and storing those within a
   # shared volume of token-refresher and fleetshard-sync.
   tokenRefresher:
-    image:
-      tag: "latest"
-      name: "quay.io/rhoas/mk-token-refresher"
+    image: "quay.io/rhoas/mk-token-refresher:latest"
     issuerUrl: "https://sso.redhat.com/auth/realms/redhat-external"
   
 acsOperator:

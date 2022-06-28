@@ -23,7 +23,7 @@ func main() {
 		glog.Info("Unable to set logtostderr to true")
 	}
 
-	config, err := config.Load()
+	config, err := config.Singleton()
 	if err != nil {
 		glog.Fatalf("Failed to load configuration: %v", err)
 	}
