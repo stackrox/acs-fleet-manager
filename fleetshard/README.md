@@ -32,3 +32,12 @@ Execute all commands from git root directory.
     ```
     $ ./scripts/create-central.sh
     ```
+
+## Authentication types
+
+Fleetshard sync provides different authentication types that can be used when calling the fleet manager's API:
+- OCM refresh token
+  - This will use the OCM refresh token obtained via `ocm token --refresh` and will be refreshed before expiring.
+- RH SSO
+  - This will use the client_credentials grant to obtain an access token. Additionally, it uses the [token-refresher](https://gitlab.cee.redhat.com/mk-ci-cd/mk-token-refresher)
+    for obtaining new access tokens before expiring. Currently, the token-refresher is deployed via helm.
