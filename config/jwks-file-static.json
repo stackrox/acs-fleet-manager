@@ -36,9 +36,9 @@
       "kty": "RSA",
       "e": "AQAB",
       "use": "sig",
-      "kid": "l3-56VgQLPBcsd4DJtpbaT9BYIx1SxKW8IlKASPwoBQ",
+      "kid": "acs-dev-bitwarden-static-token-jwks",
       "alg": "RS256",
-      "n": "35p0ljwrf16D2pSzU7P_r6mh0RJIIvStBc62yfXLFJN5hd1k54qJdRt9vHvgUaw5R5PVSntSGd5MdFL2QcIyKFFavxXuuv1DLxh-eKCdx4x32XQ_I6jC71qjlUwXrTRvl5IYeDVMbl2aqqvqy7IFsTIlEUC3tycp7fNw3PfOYTyAkE_m3lsC8lNs2LQC3OqpMofaHwlU9SqO7Sj95QUGfcJZYOn-tivvcg6Xt9ii1nEOd7NXcigX7kKQ2ER9E-ltAvbNuvBkGkeN1Os4GbRJREN_9lr56niaDFOwVU9dJH2-0-O8lQn9pRjqwJXilLxkrvYvEGLYsTTYg-ooEfo7gQ"
+      "n": "s6bi3xECYj1V_QksbRme4wRMm9X8NoCPqqYRqn3PGTYSpNpTsvOohSd2b3gtbtR_89N1YXFYbjMmk-dqaaZNGCVfg45KuCjaore62yiExAzMA8N-gw6IiBXe6TUN6kZP84OLDhfDZXmrpL1tOepWY1mSAN3IT_lmDFqU06MS7AXOTz7qWXOp6s_-Bwbl3GmP6OhAdc955-WAizTxiWdKWGZ0aXlhP167GE45IRjVarB_TIemDYfN1PBfznfgW7F4JZvwzC--oiH2mps8xaDvby7Y0W-LHFL_64lXgTs1OW9vcIisSH-1YsiVIraQDbiVtNTjzDrF7ouNKSL5uTQ2pQ"
     }
   ]
 }
