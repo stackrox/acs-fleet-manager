@@ -66,12 +66,6 @@ func NewAuth(t AuthType) (Auth, error) {
 	}
 }
 
-type noAuth struct{}
-
-func (n noAuth) AddAuth(_ *http.Request) error {
-	return nil
-}
-
 // setBearer is a helper to set a bearer token as authorization header on the http.Request.
 func setBearer(req *http.Request, token string) {
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
