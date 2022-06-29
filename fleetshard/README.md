@@ -59,10 +59,22 @@ $ helm install \
   fleetshard dp-terraform/helm/rhacs-terraform
 ```
 
-If you want to test it locally, you can do the following:
+If you want to test it locally, you can do the following with a token in a file:
 ```
 $ http --form --auth <client-id>:<client-secret> POST https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token grant_type=client_credentials > path/to/token/file
 $ AUTH_TYPE=RHSSO RHSSO_TOKEN_FILE=path/to/token/file ./fleetshard-sync
+```
+
+This will have the disadvantage of the token expiring, you can also deploy the token-refresher image locally:
+```
+$ docker run -d \
+   -e CLIENT_ID=<rhsso-client-id> \
+   -e CLIENT_SECRET=<rhsso-client-secret> \
+   -e ISSUER_URL=https://sso.redhat.com/auth/realms/redhat-external \
+   -v /path/to/your/token-file:/rhsso-token/token \
+   quay.io/rhoas/mk-token-refresher:latest \
+   --oidc.client-id=$(CLIENT_ID) --oidc.client-secret=$(CLIENT_SECRET) --oidc.issuer-url=$(ISSUER_URL) --margin=1m --file=/rhsso-token/token
+$ AUTH_TYPE=RHSSO RHSSO_TOKEN_FILE=/path/to/token/file ./fleetshard-sync
 ```
 
 ### Static token
