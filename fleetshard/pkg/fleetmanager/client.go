@@ -24,7 +24,6 @@ const (
 type Client struct {
 	client                http.Client
 	auth                  Auth
-	ocmToken              string
 	clusterID             string
 	fleetshardAPIEndpoint string
 	consoleAPIEndpoint    string

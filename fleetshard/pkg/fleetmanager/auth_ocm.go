@@ -10,6 +10,7 @@ import (
 
 const (
 	ocmTokenExpirationMargin = time.Minute
+	ocmClientID              = "cloud-services"
 )
 
 type ocmAuth struct {
@@ -28,7 +29,7 @@ func newOcmAuth() (*ocmAuth, error) {
 	}
 
 	builder := sdk.NewConnectionBuilder().
-		Client("cloud-services", "").
+		Client(ocmClientID, "").
 		Tokens(initialToken).
 		Logger(l)
 
@@ -52,7 +53,7 @@ func (o *ocmAuth) AddAuth(req *http.Request) error {
 	// lower than 1 minute.
 	access, _, err := o.conn.TokensContext(req.Context(), ocmTokenExpirationMargin)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "retrieving access token via OCM auth type")
 	}
 
 	setBearer(req, access)
