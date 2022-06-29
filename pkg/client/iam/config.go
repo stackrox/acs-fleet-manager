@@ -9,19 +9,27 @@ import (
 )
 
 type IAMConfig struct {
-	BaseURL                                    string          `json:"base_url"`
-	SsoBaseUrl                                 string          `json:"sso_base_url"`
-	Debug                                      bool            `json:"debug"`
-	InsecureSkipVerify                         bool            `json:"insecure-skip-verify"`
-	TLSTrustedCertificatesKey                  string          `json:"tls_trusted_certificates_key"`
-	TLSTrustedCertificatesValue                string          `json:"tls_trusted_certificates_value"`
-	TLSTrustedCertificatesFile                 string          `json:"tls_trusted_certificates_file"`
-	OSDClusterIDPRealm                         *IAMRealmConfig `json:"osd_cluster_idp_realm"`
-	RedhatSSORealm                             *IAMRealmConfig `json:"redhat_sso_config"`
-	MaxAllowedServiceAccounts                  int             `json:"max_allowed_service_accounts"`
-	MaxLimitForGetClients                      int             `json:"max_limit_for_get_clients"`
-	ServiceAccounttLimitCheckSkipOrgIdListFile string          `json:"-"`
-	ServiceAccounttLimitCheckSkipOrgIdList     []string        `json:"-"`
+	BaseURL                                    string                  `json:"base_url"`
+	SsoBaseUrl                                 string                  `json:"sso_base_url"`
+	Debug                                      bool                    `json:"debug"`
+	InsecureSkipVerify                         bool                    `json:"insecure-skip-verify"`
+	TLSTrustedCertificatesKey                  string                  `json:"tls_trusted_certificates_key"`
+	TLSTrustedCertificatesValue                string                  `json:"tls_trusted_certificates_value"`
+	TLSTrustedCertificatesFile                 string                  `json:"tls_trusted_certificates_file"`
+	OSDClusterIDPRealm                         *IAMRealmConfig         `json:"osd_cluster_idp_realm"`
+	RedhatSSORealm                             *IAMRealmConfig         `json:"redhat_sso_config"`
+	MaxAllowedServiceAccounts                  int                     `json:"max_allowed_service_accounts"`
+	MaxLimitForGetClients                      int                     `json:"max_limit_for_get_clients"`
+	ServiceAccounttLimitCheckSkipOrgIdListFile string                  `json:"-"`
+	ServiceAccounttLimitCheckSkipOrgIdList     []string                `json:"-"`
+	AdditionalSSOEndpoints                     *AdditionalSSOEndpoints `json:"-"`
+}
+
+type AdditionalSSOEndpoints struct {
+	IssuerURIs                   []string
+	JWKSURIs                     []string
+	AdditionalSSOEndpointsFile   string
+	EnableAdditionalSSOEndpoints bool
 }
 
 type IAMRealmConfig struct {
@@ -67,6 +75,7 @@ func NewKeycloakConfig() *IAMConfig {
 		TLSTrustedCertificatesKey:                  "keycloak.crt",
 		MaxAllowedServiceAccounts:                  50,
 		ServiceAccounttLimitCheckSkipOrgIdListFile: "config/service-account-limits-check-skip-org-id-list.yaml",
+		AdditionalSSOEndpoints:                     &AdditionalSSOEndpoints{},
 	}
 	return kc
 }
@@ -85,6 +94,8 @@ func (kc *IAMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.RedhatSSORealm.ClientSecretFile, "redhat-sso-client-secret-file", kc.RedhatSSORealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&kc.SsoBaseUrl, "redhat-sso-base-url", kc.SsoBaseUrl, "The base URL of the SSO, integration by default")
 	fs.StringVar(&kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "service-account-limits-check-skip-org-id-list-file", kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "File containing a list of Org IDs for which service account limits check will be skipped")
+	fs.BoolVar(&kc.AdditionalSSOEndpoints.EnableAdditionalSSOEndpoints, "enable-additional-sso-endpoints", kc.AdditionalSSOEndpoints.EnableAdditionalSSOEndpoints, "Enable additional SSO endpoints for verifying tokens")
+	fs.StringVar(&kc.AdditionalSSOEndpoints.AdditionalSSOEndpointsFile, "additional-sso-endpoints-file", kc.AdditionalSSOEndpoints.AdditionalSSOEndpointsFile, "File containing a list of SSO endpoints to include for verifying tokens")
 }
 
 func (kc *IAMConfig) ReadFiles() error {
@@ -133,5 +144,43 @@ func (kc *IAMConfig) ReadFiles() error {
 	kc.OSDClusterIDPRealm.setDefaultURIs(kc.BaseURL)
 	kc.RedhatSSORealm.setDefaultURIs(kc.SsoBaseUrl)
 
+	// Read the additional endpoints file. This will add additional SSO endpoints which shall be used as valid issuers
+	// for tokens, i.e. sso.stage.redhat.com.
+	if kc.AdditionalSSOEndpoints.EnableAdditionalSSOEndpoints {
+		err = readAdditionalEndpointsFile(kc.AdditionalSSOEndpoints.AdditionalSSOEndpointsFile, kc.AdditionalSSOEndpoints)
+		if err != nil {
+			if os.IsNotExist(err) {
+				glog.V(10).Infof("Specified additional SSO endpoints file %q does not exist. "+
+					"Proceeding as if no additional SSO endpoints list was provided", kc.AdditionalSSOEndpoints.AdditionalSSOEndpointsFile)
+			} else {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+const (
+	issuerPath = "/auth/realms/redhat-external"
+	jwksPath   = "/auth/realms/redhat-external/protocol/openid-connect/certs"
+)
+
+func readAdditionalEndpointsFile(file string, endpoints *AdditionalSSOEndpoints) error {
+	var ssoEndpoints []string
+	if err := shared.ReadYamlFile(file, &ssoEndpoints); err != nil {
+		return err
+	}
+
+	issuerEndpoints := make([]string, 0, len(ssoEndpoints))
+	jwksEndpoints := make([]string, 0, len(ssoEndpoints))
+
+	for _, ssoEndpoint := range ssoEndpoints {
+		issuerEndpoints = append(issuerEndpoints, ssoEndpoint+issuerPath)
+		jwksEndpoints = append(jwksEndpoints, ssoEndpoint+jwksPath)
+	}
+
+	endpoints.JWKSURIs = jwksEndpoints
+	endpoints.IssuerURIs = issuerEndpoints
 	return nil
 }
