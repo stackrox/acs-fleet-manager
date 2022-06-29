@@ -1,9 +1,10 @@
 package fleetmanager
 
 import (
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"net/http"
-	"os"
 )
 
 type rhSSOAuth struct {
@@ -16,7 +17,7 @@ func newRHSSOAuth() (*rhSSOAuth, error) {
 		return nil, err
 	}
 	tokenFilePath := cfg.RHSSOTokenFilePath
-	if _, err := os.Stat(tokenFilePath); err != nil {
+	if _, err := shared.ReadFile(tokenFilePath); err != nil {
 		return nil, err
 	}
 	return &rhSSOAuth{
@@ -26,11 +27,11 @@ func newRHSSOAuth() (*rhSSOAuth, error) {
 
 func (r *rhSSOAuth) AddAuth(req *http.Request) error {
 	// The file is populated by the token-refresher, which will ensure the token is not expired.
-	contents, err := os.ReadFile(r.tokenFilePath)
+	token, err := shared.ReadFile(r.tokenFilePath)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "reading token file %q within rhsso auth", r.tokenFilePath)
 	}
 
-	setBearer(req, string(contents))
+	setBearer(req, token)
 	return nil
 }

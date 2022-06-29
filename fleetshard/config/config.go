@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/stackrox/rox/pkg/errorhelpers"
 	"github.com/stackrox/rox/pkg/sync"
 	"time"
 
@@ -26,23 +27,25 @@ type Config struct {
 
 func loadConfig() {
 	c := Config{}
+	var configErrors errorhelpers.ErrorList
+
 	if err := env.Parse(&c); err != nil {
 		cfgErr = errors.Wrapf(err, "Unable to parse runtime configuration from environment")
 		return
 	}
 	if c.ClusterID == "" {
-		cfgErr = errors.New("CLUSTER_ID unset in the environment")
-		return
+		configErrors.AddError(errors.New("CLUSTER_ID unset in the environment"))
 	}
 	if c.FleetManagerEndpoint == "" {
-		cfgErr = errors.New("FLEET_MANAGER_ENDPOINT unset in the environment")
-		return
+		configErrors.AddError(errors.New("FLEET_MANAGER_ENDPOINT unset in the environment"))
 	}
 	if c.AuthType == "" {
-		cfgErr = errors.New("AUTH_TYPE unset in the environment")
-		return
+		configErrors.AddError(errors.New("AUTH_TYPE unset in the environment"))
 	}
-	cfg = &c
+	cfgErr = configErrors.ToError()
+	if cfgErr == nil {
+		cfg = &c
+	}
 }
 
 // Singleton retrieves the current runtime configuration from the environment and returns it.
