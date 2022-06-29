@@ -11,3 +11,12 @@
 # - run `/test pj-rehearse-max` on the openshift/release PR to validate the change
 
 FROM registry.ci.openshift.org/openshift/release:golang-1.17
+RUN curl -L --silent --show-error --fail -o "/usr/local/bin/yq" \
+    https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64 && \
+    chmod +x /usr/local/bin/yq
+RUN curl -L --silent --show-error --fail -O https://nodejs.org/dist/v16.15.1/node-v16.15.1-linux-x64.tar.xz && \
+    mkdir -p /usr/local/lib/nodejs && \
+    tar -xJvf node-v16.15.1-linux-x64.tar.xz -C /usr/local/lib/nodejs
+ENV PATH="/usr/local/lib/nodejs/node-v16.15.1-linux-x64/bin:${PATH}"
+
+
