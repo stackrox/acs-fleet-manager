@@ -1,6 +1,0 @@
----
-# A list of additional SSO endpoints that should be valid for issued tokens.
-# This will include the staging environment of sso.redhat.com to enable UI development
-# to be unblocked.
-# Endpoints must be given in the format https://<endpoint> without trailing slash.
-- https://sso.stage.redhat.com
