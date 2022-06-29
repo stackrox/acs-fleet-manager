@@ -9,8 +9,8 @@ It's additionally also used within the fleetshard synchronizer for developing wi
 
 If you simply want to use the token, you can find a non-expiring static token within Bitwarden (`ACS Fleet* static token`).
 
-In case you want to change the static token, follow the steps below (if you do not require to completely re-create the 
-JWKS files, please re-use the ones under `dev/static-token` respectively):
+In case you want to change the static token, follow the steps below (you can skip optional steps if you do not want to 
+re-create the JWKS files. You will find the JWKS files in Bitwarden `ACS Fleet* Static token JWKS`):
 
 1. (optional): You have to create JSON web keypair. For simplicity, you can use [mkjwk.org](http://mkjwk.org/) to generate the keypair.
 2. (optional): Use the following options to generate your keypair:
@@ -27,9 +27,7 @@ Show X.509: Yes
 6. Open [jwt.io](https://jwt.io), and paste the last value of the array within `config/jwks-file-static.json` into the `HEADER` field in the decoded column.
 7. Copy the values of from Bitwarden's `ACS Fleet* Static token JWKS` item respectively, pasting them into the `VERIFY SIGNATURE` fields.
 8. Copy the payload data contained within `config/static-token-payload.json` and adjust the payload to your liking.
-9. Once finished:
-   1. copy the encoded JWT and update the value within `fleetshard/pkg/fleetmanager/static-token`.
-   2. copy the payload data and update the value within `config/static-token-payload.json`.
+9. Once finished copy the payload data and update the value within `config/static-token-payload.json`.
 
 If you have re-created the JWKS files, ensure that fleet manager is re-started with the new values of the `config/jwks-file-static.json`.
 This also includes any staging instances.
