@@ -8,10 +8,6 @@ import (
 	"strings"
 )
 
-const (
-	tokenPath = "/run/secrets/rhsso/token"
-)
-
 // AuthType represents the supported authentication types for the client.
 type AuthType int
 
@@ -62,12 +58,6 @@ func NewAuth(t AuthType) (Auth, error) {
 	default:
 		return newOcmAuth()
 	}
-}
-
-type noAuth struct{}
-
-func (n noAuth) AddAuth(_ *http.Request) error {
-	return nil
 }
 
 // setBearer is a helper to set a bearer token as authorization header on the http.Request.
