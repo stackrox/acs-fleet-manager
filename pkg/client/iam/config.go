@@ -8,11 +8,13 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
 )
 
+<<<<<<< HEAD:pkg/client/iam/config.go
 type IAMConfig struct {
 	BaseURL                                    string                  `json:"base_url"`
 	SsoBaseUrl                                 string                  `json:"sso_base_url"`
@@ -28,13 +30,30 @@ type IAMConfig struct {
 	ServiceAccounttLimitCheckSkipOrgIdListFile string                  `json:"-"`
 	ServiceAccounttLimitCheckSkipOrgIdList     []string                `json:"-"`
 	AdditionalSSOEndpoints                     *AdditionalSSOEndpoints `json:"-"`
+=======
+type KeycloakConfig struct {
+	BaseURL                                    string                `json:"base_url"`
+	SsoBaseUrl                                 string                `json:"sso_base_url"`
+	Debug                                      bool                  `json:"debug"`
+	InsecureSkipVerify                         bool                  `json:"insecure-skip-verify"`
+	TLSTrustedCertificatesKey                  string                `json:"tls_trusted_certificates_key"`
+	TLSTrustedCertificatesValue                string                `json:"tls_trusted_certificates_value"`
+	TLSTrustedCertificatesFile                 string                `json:"tls_trusted_certificates_file"`
+	OSDClusterIDPRealm                         *KeycloakRealmConfig  `json:"osd_cluster_idp_realm"`
+	RedhatSSORealm                             *KeycloakRealmConfig  `json:"redhat_sso_config"`
+	MaxAllowedServiceAccounts                  int                   `json:"max_allowed_service_accounts"`
+	MaxLimitForGetClients                      int                   `json:"max_limit_for_get_clients"`
+	ServiceAccounttLimitCheckSkipOrgIdListFile string                `json:"-"`
+	ServiceAccounttLimitCheckSkipOrgIdList     []string              `json:"-"`
+	AdditionalSSOIssuers                       *AdditionalSSOIssuers `json:"-"`
+>>>>>>> 1a3eda0 (Address minor comments.):pkg/client/keycloak/config.go
 }
 
-type AdditionalSSOEndpoints struct {
-	IssuerURIs                 []string
-	JWKSURIs                   []string
-	AdditionalSSOIssuersFile   string
-	EnableAdditionalSSOIssuers bool
+type AdditionalSSOIssuers struct {
+	URIs     []string
+	JWKSURIs []string
+	File     string
+	Enabled  bool
 }
 
 type IAMRealmConfig struct {
@@ -80,7 +99,7 @@ func NewKeycloakConfig() *IAMConfig {
 		TLSTrustedCertificatesKey:                  "keycloak.crt",
 		MaxAllowedServiceAccounts:                  50,
 		ServiceAccounttLimitCheckSkipOrgIdListFile: "config/service-account-limits-check-skip-org-id-list.yaml",
-		AdditionalSSOEndpoints:                     &AdditionalSSOEndpoints{},
+		AdditionalSSOIssuers:                       &AdditionalSSOIssuers{},
 	}
 	return kc
 }
@@ -99,8 +118,8 @@ func (kc *IAMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.RedhatSSORealm.ClientSecretFile, "redhat-sso-client-secret-file", kc.RedhatSSORealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&kc.SsoBaseUrl, "redhat-sso-base-url", kc.SsoBaseUrl, "The base URL of the SSO, integration by default")
 	fs.StringVar(&kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "service-account-limits-check-skip-org-id-list-file", kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "File containing a list of Org IDs for which service account limits check will be skipped")
-	fs.BoolVar(&kc.AdditionalSSOEndpoints.EnableAdditionalSSOIssuers, "enable-additional-sso-endpoints", kc.AdditionalSSOEndpoints.EnableAdditionalSSOIssuers, "Enable additional SSO endpoints for verifying tokens")
-	fs.StringVar(&kc.AdditionalSSOEndpoints.AdditionalSSOIssuersFile, "additional-sso-issuers-file", kc.AdditionalSSOEndpoints.AdditionalSSOIssuersFile, "File containing a list of SSO endpoints to include for verifying tokens")
+	fs.BoolVar(&kc.AdditionalSSOIssuers.Enabled, "enable-additional-sso-issuers", kc.AdditionalSSOIssuers.Enabled, "Enable additional SSO endpoints for verifying tokens")
+	fs.StringVar(&kc.AdditionalSSOIssuers.File, "additional-sso-issuers-file", kc.AdditionalSSOIssuers.File, "File containing a list of SSO endpoints to include for verifying tokens")
 }
 
 func (kc *IAMConfig) ReadFiles() error {
@@ -151,17 +170,17 @@ func (kc *IAMConfig) ReadFiles() error {
 
 	// Read the additional endpoints file. This will add additional SSO endpoints which shall be used as valid issuers
 	// for tokens, i.e. sso.stage.redhat.com.
-	if kc.AdditionalSSOEndpoints.EnableAdditionalSSOIssuers {
-		err = readAdditionalEndpointsFile(kc.AdditionalSSOEndpoints.AdditionalSSOIssuersFile, kc.AdditionalSSOEndpoints)
+	if kc.AdditionalSSOIssuers.Enabled {
+		err = readAdditionalEndpointsFile(kc.AdditionalSSOIssuers.File, kc.AdditionalSSOIssuers)
 		if err != nil {
 			if os.IsNotExist(err) {
 				glog.V(10).Infof("Specified additional SSO endpoints file %q does not exist. "+
-					"Proceeding as if no additional SSO endpoints list was provided", kc.AdditionalSSOEndpoints.AdditionalSSOIssuersFile)
+					"Proceeding as if no additional SSO endpoints list was provided", kc.AdditionalSSOIssuers.File)
 			} else {
 				return err
 			}
 		}
-		if err := kc.AdditionalSSOEndpoints.resolveURIs(); err != nil {
+		if err := kc.AdditionalSSOIssuers.resolveURIs(); err != nil {
 			return err
 		}
 	}
@@ -179,10 +198,10 @@ type openIdConfiguration struct {
 
 // setJWKSURIs will set the jwks URIs by taking the issuer URI and fetching the openid-configuration, setting the
 // jwks URI dynamically
-func (a *AdditionalSSOEndpoints) resolveURIs() error {
+func (a *AdditionalSSOIssuers) resolveURIs() error {
 	client := http.Client{Timeout: time.Minute}
-	jwksURIs := make([]string, 0, len(a.IssuerURIs))
-	for _, issuerURI := range a.IssuerURIs {
+	jwksURIs := make([]string, 0, len(a.URIs))
+	for _, issuerURI := range a.URIs {
 		cfg, err := getOpenIDConfiguration(client, issuerURI)
 		if err != nil {
 			return errors.Wrapf(err, "retrieving open-id configuration for %q", issuerURI)
@@ -197,7 +216,7 @@ func (a *AdditionalSSOEndpoints) resolveURIs() error {
 }
 
 func getOpenIDConfiguration(c http.Client, baseURL string) (*openIdConfiguration, error) {
-	url := baseURL + openidConfigurationPath
+	url := strings.TrimRight(baseURL, "/") + openidConfigurationPath
 	resp, err := c.Get(url)
 	if err != nil {
 		return nil, err
@@ -220,11 +239,11 @@ func getOpenIDConfiguration(c http.Client, baseURL string) (*openIdConfiguration
 	return &cfg, nil
 }
 
-func readAdditionalEndpointsFile(file string, endpoints *AdditionalSSOEndpoints) error {
+func readAdditionalEndpointsFile(file string, endpoints *AdditionalSSOIssuers) error {
 	var issuers []string
 	if err := shared.ReadYamlFile(file, &issuers); err != nil {
 		return err
 	}
-	endpoints.IssuerURIs = issuers
+	endpoints.URIs = issuers
 	return nil
 }

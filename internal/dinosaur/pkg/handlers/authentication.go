@@ -27,7 +27,7 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig 
 	authenticationBuilder := authentication.NewHandler()
 
 	// Add additional JWKS endpoints to the builder if there are any.
-	for _, jwksEndpointURI := range KeycloakConfig.AdditionalSSOEndpoints.JWKSURIs {
+	for _, jwksEndpointURI := range KeycloakConfig.AdditionalSSOIssuers.JWKSURIs {
 		authenticationBuilder.KeysURL(jwksEndpointURI)
 	}
 
