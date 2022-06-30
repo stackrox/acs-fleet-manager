@@ -8,6 +8,15 @@ SHELL = bash
 # The details of the application:
 binary:=fleet-manager
 
+ifeq ($(TAG),)
+ifeq (,$(wildcard CI_TAG))
+TAG=$(shell git describe --tags --abbrev=10 --dirty --long)
+else
+TAG=$(shell cat CI_TAG)
+endif
+endif
+image_tag = $(TAG)
+
 # The version needs to be different for each deployment because otherwise the
 # cluster will not pull the new image from the internal registry:
 version:=$(shell date +%s)
@@ -22,9 +31,6 @@ NAMESPACE ?= fleet-manager-${USER}
 # exist the push fails. This doesn't apply when the image is pushed to a public
 # repository, like `docker.io` or `quay.io`.
 image_repository:=$(NAMESPACE)/fleet-manager
-
-# Tag for the image:
-image_tag:=$(version)
 
 # In the development environment we are pushing the image directly to the image
 # registry inside the development cluster. That registry has a different name
@@ -459,7 +465,7 @@ docker/login/internal:
 image/build: GOOS=linux
 image/build: GOARCH=amd64
 image/build: fleet-manager fleetshard-sync
-	docker --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
+	docker --config="${DOCKER_CONFIG}" build -t "$(image_repository):$(image_tag)" .
 .PHONY: image/build
 
 # Build and push the image
@@ -738,5 +744,12 @@ docs/generate/mermaid:
 	done
 .PHONY: docs/generate/mermaid
 
+tag:
+	@echo "$(image_tag)"
+.PHONY: tag
+
+image-tag:
+	@echo "$(image_repository):$(image_tag)"
+.PHONY: image-tag
 
 # TODO CRC Deployment stuff

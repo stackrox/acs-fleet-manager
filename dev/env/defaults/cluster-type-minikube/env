@@ -1,0 +1,11 @@
+export MINIKUBE="${MINIKUBE:-minikube}"
+export CLUSTER_NAME_DEFAULT="minikube"
+export KUBECONF_CLUSTER_SERVER_OVERRIDE_DEFAULT="https://minikube:8443"
+
+DOCKER_AVAILABLE="false"
+if which -s docker; then
+    DOCKER_AVAILABLE="true"
+fi
+if [[ "$DOCKER_AVAILABLE" == "false" ]]; then
+    die "Need docker cli when CLUSTER_TYPE is 'minikube'"
+fi

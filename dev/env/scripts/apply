@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+export GITROOT="$(git rev-parse --show-toplevel)"
+source "${GITROOT}/dev/env/scripts/lib.sh"
+init
+
+apply_res() {
+    if [[ "$DEBUG" != "trace" ]]; then
+        disable_debugging
+    fi
+    local path="$1"
+    local short_path=$(echo "$path" | sed -e "s|^${GITROOT}||;")
+    res=$(cat)
+    log "Applying resource from '${short_path}'"
+    echo "$res" | $KUBECTL apply -f -
+    enable_debugging_if_necessary
+}
+
+for path in "$@"; do
+
+    if [[ -d "$path" ]]; then
+        find "$path" -name "*.yaml" -type f | sort -n | while read f; do
+            envsubst <"$f" | apply_res "$f"
+        done
+    else
+        envsubst <"$path" | apply_res "$path"
+    fi
+
+done

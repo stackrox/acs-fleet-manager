@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.1 (HEAD)
+  labels:
+    io.kompose.service: fleet-manager
+  name: fleet-manager
+  namespace: "$ACSMS_NAMESPACE"
+spec:
+  ports:
+    - name: "8000"
+      port: 8000
+      targetPort: 8000
+  selector:
+    io.kompose.service: fleet-manager
+status:
+  loadBalancer: {}

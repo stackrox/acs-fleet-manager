@@ -1,0 +1,31 @@
+#!/bin/sh
+
+export GITROOT="$(git rev-parse --show-toplevel)"
+source "${GITROOT}/dev/env/scripts/lib.sh"
+init
+
+delete_res() {
+    local path="$1"
+    local short_path=$(echo "$path" | sed -e "s|^${GITROOT}||;")
+    local kind="$(cat "$path" | envsubst | yq e .kind -)"
+    local name="$(cat "$path" | envsubst | yq e .metadata.name -)"
+    local namespace="$(cat "$path" | envsubst | yq e .metadata.namespace -)"
+    log "Deleting resource '${short_path}'"
+    if [[ "$namespace" == "null" ]]; then
+        $KUBECTL delete "${kind}" "${name}"
+    else
+        $KUBECTL -n "$namespace" delete "${kind}" "${name}"
+    fi
+}
+
+for path in "$@"; do
+
+    if [[ -d "$path" ]]; then
+        find "$path" -name "*.yaml" -type f | while read f; do
+            delete_res "$f"
+        done
+    else
+        delete_res "$path"
+    fi
+
+done

@@ -1,0 +1,159 @@
+apiVersion: v1
+data:
+  dataplane-cluster-configuration.yaml: |
+    ---
+    clusters:
+      - name: minikube
+        cluster_id: 1234567890abcdef1234567890abcdef
+        cloud_provider: standalone
+        region: standalone
+        schedulable: true
+        status: ready
+        provider_type: standalone
+        supported_instance_type: "eval,standard"
+        cluster_dns: cluster.local
+        central_instance_limit: 5
+        available_central_operator_versions:
+          - version: "0.1.0"
+            ready: true
+            central_versions:
+              - version: "0.1.0"
+  deny-list-configuration.yaml: |-
+    ---
+    # A list of denied users given by their usernames
+    # The structure of denied accounts is:
+    #  - 'username' which is the username of the user.
+
+    # These a sample users used in integration tests
+    - denied-test-user1@example.com
+    - denied-test-user2@example.com
+  dinosaur-capacity-config.yaml: |-
+    ---
+    # see https://docs.google.com/spreadsheets/d/1W4H1IgDXKv24Sf7aWeqeAqxjKVj8EJB9giYN9obqPgU/edit#gid=493008265
+    maxCapacity: 1000
+  dinosaur-sre-user-list.yaml: |-
+    ---
+    # A list of dinosaur-sre users with cluster-admin permissions for data plane clusters
+    # A dinosaur-sre user is represented in the below list by their Kerboros ID
+    - dinosaur-sre-user-1
+    - dinosaur-sre-user-2
+  jwks-file.json: |
+    {
+      "keys": [
+        {
+          "kid": "-4elc_VdN_WsOUYf2G4Qxr8GcwIx_KtXUCitatLKlLw",
+          "kty": "RSA",
+          "alg": "RS256",
+          "use": "sig",
+          "n": "5MvhbE1Mxr2FUYGZiH0z6p-kV-FIUHp4ErxkD6S8Sc5OB7IjRKDSsJzmuwR803cKpeKoIkkUTiznYwCBqAUdP3bIZ8k97X6GX19dOSqL4ej1rjYZYAf9_Jt_Z-0PzIjX50z6TpqeGoh7-6P-634SvbdjatnhTAQ3qsBXfPOHPIPRAZkGfmlM1EdvIlm_d2hQ7nDSETbVC4YHY-iESvUhre-aNmqJU_E6fRnGwFTPS20fPLE5bUNbshvTXn5c-bxtWK9bSCHCRVYUF9QWwDoFX9gGOIpSScHAKQLRR16yOQjOioZ2FeVZnDpWNvZelbQ7LtLN0H5uCJsqDoZDDhDWeFp-25O9ih5M9auT_2IepUlOq3OBMj7i3CJXrvjNQiuGkPHp9xN6kd5H4E5hcqUTmfYdgf1IuXP0cTwYtQor21dWBSpFvxW8l1HGLOaO_rSetNRJ-tZ7FKUK5L6crt1N72AGIay96gNOWNe4POOG_ML1r4h3SKBFdMPwJ-R5KDg7-oRcUT4kLuFtWuQG7bKLJhIxw_SnVFajLGt1d3-OCqX6ozuUbdEW31f9iLZd4w-NUSSHjxP1Uvalk5QfUro9w9fTW73jRIUASnbHunopjt_IkiQswrdIwpfpeBokcf9O757_i0kctQ5M1gyPf4-0yPfuDVkeBAHygoxNJU9H3C0",
+          "e": "AQAB"
+        },
+        {
+          "kid": "v5MpUEnwk1VYIqifv9G9xmIB2ZLzPttk-0PaEURQQ3I",
+          "kty": "RSA",
+          "alg": "RS256",
+          "use": "sig",
+          "n": "uYp35gi5YzQeNN5aQOPwLranSJT9aJB-w6Ih4Wn9R6FzEg1OEKwBNNpb-z18reAyhxQMy_bCz3q-J7viX6p5hbclPBakKOjPB4lDzwhvfE1G4vp84zH1bR7m8dd4OXbriojVZ51IPNuItO00nrDrx6PWNP_5ufBUwjJo8-BD-sWm7BP_CVlb8miVh8itpcLJrszpHzF-u0OPqwI_e3P83cYOsXoQRxD4wpo718yqYh4J3NNJQYnyprJMpC3w3QQ5PR28TbBfSHgvtWD1SBuavHh2jwT_6Pi8FqOS1vfX7QA1pxyYZ-zazVxj_zOrCeP3FHyaxTPmn0d5zsXBZCCyhsfCaStnFePTPk-KEGwZAlv43JJjV2rTJc1Lsj1Th7Jq63TvwIGBcFFAtC72N5-jwRjUoeyu_nwO_1r1awvbfrlBF31PG5wxUdVR56PesLO7EVH1_2KrVN7dtgaQkomVk6rULBbCbwhfR1oT3cOxF7d0ajpbzHd2qcfeBzFTABL8dzBp4FcZx5QyYSIOP8fuwSO8zy4rxmBw7HpHGOGFrC3cXWqB33M23IjOpVZbfK46QvJhcGq9QEtOlRO2WVemMcwDSgpceAa7e3ZJx-LO6XyTEjRtTuHMwdLxII3YUlL1hPozrNE1U_ADPGHgnTxGswgBpGOA6rOkWav5uhcj9Cs",
+          "e": "AQAB"
+        },
+        {
+          "kid": "RIENZmfJ6O4rpkmnswmxgMUznjq3rRuUbz5r9eFiq3E",
+          "kty": "RSA",
+          "alg": "RS512",
+          "use": "sig",
+          "n": "0BpyPqFrZHF2xluG8wSjUMr_ouktSJiSq3VcOn6xH04rG8wLX-v3JfhXRjtJl3XpSJU7j5GMJzz3Cq3dbgBCpb49gVQkBE7s4NVlN4gLhonn7VekXF6YZlI152ROFxoKWda157BIj3m--JYVKIiVg21WujAOA5WVjy17t3fC_7HDgPMVO6MSo7aCbzOc1NEDJ0-5NBNtqZBBlu240gyhW8FNgIdgna-_QWKsQOUKTDlvOFwEt0IDXd29KU0FOIGRPiKsQ--1eIBg3OLMxlni-DhWBAyVpf5_kP0P8udSqXfWba6i6YmnNAAdaVYV5_EGYCxPhwdwTndNtDErCw1oaw",
+          "e": "AQAB"
+        },
+        {
+          "kid": "E3DKGdZQ7xTiIvfdFgVXLNupVupFBlcxNUgVCFhDwEg",
+          "kty": "RSA",
+          "alg": "RS512",
+          "use": "sig",
+          "n": "ta1xAjqdqnH_RlDI1rFtiGWYgnxpzqGflSQXzuiKR1QaipHTeGeLDUTcG1O6nlb9YgEVcJKSP8JQ36QNfXCPKlNcsqUqr81jiL_kSNAD3xHX4Z8ymuA-FW24bLeNwRkdGKGy3aY4giJxXnqB63ArtjmmWaGYEQEriUz16wW0w3H_QJyje3__j_Sh1ya_V7Ct3A6ajTipp-OzAuIgsqXbZz2b8ejr3My5PiXz9t41xKx_u4Mm18BQ4SQ2OvTfA0Of0mZ3Q-FVy2q1WIKwPmCMDyV5bigmvRYblRDCbTvKIGHyEjs1zuAxJqzFJkGpAHpnKfbUdSfO-JWK6fB4V3bPzw",
+          "e": "AQAB"
+        }
+      ]
+    }
+  provider-configuration.yaml: |-
+    ---
+    supported_providers:
+      - name: aws
+        default: true
+        regions:
+          - name: us-east-1
+            default: true
+            supported_instance_type:
+              standard: {}
+              eval: {}
+          - name: us-west-2  # Added to support infra.rox.systems default AWS OSD cluster region
+            supported_instance_type:
+              standard: {}
+              eval: {}
+      - name: standalone
+        regions:
+          - name: standalone
+            default: true
+            supported_instance_type:
+              standard: {}
+              eval: {}
+  quota-management-list-configuration.yaml: |
+    ---
+    # A list of registered users given by their usernames irrespective whether they are under an organisation or not.
+    # If a user is not in this or in the `registered_users_per_organisation` list, only EVAL dinosaur instances will be allowed.
+    # For now, this only supports RH service account.
+    # In the future it may support service accounts outside RH.
+    # The structure of registered service accounts is:
+    #       - username: is the account of the user. The username must be unique
+    #       - max_allowed_instances: is the maximum number of instances this user can create.
+    #         Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
+    registered_service_accounts:
+      - username: testuser1@example.com
+        max_allowed_instances: 1
+      - username: testuser2@example.com
+        max_allowed_instances: 1
+      - username: testuser3@example.com
+        max_allowed_instances: 1
+
+    # A list of registered users per organisation (see structure below). The list current contains known organisations - add yours if it is missing.
+    # If a user is not in this or in the `registered_service_accounts` list, only EVAL dinosaur instances will be allowed.
+    # - "id": is the organisation id
+    # - "any_user": "any_user": Controls whether to allow all users to create standard dinosaur instances with this organisation if "registered_users" list is empty.
+    # - max_allowed_instances: is the maximum number of instances this orgnisation. Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
+    # - "registered_users": A list of registered users for this organisation. If empty, no one is registered unless "any_user" is set to true.
+    #      - username: is the account of the user. The username must be unique within the organisation and across organisations.
+    registered_users_per_organisation:
+        # The Control Plane team
+      - id: 13640203
+        any_user: true
+        max_allowed_instances: 5
+        registered_users: []
+        # The App SRE team
+      - id: 12147054
+        any_user: true
+        max_allowed_instances: 1
+        registered_users: []
+        # The Dinosaur Instances team
+      - id: 13639843
+        any_user: true
+        max_allowed_instances: 1
+        registered_users: []
+        # The MK Security team
+      - id: 13785172
+        any_user: true
+        max_allowed_instances: 1
+        registered_users: []
+        # The Running the Service team
+      - id: 13645369
+        any_user: true
+        max_allowed_instances: 3
+        registered_users: []
+  read-only-user-list.yaml: |-
+    ---
+    # A list of users with read-only permissions for data plane clusters
+    # A user is represented in the below list by their Kerboros ID
+    - read-only-user-1
+    - read-only-user-2
+kind: ConfigMap
+metadata:
+  name: config
+  namespace: "$ACSMS_NAMESPACE"
