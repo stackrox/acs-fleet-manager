@@ -35,7 +35,7 @@ func (a AuthType) String() string {
 func AuthTypeFromString(s string) (AuthType, error) {
 	switch s {
 	case RHSSOAuthType.String():
-		return RHSSOAuthType
+		return RHSSOAuthType, nil
 	case OCMTokenAuthType.String():
 		return OCMTokenAuthType, nil
 	default:
