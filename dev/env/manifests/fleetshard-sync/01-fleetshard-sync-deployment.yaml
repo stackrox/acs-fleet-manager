@@ -21,13 +21,12 @@ spec:
       annotations:
         kompose.cmd: kompose convert
         kompose.version: 1.26.1 (HEAD)
-      creationTimestamp: null
       labels:
         io.kompose.service: fleetshard-sync
     spec:
       containers:
         - command:
-            - /usr/local/bin/fleetshard-sync
+            - /usr/bin/fleetshard-sync
           env:
             - name: KUBECONFIG
               value: "/secrets/kubeconfig"

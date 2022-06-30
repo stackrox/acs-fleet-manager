@@ -4,7 +4,6 @@ metadata:
   annotations:
     kompose.cmd: kompose convert
     kompose.version: 1.26.1 (HEAD)
-  creationTimestamp: null
   labels:
     io.kompose.service: fleet-manager
   name: fleet-manager
@@ -21,7 +20,6 @@ spec:
       annotations:
         kompose.cmd: kompose convert
         kompose.version: 1.26.1 (HEAD)
-      creationTimestamp: null
       labels:
         io.kompose.service: fleet-manager
     spec:
@@ -30,7 +28,7 @@ spec:
           image: "$FULL_FLEET_MANAGER_IMAGE"
           imagePullPolicy: IfNotPresent
           command:
-            - /usr/local/bin/fleet-manager
+            - /usr/bin/fleet-manager
             - migrate
           volumeMounts:
             - mountPath: /secrets
@@ -39,7 +37,7 @@ spec:
               name: config
       containers:
         - command:
-            - /usr/local/bin/fleet-manager
+            - /usr/bin/fleet-manager
             - serve
             - --api-server-bindaddress=0.0.0.0:8000
             - --kubeconfig=/secrets/kubeconfig
