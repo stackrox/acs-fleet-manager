@@ -27,7 +27,7 @@ var migrations = []*gormigrate.Migration{
 	addClusters(),
 	addLeaderLease(),
 	sampleMigration(),
-	addOwnerUseridToCentralRequest(),
+	addOwnerUserIdToCentralRequest(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

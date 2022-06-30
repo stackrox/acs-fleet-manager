@@ -19,7 +19,7 @@ type CentralRequest struct {
 	SubscriptionId string `json:"subscription_id"`
 	Owner          string `json:"owner" gorm:"index"` // TODO: ocm owner?
 	OwnerAccountId string `json:"owner_account_id"`
-	OwnerUserid    string `json:"owner_userid"`
+	OwnerUserId    string `json:"owner_user_id"`
 	// The DNS host (domain) of the Central service
 	Host           string `json:"host"`
 	OrganisationId string `json:"organisation_id" gorm:"index"`

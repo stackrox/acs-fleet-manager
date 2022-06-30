@@ -819,7 +819,7 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfi
 				// TODO: ROX-11593: make part of dinosaurConfig
 				ClientId:    "rhacs-ms-dev",
 				OwnerOrgId:  dinosaurRequest.OrganisationId,
-				OwnerUserId: dinosaurRequest.OwnerUserid,
+				OwnerUserId: dinosaurRequest.OwnerUserId,
 			},
 			Endpoint: manageddinosaur.EndpointSpec{
 				Host: dinosaurRequest.Host,

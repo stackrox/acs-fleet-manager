@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func addOwnerUseridToCentralRequest() *gormigrate.Migration {
+func addOwnerUserIdToCentralRequest() *gormigrate.Migration {
 	type CentralRequest struct {
 		db.Model
 		Region                        string     `json:"region"`
@@ -20,7 +20,7 @@ func addOwnerUseridToCentralRequest() *gormigrate.Migration {
 		SubscriptionId                string     `json:"subscription_id"`
 		Owner                         string     `json:"owner" gorm:"index"`
 		OwnerAccountId                string     `json:"owner_account_id"`
-		OwnerUserid                   string     `json:"owner_userid"`
+		OwnerUserId                   string     `json:"owner_user_id"`
 		Host                          string     `json:"host"`
 		OrganisationId                string     `json:"organisation_id" gorm:"index"`
 		FailedReason                  string     `json:"failed_reason"`
@@ -43,10 +43,10 @@ func addOwnerUseridToCentralRequest() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "20220630220500",
 		Migrate: func(tx *gorm.DB) error {
-			return tx.Migrator().AddColumn(&CentralRequest{}, "OwnerUserid")
+			return tx.Migrator().AddColumn(&CentralRequest{}, "OwnerUserId")
 		},
 		Rollback: func(tx *gorm.DB) error {
-			return tx.Migrator().DropColumn(&CentralRequest{}, "OwnerUserid")
+			return tx.Migrator().DropColumn(&CentralRequest{}, "OwnerUserId")
 		},
 	}
 }
