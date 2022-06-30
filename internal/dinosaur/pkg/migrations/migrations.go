@@ -20,12 +20,14 @@ import (
 // 3. Migrations must be backwards compatible. There are no new required fields allowed.
 //    See $project_home/db/README.md
 //
-// 4. Create one function in a separate file that returns your Migration. Add that single function call to this list.
+// 4. Create one function in a separate file that returns your Migration. Add that single function call
+//    to the end of this list.
 var migrations = []*gormigrate.Migration{
 	addCentralRequest(),
 	addClusters(),
 	addLeaderLease(),
 	sampleMigration(),
+	addOwnerUseridToCentralRequest(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
