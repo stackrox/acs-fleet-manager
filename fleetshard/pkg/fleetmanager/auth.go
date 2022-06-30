@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"net/http"
 	"strings"
 )
@@ -24,16 +25,16 @@ func (a AuthType) String() string {
 }
 
 // AuthTypeFromString will return the AuthType based on the string representation given. If no matching AuthType is
-// found, the issue will be logged and StaticTokenAuthType will be used as default.
-func AuthTypeFromString(s string) AuthType {
+// found, an error will be returned.
+func AuthTypeFromString(s string) (AuthType, error) {
 	switch s {
 	case OCMTokenAuthType.String():
-		return OCMTokenAuthType
+		return OCMTokenAuthType, nil
 	default:
-		glog.Warningf("No valid auth type given, expected one of the following values [%s] but got %q. "+
-			"Defaulting to auth type %s",
+		glog.Warningf("",
 			strings.Join(getAllAuthTypes(), ","), s, OCMTokenAuthType.String())
-		return OCMTokenAuthType
+		return OCMTokenAuthType, errors.Errorf("No valid auth type given, expected one of the following values"+
+			" [%s] but got %q", strings.Join(getAllAuthTypes(), ","), s)
 	}
 
 }
