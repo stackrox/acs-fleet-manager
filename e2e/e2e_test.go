@@ -53,10 +53,7 @@ var _ = Describe("Central", func() {
 
 		It("should transition central's state to provisioning", func() {
 			Eventually(func() string {
-				Expect(createdCentral).NotTo(BeNil())
-				provisioningCentral, err := client.GetCentral(createdCentral.Id)
-				Expect(err).To(BeNil())
-				return provisioningCentral.Status
+				return centralStatus(createdCentral, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusProvisioning.String()))
 		})
 
@@ -76,9 +73,14 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
-		//TODO(create-ticket): Add test to eventually reach ready state
 		//TODO(create-ticket): create test to check that Central and Scanner are healthy
 		//TODO(create-ticket): Create test to check Central is correctly exposed
+
+		It("should transition central's state to ready", func() {
+			Eventually(func() string {
+				return centralStatus(createdCentral, client)
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusReady.String()))
+		})
 
 		It("should transition central to deprovisioning state", func() {
 			err = client.DeleteCentral(createdCentral.Id)
@@ -108,3 +110,10 @@ var _ = Describe("Central", func() {
 
 	})
 })
+
+func centralStatus(createdCentral *public.CentralRequest, client *fleetmanager.Client) string {
+	Expect(createdCentral).NotTo(BeNil())
+	provisioningCentral, err := client.GetCentral(createdCentral.Id)
+	Expect(err).To(BeNil())
+	return provisioningCentral.Status
+}
