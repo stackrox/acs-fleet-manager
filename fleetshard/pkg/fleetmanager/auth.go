@@ -3,7 +3,6 @@ package fleetmanager
 import (
 	_ "embed"
 	"fmt"
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"net/http"
 	"strings"
@@ -31,8 +30,6 @@ func AuthTypeFromString(s string) (AuthType, error) {
 	case OCMTokenAuthType.String():
 		return OCMTokenAuthType, nil
 	default:
-		glog.Warningf("",
-			strings.Join(getAllAuthTypes(), ","), s, OCMTokenAuthType.String())
 		return OCMTokenAuthType, errors.Errorf("No valid auth type given, expected one of the following values"+
 			" [%s] but got %q", strings.Join(getAllAuthTypes(), ","), s)
 	}
