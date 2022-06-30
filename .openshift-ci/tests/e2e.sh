@@ -64,7 +64,7 @@ fi
 
 LOG_DIR=$(mktemp -d)
 LOGGER_PID=""
-MAIN_LOG="log.json"
+MAIN_LOG="log.txt"
 
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
     log "Spawning logger, log directory is ${LOG_DIR}"
