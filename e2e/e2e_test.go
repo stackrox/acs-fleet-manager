@@ -113,7 +113,7 @@ var _ = Describe("Central", func() {
 
 func centralStatus(createdCentral *public.CentralRequest, client *fleetmanager.Client) string {
 	Expect(createdCentral).NotTo(BeNil())
-	provisioningCentral, err := client.GetCentral(createdCentral.Id)
+	central, err := client.GetCentral(createdCentral.Id)
 	Expect(err).To(BeNil())
-	return provisioningCentral.Status
+	return central.Status
 }
