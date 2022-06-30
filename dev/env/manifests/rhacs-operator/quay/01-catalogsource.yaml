@@ -1,0 +1,12 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: stackrox-operator-test-index
+  namespace: "$STACKROX_OPERATOR_NAMESPACE"
+spec:
+  sourceType: grpc
+  image: "${STACKROX_OPERATOR_INDEX_IMAGE}"
+  displayName: StackRox Operator
+  publisher: "${USER}"
+  secrets:
+    - quay-ips

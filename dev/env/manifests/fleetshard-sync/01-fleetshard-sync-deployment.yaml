@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.1 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: fleetshard-sync
+  name: fleetshard-sync
+  namespace: "$ACSMS_NAMESPACE"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: fleetshard-sync
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.1 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: fleetshard-sync
+    spec:
+      containers:
+        - command:
+            - /usr/local/bin/fleetshard-sync
+          env:
+            - name: KUBECONFIG
+              value: "/secrets/kubeconfig"
+            - name: CLUSTER_ID
+              value: "1234567890abcdef1234567890abcdef"
+            - name: FLEET_MANAGER_ENDPOINT
+              value: http://fleet-manager:8000
+            - name: OCM_TOKEN
+              value: "${OCM_TOKEN}"
+            - name: RUNTIME_POLL_PERIOD
+              value: 10s
+          image: "${FULL_FLEET_MANAGER_IMAGE}"
+          imagePullPolicy: IfNotPresent
+          name: fleetshard-sync
+          resources: {}
+          volumeMounts:
+            - mountPath: /secrets
+              name: secrets
+            - mountPath: /config
+              name: config
+      restartPolicy: Always
+      volumes:
+        - name: secrets
+          secret:
+            secretName: fleet-manager
+            optional: false
+        - name: config
+          configMap:
+            name: config
+status: {}
