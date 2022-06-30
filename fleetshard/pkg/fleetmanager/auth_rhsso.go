@@ -7,11 +7,27 @@ import (
 	"net/http"
 )
 
+const (
+	rhSSOAuthName = "RHSSO"
+)
+
+var (
+	_            authFactory = (*rhSSOAuthFactory)(nil)
+	_            Auth        = (*rhSSOAuth)(nil)
+	rhSSOFactory             = &rhSSOAuthFactory{}
+)
+
 type rhSSOAuth struct {
 	tokenFilePath string
 }
 
-func newRHSSOAuth() (*rhSSOAuth, error) {
+type rhSSOAuthFactory struct{}
+
+func (f *rhSSOAuthFactory) GetName() string {
+	return rhSSOAuthName
+}
+
+func (f *rhSSOAuthFactory) CreateAuth() (Auth, error) {
 	cfg, err := config.Singleton()
 	if err != nil {
 		return nil, err

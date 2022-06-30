@@ -6,11 +6,27 @@ import (
 	"net/http"
 )
 
+const (
+	staticTokenAuthName = "STATIC_TOKEN"
+)
+
+var (
+	_                  authFactory = (*staticTokenAuthFactory)(nil)
+	_                  Auth        = (*staticTokenAuth)(nil)
+	staticTokenFactory             = &staticTokenAuthFactory{}
+)
+
 type staticTokenAuth struct {
 	token string
 }
 
-func newStaticTokenAuth() (*staticTokenAuth, error) {
+type staticTokenAuthFactory struct{}
+
+func (f *staticTokenAuthFactory) GetName() string {
+	return staticTokenAuthName
+}
+
+func (f *staticTokenAuthFactory) CreateAuth() (Auth, error) {
 	cfg, err := config.Singleton()
 	if err != nil {
 		return nil, err

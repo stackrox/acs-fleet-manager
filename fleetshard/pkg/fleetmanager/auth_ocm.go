@@ -11,13 +11,26 @@ import (
 const (
 	ocmTokenExpirationMargin = time.Minute
 	ocmClientID              = "cloud-services"
+	ocmAuthName              = "OCM"
+)
+
+var (
+	_          authFactory = (*ocmAuthFactory)(nil)
+	_          Auth        = (*ocmAuth)(nil)
+	ocmFactory             = &ocmAuthFactory{}
 )
 
 type ocmAuth struct {
 	conn *sdk.Connection
 }
 
-func newOcmAuth() (*ocmAuth, error) {
+type ocmAuthFactory struct{}
+
+func (f *ocmAuthFactory) GetName() string {
+	return ocmAuthName
+}
+
+func (f *ocmAuthFactory) CreateAuth() (Auth, error) {
 	cfg, err := config.Singleton()
 	if err != nil {
 		return nil, err
