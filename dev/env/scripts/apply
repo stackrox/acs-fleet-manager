@@ -9,7 +9,7 @@ apply_res() {
         disable_debugging
     fi
     local path="$1"
-    local short_path=$(echo "$path" | sed -e "s|^${GITROOT}||;")
+    local short_path=$(echo "$path" | sed -e "s|^${GITROOT}/||;")
     res=$(cat)
     log "Applying resource from '${short_path}'"
     echo "$res" | $KUBECTL apply -f -

@@ -6,7 +6,7 @@ init
 
 delete_res() {
     local path="$1"
-    local short_path=$(echo "$path" | sed -e "s|^${GITROOT}||;")
+    local short_path=$(echo "$path" | sed -e "s|^${GITROOT}/||;")
     local kind="$(cat "$path" | envsubst | yq e .kind -)"
     local name="$(cat "$path" | envsubst | yq e .metadata.name -)"
     local namespace="$(cat "$path" | envsubst | yq e .metadata.namespace -)"
