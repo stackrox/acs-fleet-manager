@@ -46,19 +46,6 @@ spec:
                   optional: false
           image: registry.redhat.io/rhscl/postgresql-95-rhel7
 
-          livenessProbe:
-            exec:
-              command:
-                - pg_isready
-                - -h
-                - localhost
-                - -U
-                - "$POSTGRES_USER"
-                - -d
-                - "$POSTGRES_DB"
-            failureThreshold: 30
-            periodSeconds: 1
-            timeoutSeconds: 3
           name: db
           ports:
             - containerPort: 5432

@@ -28,7 +28,7 @@ spec:
           image: "$FULL_FLEET_MANAGER_IMAGE"
           imagePullPolicy: IfNotPresent
           command:
-            - /usr/bin/fleet-manager
+            - /usr/local/bin/fleet-manager
             - migrate
           volumeMounts:
             - mountPath: /secrets
@@ -37,7 +37,7 @@ spec:
               name: config
       containers:
         - command:
-            - /usr/bin/fleet-manager
+            - /usr/local/bin/fleet-manager
             - serve
             - --api-server-bindaddress=0.0.0.0:8000
             - --kubeconfig=/secrets/kubeconfig

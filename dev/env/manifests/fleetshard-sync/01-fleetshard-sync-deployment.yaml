@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
         - command:
-            - /usr/bin/fleetshard-sync
+            - /usr/local/bin/fleetshard-sync
           env:
             - name: KUBECONFIG
               value: "/secrets/kubeconfig"
