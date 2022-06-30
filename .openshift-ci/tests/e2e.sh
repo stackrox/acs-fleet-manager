@@ -94,4 +94,14 @@ $KUBECTL -n "$ACSMS_NAMESPACE" describe pods
 log "** END PODS **"
 log
 
+log "** BEGIN FLEET-MANAGER POD LOGS **"
+$KUBECTL -n "$ACSMS_NAMESPACE" logs io.kompose.service=fleet-manager
+log "** END FLEET-MANAGER POD LOGS **"
+log
+
+log "** BEGIN FLEETSHARD-SYNC POD LOGS **"
+$KUBECTL -n "$ACSMS_NAMESPACE" logs io.kompose.service=fleetshard-sync
+log "** END FLEETSHARD-SYNC POD LOGS **"
+log
+
 exit $FAIL
