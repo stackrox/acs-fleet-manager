@@ -41,6 +41,8 @@ func AuthTypeFromString(s string) (AuthType, error) {
 		return RHSSOAuthType, nil
 	case OCMTokenAuthType.String():
 		return OCMTokenAuthType, nil
+	case StaticTokenAuthType.String():
+		return StaticTokenAuthType, nil
 	default:
 		return OCMTokenAuthType, errors.Errorf("No valid auth type given, expected one of the following values"+
 			" [%s] but got %q", strings.Join(getAllAuthTypes(), ","), s)
