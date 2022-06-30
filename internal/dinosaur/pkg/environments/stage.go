@@ -12,5 +12,6 @@ func NewStageEnvLoader() environments.EnvLoader {
 		"sso-base-url":                         "https://sso.redhat.com",
 		"enable-dinosaur-external-certificate": "true",
 		"cluster-compute-machine-type":         "m5.2xlarge",
+		"jwks-file":                            "config/authentication/jwks-file-static.json",
 	}
 }

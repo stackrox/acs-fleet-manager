@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 type ServerConfig struct {
@@ -25,7 +25,7 @@ func NewServerConfig() *ServerConfig {
 		BindAddress:    "localhost:8000",
 		EnableHTTPS:    false,
 		JwksURL:        "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
-		JwksFile:       "config/jwks-file.json",
+		JwksFile:       "config/authentication/jwks-file.json",
 		TokenIssuerURL: "https://sso.redhat.com/auth/realms/redhat-external",
 		HTTPSCertFile:  "",
 		HTTPSKeyFile:   "",
