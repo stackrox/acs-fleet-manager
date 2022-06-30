@@ -8,7 +8,7 @@ import (
 	pkgErr "github.com/pkg/errors"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -80,7 +80,7 @@ func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
 		//			//CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
 		//			//	return testClientID, nil
 		//			//},
-		//			//ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+		//			//ClientConfigFunc: func(client iam.ClientRepresentation) gocloak.Client {
 		//			//	testID := "12221"
 		//			//	return gocloak.Client{
 		//			//		ClientID: &testID,
@@ -110,7 +110,7 @@ func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
 		//			//CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
 		//			//	return "", failedToCreateClientErr
 		//			//},
-		//			//ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+		//			//ClientConfigFunc: func(client iam.ClientRepresentation) gocloak.Client {
 		//			//	testID := "12221"
 		//			//	return gocloak.Client{
 		//			//		ClientID: &testID,
@@ -176,8 +176,8 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 							CreatedAt:   &createdAt,
 						}, nil
 					},
-					GetConfigFunc: func() *keycloak.KeycloakConfig {
-						return keycloak.NewKeycloakConfig()
+					GetConfigFunc: func() *iam.IAMConfig {
+						return iam.NewKeycloakConfig()
 					},
 				},
 			},
@@ -212,8 +212,8 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 							CreatedAt:   &createdAt,
 						}, nil
 					},
-					GetConfigFunc: func() *keycloak.KeycloakConfig {
-						return keycloak.NewKeycloakConfig()
+					GetConfigFunc: func() *iam.IAMConfig {
+						return iam.NewKeycloakConfig()
 					},
 				},
 			},
@@ -477,7 +477,7 @@ func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
 					//CreateProtocolMapperConfigFunc: func(s string) []gocloak.ProtocolMapperRepresentation {
 					//	return []gocloak.ProtocolMapperRepresentation{}
 					//},
-					//ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+					//ClientConfigFunc: func(client iam.ClientRepresentation) gocloak.Client {
 					//	return gocloak.Client{}
 					//},
 					//CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
@@ -504,7 +504,7 @@ func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
 					//CreateProtocolMapperConfigFunc: func(s string) []gocloak.ProtocolMapperRepresentation {
 					//	return []gocloak.ProtocolMapperRepresentation{}
 					//},
-					//ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+					//ClientConfigFunc: func(client iam.ClientRepresentation) gocloak.Client {
 					//	return gocloak.Client{}
 					//},
 					//CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {

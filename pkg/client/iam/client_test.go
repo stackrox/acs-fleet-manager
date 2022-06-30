@@ -1,4 +1,4 @@
-package keycloak
+package iam
 
 import (
 	"context"
@@ -38,8 +38,8 @@ func Test_kcClient_GetToken(t *testing.T) {
 	type fields struct {
 		goCloakClient gocloak.GoCloak
 		ctx           context.Context
-		config        *KeycloakConfig
-		realmConfig   *KeycloakRealmConfig
+		config        *IAMConfig
+		realmConfig   *IAMRealmConfig
 		cache         *cache.Cache
 	}
 
@@ -67,7 +67,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 		{
 			name: "failed to get token",
 			fields: fields{
-				realmConfig: &KeycloakRealmConfig{
+				realmConfig: &IAMRealmConfig{
 					ClientID:         clientID,
 					GrantType:        grantType,
 					ValidIssuerURI:   validIssuerURI,
@@ -87,7 +87,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 		{
 			name: "successfully get new access token when no token is in cache",
 			fields: fields{
-				realmConfig: &KeycloakRealmConfig{
+				realmConfig: &IAMRealmConfig{
 					ClientID:         clientID,
 					GrantType:        grantType,
 					ValidIssuerURI:   validIssuerURI,
@@ -112,7 +112,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 				f.cache.Set(cachedTK, jwtTokenExpired, tokenLifeDuration)
 			},
 			fields: fields{
-				realmConfig: &KeycloakRealmConfig{
+				realmConfig: &IAMRealmConfig{
 					ClientID:         clientID,
 					GrantType:        grantType,
 					ValidIssuerURI:   validIssuerURI,
@@ -139,7 +139,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn(&tt.fields)
 			}
-			kc := &kcClient{
+			kc := &iamClient{
 				kcClient:    tt.fields.goCloakClient,
 				ctx:         tt.fields.ctx,
 				config:      tt.fields.config,
@@ -159,7 +159,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 func Test_kcClient_IsClientExist(t *testing.T) {
 	type fields struct {
 		goCloakClient gocloak.GoCloak
-		realmConfig   *KeycloakRealmConfig
+		realmConfig   *IAMRealmConfig
 	}
 
 	type args struct {
@@ -191,7 +191,7 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 						return nil, errors.Errorf("no client exists with requested clientId")
 					},
 				},
-				realmConfig: &KeycloakRealmConfig{
+				realmConfig: &IAMRealmConfig{
 					ClientID:         clientID,
 					GrantType:        grantType,
 					ValidIssuerURI:   validIssuerURI,
@@ -223,7 +223,7 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 						}, nil
 					},
 				},
-				realmConfig: &KeycloakRealmConfig{
+				realmConfig: &IAMRealmConfig{
 					ClientID:         clientID,
 					GrantType:        grantType,
 					ValidIssuerURI:   validIssuerURI,
@@ -242,7 +242,7 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 	for _, tt := range tests {
 		gomega.RegisterTestingT(t)
 		t.Run(tt.name, func(t *testing.T) {
-			kc := &kcClient{
+			kc := &iamClient{
 				kcClient:    tt.fields.goCloakClient,
 				realmConfig: tt.fields.realmConfig,
 			}
@@ -258,7 +258,7 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 func Test_kcClient_GetClient(t *testing.T) {
 	type fields struct {
 		goCloakClient gocloak.GoCloak
-		realmConfig   *KeycloakRealmConfig
+		realmConfig   *IAMRealmConfig
 	}
 
 	type args struct {
@@ -290,7 +290,7 @@ func Test_kcClient_GetClient(t *testing.T) {
 						return nil, errors.Errorf("no client exists with requested clientId")
 					},
 				},
-				realmConfig: &KeycloakRealmConfig{
+				realmConfig: &IAMRealmConfig{
 					ClientID:         clientID,
 					GrantType:        grantType,
 					ValidIssuerURI:   validIssuerURI,
@@ -321,7 +321,7 @@ func Test_kcClient_GetClient(t *testing.T) {
 						}, nil
 					},
 				},
-				realmConfig: &KeycloakRealmConfig{
+				realmConfig: &IAMRealmConfig{
 					ClientID:         clientID,
 					GrantType:        grantType,
 					ValidIssuerURI:   validIssuerURI,
@@ -340,7 +340,7 @@ func Test_kcClient_GetClient(t *testing.T) {
 	for _, tt := range tests {
 		gomega.RegisterTestingT(t)
 		t.Run(tt.name, func(t *testing.T) {
-			kc := &kcClient{
+			kc := &iamClient{
 				kcClient:    tt.fields.goCloakClient,
 				realmConfig: tt.fields.realmConfig,
 			}

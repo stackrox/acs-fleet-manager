@@ -948,8 +948,8 @@ objects:
             - --sso-base-url=${SSO_BASE_URL}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
             - --osd-idp-sso-realm=${OSD_IDP_SSO_REALM}
-            - --osd-idp-sso-client-id-file=/secrets/service/osd-idp-keycloak-service.clientId
-            - --osd-idp-sso-client-secret-file=/secrets/service/osd-idp-keycloak-service.clientSecret
+            - --osd-idp-sso-client-id-file=/secrets/service/osd-idp-iam-service.clientId
+            - --osd-idp-sso-client-secret-file=/secrets/service/osd-idp-iam-service.clientSecret
             - --sso-debug=${SSO_DEBUG}
             - --self-token-file=/secrets/service/ocm-service.token
             - --ocm-base-url=${OCM_URL}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
@@ -17,7 +17,7 @@ type keycloakServiceProxy struct {
 	service             keycloakServiceInternal
 }
 
-var _ KeycloakService = &keycloakServiceProxy{}
+var _ IAMService = &keycloakServiceProxy{}
 var _ OSDKeycloakService = &keycloakServiceProxy{}
 
 func (r *keycloakServiceProxy) DeRegisterClientInSSO(clientId string) *errors.ServiceError {
@@ -36,11 +36,11 @@ func (r *keycloakServiceProxy) RegisterClientInSSO(clusterId string, clusterOath
 	}
 }
 
-func (r *keycloakServiceProxy) GetConfig() *keycloak.KeycloakConfig {
+func (r *keycloakServiceProxy) GetConfig() *iam.IAMConfig {
 	return r.service.GetConfig()
 }
 
-func (r *keycloakServiceProxy) GetRealmConfig() *keycloak.KeycloakRealmConfig {
+func (r *keycloakServiceProxy) GetRealmConfig() *iam.IAMRealmConfig {
 	return r.service.GetRealmConfig()
 }
 

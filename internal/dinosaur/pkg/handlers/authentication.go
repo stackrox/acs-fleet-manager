@@ -8,12 +8,12 @@ import (
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 	pkgErrors "github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/routes"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 )
 
-func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig *keycloak.KeycloakConfig) (*authentication.HandlerBuilder, error) {
+func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig *iam.IAMConfig) (*authentication.HandlerBuilder, error) {
 
 	authnLogger, err := sdk.NewGlogLoggerBuilder().
 		InfoV(glog.Level(1)).

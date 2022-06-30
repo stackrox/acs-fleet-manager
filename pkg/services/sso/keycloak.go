@@ -3,7 +3,7 @@ package sso
 import (
 	"context"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
@@ -19,9 +19,9 @@ type CompleteServiceAccountRequest struct {
 }
 
 //go:generate moq -out keycloakservice_moq.go . KeycloakService
-type KeycloakService interface {
-	GetConfig() *keycloak.KeycloakConfig
-	GetRealmConfig() *keycloak.KeycloakRealmConfig
+type IAMService interface {
+	GetConfig() *iam.IAMConfig
+	GetRealmConfig() *iam.IAMRealmConfig
 	CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError)
 	DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError
 	ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
@@ -36,7 +36,7 @@ type KeycloakService interface {
 }
 
 type OSDKeycloakService interface {
-	KeycloakService
+	IAMService
 	DeRegisterClientInSSO(namespace string) *errors.ServiceError
 	RegisterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
 }
@@ -44,8 +44,8 @@ type OSDKeycloakService interface {
 type keycloakServiceInternal interface {
 	DeRegisterClientInSSO(accessToken string, namespace string) *errors.ServiceError
 	RegisterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
-	GetConfig() *keycloak.KeycloakConfig
-	GetRealmConfig() *keycloak.KeycloakRealmConfig
+	GetConfig() *iam.IAMConfig
+	GetRealmConfig() *iam.IAMRealmConfig
 	CreateServiceAccount(accessToken string, serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError)
 	DeleteServiceAccount(accessToken string, ctx context.Context, clientId string) *errors.ServiceError
 	ResetServiceAccountCredentials(accessToken string, ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)

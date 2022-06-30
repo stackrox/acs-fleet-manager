@@ -89,19 +89,19 @@ const (
 	ErrorSyncActionNotSupported       ServiceErrorCode = 103
 	ErrorSyncActionNotSupportedReason string           = "Synchronous action is not supported, use async=true parameter"
 
-	// Failed to create sso client - an internal error incurred when calling keycloak server
+	// Failed to create sso client - an internal error incurred when calling iam server
 	ErrorFailedToCreateSSOClient       ServiceErrorCode = 106
 	ErrorFailedToCreateSSOClientReason string           = "Failed to create dinosaur client in the mas sso"
 
-	// Failed to get sso client secret  - an internal error incurred when calling keycloak server
+	// Failed to get sso client secret  - an internal error incurred when calling iam server
 	ErrorFailedToGetSSOClientSecret       ServiceErrorCode = 107
 	ErrorFailedToGetSSOClientSecretReason string           = "Failed to get dinosaur client secret from the mas sso"
 
-	// Failed to get sso client - an internal error incurred when calling keycloak server
+	// Failed to get sso client - an internal error incurred when calling iam server
 	ErrorFailedToGetSSOClient       ServiceErrorCode = 108
 	ErrorFailedToGetSSOClientReason string           = "Failed to get dinosaur client from the mas sso"
 
-	// Failed to delete sso client - an internal error incurred when calling keycloak server
+	// Failed to delete sso client - an internal error incurred when calling iam server
 	ErrorFailedToDeleteSSOClient       ServiceErrorCode = 109
 	ErrorFailedToDeleteSSOClientReason string           = "Failed to delete dinosaur client from the mas sso"
 
@@ -110,11 +110,11 @@ const (
 	ErrorFailedToCreateServiceAccount       ServiceErrorCode = 110
 	ErrorFailedToCreateServiceAccountReason string           = "Failed to create service account"
 
-	// Failed to get service account - an internal error incurred when calling keycloak server
+	// Failed to get service account - an internal error incurred when calling iam server
 	ErrorFailedToGetServiceAccount       ServiceErrorCode = 111
 	ErrorFailedToGetServiceAccountReason string           = "Failed to get service account"
 
-	// Failed to delete service account - an internal error incurred when calling keycloak server
+	// Failed to delete service account - an internal error incurred when calling iam server
 	ErrorFailedToDeleteServiceAccount       ServiceErrorCode = 112
 	ErrorFailedToDeleteServiceAccountReason string           = "Failed to delete service account"
 

@@ -1,4 +1,4 @@
-package keycloak
+package iam
 
 import (
 	"github.com/golang/glog"
@@ -8,23 +8,23 @@ import (
 	"github.com/spf13/pflag"
 )
 
-type KeycloakConfig struct {
-	BaseURL                                    string               `json:"base_url"`
-	SsoBaseUrl                                 string               `json:"sso_base_url"`
-	Debug                                      bool                 `json:"debug"`
-	InsecureSkipVerify                         bool                 `json:"insecure-skip-verify"`
-	TLSTrustedCertificatesKey                  string               `json:"tls_trusted_certificates_key"`
-	TLSTrustedCertificatesValue                string               `json:"tls_trusted_certificates_value"`
-	TLSTrustedCertificatesFile                 string               `json:"tls_trusted_certificates_file"`
-	OSDClusterIDPRealm                         *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
-	RedhatSSORealm                             *KeycloakRealmConfig `json:"redhat_sso_config"`
-	MaxAllowedServiceAccounts                  int                  `json:"max_allowed_service_accounts"`
-	MaxLimitForGetClients                      int                  `json:"max_limit_for_get_clients"`
-	ServiceAccounttLimitCheckSkipOrgIdListFile string               `json:"-"`
-	ServiceAccounttLimitCheckSkipOrgIdList     []string             `json:"-"`
+type IAMConfig struct {
+	BaseURL                                    string          `json:"base_url"`
+	SsoBaseUrl                                 string          `json:"sso_base_url"`
+	Debug                                      bool            `json:"debug"`
+	InsecureSkipVerify                         bool            `json:"insecure-skip-verify"`
+	TLSTrustedCertificatesKey                  string          `json:"tls_trusted_certificates_key"`
+	TLSTrustedCertificatesValue                string          `json:"tls_trusted_certificates_value"`
+	TLSTrustedCertificatesFile                 string          `json:"tls_trusted_certificates_file"`
+	OSDClusterIDPRealm                         *IAMRealmConfig `json:"osd_cluster_idp_realm"`
+	RedhatSSORealm                             *IAMRealmConfig `json:"redhat_sso_config"`
+	MaxAllowedServiceAccounts                  int             `json:"max_allowed_service_accounts"`
+	MaxLimitForGetClients                      int             `json:"max_limit_for_get_clients"`
+	ServiceAccounttLimitCheckSkipOrgIdListFile string          `json:"-"`
+	ServiceAccounttLimitCheckSkipOrgIdList     []string        `json:"-"`
 }
 
-type KeycloakRealmConfig struct {
+type IAMRealmConfig struct {
 	BaseURL          string `json:"base_url"`
 	Realm            string `json:"realm"`
 	ClientID         string `json:"client-id"`
@@ -38,40 +38,40 @@ type KeycloakRealmConfig struct {
 	APIEndpointURI   string `json:"api_endpoint_uri"`
 }
 
-func (c *KeycloakRealmConfig) setDefaultURIs(baseURL string) {
+func (c *IAMRealmConfig) setDefaultURIs(baseURL string) {
 	c.BaseURL = baseURL
 	c.ValidIssuerURI = baseURL + "/auth/realms/" + c.Realm
 	c.JwksEndpointURI = baseURL + "/auth/realms/" + c.Realm + "/protocol/openid-connect/certs"
 	c.TokenEndpointURI = baseURL + "/auth/realms/" + c.Realm + "/protocol/openid-connect/token"
 }
 
-func NewKeycloakConfig() *KeycloakConfig {
-	kc := &KeycloakConfig{
+func NewKeycloakConfig() *IAMConfig {
+	kc := &IAMConfig{
 		SsoBaseUrl: "https://sso.redhat.com",
-		OSDClusterIDPRealm: &KeycloakRealmConfig{
-			ClientIDFile:     "secrets/osd-idp-keycloak-service.clientId",
-			ClientSecretFile: "secrets/osd-idp-keycloak-service.clientSecret",
+		OSDClusterIDPRealm: &IAMRealmConfig{
+			ClientIDFile:     "secrets/osd-idp-iam-service.clientId",
+			ClientSecretFile: "secrets/osd-idp-iam-service.clientSecret",
 			GrantType:        "client_credentials",
 		},
 		Debug:                 false,
 		InsecureSkipVerify:    false,
 		MaxLimitForGetClients: 100,
-		RedhatSSORealm: &KeycloakRealmConfig{
+		RedhatSSORealm: &IAMRealmConfig{
 			APIEndpointURI:   "/auth/realms/redhat-external",
 			Realm:            "redhat-external",
 			ClientIDFile:     "secrets/redhatsso-service.clientId",
 			ClientSecretFile: "secrets/redhatsso-service.clientSecret",
 			GrantType:        "client_credentials",
 		},
-		TLSTrustedCertificatesFile:                 "secrets/keycloak-service.crt",
-		TLSTrustedCertificatesKey:                  "keycloak.crt",
+		TLSTrustedCertificatesFile:                 "secrets/iam-service.crt",
+		TLSTrustedCertificatesKey:                  "iam.crt",
 		MaxAllowedServiceAccounts:                  50,
 		ServiceAccounttLimitCheckSkipOrgIdListFile: "config/service-account-limits-check-skip-org-id-list.yaml",
 	}
 	return kc
 }
 
-func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
+func (kc *IAMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.BaseURL, "sso-base-url", kc.BaseURL, "The base URL of the sso, integration by default")
 	fs.StringVar(&kc.TLSTrustedCertificatesFile, "osd-sso-cert-file", kc.TLSTrustedCertificatesFile, "File containing tls cert for the osd-sso. Useful when osd-sso uses a self-signed certificate. If the provided file does not exist, is the empty string or the provided file content is empty then no custom OSD SSO certificate is used")
 	fs.BoolVar(&kc.Debug, "sso-debug", kc.Debug, "Debug flag for Keycloak API")
@@ -87,7 +87,7 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "service-account-limits-check-skip-org-id-list-file", kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "File containing a list of Org IDs for which service account limits check will be skipped")
 }
 
-func (kc *KeycloakConfig) ReadFiles() error {
+func (kc *IAMConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(kc.OSDClusterIDPRealm.ClientIDFile, &kc.OSDClusterIDPRealm.ClientID)
 	if err != nil {
 		return err
