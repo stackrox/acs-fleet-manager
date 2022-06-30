@@ -18,7 +18,7 @@
 #    cluster_dns: apps.example.com #Valid cluster DNS. This will be used to build central host url and to communicate with standalone clusters. Required when "provider_type" is "standalone" 
 #    supported_instance_type: "eval" # could be "eval", "standard" or both i.e "standard,eval" or "eval,standard". Defaults to "standard,eval" if not set 
 clusters:
- - name: minikube  # Uncomment if using minikube
+ - name: rancher-desktop  # Uncomment if using minikube
    cluster_id: 1234567890abcdef1234567890abcdef
    cloud_provider: standalone
    region: standalone
