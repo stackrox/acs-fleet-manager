@@ -17,6 +17,7 @@ RUN curl -L --silent --show-error --fail -o "/usr/local/bin/yq" \
 RUN curl -L --silent --show-error --fail -O https://nodejs.org/dist/v16.15.1/node-v16.15.1-linux-x64.tar.xz && \
     mkdir -p /usr/local/lib/nodejs && \
     tar -xJvf node-v16.15.1-linux-x64.tar.xz -C /usr/local/lib/nodejs
+RUN curl -L --silent --show-error --fail -o "/usr/local/bin/stern" \
+    https://github.com/wercker/stern/releases/download/1.11.0/stern_linux_amd64 && \
+    chmod +x /usr/local/bin/stern
 ENV PATH="/usr/local/lib/nodejs/node-v16.15.1-linux-x64/bin:${PATH}"
-
-
