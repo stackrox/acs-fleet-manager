@@ -29,7 +29,7 @@ const (
 // TODO(create-ticket): Use correct OCM_TOKEN for different clients (console.redhat.com, fleetshard)
 var _ = Describe("Central", func() {
 	Describe("should be created and deployed to k8s", func() {
-		auth, err := fleetmanager.NewAuth(fleetmanager.OCMTokenAuthType)
+		auth, err := fleetmanager.NewAuth("OCM")
 		Expect(err).ToNot(HaveOccurred())
 		client, err := fleetmanager.NewClient("http://localhost:8000", "cluster-id", auth)
 		Expect(err).ToNot(HaveOccurred())
