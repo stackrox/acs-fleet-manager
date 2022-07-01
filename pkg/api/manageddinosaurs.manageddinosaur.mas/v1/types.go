@@ -41,7 +41,15 @@ type EndpointSpec struct {
 	Tls  *TlsSpec `json:"tls,omitempty"`
 }
 
+type AuthSpec struct {
+	ClientSecret string `json:"clientSecret,omitempty"`
+	ClientId     string `json:"clientId,omitempty"`
+	OwnerUserId  string `json:"ownerUserId,omitempty"`
+	OwnerOrgId   string `json:"ownerOrgId,omitempty"`
+}
+
 type ManagedDinosaurSpec struct {
+	Auth     AuthSpec     `json:"auth"`
 	Endpoint EndpointSpec `json:"endpoint"`
 	Versions VersionsSpec `json:"versions"`
 	Deleted  bool         `json:"deleted"`
