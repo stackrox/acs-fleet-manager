@@ -26,26 +26,40 @@ spec:
     spec:
       containers:
         - env:
-            - name: POSTGRESQL_DATABASE
+            - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
                   name: acs-fleet-manager-rds
                   key: "db.name"
                   optional: false
-            - name: POSTGRESQL_PASSWORD
+            - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: acs-fleet-manager-rds
                   key: "db.password"
                   optional: false
-            - name: POSTGRESQL_USER
+            - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
                   name: acs-fleet-manager-rds
                   key: "db.user"
                   optional: false
-          image: registry.redhat.io/rhscl/postgresql-95-rhel7
-
+            - name: PGDATA
+              value: "/tmp/postgresql"
+          image: postgres:13
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -h
+                - localhost
+                - -U
+                - "$POSTGRES_USER"
+                - -d
+                - "$POSTGRES_DB"
+            failureThreshold: 30
+            periodSeconds: 1
+            timeoutSeconds: 3
           name: db
           ports:
             - containerPort: 5432
