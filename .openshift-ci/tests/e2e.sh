@@ -41,10 +41,10 @@ else
 fi
 
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
-    if [[ -z "$QUAY_IO_USERNAME" ]]; then
+    if [[ -z "${QUAY_IO_USERNAME:-}" ]]; then
         die "QUAY_IO_USERNAME needs to be set"
     fi
-    if [[ -z "$QUAY_IO_PASSWORD" ]]; then
+    if [[ -z "${QUAY_IO_PASSWORD:-}" ]]; then
         die "QUAY_IO_PASSWORD needs to be set"
     fi
 fi
