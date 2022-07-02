@@ -30,7 +30,7 @@ spec:
           command:
             - sh
             - "-c"
-            - "/usr/local/bin/fleet-manager migrate || sleep 600"
+            - "cd /; /usr/local/bin/fleet-manager migrate || { sleep 120; false }"
           volumeMounts:
             - mountPath: /secrets
               name: secrets
@@ -40,7 +40,7 @@ spec:
         - command:
             - sh
             - "-c"
-            - "/usr/local/bin/fleet-manager serve --api-server-bindaddress=0.0.0.0:8000 --kubeconfig=/secrets/kubeconfig || sleep 600"
+            - "cd /; /usr/local/bin/fleet-manager serve --api-server-bindaddress=0.0.0.0:8000 --kubeconfig=/secrets/kubeconfig || { sleep 120; false }"
           image: "$FULL_FLEET_MANAGER_IMAGE"
           imagePullPolicy: IfNotPresent
           name: fleet-manager
