@@ -896,6 +896,9 @@ objects:
             - name: fleet-manager-dataplane-cluster-scaling-config
               mountPath: /config/dataplane-cluster-configuration.yaml
               subPath: dataplane-cluster-configuration.yaml
+            - name: fleet-manager-dataplane-cluster-configuration-staging.yaml
+              mountPath: /config/dataplane-cluster-configuration-staging.yaml
+              subPath: dataplane-cluster-configuration-staging.yaml
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
