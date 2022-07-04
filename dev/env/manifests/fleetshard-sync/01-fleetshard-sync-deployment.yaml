@@ -36,6 +36,12 @@ spec:
               value: http://fleet-manager:8000
             - name: AUTH_TYPE
               value: STATIC_TOKEN
+            - name: STATIC_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: fleet-manager
+                  key: "fleet-static-token"
+                  optional: false
             - name: RUNTIME_POLL_PERIOD
               value: 10s
 
