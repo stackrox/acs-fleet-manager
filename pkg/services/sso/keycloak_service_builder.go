@@ -31,7 +31,6 @@ func (s *keycloakServiceBuilderSelector) ForACS() ACSKeycloakServiceBuilderConfi
 }
 
 type keycloakBuilderConfigurator struct{}
-type osdBuilderConfigurator keycloakBuilderConfigurator
 
 func (k *keycloakBuilderConfigurator) WithConfiguration(config *iam.IAMConfig) KeycloakServiceBuilder {
 	return &keycloakServiceBuilder{
@@ -63,10 +62,7 @@ func build(iamConfig *iam.IAMConfig, realmConfig *iam.IAMRealmConfig) IAMService
 
 	_, newRealmConfig := arrays.FindFirst(notNilPredicate, realmConfig, iamConfig.RedhatSSORealm)
 	client := redhatsso.NewSSOClient(iamConfig, newRealmConfig.(*iam.IAMRealmConfig))
-	return &keycloakServiceProxy{
-		accessTokenProvider: client,
-		service: &redhatssoService{
-			client: client,
-		},
+	return &redhatssoService{
+		client: client,
 	}
 }
