@@ -472,7 +472,7 @@ objects:
             }
           ]
         }
-    jwks-file-static.json: |
+      jwks-file-static.json: |
         {
           "keys": [
             {
