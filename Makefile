@@ -345,6 +345,10 @@ test/cluster/cleanup:
 	./scripts/cleanup_test_cluster.sh
 .PHONY: test/cluster/cleanup
 
+test/e2e:
+	RUN_E2E=true go test $(GOARGS) -bench -v -count=1 ./e2e/...
+.PHONY: test/e2e
+
 test/e2e/cleanup:
 	./e2e/cleanup.sh
 .PHONY: test/e2e/cleanup

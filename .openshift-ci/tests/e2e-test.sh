@@ -25,11 +25,11 @@ fi
 
 if [[ $FAIL == 0 ]]; then
     log
-    log "** TESTS FINISHED SUCCESSFULLY **"
+    log "** E2E TESTS FINISHED SUCCESSFULLY **"
     log
 else
     log
-    log "** TESTS FAILED **"
+    log "** E2E TESTS FAILED **"
     log
 fi
 

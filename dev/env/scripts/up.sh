@@ -68,15 +68,37 @@ done
 # Deploy MS components.
 apply "${MANIFESTS_DIR}/fleet-manager"
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
-    sleep 5 # Wait for pods to be created.
-    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleet-manager -c db-migrate --since=1m -f >"${LOG_DIR}/pod-logs_fleet-manager_db-migrate.txt" 2>&1 &
-    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleet-manager -c fleet-manager --since=1m -f >"${LOG_DIR}/pod-logs_fleet-manager_fleet-manager.txt" 2>&1 &
+    # Wait for init Container to be in running or in terminated state:
+    for i in $(seq 5); do
+        state=$({
+            $KUBECTL -n "$ACSMS_NAMESPACE" get pod -l io.kompose.service=fleet-manager -o jsonpath='{.items[0].status.initContainerStatuses[0].state}'
+            echo '{}'
+        } |
+            jq -r 'keys[]')
+        echo "state = $state"
+        if [[ "$state" == "terminated" || "$state" == "running" ]]; then
+            break
+        fi
+        sleep 1
+    done
+    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
 fi
 
 apply "${MANIFESTS_DIR}/fleetshard-sync"
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
-    sleep 5 # Wait for pods to be created.
-    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleetshard-sync -c fleetshard-sync --since=1m -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
+    # Wait for init Container to be in running or in terminated state:
+    for i in $(seq 5); do
+        state=$({
+            $KUBECTL -n "$ACSMS_NAMESPACE" get pod -l io.kompose.service=fleetshard-sync -o jsonpath='{.items[0].status.containerStatuses[0].state}'
+            echo '{}'
+        } |
+            jq -r 'keys[]')
+        if [[ "$state" == "terminated" || "$state" == "running" ]]; then
+            break
+        fi
+        sleep 1
+    done
+    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
 fi
 
 # Prerequisite for port-forwarding are pods in ready state.
@@ -88,7 +110,7 @@ for i in $(seq 10); do
         sleep 1
     fi
 done
-$KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l io.kompose.service=fleet-manager
+$KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=120s --for=condition=ready pod -l io.kompose.service=fleet-manager
 sleep 1
 
 if [[ "$ENABLE_FM_PORT_FORWARDING" == "true" ]]; then

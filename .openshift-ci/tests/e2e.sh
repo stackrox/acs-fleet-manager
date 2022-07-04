@@ -26,6 +26,7 @@ fi
 
 if [[ -n "$OPENSHIFT_CI" ]]; then
     log "Test suite is running in OpenShift CI"
+    export GOARGS="-mod=mod"
 fi
 
 if [[ -z "$OPENSHIFT_CI" ]]; then
@@ -76,41 +77,44 @@ if ! ${GITROOT}/.openshift-ci/tests/e2e-test.sh; then
     FAIL=1
 fi
 
-if [[ "$SPAWN_LOGGER" == "true" ]]; then
-    log "Terminating logger"
-    kill "$LOGGER_PID" || true
-    sleep 1
+if [[ "$DUMP_LOGS" == "true" ]]; then
+    if [[ "$SPAWN_LOGGER" == "true" ]]; then
+        log
+        log "** BEGIN LOGS **"
+        log
 
-    log "** BEGIN LOG **"
-    cat "${LOG_DIR}/${MAIN_LOG}"
-    log "** END LOG **"
+        shopt -s nullglob
+        for logfile in "${LOG_DIR}"/*; do
+            logfile_basename=$(basename "$logfile")
+            log
+            log "== BEGIN LOG ${logfile_basename} =="
+            cat "${logfile}"
+            log "== END LOG ${logfile_basename} =="
+            log
+        done
+
+        log
+        log "** END LOGS **"
+        log
+    fi
+
+    log "** BEGIN PODS **"
+    $KUBECTL -n "$ACSMS_NAMESPACE" get pods
+    $KUBECTL -n "$ACSMS_NAMESPACE" describe pods
+    log "** END PODS **"
     log
 fi
 
-if [[ "$SPAWN_LOGGER" == "true" ]]; then
-    log
-    log "** BEGIN LOGS **"
-    log
+log "=========="
 
-    shopt -s nullglob
-    for logfile in "${LOG_DIR}"/*; do
-        logfile_basename=$(basename "$logfile")
-        log
-        log "== BEGIN LOG ${logfile_basename} =="
-        cat "${logfile}"
-        log "== END LOG ${logfile_basename} =="
-        log
-    done
-
+if [[ $FAIL == 0 ]]; then
     log
-    log "** END LOGS **"
+    log "** TESTS FINISHED SUCCESSFULLY **"
+    log
+else
+    log
+    log "** TESTS FAILED **"
     log
 fi
-
-log "** BEGIN PODS **"
-$KUBECTL -n "$ACSMS_NAMESPACE" get pods
-$KUBECTL -n "$ACSMS_NAMESPACE" describe pods
-log "** END PODS **"
-log
 
 exit $FAIL
