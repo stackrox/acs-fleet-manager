@@ -10,7 +10,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 
 	. "github.com/onsi/gomega"
@@ -19,124 +18,6 @@ import (
 const (
 	token = "token"
 )
-
-func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
-	tokenErr := pkgErr.New("token error")
-	//failedToCreateClientErr := pkgErr.New("failed to create client")
-
-	type fields struct {
-		kcClient redhatsso.SSOClient
-	}
-
-	tests := []struct {
-		name    string
-		fields  fields
-		want    string
-		wantErr *errors.ServiceError
-	}{
-		{
-			name: "throws error when failed to fetch token",
-			fields: fields{
-				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return "", tokenErr
-					},
-				},
-			},
-			want:    "",
-			wantErr: errors.NewWithCause(errors.ErrorGeneral, tokenErr, "error getting access token"),
-		},
-		//{ // TODO: feature not yet implemented
-		//	name: "fetch osd client secret from sso when client already exists",
-		//	fields: fields{
-		//		kcClient: &redhatsso.SSOClientMock{
-		//			GetTokenFunc: func() (string, error) {
-		//				return token, nil
-		//			},
-		//			GetConfigFunc: func() *redhatsso.RedhatSSORealm {
-		//				return redhatsso.NewRedhatSSOConfig()
-		//			},
-		//		},
-		//	},
-		//	want:    secret,
-		//	wantErr: nil,
-		//},
-		//{ // TODO: Not yet implemented
-		//	name: "successfully register a new sso client for the ACS cluster",
-		//	fields: fields{
-		//		kcClient: &redhatsso.SSOClientMock{
-		//			GetTokenFunc: func() (string, error) {
-		//				return token, nil
-		//			},
-		//			GetConfigFunc: func() *redhatsso.RedhatSSORealm {
-		//				return redhatsso.NewRedhatSSOConfig()
-		//			},
-		//			//IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
-		//			//	return "", nil
-		//			//},
-		//			//GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
-		//			//	return secret, nil
-		//			//},
-		//			//CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-		//			//	return testClientID, nil
-		//			//},
-		//			//ClientConfigFunc: func(client iam.ClientRepresentation) gocloak.Client {
-		//			//	testID := "12221"
-		//			//	return gocloak.Client{
-		//			//		ClientID: &testID,
-		//			//	}
-		//			//},
-		//		},
-		//	},
-		//	want:    secret,
-		//	wantErr: nil,
-		//},
-		//{ // TODO: not yet implemented
-		//	name: "failed to register sso client for the osd cluster",
-		//	fields: fields{
-		//		kcClient: &redhatsso.SSOClientMock{
-		//			GetTokenFunc: func() (string, error) {
-		//				return token, nil
-		//			},
-		//			GetConfigFunc: func() *redhatsso.RedhatSSORealm {
-		//				return redhatsso.NewRedhatSSOConfig()
-		//			},
-		//			//IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
-		//			//	return "", nil
-		//			//},
-		//			//GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
-		//			//	return secret, nil
-		//			//},
-		//			//CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-		//			//	return "", failedToCreateClientErr
-		//			//},
-		//			//ClientConfigFunc: func(client iam.ClientRepresentation) gocloak.Client {
-		//			//	testID := "12221"
-		//			//	return gocloak.Client{
-		//			//		ClientID: &testID,
-		//			//	}
-		//			//},
-		//		},
-		//	},
-		//	want:    "",
-		//	wantErr: errors.NewWithCause(errors.ErrorFailedToCreateSSOClient, failedToCreateClientErr, "failed to create sso client"),
-		//},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
-			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
-			}
-			got, err := keycloakService.RegisterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
-			Expect(err).To(Equal(tt.wantErr))
-			Expect(got).To(Equal(tt.want))
-		})
-	}
-
-}
 
 func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing.T) {
 	type fields struct {
@@ -236,10 +117,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
-			}
+			keycloakService := &redhatssoService{client: tt.fields.kcClient}
 			got, err := keycloakService.RegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterId)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterAcsFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
@@ -343,10 +221,7 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
-			}
+			keycloakService := &redhatssoService{client: tt.fields.kcClient}
 			err := keycloakService.DeRegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterId)
 			Expect(err != nil).To(Equal(tt.wantErr))
 		})
@@ -424,10 +299,7 @@ func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
-			}
+			keycloakService := &redhatssoService{client: tt.fields.kcClient}
 			err := keycloakService.DeleteServiceAccountInternal("account-id")
 			Expect(err != nil).To(Equal(tt.wantErr))
 		})
@@ -529,10 +401,7 @@ func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
-			}
+			keycloakService := &redhatssoService{client: tt.fields.kcClient}
 			serviceAccount, err := keycloakService.CreateServiceAccountInternal(request)
 			Expect(err != nil).To(Equal(tt.wantErr))
 			Expect(serviceAccount != nil).To(Equal(tt.serviceAccountCreated))

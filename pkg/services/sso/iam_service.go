@@ -3,6 +3,7 @@ package sso
 import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
@@ -28,6 +29,8 @@ type IAMService interface {
 	DeleteServiceAccountInternal(clientId string) *errors.ServiceError
 }
 
-func NewKeycloakServiceBuilder() KeycloakServiceBuilderSelector {
-	return &keycloakServiceBuilderSelector{}
+func NewIAMService(config *iam.IAMConfig) IAMService {
+	return &redhatssoService{
+		client: redhatsso.NewSSOClient(config, config.RedhatSSORealm),
+	}
 }
