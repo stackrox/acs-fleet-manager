@@ -1,10 +1,10 @@
 die() {
-    echo >&2 "$*"
+    echo -e "$*" >&2
     exit 1
 }
 
 log() {
-    echo "$*"
+    echo -e "$*"
 }
 
 verify_environment() {
