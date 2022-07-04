@@ -10,17 +10,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/goava/di"
 	"github.com/golang/glog"
 	gm "github.com/onsi/gomega"
 	"github.com/spf13/pflag"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/golang-jwt/jwt/v4"
@@ -102,7 +102,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	var ocmConfig *ocm.OCMConfig
 	var serverConfig *server.ServerConfig
-	var keycloakConfig *keycloak.KeycloakConfig
+	var keycloakConfig *iam.IAMConfig
 
 	env.MustResolveAll(&ocmConfig, &serverConfig, &keycloakConfig)
 

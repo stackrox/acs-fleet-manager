@@ -14,14 +14,14 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
 	// TODO(ROX-9821) restore when admin API is properly implemented "github.com/stackrox/acs-fleet-manager/pkg/auth"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	coreTest "github.com/stackrox/acs-fleet-manager/test"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
 	// TODO(ROX-9821) restore when admin API is properly implemented . "github.com/onsi/gomega"
 )
 
 func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []string) context.Context {
-	var keycloakConfig *keycloak.KeycloakConfig
+	var keycloakConfig *iam.IAMConfig
 	h.Env.MustResolveAll(&keycloakConfig)
 
 	account := h.NewAllowedServiceAccount()

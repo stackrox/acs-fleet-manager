@@ -5,7 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/aws"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/migrate"
@@ -34,7 +34,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(db.NewDatabaseConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(server.NewServerConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(ocm.NewOCMConfig, di.As(new(environments.ConfigModule))),
-		di.Provide(keycloak.NewKeycloakConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(iam.NewKeycloakConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(acl.NewAccessControlListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(quota_management.NewQuotaManagementListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(server.NewMetricsConfig, di.As(new(environments.ConfigModule))),
@@ -80,13 +80,13 @@ func ServiceProviders() di.Option {
 
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
-		di.Provide(func(c *keycloak.KeycloakConfig) sso.KeycloakService {
+		di.Provide(func(c *iam.IAMConfig) sso.IAMService {
 			return sso.NewKeycloakServiceBuilder().
 				ForACS().
 				WithConfiguration(c).
 				Build()
 		}),
-		di.Provide(func(c *keycloak.KeycloakConfig) sso.OSDKeycloakService {
+		di.Provide(func(c *iam.IAMConfig) sso.OSDKeycloakService {
 			return sso.NewKeycloakServiceBuilder().
 				ForOSD().
 				WithConfiguration(c).

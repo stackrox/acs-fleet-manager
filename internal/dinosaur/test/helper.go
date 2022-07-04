@@ -17,7 +17,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/workers"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
@@ -30,7 +30,7 @@ import (
 type Services struct {
 	di.Inject
 	DBFactory             *db.ConnectionFactory
-	KeycloakConfig        *keycloak.KeycloakConfig
+	KeycloakConfig        *iam.IAMConfig
 	DinosaurConfig        *config.DinosaurConfig
 	MetricsServer         *server.MetricsServer
 	HealthCheckServer     *server.HealthCheckServer

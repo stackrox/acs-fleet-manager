@@ -7,7 +7,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
@@ -43,12 +43,12 @@ func NewFleetshardOperatorAddon(o fleetshardOperatorAddon) FleetshardOperatorAdd
 
 type fleetshardOperatorAddon struct {
 	di.Inject
-	SsoService       sso.KeycloakService
+	IAMService       sso.IAMService
 	ProviderFactory  clusters.ProviderFactory
 	ServerConfig     *server.ServerConfig
 	FleetShardConfig *config.FleetshardConfig
 	OCMConfig        *ocm.OCMConfig
-	KeycloakConfig   *keycloak.KeycloakConfig
+	KeycloakConfig   *iam.IAMConfig
 }
 
 func (o *fleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {
@@ -115,7 +115,7 @@ func (o *fleetshardOperatorAddon) getAddonParams(cluster api.Cluster) ([]types.P
 
 func (o *fleetshardOperatorAddon) provisionServiceAccount(clusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	glog.V(5).Infof("Provisioning service account for cluster %s", clusterId)
-	return o.SsoService.RegisterAcsFleetshardOperatorServiceAccount(clusterId)
+	return o.IAMService.RegisterAcsFleetshardOperatorServiceAccount(clusterId)
 }
 
 func (o *fleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []types.Parameter {
@@ -155,5 +155,5 @@ func (o *fleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAc
 
 func (o *fleetshardOperatorAddon) RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError {
 	glog.V(5).Infof("Removing fleetshard-operator service account for cluster %s", cluster.ClusterID)
-	return o.SsoService.DeRegisterAcsFleetshardOperatorServiceAccount(cluster.ClusterID)
+	return o.IAMService.DeRegisterAcsFleetshardOperatorServiceAccount(cluster.ClusterID)
 }

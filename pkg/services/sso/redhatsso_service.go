@@ -6,7 +6,7 @@ import (
 	"github.com/golang/glog"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -33,11 +33,11 @@ func (r *redhatssoService) DeRegisterClientInSSO(accessToken string, clientId st
 	return nil
 }
 
-func (r *redhatssoService) GetConfig() *keycloak.KeycloakConfig {
+func (r *redhatssoService) GetConfig() *iam.IAMConfig {
 	return r.client.GetConfig()
 }
 
-func (r *redhatssoService) GetRealmConfig() *keycloak.KeycloakRealmConfig {
+func (r *redhatssoService) GetRealmConfig() *iam.IAMRealmConfig {
 	return r.client.GetRealmConfig()
 }
 

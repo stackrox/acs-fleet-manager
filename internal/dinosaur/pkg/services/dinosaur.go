@@ -11,7 +11,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
@@ -99,7 +99,7 @@ var _ DinosaurService = &dinosaurService{}
 type dinosaurService struct {
 	connectionFactory        *db.ConnectionFactory
 	clusterService           ClusterService
-	keycloakService          sso.KeycloakService
+	iamService               sso.IAMService
 	dinosaurConfig           *config.DinosaurConfig
 	awsConfig                *config.AWSConfig
 	quotaServiceFactory      QuotaServiceFactory
@@ -110,11 +110,11 @@ type dinosaurService struct {
 	clusterPlacementStrategy ClusterPlacementStrategy
 }
 
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService sso.KeycloakService, dinosaurConfig *config.DinosaurConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy) *dinosaurService {
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.DinosaurConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy) *dinosaurService {
 	return &dinosaurService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
-		keycloakService:          keycloakService,
+		iamService:               iamService,
 		dinosaurConfig:           dinosaurConfig,
 		awsConfig:                awsConfig,
 		quotaServiceFactory:      quotaServiceFactory,
@@ -569,7 +569,7 @@ func (k *dinosaurService) GetManagedDinosaurByClusterID(clusterID string) ([]man
 	var res []manageddinosaur.ManagedDinosaur
 	// convert dinosaur requests to managed dinosaur
 	for _, dinosaurRequest := range dinosaurRequestList {
-		mk := BuildManagedDinosaurCR(dinosaurRequest, k.dinosaurConfig, k.keycloakService.GetConfig())
+		mk := BuildManagedDinosaurCR(dinosaurRequest, k.dinosaurConfig, k.iamService.GetConfig())
 		res = append(res, *mk)
 	}
 
@@ -798,7 +798,7 @@ func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralR
 	return results, nil
 }
 
-func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfig *config.DinosaurConfig, keycloakConfig *keycloak.KeycloakConfig) *manageddinosaur.ManagedDinosaur {
+func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfig *config.DinosaurConfig, keycloakConfig *iam.IAMConfig) *manageddinosaur.ManagedDinosaur {
 	managedDinosaurCR := &manageddinosaur.ManagedDinosaur{
 		Id: dinosaurRequest.ID,
 		TypeMeta: metav1.TypeMeta{
