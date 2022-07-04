@@ -4,8 +4,8 @@ export GITROOT="$(git rev-parse --show-toplevel)"
 source "${GITROOT}/dev/env/scripts/lib.sh"
 init
 
-enable-port-forwarding stop fleet-manager || true
-enable-port-forwarding stop db || true
+port-forwarding stop fleet-manager || true
+port-forwarding stop db || true
 
 # $KUBECTL delete configmap kubeconfig
 delete "${MANIFESTS_DIR}/rhacs-operator" || true
