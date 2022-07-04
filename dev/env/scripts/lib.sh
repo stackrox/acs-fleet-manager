@@ -32,6 +32,10 @@ init() {
         source "${GITROOT}/dev/env/defaults/openshift-ci.env"
     fi
 
+    if ! which -s bootstrap.sh; then
+        export PATH="$GITROOT/dev/env/scripts:${PATH}"
+    fi
+
     export CLUSTER_TYPE="${CLUSTER_TYPE:-$CLUSTER_TYPE_DEFAULT}"
     source "${GITROOT}/dev/env/defaults/cluster-type-${CLUSTER_TYPE}/env"
 

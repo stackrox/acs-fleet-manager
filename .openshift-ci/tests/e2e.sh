@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 export GITROOT="$(git rev-parse --show-toplevel)"
-export PATH="$GITROOT/dev/env/scripts:${PATH}"
 source "${GITROOT}/dev/env/scripts/lib.sh"
 
 log
