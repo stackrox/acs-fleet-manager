@@ -37,10 +37,11 @@ if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
     # Workaround for a bug in minikube(?) where sometimes the images fail to load:
     log "Deleting docker containers running in Minikube"
     $MINIKUBE ssh 'docker kill $(docker ps -q) > /dev/null' || true
+    sleep 1
     $MINIKUBE ssh 'docker rm --force $(docker ps -a -q) > /dev/null' || true
     sleep 1
     $MINIKUBE image ls | grep -v "^${FLEET_MANAGER_IMAGE}$" | { grep "^.*/fleet-manager-.*/fleet-manager:.*$" || test $? = 1; } | while read img; do
-        $MINIKUBE image rm "$img"
+        $MINIKUBE image rm "$img" || true
     done
     # In a perfect world this line would be sufficient...
     $DOCKER save "${FLEET_MANAGER_IMAGE}" | $MINIKUBE ssh --native-ssh=false docker load
@@ -64,6 +65,7 @@ for i in $(seq 10); do
         sleep 1
     fi
 done
+$KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l io.kompose.service=db
 
 # Deploy MS components.
 apply "${MANIFESTS_DIR}/fleet-manager"
@@ -75,7 +77,6 @@ if [[ "$SPAWN_LOGGER" == "true" ]]; then
             echo '{}'
         } |
             jq -r 'keys[]')
-        echo "state = $state"
         if [[ "$state" == "terminated" || "$state" == "running" ]]; then
             break
         fi
@@ -102,7 +103,6 @@ if [[ "$SPAWN_LOGGER" == "true" ]]; then
 fi
 
 # Prerequisite for port-forwarding are pods in ready state.
-$KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l io.kompose.service=db
 for i in $(seq 10); do
     if $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l io.kompose.service=fleet-manager 2>/dev/null >&2; then
         break

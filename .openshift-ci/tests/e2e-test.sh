@@ -19,7 +19,7 @@ log "Next: Executing e2e tests"
 export RUN_E2E=true
 
 FAIL=0
-if ! go test -bench -v -count=1 ./e2e/...; then
+if ! make test/e2e; then
     FAIL=1
 fi
 
