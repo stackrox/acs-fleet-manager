@@ -138,7 +138,6 @@ func TestReconicleLastHashSetOnSuccess(t *testing.T) {
 }
 
 func TestCentralChanged(t *testing.T) {
-
 	tests := []struct {
 		name           string
 		lastCentral    *private.ManagedCentral
