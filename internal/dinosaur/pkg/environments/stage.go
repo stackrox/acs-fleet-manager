@@ -14,6 +14,6 @@ func NewStageEnvLoader() environments.EnvLoader {
 		"cluster-compute-machine-type":         "m5.2xlarge",
 		"enable-additional-sso-issuers":        "true",
 		"additional-sso-issuers-file":          "config/additional-sso-issuers.yaml",
-		"jwks-file":                            "config/authentication/jwks-file-static.json",
+		"jwks-file":                            "config/jwks-file-static.json",
 	}
 }
