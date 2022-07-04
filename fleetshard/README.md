@@ -67,14 +67,12 @@ $ AUTH_TYPE=RHSSO RHSSO_TOKEN_FILE=path/to/token/file ./fleetshard-sync
 
 This will have the disadvantage of the token expiring, you can also deploy the token-refresher image locally:
 ```
-$ docker run -d \
-   -e CLIENT_ID=<rhsso-client-id> \
-   -e CLIENT_SECRET=<rhsso-client-secret> \
-   -e ISSUER_URL=https://sso.redhat.com/auth/realms/redhat-external \
-   -v /path/to/your/token-file:/rhsso-token/token \
+docker run -it \
+   -v /path/to/your/token:/rhsso-token/ \
    quay.io/rhoas/mk-token-refresher:latest \
-   --oidc.client-id=$(CLIENT_ID) --oidc.client-secret=$(CLIENT_SECRET) --oidc.issuer-url=$(ISSUER_URL) --margin=1m --file=/rhsso-token/token
-$ AUTH_TYPE=RHSSO RHSSO_TOKEN_FILE=/path/to/token/file ./fleetshard-sync
+   --oidc.client-id=<rhsso-client-id> --oidc.client-secret=<rhsso-client-secret> \
+   --oidc.issuer-url=https://sso.redhat.com/auth/realms/redhat-external --margin=1m --file=/rhsso-token/token   
+$ AUTH_TYPE=RHSSO RHSSO_TOKEN_FILE=/path/to/token/token ./fleetshard-sync
 ```
 
 ### Static token
