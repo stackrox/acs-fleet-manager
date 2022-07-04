@@ -20,6 +20,10 @@ done
 init
 
 log "Image: ${FLEET_MANAGER_IMAGE}"
+if [[ "$SPAWN_LOGGER" == "true" ]]; then
+    export LOG_DIR=$(mktemp -d)
+    log "Log directory: ${LOG_DIR}"
+fi
 
 if [[ -n "$OPENSHIFT_CI" ]]; then
     log "Test suite is running in OpenShift CI"
@@ -62,7 +66,6 @@ if [[ -z "$OPENSHIFT_CI" ]]; then
     down.sh 2>/dev/null
 fi
 
-LOG_DIR=$(mktemp -d)
 LOGGER_PID=""
 MAIN_LOG="log.txt"
 
@@ -88,20 +91,30 @@ if [[ "$SPAWN_LOGGER" == "true" ]]; then
     log
 fi
 
+if [[ "$SPAWN_LOGGER" == "true" ]]; then
+    log
+    log "** BEGIN LOGS **"
+    log
+
+    shopt -s nullglob
+    for logfile in "${LOG_DIR}"/*; do
+        logfile_basename=$(basename "$logfile")
+        log
+        log "== BEGIN LOG ${logfile_basename} =="
+        cat "${logfile}"
+        log "== END LOG ${logfile_basename} =="
+        log
+    done
+
+    log
+    log "** END LOGS **"
+    log
+fi
+
 log "** BEGIN PODS **"
 $KUBECTL -n "$ACSMS_NAMESPACE" get pods
 $KUBECTL -n "$ACSMS_NAMESPACE" describe pods
 log "** END PODS **"
-log
-
-log "** BEGIN FLEET-MANAGER POD LOGS **"
-$KUBECTL -n "$ACSMS_NAMESPACE" logs io.kompose.service=fleet-manager
-log "** END FLEET-MANAGER POD LOGS **"
-log
-
-log "** BEGIN FLEETSHARD-SYNC POD LOGS **"
-$KUBECTL -n "$ACSMS_NAMESPACE" logs io.kompose.service=fleetshard-sync
-log "** END FLEETSHARD-SYNC POD LOGS **"
 log
 
 exit $FAIL
