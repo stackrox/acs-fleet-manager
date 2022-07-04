@@ -35,12 +35,6 @@ type IAMService interface {
 	DeleteServiceAccountInternal(clientId string) *errors.ServiceError
 }
 
-type OSDKeycloakService interface {
-	IAMService
-	DeRegisterClientInSSO(namespace string) *errors.ServiceError
-	RegisterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
-}
-
 type keycloakServiceInternal interface {
 	DeRegisterClientInSSO(accessToken string, namespace string) *errors.ServiceError
 	RegisterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)

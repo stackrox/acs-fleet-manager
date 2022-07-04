@@ -86,13 +86,6 @@ func ServiceProviders() di.Option {
 				WithConfiguration(c).
 				Build()
 		}),
-		di.Provide(func(c *iam.IAMConfig) sso.OSDKeycloakService {
-			return sso.NewKeycloakServiceBuilder().
-				ForOSD().
-				WithConfiguration(c).
-				WithRealmConfig(c.OSDClusterIDPRealm).
-				Build()
-		}),
 
 		// Types registered as a BootService are started when the env is started
 		di.Provide(server.NewAPIServer, di.As(new(environments.BootService))),
