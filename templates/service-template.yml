@@ -527,6 +527,15 @@ objects:
     data:
       tls.crt: badger
       tls.key: badger
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: fleet-manager-dataplane-cluster-configuration-staging
+      annotations:
+        qontract.recycle: "true"
+    data:
+      dataplane-cluster-configuration-staging.yaml: |-
+        clusters: ${CLUSTER_LIST}
 
   # This is a copy of the configmap from envoy-config-configmap.yml but only containing the parts
   # which are strictly necessary to get readiness/liveness probes to pass.
