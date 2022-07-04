@@ -47,7 +47,7 @@ spec:
             - name: PGDATA
               value: "/tmp/postgresql"
           image: postgres:13
-          livenessProbe:
+          readinessProbe:
             exec:
               command:
                 - pg_isready
