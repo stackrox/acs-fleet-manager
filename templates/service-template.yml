@@ -964,7 +964,11 @@ objects:
               mountPath: /config/read-only-user-list.yaml
               subPath: read-only-user-list.yaml
             - name: fleet-manager-authentication
-              mountPath: /config/authentication
+              mountPath: /config/jwks-file.json
+              subPath: jwks-file.json
+            - name: fleet-manager-authentication
+              mountPath: /config/jwks-file-static.json
+              subPath: jwks-file-static.json
             - name: fleet-manager-dataplane-cluster-scaling-config
               mountPath: /config/dataplane-cluster-configuration.yaml
               subPath: dataplane-cluster-configuration.yaml

@@ -23,14 +23,14 @@ Show X.509: Yes
 ```
 3. (optional): Copy the values of the `Public Key (X.509 PEM Format), Private Key (X.509 PEM Format)` fields.
 4. (optional): Replace the values within BitWarden's `ACS Fleet* Static token JWKS` item respectively with the previously copied values.
-5. (optional): Copy the value of the `Public Key` field within [mkjwk.org](http://mkjwk.org) and append the value to the array within `config/authentication/jwks-file-static.json`.
-6. Open [jwt.io](https://jwt.io), and paste the last value of the array within `config/authentication/jwks-file-static.json` into the `HEADER` field in the decoded column.
+5. (optional): Copy the value of the `Public Key` field within [mkjwk.org](http://mkjwk.org) and append the value to the array within `config/jwks-file-static.json`.
+6. Open [jwt.io](https://jwt.io), and paste the last value of the array within `config/jwks-file-static.json` into the `HEADER` field in the decoded column.
 7. Copy the values of from Bitwarden's `ACS Fleet* Static token JWKS` item respectively, pasting them into the `VERIFY SIGNATURE` fields.
 8. Copy the payload data contained within `config/static-token-payload.json` and adjust the payload to your liking.
 9. Once finished copy the payload data and update the value within `config/static-token-payload.json`.
 10. Also, ensure that the ConfigMap `fleet-manager-authentication` is up-to-date, specifically the `jwks-file-static.json` item.
 
-If you have re-created the JWKS files, ensure that fleet manager is re-started with the new values of the `config/authentication/jwks-file-static.json`.
+If you have re-created the JWKS files, ensure that fleet manager is re-started with the new values of the `config/jwks-file-static.json`.
 This also includes any staging instances.
 
 Locally, you have the option to explicitly set the JWKS file to be used by the fleet manager using the following flag:
