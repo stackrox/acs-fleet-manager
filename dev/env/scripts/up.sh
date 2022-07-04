@@ -58,6 +58,7 @@ fi
 
 # Deploy database.
 apply "${MANIFESTS_DIR}/db"
+log "Waiting for database to become ready..."
 for i in $(seq 10); do
     if $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l io.kompose.service=db 2>/dev/null >&2; then
         break
@@ -66,11 +67,12 @@ for i in $(seq 10); do
     fi
 done
 $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l io.kompose.service=db
+log "Database is ready."
 
 # Deploy MS components.
 apply "${MANIFESTS_DIR}/fleet-manager"
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
-    # Wait for init Container to be in running or in terminated state:
+    log "Waiting for fleet-manager's init container to appear..."
     for i in $(seq 5); do
         state=$({
             $KUBECTL -n "$ACSMS_NAMESPACE" get pod -l io.kompose.service=fleet-manager -o jsonpath='{.items[0].status.initContainerStatuses[0].state}'
@@ -87,7 +89,7 @@ fi
 
 apply "${MANIFESTS_DIR}/fleetshard-sync"
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
-    # Wait for init Container to be in running or in terminated state:
+    log "Waiting for fleetshard-sync to appear..."
     for i in $(seq 5); do
         state=$({
             $KUBECTL -n "$ACSMS_NAMESPACE" get pod -l io.kompose.service=fleetshard-sync -o jsonpath='{.items[0].status.containerStatuses[0].state}'
@@ -103,6 +105,7 @@ if [[ "$SPAWN_LOGGER" == "true" ]]; then
 fi
 
 # Prerequisite for port-forwarding are pods in ready state.
+log "Waiting for fleet-manager to become ready..."
 for i in $(seq 10); do
     if $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l io.kompose.service=fleet-manager 2>/dev/null >&2; then
         break
@@ -110,6 +113,8 @@ for i in $(seq 10); do
         sleep 1
     fi
 done
+log "fleet-manager is ready."
+
 $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=120s --for=condition=ready pod -l io.kompose.service=fleet-manager
 sleep 1
 
