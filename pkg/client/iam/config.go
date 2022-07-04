@@ -14,24 +14,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-<<<<<<< HEAD:pkg/client/iam/config.go
 type IAMConfig struct {
-	BaseURL                                    string                  `json:"base_url"`
-	SsoBaseUrl                                 string                  `json:"sso_base_url"`
-	Debug                                      bool                    `json:"debug"`
-	InsecureSkipVerify                         bool                    `json:"insecure-skip-verify"`
-	TLSTrustedCertificatesKey                  string                  `json:"tls_trusted_certificates_key"`
-	TLSTrustedCertificatesValue                string                  `json:"tls_trusted_certificates_value"`
-	TLSTrustedCertificatesFile                 string                  `json:"tls_trusted_certificates_file"`
-	OSDClusterIDPRealm                         *IAMRealmConfig         `json:"osd_cluster_idp_realm"`
-	RedhatSSORealm                             *IAMRealmConfig         `json:"redhat_sso_config"`
-	MaxAllowedServiceAccounts                  int                     `json:"max_allowed_service_accounts"`
-	MaxLimitForGetClients                      int                     `json:"max_limit_for_get_clients"`
-	ServiceAccounttLimitCheckSkipOrgIdListFile string                  `json:"-"`
-	ServiceAccounttLimitCheckSkipOrgIdList     []string                `json:"-"`
-	AdditionalSSOEndpoints                     *AdditionalSSOEndpoints `json:"-"`
-=======
-type KeycloakConfig struct {
 	BaseURL                                    string                `json:"base_url"`
 	SsoBaseUrl                                 string                `json:"sso_base_url"`
 	Debug                                      bool                  `json:"debug"`
@@ -39,14 +22,13 @@ type KeycloakConfig struct {
 	TLSTrustedCertificatesKey                  string                `json:"tls_trusted_certificates_key"`
 	TLSTrustedCertificatesValue                string                `json:"tls_trusted_certificates_value"`
 	TLSTrustedCertificatesFile                 string                `json:"tls_trusted_certificates_file"`
-	OSDClusterIDPRealm                         *KeycloakRealmConfig  `json:"osd_cluster_idp_realm"`
-	RedhatSSORealm                             *KeycloakRealmConfig  `json:"redhat_sso_config"`
+	OSDClusterIDPRealm                         *IAMRealmConfig       `json:"osd_cluster_idp_realm"`
+	RedhatSSORealm                             *IAMRealmConfig       `json:"redhat_sso_config"`
 	MaxAllowedServiceAccounts                  int                   `json:"max_allowed_service_accounts"`
 	MaxLimitForGetClients                      int                   `json:"max_limit_for_get_clients"`
 	ServiceAccounttLimitCheckSkipOrgIdListFile string                `json:"-"`
 	ServiceAccounttLimitCheckSkipOrgIdList     []string              `json:"-"`
 	AdditionalSSOIssuers                       *AdditionalSSOIssuers `json:"-"`
->>>>>>> 1a3eda0 (Address minor comments.):pkg/client/keycloak/config.go
 }
 
 type AdditionalSSOIssuers struct {
@@ -118,8 +100,8 @@ func (kc *IAMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.RedhatSSORealm.ClientSecretFile, "redhat-sso-client-secret-file", kc.RedhatSSORealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&kc.SsoBaseUrl, "redhat-sso-base-url", kc.SsoBaseUrl, "The base URL of the SSO, integration by default")
 	fs.StringVar(&kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "service-account-limits-check-skip-org-id-list-file", kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "File containing a list of Org IDs for which service account limits check will be skipped")
-	fs.BoolVar(&kc.AdditionalSSOIssuers.Enabled, "enable-additional-sso-issuers", kc.AdditionalSSOIssuers.Enabled, "Enable additional SSO endpoints for verifying tokens")
-	fs.StringVar(&kc.AdditionalSSOIssuers.File, "additional-sso-issuers-file", kc.AdditionalSSOIssuers.File, "File containing a list of SSO endpoints to include for verifying tokens")
+	fs.BoolVar(&kc.AdditionalSSOIssuers.Enabled, "enable-additional-sso-issuers", kc.AdditionalSSOIssuers.Enabled, "Enable additional SSO issuer URIs for verifying tokens")
+	fs.StringVar(&kc.AdditionalSSOIssuers.File, "additional-sso-issuers-file", kc.AdditionalSSOIssuers.File, "File containing a list of SSO issuer URIs to include for verifying tokens")
 }
 
 func (kc *IAMConfig) ReadFiles() error {
@@ -155,7 +137,7 @@ func (kc *IAMConfig) ReadFiles() error {
 		}
 	}
 
-	//Read the service account limits check skip org ID yaml file
+	// Read the service account limits check skip org ID yaml file
 	err = shared.ReadYamlFile(kc.ServiceAccounttLimitCheckSkipOrgIdListFile, &kc.ServiceAccounttLimitCheckSkipOrgIdList)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -168,14 +150,14 @@ func (kc *IAMConfig) ReadFiles() error {
 	kc.OSDClusterIDPRealm.setDefaultURIs(kc.BaseURL)
 	kc.RedhatSSORealm.setDefaultURIs(kc.SsoBaseUrl)
 
-	// Read the additional endpoints file. This will add additional SSO endpoints which shall be used as valid issuers
+	// Read the additional issuers file. This will add additional SSO issuer URIs which shall be used as valid issuers
 	// for tokens, i.e. sso.stage.redhat.com.
 	if kc.AdditionalSSOIssuers.Enabled {
-		err = readAdditionalEndpointsFile(kc.AdditionalSSOIssuers.File, kc.AdditionalSSOIssuers)
+		err = readAdditionalIssuersFile(kc.AdditionalSSOIssuers.File, kc.AdditionalSSOIssuers)
 		if err != nil {
 			if os.IsNotExist(err) {
-				glog.V(10).Infof("Specified additional SSO endpoints file %q does not exist. "+
-					"Proceeding as if no additional SSO endpoints list was provided", kc.AdditionalSSOIssuers.File)
+				glog.V(10).Infof("Specified additional SSO issuers file %q does not exist. "+
+					"Proceeding as if no additional SSO issuers list was provided", kc.AdditionalSSOIssuers.File)
 			} else {
 				return err
 			}
@@ -239,7 +221,7 @@ func getOpenIDConfiguration(c http.Client, baseURL string) (*openIdConfiguration
 	return &cfg, nil
 }
 
-func readAdditionalEndpointsFile(file string, endpoints *AdditionalSSOIssuers) error {
+func readAdditionalIssuersFile(file string, endpoints *AdditionalSSOIssuers) error {
 	var issuers []string
 	if err := shared.ReadYamlFile(file, &issuers); err != nil {
 		return err

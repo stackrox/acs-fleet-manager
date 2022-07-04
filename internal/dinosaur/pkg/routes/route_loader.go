@@ -82,11 +82,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
 	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(
-<<<<<<< HEAD
-		append(s.IAM.GetConfig().AdditionalSSOEndpoints.IssuerURIs, s.ServerConfig.TokenIssuerURL), errors.ErrorUnauthenticated)
-=======
-		append(s.Keycloak.GetConfig().AdditionalSSOIssuers.URIs, s.ServerConfig.TokenIssuerURL), errors.ErrorUnauthenticated)
->>>>>>> 1a3eda0 (Address minor comments.)
+		append(s.IAM.GetConfig().AdditionalSSOIssuers.URIs, s.ServerConfig.TokenIssuerURL), errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMSClient, errors.ErrorTermsNotAccepted)
 
 	// base path.
@@ -153,13 +149,8 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		Name(logger.NewLogEvent("get-federate-metrics", "get federate metrics by id").ToString()).
 		Methods(http.MethodGet)
 	apiV1MetricsFederateRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
-<<<<<<< HEAD
-		append(s.IAM.GetConfig().AdditionalSSOEndpoints.IssuerURIs, s.ServerConfig.TokenIssuerURL,
+		append(s.IAM.GetConfig().AdditionalSSOIssuers.URIs, s.ServerConfig.TokenIssuerURL,
 			s.IAM.GetConfig().RedhatSSORealm.ValidIssuerURI), errors.ErrorUnauthenticated))
-=======
-		append(s.Keycloak.GetConfig().AdditionalSSOIssuers.URIs, s.ServerConfig.TokenIssuerURL,
-			s.Keycloak.GetConfig().RedhatSSORealm.ValidIssuerURI), errors.ErrorUnauthenticated))
->>>>>>> 1a3eda0 (Address minor comments.)
 	apiV1MetricsFederateRouter.Use(requireOrgID)
 	apiV1MetricsFederateRouter.Use(authorizeMiddleware)
 
