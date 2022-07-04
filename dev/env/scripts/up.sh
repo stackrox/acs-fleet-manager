@@ -91,12 +91,12 @@ done
 $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l io.kompose.service=fleet-manager
 sleep 1
 
-if [[ "$ENABLE_FM_PORT_FORWARDING" ]]; then
+if [[ "$ENABLE_FM_PORT_FORWARDING" == "true" ]]; then
     log "Setting up port-forwarding: fleet-manager is at http://localhost:8000"
     enable-port-forwarding start fleet-manager 8000 8000
 fi
 
-if [[ "$ENABLE_DB_PORT_FORWARDING" ]]; then
+if [[ "$ENABLE_DB_PORT_FORWARDING" == "true" ]]; then
     log "Setting up port-forwarding: db is at localhost:5432"
     enable-port-forwarding start db 5432 5432
 fi
