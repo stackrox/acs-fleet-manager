@@ -26,7 +26,12 @@ fi
 
 if [[ -n "$OPENSHIFT_CI" ]]; then
     log "Test suite is running in OpenShift CI"
-    export GOARGS="-mod=mod"
+    export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
+else
+    export OCM_SERVICE_TOKEN=$(ocm token --refresh)
+    if [[ -z "$FLEET_STATIC_TOKEN" ]]; then
+        die "Error: FLEET_STATIC_TOKEN does not contain a static token.\nPlease set the environment variable FLEET_STATIC_TOKEN to a valid static token."
+    fi
 fi
 
 log
