@@ -346,7 +346,7 @@ test/cluster/cleanup:
 .PHONY: test/cluster/cleanup
 
 test/e2e:
-	RUN_E2E=true go test $(GOARGS) -bench -v -count=1 ./e2e/...
+	CLUSTER_ID=1234567890abcdef1234567890abcdef RUN_E2E=true go test $(GOARGS) -bench -v -count=1 ./e2e/...
 .PHONY: test/e2e
 
 test/e2e/cleanup:
