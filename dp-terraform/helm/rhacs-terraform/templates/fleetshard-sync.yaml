@@ -31,16 +31,45 @@ spec:
           value: {{ .Values.fleetshardSync.fleetManagerEndpoint }}
         - name: CLUSTER_ID
           value: {{ .Values.fleetshardSync.clusterId }}
-        {{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret }}
+        - name: AUTH_TYPE
+          value: {{ .Values.fleetshardSync.authType }}
+        - name: STATIC_TOKEN
+          value: {{ .Values.fleetshardSync.staticToken }}
+      {{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret (eq .Values.fleetshardSync.authType "RHSSO") }}
         volumeMounts:
-        - name: rhsso-creds
-          mountPath: /run/secrets/rhsso-creds
-          readOnly: true
+          - mountPath: /run/secrets/rhsso-token
+            name: rhsso-token
+            readOnly: true
+      - name: token-refresher
+        image: {{ .Values.fleetshardSync.tokenRefresher.image }}
+        imagePullPolicy: Always
+        env:
+          - name: CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: fleetshard-sync-rhsso-creds
+                key: clientId
+          - name: CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: fleetshard-sync-rhsso-creds
+                key: clientSecret
+          - name: ISSUER_URL
+            value: {{ .Values.fleetshardSync.tokenRefresher.issuerUrl }}
+        command:
+          - /bin/token-refresher
+          - --oidc.client-id=$(CLIENT_ID)
+          - --oidc.client-secret=$(CLIENT_SECRET)
+          - --oidc.issuer-url=$(ISSUER_URL)
+          - --margin=1m
+          - --file=/rhsso-token/token
+        volumeMounts:
+          - mountPath: /rhsso-token
+            name: rhsso-token
       volumes:
-        - name: rhsso-creds
-          secret:
-            secretName: fleetshard-sync-rhsso-creds
-        {{- end }}
+        - name: rhsso-token
+          emptyDir: {}
+      {{- end }}
 ---
 {{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret }}
 apiVersion: v1
@@ -51,9 +80,8 @@ metadata:
   labels:
     app: fleetshard-sync
 type: Opaque
-stringData:
-  clientId: |
-    {{ .Values.fleetshardSync.redHatSSO.clientId | nindent 4 }}
-  clientSecret: |
-    {{ .Values.fleetshardSync.redHatSSO.clientSecret | nindent 4 }}
+data:
+  clientId: {{ .Values.fleetshardSync.redHatSSO.clientId | b64enc | quote }}
+  clientSecret: {{ .Values.fleetshardSync.redHatSSO.clientSecret | b64enc | quote }}
+---
 {{- end }}
