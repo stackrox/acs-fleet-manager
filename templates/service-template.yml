@@ -413,6 +413,15 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
+      name: fleet-manager-additional-sso-issuers-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      additional-sso-issuers.yaml: |-
+        - https://sso.stage.redhat.com/auth/realms/redhat-external
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
       name: fleet-manager-read-only-user-list
       annotations:
         qontract.recycle: "true"
@@ -816,6 +825,9 @@ objects:
           - name: fleet-manager-denied-users-config
             configMap:
               name: fleet-manager-denied-users-config
+          - name: fleet-manager-additional-sso-issuers-config
+            configMap:
+              name: fleet-manager-additional-sso-issuers-config
           - name: fleet-manager-read-only-user-list
             configMap:
               name: fleet-manager-read-only-user-list
@@ -891,6 +903,9 @@ objects:
             - name: fleet-manager-denied-users-config
               mountPath: /config/deny-list-configuration.yaml
               subPath: deny-list-configuration.yaml
+            - name: fleet-manager-additional-sso-issuers-config
+              mountPath: /config/additional-sso-issuers.yaml
+              subPath: additional-sso-issuers.yaml
             - name: fleet-manager-read-only-user-list
               mountPath: /config/read-only-user-list.yaml
               subPath: read-only-user-list.yaml
