@@ -35,12 +35,18 @@ spec:
             - name: FLEET_MANAGER_ENDPOINT
               value: http://fleet-manager:8000
             - name: AUTH_TYPE
-              value: STATIC_TOKEN
+              value: "$AUTH_TYPE"
             - name: STATIC_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: fleet-manager
                   key: "fleet-static-token"
+                  optional: false
+            - name: OCM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: fleet-manager
+                  key: "ocm-service.token"
                   optional: false
             - name: RUNTIME_POLL_PERIOD
               value: 10s

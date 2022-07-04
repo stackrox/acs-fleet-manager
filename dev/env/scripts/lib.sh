@@ -1,10 +1,14 @@
 die() {
-    echo -e "$*" >&2
+    {
+        printf "$*"
+        echo
+    } >&2
     exit 1
 }
 
 log() {
-    echo -e "$*"
+    printf "$*"
+    echo
 }
 
 verify_environment() {
@@ -83,6 +87,7 @@ init() {
     export INSTALL_OLM=${INSTALL_OLM:-$INSTALL_OLM_DEFAULT}
     export ENABLE_DB_PORT_FORWARDING=${ENABLE_DB_PORT_FORWARDING:-$ENABLE_DB_PORT_FORWARDING_DEFAULT}
     export ENABLE_FM_PORT_FORWARDING=${ENABLE_FM_PORT_FORWARDING:-$ENABLE_FM_PORT_FORWARDING_DEFAULT}
+    export AUTH_TYPE=${AUTH_TYPE:-$AUTH_TYPE_DEFAULT}
 
     export FLEET_MANAGER_IMAGE="${FLEET_MANAGER_IMAGE:-$FLEET_MANAGER_IMAGE_DEFAULT}"
     # When transferring images without repository hostname to Minikube it gets prefixed with "docker.io" automatically.

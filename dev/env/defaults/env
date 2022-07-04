@@ -22,6 +22,7 @@ export POSTGRES_DB_DEFAULT="rhacsms"
 export POSTGRES_USER_DEFAULT="fleet_manager"
 export POSTGRES_PASSWORD_DEFAULT="letmein" # pragma: allowlist secret
 
+export AUTH_TYPE_DEFAULT="OCM"
 export OCM_SERVICE_CLIENT_ID_DEFAULT=""
 export OCM_SERVICE_CLIENT_SECRET_DEFAULT=""
 export OCM_SERVICE_TOKEN_DEFAULT=""
