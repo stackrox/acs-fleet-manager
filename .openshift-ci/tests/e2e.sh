@@ -27,12 +27,28 @@ fi
 if [[ -n "$OPENSHIFT_CI" ]]; then
     log "Test suite is running in OpenShift CI"
     export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
-else
-    export OCM_SERVICE_TOKEN=$(ocm token --refresh)
-    if [[ -z "$FLEET_STATIC_TOKEN" ]]; then
-        die "Error: FLEET_STATIC_TOKEN does not contain a static token.\nPlease set the environment variable FLEET_STATIC_TOKEN to a valid static token."
-    fi
 fi
+
+disable_debugging
+case "$AUTH_TYPE" in
+OCM)
+
+    log "Refreshing OCM Service Token"
+    export OCM_SERVICE_TOKEN=$(ocm token --refresh)
+    ;;
+
+STATIC_TOKEN)
+    # FLEET_STATIC_TOKEN is the name of the secret in Vault,
+    # STATIC_TOKEN is the name expected by the application (when running directly),
+    # hence we support both names here.
+    STATIC_TOKEN=${STATIC_TOKEN:-}
+    export FLEET_STATIC_TOKEN=${FLEET_STATIC_TOKEN:-$STATIC_TOKEN}
+    if [[ -z "$FLEET_STATIC_TOKEN" ]]; then
+        die "Error: No static token found in the environment.\nPlease set the environment variable STATIC_TOKEN to a valid static token."
+    fi
+    log "Found static token in the environment"
+    ;;
+esac
 
 log
 
