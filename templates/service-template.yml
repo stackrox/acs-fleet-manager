@@ -435,7 +435,7 @@ objects:
       annotations:
         qontract.recycle: "true"
     data:
-      jwks-fileg.json: |-
+      jwks-file.json: |-
         {
           "keys": [
             {
