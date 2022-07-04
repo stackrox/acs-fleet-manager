@@ -18,7 +18,7 @@ type CompleteServiceAccountRequest struct {
 	Description    string
 }
 
-//go:generate moq -out keycloakservice_moq.go . KeycloakService
+//go:generate moq -out iam_service_moq.go . IAMService
 type IAMService interface {
 	GetConfig() *iam.IAMConfig
 	GetRealmConfig() *iam.IAMRealmConfig

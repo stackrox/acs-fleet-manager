@@ -11,16 +11,16 @@ import (
 	"sync"
 )
 
-// Ensure, that KeycloakServiceMock does implement IAMService.
+// Ensure, that IAMServiceMock does implement IAMService.
 // If this is not the case, regenerate this file with moq.
-var _ IAMService = &KeycloakServiceMock{}
+var _ IAMService = &IAMServiceMock{}
 
-// KeycloakServiceMock is a mock implementation of IAMService.
+// IAMServiceMock is a mock implementation of IAMService.
 //
-// 	func TestSomethingThatUsesKeycloakService(t *testing.T) {
+// 	func TestSomethingThatUsesIAMService(t *testing.T) {
 //
 // 		// make and configure a mocked IAMService
-// 		mockedKeycloakService := &KeycloakServiceMock{
+// 		mockedIAMService := &IAMServiceMock{
 // 			CreateServiceAccountFunc: func(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
 // 				panic("mock out the CreateServiceAccount method")
 // 			},
@@ -62,11 +62,11 @@ var _ IAMService = &KeycloakServiceMock{}
 // 			},
 // 		}
 //
-// 		// use mockedKeycloakService in code that requires IAMService
+// 		// use mockedIAMService in code that requires IAMService
 // 		// and then make assertions.
 //
 // 	}
-type KeycloakServiceMock struct {
+type IAMServiceMock struct {
 	// CreateServiceAccountFunc mocks the CreateServiceAccount method.
 	CreateServiceAccountFunc func(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError)
 
@@ -200,9 +200,9 @@ type KeycloakServiceMock struct {
 }
 
 // CreateServiceAccount calls CreateServiceAccountFunc.
-func (mock *KeycloakServiceMock) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
+func (mock *IAMServiceMock) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
 	if mock.CreateServiceAccountFunc == nil {
-		panic("KeycloakServiceMock.CreateServiceAccountFunc: method is nil but IAMService.CreateServiceAccount was just called")
+		panic("IAMServiceMock.CreateServiceAccountFunc: method is nil but IAMService.CreateServiceAccount was just called")
 	}
 	callInfo := struct {
 		ServiceAccountRequest *api.ServiceAccountRequest
@@ -219,8 +219,8 @@ func (mock *KeycloakServiceMock) CreateServiceAccount(serviceAccountRequest *api
 
 // CreateServiceAccountCalls gets all the calls that were made to CreateServiceAccount.
 // Check the length with:
-//     len(mockedKeycloakService.CreateServiceAccountCalls())
-func (mock *KeycloakServiceMock) CreateServiceAccountCalls() []struct {
+//     len(mockedIAMService.CreateServiceAccountCalls())
+func (mock *IAMServiceMock) CreateServiceAccountCalls() []struct {
 	ServiceAccountRequest *api.ServiceAccountRequest
 	Ctx                   context.Context
 } {
@@ -235,9 +235,9 @@ func (mock *KeycloakServiceMock) CreateServiceAccountCalls() []struct {
 }
 
 // CreateServiceAccountInternal calls CreateServiceAccountInternalFunc.
-func (mock *KeycloakServiceMock) CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
+func (mock *IAMServiceMock) CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 	if mock.CreateServiceAccountInternalFunc == nil {
-		panic("KeycloakServiceMock.CreateServiceAccountInternalFunc: method is nil but IAMService.CreateServiceAccountInternal was just called")
+		panic("IAMServiceMock.CreateServiceAccountInternalFunc: method is nil but IAMService.CreateServiceAccountInternal was just called")
 	}
 	callInfo := struct {
 		Request CompleteServiceAccountRequest
@@ -252,8 +252,8 @@ func (mock *KeycloakServiceMock) CreateServiceAccountInternal(request CompleteSe
 
 // CreateServiceAccountInternalCalls gets all the calls that were made to CreateServiceAccountInternal.
 // Check the length with:
-//     len(mockedKeycloakService.CreateServiceAccountInternalCalls())
-func (mock *KeycloakServiceMock) CreateServiceAccountInternalCalls() []struct {
+//     len(mockedIAMService.CreateServiceAccountInternalCalls())
+func (mock *IAMServiceMock) CreateServiceAccountInternalCalls() []struct {
 	Request CompleteServiceAccountRequest
 } {
 	var calls []struct {
@@ -266,9 +266,9 @@ func (mock *KeycloakServiceMock) CreateServiceAccountInternalCalls() []struct {
 }
 
 // DeRegisterAcsFleetshardOperatorServiceAccount calls DeRegisterAcsFleetshardOperatorServiceAccountFunc.
-func (mock *KeycloakServiceMock) DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
+func (mock *IAMServiceMock) DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
 	if mock.DeRegisterAcsFleetshardOperatorServiceAccountFunc == nil {
-		panic("KeycloakServiceMock.DeRegisterAcsFleetshardOperatorServiceAccountFunc: method is nil but IAMService.DeRegisterAcsFleetshardOperatorServiceAccount was just called")
+		panic("IAMServiceMock.DeRegisterAcsFleetshardOperatorServiceAccountFunc: method is nil but IAMService.DeRegisterAcsFleetshardOperatorServiceAccount was just called")
 	}
 	callInfo := struct {
 		AgentClusterId string
@@ -283,8 +283,8 @@ func (mock *KeycloakServiceMock) DeRegisterAcsFleetshardOperatorServiceAccount(a
 
 // DeRegisterAcsFleetshardOperatorServiceAccountCalls gets all the calls that were made to DeRegisterAcsFleetshardOperatorServiceAccount.
 // Check the length with:
-//     len(mockedKeycloakService.DeRegisterAcsFleetshardOperatorServiceAccountCalls())
-func (mock *KeycloakServiceMock) DeRegisterAcsFleetshardOperatorServiceAccountCalls() []struct {
+//     len(mockedIAMService.DeRegisterAcsFleetshardOperatorServiceAccountCalls())
+func (mock *IAMServiceMock) DeRegisterAcsFleetshardOperatorServiceAccountCalls() []struct {
 	AgentClusterId string
 } {
 	var calls []struct {
@@ -297,9 +297,9 @@ func (mock *KeycloakServiceMock) DeRegisterAcsFleetshardOperatorServiceAccountCa
 }
 
 // DeleteServiceAccount calls DeleteServiceAccountFunc.
-func (mock *KeycloakServiceMock) DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError {
+func (mock *IAMServiceMock) DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError {
 	if mock.DeleteServiceAccountFunc == nil {
-		panic("KeycloakServiceMock.DeleteServiceAccountFunc: method is nil but IAMService.DeleteServiceAccount was just called")
+		panic("IAMServiceMock.DeleteServiceAccountFunc: method is nil but IAMService.DeleteServiceAccount was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -316,8 +316,8 @@ func (mock *KeycloakServiceMock) DeleteServiceAccount(ctx context.Context, clien
 
 // DeleteServiceAccountCalls gets all the calls that were made to DeleteServiceAccount.
 // Check the length with:
-//     len(mockedKeycloakService.DeleteServiceAccountCalls())
-func (mock *KeycloakServiceMock) DeleteServiceAccountCalls() []struct {
+//     len(mockedIAMService.DeleteServiceAccountCalls())
+func (mock *IAMServiceMock) DeleteServiceAccountCalls() []struct {
 	Ctx      context.Context
 	ClientId string
 } {
@@ -332,9 +332,9 @@ func (mock *KeycloakServiceMock) DeleteServiceAccountCalls() []struct {
 }
 
 // DeleteServiceAccountInternal calls DeleteServiceAccountInternalFunc.
-func (mock *KeycloakServiceMock) DeleteServiceAccountInternal(clientId string) *errors.ServiceError {
+func (mock *IAMServiceMock) DeleteServiceAccountInternal(clientId string) *errors.ServiceError {
 	if mock.DeleteServiceAccountInternalFunc == nil {
-		panic("KeycloakServiceMock.DeleteServiceAccountInternalFunc: method is nil but IAMService.DeleteServiceAccountInternal was just called")
+		panic("IAMServiceMock.DeleteServiceAccountInternalFunc: method is nil but IAMService.DeleteServiceAccountInternal was just called")
 	}
 	callInfo := struct {
 		ClientId string
@@ -349,8 +349,8 @@ func (mock *KeycloakServiceMock) DeleteServiceAccountInternal(clientId string) *
 
 // DeleteServiceAccountInternalCalls gets all the calls that were made to DeleteServiceAccountInternal.
 // Check the length with:
-//     len(mockedKeycloakService.DeleteServiceAccountInternalCalls())
-func (mock *KeycloakServiceMock) DeleteServiceAccountInternalCalls() []struct {
+//     len(mockedIAMService.DeleteServiceAccountInternalCalls())
+func (mock *IAMServiceMock) DeleteServiceAccountInternalCalls() []struct {
 	ClientId string
 } {
 	var calls []struct {
@@ -363,9 +363,9 @@ func (mock *KeycloakServiceMock) DeleteServiceAccountInternalCalls() []struct {
 }
 
 // GetAcsClientSecret calls GetAcsClientSecretFunc.
-func (mock *KeycloakServiceMock) GetAcsClientSecret(clientId string) (string, *errors.ServiceError) {
+func (mock *IAMServiceMock) GetAcsClientSecret(clientId string) (string, *errors.ServiceError) {
 	if mock.GetAcsClientSecretFunc == nil {
-		panic("KeycloakServiceMock.GetAcsClientSecretFunc: method is nil but IAMService.GetAcsClientSecret was just called")
+		panic("IAMServiceMock.GetAcsClientSecretFunc: method is nil but IAMService.GetAcsClientSecret was just called")
 	}
 	callInfo := struct {
 		ClientId string
@@ -380,8 +380,8 @@ func (mock *KeycloakServiceMock) GetAcsClientSecret(clientId string) (string, *e
 
 // GetAcsClientSecretCalls gets all the calls that were made to GetAcsClientSecret.
 // Check the length with:
-//     len(mockedKeycloakService.GetAcsClientSecretCalls())
-func (mock *KeycloakServiceMock) GetAcsClientSecretCalls() []struct {
+//     len(mockedIAMService.GetAcsClientSecretCalls())
+func (mock *IAMServiceMock) GetAcsClientSecretCalls() []struct {
 	ClientId string
 } {
 	var calls []struct {
@@ -394,9 +394,9 @@ func (mock *KeycloakServiceMock) GetAcsClientSecretCalls() []struct {
 }
 
 // GetConfig calls GetConfigFunc.
-func (mock *KeycloakServiceMock) GetConfig() *iam.IAMConfig {
+func (mock *IAMServiceMock) GetConfig() *iam.IAMConfig {
 	if mock.GetConfigFunc == nil {
-		panic("KeycloakServiceMock.GetConfigFunc: method is nil but IAMService.GetConfig was just called")
+		panic("IAMServiceMock.GetConfigFunc: method is nil but IAMService.GetConfig was just called")
 	}
 	callInfo := struct {
 	}{}
@@ -408,8 +408,8 @@ func (mock *KeycloakServiceMock) GetConfig() *iam.IAMConfig {
 
 // GetConfigCalls gets all the calls that were made to GetConfig.
 // Check the length with:
-//     len(mockedKeycloakService.GetConfigCalls())
-func (mock *KeycloakServiceMock) GetConfigCalls() []struct {
+//     len(mockedIAMService.GetConfigCalls())
+func (mock *IAMServiceMock) GetConfigCalls() []struct {
 } {
 	var calls []struct {
 	}
@@ -420,9 +420,9 @@ func (mock *KeycloakServiceMock) GetConfigCalls() []struct {
 }
 
 // GetRealmConfig calls GetRealmConfigFunc.
-func (mock *KeycloakServiceMock) GetRealmConfig() *iam.IAMRealmConfig {
+func (mock *IAMServiceMock) GetRealmConfig() *iam.IAMRealmConfig {
 	if mock.GetRealmConfigFunc == nil {
-		panic("KeycloakServiceMock.GetRealmConfigFunc: method is nil but IAMService.GetRealmConfig was just called")
+		panic("IAMServiceMock.GetRealmConfigFunc: method is nil but IAMService.GetRealmConfig was just called")
 	}
 	callInfo := struct {
 	}{}
@@ -434,8 +434,8 @@ func (mock *KeycloakServiceMock) GetRealmConfig() *iam.IAMRealmConfig {
 
 // GetRealmConfigCalls gets all the calls that were made to GetRealmConfig.
 // Check the length with:
-//     len(mockedKeycloakService.GetRealmConfigCalls())
-func (mock *KeycloakServiceMock) GetRealmConfigCalls() []struct {
+//     len(mockedIAMService.GetRealmConfigCalls())
+func (mock *IAMServiceMock) GetRealmConfigCalls() []struct {
 } {
 	var calls []struct {
 	}
@@ -446,9 +446,9 @@ func (mock *KeycloakServiceMock) GetRealmConfigCalls() []struct {
 }
 
 // GetServiceAccountByClientId calls GetServiceAccountByClientIdFunc.
-func (mock *KeycloakServiceMock) GetServiceAccountByClientId(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+func (mock *IAMServiceMock) GetServiceAccountByClientId(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
 	if mock.GetServiceAccountByClientIdFunc == nil {
-		panic("KeycloakServiceMock.GetServiceAccountByClientIdFunc: method is nil but IAMService.GetServiceAccountByClientId was just called")
+		panic("IAMServiceMock.GetServiceAccountByClientIdFunc: method is nil but IAMService.GetServiceAccountByClientId was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -465,8 +465,8 @@ func (mock *KeycloakServiceMock) GetServiceAccountByClientId(ctx context.Context
 
 // GetServiceAccountByClientIdCalls gets all the calls that were made to GetServiceAccountByClientId.
 // Check the length with:
-//     len(mockedKeycloakService.GetServiceAccountByClientIdCalls())
-func (mock *KeycloakServiceMock) GetServiceAccountByClientIdCalls() []struct {
+//     len(mockedIAMService.GetServiceAccountByClientIdCalls())
+func (mock *IAMServiceMock) GetServiceAccountByClientIdCalls() []struct {
 	Ctx      context.Context
 	ClientId string
 } {
@@ -481,9 +481,9 @@ func (mock *KeycloakServiceMock) GetServiceAccountByClientIdCalls() []struct {
 }
 
 // GetServiceAccountById calls GetServiceAccountByIdFunc.
-func (mock *KeycloakServiceMock) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
+func (mock *IAMServiceMock) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
 	if mock.GetServiceAccountByIdFunc == nil {
-		panic("KeycloakServiceMock.GetServiceAccountByIdFunc: method is nil but IAMService.GetServiceAccountById was just called")
+		panic("IAMServiceMock.GetServiceAccountByIdFunc: method is nil but IAMService.GetServiceAccountById was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
@@ -500,8 +500,8 @@ func (mock *KeycloakServiceMock) GetServiceAccountById(ctx context.Context, id s
 
 // GetServiceAccountByIdCalls gets all the calls that were made to GetServiceAccountById.
 // Check the length with:
-//     len(mockedKeycloakService.GetServiceAccountByIdCalls())
-func (mock *KeycloakServiceMock) GetServiceAccountByIdCalls() []struct {
+//     len(mockedIAMService.GetServiceAccountByIdCalls())
+func (mock *IAMServiceMock) GetServiceAccountByIdCalls() []struct {
 	Ctx context.Context
 	ID  string
 } {
@@ -516,9 +516,9 @@ func (mock *KeycloakServiceMock) GetServiceAccountByIdCalls() []struct {
 }
 
 // ListServiceAcc calls ListServiceAccFunc.
-func (mock *KeycloakServiceMock) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
+func (mock *IAMServiceMock) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
 	if mock.ListServiceAccFunc == nil {
-		panic("KeycloakServiceMock.ListServiceAccFunc: method is nil but IAMService.ListServiceAcc was just called")
+		panic("IAMServiceMock.ListServiceAccFunc: method is nil but IAMService.ListServiceAcc was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -537,8 +537,8 @@ func (mock *KeycloakServiceMock) ListServiceAcc(ctx context.Context, first int, 
 
 // ListServiceAccCalls gets all the calls that were made to ListServiceAcc.
 // Check the length with:
-//     len(mockedKeycloakService.ListServiceAccCalls())
-func (mock *KeycloakServiceMock) ListServiceAccCalls() []struct {
+//     len(mockedIAMService.ListServiceAccCalls())
+func (mock *IAMServiceMock) ListServiceAccCalls() []struct {
 	Ctx   context.Context
 	First int
 	Max   int
@@ -555,9 +555,9 @@ func (mock *KeycloakServiceMock) ListServiceAccCalls() []struct {
 }
 
 // RegisterAcsFleetshardOperatorServiceAccount calls RegisterAcsFleetshardOperatorServiceAccountFunc.
-func (mock *KeycloakServiceMock) RegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
+func (mock *IAMServiceMock) RegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	if mock.RegisterAcsFleetshardOperatorServiceAccountFunc == nil {
-		panic("KeycloakServiceMock.RegisterAcsFleetshardOperatorServiceAccountFunc: method is nil but IAMService.RegisterAcsFleetshardOperatorServiceAccount was just called")
+		panic("IAMServiceMock.RegisterAcsFleetshardOperatorServiceAccountFunc: method is nil but IAMService.RegisterAcsFleetshardOperatorServiceAccount was just called")
 	}
 	callInfo := struct {
 		AgentClusterId string
@@ -572,8 +572,8 @@ func (mock *KeycloakServiceMock) RegisterAcsFleetshardOperatorServiceAccount(age
 
 // RegisterAcsFleetshardOperatorServiceAccountCalls gets all the calls that were made to RegisterAcsFleetshardOperatorServiceAccount.
 // Check the length with:
-//     len(mockedKeycloakService.RegisterAcsFleetshardOperatorServiceAccountCalls())
-func (mock *KeycloakServiceMock) RegisterAcsFleetshardOperatorServiceAccountCalls() []struct {
+//     len(mockedIAMService.RegisterAcsFleetshardOperatorServiceAccountCalls())
+func (mock *IAMServiceMock) RegisterAcsFleetshardOperatorServiceAccountCalls() []struct {
 	AgentClusterId string
 } {
 	var calls []struct {
@@ -586,9 +586,9 @@ func (mock *KeycloakServiceMock) RegisterAcsFleetshardOperatorServiceAccountCall
 }
 
 // ResetServiceAccountCredentials calls ResetServiceAccountCredentialsFunc.
-func (mock *KeycloakServiceMock) ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+func (mock *IAMServiceMock) ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
 	if mock.ResetServiceAccountCredentialsFunc == nil {
-		panic("KeycloakServiceMock.ResetServiceAccountCredentialsFunc: method is nil but IAMService.ResetServiceAccountCredentials was just called")
+		panic("IAMServiceMock.ResetServiceAccountCredentialsFunc: method is nil but IAMService.ResetServiceAccountCredentials was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -605,8 +605,8 @@ func (mock *KeycloakServiceMock) ResetServiceAccountCredentials(ctx context.Cont
 
 // ResetServiceAccountCredentialsCalls gets all the calls that were made to ResetServiceAccountCredentials.
 // Check the length with:
-//     len(mockedKeycloakService.ResetServiceAccountCredentialsCalls())
-func (mock *KeycloakServiceMock) ResetServiceAccountCredentialsCalls() []struct {
+//     len(mockedIAMService.ResetServiceAccountCredentialsCalls())
+func (mock *IAMServiceMock) ResetServiceAccountCredentialsCalls() []struct {
 	Ctx      context.Context
 	ClientId string
 } {

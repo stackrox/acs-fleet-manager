@@ -49,8 +49,8 @@ func NewKeycloakConfig() *IAMConfig {
 	kc := &IAMConfig{
 		SsoBaseUrl: "https://sso.redhat.com",
 		OSDClusterIDPRealm: &IAMRealmConfig{
-			ClientIDFile:     "secrets/osd-idp-iam-service.clientId",
-			ClientSecretFile: "secrets/osd-idp-iam-service.clientSecret",
+			ClientIDFile:     "secrets/osd-idp-keycloak-service.clientId",
+			ClientSecretFile: "secrets/osd-idp-keycloak-service.clientSecret",
 			GrantType:        "client_credentials",
 		},
 		Debug:                 false,
@@ -63,8 +63,8 @@ func NewKeycloakConfig() *IAMConfig {
 			ClientSecretFile: "secrets/redhatsso-service.clientSecret",
 			GrantType:        "client_credentials",
 		},
-		TLSTrustedCertificatesFile:                 "secrets/iam-service.crt",
-		TLSTrustedCertificatesKey:                  "iam.crt",
+		TLSTrustedCertificatesFile:                 "secrets/keycloak-service.crt",
+		TLSTrustedCertificatesKey:                  "keycloak.crt",
 		MaxAllowedServiceAccounts:                  50,
 		ServiceAccounttLimitCheckSkipOrgIdListFile: "config/service-account-limits-check-skip-org-id-list.yaml",
 	}
