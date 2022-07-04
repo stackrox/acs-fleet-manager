@@ -840,8 +840,8 @@ objects:
             configMap:
               name: fake-fleet-manager-observatorium-secret
           - name: fleet-manager-dataplane-cluster-configuration-staging
-              configMap:
-                name: fleet-manager-dataplane-cluster-configuration-staging
+            configMap:
+              name: fleet-manager-dataplane-cluster-configuration-staging
           initContainers:
           - name: migration
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
