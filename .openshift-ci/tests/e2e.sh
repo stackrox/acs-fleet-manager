@@ -26,9 +26,6 @@ fi
 
 if [[ -n "$OPENSHIFT_CI" ]]; then
     log "Test suite is running in OpenShift CI"
-else
-    export ENABLE_DB_PORT_FORWARDING="true"
-    export ENABLE_FM_PORT_FORWARDING="true"
 fi
 
 if [[ -z "$OPENSHIFT_CI" ]]; then
