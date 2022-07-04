@@ -34,10 +34,11 @@ spec:
               value: "1234567890abcdef1234567890abcdef"
             - name: FLEET_MANAGER_ENDPOINT
               value: http://fleet-manager:8000
-            - name: OCM_TOKEN
-              value: "${OCM_TOKEN}"
+            - name: AUTH_TYPE
+              value: STATIC_TOKEN
             - name: RUNTIME_POLL_PERIOD
               value: 10s
+
           image: "${FULL_FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent
           name: fleetshard-sync

@@ -31,18 +31,6 @@ fi
 
 log
 
-if [[ -z "$OPENSHIFT_CI" ]]; then
-    # Will be replaced with static auth.
-    log "Refreshing OCM token (currently injected into fleetshard-sync)"
-    disable_debugging
-    OCM_TOKEN=$(ocm token)
-    export OCM_TOKEN
-else
-    # This will cause fleetshard-sync to fail.
-    # Will be replaced with static auth.
-    export OCM_TOKEN="not-a-token"
-fi
-
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
     if [[ -z "${QUAY_IO_USERNAME:-}" ]]; then
         die "QUAY_IO_USERNAME needs to be set"
@@ -117,6 +105,14 @@ else
     log
     log "** TESTS FAILED **"
     log
+fi
+
+if [[ "$ENABLE_FM_PORT_FORWARDING_DEFAULT" == "true" ]]; then
+    port-forwarding stop fleet-manager
+fi
+
+if [[ "$ENABLE_DB_PORT_FORWARDING_DEFAULT" == "true" ]]; then
+    port-forwarding stop db
 fi
 
 exit $FAIL
