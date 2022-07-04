@@ -67,7 +67,17 @@ done
 
 # Deploy MS components.
 apply "${MANIFESTS_DIR}/fleet-manager"
+if [[ "$SPAWN_LOGGER" == "true" ]]; then
+    sleep 5 # Wait for pods to be created.
+    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleet-manager -c db-migrate --since=1m -f >"${LOG_DIR}/pod-logs_fleet-manager_db-migrate.txt" 2>&1 &
+    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleet-manager -c fleet-manager --since=1m -f >"${LOG_DIR}/pod-logs_fleet-manager_fleet-manager.txt" 2>&1 &
+fi
+
 apply "${MANIFESTS_DIR}/fleetshard-sync"
+if [[ "$SPAWN_LOGGER" == "true" ]]; then
+    sleep 5 # Wait for pods to be created.
+    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleetshard-sync -c fleetshard-sync --since=1m -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
+fi
 
 # Prerequisite for port-forwarding are pods in ready state.
 $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l io.kompose.service=db
