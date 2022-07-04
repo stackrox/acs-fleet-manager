@@ -14,7 +14,7 @@ if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
             --apiserver-names=minikube \
             --delete-on-failure=true
     else
-        if ! kc_output=$($KUBECTL get nodes 2>&1); then
+        if ! kc_output=$($KUBECTL api-versions >/dev/null 2>&1); then
             die "Sanity check for contacting Kubernetes cluster failed: ${kc_output}"
         fi
     fi

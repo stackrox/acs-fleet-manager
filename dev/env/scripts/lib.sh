@@ -13,10 +13,7 @@ verify_environment() {
 
 get_current_cluster_name() {
     local kubeconfig_file="$1"
-    local kubeconf=$(cat "$kubeconfig_file")
-    local context_name=$(echo "$kubeconf" | yq e .current-context -)
-    local context="$(echo "$kubeconf" | yq e ".contexts[] | select(.name == \"${context_name}\")" -j - | jq -c)"
-    local cluster_name=$(echo "$context" | jq -r .context.cluster -)
+    local cluster_name=$($KUBECTL --kubeconfig "${kubeconfig_file}" config view --minify=true | yq e '.clusters[].name' -)
     echo "$cluster_name"
 }
 

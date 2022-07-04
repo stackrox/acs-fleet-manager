@@ -29,6 +29,8 @@ if [[ -n "$OPENSHIFT_CI" ]]; then
     export GOARGS="-mod=mod"
 fi
 
+log
+
 if [[ -z "$OPENSHIFT_CI" ]]; then
     # Will be replaced with static auth.
     log "Refreshing OCM token (currently injected into fleetshard-sync)"
