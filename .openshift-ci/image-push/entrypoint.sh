@@ -17,7 +17,8 @@ if [[ -z "$FLEET_MANAGER_IMAGE" ]]; then
 fi
 
 registry_host=$(echo "$IMAGE_PUSH_REGISTRY" | cut -d / -f 1)
-tag=$(make -C "$GITROOT" tag)
+tag=$(make -s -C "$GITROOT" tag)
+
 if [[ "$tag" =~ dirty$ ]]; then
     die "Error: Repository is dirty, refusing to push dirty tag to registry."
 fi
