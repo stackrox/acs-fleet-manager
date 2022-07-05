@@ -16,22 +16,26 @@ sleep 1
 
 log "Next: Executing e2e tests"
 
-export STATIC_TOKEN="$FLEET_STATIC_TOKEN"
 FAIL=0
+T0=$(date "+%s")
 if ! make test/e2e; then
     FAIL=1
 fi
+T1=$(date "+%s")
+DELTA=$(($T1 - $T0))
 
 if [[ $FAIL == 0 ]]; then
     log
-    log "** E2E TESTS FINISHED SUCCESSFULLY **"
+    log "** E2E TESTS FINISHED SUCCESSFULLY ($DELTA seconds) **"
     log
 else
     log
-    log "** E2E TESTS FAILED **"
+    log "** E2E TESTS FAILED ($DELTA seconds) **"
     log
 fi
 
-down.sh
+if [[ "$FINAL_TEAR_DOWN" == "true" ]]; then
+    down.sh
+fi
 
 exit $FAIL

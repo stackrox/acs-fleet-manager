@@ -45,13 +45,9 @@ STATIC_TOKEN)
     # FLEET_STATIC_TOKEN is the name of the secret in Vault,
     # STATIC_TOKEN is the name expected by the application (when running directly),
     # hence we support both names here.
-    FLEET_MANAGER_STATIC_TOKEN=${FLEET_MANAGER_STATIC_TOKEN:-}
-    STATIC_TOKEN=${STATIC_TOKEN:-}
-
-    export FLEET_STATIC_TOKEN=${FLEET_STATIC_TOKEN:-$STATIC_TOKEN}
-    export FLEET_STATIC_TOKEN=${FLEET_STATIC_TOKEN:-$FLEET_MANAGER_STATIC_TOKEN}
-
-    if [[ -z "$FLEET_STATIC_TOKEN" ]]; then
+    FLEET_STATIC_TOKEN=${FLEET_STATIC_TOKEN:-}
+    export STATIC_TOKEN=${STATIC_TOKEN:-$FLEET_STATIC_TOKEN}
+    if [[ -z "$STATIC_TOKEN" ]]; then
         die "Error: No static token found in the environment.\nPlease set the environment variable STATIC_TOKEN to a valid static token."
     fi
     log "Found static token in the environment"
