@@ -243,8 +243,7 @@ components:
                     mas/placementId:
                       type: string
                 deletionTimestamp:
-                      type: string
-
+                  type: string
             spec:
               type: object
               properties:   
@@ -313,7 +312,8 @@ components:
                       properties:
                         host:
                           type: string
-
+            requestStatus:
+              type: string
     ManagedCentralList:
       description: >-
         A list of ManagedCentral

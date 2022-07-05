@@ -60,7 +60,8 @@ type ManagedDinosaur struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Id     string                `json:"id,omitempty"`
-	Spec   ManagedDinosaurSpec   `json:"spec,omitempty"`
-	Status ManagedDinosaurStatus `json:"status,omitempty"`
+	Id            string                `json:"id,omitempty"`
+	Spec          ManagedDinosaurSpec   `json:"spec,omitempty"`
+	Status        ManagedDinosaurStatus `json:"status,omitempty"`
+	RequestStatus string                `json:"requestStatus,omitempty"`
 }

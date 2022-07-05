@@ -3,9 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"strings"
 	"sync"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -833,7 +834,8 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfi
 				dinosaurRequest.Owner,
 			},
 		},
-		Status: manageddinosaur.ManagedDinosaurStatus{},
+		Status:        manageddinosaur.ManagedDinosaurStatus{},
+		RequestStatus: dinosaurRequest.Status,
 	}
 
 	if dinosaurConfig.EnableDinosaurExternalCertificate {

@@ -6,8 +6,10 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
+	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -125,16 +127,48 @@ func TestReconicleLastHashSetOnSuccess(t *testing.T) {
 		central: private.ManagedCentral{},
 	}
 
-	expectedHash, err := util.MD5SumFromJSONStruct(&simpleManagedCentral)
+	managedCentral := simpleManagedCentral
+	managedCentral.RequestStatus = centralConstants.DinosaurRequestStatusReady.String()
+
+	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)
 	require.NoError(t, err)
 
-	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
+	_, err = r.Reconcile(context.TODO(), managedCentral)
 	require.NoError(t, err)
 
 	assert.Equal(t, expectedHash, r.lastCentralHash)
 
-	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
+	_, err = r.Reconcile(context.TODO(), managedCentral)
 	require.ErrorIs(t, err, ErrTypeCentralNotChanged)
+}
+
+func TestIgnoreCacheForCentralNotReady(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        centralName,
+			Namespace:   centralName,
+			Annotations: map[string]string{revisionAnnotationKey: "3"},
+		},
+	}).Build()
+
+	r := CentralReconciler{
+		status:  pointer.Int32(0),
+		client:  fakeClient,
+		central: private.ManagedCentral{},
+	}
+
+	managedCentral := simpleManagedCentral
+	managedCentral.RequestStatus = centralConstants.DinosaurRequestStatusProvisioning.String()
+
+	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)
+	require.NoError(t, err)
+
+	_, err = r.Reconcile(context.TODO(), managedCentral)
+	require.NoError(t, err)
+	assert.Equal(t, expectedHash, r.lastCentralHash)
+
+	_, err = r.Reconcile(context.TODO(), managedCentral)
+	require.NoError(t, err)
 }
 
 func TestCentralChanged(t *testing.T) {

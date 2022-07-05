@@ -94,6 +94,7 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 				},
 			},
 		},
+		RequestStatus: from.RequestStatus,
 	}
 
 	if from.DeletionTimestamp != nil {

@@ -504,6 +504,8 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_metadata'
         spec:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec'
+        requestStatus:
+          type: string
     ManagedCentralList_allOf:
       example: '{"kind":"ManagedCentralList","items":{"$ref":"#/components/examples/ManagedCentralExample"}}'
       properties:
