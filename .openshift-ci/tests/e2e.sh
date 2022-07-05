@@ -132,4 +132,7 @@ else
     log
 fi
 
+# Just testing, this will be moved somewhere else.
+./.openshift-ci/image-push/entrypoint.sh
+
 exit $FAIL
