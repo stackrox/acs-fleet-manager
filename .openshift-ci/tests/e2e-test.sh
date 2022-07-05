@@ -9,7 +9,7 @@ up.sh
 log "Environment up and running"
 log "Waiting for fleet-manager to complete leader election..."
 # Don't have a better way yet to wait until fleet-manager has completed the leader election.
-$KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleet-manager -c fleet-manager -f |
+$KUBECTL -n "$ACSMS_NAMESPACE" logs -l application=fleet-manager -c fleet-manager -f |
     grep --line-buffered 'Running as the leader and starting' |
     head -1 >/dev/null || true
 sleep 1

@@ -5,14 +5,14 @@ metadata:
     kompose.cmd: kompose convert
     kompose.version: 1.26.1 (HEAD)
   labels:
-    io.kompose.service: fleet-manager
+    application: fleet-manager
   name: fleet-manager
   namespace: "$ACSMS_NAMESPACE"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      io.kompose.service: fleet-manager
+      application: fleet-manager
   strategy:
     type: Recreate
   template:
@@ -21,7 +21,7 @@ spec:
         kompose.cmd: kompose convert
         kompose.version: 1.26.1 (HEAD)
       labels:
-        io.kompose.service: fleet-manager
+        application: fleet-manager
     spec:
       initContainers:
         - name: db-migrate
@@ -61,4 +61,3 @@ spec:
         - name: config
           configMap:
             name: config
-status: {}
