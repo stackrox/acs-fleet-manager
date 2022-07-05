@@ -4,16 +4,15 @@ metadata:
   annotations:
     kompose.cmd: kompose convert
     kompose.version: 1.26.1 (HEAD)
-  creationTimestamp: null
   labels:
-    io.kompose.service: fleetshard-sync
+    application: fleetshard-sync
   name: fleetshard-sync
   namespace: "$ACSMS_NAMESPACE"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      io.kompose.service: fleetshard-sync
+      application: fleetshard-sync
   strategy:
     type: Recreate
   template:
@@ -22,7 +21,7 @@ spec:
         kompose.cmd: kompose convert
         kompose.version: 1.26.1 (HEAD)
       labels:
-        io.kompose.service: fleetshard-sync
+        application: fleetshard-sync
     spec:
       containers:
         - command:
@@ -69,4 +68,3 @@ spec:
         - name: config
           configMap:
             name: config
-status: {}

@@ -60,25 +60,25 @@ fi
 
 # Deploy database.
 apply "${MANIFESTS_DIR}/db"
-wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "io.kompose.service=db"
+wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=db"
 log "Database is ready."
 
 # Deploy MS components.
 apply "${MANIFESTS_DIR}/fleet-manager"
-wait_for_container_to_appear "$ACSMS_NAMESPACE" "io.kompose.service=fleet-manager" "db-migrate"
-wait_for_container_to_appear "$ACSMS_NAMESPACE" "io.kompose.service=fleet-manager" "fleet-manager"
+wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleet-manager" "db-migrate"
+wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleet-manager" "fleet-manager"
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
-    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
+    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l application=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
 fi
 
 apply "${MANIFESTS_DIR}/fleetshard-sync"
-wait_for_container_to_appear "$ACSMS_NAMESPACE" "io.kompose.service=fleetshard-sync" "fleetshard-sync"
+wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync"
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
-    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
+    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l application=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
 fi
 
 # Prerequisite for port-forwarding are pods in ready state.
-wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "io.kompose.service=fleet-manager"
+wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=fleet-manager"
 
 if [[ "$ENABLE_FM_PORT_FORWARDING" == "true" ]]; then
     port-forwarding start fleet-manager 8000 8000

@@ -4,25 +4,23 @@ metadata:
   annotations:
     kompose.cmd: kompose convert
     kompose.version: 1.26.1 (HEAD)
-  creationTimestamp: null
   labels:
-    io.kompose.service: db
+    application: db
   name: db
   namespace: "$ACSMS_NAMESPACE"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      io.kompose.service: db
+      application: db
   strategy: {}
   template:
     metadata:
       annotations:
         kompose.cmd: kompose convert
         kompose.version: 1.26.1 (HEAD)
-      creationTimestamp: null
       labels:
-        io.kompose.service: db
+        application: db
     spec:
       containers:
         - env:
@@ -65,4 +63,3 @@ spec:
             - containerPort: 5432
           resources: {}
       restartPolicy: Always
-status: {}

@@ -4,9 +4,8 @@ metadata:
   annotations:
     kompose.cmd: kompose convert
     kompose.version: 1.26.1 (HEAD)
-  creationTimestamp: null
   labels:
-    io.kompose.service: db
+    application: db
   name: db
   namespace: "$ACSMS_NAMESPACE"
 spec:
@@ -15,6 +14,6 @@ spec:
       port: 5432
       targetPort: 5432
   selector:
-    io.kompose.service: db
+    application: db
 status:
   loadBalancer: {}
