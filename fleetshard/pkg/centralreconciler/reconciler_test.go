@@ -161,7 +161,7 @@ func TestReconcileDelete(t *testing.T) {
 	deletedCentral := simpleManagedCentral
 	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
 
-	maxReconcileAttempts := 5
+	maxReconcileAttempts := 4 // Each resource deletion requires its own reconciliation attempt + an attempt for status return: Route + CR + namespace + 1 = min 4 attempts
 	attempt := 0
 	var status *private.DataPlaneCentralStatus
 	for attempt < maxReconcileAttempts && status == nil {
