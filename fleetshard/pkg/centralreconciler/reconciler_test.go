@@ -165,7 +165,6 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 
 	_, err = r.Reconcile(context.TODO(), managedCentral)
 	require.NoError(t, err)
-
 	assert.Equal(t, expectedHash, r.lastCentralHash)
 
 	_, err = r.Reconcile(context.TODO(), managedCentral)
