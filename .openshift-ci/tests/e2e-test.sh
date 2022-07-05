@@ -32,4 +32,6 @@ else
     log
 fi
 
+down.sh
+
 exit $FAIL

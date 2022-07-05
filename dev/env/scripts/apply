@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This script can apply Kubernetes manifests provided as parameters -- either individual files or directories with manifests.
+## This script can apply Kubernetes manifests provided as parameters -- either individual files or directories with manifests.
 
 export GITROOT="$(git rev-parse --show-toplevel)"
 source "${GITROOT}/dev/env/scripts/lib.sh"

@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+## This is the main entry point for OpenShift CI. This can also be executed locally against Minikube.
+## This script also takes care of OpenShift CI specific initialization
+## (e.g. injecting Vault secrets into the environment), spawning loggers, dumping logs at the end.
+
 export GITROOT="$(git rev-parse --show-toplevel)"
 source "${GITROOT}/dev/env/scripts/lib.sh"
 
@@ -130,14 +134,6 @@ else
     log
     log "** TESTS FAILED **"
     log
-fi
-
-if [[ "$ENABLE_FM_PORT_FORWARDING_DEFAULT" == "true" ]]; then
-    port-forwarding stop fleet-manager
-fi
-
-if [[ "$ENABLE_DB_PORT_FORWARDING_DEFAULT" == "true" ]]; then
-    port-forwarding stop db
 fi
 
 exit $FAIL
