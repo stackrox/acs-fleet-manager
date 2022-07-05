@@ -17,7 +17,7 @@ import (
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// TODO(create-ticket): Why is a central always created as a "eval" instance type?
+// TODO(ROX-11468): Why is a central always created as a "eval" instance type?
 var (
 	centralName = fmt.Sprintf("%s-%d", "e2e-test-central", time.Now().UnixMilli())
 )
@@ -26,7 +26,7 @@ const (
 	defaultPolling = 1 * time.Second
 )
 
-// TODO(create-ticket): Use correct OCM_TOKEN for different clients (console.redhat.com, fleetshard)
+// TODO(ROX-11465): Use correct OCM_TOKEN for different clients (console.redhat.com, fleetshard)
 var _ = Describe("Central", func() {
 	Describe("should be created and deployed to k8s", func() {
 		auth, err := fleetmanager.NewAuth("OCM")
@@ -76,9 +76,9 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
-		//TODO(create-ticket): Add test to eventually reach ready state
-		//TODO(create-ticket): create test to check that Central and Scanner are healthy
-		//TODO(create-ticket): Create test to check Central is correctly exposed
+		//TODO(ROX-11368): Add test to eventually reach ready state
+		//TODO(ROX-11368): create test to check that Central and Scanner are healthy
+		//TODO(ROX-11368): Create test to check Central is correctly exposed
 
 		It("should transition central to deprovisioning state", func() {
 			err = client.DeleteCentral(createdCentral.Id)
