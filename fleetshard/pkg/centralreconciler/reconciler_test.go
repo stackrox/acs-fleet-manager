@@ -155,15 +155,15 @@ func TestReconcileDelete(t *testing.T) {
 		useRoutes: true,
 	}
 
-	_, _ = r.Reconcile(context.TODO(), simpleManagedCentral)
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
 	// when
 	deletedCentral := simpleManagedCentral
 	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
 
-	maxReconcileAttempts := 10
+	maxReconcileAttempts := 5
 	attempt := 0
 	var status *private.DataPlaneCentralStatus
-	var err error
 	for attempt < maxReconcileAttempts && status == nil {
 		status, err = r.Reconcile(context.TODO(), deletedCentral)
 		attempt++
