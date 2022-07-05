@@ -527,6 +527,23 @@ objects:
     data:
       dataplane-cluster-configuration.yaml: |-
         clusters: ${CLUSTER_LIST}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: fleet-manager-fleetshard-authz-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      fleetshard-authz-org-ids.yaml: |-
+        # RH ACS Organization (returned for personal tokens obtained by ocm token).
+        - "11009103"
+        # RHACS Managed Service Org for staging (Entry `RHACS Managed Service Org for AWS Billing` in Bitwarden).
+        - "16064548"
+        # ACS RH SSO Org Prod
+        - "16134752"
+      fleetshard-authz-org-ids-prod.yaml: |-
+        # ACS RH SSO Org Prod
+        - "16134752"
   - kind: ServiceAccount
     apiVersion: v1
     metadata:
@@ -891,6 +908,9 @@ objects:
           - name: fleet-manager-dataplane-cluster-scaling-config
             configMap:
               name: fleet-manager-dataplane-cluster-scaling-config
+          - name: fleet-manager-fleetshard-authz-config
+            configMap:
+              name: fleet-manager-fleetshard-authz-config
           - name: envoy-config
             configMap:
               # Temporarily use a minimum version of the configmap deployed from this file
@@ -969,6 +989,12 @@ objects:
             - name: fleet-manager-authentication
               mountPath: /config/jwks-file-static.json
               subPath: jwks-file-static.json
+            - name: fleet-manager-fleetshard-authz-config
+              mountPath: /config/fleetshard-authz-org-ids.yaml
+              subPath: fleetshard-authz-org-ids.yaml
+            - name: fleet-manager-fleetshard-authz-config
+              mountPath: /config/fleetshard-authz-org-ids-prod.yaml
+              subPath: fleetshard-authz-org-ids-prod.yaml
             - name: fleet-manager-dataplane-cluster-scaling-config
               mountPath: /config/dataplane-cluster-configuration.yaml
               subPath: dataplane-cluster-configuration.yaml
