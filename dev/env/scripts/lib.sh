@@ -114,3 +114,36 @@ enable_debugging_if_necessary() {
         set -x
     fi
 }
+
+wait_for_container_to_appear() {
+    local namespace="$1"
+    local pod_selector="$2"
+    local container_name="$3"
+    local status=$($KUBECTL -n "$ACSMS_NAMESPACE" get pod -l "${pod_selector}" -o jsonpath="{.items[0].status.initContainerStatuses[?(@.name == '${container_name}')]} {.items[0].status.containerStatuses[?(@.name == '${container_name}')]}")
+    local state=$(echo "${status}" | jq -r ".state | keys[]")
+    log "Waiting for container ${container_name} within pod ${pod_selector} in namespace ${namespace} to appear..."
+    for i in $(seq 10); do
+        if [[ "$state" == "terminated" || "$state" == "running" ]]; then
+            echo "Container ${container_name} is in state ${state}"
+            break
+        fi
+        sleep 1
+    done
+}
+
+wait_for_container_to_become_ready() {
+    local namespace="$1"
+    local pod_selector="$2"
+
+    log "Waiting for pod ${pod_selector} within namespace ${namespace} to become ready..."
+
+    for i in $(seq 10); do
+        if $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l "$pod_selector" 2>/dev/null >&2; then
+            break
+        fi
+        sleep 1
+    done
+    $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=20s --for=condition=ready pod -l "$pod_selector"
+    sleep 1
+    log "Pod ${pod_selector} is ready."
+}

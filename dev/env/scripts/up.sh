@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+## This script takes care of deploying Managed Service components.
+
 export GITROOT="$(git rev-parse --show-toplevel)"
 source "${GITROOT}/dev/env/scripts/lib.sh"
 init
@@ -58,73 +60,31 @@ fi
 
 # Deploy database.
 apply "${MANIFESTS_DIR}/db"
-log "Waiting for database to become ready..."
-for i in $(seq 10); do
-    if $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l io.kompose.service=db 2>/dev/null >&2; then
-        break
-    else
-        sleep 1
-    fi
-done
-$KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l io.kompose.service=db
+wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "io.kompose.service=db"
 log "Database is ready."
 
 # Deploy MS components.
 apply "${MANIFESTS_DIR}/fleet-manager"
+wait_for_container_to_appear "$ACSMS_NAMESPACE" "io.kompose.service=fleet-manager" "db-migrate"
+wait_for_container_to_appear "$ACSMS_NAMESPACE" "io.kompose.service=fleet-manager" "fleet-manager"
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
-    log "Waiting for fleet-manager's init container to appear..."
-    for i in $(seq 5); do
-        state=$({
-            $KUBECTL -n "$ACSMS_NAMESPACE" get pod -l io.kompose.service=fleet-manager -o jsonpath='{.items[0].status.initContainerStatuses[0].state}'
-            echo '{}'
-        } |
-            jq -r 'keys[]')
-        if [[ "$state" == "terminated" || "$state" == "running" ]]; then
-            break
-        fi
-        sleep 1
-    done
     $KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
 fi
 
 apply "${MANIFESTS_DIR}/fleetshard-sync"
+wait_for_container_to_appear "$ACSMS_NAMESPACE" "io.kompose.service=fleetshard-sync" "fleetshard-sync"
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
-    log "Waiting for fleetshard-sync to appear..."
-    for i in $(seq 5); do
-        state=$({
-            $KUBECTL -n "$ACSMS_NAMESPACE" get pod -l io.kompose.service=fleetshard-sync -o jsonpath='{.items[0].status.containerStatuses[0].state}'
-            echo '{}'
-        } |
-            jq -r 'keys[]')
-        if [[ "$state" == "terminated" || "$state" == "running" ]]; then
-            break
-        fi
-        sleep 1
-    done
     $KUBECTL -n "$ACSMS_NAMESPACE" logs -l io.kompose.service=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
 fi
 
 # Prerequisite for port-forwarding are pods in ready state.
-log "Waiting for fleet-manager to become ready..."
-for i in $(seq 10); do
-    if $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l io.kompose.service=fleet-manager 2>/dev/null >&2; then
-        break
-    else
-        sleep 1
-    fi
-done
-log "fleet-manager is ready."
-
-$KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=120s --for=condition=ready pod -l io.kompose.service=fleet-manager
-sleep 1
+wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "io.kompose.service=fleet-manager"
 
 if [[ "$ENABLE_FM_PORT_FORWARDING" == "true" ]]; then
-    log "Setting up port-forwarding: fleet-manager is at http://localhost:8000"
     port-forwarding start fleet-manager 8000 8000
 fi
 
 if [[ "$ENABLE_DB_PORT_FORWARDING" == "true" ]]; then
-    log "Setting up port-forwarding: db is at localhost:5432"
     port-forwarding start db 5432 5432
 fi
 
