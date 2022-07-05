@@ -20,9 +20,9 @@ spec:
       serviceAccountName: fleetshard-sync
       containers:
       - name: fleetshard-sync
-        image: quay.io/app-sre/acs-fleet-manager:main
+        image: {{ .Values.fleetshardSync.image | quote }}
         imagePullPolicy: Always
-        command: 
+        command:
         - /usr/local/bin/fleetshard-sync
         env:
         - name: OCM_TOKEN

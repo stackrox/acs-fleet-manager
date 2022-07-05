@@ -31,6 +31,7 @@ helm template rhacs-terraform \
 ```bash
 helm upgrade --install rhacs-terraform \
   --namespace rhacs \
+  --create-namespace \
   --values ~/acs-terraform-values.yaml \
   --set fleetshardSync.ocmToken=$(ocm token --refresh) \
   --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
