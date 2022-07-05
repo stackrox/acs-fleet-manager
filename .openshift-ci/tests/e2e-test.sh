@@ -16,8 +16,7 @@ sleep 1
 
 log "Next: Executing e2e tests"
 
-export RUN_E2E=true
-
+export STATIC_TOKEN="$FLEET_STATIC_TOKEN"
 FAIL=0
 if ! make test/e2e; then
     FAIL=1
