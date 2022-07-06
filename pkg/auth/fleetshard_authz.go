@@ -46,7 +46,7 @@ func (c *FleetShardAuthZConfig) ReadFiles() error {
 func readFleetShardAuthZConfigFile(file string, val *AllowedOrgIDs) error {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
-
+		return err
 	}
 
 	return yaml.UnmarshalStrict([]byte(fileContents), val)
