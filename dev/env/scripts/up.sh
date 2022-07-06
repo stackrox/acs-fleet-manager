@@ -21,7 +21,7 @@ if [[ -z "$OPENSHIFT_CI" ]]; then
         # Local image reference, which cannot be pulled.
         if ! $DOCKER image inspect "${FLEET_MANAGER_IMAGE}" >/dev/null 2>&1; then
             # Attempt to build this image.
-            if [[ "$FLEET_MANAGER_IMAGE" == "$(make -C "${GITROOT}" image-tag)" ]]; then
+            if [[ "$FLEET_MANAGER_IMAGE" == "$(make -s -C "${GITROOT}" image-tag)" ]]; then
                 # Looks like we can build this tag from the current state of the repository.
                 log "Rebuilding image..."
                 make -C "${GITROOT}" image/build

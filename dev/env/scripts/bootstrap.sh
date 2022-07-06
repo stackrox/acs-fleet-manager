@@ -28,17 +28,18 @@ wait_for_default_service_account "$STACKROX_OPERATOR_NAMESPACE"
 
 inject_ips() {
     local namespace="$1"
-    local name="$2"
+    local service_account="$2"
+    local secret_name="$3"
 
     log "Patching ServiceAccount ${namespace}/default to use Quay.io imagePullSecrets"
-    $KUBECTL -n "$namespace" patch sa default -p "\"imagePullSecrets\": [{\"name\": \"${name}\" }]"
+    $KUBECTL -n "$namespace" patch sa "$service_account" -p "\"imagePullSecrets\": [{\"name\": \"${secret_name}\" }]"
 }
 
 # TODO: use a function.
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
     create-imagepullsecrets-interactive
-    inject_ips "$ACSMS_NAMESPACE" "quay-ips"
-    inject_ips "$STACKROX_OPERATOR_NAMESPACE" "quay-ips"
+    inject_ips "$ACSMS_NAMESPACE" "default" "quay-ips"
+    inject_ips "$STACKROX_OPERATOR_NAMESPACE" "default" "quay-ips"
 fi
 
 if [[ "$INSTALL_OPERATOR" == "true" ]]; then
@@ -52,8 +53,7 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
     fi
 
     if [[ "$OPERATOR_SOURCE" == "quay" && "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
-        echo "Patching ServiceAccount ${STACKROX_OPERATOR_NAMESPACE}/stackrox-operator-test-index to use imagePullSecrets"
-        $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" patch sa stackrox-operator-test-index -p '"imagePullSecrets": [{"name": "quay-ips" }]'
+        inject_ips "$STACKROX_OPERATOR_NAMESPACE" "stackrox-operator-test-index" "quay-ips"
     fi
 
     if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
@@ -84,18 +84,11 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
     fi
 
     if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
-        echo "Waiting for SA to appear..."
-        while true; do
-            $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get serviceaccount rhacs-operator-controller-manager >/dev/null 2>&1 && break
-            sleep 1
-        done
+        wait_for_resource_to_appear "$STACKROX_OPERATOR_NAMESPACE" "serviceaccount" "rhacs-operator-controller-manager"
+        inject_ips "$STACKROX_OPERATOR_NAMESPACE" "rhacs-operator-controller-manager" "quay-ips"
 
-        echo "Patching ServiceAccount rhacs-operator-controller-manager to use imagePullSecrets"
-        if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
-            $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" patch sa rhacs-operator-controller-manager -p '"imagePullSecrets": [{"name": "quay-ips" }]'
-        fi
-
-        sleep 2 # Wait for rhacs-operator pods to be created. Possibly the imagePullSecrets were not picked up yet, which is why we respawn them:
+        # Wait for rhacs-operator pods to be created. Possibly the imagePullSecrets were not picked up yet, which is why we respawn them:
+        sleep 2
         $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" delete pod -l app=rhacs-operator
     fi
 
