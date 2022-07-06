@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net/http"
 	"strconv"
 	"sync/atomic"
 
@@ -45,7 +44,6 @@ var ErrTypeCentralNotChanged = errors.New("central not changed, skipping reconci
 // in its Reconcile function.
 type CentralReconciler struct {
 	controllerClient   ctrlClient.Client
-	httpClient         http.Client
 	central            private.ManagedCentral
 	status             *int32
 	lastCentralHash    [16]byte
@@ -161,7 +159,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// 2. OR reconciler creator specified auth provider not to be created
 	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
 	if r.createAuthProvider && remoteCentral.RequestStatus != centralConstants.DinosaurRequestStatusReady.String() {
-		err = InitRHSSOAuthProvider(ctx, remoteCentral, r.controllerClient, &r.httpClient)
+		err = InitRHSSOAuthProvider(ctx, remoteCentral, r.controllerClient)
 		if err != nil {
 			return nil, err
 		} else {
@@ -369,16 +367,12 @@ func (r CentralReconciler) ensureReencryptRouteDeleted(ctx context.Context, name
 	return false, nil
 }
 
-func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, useRoutes bool) *CentralReconciler {
+func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, useRoutes, createAuthProvider bool) *CentralReconciler {
 	return &CentralReconciler{
-		controllerClient: k8sClient,
-		httpClient: http.Client{
-			// TODO: once certificates will be added, we probably will be able to replace with secure transport
-			Transport: insecureTransport,
-		},
+		controllerClient:   k8sClient,
 		central:            central,
 		status:             pointer.Int32(FreeStatus),
 		useRoutes:          useRoutes,
-		createAuthProvider: true,
+		createAuthProvider: createAuthProvider,
 	}
 }

@@ -10,6 +10,7 @@ fleetshardSync:
   ocmToken: ""
   fleetManagerEndpoint: ""
   clusterId: ""
+  createAuthProvider: true
   # Static token, only required in combination with authType=STATIC_TOKEN. A sample static token can be found
   # within Bitwarden (ACS Fleet* static token).
   staticToken: ""

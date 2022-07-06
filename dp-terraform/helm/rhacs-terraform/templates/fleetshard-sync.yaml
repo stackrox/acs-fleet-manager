@@ -31,6 +31,8 @@ spec:
           value: {{ .Values.fleetshardSync.fleetManagerEndpoint }}
         - name: CLUSTER_ID
           value: {{ .Values.fleetshardSync.clusterId }}
+        - name: CREATE_AUTH_PROVIDER
+          value: "{{ .Values.fleetshardSync.createAuthProvider }}"
         - name: AUTH_TYPE
           value: {{ .Values.fleetshardSync.authType }}
         - name: STATIC_TOKEN

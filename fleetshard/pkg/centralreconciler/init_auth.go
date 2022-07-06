@@ -3,6 +3,7 @@ package centralreconciler
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -21,8 +22,18 @@ const (
 	centralServiceName        = "central"
 )
 
+var (
+	insecureTransport *http.Transport
+)
+
+func init() {
+	insecureTransport = http.DefaultTransport.(*http.Transport).Clone()
+	// TODO: once certificates will be added, we probably will be able to replace with secure transport
+	insecureTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+}
+
 // InitRHSSOAuthProvider initialises sso.redhat.com auth provider in a deployed Central instance.
-func InitRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client, httpClient *http.Client) error {
+func InitRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) error {
 	// Acquire central admin password.
 	pass, err := acquireAdminPassword(ctx, central, client)
 	if err != nil {
@@ -30,7 +41,7 @@ func InitRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, 
 	}
 
 	// Acquire central address.
-	address, err := acquireServiceAddress(ctx, client, central)
+	address, err := acquireServiceAddress(ctx, central, client)
 
 	// Send POST request to Central.
 	authProviderRequest := createAuthProviderRequest(central)
@@ -45,6 +56,9 @@ func InitRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, 
 	req.Header.Set("Authorization", "Basic "+getAuthString(pass))
 	req = req.WithContext(ctx)
 
+	httpClient := http.Client{
+		Transport: insecureTransport,
+	}
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "sending new auth provider request to central")
@@ -80,7 +94,8 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 	return request
 }
 
-func acquireServiceAddress(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (string, error) {
+// TODO: ROX-11644: doesn't work when fleetshard-sync deployed outside of Central's cluster
+func acquireServiceAddress(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (string, error) {
 	service := &core.Service{}
 	err := client.Get(ctx,
 		ctrlClient.ObjectKey{Name: centralServiceName, Namespace: central.Metadata.Namespace},

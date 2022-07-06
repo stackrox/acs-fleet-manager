@@ -65,6 +65,7 @@ func (r *Runtime) Stop() {
 // Start starts the fleetshard runtime and schedules
 func (r *Runtime) Start() error {
 	glog.Infof("fleetshard runtime started")
+	glog.Infof("Auth provider initialisation enabled: %v", r.config.CreateAuthProvider)
 
 	routesAvailable := routesAvailable()
 
@@ -80,7 +81,7 @@ func (r *Runtime) Start() error {
 		glog.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Metadata.Name]; !ok {
-				r.reconcilers[central.Metadata.Name] = centralreconciler.NewCentralReconciler(r.k8sClient, central, routesAvailable)
+				r.reconcilers[central.Metadata.Name] = centralreconciler.NewCentralReconciler(r.k8sClient, central, routesAvailable, r.config.CreateAuthProvider)
 			}
 
 			reconciler := r.reconcilers[central.Metadata.Name]
