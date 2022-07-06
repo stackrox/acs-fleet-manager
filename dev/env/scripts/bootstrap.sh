@@ -26,16 +26,19 @@ wait_for_default_service_account "$ACSMS_NAMESPACE"
 apply "${MANIFESTS_DIR}/rhacs-operator/00-namespace.yaml"
 wait_for_default_service_account "$STACKROX_OPERATOR_NAMESPACE"
 
+inject_ips() {
+    local namespace="$1"
+    local name="$2"
+
+    log "Patching ServiceAccount ${namespace}/default to use Quay.io imagePullSecrets"
+    $KUBECTL -n "$namespace" patch sa default -p "\"imagePullSecrets\": [{\"name\": \"${name}\" }]"
+}
+
 # TODO: use a function.
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
     create-imagepullsecrets-interactive
-    log "Patching ServiceAccount ${ACSMS_NAMESPACE}/default to use Quay.io imagePullSecrets"
-    $KUBECTL -n "$ACSMS_NAMESPACE" patch sa default -p '"imagePullSecrets": [{"name": "quay-ips" }]'
-fi
-
-if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
-    echo "Patching ServiceAccount ${STACKROX_OPERATOR_NAMESPACE}/default to use imagePullSecrets"
-    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" patch sa default -p '"imagePullSecrets": [{"name": "quay-ips" }]'
+    inject_ips "$ACSMS_NAMESPACE" "quay-ips"
+    inject_ips "$STACKROX_OPERATOR_NAMESPACE" "quay-ips"
 fi
 
 if [[ "$INSTALL_OPERATOR" == "true" ]]; then
