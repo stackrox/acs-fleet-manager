@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
@@ -42,6 +41,9 @@ func InitRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, 
 
 	// Acquire central address.
 	address, err := acquireServiceAddress(ctx, central, client)
+	if err != nil {
+		return err
+	}
 
 	// Send POST request to Central.
 	authProviderRequest := createAuthProviderRequest(central)
@@ -53,7 +55,7 @@ func InitRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, 
 	if err != nil {
 		return errors.Wrap(err, "creating HTTP request to central")
 	}
-	req.Header.Set("Authorization", "Basic "+getAuthString(pass))
+	req.SetBasicAuth("admin", pass)
 	req = req.WithContext(ctx)
 
 	httpClient := http.Client{
@@ -70,10 +72,6 @@ func InitRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, 
 	}
 }
 
-func getAuthString(pass string) string {
-	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", "admin", pass)))
-}
-
 func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProvider {
 	request := &storage.AuthProvider{
 		// TODO: ROX-11619: change depending on whether environment is stage or not
@@ -88,7 +86,7 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 			"client_secret": central.Spec.Auth.ClientSecret,
 			"mode":          "post",
 		},
-		// TODO: remove once host is correctly specified
+		// TODO: for testing purposes only; remove once host is correctly specified in fleet-manager
 		ExtraUiEndpoints: []string{"localhost:8443"},
 	}
 	return request
