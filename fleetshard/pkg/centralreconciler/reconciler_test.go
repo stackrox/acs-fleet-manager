@@ -45,7 +45,7 @@ func TestReconcileCreate(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
 	r := CentralReconciler{
 		status:             pointer.Int32(0),
-		controllerClient:   fakeClient,
+		client:             fakeClient,
 		central:            private.ManagedCentral{},
 		useRoutes:          true,
 		createAuthProvider: false,
@@ -86,7 +86,7 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 
 	r := CentralReconciler{
 		status:             pointer.Int32(0),
-		controllerClient:   fakeClient,
+		client:             fakeClient,
 		central:            private.ManagedCentral{},
 		createAuthProvider: false,
 	}
@@ -114,7 +114,7 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 
 	r := CentralReconciler{
 		status:             pointer.Int32(0),
-		controllerClient:   fakeClient,
+		client:             fakeClient,
 		central:            private.ManagedCentral{},
 		createAuthProvider: false,
 	}
@@ -136,7 +136,7 @@ func TestReconicleLastHashSetOnSuccess(t *testing.T) {
 
 	r := CentralReconciler{
 		status:             pointer.Int32(0),
-		controllerClient:   fakeClient,
+		client:             fakeClient,
 		central:            private.ManagedCentral{},
 		createAuthProvider: false,
 	}
@@ -167,7 +167,7 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 
 	r := CentralReconciler{
 		status:             pointer.Int32(0),
-		controllerClient:   fakeClient,
+		client:             fakeClient,
 		central:            private.ManagedCentral{},
 		createAuthProvider: false,
 	}
@@ -267,7 +267,7 @@ func TestCentralChanged(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			reconciler := CentralReconciler{
 				status:             pointer.Int32(0),
-				controllerClient:   fakeClient,
+				client:             fakeClient,
 				central:            test.currentCentral,
 				createAuthProvider: false,
 			}
