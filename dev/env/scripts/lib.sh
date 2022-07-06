@@ -17,11 +17,24 @@ verify_environment() {
 
 get_current_cluster_name() {
     local kubeconfig_file="$1"
-    local cluster_name=$($KUBECTL --kubeconfig "${kubeconfig_file}" config view --minify=true | yq e '.clusters[].name' -)
+    local cluster_name=$($KUBECTL --kubeconfig "${kubeconfig_file}" config view --minify=true 2>/dev/null | yq e '.clusters[].name' -)
     echo "$cluster_name"
 }
 
+pre_init_env=$(env)
+
+dump_env() {
+    current_env=$(env)
+    diff -up <(echo "$pre_init_env") <(echo "$current_env") |
+        tail +4 |
+        grep '^+' |
+        sed -e 's/^\+//;' |
+        grep -v '\(_DEFAULT\|^_\)=' |
+        sort
+}
+
 init() {
+    export GITROOT=${GITROOT:-"$(git rev-parse --show-toplevel)"} # This makes it possible to execute init without having GITROOT initialized already.
     export DEBUG="${DEBUG:-false}"
     set -eu -o pipefail
     if [[ "$DEBUG" == "trace" ]]; then
