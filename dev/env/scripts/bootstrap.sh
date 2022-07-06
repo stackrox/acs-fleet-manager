@@ -21,24 +21,10 @@ fi
 
 # Create Namespaces.
 apply "${MANIFESTS_DIR}/shared"
-echo "Waiting for default service account to be created in namespace '${ACSMS_NAMESPACE}'"
-for i in $(seq 10); do
-    if $KUBECTL -n "$ACSMS_NAMESPACE" get sa default 2>/dev/null >&2; then
-        break
-    fi
-    sleep 1
-done
+wait_for_default_service_account "$ACSMS_NAMESPACE"
 
 apply "${MANIFESTS_DIR}/rhacs-operator/00-namespace.yaml"
-echo "Waiting for default service account to be created in namespace '${STACKROX_OPERATOR_NAMESPACE}'"
-for i in $(seq 10); do
-    if $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get sa default 2>/dev/null >&2; then
-        break
-    fi
-    sleep 1
-done
-
-sleep 1 # I have seen failures without an extra delay between the above check and the patching of ServiceAccounts.
+wait_for_default_service_account "$STACKROX_OPERATOR_NAMESPACE"
 
 # TODO: use a function.
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then

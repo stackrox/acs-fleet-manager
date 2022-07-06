@@ -148,3 +148,31 @@ wait_for_container_to_become_ready() {
     sleep 1
     log "Pod ${pod_selector} is ready."
 }
+
+wait_for_resource_to_appear() {
+    local namespace="$1"
+    local kind="$2"
+    local name="$3"
+
+    log "Waiting for ${kind}/${name} to be created in namespace ${namespace}"
+
+    for i in $(seq 10); do
+        if $KUBECTL -n "$namespace" get "$kind" "$name" 2>/dev/null >&2; then
+            return 0
+        fi
+        sleep 1
+    done
+
+    log "Giving up waiting for ${kind}/${name} in namespace ${namespace}"
+
+    return 1
+}
+
+wait_for_default_service_account() {
+    local namespace="$1"
+    if wait_for_resource_to_appear "$namespace" "serviceaccount" "default"; then
+        return 0
+    else
+        return 1
+    fi
+}
