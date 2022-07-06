@@ -6,7 +6,6 @@ init
 
 if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
     if ! minikube status >/dev/null; then
-        unset DEBUG
         minikube start --memory=5G \
             --cpus=4 \
             --apiserver-port=8443 \
