@@ -6,39 +6,39 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 )
 
-var _ KeycloakServiceBuilderSelector = &keycloakServiceBuilderSelector{}
-var _ KeycloakServiceBuilder = &keycloakServiceBuilder{}
-var _ ACSKeycloakServiceBuilderConfigurator = &keycloakBuilderConfigurator{}
+var _ IAMServiceBuilderSelector = &iamServiceBuilderSelector{}
+var _ IAMServiceBuilder = &iamServiceBuilder{}
+var _ ACSIAMServiceBuilderConfigurator = &iamBuilderConfigurator{}
 
-type KeycloakServiceBuilderSelector interface {
-	ForACS() ACSKeycloakServiceBuilderConfigurator
+type IAMServiceBuilderSelector interface {
+	ForACS() ACSIAMServiceBuilderConfigurator
 }
 
-type ACSKeycloakServiceBuilderConfigurator interface {
-	WithConfiguration(config *iam.IAMConfig) KeycloakServiceBuilder
+type ACSIAMServiceBuilderConfigurator interface {
+	WithConfiguration(config *iam.IAMConfig) IAMServiceBuilder
 }
 
-type KeycloakServiceBuilder interface {
-	WithRealmConfig(realmConfig *iam.IAMRealmConfig) KeycloakServiceBuilder
+type IAMServiceBuilder interface {
+	WithRealmConfig(realmConfig *iam.IAMRealmConfig) IAMServiceBuilder
 	Build() IAMService
 }
 
-type keycloakServiceBuilderSelector struct {
+type iamServiceBuilderSelector struct {
 }
 
-func (s *keycloakServiceBuilderSelector) ForACS() ACSKeycloakServiceBuilderConfigurator {
-	return &keycloakBuilderConfigurator{}
+func (s *iamServiceBuilderSelector) ForACS() ACSIAMServiceBuilderConfigurator {
+	return &iamBuilderConfigurator{}
 }
 
-type keycloakBuilderConfigurator struct{}
+type iamBuilderConfigurator struct{}
 
-func (k *keycloakBuilderConfigurator) WithConfiguration(config *iam.IAMConfig) KeycloakServiceBuilder {
-	return &keycloakServiceBuilder{
+func (k *iamBuilderConfigurator) WithConfiguration(config *iam.IAMConfig) IAMServiceBuilder {
+	return &iamServiceBuilder{
 		config: config,
 	}
 }
 
-type keycloakServiceBuilder struct {
+type iamServiceBuilder struct {
 	config      *iam.IAMConfig
 	realmConfig *iam.IAMRealmConfig
 }
@@ -46,11 +46,11 @@ type keycloakServiceBuilder struct {
 // Build returns an instance of IAMService ready to be used.
 // If a custom realm is configured (WithRealmConfig called), then always Keycloak provider is used
 // irrespective of the `builder.config.SelectSSOProvider` value
-func (builder *keycloakServiceBuilder) Build() IAMService {
+func (builder *iamServiceBuilder) Build() IAMService {
 	return build(builder.config, builder.realmConfig)
 }
 
-func (builder *keycloakServiceBuilder) WithRealmConfig(realmConfig *iam.IAMRealmConfig) KeycloakServiceBuilder {
+func (builder *iamServiceBuilder) WithRealmConfig(realmConfig *iam.IAMRealmConfig) IAMServiceBuilder {
 	builder.realmConfig = realmConfig
 	return builder
 }

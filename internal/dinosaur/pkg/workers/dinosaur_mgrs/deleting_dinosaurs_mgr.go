@@ -18,12 +18,12 @@ import (
 type DeletingDinosaurManager struct {
 	workers.BaseWorker
 	dinosaurService     services.DinosaurService
-	keycloakConfig      *iam.IAMConfig
+	iamConfig           *iam.IAMConfig
 	quotaServiceFactory services.QuotaServiceFactory
 }
 
 // NewDeletingDinosaurManager creates a new dinosaur manager
-func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, keycloakConfig *iam.IAMConfig, quotaServiceFactory services.QuotaServiceFactory) *DeletingDinosaurManager {
+func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, iamConfig *iam.IAMConfig, quotaServiceFactory services.QuotaServiceFactory) *DeletingDinosaurManager {
 	return &DeletingDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -31,7 +31,7 @@ func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, keyclo
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService:     dinosaurService,
-		keycloakConfig:      keycloakConfig,
+		iamConfig:           iamConfig,
 		quotaServiceFactory: quotaServiceFactory,
 	}
 }
