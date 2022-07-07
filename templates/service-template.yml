@@ -555,6 +555,7 @@ objects:
       aws.route53secretaccesskey: badger
       observability-config-access.token: badger
       image-pull.dockerconfigjson: badger
+      kubeconfig: badger
   - apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -854,6 +855,9 @@ objects:
           serviceAccount: fleet-manager
           serviceAccountName: fleet-manager
           volumes:
+          - name: fleet-manager-credentials
+            secret:
+              secretName: fleet-manager
           - name: rhsso-client-secret
             secret:
               secretName: fleet-manager-central-rhsso-client-secret
@@ -935,6 +939,8 @@ objects:
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
             imagePullPolicy: ${IMAGE_PULL_POLICY}
             volumeMounts:
+            - name: fleet-manager-credentials
+              mountPath: /secrets/fleet-manager-credentials
             - name: tls
               mountPath: /secrets/tls
             - name: rhsso-client-secret
@@ -1056,7 +1062,7 @@ objects:
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
             - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
             - --dataplane-cluster-config-file=${DATAPLANE_CLUSTER_CONFIG_FILE}
-            - --kubeconfig=/secrets/service/kubeconfig
+            - --kubeconfig=/secrets/fleet-manager-credentials/kubeconfig
             - --fleetshard-poll-interval=${FLEETSHARD_POLL_INTERVAL}
             - --fleetshard-resync-interval=${FLEETSHARD_RESYNC_INTERVAL}
             - --allow-evaluator-instance=${ALLOW_EVALUATOR_INSTANCE}
