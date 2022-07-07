@@ -555,7 +555,6 @@ objects:
       aws.route53secretaccesskey: badger
       observability-config-access.token: badger
       image-pull.dockerconfigjson: badger
-      kubeconfig: badger
   - apiVersion: v1
     kind: ConfigMap
     metadata:
