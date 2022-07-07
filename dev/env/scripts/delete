@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # This script deletes resources on a Kubernetes cluster. The resources to delete are derived from the Kubernetes manifests
 # provided as parameters; these can either be individual files or directories with manifests or a combination.
