@@ -152,12 +152,12 @@ wait_for_container_to_become_ready() {
     log "Waiting for pod ${pod_selector} within namespace ${namespace} to become ready..."
 
     for i in $(seq 10); do
-        if $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=5s --for=condition=ready pod -l "$pod_selector" 2>/dev/null >&2; then
+        if $KUBECTL -n "$namespace" wait --timeout=5s --for=condition=ready pod -l "$pod_selector" 2>/dev/null >&2; then
             break
         fi
         sleep 1
     done
-    $KUBECTL -n "$ACSMS_NAMESPACE" wait --timeout=20s --for=condition=ready pod -l "$pod_selector"
+    $KUBECTL -n "$namespace" wait --timeout=20s --for=condition=ready pod -l "$pod_selector"
     sleep 1
     log "Pod ${pod_selector} is ready."
 }

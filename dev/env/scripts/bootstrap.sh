@@ -92,8 +92,7 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
         $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" delete pod -l app=rhacs-operator
     fi
 
-    sleep 1
-    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" wait --timeout=120s --for=condition=ready pod -l app=rhacs-operator
+    wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "app=rhacs-operator"
 else
     # We will be running without RHACS operator, but at least install our CRDs.
     apply "${MANIFESTS_DIR}/crds"
