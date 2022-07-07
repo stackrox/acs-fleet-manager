@@ -157,7 +157,7 @@ wait_for_container_to_become_ready() {
         fi
         sleep 1
     done
-    $KUBECTL -n "$namespace" wait --timeout=20s --for=condition=ready pod -l "$pod_selector"
+    $KUBECTL -n "$namespace" wait --timeout=60s --for=condition=ready pod -l "$pod_selector"
     sleep 1
     log "Pod ${pod_selector} is ready."
 }
@@ -169,7 +169,7 @@ wait_for_resource_to_appear() {
 
     log "Waiting for ${kind}/${name} to be created in namespace ${namespace}"
 
-    for i in $(seq 10); do
+    for i in $(seq 60); do
         if $KUBECTL -n "$namespace" get "$kind" "$name" 2>/dev/null >&2; then
             return 0
         fi

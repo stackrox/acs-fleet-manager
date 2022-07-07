@@ -45,7 +45,10 @@ fi
 if [[ "$INSTALL_OPERATOR" == "true" ]]; then
     if [[ "$INSTALL_OLM" == "true" ]]; then
         # Setup OLM
-        operator-sdk olm install
+        if ! { operator-sdk olm status 2>&1 | grep -q "no existing installation found"; }; then
+            log "Installing OLM..."
+            operator-sdk olm install
+        fi
     fi
 
     if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
@@ -61,18 +64,11 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
         # otherwise the subscription will be in a failed state and not progress.
         # Looks like there is some race which causes the subscription to still fail right after
         # operatorhubio catalog is ready, which is why an additional delay has been added.
-        $KUBECTL -n olm wait --timeout=120s --for=condition=ready pod -l olm.catalogSource=operatorhubio-catalog
+        wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "olm.catalogSource=stackrox-operator-test-index"
         echo "Waiting for CatalogSource to include rhacs-operator..."
         while true; do
             $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get packagemanifests.packages.operators.coreos.com -o json |
                 jq -r '.items[].metadata.name' | grep -q '^rhacs-operator$' && break
-            sleep 1
-        done
-
-        echo "Waiting for CatalogSource to include bundles from operatorhubio-catalog..."
-        while true; do
-            $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get packagemanifests.packages.operators.coreos.com -o json |
-                jq -r '.items[].metadata.labels.catalog' | grep -q '^operatorhubio-catalog$' && break
             sleep 1
         done
     fi
