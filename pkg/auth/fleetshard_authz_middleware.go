@@ -27,7 +27,7 @@ func checkAllowedOrgIDs(allowedOrgIDs AllowedOrgIDs) mux.MiddlewareFunc {
 			if err != nil {
 				// Deliberately return 404 here so that it will appear as the endpoint doesn't exist if requests are
 				// not authorised. Otherwise, we would leak information about existing cluster IDs, since the path
-				// of the request is /agent-cluster/<id>.
+				// of the request is /agent-clusters/<id>.
 				shared.HandleError(request, writer, errors.NotFound(""))
 				return
 			}

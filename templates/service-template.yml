@@ -534,13 +534,15 @@ objects:
       annotations:
         qontract.recycle: "true"
     data:
-      fleetshard-authz-org-ids.yaml: |-
+      fleetshard-authz-org-ids-development.yaml: |-
         # RH ACS Organization (returned for personal tokens obtained by ocm token).
         - "11009103"
         # RHACS Managed Service Org for staging (Entry `RHACS Managed Service Org for AWS Billing` in Bitwarden).
         - "16064548"
         # ACS RH SSO Org Prod
         - "16134752"
+        # org_id for the static token
+        - "12345678"
       fleetshard-authz-org-ids-prod.yaml: |-
         # ACS RH SSO Org Prod
         - "16134752"
@@ -990,8 +992,8 @@ objects:
               mountPath: /config/jwks-file-static.json
               subPath: jwks-file-static.json
             - name: fleet-manager-fleetshard-authz-config
-              mountPath: /config/fleetshard-authz-org-ids.yaml
-              subPath: fleetshard-authz-org-ids.yaml
+              mountPath: /config/fleetshard-authz-org-ids-development.yaml
+              subPath: fleetshard-authz-org-ids-development.yaml
             - name: fleet-manager-fleetshard-authz-config
               mountPath: /config/fleetshard-authz-org-ids-prod.yaml
               subPath: fleetshard-authz-org-ids-prod.yaml

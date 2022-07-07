@@ -14,7 +14,7 @@ var (
 	alternateTenantUsernameClaim string = "preferred_username"
 	tenantUserIdClaim            string = "account_id"
 	tenantSubClaim               string = "sub"
-	// Service accounts will have this claim **iff** they are dynamically created.
+	// Only service accounts that have been created via the service_accounts API have this claim set.
 	alternateTenantIdClaim string = "rh-org-id"
 )
 

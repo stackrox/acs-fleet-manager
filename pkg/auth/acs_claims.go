@@ -24,10 +24,8 @@ func (c *ACSClaims) GetUsername() (string, error) {
 }
 
 func (c *ACSClaims) GetAccountId() (string, error) {
-	if (*c)[tenantUserIdClaim] != nil {
-		if accountId, ok := (*c)[tenantUserIdClaim].(string); ok {
-			return accountId, nil
-		}
+	if accountId, ok := (*c)[tenantUserIdClaim].(string); ok {
+		return accountId, nil
 	}
 	return "", fmt.Errorf("can't find %q attribute in claims", tenantUserIdClaim)
 }
@@ -45,20 +43,14 @@ func (c *ACSClaims) GetOrgId() (string, error) {
 }
 
 func (c *ACSClaims) GetUserId() (string, error) {
-	if (*c)[tenantSubClaim] != nil {
-		if sub, ok := (*c)[tenantSubClaim].(string); ok {
-			return sub, nil
-		}
+	if sub, ok := (*c)[tenantSubClaim].(string); ok {
+		return sub, nil
 	}
 
 	return "", fmt.Errorf("can't find %q attribute in claims", tenantSubClaim)
 }
 
 func (c *ACSClaims) IsOrgAdmin() bool {
-	if (*c)[tenantOrgAdminClaim] != nil {
-		if isOrgAdmin, ok := (*c)[tenantOrgAdminClaim].(bool); ok {
-			return isOrgAdmin
-		}
-	}
-	return false
+	isOrgAdmin, _ := (*c)[tenantOrgAdminClaim].(bool)
+	return isOrgAdmin
 }
