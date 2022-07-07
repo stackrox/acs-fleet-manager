@@ -216,7 +216,6 @@ help:
 	@echo "make image/push                  push docker image"
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make secrets/touch               touch all required secret files"
-	@echo "make osd/setup                   setup OSD SSO clientId, clientSecret & crt"
 	@echo "make dinosaurcert/setup          setup the dinosaur TLS certificate used for Managed Dinosaur Service"
 	@echo "make observatorium/setup         setup observatorium secrets used by CI"
 	@echo "make observatorium/token-refresher/setup" setup a local observatorium token refresher
@@ -514,8 +513,6 @@ secrets/touch:
           secrets/ocm-service.clientId \
           secrets/ocm-service.clientSecret \
           secrets/ocm-service.token \
-          secrets/osd-idp-keycloak-service.clientId \
-          secrets/osd-idp-keycloak-service.clientSecret \
           secrets/rhsso-logs.clientId \
           secrets/rhsso-logs.clientSecret \
           secrets/rhsso-metrics.clientId \
@@ -533,12 +530,6 @@ aws/setup:
 	@echo -n "$(ROUTE53_ACCESS_KEY)" > secrets/aws.route53accesskey
 	@echo -n "$(ROUTE53_SECRET_ACCESS_KEY)" > secrets/aws.route53secretaccesskey
 .PHONY: aws/setup
-
-# Setup for osd sso credentials
-osd/setup:
-	@echo -n "$(OSD_IDP_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
-	@echo -n "$(OSD_IDP_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
-.PHONY:osd/setup
 
 redhatsso/setup:
 	@echo -n "$(SSO_CLIENT_ID)" > secrets/redhatsso-service.clientId
@@ -621,8 +612,6 @@ deploy/secrets:
 		-p ROUTE53_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53secretaccesskey' ] && [ -z '${ROUTE53_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.route53secretaccesskey || echo '${ROUTE53_SECRET_ACCESS_KEY}')" \
 		-p SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${SSO_CLIENT_ID}')" \
 		-p SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${SSO_CLIENT_SECRET}')" \
-		-p OSD_IDP_SSO_CLIENT_ID="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientId' ] && [ -z '${OSD_IDP_SSO_CLIENT_ID}' ]) && cat ./secrets/osd-idp-keycloak-service.clientId || echo '${OSD_IDP_SSO_CLIENT_ID}')" \
-		-p OSD_IDP_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientSecret' ] && [ -z '${OSD_IDP_SSO_CLIENT_SECRET}' ]) && cat ./secrets/osd-idp-keycloak-service.clientSecret || echo '${OSD_IDP_SSO_CLIENT_SECRET}')" \
 		-p DINOSAUR_TLS_CERT="$(shell ([ -s './secrets/dinosaur-tls.crt' ] && [ -z '${DINOSAUR_TLS_CERT}' ]) && cat ./secrets/dinosaur-tls.crt || echo '${DINOSAUR_TLS_CERT}')" \
 		-p DINOSAUR_TLS_KEY="$(shell ([ -s './secrets/dinosaur-tls.key' ] && [ -z '${DINOSAUR_TLS_KEY}' ]) && cat ./secrets/dinosaur-tls.key || echo '${DINOSAUR_TLS_KEY}')" \
 		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
@@ -657,7 +646,6 @@ deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
 deploy/service: SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy/service: SSO_REALM ?= "rhoas"
 deploy/service: MAX_LIMIT_FOR_SSO_GET_CLIENTS ?= "100"
-deploy/service: OSD_IDP_SSO_REALM ?= "rhoas-dinosaur-sre"
 deploy/service: TOKEN_ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
 deploy/service: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
 deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
@@ -692,7 +680,6 @@ deploy/service: deploy/envoy deploy/route
 		-p SSO_BASE_URL="$(SSO_BASE_URL)" \
 		-p SSO_REALM="$(SSO_REALM)" \
 		-p MAX_LIMIT_FOR_SSO_GET_CLIENTS="${MAX_LIMIT_FOR_SSO_GET_CLIENTS}" \
-		-p OSD_IDP_SSO_REALM="$(OSD_IDP_SSO_REALM)" \
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
 		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
 		-p OBSERVATORIUM_RHSSO_GATEWAY="${OBSERVATORIUM_RHSSO_GATEWAY}" \

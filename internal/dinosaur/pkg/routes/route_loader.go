@@ -211,7 +211,10 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		http.MethodPatch:  {auth.FleetManagerAdminWriteRole, auth.FleetManagerAdminFullRole},
 		http.MethodDelete: {auth.FleetManagerAdminFullRole},
 	}
-	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.IAM.GetConfig().OSDClusterIDPRealm.ValidIssuerURI}, errors.ErrorNotFound))
+
+	// TODO(ROX-11683): For now using RH SSO issuer for the admin API, but needs to be re-visited within this ticket.
+	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
+		[]string{s.IAM.GetConfig().RedhatSSORealm.ValidIssuerURI}, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
 	adminRouter.HandleFunc("/dinosaurs", adminDinosaurHandler.List).

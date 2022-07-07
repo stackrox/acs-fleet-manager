@@ -56,13 +56,13 @@ func (builder *keycloakServiceBuilder) WithRealmConfig(realmConfig *iam.IAMRealm
 	return builder
 }
 
-func build(keycloakConfig *iam.IAMConfig, realmConfig *iam.IAMRealmConfig) IAMService {
+func build(iamConfig *iam.IAMConfig, realmConfig *iam.IAMRealmConfig) IAMService {
 	notNilPredicate := func(x interface{}) bool {
 		return x.(*iam.IAMRealmConfig) != nil
 	}
 
-	_, newRealmConfig := arrays.FindFirst(notNilPredicate, realmConfig, keycloakConfig.RedhatSSORealm)
-	client := redhatsso.NewSSOClient(keycloakConfig, newRealmConfig.(*iam.IAMRealmConfig))
+	_, newRealmConfig := arrays.FindFirst(notNilPredicate, realmConfig, iamConfig.RedhatSSORealm)
+	client := redhatsso.NewSSOClient(iamConfig, newRealmConfig.(*iam.IAMRealmConfig))
 	return &keycloakServiceProxy{
 		accessTokenProvider: client,
 		service: &redhatssoService{

@@ -254,11 +254,6 @@ parameters:
   displayName: SSO REALM for Dinosaur SSO Clients and Service Accounts
   description: SSO realm for Dinosaur SSO Clients and Service Accounts
 
-- name: OSD_IDP_SSO_REALM
-  displayName: SSO REALM for OSD Cluster Identity Provider Clients
-  description: SSO realm for OSD Cluster Identity Provider Clients
-  value: "interim-test-realm"
-
 - name: CLUSTER_OPENSHIFT_VERSION
   displayName: The version of openshift
   description: The version of openshift to be deployed on a new created OSD cluster
@@ -549,8 +544,6 @@ objects:
       aws.secretaccesskey: badger
       redhatsso-service.clientId: badger
       redhatsso-service.clientSecret: badger
-      osd-idp-keycloak-service.clientId: badger
-      osd-idp-keycloak-service.clientSecret: badger
       aws.route53accesskey: badger
       aws.route53secretaccesskey: badger
       observability-config-access.token: badger
@@ -1028,9 +1021,6 @@ objects:
             - --ocm-client-secret-file=/secrets/service/ocm-service.clientSecret
             - --sso-base-url=${SSO_BASE_URL}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
-            - --osd-idp-sso-realm=${OSD_IDP_SSO_REALM}
-            - --osd-idp-sso-client-id-file=/secrets/service/osd-idp-keycloak-service.clientId
-            - --osd-idp-sso-client-secret-file=/secrets/service/osd-idp-keycloak-service.clientSecret
             - --sso-debug=${SSO_DEBUG}
             - --self-token-file=/secrets/service/ocm-service.token
             - --ocm-base-url=${OCM_URL}
