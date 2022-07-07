@@ -24,9 +24,6 @@ type IAMService interface {
 	GetRealmConfig() *iam.IAMRealmConfig
 	RegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError)
 	DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError
-	GetAcsClientSecret(clientId string) (string, *errors.ServiceError)
-	CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError)
-	DeleteServiceAccountInternal(clientId string) *errors.ServiceError
 }
 
 func NewIAMService(config *iam.IAMConfig) IAMService {

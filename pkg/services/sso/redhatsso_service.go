@@ -64,53 +64,6 @@ func (r *redhatssoService) DeRegisterAcsFleetshardOperatorServiceAccount(agentCl
 	return nil
 }
 
-func (r *redhatssoService) GetAcsClientSecret(clientId string) (string, *errors.ServiceError) {
-	accessToken, tokenErr := r.getToken()
-	if tokenErr != nil {
-		return "", tokenErr
-	}
-
-	serviceAccount, found, err := r.client.GetServiceAccount(accessToken, clientId)
-	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
-	}
-	if !found {
-		//if client is found re-generate the client secret.
-		svcData, seErr := r.client.RegenerateClientSecret(accessToken, shared.SafeString(serviceAccount.Id))
-		if seErr != nil {
-			return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
-		}
-		return shared.SafeString(svcData.Secret), nil
-	}
-
-	return *serviceAccount.Secret, nil
-}
-
-func (r *redhatssoService) CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
-	accessToken, tokenErr := r.getToken()
-	if tokenErr != nil {
-		return nil, tokenErr
-	}
-
-	svcData, err := r.client.CreateServiceAccount(accessToken, request.ClientId, request.Description)
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorFailedToCreateServiceAccount, err, "failed to create service account")
-	}
-	return convertServiceAccountDataToAPIServiceAccount(&svcData), nil
-}
-func (r *redhatssoService) DeleteServiceAccountInternal(clientId string) *errors.ServiceError {
-	accessToken, tokenErr := r.getToken()
-	if tokenErr != nil {
-		return tokenErr
-	}
-
-	err := r.client.DeleteServiceAccount(accessToken, clientId)
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", clientId)
-	}
-	return nil
-}
-
 func (r *redhatssoService) getToken() (string, *errors.ServiceError) {
 	accessToken, err := r.client.GetToken()
 	if err != nil {
