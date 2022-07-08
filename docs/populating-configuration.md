@@ -82,7 +82,7 @@ quotas for users in Fleet Manager:
 
 To select the type of quota to be used by Fleet Manager set the `--quota-type`
 which accepts either `ams` or `quota-management-list`Fleet Manager binary CLI
-flag. 
+flag.
 
 ## Setup AWS configuration
 Fleet Manager interacts with AWS to provide the following functionalities:

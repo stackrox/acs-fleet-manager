@@ -71,7 +71,7 @@ docker run -it \
    -v /path/to/your/token:/rhsso-token/ \
    quay.io/rhoas/mk-token-refresher:latest \
    --oidc.client-id=<rhsso-client-id> --oidc.client-secret=<rhsso-client-secret> \
-   --oidc.issuer-url=https://sso.redhat.com/auth/realms/redhat-external --margin=1m --file=/rhsso-token/token   
+   --oidc.issuer-url=https://sso.redhat.com/auth/realms/redhat-external --margin=1m --file=/rhsso-token/token  
 $ AUTH_TYPE=RHSSO RHSSO_TOKEN_FILE=/path/to/token/token ./fleetshard-sync
 ```
 

@@ -27,9 +27,9 @@ func newVersionMetrics(dinosaurService services.DinosaurService) *versionsMetric
 		dinosaurService: dinosaurService,
 		dinosaurOperatorVersion: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "dinosaur_operator_version",
-			Help: `Reports the version of Dinosaur Operator in terms of seconds since the epoch. 
+			Help: `Reports the version of Dinosaur Operator in terms of seconds since the epoch.
 The type 'actual' is the Dinosaur Operator version that is reported by fleetshard.
-The type 'desired' is the desired Dinosaur Operator version that is set in the fleet-manager. 
+The type 'desired' is the desired Dinosaur Operator version that is set in the fleet-manager.
 If the type is 'upgrade' it means the Dinosaur Operator is being upgraded.
 `,
 		}, []string{"cluster_id", "dinosaur_id", "type", "version"}),
@@ -37,7 +37,7 @@ If the type is 'upgrade' it means the Dinosaur Operator is being upgraded.
 			Name: "dinosaur_version",
 			Help: `Reports the version of Dinosaur in terms of seconds since the epoch.
 The type 'actual' is the Dinosaur version that is reported by fleetshard.
-The type 'desired' is the desired Dinosaur version that is set in the fleet-manager. 
+The type 'desired' is the desired Dinosaur version that is set in the fleet-manager.
 If the type is 'upgrade' it means the Dinosaur is being upgraded.
 `,
 		}, []string{"cluster_id", "dinosaur_id", "type", "version"}),

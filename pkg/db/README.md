@@ -29,7 +29,7 @@ Migration IDs must be descending. If you create a migration, submit an MR, and a
 
 ### Models in Migrations
 
-Represent modesl inline with migrations to represent the evolution of the object over time. 
+Represent modesl inline with migrations to represent the evolution of the object over time.
 
 For example, it is necessary to add a boolean field "hidden" to the "Account" model. This is how you would represent the account model in that migration:
 ```golang

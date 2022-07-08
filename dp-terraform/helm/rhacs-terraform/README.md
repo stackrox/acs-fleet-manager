@@ -11,7 +11,7 @@ To get the cluster id for staging look for `cluster_id` in `dev/config/dataplane
 
 **Create values file**
 
-Create a file `~/acs-terraform-values.yaml` with the values for the parameters in [values.yaml](./values.yaml) that are missing or that you want to override. That file will contain credentials, so make sure you put it in a safe location, and with suitable permissions. 
+Create a file `~/acs-terraform-values.yaml` with the values for the parameters in [values.yaml](./values.yaml) that are missing or that you want to override. That file will contain credentials, so make sure you put it in a safe location, and with suitable permissions.
 
 **Render the chart to see the generated templates during development**
 

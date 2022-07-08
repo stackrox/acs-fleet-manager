@@ -2,7 +2,7 @@
 
 ## Usage
 
-Create a file `~/acs-terraform-obs-values.yaml` with the values for the parameters in [values.yaml](./values.yaml) that are missing or that you want to override. That file will contain credentials, so make sure you put it in a safe location, and with suitable permissions. 
+Create a file `~/acs-terraform-obs-values.yaml` with the values for the parameters in [values.yaml](./values.yaml) that are missing or that you want to override. That file will contain credentials, so make sure you put it in a safe location, and with suitable permissions.
 
 **Render the chart to see the generated templates during development**
 

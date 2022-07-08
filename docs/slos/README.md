@@ -35,7 +35,7 @@ Alerts are based on rules which provide the logic for when an alert fires. There
 **Error rate** is the ratio of error events to total events. This value can be used to provide the alerting threshold.
 **Error budget** is the number of allowed error events as per defined SLO (for example an SLO of 99% means an error budget of 1% of total events over the time period). This value can be used to decide on the length of alert window.
 
-A burn rate is a measure of how fast the service would consume the error budget relative to the SLO. For example: 
+A burn rate is a measure of how fast the service would consume the error budget relative to the SLO. For example:
 With an SLO of 99% over a time period of 30 days, a constant 1% error rate uses exactly all of the error budget giving a burn rate of 1.
 
 The alerts for this template follow a multi-window, multi-burn-rate structure. This is to ensure all significant error rates are alerted while also reducing the number of false positives. The section [Multiwindow, Multi-Burn-Rate Alerts](https://sre.google/workbook/alerting-on-slos/#:~:text=6%3A%20Multiwindow%2C%20Multi-Burn-Rate%20Alerts) of Site Reliability Workbook provides a detailed breakdown of this approach.

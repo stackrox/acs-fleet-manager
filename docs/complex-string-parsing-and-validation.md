@@ -42,7 +42,7 @@ for s.Next() {
 The state machine is the most important component of the parser and is used to know what is the valid next token we should receive according to the current position.
 To understand how it works, let's start with a very simple example:
 
-    We need to validate a simple statement describing a multiplication or a division. In the case of the division, 
+    We need to validate a simple statement describing a multiplication or a division. In the case of the division,
     the dividend can't be 0.
     Valid statements:
         10x50
@@ -83,7 +83,7 @@ Let’s try to validate the division example "50/2"
 
 | CURRENT STATE | RECEIVED TOKEN | NEW STATE     |
 |---------------|----------------|---------------|
-| START         | 50             | FIRST_OPERAND | 
+| START         | 50             | FIRST_OPERAND |
 | FIRST_OPERAND | /              | DIV           |
 | DIV           | 2              | DIVIDEND      |
 | DIVIDEND      | EOF            | END           |
@@ -114,12 +114,12 @@ Let’s validate an incomplete statement: "50/"
 The DIV state doesn’t have a transition to END, so an error is returned
 
 ### The `StateMachineBuilder`
-Configuring the statemachine can be boring and error prone. 
+Configuring the statemachine can be boring and error prone.
 To make the code more readable the `StateMachineBuilder` and `Grammar` couple have been created.
 The `Grammar` simply defines the tokens that composes our language and the valid transitions between each token.
 
 #### Example
-Let’s keep on with the previous example. 
+Let’s keep on with the previous example.
 
 Tokens:
 * `FIRST_OPERAND=[0-9]+` - Match one or more digit
@@ -168,7 +168,7 @@ The QueryParser is the topmost object and hides all the configuration needed to 
 It does the following:
 * Creates a `Grammar` able to parse and validate our SQL subset
 * Uses the Grammar and the StateMachineBuilder to create the StateMachine
-* Passes an `onNewToken` handler to the builder to perform custom operations (limit the maximum number of joins, 
+* Passes an `onNewToken` handler to the builder to perform custom operations (limit the maximum number of joins,
   constraint the column names to a specified set of column names, etc)
 
 By using the parser, parsing and validating our SQL subset becomes a one liner:

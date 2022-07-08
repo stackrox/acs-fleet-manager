@@ -1,7 +1,7 @@
 name: Dispatch OpenAPI File Change event
 on:
   push:
-    branches: 
+    branches:
       - main
     paths:
       - "openapi/*.yaml"

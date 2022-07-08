@@ -45,7 +45,7 @@ export PATH="${jenkins_go117}/bin:${PATH}:${GOPATH}/bin"
 LINK="${GOPATH}/src/github.com/stackrox/acs-fleet-manager"
 
 # print go version
-go version  
+go version
 
 mkdir -p "$(dirname "${LINK}")"
 ln -sf "${PWD}" "${LINK}"

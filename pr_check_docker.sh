@@ -14,7 +14,7 @@ export LOGLEVEL="1"
 export TEST_SUMMARY_FORMAT="standard-verbose"
 
 # cd /fleet-manager/src/github.com/stackrox/acs-fleet-manager
-# ls -la 
+# ls -la
 # go version
 
 # start postgres

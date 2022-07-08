@@ -23,7 +23,7 @@ Feature flags can also expect a string value. In this case, it should follow the
 Any sub-configuration flags that needs to be specified if a feature is enabled should also follow the general flag naming convention.
 
 ## Adding a New Flag
-Flags are defined within a configuration file located in the *pkg/config/* directory. 
+Flags are defined within a configuration file located in the *pkg/config/* directory.
 
 Flags should assign its value to a property within a config struct or a variable within the configuration file.
 
@@ -48,14 +48,14 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 ### Adding a New Config File
 If the new configuration flag doesn't fit in any of the existing config file, a new one should be created.
 
-1. Create a new config file with a filename format of `<feature>.go` under the *internal/<resource>/config/* directory (e.g. `internal/dinosaur/pkg/config/`).  (See [dinosaur.go](../internal/dinosaur/pkg/config/dinosaur.go) as an example) 
+1. Create a new config file with a filename format of `<feature>.go` under the *internal/<resource>/config/* directory (e.g. `internal/dinosaur/pkg/config/`).  (See [dinosaur.go](../internal/dinosaur/pkg/config/dinosaur.go) as an example)
 2. Define any new flags in the `AddFlags()` function.
 3. New config file has to implement `ConfigModule` interface and to be added into the `CoreConfigProviders()` function inside the [core providers file](../pkg/providers/core.go) or any more appropriate internal folder, e.g. [dinosaur providers](../internal/dinosaur/providers.go) (see `ConfigProviders()` function)
 
 ### Verify Addition of New Flags
-Flags defined in configuration files in *pkg/config/* are added to the Fleet Manager **serve** command. 
+Flags defined in configuration files in *pkg/config/* are added to the Fleet Manager **serve** command.
 
-To verify that a new flag has been successfully added, run the following commands. 
+To verify that a new flag has been successfully added, run the following commands.
 
 ```bash
     make binary
@@ -64,7 +64,7 @@ To verify that a new flag has been successfully added, run the following command
 
 This will list all of the available flags that can be specified with the **serve** command. Any new flags should be listed here.
 
-Once values are set, these configurations will be available in the overall Application Config so that these values can be accessed within the code. 
+Once values are set, these configurations will be available in the overall Application Config so that these values can be accessed within the code.
 
 Example:
 ```go
@@ -88,7 +88,7 @@ Any new feature flags should be documented [here](./feature-flags.md). Any sub-c
 
 Any flags that should no longer be used but cannot be removed at the current time should be marked as `deprecated`. A note should be added as to the reason why it is deprecated as well as stating what alternatives can be used if there is one.
 
-Any flags that will be removed at a later point in time should have its lifecycle information documented. 
+Any flags that will be removed at a later point in time should have its lifecycle information documented.
 
 For example:
 

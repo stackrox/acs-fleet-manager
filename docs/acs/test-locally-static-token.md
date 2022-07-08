@@ -9,7 +9,7 @@ It's additionally also used within the fleetshard synchronizer for developing wi
 
 If you simply want to use the token, you can find a non-expiring static token within Bitwarden (`ACS Fleet* static token`).
 
-In case you want to change the static token, follow the steps below (you can skip optional steps if you do not want to 
+In case you want to change the static token, follow the steps below (you can skip optional steps if you do not want to
 re-create the JWKS files. You will find the JWKS files in Bitwarden `ACS Fleet* Static token JWKS`):
 
 1. (optional): You have to create JSON web keypair. For simplicity, you can use [mkjwk.org](http://mkjwk.org/) to generate the keypair.

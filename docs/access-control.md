@@ -1,7 +1,7 @@
-# Access Control 
+# Access Control
 ## Deny List Configurations
 
-Users can be denied access to the service explicitly by adding their usernames in 
+Users can be denied access to the service explicitly by adding their usernames in
 [the list of denied users](../config/deny-list-configuration.yaml).
 
 The username is the account in question.

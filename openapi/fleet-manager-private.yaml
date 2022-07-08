@@ -246,7 +246,7 @@ components:
                   type: string
             spec:
               type: object
-              properties:   
+              properties:
                 owners:
                   type: array
                   items:
@@ -506,9 +506,9 @@ components:
                   memory: 100Mi
                 limtis:
                   cpu: 500m
-                  memory: 2500Mi             
+                  memory: 2500Mi
           db:
-            host: dbhost.rhacs-psql-instance 
+            host: dbhost.rhacs-psql-instance
     DataPlaneCentralStatusRequestExample:
       value:
         conditions:
