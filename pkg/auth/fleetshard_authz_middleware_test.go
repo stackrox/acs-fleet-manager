@@ -92,8 +92,6 @@ func TestUseFleetShardAuthorizationMiddleware(t *testing.T) {
 }
 
 func TestUseFleetShardAuthorizationMiddleware_NoTokenSet(t *testing.T) {
-	const validIssuer = "http://localhost"
-
 	var allowedOrgIds = AllowedOrgIDs{"123", "345"}
 
 	// Create the router but leave out the handler setting the context token.
@@ -101,8 +99,11 @@ func TestUseFleetShardAuthorizationMiddleware_NoTokenSet(t *testing.T) {
 	route.HandleFunc("", func(writer http.ResponseWriter, request *http.Request) {
 		shared.WriteJSONResponse(writer, http.StatusOK, "")
 	}).Methods(http.MethodGet)
+	route.Use(func(handler http.Handler) http.Handler {
+		return setContextToken(handler, nil)
+	})
 
-	UseFleetShardAuthorizationMiddleware(route, validIssuer, &FleetShardAuthZConfig{AllowedOrgIDs: allowedOrgIds})
+	route.Use(checkAllowedOrgIDs(allowedOrgIds))
 
 	req := httptest.NewRequest("GET", "http://example.com/agent-clusters/1234", nil)
 	recorder := httptest.NewRecorder()
