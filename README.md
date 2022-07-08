@@ -19,7 +19,7 @@ Context: We want to fix the e2e flow in parallel across many engineers quickly, 
 The repository offers git hooks to run lints and checks locally before committing changes. Under the hood this uses
 [pre-commit](https://pre-commit.com/) plugins.
 
-To install the git hooks, run the following: 
+To install the git hooks, run the following:
 ```shell
 $ make setup/git/hooks
 ```
@@ -27,6 +27,7 @@ $ make setup/git/hooks
 Currently, the following plugins are enabled:
 - [detect-secrets](https://github.com/Yelp/detect-secrets): detect secrets to avoid accidentially commit them.
 - [golangci-lint](https://github.com/golangci/golangci-lint): run golangci-lint for changed go files.
+- [trailing-whitespace](https://github.com/pre-commit/pre-commit-hooks#trailing-whitespace): detect trailing whitespaces.
 
 
 **Troubleshooting:**
@@ -44,7 +45,7 @@ $ detect-secrets scan > .secrets.baseline
 $ detect-secrets audit .secrets.baseline
 
 # Afterwards, make sure you commit the updated .secrets.baseline file and the plugin should not return any errors
-# anymore! 
+# anymore!
 ```
 
 ### Rough map
@@ -80,7 +81,7 @@ make db/login
   \dt                        # List tables in postgresql database
   select * from migrations;  # Run a query to view the migrations
   quit
-  
+
 # By default web (no TLS) at localhost:8000, metrics at localhost:8080, healthcheck (no TLS) at localhost:8083
 ./fleet-manager serve
 
@@ -129,18 +130,18 @@ kubectl -n olm get pods -w  # Verify installation of OLM
 
 # Fleet Manager Golang Template
 
-This project is an example fleet management service. Fleet managers govern service 
-instances across a range of cloud provider infrastructure and regions. They are 
-responsible for service placement, service lifecycle including blast radius aware 
-upgrades,control of the operators handling each service instance, DNS management, 
-infrastructure scaling and pre-flight checks such as quota entitlement, export control, 
-terms acceptance and authorization. They also provide the public APIs of our platform 
+This project is an example fleet management service. Fleet managers govern service
+instances across a range of cloud provider infrastructure and regions. They are
+responsible for service placement, service lifecycle including blast radius aware
+upgrades,control of the operators handling each service instance, DNS management,
+infrastructure scaling and pre-flight checks such as quota entitlement, export control,
+terms acceptance and authorization. They also provide the public APIs of our platform
 for provisioning and managing service instances.
 
 
 To help you while reading the code the example service implements a simple collection
-of _dinosaurs_ and their provisioning, so you can immediately know when something is 
-infrastructure or business logic. Anything that talks about dinosaurs is business logic, 
+of _dinosaurs_ and their provisioning, so you can immediately know when something is
+infrastructure or business logic. Anything that talks about dinosaurs is business logic,
 which you will want to replace with your our concepts. The rest is infrastructure, and you
 will probably want to preserve without change.
 
@@ -156,8 +157,8 @@ To contact the people that created this template go to [zulip](https://bf2.zulip
 * [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 
 ## Using the template for the first time
-The [implementation](./docs/implementation.md) talks about the main components of this template. 
-To bootstrap your application, after cloning the repository. 
+The [implementation](./docs/implementation.md) talks about the main components of this template.
+To bootstrap your application, after cloning the repository.
 
 1. Replace _dinosaurs_ placeholder with your own business entity / objects
 1. Implement code that have TODO comments
@@ -202,7 +203,7 @@ make binary
     This will start the Fleet Manager server and it will expose its API on
     port 8000 by default
 
-    >**NOTE**: The service has numerous feature flags which can be used to enable/disable certain features 
+    >**NOTE**: The service has numerous feature flags which can be used to enable/disable certain features
     of the service. Please see the [feature flag](./docs/feature-flags.md) documentation for more information.
 1. Verify the local service is working
     ```
@@ -272,9 +273,9 @@ Manager binary command or Makefile target
 
 ### Running the fleet manager with an OSD cluster form infractl
 
-Write a Cloud provider configuration file that matches the cloud provider and region used for the cluster, see `dev/config/provider-configuration-infractl-osd.yaml` for an example OSD cluster running in GCP. See the cluster creation logs in https://infra.rox.systems/cluster/YOUR_CLUSTER to locate the provider and region. See `internal/dinosaur/pkg/services/cloud_providers.go` for the provider constant. 
+Write a Cloud provider configuration file that matches the cloud provider and region used for the cluster, see `dev/config/provider-configuration-infractl-osd.yaml` for an example OSD cluster running in GCP. See the cluster creation logs in https://infra.rox.systems/cluster/YOUR_CLUSTER to locate the provider and region. See `internal/dinosaur/pkg/services/cloud_providers.go` for the provider constant.
 
-Enable a cluster configuration file for the OSD cluster, see `dev/config/dataplane-cluster-configuration-infractl-osd.yaml` for an example OSD cluster running in GCP. Again, see the cluster creation logs for possibly missing required fields. 
+Enable a cluster configuration file for the OSD cluster, see `dev/config/dataplane-cluster-configuration-infractl-osd.yaml` for an example OSD cluster running in GCP. Again, see the cluster creation logs for possibly missing required fields.
 
 Download the kubeconfig for the cluster. Without this the fleet manager will refuse to use the cluster.
 
