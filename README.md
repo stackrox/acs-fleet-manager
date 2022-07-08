@@ -28,6 +28,7 @@ Currently, the following plugins are enabled:
 - [detect-secrets](https://github.com/Yelp/detect-secrets): detect secrets to avoid accidentially commit them.
 - [golangci-lint](https://github.com/golangci/golangci-lint): run golangci-lint for changed go files.
 - [trailing-whitespace](https://github.com/pre-commit/pre-commit-hooks#trailing-whitespace): detect trailing whitespaces.
+- [end-of-file-fixer](https://github.com/pre-commit/pre-commit-hooks#end-of-file-fixer): ensure files end in a newline.
 
 
 **Troubleshooting:**
