@@ -10,7 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -210,7 +210,7 @@ func (m *mockFleetshardSync) reconcileDinosaurClusters() {
 
 // Returns an authenticated context to be used for calling the data plane endpoints
 func NewAuthenticatedContextForDataPlaneCluster(h *coreTest.Helper, clusterID string) context.Context {
-	var keycloakConfig *keycloak.KeycloakConfig
+	var keycloakConfig *iam.IAMConfig
 	h.Env.MustResolveAll(&keycloakConfig)
 
 	account := h.NewAllowedServiceAccount()

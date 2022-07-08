@@ -7,7 +7,7 @@ import (
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"io/ioutil"
 	"net/http"
@@ -26,8 +26,8 @@ const (
 //go:generate moq -out client_moq.go . SSOClient
 type SSOClient interface {
 	GetToken() (string, error)
-	GetConfig() *keycloak.KeycloakConfig
-	GetRealmConfig() *keycloak.KeycloakRealmConfig
+	GetConfig() *iam.IAMConfig
+	GetRealmConfig() *iam.IAMRealmConfig
 	GetServiceAccounts(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error)
 	GetServiceAccount(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error)
 	CreateServiceAccount(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error)
@@ -36,7 +36,7 @@ type SSOClient interface {
 	RegenerateClientSecret(accessToken string, id string) (serviceaccountsclient.ServiceAccountData, error)
 }
 
-func NewSSOClient(config *keycloak.KeycloakConfig, realmConfig *keycloak.KeycloakRealmConfig) SSOClient {
+func NewSSOClient(config *iam.IAMConfig, realmConfig *iam.IAMRealmConfig) SSOClient {
 	return &rhSSOClient{
 		config:      config,
 		realmConfig: realmConfig,
@@ -56,8 +56,8 @@ func NewSSOClient(config *keycloak.KeycloakConfig, realmConfig *keycloak.Keycloa
 var _ SSOClient = &rhSSOClient{}
 
 type rhSSOClient struct {
-	config        *keycloak.KeycloakConfig
-	realmConfig   *keycloak.KeycloakRealmConfig
+	config        *iam.IAMConfig
+	realmConfig   *iam.IAMRealmConfig
 	configuration *serviceaccountsclient.Configuration
 	cache         *cache.Cache
 }
@@ -144,11 +144,11 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	return tokenData.AccessToken, nil
 }
 
-func (c *rhSSOClient) GetConfig() *keycloak.KeycloakConfig {
+func (c *rhSSOClient) GetConfig() *iam.IAMConfig {
 	return c.config
 }
 
-func (c *rhSSOClient) GetRealmConfig() *keycloak.KeycloakRealmConfig {
+func (c *rhSSOClient) GetRealmConfig() *iam.IAMRealmConfig {
 	return c.realmConfig
 }
 

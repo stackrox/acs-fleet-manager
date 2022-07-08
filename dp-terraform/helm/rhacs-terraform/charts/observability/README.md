@@ -18,6 +18,7 @@ helm template rhacs-terraform-obs \
 ```bash
 helm upgrade --install rhacs-terraform-obs \
   --namespace rhacs \
+  --create-namespace \
   --values ~/acs-terraform-obs-values.yaml .
 ```
 

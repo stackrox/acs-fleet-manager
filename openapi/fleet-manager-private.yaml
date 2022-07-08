@@ -243,8 +243,7 @@ components:
                     mas/placementId:
                       type: string
                 deletionTimestamp:
-                      type: string
-
+                  type: string
             spec:
               type: object
               properties:   
@@ -252,6 +251,17 @@ components:
                   type: array
                   items:
                     type: string
+                auth:
+                  type: object
+                  properties:
+                    clientSecret:
+                      type: string
+                    clientId:
+                      type: string
+                    ownerUserId:
+                      type: string
+                    ownerOrgId:
+                      type: string
                 endpoint:
                   type: object
                   properties:
@@ -301,7 +311,8 @@ components:
                       properties:
                         host:
                           type: string
-
+            requestStatus:
+              type: string
     ManagedCentralList:
       description: >-
         A list of ManagedCentral
@@ -461,6 +472,11 @@ components:
           owners: [
             "central-owner1"
           ]
+          auth:
+            clientSecret: ""
+            clientId: "client-id"
+            ownerUserId: "f:ac4bcdb5-1fb1-41c5-9323-349698b9b757:username"
+            orgId: "13442309"
           endpoint:
             host: "example-central--rfpsqbvq-em-u-u-z--ymjcwac.example.central.com"
             tls:

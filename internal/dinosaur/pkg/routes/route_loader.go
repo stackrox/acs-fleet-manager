@@ -42,7 +42,7 @@ type options struct {
 	Dinosaur                 services.DinosaurService
 	CloudProviders           services.CloudProvidersService
 	Observatorium            services.ObservatoriumService
-	Keycloak                 sso.KeycloakService
+	IAM                      sso.IAMService
 	DataPlaneCluster         services.DataPlaneClusterService
 	DataPlaneDinosaurService services.DataPlaneDinosaurService
 	AccountService           account.AccountService
@@ -81,7 +81,8 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
-	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.ServerConfig.TokenIssuerURL}, errors.ErrorUnauthenticated)
+	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(
+		append(s.IAM.GetConfig().AdditionalSSOIssuers.URIs, s.ServerConfig.TokenIssuerURL), errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMSClient, errors.ErrorTermsNotAccepted)
 
 	// base path.
@@ -147,7 +148,9 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1MetricsFederateRouter.HandleFunc("", metricsHandler.FederateMetrics).
 		Name(logger.NewLogEvent("get-federate-metrics", "get federate metrics by id").ToString()).
 		Methods(http.MethodGet)
-	apiV1MetricsFederateRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.ServerConfig.TokenIssuerURL, s.Keycloak.GetConfig().RedhatSSORealm.ValidIssuerURI}, errors.ErrorUnauthenticated))
+	apiV1MetricsFederateRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
+		append(s.IAM.GetConfig().AdditionalSSOIssuers.URIs, s.ServerConfig.TokenIssuerURL,
+			s.IAM.GetConfig().RedhatSSORealm.ValidIssuerURI), errors.ErrorUnauthenticated))
 	apiV1MetricsFederateRouter.Use(requireOrgID)
 	apiV1MetricsFederateRouter.Use(authorizeMiddleware)
 
@@ -199,7 +202,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		Methods(http.MethodGet)
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	// TODO(create-ticket): We need to authn/authz requests to the internal API.
-	// auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, s.Keycloak.GetConfig().DinosaurRealm.ValidIssuerURI, "id")
+	// auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, s.IAM.GetConfig().DinosaurRealm.ValidIssuerURI, "id")
 
 	adminDinosaurHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
@@ -208,7 +211,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		http.MethodPatch:  {auth.FleetManagerAdminWriteRole, auth.FleetManagerAdminFullRole},
 		http.MethodDelete: {auth.FleetManagerAdminFullRole},
 	}
-	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.Keycloak.GetConfig().OSDClusterIDPRealm.ValidIssuerURI}, errors.ErrorNotFound))
+	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.IAM.GetConfig().OSDClusterIDPRealm.ValidIssuerURI}, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
 	adminRouter.HandleFunc("/dinosaurs", adminDinosaurHandler.List).

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 
 	"github.com/goava/di"
@@ -43,7 +43,7 @@ var _ Server = &ApiServer{}
 type ServerOptions struct {
 	di.Inject
 	ServerConfig    *ServerConfig
-	KeycloakConfig  *keycloak.KeycloakConfig
+	KeycloakConfig  *iam.IAMConfig
 	SentryConfig    *sentry.Config
 	RouteLoaders    []environments.RouteLoader
 	Env             *environments.Env

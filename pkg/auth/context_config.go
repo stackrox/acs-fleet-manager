@@ -13,6 +13,7 @@ var (
 	// sso.redhat.com token claim keys
 	alternateTenantUsernameClaim string = "preferred_username"
 	tenantUserIdClaim            string = "account_id"
+	tenantSubClaim               string = "sub"
 )
 
 type ContextConfig struct {

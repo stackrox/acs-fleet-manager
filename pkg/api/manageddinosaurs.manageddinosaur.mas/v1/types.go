@@ -41,7 +41,15 @@ type EndpointSpec struct {
 	Tls  *TlsSpec `json:"tls,omitempty"`
 }
 
+type AuthSpec struct {
+	ClientSecret string `json:"clientSecret,omitempty"`
+	ClientId     string `json:"clientId,omitempty"`
+	OwnerUserId  string `json:"ownerUserId,omitempty"`
+	OwnerOrgId   string `json:"ownerOrgId,omitempty"`
+}
+
 type ManagedDinosaurSpec struct {
+	Auth     AuthSpec     `json:"auth"`
 	Endpoint EndpointSpec `json:"endpoint"`
 	Versions VersionsSpec `json:"versions"`
 	Deleted  bool         `json:"deleted"`
@@ -52,7 +60,8 @@ type ManagedDinosaur struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Id     string                `json:"id,omitempty"`
-	Spec   ManagedDinosaurSpec   `json:"spec,omitempty"`
-	Status ManagedDinosaurStatus `json:"status,omitempty"`
+	Id            string                `json:"id,omitempty"`
+	Spec          ManagedDinosaurSpec   `json:"spec,omitempty"`
+	Status        ManagedDinosaurStatus `json:"status,omitempty"`
+	RequestStatus string                `json:"requestStatus,omitempty"`
 }

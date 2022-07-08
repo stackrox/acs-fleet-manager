@@ -6,7 +6,7 @@ import (
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
@@ -18,12 +18,12 @@ import (
 type DeletingDinosaurManager struct {
 	workers.BaseWorker
 	dinosaurService     services.DinosaurService
-	keycloakConfig      *keycloak.KeycloakConfig
+	keycloakConfig      *iam.IAMConfig
 	quotaServiceFactory services.QuotaServiceFactory
 }
 
 // NewDeletingDinosaurManager creates a new dinosaur manager
-func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, keycloakConfig *keycloak.KeycloakConfig, quotaServiceFactory services.QuotaServiceFactory) *DeletingDinosaurManager {
+func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, keycloakConfig *iam.IAMConfig, quotaServiceFactory services.QuotaServiceFactory) *DeletingDinosaurManager {
 	return &DeletingDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),

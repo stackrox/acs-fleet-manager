@@ -4,6 +4,8 @@ set -oe pipefail
 SCRIPT="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "${BASH_SOURCE[0]}")"
 DIRNAME=$(dirname "$SCRIPT")
 
+make secrets/touch
+
 set +e
 $(docker ps | grep -q fleet-manager-db)
 setup_db_container=$?

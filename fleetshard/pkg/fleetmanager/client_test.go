@@ -8,9 +8,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 )
+
+type noAuth struct{}
+
+func (n noAuth) AddAuth(_ *http.Request) error {
+	return nil
+}
 
 func TestClientGetManagedCentralList(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -22,10 +27,7 @@ func TestClientGetManagedCentralList(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	err := os.Setenv("OCM_TOKEN", "token")
-	require.NoError(t, err)
-
-	client, err := NewClient(ts.URL, "cluster-id")
+	client, err := NewClient(ts.URL, "cluster-id", &noAuth{})
 	require.NoError(t, err)
 
 	result, err := client.GetManagedCentralList()
@@ -46,10 +48,7 @@ func TestClientReturnsError(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	err := os.Setenv("OCM_TOKEN", "token")
-	require.NoError(t, err)
-
-	client, err := NewClient(ts.URL, "cluster-id")
+	client, err := NewClient(ts.URL, "cluster-id", &noAuth{})
 	require.NoError(t, err)
 
 	_, err = client.GetManagedCentralList()
@@ -63,10 +62,7 @@ func TestClientUpdateStatus(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	err := os.Setenv("OCM_TOKEN", "token")
-	require.NoError(t, err)
-
-	client, err := NewClient(ts.URL, "cluster-id")
+	client, err := NewClient(ts.URL, "cluster-id", &noAuth{})
 	require.NoError(t, err)
 
 	statuses := map[string]private.DataPlaneCentralStatus{}

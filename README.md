@@ -283,6 +283,7 @@ reachable at `localhost` (host system).
 In principle `fleetshard-sync` will be able to spawned using a command similar to the following:
 
 ```
+OCM_TOKEN=$(ocm token --refresh)
 docker run -it -e OCM_TOKEN --rm -p 8000:8000 \
    --entrypoint /usr/local/bin/fleetshard-sync \
    -v "$(git rev-parse --show-toplevel)/config":/config \

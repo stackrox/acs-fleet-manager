@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
@@ -15,12 +15,12 @@ import (
 type ReadyDinosaurManager struct {
 	workers.BaseWorker
 	dinosaurService services.DinosaurService
-	keycloakService sso.KeycloakService
-	keycloakConfig  *keycloak.KeycloakConfig
+	iamService      sso.IAMService
+	keycloakConfig  *iam.IAMConfig
 }
 
 // NewReadyDinosaurManager creates a new dinosaur manager
-func NewReadyDinosaurManager(dinosaurService services.DinosaurService, keycloakService sso.KeycloakService, keycloakConfig *keycloak.KeycloakConfig) *ReadyDinosaurManager {
+func NewReadyDinosaurManager(dinosaurService services.DinosaurService, iamService sso.IAMService, keycloakConfig *iam.IAMConfig) *ReadyDinosaurManager {
 	return &ReadyDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -28,7 +28,7 @@ func NewReadyDinosaurManager(dinosaurService services.DinosaurService, keycloakS
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService: dinosaurService,
-		keycloakService: keycloakService,
+		iamService:      iamService,
 		keycloakConfig:  keycloakConfig,
 	}
 }

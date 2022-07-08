@@ -11,7 +11,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"io"
 	"net/http"
-	"os"
 )
 
 const (
@@ -24,21 +23,14 @@ const (
 // Client represents the REST client for connecting to fleet-manager
 type Client struct {
 	client                http.Client
-	ocmToken              string
+	auth                  Auth
 	clusterID             string
 	fleetshardAPIEndpoint string
 	consoleAPIEndpoint    string
 }
 
 // NewClient creates a new client
-func NewClient(endpoint string, clusterID string) (*Client, error) {
-	//TODO(create-ticket): Add authentication SSO
-	//TODO(create-ticket): Different auth tokens for fleetshard and console API
-	ocmToken := os.Getenv("OCM_TOKEN")
-	if ocmToken == "" {
-		return nil, errors.New("empty ocm token")
-	}
-
+func NewClient(endpoint string, clusterID string, auth Auth) (*Client, error) {
 	if clusterID == "" {
 		return nil, errors.New("cluster id is empty")
 	}
@@ -50,7 +42,7 @@ func NewClient(endpoint string, clusterID string) (*Client, error) {
 	return &Client{
 		client:                http.Client{},
 		clusterID:             clusterID,
-		ocmToken:              ocmToken,
+		auth:                  auth,
 		fleetshardAPIEndpoint: fmt.Sprintf("%s/%s/%s/%s", endpoint, uri, clusterID, "centrals"),
 		consoleAPIEndpoint:    fmt.Sprintf("%s/%s", endpoint, publicCentralURI),
 	}, nil
@@ -127,13 +119,29 @@ func (c *Client) GetCentral(id string) (*public.CentralRequest, error) {
 	return central, nil
 }
 
+// DeleteCentral deletes a central from the public fleet-manager API
+func (c *Client) DeleteCentral(id string) error {
+	resp, err := c.newRequest(http.MethodDelete, fmt.Sprintf("%s/%s?async=true", c.consoleAPIEndpoint, id), nil)
+	if err != nil {
+		return err
+	}
+
+	err = c.unmarshalResponse(resp, nil)
+	if err != nil {
+		return errors.Wrapf(err, "deleting central %s", id)
+	}
+	return nil
+}
+
 func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Response, error) {
 	glog.Infof("Send request to %s", url)
 	r, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
-	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.ocmToken))
+	if err := c.auth.AddAuth(r); err != nil {
+		return nil, err
+	}
 
 	resp, err := c.client.Do(r)
 	if err != nil {

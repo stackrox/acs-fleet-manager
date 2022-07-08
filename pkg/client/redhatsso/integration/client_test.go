@@ -4,16 +4,16 @@ import (
 	"fmt"
 	. "github.com/onsi/gomega"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/keycloak"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
 	"testing"
 )
 
 func getClient(baseURL string) redhatsso.SSOClient {
-	config := keycloak.KeycloakConfig{
+	config := iam.IAMConfig{
 		SsoBaseUrl: baseURL,
-		RedhatSSORealm: &keycloak.KeycloakRealmConfig{
+		RedhatSSORealm: &iam.IAMRealmConfig{
 			Realm:            "redhat-external",
 			APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", baseURL),
 			TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", baseURL),
@@ -182,9 +182,9 @@ func Test_SSOClient_GetToken(t *testing.T) {
 
 	defer server.Stop()
 
-	config := keycloak.KeycloakConfig{
+	config := iam.IAMConfig{
 		SsoBaseUrl: server.BaseURL(),
-		RedhatSSORealm: &keycloak.KeycloakRealmConfig{
+		RedhatSSORealm: &iam.IAMRealmConfig{
 			Realm:            "redhat-external",
 			APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 			TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),

@@ -39,6 +39,12 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 		},
 		Spec: private.ManagedCentralAllOfSpec{
 			Owners: from.Spec.Owners,
+			Auth: private.ManagedCentralAllOfSpecAuth{
+				ClientSecret: from.Spec.Auth.ClientSecret,
+				ClientId:     from.Spec.Auth.ClientId,
+				OwnerUserId:  from.Spec.Auth.OwnerUserId,
+				OwnerOrgId:   from.Spec.Auth.OwnerOrgId,
+			},
 			Endpoint: private.ManagedCentralAllOfSpecEndpoint{
 				Host: from.Spec.Endpoint.Host,
 				Tls: private.ManagedCentralAllOfSpecEndpointTls{
@@ -88,6 +94,7 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 				},
 			},
 		},
+		RequestStatus: from.RequestStatus,
 	}
 
 	if from.DeletionTimestamp != nil {

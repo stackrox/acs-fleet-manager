@@ -3,13 +3,27 @@
 # Declare variables to be passed into your templates.
 
 fleetshardSync:
+  image: "quay.io/app-sre/acs-fleet-manager:main"
+  # Can be either OCM, RHSSO, STATIC_TOKEN. When choosing RHSSO, make sure the clientId/secret is set. By default, uses OCM.
+  authType: "OCM"
+  # OCM refresh token, only required in combination with authType=OCM.
   ocmToken: ""
   fleetManagerEndpoint: ""
   clusterId: ""
+  # Static token, only required in combination with authType=STATIC_TOKEN. A sample static token can be found
+  # within Bitwarden (ACS Fleet* static token).
+  staticToken: ""
+  # Red Hat SSO secrets, only required in combination with authType=RHSSO. The client credentials can be found within
+  # Bitwarden (ACS RH SSO Fleet* serviceaccount).
   redHatSSO:
     clientId: ""
     clientSecret: ""
-  
+  # Will be created when the auth type RHSSO is used. It will handle obtaining access tokens and storing those within a
+  # shared volume of token-refresher and fleetshard-sync.
+  tokenRefresher:
+    image: "quay.io/rhoas/mk-token-refresher:latest"
+    issuerUrl: "https://sso.redhat.com/auth/realms/redhat-external"
+
 acsOperator:
   enabled: false
   startingCSV: rhacs-operator.v3.70.0

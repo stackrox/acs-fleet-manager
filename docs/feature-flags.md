@@ -35,6 +35,7 @@ This lists the feature flags and their sub-configurations to enable/disable and 
     - `dinosaur-tls-cert-file` [Required]: The path to the file containing the Dinosaur TLS certificate (default: `'secrets/dinosaur-tls.crt'`).
     - `dinosaur-tls-key-file` [Required]: The path to the file containing the Dinosaur TLS private key (default: `'secrets/dinosaur-tls.key'`).
 - **enable-evaluator-instance**: Enable the creation of one dinosaur evaluator instances per user    
+- **rhsso-client-secret-file**: OIDC client secret to connect Dinosaur instances to sso.redhat.com
 - **quota-type**: Sets the quota service to be used for access control when requesting Dinosaur instances (options: `ams` or `quota-management-list`, default: `quota-management-list`).
     > For more information on the quota service implementation, see the [quota service architecture](./architecture/quota-service-implementation) architecture documentation.
     - If this is set to `quota-management-list`, quotas will be managed via the quota management list configuration. 

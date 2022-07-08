@@ -69,8 +69,8 @@ func replaceHostSpecialChar(name string) (string, error) {
 	return replacedName, nil
 }
 
-// formatNamespace adds the rhacs prefix to the namespace name and performs the necessary validation and formatting to comply with RFC1123 that namespace names must follow.
-func formatNamespace(text string) (string, error) {
+// FormatNamespace adds the rhacs prefix to the namespace name and performs the necessary validation and formatting to comply with RFC1123 that namespace names must follow.
+func FormatNamespace(text string) (string, error) {
 	if !dns1123LabelRegexp.MatchString(text) {
 		return "", fmt.Errorf("invalid namespace %s: %s", text, validation.RegexError(dns1123LabelErrMsg, dns1123LabelFmt, "my-name", "123-abc"))
 	}

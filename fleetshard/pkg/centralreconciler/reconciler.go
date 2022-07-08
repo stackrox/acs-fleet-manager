@@ -14,6 +14,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
+	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -64,7 +65,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "checking if central changed")
 	}
 
-	if !changed {
+	if !changed && remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String() {
 		return nil, ErrTypeCentralNotChanged
 	}
 
