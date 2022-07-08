@@ -70,8 +70,6 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 value read from _./secrets/dex.secret_
 - `SSO_CLIENT_ID`: The client id for a RedHat SSO service account. Defaults to value read from _./secrets/redhatsso-service.clientId_
 - `SSO_CLIENT_SECRET`: The client secret for a RedHat SSO service account. Defaults to value read from _./secrets/redhatsso-service.clientSecret_
-- `OSD_IDP_SSO_CLIENT_ID`: The client id for a SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientId_
-- `OSD_IDP_SSO_CLIENT_SECRET`: The client secret for a SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientSecret_
 - `IMAGE_PULL_DOCKER_CONFIG`: Docker config content for pulling private images. Defaults to value read from _./secrets/image-pull.dockerconfigjson_
 - `KUBE_CONFIG`: Kubeconfig content for standalone dataplane clusters communication. Defaults to `''`
 - `OBSERVABILITY_RHSSO_LOGS_CLIENT_ID`: The client id for a RHSSO service account that has read logs permission. Defaults to vaue read from _./secrets/rhsso-logs.clientId_

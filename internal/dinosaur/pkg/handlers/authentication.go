@@ -13,7 +13,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 )
 
-func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig *iam.IAMConfig) (*authentication.HandlerBuilder, error) {
+func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, IAMConfig *iam.IAMConfig) (*authentication.HandlerBuilder, error) {
 
 	authnLogger, err := sdk.NewGlogLoggerBuilder().
 		InfoV(glog.Level(1)).
@@ -27,15 +27,15 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig 
 	authenticationBuilder := authentication.NewHandler()
 
 	// Add additional JWKS endpoints to the builder if there are any.
-	for _, jwksEndpointURI := range KeycloakConfig.AdditionalSSOIssuers.JWKSURIs {
+	for _, jwksEndpointURI := range IAMConfig.AdditionalSSOIssuers.JWKSURIs {
 		authenticationBuilder.KeysURL(jwksEndpointURI)
 	}
 
 	return authenticationBuilder.
 			Logger(authnLogger).
-			KeysURL(ServerConfig.JwksURL).                          //ocm JWK JSON web token signing certificates URL
-			KeysFile(ServerConfig.JwksFile).                        //ocm JWK backup JSON web token signing certificates
-			KeysURL(KeycloakConfig.RedhatSSORealm.JwksEndpointURI). // sso JWK Cert URL
+			KeysURL(ServerConfig.JwksURL).                     //ocm JWK JSON web token signing certificates URL
+			KeysFile(ServerConfig.JwksFile).                   //ocm JWK backup JSON web token signing certificates
+			KeysURL(IAMConfig.RedhatSSORealm.JwksEndpointURI). // sso JWK Cert URL
 			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
 			Service(errors.ERROR_CODE_PREFIX).
 			Public(fmt.Sprintf("^%s/%s/?$", routes.ApiEndpoint, routes.DinosaursFleetManagementApiPrefix)).

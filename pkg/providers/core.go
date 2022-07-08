@@ -34,7 +34,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(db.NewDatabaseConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(server.NewServerConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(ocm.NewOCMConfig, di.As(new(environments.ConfigModule))),
-		di.Provide(iam.NewKeycloakConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(iam.NewIAMConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(acl.NewAccessControlListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(quota_management.NewQuotaManagementListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(server.NewMetricsConfig, di.As(new(environments.ConfigModule))),

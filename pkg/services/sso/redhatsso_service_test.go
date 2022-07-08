@@ -57,7 +57,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 						}, nil
 					},
 					GetConfigFunc: func() *iam.IAMConfig {
-						return iam.NewKeycloakConfig()
+						return iam.NewIAMConfig()
 					},
 				},
 			},
@@ -93,7 +93,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 						}, nil
 					},
 					GetConfigFunc: func() *iam.IAMConfig {
-						return iam.NewKeycloakConfig()
+						return iam.NewIAMConfig()
 					},
 				},
 			},

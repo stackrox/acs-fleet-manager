@@ -6,7 +6,7 @@ This lists the feature flags and their sub-configurations to enable/disable and 
   - [Database](#database)
   - [Health Check Server](#health-check-server)
   - [Dinosaur](#dinosaur)
-  - [Keycloak](#keycloak)
+  - [IAM](#iam)
   - [Metrics Server](#metrics-server)
   - [Observability](#observability)
   - [OpenShift Cluster Manager](#openshift-cluster-manager)
@@ -52,15 +52,12 @@ This lists the feature flags and their sub-configurations to enable/disable and 
             > See the [max allowed instances](./access-control.md#max-allowed-instances) section for more information about setting Dinosaur instance limits for users.
     - If this is set to `ams`, quotas will be managed via OCM's accounts management service (AMS).
 
-## Keycloak
-- **sso-debug** [Optional] Enables Keycloak debug logging.
-- **sso-base-url** [Required]: The base URL of the Keycloak instance.
+## IAM
+- **sso-debug** [Optional] Enables IAM debug logging.
+- **sso-base-url** [Required]: The base URL of the IAM instance.
 - **redhat-sso-client-id-file** [Required]: The path to the file containing a RedHat SSO account client ID that has access to the ACS service accounts (default: `'secrets/redhatsso-service.clientId'`).
 - **redhat-sso-client-secret-file** [Required]: The path to the file containing a RedHat SSO account client secret that has access to the ACS service accounts (default: `'secrets/redhatsso-service.clientSecret'`).
-- **osd-idp-sso-client-id-file** [Required]: The path to the file containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm (default `'secrets/osd-idp-keycloak-service.clientId'`)
-- **osd-idp-sso-client-secret-file** [Required]: The path to the file containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm (default `'secrets/osd-idp-keycloak-service.clientSecret'`)
-- **osd-idp-sso-realm** [Required]:  Realm for OSD cluster IDP clients in the SSO Keycloak server
-- **sso-insecure** [Optional]: Disables Keycloak TLS verification
+- **sso-insecure** [Optional]: Disables IAM TLS verification
 
 ## Metrics Server
 - **enable-metrics-https**: Enables HTTPS for the metrics server.
