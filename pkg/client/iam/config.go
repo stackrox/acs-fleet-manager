@@ -75,55 +75,55 @@ func NewIAMConfig() *IAMConfig {
 	return kc
 }
 
-func (kc *IAMConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&kc.BaseURL, "sso-base-url", kc.BaseURL, "The base URL of the sso, integration by default")
-	fs.BoolVar(&kc.Debug, "sso-debug", kc.Debug, "Debug flag for IAM API")
-	fs.BoolVar(&kc.InsecureSkipVerify, "sso-insecure", kc.InsecureSkipVerify, "Disable tls verification with sso")
-	fs.IntVar(&kc.MaxAllowedServiceAccounts, "max-allowed-service-accounts", kc.MaxAllowedServiceAccounts, "Max allowed service accounts per org")
-	fs.IntVar(&kc.MaxLimitForGetClients, "max-limit-for-sso-get-clients", kc.MaxLimitForGetClients, "Max limits for SSO get clients")
-	fs.StringVar(&kc.RedhatSSORealm.ClientIDFile, "redhat-sso-client-id-file", kc.RedhatSSORealm.ClientIDFile, "File containing IAM privileged account client-id that has access to the OSD Cluster IDP realm")
-	fs.StringVar(&kc.RedhatSSORealm.ClientSecretFile, "redhat-sso-client-secret-file", kc.RedhatSSORealm.ClientSecretFile, "File containing IAM privileged account client-secret that has access to the OSD Cluster IDP realm")
-	fs.StringVar(&kc.SsoBaseUrl, "redhat-sso-base-url", kc.SsoBaseUrl, "The base URL of the SSO, integration by default")
-	fs.StringVar(&kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "service-account-limits-check-skip-org-id-list-file", kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "File containing a list of Org IDs for which service account limits check will be skipped")
-	fs.BoolVar(&kc.AdditionalSSOIssuers.Enabled, "enable-additional-sso-issuers", kc.AdditionalSSOIssuers.Enabled, "Enable additional SSO issuer URIs for verifying tokens")
-	fs.StringVar(&kc.AdditionalSSOIssuers.File, "additional-sso-issuers-file", kc.AdditionalSSOIssuers.File, "File containing a list of SSO issuer URIs to include for verifying tokens")
+func (ic *IAMConfig) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&ic.BaseURL, "sso-base-url", ic.BaseURL, "The base URL of the sso, integration by default")
+	fs.BoolVar(&ic.Debug, "sso-debug", ic.Debug, "Debug flag for IAM API")
+	fs.BoolVar(&ic.InsecureSkipVerify, "sso-insecure", ic.InsecureSkipVerify, "Disable tls verification with sso")
+	fs.IntVar(&ic.MaxAllowedServiceAccounts, "max-allowed-service-accounts", ic.MaxAllowedServiceAccounts, "Max allowed service accounts per org")
+	fs.IntVar(&ic.MaxLimitForGetClients, "max-limit-for-sso-get-clients", ic.MaxLimitForGetClients, "Max limits for SSO get clients")
+	fs.StringVar(&ic.RedhatSSORealm.ClientIDFile, "redhat-sso-client-id-file", ic.RedhatSSORealm.ClientIDFile, "File containing IAM privileged account client-id that has access to the OSD Cluster IDP realm")
+	fs.StringVar(&ic.RedhatSSORealm.ClientSecretFile, "redhat-sso-client-secret-file", ic.RedhatSSORealm.ClientSecretFile, "File containing IAM privileged account client-secret that has access to the OSD Cluster IDP realm")
+	fs.StringVar(&ic.SsoBaseUrl, "redhat-sso-base-url", ic.SsoBaseUrl, "The base URL of the SSO, integration by default")
+	fs.StringVar(&ic.ServiceAccounttLimitCheckSkipOrgIdListFile, "service-account-limits-check-skip-org-id-list-file", ic.ServiceAccounttLimitCheckSkipOrgIdListFile, "File containing a list of Org IDs for which service account limits check will be skipped")
+	fs.BoolVar(&ic.AdditionalSSOIssuers.Enabled, "enable-additional-sso-issuers", ic.AdditionalSSOIssuers.Enabled, "Enable additional SSO issuer URIs for verifying tokens")
+	fs.StringVar(&ic.AdditionalSSOIssuers.File, "additional-sso-issuers-file", ic.AdditionalSSOIssuers.File, "File containing a list of SSO issuer URIs to include for verifying tokens")
 }
 
-func (kc *IAMConfig) ReadFiles() error {
-	err := shared.ReadFileValueString(kc.RedhatSSORealm.ClientIDFile, &kc.RedhatSSORealm.ClientID)
+func (ic *IAMConfig) ReadFiles() error {
+	err := shared.ReadFileValueString(ic.RedhatSSORealm.ClientIDFile, &ic.RedhatSSORealm.ClientID)
 	if err != nil {
 		return err
 	}
-	err = shared.ReadFileValueString(kc.RedhatSSORealm.ClientSecretFile, &kc.RedhatSSORealm.ClientSecret)
+	err = shared.ReadFileValueString(ic.RedhatSSORealm.ClientSecretFile, &ic.RedhatSSORealm.ClientSecret)
 	if err != nil {
 		return err
 	}
 
 	//Read the service account limits check skip org ID yaml file
-	err = shared.ReadYamlFile(kc.ServiceAccounttLimitCheckSkipOrgIdListFile, &kc.ServiceAccounttLimitCheckSkipOrgIdList)
+	err = shared.ReadYamlFile(ic.ServiceAccounttLimitCheckSkipOrgIdListFile, &ic.ServiceAccounttLimitCheckSkipOrgIdList)
 	if err != nil {
 		if os.IsNotExist(err) {
-			glog.V(10).Infof("Specified service account limits skip org IDs  file %q does not exist. Proceeding as if no service account org ID skip list was provided", kc.ServiceAccounttLimitCheckSkipOrgIdListFile)
+			glog.V(10).Infof("Specified service account limits skip org IDs  file %q does not exist. Proceeding as if no service account org ID skip list was provided", ic.ServiceAccounttLimitCheckSkipOrgIdListFile)
 		} else {
 			return err
 		}
 	}
 
-	kc.RedhatSSORealm.setDefaultURIs(kc.SsoBaseUrl)
+	ic.RedhatSSORealm.setDefaultURIs(ic.SsoBaseUrl)
 
 	// Read the additional issuers file. This will add additional SSO issuer URIs which shall be used as valid issuers
 	// for tokens, i.e. sso.stage.redhat.com.
-	if kc.AdditionalSSOIssuers.Enabled {
-		err = readAdditionalIssuersFile(kc.AdditionalSSOIssuers.File, kc.AdditionalSSOIssuers)
+	if ic.AdditionalSSOIssuers.Enabled {
+		err = readAdditionalIssuersFile(ic.AdditionalSSOIssuers.File, ic.AdditionalSSOIssuers)
 		if err != nil {
 			if os.IsNotExist(err) {
 				glog.V(10).Infof("Specified additional SSO issuers file %q does not exist. "+
-					"Proceeding as if no additional SSO issuers list was provided", kc.AdditionalSSOIssuers.File)
+					"Proceeding as if no additional SSO issuers list was provided", ic.AdditionalSSOIssuers.File)
 			} else {
 				return err
 			}
 		}
-		if err := kc.AdditionalSSOIssuers.resolveURIs(); err != nil {
+		if err := ic.AdditionalSSOIssuers.resolveURIs(); err != nil {
 			return err
 		}
 	}
