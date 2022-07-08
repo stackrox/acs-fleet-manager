@@ -15,3 +15,4 @@ repos:
         args: ["--markdown-linebreak-ext=md"]
       - id: end-of-file-fixer
         exclude: '^(?:secrets/db.*|.*?VERSION)$' # Matches either secrets/db.* files or the VERSION file under internal/dinosaur/pkg/api/<group>/.openapi-generator
+      - id: check-json
