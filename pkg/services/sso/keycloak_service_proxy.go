@@ -18,7 +18,6 @@ type keycloakServiceProxy struct {
 }
 
 var _ IAMService = &keycloakServiceProxy{}
-var _ OSDKeycloakService = &keycloakServiceProxy{}
 
 func (r *keycloakServiceProxy) DeRegisterClientInSSO(clientId string) *errors.ServiceError {
 	if token, err := r.retrieveToken(); err != nil {

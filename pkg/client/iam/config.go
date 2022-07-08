@@ -19,10 +19,6 @@ type IAMConfig struct {
 	SsoBaseUrl                                 string                `json:"sso_base_url"`
 	Debug                                      bool                  `json:"debug"`
 	InsecureSkipVerify                         bool                  `json:"insecure-skip-verify"`
-	TLSTrustedCertificatesKey                  string                `json:"tls_trusted_certificates_key"`
-	TLSTrustedCertificatesValue                string                `json:"tls_trusted_certificates_value"`
-	TLSTrustedCertificatesFile                 string                `json:"tls_trusted_certificates_file"`
-	OSDClusterIDPRealm                         *IAMRealmConfig       `json:"osd_cluster_idp_realm"`
 	RedhatSSORealm                             *IAMRealmConfig       `json:"redhat_sso_config"`
 	MaxAllowedServiceAccounts                  int                   `json:"max_allowed_service_accounts"`
 	MaxLimitForGetClients                      int                   `json:"max_limit_for_get_clients"`
@@ -61,12 +57,7 @@ func (c *IAMRealmConfig) setDefaultURIs(baseURL string) {
 
 func NewKeycloakConfig() *IAMConfig {
 	kc := &IAMConfig{
-		SsoBaseUrl: "https://sso.redhat.com",
-		OSDClusterIDPRealm: &IAMRealmConfig{
-			ClientIDFile:     "secrets/osd-idp-keycloak-service.clientId",
-			ClientSecretFile: "secrets/osd-idp-keycloak-service.clientSecret",
-			GrantType:        "client_credentials",
-		},
+		SsoBaseUrl:            "https://sso.redhat.com",
 		Debug:                 false,
 		InsecureSkipVerify:    false,
 		MaxLimitForGetClients: 100,
@@ -77,8 +68,6 @@ func NewKeycloakConfig() *IAMConfig {
 			ClientSecretFile: "secrets/redhatsso-service.clientSecret",
 			GrantType:        "client_credentials",
 		},
-		TLSTrustedCertificatesFile:                 "secrets/keycloak-service.crt",
-		TLSTrustedCertificatesKey:                  "keycloak.crt",
 		MaxAllowedServiceAccounts:                  50,
 		ServiceAccounttLimitCheckSkipOrgIdListFile: "config/service-account-limits-check-skip-org-id-list.yaml",
 		AdditionalSSOIssuers:                       &AdditionalSSOIssuers{},
@@ -88,12 +77,8 @@ func NewKeycloakConfig() *IAMConfig {
 
 func (kc *IAMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.BaseURL, "sso-base-url", kc.BaseURL, "The base URL of the sso, integration by default")
-	fs.StringVar(&kc.TLSTrustedCertificatesFile, "osd-sso-cert-file", kc.TLSTrustedCertificatesFile, "File containing tls cert for the osd-sso. Useful when osd-sso uses a self-signed certificate. If the provided file does not exist, is the empty string or the provided file content is empty then no custom OSD SSO certificate is used")
 	fs.BoolVar(&kc.Debug, "sso-debug", kc.Debug, "Debug flag for Keycloak API")
 	fs.BoolVar(&kc.InsecureSkipVerify, "sso-insecure", kc.InsecureSkipVerify, "Disable tls verification with sso")
-	fs.StringVar(&kc.OSDClusterIDPRealm.ClientIDFile, "osd-idp-sso-client-id-file", kc.OSDClusterIDPRealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm")
-	fs.StringVar(&kc.OSDClusterIDPRealm.ClientSecretFile, "osd-idp-sso-client-secret-file", kc.OSDClusterIDPRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
-	fs.StringVar(&kc.OSDClusterIDPRealm.Realm, "osd-idp-sso-realm", kc.OSDClusterIDPRealm.Realm, "Realm for OSD cluster IDP clients in the sso")
 	fs.IntVar(&kc.MaxAllowedServiceAccounts, "max-allowed-service-accounts", kc.MaxAllowedServiceAccounts, "Max allowed service accounts per org")
 	fs.IntVar(&kc.MaxLimitForGetClients, "max-limit-for-sso-get-clients", kc.MaxLimitForGetClients, "Max limits for SSO get clients")
 	fs.StringVar(&kc.RedhatSSORealm.ClientIDFile, "redhat-sso-client-id-file", kc.RedhatSSORealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm")
@@ -105,19 +90,7 @@ func (kc *IAMConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (kc *IAMConfig) ReadFiles() error {
-	err := shared.ReadFileValueString(kc.OSDClusterIDPRealm.ClientIDFile, &kc.OSDClusterIDPRealm.ClientID)
-	if err != nil {
-		return err
-	}
-	err = shared.ReadFileValueString(kc.OSDClusterIDPRealm.ClientSecretFile, &kc.OSDClusterIDPRealm.ClientSecret)
-	if err != nil {
-		return err
-	}
-	err = shared.ReadFileValueString(kc.OSDClusterIDPRealm.ClientSecretFile, &kc.OSDClusterIDPRealm.ClientSecret)
-	if err != nil {
-		return err
-	}
-	err = shared.ReadFileValueString(kc.RedhatSSORealm.ClientIDFile, &kc.RedhatSSORealm.ClientID)
+	err := shared.ReadFileValueString(kc.RedhatSSORealm.ClientIDFile, &kc.RedhatSSORealm.ClientID)
 	if err != nil {
 		return err
 	}
@@ -126,18 +99,7 @@ func (kc *IAMConfig) ReadFiles() error {
 		return err
 	}
 
-	// We read the OSD SSO TLS certificate file. If it does not exist we
-	// intentionally continue as if it was not provided
-	err = shared.ReadFileValueString(kc.TLSTrustedCertificatesFile, &kc.TLSTrustedCertificatesValue)
-	if err != nil {
-		if os.IsNotExist(err) {
-			glog.V(10).Infof("Specified OSD SSO TLS certificate file %q does not exist. Proceeding as if OSD SSO TLS certificate was not provided", kc.TLSTrustedCertificatesFile)
-		} else {
-			return err
-		}
-	}
-
-	// Read the service account limits check skip org ID yaml file
+	//Read the service account limits check skip org ID yaml file
 	err = shared.ReadYamlFile(kc.ServiceAccounttLimitCheckSkipOrgIdListFile, &kc.ServiceAccounttLimitCheckSkipOrgIdList)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -147,7 +109,6 @@ func (kc *IAMConfig) ReadFiles() error {
 		}
 	}
 
-	kc.OSDClusterIDPRealm.setDefaultURIs(kc.BaseURL)
 	kc.RedhatSSORealm.setDefaultURIs(kc.SsoBaseUrl)
 
 	// Read the additional issuers file. This will add additional SSO issuer URIs which shall be used as valid issuers

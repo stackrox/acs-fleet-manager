@@ -18,7 +18,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"enable-deny-list":                                "true",
 		"enable-instance-limit-control":                   "false",
 		"sso-base-url":                                    "https://sso.redhat.com",
-		"osd-idp-sso-realm":                               "rhoas-dinosaur-sre",
 		"enable-dinosaur-external-certificate":            "false",
 		"cluster-compute-machine-type":                    "m5.2xlarge",
 		"allow-evaluator-instance":                        "true",

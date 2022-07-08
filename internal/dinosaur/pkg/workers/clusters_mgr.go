@@ -1,9 +1,6 @@
 package workers
 
 import (
-	"fmt"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
-
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -94,7 +91,6 @@ type ClusterManagerOptions struct {
 	ClusterService             services.ClusterService
 	CloudProvidersService      services.CloudProvidersService
 	FleetshardOperatorAddon    services.FleetshardOperatorAddon
-	OsdIdpKeycloakService      sso.OSDKeycloakService
 }
 
 type processor func() []error
@@ -365,12 +361,6 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) er
 }
 
 func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
-	glog.Infof("Removing Dataplane cluster %s IDP client", cluster.ClusterID)
-	keycloakDeregistrationErr := c.OsdIdpKeycloakService.DeRegisterClientInSSO(cluster.ID)
-	if keycloakDeregistrationErr != nil {
-		return errors.Wrapf(keycloakDeregistrationErr, "Failed to removed Dataplance cluster %s IDP client", cluster.ClusterID)
-	}
-
 	glog.Infof("Removing Dataplane cluster %s fleetshard service account", cluster.ClusterID)
 	serviceAcountRemovalErr := c.FleetshardOperatorAddon.RemoveServiceAccount(cluster)
 	if serviceAcountRemovalErr != nil {
@@ -968,39 +958,6 @@ func (c *ClusterManager) buildDinosaurSREClusterRoleBindingResource() *authv1.Cl
 			APIVersion: "rbac.authorization.k8s.io",
 		},
 	}
-}
-
-func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) error {
-	if cluster.IdentityProviderID != "" {
-		return nil
-	}
-
-	// identity provider not yet created, let's create a new one
-	glog.Infof("Setting up the identity provider for cluster %s", cluster.ClusterID)
-	clusterDNS, dnsErr := c.ClusterService.GetClusterDNS(cluster.ClusterID)
-	if dnsErr != nil {
-		return errors.WithMessagef(dnsErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, dnsErr.Error())
-	}
-
-	callbackUri := fmt.Sprintf("https://oauth-openshift.%s/oauth2callback/%s", clusterDNS, openIDIdentityProviderName)
-	clientSecret, ssoErr := c.OsdIdpKeycloakService.RegisterClientInSSO(cluster.ID, callbackUri)
-	if ssoErr != nil {
-		return errors.WithMessagef(ssoErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, ssoErr.Error())
-	}
-
-	idpInfo := types.IdentityProviderInfo{
-		OpenID: &types.OpenIDIdentityProviderInfo{
-			Name:         openIDIdentityProviderName,
-			ClientID:     cluster.ID,
-			ClientSecret: clientSecret,
-			Issuer:       c.OsdIdpKeycloakService.GetRealmConfig().ValidIssuerURI,
-		},
-	}
-	if _, err := c.ClusterService.ConfigureAndSaveIdentityProvider(&cluster, idpInfo); err != nil {
-		return err
-	}
-	glog.Infof("Identity provider is set up for cluster %s", cluster.ClusterID)
-	return nil
 }
 
 func (c *ClusterManager) setClusterStatusMaxCapacityMetrics() {

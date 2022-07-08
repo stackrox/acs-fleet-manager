@@ -6,37 +6,16 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	adminprivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
-	// TODO(ROX-9821) restore when admin API is properly implemented "github.com/stackrox/acs-fleet-manager/pkg/auth"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	coreTest "github.com/stackrox/acs-fleet-manager/test"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
 	// TODO(ROX-9821) restore when admin API is properly implemented . "github.com/onsi/gomega"
 )
-
-func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []string) context.Context {
-	var keycloakConfig *iam.IAMConfig
-	h.Env.MustResolveAll(&keycloakConfig)
-
-	account := h.NewAllowedServiceAccount()
-	claims := jwt.MapClaims{
-		"iss": keycloakConfig.OSDClusterIDPRealm.ValidIssuerURI,
-		"realm_access": map[string][]string{
-			"roles": realmRoles,
-		},
-		"preferred_username": "integration-test-user",
-	}
-	token := h.CreateJWTStringWithClaim(account, claims)
-	ctx := context.WithValue(context.Background(), adminprivate.ContextAccessToken, token)
-
-	return ctx
-}
 
 func TestAdminDinosaur_Get(t *testing.T) {
 	skipNotFullyImplementedYet(t)
