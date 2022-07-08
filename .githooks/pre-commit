@@ -28,6 +28,3 @@ if [ -n "$go_vet_results" ]; then
 fi
 
 exit 0
-
-
-
