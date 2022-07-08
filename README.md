@@ -26,6 +26,7 @@ $ make setup/git/hooks
 
 Currently, the following plugins are enabled:
 - [detect-secrets](https://github.com/Yelp/detect-secrets): detect secrets to avoid accidentially commit them.
+- [golangci-lint](https://github.com/golangci/golangci-lint): run golangci-lint for changed go files.
 
 
 **Troubleshooting:**
