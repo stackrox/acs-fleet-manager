@@ -2,8 +2,7 @@ package centralreconciler
 
 import (
 	"context"
-	"testing"
-
+	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -12,9 +11,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"testing"
 )
 
 const (
@@ -62,6 +63,13 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, centralName, central.GetName())
 	assert.Equal(t, "1", central.GetAnnotations()[revisionAnnotationKey])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
+
+	route := &openshiftRouteV1.Route{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralName}, route)
+	require.NoError(t, err)
+	assert.Equal(t, centralReencryptRouteName, route.GetName())
+	assert.Equal(t, openshiftRouteV1.TLSTerminationReencrypt, route.Spec.TLS.Termination)
+	assert.Equal(t, testutils.CentralCA, route.Spec.TLS.DestinationCACertificate)
 }
 
 func TestReconcileUpdateSucceeds(t *testing.T) {
@@ -169,6 +177,49 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 
 	_, err = r.Reconcile(context.TODO(), managedCentral)
 	require.NoError(t, err)
+}
+
+func TestReconcileDelete(t *testing.T) {
+	// given
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	r := CentralReconciler{
+		status:    pointer.Int32(0),
+		client:    fakeClient,
+		central:   private.ManagedCentral{},
+		useRoutes: true,
+	}
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+	// when
+	deletedCentral := simpleManagedCentral
+	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
+
+	maxReconcileAttempts := 4 // Each resource deletion requires its own reconciliation attempt + an attempt for status return: Route + CR + namespace + 1 = min 4 attempts
+	attempt := 0
+	var status *private.DataPlaneCentralStatus
+	for attempt < maxReconcileAttempts && status == nil {
+		status, err = r.Reconcile(context.TODO(), deletedCentral)
+		attempt++
+	}
+	// then
+	require.NoError(t, err)
+	require.NotNil(t, status)
+
+	if readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady); ok {
+		assert.Equal(t, "False", readyCondition.Status)
+		assert.Equal(t, "Deleted", readyCondition.Reason)
+	} else {
+		assert.Fail(t, "Ready condition not found in conditions", status.Conditions)
+	}
+
+	central := &v1alpha1.Central{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralName}, central)
+	assert.True(t, errors.IsNotFound(err))
+
+	route := &openshiftRouteV1.Route{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralName}, route)
+	assert.True(t, errors.IsNotFound(err))
 }
 
 func TestCentralChanged(t *testing.T) {

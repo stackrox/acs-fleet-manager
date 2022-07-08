@@ -824,6 +824,10 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfi
 			},
 			Endpoint: manageddinosaur.EndpointSpec{
 				Host: dinosaurRequest.Host,
+				Tls: &manageddinosaur.TlsSpec{
+					Cert: dinosaurConfig.DinosaurTLSCert,
+					Key:  dinosaurConfig.DinosaurTLSKey,
+				},
 			},
 			Versions: manageddinosaur.VersionsSpec{
 				Dinosaur:         dinosaurRequest.DesiredCentralVersion,
