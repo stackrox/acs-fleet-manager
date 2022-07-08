@@ -17,7 +17,6 @@ subjects:
   name: fleetshard-sync
   namespace: {{ .Release.Namespace }}
 ---
-{{- if not (lookup "rbac.authorization.k8s.io/v1" "ClusterRole" "" "fleetshard-sync-role") }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -30,4 +29,3 @@ rules:
   - '*'
   verbs:
   - '*'
-{{- end }}
