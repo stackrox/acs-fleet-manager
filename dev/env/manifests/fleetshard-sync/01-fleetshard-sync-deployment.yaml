@@ -44,10 +44,10 @@ spec:
             - name: RUNTIME_POLL_PERIOD
               value: 10s
 
-          image: "${FULL_FLEET_MANAGER_IMAGE}"
+          image: "${FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent
           name: fleetshard-sync
-          resources: $FLEETSHARD_SYNC_RESOURCES_DEFAULT
+          resources: $FLEETSHARD_SYNC_RESOURCES
           volumeMounts:
             - mountPath: /secrets
               name: secrets

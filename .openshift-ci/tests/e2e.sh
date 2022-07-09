@@ -9,11 +9,9 @@ export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 
-log
-log "** Entrypoint for ACS MS E2E Tests **"
-log
-
-if [[ -n "$OPENSHIFT_CI" ]]; then
+if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
+    # We are running in an OpenShift CI context, configure accordingly.
+    log "Executing in OpenShift CI context"
     log "Retrieving secrets from Vault mount"
     shopt -s nullglob
     for cred in /var/run/rhacs-ms-e2e-tests/[A-Z]*; do
@@ -22,20 +20,23 @@ if [[ -n "$OPENSHIFT_CI" ]]; then
         log "Got secret ${secret_name}"
         export "${secret_name}"="${secret_value}"
     done
+    export CLUSTER_TYPE="openshift-ci"
+    export STATIC_TOKEN="${FLEET_STATIC_TOKEN:-}"
+    export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
 fi
 
 init
 
+log
+log "** Entrypoint for ACS MS E2E Tests **"
+log
+
+log "Cluster type: ${CLUSTER_TYPE}"
 log "Image: ${FLEET_MANAGER_IMAGE}"
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
     LOG_DIR=$(mktemp -d)
     export LOG_DIR
     log "Log directory: ${LOG_DIR}"
-fi
-
-if [[ -n "$OPENSHIFT_CI" ]]; then
-    log "Test suite is running in OpenShift CI"
-    export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
 fi
 
 disable_debugging
@@ -48,11 +49,6 @@ OCM)
     ;;
 
 STATIC_TOKEN)
-    # FLEET_STATIC_TOKEN is the name of the secret in Vault,
-    # STATIC_TOKEN is the name expected by the application (when running directly),
-    # hence we support both names here.
-    FLEET_STATIC_TOKEN=${FLEET_STATIC_TOKEN:-}
-    export STATIC_TOKEN=${STATIC_TOKEN:-$FLEET_STATIC_TOKEN}
     if [[ -z "$STATIC_TOKEN" ]]; then
         die "Error: No static token found in the environment.\nPlease set the environment variable STATIC_TOKEN to a valid static token."
     fi
@@ -63,24 +59,22 @@ esac
 log
 
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
-    if [[ -z "${QUAY_IO_USERNAME:-}" ]]; then
-        die "QUAY_IO_USERNAME needs to be set"
+    if [[ -z "${QUAY_USER:-}" ]]; then
+        die "QUAY_USER needs to be set"
     fi
-    if [[ -z "${QUAY_IO_PASSWORD:-}" ]]; then
-        die "QUAY_IO_PASSWORD needs to be set"
+    if [[ -z "${QUAY_TOKEN:-}" ]]; then
+        die "QUAY_TOKEN needs to be set"
     fi
 fi
 
 enable_debugging_if_necessary
-KUBE_CONFIG=$(assemble-kubeconfig | yq e . -j - | jq -c . -)
-export KUBE_CONFIG
 
 # Configuration specific to this e2e test suite:
 export ENABLE_DB_PORT_FORWARDING="false"
 
 bootstrap.sh
 
-if [[ -z "$OPENSHIFT_CI" ]]; then
+if [[ "$CLUSTER_TYPE" != "openshift-ci" ]]; then
     log "Cleaning up left-over resource (if any)"
     down.sh 2>/dev/null
 fi
@@ -133,6 +127,11 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
     $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" describe installplans || true
     log "** END OPERATOR STATE **"
     log
+
+    if [[ "$SPAWN_LOGGER" == "true" ]]; then
+        log "Logs are in ${LOG_DIR}"
+        log
+    fi
 fi
 
 log "=========="
@@ -149,6 +148,7 @@ fi
 
 if [[ "$FINAL_TEAR_DOWN" == "true" ]]; then
     down.sh
+    delete "${MANIFESTS_DIR}/rhacs-operator" || true
 fi
 
 exit $FAIL
