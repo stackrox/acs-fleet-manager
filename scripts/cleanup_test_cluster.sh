@@ -17,12 +17,12 @@ if test -f "$FILE"; then
       ocm login --url=https://api.stage.openshift.com/ --token="$OCM_OFFLINE_TOKEN"
       ocm delete /api/clusters_mgmt/v1/clusters/"$clusterID"
       rm $FILE
-    else 
+    else
       echo "Cluster id not found in file $FILE"
-      exit 1  
+      exit 1
     fi
   fi
-else 
+else
   echo "File $FILE does not exist"
-  exit 1  
+  exit 1
 fi

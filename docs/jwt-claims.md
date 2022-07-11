@@ -28,7 +28,7 @@ Below is the list of jwt claims used in the fleet-manager
 ## Dinosaur admin endpoint roles
 
 * **realm_access**
-	* **roles** 
+	* **roles**
 		- fleet-manager-admin-read - has permissions to list all dinosaur clusters across all ocm organisations
 		- fleet-manager-admin-write -has permissions to list and update all dinosaur clusters across all ocm organisations
 		- fleet-manager-admin-full -has permissions to list, update and delete all dinosaur clusters across all ocm organisations

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides the best practices all developers should follow when handling errors in fleet-manager. 
+This document provides the best practices all developers should follow when handling errors in fleet-manager.
 At the time of writing this document (Apr 29, 2021), the code base doesn't follow these best practices. It is not required to change the current code base to follow the new practices. Instead, the practices should be adopted when new code are introduced, and if existing code needs to be updated for new changes, it should be refactored to follow the practice as part of the new work.
 
 ## Best Practices

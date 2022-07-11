@@ -614,11 +614,11 @@ objects:
           address:
             pipe:
               path: /sockets/admin.socket
-    
+
         static_resources:
-    
+
           clusters:
-            
+
           # This backend is used to send metrics and probes requests to the
           # administration endpoint.
           - name: admin
@@ -633,7 +633,7 @@ objects:
                         address:
                           pipe:
                             path: /sockets/admin.socket
-            
+
           # This cluster is used to send requests to the backend. Note that
           # currently it uses TLS, but that doesn't make much sense in this
           # context because this communication is completely iside the pod. We
@@ -659,7 +659,7 @@ objects:
                   validation_context:
                     trusted_ca:
                       filename: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
-    
+
           # TODO(ROX-11395): enable rate limiting post-MVP
           # # This cluster is used to send request to the rate limiting service.
           # - name: limiter
@@ -678,7 +678,7 @@ objects:
           #               port_value: 8081
 
           listeners:
-            
+
           # This listener is used to accept /metrics and /ready requests.
           # Everything else will be rejected.
           - name: admin
@@ -712,7 +712,7 @@ objects:
                                   prefix_rewrite: /stats/prometheus
                       http_filters:
                         - name: envoy.filters.http.router
-    
+
           # This listener is used to accept inbound API requests.
           - name: ingress
             address:
@@ -790,7 +790,7 @@ objects:
                           prefix: /
                         route:
                           cluster: backend
-    
+
                   http_filters:
 
                   # TODO(ROX-11395): enable rate limiting post-MVP
@@ -806,7 +806,7 @@ objects:
                   #         envoy_grpc:
                   #           cluster_name: limiter
                   #       transport_api_version: V3
-    
+
                   # This is mandatory in order to have the HTTP routes above.
                   - name: envoy.filters.http.router
 

@@ -25,7 +25,7 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 
 ## Health Check Server
 - **enable-health-check-https**: Enable HTTPS for health check server.
-    - `https-cert-file` [Required]: The path to the file containing the TLS certificate. 
+    - `https-cert-file` [Required]: The path to the file containing the TLS certificate.
     - `https-key-file` [Required]: The path to the file containing the TLS private key.
 
 ## Dinosaur
@@ -34,19 +34,19 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **enable-dinosaur-external-certificate**: Enables custom Dinosaur TLS certificate.
     - `dinosaur-tls-cert-file` [Required]: The path to the file containing the Dinosaur TLS certificate (default: `'secrets/dinosaur-tls.crt'`).
     - `dinosaur-tls-key-file` [Required]: The path to the file containing the Dinosaur TLS private key (default: `'secrets/dinosaur-tls.key'`).
-- **enable-evaluator-instance**: Enable the creation of one dinosaur evaluator instances per user    
+- **enable-evaluator-instance**: Enable the creation of one dinosaur evaluator instances per user  
 - **rhsso-client-secret-file**: OIDC client secret to connect Dinosaur instances to sso.redhat.com
 - **quota-type**: Sets the quota service to be used for access control when requesting Dinosaur instances (options: `ams` or `quota-management-list`, default: `quota-management-list`).
     > For more information on the quota service implementation, see the [quota service architecture](./architecture/quota-service-implementation) architecture documentation.
-    - If this is set to `quota-management-list`, quotas will be managed via the quota management list configuration. 
+    - If this is set to `quota-management-list`, quotas will be managed via the quota management list configuration.
         > See [quota control](./quota-management-list-configuration.md) documentation for more information about the quota management list.
-        - `enable-instance-limit-control` [Required]: Enables enforcement of limits on how much Dinosaur instances a user can create (default: `false`). 
-        
+        - `enable-instance-limit-control` [Required]: Enables enforcement of limits on how much Dinosaur instances a user can create (default: `false`).
+
             If enabled, the maximum instances a user can create can be specified in one of the following ways:
-            - `quota-management-list-config-file` [Optional]: Allows setting of Dinosaur instance limit per organisation 
-              via _registered_users_per_organisation_ or per service account via _registered_service_accounts_ 
-              (default: `'config/quota-management-list-configuration.yaml'`, 
-              example: [quota-management-list-configuration.yaml](../config/quota-management-list-configuration.yaml)). 
+            - `quota-management-list-config-file` [Optional]: Allows setting of Dinosaur instance limit per organisation
+              via _registered_users_per_organisation_ or per service account via _registered_service_accounts_
+              (default: `'config/quota-management-list-configuration.yaml'`,
+              example: [quota-management-list-configuration.yaml](../config/quota-management-list-configuration.yaml)).
             - `max-allowed-instances` [Optional]: The default maximum Dinosaur instance limit a user can create (default: `1`).
 
             > See the [max allowed instances](./access-control.md#max-allowed-instances) section for more information about setting Dinosaur instance limits for users.
@@ -64,7 +64,7 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 
 ## Metrics Server
 - **enable-metrics-https**: Enables HTTPS for the metrics server.
-    - `https-cert-file` [Required]: The path to the file containing the TLS certificate. 
+    - `https-cert-file` [Required]: The path to the file containing the TLS certificate.
     - `https-key-file` [Required]: The path to the file containing the TLS private key.
 
 ## Observability
@@ -99,13 +99,13 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **kubeconfig**: A path to kubeconfig file used to communicate with standalone dataplane clusters.
 - **dataplane-cluster-scaling-type**: Sets the behaviour of how the service manages and scales OSD clusters (options: `manual`, `auto` or `none`).
     > For more information on the different dataplane cluster scaling types and their behaviour, see the [dataplane osd cluster options](./data-plane-osd-cluster-options.md) documentation.
-    
+
     - If this is set to `manual`, the following configuration must be specified:
         - `dataplane-cluster-config-file` [Required]: The path to the file that contains a list of data plane clusters and their details for the service to manage (default: `'config/dataplane-cluster-configuration.yaml'`, example: [dataplane-cluster-configuration.yaml](../config/dataplane-cluster-configuration.yaml)).
     - If this is set to `auto`, the following configurations can be specified:
         - `providers-config-file` [Required]: The path to the file containing a list of supported cloud providers that the service can provision dataplane clusters to (default: `'config/provider-configuration.yaml'`, example: [provider-configuration.yaml](../config/provider-configuration.yaml)).
         - `cluster-compute-machine-type` [Optional]: The compute machine type to be used for provisioning a new dataplane cluster (default: `m5.2xlarge`).
-        - `cluster-openshift-version` [Optional]: The OpenShift version to be installed on the dataplane cluster (default: `""`, empty string indicates that the latest stable version will be used). 
+        - `cluster-openshift-version` [Optional]: The OpenShift version to be installed on the dataplane cluster (default: `""`, empty string indicates that the latest stable version will be used).
 - **dinosaur-operator-cs-namespace**: Dinosaur operator catalog source namespace.
 - **dinosaur-operator-index-image**: Dinosaur operator index image name
 - **dinosaur-operator-namespace**: Dinosaur operator namespace
@@ -127,6 +127,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 
 ## Server
 - **enable-https**: Enables HTTPS for the Fleet Manager server.
-    - `https-cert-file` [Required]: The path to the file containing the TLS certificate. 
+    - `https-cert-file` [Required]: The path to the file containing the TLS certificate.
     - `https-key-file` [Required]: The path to the file containing the TLS private key.
 - **enable-terms-acceptance**: Enables terms acceptance verification.

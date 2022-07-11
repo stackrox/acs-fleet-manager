@@ -12,7 +12,7 @@ Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`) using the C
 
 ## Using an existing OSD cluster with manual scaling enabled
 
-You can manually add the cluster in the [dataplane-cluster-configuration.yaml](../config/dataplane-cluster-configuration.yaml) file. 
+You can manually add the cluster in the [dataplane-cluster-configuration.yaml](../config/dataplane-cluster-configuration.yaml) file.
 
 A content of the file is:
 
@@ -26,7 +26,7 @@ From the cluster ID taken from step (1), use `ocm` CLI to get cluster details i.
 ocm get /api/clusters_mgmt/v1/clusters/$ID | jq ' .name, .id, .multi_az, .cloud_provider.id, .region.id '
 
 "cluster-name"
-"1jp6kdr7k0sjbe5adck2prjur8f39378" # or a value matching your cluster ID 
+"1jp6kdr7k0sjbe5adck2prjur8f39378" # or a value matching your cluster ID
 true
 "aws" # or any cloud provider
 "us-east-1" # or any region
@@ -57,11 +57,11 @@ fleet-manager allows provisioning of dinosaurs in an already preexisting standal
 > NOTE: `kubeconfig` path can be configured via the `--kubeconfig` CLI flag. Otherwise is defaults to `$HOME/.kube/config`
 
 > NOTE: [OLM](https://github.com/operator-framework/operator-lifecycle-manager#installation) in the destination standalone cluster/s is a prerequisite to be able to install dinosaur operator and fleetshard operators
- 
+
 ## Configuring OSD Cluster Creation and AutoScaling
 
-To configure auto scaling, use the `--dataplane-cluster-scaling-type=auto`. 
-Once auto scaling is enabled this will activate the scaling up/down of compute nodes for existing clusters, dynamic creation and deletion of OSD dataplane clusters as explained in the [dynamic scaling architecture documentation](./architecture/data-plane-osd-cluster-dynamic-scaling.md) 
+To configure auto scaling, use the `--dataplane-cluster-scaling-type=auto`.
+Once auto scaling is enabled this will activate the scaling up/down of compute nodes for existing clusters, dynamic creation and deletion of OSD dataplane clusters as explained in the [dynamic scaling architecture documentation](./architecture/data-plane-osd-cluster-dynamic-scaling.md)
 
 ## Registering an existing cluster in the Database
 

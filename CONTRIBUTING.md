@@ -5,14 +5,14 @@
 Every team using the template has shared responsibility and code access to this repository.
 The template will be collectively contributed and versioned.
 
-When a bug fix or a feature change is done on the Go template, a pull request on the Java version 
-(preferred) or an issue will be opened to make sure we keep both versions at the same feature and 
+When a bug fix or a feature change is done on the Go template, a pull request on the Java version
+(preferred) or an issue will be opened to make sure we keep both versions at the same feature and
 maturity level.
 
-There is an agreement from each fleet-manager team to update their fleet-manager code on the newest 
-template regularly. Code updates to/from the template onto/from a specific service are expected to be 
-done manually since the two repositories are different. You are free to choose/rely on whichever 
-automation tool you have at your disposal e.g the combination of [git patch](https://git-scm.com/docs/git-format-patch) 
+There is an agreement from each fleet-manager team to update their fleet-manager code on the newest
+template regularly. Code updates to/from the template onto/from a specific service are expected to be
+done manually since the two repositories are different. You are free to choose/rely on whichever
+automation tool you have at your disposal e.g the combination of [git patch](https://git-scm.com/docs/git-format-patch)
 and [git apply](https://git-scm.com/docs/git-apply) etc. Code fix is done on a roll forward fashion.
 
 ### Notifying others about updates
@@ -20,10 +20,10 @@ and [git apply](https://git-scm.com/docs/git-apply) etc. Code fix is done on a r
 #### From service specific code to template
 
 In case of updates that are coming from a service specific fleet manager to the template, open an issue
-in [ffm project](https://github.com/bf2fc6cc711aee1a0c2a/ffm-project/issues) stating if it is a bug 
-fix/enhancement/ version updates etc.  It is advisable to open PR once there is concensus on the adoption of 
-the enhancement. To speed up the decision time, you can start a [zulip thread](https://bf2.zulipchat.com/) or 
-[google group thread](https://groups.google.com/g/factorized-fleet-manager) engaging the interested parties 
+in [ffm project](https://github.com/bf2fc6cc711aee1a0c2a/ffm-project/issues) stating if it is a bug
+fix/enhancement/ version updates etc.  It is advisable to open PR once there is concensus on the adoption of
+the enhancement. To speed up the decision time, you can start a [zulip thread](https://bf2.zulipchat.com/) or
+[google group thread](https://groups.google.com/g/factorized-fleet-manager) engaging the interested parties
 asking if they would like to adopt the proposal. Additionally, it is okay to open a draft PR, to drive the conversation
 and enrich the understanding of the proposal.
 
@@ -31,13 +31,13 @@ and enrich the understanding of the proposal.
 
 Once a fix / enhancement has landed to the template, an email should be sent to [factorised fleet manager google group](https://groups.google.com/g/factorized-fleet-manager). Likewise, the notification has to be sent to [zulip chat](https://bf2.zulipchat.com/).
 
->NOTE: A preferred approach/ process is to update the templates and service specific fleet managers regularly. 
-This will make the rather "manual" update process less painful to work with by avoiding huge drifts which are likely to 
+>NOTE: A preferred approach/ process is to update the templates and service specific fleet managers regularly.
+This will make the rather "manual" update process less painful to work with by avoiding huge drifts which are likely to
 cause a painful big-bang update.
 
 ## Definition of Done
 * Changes have been verified by one additional reviewer
-* An equivalent Github Pull Request or an issue has been opened on the Quarkus based template   
+* An equivalent Github Pull Request or an issue has been opened on the Quarkus based template  
 * PR has been merged and announcement sent
 
 ## Project Source
@@ -54,17 +54,17 @@ $GOPATH
         /cmd
           /fleet-manager  -- Main CLI entrypoint
         /internal   -- service specific implementations
-           /dinosaur 
+           /dinosaur
                providers.go -- dinosaurs service injection setup
               /test  -- integration test folder
-              /internal 
+              /internal
                 /services -- dinosaurs services
                 /workers  -- dinosaurs workers
-                /api      -- generated data transfer objects for the API and database entities 
+                /api      -- generated data transfer objects for the API and database entities
                 /migrations -- dinosaurs database migrations
                 /presenters -- DTO converters and presenters
-                /routes  -- routes setup 
-                /environments -- environment setup 
+                /routes  -- routes setup
+                /environments -- environment setup
                 /handlers -- api endpoint handlers
         /pkg
           /api      -- type definitions and models (Note. openapi folder is generated - see below)
@@ -179,17 +179,17 @@ glog.V(10).Info("biz")
 
 ### Sentry Logging
 Sentry monitors errors/exceptions in a real-time environment. It provides detailed information about captured errors. See [sentry](https://sentry.io/welcome/) for more details.
- 
+
 Logging can be enabled by importing the sentry-go package: "github.com/getsentry/sentry-go
 
 Following are possible ways of logging events via Sentry:
 
 ```go
 sentry.CaptureMessage(message) // for logging message
-sentry.CaptureEvent(event) // capture the events 
+sentry.CaptureEvent(event) // capture the events
 sentry.CaptureException(error) // capture the exception
-``` 
-Example : 
+```
+Example :
 ```go
 func check(err error, msg string) {
 	if err != nil && err != http.ErrServerClosed {

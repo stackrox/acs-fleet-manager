@@ -27,8 +27,8 @@ There are three `config.yaml` files located in `observability` folder responsibl
 Each file contains the JSON data required for the metrics dashboards. Each dashboard consists of panels. For each panel, within `"targets"` arrays, the `"expr"` fields need to be modified to represent the service being used with the fleet manager. Attention should be paid to labels such as `job`, `namespace`, `exported_namespace` within the `"expr"` field.
 The `"expr"` fields contain Prometheus queries. The [Querying section](https://prometheus.io/docs/prometheus/latest/querying/basics/) of the Prometheus website has more information about queries.
 
-> NOTE: Make sure to change the `namespace` label so that it corresponds to the namespace where your service will be deployed. 
- 
+> NOTE: Make sure to change the `namespace` label so that it corresponds to the namespace where your service will be deployed.
+
 The `"title"`, `"transformations"`, `"legendFormat"` fields may also need to be updated to include the service name. Be aware that each panel can have multiple sub-panels each needing to be adapted.
 
 The dashboard `"uid"` needs to be updated also. See [here](https://grafana.com/docs/grafana/latest/http_api/dashboard/) for more info about dashboard uid.

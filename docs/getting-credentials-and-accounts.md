@@ -12,7 +12,7 @@ The [Account Management Service](https://api.openshift.com/?urls.primaryName=Acc
 2. To onboard a fleet-manager to [app-interface](https://gitlab.cee.redhat.com/service/app-interface) a new role will be required for resources (e.g. Syncsets, etc) creation (see [example](https://gitlab.cee.redhat.com/service/uhc-account-manager/-/blob/master/pkg/api/roles/managed_kafka_service.go)). The following [MR](https://gitlab.cee.redhat.com/service/uhc-account-manager/-/merge_requests/1907) shows how the ManagedKafkaService role was created for RHOSAK.
 3. Once the role is created, users required to have this role need to get it assigned to their OCM account: [example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812).
 4. Very likely your organization will need to have quota for installing Add-ons specific for your fleet-manager. See an example of Add-on quotas [here](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml) (find your organization by its `external_id` beneath [ocm-resources/uhc-stage/orgs](https://gitlab.cee.redhat.com/service/ocm-resources/-/tree/master/data/uhc-stage/orgs)).
-5. Each call to OCM endpoints needs specific permissions. Make sure that you have all the needed permissions to call OCM endpoints. If the role created in step (2) is missing those permissions, then they can be added via the [account-manager repo](https://gitlab.cee.redhat.com/service/uhc-account-manager). See an example [MR](https://gitlab.cee.redhat.com/service/uhc-account-manager/-/merge_requests/2530). 
+5. Each call to OCM endpoints needs specific permissions. Make sure that you have all the needed permissions to call OCM endpoints. If the role created in step (2) is missing those permissions, then they can be added via the [account-manager repo](https://gitlab.cee.redhat.com/service/uhc-account-manager). See an example [MR](https://gitlab.cee.redhat.com/service/uhc-account-manager/-/merge_requests/2530).
    >TIP: The permissions attached to the [`ManagedKafkaService`](https://gitlab.cee.redhat.com/service/uhc-account-manager/-/blob/master/pkg/api/roles/managed_kafka_service.go) role will be a very good start.
 
 # Vault
@@ -26,11 +26,11 @@ AWS accounts are required for provisioning development OSD clusters and to acces
 New AWS account
 *Team*
 <Whoever the requesting team is>
- 
+
 *Cost*
 <Calculations for the estimated monthly charges>
 *Why?*
-<The reason for requesting the account> 
+<The reason for requesting the account>
 ```
 > NOTE
 Within the AWS account used to provision OSD clusters, you must create an osdCcsAdmin IAM user with the following requirements:
@@ -46,5 +46,5 @@ Depending on whether interacting with public or private endpoints, the authentic
 See [feature-flags](feature-flags.md#Keycloak) to understand flags used for authentication.
 
 ## sso.redhat.com service account
-To avail of all required OCM services the fleet-manager depends on, it is required to create an sso.redhat.com service account that will be used for the communication between the fleet-manager and OCM. It is a help desk ticket to get this created which gets routed to Red Hat IT. 
+To avail of all required OCM services the fleet-manager depends on, it is required to create an sso.redhat.com service account that will be used for the communication between the fleet-manager and OCM. It is a help desk ticket to get this created which gets routed to Red Hat IT.
 The link to create the request is https://redhat.service-now.com/help?id=sc_cat_item&sys_id=7ab45993131c9380196f7e276144b054

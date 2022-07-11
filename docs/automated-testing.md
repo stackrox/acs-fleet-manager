@@ -29,7 +29,7 @@ A new `InterfaceNameMock` struct will be generated and can be used in tests.
 For more information on using `moq`, see:
 
 - [The moq repository](https://github.com/matryer/moq)
-- The IDGenerator [interface](../pkg/client/ocm/id.go) and [mock](../pkg/client/ocm/idgenerator_moq_test.go) in this repository 
+- The IDGenerator [interface](../pkg/client/ocm/id.go) and [mock](../pkg/client/ocm/idgenerator_moq_test.go) in this repository
 
 For mocking the OCM client, [this wrapper interface](../pkg/client/ocm/client.go). If using the OCM SDK in
 any component of the system, please ensure the OCM SDK logic is placed inside this mock-able
@@ -166,15 +166,15 @@ import (
 func MyTestFunction(t *testing.T) {
     err := utils.NewPollerBuilder().
         // test output should go to `t.Logf` instead of `fmt.Printf`
-        OutputFunction(t.Logf). 
+        OutputFunction(t.Logf).
         // sets number of retries and interval between each retry
         IntervalAndRetries(10 * time.Second, 10).
         OnRetry(func(attempt int, maxAttempts int) (done bool, err error) { // function executed on each retry
-            // put your logic here 
+            // put your logic here
             return true, nil
         }).
         Build().Poll()
-    if err != nil { 
+    if err != nil {
         // ...
     }
     // ...
@@ -185,9 +185,9 @@ func MyTestFunction(t *testing.T) {
 
 ### Mock Fleetshard Sync
 The mock [Fleetshard Sync](../internal/dinosaur/test/mocks/fleetshardsync/fleetshard-sync.go) is used to reconcile data plane and Dinosaur cluster status during integration tests. This also needs to be used even when running integration tests against a real OCM environment as the Fleetshard Sync in the data plane cluster cannot
-communicate to the Fleet Manager during integration test runs. 
+communicate to the Fleet Manager during integration test runs.
 
-The mock Fleetshard Sync needs to be started at the start of a test that requires updates to a data plane or Dinosaur cluster status. 
+The mock Fleetshard Sync needs to be started at the start of a test that requires updates to a data plane or Dinosaur cluster status.
 
 **Example Usage:**
 ```go

@@ -1,4 +1,4 @@
-# Running a Local Observatorium Token Refresher 
+# Running a Local Observatorium Token Refresher
 > NOTE: This is only required if your Observatorium instance is authenticated using sso.redhat.com.
 
 Run the following make target:

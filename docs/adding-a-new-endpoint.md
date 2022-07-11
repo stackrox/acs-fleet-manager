@@ -21,7 +21,7 @@ Presenters are functions responsible for converting internal types to the endpoi
 Converters/presenters are defined in the `pkg/api/presenters` directory. Please add/modify existing converters and presenters here.
 
 ## Add a new handler
-Handlers are defined in the one of the `handlers` directory. 
+Handlers are defined in the one of the `handlers` directory.
 * [`pkg/handlers`](../pkg/handlers) - for generic handlers that can be resused by different services
 * [`internal/dinosaur/pkg/handlers`](../internal/dinosaur/pkg/handlers) - for dinosaur service handlers
 
@@ -90,6 +90,6 @@ The CLI is built using [Cobra](https://github.com/spf13/cobra).  All of the comm
 
 If your endpoint is using a new resource, a new folder should be created here with the following files:
 - _cmd.go_: The main entry point for your command
-- _flags.go_: Definition for common flags used across your command. 
+- _flags.go_: Definition for common flags used across your command.
 
 Any subcommands (i.e. `get`, `list`, `create`) should be added as separate files.
