@@ -159,13 +159,13 @@ func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1
 	if err != nil {
 		return false, err
 	}
-	globalDeleted = routeDeleted && centralDeleted
+	globalDeleted = globalDeleted && centralDeleted
 
 	nsDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace())
 	if err != nil {
 		return false, err
 	}
-	globalDeleted = routeDeleted && nsDeleted
+	globalDeleted = globalDeleted && nsDeleted
 
 	glog.Infof("All central resources were deleted: %s/%s", central.GetNamespace(), central.GetName())
 	return globalDeleted, nil
