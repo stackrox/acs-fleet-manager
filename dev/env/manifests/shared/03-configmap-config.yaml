@@ -11,7 +11,7 @@ data:
         status: ready
         provider_type: standalone
         supported_instance_type: "eval,standard"
-        cluster_dns: cluster.local
+        cluster_dns: "$CLUSTER_DNS"
         central_instance_limit: 5
         available_central_operator_versions:
           - version: "0.1.0"

@@ -22,14 +22,16 @@ import (
 )
 
 const (
-	centralName        = "test-central"
-	conditionTypeReady = "Ready"
+	centralName               = "test-central"
+	centralNamespace          = "rhacs-cb45idheg5ip6dq1jo4g"
+	centralReencryptRouteName = "central-reencrypt"
+	conditionTypeReady        = "Ready"
 )
 
 var simpleManagedCentral = private.ManagedCentral{
 	Metadata: private.ManagedCentralAllOfMetadata{
 		Name:      centralName,
-		Namespace: centralName,
+		Namespace: centralNamespace,
 	},
 }
 
@@ -44,12 +46,7 @@ func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestCo
 
 func TestReconcileCreate(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
-	r := CentralReconciler{
-		status:    pointer.Int32(0),
-		client:    fakeClient,
-		central:   private.ManagedCentral{},
-		useRoutes: true,
-	}
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -61,14 +58,14 @@ func TestReconcileCreate(t *testing.T) {
 	}
 
 	central := &v1alpha1.Central{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralName}, central)
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
 	assert.Equal(t, centralName, central.GetName())
 	assert.Equal(t, "1", central.GetAnnotations()[revisionAnnotationKey])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
 
 	route := &openshiftRouteV1.Route{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralName}, route)
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
 	require.NoError(t, err)
 	assert.Equal(t, centralReencryptRouteName, route.GetName())
 	assert.Equal(t, openshiftRouteV1.TLSTerminationReencrypt, route.Spec.TLS.Termination)
@@ -79,16 +76,12 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        centralName,
-			Namespace:   centralName,
+			Namespace:   centralNamespace,
 			Annotations: map[string]string{revisionAnnotationKey: "3"},
 		},
 	}, centralDeploymentObject()).Build()
 
-	r := CentralReconciler{
-		status:  pointer.Int32(0),
-		client:  fakeClient,
-		central: private.ManagedCentral{},
-	}
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, false, false)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -96,7 +89,7 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 	assert.Equal(t, "True", status.Conditions[0].Status)
 
 	central := &v1alpha1.Central{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralName}, central)
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
 	assert.Equal(t, centralName, central.GetName())
 	assert.Equal(t, "4", central.GetAnnotations()[revisionAnnotationKey])
@@ -106,7 +99,7 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        centralName,
-			Namespace:   centralName,
+			Namespace:   centralNamespace,
 			Annotations: map[string]string{revisionAnnotationKey: "invalid annotation"},
 		},
 	}, centralDeploymentObject()).Build()
@@ -123,20 +116,16 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 	assert.Equal(t, [16]byte{}, r.lastCentralHash)
 }
 
-func TestReconicleLastHashSetOnSuccess(t *testing.T) {
+func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        centralName,
-			Namespace:   centralName,
+			Namespace:   centralNamespace,
 			Annotations: map[string]string{revisionAnnotationKey: "3"},
 		},
 	}, centralDeploymentObject()).Build()
 
-	r := CentralReconciler{
-		status:  pointer.Int32(0),
-		client:  fakeClient,
-		central: private.ManagedCentral{},
-	}
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, false, false)
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.DinosaurRequestStatusReady.String()
@@ -149,8 +138,15 @@ func TestReconicleLastHashSetOnSuccess(t *testing.T) {
 
 	assert.Equal(t, expectedHash, r.lastCentralHash)
 
-	_, err = r.Reconcile(context.TODO(), managedCentral)
-	require.ErrorIs(t, err, ErrTypeCentralNotChanged)
+	status, err := r.Reconcile(context.TODO(), managedCentral)
+	require.NoError(t, err)
+	assert.Equal(t, "Ready", status.Conditions[0].Type)
+	assert.Equal(t, "True", status.Conditions[0].Status)
+
+	central := &v1alpha1.Central{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
+	require.NoError(t, err)
+	assert.Equal(t, "4", central.Annotations[revisionAnnotationKey])
 }
 
 func TestIgnoreCacheForCentralNotReady(t *testing.T) {
@@ -162,11 +158,7 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 		},
 	}, centralDeploymentObject()).Build()
 
-	r := CentralReconciler{
-		status:  pointer.Int32(0),
-		client:  fakeClient,
-		central: private.ManagedCentral{},
-	}
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, false, false)
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.DinosaurRequestStatusProvisioning.String()
@@ -186,12 +178,7 @@ func TestReconcileDelete(t *testing.T) {
 	// given
 	// centralDeploymentObject() is needed to pass first reconcile loop without an error
 	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
-	r := CentralReconciler{
-		status:    pointer.Int32(0),
-		client:    fakeClient,
-		central:   private.ManagedCentral{},
-		useRoutes: true,
-	}
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -215,11 +202,11 @@ func TestReconcileDelete(t *testing.T) {
 	assert.Equal(t, "Deleted", readyCondition.Reason)
 
 	central := &v1alpha1.Central{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralName}, central)
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	assert.True(t, errors.IsNotFound(err))
 
 	route := &openshiftRouteV1.Route{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralName}, route)
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
 	assert.True(t, errors.IsNotFound(err))
 }
 
@@ -262,11 +249,7 @@ func TestCentralChanged(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			reconciler := CentralReconciler{
-				status:  pointer.Int32(0),
-				client:  fakeClient,
-				central: test.currentCentral,
-			}
+			reconciler := NewCentralReconciler(fakeClient, test.currentCentral, false, false)
 
 			if test.lastCentral != nil {
 				err := reconciler.setLastCentralHash(*test.lastCentral)
@@ -281,11 +264,60 @@ func TestCentralChanged(t *testing.T) {
 
 }
 
+func TestReportRoutesStatuses(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
+
+	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+
+	expected := []private.DataPlaneCentralStatusRoutes{
+		{
+			Name:   "central-reencrypt",
+			Router: "router-default.apps.test.local",
+		},
+		{
+			Name:   "central-mtls",
+			Prefix: "data",
+			Router: "router-default.apps.test.local",
+		},
+	}
+	actual := status.Routes
+	assert.ElementsMatch(t, expected, actual)
+}
+
+func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
+	// given
+	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+	// when
+	existingCentral := simpleManagedCentral
+	existingCentral.RequestStatus = centralConstants.DinosaurRequestStatusReady.String()
+	status, _ := r.Reconcile(context.TODO(), existingCentral) // cache hit
+	// then
+	expected := []private.DataPlaneCentralStatusRoutes{
+		{
+			Name:   "central-reencrypt",
+			Router: "router-default.apps.test.local",
+		},
+		{
+			Name:   "central-mtls",
+			Prefix: "data",
+			Router: "router-default.apps.test.local",
+		},
+	}
+	actual := status.Routes
+	assert.ElementsMatch(t, expected, actual)
+}
+
 func centralDeploymentObject() *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "central",
-			Namespace: centralName,
+			Namespace: centralNamespace,
 		},
 	}
 }

@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"github.com/golang/glog"
+	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
@@ -26,6 +27,7 @@ func CreateClientOrDie() ctrlClient.Client {
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = v1alpha1.AddToScheme(scheme)
 	_ = openshiftRouteV1.Install(scheme)
+	_ = openshiftOperatorV1.Install(scheme)
 
 	config, err := ctrl.GetConfig()
 	if err != nil {
