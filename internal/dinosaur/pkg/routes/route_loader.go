@@ -51,6 +51,7 @@ type options struct {
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
+	FleetShardAuthZConfig       *auth.FleetShardAuthZConfig
 }
 
 func NewRouteLoader(s options) environments.RouteLoader {
@@ -201,8 +202,8 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		Name(logger.NewLogEvent("list-dataplane-centrals", "list all dataplane centrals").ToString()).
 		Methods(http.MethodGet)
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
-	// TODO(create-ticket): We need to authn/authz requests to the internal API.
-	// auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, s.IAM.GetConfig().DinosaurRealm.ValidIssuerURI, "id")
+	auth.UseFleetShardAuthorizationMiddleware(apiV1DataPlaneRequestsRouter,
+		s.IAM.GetConfig().RedhatSSORealm.ValidIssuerURI, s.FleetShardAuthZConfig)
 
 	adminDinosaurHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
