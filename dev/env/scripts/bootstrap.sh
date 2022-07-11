@@ -35,7 +35,6 @@ inject_ips() {
     $KUBECTL -n "$namespace" patch sa "$service_account" -p "\"imagePullSecrets\": [{\"name\": \"${secret_name}\" }]"
 }
 
-# TODO: use a function.
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
     create-imagepullsecrets-interactive
     inject_ips "$ACSMS_NAMESPACE" "default" "quay-ips"
