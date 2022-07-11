@@ -4,3 +4,7 @@ repos:
     hooks:
       - id: detect-secrets
         args: ["--baseline", ".secrets.baseline"]
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.46.2
+    hooks:
+      - id: golangci-lint
