@@ -3,6 +3,7 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -28,11 +29,21 @@ const (
 
 // TODO(create-ticket): Use correct OCM_TOKEN for different clients (console.redhat.com, fleetshard)
 var _ = Describe("Central", func() {
+	var client *fleetmanager.Client
+
+	BeforeEach(func() {
+		authType := "OCM"
+		if val := os.Getenv("AUTH_TYPE"); val != "" {
+			authType = val
+		}
+		auth, err := fleetmanager.NewAuth(authType)
+		Expect(err).ToNot(HaveOccurred())
+		client, err = fleetmanager.NewClient("http://localhost:8000", "cluster-id", auth)
+		Expect(err).ToNot(HaveOccurred())
+	})
+
 	Describe("should be created and deployed to k8s", func() {
-		auth, err := fleetmanager.NewAuth("OCM")
-		Expect(err).ToNot(HaveOccurred())
-		client, err := fleetmanager.NewClient("http://localhost:8000", "cluster-id", auth)
-		Expect(err).ToNot(HaveOccurred())
+		var err error
 
 		request := public.CentralRequestPayload{
 			Name:          centralName,
