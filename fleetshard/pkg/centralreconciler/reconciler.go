@@ -148,17 +148,27 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 }
 
 func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
-	if reencryptRouteDeleted, err := r.ensureReencryptRouteDeleted(ctx, central.GetNamespace()); err != nil || !reencryptRouteDeleted {
+	globalDeleted := true
+	routeDeleted, err := r.ensureReencryptRouteDeleted(ctx, central.GetNamespace())
+	if err != nil {
 		return false, err
 	}
-	if crDeleted, err := r.ensureCentralCRDeleted(ctx, central); err != nil || !crDeleted {
+	globalDeleted = routeDeleted && globalDeleted
+
+	centralDeleted, err := r.ensureCentralCRDeleted(ctx, central)
+	if err != nil {
 		return false, err
 	}
-	if namespaceDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace()); err != nil || !namespaceDeleted {
+	globalDeleted = globalDeleted && centralDeleted
+
+	nsDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace())
+	if err != nil {
 		return false, err
 	}
+	globalDeleted = globalDeleted && nsDeleted
+
 	glog.Infof("All central resources were deleted: %s/%s", central.GetNamespace(), central.GetName())
-	return true, nil
+	return globalDeleted, nil
 }
 
 // centralChanged compares the given central to the last central reconciled using a hash

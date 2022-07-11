@@ -195,23 +195,20 @@ func TestReconcileDelete(t *testing.T) {
 	deletedCentral := simpleManagedCentral
 	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
 
-	maxReconcileAttempts := 4 // Each resource deletion requires its own reconciliation attempt + an attempt for status return: Route + CR + namespace + 1 = min 4 attempts
-	attempt := 0
-	var status *private.DataPlaneCentralStatus
-	for attempt < maxReconcileAttempts && status == nil {
-		status, err = r.Reconcile(context.TODO(), deletedCentral)
-		attempt++
-	}
-	// then
+	// trigger deletion
+	statusTrigger, err := r.Reconcile(context.TODO(), deletedCentral)
 	require.NoError(t, err)
-	require.NotNil(t, status)
+	require.Nil(t, statusTrigger)
 
-	if readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady); ok {
-		assert.Equal(t, "False", readyCondition.Status)
-		assert.Equal(t, "Deleted", readyCondition.Reason)
-	} else {
-		assert.Fail(t, "Ready condition not found in conditions", status.Conditions)
-	}
+	// deletion completed needs second reconcile to check as deletion is async in a kubernetes cluster
+	statusDeletion, err := r.Reconcile(context.TODO(), deletedCentral)
+	require.NoError(t, err)
+	require.NotNil(t, statusDeletion)
+
+	readyCondition, ok := conditionForType(statusDeletion.Conditions, conditionTypeReady)
+	require.True(t, ok, "Ready condition not found in conditions", statusDeletion.Conditions)
+	assert.Equal(t, "False", readyCondition.Status)
+	assert.Equal(t, "Deleted", readyCondition.Reason)
 
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralName}, central)
