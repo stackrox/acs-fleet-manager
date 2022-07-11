@@ -5529,4 +5529,3 @@ metadata:
   annotations:
     # TODO update location of dashboard definitions
     grafana-folder: /grafana-dashboard-definitions/
-
