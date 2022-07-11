@@ -46,7 +46,13 @@ spec:
               path: /healthcheck
               port: 8083
             periodSeconds: 5
-          resources: {}
+          resources:
+            requests:
+              cpu: 800m
+              memory: 1000Mi
+            limits:
+              cpu: 800m
+              memory: 1000Mi
           volumeMounts:
             - mountPath: /secrets
               name: secrets

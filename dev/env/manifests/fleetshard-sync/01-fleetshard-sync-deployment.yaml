@@ -47,7 +47,13 @@ spec:
           image: "${FULL_FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent
           name: fleetshard-sync
-          resources: {}
+          resources:
+            requests:
+              cpu: 600m
+              memory: 1000Mi
+            limits:
+              cpu: 600m
+              memory: 1000Mi
           volumeMounts:
             - mountPath: /secrets
               name: secrets
