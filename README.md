@@ -29,7 +29,7 @@ Currently, the following plugins are enabled:
 - [golangci-lint](https://github.com/golangci/golangci-lint): run golangci-lint for changed go files.
 - [trailing-whitespace](https://github.com/pre-commit/pre-commit-hooks#trailing-whitespace): detect trailing whitespaces.
 - [end-of-file-fixer](https://github.com/pre-commit/pre-commit-hooks#end-of-file-fixer): ensure files end in a newline.
-
+- [check-json](https://github.com/pre-commit/pre-commit-hooks#check-json): ensure all JSON files have valid syntax.
 
 **Troubleshooting:**
 In case you run into any issues with the secrets, the output typically is enough to highlight the problem.
