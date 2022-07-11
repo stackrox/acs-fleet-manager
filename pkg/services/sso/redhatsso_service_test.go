@@ -5,12 +5,10 @@ import (
 	"testing"
 	"time"
 
-	pkgErr "github.com/pkg/errors"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 
 	. "github.com/onsi/gomega"
@@ -19,124 +17,6 @@ import (
 const (
 	token = "token"
 )
-
-func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
-	tokenErr := pkgErr.New("token error")
-	//failedToCreateClientErr := pkgErr.New("failed to create client")
-
-	type fields struct {
-		kcClient redhatsso.SSOClient
-	}
-
-	tests := []struct {
-		name    string
-		fields  fields
-		want    string
-		wantErr *errors.ServiceError
-	}{
-		{
-			name: "throws error when failed to fetch token",
-			fields: fields{
-				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return "", tokenErr
-					},
-				},
-			},
-			want:    "",
-			wantErr: errors.NewWithCause(errors.ErrorGeneral, tokenErr, "error getting access token"),
-		},
-		//{ // TODO: feature not yet implemented
-		//	name: "fetch osd client secret from sso when client already exists",
-		//	fields: fields{
-		//		kcClient: &redhatsso.SSOClientMock{
-		//			GetTokenFunc: func() (string, error) {
-		//				return token, nil
-		//			},
-		//			GetConfigFunc: func() *redhatsso.RedhatSSORealm {
-		//				return redhatsso.NewRedhatSSOConfig()
-		//			},
-		//		},
-		//	},
-		//	want:    secret,
-		//	wantErr: nil,
-		//},
-		//{ // TODO: Not yet implemented
-		//	name: "successfully register a new sso client for the ACS cluster",
-		//	fields: fields{
-		//		kcClient: &redhatsso.SSOClientMock{
-		//			GetTokenFunc: func() (string, error) {
-		//				return token, nil
-		//			},
-		//			GetConfigFunc: func() *redhatsso.RedhatSSORealm {
-		//				return redhatsso.NewRedhatSSOConfig()
-		//			},
-		//			//IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
-		//			//	return "", nil
-		//			//},
-		//			//GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
-		//			//	return secret, nil
-		//			//},
-		//			//CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-		//			//	return testClientID, nil
-		//			//},
-		//			//ClientConfigFunc: func(client iam.ClientRepresentation) gocloak.Client {
-		//			//	testID := "12221"
-		//			//	return gocloak.Client{
-		//			//		ClientID: &testID,
-		//			//	}
-		//			//},
-		//		},
-		//	},
-		//	want:    secret,
-		//	wantErr: nil,
-		//},
-		//{ // TODO: not yet implemented
-		//	name: "failed to register sso client for the osd cluster",
-		//	fields: fields{
-		//		kcClient: &redhatsso.SSOClientMock{
-		//			GetTokenFunc: func() (string, error) {
-		//				return token, nil
-		//			},
-		//			GetConfigFunc: func() *redhatsso.RedhatSSORealm {
-		//				return redhatsso.NewRedhatSSOConfig()
-		//			},
-		//			//IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
-		//			//	return "", nil
-		//			//},
-		//			//GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
-		//			//	return secret, nil
-		//			//},
-		//			//CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-		//			//	return "", failedToCreateClientErr
-		//			//},
-		//			//ClientConfigFunc: func(client iam.ClientRepresentation) gocloak.Client {
-		//			//	testID := "12221"
-		//			//	return gocloak.Client{
-		//			//		ClientID: &testID,
-		//			//	}
-		//			//},
-		//		},
-		//	},
-		//	want:    "",
-		//	wantErr: errors.NewWithCause(errors.ErrorFailedToCreateSSOClient, failedToCreateClientErr, "failed to create sso client"),
-		//},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
-			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
-			}
-			got, err := keycloakService.RegisterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
-			Expect(err).To(Equal(tt.wantErr))
-			Expect(got).To(Equal(tt.want))
-		})
-	}
-
-}
 
 func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing.T) {
 	type fields struct {
@@ -236,10 +116,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
-			}
+			keycloakService := &redhatssoService{client: tt.fields.kcClient}
 			got, err := keycloakService.RegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterId)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterAcsFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
@@ -343,205 +220,9 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
-			}
+			keycloakService := &redhatssoService{client: tt.fields.kcClient}
 			err := keycloakService.DeRegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterId)
 			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
-}
-
-func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
-	t.Skip("DeleteServiceAccountInternal not yet implemented")
-
-	type fields struct {
-		kcClient redhatsso.SSOClient
-	}
-	tests := []struct {
-		name       string
-		disable    bool
-		skipReason string
-		fields     fields
-		wantErr    bool
-	}{
-		{
-			name: "returns error when failed to fetch token",
-			fields: fields{
-				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return "", pkgErr.New("token error")
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "do not return an error when service account deleted successfully",
-			fields: fields{
-				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return "", nil
-					},
-					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
-						return nil
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "do not return an error when service account does not exists",
-			fields: fields{
-				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return "", nil
-					},
-					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
-						return fmt.Errorf("not found")
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "returns an error when failed to delete service account",
-			fields: fields{
-				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return "", nil
-					},
-					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
-						return fmt.Errorf("internal server error")
-					},
-				},
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
-			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
-			}
-			err := keycloakService.DeleteServiceAccountInternal("account-id")
-			Expect(err != nil).To(Equal(tt.wantErr))
-		})
-	}
-
-}
-
-func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
-	t.Skip("CreateServiceAccountInternal not yet implemented")
-	tokenErr := pkgErr.New("token error")
-	request := CompleteServiceAccountRequest{
-		Owner:          "some-owner",
-		OwnerAccountId: "owner-account-id",
-		ClientId:       "some-client-id",
-		Name:           "some-name",
-		Description:    "some-description",
-		OrgId:          "some-organisation-id",
-	}
-	type fields struct {
-		kcClient redhatsso.SSOClient
-	}
-	tests := []struct {
-		name                  string
-		fields                fields
-		wantErr               bool
-		serviceAccountCreated bool
-	}{
-		{
-			name: "returns error when failed to fetch token",
-			fields: fields{
-				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return "", tokenErr
-					},
-				},
-			},
-			wantErr:               true,
-			serviceAccountCreated: false,
-		},
-		{
-			name: "returns error when failed to create service account",
-			fields: fields{
-				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return "", nil
-					},
-					//CreateProtocolMapperConfigFunc: func(s string) []gocloak.ProtocolMapperRepresentation {
-					//	return []gocloak.ProtocolMapperRepresentation{}
-					//},
-					//ClientConfigFunc: func(client iam.ClientRepresentation) gocloak.Client {
-					//	return gocloak.Client{}
-					//},
-					//CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-					//	return "", pkgErr.New("failed to create client")
-					//},
-					//GetClientFunc: func(clientId, accessToken string) (*gocloak.Client, error) {
-					//	return nil, nil
-					//},
-				},
-			},
-			wantErr:               true,
-			serviceAccountCreated: false,
-		},
-		{
-			name: "succeed to create service account error when failed to create client",
-			fields: fields{
-				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return "", nil
-					},
-					//GetClientFunc: func(clientId, accessToken string) (*gocloak.Client, error) {
-					//	return nil, nil
-					//},
-					//CreateProtocolMapperConfigFunc: func(s string) []gocloak.ProtocolMapperRepresentation {
-					//	return []gocloak.ProtocolMapperRepresentation{}
-					//},
-					//ClientConfigFunc: func(client iam.ClientRepresentation) gocloak.Client {
-					//	return gocloak.Client{}
-					//},
-					//CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-					//	return "dsd", nil
-					//},
-					//GetClientSecretFunc: func(internalClientId, accessToken string) (string, error) {
-					//	return "secret", nil
-					//},
-					//GetClientServiceAccountFunc: func(accessToken, internalClient string) (*gocloak.User, error) {
-					//	return &gocloak.User{}, nil
-					//},
-					//UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
-					//	return nil
-					//},
-				},
-			},
-			wantErr:               false,
-			serviceAccountCreated: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
-			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
-			}
-			serviceAccount, err := keycloakService.CreateServiceAccountInternal(request)
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(serviceAccount != nil).To(Equal(tt.serviceAccountCreated))
-			if tt.serviceAccountCreated {
-				Expect(serviceAccount.ClientSecret).To(Equal("secret"))
-				Expect(serviceAccount.ClientID).To(Equal(request.ClientId))
-				Expect(serviceAccount.ID).To(Equal("dsd"))
-			}
-		})
-	}
-
 }

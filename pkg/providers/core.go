@@ -82,10 +82,7 @@ func ServiceProviders() di.Option {
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
 		di.Provide(func(c *iam.IAMConfig) sso.IAMService {
-			return sso.NewKeycloakServiceBuilder().
-				ForACS().
-				WithConfiguration(c).
-				Build()
+			return sso.NewIAMService(c)
 		}),
 
 		// Types registered as a BootService are started when the env is started

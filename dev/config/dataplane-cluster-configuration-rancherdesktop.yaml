@@ -15,8 +15,8 @@
 #    central_instance_limit: 2
 #    status: "cluster_provisioning" #Valid values are `cluster_provisioning`, `cluster_provisioned` and `ready`. `cluster_provisioning` will be used if not specified.
 #    provider_type: "ocm" #Valid values are `ocm` and `standalone`. `ocm` will be used if not specified.
-#    cluster_dns: apps.example.com #Valid cluster DNS. This will be used to build central host url and to communicate with standalone clusters. Required when "provider_type" is "standalone" 
-#    supported_instance_type: "eval" # could be "eval", "standard" or both i.e "standard,eval" or "eval,standard". Defaults to "standard,eval" if not set 
+#    cluster_dns: apps.example.com #Valid cluster DNS. This will be used to build central host url and to communicate with standalone clusters. Required when "provider_type" is "standalone"
+#    supported_instance_type: "eval" # could be "eval", "standard" or both i.e "standard,eval" or "eval,standard". Defaults to "standard,eval" if not set
 clusters:
  - name: rancher-desktop
    cluster_id: 1234567890abcdef1234567890abcdef
