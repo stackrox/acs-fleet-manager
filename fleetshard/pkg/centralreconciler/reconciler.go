@@ -159,7 +159,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// 2. OR reconciler creator specified auth provider not to be created
 	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
 	if r.createAuthProvider && remoteCentral.RequestStatus != centralConstants.DinosaurRequestStatusReady.String() {
-		err = InitRHSSOAuthProvider(ctx, remoteCentral, r.client)
+		err = CreateRHSSOAuthProvider(ctx, remoteCentral, r.client)
 		if err != nil {
 			return nil, err
 		} else {
