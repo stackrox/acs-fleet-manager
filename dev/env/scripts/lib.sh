@@ -133,15 +133,16 @@ wait_for_container_to_appear() {
     local namespace="$1"
     local pod_selector="$2"
     local container_name="$3"
-    local status=$($KUBECTL -n "$ACSMS_NAMESPACE" get pod -l "${pod_selector}" -o jsonpath="{.items[0].status.initContainerStatuses[?(@.name == '${container_name}')]} {.items[0].status.containerStatuses[?(@.name == '${container_name}')]}")
-    local state=$(echo "${status}" | jq -r ".state | keys[]")
     log "Waiting for container ${container_name} within pod ${pod_selector} in namespace ${namespace} to appear..."
     for i in $(seq 10); do
+        local status=$($KUBECTL -n "$ACSMS_NAMESPACE" get pod -l "${pod_selector}" -o jsonpath="{.items[0].status.initContainerStatuses[?(@.name == '${container_name}')]} {.items[0].status.containerStatuses[?(@.name == '${container_name}')]}" 2>/dev/null)
+        local state=$(echo "${status}" | jq -r ".state | keys[]")
         if [[ "$state" == "terminated" || "$state" == "running" ]]; then
             echo "Container ${container_name} is in state ${state}"
+            sleep 2
             break
         fi
-        sleep 1
+        sleep 2
     done
 }
 

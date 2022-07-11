@@ -10,6 +10,9 @@ spec:
     - name: "8000"
       port: 8000
       targetPort: 8000
+    - name: healthcheck
+      port: 8083
+      targetPort: 8083
   selector:
     application: fleet-manager
 status:
