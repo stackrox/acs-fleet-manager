@@ -60,7 +60,7 @@ fi
 
 # Deploy database.
 apply "${MANIFESTS_DIR}/db"
-wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=db"
+wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=db" "db"
 log "Database is ready."
 
 # Deploy MS components.
@@ -78,7 +78,7 @@ if [[ "$SPAWN_LOGGER" == "true" ]]; then
 fi
 
 # Prerequisite for port-forwarding are pods in ready state.
-wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=fleet-manager"
+wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=fleet-manager" "fleet-manager"
 
 if [[ "$ENABLE_FM_PORT_FORWARDING" == "true" ]]; then
     port-forwarding start fleet-manager 8000 8000

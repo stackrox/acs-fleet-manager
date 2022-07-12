@@ -63,7 +63,7 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
         # otherwise the subscription will be in a failed state and not progress.
         # Looks like there is some race which causes the subscription to still fail right after
         # operatorhubio catalog is ready, which is why an additional delay has been added.
-        wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "olm.catalogSource=stackrox-operator-test-index"
+        # wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "olm.catalogSource=stackrox-operator-test-index"
         echo "Waiting for CatalogSource to include rhacs-operator..."
         while true; do
             $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get packagemanifests.packages.operators.coreos.com -o json |
@@ -87,7 +87,7 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
         $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" delete pod -l app=rhacs-operator
     fi
 
-    wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "app=rhacs-operator"
+    wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "app=rhacs-operator" "manager"
 else
     # We will be running without RHACS operator, but at least install our CRDs.
     apply "${MANIFESTS_DIR}/crds"

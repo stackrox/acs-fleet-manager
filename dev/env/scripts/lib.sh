@@ -109,6 +109,7 @@ init() {
     export FLEET_MANAGER_RESOURCES=${FLEET_MANAGER_RESOURCES:-$FLEET_MANAGER_RESOURCES_DEFAULT}
     export FLEETSHARD_SYNC_RESOURCES=${FLEETSHARD_SYNC_RESOURCES:-$FLEETSHARD_SYNC_RESOURCES_DEFAULT}
     export DB_RESOURCES=${DB_RESOURCES_DEFAULT:-$DB_RESOURCES_DEFAULT}
+    export RHACS_OPERATOR_RESOURCES=${RHACS_OPERATOR_RESOURCES:-$RHACS_OPERATOR_RESOURCES_DEFAULTS}
 
     export FLEET_MANAGER_IMAGE="${FLEET_MANAGER_IMAGE:-$FLEET_MANAGER_IMAGE_DEFAULT}"
     # When transferring images without repository hostname to Minikube it gets prefixed with "docker.io" automatically.
@@ -140,8 +141,9 @@ wait_for_container_to_appear() {
     local namespace="$1"
     local pod_selector="$2"
     local container_name="$3"
+
     log "Waiting for container ${container_name} within pod ${pod_selector} in namespace ${namespace} to appear..."
-    for i in $(seq 10); do
+    for i in $(seq 60); do
         local status=$($KUBECTL -n "$ACSMS_NAMESPACE" get pod -l "${pod_selector}" -o jsonpath="{.items[0].status.initContainerStatuses[?(@.name == '${container_name}')]} {.items[0].status.containerStatuses[?(@.name == '${container_name}')]}" 2>/dev/null)
         local state=$(echo "${status}" | jq -r ".state | keys[]")
         if [[ "$state" == "terminated" || "$state" == "running" ]]; then
@@ -156,17 +158,18 @@ wait_for_container_to_appear() {
 wait_for_container_to_become_ready() {
     local namespace="$1"
     local pod_selector="$2"
+    local container="$3"
 
     log "Waiting for pod ${pod_selector} within namespace ${namespace} to become ready..."
-
+    wait_for_container_to_appear "$namespace" "$pod_selector" "$container"
     for i in $(seq 10); do
         if $KUBECTL -n "$namespace" wait --timeout=5s --for=condition=ready pod -l "$pod_selector" 2>/dev/null >&2; then
             break
         fi
-        sleep 1
+        sleep 2
     done
     $KUBECTL -n "$namespace" wait --timeout=60s --for=condition=ready pod -l "$pod_selector"
-    sleep 1
+    sleep 2
     log "Pod ${pod_selector} is ready."
 }
 
