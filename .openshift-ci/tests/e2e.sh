@@ -122,12 +122,12 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
     log
 
     log "** BEGIN OPERATOR STATE **"
-    $KUBECTL -n "$STACKROX_OPERATOR" get pods || true
-    $KUBECTL -n "$STACKROX_OPERATOR" describe pods || true
-    $KUBECTL -n "$STACKROX_OPERATOR" get subscriptions || true
-    $KUBECTL -n "$STACKROX_OPERATOR" describe subscriptions || true
-    $KUBECTL -n "$STACKROX_OPERATOR" get installplans || true
-    $KUBECTL -n "$STACKROX_OPERATOR" describe installplans || true
+    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get pods || true
+    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" describe pods || true
+    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get subscriptions || true
+    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" describe subscriptions || true
+    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get installplans || true
+    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" describe installplans || true
     log "** END OPERATOR STATE **"
     log
 fi
