@@ -1,8 +1,8 @@
 package integration
 
 import (
-	"github.com/stackrox/acs-fleet-manager/test/mocks"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/stackrox/acs-fleet-manager/test/mocks"
 )
 
 /* TODO(ROX-10709)
@@ -117,7 +117,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test.TestServices.KeycloakConfig.DinosaurRealm.ValidIssuerURI,
+			"iss":      test.TestServices.IAMConfig.DinosaurRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"fleetshard_operator"},
 			},

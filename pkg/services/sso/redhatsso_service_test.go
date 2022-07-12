@@ -57,7 +57,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 						}, nil
 					},
 					GetConfigFunc: func() *iam.IAMConfig {
-						return iam.NewKeycloakConfig()
+						return iam.NewIAMConfig()
 					},
 				},
 			},
@@ -93,7 +93,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 						}, nil
 					},
 					GetConfigFunc: func() *iam.IAMConfig {
-						return iam.NewKeycloakConfig()
+						return iam.NewIAMConfig()
 					},
 				},
 			},
@@ -116,8 +116,8 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := &redhatssoService{client: tt.fields.kcClient}
-			got, err := keycloakService.RegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterId)
+			iamService := &redhatssoService{client: tt.fields.kcClient}
+			got, err := iamService.RegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterId)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterAcsFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -220,8 +220,8 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			keycloakService := &redhatssoService{client: tt.fields.kcClient}
-			err := keycloakService.DeRegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterId)
+			iamService := &redhatssoService{client: tt.fields.kcClient}
+			err := iamService.DeRegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterId)
 			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}

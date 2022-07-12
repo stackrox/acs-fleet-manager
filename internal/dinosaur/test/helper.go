@@ -30,7 +30,7 @@ import (
 type Services struct {
 	di.Inject
 	DBFactory             *db.ConnectionFactory
-	KeycloakConfig        *iam.IAMConfig
+	IAMConfig             *iam.IAMConfig
 	DinosaurConfig        *config.DinosaurConfig
 	MetricsServer         *server.MetricsServer
 	HealthCheckServer     *server.HealthCheckServer

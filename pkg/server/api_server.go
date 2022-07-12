@@ -43,7 +43,7 @@ var _ Server = &ApiServer{}
 type ServerOptions struct {
 	di.Inject
 	ServerConfig    *ServerConfig
-	KeycloakConfig  *iam.IAMConfig
+	IAMConfig       *iam.IAMConfig
 	SentryConfig    *sentry.Config
 	RouteLoaders    []environments.RouteLoader
 	Env             *environments.Env

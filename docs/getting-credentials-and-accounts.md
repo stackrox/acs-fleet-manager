@@ -43,7 +43,7 @@ Depending on whether interacting with public or private endpoints, the authentic
 * sso.redhat.com for public endpoints
 * MAS-SSO for private endpoints (see this [doc](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/docs/mas-sso/service-architecture/service-architecture.md) to understand how kas-fleet-manager is using MAS-SSO for authentication)
 
-See [feature-flags](feature-flags.md#Keycloak) to understand flags used for authentication.
+See [feature-flags](feature-flags.md#IAM) to understand flags used for authentication.
 
 ## sso.redhat.com service account
 To avail of all required OCM services the fleet-manager depends on, it is required to create an sso.redhat.com service account that will be used for the communication between the fleet-manager and OCM. It is a help desk ticket to get this created which gets routed to Red Hat IT.

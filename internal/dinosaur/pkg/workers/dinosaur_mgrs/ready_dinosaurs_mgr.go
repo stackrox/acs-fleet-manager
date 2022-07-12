@@ -16,11 +16,11 @@ type ReadyDinosaurManager struct {
 	workers.BaseWorker
 	dinosaurService services.DinosaurService
 	iamService      sso.IAMService
-	keycloakConfig  *iam.IAMConfig
+	iamConfig       *iam.IAMConfig
 }
 
 // NewReadyDinosaurManager creates a new dinosaur manager
-func NewReadyDinosaurManager(dinosaurService services.DinosaurService, iamService sso.IAMService, keycloakConfig *iam.IAMConfig) *ReadyDinosaurManager {
+func NewReadyDinosaurManager(dinosaurService services.DinosaurService, iamService sso.IAMService, iamConfig *iam.IAMConfig) *ReadyDinosaurManager {
 	return &ReadyDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -29,7 +29,7 @@ func NewReadyDinosaurManager(dinosaurService services.DinosaurService, iamServic
 		},
 		dinosaurService: dinosaurService,
 		iamService:      iamService,
-		keycloakConfig:  keycloakConfig,
+		iamConfig:       iamConfig,
 	}
 }
 

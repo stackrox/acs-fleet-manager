@@ -210,12 +210,12 @@ func (m *mockFleetshardSync) reconcileDinosaurClusters() {
 
 // Returns an authenticated context to be used for calling the data plane endpoints
 func NewAuthenticatedContextForDataPlaneCluster(h *coreTest.Helper, clusterID string) context.Context {
-	var keycloakConfig *iam.IAMConfig
-	h.Env.MustResolveAll(&keycloakConfig)
+	var iamConfig *iam.IAMConfig
+	h.Env.MustResolveAll(&iamConfig)
 
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
-		"iss": keycloakConfig.RedhatSSORealm.ValidIssuerURI,
+		"iss": iamConfig.RedhatSSORealm.ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": {"fleetshard_operator"},
 		},

@@ -47,8 +47,8 @@ type fleetshardOperatorAddon struct {
 	ProviderFactory  clusters.ProviderFactory
 	ServerConfig     *server.ServerConfig
 	FleetShardConfig *config.FleetshardConfig
-	OCMConfig        *ocm.OCMConfig
-	KeycloakConfig   *iam.IAMConfig
+	OCMConfig *ocm.OCMConfig
+	IAMConfig *iam.IAMConfig
 }
 
 func (o *fleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {
@@ -123,7 +123,7 @@ func (o *fleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAc
 
 		{
 			Id:    fleetshardOperatorParamSSOBaseUrl,
-			Value: o.KeycloakConfig.RedhatSSORealm.ValidIssuerURI,
+			Value: o.IAMConfig.RedhatSSORealm.ValidIssuerURI,
 		},
 		{
 			Id:    fleetshardOperatorParamServiceAccountId,

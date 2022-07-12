@@ -102,9 +102,9 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	var ocmConfig *ocm.OCMConfig
 	var serverConfig *server.ServerConfig
-	var keycloakConfig *iam.IAMConfig
+	var iamConfig *iam.IAMConfig
 
-	env.MustResolveAll(&ocmConfig, &serverConfig, &keycloakConfig)
+	env.MustResolveAll(&ocmConfig, &serverConfig, &iamConfig)
 
 	db.DinosaurAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set dinosaurs lease as expired so that a new leader is elected for each of the leases
 

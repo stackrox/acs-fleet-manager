@@ -139,14 +139,14 @@ func Test_kcClient_GetToken(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn(&tt.fields)
 			}
-			kc := &iamClient{
+			ic := &iamClient{
 				kcClient:    tt.fields.goCloakClient,
 				ctx:         tt.fields.ctx,
 				config:      tt.fields.config,
 				realmConfig: tt.fields.realmConfig,
 				cache:       tt.fields.cache,
 			}
-			cachedToken, err := kc.GetToken()
+			cachedToken, err := ic.GetToken()
 
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if cachedToken != "" && tt.wantNewToken {
@@ -242,11 +242,11 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 	for _, tt := range tests {
 		gomega.RegisterTestingT(t)
 		t.Run(tt.name, func(t *testing.T) {
-			kc := &iamClient{
+			ic := &iamClient{
 				kcClient:    tt.fields.goCloakClient,
 				realmConfig: tt.fields.realmConfig,
 			}
-			internalId, err := kc.IsClientExist(tt.args.requestClientId, tt.args.accessToken)
+			internalId, err := ic.IsClientExist(tt.args.requestClientId, tt.args.accessToken)
 
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			gomega.Expect(internalId).To(gomega.Equal(tt.want))
@@ -340,11 +340,11 @@ func Test_kcClient_GetClient(t *testing.T) {
 	for _, tt := range tests {
 		gomega.RegisterTestingT(t)
 		t.Run(tt.name, func(t *testing.T) {
-			kc := &iamClient{
+			ic := &iamClient{
 				kcClient:    tt.fields.goCloakClient,
 				realmConfig: tt.fields.realmConfig,
 			}
-			client, err := kc.GetClient(tt.args.requestClientId, tt.args.accessToken)
+			client, err := ic.GetClient(tt.args.requestClientId, tt.args.accessToken)
 
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if client != nil {

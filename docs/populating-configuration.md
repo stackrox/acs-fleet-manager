@@ -141,42 +141,6 @@ you can set Fleet Manager to use them by running the following command:
  make redhatsso/setup
 ```
 
-## Setup additional SSO configuration
-A different SSO server other than the default authentication server (Red Hat SSO)
-is needed in Fleet Manager to enable some functionalities:
-* To configure the OpenShift cluster identity provider in Data Plane clusters
-  to give SRE access to them
-
-This additional SSO server must be based on Keycloak.
-
-In order for the Fleet Manager to be able to start, create the following files:
-```
-touch secrets/osd-idp-keycloak-service.clientId
-touch secrets/osd-idp-keycloak-service.clientSecret
-```
-
-If you need any of those functionalities keep reading. Otherwise, this section
-can be skipped.
-
-Two alternatives are offered here to use as the SSO Keycloak server:
-* Run your own Keycloak server instance by following their [getting-started guide](https://www.keycloak.org/getting-started/getting-started-docker). Please note, how to setup Keycloak is out of scope of this guide
-
-To accomplish the previously mentioned functionalities Fleet Manager needs to
-be configured to interact with this additional SSO server.
-
-Create/Have available client-id/client-secret pair of credentials (called Keycloak Clients)
-in the SSO Keycloak server, one for each previously mentioned functionality, and
-then set Fleet Manager to use them by running the following command:
-```
- OSD_IDP_SSO_CLIENT_ID="<osd-idp-sso-client-id>" \
- OSD_IDP_SSO_CLIENT_SECRET="<osd-idp-sso-client-secret" \
- make osd/setup
-```
-
-Additionally, make sure you start the Fleet Manager server with the appropriate
-Keycloak SSO Realms and URL for this. See the
-[Fleet Manager CLI feature flags](./feature-flags.md#keycloak) for details on it.
-
 ## Setup the data plane image pull secret
 In the Data Plane cluster, the Dinosaur Operator and the FleetShard Deployments
 might reference container images that are located in authenticated container

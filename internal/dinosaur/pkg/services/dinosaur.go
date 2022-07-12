@@ -799,7 +799,7 @@ func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralR
 	return results, nil
 }
 
-func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfig *config.DinosaurConfig, keycloakConfig *iam.IAMConfig) *manageddinosaur.ManagedDinosaur {
+func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfig *config.DinosaurConfig, iamConfig *iam.IAMConfig) *manageddinosaur.ManagedDinosaur {
 	managedDinosaurCR := &manageddinosaur.ManagedDinosaur{
 		Id: dinosaurRequest.ID,
 		TypeMeta: metav1.TypeMeta{
