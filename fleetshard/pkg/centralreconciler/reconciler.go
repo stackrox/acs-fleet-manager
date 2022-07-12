@@ -310,7 +310,7 @@ func (r CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remot
 	}
 	err := r.findRoute(ctx, route)
 	if apiErrors.IsNotFound(err) {
-		centralTLSSecret := &v1.Secret{}
+		centralTLSSecret := &corev1.Secret{}
 		err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: centralTLSSecretName}, centralTLSSecret)
 		if err != nil {
 			return errors.Wrapf(err, "get central TLS secret %s/%s", namespace, remoteCentral.Metadata.Name)

@@ -188,7 +188,8 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 
 func TestReconcileDelete(t *testing.T) {
 	// given
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	// centralDeploymentObject() is needed to pass first reconcile loop without an error
+	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
 	r := CentralReconciler{
 		status:    pointer.Int32(0),
 		client:    fakeClient,
