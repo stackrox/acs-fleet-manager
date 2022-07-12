@@ -2,6 +2,7 @@ package sso
 
 import (
 	"fmt"
+	"github.com/golang/glog"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
@@ -35,14 +36,18 @@ func (r *redhatssoService) RegisterAcsFleetshardOperatorServiceAccount(agentClus
 }
 
 func (r *redhatssoService) registerAgentServiceAccount(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
+	glog.V(5).Infof("Registering agent service account with cluster: %s", agentClusterId)
 	svcData, err := r.client.CreateServiceAccount(accessToken, agentClusterId, fmt.Sprintf("service account for agent on cluster %s", agentClusterId))
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to create agent service account")
 	}
+
+	glog.V(5).Infof("Agent service account registered with cluster: %s", agentClusterId)
 	return convertServiceAccountDataToAPIServiceAccount(&svcData), nil
 }
 
 func (r *redhatssoService) DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
+	glog.V(5).Infof("Deregistering ACS fleetshard operator service account with cluster: %s", agentClusterId)
 	accessToken, tokenErr := r.getToken()
 	if tokenErr != nil {
 		return tokenErr
@@ -52,7 +57,8 @@ func (r *redhatssoService) DeRegisterAcsFleetshardOperatorServiceAccount(agentCl
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
 	} else {
 		if !found {
-			// if the account to be deleted does not exists, we simply exit with no errors
+			// if the account to be deleted does not exist, we simply exit with no errors
+			glog.V(5).Infof("ACS fleetshard operator service account not found")
 			return nil
 		}
 	}
@@ -61,6 +67,8 @@ func (r *redhatssoService) DeRegisterAcsFleetshardOperatorServiceAccount(agentCl
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
 	}
+
+	glog.V(5).Infof("ACS fleetshard operator service account deregistered with cluster: %s", agentClusterId)
 	return nil
 }
 
