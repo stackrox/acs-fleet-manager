@@ -2,12 +2,11 @@ package services
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"reflect"
-	"strings"
 	"testing"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 
@@ -180,47 +179,6 @@ func Test_truncateString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := truncateString(tt.args.str, tt.args.num); got != tt.want {
 				t.Errorf("truncateString() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_buildTruncateDinosaurIdentifier(t *testing.T) {
-	mockShortDinosaurName := "dinosaur"
-	mockLongDinosaurName := "sample-dinosaur-name-long"
-
-	type args struct {
-		dinosaurRequest *dbapi.CentralRequest
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "build dinosaur identifier with a short name successfully",
-			args: args{
-				dinosaurRequest: &dbapi.CentralRequest{
-					Name: mockShortDinosaurName,
-				},
-			},
-			want: fmt.Sprintf("%s-%s", mockShortDinosaurName, strings.ToLower(mockDinosaurRequestID)),
-		},
-		{
-			name: "build dinosaur identifier with a long name successfully",
-			args: args{
-				dinosaurRequest: &dbapi.CentralRequest{
-					Name: mockLongDinosaurName,
-				},
-			},
-			want: fmt.Sprintf("%s-%s", mockLongDinosaurName[0:truncatedNameLen], strings.ToLower(mockDinosaurRequestID)),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.args.dinosaurRequest.ID = mockDinosaurRequestID
-			if got := buildTruncateDinosaurIdentifier(tt.args.dinosaurRequest); got != tt.want {
-				t.Errorf("buildTruncateDinosaurIdentifier() = %v, want %v", got, tt.want)
 			}
 		})
 	}
