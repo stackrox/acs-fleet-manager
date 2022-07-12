@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# This script deletes resources on a Kubernetes cluster. The resources to delete are derived from the Kubernetes manifests
+# provided as parameters; these can either be individual files or directories with manifests or a combination.
+
+GITROOT="$(git rev-parse --show-toplevel)"
+export GITROOT
+# shellcheck source=/dev/null
+source "${GITROOT}/dev/env/scripts/lib.sh"
+init
+
+delete_res() {
+    local path="$1"
+    local short_path
+    short_path=$(echo "$path" | sed -e "s|^${GITROOT}/||;")
+    local res
+    res=$(envsubst <"$path")
+    local kind
+    kind=$(echo "$res" | yq e .kind -)
+    local name
+    name=$(echo "$res" | yq e .metadata.name -)
+    local namespace
+    namespace="$(echo "$res" | yq e .metadata.namespace -)"
+    log "Deleting resource '${short_path}'"
+    if [[ "$namespace" == "null" ]]; then
+        $KUBECTL delete "${kind}" "${name}"
+    else
+        $KUBECTL -n "$namespace" delete "${kind}" "${name}"
+    fi
+}
+
+for path in "$@"; do
+
+    if [[ -d "$path" ]]; then
+        find "$path" -name "*.yaml" -type f | while read -r f; do
+            delete_res "$f"
+        done
+    else
+        delete_res "$path"
+    fi
+
+done

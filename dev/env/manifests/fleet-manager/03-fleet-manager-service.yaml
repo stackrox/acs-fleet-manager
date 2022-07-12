@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    application: fleet-manager
+  name: fleet-manager
+  namespace: "$ACSMS_NAMESPACE"
+spec:
+  ports:
+    - name: "8000"
+      port: 8000
+      targetPort: 8000
+    - name: healthcheck
+      port: 8083
+      targetPort: 8083
+  selector:
+    application: fleet-manager
+status:
+  loadBalancer: {}

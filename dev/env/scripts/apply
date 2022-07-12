@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+## This script can apply Kubernetes manifests provided as parameters -- either individual files or directories with manifests.
+
+GITROOT="$(git rev-parse --show-toplevel)"
+export GITROOT
+# shellcheck source=/dev/null
+source "${GITROOT}/dev/env/scripts/lib.sh"
+init
+
+apply_res() {
+    if [[ "$DEBUG" != "trace" ]]; then
+        disable_debugging
+    fi
+    local path="$1"
+    local short_path
+    short_path=$(echo "$path" | sed -e "s|^${GITROOT}/||;")
+    res=$(envsubst <"$path")
+    log "Applying resource from '${short_path}'"
+    echo "$res" | $KUBECTL apply -f -
+    enable_debugging_if_necessary
+}
+
+for path in "$@"; do
+
+    if [[ -d "$path" ]]; then
+        find "$path" -name "*.yaml" -type f | sort -n | while read -r f; do
+            apply_res "$f"
+        done
+    else
+        apply_res "$path"
+    fi
+
+done

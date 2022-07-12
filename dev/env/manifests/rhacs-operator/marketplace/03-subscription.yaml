@@ -1,0 +1,20 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: stackrox-operator-test-subscription
+  namespace: "$STACKROX_OPERATOR_NAMESPACE"
+spec:
+  channel: latest
+  name: rhacs-operator
+  installPlanApproval: Automatic
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: rhacs-operator.v3.70.0
+  config:
+    env:
+      # use a test value for NO_PROXY. This will not have any impact
+      # on the services at runtime, but we can test if it gets piped
+      # through correctly.
+      - name: NO_PROXY
+        value: "127.1.2.3/8"
+    resources: $RHACS_OPERATOR_RESOURCES

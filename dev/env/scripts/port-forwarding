@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+GITROOT="$(git rev-parse --show-toplevel)"
+export GITROOT
+# shellcheck source=/dev/null
+source "${GITROOT}/dev/env/scripts/lib.sh"
+init
+
+usage() {
+    die "Usage: $0 <start|stop> <service name> <local port> <service port>"
+}
+
+if [[ $# -lt 3 ]]; then
+    usage
+fi
+
+action="$1"
+shift
+service_name="$1"
+shift
+service_port="$1"
+shift
+
+pid_file="/tmp/.port-forwarding-${service_name}-${service_port}-pid"
+
+case "$action" in
+
+start)
+    if [[ $# != 1 ]]; then
+        usage
+    fi
+
+    local_port="$1"
+    shift
+
+    if [[ -f "${pid_file}" ]]; then
+        log "Stopping previous port-forwarding"
+        kill "$(cat "${pid_file}")" 2>/dev/null >&2 || true
+        rm "${pid_file}"
+    fi
+    log "Enabling port-forwarding: ${service_name}:${service_port} is bound to localhost:${local_port}"
+    unset DEBUG
+    $KUBECTL -n "$ACSMS_NAMESPACE" port-forward svc/"${service_name}" "${local_port}:${service_port}" >/dev/null &
+    echo $! >"${pid_file}"
+    ;;
+
+stop)
+
+    if [[ -f "${pid_file}" ]]; then
+        log "Stopping port-forwarding"
+        kill "$(cat "${pid_file}")" 2>/dev/null >&2 || true
+        rm "${pid_file}"
+    fi
+    ;;
+
+*)
+    die "Unknown action '$action': must be either 'start' or 'stop'"
+    ;;
+esac

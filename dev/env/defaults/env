@@ -1,0 +1,54 @@
+export ACSMS_NAMESPACE_DEFAULT="acsms"
+export MANIFESTS_DIR="$GITROOT/dev/env/manifests"
+export KUBECTL_DEFAULT="kubectl"
+export DOCKER_DEFAULT="docker"
+export CLUSTER_TYPE_DEFAULT="minikube"
+export INHERIT_IMAGEPULLSECRETS_DEFAULT="false"
+export AUTH_TYPE_DEFAULT="STATIC_TOKEN"
+
+export IMAGE_REGISTRY_DEFAULT="quay.io/rhacs-eng"
+STACKROX_VERSION_TAG="3.70.0-nightly-20220707"
+export STACKROX_OPERATOR_VERSION_DEFAULT="${STACKROX_VERSION_TAG}"
+export CENTRAL_VERSION_DEFAULT=$(echo "$STACKROX_VERSION_TAG" | sed -e 's/0-nightly/x-nightly/;')
+export SCANNER_VERSION_DEFAULT="2.25.1" # This one matches the above operator version tag.
+export STACKROX_OPERATOR_NAMESPACE_DEFAULT="stackrox-operator"
+export OPENSHIFT_CI="${OPENSHIFT_CI:-}"
+export FLEET_MANAGER_IMAGE_DEFAULT="$(make -s -C "$GITROOT" image-tag)"
+export KUBECONFIG_DEFAULT="$HOME/.kube/config"
+export ENABLE_DB_PORT_FORWARDING_DEFAULT="false"
+export ENABLE_FM_PORT_FORWARDING_DEFAULT="false"
+export OPENSHIFT_MARKETPLACE_DEFAULT="false"
+export INSTALL_OPERATOR_DEFAULT="false"
+
+export POSTGRES_DB_DEFAULT="rhacsms"
+export POSTGRES_USER_DEFAULT="fleet_manager"
+export POSTGRES_PASSWORD_DEFAULT="letmein" # pragma: allowlist secret
+
+export AUTH_TYPE_DEFAULT="OCM"
+export OCM_SERVICE_CLIENT_ID_DEFAULT=""
+export OCM_SERVICE_CLIENT_SECRET_DEFAULT=""
+export OCM_SERVICE_TOKEN_DEFAULT=""
+export SENTRY_KEY_DEFAULT=""
+export AWS_ACCESS_KEY_DEFAULT=""
+export AWS_ACCOUNT_ID_DEFAULT=""
+export AWS_SECRET_ACCESS_KEY_DEFAULT=""
+export SSO_CLIENT_ID_DEFAULT=""
+export SSO_CLIENT_SECRET_DEFAULT=""
+export OSD_IDP_SSO_CLIENT_ID_DEFAULT=""
+export OSD_IDP_SSO_CLIENT_SECRET_DEFAULT=""
+export ROUTE53_ACCESS_KEY_DEFAULT=""
+export ROUTE53_SECRET_ACCESS_KEY_DEFAULT=""
+export OBSERVABILITY_CONFIG_ACCESS_TOKEN_DEFAULT=""
+export IMAGE_PULL_DOCKER_CONFIG_DEFAULT=""
+export SPAWN_LOGGER_DEFAULT="false"
+export DUMP_LOGS_DEFAULT="false"
+export OPERATOR_SOURCE_DEFAULT="quay"
+export INSTALL_OLM_DEFAULT="true"
+export FINAL_TEAR_DOWN_DEFAULT="false"
+
+export KUBECONF_CLUSTER_SERVER_OVERRIDE_DEFAULT=""
+
+export FLEET_MANAGER_RESOURCES_DEFAULT='{"requests":{"cpu":"200m","memory":"300Mi"},"limits":{"cpu":"200m","memory":"300Mi"}}'
+export FLEETSHARD_SYNC_RESOURCES_DEFAULT='{"requests":{"cpu":"200m","memory":"300Mi"},"limits":{"cpu":"200m","memory":"300Mi"}}'
+export DB_RESOURCES_DEFAULT='{"requests":{"cpu":"100m","memory":"300Mi"},"limits":{"cpu":"100m","memory":"300Mi"}}'
+export RHACS_OPERATOR_RESOURCES_DEFAULTS='{"requests":{"cpu":"200m","memory":"300Mi"},"limits":{"cpu":"200m","memory":"300Mi"}}'

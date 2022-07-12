@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+set -eu -o pipefail
+
+function log() {
+    echo "$(date -u "+%Y-%m-%dT%H:%M:%SZ")" "$@" >&2
+}
+
+function retry() {
+    local -ir max_attempts=$1
+    shift
+    local -ir sleep=$1
+    shift
+    for attempt in $(seq "${max_attempts}"); do
+        if ((attempt > 1)); then
+            log "retrying in ${sleep}s..."
+            sleep "${sleep}"
+        fi
+        if "$@"; then
+            return 0
+        fi
+    done
+    log "failed $max_attempts attempts"
+    return 1
+}
+
+die() {
+    log "$@"
+    exit 1
+}
+
+function main() {
+    if [ $# -lt 2 ]; then
+        die "Usage: $0 <number of attempts> <delay between attempts in seconds> <command> [ <command arg> ... ]"
+    fi
+
+    local -r n_attempts="${1:-}"
+    shift
+    if ! [ "$n_attempts" -gt 0 ] 2>/dev/null; then
+        die "Error: '$n_attempts' is not a valid number of attempts, please provide a positive natural number."
+    fi
+
+    local -r delay="${1:-}"
+    shift
+    if ! { [ "$delay" -gt 0 ] 2>/dev/null || [ "$delay" -eq 0 ] 2>/dev/null; }; then
+        die "Error: '$delay' is not a number of seconds."
+    fi
+
+    log "** Executing '$*' with $n_attempts attempts **"
+    log
+    retry "$n_attempts" "$delay" "$@"
+}
+
+main "$@"
