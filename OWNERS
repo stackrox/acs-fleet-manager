@@ -7,6 +7,9 @@ approvers:
   - johannes94
   - ebensh
   - kurlov
+  - dhaus67
+  - mtodor
+  - ivan-degtiarenko
 reviewers:
   - SimonBaeumer
   - juanrh
@@ -16,3 +19,6 @@ reviewers:
   - johannes94
   - ebensh
   - kurlov
+  - dhaus67
+  - mtodor
+  - ivan-degtiarenko
