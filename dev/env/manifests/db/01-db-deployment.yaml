@@ -57,9 +57,9 @@ spec:
             - containerPort: 5432
           resources:
             requests:
-              cpu: 600m
-              memory: 2000Mi
+              cpu: 500m
+              memory: 1000Mi
             limits:
-              cpu: 600m
-              memory: 2000Mi
+              cpu: 500m
+              memory: 1000Mi
       restartPolicy: Always

@@ -48,10 +48,10 @@ spec:
             periodSeconds: 5
           resources:
             requests:
-              cpu: 800m
+              cpu: 500m
               memory: 1000Mi
             limits:
-              cpu: 800m
+              cpu: 500m
               memory: 1000Mi
           volumeMounts:
             - mountPath: /secrets

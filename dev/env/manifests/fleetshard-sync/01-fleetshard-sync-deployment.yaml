@@ -49,10 +49,10 @@ spec:
           name: fleetshard-sync
           resources:
             requests:
-              cpu: 600m
+              cpu: 500m
               memory: 1000Mi
             limits:
-              cpu: 600m
+              cpu: 500m
               memory: 1000Mi
           volumeMounts:
             - mountPath: /secrets
