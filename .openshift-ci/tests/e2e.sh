@@ -4,7 +4,9 @@
 ## This script also takes care of OpenShift CI specific initialization
 ## (e.g. injecting Vault secrets into the environment), spawning loggers, dumping logs at the end.
 
-export GITROOT="$(git rev-parse --show-toplevel)"
+GITROOT="$(git rev-parse --show-toplevel)"
+export GITROOT
+# shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 
 log
@@ -26,7 +28,8 @@ init
 
 log "Image: ${FLEET_MANAGER_IMAGE}"
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
-    export LOG_DIR=$(mktemp -d)
+    LOG_DIR=$(mktemp -d)
+    export LOG_DIR
     log "Log directory: ${LOG_DIR}"
 fi
 
@@ -40,7 +43,8 @@ case "$AUTH_TYPE" in
 OCM)
 
     log "Refreshing OCM Service Token"
-    export OCM_SERVICE_TOKEN=$(ocm token --refresh)
+    OCM_SERVICE_TOKEN=$(ocm token --refresh)
+    export OCM_SERVICE_TOKEN
     ;;
 
 STATIC_TOKEN)
@@ -68,7 +72,8 @@ if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
 fi
 
 enable_debugging_if_necessary
-export KUBE_CONFIG=$(assemble-kubeconfig | yq e . -j - | jq -c . -)
+KUBE_CONFIG=$(assemble-kubeconfig | yq e . -j - | jq -c . -)
+export KUBE_CONFIG
 
 # Configuration specific to this e2e test suite:
 export ENABLE_DB_PORT_FORWARDING="false"
@@ -80,17 +85,15 @@ if [[ -z "$OPENSHIFT_CI" ]]; then
     down.sh 2>/dev/null
 fi
 
-LOGGER_PID=""
 MAIN_LOG="log.txt"
 
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
     log "Spawning logger, log directory is ${LOG_DIR}"
-    stern -n "$ACSMS_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >${LOG_DIR}/${MAIN_LOG} 2>&1 &
-    LOGGER_PID=$!
+    stern -n "$ACSMS_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >"${LOG_DIR}/${MAIN_LOG}" 2>&1 &
 fi
 
 FAIL=0
-if ! ${GITROOT}/.openshift-ci/tests/e2e-test.sh; then
+if ! "${GITROOT}/.openshift-ci/tests/e2e-test.sh"; then
     FAIL=1
 fi
 

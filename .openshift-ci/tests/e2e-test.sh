@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-export GITROOT="$(git rev-parse --show-toplevel)"
+GITROOT="$(git rev-parse --show-toplevel)"
+export GITROOT
+# shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 init
 
@@ -21,7 +23,7 @@ if ! make test/e2e; then
     FAIL=1
 fi
 T1=$(date "+%s")
-DELTA=$(($T1 - $T0))
+DELTA=$((T1 - T0))
 
 if [[ $FAIL == 0 ]]; then
     log
@@ -31,10 +33,6 @@ else
     log
     log "** E2E TESTS FAILED ($DELTA seconds) **"
     log
-fi
-
-if [[ "$FINAL_TEAR_DOWN" == "true" ]]; then
-    down.sh
 fi
 
 exit $FAIL

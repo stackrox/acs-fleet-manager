@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-export GITROOT="$(git rev-parse --show-toplevel)"
+GITROOT="$(git rev-parse --show-toplevel)"
+export GITROOT
+# shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 init
 
@@ -8,7 +10,7 @@ usage() {
     die "Usage: $0 <start|stop> <service name> <local port> <service port>"
 }
 
-if [[ $# < 3 ]]; then
+if [[ $# -lt 3 ]]; then
     usage
 fi
 

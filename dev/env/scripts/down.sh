@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-export GITROOT="$(git rev-parse --show-toplevel)"
+GITROOT="$(git rev-parse --show-toplevel)"
+export GITROOT
+# shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 init
 

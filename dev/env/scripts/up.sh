@@ -2,7 +2,9 @@
 
 ## This script takes care of deploying Managed Service components.
 
-export GITROOT="$(git rev-parse --show-toplevel)"
+GITROOT="$(git rev-parse --show-toplevel)"
+export GITROOT
+# shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 init
 
@@ -42,7 +44,7 @@ if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
     sleep 1
     $MINIKUBE ssh 'docker rm --force $(docker ps -a -q) > /dev/null' || true
     sleep 1
-    $MINIKUBE image ls | grep -v "^${FLEET_MANAGER_IMAGE}$" | { grep "^.*/fleet-manager-.*/fleet-manager:.*$" || test $? = 1; } | while read img; do
+    $MINIKUBE image ls | grep -v "^${FLEET_MANAGER_IMAGE}$" | { grep "^.*/fleet-manager-.*/fleet-manager:.*$" || test $? = 1; } | while read -r img; do
         $MINIKUBE image rm "$img" || true
     done
     # In a perfect world this line would be sufficient...
