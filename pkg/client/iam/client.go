@@ -26,7 +26,7 @@ var (
 	mapper   = "oidc-usermodel-attribute-mapper"
 )
 
-//go:generate moq -out client_moq.go . KcClient
+//go:generate moq -out client_moq.go . IAMClient
 type IAMClient interface {
 	CreateClient(client gocloak.Client, accessToken string) (string, error)
 	GetToken() (string, error)

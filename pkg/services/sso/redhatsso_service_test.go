@@ -226,3 +226,71 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 		})
 	}
 }
+
+func TestRedhatSSOService_GetRealmConfig(t *testing.T) {
+	type fields struct {
+		client redhatsso.SSOClient
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   *iam.IAMRealmConfig
+	}{
+		{
+			name: "should return the realm config",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetRealmConfigFunc: func() *iam.IAMRealmConfig {
+						return &iam.IAMRealmConfig{}
+					},
+				},
+			},
+			want: &iam.IAMRealmConfig{},
+		},
+	}
+	g := NewWithT(t)
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			r := &redhatssoService{
+				client: tt.fields.client,
+			}
+			g.Expect(r.GetRealmConfig()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestRedhatSSOService_GetConfig(t *testing.T) {
+	type fields struct {
+		client redhatsso.SSOClient
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   *iam.IAMConfig
+	}{
+		{
+			name: "should return the config",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetConfigFunc: func() *iam.IAMConfig {
+						return &iam.IAMConfig{}
+					},
+				},
+			},
+			want: &iam.IAMConfig{},
+		},
+	}
+	g := NewWithT(t)
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			r := &redhatssoService{
+				client: tt.fields.client,
+			}
+			g.Expect(r.GetConfig()).To(Equal(tt.want))
+		})
+	}
+}
