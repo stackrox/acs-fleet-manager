@@ -46,13 +46,7 @@ spec:
               path: /healthcheck
               port: 8083
             periodSeconds: 5
-          resources:
-            requests:
-              cpu: 500m
-              memory: 1000Mi
-            limits:
-              cpu: 500m
-              memory: 1000Mi
+          resources: $FLEET_MANAGER_RESOURCES_DEFAULT
           volumeMounts:
             - mountPath: /secrets
               name: secrets

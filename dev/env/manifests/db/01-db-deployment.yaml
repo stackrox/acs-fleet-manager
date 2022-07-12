@@ -55,11 +55,5 @@ spec:
           name: db
           ports:
             - containerPort: 5432
-          resources:
-            requests:
-              cpu: 500m
-              memory: 1000Mi
-            limits:
-              cpu: 500m
-              memory: 1000Mi
+          resources: $DB_RESOURCES_DEFAULT
       restartPolicy: Always

@@ -47,3 +47,7 @@ export INSTALL_OLM_DEFAULT="true"
 export FINAL_TEAR_DOWN_DEFAULT="false"
 
 export KUBECONF_CLUSTER_SERVER_OVERRIDE_DEFAULT=""
+
+export FLEET_MANAGER_RESOURCES_DEFAULT='{"requests":{"cpu":"300m","memory":"300Mi"},"limits":{"cpu":"300m","memory":"300Mi"}}'
+export FLEETSHARD_SYNC_RESOURCES_DEFAULT='{"requests":{"cpu":"300m","memory":"300Mi"},"limits":{"cpu":"300m","memory":"300Mi"}}'
+export DB_RESOURCES_DEFAULT='{"requests":{"cpu":"300m","memory":"400Mi"},"limits":{"cpu":"300m","memory":"400Mi"}}'
