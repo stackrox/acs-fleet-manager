@@ -42,16 +42,20 @@ init() {
     fi
 
     source "${GITROOT}/dev/env/defaults/env"
-    if [[ -n "$OPENSHIFT_CI" ]]; then
-        source "${GITROOT}/dev/env/defaults/openshift-ci.env"
-    fi
-
     if ! which bootstrap.sh >/dev/null 2>&1; then
         export PATH="$GITROOT/dev/env/scripts:${PATH}"
     fi
 
+    if [[ -n "$OPENSHIFT_CI" ]]; then
+        export CLUSTER_TYPE_DEFAULT="openshift"
+    fi
+
     export CLUSTER_TYPE="${CLUSTER_TYPE:-$CLUSTER_TYPE_DEFAULT}"
     source "${GITROOT}/dev/env/defaults/cluster-type-${CLUSTER_TYPE}/env"
+
+    if [[ -n "$OPENSHIFT_CI" ]]; then
+        source "${GITROOT}/dev/env/defaults/openshift-ci.env"
+    fi
 
     export ACSMS_NAMESPACE="${ACSMS_NAMESPACE:-$ACSMS_NAMESPACE_DEFAULT}"
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
