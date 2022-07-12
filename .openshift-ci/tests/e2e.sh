@@ -115,10 +115,20 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
         log
     fi
 
-    log "** BEGIN PODS **"
-    $KUBECTL -n "$ACSMS_NAMESPACE" get pods
-    $KUBECTL -n "$ACSMS_NAMESPACE" describe pods
-    log "** END PODS **"
+    log "** BEGIN ACSMS PODS **"
+    $KUBECTL -n "$ACSMS_NAMESPACE" get pods || true
+    $KUBECTL -n "$ACSMS_NAMESPACE" describe pods || true
+    log "** END ACSMS PODS **"
+    log
+
+    log "** BEGIN OPERATOR STATE **"
+    $KUBECTL -n "$STACKROX_OPERATOR" get pods || true
+    $KUBECTL -n "$STACKROX_OPERATOR" describe pods || true
+    $KUBECTL -n "$STACKROX_OPERATOR" get subscriptions || true
+    $KUBECTL -n "$STACKROX_OPERATOR" describe subscriptions || true
+    $KUBECTL -n "$STACKROX_OPERATOR" get installplans || true
+    $KUBECTL -n "$STACKROX_OPERATOR" describe installplans || true
+    log "** END OPERATOR STATE **"
     log
 fi
 
@@ -132,6 +142,10 @@ else
     log
     log "** TESTS FAILED **"
     log
+fi
+
+if [[ "$FINAL_TEAR_DOWN" == "true" ]]; then
+    down.sh
 fi
 
 exit $FAIL
