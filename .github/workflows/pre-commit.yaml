@@ -1,0 +1,21 @@
+# This runs all pre-commit hooks defined within .pre-commit-config.yaml.
+name: Pre-commit hooks
+
+on:
+  push:
+    branches:
+      - main
+      - release
+  pull_request:
+
+jobs:
+  pre-commit:
+    name: "Run pre-commit hooks"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: "1.17"
+      - uses: pre-commit/action@v3.0.0
