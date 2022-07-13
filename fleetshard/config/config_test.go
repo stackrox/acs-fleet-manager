@@ -13,11 +13,9 @@ func TestSingleton_Success(t *testing.T) {
 	t.Setenv("CLUSTER_ID", "some-value")
 	t.Cleanup(func() {
 		_ = os.Unsetenv("CLUSTER_ID")
-		cfg = nil
-		cfgErr = nil
 	})
-	loadConfig()
-	require.NoError(t, cfgErr)
+	cfg, err := GetConfig()
+	require.NoError(t, err)
 	assert.Equal(t, cfg.FleetManagerEndpoint, "http://127.0.0.1:8000")
 	assert.Equal(t, cfg.ClusterID, "some-value")
 	assert.Equal(t, cfg.RuntimePollPeriod, 5*time.Second)
@@ -28,10 +26,8 @@ func TestSingleton_Success(t *testing.T) {
 
 func TestSingleton_Failure(t *testing.T) {
 	t.Cleanup(func() {
-		cfg = nil
-		cfgErr = nil
 	})
-	loadConfig()
-	assert.Error(t, cfgErr)
+	cfg, err := GetConfig()
+	assert.Error(t, err)
 	assert.Nil(t, cfg)
 }

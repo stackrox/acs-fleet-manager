@@ -1,20 +1,12 @@
 package config
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/stackrox/rox/pkg/errorhelpers"
-	"github.com/stackrox/rox/pkg/sync"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/pkg/errors"
-)
-
-var (
-	once   sync.Once
-	cfg    *Config
-	cfgErr error
 )
 
 // Config contains this application's runtime configuration.
@@ -29,13 +21,13 @@ type Config struct {
 	CreateAuthProvider   bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
 }
 
-func loadConfig() {
+// GetConfig retrieves the current runtime configuration from the environment and returns it.
+func GetConfig() (*Config, error) {
 	c := Config{}
 	var configErrors errorhelpers.ErrorList
 
 	if err := env.Parse(&c); err != nil {
-		cfgErr = errors.Wrapf(err, "Unable to parse runtime configuration from environment")
-		return
+		return nil, errors.Wrapf(err, "Unable to parse runtime configuration from environment")
 	}
 	if c.ClusterID == "" {
 		configErrors.AddError(errors.New("CLUSTER_ID unset in the environment"))
@@ -46,17 +38,9 @@ func loadConfig() {
 	if c.AuthType == "" {
 		configErrors.AddError(errors.New("AUTH_TYPE unset in the environment"))
 	}
-	cfgErr = configErrors.ToError()
-	if cfgErr == nil {
-		cfg = &c
-	}
-}
-
-// Singleton retrieves the current runtime configuration from the environment and returns it.
-func Singleton() (*Config, error) {
-	once.Do(loadConfig)
+	cfgErr := configErrors.ToError()
 	if cfgErr != nil {
-		return cfg, fmt.Errorf("loading configuration: %w", cfgErr)
+		return nil, cfgErr
 	}
-	return cfg, nil
+	return &c, nil
 }
