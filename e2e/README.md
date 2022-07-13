@@ -16,6 +16,16 @@ $ CLUSTER_ID=1234567890abcdef1234567890abcdef OCM_TOKEN=$(ocm token --refresh) .
 # Run e2e tests (invalidate cache to run it multiple times)
 $ go clean -testcache && CLUSTER_ID=1234567890abcdef1234567890abcdef RUN_E2E=true OCM_TOKEN=$(ocm token --refresh) go test ./e2e/...
 
+# Run auth e2e tests:
+$ go clean -testcache && CLUSTER_ID=1234567890abcdef1234567890abcdef \
+  RUN_E2E=true \
+  RUN_AUTH_E2E=true \
+  CLUSTER_ID=1234567890abcdef1234567890abcdef \
+  STATIC_TOKEN=<bitwarden value> \
+  OCM_TOKEN=$(ocm token --refresh) \
+  RHSSO_CLIENT_ID=<bitwarden value> RHSSO_CLIENT_SECRET=<bitwarden value> \
+  go test ./e2e/...
+
 # To clean up the environment run
 $ ./e2e/cleanup.sh
 ```
