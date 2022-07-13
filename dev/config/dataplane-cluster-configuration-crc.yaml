@@ -1,0 +1,22 @@
+---
+#- A list of clusters for fleet manager
+#- The `cluster_id` field can not be empty
+#- All clusters in fleet manager DB already but are missing in the list will be marked as
+#  'deprovisioning' and will later be deleted.
+#- This list is ordered, any new cluster should be appended at the end.
+clusters:
+ - name: crc-admin  # Uncomment if using minikube
+   cluster_id: 1234567890abcdef1234567890abcdef
+   cloud_provider: standalone
+   region: standalone
+   schedulable: true
+   status: ready
+   central_instance_limit: 5
+   provider_type: standalone
+   supported_instance_type: "eval,standard"
+   cluster_dns: apps-crc.testing
+   available_central_operator_versions:
+    - version: "0.1.0"
+      ready: true
+      central_versions:
+       - version: "0.1.0"
