@@ -7,7 +7,7 @@ source "${GITROOT}/dev/env/scripts/lib.sh"
 init
 
 usage() {
-    die "Usage: $0 <start|stop> <service name> <local port> <service port>"
+    die "Usage: $0 <start|stop> <service name> <service port> <local port>"
 }
 
 if [[ $# -lt 3 ]]; then
