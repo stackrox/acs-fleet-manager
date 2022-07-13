@@ -39,7 +39,7 @@ inject_ips() {
 }
 
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
-    create-imagepullsecrets-interactive
+    create-imagepullsecrets
     inject_ips "$ACSMS_NAMESPACE" "default" "quay-ips"
     inject_ips "$STACKROX_OPERATOR_NAMESPACE" "default" "quay-ips"
 fi

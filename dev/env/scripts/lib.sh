@@ -16,10 +16,9 @@ verify_environment() {
 }
 
 get_current_cluster_name() {
-    local kubeconfig_file="$1"
     local cluster_name
     disable_debugging
-    cluster_name=$($KUBECTL --kubeconfig "${kubeconfig_file}" config view --minify=true 2>/dev/null | yq e '.clusters[].name' -)
+    cluster_name=$(kubectl config view --minify=true 2>/dev/null | yq e '.clusters[].name' -)
     enable_debugging_if_necessary
     echo "$cluster_name"
 }
@@ -43,6 +42,10 @@ init() {
     if [[ "$DEBUG" == "trace" ]]; then
         set -x
     fi
+
+    # For reading the defaults we need access to the
+    CLUSTER_NAME=$(get_current_cluster_name)
+    export CLUSTER_NAME
 
     for env_file in "${GITROOT}/dev/env/defaults/"*.env; do
         source "$env_file"
@@ -69,8 +72,6 @@ init() {
     export STACKROX_OPERATOR_NAMESPACE="${STACKROX_OPERATOR_NAMESPACE:-$STACKROX_OPERATOR_NAMESPACE_DEFAULT}"
     export STACKROX_OPERATOR_IMAGE="${IMAGE_REGISTRY}/stackrox-operator:${STACKROX_OPERATOR_VERSION}"
     export STACKROX_OPERATOR_INDEX_IMAGE="${IMAGE_REGISTRY}/stackrox-operator-index:v${STACKROX_OPERATOR_VERSION}"
-    export KUBECONFIG=${KUBECONFIG:-$KUBECONFIG_DEFAULT}
-    export CLUSTER_NAME=$(get_current_cluster_name "$KUBECONFIG")
     export OPENSHIFT_MARKETPLACE="${OPENSHIFT_MARKETPLACE:-$OPENSHIFT_MARKETPLACE_DEFAULT}"
     export INSTALL_OPERATOR="${INSTALL_OPERATOR:-$INSTALL_OPERATOR_DEFAULT}"
     export DATABASE_HOST=${DATABASE_HOST:-$DATABASE_HOST_DEFAULT}
@@ -110,7 +111,7 @@ init() {
     export RHACS_OPERATOR_RESOURCES=${RHACS_OPERATOR_RESOURCES:-$RHACS_OPERATOR_RESOURCES_DEFAULTS}
     export DOCKER_CONFIG=${DOCKER_CONFIG:-$DOCKER_CONFIG_DEFAULT}
     [[ -d "$DOCKER_CONFIG" ]] || mkdir -p "$DOCKER_CONFIG"
-
+    export SKIP_TESTS=${SKIP_TESTS:-$SKIP_TESTS_DEFAULT}
     export FLEET_MANAGER_IMAGE="${FLEET_MANAGER_IMAGE:-$FLEET_MANAGER_IMAGE_DEFAULT}"
 
     if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
@@ -218,7 +219,7 @@ wait_for_default_service_account() {
 }
 
 assemble_kubeconfig() {
-    kubeconf=$($KUBECTL --kubeconfig "${KUBECONFIG}" config view --minify=true --raw=true 2>/dev/null)
+    kubeconf=$($KUBECTL config view --minify=true --raw=true 2>/dev/null)
     CONTEXT_NAME=$(echo "$kubeconf" | yq e .current-context -)
     CONTEXT="$(echo "$kubeconf" | yq e ".contexts[] | select(.name == \"${CONTEXT_NAME}\")" -j - | jq -c)"
     USER_NAME=$(echo "$CONTEXT" | jq -r .context.user -)
@@ -232,8 +233,10 @@ assemble_kubeconfig() {
 
     if [[ "$KUBECONF_CLUSTER_SERVER_OVERRIDE" == "true" ]]; then
         local server
+        $KUBECTL delete pod alpine >/dev/null 2>&1 || true
         server=$($KUBECTL run --rm -it alpine --quiet --image=alpine --restart=Never -- sh -c 'echo $KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT' | tr -d '\r')
         CLUSTER=$(echo "$CLUSTER" | jq ".cluster.server = \"https://${server}\"" -)
+        $KUBECTL delete pod alpine >/dev/null 2>&1 || true
     fi
 
     config=$(

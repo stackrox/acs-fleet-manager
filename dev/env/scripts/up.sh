@@ -9,6 +9,7 @@ source "${GITROOT}/dev/env/scripts/lib.sh"
 init
 
 cat <<EOF
+
 ** Bringing up ACS MS **
 
 Image: ${FLEET_MANAGER_IMAGE}

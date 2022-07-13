@@ -1,5 +1,4 @@
 export OPENSHIFT_MARKETPLACE_DEFAULT="true"
-export INSTALL_OPERATOR_DEFAULT="false"
 export KUBECTL_DEFAULT="oc"
 export OPERATOR_SOURCE_DEFAULT="marketplace"
 export INSTALL_OLM_DEFAULT="false"
