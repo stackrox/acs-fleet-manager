@@ -1,4 +1,4 @@
-# This runs checks to verify if code is properly formated and that tests (unit and integration against a mocked environment) are passing.
+# This runs checks to verify if code is properly formatted and that tests (unit and integration against a mocked environment) are passing.
 name: Lint & Test
 
 on:
@@ -112,7 +112,7 @@ jobs:
         run: |
           export GOPATH=$(go env GOPATH)
           export PATH=${PATH}:$GOPATH/bin
-          make verify lint binary test test/integration
+          make verify binary test test/integration
         timeout-minutes: 14
       - name: Build and publish image to quay.io
         if: github.event_name == 'push'
