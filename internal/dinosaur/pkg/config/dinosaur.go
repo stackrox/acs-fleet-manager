@@ -31,7 +31,7 @@ func NewDinosaurConfig() *DinosaurConfig {
 		DinosaurTLSCertFile:               "secrets/dinosaur-tls.crt",
 		DinosaurTLSKeyFile:                "secrets/dinosaur-tls.key",
 		EnableDinosaurExternalCertificate: false,
-		DinosaurDomainName:                "dinosaur.devshift.org",
+		DinosaurDomainName:                "rhacs-dev.com",
 		DinosaurLifespan:                  NewDinosaurLifespanConfig(),
 		Quota:                             NewDinosaurQuotaConfig(),
 	}

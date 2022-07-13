@@ -255,12 +255,6 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 }
 
 func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
-	truncatedDinosaurIdentifier := buildTruncateDinosaurIdentifier(dinosaurRequest)
-	truncatedDinosaurIdentifier, replaceErr := replaceHostSpecialChar(truncatedDinosaurIdentifier)
-	if replaceErr != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, replaceErr, "generated host is not valid")
-	}
-
 	clusterDNS, err := k.clusterService.GetClusterDNS(dinosaurRequest.ClusterID)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
@@ -272,11 +266,11 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 	}
 	dinosaurRequest.Namespace = namespace
 	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedDinosaurIngressDnsNamePrefix, 1)
-	dinosaurRequest.Host = fmt.Sprintf("%s.%s", truncatedDinosaurIdentifier, clusterDNS)
+	dinosaurRequest.Host = fmt.Sprintf("%s.%s", namespace, clusterDNS)
 
 	if k.dinosaurConfig.EnableDinosaurExternalCertificate {
 		// If we enable DinosaurTLS, the host should use the external domain name rather than the cluster domain
-		dinosaurRequest.Host = fmt.Sprintf("%s.%s", truncatedDinosaurIdentifier, k.dinosaurConfig.DinosaurDomainName)
+		dinosaurRequest.Host = fmt.Sprintf("%s.%s", namespace, k.dinosaurConfig.DinosaurDomainName)
 	}
 
 	// Update the Dinosaur Request record in the database

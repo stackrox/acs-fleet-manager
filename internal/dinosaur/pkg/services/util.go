@@ -5,8 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -33,12 +31,6 @@ func truncateString(str string, num int) string {
 		truncatedString = str[0:num]
 	}
 	return truncatedString
-}
-
-// buildTruncateDinosaurIdentifier creates a unique identifier for a dinosaur cluster given
-// the dinosaur request object
-func buildTruncateDinosaurIdentifier(dinosaurRequest *dbapi.CentralRequest) string {
-	return fmt.Sprintf("%s-%s", truncateString(dinosaurRequest.Name, truncatedNameLen), strings.ToLower(dinosaurRequest.ID))
 }
 
 // maskProceedingandTrailingDash replaces the first and final character of a string with a subdomain safe
