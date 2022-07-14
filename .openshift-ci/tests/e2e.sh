@@ -14,7 +14,6 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     log "Executing in OpenShift CI context"
     log "Retrieving secrets from Vault mount"
     shopt -s nullglob
-    disable_debugging
     for cred in /var/run/rhacs-ms-e2e-tests/[A-Z]*; do
         secret_name="$(basename "$cred")"
         secret_value="$(cat "$cred")"
@@ -24,7 +23,6 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export STATIC_TOKEN="${FLEET_STATIC_TOKEN:-}"
     export QUAY_USER="${IMAGE_PUSH_USERNAME:-}"
     export QUAY_TOKEN="${IMAGE_PUSH_PASSWORD:-}"
-    enable_debugging_if_necessary
     export CLUSTER_TYPE="openshift-ci"
     export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
 fi
@@ -44,7 +42,6 @@ if [[ "$SPAWN_LOGGER" == "true" ]]; then
     log "Log directory: ${LOG_DIR}"
 fi
 
-disable_debugging
 case "$AUTH_TYPE" in
 OCM)
 
@@ -71,8 +68,6 @@ if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
         die "QUAY_TOKEN needs to be set"
     fi
 fi
-
-enable_debugging_if_necessary
 
 # Configuration specific to this e2e test suite:
 export ENABLE_DB_PORT_FORWARDING="false"

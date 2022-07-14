@@ -102,13 +102,11 @@ else
     apply "${MANIFESTS_DIR}/crds"
 fi
 
-if [[ ("$INSTALL_OPERATOR" == "true" && "$IMAGE_REGISTRY" =~ ^quay.io/) || "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
+if [[ ("$INSTALL_OPERATOR" == "true" && "$OPERATOR_SOURCE" == "quay") || "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
     log "Logging into Quay image registry"
-    disable_debugging
     $DOCKER login quay.io -u "$QUAY_USER" --password-stdin <<EOF
 $QUAY_TOKEN
 EOF
-    enable_debugging_if_necessary
 fi
 
 if [[ "$CLUSTER_TYPE" == "minikube" ]]; then

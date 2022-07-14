@@ -39,7 +39,6 @@ start)
         rm "${pid_file}"
     fi
     log "Enabling port-forwarding: ${service_name}:${service_port} is bound to localhost:${local_port}"
-    unset DEBUG
     $KUBECTL -n "$ACSMS_NAMESPACE" port-forward svc/"${service_name}" "${local_port}:${service_port}" >/dev/null &
     echo $! >"${pid_file}"
     ;;

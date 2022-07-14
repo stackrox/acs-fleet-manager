@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 die() {
     {
         printf "$*"
@@ -11,15 +13,9 @@ log() {
     echo
 }
 
-verify_environment() {
-    return
-}
-
 get_current_cluster_name() {
     local cluster_name
-    disable_debugging
     cluster_name=$(kubectl config view --minify=true 2>/dev/null | yq e '.clusters[].name' -)
-    enable_debugging_if_necessary
     echo "$cluster_name"
 }
 
@@ -36,18 +32,16 @@ dump_env() {
 }
 
 init() {
-    export GITROOT=${GITROOT:-"$(git rev-parse --show-toplevel)"} # This makes it possible to execute init without having GITROOT initialized already.
-    export DEBUG="${DEBUG:-false}"
+    GITROOT_DEFAULT=$(git rev-parse --show-toplevel)
+    export GITROOT=${GITROOT:-$GITROOT_DEFAULT}
     set -eu -o pipefail
-    if [[ "$DEBUG" == "trace" ]]; then
-        set -x
-    fi
 
     # For reading the defaults we need access to the
     CLUSTER_NAME=$(get_current_cluster_name)
     export CLUSTER_NAME
 
     for env_file in "${GITROOT}/dev/env/defaults/"*.env; do
+        # shellcheck source=/dev/null
         source "$env_file"
     done
 
@@ -57,6 +51,7 @@ init() {
 
     export CLUSTER_TYPE="${CLUSTER_TYPE:-$CLUSTER_TYPE_DEFAULT}"
     for env_file in "${GITROOT}/dev/env/defaults/cluster-type-${CLUSTER_TYPE}/"*; do
+        # shellcheck source=/dev/null
         source "$env_file"
     done
 
@@ -65,7 +60,8 @@ init() {
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
     export DOCKER=${DOCKER:-$DOCKER_DEFAULT}
     export IMAGE_REGISTRY="${IMAGE_REGISTRY:-$IMAGE_REGISTRY_DEFAULT}"
-    export IMAGE_REGISTRY_HOST=$(if [[ "$IMAGE_REGISTRY" =~ ^[^/]*\.[^/]*/ ]]; then echo "$IMAGE_REGISTRY" | cut -d / -f 1; fi)
+    IMAGE_REGISTRY_HOST=$(if [[ "$IMAGE_REGISTRY" =~ ^[^/]*\.[^/]*/ ]]; then echo "$IMAGE_REGISTRY" | cut -d / -f 1; fi)
+    export IMAGE_REGISTRY_HOST
     export STACKROX_OPERATOR_VERSION="${STACKROX_OPERATOR_VERSION:-$STACKROX_OPERATOR_VERSION_DEFAULT}"
     export CENTRAL_VERSION="${CENTRAL_VERSION:-$CENTRAL_VERSION_DEFAULT}"
     export SCANNER_VERSION="${SCANNER_VERSION:-$SCANNER_VERSION_DEFAULT}"
@@ -116,23 +112,6 @@ init() {
 
     if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
         eval "$(minikube docker-env)"
-    fi
-
-    verify_environment
-
-    disable_debugging
-    enable_debugging_if_necessary
-}
-
-disable_debugging() {
-    if [[ "$DEBUG" != "trace" ]]; then
-        set +x
-    fi
-}
-
-enable_debugging_if_necessary() {
-    if [[ "$DEBUG" != "false" ]]; then
-        set -x
     fi
 }
 
@@ -225,8 +204,6 @@ assemble_kubeconfig() {
     USER_NAME=$(echo "$CONTEXT" | jq -r .context.user -)
     CLUSTER_NAME=$(echo "$CONTEXT" | jq -r .context.cluster -)
     CLUSTER=$(echo "$kubeconf" | yq e ".clusters[] | select(.name == \"${CLUSTER_NAME}\")" -j - | jq -c)
-    CLUSTER_SERVER=$(echo "$CLUSTER" | jq -r .cluster.server -)
-    CLUSTER_SERVER_HOST=$(echo "$CLUSTER_SERVER" | sed -e 's|https://\(.*\):.*|\1|;')
     NEW_CONTEXT_NAME="$CLUSTER_NAME"
     CONTEXT=$(echo "$CONTEXT" | jq ".name = \"$NEW_CONTEXT_NAME\"" -c -)
     KUBEUSER="$(echo "$kubeconf" | yq e ".users[] | select(.name == \"${USER_NAME}\")" -j - | jq -c)"

@@ -19,9 +19,7 @@ Installing RHACS Operator: ${INSTALL_OPERATOR}
 
 EOF
 
-disable_debugging
 KUBE_CONFIG=$(assemble_kubeconfig | yq e . -j - | jq -c . -)
-enable_debugging_if_necessary
 export KUBE_CONFIG
 
 if [[ "$CLUSTER_TYPE" != "openshift-ci" ]]; then

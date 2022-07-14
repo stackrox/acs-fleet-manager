@@ -9,16 +9,12 @@ source "${GITROOT}/dev/env/scripts/lib.sh"
 init
 
 apply_res() {
-    if [[ "$DEBUG" != "trace" ]]; then
-        disable_debugging
-    fi
     local path="$1"
     local short_path
-    short_path=$(echo "$path" | sed -e "s|^${GITROOT}/||;")
+    short_path=${path/#${GITROOT}/}
     res=$(envsubst <"$path")
     log "Applying resource from '${short_path}'"
     echo "$res" | $KUBECTL apply -f -
-    enable_debugging_if_necessary
 }
 
 for path in "$@"; do
