@@ -121,4 +121,6 @@ EOF
     log "Images preloaded"
 fi
 
+log
 log "** Bootstrapping complete **"
+log
