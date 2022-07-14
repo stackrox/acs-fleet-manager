@@ -50,6 +50,10 @@ init() {
     fi
 
     export CLUSTER_TYPE="${CLUSTER_TYPE:-$CLUSTER_TYPE_DEFAULT}"
+    if [[ -z "$CLUSTER_TYPE" ]]; then
+        die "Error: CLUSTER_TYPE not set and could not be figured out. Please make sure that it is initialized properly."
+    fi
+
     for env_file in "${GITROOT}/dev/env/defaults/cluster-type-${CLUSTER_TYPE}/"*; do
         # shellcheck source=/dev/null
         source "$env_file"

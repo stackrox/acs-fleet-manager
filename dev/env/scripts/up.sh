@@ -22,7 +22,8 @@ EOF
 KUBE_CONFIG=$(assemble_kubeconfig | yq e . -j - | jq -c . -)
 export KUBE_CONFIG
 
-if [[ "$CLUSTER_TYPE" != "openshift-ci" ]]; then
+if [[ ! ("$CLUSTER_TYPE" == "openshift-ci" || "$CLUSTER_TYPE" == "infra-openshift") ]]; then
+    # We are deploying locally. Locally we support Quay images and freshly built images.
     if [[ "$FLEET_MANAGER_IMAGE" =~ ^fleet-manager:.* ]]; then
         # Local image reference, which cannot be pulled.
         image_available=$(if $DOCKER image inspect "${FLEET_MANAGER_IMAGE}" >/dev/null 2>&1; then echo "true"; else echo "false"; fi)
@@ -44,6 +45,11 @@ if [[ "$CLUSTER_TYPE" != "openshift-ci" ]]; then
     # Verify that the image is there.
     if ! $DOCKER image inspect "$FLEET_MANAGER_IMAGE" >/dev/null 2>&1; then
         die "Image ${FLEET_MANAGER_IMAGE} not available in cluster, aborting"
+    fi
+else
+    # We are deploying to a remote cluster.
+    if [[ "$FLEET_MANAGER_IMAGE" =~ ^fleet-manager:.* ]]; then
+        die "Error: When deploying to a remote target cluster FLEET_MANAGER_IMAGE must point to an image pullable from the target cluster."
     fi
 fi
 
@@ -87,4 +93,6 @@ if [[ "$ENABLE_DB_PORT_FORWARDING" == "true" ]]; then
     port-forwarding start db 5432 5432
 fi
 
+log
 log "** Fleet Manager ready ** "
+log

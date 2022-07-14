@@ -102,14 +102,14 @@ else
     apply "${MANIFESTS_DIR}/crds"
 fi
 
-if [[ ("$INSTALL_OPERATOR" == "true" && "$OPERATOR_SOURCE" == "quay") || "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
-    log "Logging into Quay image registry"
-    $DOCKER login quay.io -u "$QUAY_USER" --password-stdin <<EOF
+if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
+    if [[ ("$INSTALL_OPERATOR" == "true" && "$OPERATOR_SOURCE" == "quay") || "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
+        log "Logging into Quay image registry"
+        $DOCKER login quay.io -u "$QUAY_USER" --password-stdin <<EOF
 $QUAY_TOKEN
 EOF
-fi
+    fi
 
-if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
     log "Preloading images into minikube..."
     $DOCKER pull "postgres:13"
     if [[ "$INSTALL_OPERATOR" == "true" ]]; then
