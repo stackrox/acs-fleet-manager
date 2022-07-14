@@ -40,11 +40,11 @@ if [[ "$CLUSTER_TYPE" != "openshift-ci" ]]; then
         log "Trying to pull image '${FLEET_MANAGER_IMAGE}'..."
         $DOCKER pull "$FLEET_MANAGER_IMAGE"
     fi
-fi
 
-# Verify that the image is there.
-if ! $DOCKER image inspect "$FLEET_MANAGER_IMAGE" >/dev/null 2>&1; then
-    die "Image ${FLEET_MANAGER_IMAGE} not available in cluster, aborting"
+    # Verify that the image is there.
+    if ! $DOCKER image inspect "$FLEET_MANAGER_IMAGE" >/dev/null 2>&1; then
+        die "Image ${FLEET_MANAGER_IMAGE} not available in cluster, aborting"
+    fi
 fi
 
 # Apply cluster type specific manifests, if any.
