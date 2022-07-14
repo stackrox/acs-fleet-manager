@@ -36,7 +36,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 417,
-      "iteration": 1657746518714,
+      "iteration": 1657835940922,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -45,7 +45,7 @@ data:
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "description": "",
+          "description": "The availability is calculated as the average of binary up (1) or down (0) values. Each value represents an interval of 10 minutes, in which the service is either up or down. The service counts as available if at most 10% of requests return a status code 5xx in the interval.",
           "fieldConfig": {
             "defaults": {
               "decimals": 2,
@@ -98,10 +98,10 @@ data:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "(sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\",code!=\"5xx\"}[$__range]))/sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\"}[$__range])))",
+              "expr": "avg_over_time(floor(sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\",code!=\"5xx\"}[10m])) / sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\"}[10m])) > 0 + 0.1)[28d:10m])",
               "instant": true,
               "interval": "",
-              "legendFormat": "Create Operation",
+              "legendFormat": "Availability",
               "range": false,
               "refId": "A"
             }
@@ -619,7 +619,7 @@ data:
                 "uid": "$datasource"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.90, sum(rate(api_inbound_request_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",code!~\"5..\"}[5m])) by (le))",
+              "expr": "histogram_quantile(0.90, sum(rate(api_inbound_request_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[5m])) by (le))",
               "interval": "",
               "legendFormat": "p90",
               "range": true,
@@ -631,11 +631,23 @@ data:
                 "uid": "$datasource"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.99, sum(rate(api_inbound_request_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",code!~\"5..\"}[5m])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(api_inbound_request_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[5m])) by (le))",
               "hide": false,
               "legendFormat": "p99",
               "range": true,
               "refId": "B"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "$datasource"
+              },
+              "editorMode": "code",
+              "expr": "histogram_quantile(1, sum(rate(api_inbound_request_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[5m])) by (le))",
+              "hide": false,
+              "legendFormat": "max",
+              "range": true,
+              "refId": "C"
             }
           ],
           "title": "API Latency",
@@ -749,17 +761,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "thresholds"
-              },
-              "custom": {
-                "fillOpacity": 80,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineWidth": 1
+                "mode": "continuous-GrYlRd"
               },
               "mappings": [],
               "thresholds": {
@@ -768,18 +770,27 @@ data:
                   {
                     "color": "green",
                     "value": null
-                  },
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "1"
+                },
+                "properties": [
                   {
-                    "color": "red",
-                    "value": 80
+                    "id": "displayName"
                   }
                 ]
               }
-            },
-            "overrides": []
+            ]
           },
           "gridPos": {
-            "h": 6,
+            "h": 11,
             "w": 24,
             "x": 0,
             "y": 32
@@ -787,12 +798,19 @@ data:
           "id": 7,
           "links": [],
           "options": {
-            "bucketOffset": 0,
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom"
-            }
+            "displayMode": "gradient",
+            "minVizHeight": 10,
+            "minVizWidth": 0,
+            "orientation": "vertical",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showUnfilled": true,
+            "text": {}
           },
           "pluginVersion": "9.0.1",
           "targets": [
@@ -801,15 +819,18 @@ data:
                 "uid": "$datasource"
               },
               "editorMode": "code",
+              "exemplar": false,
               "expr": "sum(fleet_manager_worker_dinosaur_duration_bucket{namespace=\"$namespace\",jobType=\"dinosaur_create\"}) by (le)",
+              "format": "heatmap",
+              "instant": false,
               "interval": "",
-              "legendFormat": "p90-create",
+              "legendFormat": "{{le}}",
               "range": true,
               "refId": "A"
             }
           ],
-          "title": "Creation Latency",
-          "type": "histogram"
+          "title": "Creation Latency histogram (in seconds)",
+          "type": "bargauge"
         }
       ],
       "refresh": false,
@@ -820,7 +841,7 @@ data:
         "list": [
           {
             "current": {
-              "selected": false,
+              "selected": true,
               "text": "app-sre-stage-01-prometheus",
               "value": "app-sre-stage-01-prometheus"
             },
@@ -894,6 +915,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager SLOs",
       "uid": "T2kek3H9a",
-      "version": 6,
+      "version": 9,
       "weekStart": ""
     }
