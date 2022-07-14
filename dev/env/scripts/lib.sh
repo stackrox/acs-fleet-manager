@@ -15,7 +15,18 @@ log() {
 
 get_current_cluster_name() {
     local cluster_name
-    cluster_name=$(kubectl config view --minify=true 2>/dev/null | yq e '.clusters[].name' -)
+    local kubectl
+    if which kubectl >/dev/null 2>&1; then
+        kubectl="kubectl"
+    elif which oc >/dev/null 2>&1; then
+        kubectl="oc"
+    else
+        log "Error: Failed to retrieve cluster name, please set CLUSTER_NAME"
+    fi
+
+    if [[ -n "$kubectl" ]]; then
+        cluster_name=$($kubectl config view --minify=true | yq e '.clusters[].name' -)
+    fi
     echo "$cluster_name"
 }
 
@@ -37,7 +48,11 @@ init() {
     set -eu -o pipefail
 
     # For reading the defaults we need access to the
-    CLUSTER_NAME=$(get_current_cluster_name)
+    CLUSTER_NAME_DEFAULT=$(get_current_cluster_name)
+    export CLUSTER_NAME=${CLUSTER_NAME:-$CLUSTER_NAME_DEFAULT}
+    if [[ -z "$CLUSTER_NAME" ]]; then
+        die "Error: Failed to retrieve cluster name."
+    fi
     export CLUSTER_NAME
 
     for env_file in "${GITROOT}/dev/env/defaults/"*.env; do
