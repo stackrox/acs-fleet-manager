@@ -109,7 +109,7 @@ func sendGroupRequest(ctx context.Context, central private.ManagedCentral, group
 		return errors.Wrap(err, "sending new group to central")
 	}
 	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "Failed to create group for central %s", central.Metadata.Name)
+		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create group for central %s", central.Metadata.Name)
 	}
 	return nil
 }
