@@ -36,7 +36,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 417,
-      "iteration": 1657847471950,
+      "iteration": 1657881183696,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -45,7 +45,7 @@ data:
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "description": "",
+          "description": "The availability is calculated as the average of binary up (1) or down (0) values. Each value represents an interval of 10 minutes, in which the service is either up or down. The service counts as available if at most 35% of requests return a status code 5xx in the interval.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -109,7 +109,7 @@ data:
               "hide": false,
               "instant": true,
               "interval": "",
-              "legendFormat": "Create Operation",
+              "legendFormat": "__auto",
               "range": false,
               "refId": "B"
             }
@@ -704,8 +704,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -776,8 +775,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               },
@@ -923,6 +921,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager SLOs",
       "uid": "T2kek3H9a",
-      "version": 10,
+      "version": 12,
       "weekStart": ""
     }
