@@ -36,9 +36,14 @@ var _ = Describe("Central", func() {
 		if val := os.Getenv("AUTH_TYPE"); val != "" {
 			authType = val
 		}
+		fleetManagerEndpoint := "http://localhost:8000"
+		if fmEndpointEnv := os.Getenv("FLEET_MANAGER_ENDPOINT"); fmEndpointEnv != "" {
+			fleetManagerEndpoint = fmEndpointEnv
+		}
+
 		auth, err := fleetmanager.NewAuth(authType)
 		Expect(err).ToNot(HaveOccurred())
-		client, err = fleetmanager.NewClient("http://localhost:8000", "cluster-id", auth)
+		client, err = fleetmanager.NewClient(fleetManagerEndpoint, "cluster-id", auth)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
