@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 die() {
     {
         printf "$*"
@@ -11,13 +13,20 @@ log() {
     echo
 }
 
-verify_environment() {
-    return
-}
-
 get_current_cluster_name() {
-    local kubeconfig_file="$1"
-    local cluster_name=$($KUBECTL --kubeconfig "${kubeconfig_file}" config view --minify=true 2>/dev/null | yq e '.clusters[].name' -)
+    local cluster_name
+    local kubectl
+    if which kubectl >/dev/null 2>&1; then
+        kubectl="kubectl"
+    elif which oc >/dev/null 2>&1; then
+        kubectl="oc"
+    else
+        log "Error: Failed to retrieve cluster name, please set CLUSTER_NAME"
+    fi
+
+    if [[ -n "$kubectl" ]]; then
+        cluster_name=$($kubectl config view --minify=true | yq e '.clusters[].name' -)
+    fi
     echo "$cluster_name"
 }
 
@@ -34,53 +43,58 @@ dump_env() {
 }
 
 init() {
-    export GITROOT=${GITROOT:-"$(git rev-parse --show-toplevel)"} # This makes it possible to execute init without having GITROOT initialized already.
-    export DEBUG="${DEBUG:-false}"
+    GITROOT_DEFAULT=$(git rev-parse --show-toplevel)
+    export GITROOT=${GITROOT:-$GITROOT_DEFAULT}
     set -eu -o pipefail
-    if [[ "$DEBUG" == "trace" ]]; then
-        set -x
-    fi
 
-    source "${GITROOT}/dev/env/defaults/env"
+    # For reading the defaults we need access to the
+    CLUSTER_NAME_DEFAULT=$(get_current_cluster_name)
+    export CLUSTER_NAME=${CLUSTER_NAME:-$CLUSTER_NAME_DEFAULT}
+    if [[ -z "$CLUSTER_NAME" ]]; then
+        die "Error: Failed to retrieve cluster name."
+    fi
+    export CLUSTER_NAME
+
+    for env_file in "${GITROOT}/dev/env/defaults/"*.env; do
+        # shellcheck source=/dev/null
+        source "$env_file"
+    done
+
     if ! which bootstrap.sh >/dev/null 2>&1; then
         export PATH="$GITROOT/dev/env/scripts:${PATH}"
     fi
 
-    if [[ -n "$OPENSHIFT_CI" ]]; then
-        export CLUSTER_TYPE_DEFAULT="openshift"
-    fi
-
     export CLUSTER_TYPE="${CLUSTER_TYPE:-$CLUSTER_TYPE_DEFAULT}"
-    source "${GITROOT}/dev/env/defaults/cluster-type-${CLUSTER_TYPE}/env"
-
-    if [[ -n "$OPENSHIFT_CI" ]]; then
-        source "${GITROOT}/dev/env/defaults/openshift-ci.env"
+    if [[ -z "$CLUSTER_TYPE" ]]; then
+        die "Error: CLUSTER_TYPE not set and could not be figured out. Please make sure that it is initialized properly."
     fi
+
+    for env_file in "${GITROOT}/dev/env/defaults/cluster-type-${CLUSTER_TYPE}/"*; do
+        # shellcheck source=/dev/null
+        source "$env_file"
+    done
 
     export ACSMS_NAMESPACE="${ACSMS_NAMESPACE:-$ACSMS_NAMESPACE_DEFAULT}"
+    export CLUSTER_ID=${CLUSTER_ID:-$CLUSTER_ID_DEFAULT}
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
     export DOCKER=${DOCKER:-$DOCKER_DEFAULT}
     export IMAGE_REGISTRY="${IMAGE_REGISTRY:-$IMAGE_REGISTRY_DEFAULT}"
+    IMAGE_REGISTRY_HOST=$(if [[ "$IMAGE_REGISTRY" =~ ^[^/]*\.[^/]*/ ]]; then echo "$IMAGE_REGISTRY" | cut -d / -f 1; fi)
+    export IMAGE_REGISTRY_HOST
     export STACKROX_OPERATOR_VERSION="${STACKROX_OPERATOR_VERSION:-$STACKROX_OPERATOR_VERSION_DEFAULT}"
     export CENTRAL_VERSION="${CENTRAL_VERSION:-$CENTRAL_VERSION_DEFAULT}"
     export SCANNER_VERSION="${SCANNER_VERSION:-$SCANNER_VERSION_DEFAULT}"
     export STACKROX_OPERATOR_NAMESPACE="${STACKROX_OPERATOR_NAMESPACE:-$STACKROX_OPERATOR_NAMESPACE_DEFAULT}"
     export STACKROX_OPERATOR_IMAGE="${IMAGE_REGISTRY}/stackrox-operator:${STACKROX_OPERATOR_VERSION}"
     export STACKROX_OPERATOR_INDEX_IMAGE="${IMAGE_REGISTRY}/stackrox-operator-index:v${STACKROX_OPERATOR_VERSION}"
-    export KUBECONFIG=${KUBECONFIG:-$KUBECONFIG_DEFAULT}
-    export CLUSTER_NAME_DEFAULT=$(get_current_cluster_name "$KUBECONFIG")
-    export CLUSTER_NAME=${CLUSTER_NAME:-$CLUSTER_NAME_DEFAULT}
     export OPENSHIFT_MARKETPLACE="${OPENSHIFT_MARKETPLACE:-$OPENSHIFT_MARKETPLACE_DEFAULT}"
     export INSTALL_OPERATOR="${INSTALL_OPERATOR:-$INSTALL_OPERATOR_DEFAULT}"
-    export POSTGRES_DB=${POSTGRES_DB:-$POSTGRES_DB_DEFAULT}
-    export POSTGRES_USER=${POSTGRES_USER:-$POSTGRES_USER_DEFAULT}
-    export POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-$POSTGRES_PASSWORD_DEFAULT}
-    export DATABASE_HOST="db"
-    export DATABASE_PORT="5432"
-    export DATABASE_NAME="$POSTGRES_DB"
-    export DATABASE_USER="$POSTGRES_USER"
-    export DATABASE_PASSWORD="$POSTGRES_PASSWORD"
-    export DATABASE_TLS_CERT=""
+    export DATABASE_HOST=${DATABASE_HOST:-$DATABASE_HOST_DEFAULT}
+    export DATABASE_PORT=${DATABASE_PORT:-$DATABASE_PORT_DEFAULT}
+    export DATABASE_NAME=${DATABASE_NAME:-$DATABASE_NAME_DEFAULT}
+    export DATABASE_USER=${DATABASE_USER:-$DATABASE_USER_DEFAULT}
+    export DATABASE_PASSWORD=${DATABASE_PASSWORD:-$DATABASE_PASSWORD_DEFAULT}
+    export DATABASE_TLS_CERT=${DATABASE_TLS_CERT:-$DATABASE_TLS_CERT_DEFAULT}
     export OCM_SERVICE_CLIENT_ID=${OCM_SERVICE_CLIENT_ID:-$OCM_SERVICE_CLIENT_ID_DEFAULT}
     export OCM_SERVICE_CLIENT_SECRET=${OCM_SERVICE_CLIENT_SECRET:-$OCM_SERVICE_CLIENT_SECRET_DEFAULT}
     export OCM_SERVICE_TOKEN=${OCM_SERVICE_TOKEN:-$OCM_SERVICE_TOKEN_DEFAULT}
@@ -110,30 +124,13 @@ init() {
     export FLEETSHARD_SYNC_RESOURCES=${FLEETSHARD_SYNC_RESOURCES:-$FLEETSHARD_SYNC_RESOURCES_DEFAULT}
     export DB_RESOURCES=${DB_RESOURCES_DEFAULT:-$DB_RESOURCES_DEFAULT}
     export RHACS_OPERATOR_RESOURCES=${RHACS_OPERATOR_RESOURCES:-$RHACS_OPERATOR_RESOURCES_DEFAULTS}
-
+    export DOCKER_CONFIG=${DOCKER_CONFIG:-$DOCKER_CONFIG_DEFAULT}
+    [[ -d "$DOCKER_CONFIG" ]] || mkdir -p "$DOCKER_CONFIG"
+    export SKIP_TESTS=${SKIP_TESTS:-$SKIP_TESTS_DEFAULT}
     export FLEET_MANAGER_IMAGE="${FLEET_MANAGER_IMAGE:-$FLEET_MANAGER_IMAGE_DEFAULT}"
-    # When transferring images without repository hostname to Minikube it gets prefixed with "docker.io" automatically.
-    if [[ "$FLEET_MANAGER_IMAGE" =~ ^fleet-manager-.*/fleet-manager:.* ]]; then
-        export FULL_FLEET_MANAGER_IMAGE="docker.io/${FLEET_MANAGER_IMAGE}"
-    else
-        export FULL_FLEET_MANAGER_IMAGE="${FLEET_MANAGER_IMAGE}"
-    fi
 
-    verify_environment
-
-    disable_debugging
-    enable_debugging_if_necessary
-}
-
-disable_debugging() {
-    if [[ "$DEBUG" != "trace" ]]; then
-        set +x
-    fi
-}
-
-enable_debugging_if_necessary() {
-    if [[ "$DEBUG" != "false" ]]; then
-        set -x
+    if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
+        eval "$(minikube docker-env)"
     fi
 }
 
@@ -141,36 +138,53 @@ wait_for_container_to_appear() {
     local namespace="$1"
     local pod_selector="$2"
     local container_name="$3"
+    local seconds="${4:-120}" # Default to 120 seconds waiting time.
 
     log "Waiting for container ${container_name} within pod ${pod_selector} in namespace ${namespace} to appear..."
-    for i in $(seq 60); do
-        local status=$($KUBECTL -n "$ACSMS_NAMESPACE" get pod -l "${pod_selector}" -o jsonpath="{.items[0].status.initContainerStatuses[?(@.name == '${container_name}')]} {.items[0].status.containerStatuses[?(@.name == '${container_name}')]}" 2>/dev/null)
-        local state=$(echo "${status}" | jq -r ".state | keys[]")
-        if [[ "$state" == "terminated" || "$state" == "running" ]]; then
-            echo "Container ${container_name} is in state ${state}"
-            sleep 2
-            break
+    for i in $(seq "$seconds"); do
+        local status
+        status=$($KUBECTL -n "$namespace" get pod -l "$pod_selector" -o jsonpath="{.items[0].status.initContainerStatuses[?(@.name == '${container_name}')]} {.items[0].status.containerStatuses[?(@.name == '${container_name}')]}" 2>/dev/null)
+        local state=
+        state=$(echo "${status}" | jq -r ".state | keys[]")
+        if [[ "$state" == "running" ]]; then
+            echo "Container ${pod_selector}/${container_name} is in state ${state}"
+            return 0
         fi
-        sleep 2
+        sleep 1
     done
+
+    log "Timed out waiting for container ${container_name} to appear for pod ${pod_selector} in namespace ${namespace}"
+    return 1
+}
+
+is_pod_ready() {
+    local namespace="$1"
+    local pod_selector="$2"
+    local status
+    status=$($KUBECTL -n "$namespace" get pod -l "$pod_selector" -o jsonpath="{.items[0].status.conditions[?(@.type == 'ContainersReady')].status}" 2>/dev/null || true)
+    if [[ "$status" == "True" ]]; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 wait_for_container_to_become_ready() {
     local namespace="$1"
     local pod_selector="$2"
-    local container="$3"
+    local container_name="$3"
+    local timeout="120s"
 
     log "Waiting for pod ${pod_selector} within namespace ${namespace} to become ready..."
-    wait_for_container_to_appear "$namespace" "$pod_selector" "$container"
-    for i in $(seq 10); do
-        if $KUBECTL -n "$namespace" wait --timeout=5s --for=condition=ready pod -l "$pod_selector" 2>/dev/null >&2; then
-            break
-        fi
+    wait_for_container_to_appear "$namespace" "$pod_selector" "$container_name" || return 1
+    if $KUBECTL -n "$namespace" wait --timeout="$timeout" --for=condition=ready pod -l "$pod_selector" 2>/dev/null >&2; then
+        log "Container $container_name for pod ${pod_selector} is ready."
         sleep 2
-    done
-    $KUBECTL -n "$namespace" wait --timeout=60s --for=condition=ready pod -l "$pod_selector"
-    sleep 2
-    log "Pod ${pod_selector} is ready."
+        return 0
+    fi
+
+    log "Failed to wait for container ${container_name} in pod ${pod_selector} in namespace ${namespace} to become ready"
+    return 1
 }
 
 wait_for_resource_to_appear() {
@@ -182,6 +196,7 @@ wait_for_resource_to_appear() {
 
     for i in $(seq 60); do
         if $KUBECTL -n "$namespace" get "$kind" "$name" 2>/dev/null >&2; then
+            log "Resource ${kind}/${namespace} in namespace ${namespace} appeared"
             return 0
         fi
         sleep 1
@@ -199,4 +214,40 @@ wait_for_default_service_account() {
     else
         return 1
     fi
+}
+
+assemble_kubeconfig() {
+    kubeconf=$($KUBECTL config view --minify=true --raw=true 2>/dev/null)
+    CONTEXT_NAME=$(echo "$kubeconf" | yq e .current-context -)
+    CONTEXT="$(echo "$kubeconf" | yq e ".contexts[] | select(.name == \"${CONTEXT_NAME}\")" -j - | jq -c)"
+    USER_NAME=$(echo "$CONTEXT" | jq -r .context.user -)
+    CLUSTER_NAME=$(echo "$CONTEXT" | jq -r .context.cluster -)
+    CLUSTER=$(echo "$kubeconf" | yq e ".clusters[] | select(.name == \"${CLUSTER_NAME}\")" -j - | jq -c)
+    NEW_CONTEXT_NAME="$CLUSTER_NAME"
+    CONTEXT=$(echo "$CONTEXT" | jq ".name = \"$NEW_CONTEXT_NAME\"" -c -)
+    KUBEUSER="$(echo "$kubeconf" | yq e ".users[] | select(.name == \"${USER_NAME}\")" -j - | jq -c)"
+
+    if [[ "$KUBECONF_CLUSTER_SERVER_OVERRIDE" == "true" ]]; then
+        local server
+        $KUBECTL delete pod alpine >/dev/null 2>&1 || true
+        server=$($KUBECTL run --rm -it alpine --quiet --image=alpine --restart=Never -- sh -c 'echo $KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT' | tr -d '\r')
+        CLUSTER=$(echo "$CLUSTER" | jq ".cluster.server = \"https://${server}\"" -)
+        $KUBECTL delete pod alpine >/dev/null 2>&1 || true
+    fi
+
+    config=$(
+        cat <<EOF
+apiVersion: v1
+clusters:
+    - $CLUSTER
+contexts:
+    - $CONTEXT
+current-context: "$NEW_CONTEXT_NAME"
+kind: Config
+users:
+    - $KUBEUSER
+EOF
+    )
+
+    echo "$config"
 }

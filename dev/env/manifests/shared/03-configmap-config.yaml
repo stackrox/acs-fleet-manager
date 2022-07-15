@@ -4,7 +4,7 @@ data:
     ---
     clusters:
       - name: "$CLUSTER_NAME"
-        cluster_id: 1234567890abcdef1234567890abcdef
+        cluster_id: "$CLUSTER_ID"
         cloud_provider: standalone
         region: standalone
         schedulable: true

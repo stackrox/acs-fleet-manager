@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     application: db
-  name: db
+  name: "$DATABASE_HOST"
   namespace: "$ACSMS_NAMESPACE"
 spec:
   replicas: 1
@@ -46,14 +46,14 @@ spec:
                 - -h
                 - localhost
                 - -U
-                - "$POSTGRES_USER"
+                - "$DATABASE_USER"
                 - -d
-                - "$POSTGRES_DB"
+                - "$DATABASE_NAME"
             failureThreshold: 30
             periodSeconds: 1
             timeoutSeconds: 3
           name: db
           ports:
             - containerPort: 5432
-          resources: $DB_RESOURCES_DEFAULT
+          resources: $DB_RESOURCES
       restartPolicy: Always

@@ -12,7 +12,7 @@ init
 delete_res() {
     local path="$1"
     local short_path
-    short_path=$(echo "$path" | sed -e "s|^${GITROOT}/||;")
+    short_path=${path/#${GITROOT}/}
     local res
     res=$(envsubst <"$path")
     local kind

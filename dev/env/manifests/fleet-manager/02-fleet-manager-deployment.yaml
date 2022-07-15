@@ -19,7 +19,7 @@ spec:
     spec:
       initContainers:
         - name: db-migrate
-          image: "$FULL_FLEET_MANAGER_IMAGE"
+          image: "$FLEET_MANAGER_IMAGE"
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -35,7 +35,7 @@ spec:
             - sh
             - "-c"
             - "cd /; /usr/local/bin/fleet-manager serve --api-server-bindaddress=0.0.0.0:8000 --health-check-server-bindaddress=0.0.0.0:8083 --kubeconfig=/secrets/kubeconfig || { sleep 120; false; }"
-          image: "$FULL_FLEET_MANAGER_IMAGE"
+          image: "$FLEET_MANAGER_IMAGE"
           imagePullPolicy: IfNotPresent
           name: fleet-manager
           ports:
@@ -46,7 +46,7 @@ spec:
               path: /healthcheck
               port: 8083
             periodSeconds: 5
-          resources: $FLEET_MANAGER_RESOURCES_DEFAULT
+          resources: $FLEET_MANAGER_RESOURCES
           volumeMounts:
             - mountPath: /secrets
               name: secrets

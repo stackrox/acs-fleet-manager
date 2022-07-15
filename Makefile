@@ -43,6 +43,7 @@ internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 # Test image name that will be used for PR checks
 test_image:=test/fleet-manager
 
+DOCKER ?= docker
 DOCKER_CONFIG="${PWD}/.docker"
 
 # Default Variables
@@ -219,6 +220,7 @@ help:
 	@echo "make openapi/generate            generate openapi modules"
 	@echo "make openapi/validate            validate openapi schema"
 	@echo "make image/build                 build docker image"
+	@echo "make image/build/local           build docker image and retag in simplified form"
 	@echo "make image/push                  push docker image"
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make secrets/touch               touch all required secret files"
@@ -411,7 +413,7 @@ run: install
 
 # Run Swagger and host the api docs
 run/docs:
-	docker run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 8082:8080 -e URLS="[ \
+	$(DOCKER) run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 8082:8080 -e URLS="[ \
 		{ url: \"./openapi/fleet-manager.yaml\", name: \"Public API\" },\
 		{ url: \"./openapi/fleet-manager-private.yaml\", name: \"Private API\"},\
 		{ url: \"./openapi/fleet-manager-private-admin.yaml\", name: \"Private Admin API\"}]"\
@@ -421,8 +423,8 @@ run/docs:
 
 # Remove Swagger container
 run/docs/teardown:
-	docker container stop swagger_ui_docs
-	docker container rm swagger_ui_docs
+	$(DOCKER) container stop swagger_ui_docs
+	$(DOCKER) container rm swagger_ui_docs
 .PHONY: run/docs/teardown
 
 db/setup:
@@ -430,7 +432,7 @@ db/setup:
 .PHONY: db/setup
 
 db/start:
-	docker start fleet-manager-db
+	$(DOCKER) start fleet-manager-db
 .PHONY: db/start
 
 db/migrate:
@@ -442,7 +444,7 @@ db/teardown:
 .PHONY: db/teardown
 
 db/login:
-	docker exec -u $(shell id -u) -it fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
+	$(DOCKER) exec -u $(shell id -u) -it fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
 .PHONY: db/login
 
 db/psql:
@@ -456,12 +458,12 @@ db/generate/insert/cluster:
 
 # Login to docker
 docker/login:
-	docker --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
+	$(DOCKER) --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
 .PHONY: docker/login
 
 # Login to the OpenShift internal registry
 docker/login/internal:
-	docker login -u kubeadmin --password-stdin <<< $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
+	$(DOCKER) login -u kubeadmin --password-stdin <<< $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
 .PHONY: docker/login/internal
 
 # Build the binary and image
@@ -469,24 +471,32 @@ docker/login/internal:
 image/build: GOOS=linux
 image/build: GOARCH=amd64
 image/build: fleet-manager fleetshard-sync
-	docker --config="${DOCKER_CONFIG}" build -t "$(image_repository):$(image_tag)" .
+	$(DOCKER) --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
 .PHONY: image/build
 
 # Build and push the image
 image/push: image/build
-	docker --config="${DOCKER_CONFIG}" push "$(external_image_registry)/$(image_repository):$(image_tag)"
+	$(DOCKER) --config="${DOCKER_CONFIG}" push "$(external_image_registry)/$(image_repository):$(image_tag)"
 .PHONY: image/push
 
 # build binary and image for OpenShift deployment
 image/build/internal: IMAGE_TAG ?= $(image_tag)
 image/build/internal: binary
-	docker build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
+	$(DOCKER) build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
 .PHONY: image/build/internal
+
+# build binary and image and tag image for local deployment
+image/build/local: GOOS=linux
+image/build/local: GOARCH=amd64
+image/build/local: IMAGE_TAG ?= $(image_tag)
+image/build/local: image/build
+	$(DOCKER) image tag "$(external_image_registry)/$(image_repository):$(IMAGE_TAG)" "fleet-manager:$(IMAGE_TAG)"
+.PHONY: image/build/local
 
 # push the image to the OpenShift internal registry
 image/push/internal: IMAGE_TAG ?= $(image_tag)
 image/push/internal: docker/login/internal
-	docker push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)"
+	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)"
 .PHONY: image/push/internal
 
 # build and push the image to an OpenShift cluster's internal registry
@@ -496,12 +506,12 @@ image/build/push/internal: image/build/internal image/push/internal
 
 # Build the binary and test image
 image/build/test: binary
-	docker build -t "$(test_image)" -f Dockerfile.integration.test .
+	$(DOCKER) build -t "$(test_image)" -f Dockerfile.integration.test .
 .PHONY: image/build/test
 
 # Run the test container
 test/run: image/build/test
-	docker run -u $(shell id -u) --net=host -p 9876:9876 -i "$(test_image)"
+	$(DOCKER) run -u $(shell id -u) --net=host -p 9876:9876 -i "$(test_image)"
 .PHONY: test/run
 
 # Touch all necessary secret files for fleet manager to start up
@@ -565,7 +575,7 @@ observatorium/token-refresher/setup: IMAGE_TAG ?= latest
 observatorium/token-refresher/setup: ISSUER_URL ?= https://sso.redhat.com/auth/realms/redhat-external
 observatorium/token-refresher/setup: OBSERVATORIUM_URL ?= https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/manageddinosaur
 observatorium/token-refresher/setup:
-	@docker run -d -p ${PORT}:${PORT} \
+	@$(DOCKER) run -d -p ${PORT}:${PORT} \
 		--restart always \
 		--name observatorium-token-refresher quay.io/rhoas/mk-token-refresher:${IMAGE_TAG} \
 		/bin/token-refresher \
@@ -744,16 +754,12 @@ deploy/token-refresher:
 docs/generate/mermaid:
 	@for f in $(shell ls $(DOCS_DIR)/mermaid-diagrams-source/*.mmd); do \
 		echo Generating diagram for `basename $${f}`; \
-		docker run -it -v $(DOCS_DIR)/mermaid-diagrams-source:/data -v $(DOCS_DIR)/images:/output minlag/mermaid-cli -i /data/`basename $${f}` -o /output/`basename $${f} .mmd`.png; \
+		$(DOCKER) run -it -v $(DOCS_DIR)/mermaid-diagrams-source:/data -v $(DOCS_DIR)/images:/output minlag/mermaid-cli -i /data/`basename $${f}` -o /output/`basename $${f} .mmd`.png; \
 	done
 .PHONY: docs/generate/mermaid
 
 tag:
 	@echo "$(image_tag)"
 .PHONY: tag
-
-image-tag:
-	@echo "$(image_repository):$(image_tag)"
-.PHONY: image-tag
 
 # TODO CRC Deployment stuff
