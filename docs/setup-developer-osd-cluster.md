@@ -26,10 +26,11 @@ Export name for your cluster. Prefix it with your initials or something similar 
 export OSD_CLUSTER_NAME="<your cluster name>"
 ```
 
-For staging OSD cluster, you should login to staging platform. You should use `rhacs-managed-service-dev` account.
+For staging OSD cluster, you should login to staging platform. You should use `rhacs-managed-service-dev` account. The `ocm` command is aware of differences and defining `--url staging` all what is required in order to login to staging platform.
 ```
 ocm login --url staging --token="<your token from OpenShift console UI - console.redhat.com>
 ```
+Staging UI is accessible on this URL: https://qaprodauth.cloud.redhat.com
 
 Create cluster with `ocm` command
 ```
