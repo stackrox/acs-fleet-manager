@@ -25,6 +25,21 @@ The scripts can be configured using environment variables, the most important op
 * `AUTH_TYPE`: Can be `OCM` (in which case a new token will be created automatically using `ocm token --refresh`) or `STATIC_TOKEN`, in which case a valid static token is expected in the environment variable `STATIC_TOKEN`.
 * `QUAY_USER` & `QUAY_TOKEN`: Mandatory setting in case images need to be pulled from Quay.
 
+## Prerequisites
+
+Currently supported cluster types are:
+* Local Minikube
+* Remote Infra OpenShift 4.x
+* OpenShift CI
+
+Required tools:
+* standard Unix environment with Bash
+* `docker` CLI (or replacement)
+* Minikube (if deploying to Minikube)
+* operator-sdk (if deploying to clusters not having access to OpenShift Marketplace, like Minikube)
+* `yq` & `jq`
+* `kubectl` or `oc`
+
 ## Examples
 
 ### Minikube
