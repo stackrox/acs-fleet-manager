@@ -59,20 +59,20 @@ and that the `docker` CLI is in `PATH` (if not, export `DOCKER=...` accordingly)
 * `QUAY_TOKEN`
 * `STATIC_TOKEN` for `AUTH_TYPE=STATIC_TOKEN` or `OCM_TOKEN` for `AUTH_TYPE=OCM`
 
-Then do:
-
-```
-$ dev/env/scripts/bootstrap.sh
-$ dev/env/scripts/up.sh
-```
-
-Then, in order to run the e2e test suite:
-```
-make test/e2e
-```
-
-If the goal is to run the e2e test suite, one can also execute the e2e entrypoint for OpenShift CI, which also works in different execution environments:
-
+The primary way for executing the e2e test suite is by calling
 ```
 $ ./.openshift-ci/test/e2e.sh
+```
+
+In certain situations it is also useful to be able to execute the respective building blocks manually:
+
+```
+$ dev/env/scripts/bootstrap.sh # For bootstrapping the basic environment
+$ dev/env/scripts/up.sh        # For brining up the Managed Services components
+```
+
+Then, after fleet-manager's leader election is complete (check it's logs), you can run the e2e test
+suite manually:
+```
+make test/e2e
 ```
