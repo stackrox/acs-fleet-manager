@@ -305,3 +305,18 @@ Or on Linux:
 ```
 echo "{\"expiration_timestamp\":\"$(date -v+7d -u +'%Y-%m-%dT%H:%M:%SZ')\"}" | ocm patch "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}"
 ```
+
+### Re-deploy new Fleetshard synchronizer
+
+To deploy new build of Fleetshard synchronizer you can simply re-build and rollout new image helm.
+```
+GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal
+oc rollout restart -n "${NAMESPACE}" deployment fleetshard-sync
+```
+
+### Re-start new local Fleetshard manager
+
+```
+make binary
+./fleet-manager serve --dataplane-cluster-config-file "./${CLUSTER_ID}.yaml"
+```
