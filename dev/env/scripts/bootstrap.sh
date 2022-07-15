@@ -47,7 +47,7 @@ fi
 if [[ "$INSTALL_OPERATOR" == "true" ]]; then
     if [[ "$INSTALL_OLM" == "true" ]]; then
         # Setup OLM
-        if { operator-sdk olm status 2>&1 | grep -q "no existing installation found"; }; then
+        if { operator-sdk olm status 2>&1 || true; } | grep -q "no existing installation found"; then
             log "Installing OLM..."
             operator-sdk olm install
         else
