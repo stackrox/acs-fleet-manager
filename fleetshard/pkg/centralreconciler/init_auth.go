@@ -76,7 +76,7 @@ func CreateRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 	if err != nil {
 		return errors.Wrap(err, "sending new auth provider to central")
 	} else if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "Failed to create auth provider for central %s", central.Metadata.Name)
+		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create auth provider for central %s", central.Metadata.Name)
 	}
 
 	// Decode auth provider response to use auth provider id in /v1/groups requests.
