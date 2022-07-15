@@ -162,7 +162,7 @@ func getAdminPassword(ctx context.Context, central private.ManagedCentral, clien
 	}
 	password := string(secret.Data[adminPasswordSecretKey])
 	if password == "" {
-		return "", errors.Errorf("no password present in %s secret.", centralHtpasswdSecretName)
+		return "", errors.Errorf("no password present in %s secret", centralHtpasswdSecretName)
 	}
 	return password, nil
 }
