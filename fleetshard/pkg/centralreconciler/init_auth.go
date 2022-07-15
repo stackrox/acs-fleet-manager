@@ -144,7 +144,7 @@ func getServiceAddress(ctx context.Context, central private.ManagedCentral, clie
 		return "", errors.Wrapf(err, "getting k8s service for central")
 	}
 	if len(service.Spec.Ports) == 0 {
-		return "", errors.Errorf("No ports present in %s service", centralServiceName)
+		return "", errors.Errorf("no ports present in %s service", centralServiceName)
 	}
 	address := fmt.Sprintf("https://%s.%s.svc.cluster.local:%d", centralServiceName, central.Metadata.Namespace, service.Spec.Ports[0].Port)
 	return address, nil
