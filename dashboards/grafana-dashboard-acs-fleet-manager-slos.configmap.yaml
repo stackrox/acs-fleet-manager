@@ -36,7 +36,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 417,
-      "iteration": 1657882342643,
+      "iteration": 1657895635860,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -126,7 +126,7 @@ data:
             "defaults": {
               "decimals": 2,
               "mappings": [],
-              "max": 100,
+              "max": 1,
               "min": 0,
               "thresholds": {
                 "mode": "absolute",
@@ -137,15 +137,15 @@ data:
                   },
                   {
                     "color": "#EAB839",
-                    "value": 90
+                    "value": 0.9
                   },
                   {
                     "color": "light-green",
-                    "value": 93
+                    "value": 0.93
                   }
                 ]
               },
-              "unit": "percent"
+              "unit": "percentunit"
             },
             "overrides": []
           },
@@ -175,7 +175,7 @@ data:
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "(sum(rate(api_inbound_request_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",le=\"0.1\"}[$__range]))/sum(rate(api_inbound_request_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))) * 100",
+              "expr": "sum(rate(api_inbound_request_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",le=\"0.1\"}[$__range]))/sum(rate(api_inbound_request_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -193,7 +193,7 @@ data:
             "defaults": {
               "decimals": 2,
               "mappings": [],
-              "max": 100,
+              "max": 1,
               "min": 0,
               "thresholds": {
                 "mode": "absolute",
@@ -204,15 +204,15 @@ data:
                   },
                   {
                     "color": "#EAB839",
-                    "value": 99
+                    "value": 0.99
                   },
                   {
                     "color": "light-green",
-                    "value": 99.5
+                    "value": 0.995
                   }
                 ]
               },
-              "unit": "percent"
+              "unit": "percentunit"
             },
             "overrides": []
           },
@@ -242,7 +242,7 @@ data:
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "(sum(rate(api_inbound_request_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",le=\"1\"}[$__range]))/sum(rate(api_inbound_request_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range])))*100",
+              "expr": "sum(rate(api_inbound_request_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",le=\"1\"}[$__range]))/sum(rate(api_inbound_request_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -259,7 +259,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "mappings": [],
-              "max": 100,
+              "max": 1,
               "min": 0,
               "thresholds": {
                 "mode": "absolute",
@@ -270,15 +270,15 @@ data:
                   },
                   {
                     "color": "#EAB839",
-                    "value": 95
+                    "value": 0.95
                   },
                   {
                     "color": "light-green",
-                    "value": 97
+                    "value": 0.97
                   }
                 ]
               },
-              "unit": "percent"
+              "unit": "percentunit"
             },
             "overrides": []
           },
@@ -308,7 +308,7 @@ data:
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "sum(rate(fleet_manager_dinosaur_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))/sum(rate(fleet_manager_dinosaur_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range])) * 100",
+              "expr": "sum(rate(fleet_manager_dinosaur_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))/sum(rate(fleet_manager_dinosaur_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))",
               "interval": "",
               "legendFormat": "Create Operation",
               "refId": "A"
@@ -326,7 +326,7 @@ data:
             "defaults": {
               "decimals": 0,
               "mappings": [],
-              "max": 100,
+              "max": 1,
               "min": 0,
               "thresholds": {
                 "mode": "absolute",
@@ -337,15 +337,15 @@ data:
                   },
                   {
                     "color": "#EAB839",
-                    "value": 95
+                    "value": 0.95
                   },
                   {
                     "color": "light-green",
-                    "value": 97
+                    "value": 0.97
                   }
                 ]
               },
-              "unit": "percent"
+              "unit": "percentunit"
             },
             "overrides": []
           },
@@ -375,7 +375,7 @@ data:
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "sum(rate(fleet_manager_dinosaur_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range]))/sum(rate(fleet_manager_dinosaur_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range])) * 100",
+              "expr": "sum(rate(fleet_manager_dinosaur_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range]))/sum(rate(fleet_manager_dinosaur_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range]))",
               "interval": "",
               "legendFormat": "Create Operation",
               "refId": "A"
@@ -392,7 +392,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "mappings": [],
-              "max": 100,
+              "max": 1,
               "min": 0,
               "thresholds": {
                 "mode": "absolute",
@@ -403,15 +403,15 @@ data:
                   },
                   {
                     "color": "#EAB839",
-                    "value": 90
+                    "value": 0.9
                   },
                   {
                     "color": "light-green",
-                    "value": 95
+                    "value": 0.95
                   }
                 ]
               },
-              "unit": "percent"
+              "unit": "percentunit"
             },
             "overrides": []
           },
@@ -441,13 +441,425 @@ data:
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "(sum(rate(fleet_manager_worker_dinosaur_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"dinosaur_create\", le=\"3600\"}[$__range])+1) / sum(rate(fleet_manager_worker_dinosaur_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"dinosaur_create\"}[$__range])+1)) * 100",
+              "expr": "sum(rate(fleet_manager_worker_dinosaur_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"dinosaur_create\", le=\"3600\"}[$__range])+1) / sum(rate(fleet_manager_worker_dinosaur_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"dinosaur_create\"}[$__range])+1)",
               "interval": "",
               "legendFormat": "Create Operation",
               "refId": "A"
             }
           ],
           "title": "Creation latency p90 < 60m",
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "light-green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 0.3
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.7
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 4,
+            "x": 0,
+            "y": 7
+          },
+          "id": 19,
+          "links": [],
+          "options": {
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true
+          },
+          "pluginVersion": "9.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "(1-avg_over_time(floor(sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\",code!=\"5xx\"}[10m])) / sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\"}[10m])) > 0 + 0.35)[$__range:]))/(1-0.99)",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "B"
+            }
+          ],
+          "title": "Error budget API Availability > 99%",
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "description": "90% requests should be faster than 100 milliseconds",
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "light-green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 0.3
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.7
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 4,
+            "x": 4,
+            "y": 7
+          },
+          "id": 20,
+          "links": [],
+          "options": {
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true
+          },
+          "pluginVersion": "9.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "(1-(sum(rate(api_inbound_request_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",le=\"0.1\"}[$__range]))/sum(rate(api_inbound_request_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))))/(1-0.9)",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Error budget API Latency p90",
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "description": "99% requests should be faster than 1 second",
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "light-green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 0.3
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.7
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 4,
+            "x": 8,
+            "y": 7
+          },
+          "id": 21,
+          "links": [],
+          "options": {
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true
+          },
+          "pluginVersion": "9.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "(1-sum(rate(api_inbound_request_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",le=\"1\"}[$__range]))/sum(rate(api_inbound_request_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range])))/(1-0.99)",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Error budget API Latency p99",
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "description": "95% central creations should be successful",
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "light-green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 0.3
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.7
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 4,
+            "x": 12,
+            "y": 7
+          },
+          "id": 22,
+          "links": [],
+          "options": {
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true
+          },
+          "pluginVersion": "9.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "(1-sum(rate(fleet_manager_dinosaur_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))/sum(rate(fleet_manager_dinosaur_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range])))/(1-0.95)",
+              "interval": "",
+              "legendFormat": "Create Operation",
+              "refId": "A"
+            }
+          ],
+          "title": "Error budget Correctness (Create)",
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "description": "95% central deletions should be successful",
+          "fieldConfig": {
+            "defaults": {
+              "decimals": 0,
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "light-green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 0.3
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.7
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 4,
+            "x": 16,
+            "y": 7
+          },
+          "id": 23,
+          "links": [],
+          "options": {
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true
+          },
+          "pluginVersion": "9.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "(1-sum(rate(fleet_manager_dinosaur_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range]))/sum(rate(fleet_manager_dinosaur_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range])))/(1-0.95)",
+              "interval": "",
+              "legendFormat": "Create Operation",
+              "refId": "A"
+            }
+          ],
+          "title": "Error budget Correctness (Delete)",
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "description": "90% of central creations should take less than 1 hour",
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "light-green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 0.3
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.7
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 4,
+            "x": 20,
+            "y": 7
+          },
+          "id": 24,
+          "links": [],
+          "options": {
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true
+          },
+          "pluginVersion": "9.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "(1-sum(rate(fleet_manager_worker_dinosaur_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"dinosaur_create\", le=\"3600\"}[$__range])+1) / sum(rate(fleet_manager_worker_dinosaur_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"dinosaur_create\"}[$__range])+1))/(1-0.9)",
+              "interval": "",
+              "legendFormat": "Create Operation",
+              "refId": "A"
+            }
+          ],
+          "title": "Error budget Creation latency p90",
           "type": "gauge"
         },
         {
@@ -489,6 +901,7 @@ data:
                 }
               },
               "mappings": [],
+              "max": 1,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -510,7 +923,7 @@ data:
             "h": 9,
             "w": 24,
             "x": 0,
-            "y": 7
+            "y": 14
           },
           "id": 2,
           "links": [],
@@ -571,7 +984,8 @@ data:
                 "lineWidth": 2,
                 "pointSize": 5,
                 "scaleDistribution": {
-                  "type": "linear"
+                  "log": 2,
+                  "type": "log"
                 },
                 "showPoints": "never",
                 "spanNulls": true,
@@ -605,7 +1019,7 @@ data:
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 16
+            "y": 23
           },
           "id": 4,
           "links": [],
@@ -700,6 +1114,7 @@ data:
                 }
               },
               "mappings": [],
+              "max": 1,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -721,7 +1136,7 @@ data:
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 24
+            "y": 31
           },
           "id": 6,
           "links": [],
@@ -769,7 +1184,8 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "continuous-GrYlRd"
+                "fixedColor": "light-green",
+                "mode": "fixed"
               },
               "mappings": [],
               "thresholds": {
@@ -783,25 +1199,13 @@ data:
               },
               "unit": "none"
             },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "1"
-                },
-                "properties": [
-                  {
-                    "id": "displayName"
-                  }
-                ]
-              }
-            ]
+            "overrides": []
           },
           "gridPos": {
             "h": 11,
             "w": 24,
             "x": 0,
-            "y": 32
+            "y": 39
           },
           "id": 7,
           "links": [],
@@ -811,9 +1215,7 @@ data:
             "minVizWidth": 0,
             "orientation": "vertical",
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
+              "calcs": [],
               "fields": "",
               "values": false
             },
@@ -923,6 +1325,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager SLOs",
       "uid": "T2kek3H9a",
-      "version": 15,
+      "version": 18,
       "weekStart": ""
     }
