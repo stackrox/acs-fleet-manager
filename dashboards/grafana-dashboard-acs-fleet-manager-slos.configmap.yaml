@@ -36,7 +36,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 417,
-      "iteration": 1657835940922,
+      "iteration": 1657847471950,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -45,9 +45,12 @@ data:
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "description": "The availability is calculated as the average of binary up (1) or down (0) values. Each value represents an interval of 10 minutes, in which the service is either up or down. The service counts as available if at most 10% of requests return a status code 5xx in the interval.",
+          "description": "",
           "fieldConfig": {
             "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
               "decimals": 2,
               "mappings": [],
               "max": 1,
@@ -60,8 +63,12 @@ data:
                     "value": null
                   },
                   {
-                    "color": "light-green",
+                    "color": "#EAB839",
                     "value": 0.99
+                  },
+                  {
+                    "color": "light-green",
+                    "value": 0.995
                   }
                 ]
               },
@@ -75,7 +82,7 @@ data:
             "x": 0,
             "y": 0
           },
-          "id": 10,
+          "id": 17,
           "links": [],
           "options": {
             "orientation": "auto",
@@ -98,12 +105,13 @@ data:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "avg_over_time(floor(sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\",code!=\"5xx\"}[10m])) / sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\"}[10m])) > 0 + 0.1)[28d:10m])",
+              "expr": "avg_over_time(floor(sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\",code!=\"5xx\"}[10m])) / sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\"}[10m])) > 0 + 0.35)[28d:])",
+              "hide": false,
               "instant": true,
               "interval": "",
-              "legendFormat": "Availability",
+              "legendFormat": "Create Operation",
               "range": false,
-              "refId": "A"
+              "refId": "B"
             }
           ],
           "title": "API Availability > 99%",
@@ -841,7 +849,7 @@ data:
         "list": [
           {
             "current": {
-              "selected": true,
+              "selected": false,
               "text": "app-sre-stage-01-prometheus",
               "value": "app-sre-stage-01-prometheus"
             },
@@ -915,6 +923,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager SLOs",
       "uid": "T2kek3H9a",
-      "version": 9,
+      "version": 10,
       "weekStart": ""
     }
