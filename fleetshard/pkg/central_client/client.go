@@ -14,7 +14,7 @@ func SendRequestToCentral(ctx context.Context, requestBody interface{}, address 
 	if err != nil {
 		return nil, errors.Wrap(err, "marshalling new request to central")
 	}
-	req, err := http.NewRequest(http.MethodPost, address, bytes.NewBuffer(jsonBytes))
+	req, err := http.NewRequest(http.MethodPost, address, bytes.NewReader(jsonBytes))
 	if err != nil {
 		return nil, errors.Wrap(err, "creating HTTP request to central")
 	}
