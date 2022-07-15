@@ -14,7 +14,7 @@ The following scripts exist currently:
 * `lib.sh`: Basic initialization and library script for the other executable scripts.
 * `apply` & `delete`: Convenience scripts for applying and deleting Kubernetes resources supporting environment interpolation.
 * `port-forwarding`: Convenient abstraction layer for kubectl port-forwarding.
-* `bootstrap.sh`: Sets up the basic environment: creates namespaces, injects image-pull-secrets if necessary, installs OLM (if required), isntalls RHACS operator (if desired), pulls required images, etc.
+* `bootstrap.sh`: Sets up the basic environment: creates namespaces, injects image-pull-secrets if necessary, installs OLM (if required), installs RHACS operator (if desired), pulls required images, etc.
 * `up.sh`: Brings up the ACS MS environment consisting of the database, `fleet-manager` and `fleetshard-sync`.
 * `down.sh`: Deletes the resources created by `up.sh`.
 
