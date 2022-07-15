@@ -92,7 +92,7 @@ export RHACS_OPERATOR_CATALOG_VERSION="3.70.1"
 export RHACS_OPERATOR_CATALOG_NAME="redhat-operators"
 ```
 
-4. Check if the latest version of available ACS Operator is high enough for you. If that is OK for you, you can skip next steps prefixed with `(ACS operator from branch)`.
+5. Check if the latest version of available ACS Operator is high enough for you. If that is OK for you, you can skip next steps prefixed with `(ACS operator from branch)`.
 
 Execute the following command in separate terminal (new shell).
 ```
@@ -104,7 +104,7 @@ grpcurl -plaintext -d '{"name":"rhacs-operator"}' localhost:50051 api.Registry/G
 ```
 You can stop port-forward after this.
 
-5. (ACS operator from branch) Prepare pull secret
+6. (ACS operator from branch) Prepare pull secret
 **Important** This will change cluster wide pull secrets. It's not advised to use on clusters where credentials can be compromized.
 
 **Pay attention:** `docker-credential-osxkeychain` is specific for MacOS. For Linux please check `docker-credential-secretservice`.
@@ -116,7 +116,7 @@ oc registry login --registry="quay.io/rhacs-eng" --auth-basic="${QUAY_REGISTRY_A
 oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=./tmp-pull-secret.json
 ```
 
-6. (ACS operator from branch) Deploy catalog
+7. (ACS operator from branch) Deploy catalog
 
 You should find catalog build from your branch or from master branch of `stackrox/stackrox` repository. You should look at CircleCI job with name `build-operator` and step `Build and push images for quay.io/rhacs-eng`. In log, you can find image tag. Something like `v3.71.0-16-g3f8fcd60c6`. Export that value without `v`
 ```
@@ -149,7 +149,7 @@ You should be able to see `rhacs-operators` pod running.
 
 ### Terraform OSD cluster with Fleet Synchronizer
 
-7. Export defaults
+8. Export defaults
 ```
 # Copy static token from BitWarden
 export STATIC_TOKEN=$(bw get item "64173bbc-d9fb-4d4a-b397-aec20171b025" | jq '.fields[] | select(.name | contains("JWT")) | .value' --raw-output)
@@ -158,7 +158,7 @@ export FLEET_MANAGER_IMAGE=quay.io/app-sre/acs-fleet-manager:main
 export STARTING_CSV="rhacs-operator.v3.70.1"
 ```
 
-8. Prepare namespace
+9. Prepare namespace
 ```
 export NAMESPACE=rhacs
 export FLEET_MANAGER_ENDPOINT="http://fleet-manager.${NAMESPACE}.svc.cluster.local:8000"
@@ -166,7 +166,7 @@ export FLEET_MANAGER_ENDPOINT="http://fleet-manager.${NAMESPACE}.svc.cluster.loc
 oc create namespace "${NAMESPACE}"
 ```
 
-9. (Optional local fleet synchronizer build) Build and push fleet synchronizer
+10. (Optional local fleet synchronizer build) Build and push fleet synchronizer
 
 ```
 export IMAGE_TAG=osd-test
@@ -174,13 +174,13 @@ export IMAGE_TAG=osd-test
 GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal
 ```
 
-10. (Optional local fleet synchronizer build) Get Fleet Manager image name
+11. (Optional local fleet synchronizer build) Get Fleet Manager image name
 ```
 export FLEET_MANAGER_IMAGE=$(oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/${NAMESPACE}/fleet-manager:${IMAGE_TAG}
 export STARTING_CSV="rhacs-operator.v${RHACS_OPERATOR_CATALOG_VERSION}"
 ```
 
-11. Terraform cluster
+12. Terraform cluster
 ```
 helm upgrade --install rhacs-terraform \
   --namespace "${NAMESPACE}" \
@@ -194,7 +194,7 @@ helm upgrade --install rhacs-terraform \
   --set observability.enabled=false ./dp-terraform/helm/rhacs-terraform
 ```
 
-12. Create tunnel from cluster to local machine
+13. Create tunnel from cluster to local machine
 
 Execute the following command in separate terminal (new shell). Ensure that you have same namespace as one defined in `$NAMESPACE`.
 ```
@@ -205,7 +205,7 @@ ktunnel expose --namespace "${NAMESPACE}" fleet-manager 8000:8000 --reuse
 
 ### Setup local Fleet Manager
 
-11. Create OSD Cluster config file for fleet manager
+14. Create OSD Cluster config file for fleet manager
 
 Ensure that you are in correct kube context.
 ```
@@ -234,7 +234,7 @@ clusters:
 EOF
 ```
 
-12. Build, setup and start local fleet manager
+15. Build, setup and start local fleet manager
 
 Execute the following command in separate terminal (new shell). Ensure that you have same exported `CLUSTER_ID`.
 ```
@@ -250,7 +250,7 @@ make db/teardown db/setup db/migrate
 
 ### Install central
 
-13. Prepare default values
+16. Prepare default values
 ```
 # Copy static token from BitWarden
 export STATIC_TOKEN=$(bw get item "64173bbc-d9fb-4d4a-b397-aec20171b025" | jq '.fields[] | select(.name | contains("JWT")) | .value' --raw-output)
@@ -258,13 +258,13 @@ export STATIC_TOKEN=$(bw get item "64173bbc-d9fb-4d4a-b397-aec20171b025" | jq '.
 export AWS_REGION="us-east-1"
 ```
 
-14. Call curl to install central
+17. Call curl to install central
 
 ```
 export CENTRAL_ID=$(curl --location --request POST "http://localhost:8000/api/rhacs/v1/centrals?async=true" --header "Content-Type: application/json" --header "Accept: application/json" --header "Authorization: Bearer ${STATIC_TOKEN}" --data-raw "{\"name\":\"test-on-cluster\",\"cloud_provider\":\"aws\",\"region\":\"${AWS_REGION}\",\"multi_az\":true}" | jq '.id' --raw-output)
 ```
 
-15. Check if new namespace is created and if all pods are up and running
+18. Check if new namespace is created and if all pods are up and running
 ```
 export CENTRAL_NAMESPACE="${NAMESPACE}-${CENTRAL_ID}"
 
@@ -273,22 +273,34 @@ oc get pods --namespace "${CENTRAL_NAMESPACE}"
 
 ### Install sensor to same data plane cluster where central is installed
 
-16. Fetch sensor configuration
+19. Fetch sensor configuration
 ```
 export ROX_ADMIN_PASSWORD=$(kubectl get secrets -n "${CENTRAL_NAMESPACE}" central-htpasswd -o yaml | yq .data.password | base64 --decode)
 roxctl sensor generate openshift --openshift-version=4 --endpoint "https://central-${CENTRAL_NAMESPACE}.apps.${OSD_CLUSTER_NAME}.${OSD_CLUSTER_DOMAIN}:443" --insecure-skip-tls-verify -p "${ROX_ADMIN_PASSWORD}" --admission-controller-listen-on-events=false --disable-audit-logs=true --central="https://central-${CENTRAL_NAMESPACE}.apps.${OSD_CLUSTER_NAME}.${OSD_CLUSTER_DOMAIN}:443" --collection-method=none --name osd-cluster-sensor
 ```
 
-17. Install sensor
+20. Install sensor
 
 This step requires `quay.io` username and password. Have that prepared.
 ```
 ./sensor-osd-cluster-sensor/sensor.sh
 ```
 
-18. Check that sensor is up and running
+21. Check that sensor is up and running
 
 Sensor uses `stackrox` namespace by default.
 ```
 oc get pods -n stackrox
+```
+
+### Extend OSD cluster lifetime to 7 days
+
+By default, staging cluster will be up for 2 days. You can extend it to 7 days. To do that, execute the following command for MacOS:
+```
+echo "{\"expiration_timestamp\":\"$(date --iso-8601=seconds -d '+7 days')\"}" | ocm patch "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}"
+```
+
+Or on Linux:
+```
+echo "{\"expiration_timestamp\":\"$(date -v+7d -u +'%Y-%m-%dT%H:%M:%SZ')\"}" | ocm patch "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}"
 ```
