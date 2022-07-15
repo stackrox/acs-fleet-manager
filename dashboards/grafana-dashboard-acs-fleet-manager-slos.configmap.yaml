@@ -36,7 +36,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 417,
-      "iteration": 1657881183696,
+      "iteration": 1657882342643,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -105,7 +105,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "avg_over_time(floor(sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\",code!=\"5xx\"}[10m])) / sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\"}[10m])) > 0 + 0.35)[28d:])",
+              "expr": "avg_over_time(floor(sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\",code!=\"5xx\"}[10m])) / sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\"}[10m])) > 0 + 0.35)[$__range:])",
               "hide": false,
               "instant": true,
               "interval": "",
@@ -502,7 +502,7 @@ data:
                   }
                 ]
               },
-              "unit": "percent"
+              "unit": "percentunit"
             },
             "overrides": []
           },
@@ -532,7 +532,7 @@ data:
                 "uid": "$datasource"
               },
               "editorMode": "code",
-              "expr": "(sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\",code!=\"5xx\"}[5m]))/sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\"}[5m]))) * 100",
+              "expr": "avg_over_time(floor(sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\",code!=\"5xx\"}[10m])) / sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\"}[10m])) > 0 + 0.35)[$__range:])",
               "interval": "",
               "legendFormat": "acs-fleet-manager",
               "range": true,
@@ -921,6 +921,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager SLOs",
       "uid": "T2kek3H9a",
-      "version": 12,
+      "version": 14,
       "weekStart": ""
     }
