@@ -11,9 +11,8 @@ const (
 	// ClusterOperationDelete - OpenShift/k8s cluster delete operation
 	ClusterOperationDelete ClusterOperation = "delete"
 
-	// The DNS prefixes used for traffic ingress
-	ManagedDinosaurIngressDNSNamePrefix = "acs"
-	DefaultIngressDNSNamePrefix         = "apps"
+	// DefaultIngressDNSNamePrefix DNS prefix used for traffic ingress
+	DefaultIngressDNSNamePrefix = "apps"
 )
 
 // String ...

@@ -9,9 +9,8 @@
 
 package private
 
-// DataPlaneCentralStatusRoutes struct for DataPlaneCentralStatusRoutes
+// DataPlaneCentralStatusRoutes Routes created for a Central
 type DataPlaneCentralStatusRoutes struct {
-	Name   string `json:"name,omitempty"`
-	Prefix string `json:"prefix,omitempty"`
-	Router string `json:"router,omitempty"`
+	UiRouter   string `json:"uiRouter,omitempty"`
+	DataRouter string `json:"dataRouter,omitempty"`
 }

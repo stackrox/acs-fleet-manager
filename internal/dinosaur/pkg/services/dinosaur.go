@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
@@ -262,22 +261,21 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 
 // PrepareDinosaurRequest ...
 func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
-	clusterDNS, err := k.clusterService.GetClusterDNS(dinosaurRequest.ClusterID)
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
-	}
-
 	namespace, formatErr := FormatNamespace(dinosaurRequest.ID)
 	if formatErr != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, formatErr, "invalid id format")
 	}
 	dinosaurRequest.Namespace = namespace
-	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDNSNamePrefix, constants2.ManagedDinosaurIngressDNSNamePrefix, 1)
-	dinosaurRequest.Host = fmt.Sprintf("%s.%s", namespace, clusterDNS)
 
 	if k.dinosaurConfig.EnableDinosaurExternalCertificate {
 		// If we enable DinosaurTLS, the host should use the external domain name rather than the cluster domain
-		dinosaurRequest.Host = fmt.Sprintf("%s.%s", namespace, k.dinosaurConfig.DinosaurDomainName)
+		dinosaurRequest.Host = k.dinosaurConfig.DinosaurDomainName
+	} else {
+		clusterDNS, err := k.clusterService.GetClusterDNS(dinosaurRequest.ClusterID)
+		if err != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
+		}
+		dinosaurRequest.Host = clusterDNS
 	}
 
 	// Update the Dinosaur Request record in the database

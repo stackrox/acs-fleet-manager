@@ -318,23 +318,22 @@ func (d *dataPlaneDinosaurService) persistDinosaurRoutes(dinosaur *dbapi.Central
 	return nil
 }
 
-func buildRoutes(routesInRequest []dbapi.DataPlaneCentralRouteRequest, dinosaur *dbapi.CentralRequest, clusterDNS string) ([]dbapi.DataPlaneCentralRoute, error) {
-	routes := []dbapi.DataPlaneCentralRoute{}
-	dinosaurHost := dinosaur.Host
-	for _, r := range routesInRequest {
-		if strings.HasSuffix(r.Router, clusterDNS) {
-			router := dbapi.DataPlaneCentralRoute{
-				Router: r.Router,
-			}
-			if r.Prefix != "" {
-				router.Domain = fmt.Sprintf("%s-%s", r.Prefix, dinosaurHost)
-			} else {
-				router.Domain = dinosaurHost
-			}
-			routes = append(routes, router)
-		} else {
-			return nil, errors.Errorf("router domain is not valid. router = %s, expected domain = %s", r.Router, clusterDNS)
-		}
+func buildRoutes(routesInRequest dbapi.DataPlaneCentralRoutesRequest, dinosaur *dbapi.CentralRequest, clusterDNS string) ([]dbapi.DataPlaneCentralRoute, error) {
+	if !strings.HasSuffix(routesInRequest.UIRouter, clusterDNS) {
+		return nil, errors.Errorf("UI router domain is not valid. UI router = %s, expected domain = %s", routesInRequest.UIRouter, clusterDNS)
 	}
-	return routes, nil
+	if !strings.HasSuffix(routesInRequest.DataRouter, clusterDNS) {
+		return nil, errors.Errorf("Data router domain is not valid. Data router = %s, expected domain = %s", routesInRequest.DataRouter, clusterDNS)
+	}
+
+	return []dbapi.DataPlaneCentralRoute{
+		{
+			Domain: dinosaur.GetUIHost(),
+			Router: routesInRequest.UIRouter,
+		},
+		{
+			Domain: dinosaur.GetDataHost(),
+			Router: routesInRequest.DataRouter,
+		},
+	}, nil
 }

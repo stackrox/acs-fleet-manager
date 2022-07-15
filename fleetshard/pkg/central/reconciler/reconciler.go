@@ -171,35 +171,27 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 func (r *CentralReconciler) readyStatus(ctx context.Context, namespace string) (*private.DataPlaneCentralStatus, error) {
 	status := readyStatus()
 	if r.useRoutes {
-		routesStatuses, err := r.getRoutesStatuses(ctx, namespace)
+		statusRoutes, err := r.getStatusRoutes(ctx, namespace)
 		if err != nil {
 			return nil, err
 		}
-		status.Routes = routesStatuses
+		status.Routes = statusRoutes
 	}
 	return status, nil
 }
 
-func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
+func (r *CentralReconciler) getStatusRoutes(ctx context.Context, namespace string) (private.DataPlaneCentralStatusRoutes, error) {
 	reencryptHostname, err := r.routeService.FindReencryptCanonicalHostname(ctx, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("obtaining canonical hostname for reencrypt route: %w", err)
+		return private.DataPlaneCentralStatusRoutes{}, fmt.Errorf("obtaining canonical hostname for reencrypt route: %w", err)
 	}
 	mtlsHostname, err := r.routeService.FindMTLSCanonicalHostname(ctx, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("obtaining canonical hostname for MTLS route: %w", err)
+		return private.DataPlaneCentralStatusRoutes{}, fmt.Errorf("obtaining canonical hostname for MTLS route: %w", err)
 	}
-	return []private.DataPlaneCentralStatusRoutes{
-		{
-			Name:   "central-reencrypt",
-			Prefix: "",
-			Router: reencryptHostname,
-		},
-		{
-			Name:   "central-mtls",
-			Prefix: "data",
-			Router: mtlsHostname,
-		},
+	return private.DataPlaneCentralStatusRoutes{
+		UiRouter:   reencryptHostname,
+		DataRouter: mtlsHostname,
 	}, nil
 }
 

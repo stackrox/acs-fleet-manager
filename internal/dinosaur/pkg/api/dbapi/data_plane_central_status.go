@@ -9,7 +9,7 @@ type DataPlaneCentralStatus struct {
 	CentralClusterID string
 	Conditions       []DataPlaneCentralStatusCondition
 	// Going to ignore the rest of fields (like capacity and versions) for now, until when they are needed
-	Routes                 []DataPlaneCentralRouteRequest
+	Routes                 DataPlaneCentralRoutesRequest
 	CentralVersion         string
 	CentralOperatorVersion string
 }
@@ -28,11 +28,10 @@ type DataPlaneCentralRoute struct {
 	Router string
 }
 
-// DataPlaneCentralRouteRequest ...
-type DataPlaneCentralRouteRequest struct {
-	Name   string
-	Prefix string
-	Router string
+// DataPlaneCentralRoutesRequest ...
+type DataPlaneCentralRoutesRequest struct {
+	UIRouter   string
+	DataRouter string
 }
 
 // GetReadyCondition ...

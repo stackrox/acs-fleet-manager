@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -23,7 +24,8 @@ import (
 
 const (
 	centralName               = "test-central"
-	centralNamespace          = "rhacs-cb45idheg5ip6dq1jo4g"
+	centralID                 = "cb45idheg5ip6dq1jo4g"
+	centralNamespace          = "rhacs-" + centralID
 	centralReencryptRouteName = "central-reencrypt"
 	conditionTypeReady        = "Ready"
 )
@@ -32,6 +34,14 @@ var simpleManagedCentral = private.ManagedCentral{
 	Metadata: private.ManagedCentralAllOfMetadata{
 		Name:      centralName,
 		Namespace: centralNamespace,
+	},
+	Spec: private.ManagedCentralAllOfSpec{
+		UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
+			Host: fmt.Sprintf("acs-%s.acs.rhcloud.test", centralID),
+		},
+		DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
+			Host: fmt.Sprintf("acs-data-%s.acs.rhcloud.test", centralID),
+		},
 	},
 }
 
@@ -271,19 +281,12 @@ func TestReportRoutesStatuses(t *testing.T) {
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
 
-	expected := []private.DataPlaneCentralStatusRoutes{
-		{
-			Name:   "central-reencrypt",
-			Router: "router-default.apps.test.local",
-		},
-		{
-			Name:   "central-mtls",
-			Prefix: "data",
-			Router: "router-default.apps.test.local",
-		},
+	expected := private.DataPlaneCentralStatusRoutes{
+		UiRouter:   "router-default.apps.test.local",
+		DataRouter: "router-default.apps.test.local",
 	}
 	actual := status.Routes
-	assert.ElementsMatch(t, expected, actual)
+	assert.Equal(t, expected, actual)
 }
 
 func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
@@ -298,19 +301,12 @@ func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
 	existingCentral.RequestStatus = centralConstants.DinosaurRequestStatusReady.String()
 	status, _ := r.Reconcile(context.TODO(), existingCentral) // cache hit
 	// then
-	expected := []private.DataPlaneCentralStatusRoutes{
-		{
-			Name:   "central-reencrypt",
-			Router: "router-default.apps.test.local",
-		},
-		{
-			Name:   "central-mtls",
-			Prefix: "data",
-			Router: "router-default.apps.test.local",
-		},
+	expected := private.DataPlaneCentralStatusRoutes{
+		UiRouter:   "router-default.apps.test.local",
+		DataRouter: "router-default.apps.test.local",
 	}
 	actual := status.Routes
-	assert.ElementsMatch(t, expected, actual)
+	assert.Equal(t, expected, actual)
 }
 
 func centralDeploymentObject() *appsv1.Deployment {

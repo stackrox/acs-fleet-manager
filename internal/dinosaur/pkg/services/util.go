@@ -9,7 +9,6 @@ import (
 )
 
 const (
-	truncatedNameLen = 10
 	// Maximum namespace name length is 63
 	// Namespace name is built using the dinosaur request id (always generated with 27 length) and the owner (truncated with this var).
 	// Set the truncate index to 35 to ensure that the namespace name does not go over the maximum limit.
