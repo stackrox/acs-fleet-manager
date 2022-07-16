@@ -42,6 +42,33 @@ if [[ "$SPAWN_LOGGER" == "true" ]]; then
     log "Log directory: ${LOG_DIR}"
 fi
 
+if [[ -n "$OPENSHIFT_CI" ]]; then
+    log "Test suite is running in OpenShift CI"
+    export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
+
+    # When running in OpenShift CI, ensure we also run the auth E2E tests.
+    RUN_AUTH_E2E="true"
+    export RUN_AUTH_E2E
+fi
+
+disable_debugging
+
+# If auth E2E tests shall be run, ensure we have all authentication related secrets correctly set up.
+if [[ "$RUN_AUTH_E2E" == "true" ]]; then
+    log "Setting up authentication related environment variables for auth E2E tests"
+    # FLEET_STATIC_TOKEN is the name of the secret in Vault,
+    # STATIC_TOKEN is the name expected by the application (when running directly),
+    # hence we support both names here.
+    FLEET_STATIC_TOKEN=${FLEET_STATIC_TOKEN:-}
+    export STATIC_TOKEN=${STATIC_TOKEN:-$FLEET_STATIC_TOKEN}
+
+    # Ensure we set the OCM refresh token once more, in case AUTH_TYPE!=OCM.
+    OCM_SERVICE_TOKEN=$(ocm token --refresh)
+    export OCM_SERVICE_TOKEN
+
+    # The RH SSO secrets are correctly set up within vault, the tests will be skipped if they are empty.
+fi
+
 case "$AUTH_TYPE" in
 OCM)
 

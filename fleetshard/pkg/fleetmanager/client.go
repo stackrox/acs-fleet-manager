@@ -133,6 +133,22 @@ func (c *Client) DeleteCentral(id string) error {
 	return nil
 }
 
+func (c *Client) ListCentrals() (*public.CentralRequestList, error) {
+	resp, err := c.newRequest(http.MethodGet, c.consoleAPIEndpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	centralList := &public.CentralRequestList{}
+
+	err = c.unmarshalResponse(resp, centralList)
+	if err != nil {
+		return nil, err
+	}
+
+	return centralList, nil
+}
+
 func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Response, error) {
 	glog.Infof("Send request to %s", url)
 	r, err := http.NewRequest(method, url, body)

@@ -27,7 +27,7 @@ func (f *staticTokenAuthFactory) GetName() string {
 }
 
 func (f *staticTokenAuthFactory) CreateAuth() (Auth, error) {
-	cfg, err := config.Singleton()
+	cfg, err := config.GetConfig()
 	if err != nil {
 		return nil, err
 	}

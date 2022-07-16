@@ -28,7 +28,7 @@ func (f *rhSSOAuthFactory) GetName() string {
 }
 
 func (f *rhSSOAuthFactory) CreateAuth() (Auth, error) {
-	cfg, err := config.Singleton()
+	cfg, err := config.GetConfig()
 	if err != nil {
 		return nil, err
 	}

@@ -11,17 +11,26 @@ import (
 	"net/http/httptest"
 )
 
+const (
+	Unlimited = -1
+)
+
 type RedhatSSOMock interface {
 	Start()
 	Stop()
 	BaseURL() string
 	GenerateNewAuthToken() string
+	SetBearerToken(token string) string
+	DeleteAllServiceAccounts()
+	ServiceAccountsLimit() int
 }
 
 type redhatSSOMock struct {
-	server          *httptest.Server
-	authTokens      []string
-	serviceAccounts map[string]serviceaccountsclient.ServiceAccountData
+	server               *httptest.Server
+	authTokens           []string
+	serviceAccounts      map[string]serviceaccountsclient.ServiceAccountData
+	sessionAuthToken     string
+	serviceAccountsLimit int
 }
 
 type getTokenResponseMock struct {
@@ -35,12 +44,34 @@ type getTokenResponseMock struct {
 
 var _ RedhatSSOMock = &redhatSSOMock{}
 
-func NewMockServer() RedhatSSOMock {
-	mockServer := &redhatSSOMock{
-		serviceAccounts: make(map[string]serviceaccountsclient.ServiceAccountData),
+type MockServerOption func(mock *redhatSSOMock)
+
+func WithServiceAccountLimit(limit int) MockServerOption {
+	return func(mock *redhatSSOMock) {
+		mock.serviceAccountsLimit = limit
 	}
+}
+
+func NewMockServer(options ...MockServerOption) RedhatSSOMock {
+	mockServer := &redhatSSOMock{
+		serviceAccounts:      make(map[string]serviceaccountsclient.ServiceAccountData),
+		serviceAccountsLimit: Unlimited,
+	}
+
+	for _, option := range options {
+		option(mockServer)
+	}
+
 	mockServer.init()
 	return mockServer
+}
+
+func (mockServer *redhatSSOMock) ServiceAccountsLimit() int {
+	return mockServer.serviceAccountsLimit
+}
+
+func (mockServer *redhatSSOMock) DeleteAllServiceAccounts() {
+	mockServer.serviceAccounts = make(map[string]serviceaccountsclient.ServiceAccountData)
 }
 
 func (mockServer *redhatSSOMock) Start() {
@@ -108,7 +139,7 @@ func (mockServer *redhatSSOMock) init() {
 
 func (mockServer *redhatSSOMock) getTokenHandler(w http.ResponseWriter, r *http.Request) {
 	resp := getTokenResponseMock{
-		AccessToken:      "DUMMY-BEARER-TOKEN-" + uuid.New().String(),
+		AccessToken:      mockServer.sessionAuthToken,
 		ExpiresIn:        0,
 		RefreshExpiresIn: 0,
 		TokenType:        "Bearer",
@@ -206,6 +237,16 @@ func (mockServer *redhatSSOMock) createServiceAccountHandler(w http.ResponseWrit
 	requestData, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 
+	if mockServer.serviceAccountsLimit != Unlimited {
+		if len(mockServer.serviceAccounts) >= mockServer.serviceAccountsLimit {
+			// return an error
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(fmt.Sprintf(`{ "error": "service_account_limit_exceeded", "error_description": "Max allowed number:%d of service accounts for user has reached"}`, mockServer.serviceAccountsLimit)))
+			return
+		}
+	}
+
 	if err != nil {
 		// Ignoring real body (json)
 		w.WriteHeader(http.StatusBadRequest)
@@ -262,5 +303,11 @@ func (mockServer *redhatSSOMock) regenerateSecretHandler(w http.ResponseWriter, 
 func (mockServer *redhatSSOMock) GenerateNewAuthToken() string {
 	token := uuid.New().String()
 	mockServer.authTokens = append(mockServer.authTokens, token)
+	return token
+}
+
+func (mockServer *redhatSSOMock) SetBearerToken(token string) string {
+	mockServer.authTokens = append(mockServer.authTokens, token)
+	mockServer.sessionAuthToken = token
 	return token
 }

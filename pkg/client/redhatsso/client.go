@@ -153,11 +153,13 @@ func (c *rhSSOClient) GetRealmConfig() *iam.IAMRealmConfig {
 }
 
 func (c *rhSSOClient) GetServiceAccounts(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error) {
-	serviceAccounts, _, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
+	serviceAccounts, resp, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.GetServiceAccounts(context.Background()).
 		Max(int32(max)).
 		First(int32(first)).
 		Execute()
+
+	defer shared.CloseResponseBody(resp)
 
 	return serviceAccounts, err
 }
@@ -167,44 +169,60 @@ func (c *rhSSOClient) GetServiceAccount(accessToken string, clientId string) (*s
 		ServiceAccountsApi.GetServiceAccount(context.Background(), clientId).
 		Execute()
 
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, false, nil
+	defer shared.CloseResponseBody(resp)
+	if resp != nil {
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, false, nil
+		}
 	}
+
 	return &serviceAccount, err == nil, err
 }
 
 func (c *rhSSOClient) CreateServiceAccount(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
-	serviceAccount, _, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
+	serviceAccount, resp, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.CreateServiceAccount(context.Background()).
 		ServiceAccountCreateRequestData(
 			serviceaccountsclient.ServiceAccountCreateRequestData{
 				Name:        name,
 				Description: description,
 			}).Execute()
+
+	defer shared.CloseResponseBody(resp)
+
 	return serviceAccount, err
 }
 
 func (c *rhSSOClient) DeleteServiceAccount(accessToken string, clientId string) error {
-	_, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
+	resp, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.DeleteServiceAccount(context.Background(), clientId).
 		Execute()
+
+	defer shared.CloseResponseBody(resp)
+
 	return err
 }
 
 func (c *rhSSOClient) UpdateServiceAccount(accessToken string, clientId string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
-	data, _, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
+	data, resp, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.UpdateServiceAccount(context.Background(), clientId).
 		ServiceAccountRequestData(serviceaccountsclient.ServiceAccountRequestData{
 			Name:        &name,
 			Description: &description,
 		}).Execute()
+
+	defer shared.CloseResponseBody(resp)
+
 	return data, err
 }
 
 func (c *rhSSOClient) RegenerateClientSecret(accessToken string, id string) (serviceaccountsclient.ServiceAccountData, error) {
-	data, _, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
+	data, resp, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.
 		ResetServiceAccountSecret(context.Background(), id).
 		Execute()
+
+	defer shared.CloseResponseBody(resp)
+
 	return data, err
 }
