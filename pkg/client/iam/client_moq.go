@@ -8,16 +8,16 @@ import (
 	"sync"
 )
 
-// Ensure, that KcClientMock does implement IAMClient.
+// Ensure, that IAMClientMock does implement IAMClient.
 // If this is not the case, regenerate this file with moq.
-var _ IAMClient = &KcClientMock{}
+var _ IAMClient = &IAMClientMock{}
 
-// KcClientMock is a mock implementation of IAMClient.
+// IAMClientMock is a mock implementation of IAMClient.
 //
-// 	func TestSomethingThatUsesKcClient(t *testing.T) {
+// 	func TestSomethingThatUsesIAMClient(t *testing.T) {
 //
 // 		// make and configure a mocked IAMClient
-// 		mockedKcClient := &KcClientMock{
+// 		mockedIAMClient := &IAMClientMock{
 // 			AddRealmRoleToUserFunc: func(accessToken string, userId string, role gocloak.Role) error {
 // 				panic("mock out the AddRealmRoleToUser method")
 // 			},
@@ -86,11 +86,11 @@ var _ IAMClient = &KcClientMock{}
 // 			},
 // 		}
 //
-// 		// use mockedKcClient in code that requires IAMClient
+// 		// use mockedIAMClient in code that requires IAMClient
 // 		// and then make assertions.
 //
 // 	}
-type KcClientMock struct {
+type IAMClientMock struct {
 	// AddRealmRoleToUserFunc mocks the AddRealmRoleToUser method.
 	AddRealmRoleToUserFunc func(accessToken string, userId string, role gocloak.Role) error
 
@@ -329,9 +329,9 @@ type KcClientMock struct {
 }
 
 // AddRealmRoleToUser calls AddRealmRoleToUserFunc.
-func (mock *KcClientMock) AddRealmRoleToUser(accessToken string, userId string, role gocloak.Role) error {
+func (mock *IAMClientMock) AddRealmRoleToUser(accessToken string, userId string, role gocloak.Role) error {
 	if mock.AddRealmRoleToUserFunc == nil {
-		panic("KcClientMock.AddRealmRoleToUserFunc: method is nil but IAMClient.AddRealmRoleToUser was just called")
+		panic("IAMClientMock.AddRealmRoleToUserFunc: method is nil but IAMClient.AddRealmRoleToUser was just called")
 	}
 	callInfo := struct {
 		AccessToken string
@@ -350,8 +350,8 @@ func (mock *KcClientMock) AddRealmRoleToUser(accessToken string, userId string, 
 
 // AddRealmRoleToUserCalls gets all the calls that were made to AddRealmRoleToUser.
 // Check the length with:
-//     len(mockedKcClient.AddRealmRoleToUserCalls())
-func (mock *KcClientMock) AddRealmRoleToUserCalls() []struct {
+//     len(mockedIAMClient.AddRealmRoleToUserCalls())
+func (mock *IAMClientMock) AddRealmRoleToUserCalls() []struct {
 	AccessToken string
 	UserId      string
 	Role        gocloak.Role
@@ -368,9 +368,9 @@ func (mock *KcClientMock) AddRealmRoleToUserCalls() []struct {
 }
 
 // ClientConfig calls ClientConfigFunc.
-func (mock *KcClientMock) ClientConfig(client ClientRepresentation) gocloak.Client {
+func (mock *IAMClientMock) ClientConfig(client ClientRepresentation) gocloak.Client {
 	if mock.ClientConfigFunc == nil {
-		panic("KcClientMock.ClientConfigFunc: method is nil but IAMClient.ClientConfig was just called")
+		panic("IAMClientMock.ClientConfigFunc: method is nil but IAMClient.ClientConfig was just called")
 	}
 	callInfo := struct {
 		Client ClientRepresentation
@@ -385,8 +385,8 @@ func (mock *KcClientMock) ClientConfig(client ClientRepresentation) gocloak.Clie
 
 // ClientConfigCalls gets all the calls that were made to ClientConfig.
 // Check the length with:
-//     len(mockedKcClient.ClientConfigCalls())
-func (mock *KcClientMock) ClientConfigCalls() []struct {
+//     len(mockedIAMClient.ClientConfigCalls())
+func (mock *IAMClientMock) ClientConfigCalls() []struct {
 	Client ClientRepresentation
 } {
 	var calls []struct {
@@ -399,9 +399,9 @@ func (mock *KcClientMock) ClientConfigCalls() []struct {
 }
 
 // CreateClient calls CreateClientFunc.
-func (mock *KcClientMock) CreateClient(client gocloak.Client, accessToken string) (string, error) {
+func (mock *IAMClientMock) CreateClient(client gocloak.Client, accessToken string) (string, error) {
 	if mock.CreateClientFunc == nil {
-		panic("KcClientMock.CreateClientFunc: method is nil but IAMClient.CreateClient was just called")
+		panic("IAMClientMock.CreateClientFunc: method is nil but IAMClient.CreateClient was just called")
 	}
 	callInfo := struct {
 		Client      gocloak.Client
@@ -418,8 +418,8 @@ func (mock *KcClientMock) CreateClient(client gocloak.Client, accessToken string
 
 // CreateClientCalls gets all the calls that were made to CreateClient.
 // Check the length with:
-//     len(mockedKcClient.CreateClientCalls())
-func (mock *KcClientMock) CreateClientCalls() []struct {
+//     len(mockedIAMClient.CreateClientCalls())
+func (mock *IAMClientMock) CreateClientCalls() []struct {
 	Client      gocloak.Client
 	AccessToken string
 } {
@@ -434,9 +434,9 @@ func (mock *KcClientMock) CreateClientCalls() []struct {
 }
 
 // CreateProtocolMapperConfig calls CreateProtocolMapperConfigFunc.
-func (mock *KcClientMock) CreateProtocolMapperConfig(s string) []gocloak.ProtocolMapperRepresentation {
+func (mock *IAMClientMock) CreateProtocolMapperConfig(s string) []gocloak.ProtocolMapperRepresentation {
 	if mock.CreateProtocolMapperConfigFunc == nil {
-		panic("KcClientMock.CreateProtocolMapperConfigFunc: method is nil but IAMClient.CreateProtocolMapperConfig was just called")
+		panic("IAMClientMock.CreateProtocolMapperConfigFunc: method is nil but IAMClient.CreateProtocolMapperConfig was just called")
 	}
 	callInfo := struct {
 		S string
@@ -451,8 +451,8 @@ func (mock *KcClientMock) CreateProtocolMapperConfig(s string) []gocloak.Protoco
 
 // CreateProtocolMapperConfigCalls gets all the calls that were made to CreateProtocolMapperConfig.
 // Check the length with:
-//     len(mockedKcClient.CreateProtocolMapperConfigCalls())
-func (mock *KcClientMock) CreateProtocolMapperConfigCalls() []struct {
+//     len(mockedIAMClient.CreateProtocolMapperConfigCalls())
+func (mock *IAMClientMock) CreateProtocolMapperConfigCalls() []struct {
 	S string
 } {
 	var calls []struct {
@@ -465,9 +465,9 @@ func (mock *KcClientMock) CreateProtocolMapperConfigCalls() []struct {
 }
 
 // CreateRealmRole calls CreateRealmRoleFunc.
-func (mock *KcClientMock) CreateRealmRole(accessToken string, roleName string) (*gocloak.Role, error) {
+func (mock *IAMClientMock) CreateRealmRole(accessToken string, roleName string) (*gocloak.Role, error) {
 	if mock.CreateRealmRoleFunc == nil {
-		panic("KcClientMock.CreateRealmRoleFunc: method is nil but IAMClient.CreateRealmRole was just called")
+		panic("IAMClientMock.CreateRealmRoleFunc: method is nil but IAMClient.CreateRealmRole was just called")
 	}
 	callInfo := struct {
 		AccessToken string
@@ -484,8 +484,8 @@ func (mock *KcClientMock) CreateRealmRole(accessToken string, roleName string) (
 
 // CreateRealmRoleCalls gets all the calls that were made to CreateRealmRole.
 // Check the length with:
-//     len(mockedKcClient.CreateRealmRoleCalls())
-func (mock *KcClientMock) CreateRealmRoleCalls() []struct {
+//     len(mockedIAMClient.CreateRealmRoleCalls())
+func (mock *IAMClientMock) CreateRealmRoleCalls() []struct {
 	AccessToken string
 	RoleName    string
 } {
@@ -500,9 +500,9 @@ func (mock *KcClientMock) CreateRealmRoleCalls() []struct {
 }
 
 // DeleteClient calls DeleteClientFunc.
-func (mock *KcClientMock) DeleteClient(internalClientID string, accessToken string) error {
+func (mock *IAMClientMock) DeleteClient(internalClientID string, accessToken string) error {
 	if mock.DeleteClientFunc == nil {
-		panic("KcClientMock.DeleteClientFunc: method is nil but IAMClient.DeleteClient was just called")
+		panic("IAMClientMock.DeleteClientFunc: method is nil but IAMClient.DeleteClient was just called")
 	}
 	callInfo := struct {
 		InternalClientID string
@@ -519,8 +519,8 @@ func (mock *KcClientMock) DeleteClient(internalClientID string, accessToken stri
 
 // DeleteClientCalls gets all the calls that were made to DeleteClient.
 // Check the length with:
-//     len(mockedKcClient.DeleteClientCalls())
-func (mock *KcClientMock) DeleteClientCalls() []struct {
+//     len(mockedIAMClient.DeleteClientCalls())
+func (mock *IAMClientMock) DeleteClientCalls() []struct {
 	InternalClientID string
 	AccessToken      string
 } {
@@ -535,9 +535,9 @@ func (mock *KcClientMock) DeleteClientCalls() []struct {
 }
 
 // GetCachedToken calls GetCachedTokenFunc.
-func (mock *KcClientMock) GetCachedToken(tokenKey string) (string, error) {
+func (mock *IAMClientMock) GetCachedToken(tokenKey string) (string, error) {
 	if mock.GetCachedTokenFunc == nil {
-		panic("KcClientMock.GetCachedTokenFunc: method is nil but IAMClient.GetCachedToken was just called")
+		panic("IAMClientMock.GetCachedTokenFunc: method is nil but IAMClient.GetCachedToken was just called")
 	}
 	callInfo := struct {
 		TokenKey string
@@ -552,8 +552,8 @@ func (mock *KcClientMock) GetCachedToken(tokenKey string) (string, error) {
 
 // GetCachedTokenCalls gets all the calls that were made to GetCachedToken.
 // Check the length with:
-//     len(mockedKcClient.GetCachedTokenCalls())
-func (mock *KcClientMock) GetCachedTokenCalls() []struct {
+//     len(mockedIAMClient.GetCachedTokenCalls())
+func (mock *IAMClientMock) GetCachedTokenCalls() []struct {
 	TokenKey string
 } {
 	var calls []struct {
@@ -566,9 +566,9 @@ func (mock *KcClientMock) GetCachedTokenCalls() []struct {
 }
 
 // GetClient calls GetClientFunc.
-func (mock *KcClientMock) GetClient(clientId string, accessToken string) (*gocloak.Client, error) {
+func (mock *IAMClientMock) GetClient(clientId string, accessToken string) (*gocloak.Client, error) {
 	if mock.GetClientFunc == nil {
-		panic("KcClientMock.GetClientFunc: method is nil but IAMClient.GetClient was just called")
+		panic("IAMClientMock.GetClientFunc: method is nil but IAMClient.GetClient was just called")
 	}
 	callInfo := struct {
 		ClientId    string
@@ -585,8 +585,8 @@ func (mock *KcClientMock) GetClient(clientId string, accessToken string) (*goclo
 
 // GetClientCalls gets all the calls that were made to GetClient.
 // Check the length with:
-//     len(mockedKcClient.GetClientCalls())
-func (mock *KcClientMock) GetClientCalls() []struct {
+//     len(mockedIAMClient.GetClientCalls())
+func (mock *IAMClientMock) GetClientCalls() []struct {
 	ClientId    string
 	AccessToken string
 } {
@@ -601,9 +601,9 @@ func (mock *KcClientMock) GetClientCalls() []struct {
 }
 
 // GetClientById calls GetClientByIdFunc.
-func (mock *KcClientMock) GetClientById(id string, accessToken string) (*gocloak.Client, error) {
+func (mock *IAMClientMock) GetClientById(id string, accessToken string) (*gocloak.Client, error) {
 	if mock.GetClientByIdFunc == nil {
-		panic("KcClientMock.GetClientByIdFunc: method is nil but IAMClient.GetClientById was just called")
+		panic("IAMClientMock.GetClientByIdFunc: method is nil but IAMClient.GetClientById was just called")
 	}
 	callInfo := struct {
 		ID          string
@@ -620,8 +620,8 @@ func (mock *KcClientMock) GetClientById(id string, accessToken string) (*gocloak
 
 // GetClientByIdCalls gets all the calls that were made to GetClientById.
 // Check the length with:
-//     len(mockedKcClient.GetClientByIdCalls())
-func (mock *KcClientMock) GetClientByIdCalls() []struct {
+//     len(mockedIAMClient.GetClientByIdCalls())
+func (mock *IAMClientMock) GetClientByIdCalls() []struct {
 	ID          string
 	AccessToken string
 } {
@@ -636,9 +636,9 @@ func (mock *KcClientMock) GetClientByIdCalls() []struct {
 }
 
 // GetClientSecret calls GetClientSecretFunc.
-func (mock *KcClientMock) GetClientSecret(internalClientId string, accessToken string) (string, error) {
+func (mock *IAMClientMock) GetClientSecret(internalClientId string, accessToken string) (string, error) {
 	if mock.GetClientSecretFunc == nil {
-		panic("KcClientMock.GetClientSecretFunc: method is nil but IAMClient.GetClientSecret was just called")
+		panic("IAMClientMock.GetClientSecretFunc: method is nil but IAMClient.GetClientSecret was just called")
 	}
 	callInfo := struct {
 		InternalClientId string
@@ -655,8 +655,8 @@ func (mock *KcClientMock) GetClientSecret(internalClientId string, accessToken s
 
 // GetClientSecretCalls gets all the calls that were made to GetClientSecret.
 // Check the length with:
-//     len(mockedKcClient.GetClientSecretCalls())
-func (mock *KcClientMock) GetClientSecretCalls() []struct {
+//     len(mockedIAMClient.GetClientSecretCalls())
+func (mock *IAMClientMock) GetClientSecretCalls() []struct {
 	InternalClientId string
 	AccessToken      string
 } {
@@ -671,9 +671,9 @@ func (mock *KcClientMock) GetClientSecretCalls() []struct {
 }
 
 // GetClientServiceAccount calls GetClientServiceAccountFunc.
-func (mock *KcClientMock) GetClientServiceAccount(accessToken string, internalClient string) (*gocloak.User, error) {
+func (mock *IAMClientMock) GetClientServiceAccount(accessToken string, internalClient string) (*gocloak.User, error) {
 	if mock.GetClientServiceAccountFunc == nil {
-		panic("KcClientMock.GetClientServiceAccountFunc: method is nil but IAMClient.GetClientServiceAccount was just called")
+		panic("IAMClientMock.GetClientServiceAccountFunc: method is nil but IAMClient.GetClientServiceAccount was just called")
 	}
 	callInfo := struct {
 		AccessToken    string
@@ -690,8 +690,8 @@ func (mock *KcClientMock) GetClientServiceAccount(accessToken string, internalCl
 
 // GetClientServiceAccountCalls gets all the calls that were made to GetClientServiceAccount.
 // Check the length with:
-//     len(mockedKcClient.GetClientServiceAccountCalls())
-func (mock *KcClientMock) GetClientServiceAccountCalls() []struct {
+//     len(mockedIAMClient.GetClientServiceAccountCalls())
+func (mock *IAMClientMock) GetClientServiceAccountCalls() []struct {
 	AccessToken    string
 	InternalClient string
 } {
@@ -706,9 +706,9 @@ func (mock *KcClientMock) GetClientServiceAccountCalls() []struct {
 }
 
 // GetClients calls GetClientsFunc.
-func (mock *KcClientMock) GetClients(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
+func (mock *IAMClientMock) GetClients(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
 	if mock.GetClientsFunc == nil {
-		panic("KcClientMock.GetClientsFunc: method is nil but IAMClient.GetClients was just called")
+		panic("IAMClientMock.GetClientsFunc: method is nil but IAMClient.GetClients was just called")
 	}
 	callInfo := struct {
 		AccessToken string
@@ -729,8 +729,8 @@ func (mock *KcClientMock) GetClients(accessToken string, first int, max int, att
 
 // GetClientsCalls gets all the calls that were made to GetClients.
 // Check the length with:
-//     len(mockedKcClient.GetClientsCalls())
-func (mock *KcClientMock) GetClientsCalls() []struct {
+//     len(mockedIAMClient.GetClientsCalls())
+func (mock *IAMClientMock) GetClientsCalls() []struct {
 	AccessToken string
 	First       int
 	Max         int
@@ -749,9 +749,9 @@ func (mock *KcClientMock) GetClientsCalls() []struct {
 }
 
 // GetConfig calls GetConfigFunc.
-func (mock *KcClientMock) GetConfig() *IAMConfig {
+func (mock *IAMClientMock) GetConfig() *IAMConfig {
 	if mock.GetConfigFunc == nil {
-		panic("KcClientMock.GetConfigFunc: method is nil but IAMClient.GetConfig was just called")
+		panic("IAMClientMock.GetConfigFunc: method is nil but IAMClient.GetConfig was just called")
 	}
 	callInfo := struct {
 	}{}
@@ -763,8 +763,8 @@ func (mock *KcClientMock) GetConfig() *IAMConfig {
 
 // GetConfigCalls gets all the calls that were made to GetConfig.
 // Check the length with:
-//     len(mockedKcClient.GetConfigCalls())
-func (mock *KcClientMock) GetConfigCalls() []struct {
+//     len(mockedIAMClient.GetConfigCalls())
+func (mock *IAMClientMock) GetConfigCalls() []struct {
 } {
 	var calls []struct {
 	}
@@ -775,9 +775,9 @@ func (mock *KcClientMock) GetConfigCalls() []struct {
 }
 
 // GetRealmConfig calls GetRealmConfigFunc.
-func (mock *KcClientMock) GetRealmConfig() *IAMRealmConfig {
+func (mock *IAMClientMock) GetRealmConfig() *IAMRealmConfig {
 	if mock.GetRealmConfigFunc == nil {
-		panic("KcClientMock.GetRealmConfigFunc: method is nil but IAMClient.GetRealmConfig was just called")
+		panic("IAMClientMock.GetRealmConfigFunc: method is nil but IAMClient.GetRealmConfig was just called")
 	}
 	callInfo := struct {
 	}{}
@@ -789,8 +789,8 @@ func (mock *KcClientMock) GetRealmConfig() *IAMRealmConfig {
 
 // GetRealmConfigCalls gets all the calls that were made to GetRealmConfig.
 // Check the length with:
-//     len(mockedKcClient.GetRealmConfigCalls())
-func (mock *KcClientMock) GetRealmConfigCalls() []struct {
+//     len(mockedIAMClient.GetRealmConfigCalls())
+func (mock *IAMClientMock) GetRealmConfigCalls() []struct {
 } {
 	var calls []struct {
 	}
@@ -801,9 +801,9 @@ func (mock *KcClientMock) GetRealmConfigCalls() []struct {
 }
 
 // GetRealmRole calls GetRealmRoleFunc.
-func (mock *KcClientMock) GetRealmRole(accessToken string, roleName string) (*gocloak.Role, error) {
+func (mock *IAMClientMock) GetRealmRole(accessToken string, roleName string) (*gocloak.Role, error) {
 	if mock.GetRealmRoleFunc == nil {
-		panic("KcClientMock.GetRealmRoleFunc: method is nil but IAMClient.GetRealmRole was just called")
+		panic("IAMClientMock.GetRealmRoleFunc: method is nil but IAMClient.GetRealmRole was just called")
 	}
 	callInfo := struct {
 		AccessToken string
@@ -820,8 +820,8 @@ func (mock *KcClientMock) GetRealmRole(accessToken string, roleName string) (*go
 
 // GetRealmRoleCalls gets all the calls that were made to GetRealmRole.
 // Check the length with:
-//     len(mockedKcClient.GetRealmRoleCalls())
-func (mock *KcClientMock) GetRealmRoleCalls() []struct {
+//     len(mockedIAMClient.GetRealmRoleCalls())
+func (mock *IAMClientMock) GetRealmRoleCalls() []struct {
 	AccessToken string
 	RoleName    string
 } {
@@ -836,9 +836,9 @@ func (mock *KcClientMock) GetRealmRoleCalls() []struct {
 }
 
 // GetToken calls GetTokenFunc.
-func (mock *KcClientMock) GetToken() (string, error) {
+func (mock *IAMClientMock) GetToken() (string, error) {
 	if mock.GetTokenFunc == nil {
-		panic("KcClientMock.GetTokenFunc: method is nil but IAMClient.GetToken was just called")
+		panic("IAMClientMock.GetTokenFunc: method is nil but IAMClient.GetToken was just called")
 	}
 	callInfo := struct {
 	}{}
@@ -850,8 +850,8 @@ func (mock *KcClientMock) GetToken() (string, error) {
 
 // GetTokenCalls gets all the calls that were made to GetToken.
 // Check the length with:
-//     len(mockedKcClient.GetTokenCalls())
-func (mock *KcClientMock) GetTokenCalls() []struct {
+//     len(mockedIAMClient.GetTokenCalls())
+func (mock *IAMClientMock) GetTokenCalls() []struct {
 } {
 	var calls []struct {
 	}
@@ -862,9 +862,9 @@ func (mock *KcClientMock) GetTokenCalls() []struct {
 }
 
 // IsClientExist calls IsClientExistFunc.
-func (mock *KcClientMock) IsClientExist(clientId string, accessToken string) (string, error) {
+func (mock *IAMClientMock) IsClientExist(clientId string, accessToken string) (string, error) {
 	if mock.IsClientExistFunc == nil {
-		panic("KcClientMock.IsClientExistFunc: method is nil but IAMClient.IsClientExist was just called")
+		panic("IAMClientMock.IsClientExistFunc: method is nil but IAMClient.IsClientExist was just called")
 	}
 	callInfo := struct {
 		ClientId    string
@@ -881,8 +881,8 @@ func (mock *KcClientMock) IsClientExist(clientId string, accessToken string) (st
 
 // IsClientExistCalls gets all the calls that were made to IsClientExist.
 // Check the length with:
-//     len(mockedKcClient.IsClientExistCalls())
-func (mock *KcClientMock) IsClientExistCalls() []struct {
+//     len(mockedIAMClient.IsClientExistCalls())
+func (mock *IAMClientMock) IsClientExistCalls() []struct {
 	ClientId    string
 	AccessToken string
 } {
@@ -897,9 +897,9 @@ func (mock *KcClientMock) IsClientExistCalls() []struct {
 }
 
 // IsOwner calls IsOwnerFunc.
-func (mock *KcClientMock) IsOwner(client *gocloak.Client, userId string) bool {
+func (mock *IAMClientMock) IsOwner(client *gocloak.Client, userId string) bool {
 	if mock.IsOwnerFunc == nil {
-		panic("KcClientMock.IsOwnerFunc: method is nil but IAMClient.IsOwner was just called")
+		panic("IAMClientMock.IsOwnerFunc: method is nil but IAMClient.IsOwner was just called")
 	}
 	callInfo := struct {
 		Client *gocloak.Client
@@ -916,8 +916,8 @@ func (mock *KcClientMock) IsOwner(client *gocloak.Client, userId string) bool {
 
 // IsOwnerCalls gets all the calls that were made to IsOwner.
 // Check the length with:
-//     len(mockedKcClient.IsOwnerCalls())
-func (mock *KcClientMock) IsOwnerCalls() []struct {
+//     len(mockedIAMClient.IsOwnerCalls())
+func (mock *IAMClientMock) IsOwnerCalls() []struct {
 	Client *gocloak.Client
 	UserId string
 } {
@@ -932,9 +932,9 @@ func (mock *KcClientMock) IsOwnerCalls() []struct {
 }
 
 // IsSameOrg calls IsSameOrgFunc.
-func (mock *KcClientMock) IsSameOrg(client *gocloak.Client, orgId string) bool {
+func (mock *IAMClientMock) IsSameOrg(client *gocloak.Client, orgId string) bool {
 	if mock.IsSameOrgFunc == nil {
-		panic("KcClientMock.IsSameOrgFunc: method is nil but IAMClient.IsSameOrg was just called")
+		panic("IAMClientMock.IsSameOrgFunc: method is nil but IAMClient.IsSameOrg was just called")
 	}
 	callInfo := struct {
 		Client *gocloak.Client
@@ -951,8 +951,8 @@ func (mock *KcClientMock) IsSameOrg(client *gocloak.Client, orgId string) bool {
 
 // IsSameOrgCalls gets all the calls that were made to IsSameOrg.
 // Check the length with:
-//     len(mockedKcClient.IsSameOrgCalls())
-func (mock *KcClientMock) IsSameOrgCalls() []struct {
+//     len(mockedIAMClient.IsSameOrgCalls())
+func (mock *IAMClientMock) IsSameOrgCalls() []struct {
 	Client *gocloak.Client
 	OrgId  string
 } {
@@ -967,9 +967,9 @@ func (mock *KcClientMock) IsSameOrgCalls() []struct {
 }
 
 // RegenerateClientSecret calls RegenerateClientSecretFunc.
-func (mock *KcClientMock) RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
+func (mock *IAMClientMock) RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
 	if mock.RegenerateClientSecretFunc == nil {
-		panic("KcClientMock.RegenerateClientSecretFunc: method is nil but IAMClient.RegenerateClientSecret was just called")
+		panic("IAMClientMock.RegenerateClientSecretFunc: method is nil but IAMClient.RegenerateClientSecret was just called")
 	}
 	callInfo := struct {
 		AccessToken string
@@ -986,8 +986,8 @@ func (mock *KcClientMock) RegenerateClientSecret(accessToken string, id string) 
 
 // RegenerateClientSecretCalls gets all the calls that were made to RegenerateClientSecret.
 // Check the length with:
-//     len(mockedKcClient.RegenerateClientSecretCalls())
-func (mock *KcClientMock) RegenerateClientSecretCalls() []struct {
+//     len(mockedIAMClient.RegenerateClientSecretCalls())
+func (mock *IAMClientMock) RegenerateClientSecretCalls() []struct {
 	AccessToken string
 	ID          string
 } {
@@ -1002,9 +1002,9 @@ func (mock *KcClientMock) RegenerateClientSecretCalls() []struct {
 }
 
 // UpdateServiceAccountUser calls UpdateServiceAccountUserFunc.
-func (mock *KcClientMock) UpdateServiceAccountUser(accessToken string, serviceAccountUser gocloak.User) error {
+func (mock *IAMClientMock) UpdateServiceAccountUser(accessToken string, serviceAccountUser gocloak.User) error {
 	if mock.UpdateServiceAccountUserFunc == nil {
-		panic("KcClientMock.UpdateServiceAccountUserFunc: method is nil but IAMClient.UpdateServiceAccountUser was just called")
+		panic("IAMClientMock.UpdateServiceAccountUserFunc: method is nil but IAMClient.UpdateServiceAccountUser was just called")
 	}
 	callInfo := struct {
 		AccessToken        string
@@ -1021,8 +1021,8 @@ func (mock *KcClientMock) UpdateServiceAccountUser(accessToken string, serviceAc
 
 // UpdateServiceAccountUserCalls gets all the calls that were made to UpdateServiceAccountUser.
 // Check the length with:
-//     len(mockedKcClient.UpdateServiceAccountUserCalls())
-func (mock *KcClientMock) UpdateServiceAccountUserCalls() []struct {
+//     len(mockedIAMClient.UpdateServiceAccountUserCalls())
+func (mock *IAMClientMock) UpdateServiceAccountUserCalls() []struct {
 	AccessToken        string
 	ServiceAccountUser gocloak.User
 } {
@@ -1037,9 +1037,9 @@ func (mock *KcClientMock) UpdateServiceAccountUserCalls() []struct {
 }
 
 // UserHasRealmRole calls UserHasRealmRoleFunc.
-func (mock *KcClientMock) UserHasRealmRole(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
+func (mock *IAMClientMock) UserHasRealmRole(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
 	if mock.UserHasRealmRoleFunc == nil {
-		panic("KcClientMock.UserHasRealmRoleFunc: method is nil but IAMClient.UserHasRealmRole was just called")
+		panic("IAMClientMock.UserHasRealmRoleFunc: method is nil but IAMClient.UserHasRealmRole was just called")
 	}
 	callInfo := struct {
 		AccessToken string
@@ -1058,8 +1058,8 @@ func (mock *KcClientMock) UserHasRealmRole(accessToken string, userId string, ro
 
 // UserHasRealmRoleCalls gets all the calls that were made to UserHasRealmRole.
 // Check the length with:
-//     len(mockedKcClient.UserHasRealmRoleCalls())
-func (mock *KcClientMock) UserHasRealmRoleCalls() []struct {
+//     len(mockedIAMClient.UserHasRealmRoleCalls())
+func (mock *IAMClientMock) UserHasRealmRoleCalls() []struct {
 	AccessToken string
 	UserId      string
 	RoleName    string
