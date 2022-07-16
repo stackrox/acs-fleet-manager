@@ -51,8 +51,6 @@ if [[ -n "$OPENSHIFT_CI" ]]; then
     export RUN_AUTH_E2E
 fi
 
-disable_debugging
-
 # If auth E2E tests shall be run, ensure we have all authentication related secrets correctly set up.
 if [[ "$RUN_AUTH_E2E" == "true" ]]; then
     log "Setting up authentication related environment variables for auth E2E tests"
