@@ -9,12 +9,15 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
+	"github.com/stackrox/rox/pkg/retry"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 const (
@@ -23,58 +26,84 @@ const (
 	staticTokenAuthType = "STATIC_TOKEN"
 )
 
+const (
+	internalAPI = "internal"
+	publicAPI   = "public"
+	adminAPI    = "admin"
+)
+
 var _ = Describe("AuthN/Z Fleet* components", func() {
 	if env := getEnvDefault("RUN_AUTH_E2E", "false"); env == "false" {
 		Skip("The RUN_AUTH_E2E variable was not set, skipping the tests. If you want to run the auth tests, " +
 			"set RUN_AUTH_E2E=true")
 	}
 
-	defer GinkgoRecover()
+	fleetManagerEndpoint := "http://localhost:8000"
+	if fmEndpointEnv := os.Getenv("FLEET_MANAGER_ENDPOINT"); fmEndpointEnv != "" {
+		fleetManagerEndpoint = fmEndpointEnv
+	}
+	clusterID := "cluster-id"
+	if clusterIDEnv := os.Getenv("CLUSTER_ID"); clusterIDEnv != "" {
+		clusterID = clusterIDEnv
+	}
+
+	isNonProdEnv := false
+	if env := getEnvDefault("OCM_ENV", "DEVELOPMENT"); env != "production" {
+		isNonProdEnv = true
+	}
+	isProdEnv := false
+	if env := getEnvDefault("OCM_ENV", "DEVELOPMENT"); env == "production" {
+		isProdEnv = true
+	}
 
 	var client *authTestClientFleetManager
+
+	// Needs to be an inline function to allow access to client - passing as arg does not work.
+	var testCase = func(group string, fail bool, code int, skip bool) {
+		if skip {
+			Skip(fmt.Sprintf("Skip test for group %q", group))
+		}
+
+		var err error
+		switch group {
+		case publicAPI:
+			_, err = client.ListCentrals()
+		case internalAPI:
+			_, err = client.GetManagedCentralList()
+		case adminAPI:
+			_, err = client.ListAdminAPI()
+		default:
+			Fail(fmt.Sprintf("Unexpected API Group: %q", group))
+		}
+
+		if !fail {
+			Expect(err).ToNot(HaveOccurred())
+		} else {
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(strconv.Itoa(code)))
+		}
+	}
 
 	Describe("OCM auth type", func() {
 		BeforeEach(func() {
 			auth, err := fleetmanager.NewAuth(ocmAuthType)
 			Expect(err).ToNot(HaveOccurred())
-			fmClient, err := fleetmanager.NewClient("http://localhost:8000", "1234567890abcdef1234567890abcdef", auth)
+			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, clusterID, auth)
 			Expect(err).ToNot(HaveOccurred())
-			client = newAuthTestClient(fmClient, auth, "http://localhost:8000")
+			client = newAuthTestClient(fmClient, auth, fleetManagerEndpoint)
 		})
 
-		It("should allow access to fleet manager's public API endpoints", func() {
-			_, err := client.ListCentrals()
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("should allow access to fleet manager's internal API endpoints in dev / staging environment", func() {
-			_, err := client.GetManagedCentralList()
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("should not allow access to fleet manager's internal API endpoints in production environment", func() {
-			// OCM_ENV specifies which environment configuration to use when deploying fleet manager.
-			if env := getEnvDefault("OCM_ENV", "DEVELOPMENT"); env != "production" {
-				Skip("Fleet manager is deployed using non-production configuration settings")
-			}
-
-			_, err := client.GetManagedCentralList()
-			Expect(err).To(HaveOccurred())
-			// Currently the errors exposed by the generated open API clients do not satisfy the error interface, hence
-			// we can't check for error types via MatchError matcher but have to resort to string checking.
-			// Instead of http.StatusUnauthorized, we will retrieve http.StatusNotFound.
-			Expect(err.Error()).To(ContainSubstring(strconv.Itoa(http.StatusNotFound)))
-		})
-
-		It("should not allow access to fleet manager's the admin API", func() {
-			_, err := client.ListAdminAPI()
-
-			Expect(err).To(HaveOccurred())
-			// Currently the errors exposed by the generated open API clients do not satisfy the error interface, hence
-			// we can't check for error types via MatchError matcher but have to resort to string checking.
-			// Instead of http.StatusUnauthorized, we will retrieve http.StatusNotFound.
-			Expect(err.Error()).To(ContainSubstring(strconv.Itoa(http.StatusNotFound)))
-		})
+		DescribeTable("AuthN/Z tests",
+			testCase,
+			Entry("should allow access to fleet manager's public API endpoints",
+				publicAPI, false, 0, false),
+			Entry("should allow access to fleet manager's internal API endpoints in non-prod environment",
+				internalAPI, false, 0, isProdEnv),
+			Entry("should not allow access to fleet manager's internal API endpoints in prod environment",
+				internalAPI, true, http.StatusNotFound, isNonProdEnv),
+			Entry("should not allow access to fleet manager's the admin API",
+				adminAPI, true, http.StatusNotFound, false),
+		)
 	})
 
 	Describe("Static token auth type", func() {
@@ -86,39 +115,17 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			client = newAuthTestClient(fmClient, auth, "http://localhost:8000")
 		})
 
-		It("should allow access to fleet manager's public API endpoints", func() {
-			_, err := client.ListCentrals()
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("should allow access to fleet manager's internal API endpoints in dev / staging environment", func() {
-			_, err := client.GetManagedCentralList()
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("should not allow access to fleet manager's internal API endpoints in production environment", func() {
-			// OCM_ENV specifies which environment configuration to use when deploying fleet manager.
-			if env := getEnvDefault("OCM_ENV", "DEVELOPMENT"); env != "production" {
-				Skip("Fleet manager is deployed using non-production configuration settings")
-			}
-
-			_, err := client.GetManagedCentralList()
-			Expect(err).To(HaveOccurred())
-			// Currently the errors exposed by the generated open API clients do not satisfy the error interface, hence
-			// we can't check for error types via MatchError matcher but have to resort to string checking.
-			// Instead of http.StatusUnauthorized, we will retrieve http.StatusNotFound.
-			Expect(err.Error()).To(ContainSubstring(strconv.Itoa(http.StatusNotFound)))
-		})
-
-		It("should not allow access to fleet manager's the admin API", func() {
-			_, err := client.ListAdminAPI()
-
-			Expect(err).To(HaveOccurred())
-			// Currently the errors exposed by the generated open API clients do not satisfy the error interface, hence
-			// we can't check for error types via MatchError matcher but have to resort to string checking.
-			// Instead of http.StatusUnauthorized, we will retrieve http.StatusNotFound.
-			Expect(err.Error()).To(ContainSubstring(strconv.Itoa(http.StatusNotFound)))
-		})
+		DescribeTable("AuthN/Z tests",
+			testCase,
+			Entry("should allow access to fleet manager's public API endpoints",
+				publicAPI, false, 0, false),
+			Entry("should allow access to fleet manager's internal API endpoints in non-prod environment",
+				internalAPI, false, 0, isProdEnv),
+			Entry("should not allow access to fleet manager's internal API endpoints in prod environment",
+				internalAPI, true, http.StatusNotFound, isNonProdEnv),
+			Entry("should not allow access to fleet manager's the admin API",
+				adminAPI, true, http.StatusNotFound, false),
+		)
 	})
 
 	Describe("RH SSO auth type", func() {
@@ -165,39 +172,17 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			})
 		})
 
-		It("should allow access to fleet manager's public API endpoints", func() {
-			_, err := client.ListCentrals()
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("should allow access to fleet manager's internal API endpoints in dev / staging environment", func() {
-			_, err := client.GetManagedCentralList()
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("should not allow access to fleet manager's internal API endpoints in production environment", func() {
-			// OCM_ENV specifies which environment configuration to use when deploying fleet manager.
-			if env := getEnvDefault("OCM_ENV", "DEVELOPMENT"); env != "production" {
-				Skip("Fleet manager is deployed using non-production configuration settings")
-			}
-
-			_, err := client.GetManagedCentralList()
-			Expect(err).To(HaveOccurred())
-			// Currently the errors exposed by the generated open API clients do not satisfy the error interface, hence
-			// we can't check for error types via MatchError matcher but have to resort to string checking.
-			// Instead of http.StatusUnauthorized, we will retrieve http.StatusNotFound.
-			Expect(err.Error()).To(ContainSubstring(strconv.Itoa(http.StatusNotFound)))
-		})
-
-		It("should not allow access to fleet manager's the admin API", func() {
-			_, err := client.ListAdminAPI()
-
-			Expect(err).To(HaveOccurred())
-			// Currently the errors exposed by the generated open API clients do not satisfy the error interface, hence
-			// we can't check for error types via MatchError matcher but have to resort to string checking.
-			// Instead of http.StatusUnauthorized, we will retrieve http.StatusNotFound.
-			Expect(err.Error()).To(ContainSubstring(strconv.Itoa(http.StatusNotFound)))
-		})
+		DescribeTable("AuthN/Z tests",
+			testCase,
+			Entry("should allow access to fleet manager's public API endpoints",
+				publicAPI, false, 0, false),
+			Entry("should allow access to fleet manager's internal API endpoints in non-prod environment",
+				internalAPI, false, 0, isProdEnv),
+			Entry("should not allow access to fleet manager's internal API endpoints in prod environment",
+				internalAPI, true, http.StatusNotFound, isNonProdEnv),
+			Entry("should not allow access to fleet manager's the admin API",
+				adminAPI, true, http.StatusNotFound, false),
+		)
 	})
 })
 
@@ -217,50 +202,65 @@ func newAuthTestClient(c *fleetmanager.Client, auth fleetmanager.Auth, endpoint 
 }
 
 func (a *authTestClientFleetManager) ListAdminAPI() (*private.DinosaurList, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", a.endpoint, "admin/dinosaurs"), nil)
-	if err != nil {
+	dinosaurList := &private.DinosaurList{}
+	if err := a.doRequestAndUnmarshal(fmt.Sprintf("%s/%s", a.endpoint, "admin/dinosaurs"), dinosaurList); err != nil {
 		return nil, err
+	}
+	return dinosaurList, nil
+}
+
+func (a *authTestClientFleetManager) ListCentrals() (*public.CentralRequestList, error) {
+	centralList := &public.CentralRequestList{}
+	if err := a.doRequestAndUnmarshal(fmt.Sprintf("%s/%s", a.endpoint, "api/rhacs/v1/centrals"), centralList); err != nil {
+		return nil, err
+	}
+	return centralList, nil
+}
+
+// Code is copied from fleetshard/pkg/fleetmanager/client.go for testing purposes.
+func (a *authTestClientFleetManager) doRequestAndUnmarshal(url string, v interface{}) error {
+	req, err := http.NewRequest(
+		http.MethodGet, url, nil)
+	if err != nil {
+		return err
 	}
 
 	if err := a.auth.AddAuth(req); err != nil {
-		return nil, err
+		return err
 	}
 
 	resp, err := a.h.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if len(data) == 0 {
-		return nil, nil
+		return nil
 	}
 
-	into := struct {
+	kind := struct {
 		Kind string `json:"kind"`
 	}{}
-	err = json.Unmarshal(data, &into)
+	err = json.Unmarshal(data, &kind)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Unmarshal error
-	if into.Kind == "Error" || into.Kind == "error" {
+	if kind.Kind == "Error" || kind.Kind == "error" {
 		apiError := compat.Error{}
 		err = json.Unmarshal(data, &apiError)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return nil, errors.Errorf("API error (HTTP status %d) occured %s: %s", resp.StatusCode, apiError.Code, apiError.Reason)
+		return errors.Errorf("API error (HTTP status %d) occured %s: %s", resp.StatusCode, apiError.Code, apiError.Reason)
 	}
 
-	var dinosaurList *private.DinosaurList
-
-	err = json.Unmarshal(data, dinosaurList)
-	return dinosaurList, err
+	return json.Unmarshal(data, v)
 }
 
 // obtainRHSSOToken will create a redhatsso.SSOClient and retrieve an access token for the specified client ID / secret
@@ -275,5 +275,24 @@ func obtainRHSSOToken(clientID, clientSecret string) (string, error) {
 		JwksEndpointURI:  "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
 		APIEndpointURI:   "/auth/realms/redhat-external",
 	})
-	return client.GetToken()
+
+	var accessToken string
+	err := retry.WithRetry(
+		func() error {
+			var getTokenErr, retryableErr error
+			accessToken, getTokenErr = client.GetToken()
+			// Make every error retryable, irrespective of whether the code is transient or not (this is only for test
+			// purposes). Ideally, the client itself should handle retries.
+			// If we do not check for non-nil errors, MakeRetryable would panic.
+			if getTokenErr != nil {
+				retryableErr = retry.MakeRetryable(getTokenErr)
+			}
+			return retryableErr
+		},
+		retry.Tries(3),
+		retry.BetweenAttempts(func(previousAttemptNumber int) {
+			time.Sleep(10 * time.Second)
+		}),
+	)
+	return accessToken, err
 }
