@@ -39,7 +39,7 @@ However, in the case of the `detect-secrets`, you are required to do a few more 
 $ pip3 install detect-secrets
 
 # In the repository root, scan the repo for secrets and update the .secrets.baseline file.
-$ detect-secrets scan > .secrets.baseline
+$ detect-secrets scan --baseline .secrets.baseline
 
 # Trigger an interactive audit of newly detected secrets. You will be asked to verify whether the detected secret
 # is safe to be committed to the repository or not.

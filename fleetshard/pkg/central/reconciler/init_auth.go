@@ -1,16 +1,12 @@
-package centralreconciler
+package reconciler
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	centralClient "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central_client"
+	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	acsErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/httputil"
 	core "k8s.io/api/core/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -54,12 +50,8 @@ var (
 	}
 )
 
-type AuthProviderResponse struct {
-	Id string `json:"id"`
-}
-
-// CreateRHSSOAuthProvider initialises sso.redhat.com auth provider in a deployed Central instance.
-func CreateRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) error {
+// createRHSSOAuthProvider initialises sso.redhat.com auth provider in a deployed Central instance.
+func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) error {
 	pass, err := getAdminPassword(ctx, central, client)
 	if err != nil {
 		return err
@@ -70,46 +62,21 @@ func CreateRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 		return err
 	}
 
-	// Send auth provider POST request to Central.
-	authProviderRequest := createAuthProviderRequest(central)
-	resp, err := centralClient.SendRequestToCentral(ctx, authProviderRequest, address+"/v1/authProviders", pass)
-	if err != nil {
-		return errors.Wrap(err, "sending new auth provider to central")
-	} else if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create auth provider for central %s", central.Metadata.Name)
-	}
+	centralClient := centralClientPkg.NewCentralClient(central, address, pass)
 
-	// Decode auth provider response to use auth provider id in /v1/groups requests.
-	defer func() {
-		err := resp.Body.Close()
-		if err != nil {
-			glog.Warningf("Attempt to close auth provider response failed: %s", err)
-		}
-	}()
-	var authProviderResp AuthProviderResponse
-	err = json.NewDecoder(resp.Body).Decode(&authProviderResp)
+	authProviderRequest := createAuthProviderRequest(central)
+	authProviderResp, err := centralClient.SendAuthProviderRequest(ctx, authProviderRequest)
 	if err != nil {
-		return errors.Wrap(err, "decoding auth provider POST response")
+		return err
 	}
 
 	// Initiate sso.redhat.com auth provider groups.
 	for _, groupCreator := range groupCreators {
 		group := groupCreator(authProviderResp.Id, central.Spec.Auth)
-		err = sendGroupRequest(ctx, central, group, address, pass)
+		err = centralClient.SendGroupRequest(ctx, group)
 		if err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func sendGroupRequest(ctx context.Context, central private.ManagedCentral, groupRequest *storage.Group, address string, pass string) error {
-	resp, err := centralClient.SendRequestToCentral(ctx, groupRequest, address+"/v1/groups", pass)
-	if err != nil {
-		return errors.Wrap(err, "sending new group to central")
-	}
-	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create group for central %s", central.Metadata.Name)
 	}
 	return nil
 }
@@ -143,11 +110,21 @@ func getServiceAddress(ctx context.Context, central private.ManagedCentral, clie
 	if err != nil {
 		return "", errors.Wrapf(err, "getting k8s service for central")
 	}
-	if len(service.Spec.Ports) == 0 {
-		return "", errors.Errorf("no ports present in %s service", centralServiceName)
+	port, err := getHttpsServicePort(service)
+	if err != nil {
+		return "", err
 	}
-	address := fmt.Sprintf("https://%s.%s.svc.cluster.local:%d", centralServiceName, central.Metadata.Namespace, service.Spec.Ports[0].Port)
+	address := fmt.Sprintf("https://%s.%s.svc.cluster.local:%d", centralServiceName, central.Metadata.Namespace, port)
 	return address, nil
+}
+
+func getHttpsServicePort(service *core.Service) (int32, error) {
+	for _, servicePort := range service.Spec.Ports {
+		if servicePort.Name == "https" {
+			return servicePort.Port, nil
+		}
+	}
+	return 0, errors.Errorf("no `https` port is present in %s/%s service", service.Namespace, service.Name)
 }
 
 func getAdminPassword(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (string, error) {

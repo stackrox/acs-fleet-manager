@@ -1,4 +1,4 @@
-package centralreconciler
+package reconciler
 
 import "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 

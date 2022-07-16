@@ -1,4 +1,4 @@
-package centralreconciler
+package reconciler
 
 import (
 	"context"
@@ -44,11 +44,10 @@ func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestCo
 func TestReconcileCreate(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
 	r := CentralReconciler{
-		status:             pointer.Int32(0),
-		client:             fakeClient,
-		central:            private.ManagedCentral{},
-		useRoutes:          true,
-		createAuthProvider: false,
+		status:    pointer.Int32(0),
+		client:    fakeClient,
+		central:   private.ManagedCentral{},
+		useRoutes: true,
 	}
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -85,10 +84,9 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:             pointer.Int32(0),
-		client:             fakeClient,
-		central:            private.ManagedCentral{},
-		createAuthProvider: false,
+		status:  pointer.Int32(0),
+		client:  fakeClient,
+		central: private.ManagedCentral{},
 	}
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -113,10 +111,9 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:             pointer.Int32(0),
-		client:             fakeClient,
-		central:            private.ManagedCentral{},
-		createAuthProvider: false,
+		status:  pointer.Int32(0),
+		client:  fakeClient,
+		central: private.ManagedCentral{},
 	}
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -135,10 +132,9 @@ func TestReconicleLastHashSetOnSuccess(t *testing.T) {
 	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:             pointer.Int32(0),
-		client:             fakeClient,
-		central:            private.ManagedCentral{},
-		createAuthProvider: false,
+		status:  pointer.Int32(0),
+		client:  fakeClient,
+		central: private.ManagedCentral{},
 	}
 
 	managedCentral := simpleManagedCentral
@@ -166,10 +162,9 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:             pointer.Int32(0),
-		client:             fakeClient,
-		central:            private.ManagedCentral{},
-		createAuthProvider: false,
+		status:  pointer.Int32(0),
+		client:  fakeClient,
+		central: private.ManagedCentral{},
 	}
 
 	managedCentral := simpleManagedCentral
@@ -267,10 +262,9 @@ func TestCentralChanged(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			reconciler := CentralReconciler{
-				status:             pointer.Int32(0),
-				client:             fakeClient,
-				central:            test.currentCentral,
-				createAuthProvider: false,
+				status:  pointer.Int32(0),
+				client:  fakeClient,
+				central: test.currentCentral,
 			}
 
 			if test.lastCentral != nil {
