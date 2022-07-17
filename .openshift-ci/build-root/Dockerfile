@@ -19,5 +19,8 @@ RUN curl -L --silent --show-error --fail -O https://nodejs.org/dist/v16.15.1/nod
     tar -xJvf node-v16.15.1-linux-x64.tar.xz -C /usr/local/lib/nodejs
 RUN curl -L --silent --show-error --fail -o "/usr/local/bin/stern" \
     https://github.com/wercker/stern/releases/download/1.11.0/stern_linux_amd64 && \
-    chmod +x /usr/local/bin/stern
+    chmod +x /usr/local/bin/stern \
+RUN curl -L --silent --show-error --fail -o "/usr/local/bin/ocm" \
+    https://github.com/openshift-online/ocm-cli/releases/download/v0.1.30/ocm-linux-amd64 && \
+    chmod +x /usr/local/bin/ocmg
 ENV PATH="/usr/local/lib/nodejs/node-v16.15.1-linux-x64/bin:${PATH}"
