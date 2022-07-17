@@ -22,5 +22,5 @@ RUN curl -L --silent --show-error --fail -o "/usr/local/bin/stern" \
     chmod +x /usr/local/bin/stern \
 RUN curl -L --silent --show-error --fail -o "/usr/local/bin/ocm" \
     https://github.com/openshift-online/ocm-cli/releases/download/v0.1.30/ocm-linux-amd64 && \
-    chmod +x /usr/local/bin/ocmg
+    chmod +x /usr/local/bin/ocm
 ENV PATH="/usr/local/lib/nodejs/node-v16.15.1-linux-x64/bin:${PATH}"
