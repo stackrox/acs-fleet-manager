@@ -93,7 +93,7 @@ linters:
     # - godot
     # - godox
     # - goerr113
-    # - gofmt TODO(ROX-10832): enable gofmt checks
+    - gofmt
     - goimports
     # - revive # replaces golint TODO(ROX-10828): enable revive checks
     # - gomnd
@@ -122,5 +122,5 @@ linters:
     # - unused
     # - varcheck
     # - whitespace
-    # - wrapcheck TODO(ROX-10829): enable wrapcheck checks
+    # - wrapcheck #TODO(ROX-10829): enable wrapcheck checks
     # - wsl
