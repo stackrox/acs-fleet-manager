@@ -34,8 +34,8 @@ func convertSampleStream(from *pmod.SampleStream) public.RangeQuery {
 		labelSet[string(k)] = string(v)
 	}
 	values := make([]public.Values, len(from.Values))
-	for i, v := range from.Values {
-		values[i] = convertSamplePair(&v)
+	for i := range from.Values {
+		values[i] = convertSamplePair(&from.Values[i])
 	}
 	return public.RangeQuery{
 		Metric: labelSet,

@@ -46,8 +46,8 @@ func runList(cmd *cobra.Command, _ []string) {
 	})
 
 	// add code prefix to service error code
-	for _, err := range errors {
-		svcErrors = append(svcErrors, handlers.PresentError(&err, ""))
+	for i := range errors {
+		svcErrors = append(svcErrors, handlers.PresentError(&errors[i], ""))
 	}
 
 	svcErrorsJson, err := json.MarshalIndent(svcErrors, "", "\t")

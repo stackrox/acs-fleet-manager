@@ -59,8 +59,8 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 				Items: []private.ManagedCentral{},
 			}
 
-			for _, mk := range managedDinosaurs {
-				converted := presenters.PresentManagedDinosaur(&mk)
+			for i := range managedDinosaurs {
+				converted := presenters.PresentManagedDinosaur(&managedDinosaurs[i])
 				managedDinosaurList.Items = append(managedDinosaurList.Items, converted)
 			}
 			return managedDinosaurList, nil

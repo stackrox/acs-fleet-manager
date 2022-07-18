@@ -98,7 +98,7 @@ linters:
     # - revive # replaces golint TODO(ROX-10828): enable revive checks
     # - gomnd
     # - goprintffuncname
-    # - gosec TODO(ROX-10835): enable gosec checks
+    - gosec
     - gosimple
     - govet
     - ineffassign

@@ -191,10 +191,10 @@ func (c *ClusterManager) processDeprovisioningClusters() []error {
 		glog.Infof("deprovisioning clusters count = %d", len(deprovisioningClusters))
 	}
 
-	for _, cluster := range deprovisioningClusters {
+	for i, cluster := range deprovisioningClusters {
 		glog.V(10).Infof("deprovision cluster ClusterID = %s", cluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterDeprovisioning)
-		if err := c.reconcileDeprovisioningCluster(&cluster); err != nil {
+		if err := c.reconcileDeprovisioningCluster(&deprovisioningClusters[i]); err != nil {
 			errs = append(errs, errors.Wrapf(err, "failed to reconcile deprovisioning cluster %s", cluster.ID))
 		}
 	}
@@ -231,10 +231,10 @@ func (c *ClusterManager) processAcceptedClusters() []error {
 		glog.Infof("accepted clusters count = %d", len(acceptedClusters))
 	}
 
-	for _, cluster := range acceptedClusters {
+	for i, cluster := range acceptedClusters {
 		glog.V(10).Infof("accepted cluster ClusterID = %s", cluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterAccepted)
-		if err := c.reconcileAcceptedCluster(&cluster); err != nil {
+		if err := c.reconcileAcceptedCluster(&acceptedClusters[i]); err != nil {
 			errs = append(errs, errors.Wrapf(err, "failed to reconcile accepted cluster %s", cluster.ID))
 			continue
 		}
@@ -253,10 +253,10 @@ func (c *ClusterManager) processProvisioningClusters() []error {
 	}
 
 	// process each local pending cluster and compare to the underlying ocm cluster
-	for _, provisioningCluster := range provisioningClusters {
+	for i, provisioningCluster := range provisioningClusters {
 		glog.V(10).Infof("provisioning cluster ClusterID = %s", provisioningCluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisioningCluster, api.ClusterProvisioning)
-		_, err := c.reconcileClusterStatus(&provisioningCluster)
+		_, err := c.reconcileClusterStatus(&provisioningClusters[i])
 		if err != nil {
 			errs = append(errs, errors.Wrapf(err, "failed to reconcile cluster %s status", provisioningCluster.ClusterID))
 			continue
