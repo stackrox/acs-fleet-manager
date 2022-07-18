@@ -2,13 +2,13 @@ package runtime
 
 import (
 	"context"
+	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"time"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/centralreconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/pkg/concurrency"
@@ -19,7 +19,7 @@ import (
 // reconcilerRegistry contains a registry of a reconciler for each Central tenant. The key is the identifier of the
 // Central instance.
 // TODO(SimonBaeumer): set a unique identifier for the map key, currently the instance name is used
-type reconcilerRegistry map[string]*centralreconciler.CentralReconciler
+type reconcilerRegistry map[string]*centralReconciler.CentralReconciler
 
 var backoff = wait.Backoff{
 	Duration: 1 * time.Second,
@@ -65,6 +65,7 @@ func (r *Runtime) Stop() {
 // Start starts the fleetshard runtime and schedules
 func (r *Runtime) Start() error {
 	glog.Infof("fleetshard runtime started")
+	glog.Infof("Auth provider initialisation enabled: %v", r.config.CreateAuthProvider)
 
 	routesAvailable := routesAvailable()
 
@@ -80,11 +81,11 @@ func (r *Runtime) Start() error {
 		glog.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Metadata.Name]; !ok {
-				r.reconcilers[central.Metadata.Name] = centralreconciler.NewCentralReconciler(r.k8sClient, central, routesAvailable)
+				r.reconcilers[central.Metadata.Name] = centralReconciler.NewCentralReconciler(r.k8sClient, central, routesAvailable, r.config.CreateAuthProvider)
 			}
 
 			reconciler := r.reconcilers[central.Metadata.Name]
-			go func(reconciler *centralreconciler.CentralReconciler, central private.ManagedCentral) {
+			go func(reconciler *centralReconciler.CentralReconciler, central private.ManagedCentral) {
 				glog.Infof("Start reconcile central %s", central.Metadata.Name)
 				status, err := reconciler.Reconcile(context.Background(), central)
 				r.handleReconcileResult(central, status, err)
@@ -99,7 +100,7 @@ func (r *Runtime) Start() error {
 
 func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error) {
 	if err != nil {
-		if errors.Is(err, centralreconciler.ErrTypeCentralNotChanged) {
+		if errors.Is(err, centralReconciler.ErrTypeCentralNotChanged) {
 			glog.Infof("%s:%s", central.Metadata.Name, err)
 			return
 		}
