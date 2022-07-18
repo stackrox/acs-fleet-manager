@@ -48,7 +48,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 	failedMetrics := []string{}
 	// TODO update metrics names and add more specifics metrics for your service
 	fetchers := map[string]fetcher{
-		//Check metrics for available disk space per broker
+		// Check metrics for available disk space per broker
 		"kubelet_volume_stats_available_bytes": {
 			`kubelet_volume_stats_available_bytes{%s}`,
 			fmt.Sprintf(`persistentvolumeclaim=~"data-.*-dinosaur-[0-9]*$", namespace=~'%s'`, namespace),
@@ -56,7 +56,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 				*metrics = append(*metrics, m)
 			},
 		},
-		//Check metrics for used disk space per broker
+		// Check metrics for used disk space per broker
 		"kubelet_volume_stats_used_bytes": {
 			`kubelet_volume_stats_used_bytes{%s}`,
 			fmt.Sprintf(`persistentvolumeclaim=~"data-.*-dinosaur-[0-9]*$", namespace=~'%s'`, namespace),
@@ -64,7 +64,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 				*metrics = append(*metrics, m)
 			},
 		},
-		//Check metrics for all traffic in/out
+		// Check metrics for all traffic in/out
 		"dinosaur_namespace:haproxy_server_bytes_in_total:rate5m": {
 			`dinosaur_namespace:haproxy_server_bytes_in_total:rate5m{%s}`,
 			fmt.Sprintf(`exported_namespace=~'%s'`, namespace),

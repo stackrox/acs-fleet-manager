@@ -2,14 +2,15 @@ package iam
 
 import (
 	"encoding/json"
-	"github.com/golang/glog"
-	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"io"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
+	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 
 	"github.com/spf13/pflag"
 )
@@ -99,7 +100,7 @@ func (ic *IAMConfig) ReadFiles() error {
 		return err
 	}
 
-	//Read the service account limits check skip org ID yaml file
+	// Read the service account limits check skip org ID yaml file
 	err = shared.ReadYamlFile(ic.ServiceAccounttLimitCheckSkipOrgIdListFile, &ic.ServiceAccounttLimitCheckSkipOrgIdList)
 	if err != nil {
 		if os.IsNotExist(err) {

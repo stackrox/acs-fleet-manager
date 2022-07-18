@@ -2,9 +2,10 @@ package runtime
 
 import (
 	"context"
+	"time"
+
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	"time"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -33,7 +34,7 @@ var backoff = wait.Backoff{
 type Runtime struct {
 	config           *config.Config
 	client           *fleetmanager.Client
-	reconcilers      reconcilerRegistry //TODO(yury): remove central instance after deletion
+	reconcilers      reconcilerRegistry // TODO(yury): remove central instance after deletion
 	k8sClient        ctrlClient.Client
 	statusResponseCh chan private.DataPlaneCentralStatus
 }

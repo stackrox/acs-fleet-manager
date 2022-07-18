@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	mocket "github.com/selvatico/go-mocket"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"gorm.io/gorm"
 )
 

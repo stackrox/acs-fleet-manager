@@ -3,13 +3,13 @@ package dinosaur_mgrs
 import (
 	"time"
 
+	"github.com/google/uuid"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/google/uuid"
 
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
-	"github.com/pkg/errors"
 
 	"github.com/golang/glog"
 )

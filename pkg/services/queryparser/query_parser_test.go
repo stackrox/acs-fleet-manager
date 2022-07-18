@@ -1,8 +1,9 @@
 package services
 
 import (
-	. "github.com/onsi/gomega"
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func Test_QueryParser(t *testing.T) {

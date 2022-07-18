@@ -2,8 +2,9 @@ package services
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"regexp"
+
+	"github.com/pkg/errors"
 )
 
 type State interface {

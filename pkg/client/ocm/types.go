@@ -29,7 +29,7 @@ func (t DinosaurQuotaType) GetProduct() string {
 }
 
 func (t DinosaurQuotaType) GetResourceName() string {
-	return "rhosak" //TODO change this to match your own AMS resource type. Usually it is the name of the product
+	return "rhosak" // TODO change this to match your own AMS resource type. Usually it is the name of the product
 }
 
 func (t DinosaurQuotaType) Equals(t1 DinosaurQuotaType) bool {

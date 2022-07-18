@@ -94,7 +94,7 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	}
 }
 
-//manual cluster configuration
+// manual cluster configuration
 type ManualCluster struct {
 	Name                             string                       `yaml:"name"`
 	ClusterId                        string                       `yaml:"cluster_id"`
@@ -214,7 +214,7 @@ func (conf *ClusterConfig) GetManualClusters() []ManualCluster {
 func (conf *ClusterConfig) MissingClusters(clusterMap map[string]api.Cluster) []ManualCluster {
 	var res []ManualCluster
 
-	//ensure the order
+	// ensure the order
 	for _, p := range conf.clusterList {
 		if _, exists := clusterMap[p.ClusterId]; !exists {
 			res = append(res, p)

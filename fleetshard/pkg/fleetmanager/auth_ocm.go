@@ -1,11 +1,12 @@
 package fleetmanager
 
 import (
+	"net/http"
+	"time"
+
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
-	"net/http"
-	"time"
 )
 
 const (

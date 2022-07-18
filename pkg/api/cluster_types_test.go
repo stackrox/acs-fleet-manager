@@ -17,9 +17,9 @@ func TestGetAvailableDinosaurOperatorVersions(t *testing.T) {
 			name: "When cluster has a non empty list of available dinosaur operator versions those are returned",
 			cluster: func() *Cluster {
 				inputDinosaurOperatorVersions := []CentralOperatorVersion{
-					CentralOperatorVersion{Version: "v3", Ready: true},
-					CentralOperatorVersion{Version: "v6", Ready: false},
-					CentralOperatorVersion{Version: "v7", Ready: true},
+					{Version: "v3", Ready: true},
+					{Version: "v6", Ready: false},
+					{Version: "v7", Ready: true},
 				}
 				inputDinosaurOperatorVersionsJSON, err := json.Marshal(inputDinosaurOperatorVersions)
 				if err != nil {
@@ -29,9 +29,9 @@ func TestGetAvailableDinosaurOperatorVersions(t *testing.T) {
 				return &res
 			},
 			want: []CentralOperatorVersion{
-				CentralOperatorVersion{Version: "v3", Ready: true},
-				CentralOperatorVersion{Version: "v6", Ready: false},
-				CentralOperatorVersion{Version: "v7", Ready: true},
+				{Version: "v3", Ready: true},
+				{Version: "v6", Ready: false},
+				{Version: "v7", Ready: true},
 			},
 			wantErr: false,
 		},
@@ -93,9 +93,9 @@ func TestGetAvailableAndReadyDinosaurOperatorVersions(t *testing.T) {
 			name: "When cluster has a non empty list of available dinosaur operator versions those ready returned",
 			cluster: func() *Cluster {
 				inputDinosaurOperatorVersions := []CentralOperatorVersion{
-					CentralOperatorVersion{Version: "v3", Ready: true},
-					CentralOperatorVersion{Version: "v6", Ready: false},
-					CentralOperatorVersion{Version: "v7", Ready: true},
+					{Version: "v3", Ready: true},
+					{Version: "v6", Ready: false},
+					{Version: "v7", Ready: true},
 				}
 				inputDinosaurOperatorVersionsJSON, err := json.Marshal(inputDinosaurOperatorVersions)
 				if err != nil {
@@ -105,8 +105,8 @@ func TestGetAvailableAndReadyDinosaurOperatorVersions(t *testing.T) {
 				return &res
 			},
 			want: []CentralOperatorVersion{
-				CentralOperatorVersion{Version: "v3", Ready: true},
-				CentralOperatorVersion{Version: "v7", Ready: true},
+				{Version: "v3", Ready: true},
+				{Version: "v7", Ready: true},
 			},
 			wantErr: false,
 		},
@@ -167,42 +167,42 @@ func TestSetAvailableDinosaurOperatorVersions(t *testing.T) {
 		{
 			name: "When setting a non empty ordered list of dinosaur operator versions that list is stored as is",
 			inputDinosaurOperatorVersions: []CentralOperatorVersion{
-				CentralOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: true},
-				CentralOperatorVersion{Version: "dinosaur-operator-v.6.0.0-0", Ready: false},
-				CentralOperatorVersion{Version: "dinosaur-operator-v.7.0.0-0", Ready: true},
+				{Version: "dinosaur-operator-v.3.0.0-0", Ready: true},
+				{Version: "dinosaur-operator-v.6.0.0-0", Ready: false},
+				{Version: "dinosaur-operator-v.7.0.0-0", Ready: true},
 			},
 			want: []CentralOperatorVersion{
-				CentralOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: true},
-				CentralOperatorVersion{Version: "dinosaur-operator-v.6.0.0-0", Ready: false},
-				CentralOperatorVersion{Version: "dinosaur-operator-v.7.0.0-0", Ready: true},
+				{Version: "dinosaur-operator-v.3.0.0-0", Ready: true},
+				{Version: "dinosaur-operator-v.6.0.0-0", Ready: false},
+				{Version: "dinosaur-operator-v.7.0.0-0", Ready: true},
 			},
 			wantErr: false,
 		},
 		{
 			name: "When setting a non empty unordered list of dinosaur operator versions that list is stored in semver ascending order",
 			inputDinosaurOperatorVersions: []CentralOperatorVersion{
-				CentralOperatorVersion{Version: "dinosaur-operator-v.5.0.0-0", Ready: true},
-				CentralOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: false},
-				CentralOperatorVersion{Version: "dinosaur-operator-v.2.0.0-0", Ready: true},
+				{Version: "dinosaur-operator-v.5.0.0-0", Ready: true},
+				{Version: "dinosaur-operator-v.3.0.0-0", Ready: false},
+				{Version: "dinosaur-operator-v.2.0.0-0", Ready: true},
 			},
 			want: []CentralOperatorVersion{
-				CentralOperatorVersion{Version: "dinosaur-operator-v.2.0.0-0", Ready: true},
-				CentralOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: false},
-				CentralOperatorVersion{Version: "dinosaur-operator-v.5.0.0-0", Ready: true},
+				{Version: "dinosaur-operator-v.2.0.0-0", Ready: true},
+				{Version: "dinosaur-operator-v.3.0.0-0", Ready: false},
+				{Version: "dinosaur-operator-v.5.0.0-0", Ready: true},
 			},
 			wantErr: false,
 		},
 		{
 			name: "When setting a non empty unordered list of dinosaur operator versions that list is stored in semver ascending order (case 2)",
 			inputDinosaurOperatorVersions: []CentralOperatorVersion{
-				CentralOperatorVersion{Version: "dinosaur-operator-v.5.10.0-3", Ready: true},
-				CentralOperatorVersion{Version: "dinosaur-operator-v.5.8.0-9", Ready: false},
-				CentralOperatorVersion{Version: "dinosaur-operator-v.2.0.0-0", Ready: true},
+				{Version: "dinosaur-operator-v.5.10.0-3", Ready: true},
+				{Version: "dinosaur-operator-v.5.8.0-9", Ready: false},
+				{Version: "dinosaur-operator-v.2.0.0-0", Ready: true},
 			},
 			want: []CentralOperatorVersion{
-				CentralOperatorVersion{Version: "dinosaur-operator-v.2.0.0-0", Ready: true},
-				CentralOperatorVersion{Version: "dinosaur-operator-v.5.8.0-9", Ready: false},
-				CentralOperatorVersion{Version: "dinosaur-operator-v.5.10.0-3", Ready: true},
+				{Version: "dinosaur-operator-v.2.0.0-0", Ready: true},
+				{Version: "dinosaur-operator-v.5.8.0-9", Ready: false},
+				{Version: "dinosaur-operator-v.5.10.0-3", Ready: true},
 			},
 			wantErr: false,
 		},
@@ -221,54 +221,54 @@ func TestSetAvailableDinosaurOperatorVersions(t *testing.T) {
 		{
 			name: "Dinosaur versions are stored and in sorted order",
 			inputDinosaurOperatorVersions: []CentralOperatorVersion{
-				CentralOperatorVersion{
+				{
 					Version: "dinosaur-operator-v.5.10.0-3",
 					Ready:   true,
 					CentralVersions: []CentralVersion{
-						CentralVersion{Version: "2.7.5"},
-						CentralVersion{Version: "2.7.3"},
+						{Version: "2.7.5"},
+						{Version: "2.7.3"},
 					},
 				},
-				CentralOperatorVersion{
+				{
 					Version: "dinosaur-operator-v.5.8.0-9",
 					Ready:   false,
 					CentralVersions: []CentralVersion{
-						CentralVersion{Version: "2.9.4"},
-						CentralVersion{Version: "2.2.1"},
+						{Version: "2.9.4"},
+						{Version: "2.2.1"},
 					},
 				},
-				CentralOperatorVersion{
+				{
 					Version: "dinosaur-operator-v.2.0.0-0",
 					Ready:   true,
 					CentralVersions: []CentralVersion{
-						CentralVersion{Version: "4.5.6"},
-						CentralVersion{Version: "1.2.3"},
+						{Version: "4.5.6"},
+						{Version: "1.2.3"},
 					},
 				},
 			},
 			want: []CentralOperatorVersion{
-				CentralOperatorVersion{
+				{
 					Version: "dinosaur-operator-v.2.0.0-0",
 					Ready:   true,
 					CentralVersions: []CentralVersion{
-						CentralVersion{Version: "1.2.3"},
-						CentralVersion{Version: "4.5.6"},
+						{Version: "1.2.3"},
+						{Version: "4.5.6"},
 					},
 				},
-				CentralOperatorVersion{
+				{
 					Version: "dinosaur-operator-v.5.8.0-9",
 					Ready:   false,
 					CentralVersions: []CentralVersion{
-						CentralVersion{Version: "2.2.1"},
-						CentralVersion{Version: "2.9.4"},
+						{Version: "2.2.1"},
+						{Version: "2.9.4"},
 					},
 				},
-				CentralOperatorVersion{
+				{
 					Version: "dinosaur-operator-v.5.10.0-3",
 					Ready:   true,
 					CentralVersions: []CentralVersion{
-						CentralVersion{Version: "2.7.3"},
-						CentralVersion{Version: "2.7.5"},
+						{Version: "2.7.3"},
+						{Version: "2.7.5"},
 					},
 				},
 			},
@@ -424,7 +424,7 @@ func Test_DinosaurOperatorVersionsDeepSort(t *testing.T) {
 		{
 			name: "When one of the dinosaur operator versions does not follow semver an error is returned",
 			args: args{
-				[]CentralOperatorVersion{CentralOperatorVersion{Version: "dinosaur-operator-v.nonsemver243-0"}, CentralOperatorVersion{Version: "dinosaur-operator-v.2.5.6-0"}},
+				[]CentralOperatorVersion{{Version: "dinosaur-operator-v.nonsemver243-0"}, {Version: "dinosaur-operator-v.2.5.6-0"}},
 			},
 			wantErr: true,
 		},
@@ -432,55 +432,55 @@ func Test_DinosaurOperatorVersionsDeepSort(t *testing.T) {
 			name: "All different versions are deeply sorted",
 			args: args{
 				versions: []CentralOperatorVersion{
-					CentralOperatorVersion{
+					{
 						Version: "dinosaur-operator-v.2.7.5-0",
 						CentralVersions: []CentralVersion{
-							CentralVersion{Version: "1.5.8"},
-							CentralVersion{Version: "0.7.1"},
-							CentralVersion{Version: "1.5.1"},
+							{Version: "1.5.8"},
+							{Version: "0.7.1"},
+							{Version: "1.5.1"},
 						},
 					},
-					CentralOperatorVersion{
+					{
 						Version: "dinosaur-operator-v.2.7.3-0",
 						CentralVersions: []CentralVersion{
-							CentralVersion{Version: "1.0.0"},
-							CentralVersion{Version: "2.0.0"},
-							CentralVersion{Version: "5.0.0"},
+							{Version: "1.0.0"},
+							{Version: "2.0.0"},
+							{Version: "5.0.0"},
 						},
 					},
-					CentralOperatorVersion{
+					{
 						Version: "dinosaur-operator-v.2.5.2-0",
 						CentralVersions: []CentralVersion{
-							CentralVersion{Version: "2.6.1"},
-							CentralVersion{Version: "5.7.2"},
-							CentralVersion{Version: "2.3.5"},
+							{Version: "2.6.1"},
+							{Version: "5.7.2"},
+							{Version: "2.3.5"},
 						},
 					},
 				},
 			},
 			want: []CentralOperatorVersion{
-				CentralOperatorVersion{
+				{
 					Version: "dinosaur-operator-v.2.5.2-0",
 					CentralVersions: []CentralVersion{
-						CentralVersion{Version: "2.3.5"},
-						CentralVersion{Version: "2.6.1"},
-						CentralVersion{Version: "5.7.2"},
+						{Version: "2.3.5"},
+						{Version: "2.6.1"},
+						{Version: "5.7.2"},
 					},
 				},
-				CentralOperatorVersion{
+				{
 					Version: "dinosaur-operator-v.2.7.3-0",
 					CentralVersions: []CentralVersion{
-						CentralVersion{Version: "1.0.0"},
-						CentralVersion{Version: "2.0.0"},
-						CentralVersion{Version: "5.0.0"},
+						{Version: "1.0.0"},
+						{Version: "2.0.0"},
+						{Version: "5.0.0"},
 					},
 				},
-				CentralOperatorVersion{
+				{
 					Version: "dinosaur-operator-v.2.7.5-0",
 					CentralVersions: []CentralVersion{
-						CentralVersion{Version: "0.7.1"},
-						CentralVersion{Version: "1.5.1"},
-						CentralVersion{Version: "1.5.8"},
+						{Version: "0.7.1"},
+						{Version: "1.5.1"},
+						{Version: "1.5.8"},
 					},
 				},
 			},

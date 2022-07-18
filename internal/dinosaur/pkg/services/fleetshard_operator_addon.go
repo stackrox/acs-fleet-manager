@@ -17,7 +17,7 @@ import (
 const (
 	FleetshardOperatorRoleName = "fleetshard_operator"
 
-	//parameter names for the fleetshard-operator service account
+	// parameter names for the fleetshard-operator service account
 	fleetshardOperatorParamSSOBaseUrl           = "sso-auth-server-url"
 	fleetshardOperatorParamServiceAccountId     = "sso-client-id"
 	fleetshardOperatorParamServiceAccountSecret = "sso-secret"
@@ -25,7 +25,7 @@ const (
 	fleetshardOperatorParamClusterId = "cluster-id"
 	// parameter names for the control plane url
 	fleetshardOperatorParamControlPlaneBaseURL = "control-plane-url"
-	//parameter names for fleetshardoperator synchronizer
+	// parameter names for fleetshardoperator synchronizer
 	fleetshardOperatorParamPollinterval   = "poll-interval"
 	fleetshardOperatorParamResyncInterval = "resync-interval"
 )
@@ -47,8 +47,8 @@ type fleetshardOperatorAddon struct {
 	ProviderFactory  clusters.ProviderFactory
 	ServerConfig     *server.ServerConfig
 	FleetShardConfig *config.FleetshardConfig
-	OCMConfig *ocm.OCMConfig
-	IAMConfig *iam.IAMConfig
+	OCMConfig        *ocm.OCMConfig
+	IAMConfig        *iam.IAMConfig
 }
 
 func (o *fleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {

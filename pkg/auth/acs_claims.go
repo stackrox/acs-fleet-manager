@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 )

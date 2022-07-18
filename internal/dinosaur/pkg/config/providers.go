@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 )
 

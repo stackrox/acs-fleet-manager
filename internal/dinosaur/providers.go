@@ -1,6 +1,7 @@
 package dinosaur
 
 import (
+	"github.com/goava/di"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/cluster"
@@ -20,7 +21,6 @@ import (
 	observatoriumClient "github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	environments2 "github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/providers"
-	"github.com/goava/di"
 )
 
 func EnvConfigProviders() di.Option {

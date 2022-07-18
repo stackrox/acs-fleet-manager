@@ -7,11 +7,11 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	. "github.com/onsi/gomega"
 	"github.com/patrickmn/go-cache"
 	mocket "github.com/selvatico/go-mocket"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
 )
 
 // This test file should act as a golden test file to show the usage of mocks

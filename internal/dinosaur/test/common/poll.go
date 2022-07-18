@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/olekukonko/tablewriter"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"gorm.io/gorm"
 	"k8s.io/apimachinery/pkg/util/wait"
 )

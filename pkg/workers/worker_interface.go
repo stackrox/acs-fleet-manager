@@ -1,9 +1,10 @@
 package workers
 
 import (
+	"sync"
+
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
-	"sync"
 )
 
 //go:generate moq -out woker_interface_moq.go . Worker

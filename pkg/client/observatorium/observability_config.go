@@ -3,8 +3,8 @@ package observatorium
 import (
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 type ObservabilityConfiguration struct {

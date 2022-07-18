@@ -1,12 +1,12 @@
 package metrics
 
 import (
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/prometheus/client_golang/prometheus"
 	pModel "github.com/prometheus/common/model"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 )
 
 type FederatedUserMetricsCollector struct {

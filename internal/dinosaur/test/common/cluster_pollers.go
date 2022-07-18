@@ -2,11 +2,12 @@ package common
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
-	"github.com/pkg/errors"
-	"time"
 )
 
 const (

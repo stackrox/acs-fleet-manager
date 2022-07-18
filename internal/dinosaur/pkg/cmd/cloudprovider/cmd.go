@@ -4,9 +4,9 @@
 package cloudprovider
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
 func NewCloudProviderCommand(env *environments.Env) *cobra.Command {

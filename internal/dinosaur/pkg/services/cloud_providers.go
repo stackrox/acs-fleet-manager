@@ -1,16 +1,17 @@
 package services
 
 import (
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
+
+	"github.com/patrickmn/go-cache"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/patrickmn/go-cache"
 )
 
 const keyCloudProvidersWithRegions = "cloudProviderWithRegions"

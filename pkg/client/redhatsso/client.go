@@ -4,17 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/patrickmn/go-cache"
-	"github.com/pkg/errors"
-	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/patrickmn/go-cache"
+	"github.com/pkg/errors"
+	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 const (

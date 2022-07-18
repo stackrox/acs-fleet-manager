@@ -2,6 +2,7 @@ package converters
 
 import (
 	"encoding/json"
+
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 )
 

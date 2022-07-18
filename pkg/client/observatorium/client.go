@@ -10,12 +10,12 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/pkg/errors"
 	pAPI "github.com/prometheus/client_golang/api"
 	pV1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	pModel "github.com/prometheus/common/model"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
 type ClientConfiguration struct {

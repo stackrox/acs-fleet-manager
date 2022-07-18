@@ -3,10 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 
 	health "github.com/docker/go-healthcheck"
 	"github.com/golang/glog"

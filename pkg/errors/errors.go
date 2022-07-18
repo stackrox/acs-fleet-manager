@@ -2,10 +2,11 @@ package errors
 
 import (
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"

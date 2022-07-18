@@ -73,7 +73,7 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusProvisioning.String()))
 		})
 
-		//TODO(create-ticket): fails because the namespace is not centralName anymore but `formatNamespace(dinosaurRequest.ID)`
+		// TODO(create-ticket): fails because the namespace is not centralName anymore but `formatNamespace(dinosaurRequest.ID)`
 		// and that is not accessible from a value `*public.CentralRequest`
 		It("should create central namespace", func() {
 			Eventually(func() error {
@@ -89,8 +89,8 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
-		//TODO(create-ticket): create test to check that Central and Scanner are healthy
-		//TODO(create-ticket): Create test to check Central is correctly exposed
+		// TODO(create-ticket): create test to check that Central and Scanner are healthy
+		// TODO(create-ticket): Create test to check Central is correctly exposed
 
 		It("should transition central's state to ready", func() {
 			Eventually(func() string {

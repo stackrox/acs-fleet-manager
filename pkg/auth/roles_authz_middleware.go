@@ -1,9 +1,10 @@
 package auth
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 	"strings"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/golang/glog"
 

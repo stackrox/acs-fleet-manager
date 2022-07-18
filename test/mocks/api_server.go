@@ -116,9 +116,9 @@ const (
 	MockMachinePoolReplicas = 3
 	// MockOpenshiftVersion default cluster openshift version
 	MockOpenshiftVersion = "openshift-v4.6.1"
-	//MockMultiAZ default value
+	// MockMultiAZ default value
 	MockMultiAZ = true
-	//MockClusterComputeNodes default nodes
+	// MockClusterComputeNodes default nodes
 	MockClusterComputeNodes = 3
 	// MockIdentityProviderID default identity provider ID
 	MockIdentityProviderID = "identity-provider-id"
@@ -613,8 +613,8 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 			return err
 		}
 		return json.NewEncoder(w).Encode(subscList)
-		//list := t.(*amsv1.SubscriptionList)
-		//return amsv1.MarshalSubscriptionList(list.Slice(), w)
+		// list := t.(*amsv1.SubscriptionList)
+		// return amsv1.MarshalSubscriptionList(list.Slice(), w)
 	// handle ocm error type
 	case *ocmErrors.ServiceError:
 		return json.NewEncoder(w).Encode(v.AsOpenapiError("", ""))

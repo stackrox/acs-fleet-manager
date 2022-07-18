@@ -1,9 +1,10 @@
 package auth
 
 import (
+	"testing"
+
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestACSClaims_VerifyIssuer(t *testing.T) {

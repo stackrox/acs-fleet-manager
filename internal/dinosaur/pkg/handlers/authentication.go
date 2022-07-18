@@ -33,8 +33,8 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, IAMConfig *iam.
 
 	return authenticationBuilder.
 			Logger(authnLogger).
-			KeysURL(ServerConfig.JwksURL).                     //ocm JWK JSON web token signing certificates URL
-			KeysFile(ServerConfig.JwksFile).                   //ocm JWK backup JSON web token signing certificates
+			KeysURL(ServerConfig.JwksURL).                     // ocm JWK JSON web token signing certificates URL
+			KeysFile(ServerConfig.JwksFile).                   // ocm JWK backup JSON web token signing certificates
 			KeysURL(IAMConfig.RedhatSSORealm.JwksEndpointURI). // sso JWK Cert URL
 			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
 			Service(errors.ERROR_CODE_PREFIX).

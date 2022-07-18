@@ -2,6 +2,8 @@ package sso
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/golang/glog"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
@@ -9,7 +11,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"time"
 )
 
 var _ IAMService = &redhatssoService{}

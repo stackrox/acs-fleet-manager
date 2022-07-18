@@ -3,11 +3,11 @@ package metrics
 import (
 	"testing"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/prometheus/client_golang/prometheus"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	pModel "github.com/prometheus/common/model"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 )
 
 func TestFederateMetrics_Collect(t *testing.T) {

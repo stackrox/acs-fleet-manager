@@ -23,7 +23,7 @@ func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time) (pM
 	return values, []string{}, nil
 }
 
-//QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) Performs a query range for the dinosaur metrics
+// QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) Performs a query range for the dinosaur metrics
 func (*httpAPIMock) QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) {
 	values := getMockQueryRangeData(query)
 	return values, []string{}, nil
@@ -95,7 +95,7 @@ func (*httpAPIMock) WalReplay(ctx context.Context) (pV1.WalReplayStatus, error) 
 	return pV1.WalReplayStatus{}, fmt.Errorf("not implemented")
 }
 
-//getMockQueryData
+// getMockQueryData
 func getMockQueryData(query string) pModel.Vector {
 	for key, values := range queryData {
 		if strings.Contains(query, key) {
@@ -106,7 +106,7 @@ func getMockQueryData(query string) pModel.Vector {
 
 }
 
-//getMockQueryRangeData
+// getMockQueryRangeData
 func getMockQueryRangeData(query string) pModel.Matrix {
 	for key, values := range rangeQuerydata {
 		if strings.Contains(query, key) {
@@ -175,7 +175,7 @@ func fakeMetricData(name string, value int) *pModel.SampleStream {
 }
 
 var queryData = map[string]pModel.Vector{
-	"dinosaur_operator_resource_state": pModel.Vector{
+	"dinosaur_operator_resource_state": {
 		&pModel.Sample{
 			Metric: pModel.Metric{
 				"dinosaur_operator_io_kind": "Dinosaur",
@@ -187,7 +187,7 @@ var queryData = map[string]pModel.Vector{
 		},
 	},
 
-	"dinosaur_server_brokertopicmetrics_bytes_in_total": pModel.Vector{
+	"dinosaur_server_brokertopicmetrics_bytes_in_total": {
 		&pModel.Sample{
 			Metric: pModel.Metric{
 				"__name__":                     "dinosaur_server_brokertopicmetrics_bytes_in_total",
@@ -199,7 +199,7 @@ var queryData = map[string]pModel.Vector{
 			Value:     293617,
 		},
 	},
-	"dinosaur_server_brokertopicmetrics_messages_in_total": pModel.Vector{
+	"dinosaur_server_brokertopicmetrics_messages_in_total": {
 		&pModel.Sample{
 			Metric: pModel.Metric{
 				"__name__":                     "dinosaur_server_brokertopicmetrics_messages_in_total",
@@ -211,7 +211,7 @@ var queryData = map[string]pModel.Vector{
 			Value:     1016,
 		},
 	},
-	"dinosaur_broker_quota_softlimitbytes": pModel.Vector{
+	"dinosaur_broker_quota_softlimitbytes": {
 		&pModel.Sample{
 			Metric: pModel.Metric{
 				"__name__":                     "dinosaur_broker_quota_softlimitbytes",
@@ -223,7 +223,7 @@ var queryData = map[string]pModel.Vector{
 			Value:     30000,
 		},
 	},
-	"dinosaur_broker_quota_totalstorageusedbytes": pModel.Vector{
+	"dinosaur_broker_quota_totalstorageusedbytes": {
 		&pModel.Sample{
 			Metric: pModel.Metric{
 				"__name__":                     "dinosaur_broker_quota_totalstorageusedbytes",
@@ -235,7 +235,7 @@ var queryData = map[string]pModel.Vector{
 			Value:     2207924332,
 		},
 	},
-	"kubelet_volume_stats_available_bytes": pModel.Vector{
+	"kubelet_volume_stats_available_bytes": {
 		&pModel.Sample{
 			Metric: pModel.Metric{
 				"__name__":              "kubelet_volume_stats_available_bytes",

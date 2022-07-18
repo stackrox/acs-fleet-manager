@@ -88,13 +88,13 @@ linters:
     # - gocognit
     # - goconst
     - exportloopref
-    # - gocritic TODO(ROX-10833): enable gocritic checks
+    - gocritic
     # - gocyclo
     # - godot
     # - godox
     # - goerr113
-    # - gofmt TODO(ROX-10832): enable gofmt checks
-    # - goimports TODO(ROX-10832): enable goimports checks
+    - gofmt
+    - goimports
     # - revive # replaces golint TODO(ROX-10828): enable revive checks
     # - gomnd
     # - goprintffuncname
@@ -122,5 +122,5 @@ linters:
     # - unused
     # - varcheck
     # - whitespace
-    # - wrapcheck TODO(ROX-10829): enable wrapcheck checks
+    # - wrapcheck #TODO(ROX-10829): enable wrapcheck checks
     # - wsl

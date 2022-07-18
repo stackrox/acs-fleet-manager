@@ -234,7 +234,7 @@ func (c clusterService) ListGroupByProviderAndRegion(providers []string, regions
 	dbConn := c.connectionFactory.New()
 	var grpResult []*ResGroupCPRegion
 
-	//only one record returns for each region if they exist
+	// only one record returns for each region if they exist
 	if err := dbConn.Model(&api.Cluster{}).
 		Select("cloud_provider as Provider, region as Region, count(1) as Count").
 		Where("cloud_provider in (?)", providers).

@@ -1,9 +1,10 @@
 package environments
 
 import (
+	"os"
+
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-	"os"
 )
 
 type TestingEnvLoader struct{}

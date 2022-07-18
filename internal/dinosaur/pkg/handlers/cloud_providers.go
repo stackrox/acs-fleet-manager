@@ -12,8 +12,8 @@ import (
 
 	"github.com/patrickmn/go-cache"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
 const cloudProvidersCacheKey = "cloudProviderList"

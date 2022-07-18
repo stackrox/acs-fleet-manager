@@ -3,8 +3,8 @@ package db
 import (
 	"testing"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	. "github.com/onsi/gomega"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
 func TestSQLTranslation(t *testing.T) {

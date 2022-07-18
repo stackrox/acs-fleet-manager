@@ -1,9 +1,10 @@
 package auth
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"net/http"
 	"time"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
 	"github.com/patrickmn/go-cache"
 

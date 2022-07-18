@@ -1,10 +1,11 @@
 package fleetmanager
 
 import (
+	"net/http"
+
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"net/http"
 )
 
 const (
