@@ -126,7 +126,7 @@ func (s *StandaloneProvider) buildDinosaurOperatorOperatorGroup() *operatorsv1al
 			Name:      dinosaurOperatorOperatorGroupName,
 			Namespace: dinosaurOperatorOLMConfig.Namespace,
 		},
-		//Spec.TargetNamespaces intentionally not set, which means "select all namespaces"
+		// Spec.TargetNamespaces intentionally not set, which means "select all namespaces"
 		Spec: operatorsv1alpha2.OperatorGroupSpec{},
 	}
 }
@@ -208,7 +208,7 @@ func (s *StandaloneProvider) buildFleetShardOperatorOperatorGroup() *operatorsv1
 			Name:      fleetShardOperatorOperatorGroupName,
 			Namespace: fleetshardOLMConfig.Namespace,
 		},
-		//Spec.TargetNamespaces intentionally not set, which means "select all namespaces"
+		// Spec.TargetNamespaces intentionally not set, which means "select all namespaces"
 		Spec: operatorsv1alpha2.OperatorGroupSpec{},
 	}
 }

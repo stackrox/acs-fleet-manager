@@ -76,7 +76,7 @@ type ClusterManager struct {
 	id           string
 	workerType   string
 	isRunning    bool
-	imStop       chan struct{} //a chan used only for cancellation
+	imStop       chan struct{} // a chan used only for cancellation
 	syncTeardown sync.WaitGroup
 	ClusterManagerOptions
 }
@@ -335,7 +335,7 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) er
 			return findClusterErr
 		}
 
-		//if it is the only cluster left in that region, set it back to ready.
+		// if it is the only cluster left in that region, set it back to ready.
 		if siblingCluster == nil {
 			return c.ClusterService.UpdateStatus(*cluster, api.ClusterReady)
 		}
@@ -390,13 +390,13 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 
 	// TODO(create-ticket): Install necessary OSD cluster resources.
 	//// resources update if needed
-	//if err := c.reconcileClusterResources(cluster); err != nil {
+	// if err := c.reconcileClusterResources(cluster); err != nil {
 	//	return errors.WithMessagef(err, "failed to reconcile ready cluster resources %s ", cluster.ClusterID)
 	//}
 
 	// TODO(create-ticket): Register what is necessary for SSO authn/authz.
-	//err = c.reconcileClusterIdentityProvider(cluster)
-	//if err != nil {
+	// err = c.reconcileClusterIdentityProvider(cluster)
+	// if err != nil {
 	//	return errors.WithMessagef(err, "failed to reconcile identity provider of ready cluster %s: %s", cluster.ClusterID, err.Error())
 	//}
 
@@ -406,7 +406,7 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	}
 
 	// TODO(create-ticket): Install the ACS Operator and Fleetshard Operator (Add-Ons)
-	//if c.FleetshardOperatorAddon != nil {
+	// if c.FleetshardOperatorAddon != nil {
 	//	if err := c.FleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
 	//		if err.IsBadRequest() {
 	//			glog.Infof("fleetshard operator is not found on cluster %s", cluster.ClusterID)
@@ -485,7 +485,7 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
 	// TODO(create-ticket): Register what is necessary for SSO authn/authz.
-	//if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
+	// if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
 	//	return err
 	//}
 
@@ -495,8 +495,8 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 
 	// TODO(create-ticket): Install necessary OSD cluster resources.
 	//// SyncSet creation step
-	//syncSetErr := c.reconcileClusterResources(cluster) //OSD cluster itself
-	//if syncSetErr != nil {
+	// syncSetErr := c.reconcileClusterResources(cluster) //OSD cluster itself
+	// if syncSetErr != nil {
 	//	return errors.WithMessagef(syncSetErr, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
 	//}
 
@@ -616,7 +616,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		clusterIdsMap[v.ClusterID] = v
 	}
 
-	//Create all missing clusters
+	// Create all missing clusters
 	for _, p := range c.DataplaneClusterConfig.ClusterConfig.MissingClusters(clusterIdsMap) {
 		clusterRequest := api.Cluster{
 			CloudProvider:         p.CloudProvider,
@@ -687,7 +687,7 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 	var providers []string
 	var regions []string
 	status := api.StatusForValidCluster
-	//gather the supported providers and regions
+	// gather the supported providers and regions
 	providerList := c.SupportedProviders.ProvidersConfig.SupportedProviders
 	for _, v := range providerList {
 		providers = append(providers, v.Name)
@@ -696,7 +696,7 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 		}
 	}
 
-	//get a list of clusters in Map group by their provider and region
+	// get a list of clusters in Map group by their provider and region
 	grpResult, err := c.ClusterService.ListGroupByProviderAndRegion(providers, regions, status)
 	if err != nil {
 		errs = append(errs, errors.Wrapf(err, "failed to find cluster with criteria"))
@@ -708,7 +708,7 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 		grpResultMap[v.Provider+"."+v.Region] = v
 	}
 
-	//create all the missing clusters in the supported provider and regions.
+	// create all the missing clusters in the supported provider and regions.
 	for _, p := range providerList {
 		for _, v := range p.Regions {
 			if _, exist := grpResultMap[p.Name+"."+v.Name]; !exist {
@@ -727,22 +727,22 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 					glog.Infof("Auto-created cluster request in %s, region: %s, Id: %s ", p.Name, v.Name, clusterRequest.ID)
 				}
 			} //
-		} //region
-	} //provider
+		} // region
+	} // provider
 	return errs
 }
 
 func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 	r := []interface{}{
-		//c.buildReadOnlyGroupResource(),
-		//c.buildDedicatedReaderClusterRoleBindingResource(),
-		//c.buildSREGroupResource(),
-		//c.buildDinosaurSREClusterRoleBindingResource(),
-		//c.buildObservabilityNamespaceResource(),
-		//c.buildObservatoriumSSOSecretResource(),
-		//c.buildObservabilityCatalogSourceResource(),
-		//c.buildObservabilityOperatorGroupResource(),
-		//c.buildObservabilitySubscriptionResource(),
+		// c.buildReadOnlyGroupResource(),
+		// c.buildDedicatedReaderClusterRoleBindingResource(),
+		// c.buildSREGroupResource(),
+		// c.buildDinosaurSREClusterRoleBindingResource(),
+		// c.buildObservabilityNamespaceResource(),
+		// c.buildObservatoriumSSOSecretResource(),
+		// c.buildObservabilityCatalogSourceResource(),
+		// c.buildObservabilityOperatorGroupResource(),
+		// c.buildObservabilitySubscriptionResource(),
 	}
 
 	managedDinosaurOperatorNamespace := dinosaurOperatorAddonNamespace

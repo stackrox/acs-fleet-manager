@@ -51,7 +51,7 @@ func (s *LeaderElectionManager) Start() {
 	go func() {
 		// Starts once immediately
 		s.startWorkers()
-		close(waitWorkersStart) //let Start() to proceed
+		close(waitWorkersStart) // let Start() to proceed
 		ticker := time.NewTicker(s.mgrRepeatInterval)
 		for {
 			select {
@@ -71,7 +71,7 @@ func (s *LeaderElectionManager) Start() {
 		}
 	}()
 
-	//wait for all workers started before leave.
+	// wait for all workers started before leave.
 	<-waitWorkersStart
 }
 
@@ -83,10 +83,10 @@ func (s *LeaderElectionManager) Stop() {
 	}
 	select {
 	case <-s.tearDown:
-		return //already closed/stopped
+		return // already closed/stopped
 	default:
-		close(s.tearDown) //it is started before, now close/stop
-		//wait for all workers are stopped before leaving
+		close(s.tearDown) // it is started before, now close/stop
+		// wait for all workers are stopped before leaving
 		s.workerGrp.Wait()
 	}
 }
@@ -97,11 +97,11 @@ func (s *LeaderElectionManager) startWorkers() {
 		if isLeader && !worker.IsRunning() {
 			glog.V(1).Infoln(fmt.Sprintf("Running as the leader and starting worker %T [%s]", worker, worker.GetID()))
 			worker.Start()
-			s.workerGrp.Add(1) //a new worker is added to the group
+			s.workerGrp.Add(1) // a new worker is added to the group
 		} else if !isLeader && worker.IsRunning() {
 			glog.V(1).Infoln(fmt.Sprintf("No longer the leader and stopping worker %T [%s]", worker, worker.GetID()))
 			worker.Stop()
-			s.workerGrp.Done() //a worker is removed from the group
+			s.workerGrp.Done() // a worker is removed from the group
 		}
 	}
 }
@@ -111,7 +111,7 @@ func (s *LeaderElectionManager) isWorkerLeader(worker Worker) bool {
 	leaderLeaseAcquisition, err := s.acquireLeaderLease(worker.GetID(), worker.GetWorkerType(), dbConn)
 	if err != nil {
 		// we don't know whether we're the leader or not, set metric to false for now
-		//metrics.UpdateLeaderStatusMetric(false)
+		// metrics.UpdateLeaderStatusMetric(false)
 		glog.V(5).Infof("failed to acquire leader lease: %s", err)
 		return false
 	}
@@ -152,7 +152,7 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType s
 	if isExpired(lease) || (lease.Leader == workerId && lease.Expires.Before(time.Now().Add(30*time.Second))) {
 		// begin a new transaction
 		// we must ensure we commit or rollback this transaction to avoid stale transactions being left around
-		leaderTx := dbConn.Begin() //starts a new transaction
+		leaderTx := dbConn.Begin() // starts a new transaction
 
 		// attempt to lock the leader lease
 		if err := leaderTx.Raw("SELECT * FROM leader_leases where deleted_at is null and lease_type = ? FOR UPDATE SKIP LOCKED LIMIT 1", workerType).Scan(&leaseList).Error; err != nil {

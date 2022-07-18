@@ -57,7 +57,7 @@ func (m *versionsMetrics) Collect(ch chan<- prometheus.Metric) {
 			actualDinosaurOperatorMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "actual", v.ActualDinosaurOperatorVersion)
 			actualDinosaurOperatorMetric.Set(float64(time.Now().Unix()))
 			ch <- actualDinosaurOperatorMetric
-			//desired metric
+			// desired metric
 			desiredDinosaurOperatorMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "desired", v.DesiredDinosaurOperatorVersion)
 			desiredDinosaurOperatorMetric.Set(float64(time.Now().Unix()))
 			ch <- desiredDinosaurOperatorMetric
@@ -72,7 +72,7 @@ func (m *versionsMetrics) Collect(ch chan<- prometheus.Metric) {
 			actualDinosaurMetric := m.dinosaurVersion.WithLabelValues(v.ClusterID, v.ID, "actual", v.ActualDinosaurVersion)
 			actualDinosaurMetric.Set(float64(time.Now().Unix()))
 			ch <- actualDinosaurMetric
-			//desired dinosaur version
+			// desired dinosaur version
 			desiredDinosaurMetric := m.dinosaurVersion.WithLabelValues(v.ClusterID, v.ID, "desired", v.DesiredDinosaurVersion)
 			desiredDinosaurMetric.Set(float64(time.Now().Unix()))
 			ch <- desiredDinosaurMetric

@@ -296,7 +296,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 		Expect(cpr.Enabled).To(BeFalse())
 	}
 
-	//test with wrong provider id
+	// test with wrong provider id
 	wrongCloudProviderList, respFromWrongID, errFromWrongId := client.DefaultApi.GetCloudProviderRegions(ctx, "wrong_provider_id", nil)
 	Expect(errFromWrongId).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", errFromWrongId)
 	Expect(respFromWrongID.StatusCode).To(Equal(http.StatusOK))

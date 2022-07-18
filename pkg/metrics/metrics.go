@@ -367,7 +367,7 @@ var dinosaurOperationsSuccessCountMetric = prometheus.NewCounterVec(
 	DinosaurOperationsCountMetricsLabels,
 )
 
-//UpdateDinosaurRequestsStatusSinceCreatedMetric
+// UpdateDinosaurRequestsStatusSinceCreatedMetric
 func UpdateDinosaurRequestsStatusSinceCreatedMetric(status constants2.DinosaurStatus, dinosaurId string, clusterId string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		LabelStatus:    string(status),
@@ -377,7 +377,7 @@ func UpdateDinosaurRequestsStatusSinceCreatedMetric(status constants2.DinosaurSt
 	dinosaurStatusSinceCreatedMetric.With(labels).Set(elapsed.Seconds())
 }
 
-//UpdateDinosaurRequestsStatusCountMetric
+// UpdateDinosaurRequestsStatusCountMetric
 func UpdateDinosaurRequestsStatusCountMetric(status constants2.DinosaurStatus, count int) {
 	labels := prometheus.Labels{
 		LabelStatus: string(status),

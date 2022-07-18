@@ -46,18 +46,18 @@ func (r *Reconciler) Start(worker Worker) {
 
 	ticker := time.NewTicker(RepeatInterval)
 	go func() {
-		//starts reconcile immediately and then on every repeat interval
+		// starts reconcile immediately and then on every repeat interval
 		glog.V(1).Infoln(fmt.Sprintf("Initial reconciliation loop for %T [%s]", worker, worker.GetID()))
 		r.runReconcile(worker)
 		for {
 			select {
-			case wg := <-r.wakeup: //we were asked to wake up...
+			case wg := <-r.wakeup: // we were asked to wake up...
 				glog.V(1).Infoln(fmt.Sprintf("Wakeup triggered reconciliation loop for %T [%s]", worker, worker.GetID()))
 				r.runReconcile(worker)
 				if wg != nil {
 					wg.Done()
 				}
-			case <-ticker.C: //time out
+			case <-ticker.C: // time out
 				glog.V(1).Infoln(fmt.Sprintf("Timeout triggered reconciliation loop for %T [%s]", worker, worker.GetID()))
 				r.runReconcile(worker)
 			case <-*worker.GetStopChan():
@@ -88,11 +88,11 @@ func (r *Reconciler) runReconcile(worker Worker) {
 func (r *Reconciler) Stop(worker Worker) {
 	defer worker.SetIsRunning(false)
 	select {
-	case <-*worker.GetStopChan(): //already closed
+	case <-*worker.GetStopChan(): // already closed
 		return
 	default:
-		close(*worker.GetStopChan()) //explicit close
-		worker.GetSyncGroup().Wait() //wait for in-flight job to finish
+		close(*worker.GetStopChan()) // explicit close
+		worker.GetSyncGroup().Wait() // wait for in-flight job to finish
 	}
 	metrics.ResetMetricsForReconcilers()
 }

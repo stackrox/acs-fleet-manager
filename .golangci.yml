@@ -88,7 +88,7 @@ linters:
     # - gocognit
     # - goconst
     - exportloopref
-    # - gocritic TODO(ROX-10833): enable gocritic checks
+    - gocritic
     # - gocyclo
     # - godot
     # - godox

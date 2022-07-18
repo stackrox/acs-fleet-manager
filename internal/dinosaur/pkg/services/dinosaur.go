@@ -248,7 +248,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	// we want to use the correct quota to perform the deletion.
 	dinosaurRequest.QuotaType = k.dinosaurConfig.Quota.Type
 	if err := dbConn.Create(dinosaurRequest).Error; err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create dinosaur request") //hide the db error to http caller
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create dinosaur request") // hide the db error to http caller
 	}
 	metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusAccepted, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
 	return nil

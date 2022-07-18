@@ -100,7 +100,7 @@ func (ic *IAMConfig) ReadFiles() error {
 		return err
 	}
 
-	//Read the service account limits check skip org ID yaml file
+	// Read the service account limits check skip org ID yaml file
 	err = shared.ReadYamlFile(ic.ServiceAccounttLimitCheckSkipOrgIdListFile, &ic.ServiceAccounttLimitCheckSkipOrgIdList)
 	if err != nil {
 		if os.IsNotExist(err) {
