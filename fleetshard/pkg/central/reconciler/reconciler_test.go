@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
 
@@ -11,8 +12,6 @@ import (
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -2,11 +2,10 @@ package runtime
 
 import (
 	"context"
+	"time"
 
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-
-	"time"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
