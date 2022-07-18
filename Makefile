@@ -8,6 +8,9 @@ SHELL = bash
 # The details of the application:
 binary:=fleet-manager
 
+# The image tag for building and pushing comes from TAG environment variable by default.
+# If there is no TAG env than CI_TAG is used instead.
+# Otherwise image tag is generated based on git tags.
 ifeq ($(TAG),)
 ifeq (,$(wildcard CI_TAG))
 TAG=$(shell git describe --tags --abbrev=10 --dirty --long)
