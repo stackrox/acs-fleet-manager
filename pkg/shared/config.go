@@ -1,11 +1,12 @@
 package shared
 
 import (
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 var projectRootDirectory = GetProjectRootDir()

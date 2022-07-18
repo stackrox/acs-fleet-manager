@@ -3,13 +3,13 @@ package dinosaur
 import (
 	"context"
 
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang/glog"
+	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/golang/glog"
-	"github.com/spf13/cobra"
 )
 
 // NewDeleteCommand command for deleting dinosaurs.

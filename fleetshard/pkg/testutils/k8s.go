@@ -1,6 +1,8 @@
 package testutils
 
 import (
+	"testing"
+
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	platform "github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/require"
@@ -12,7 +14,6 @@ import (
 	k8sTesting "k8s.io/client-go/testing"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"testing"
 )
 
 var (

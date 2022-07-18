@@ -8,11 +8,11 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	svcErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/golang/glog"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	svcErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 

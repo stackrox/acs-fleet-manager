@@ -3,12 +3,13 @@ package mocks
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
-	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 )
 
 const (

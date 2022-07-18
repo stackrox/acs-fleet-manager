@@ -1,12 +1,12 @@
 package cluster
 
 import (
+	"github.com/golang/glog"
+	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
-	"github.com/golang/glog"
-	"github.com/spf13/cobra"
 )
 
 // NewCreateCommand creates a new command for creating clusters.

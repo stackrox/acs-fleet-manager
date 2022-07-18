@@ -2,12 +2,13 @@ package integration
 
 import (
 	"fmt"
+	"testing"
+
 	. "github.com/onsi/gomega"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
-	"testing"
 )
 
 func getClient(baseURL string) redhatsso.SSOClient {

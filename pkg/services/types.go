@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 func GetAcceptedOrderByParams() []string {

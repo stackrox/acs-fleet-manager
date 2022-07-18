@@ -1,8 +1,8 @@
 package metrics
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/goava/di"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
 func ConfigProviders() di.Option {

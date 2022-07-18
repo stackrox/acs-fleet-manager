@@ -1,11 +1,12 @@
 package secrets
 
 import (
+	"reflect"
+	"testing"
+
 	. "github.com/onsi/gomega"
 	"github.com/spyzhov/ajson"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"reflect"
-	"testing"
 )
 
 const exampleSchema1 = `

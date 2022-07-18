@@ -1,9 +1,9 @@
 package observatorium
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
 func NewRunObservatoriumCommand(env *environments.Env) *cobra.Command {

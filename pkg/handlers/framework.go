@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 	"net/http"
+
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"

@@ -1,9 +1,10 @@
 package services
 
 import (
+	"strings"
+
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"gorm.io/gorm"
-	"strings"
 )
 
 // Field names suspected to contain personally identifiable information

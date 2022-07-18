@@ -3,6 +3,7 @@ package flags
 
 import (
 	"fmt"
+
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 )

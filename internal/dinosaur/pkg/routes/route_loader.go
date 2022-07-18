@@ -2,8 +2,9 @@ package routes
 
 import (
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"net/http"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 

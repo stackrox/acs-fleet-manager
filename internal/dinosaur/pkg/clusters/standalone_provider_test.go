@@ -3,17 +3,17 @@ package clusters
 import (
 	"testing"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha2 "github.com/operator-framework/api/pkg/operators/v1alpha2"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	mocket "github.com/selvatico/go-mocket"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
 )
 
 func TestStandaloneProvider_GetCloudProviders(t *testing.T) {

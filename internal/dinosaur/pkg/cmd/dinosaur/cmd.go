@@ -3,9 +3,9 @@
 package dinosaur
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
 func NewDinosaurCommand(env *environments.Env) *cobra.Command {

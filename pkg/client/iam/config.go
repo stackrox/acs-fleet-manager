@@ -2,14 +2,15 @@ package iam
 
 import (
 	"encoding/json"
-	"github.com/golang/glog"
-	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"io"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
+	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 
 	"github.com/spf13/pflag"
 )

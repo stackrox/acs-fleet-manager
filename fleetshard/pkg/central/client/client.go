@@ -5,13 +5,14 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"net/http"
+
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	acsErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/httputil"
-	"net/http"
 )
 
 // reusing transport allows us to benefit from connection pooling

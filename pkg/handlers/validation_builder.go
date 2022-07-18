@@ -1,8 +1,9 @@
 package handlers
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"strings"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
 type ValidateOption func(field string, value *string) *errors.ServiceError

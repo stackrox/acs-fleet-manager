@@ -1,11 +1,12 @@
 package quota_management
 
 import (
+	"os"
+
+	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
-	"os"
 )
 
 type QuotaManagementListConfig struct {

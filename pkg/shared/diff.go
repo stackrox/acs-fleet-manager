@@ -3,6 +3,7 @@ package shared
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/pmezard/go-difflib/difflib"
 )
 

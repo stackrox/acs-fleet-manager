@@ -5,8 +5,8 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"gorm.io/gorm"
 )
 

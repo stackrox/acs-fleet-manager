@@ -2,9 +2,10 @@ package fleetmanager
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // Auth will handle adding authentication information to HTTP requests.

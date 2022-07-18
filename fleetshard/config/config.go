@@ -1,9 +1,10 @@
 package config
 
 import (
+	"time"
+
 	"github.com/stackrox/rox/pkg/errorhelpers"
 	"github.com/stackrox/rox/pkg/sync"
-	"time"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/pkg/errors"

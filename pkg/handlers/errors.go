@@ -1,15 +1,16 @@
 package handlers
 
 import (
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"net/http"
 	"sort"
 	"strconv"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+
+	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"github.com/gorilla/mux"
 )
 
 func NewErrorsHandler() *ErrorHandler {

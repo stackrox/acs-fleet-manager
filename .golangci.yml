@@ -94,7 +94,7 @@ linters:
     # - godox
     # - goerr113
     # - gofmt TODO(ROX-10832): enable gofmt checks
-    # - goimports TODO(ROX-10832): enable goimports checks
+    - goimports
     # - revive # replaces golint TODO(ROX-10828): enable revive checks
     # - gomnd
     # - goprintffuncname

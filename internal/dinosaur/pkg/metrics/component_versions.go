@@ -3,9 +3,9 @@ package metrics
 import (
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type versionsMetrics struct {

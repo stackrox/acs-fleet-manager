@@ -3,8 +3,8 @@ package metrics
 import (
 	"testing"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 )
 
 func TestVersionsMetrics_Collect(t *testing.T) {

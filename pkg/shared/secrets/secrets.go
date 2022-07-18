@@ -3,10 +3,11 @@ package secrets
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"reflect"
+
 	"github.com/santhosh-tekuri/jsonschema/v3"
 	"github.com/spyzhov/ajson"
-	"reflect"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
 )
 
 func ModifySecrets(schemaDom, doc api.JSON, f func(node *ajson.Node) error) (api.JSON, error) {

@@ -1,6 +1,9 @@
 package dinosaur_mgrs
 
 import (
+	"github.com/golang/glog"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
@@ -8,9 +11,6 @@ import (
 	serviceErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
-	"github.com/golang/glog"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
 )
 
 // we do not add "deleted" status to the list as the dinosaurs are soft deleted once the status is set to "deleted", so no need to count them here.

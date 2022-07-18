@@ -47,8 +47,8 @@ type fleetshardOperatorAddon struct {
 	ProviderFactory  clusters.ProviderFactory
 	ServerConfig     *server.ServerConfig
 	FleetShardConfig *config.FleetshardConfig
-	OCMConfig *ocm.OCMConfig
-	IAMConfig *iam.IAMConfig
+	OCMConfig        *ocm.OCMConfig
+	IAMConfig        *iam.IAMConfig
 }
 
 func (o *fleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {

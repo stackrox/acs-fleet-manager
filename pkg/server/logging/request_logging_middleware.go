@@ -2,10 +2,11 @@ package logging
 
 import (
 	"context"
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-	"github.com/gorilla/mux"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )
 
 func RequestLoggingMiddleware(handler http.Handler) http.Handler {
