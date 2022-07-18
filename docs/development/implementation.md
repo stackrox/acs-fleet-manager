@@ -8,7 +8,7 @@ The system is comprised of three main components, each implemented using the lay
 - Dinosaur Worker
 - Cluster Worker
 
-![Component Architecture Diagram](images/fleet-manager-component-architecture.png)
+![Component Architecture Diagram](./fleet-manager-component-architecture.png)
 
 ## REST API
 
