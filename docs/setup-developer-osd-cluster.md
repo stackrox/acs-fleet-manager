@@ -1,4 +1,4 @@
-# How-To setup developer ODS cluster (step by step copy/paste guide)
+# How-To setup developer OSD cluster (step by step copy/paste guide)
 
 ### Pre-requirements
 
@@ -210,13 +210,13 @@ ktunnel expose --namespace "${NAMESPACE}" fleet-manager 8000:8000 --reuse
 
 Ensure that you are in correct kube context.
 ```
-export KUBECTL_CURRENT_CONTEXT=$(kubectl config current-context)
+export OC_CURRENT_CONTEXT=$(oc config current-context)
 export OSD_CLUSTER_DOMAIN=$(ocm get /api/clusters_mgmt/v1/clusters/${CLUSTER_ID} | jq '.dns.base_domain' --raw-output)
 
 cat << EOF > "./${CLUSTER_ID}.yaml"
 ---
 clusters:
- - name: '${KUBECTL_CURRENT_CONTEXT}'
+ - name: '${OC_CURRENT_CONTEXT}'
    cluster_id: '${CLUSTER_ID}'
    cloud_provider: aws
    region: ${AWS_REGION}
@@ -276,7 +276,7 @@ oc get pods --namespace "${CENTRAL_NAMESPACE}"
 
 19. Fetch sensor configuration
 ```
-export ROX_ADMIN_PASSWORD=$(kubectl get secrets -n "${CENTRAL_NAMESPACE}" central-htpasswd -o yaml | yq .data.password | base64 --decode)
+export ROX_ADMIN_PASSWORD=$(oc get secrets -n "${CENTRAL_NAMESPACE}" central-htpasswd -o yaml | yq .data.password | base64 --decode)
 roxctl sensor generate openshift --openshift-version=4 --endpoint "https://central-${CENTRAL_NAMESPACE}.apps.${OSD_CLUSTER_NAME}.${OSD_CLUSTER_DOMAIN}:443" --insecure-skip-tls-verify -p "${ROX_ADMIN_PASSWORD}" --admission-controller-listen-on-events=false --disable-audit-logs=true --central="https://central-${CENTRAL_NAMESPACE}.apps.${OSD_CLUSTER_NAME}.${OSD_CLUSTER_DOMAIN}:443" --collection-method=none --name osd-cluster-sensor
 ```
 
