@@ -186,11 +186,12 @@ export STARTING_CSV="rhacs-operator.v${RHACS_OPERATOR_CATALOG_VERSION}"
 helm upgrade --install rhacs-terraform \
   --namespace "${NAMESPACE}" \
   --set fleetshardSync.authType="STATIC_TOKEN" \
-  --set fleetshardSync.fleetManagerEndpoint=${FLEET_MANAGER_ENDPOINT} \
+  --set fleetshardSync.image="${FLEET_MANAGER_IMAGE}" \
+  --set fleetshardSync.fleetManagerEndpoint="${FLEET_MANAGER_ENDPOINT}" \
   --set fleetshardSync.staticToken="${STATIC_TOKEN}" \
-  --set fleetshardSync.clusterId=${CLUSTER_ID} \
+  --set fleetshardSync.clusterId="${CLUSTER_ID}" \
   --set acsOperator.enabled=true \
-  --set acsOperator.source=rhacs-operators \
+  --set acsOperator.source="rhacs-operators" \
   --set acsOperator.startingCSV="${STARTING_CSV}" \
   --set observability.enabled=false ./dp-terraform/helm/rhacs-terraform
 ```
