@@ -62,7 +62,8 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 
 			provider, _ := h.supportedProviders.GetByName(id)
 			for i := range cloudRegions {
-				region, _ := provider.Regions.GetByName(cloudRegions[i].Id)
+				cloudRegion := cloudRegions[i]
+				region, _ := provider.Regions.GetByName(cloudRegion.Id)
 
 				// skip any regions that do not support the specified instance type so its not included in the response
 				if instanceTypeFilter != "" && !region.IsInstanceTypeSupported(config.InstanceType(instanceTypeFilter)) {
@@ -70,9 +71,9 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 				}
 
 				// Only set enabled to true if the region supports at least one instance type
-				cloudRegions[i].Enabled = len(region.SupportedInstanceTypes) > 0
-				cloudRegions[i].SupportedInstanceTypes = region.SupportedInstanceTypes.AsSlice()
-				converted := presenters.PresentCloudRegion(&cloudRegions[i])
+				cloudRegion.Enabled = len(region.SupportedInstanceTypes) > 0
+				cloudRegion.SupportedInstanceTypes = region.SupportedInstanceTypes.AsSlice()
+				converted := presenters.PresentCloudRegion(&cloudRegion)
 				regionList.Items = append(regionList.Items, converted)
 			}
 
