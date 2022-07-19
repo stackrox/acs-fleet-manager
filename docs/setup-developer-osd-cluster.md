@@ -142,7 +142,7 @@ spec:
 EOF
 ```
 
-After what if you execute:
+By executing:
 ```
 oc get pods -n openshift-marketplace
 ```
@@ -309,7 +309,7 @@ echo "{\"expiration_timestamp\":\"$(date -v+7d -u +'%Y-%m-%dT%H:%M:%SZ')\"}" | o
 
 ### Re-deploy new Fleetshard synchronizer
 
-To deploy new build of Fleetshard synchronizer you can simply re-build and rollout new image helm.
+To deploy a new build of Fleetshard synchronizer, you can simply re-build and push the image and after that rollout restart of deployment is sufficient.
 ```
 GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal
 oc rollout restart -n "${NAMESPACE}" deployment fleetshard-sync
