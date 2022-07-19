@@ -9,6 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// NewCloudProviderCommand ...
 func NewCloudProviderCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cloud_providers",

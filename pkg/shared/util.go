@@ -1,6 +1,6 @@
 package shared
 
-// checks if slice of strings Contains given string
+// Contains checks if slice of strings Contains given string
 func Contains(s []string, str string) bool {
 	for _, v := range s {
 		if v == str {
@@ -10,6 +10,7 @@ func Contains(s []string, str string) bool {
 	return false
 }
 
+// SafeString ...
 func SafeString(ptr *string) string {
 	if ptr == nil {
 		return ""
@@ -17,6 +18,7 @@ func SafeString(ptr *string) string {
 	return *ptr
 }
 
+// SafeInt64 ...
 func SafeInt64(ptr *int64) int64 {
 	if ptr == nil {
 		return 0

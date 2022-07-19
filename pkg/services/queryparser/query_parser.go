@@ -9,6 +9,7 @@ import (
 
 var validColumns = []string{"region", "name", "cloud_provider", "status", "owner"}
 
+// BraceTokenFamily ...
 const (
 	BraceTokenFamily       = "BRACE"
 	OpTokenFamily          = "OP"
@@ -28,16 +29,20 @@ const (
 	AndState    = "AND"
 	OrState     = "OR"
 )
+
+// MaximumComplexity ...
 const MaximumComplexity = 10
 
 type checkUnbalancedBraces func() error
 
+// DBQuery ...
 type DBQuery struct {
 	Query        string
 	Values       []interface{}
 	ValidColumns []string
 }
 
+// QueryParser ...
 type QueryParser interface {
 	Parse(sql string) (*DBQuery, error)
 }
@@ -187,6 +192,7 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 	}
 }
 
+// Parse ...
 func (p *queryParser) Parse(sql string) (*DBQuery, error) {
 	state, checkBalancedBraces := p.initStateMachine()
 
@@ -212,6 +218,7 @@ func (p *queryParser) Parse(sql string) (*DBQuery, error) {
 	return &p.dbqry, nil
 }
 
+// NewQueryParser ...
 func NewQueryParser(columns ...string) QueryParser {
 	query := DBQuery{}
 	if len(columns) == 0 {

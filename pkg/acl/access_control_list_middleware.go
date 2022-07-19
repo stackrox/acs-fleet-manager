@@ -8,10 +8,12 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// AccessControlListMiddleware ...
 type AccessControlListMiddleware struct {
 	accessControlListConfig *AccessControlListConfig
 }
 
+// NewAccessControlListMiddleware ...
 func NewAccessControlListMiddleware(accessControlListConfig *AccessControlListConfig) *AccessControlListMiddleware {
 	middleware := AccessControlListMiddleware{
 		accessControlListConfig: accessControlListConfig,
@@ -19,7 +21,7 @@ func NewAccessControlListMiddleware(accessControlListConfig *AccessControlListCo
 	return &middleware
 }
 
-// Middleware handler to authorize users based on the provided ACL configuration
+// Authorize Middleware handler to authorize users based on the provided ACL configuration
 func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		context := r.Context()

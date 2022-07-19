@@ -11,11 +11,13 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+// QuotaManagementListService ...
 type QuotaManagementListService struct {
 	connectionFactory   *db.ConnectionFactory
 	quotaManagementList *quota_management.QuotaManagementListConfig
 }
 
+// CheckIfQuotaIsDefinedForInstanceType ...
 func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 	username := dinosaur.Owner
 	orgId := dinosaur.OrganisationId
@@ -38,6 +40,7 @@ func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(dinosau
 	return false, nil
 }
 
+// ReserveQuota ...
 func (q QuotaManagementListService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
 	if !q.quotaManagementList.EnableInstanceLimitControl {
 		return "", nil
@@ -95,6 +98,7 @@ func (q QuotaManagementListService) ReserveQuota(dinosaur *dbapi.CentralRequest,
 	return "", errors.InsufficientQuotaError("Insufficient Quota")
 }
 
+// DeleteQuota ...
 func (q QuotaManagementListService) DeleteQuota(SubscriptionId string) *errors.ServiceError {
 	return nil // NOOP
 }

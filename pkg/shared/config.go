@@ -11,7 +11,7 @@ import (
 
 var projectRootDirectory = GetProjectRootDir()
 
-// Read the contents of file into integer value
+// ReadFileValueInt Read the contents of file into integer value
 func ReadFileValueInt(file string, val *int) error {
 	fileContents, err := ReadFile(file)
 	if err != nil {
@@ -22,7 +22,7 @@ func ReadFileValueInt(file string, val *int) error {
 	return err
 }
 
-// Read the contents of file into string value
+// ReadFileValueString Read the contents of file into string value
 func ReadFileValueString(file string, val *string) error {
 	fileContents, err := ReadFile(file)
 	if err != nil {
@@ -33,7 +33,7 @@ func ReadFileValueString(file string, val *string) error {
 	return err
 }
 
-// Read the contents of file into boolean value
+// ReadFileValueBool Read the contents of file into boolean value
 func ReadFileValueBool(file string, val *bool) error {
 	fileContents, err := ReadFile(file)
 	if err != nil {
@@ -44,6 +44,7 @@ func ReadFileValueBool(file string, val *bool) error {
 	return err
 }
 
+// ReadFile ...
 func ReadFile(file string) (string, error) {
 	absFilePath := BuildFullFilePath(file)
 
@@ -60,6 +61,7 @@ func ReadFile(file string) (string, error) {
 	return string(buf), nil
 }
 
+// BuildFullFilePath ...
 func BuildFullFilePath(filename string) string {
 	// If the value is in quotes, unquote it
 	unquotedFile, err := strconv.Unquote(filename)
@@ -81,6 +83,7 @@ func BuildFullFilePath(filename string) string {
 	return absFilePath
 }
 
+// ReadYamlFile ...
 func ReadYamlFile(filename string, out interface{}) (err error) {
 	fileContents, err := ReadFile(filename)
 	if err != nil {

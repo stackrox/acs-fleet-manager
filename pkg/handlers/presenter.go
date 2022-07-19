@@ -4,6 +4,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 )
 
+// PresentReferenceWith ...
 func PresentReferenceWith(id, obj interface{}, ObjectKind func(i interface{}) string, ObjectPath func(id string, obj interface{}) string) compat.ObjectReference {
 	refId, ok := MakeReferenceId(id)
 
@@ -18,6 +19,7 @@ func PresentReferenceWith(id, obj interface{}, ObjectKind func(i interface{}) st
 	}
 }
 
+// MakeReferenceId ...
 func MakeReferenceId(id interface{}) (string, bool) {
 	var refId string
 

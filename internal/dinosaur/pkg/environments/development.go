@@ -2,7 +2,7 @@ package environments
 
 import "github.com/stackrox/acs-fleet-manager/pkg/environments"
 
-// The development environment is intended for use while developing features, requiring manual verification
+// NewDevelopmentEnvLoader The development environment is intended for use while developing features, requiring manual verification
 func NewDevelopmentEnvLoader() environments.EnvLoader {
 	return environments.SimpleEnvLoader{
 		"v":                                               "10",

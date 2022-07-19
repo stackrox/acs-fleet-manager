@@ -11,6 +11,7 @@ import (
 	"github.com/golang/glog"
 )
 
+// Server ...
 type Server interface {
 	Run()
 	Stop()

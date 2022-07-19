@@ -17,6 +17,7 @@ type dataPlaneDinosaurHandler struct {
 	dinosaurService services.DinosaurService
 }
 
+// NewDataPlaneDinosaurHandler ...
 func NewDataPlaneDinosaurHandler(service services.DataPlaneDinosaurService, dinosaurService services.DinosaurService) *dataPlaneDinosaurHandler {
 	return &dataPlaneDinosaurHandler{
 		service:         service,
@@ -24,6 +25,7 @@ func NewDataPlaneDinosaurHandler(service services.DataPlaneDinosaurService, dino
 	}
 }
 
+// UpdateDinosaurStatuses ...
 func (h *dataPlaneDinosaurHandler) UpdateDinosaurStatuses(w http.ResponseWriter, r *http.Request) {
 	clusterId := mux.Vars(r)["id"]
 	var data = map[string]private.DataPlaneCentralStatus{}
@@ -42,6 +44,7 @@ func (h *dataPlaneDinosaurHandler) UpdateDinosaurStatuses(w http.ResponseWriter,
 	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
+// GetAll ...
 func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	clusterID := mux.Vars(r)["id"]
 	cfg := &handlers.HandlerConfig{

@@ -4,7 +4,7 @@ import (
 	"reflect"
 )
 
-// Prepare a 'list' of non-db-backed resources
+// DetermineListRange Prepare a 'list' of non-db-backed resources
 func DetermineListRange(obj interface{}, page int, size int) (list []interface{}, total int) {
 	items := reflect.ValueOf(obj)
 	total = items.Len()

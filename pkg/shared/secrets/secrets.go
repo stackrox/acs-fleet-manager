@@ -10,6 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 )
 
+// ModifySecrets ...
 func ModifySecrets(schemaDom, doc api.JSON, f func(node *ajson.Node) error) (api.JSON, error) {
 	secrets, err := modifySecrets(schemaDom, doc, f)
 	if err != nil {

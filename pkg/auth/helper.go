@@ -23,13 +23,14 @@ const (
 	JwkKID                = "acstestkey"
 )
 
+// AuthHelper ...
 type AuthHelper struct {
 	JWTPrivateKey  *rsa.PrivateKey
 	JWTCA          *rsa.PublicKey
 	ocmTokenIssuer string
 }
 
-// Creates an auth helper to be used for creating new accounts and jwt.
+// NewAuthHelper Creates an auth helper to be used for creating new accounts and jwt.
 func NewAuthHelper(jwtKeyFilePath, jwtCAFilePath, ocmTokenIssuer string) (*AuthHelper, error) {
 	jwtKey, jwtCA, err := ParseJWTKeys(jwtKeyFilePath, jwtCAFilePath)
 	if err != nil {
@@ -48,7 +49,7 @@ func NewAuthHelper(jwtKeyFilePath, jwtCAFilePath, ocmTokenIssuer string) (*AuthH
 	}, nil
 }
 
-// Creates a new account with the specified values
+// NewAccount Creates a new account with the specified values
 func (authHelper *AuthHelper) NewAccount(username, name, email string, orgId string) (*amv1.Account, error) {
 	var firstName string
 	var lastName string
@@ -76,7 +77,7 @@ func (authHelper *AuthHelper) NewAccount(username, name, email string, orgId str
 	return acct, nil
 }
 
-// Creates a signed token. By default, this will create a signed ocm token if the issuer was not specified in the given claims.
+// CreateSignedJWT Creates a signed token. By default, this will create a signed ocm token if the issuer was not specified in the given claims.
 func (authHelper *AuthHelper) CreateSignedJWT(account *amv1.Account, jwtClaims jwt.MapClaims) (string, error) {
 	token, err := authHelper.CreateJWTWithClaims(account, jwtClaims)
 	if err != nil {
@@ -88,7 +89,7 @@ func (authHelper *AuthHelper) CreateSignedJWT(account *amv1.Account, jwtClaims j
 	return token.SignedString(authHelper.JWTPrivateKey)
 }
 
-// Creates a JSON web token with the claims specified. By default, this will create an ocm JWT if the issuer was not specified in the given claims.
+// CreateJWTWithClaims Creates a JSON web token with the claims specified. By default, this will create an ocm JWT if the issuer was not specified in the given claims.
 // Any given claim with nil value will be removed from the claims
 func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClaims jwt.MapClaims) (*jwt.Token, error) {
 	claims := jwt.MapClaims{
@@ -136,13 +137,14 @@ func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClai
 	return token, nil
 }
 
+// GetJWTFromSignedToken ...
 func (authHelper *AuthHelper) GetJWTFromSignedToken(signedToken string) (*jwt.Token, error) {
 	return jwt.Parse(signedToken, func(token *jwt.Token) (interface{}, error) {
 		return authHelper.JWTCA, nil
 	})
 }
 
-// Parses JWT Private and Public Keys from the given path
+// ParseJWTKeys Parses JWT Private and Public Keys from the given path
 func ParseJWTKeys(jwtKeyFilePath, jwtCAFilePath string) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	projectRootDir := shared.GetProjectRootDir()
 	privateBytes, err := ioutil.ReadFile(filepath.Join(projectRootDir, jwtKeyFilePath))

@@ -64,6 +64,8 @@ func convertSamplePair(from *pmod.SamplePair) public.Values {
 		Value:     float64(from.Value),
 	}
 }
+
+// PresentMetricsByRangeQuery ...
 func PresentMetricsByRangeQuery(metrics *observatorium.DinosaurMetrics) ([]public.RangeQuery, *errors.ServiceError) {
 	out := []public.RangeQuery{}
 	for _, m := range *metrics {
@@ -76,6 +78,7 @@ func PresentMetricsByRangeQuery(metrics *observatorium.DinosaurMetrics) ([]publi
 	return out, nil
 }
 
+// PresentMetricsByInstantQuery ...
 func PresentMetricsByInstantQuery(metrics *observatorium.DinosaurMetrics) ([]public.InstantQuery, *errors.ServiceError) {
 	out := []public.InstantQuery{}
 	for _, m := range *metrics {

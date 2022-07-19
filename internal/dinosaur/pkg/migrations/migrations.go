@@ -30,6 +30,7 @@ var migrations = []*gormigrate.Migration{
 	addOwnerUserIdToCentralRequest(),
 }
 
+// New ...
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
 	return db.NewMigration(dbConfig, &gormigrate.Options{
 		TableName:      "migrations",

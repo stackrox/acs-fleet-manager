@@ -15,10 +15,13 @@ import (
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 )
 
+// ValidDinosaurClusterNameRegexp ...
 var ValidDinosaurClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 
+// MaxDinosaurNameLength ...
 var MaxDinosaurNameLength = 32
 
+// ValidDinosaurClusterName ...
 func ValidDinosaurClusterName(value *string, field string) handlers.Validate {
 	return func() *errors.ServiceError {
 		if !ValidDinosaurClusterNameRegexp.MatchString(*value) {
@@ -88,6 +91,7 @@ func ValidateCloudProvider(dinosaurService *services.DinosaurService, dinosaurRe
 	}
 }
 
+// ValidateDinosaurClaims ...
 func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.CentralRequestPayload, dinosaurRequest *dbapi.CentralRequest) handlers.Validate {
 	return func() *errors.ServiceError {
 		dinosaurRequest.Region = dinosaurRequestPayload.Region

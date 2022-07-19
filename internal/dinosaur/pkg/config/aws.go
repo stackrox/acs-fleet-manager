@@ -5,6 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// AWSConfig ...
 type AWSConfig struct {
 	// Used for OSD Cluster creation with OCM
 	AccountID           string `json:"account_id"`
@@ -21,6 +22,7 @@ type AWSConfig struct {
 	Route53SecretAccessKeyFile string `json:"route53_secret_access_key_file"`
 }
 
+// NewAWSConfig ...
 func NewAWSConfig() *AWSConfig {
 	return &AWSConfig{
 		AccountIDFile:              "secrets/aws.accountid",
@@ -31,6 +33,7 @@ func NewAWSConfig() *AWSConfig {
 	}
 }
 
+// AddFlags ...
 func (c *AWSConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.AccountIDFile, "aws-account-id-file", c.AccountIDFile, "File containing AWS account id")
 	fs.StringVar(&c.AccessKeyFile, "aws-access-key-file", c.AccessKeyFile, "File containing AWS access key")
@@ -39,6 +42,7 @@ func (c *AWSConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Route53SecretAccessKeyFile, "aws-route53-secret-access-key-file", c.Route53SecretAccessKeyFile, "File containing AWS secret access key for route53")
 }
 
+// ReadFiles ...
 func (c *AWSConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(c.AccountIDFile, &c.AccountID)
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// CentralRequest ...
 type CentralRequest struct {
 	api.Meta
 	Region         string `json:"region"`
@@ -49,9 +50,13 @@ type CentralRequest struct {
 	DeletionTimestamp *time.Time `json:"deletionTimestamp"`
 }
 
+// CentralList ...
 type CentralList []*CentralRequest
+
+// CentralIndex ...
 type CentralIndex map[string]*CentralRequest
 
+// Index ...
 func (l CentralList) Index() CentralIndex {
 	index := CentralIndex{}
 	for _, o := range l {
@@ -60,6 +65,7 @@ func (l CentralList) Index() CentralIndex {
 	return index
 }
 
+// BeforeCreate ...
 func (k *CentralRequest) BeforeCreate(scope *gorm.DB) error {
 	// To allow the id set on the CentralRequest object to be used. This is useful for testing purposes.
 	id := k.ID
@@ -69,6 +75,7 @@ func (k *CentralRequest) BeforeCreate(scope *gorm.DB) error {
 	return nil
 }
 
+// GetRoutes ...
 func (k *CentralRequest) GetRoutes() ([]DataPlaneCentralRoute, error) {
 	var routes []DataPlaneCentralRoute
 	if k.Routes == nil {
@@ -81,6 +88,7 @@ func (k *CentralRequest) GetRoutes() ([]DataPlaneCentralRoute, error) {
 	}
 }
 
+// SetRoutes ...
 func (k *CentralRequest) SetRoutes(routes []DataPlaneCentralRoute) error {
 	if r, err := json.Marshal(routes); err != nil {
 		return err

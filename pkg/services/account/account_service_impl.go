@@ -11,12 +11,14 @@ type accountService struct {
 
 var _ AccountService = &accountService{}
 
+// NewAccountService ...
 func NewAccountService(connection *sdk.Connection) AccountService {
 	return &accountService{
 		connection,
 	}
 }
 
+// SearchOrganizations ...
 func (as *accountService) SearchOrganizations(filter string) (*OrganizationList, error) {
 	items, err := as.searchOrganizations(filter)
 
@@ -36,6 +38,7 @@ func (as *accountService) searchOrganizations(filter string) (*v1.OrganizationLi
 	return res.Items(), nil
 }
 
+// GetOrganization ...
 func (as *accountService) GetOrganization(filter string) (*Organization, error) {
 	organizationList, err := as.searchOrganizations(filter)
 	if err != nil {

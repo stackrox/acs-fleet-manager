@@ -31,6 +31,7 @@ const (
 	dinosaurUpdating         string         = "DinosaurUpdating"
 )
 
+// DataPlaneDinosaurService ...
 type DataPlaneDinosaurService interface {
 	UpdateDataPlaneDinosaurService(ctx context.Context, clusterId string, status []*dbapi.DataPlaneCentralStatus) *serviceError.ServiceError
 }
@@ -41,6 +42,7 @@ type dataPlaneDinosaurService struct {
 	dinosaurConfig  *config.DinosaurConfig
 }
 
+// NewDataPlaneDinosaurService ...
 func NewDataPlaneDinosaurService(dinosaurSrv DinosaurService, clusterSrv ClusterService, dinosaurConfig *config.DinosaurConfig) *dataPlaneDinosaurService {
 	return &dataPlaneDinosaurService{
 		dinosaurService: dinosaurSrv,
@@ -49,6 +51,7 @@ func NewDataPlaneDinosaurService(dinosaurSrv DinosaurService, clusterSrv Cluster
 	}
 }
 
+// UpdateDataPlaneDinosaurService ...
 func (d *dataPlaneDinosaurService) UpdateDataPlaneDinosaurService(ctx context.Context, clusterId string, status []*dbapi.DataPlaneCentralStatus) *serviceError.ServiceError {
 	cluster, err := d.clusterService.FindClusterByID(clusterId)
 	log := logger.NewUHCLogger(ctx)

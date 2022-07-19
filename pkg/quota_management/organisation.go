@@ -1,5 +1,6 @@
 package quota_management
 
+// Organisation ...
 type Organisation struct {
 	Id                  string      `yaml:"id"`
 	AnyUser             bool        `yaml:"any_user"`
@@ -7,6 +8,7 @@ type Organisation struct {
 	RegisteredUsers     AccountList `yaml:"registered_users"`
 }
 
+// IsUserRegistered ...
 func (org Organisation) IsUserRegistered(username string) bool {
 	if !org.HasUsersRegistered() {
 		return org.AnyUser
@@ -15,14 +17,17 @@ func (org Organisation) IsUserRegistered(username string) bool {
 	return found
 }
 
+// HasUsersRegistered ...
 func (org Organisation) HasUsersRegistered() bool {
 	return len(org.RegisteredUsers) > 0
 }
 
+// IsInstanceCountWithinLimit ...
 func (org Organisation) IsInstanceCountWithinLimit(count int) bool {
 	return count < org.GetMaxAllowedInstances()
 }
 
+// GetMaxAllowedInstances ...
 func (org Organisation) GetMaxAllowedInstances() int {
 	if org.MaxAllowedInstances <= 0 {
 		return MaxAllowedInstances
@@ -31,8 +36,10 @@ func (org Organisation) GetMaxAllowedInstances() int {
 	return org.MaxAllowedInstances
 }
 
+// OrganisationList ...
 type OrganisationList []Organisation
 
+// GetById ...
 func (orgList OrganisationList) GetById(Id string) (Organisation, bool) {
 	for _, organisation := range orgList {
 		if Id == organisation.Id {

@@ -10,6 +10,7 @@ type DinosaurStatus string
 // DinosaurOperation type
 type DinosaurOperation string
 
+// DinosaurRequestStatusAccepted ...
 const (
 	// DinosaurRequestStatusAccepted - dinosaur request status when accepted by dinosaur worker
 	DinosaurRequestStatusAccepted DinosaurStatus = "accepted"
@@ -64,11 +65,12 @@ var NamespaceLabels = map[string]string{
 	"mas-managed": "true",
 }
 
+// String ...
 func (k DinosaurOperation) String() string {
 	return string(k)
 }
 
-// DinosaurStatus Methods
+// String DinosaurStatus Methods
 func (k DinosaurStatus) String() string {
 	return string(k)
 }
@@ -88,6 +90,7 @@ func (k DinosaurStatus) CompareTo(k1 DinosaurStatus) int {
 	}
 }
 
+// GetUpdateableStatuses ...
 func GetUpdateableStatuses() []string {
 	return []string{
 		DinosaurRequestStatusPreparing.String(),

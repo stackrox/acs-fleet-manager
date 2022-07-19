@@ -38,16 +38,22 @@ import (
 var dinosaurDeletionStatuses = []string{constants2.DinosaurRequestStatusDeleting.String(), constants2.DinosaurRequestStatusDeprovision.String()}
 var dinosaurManagedCRStatuses = []string{constants2.DinosaurRequestStatusProvisioning.String(), constants2.DinosaurRequestStatusDeprovision.String(), constants2.DinosaurRequestStatusReady.String(), constants2.DinosaurRequestStatusFailed.String()}
 
+// DinosaurRoutesAction ...
 type DinosaurRoutesAction string
 
+// DinosaurRoutesActionCreate ...
 const DinosaurRoutesActionCreate DinosaurRoutesAction = "CREATE"
+
+// DinosaurRoutesActionDelete ...
 const DinosaurRoutesActionDelete DinosaurRoutesAction = "DELETE"
 
+// CNameRecordStatus ...
 type CNameRecordStatus struct {
 	Id     *string
 	Status *string
 }
 
+// DinosaurService ...
 //go:generate moq -out dinosaurservice_moq.go . DinosaurService
 type DinosaurService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
@@ -111,6 +117,7 @@ type dinosaurService struct {
 	clusterPlacementStrategy ClusterPlacementStrategy
 }
 
+// NewDinosaurService ...
 func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.DinosaurConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy) *dinosaurService {
 	return &dinosaurService{
 		connectionFactory:        connectionFactory,
@@ -126,6 +133,7 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 	}
 }
 
+// HasAvailableCapacity ...
 func (k *dinosaurService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 	var count int64
@@ -138,6 +146,7 @@ func (k *dinosaurService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 	return count < k.dinosaurConfig.MaxCapacity.MaxCapacity, nil
 }
 
+// HasAvailableCapacityInRegion ...
 func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.CentralRequest) (bool, *errors.ServiceError) {
 	regionCapacity := int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(dinosaurRequest.Region))
 	if regionCapacity <= 0 {
@@ -154,6 +163,7 @@ func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.Ce
 	return count < regionCapacity, nil
 }
 
+// DetectInstanceType ...
 func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.dinosaurConfig.Quota.Type))
 	if factoryErr != nil {
@@ -254,6 +264,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	return nil
 }
 
+// PrepareDinosaurRequest ...
 func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	clusterDNS, err := k.clusterService.GetClusterDNS(dinosaurRequest.ClusterID)
 	if err != nil {
@@ -291,6 +302,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 	return nil
 }
 
+// ListByStatus ...
 func (k *dinosaurService) ListByStatus(status ...constants2.DinosaurStatus) ([]*dbapi.CentralRequest, *errors.ServiceError) {
 	if len(status) == 0 {
 		return nil, errors.GeneralError("no status provided")
@@ -306,6 +318,7 @@ func (k *dinosaurService) ListByStatus(status ...constants2.DinosaurStatus) ([]*
 	return dinosaurs, nil
 }
 
+// Get ...
 func (k *dinosaurService) Get(ctx context.Context, id string) (*dbapi.CentralRequest, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("id is undefined")
@@ -347,6 +360,7 @@ func (k *dinosaurService) Get(ctx context.Context, id string) (*dbapi.CentralReq
 	return &dinosaurRequest, nil
 }
 
+// GetById ...
 func (k *dinosaurService) GetById(id string) (*dbapi.CentralRequest, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("id is undefined")
@@ -403,6 +417,7 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 	return nil
 }
 
+// DeprovisionDinosaurForUsers ...
 func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(&dbapi.CentralRequest{}).
@@ -427,6 +442,7 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 	return nil
 }
 
+// DeprovisionExpiredDinosaurs ...
 func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(&dbapi.CentralRequest{}).
@@ -452,6 +468,7 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *e
 	return nil
 }
 
+// Delete ...
 func (k *dinosaurService) Delete(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
@@ -550,6 +567,7 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 	return dinosaurRequestList, pagingMeta, nil
 }
 
+// GetManagedDinosaurByClusterID ...
 func (k *dinosaurService) GetManagedDinosaurByClusterID(clusterID string) ([]manageddinosaur.ManagedDinosaur, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New().
 		Where("cluster_id = ?", clusterID).
@@ -571,6 +589,7 @@ func (k *dinosaurService) GetManagedDinosaurByClusterID(clusterID string) ([]man
 	return res, nil
 }
 
+// Update ...
 func (k *dinosaurService) Update(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(dinosaurRequest).
@@ -583,6 +602,7 @@ func (k *dinosaurService) Update(dinosaurRequest *dbapi.CentralRequest) *errors.
 	return nil
 }
 
+// Updates ...
 func (k *dinosaurService) Updates(dinosaurRequest *dbapi.CentralRequest, fields map[string]interface{}) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(dinosaurRequest).
@@ -595,6 +615,7 @@ func (k *dinosaurService) Updates(dinosaurRequest *dbapi.CentralRequest, fields 
 	return nil
 }
 
+// VerifyAndUpdateDinosaurAdmin ...
 func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	if auth.GetIsAdminFromContext(ctx) {
 		cluster, err := k.clusterService.FindClusterByID(dinosaurRequest.ClusterID)
@@ -640,6 +661,7 @@ func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dino
 	}
 }
 
+// UpdateStatus ...
 func (k *dinosaurService) UpdateStatus(id string, status constants2.DinosaurStatus) (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 
@@ -670,6 +692,7 @@ func (k *dinosaurService) UpdateStatus(id string, status constants2.DinosaurStat
 	return true, nil
 }
 
+// ChangeDinosaurCNAMErecords ...
 func (k *dinosaurService) ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
 	routes, err := dinosaurRequest.GetRoutes()
 	if routes == nil || err != nil {
@@ -696,6 +719,7 @@ func (k *dinosaurService) ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.Cent
 	return changeRecordsOutput, nil
 }
 
+// GetCNAMERecordStatus ...
 func (k *dinosaurService) GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error) {
 	awsConfig := aws.Config{
 		AccessKeyID:     k.awsConfig.Route53AccessKey,
@@ -717,11 +741,13 @@ func (k *dinosaurService) GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralReq
 	}, nil
 }
 
+// DinosaurStatusCount ...
 type DinosaurStatusCount struct {
 	Status constants2.DinosaurStatus
 	Count  int
 }
 
+// DinosaurRegionCount ...
 type DinosaurRegionCount struct {
 	Region       string
 	InstanceType string `gorm:"column:instance_type"`
@@ -729,6 +755,7 @@ type DinosaurRegionCount struct {
 	Count        int
 }
 
+// CountByRegionAndInstanceType ...
 func (k *dinosaurService) CountByRegionAndInstanceType() ([]DinosaurRegionCount, error) {
 	dbConn := k.connectionFactory.New()
 	var results []DinosaurRegionCount
@@ -740,6 +767,7 @@ func (k *dinosaurService) CountByRegionAndInstanceType() ([]DinosaurRegionCount,
 	return results, nil
 }
 
+// CountByStatus ...
 func (k *dinosaurService) CountByStatus(status []constants2.DinosaurStatus) ([]DinosaurStatusCount, error) {
 	dbConn := k.connectionFactory.New()
 	var results []DinosaurStatusCount
@@ -764,6 +792,7 @@ func (k *dinosaurService) CountByStatus(status []constants2.DinosaurStatus) ([]D
 	return results, nil
 }
 
+// DinosaurComponentVersions ...
 type DinosaurComponentVersions struct {
 	ID                             string
 	ClusterID                      string
@@ -775,6 +804,7 @@ type DinosaurComponentVersions struct {
 	DinosaurUpgrading              bool
 }
 
+// ListComponentVersions ...
 func (k *dinosaurService) ListComponentVersions() ([]DinosaurComponentVersions, error) {
 	dbConn := k.connectionFactory.New()
 	var results []DinosaurComponentVersions
@@ -784,6 +814,7 @@ func (k *dinosaurService) ListComponentVersions() ([]DinosaurComponentVersions, 
 	return results, nil
 }
 
+// ListDinosaursWithRoutesNotCreated ...
 func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 	var results []*dbapi.CentralRequest
@@ -793,6 +824,7 @@ func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralR
 	return results, nil
 }
 
+// BuildManagedDinosaurCR ...
 func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfig *config.DinosaurConfig, iamConfig *iam.IAMConfig) *manageddinosaur.ManagedDinosaur {
 	managedDinosaurCR := &manageddinosaur.ManagedDinosaur{
 		Id: dinosaurRequest.ID,

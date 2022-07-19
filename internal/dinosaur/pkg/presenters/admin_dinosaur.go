@@ -7,6 +7,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 )
 
+// PresentDinosaurRequestAdminEndpoint ...
 func PresentDinosaurRequestAdminEndpoint(dinosaurRequest *dbapi.CentralRequest, accountService account.AccountService) (*private.Dinosaur, *errors.ServiceError) {
 	// TODO implement presenter
 	var res *private.Dinosaur

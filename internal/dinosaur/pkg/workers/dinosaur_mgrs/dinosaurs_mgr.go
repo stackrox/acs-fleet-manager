@@ -56,6 +56,7 @@ func (k *DinosaurManager) Stop() {
 	k.StopWorker(k)
 }
 
+// Reconcile ...
 func (k *DinosaurManager) Reconcile() []error {
 	glog.Infoln("reconciling dinosaurs")
 	var encounteredErrors []error

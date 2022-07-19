@@ -30,6 +30,7 @@ var supportedAMSBillingModels map[string]struct{} = map[string]struct{}{
 	string(amsv1.BillingModelStandard):    {},
 }
 
+// CheckIfQuotaIsDefinedForInstanceType ...
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(dinosaur.OrganisationId)
 	if err != nil {
@@ -112,6 +113,7 @@ func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(extern
 	return billingModel, nil
 }
 
+// ReserveQuota ...
 func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
 	dinosaurId := dinosaur.ID
 
@@ -153,6 +155,7 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 	}
 }
 
+// DeleteQuota ...
 func (q amsQuotaService) DeleteQuota(subscriptionId string) *errors.ServiceError {
 	if subscriptionId == "" {
 		return nil

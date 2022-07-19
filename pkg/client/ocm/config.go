@@ -5,6 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// MockModeStubServer ...
 const (
 	MockModeStubServer            = "stub-server"
 	MockModeEmulateServer         = "emulate-server"
@@ -13,6 +14,7 @@ const (
 	ClusterLoggingOperatorAddonID = "cluster-logging-operator"
 )
 
+// OCMConfig ...
 type OCMConfig struct {
 	BaseURL                 string `json:"base_url"`
 	AmsUrl                  string `json:"ams_url"`
@@ -30,6 +32,7 @@ type OCMConfig struct {
 	FleetshardAddonID       string `json:"fleetshard_addon_id"`
 }
 
+// NewOCMConfig ...
 func NewOCMConfig() *OCMConfig {
 	return &OCMConfig{
 		BaseURL:                 "https://api-integration.6943.hive-integration.openshiftapps.com",
@@ -46,6 +49,7 @@ func NewOCMConfig() *OCMConfig {
 	}
 }
 
+// AddFlags ...
 func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ClientIDFile, "ocm-client-id-file", c.ClientIDFile, "File containing OCM API privileged account client-id")
 	fs.StringVar(&c.ClientSecretFile, "ocm-client-secret-file", c.ClientSecretFile, "File containing OCM API privileged account client-secret")
@@ -60,6 +64,7 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.FleetshardAddonID, "fleetshard-addon-id", c.FleetshardAddonID, "The name of the fleetshard operator addon")
 }
 
+// ReadFiles ...
 func (c *OCMConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(c.ClientIDFile, &c.ClientID)
 	if err != nil {

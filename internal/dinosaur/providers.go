@@ -23,6 +23,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/providers"
 )
 
+// EnvConfigProviders ...
 func EnvConfigProviders() di.Option {
 	return di.Options(
 		di.Provide(environments.NewDevelopmentEnvLoader, di.Tags{"env": environments2.DevelopmentEnv}),
@@ -33,6 +34,7 @@ func EnvConfigProviders() di.Option {
 	)
 }
 
+// ConfigProviders ...
 func ConfigProviders() di.Option {
 	return di.Options(
 
@@ -60,6 +62,7 @@ func ConfigProviders() di.Option {
 	)
 }
 
+// ServiceProviders ...
 func ServiceProviders() di.Option {
 	return di.Options(
 		di.Provide(services.NewClusterService),

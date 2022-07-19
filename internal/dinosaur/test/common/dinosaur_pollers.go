@@ -122,6 +122,7 @@ func WaitForDinosaurToBeDeleted(ctx context.Context, db *db.ConnectionFactory, c
 		Build().Poll()
 }
 
+// WaitForDinosaurClusterIDToBeAssigned ...
 func WaitForDinosaurClusterIDToBeAssigned(dbFactory *db.ConnectionFactory, dinosaurRequestName string) (*dbapi.CentralRequest, error) {
 	dinosaurFound := &dbapi.CentralRequest{}
 

@@ -12,6 +12,7 @@ type ConfigModule interface {
 	ReadFiles() error
 }
 
+// ServiceValidator ...
 type ServiceValidator interface {
 	Validate() error
 }
@@ -27,8 +28,13 @@ type RouteLoader interface {
 	AddRoutes(mainRouter *mux.Router) error
 }
 
+// EnvHook ...
 type EnvHook struct {
 	Func di.Invocation
 }
+
+// BeforeCreateServicesHook ...
 type BeforeCreateServicesHook EnvHook
+
+// AfterCreateServicesHook ...
 type AfterCreateServicesHook EnvHook

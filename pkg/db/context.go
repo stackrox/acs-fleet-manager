@@ -66,6 +66,7 @@ func Resolve(ctx context.Context) error {
 	return nil
 }
 
+// Begin ...
 func Begin(ctx context.Context) error {
 	tx, ok := ctx.Value(transactionKey).(*txFactory)
 	if !ok {
@@ -79,6 +80,7 @@ func Begin(ctx context.Context) error {
 	return nil
 }
 
+// AddPostCommitAction ...
 func AddPostCommitAction(ctx context.Context, f func()) error {
 	tx, ok := ctx.Value(transactionKey).(*txFactory)
 	if !ok {

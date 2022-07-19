@@ -26,6 +26,7 @@ var (
 	mapper   = "oidc-usermodel-attribute-mapper"
 )
 
+// IAMClient ...
 //go:generate moq -out client_moq.go . IAMClient
 type IAMClient interface {
 	CreateClient(client gocloak.Client, accessToken string) (string, error)
@@ -54,6 +55,7 @@ type IAMClient interface {
 	AddRealmRoleToUser(accessToken string, userId string, role gocloak.Role) error
 }
 
+// ClientRepresentation ...
 type ClientRepresentation struct {
 	Name                         string
 	ClientID                     string
@@ -77,6 +79,7 @@ type iamClient struct {
 
 var _ IAMClient = &iamClient{}
 
+// NewClient ...
 func NewClient(config *IAMConfig, realmConfig *IAMRealmConfig) *iamClient {
 	setTokenEndpoints(config, realmConfig)
 	client := gocloak.NewClient(config.BaseURL)
@@ -91,6 +94,7 @@ func NewClient(config *IAMConfig, realmConfig *IAMRealmConfig) *iamClient {
 	}
 }
 
+// ClientConfig ...
 func (ic *iamClient) ClientConfig(client ClientRepresentation) gocloak.Client {
 	publicClient := false
 	directAccess := false
@@ -110,6 +114,7 @@ func (ic *iamClient) ClientConfig(client ClientRepresentation) gocloak.Client {
 	}
 }
 
+// CreateProtocolMapperConfig ...
 func (ic *iamClient) CreateProtocolMapperConfig(name string) []gocloak.ProtocolMapperRepresentation {
 	protocolMapper := []gocloak.ProtocolMapperRepresentation{
 		{
@@ -135,6 +140,7 @@ func setTokenEndpoints(config *IAMConfig, realmConfig *IAMRealmConfig) {
 	realmConfig.ValidIssuerURI = config.BaseURL + "/auth/realms/" + realmConfig.Realm
 }
 
+// CreateClient ...
 func (ic *iamClient) CreateClient(client gocloak.Client, accessToken string) (string, error) {
 	internalClientID, err := ic.kcClient.CreateClient(ic.ctx, accessToken, ic.realmConfig.Realm, client)
 	if err != nil {
@@ -143,6 +149,7 @@ func (ic *iamClient) CreateClient(client gocloak.Client, accessToken string) (st
 	return internalClientID, err
 }
 
+// GetClient ...
 func (ic *iamClient) GetClient(clientId string, accessToken string) (*gocloak.Client, error) {
 	params := gocloak.GetClientsParams{
 		ClientID: &clientId,
@@ -159,6 +166,7 @@ func (ic *iamClient) GetClient(clientId string, accessToken string) (*gocloak.Cl
 	return nil, nil
 }
 
+// GetToken ...
 func (ic *iamClient) GetToken() (string, error) {
 	options := gocloak.TokenOptions{
 		ClientID:     &ic.realmConfig.ClientID,
@@ -180,6 +188,7 @@ func (ic *iamClient) GetToken() (string, error) {
 	return tokenResp.AccessToken, nil
 }
 
+// GetCachedToken ...
 func (ic *iamClient) GetCachedToken(tokenKey string) (string, error) {
 	cachedToken, isCached := ic.cache.Get(tokenKey)
 	ct, _ := cachedToken.(string)
@@ -189,6 +198,7 @@ func (ic *iamClient) GetCachedToken(tokenKey string) (string, error) {
 	return "", errors.Errorf("failed to retrieve cached token")
 }
 
+// GetClientSecret ...
 func (ic *iamClient) GetClientSecret(internalClientId string, accessToken string) (string, error) {
 	resp, err := ic.kcClient.GetClientSecret(ic.ctx, accessToken, ic.realmConfig.Realm, internalClientId)
 	if err != nil {
@@ -200,6 +210,7 @@ func (ic *iamClient) GetClientSecret(internalClientId string, accessToken string
 	return *resp.Value, err
 }
 
+// DeleteClient ...
 func (ic *iamClient) DeleteClient(internalClientID string, accessToken string) error {
 	return ic.kcClient.DeleteClient(ic.ctx, accessToken, ic.realmConfig.Realm, internalClientID)
 }
@@ -215,6 +226,7 @@ func (ic *iamClient) getClient(clientId string, accessToken string) ([]*gocloak.
 	return client, err
 }
 
+// GetClientById ...
 func (ic *iamClient) GetClientById(internalId string, accessToken string) (*gocloak.Client, error) {
 	client, err := ic.kcClient.GetClient(ic.ctx, accessToken, ic.realmConfig.Realm, internalId)
 	if err != nil {
@@ -223,14 +235,17 @@ func (ic *iamClient) GetClientById(internalId string, accessToken string) (*gocl
 	return client, err
 }
 
+// GetConfig ...
 func (ic *iamClient) GetConfig() *IAMConfig {
 	return ic.config
 }
 
+// GetRealmConfig ...
 func (ic *iamClient) GetRealmConfig() *IAMRealmConfig {
 	return ic.realmConfig
 }
 
+// IsClientExist ...
 func (ic *iamClient) IsClientExist(clientId string, accessToken string) (string, error) {
 	if clientId == "" {
 		return "", errors.New("clientId cannot be empty")
@@ -247,6 +262,7 @@ func (ic *iamClient) IsClientExist(clientId string, accessToken string) (string,
 	return "", err
 }
 
+// GetClientServiceAccount ...
 func (ic *iamClient) GetClientServiceAccount(accessToken string, internalClient string) (*gocloak.User, error) {
 	serviceAccountUser, err := ic.kcClient.GetClientServiceAccount(ic.ctx, accessToken, ic.realmConfig.Realm, internalClient)
 	if err != nil {
@@ -256,6 +272,7 @@ func (ic *iamClient) GetClientServiceAccount(accessToken string, internalClient 
 	return serviceAccountUser, err
 }
 
+// UpdateServiceAccountUser ...
 func (ic *iamClient) UpdateServiceAccountUser(accessToken string, serviceAccountUser gocloak.User) error {
 	err := ic.kcClient.UpdateUser(ic.ctx, accessToken, ic.realmConfig.Realm, serviceAccountUser)
 	if err != nil {
@@ -264,6 +281,7 @@ func (ic *iamClient) UpdateServiceAccountUser(accessToken string, serviceAccount
 	return err
 }
 
+// GetClients ...
 func (ic *iamClient) GetClients(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
 	params := gocloak.GetClientsParams{
 		First:                &first,
@@ -285,6 +303,7 @@ func (ic *iamClient) GetClients(accessToken string, first int, max int, attribut
 	return clients, err
 }
 
+// IsSameOrg ...
 func (ic *iamClient) IsSameOrg(client *gocloak.Client, orgId string) bool {
 	if orgId == "" {
 		return false
@@ -293,6 +312,7 @@ func (ic *iamClient) IsSameOrg(client *gocloak.Client, orgId string) bool {
 	return attributes[OrgKey] == orgId
 }
 
+// IsOwner ...
 func (ic *iamClient) IsOwner(client *gocloak.Client, userId string) bool {
 	if userId == "" {
 		return false
@@ -304,6 +324,7 @@ func (ic *iamClient) IsOwner(client *gocloak.Client, userId string) bool {
 	return false
 }
 
+// RegenerateClientSecret ...
 func (ic *iamClient) RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
 	credRep, err := ic.kcClient.RegenerateClientSecret(ic.ctx, accessToken, ic.realmConfig.Realm, id)
 	if err != nil {
@@ -312,6 +333,7 @@ func (ic *iamClient) RegenerateClientSecret(accessToken string, id string) (*goc
 	return credRep, err
 }
 
+// GetRealmRole ...
 func (ic *iamClient) GetRealmRole(accessToken string, roleName string) (*gocloak.Role, error) {
 	r, err := ic.kcClient.GetRealmRole(ic.ctx, accessToken, ic.realmConfig.Realm, roleName)
 	if err != nil {
@@ -323,6 +345,7 @@ func (ic *iamClient) GetRealmRole(accessToken string, roleName string) (*gocloak
 	return r, err
 }
 
+// CreateRealmRole ...
 func (ic *iamClient) CreateRealmRole(accessToken string, roleName string) (*gocloak.Role, error) {
 	r := &gocloak.Role{
 		Name: &roleName,
@@ -339,6 +362,7 @@ func (ic *iamClient) CreateRealmRole(accessToken string, roleName string) (*gocl
 	return r, nil
 }
 
+// UserHasRealmRole ...
 func (ic *iamClient) UserHasRealmRole(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
 	roles, err := ic.kcClient.GetRealmRolesByUserID(ic.ctx, accessToken, ic.realmConfig.Realm, userId)
 	if err != nil {
@@ -352,6 +376,7 @@ func (ic *iamClient) UserHasRealmRole(accessToken string, userId string, roleNam
 	return nil, nil
 }
 
+// AddRealmRoleToUser ...
 func (ic *iamClient) AddRealmRoleToUser(accessToken string, userId string, role gocloak.Role) error {
 	roles := []gocloak.Role{role}
 	err := ic.kcClient.AddRealmRoleToUser(ic.ctx, accessToken, ic.realmConfig.Realm, userId, roles)

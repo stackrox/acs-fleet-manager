@@ -18,13 +18,16 @@ var (
 	alternateTenantIdClaim string = "rh-org-id"
 )
 
+// ContextConfig ...
 type ContextConfig struct {
 }
 
+// NewContextConfig ...
 func NewContextConfig() *ContextConfig {
 	return &ContextConfig{}
 }
 
+// AddFlags ...
 func (c *ContextConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&tenantUsernameClaim, "tenant-username-claim", tenantUsernameClaim,
 		"Token claims key to retrieve the corresponding user principal.")
@@ -41,6 +44,7 @@ func (c *ContextConfig) AddFlags(fs *pflag.FlagSet) {
 
 }
 
+// ReadFiles ...
 func (c *ContextConfig) ReadFiles() error {
 	return nil
 }

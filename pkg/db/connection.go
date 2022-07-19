@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// ConnectionFactory ...
 type ConnectionFactory struct {
 	Config *DatabaseConfig
 	DB     *gorm.DB
@@ -95,7 +96,7 @@ func (f *ConnectionFactory) New() *gorm.DB {
 	return f.DB
 }
 
-// Checks to ensure a connection is present
+// CheckConnection Checks to ensure a connection is present
 func (f *ConnectionFactory) CheckConnection() error {
 	return f.DB.Exec("SELECT 1").Error
 }

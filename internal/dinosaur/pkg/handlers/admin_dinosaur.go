@@ -21,6 +21,7 @@ type adminDinosaurHandler struct {
 	providerConfig *config.ProviderConfig
 }
 
+// NewAdminDinosaurHandler ...
 func NewAdminDinosaurHandler(service services.DinosaurService, accountService account.AccountService, providerConfig *config.ProviderConfig) *adminDinosaurHandler {
 	return &adminDinosaurHandler{
 		service:        service,
@@ -29,6 +30,7 @@ func NewAdminDinosaurHandler(service services.DinosaurService, accountService ac
 	}
 }
 
+// Get ...
 func (h adminDinosaurHandler) Get(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
@@ -44,6 +46,7 @@ func (h adminDinosaurHandler) Get(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleGet(w, r, cfg)
 }
 
+// List ...
 func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -86,6 +89,7 @@ func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleList(w, r, cfg)
 }
 
+// Delete ...
 func (h adminDinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
@@ -103,6 +107,7 @@ func (h adminDinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
 }
 
+// Update ...
 func (h adminDinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var dinosaurUpdateReq private.DinosaurUpdateRequest

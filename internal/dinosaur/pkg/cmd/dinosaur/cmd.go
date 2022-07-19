@@ -8,6 +8,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// NewDinosaurCommand ...
 func NewDinosaurCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "dinosaur",

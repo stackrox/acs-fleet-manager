@@ -28,6 +28,7 @@ var (
 	}
 )
 
+// CentralCA ...
 const CentralCA = "test CA"
 
 type reconcileTracker struct {
@@ -51,6 +52,7 @@ func newReconcileTracker(scheme *runtime.Scheme) k8sTesting.ObjectTracker {
 	return reconcileTracker{ObjectTracker: k8sTesting.NewObjectTracker(scheme, clientgoscheme.Codecs.UniversalDecoder())}
 }
 
+// Create ...
 func (t reconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
 	if err := t.ObjectTracker.Create(gvr, obj, ns); err != nil {
 		return err

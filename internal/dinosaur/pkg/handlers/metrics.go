@@ -26,12 +26,14 @@ type metricsHandler struct {
 	service services.ObservatoriumService
 }
 
+// NewMetricsHandler ...
 func NewMetricsHandler(service services.ObservatoriumService) *metricsHandler {
 	return &metricsHandler{
 		service: service,
 	}
 }
 
+// FederateMetrics ...
 func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) {
 	dinosaurId := strings.TrimSpace(mux.Vars(r)["id"])
 	if dinosaurId == "" {
@@ -75,6 +77,7 @@ func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) 
 	promHandler.ServeHTTP(w, r)
 }
 
+// GetMetricsByRangeQuery ...
 func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}
@@ -109,6 +112,7 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 	handlers.HandleGet(w, r, cfg)
 }
 
+// GetMetricsByInstantQuery ...
 func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}

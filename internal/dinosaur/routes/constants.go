@@ -1,5 +1,6 @@
 package routes
 
+// Version ...
 const (
 	Version                           = "v1"
 	ApiEndpoint                       = "/api"

@@ -48,6 +48,7 @@ func ConvertClusterList(clusterList []api.Cluster) []map[string]interface{} {
 	return convertedClusterList
 }
 
+// ConvertClusters ...
 func ConvertClusters(clusterList []*api.Cluster) []map[string]interface{} {
 	var convertedClusterList []map[string]interface{}
 

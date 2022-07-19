@@ -57,6 +57,7 @@ func newClientGoClientSet() (client kubernetes.Interface, err error) {
 	return clientSet, err
 }
 
+// IsRoutesResourceEnabled ...
 func IsRoutesResourceEnabled() (bool, error) {
 	clientSet, err := newClientGoClientSet()
 	if err != nil {

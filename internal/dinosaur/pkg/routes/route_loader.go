@@ -55,10 +55,12 @@ type options struct {
 	FleetShardAuthZConfig       *auth.FleetShardAuthZConfig
 }
 
+// NewRouteLoader ...
 func NewRouteLoader(s options) environments.RouteLoader {
 	return &s
 }
 
+// AddRoutes ...
 func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	basePath := fmt.Sprintf("%s/%s", routes.ApiEndpoint, routes.DinosaursFleetManagementApiPrefix)
 	err := s.buildApiBaseRouter(mainRouter, basePath, "fleet-manager.yaml")

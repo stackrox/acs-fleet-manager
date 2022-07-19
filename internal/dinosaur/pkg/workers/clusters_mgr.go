@@ -68,10 +68,12 @@ var clusterMetricsStatuses = []api.ClusterStatus{
 	api.ClusterDeprovisioning,
 }
 
+// Worker ...
 type Worker = workers.Worker
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
 
+// ClusterManager ...
 type ClusterManager struct {
 	id           string
 	workerType   string
@@ -81,6 +83,7 @@ type ClusterManager struct {
 	ClusterManagerOptions
 }
 
+// ClusterManagerOptions ...
 type ClusterManagerOptions struct {
 	di.Inject
 	Reconciler                 workers.Reconciler
@@ -104,10 +107,12 @@ func NewClusterManager(o ClusterManagerOptions) *ClusterManager {
 	}
 }
 
+// GetStopChan ...
 func (c *ClusterManager) GetStopChan() *chan struct{} {
 	return &c.imStop
 }
 
+// GetSyncGroup ...
 func (c *ClusterManager) GetSyncGroup() *sync.WaitGroup {
 	return &c.syncTeardown
 }
@@ -117,6 +122,7 @@ func (c *ClusterManager) GetID() string {
 	return c.id
 }
 
+// GetWorkerType ...
 func (c *ClusterManager) GetWorkerType() string {
 	return c.workerType
 }
@@ -135,14 +141,17 @@ func (c *ClusterManager) Stop() {
 	metrics.SetLeaderWorkerMetric(c.workerType, false)
 }
 
+// IsRunning ...
 func (c *ClusterManager) IsRunning() bool {
 	return c.isRunning
 }
 
+// SetIsRunning ...
 func (c *ClusterManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
+// Reconcile ...
 func (c *ClusterManager) Reconcile() []error {
 	glog.Infoln("reconciling clusters")
 	var encounteredErrors []error

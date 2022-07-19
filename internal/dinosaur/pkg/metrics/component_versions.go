@@ -14,7 +14,7 @@ type versionsMetrics struct {
 	dinosaurVersion         *prometheus.GaugeVec
 }
 
-// need to invoked when the server is started and dinosaurService is initialised
+// RegisterVersionMetrics need to invoked when the server is started and dinosaurService is initialised
 func RegisterVersionMetrics(dinosaurService services.DinosaurService) {
 	m := newVersionMetrics(dinosaurService)
 	// for tests. This function will be called multiple times when run integration tests because `prometheus` is singleton
@@ -44,10 +44,12 @@ If the type is 'upgrade' it means the Dinosaur is being upgraded.
 	}
 }
 
+// Describe ...
 func (m *versionsMetrics) Describe(ch chan<- *prometheus.Desc) {
 	ch <- m.dinosaurOperatorVersion.WithLabelValues("", "", "", "").Desc()
 }
 
+// Collect ...
 func (m *versionsMetrics) Collect(ch chan<- prometheus.Metric) {
 	// list all the Dinosaur instances from dinosaurServices and generate metrics for each
 	// the generated metrics will be put on the channel

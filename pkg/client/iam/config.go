@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// IAMConfig ...
 type IAMConfig struct {
 	BaseURL                                    string                `json:"base_url"`
 	SsoBaseUrl                                 string                `json:"sso_base_url"`
@@ -28,6 +29,7 @@ type IAMConfig struct {
 	AdditionalSSOIssuers                       *AdditionalSSOIssuers `json:"-"`
 }
 
+// AdditionalSSOIssuers ...
 type AdditionalSSOIssuers struct {
 	URIs     []string
 	JWKSURIs []string
@@ -35,6 +37,7 @@ type AdditionalSSOIssuers struct {
 	Enabled  bool
 }
 
+// IAMRealmConfig ...
 type IAMRealmConfig struct {
 	BaseURL          string `json:"base_url"`
 	Realm            string `json:"realm"`
@@ -56,6 +59,7 @@ func (c *IAMRealmConfig) setDefaultURIs(baseURL string) {
 	c.TokenEndpointURI = baseURL + "/auth/realms/" + c.Realm + "/protocol/openid-connect/token"
 }
 
+// NewIAMConfig ...
 func NewIAMConfig() *IAMConfig {
 	kc := &IAMConfig{
 		SsoBaseUrl:            "https://sso.redhat.com",
@@ -76,6 +80,7 @@ func NewIAMConfig() *IAMConfig {
 	return kc
 }
 
+// AddFlags ...
 func (ic *IAMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&ic.BaseURL, "sso-base-url", ic.BaseURL, "The base URL of the sso, integration by default")
 	fs.BoolVar(&ic.Debug, "sso-debug", ic.Debug, "Debug flag for IAM API")
@@ -90,6 +95,7 @@ func (ic *IAMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&ic.AdditionalSSOIssuers.File, "additional-sso-issuers-file", ic.AdditionalSSOIssuers.File, "File containing a list of SSO issuer URIs to include for verifying tokens")
 }
 
+// ReadFiles ...
 func (ic *IAMConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(ic.RedhatSSORealm.ClientIDFile, &ic.RedhatSSORealm.ClientID)
 	if err != nil {

@@ -20,6 +20,7 @@ const (
 	ipdAlreadyCreatedErrorToCheck = "already exists"
 )
 
+// OCMProvider ...
 type OCMProvider struct {
 	ocmClient      ocm.Client
 	clusterBuilder ClusterBuilder
@@ -29,6 +30,7 @@ type OCMProvider struct {
 // blank assignment to verify that OCMProvider implements Provider
 var _ Provider = &OCMProvider{}
 
+// Create ...
 func (o *OCMProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 	// Build a new OSD cluster object
 	newCluster, err := o.clusterBuilder.NewOCMClusterFromCluster(request)
@@ -55,6 +57,7 @@ func (o *OCMProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec,
 	return result, nil
 }
 
+// CheckClusterStatus ...
 func (o *OCMProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
 	ocmCluster, err := o.ocmClient.GetCluster(spec.InternalID)
 	if err != nil {
@@ -83,6 +86,7 @@ func (o *OCMProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.Cluste
 	return spec, nil
 }
 
+// Delete ...
 func (o *OCMProvider) Delete(spec *types.ClusterSpec) (bool, error) {
 	code, err := o.ocmClient.DeleteCluster(spec.InternalID)
 	if err != nil && code != http.StatusNotFound {
@@ -91,6 +95,7 @@ func (o *OCMProvider) Delete(spec *types.ClusterSpec) (bool, error) {
 	return code == http.StatusNotFound, nil
 }
 
+// GetClusterDNS ...
 func (o *OCMProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (string, error) {
 	clusterDNS, err := o.ocmClient.GetClusterDNS(clusterSpec.InternalID)
 	if err != nil {
@@ -99,6 +104,7 @@ func (o *OCMProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (string, err
 	return clusterDNS, nil
 }
 
+// AddIdentityProvider ...
 func (o *OCMProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProviderInfo types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
 	if identityProviderInfo.OpenID != nil {
 		idpId, err := o.addOpenIDIdentityProvider(clusterSpec, *identityProviderInfo.OpenID)
@@ -111,6 +117,7 @@ func (o *OCMProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identi
 	return nil, nil
 }
 
+// ApplyResources ...
 func (o *OCMProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
 	existingSyncset, err := o.ocmClient.GetSyncSet(clusterSpec.InternalID, resources.Name)
 	syncSetFound := true
@@ -139,6 +146,7 @@ func (o *OCMProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources t
 	return &resources, nil
 }
 
+// ScaleUp ...
 func (o *OCMProvider) ScaleUp(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
 	_, err := o.ocmClient.ScaleUpComputeNodes(clusterSpec.InternalID, increment)
 	if err != nil {
@@ -147,6 +155,7 @@ func (o *OCMProvider) ScaleUp(clusterSpec *types.ClusterSpec, increment int) (*t
 	return clusterSpec, nil
 }
 
+// ScaleDown ...
 func (o *OCMProvider) ScaleDown(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
 	_, err := o.ocmClient.ScaleDownComputeNodes(clusterSpec.InternalID, decrement)
 	if err != nil {
@@ -155,6 +164,7 @@ func (o *OCMProvider) ScaleDown(clusterSpec *types.ClusterSpec, decrement int) (
 	return clusterSpec, nil
 }
 
+// SetComputeNodes ...
 func (o *OCMProvider) SetComputeNodes(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
 	_, err := o.ocmClient.SetComputeNodes(clusterSpec.InternalID, numNodes)
 	if err != nil {
@@ -163,6 +173,7 @@ func (o *OCMProvider) SetComputeNodes(clusterSpec *types.ClusterSpec, numNodes i
 	return clusterSpec, nil
 }
 
+// GetComputeNodes ...
 func (o *OCMProvider) GetComputeNodes(clusterSpec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
 	ocmCluster, err := o.ocmClient.GetCluster(clusterSpec.InternalID)
 	if err != nil {
@@ -199,10 +210,12 @@ func (o *OCMProvider) GetComputeNodes(clusterSpec *types.ClusterSpec) (*types.Co
 	}, nil
 }
 
+// InstallDinosaurOperator ...
 func (o *OCMProvider) InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error) {
 	return o.installAddon(clusterSpec, o.ocmConfig.DinosaurOperatorAddonID)
 }
 
+// InstallFleetshard ...
 func (o *OCMProvider) InstallFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 	return o.installAddonWithParams(clusterSpec, o.ocmConfig.FleetshardAddonID, params)
 }
@@ -255,6 +268,7 @@ func (o *OCMProvider) installAddonWithParams(clusterSpec *types.ClusterSpec, add
 	return false, nil
 }
 
+// GetCloudProviders ...
 func (o *OCMProvider) GetCloudProviders() (*types.CloudProviderInfoList, error) {
 	list := types.CloudProviderInfoList{}
 	providerList, err := o.ocmClient.GetCloudProviders()
@@ -275,6 +289,7 @@ func (o *OCMProvider) GetCloudProviders() (*types.CloudProviderInfoList, error) 
 	return &list, nil
 }
 
+// GetCloudProviderRegions ...
 func (o *OCMProvider) GetCloudProviderRegions(providerInfo types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
 	list := types.CloudProviderRegionInfoList{}
 	cp, err := clustersmgmtv1.NewCloudProvider().ID(providerInfo.ID).Name(providerInfo.Name).DisplayName(providerInfo.DisplayName).Build()

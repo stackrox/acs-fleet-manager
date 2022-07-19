@@ -25,6 +25,7 @@ import (
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// FreeStatus ...
 const (
 	FreeStatus int32 = iota
 	BlockedStatus
@@ -367,6 +368,7 @@ func (r CentralReconciler) ensureReencryptRouteDeleted(ctx context.Context, name
 	return false, nil
 }
 
+// NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, useRoutes, createAuthProvider bool) *CentralReconciler {
 	return &CentralReconciler{
 		client:             k8sClient,

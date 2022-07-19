@@ -2,6 +2,7 @@ package environments
 
 import "github.com/stackrox/acs-fleet-manager/pkg/environments"
 
+// NewStageEnvLoader ...
 func NewStageEnvLoader() environments.EnvLoader {
 	return environments.SimpleEnvLoader{
 		"ocm-base-url":                         "https://api.stage.openshift.com",

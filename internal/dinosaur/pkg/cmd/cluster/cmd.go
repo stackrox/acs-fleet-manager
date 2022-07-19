@@ -8,6 +8,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// NewClusterCommand ...
 func NewClusterCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cluster",
