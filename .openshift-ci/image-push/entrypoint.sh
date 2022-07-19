@@ -62,7 +62,7 @@ log
 
 registry_host=$(echo "$IMAGE_PUSH_REGISTRY" | cut -d / -f 1)
 tag=$(make -s -C "$GITROOT" tag)
-image_tag="${IMAGE_PUSH_REGISTRY}/acs-fleet-manager:${tag}"
+image_tag="${IMAGE_PUSH_REGISTRY}/fleet-manager:${tag}"
 
 if [[ -z "$IMAGE_PUSH_REGISTRY" ]]; then
     die "Error: IMAGE_PUSH_REGISTRY not found."
