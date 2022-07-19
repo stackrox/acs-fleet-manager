@@ -10,8 +10,10 @@
 #
 
 make \
+  CLUSTER_ID="1smhq7nc0ncfv2jbjgf48q7e6qb943ou" \
   DP_CLOUD_PROVIDER="aws" \
   DP_REGION="us-east-1" \
   FLEET_MANAGER_ENDPOINT="${ACS_FLEET_MANAGER_ENDPOINT}" \
-  OCM_TOKEN="${OCM_TOKEN}" \
-  test/e2e/stage
+  AUTH_TYPE="STATIC_TOKEN" \
+  STATIC_TOKEN="${OCM_TOKEN}" \
+  test/e2e

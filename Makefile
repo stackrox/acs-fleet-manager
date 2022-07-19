@@ -218,7 +218,6 @@ help:
 	@echo "make run/docs                    run swagger and host the api spec"
 	@echo "make test                        run unit tests"
 	@echo "make test/integration            run integration tests"
-	@echo "make test/e2e/stage              run e2e tests on stage environment"
 	@echo "make code/fix                    format files"
 	@echo "make generate                    generate go and openapi modules"
 	@echo "make openapi/generate            generate openapi modules"
@@ -358,10 +357,6 @@ test/e2e:
 test/e2e/cleanup:
 	./e2e/cleanup.sh
 .PHONY: test/e2e/cleanup
-
-test/e2e/stage:
-	CLUSTER_ID=1smhq7nc0ncfv2jbjgf48q7e6qb943ou RUN_E2E=true go test $(GOARGS) -bench -v -count=1 ./e2e/...
-.PHONY: test/e2e
 
 # generate files
 generate: moq openapi/generate
