@@ -107,8 +107,9 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 			}
 
 			for i := range cloudProviders {
-				_, cloudProviders[i].Enabled = h.supportedProviders.GetByName(cloudProviders[i].Id)
-				converted := presenters.PresentCloudProvider(&cloudProviders[i])
+				cloudProvider := cloudProviders[i]
+				_, cloudProvider.Enabled = h.supportedProviders.GetByName(cloudProvider.Id)
+				converted := presenters.PresentCloudProvider(&cloudProvider)
 				cloudProviderList.Items = append(cloudProviderList.Items, converted)
 			}
 			h.cache.Set(cloudProvidersCacheKey, cloudProviderList, cache.DefaultExpiration)
