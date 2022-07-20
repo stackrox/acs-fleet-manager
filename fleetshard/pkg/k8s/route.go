@@ -26,18 +26,22 @@ type RouteService struct {
 	client ctrlClient.Client
 }
 
+// NewRouteService creates a new instance of RouteService.
 func NewRouteService(client ctrlClient.Client) *RouteService {
 	return &RouteService{client: client}
 }
 
+// FindReencryptRoute returns central reencrypt route or error if not found.
 func (s *RouteService) FindReencryptRoute(ctx context.Context, namespace string) (*openshiftRouteV1.Route, error) {
 	return s.findRoute(ctx, namespace, centralReencryptRouteName)
 }
 
+// FindReencryptCanonicalHostname returns a canonical hostname of central reencrypt route or error if not found.
 func (s *RouteService) FindReencryptCanonicalHostname(ctx context.Context, namespace string) (string, error) {
 	return s.findCanonicalHostname(ctx, namespace, centralReencryptRouteName)
 }
 
+// FindMTLSCanonicalHostname returns a canonical hostname of central MTLS route or error if not found.
 func (s *RouteService) FindMTLSCanonicalHostname(ctx context.Context, namespace string) (string, error) {
 	return s.findCanonicalHostname(ctx, namespace, centralMTLSRouteName)
 }
@@ -74,6 +78,7 @@ func newReencryptRoute(namespace string) *openshiftRouteV1.Route {
 	}
 }
 
+// CreateReencryptRoute creates a new managed central reencrypt route.
 func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	centralTLSSecret := &v1.Secret{}
 	namespace := remoteCentral.Metadata.Namespace
