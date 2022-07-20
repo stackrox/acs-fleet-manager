@@ -50,9 +50,8 @@ func Test_FindFirst(t *testing.T) {
 				predicate: func(x interface{}) bool {
 					if val, ok := x.(int); ok {
 						return val > 5
-					} else {
-						return false
 					}
+					return false
 				},
 				values: []interface{}{1, 2, "Hello", 4, 5, 6, 7, 8},
 			},

@@ -25,11 +25,10 @@ func ServiceProviders() di.Option {
 func NewAuthorization(ocmConfig *ocm.OCMConfig) Authorization {
 	if ocmConfig.EnableMock {
 		return NewMockAuthorization()
-	} else {
-		connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsUrl)
-		if err != nil {
-			logger.Logger.Error(err)
-		}
-		return NewOCMAuthorization(connection)
 	}
+	connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsUrl)
+	if err != nil {
+		logger.Logger.Error(err)
+	}
+	return NewOCMAuthorization(connection)
 }

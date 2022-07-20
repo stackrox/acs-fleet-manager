@@ -300,7 +300,7 @@ func (c clusterService) FindClusterByID(clusterID string) (*api.Cluster, *apiErr
 	}
 	dbConn := c.connectionFactory.New()
 
-	var cluster *api.Cluster = &api.Cluster{}
+	cluster := &api.Cluster{}
 
 	clusterDetails := &api.Cluster{
 		ClusterID: clusterID,
@@ -435,7 +435,7 @@ func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceEr
 func (c clusterService) FindNonEmptyClusterById(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
 
-	var cluster *api.Cluster = &api.Cluster{}
+	cluster := &api.Cluster{}
 
 	clusterDetails := &api.Cluster{
 		ClusterID: clusterID,
@@ -653,11 +653,11 @@ func (c clusterService) Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceEr
 	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
-	if removed, err := p.Delete(buildClusterSpec(cluster)); err != nil {
+	removed, err := p.Delete(buildClusterSpec(cluster))
+	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to delete the cluster from the provider")
-	} else {
-		return removed, nil
 	}
+	return removed, nil
 }
 
 // ConfigureAndSaveIdentityProvider ...
@@ -699,11 +699,11 @@ func (c clusterService) InstallDinosaurOperator(cluster *api.Cluster) (bool, *ap
 	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
-	if ready, err := p.InstallDinosaurOperator(buildClusterSpec(cluster)); err != nil {
+	ready, err := p.InstallDinosaurOperator(buildClusterSpec(cluster))
+	if err != nil {
 		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install dinosaur for cluster %s", cluster.ClusterID)
-	} else {
-		return ready, nil
 	}
+	return ready, nil
 }
 
 func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {

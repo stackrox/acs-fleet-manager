@@ -108,7 +108,7 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Cent
 		if err != nil {
 			err = errors.Wrapf(err, "failed to get desired dinosaur operator version %s", dinosaur.ID)
 		} else {
-			err = errors.New(fmt.Sprintf("failed to get desired dinosaur operator version %s", dinosaur.ID))
+			err = errors.Errorf("failed to get desired dinosaur operator version %s", dinosaur.ID)
 		}
 		dinosaur.FailedReason = err.Error()
 		if err2 := k.dinosaurService.Update(dinosaur); err2 != nil {
@@ -122,7 +122,7 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Cent
 
 	// Set desired Dinosaur version
 	if len(selectedDinosaurOperatorVersion.CentralVersions) == 0 {
-		return errors.New(fmt.Sprintf("failed to get Dinosaur version %s", dinosaur.ID))
+		return fmt.Errorf("failed to get Dinosaur version %s", dinosaur.ID)
 	}
 	dinosaur.DesiredCentralVersion = selectedDinosaurOperatorVersion.CentralVersions[len(selectedDinosaurOperatorVersion.CentralVersions)-1].Version
 

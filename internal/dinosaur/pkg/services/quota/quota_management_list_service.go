@@ -83,9 +83,8 @@ func (q QuotaManagementListService) ReserveQuota(dinosaur *dbapi.CentralRequest,
 	if quotaManagementListItem != nil && instanceType == types.STANDARD {
 		if quotaManagementListItem.IsInstanceCountWithinLimit(totalInstanceCount) {
 			return "", nil
-		} else {
-			return "", errors.MaximumAllowedInstanceReached(message)
 		}
+		return "", errors.MaximumAllowedInstanceReached(message)
 	}
 
 	if instanceType == types.EVAL && quotaManagementListItem == nil {

@@ -72,11 +72,11 @@ func (o *fleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.
 		Status:         cluster.Status,
 		AdditionalInfo: cluster.ClusterSpec,
 	}
-	if ready, err := p.InstallFleetshard(spec, params); err != nil {
+	ready, err := p.InstallFleetshard(spec, params)
+	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to install addon %s for cluster %s", fleetshardAddonID, cluster.ClusterID)
-	} else {
-		return ready, nil
 	}
+	return ready, nil
 }
 
 // ReconcileParameters ...

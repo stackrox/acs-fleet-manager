@@ -432,7 +432,7 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 
 	if dbConn.RowsAffected >= 1 {
 		glog.Infof("%v dinosaurs are now deprovisioning for users %v", dbConn.RowsAffected, users)
-		var counter int64 = 0
+		var counter int64
 		for ; counter < dbConn.RowsAffected; counter++ {
 			metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.DinosaurOperationDeprovision)
 			metrics.IncreaseDinosaurSuccessOperationsCountMetric(constants2.DinosaurOperationDeprovision)
@@ -458,7 +458,7 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *e
 
 	if db.RowsAffected >= 1 {
 		glog.Infof("%v dinosaur_request's lifespans are over %d hours and have had their status updated to deprovisioning", db.RowsAffected, dinosaurAgeInHours)
-		var counter int64 = 0
+		var counter int64
 		for ; counter < db.RowsAffected; counter++ {
 			metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.DinosaurOperationDeprovision)
 			metrics.IncreaseDinosaurSuccessOperationsCountMetric(constants2.DinosaurOperationDeprovision)
@@ -656,27 +656,26 @@ func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dino
 		}
 
 		return k.Update(dinosaurRequest)
-	} else {
-		return errors.New(errors.ErrorUnauthenticated, "User not authenticated")
 	}
+	return errors.New(errors.ErrorUnauthenticated, "User not authenticated")
 }
 
 // UpdateStatus ...
 func (k *dinosaurService) UpdateStatus(id string, status constants2.DinosaurStatus) (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 
-	if dinosaur, err := k.GetById(id); err != nil {
+	dinosaur, err := k.GetById(id)
+	if err != nil {
 		return true, errors.NewWithCause(errors.ErrorGeneral, err, "failed to update status")
-	} else {
-		// only allow to change the status to "deleting" if the cluster is already in "deprovision" status
-		if dinosaur.Status == constants2.DinosaurRequestStatusDeprovision.String() && status != constants2.DinosaurRequestStatusDeleting {
-			return false, errors.GeneralError("failed to update status: cluster is deprovisioning")
-		}
+	}
+	// only allow to change the status to "deleting" if the cluster is already in "deprovision" status
+	if dinosaur.Status == constants2.DinosaurRequestStatusDeprovision.String() && status != constants2.DinosaurRequestStatusDeleting {
+		return false, errors.GeneralError("failed to update status: cluster is deprovisioning")
+	}
 
-		if dinosaur.Status == status.String() {
-			// no update needed
-			return false, errors.GeneralError("failed to update status: the cluster %s is already in %s state", id, status.String())
-		}
+	if dinosaur.Status == status.String() {
+		// no update needed
+		return false, errors.GeneralError("failed to update status: the cluster %s is already in %s state", id, status.String())
 	}
 
 	update := &dbapi.CentralRequest{Status: status.String()}

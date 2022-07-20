@@ -83,17 +83,16 @@ func (k *CentralRequest) GetRoutes() ([]DataPlaneCentralRoute, error) {
 	}
 	if err := json.Unmarshal(k.Routes, &routes); err != nil {
 		return nil, err
-	} else {
-		return routes, nil
 	}
+	return routes, nil
 }
 
 // SetRoutes ...
 func (k *CentralRequest) SetRoutes(routes []DataPlaneCentralRoute) error {
-	if r, err := json.Marshal(routes); err != nil {
+	r, err := json.Marshal(routes)
+	if err != nil {
 		return err
-	} else {
-		k.Routes = r
-		return nil
 	}
+	k.Routes = r
+	return nil
 }

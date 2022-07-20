@@ -172,8 +172,8 @@ func readFileProvidersConfig(file string, val *ProviderConfiguration) error {
 }
 
 // GetDefault ...
-func (c ProviderList) GetDefault() (Provider, error) {
-	for _, p := range c {
+func (pl ProviderList) GetDefault() (Provider, error) {
+	for _, p := range pl {
 		if p.Default {
 			return p, nil
 		}

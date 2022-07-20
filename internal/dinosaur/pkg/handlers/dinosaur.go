@@ -45,7 +45,7 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.ValidateAsyncEnabled(r, "creating central requests"),
 			handlers.ValidateLength(&dinosaurRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxDinosaurNameLength),
 			ValidDinosaurClusterName(&dinosaurRequest.Name, "name"),
-			ValidateDinosaurClusterNameIsUnique(&dinosaurRequest.Name, h.service, r.Context()),
+			ValidateDinosaurClusterNameIsUnique(r.Context(), &dinosaurRequest.Name, h.service),
 			ValidateDinosaurClaims(ctx, &dinosaurRequest, convDinosaur),
 			ValidateCloudProvider(&h.service, convDinosaur, h.providerConfig, "creating central requests"),
 			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating central requests"),

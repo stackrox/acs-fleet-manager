@@ -147,7 +147,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	// Check whether deployment is ready.
-	err, centralReady := isCentralReady(ctx, r.client, remoteCentral)
+	centralReady, err := isCentralReady(ctx, r.client, remoteCentral)
 	if err != nil {
 		return nil, err
 	}
@@ -163,27 +163,26 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		err = createRHSSOAuthProvider(ctx, remoteCentral, r.client)
 		if err != nil {
 			return nil, err
-		} else {
-			r.createAuthProvider = false
 		}
+		r.createAuthProvider = false
 	}
 
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
 	return readyStatus(), nil
 }
 
-func isCentralReady(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (error, bool) {
+func isCentralReady(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (bool, error) {
 	deployment := &appsv1.Deployment{}
 	err := client.Get(ctx,
 		ctrlClient.ObjectKey{Name: "central", Namespace: central.Metadata.Namespace},
 		deployment)
 	if err != nil {
-		return err, false
+		return false, err
 	}
 	if deployment.Status.UnavailableReplicas == 0 {
-		return nil, true
+		return true, nil
 	}
-	return nil, false
+	return false, nil
 }
 
 func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {

@@ -32,7 +32,7 @@ func ValidDinosaurClusterName(value *string, field string) handlers.Validate {
 }
 
 // ValidateDinosaurClusterNameIsUnique returns a validator that validates that the dinosaur cluster name is unique
-func ValidateDinosaurClusterNameIsUnique(name *string, dinosaurService services.DinosaurService, context context.Context) handlers.Validate {
+func ValidateDinosaurClusterNameIsUnique(context context.Context, name *string, dinosaurService services.DinosaurService) handlers.Validate {
 	return func() *errors.ServiceError {
 
 		_, pageMeta, err := dinosaurService.List(context, &coreServices.ListArguments{Page: 1, Size: 1, Search: fmt.Sprintf("name = %s", *name)})

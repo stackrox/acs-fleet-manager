@@ -357,9 +357,8 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 
 	if err = yaml.Unmarshal([]byte(fileContents), &c); err != nil {
 		return nil, err
-	} else {
-		return c.ClusterList, nil
 	}
+	return c.ClusterList, nil
 }
 
 // FindClusterNameByClusterId ...

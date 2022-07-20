@@ -14,7 +14,7 @@ import (
 )
 
 // RepeatInterval ...
-var RepeatInterval time.Duration = 30 * time.Second
+var RepeatInterval = 30 * time.Second
 
 // Reconciler ...
 type Reconciler struct {

@@ -16,9 +16,12 @@ import (
 
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 
+	// TODO why is this imported?
 	_ "github.com/auth0/go-jwt-middleware/v2"
-	sentryhttp "github.com/getsentry/sentry-go/http"
+	// TODO why is this imported?
 	_ "github.com/golang-jwt/jwt/v4"
+
+	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/golang/glog"
 	gorillahandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"

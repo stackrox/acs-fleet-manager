@@ -25,11 +25,10 @@ func ServiceProviders() di.Option {
 func NewAccount(ocmConfig *ocm.OCMConfig) AccountService {
 	if ocmConfig.EnableMock {
 		return NewMockAccountService()
-	} else {
-		connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsUrl)
-		if err != nil {
-			logger.Logger.Error(err)
-		}
-		return NewAccountService(connection)
 	}
+	connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsUrl)
+	if err != nil {
+		logger.Logger.Error(err)
+	}
+	return NewAccountService(connection)
 }

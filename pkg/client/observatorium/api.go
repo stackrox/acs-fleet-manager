@@ -125,7 +125,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 
 	}
 	if len(failedMetrics) > 0 {
-		return errors.New(fmt.Sprintf("Failed to fetch metrics data [%s]", strings.Join(failedMetrics, ",")))
+		return errors.Errorf("Failed to fetch metrics data [%s]", strings.Join(failedMetrics, ","))
 	}
 	return nil
 }

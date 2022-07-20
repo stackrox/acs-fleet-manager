@@ -6,16 +6,16 @@ import (
 
 var (
 	// OCM token claim keys.
-	tenantUsernameClaim string = "username"
-	tenantIdClaim       string = "org_id"
-	tenantOrgAdminClaim string = "is_org_admin"
+	tenantUsernameClaim = "username"
+	tenantIdClaim       = "org_id"
+	tenantOrgAdminClaim = "is_org_admin"
 
 	// sso.redhat.com token claim keys.
-	alternateTenantUsernameClaim string = "preferred_username"
-	tenantUserIdClaim            string = "account_id"
-	tenantSubClaim               string = "sub"
+	alternateTenantUsernameClaim = "preferred_username"
+	tenantUserIdClaim            = "account_id"
+	tenantSubClaim               = "sub"
 	// Only service accounts that have been created via the service_accounts API have this claim set.
-	alternateTenantIdClaim string = "rh-org-id"
+	alternateTenantIdClaim = "rh-org-id"
 )
 
 // ContextConfig ...

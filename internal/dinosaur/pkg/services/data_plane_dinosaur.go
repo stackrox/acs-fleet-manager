@@ -112,9 +112,9 @@ func (d *dataPlaneDinosaurService) setDinosaurClusterReady(dinosaur *dbapi.Centr
 	if !dinosaur.RoutesCreated {
 		logger.Logger.V(10).Infof("routes for dinosaur %s are not created", dinosaur.ID)
 		return nil
-	} else {
-		logger.Logger.Infof("routes for dinosaur %s are created", dinosaur.ID)
 	}
+	logger.Logger.Infof("routes for dinosaur %s are created", dinosaur.ID)
+
 	// only send metrics data if the current dinosaur request is in "provisioning" status as this is the only case we want to report
 	shouldSendMetric, err := d.checkDinosaurRequestCurrentStatus(dinosaur, constants2.DinosaurRequestStatusProvisioning)
 	if err != nil {
@@ -230,9 +230,8 @@ func (d *dataPlaneDinosaurService) setDinosaurClusterDeleting(dinosaur *dbapi.Ce
 	if ok, updateErr := d.dinosaurService.UpdateStatus(dinosaur.ID, constants2.DinosaurRequestStatusDeleting); ok {
 		if updateErr != nil {
 			return serviceError.NewWithCause(updateErr.Code, updateErr, "failed to update status %s for dinosaur cluster %s", constants2.DinosaurRequestStatusDeleting, dinosaur.ID)
-		} else {
-			metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusDeleting, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		}
+		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusDeleting, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 	}
 	return nil
 }

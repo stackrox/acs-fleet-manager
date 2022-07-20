@@ -28,17 +28,16 @@ func WaitForNumberOfDinosaurToBeGivenCount(ctx context.Context, db *db.Connectio
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentCount == -1 {
 				return fmt.Sprintf("Waiting for dinosaurs count to become %d", count)
-			} else {
-				return fmt.Sprintf("Waiting for dinosaurs count to become %d (current %d)", count, currentCount)
 			}
+			return fmt.Sprintf("Waiting for dinosaurs count to become %d (current %d)", count, currentCount)
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			if list, _, err := client.DefaultApi.GetCentrals(ctx, nil); err != nil {
+			list, _, err := client.DefaultApi.GetCentrals(ctx, nil)
+			if err != nil {
 				return false, err
-			} else {
-				currentCount = list.Size
-				return currentCount == count, err
 			}
+			currentCount = list.Size
+			return currentCount == count, err
 		}).
 		Build().Poll()
 }
@@ -52,9 +51,8 @@ func WaitForDinosaurCreateToBeAccepted(ctx context.Context, db *db.ConnectionFac
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentStatus == "" {
 				return "Waiting for dinosaur creation to be accepted"
-			} else {
-				return fmt.Sprintf("Waiting for dinosaur creation to be accepted (current status %s)", currentStatus)
 			}
+			return fmt.Sprintf("Waiting for dinosaur creation to be accepted (current status %s)", currentStatus)
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			dinosaur, resp, err = client.DefaultApi.CreateCentral(ctx, true, k)
@@ -78,9 +76,8 @@ func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory,
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentStatus == "" {
 				return fmt.Sprintf("Waiting for dinosaur '%s' to reach status '%s'", dinosaurId, status.String())
-			} else {
-				return fmt.Sprintf("Waiting for dinosaur '%s' to reach status '%s' (current status %s)", dinosaurId, status.String(), currentStatus)
 			}
+			return fmt.Sprintf("Waiting for dinosaur '%s' to reach status '%s' (current status %s)", dinosaurId, status.String(), currentStatus)
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			dinosaur, _, err = client.DefaultApi.GetCentralById(ctx, dinosaurId)

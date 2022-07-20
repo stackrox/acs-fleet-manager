@@ -200,11 +200,11 @@ func (p *queryParser) Parse(sql string) (*DBQuery, error) {
 	scanner.Init(sql)
 
 	for scanner.Next() {
-		if next, err := state.parse(scanner.Token().Value); err != nil {
+		next, err := state.parse(scanner.Token().Value)
+		if err != nil {
 			return nil, errors.Errorf("[%d] error parsing the filter: %v", scanner.Token().Position+1, err)
-		} else {
-			state = next
 		}
+		state = next
 	}
 
 	if err := state.eof(); err != nil {

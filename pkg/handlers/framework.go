@@ -203,14 +203,13 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 				}
 				_ = json.NewEncoder(w).Encode(result)
 				return
-			} else {
-				if result == nil {
-					return // the event stream was done.
-				}
-				_ = json.NewEncoder(w).Encode(result)
-				_, _ = fmt.Fprint(w, "\n")
-				flusher.Flush() // sends the result to the client (forces Transfer-Encoding: chunked)
 			}
+			if result == nil {
+				return // the event stream was done.
+			}
+			_ = json.NewEncoder(w).Encode(result)
+			_, _ = fmt.Fprint(w, "\n")
+			flusher.Flush() // sends the result to the client (forces Transfer-Encoding: chunked)
 		}
 	} else {
 		shared.WriteJSONResponse(w, http.StatusOK, results)

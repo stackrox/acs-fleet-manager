@@ -17,8 +17,10 @@ const (
 	// gocloak access token duration before expiration
 	tokenLifeDuration    = 5 * time.Minute
 	cacheCleanupInterval = 5 * time.Minute
-	OrgKey               = "rh-org-id"
-	UserKey              = "rh-user-id"
+	// OrgKey ...
+	OrgKey = "rh-org-id"
+	// UserKey ...
+	UserKey = "rh-user-id"
 )
 
 var (

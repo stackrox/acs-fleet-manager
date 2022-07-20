@@ -1,6 +1,5 @@
 // Package cloudprovider contains commands for interacting with cloud provider service directly instead of through the
 // REST API exposed via the serve command.
-
 package cloudprovider
 
 import (

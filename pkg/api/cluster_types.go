@@ -258,7 +258,7 @@ func CompareSemanticVersionsMajorAndMinor(current, desired string) (int, error) 
 
 // DeepCopy ...
 func (s *CentralOperatorVersion) DeepCopy() *CentralOperatorVersion {
-	var res CentralOperatorVersion = *s
+	res := *s
 	res.CentralVersions = nil
 
 	if s.CentralVersions != nil {
@@ -376,11 +376,10 @@ func (cluster *Cluster) SetAvailableCentralOperatorVersions(availableCentralOper
 	if sortedVersions == nil {
 		sortedVersions = []CentralOperatorVersion{}
 	}
-
-	if v, err := json.Marshal(sortedVersions); err != nil {
+	v, err := json.Marshal(sortedVersions)
+	if err != nil {
 		return err
-	} else {
-		cluster.AvailableCentralOperatorVersions = v
-		return nil
 	}
+	cluster.AvailableCentralOperatorVersions = v
+	return nil
 }

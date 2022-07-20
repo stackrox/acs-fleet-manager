@@ -533,9 +533,8 @@ func shouldApplyChanges(dynamicClient dynamic.ResourceInterface, existingObj *un
 		lastApplied, ok := originalAnnotations[lastAppliedConfigurationAnnotation]
 		if !ok {
 			return true // new object, create it
-		} else {
-			return newConfiguration != lastApplied // check if configuration has changed before applying changes
 		}
+		return newConfiguration != lastApplied // check if configuration has changed before applying changes
 	}
 
 	return true

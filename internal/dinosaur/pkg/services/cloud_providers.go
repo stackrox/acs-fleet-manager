@@ -16,7 +16,7 @@ import (
 
 const keyCloudProvidersWithRegions = "cloudProviderWithRegions"
 
-var cloudPoviderIdToDisplayNameMapping map[string]string = map[string]string{
+var cloudPoviderIdToDisplayNameMapping = map[string]string{
 	"aws":   "Amazon Web Services",
 	"azure": "Microsoft Azure",
 	"gcp":   "Google Cloud Platform",
@@ -92,7 +92,7 @@ func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWi
 
 	}
 
-	var cloudProviderWithRegions []CloudProviderWithRegions = []CloudProviderWithRegions{}
+	var cloudProviderWithRegions = []CloudProviderWithRegions{}
 	for key, regions := range cloudProvidersToRegions {
 		cloudProviderWithRegions = append(cloudProviderWithRegions, CloudProviderWithRegions{
 			ID:         key,

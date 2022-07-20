@@ -25,7 +25,7 @@ func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder
 	return rr
 }
 
-var supportedAMSBillingModels map[string]struct{} = map[string]struct{}{
+var supportedAMSBillingModels = map[string]struct{}{
 	string(amsv1.BillingModelMarketplace): {},
 	string(amsv1.BillingModelStandard):    {},
 }
@@ -66,9 +66,8 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 			for _, rr := range qc.RelatedResources() {
 				if _, isCompatibleBillingModel := supportedAMSBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
 					return true, nil
-				} else {
-					foundUnsupportedBillingModel = rr.BillingModel()
 				}
+				foundUnsupportedBillingModel = rr.BillingModel()
 			}
 		}
 	}
@@ -150,9 +149,8 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 
 	if resp.Allowed() {
 		return resp.Subscription().ID(), nil
-	} else {
-		return "", errors.InsufficientQuotaError("Insufficient Quota")
 	}
+	return "", errors.InsufficientQuotaError("Insufficient Quota")
 }
 
 // DeleteQuota ...
