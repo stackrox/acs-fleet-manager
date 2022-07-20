@@ -166,11 +166,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 func (r *CentralReconciler) readyStatus(ctx context.Context, namespace string) (*private.DataPlaneCentralStatus, error) {
 	status := readyStatus()
 	if r.useRoutes {
-		statuses, err := r.getRoutesStatuses(ctx, namespace)
+		routesStatuses, err := r.getRoutesStatuses(ctx, namespace)
 		if err != nil {
 			return nil, err
 		}
-		status.Routes = statuses
+		status.Routes = routesStatuses
 	}
 	return status, nil
 }
