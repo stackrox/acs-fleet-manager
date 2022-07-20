@@ -98,7 +98,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 	for msg, f := range fetchers {
 		fetchAll := len(rq.Filters) == 0
 		if fetchAll {
-			result := obs.fetchMetricsResult(rq, &f)
+			result := obs.fetchMetricsResult(rq, f)
 			if result.Err != nil {
 				glog.Error("error from metric ", result.Err)
 				failedMetrics = append(failedMetrics, fmt.Sprintf("%s: %s", msg, result.Err))
@@ -108,7 +108,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 		if !fetchAll {
 			for _, filter := range rq.Filters {
 				if filter == msg {
-					result := obs.fetchMetricsResult(rq, &f)
+					result := obs.fetchMetricsResult(rq, f)
 					if result.Err != nil {
 						glog.Error("error from metric ", result.Err)
 						failedMetrics = append(failedMetrics, fmt.Sprintf("%s: %s", msg, result.Err))
@@ -126,7 +126,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 	return nil
 }
 
-func (obs *ServiceObservatorium) fetchMetricsResult(rq *MetricsReqParams, f *fetcher) Metric {
+func (obs *ServiceObservatorium) fetchMetricsResult(rq *MetricsReqParams, f fetcher) Metric {
 	c := obs.client
 	var result Metric
 	switch rq.ResultType {

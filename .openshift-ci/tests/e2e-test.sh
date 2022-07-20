@@ -6,6 +6,13 @@ export GITROOT
 source "${GITROOT}/dev/env/scripts/lib.sh"
 init
 
+bootstrap.sh
+
+if [[ "$CLUSTER_TYPE" != "openshift-ci" ]]; then
+    log "Cleaning up left-over resource (if any)"
+    down.sh 2>/dev/null
+fi
+
 up.sh
 
 log "Environment up and running"

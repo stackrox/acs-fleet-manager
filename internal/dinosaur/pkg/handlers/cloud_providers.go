@@ -61,7 +61,8 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			}
 
 			provider, _ := h.supportedProviders.GetByName(id)
-			for _, cloudRegion := range cloudRegions {
+			for i := range cloudRegions {
+				cloudRegion := cloudRegions[i]
 				region, _ := provider.Regions.GetByName(cloudRegion.Id)
 
 				// skip any regions that do not support the specified instance type so its not included in the response
@@ -105,7 +106,8 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 				Items: []public.CloudProvider{},
 			}
 
-			for _, cloudProvider := range cloudProviders {
+			for i := range cloudProviders {
+				cloudProvider := cloudProviders[i]
 				_, cloudProvider.Enabled = h.supportedProviders.GetByName(cloudProvider.Id)
 				converted := presenters.PresentCloudProvider(&cloudProvider)
 				cloudProviderList.Items = append(cloudProviderList.Items, converted)

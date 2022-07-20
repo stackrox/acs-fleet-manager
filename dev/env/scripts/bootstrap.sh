@@ -102,7 +102,7 @@ else
     apply "${MANIFESTS_DIR}/crds"
 fi
 
-if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
+if [[ "$CLUSTER_TYPE" == "minikube" || "$CLUSTER_TYPE" == "colima" ]]; then
     if [[ ("$INSTALL_OPERATOR" == "true" && "$OPERATOR_SOURCE" == "quay") || "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
         log "Logging into Quay image registry"
         $DOCKER login quay.io -u "$QUAY_USER" --password-stdin <<EOF
@@ -110,7 +110,7 @@ $QUAY_TOKEN
 EOF
     fi
 
-    log "Preloading images into minikube..."
+    log "Preloading images into ${CLUSTER_TYPE} cluster..."
     $DOCKER pull "postgres:13"
     if [[ "$INSTALL_OPERATOR" == "true" ]]; then
         # Preload images required by Central installation.
