@@ -70,7 +70,7 @@ func (c *Client) SendGroupRequest(ctx context.Context, groupRequest *storage.Gro
 		return errors.Wrap(err, "sending new group to central")
 	}
 	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create group for central %s", c.central.Metadata.Name)
+		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create group for central %s/%s", c.central.Metadata.Namespace, c.central.Metadata.Name)
 	}
 	return nil
 }
@@ -80,7 +80,7 @@ func (c *Client) SendAuthProviderRequest(ctx context.Context, authProviderReques
 	if err != nil {
 		return nil, errors.Wrap(err, "sending new auth provider to central")
 	} else if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return nil, acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create auth provider for central %s", c.central.Metadata.Name)
+		return nil, acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create auth provider for central %s/%s", c.central.Metadata.Namespace, c.central.Metadata.Name)
 	}
 
 	defer func() {

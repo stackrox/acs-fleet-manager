@@ -81,13 +81,13 @@ func (r *Runtime) Start() error {
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
 		glog.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
-			if _, ok := r.reconcilers[central.Metadata.Name]; !ok {
-				r.reconcilers[central.Metadata.Name] = centralReconciler.NewCentralReconciler(r.k8sClient, central, routesAvailable, r.config.CreateAuthProvider)
+			if _, ok := r.reconcilers[central.Id]; !ok {
+				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, routesAvailable, r.config.CreateAuthProvider)
 			}
 
-			reconciler := r.reconcilers[central.Metadata.Name]
+			reconciler := r.reconcilers[central.Id]
 			go func(reconciler *centralReconciler.CentralReconciler, central private.ManagedCentral) {
-				glog.Infof("Start reconcile central %s", central.Metadata.Name)
+				glog.Infof("Start reconcile central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
 				status, err := reconciler.Reconcile(context.Background(), central)
 				r.handleReconcileResult(central, status, err)
 			}(reconciler, central)
@@ -102,15 +102,15 @@ func (r *Runtime) Start() error {
 func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error) {
 	if err != nil {
 		if errors.Is(err, centralReconciler.ErrTypeCentralNotChanged) {
-			glog.Infof("%s:%s", central.Metadata.Name, err)
+			glog.Infof("%s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err)
 			return
 		}
 
-		glog.Errorf("error occurred %s: %s", central.Metadata.Name, err.Error())
+		glog.Errorf("error occurred %s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err.Error())
 		return
 	}
 	if status == nil {
-		glog.Infof("No status update for Central %s", central.Metadata.Name)
+		glog.Infof("No status update for Central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
 		return
 	}
 
@@ -118,7 +118,7 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 		central.Id: *status,
 	})
 	if err != nil {
-		err = errors.Wrapf(err, "updating status for Central %s", central.Metadata.Name)
+		err = errors.Wrapf(err, "updating status for Central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
 		glog.Error(err)
 	}
 }

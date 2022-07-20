@@ -72,12 +72,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	remoteCentralName := remoteCentral.Metadata.Name
-	remoteNamespace := remoteCentral.Metadata.Namespace
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
-			Namespace: remoteNamespace,
+			Namespace: remoteCentralNamespace,
 			Labels:    map[string]string{k8sManagedByLabelKey: k8sManagedByLabelValue},
 		},
 		Spec: v1alpha1.CentralSpec{
@@ -94,7 +94,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
 		deleted, err := r.ensureCentralDeleted(ctx, central)
 		if err != nil {
-			return nil, errors.Wrapf(err, "delete central %s", remoteCentralName)
+			return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
 		}
 		if deleted {
 			return deletedStatus(), nil
@@ -102,15 +102,15 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, nil
 	}
 
-	if err := r.ensureNamespaceExists(remoteNamespace); err != nil {
-		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteNamespace)
+	if err := r.ensureNamespaceExists(remoteCentralNamespace); err != nil {
+		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
 	centralExists := true
-	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteNamespace, Name: remoteCentralName}, central)
+	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}, central)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return nil, errors.Wrapf(err, "unable to check the existence of central %q", central.GetName())
+			return nil, errors.Wrapf(err, "unable to check the existence of central %s/%s", central.GetNamespace(), central.GetName())
 		}
 		centralExists = false
 	}
@@ -118,14 +118,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if !centralExists {
 		central.Annotations = map[string]string{revisionAnnotationKey: "1"}
 
-		glog.Infof("Creating central tenant %s", central.GetName())
+		glog.Infof("Creating central %s/%s", central.GetNamespace(), central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
-			return nil, errors.Wrapf(err, "creating new central %s/%s", remoteNamespace, remoteCentralName)
+			return nil, errors.Wrapf(err, "creating new central %s/%s", remoteCentralNamespace, remoteCentralName)
 		}
-		glog.Infof("Central %s created", central.GetName())
+		glog.Infof("Central %s/%s created", central.GetNamespace(), central.GetName())
 	} else {
 		// TODO(create-ticket): implement update logic
-		glog.Infof("Update central tenant %s", central.GetName())
+		glog.Infof("Update central %s/%s", central.GetNamespace(), central.GetName())
 
 		err = r.incrementCentralRevision(central)
 		if err != nil {
@@ -133,7 +133,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 
 		if err := r.client.Update(ctx, central); err != nil {
-			return nil, errors.Wrapf(err, "updating central %q", central.GetName())
+			return nil, errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
 		}
 	}
 
