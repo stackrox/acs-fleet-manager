@@ -20,6 +20,8 @@ const (
 	centralTLSSecretName      = "central-tls"
 )
 
+// RouteService is responsible for performing read and write operations on the OpenShift Route objects in the cluster.
+// This service is specific to ACS Managed Services and provides methods to work on specific routes.
 type RouteService struct {
 	client ctrlClient.Client
 }
