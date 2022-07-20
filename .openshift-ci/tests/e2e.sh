@@ -27,6 +27,12 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
 fi
 
+LOG_DIR=""
+if [[ "$SPAWN_LOGGER" == "true" ]]; then
+    LOG_DIR=$(mktemp -d)
+fi
+export LOG_DIR
+
 init
 
 log
@@ -36,11 +42,7 @@ log
 log "Cluster type: ${CLUSTER_TYPE}"
 log "Cluster name: ${CLUSTER_NAME}"
 log "Image: ${FLEET_MANAGER_IMAGE}"
-if [[ "$SPAWN_LOGGER" == "true" ]]; then
-    LOG_DIR=$(mktemp -d)
-    export LOG_DIR
-    log "Log directory: ${LOG_DIR}"
-fi
+log "Log directory: ${LOG_DIR:-(none)}"
 
 case "$AUTH_TYPE" in
 OCM)
@@ -72,24 +74,30 @@ fi
 # Configuration specific to this e2e test suite:
 export ENABLE_DB_PORT_FORWARDING="false"
 
-bootstrap.sh
-
-if [[ "$CLUSTER_TYPE" != "openshift-ci" ]]; then
-    log "Cleaning up left-over resource (if any)"
-    down.sh 2>/dev/null
-fi
-
-MAIN_LOG="log.txt"
-
 if [[ "$SPAWN_LOGGER" == "true" ]]; then
+    # Need to create the namespaces prior to spawning the stern loggers.
+    apply "${MANIFESTS_DIR}/shared/00-namespace.yaml"
+    apply "${MANIFESTS_DIR}/rhacs-operator/00-namespace.yaml"
+    sleep 2
     log "Spawning logger, log directory is ${LOG_DIR}"
-    stern -n "$ACSMS_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >"${LOG_DIR}/${MAIN_LOG}" 2>&1 &
+    stern -n "$ACSMS_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >"${LOG_DIR}/namespace-${ACSMS_NAMESPACE}.txt" 2>&1 &
+    stern -n "$STACKROX_OPERATOR_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >"${LOG_DIR}/namespace-${STACKROX_OPERATOR_NAMESPACE}.txt" 2>&1 &
 fi
 
 FAIL=0
 if ! "${GITROOT}/.openshift-ci/tests/e2e-test.sh"; then
     FAIL=1
 fi
+
+# Terminate loggers.
+for p in $(jobs -pr); do
+    log "Terminating background process ${p}"
+    kill $p || true
+done
+
+log
+log "=========="
+log
 
 if [[ "$DUMP_LOGS" == "true" ]]; then
     if [[ "$SPAWN_LOGGER" == "true" ]]; then
@@ -132,9 +140,16 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
         log "Logs are in ${LOG_DIR}"
         log
     fi
+else
+    if [[ "$SPAWN_LOGGER" == "true" ]]; then
+        log "Not dumping logs, logs are in ${LOG_DIR}"
+        log
+    fi
 fi
 
+log
 log "=========="
+log
 
 if [[ $FAIL == 0 ]]; then
     log
