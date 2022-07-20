@@ -27,13 +27,13 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
 fi
 
-LOG_DIR=""
-if [[ "$SPAWN_LOGGER" == "true" ]]; then
+init
+
+LOG_DIR=${LOG_DIR:-}
+if [[ "$SPAWN_LOGGER" == "true" && "$LOG_DIR" == "" ]]; then
     LOG_DIR=$(mktemp -d)
 fi
 export LOG_DIR
-
-init
 
 log
 log "** Entrypoint for ACS MS E2E Tests **"
