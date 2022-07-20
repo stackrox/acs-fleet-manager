@@ -68,16 +68,6 @@ func isAdmitted(ingress openshiftRouteV1.RouteIngress) bool {
 	return false
 }
 
-func newReencryptRoute(namespace string) *openshiftRouteV1.Route {
-	return &openshiftRouteV1.Route{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralReencryptRouteName,
-			Namespace: namespace,
-			Labels:    map[string]string{ManagedByLabelKey: ManagedByLabelValue},
-		},
-	}
-}
-
 // CreateReencryptRoute creates a new managed central reencrypt route.
 func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	centralTLSSecret := &v1.Secret{}
@@ -90,21 +80,27 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 	if !ok {
 		return errors.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
 	}
-	route := newReencryptRoute(namespace)
-	route.Spec = openshiftRouteV1.RouteSpec{
-		Host: remoteCentral.Spec.Endpoint.Host,
-		Port: &openshiftRouteV1.RoutePort{
-			TargetPort: intstr.IntOrString{Type: intstr.String, StrVal: "https"},
+	route := &openshiftRouteV1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      centralReencryptRouteName,
+			Namespace: namespace,
+			Labels:    map[string]string{ManagedByLabelKey: ManagedByLabelValue},
 		},
-		To: openshiftRouteV1.RouteTargetReference{
-			Kind: "Service",
-			Name: "central",
-		},
-		TLS: &openshiftRouteV1.TLSConfig{
-			Termination:              openshiftRouteV1.TLSTerminationReencrypt,
-			Key:                      remoteCentral.Spec.Endpoint.Tls.Key,
-			Certificate:              remoteCentral.Spec.Endpoint.Tls.Cert,
-			DestinationCACertificate: string(centralCA),
+		Spec: openshiftRouteV1.RouteSpec{
+			Host: remoteCentral.Spec.Endpoint.Host,
+			Port: &openshiftRouteV1.RoutePort{
+				TargetPort: intstr.IntOrString{Type: intstr.String, StrVal: "https"},
+			},
+			To: openshiftRouteV1.RouteTargetReference{
+				Kind: "Service",
+				Name: "central",
+			},
+			TLS: &openshiftRouteV1.TLSConfig{
+				Termination:              openshiftRouteV1.TLSTerminationReencrypt,
+				Key:                      remoteCentral.Spec.Endpoint.Tls.Key,
+				Certificate:              remoteCentral.Spec.Endpoint.Tls.Cert,
+				DestinationCACertificate: string(centralCA),
+			},
 		},
 	}
 	return s.client.Create(ctx, route)
