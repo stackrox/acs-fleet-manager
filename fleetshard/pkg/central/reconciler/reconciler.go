@@ -180,7 +180,7 @@ func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace str
 	if err != nil {
 		return nil, err
 	}
-	mtlsHostname, err := r.routeService.FindMtlsCanonicalHostname(ctx, namespace)
+	mtlsHostname, err := r.routeService.FindMTLSCanonicalHostname(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}

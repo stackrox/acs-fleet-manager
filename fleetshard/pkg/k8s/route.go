@@ -16,7 +16,7 @@ import (
 
 const (
 	centralReencryptRouteName = "central-reencrypt"
-	centralMtlsRouteName      = "central-mtls"
+	centralMTLSRouteName      = "central-mtls"
 	centralTLSSecretName      = "central-tls"
 )
 
@@ -38,8 +38,8 @@ func (s *RouteService) FindReencryptCanonicalHostname(ctx context.Context, names
 	return s.findCanonicalHostname(ctx, namespace, centralReencryptRouteName)
 }
 
-func (s *RouteService) FindMtlsCanonicalHostname(ctx context.Context, namespace string) (string, error) {
-	return s.findCanonicalHostname(ctx, namespace, centralMtlsRouteName)
+func (s *RouteService) FindMTLSCanonicalHostname(ctx context.Context, namespace string) (string, error) {
+	return s.findCanonicalHostname(ctx, namespace, centralMTLSRouteName)
 }
 
 func (s *RouteService) findCanonicalHostname(ctx context.Context, namespace string, routeName string) (string, error) {
