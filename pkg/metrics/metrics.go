@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// FleetManager ...
 const (
 	// FleetManager - metrics prefix
 	FleetManager = "fleet_manager"
@@ -83,6 +84,7 @@ const (
 // JobType metric to capture
 type JobType string
 
+// JobTypeClusterCreate ...
 var (
 	// JobTypeClusterCreate - cluster_create job type
 	JobTypeClusterCreate JobType = "cluster_create"
@@ -112,6 +114,7 @@ var DinosaurOperationsCountMetricsLabels = []string{
 	labelOperation,
 }
 
+// DinosaurPerClusterCountMetricsLabels ...
 var DinosaurPerClusterCountMetricsLabels = []string{
 	LabelClusterID,
 	LabelClusterExternalID,
@@ -122,16 +125,19 @@ var ClusterOperationsCountMetricsLabels = []string{
 	labelOperation,
 }
 
+// ClusterStatusSinceCreatedMetricsLabels ...
 var ClusterStatusSinceCreatedMetricsLabels = []string{
 	LabelID,
 	LabelClusterID,
 	LabelStatus,
 }
 
+// ClusterStatusCountMetricsLabels ...
 var ClusterStatusCountMetricsLabels = []string{
 	LabelStatus,
 }
 
+// ReconcilerMetricsLabels ...
 var ReconcilerMetricsLabels = []string{
 	labelWorkerType,
 }
@@ -142,6 +148,7 @@ var observatoriumRequestMetricsLabels = []string{
 	LabelPath,
 }
 
+// DatabaseMetricsLabels ...
 var DatabaseMetricsLabels = []string{
 	LabelDatabaseQueryStatus,
 	LabelDatabaseQueryType,
@@ -266,6 +273,7 @@ var clusterStatusSinceCreatedMetric = prometheus.NewGaugeVec(
 	ClusterStatusSinceCreatedMetricsLabels,
 )
 
+// UpdateClusterStatusSinceCreatedMetric ...
 func UpdateClusterStatusSinceCreatedMetric(cluster api.Cluster, status api.ClusterStatus) {
 	labels := prometheus.Labels{
 		LabelStatus:    string(status),
@@ -284,6 +292,7 @@ var clusterStatusCountMetric = prometheus.NewGaugeVec(
 	ClusterStatusCountMetricsLabels,
 )
 
+// UpdateClusterStatusCountMetric ...
 func UpdateClusterStatusCountMetric(status api.ClusterStatus, count int) {
 	labels := prometheus.Labels{
 		LabelStatus: string(status),
@@ -299,6 +308,7 @@ var dinosaurPerClusterCountMetric = prometheus.NewGaugeVec(
 	},
 	DinosaurPerClusterCountMetricsLabels)
 
+// UpdateDinosaurPerClusterCountMetric ...
 func UpdateDinosaurPerClusterCountMetric(clusterId string, clusterExternalID string, count int) {
 	labels := prometheus.Labels{
 		LabelClusterID:         clusterId,
@@ -367,7 +377,7 @@ var dinosaurOperationsSuccessCountMetric = prometheus.NewCounterVec(
 	DinosaurOperationsCountMetricsLabels,
 )
 
-// UpdateDinosaurRequestsStatusSinceCreatedMetric
+// UpdateDinosaurRequestsStatusSinceCreatedMetric ...
 func UpdateDinosaurRequestsStatusSinceCreatedMetric(status constants2.DinosaurStatus, dinosaurId string, clusterId string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		LabelStatus:    string(status),
@@ -377,7 +387,7 @@ func UpdateDinosaurRequestsStatusSinceCreatedMetric(status constants2.DinosaurSt
 	dinosaurStatusSinceCreatedMetric.With(labels).Set(elapsed.Seconds())
 }
 
-// UpdateDinosaurRequestsStatusCountMetric
+// UpdateDinosaurRequestsStatusCountMetric ...
 func UpdateDinosaurRequestsStatusCountMetric(status constants2.DinosaurStatus, count int) {
 	labels := prometheus.Labels{
 		LabelStatus: string(status),
@@ -385,7 +395,7 @@ func UpdateDinosaurRequestsStatusCountMetric(status constants2.DinosaurStatus, c
 	DinosaurStatusCountMetric.With(labels).Set(float64(count))
 }
 
-// create a new GaugeVec for status counts
+// DinosaurStatusCountMetric create a new GaugeVec for status counts
 var DinosaurStatusCountMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: FleetManager,
@@ -444,6 +454,7 @@ var reconcilerDurationMetric = prometheus.NewGaugeVec(
 	ReconcilerMetricsLabels,
 )
 
+// UpdateReconcilerDurationMetric ...
 func UpdateReconcilerDurationMetric(reconcilerType string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		labelWorkerType: reconcilerType,
@@ -458,6 +469,7 @@ var reconcilerSuccessCountMetric = prometheus.NewCounterVec(
 		Help:      "count of success operations of the backgroup reconcilers",
 	}, ReconcilerMetricsLabels)
 
+// IncreaseReconcilerSuccessCount ...
 func IncreaseReconcilerSuccessCount(reconcilerType string) {
 	labels := prometheus.Labels{
 		labelWorkerType: reconcilerType,
@@ -472,6 +484,7 @@ var reconcilerFailureCountMetric = prometheus.NewCounterVec(
 		Help:      "count of failed operations of the backgroup reconcilers",
 	}, ReconcilerMetricsLabels)
 
+// IncreaseReconcilerFailureCount ...
 func IncreaseReconcilerFailureCount(reconcilerType string) {
 	labels := prometheus.Labels{
 		labelWorkerType: reconcilerType,
@@ -486,6 +499,7 @@ var reconcilerErrorsCountMetric = prometheus.NewCounterVec(
 		Help:      "count of errors occured during backgroup reconcilers runs",
 	}, ReconcilerMetricsLabels)
 
+// IncreaseReconcilerErrorsCount ...
 func IncreaseReconcilerErrorsCount(reconcilerType string, numOfErr int) {
 	labels := prometheus.Labels{
 		labelWorkerType: reconcilerType,
@@ -525,7 +539,7 @@ var observatoriumRequestCountMetric = prometheus.NewCounterVec(prometheus.Counte
 	Help:      "number of requests sent to Observatorium. If no response was received, the value of code should be '0' (this can happen on request timeout or failure to connect to Observatorium).",
 }, observatoriumRequestMetricsLabels)
 
-// Increase the observatorium request count metric with the following labels:
+// IncreaseObservatoriumRequestCount Increase the observatorium request count metric with the following labels:
 // 	- code: HTTP Status code (i.e. 200 or 500)
 // 	- path: Request URL path (i.e. /api/v1/query)
 // 	- method: HTTP Method (i.e. GET or POST)
@@ -557,7 +571,7 @@ var observatoriumRequestDurationMetric = prometheus.NewHistogramVec(
 	observatoriumRequestMetricsLabels,
 )
 
-// Update the observatorium request duration metric with the following labels:
+// UpdateObservatoriumRequestDurationMetric Update the observatorium request duration metric with the following labels:
 // 	- code: HTTP Status code (i.e. 200 or 500)
 // 	- path: Request url path (i.e. /api/v1/query)
 // 	- method: HTTP Method (i.e. GET or POST)
@@ -582,7 +596,7 @@ var databaseRequestCountMetric = prometheus.NewCounterVec(prometheus.CounterOpts
 	Help:      "number of query sent to Dataase.",
 }, DatabaseMetricsLabels)
 
-// Increase the database query count metric with the following labels:
+// IncreaseDatabaseQueryCount Increase the database query count metric with the following labels:
 // 	- status: (i.e. "success" or "failure")
 // 	- queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
 func IncreaseDatabaseQueryCount(status string, queryType string) {
@@ -635,7 +649,7 @@ var databaseQueryDurationMetric = prometheus.NewHistogramVec(
 	DatabaseMetricsLabels,
 )
 
-// Update the observatorium request duration metric with the following labels:
+// UpdateDatabaseQueryDurationMetric Update the observatorium request duration metric with the following labels:
 // 	- status: (i.e. "success" or "failure")
 // 	- queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
 func UpdateDatabaseQueryDurationMetric(status string, queryType string, elapsed time.Duration) {

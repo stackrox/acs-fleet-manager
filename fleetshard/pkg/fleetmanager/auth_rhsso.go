@@ -24,10 +24,12 @@ type rhSSOAuth struct {
 
 type rhSSOAuthFactory struct{}
 
+// GetName ...
 func (f *rhSSOAuthFactory) GetName() string {
 	return rhSSOAuthName
 }
 
+// CreateAuth ...
 func (f *rhSSOAuthFactory) CreateAuth() (Auth, error) {
 	cfg, err := config.Singleton()
 	if err != nil {
@@ -42,6 +44,7 @@ func (f *rhSSOAuthFactory) CreateAuth() (Auth, error) {
 	}, nil
 }
 
+// AddAuth ...
 func (r *rhSSOAuth) AddAuth(req *http.Request) error {
 	// The file is populated by the token-refresher, which will ensure the token is not expired.
 	token, err := shared.ReadFile(r.tokenFilePath)

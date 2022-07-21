@@ -11,6 +11,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// NewServeCommand ...
 func NewServeCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "serve",

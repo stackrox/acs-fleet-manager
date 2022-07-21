@@ -14,6 +14,7 @@ type DefaultQuotaServiceFactory struct {
 	quoataServiceContainer map[api.QuotaType]services.QuotaService
 }
 
+// NewDefaultQuotaServiceFactory ...
 func NewDefaultQuotaServiceFactory(
 	amsClient ocm.AMSClient,
 	connectionFactory *db.ConnectionFactory,
@@ -26,6 +27,7 @@ func NewDefaultQuotaServiceFactory(
 	return &DefaultQuotaServiceFactory{quoataServiceContainer: quoataServiceContainer}
 }
 
+// GetQuotaService ...
 func (factory *DefaultQuotaServiceFactory) GetQuotaService(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
 	if quoataType == api.UndefinedQuotaType {
 		quoataType = api.QuotaManagementListQuotaType

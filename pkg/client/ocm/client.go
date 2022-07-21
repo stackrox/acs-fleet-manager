@@ -13,10 +13,16 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+// TERMS_SITECODE ...
 const TERMS_SITECODE = "OCM"
+
+// TERMS_EVENTCODE_ONLINE_SERVICE ...
 const TERMS_EVENTCODE_ONLINE_SERVICE = "onlineService"
+
+// TERMS_EVENTCODE_REGISTER ...
 const TERMS_EVENTCODE_REGISTER = "register"
 
+// Client ...
 //go:generate moq -out client_moq.go . Client
 type Client interface {
 	CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error)
@@ -56,9 +62,13 @@ type client struct {
 	connection *sdkClient.Connection
 }
 
+// AMSClient ...
 type AMSClient Client
+
+// ClusterManagementClient ...
 type ClusterManagementClient Client
 
+// NewOCMConnection ...
 func NewOCMConnection(ocmConfig *OCMConfig, BaseUrl string) (*sdkClient.Connection, func(), error) {
 	if ocmConfig.EnableMock && ocmConfig.MockMode != MockModeEmulateServer {
 		return nil, func() {}, nil
@@ -97,20 +107,24 @@ func NewOCMConnection(ocmConfig *OCMConfig, BaseUrl string) (*sdkClient.Connecti
 
 }
 
+// NewClient ...
 func NewClient(connection *sdkClient.Connection) Client {
 	return &client{connection: connection}
 }
 
+// Connection ...
 func (c *client) Connection() *sdkClient.Connection {
 	return c.connection
 }
 
+// Close ...
 func (c *client) Close() {
 	if c.connection != nil {
 		_ = c.connection.Close()
 	}
 }
 
+// CreateCluster ...
 func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error) {
 
 	clusterResource := c.connection.ClustersMgmt().V1().Clusters()
@@ -123,6 +137,7 @@ func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1
 	return createdCluster, nil
 }
 
+// GetExistingClusterMetrics ...
 func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error) {
 	subscriptions, err := c.connection.AccountsMgmt().V1().Subscriptions().List().Search(fmt.Sprintf("cluster_id='%s'", clusterID)).Send()
 	if err != nil {
@@ -149,6 +164,7 @@ func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.Subscriptio
 	return subscriptionsMetrics[0], nil
 }
 
+// GetOrganisationIdFromExternalId ...
 func (c *client) GetOrganisationIdFromExternalId(externalId string) (string, error) {
 	res, err := c.connection.AccountsMgmt().V1().Organizations().List().Search(fmt.Sprintf("external_id='%s'", externalId)).Send()
 	if err != nil {
@@ -164,6 +180,7 @@ func (c *client) GetOrganisationIdFromExternalId(externalId string) (string, err
 	return items.Get(0).ID(), nil
 }
 
+// GetRequiresTermsAcceptance ...
 func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error) {
 	// Check for Appendix 4 Terms
 	request, err := v1.NewTermsReviewRequest().AccountUsername(username).SiteCode(TERMS_SITECODE).EventCode(TERMS_EVENTCODE_REGISTER).Build()
@@ -196,6 +213,7 @@ func (c *client) GetClusterIngresses(clusterID string) (*clustersmgmtv1.Ingresse
 	return ingressList, nil
 }
 
+// GetCluster ...
 func (c client) GetCluster(clusterID string) (*clustersmgmtv1.Cluster, error) {
 	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Get().Send()
 	if err != nil {
@@ -204,6 +222,7 @@ func (c client) GetCluster(clusterID string) (*clustersmgmtv1.Cluster, error) {
 	return resp.Body(), nil
 }
 
+// GetClusterStatus ...
 func (c client) GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, error) {
 	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(id).Status().Get().Send()
 	if err != nil {
@@ -212,6 +231,7 @@ func (c client) GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, erro
 	return resp.Body(), nil
 }
 
+// GetCloudProviders ...
 func (c *client) GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error) {
 	providersCollection := c.connection.ClustersMgmt().V1().CloudProviders()
 	providersResponse, err := providersCollection.List().Send()
@@ -222,6 +242,7 @@ func (c *client) GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error) 
 	return cloudProviderList, nil
 }
 
+// GetRegions ...
 func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
 	regionsCollection := c.connection.ClustersMgmt().V1().CloudProviders().CloudProvider(provider.ID()).Regions()
 	regionsResponse, err := regionsCollection.List().Send()
@@ -233,6 +254,7 @@ func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmg
 	return regionList, nil
 }
 
+// CreateAddonWithParams ...
 func (c client) CreateAddonWithParams(clusterId string, addonId string, params []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 	addon := clustersmgmtv1.NewAddOn().ID(addonId)
 	addonParameters := newAddonParameterListBuilder(params)
@@ -251,10 +273,12 @@ func (c client) CreateAddonWithParams(clusterId string, addonId string, params [
 	return resp.Body(), nil
 }
 
+// CreateAddon ...
 func (c client) CreateAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
 	return c.CreateAddonWithParams(clusterId, addonId, []Parameter{})
 }
 
+// GetAddon ...
 func (c client) GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
 	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterId).Addons().List().Send()
 	if err != nil {
@@ -273,6 +297,7 @@ func (c client) GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddO
 	return addon, nil
 }
 
+// UpdateAddonParameters ...
 func (c client) UpdateAddonParameters(clusterId string, addonInstallationId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 	addonInstallationResp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterId).Addons().Addoninstallation(addonInstallationId).Get().Send()
 	if err != nil {
@@ -299,6 +324,7 @@ func (c client) UpdateAddonParameters(clusterId string, addonInstallationId stri
 	return addonInstallationResp.Body(), nil
 }
 
+// GetClusterDNS ...
 func (c *client) GetClusterDNS(clusterID string) (string, error) {
 	if clusterID == "" {
 		return "", errors.Validation("clusterID cannot be empty")
@@ -324,6 +350,7 @@ func (c *client) GetClusterDNS(clusterID string) (string, error) {
 	return clusterDNS, nil
 }
 
+// CreateSyncSet ...
 func (c client) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
 
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
@@ -340,6 +367,7 @@ func (c client) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset)
 	return response.Body(), err
 }
 
+// UpdateSyncSet ...
 func (c client) UpdateSyncSet(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
 
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
@@ -358,6 +386,7 @@ func (c client) UpdateSyncSet(clusterID string, syncSetID string, syncset *clust
 	return response.Body(), err
 }
 
+// CreateIdentityProvider ...
 func (c client) CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
 
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
@@ -373,6 +402,7 @@ func (c client) CreateIdentityProvider(clusterID string, identityProvider *clust
 	return response.Body(), err
 }
 
+// GetIdentityProviderList ...
 func (c client) GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
 	clusterResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, getIDPErr := clusterResource.Cluster(clusterID).
@@ -386,6 +416,7 @@ func (c client) GetIdentityProviderList(clusterID string) (*clustersmgmtv1.Ident
 	return response.Items(), nil
 }
 
+// GetSyncSet ...
 func (c client) GetSyncSet(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, syncsetErr := clustersResource.Cluster(clusterID).
@@ -402,7 +433,7 @@ func (c client) GetSyncSet(clusterID string, syncSetID string) (*clustersmgmtv1.
 	return response.Body(), err
 }
 
-// Status returns the response status code.
+// DeleteSyncSet Status returns the response status code.
 func (c client) DeleteSyncSet(clusterID string, syncsetID string) (int, error) {
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, syncsetErr := clustersResource.Cluster(clusterID).
@@ -453,6 +484,7 @@ func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmt
 	return resp.Body(), nil
 }
 
+// SetComputeNodes ...
 func (c client) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
 	clusterClient := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID)
 
@@ -502,6 +534,7 @@ func sameParameters(parameterList *clustersmgmtv1.AddOnInstallationParameterList
 	return match
 }
 
+// DeleteCluster ...
 func (c client) DeleteCluster(clusterID string) (int, error) {
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, deleteClusterError := clustersResource.Cluster(clusterID).Delete().Send()
@@ -513,6 +546,7 @@ func (c client) DeleteCluster(clusterID string) (int, error) {
 	return response.Status(), err
 }
 
+// ClusterAuthorization ...
 func (c client) ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error) {
 	r, err := c.connection.AccountsMgmt().V1().
 		ClusterAuthorizations().
@@ -525,12 +559,14 @@ func (c client) ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*am
 	return resp, nil
 }
 
+// DeleteSubscription ...
 func (c client) DeleteSubscription(id string) (int, error) {
 	r := c.connection.AccountsMgmt().V1().Subscriptions().Subscription(id).Delete()
 	resp, err := r.Send()
 	return resp.Status(), err
 }
 
+// FindSubscriptions ...
 func (c client) FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error) {
 	r, err := c.connection.AccountsMgmt().V1().Subscriptions().List().Search(query).Send()
 	if err != nil {

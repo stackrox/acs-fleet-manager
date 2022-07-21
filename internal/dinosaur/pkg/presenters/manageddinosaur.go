@@ -25,6 +25,7 @@ const (
 	defaultScannerAnalyzerScalingMaxReplicas = 3
 )
 
+// PresentManagedDinosaur ...
 func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 	res := private.ManagedCentral{
 		Id:   from.Annotations["mas/id"],

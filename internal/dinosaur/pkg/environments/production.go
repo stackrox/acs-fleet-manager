@@ -2,6 +2,7 @@ package environments
 
 import "github.com/stackrox/acs-fleet-manager/pkg/environments"
 
+// NewProductionEnvLoader ...
 func NewProductionEnvLoader() environments.EnvLoader {
 	return environments.SimpleEnvLoader{
 		"v":                                    "1",

@@ -24,6 +24,7 @@ func init() {
 	insecureTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 }
 
+// Client ...
 type Client struct {
 	address    string
 	pass       string
@@ -31,10 +32,12 @@ type Client struct {
 	central    private.ManagedCentral
 }
 
+// AuthProviderResponse ...
 type AuthProviderResponse struct {
 	Id string `json:"id"`
 }
 
+// NewCentralClient ...
 func NewCentralClient(central private.ManagedCentral, address, pass string) *Client {
 	return &Client{
 		central: central,
@@ -46,6 +49,7 @@ func NewCentralClient(central private.ManagedCentral, address, pass string) *Cli
 	}
 }
 
+// SendRequestToCentral ...
 func (c *Client) SendRequestToCentral(ctx context.Context, requestBody interface{}, path string) (*http.Response, error) {
 	jsonBytes, err := json.Marshal(requestBody)
 	if err != nil {
@@ -64,23 +68,25 @@ func (c *Client) SendRequestToCentral(ctx context.Context, requestBody interface
 	return resp, nil
 }
 
+// SendGroupRequest ...
 func (c *Client) SendGroupRequest(ctx context.Context, groupRequest *storage.Group) error {
 	resp, err := c.SendRequestToCentral(ctx, groupRequest, "/v1/groups")
 	if err != nil {
 		return errors.Wrap(err, "sending new group to central")
 	}
 	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create group for central %s", c.central.Metadata.Name)
+		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create group for central %s/%s", c.central.Metadata.Namespace, c.central.Metadata.Name)
 	}
 	return nil
 }
 
+// SendAuthProviderRequest ...
 func (c *Client) SendAuthProviderRequest(ctx context.Context, authProviderRequest *storage.AuthProvider) (*AuthProviderResponse, error) {
 	resp, err := c.SendRequestToCentral(ctx, authProviderRequest, "/v1/authProviders")
 	if err != nil {
 		return nil, errors.Wrap(err, "sending new auth provider to central")
 	} else if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return nil, acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create auth provider for central %s", c.central.Metadata.Name)
+		return nil, acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create auth provider for central %s/%s", c.central.Metadata.Namespace, c.central.Metadata.Name)
 	}
 
 	defer func() {

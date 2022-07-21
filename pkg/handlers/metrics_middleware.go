@@ -175,14 +175,17 @@ type metricsResponseWrapper struct {
 	code    int
 }
 
+// Flush ...
 func (w *metricsResponseWrapper) Flush() {
 	w.wrapped.(http.Flusher).Flush()
 }
 
+// Header ...
 func (w *metricsResponseWrapper) Header() http.Header {
 	return w.wrapped.Header()
 }
 
+// Write ...
 func (w *metricsResponseWrapper) Write(b []byte) (n int, err error) {
 	if w.code == 0 {
 		w.code = http.StatusOK
@@ -191,6 +194,7 @@ func (w *metricsResponseWrapper) Write(b []byte) (n int, err error) {
 	return
 }
 
+// WriteHeader ...
 func (w *metricsResponseWrapper) WriteHeader(code int) {
 	w.code = code
 	w.wrapped.WriteHeader(code)

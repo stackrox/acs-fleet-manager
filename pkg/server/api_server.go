@@ -16,9 +16,12 @@ import (
 
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 
+	// TODO why is this imported?
 	_ "github.com/auth0/go-jwt-middleware/v2"
-	sentryhttp "github.com/getsentry/sentry-go/http"
+	// TODO why is this imported?
 	_ "github.com/golang-jwt/jwt/v4"
+
+	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/golang/glog"
 	gorillahandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -27,10 +30,12 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )
 
+// ApiServerReadyCondition ...
 type ApiServerReadyCondition interface {
 	Wait()
 }
 
+// ApiServer ...
 type ApiServer struct {
 	httpServer      *http.Server
 	serverConfig    *ServerConfig
@@ -40,6 +45,7 @@ type ApiServer struct {
 
 var _ Server = &ApiServer{}
 
+// ServerOptions ...
 type ServerOptions struct {
 	di.Inject
 	ServerConfig    *ServerConfig
@@ -50,6 +56,7 @@ type ServerOptions struct {
 	ReadyConditions []ApiServerReadyCondition `di:"optional"`
 }
 
+// NewAPIServer ...
 func NewAPIServer(options ServerOptions) *ApiServer {
 	s := &ApiServer{
 		httpServer:      nil,
@@ -153,11 +160,12 @@ func (s *ApiServer) Listen() (listener net.Listener, err error) {
 	return net.Listen("tcp", s.serverConfig.BindAddress)
 }
 
+// Start ...
 func (s *ApiServer) Start() {
 	go s.Run()
 }
 
-// Start listening on the configured port and start the server. This is a convenience wrapper for Listen() and Serve(listener Listener)
+// Run Start listening on the configured port and start the server. This is a convenience wrapper for Listen() and Serve(listener Listener)
 func (s *ApiServer) Run() {
 	listener, err := s.Listen()
 	if err != nil {
@@ -173,6 +181,7 @@ func (s *ApiServer) Run() {
 	s.Serve(listener)
 }
 
+// Stop ...
 func (s *ApiServer) Stop() {
 	err := s.httpServer.Shutdown(context.Background())
 	if err != nil {

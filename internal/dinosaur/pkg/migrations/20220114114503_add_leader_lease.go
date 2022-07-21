@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// LeaderLease ...
 type LeaderLease struct {
 	db.Model
 	Leader    string

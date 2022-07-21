@@ -14,6 +14,7 @@ type observatoriumService struct {
 	dinosaurService DinosaurService
 }
 
+// NewObservatoriumService ...
 func NewObservatoriumService(observatorium *observatorium.Client, dinosaurService DinosaurService) ObservatoriumService {
 	return &observatoriumService{
 		observatorium:   observatorium,
@@ -21,16 +22,19 @@ func NewObservatoriumService(observatorium *observatorium.Client, dinosaurServic
 	}
 }
 
+// ObservatoriumService ...
 //go:generate moq -out observatorium_service_moq.go . ObservatoriumService
 type ObservatoriumService interface {
 	GetDinosaurState(name string, namespaceName string) (observatorium.DinosaurState, error)
 	GetMetricsByDinosaurId(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *errors.ServiceError)
 }
 
+// GetDinosaurState ...
 func (obs observatoriumService) GetDinosaurState(name string, namespaceName string) (observatorium.DinosaurState, error) {
 	return obs.observatorium.Service.GetDinosaurState(name, namespaceName)
 }
 
+// GetMetricsByDinosaurId ...
 func (obs observatoriumService) GetMetricsByDinosaurId(ctx context.Context, dinosaursMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *errors.ServiceError) {
 	dinosaurRequest, err := obs.dinosaurService.Get(ctx, id)
 	if err != nil {

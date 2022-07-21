@@ -19,14 +19,17 @@ type redhatssoService struct {
 	client redhatsso.SSOClient
 }
 
+// GetConfig ...
 func (r *redhatssoService) GetConfig() *iam.IAMConfig {
 	return r.client.GetConfig()
 }
 
+// GetRealmConfig ...
 func (r *redhatssoService) GetRealmConfig() *iam.IAMRealmConfig {
 	return r.client.GetRealmConfig()
 }
 
+// RegisterAcsFleetshardOperatorServiceAccount ...
 func (r *redhatssoService) RegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	accessToken, err := r.getToken()
 	if err != nil {
@@ -47,6 +50,7 @@ func (r *redhatssoService) registerAgentServiceAccount(accessToken string, agent
 	return convertServiceAccountDataToAPIServiceAccount(&svcData), nil
 }
 
+// DeRegisterAcsFleetshardOperatorServiceAccount ...
 func (r *redhatssoService) DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
 	glog.V(5).Infof("Deregistering ACS fleetshard operator service account with cluster: %s", agentClusterId)
 	accessToken, tokenErr := r.getToken()
@@ -54,17 +58,17 @@ func (r *redhatssoService) DeRegisterAcsFleetshardOperatorServiceAccount(agentCl
 		return tokenErr
 	}
 
-	if _, found, err := r.client.GetServiceAccount(accessToken, agentClusterId); err != nil {
+	_, found, err := r.client.GetServiceAccount(accessToken, agentClusterId)
+	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
-	} else {
-		if !found {
-			// if the account to be deleted does not exist, we simply exit with no errors
-			glog.V(5).Infof("ACS fleetshard operator service account not found")
-			return nil
-		}
+	}
+	if !found {
+		// if the account to be deleted does not exist, we simply exit with no errors
+		glog.V(5).Infof("ACS fleetshard operator service account not found")
+		return nil
 	}
 
-	err := r.client.DeleteServiceAccount(accessToken, agentClusterId)
+	err = r.client.DeleteServiceAccount(accessToken, agentClusterId)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
 	}

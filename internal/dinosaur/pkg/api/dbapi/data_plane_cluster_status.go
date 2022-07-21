@@ -2,11 +2,13 @@ package dbapi
 
 import "github.com/stackrox/acs-fleet-manager/pkg/api"
 
+// DataPlaneClusterStatus ...
 type DataPlaneClusterStatus struct {
 	Conditions                        []DataPlaneClusterStatusCondition
 	AvailableDinosaurOperatorVersions []api.CentralOperatorVersion
 }
 
+// DataPlaneClusterStatusCondition ...
 type DataPlaneClusterStatusCondition struct {
 	Type    string
 	Reason  string
@@ -14,6 +16,7 @@ type DataPlaneClusterStatusCondition struct {
 	Message string
 }
 
+// DataPlaneClusterConfigObservability ...
 type DataPlaneClusterConfigObservability struct {
 	AccessToken string
 	Channel     string
@@ -21,6 +24,7 @@ type DataPlaneClusterConfigObservability struct {
 	Tag         string
 }
 
+// DataPlaneClusterConfig ...
 type DataPlaneClusterConfig struct {
 	Observability DataPlaneClusterConfigObservability
 }

@@ -1,5 +1,6 @@
 package constants
 
+// ProductName ...
 const (
 	// ProductName defines the name of the product
 	ProductName = "RHACS"

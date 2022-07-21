@@ -38,10 +38,16 @@ const (
 	defaultLogEnabled = true
 )
 
+// ShouldLogFunc ...
 type ShouldLogFunc func(attempt int, maxRetries int, maxRetryLogs int) bool
 
+// OnStartFunc ...
 type OnStartFunc func(maxRetries int) error
+
+// OnRetryFunc ...
 type OnRetryFunc func(attempt int, maxRetries int) (done bool, err error)
+
+// OnFinishFunc ...
 type OnFinishFunc func(attempt int, maxRetries int, err error)
 
 // Poller - This is the actual poller
@@ -74,6 +80,7 @@ type poller struct {
 
 var _ Poller = &poller{}
 
+// Poll ...
 func (poller *poller) Poll() error {
 	maxAttempts := poller.attempts
 	start := time.Now()
@@ -169,6 +176,7 @@ func (poller *poller) logRetry(attempt int, maxAttempts int, start time.Time) {
 	}
 }
 
+// LogFunctionType ...
 type LogFunctionType func(pattern string, args ...interface{})
 
 // PollerBuilder is to be used to create a poller to check for an event to happens
@@ -216,6 +224,7 @@ type pollerBuilder struct {
 
 var _ PollerBuilder = &pollerBuilder{}
 
+// NewPollerBuilder ...
 func NewPollerBuilder(db *db.ConnectionFactory) PollerBuilder {
 	return &pollerBuilder{
 		p: poller{
@@ -229,72 +238,86 @@ func NewPollerBuilder(db *db.ConnectionFactory) PollerBuilder {
 	}
 }
 
+// OnStart ...
 func (b *pollerBuilder) OnStart(onStart OnStartFunc) PollerBuilder {
 	b.p.onStart = onStart
 	return b
 }
 
+// OnRetry ...
 func (b *pollerBuilder) OnRetry(onRetry OnRetryFunc) PollerBuilder {
 	b.p.onRetry = onRetry
 	return b
 }
 
+// OnFinish ...
 func (b *pollerBuilder) OnFinish(onFinish OnFinishFunc) PollerBuilder {
 	b.p.onFinish = onFinish
 	return b
 }
 
+// IntervalAndRetries ...
 func (b *pollerBuilder) IntervalAndRetries(interval time.Duration, maxRetries int) PollerBuilder {
 	b.p.interval = interval
 	b.p.attempts = maxRetries
 	return b
 }
 
+// IntervalAndTimeout ...
 func (b *pollerBuilder) IntervalAndTimeout(interval time.Duration, timeout time.Duration) PollerBuilder {
 	b.p.interval = interval
 	b.p.attempts = int((timeout-1)/interval + 1)
 	return b
 }
 
+// DisableRetryLog ...
 func (b *pollerBuilder) DisableRetryLog() PollerBuilder {
 	b.p.logEnabled = false
 	return b
 }
 
+// RetryLogMessagef ...
 func (b *pollerBuilder) RetryLogMessagef(format string, params ...interface{}) PollerBuilder {
 	b.p.retryLogMessage = fmt.Sprintf(format, params...)
 	return b
 }
 
+// RetryLogMessage ...
 func (b *pollerBuilder) RetryLogMessage(msg string) PollerBuilder {
 	b.p.retryLogMessage = msg
 	return b
 }
 
+// RetryLogFunction ...
 func (b *pollerBuilder) RetryLogFunction(logFunction func(retry int, maxRetry int) string) PollerBuilder {
 	b.p.customLog = logFunction
 	return b
 }
 
+// OutputFunction ...
 func (b *pollerBuilder) OutputFunction(logFunction LogFunctionType) PollerBuilder {
 	b.p.outputFunction = logFunction
 	return b
 }
 
+// MaxRetryLogs ...
 func (b *pollerBuilder) MaxRetryLogs(maxRetryLogs int) PollerBuilder {
 	b.p.maxRetryLogs = maxRetryLogs
 	return b
 }
 
+// ShouldLog ...
 func (b *pollerBuilder) ShouldLog(shouldLog ShouldLogFunc) PollerBuilder {
 	b.p.shouldLog = shouldLog
 	return b
 }
 
+// DumpCluster ...
 func (b *pollerBuilder) DumpCluster(id string) PollerBuilder {
 	return b.DumpDB("clusters", fmt.Sprintf("cluster_id = '%s'", id), "cluster_id", "status", "updated_at")
 }
 
+// DumpDB ...
 func (b *pollerBuilder) DumpDB(name string, filter string, columns ...string) PollerBuilder {
 	if b.p.dbDump == nil {
 		b.p.dbDump = make(map[string]dbDumper)
@@ -306,6 +329,7 @@ func (b *pollerBuilder) DumpDB(name string, filter string, columns ...string) Po
 	return b
 }
 
+// Build ...
 func (b *pollerBuilder) Build() Poller {
 	if b.p.interval == 0 {
 		panic("no retry interval has been specified")

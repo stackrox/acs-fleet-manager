@@ -13,6 +13,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 )
 
+// NewAuthenticationBuilder ...
 func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, IAMConfig *iam.IAMConfig) (*authentication.HandlerBuilder, error) {
 
 	authnLogger, err := sdk.NewGlogLoggerBuilder().

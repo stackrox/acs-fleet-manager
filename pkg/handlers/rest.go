@@ -2,6 +2,7 @@ package handlers
 
 import "net/http"
 
+// RestHandler ...
 type RestHandler interface {
 	List(w http.ResponseWriter, r *http.Request)
 	Get(w http.ResponseWriter, r *http.Request)

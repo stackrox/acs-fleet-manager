@@ -10,6 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 )
 
+// KindDinosaur ...
 const (
 	// KindDinosaur is a string identifier for the type api.DinosaurRequest
 	KindDinosaur = "CentralRequest"
@@ -24,6 +25,7 @@ const (
 	BasePath = "/api/rhacs/v1"
 )
 
+// PresentReference ...
 func PresentReference(id, obj interface{}) compat.ObjectReference {
 	return handlers.PresentReferenceWith(id, obj, objectKind, objectPath)
 }

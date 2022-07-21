@@ -17,6 +17,7 @@ const (
 	leaseRenewTime    = 1 * time.Minute
 )
 
+// LeaderElectionManager ...
 type LeaderElectionManager struct {
 	workers           []Worker
 	connectionFactory *db.ConnectionFactory
@@ -34,6 +35,7 @@ type leaderLeaseAcquisition struct {
 	currentLease *api.LeaderLease
 }
 
+// NewLeaderElectionManager ...
 func NewLeaderElectionManager(workers []Worker, connectionFactory *db.ConnectionFactory) *LeaderElectionManager {
 	return &LeaderElectionManager{
 		workers:           workers,
@@ -43,6 +45,7 @@ func NewLeaderElectionManager(workers []Worker, connectionFactory *db.Connection
 	}
 }
 
+// Start ...
 func (s *LeaderElectionManager) Start() {
 	glog.V(1).Infoln("Starting LeaderElectionManager")
 
@@ -75,7 +78,7 @@ func (s *LeaderElectionManager) Start() {
 	<-waitWorkersStart
 }
 
-// impl. Stoppable
+// Stop impl. Stoppable
 // Workers started with Leader Election manager should be stop from here
 func (s *LeaderElectionManager) Stop() {
 	if s.tearDown == nil {

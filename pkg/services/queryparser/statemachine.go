@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// State ...
 type State interface {
 	accept(tok string) bool
 	parse(tok string) (State, error)
@@ -47,6 +48,7 @@ type state struct {
 	onNewToken func(token *ParsedToken) error
 }
 
+// NewStartState ...
 func NewStartState() State {
 	return &state{
 		tokenName:     "START",
@@ -54,6 +56,7 @@ func NewStartState() State {
 	}
 }
 
+// NewEndState ...
 func NewEndState() State {
 	return &state{
 		tokenName: "END",
@@ -121,26 +124,31 @@ type stateBuilder struct {
 
 var _ StateBuilder = &stateBuilder{}
 
+// Family ...
 func (sb *stateBuilder) Family(family string) StateBuilder {
 	sb.s.family = family
 	return sb
 }
 
+// AcceptPattern ...
 func (sb *stateBuilder) AcceptPattern(acceptPattern string) StateBuilder {
 	sb.s.acceptPattern = acceptPattern
 	return sb
 }
 
+// OnNewToken ...
 func (sb *stateBuilder) OnNewToken(handler func(token *ParsedToken) error) StateBuilder {
 	sb.s.onNewToken = handler
 	return sb
 }
 
+// Build ...
 func (sb *stateBuilder) Build() State {
 	sb.s.acceptPattern = fmt.Sprintf(`^%s$`, sb.s.acceptPattern)
 	return sb.s
 }
 
+// NewStateBuilder ...
 func NewStateBuilder(tokenName string) StateBuilder {
 	return &stateBuilder{s: &state{
 		last:      false,

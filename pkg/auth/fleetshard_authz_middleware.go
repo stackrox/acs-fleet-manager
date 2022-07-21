@@ -11,6 +11,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// UseFleetShardAuthorizationMiddleware ...
 func UseFleetShardAuthorizationMiddleware(router *mux.Router, jwkValidIssuerURI string,
 	fleetShardAuthZConfig *FleetShardAuthZConfig) {
 	router.Use(

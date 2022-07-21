@@ -1,5 +1,6 @@
 package api
 
+// CloudRegion ...
 type CloudRegion struct {
 	Kind                   string   `json:"kind"`
 	Id                     string   `json:"id"`
@@ -9,4 +10,5 @@ type CloudRegion struct {
 	SupportedInstanceTypes []string `json:"supported_instance_types"`
 }
 
+// CloudRegionList ...
 type CloudRegionList *[]CloudRegion

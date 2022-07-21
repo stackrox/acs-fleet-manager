@@ -5,6 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 )
 
+// ConvertDataPlaneDinosaurStatus ...
 func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralStatus) []*dbapi.DataPlaneCentralStatus {
 	res := make([]*dbapi.DataPlaneCentralStatus, 0, len(status))
 
@@ -20,8 +21,8 @@ func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralSt
 			})
 		}
 		if v.Routes != nil {
-			routes = make([]dbapi.DataPlaneCentralRouteRequest, 0, len(*v.Routes))
-			for _, ro := range *v.Routes {
+			routes = make([]dbapi.DataPlaneCentralRouteRequest, 0, len(v.Routes))
+			for _, ro := range v.Routes {
 				routes = append(routes, dbapi.DataPlaneCentralRouteRequest{
 					Name:   ro.Name,
 					Prefix: ro.Prefix,

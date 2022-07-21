@@ -15,6 +15,7 @@ const (
 	rhs256       = "RHS256"
 )
 
+// NewJWKCertServerMock ...
 func NewJWKCertServerMock(t *testing.T, pubKey crypto.PublicKey, jwkKID string) (url string, teardown func()) {
 	certHandler := http.NewServeMux()
 	certHandler.HandleFunc(certEndpoint,

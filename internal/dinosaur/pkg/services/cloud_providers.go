@@ -16,12 +16,13 @@ import (
 
 const keyCloudProvidersWithRegions = "cloudProviderWithRegions"
 
-var cloudPoviderIdToDisplayNameMapping map[string]string = map[string]string{
+var cloudPoviderIdToDisplayNameMapping = map[string]string{
 	"aws":   "Amazon Web Services",
 	"azure": "Microsoft Azure",
 	"gcp":   "Google Cloud Platform",
 }
 
+// CloudProvidersService ...
 //go:generate moq -out cloud_providers_moq.go . CloudProvidersService
 type CloudProvidersService interface {
 	GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError)
@@ -30,6 +31,7 @@ type CloudProvidersService interface {
 	ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError)
 }
 
+// NewCloudProvidersService ...
 func NewCloudProvidersService(providerFactory clusters.ProviderFactory, connectionFactory *db.ConnectionFactory) CloudProvidersService {
 	return &cloudProvidersService{
 		providerFactory:   providerFactory,
@@ -44,15 +46,18 @@ type cloudProvidersService struct {
 	cache             *cache.Cache
 }
 
+// CloudProviderWithRegions ...
 type CloudProviderWithRegions struct {
 	ID         string
 	RegionList *types.CloudProviderRegionInfoList
 }
 
+// Cluster ...
 type Cluster struct {
 	ProviderType api.ClusterProviderType `json:"provider_type"`
 }
 
+// GetCloudProvidersWithRegions ...
 func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError) {
 	results, dbErr := p.getAvailableClusterProviderTypes()
 	if dbErr != nil {
@@ -87,7 +92,7 @@ func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWi
 
 	}
 
-	var cloudProviderWithRegions []CloudProviderWithRegions = []CloudProviderWithRegions{}
+	var cloudProviderWithRegions = []CloudProviderWithRegions{}
 	for key, regions := range cloudProvidersToRegions {
 		cloudProviderWithRegions = append(cloudProviderWithRegions, CloudProviderWithRegions{
 			ID:         key,
@@ -102,6 +107,7 @@ func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWi
 	return cloudProviderWithRegions, nil
 }
 
+// GetCachedCloudProvidersWithRegions ...
 func (p cloudProvidersService) GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError) {
 	cachedCloudProviderWithRegions, cached := p.cache.Get(keyCloudProvidersWithRegions)
 	if cached {
@@ -123,6 +129,7 @@ func convertToCloudProviderWithRegionsType(cachedCloudProviderWithRegions interf
 	return nil, nil
 }
 
+// ListCloudProviders ...
 func (p cloudProvidersService) ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError) {
 	results, err := p.getAvailableClusterProviderTypes()
 	if err != nil {
@@ -157,6 +164,7 @@ func (p cloudProvidersService) ListCloudProviders() ([]api.CloudProvider, *error
 	return cloudProviderList, nil
 }
 
+// ListCloudProviderRegions ...
 func (p cloudProvidersService) ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError) {
 	cloudRegionList := []api.CloudRegion{}
 	cloudProviders, err := p.GetCloudProvidersWithRegions()

@@ -6,6 +6,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+// QuotaService ...
 //go:generate moq -out quotaservice_moq.go . QuotaService
 type QuotaService interface {
 	// CheckIfQuotaIsDefinedForInstanceType checks if quota is defined for the given instance type

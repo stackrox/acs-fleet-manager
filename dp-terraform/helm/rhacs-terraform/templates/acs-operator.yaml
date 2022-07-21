@@ -14,7 +14,7 @@ spec:
   channel: latest
   installPlanApproval: Automatic
   name: rhacs-operator
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
+  source: {{ .Values.acsOperator.source }}
+  sourceNamespace: {{ .Values.acsOperator.sourceNamespace }}
   startingCSV: {{ .Values.acsOperator.startingCSV }}
 {{- end }}
