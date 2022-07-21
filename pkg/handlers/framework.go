@@ -28,6 +28,7 @@ type HandlerConfig struct {
 	ErrorHandler ErrorHandlerFunc
 }
 
+// EventStream ...
 type EventStream struct {
 	ContentType string
 	// GetNextEvent should block until there is an event to return.  GetNextEvent should unblock and return io.EOF when if context is canceled.
@@ -35,8 +36,13 @@ type EventStream struct {
 	Close        func()
 }
 
+// Validate ...
 type Validate func() *errors.ServiceError
+
+// ErrorHandlerFunc ...
 type ErrorHandlerFunc func(r *http.Request, w http.ResponseWriter, err *errors.ServiceError)
+
+// HttpAction ...
 type HttpAction func() (interface{}, *errors.ServiceError)
 
 func success(r *http.Request) {
@@ -54,6 +60,7 @@ func errorHandler(r *http.Request, w http.ResponseWriter, cfg *HandlerConfig, er
 	cfg.ErrorHandler(r, w, err)
 }
 
+// Handle ...
 func Handle(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, httpStatus int) {
 	if cfg.ErrorHandler == nil {
 		cfg.ErrorHandler = shared.HandleError
@@ -98,6 +105,7 @@ func Handle(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, httpStat
 
 }
 
+// HandleDelete ...
 func HandleDelete(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, httpStatus int) {
 	if cfg.ErrorHandler == nil {
 		cfg.ErrorHandler = shared.HandleError
@@ -122,6 +130,7 @@ func HandleDelete(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, ht
 
 }
 
+// HandleGet ...
 func HandleGet(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 	if cfg.ErrorHandler == nil {
 		cfg.ErrorHandler = shared.HandleError
@@ -145,6 +154,7 @@ func HandleGet(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 	}
 }
 
+// HandleList ...
 func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 	if cfg.ErrorHandler == nil {
 		cfg.ErrorHandler = shared.HandleError
@@ -193,20 +203,21 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 				}
 				_ = json.NewEncoder(w).Encode(result)
 				return
-			} else {
-				if result == nil {
-					return // the event stream was done.
-				}
-				_ = json.NewEncoder(w).Encode(result)
-				_, _ = fmt.Fprint(w, "\n")
-				flusher.Flush() // sends the result to the client (forces Transfer-Encoding: chunked)
 			}
+			if result == nil {
+				return // the event stream was done.
+			}
+			_ = json.NewEncoder(w).Encode(result)
+			_, _ = fmt.Fprint(w, "\n")
+			flusher.Flush() // sends the result to the client (forces Transfer-Encoding: chunked)
 		}
 	} else {
 		shared.WriteJSONResponse(w, http.StatusOK, results)
 	}
 	success(r)
 }
+
+// ConvertToPrivateError ...
 func ConvertToPrivateError(e compat.Error) compat.PrivateError {
 	return compat.PrivateError{
 		Id:          e.Id,

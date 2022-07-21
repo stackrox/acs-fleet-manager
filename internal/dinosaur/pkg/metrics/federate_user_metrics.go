@@ -9,11 +9,13 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 )
 
+// FederatedUserMetricsCollector ...
 type FederatedUserMetricsCollector struct {
 	DinosaurMetricsMetadata map[string]constants.MetricsMetadata
 	DinosaurMetrics         *observatorium.DinosaurMetrics
 }
 
+// NewFederatedUserMetricsCollector ...
 func NewFederatedUserMetricsCollector(dinosaurMetrics *observatorium.DinosaurMetrics) *FederatedUserMetricsCollector {
 	return &FederatedUserMetricsCollector{
 		DinosaurMetricsMetadata: constants.GetMetricsMetaData(),
@@ -21,12 +23,14 @@ func NewFederatedUserMetricsCollector(dinosaurMetrics *observatorium.DinosaurMet
 	}
 }
 
+// Describe ...
 func (f FederatedUserMetricsCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, metricMetadata := range f.DinosaurMetricsMetadata {
 		ch <- f.buildMetricDesc(metricMetadata)
 	}
 }
 
+// Collect ...
 func (f FederatedUserMetricsCollector) Collect(ch chan<- prometheus.Metric) {
 	// collect metric
 	for _, m := range *f.DinosaurMetrics {

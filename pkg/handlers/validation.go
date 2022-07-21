@@ -12,6 +12,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+// ValidUuidRegexp ...
 var (
 	// Dinosaur cluster names must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character. For example, 'my-name', or 'abc-123'.
 
@@ -36,6 +37,7 @@ func ValidateAsyncEnabled(r *http.Request, action string) Validate {
 	}
 }
 
+// ValidateServiceAccountName ...
 func ValidateServiceAccountName(value *string, field string) Validate {
 	return func() *errors.ServiceError {
 		if !ValidServiceAccountNameRegexp.MatchString(*value) {
@@ -45,6 +47,7 @@ func ValidateServiceAccountName(value *string, field string) Validate {
 	}
 }
 
+// ValidateServiceAccountDesc ...
 func ValidateServiceAccountDesc(value *string, field string) Validate {
 	return func() *errors.ServiceError {
 		if !ValidServiceAccountDescRegexp.MatchString(*value) {
@@ -54,6 +57,7 @@ func ValidateServiceAccountDesc(value *string, field string) Validate {
 	}
 }
 
+// ValidateServiceAccountId ...
 func ValidateServiceAccountId(value *string, field string) Validate {
 	return func() *errors.ServiceError {
 		if !ValidUuidRegexp.MatchString(*value) {
@@ -73,6 +77,7 @@ func ValidateMultiAZEnabled(value *bool, action string) Validate {
 	}
 }
 
+// ValidateMaxLength ...
 func ValidateMaxLength(value *string, field string, maxVal *int) Validate {
 	return func() *errors.ServiceError {
 		if maxVal != nil && len(*value) > *maxVal {
@@ -82,6 +87,7 @@ func ValidateMaxLength(value *string, field string, maxVal *int) Validate {
 	}
 }
 
+// ValidateLength ...
 func ValidateLength(value *string, field string, minVal *int, maxVal *int) Validate {
 	var min = 1
 	if *minVal > 1 {
@@ -94,6 +100,7 @@ func ValidateLength(value *string, field string, minVal *int, maxVal *int) Valid
 	return ValidateMinLength(value, field, min)
 }
 
+// ValidateMinLength ...
 func ValidateMinLength(value *string, field string, min int) Validate {
 	return func() *errors.ServiceError {
 		if value == nil || len(*value) < min {
@@ -103,6 +110,7 @@ func ValidateMinLength(value *string, field string, min int) Validate {
 	}
 }
 
+// ValidateJsonSchema ...
 func ValidateJsonSchema(schemaName string, schemaLoader gojsonschema.JSONLoader, documentName string, documentLoader gojsonschema.JSONLoader) *errors.ServiceError {
 	schema, err := gojsonschema.NewSchema(schemaLoader)
 	if err != nil {
@@ -120,6 +128,7 @@ func ValidateJsonSchema(schemaName string, schemaLoader gojsonschema.JSONLoader,
 	return nil
 }
 
+// ValidatQueryParam ...
 func ValidatQueryParam(queryParams url.Values, field string) Validate {
 
 	return func() *errors.ServiceError {

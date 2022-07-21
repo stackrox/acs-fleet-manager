@@ -6,7 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// This method returns true if JWT token is expired, otherwise returns false
+// IsJWTTokenExpired This method returns true if JWT token is expired, otherwise returns false
 func IsJWTTokenExpired(accessToken string) bool {
 	token, tokenErr := jwt.Parse(accessToken, nil)
 	if tokenErr != nil {

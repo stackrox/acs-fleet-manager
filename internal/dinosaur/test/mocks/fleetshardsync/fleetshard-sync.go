@@ -109,6 +109,7 @@ var defaultUpdateDinosaurStatusFunc = func(helper *coreTest.Helper, privateClien
 	return nil
 }
 
+// MockFleetshardSyncBuilder ...
 type MockFleetshardSyncBuilder interface {
 	// SetUpdateDataplaneClusterStatusFunc - Sets behaviour for updating dataplane clusters in each Fleetshard sync reconcile
 	SetUpdateDataplaneClusterStatusFunc(func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error)
@@ -127,6 +128,7 @@ type mockFleetshardSyncBuilder struct {
 
 var _ MockFleetshardSyncBuilder = &mockFleetshardSyncBuilder{}
 
+// NewMockFleetshardSyncBuilder ...
 func NewMockFleetshardSyncBuilder(helper *coreTest.Helper, t *testing.T) MockFleetshardSyncBuilder {
 	var ocmClient ocm.ClusterManagementClient
 	helper.Env.MustResolveAll(&ocmClient)
@@ -143,22 +145,27 @@ func NewMockFleetshardSyncBuilder(helper *coreTest.Helper, t *testing.T) MockFle
 	}
 }
 
+// SetUpdateDataplaneClusterStatusFunc ...
 func (m *mockFleetshardSyncBuilder) SetUpdateDataplaneClusterStatusFunc(updateDataplaneClusterStatusFunc func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error) {
 	m.kfsync.updateDataplaneClusterStatus = updateDataplaneClusterStatusFunc
 }
 
+// SetUpdateDinosaurStatusFunc ...
 func (m *mockFleetshardSyncBuilder) SetUpdateDinosaurStatusFunc(updateDinosaurStatusFunc func(helper *coreTest.Helper, privateClient *private.APIClient) error) {
 	m.kfsync.updateDinosaurClusterStatus = updateDinosaurStatusFunc
 }
 
+// SetInterval ...
 func (m *mockFleetshardSyncBuilder) SetInterval(interval time.Duration) {
 	m.kfsync.interval = interval
 }
 
+// Build ...
 func (m *mockFleetshardSyncBuilder) Build() MockFleetshardSync {
 	return &m.kfsync
 }
 
+// MockFleetshardSync ...
 type MockFleetshardSync interface {
 	// Start - Starts the Fleetshard sync reconciler
 	Start()
@@ -179,6 +186,7 @@ type mockFleetshardSync struct {
 
 var _ MockFleetshardSync = &mockFleetshardSync{}
 
+// Start ...
 func (m *mockFleetshardSync) Start() {
 	// starts reconcile immediately and then on every repeat interval
 	// run reconcile
@@ -192,6 +200,7 @@ func (m *mockFleetshardSync) Start() {
 	}()
 }
 
+// Stop ...
 func (m *mockFleetshardSync) Stop() {
 	m.ticker.Stop()
 }
@@ -208,7 +217,7 @@ func (m *mockFleetshardSync) reconcileDinosaurClusters() {
 	}
 }
 
-// Returns an authenticated context to be used for calling the data plane endpoints
+// NewAuthenticatedContextForDataPlaneCluster Returns an authenticated context to be used for calling the data plane endpoints
 func NewAuthenticatedContextForDataPlaneCluster(h *coreTest.Helper, clusterID string) context.Context {
 	var iamConfig *iam.IAMConfig
 	h.Env.MustResolveAll(&iamConfig)
@@ -227,7 +236,7 @@ func NewAuthenticatedContextForDataPlaneCluster(h *coreTest.Helper, clusterID st
 	return ctx
 }
 
-// Returns a sample data plane cluster status request with available capacity
+// SampleDataPlaneclusterStatusRequestWithAvailableCapacity Returns a sample data plane cluster status request with available capacity
 func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPlaneClusterUpdateStatusRequest {
 	return &private.DataPlaneClusterUpdateStatusRequest{
 		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
@@ -259,7 +268,7 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 	}
 }
 
-// Return a Dinosaur status for a deleted cluster
+// GetDeletedDinosaurStatusResponse Return a Dinosaur status for a deleted cluster
 func GetDeletedDinosaurStatusResponse() private.DataPlaneCentralStatus {
 	return private.DataPlaneCentralStatus{
 		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
@@ -271,15 +280,17 @@ func GetDeletedDinosaurStatusResponse() private.DataPlaneCentralStatus {
 	}
 }
 
+// GetDefaultReportedDinosaurVersion ...
 func GetDefaultReportedDinosaurVersion() string {
 	return "2.7.0"
 }
 
+// GetDefaultReportedDinosaurOperatorVersion ...
 func GetDefaultReportedDinosaurOperatorVersion() string {
 	return "dinosaur-operator.v0.23.0-0"
 }
 
-// Return a dinosaur status for a ready cluster
+// GetReadyDinosaurStatusResponse Return a dinosaur status for a ready cluster
 func GetReadyDinosaurStatusResponse() private.DataPlaneCentralStatus {
 	return private.DataPlaneCentralStatus{
 		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
@@ -295,6 +306,7 @@ func GetReadyDinosaurStatusResponse() private.DataPlaneCentralStatus {
 	}
 }
 
+// GetErrorDinosaurStatusResponse ...
 func GetErrorDinosaurStatusResponse() private.DataPlaneCentralStatus {
 	return private.DataPlaneCentralStatus{
 		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
@@ -307,6 +319,7 @@ func GetErrorDinosaurStatusResponse() private.DataPlaneCentralStatus {
 	}
 }
 
+// GetErrorWithCustomMessageDinosaurStatusResponse ...
 func GetErrorWithCustomMessageDinosaurStatusResponse(message string) private.DataPlaneCentralStatus {
 	res := GetErrorDinosaurStatusResponse()
 	res.Conditions[0].Message = message

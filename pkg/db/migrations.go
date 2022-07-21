@@ -11,12 +11,14 @@ import (
 	"gorm.io/gorm"
 )
 
+// Migration ...
 type Migration struct {
 	DbFactory   *ConnectionFactory
 	Gormigrate  *gormigrate.Gormigrate
 	GormOptions *gormigrate.Options
 }
 
+// NewMigration ...
 func NewMigration(dbConfig *DatabaseConfig, gormOptions *gormigrate.Options, migrations []*gormigrate.Migration) (*Migration, func(), error) {
 	err := dbConfig.ReadFiles()
 	if err != nil {
@@ -31,13 +33,14 @@ func NewMigration(dbConfig *DatabaseConfig, gormOptions *gormigrate.Options, mig
 	}, cleanup, nil
 }
 
+// Migrate ...
 func (m *Migration) Migrate() {
 	if err := m.Gormigrate.Migrate(); err != nil {
 		glog.Fatalf("Could not migrate: %v", err)
 	}
 }
 
-// Migrating to a specific migration will not seed the database, seeds are up to date with the latest
+// MigrateTo Migrating to a specific migration will not seed the database, seeds are up to date with the latest
 // schema based on the most recent migration
 // This should be for testing purposes mainly
 func (m *Migration) MigrateTo(migrationID string) {
@@ -46,6 +49,7 @@ func (m *Migration) MigrateTo(migrationID string) {
 	}
 }
 
+// RollbackLast ...
 func (m *Migration) RollbackLast() {
 	if err := m.Gormigrate.RollbackLast(); err != nil {
 		glog.Fatalf("Could not migrate: %v", err)
@@ -53,13 +57,14 @@ func (m *Migration) RollbackLast() {
 	m.deleteMigrationTableIfEmpty(m.DbFactory.New())
 }
 
+// RollbackTo ...
 func (m *Migration) RollbackTo(migrationID string) {
 	if err := m.Gormigrate.RollbackTo(migrationID); err != nil {
 		glog.Fatalf("Could not migrate: %v", err)
 	}
 }
 
-// Rolls back all migrations..
+// RollbackAll Rolls back all migrations..
 func (m *Migration) RollbackAll() {
 	db := m.DbFactory.New()
 	type Result struct {
@@ -91,6 +96,7 @@ func (m *Migration) deleteMigrationTableIfEmpty(db *gorm.DB) {
 	}
 }
 
+// CountMigrationsApplied ...
 func (m *Migration) CountMigrationsApplied() int {
 	db := m.DbFactory.New()
 	if !db.Migrator().HasTable(m.GormOptions.TableName) {
@@ -112,8 +118,10 @@ type Model struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
+// MigrationAction ...
 type MigrationAction func(tx *gorm.DB, apply bool) error
 
+// CreateTableAction ...
 func CreateTableAction(table interface{}) MigrationAction {
 	caller := ""
 	if _, file, no, ok := runtime.Caller(1); ok {
@@ -135,6 +143,7 @@ func CreateTableAction(table interface{}) MigrationAction {
 	}
 }
 
+// AddTableColumnsAction ...
 func AddTableColumnsAction(table interface{}) MigrationAction {
 	caller := ""
 	if _, file, no, ok := runtime.Caller(1); ok {
@@ -167,6 +176,7 @@ func AddTableColumnsAction(table interface{}) MigrationAction {
 	}
 }
 
+// DropTableColumnsAction ...
 func DropTableColumnsAction(table interface{}, tableName ...string) MigrationAction {
 	caller := ""
 	if _, file, no, ok := runtime.Caller(1); ok {
@@ -205,6 +215,7 @@ func DropTableColumnsAction(table interface{}, tableName ...string) MigrationAct
 	}
 }
 
+// ExecAction ...
 func ExecAction(applySql string, unapplySql string) MigrationAction {
 	caller := ""
 	if _, file, no, ok := runtime.Caller(1); ok {
@@ -232,6 +243,7 @@ func ExecAction(applySql string, unapplySql string) MigrationAction {
 	}
 }
 
+// FuncAction ...
 func FuncAction(applyFunc func(*gorm.DB) error, unapplyFunc func(*gorm.DB) error) MigrationAction {
 	caller := ""
 	if _, file, no, ok := runtime.Caller(1); ok {
@@ -255,6 +267,7 @@ func FuncAction(applyFunc func(*gorm.DB) error, unapplyFunc func(*gorm.DB) error
 	}
 }
 
+// CreateMigrationFromActions ...
 func CreateMigrationFromActions(id string, actions ...MigrationAction) *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: id,

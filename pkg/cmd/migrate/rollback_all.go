@@ -7,6 +7,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// NewRollbackAll ...
 func NewRollbackAll(env *environments.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "rollback-all",

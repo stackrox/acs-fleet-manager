@@ -5,6 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 )
 
+// ConvertDataPlaneDinosaurStatus ...
 func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralStatus) []*dbapi.DataPlaneCentralStatus {
 	res := make([]*dbapi.DataPlaneCentralStatus, 0, len(status))
 

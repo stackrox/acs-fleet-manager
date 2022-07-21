@@ -9,6 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 )
 
+// Provider ...
 //go:generate moq -out provider_moq.go . Provider
 type Provider interface {
 	// Create using the information provided to request a new OpenShift/k8s cluster from the provider
@@ -54,6 +55,7 @@ type DefaultProviderFactory struct {
 	providerContainer map[api.ClusterProviderType]Provider
 }
 
+// NewDefaultProviderFactory ...
 func NewDefaultProviderFactory(
 	ocmClient ocm.ClusterManagementClient,
 	connectionFactory *db.ConnectionFactory,
@@ -71,6 +73,7 @@ func NewDefaultProviderFactory(
 	}
 }
 
+// GetProvider ...
 func (d *DefaultProviderFactory) GetProvider(providerType api.ClusterProviderType) (Provider, error) {
 	if providerType == "" {
 		providerType = api.ClusterProviderOCM

@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// Config ...
 type Config struct {
 	Enabled bool          `json:"enabled"`
 	Key     string        `json:"key"`
@@ -19,6 +20,7 @@ type Config struct {
 	KeyFile string `json:"key_file"`
 }
 
+// NewConfig ...
 func NewConfig() *Config {
 	return &Config{
 		Enabled: false,
@@ -30,6 +32,7 @@ func NewConfig() *Config {
 	}
 }
 
+// AddFlags ...
 func (c *Config) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Enabled, "enable-sentry", c.Enabled, "Enable sentry error monitoring")
 	fs.StringVar(&c.KeyFile, "sentry-key-file", c.KeyFile, "File containing Sentry key")
@@ -39,6 +42,7 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&c.Timeout, "sentry-timeout", c.Timeout, "Timeout for all requests made to Sentry")
 }
 
+// ReadFiles ...
 func (c *Config) ReadFiles() error {
 	return shared.ReadFileValueString(c.KeyFile, &c.Key)
 }

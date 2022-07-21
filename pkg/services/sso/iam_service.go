@@ -7,8 +7,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+// Provider ...
 type Provider string
 
+// CompleteServiceAccountRequest ...
 type CompleteServiceAccountRequest struct {
 	Owner          string
 	OwnerAccountId string
@@ -18,6 +20,7 @@ type CompleteServiceAccountRequest struct {
 	Description    string
 }
 
+// IAMService ...
 //go:generate moq -out iam_service_moq.go . IAMService
 type IAMService interface {
 	GetConfig() *iam.IAMConfig
@@ -26,6 +29,7 @@ type IAMService interface {
 	DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError
 }
 
+// NewIAMService ...
 func NewIAMService(config *iam.IAMConfig) IAMService {
 	return &redhatssoService{
 		client: redhatsso.NewSSOClient(config, config.RedhatSSORealm),

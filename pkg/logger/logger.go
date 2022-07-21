@@ -11,8 +11,10 @@ import (
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 )
 
+// LoggerKeys ...
 type LoggerKeys string
 
+// ActionKey ...
 const (
 	ActionKey       LoggerKeys = "Action"
 	ActionResultKey LoggerKeys = "EventResult"
@@ -24,11 +26,13 @@ const (
 	logEventSeparator = "$$"
 )
 
+// LogEvent ...
 type LogEvent struct {
 	Type        string
 	Description string
 }
 
+// NewLogEventFromString ...
 func NewLogEventFromString(eventTypeAndDescription string) (logEvent LogEvent) {
 	typeAndDesc := strings.Split(eventTypeAndDescription, logEventSeparator)
 	sliceLen := len(typeAndDesc)
@@ -44,6 +48,7 @@ func NewLogEventFromString(eventTypeAndDescription string) (logEvent LogEvent) {
 	return logEvent
 }
 
+// NewLogEvent ...
 func NewLogEvent(eventType string, description ...string) LogEvent {
 	res := LogEvent{
 		Type: eventType,
@@ -56,6 +61,7 @@ func NewLogEvent(eventType string, description ...string) LogEvent {
 	return res
 }
 
+// ToString ...
 func (l LogEvent) ToString() string {
 	if l.Description != "" {
 		return fmt.Sprintf("%s%s%s", l.Type, logEventSeparator, l.Description)
@@ -64,6 +70,7 @@ func (l LogEvent) ToString() string {
 	return l.Type
 }
 
+// UHCLogger ...
 type UHCLogger interface {
 	V(level int32) UHCLogger
 	Infof(format string, args ...interface{})
@@ -137,6 +144,7 @@ func (l *logger) prepareLogPrefix(format string, args ...interface{}) string {
 	return prefix + orig
 }
 
+// V ...
 func (l *logger) V(level int32) UHCLogger {
 	return &logger{
 		context:   l.context,
@@ -166,23 +174,27 @@ func getSessionFromClaims(ctx context.Context) string {
 	return ""
 }
 
+// Infof ...
 func (l *logger) Infof(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.V(glog.Level(l.level)).Infof(prefixed)
 }
 
+// Warningf ...
 func (l *logger) Warningf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.Warningln(prefixed)
 	l.captureSentryEvent(sentry.LevelWarning, format, args...)
 }
 
+// Errorf ...
 func (l *logger) Errorf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.Errorln(prefixed)
 	l.captureSentryEvent(sentry.LevelError, format, args...)
 }
 
+// Error ...
 func (l *logger) Error(err error) {
 	glog.Error(err)
 	if l.sentryHub == nil {
@@ -192,6 +204,7 @@ func (l *logger) Error(err error) {
 	l.sentryHub.CaptureException(err)
 }
 
+// Fatalf ...
 func (l *logger) Fatalf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.Fatalln(prefixed)

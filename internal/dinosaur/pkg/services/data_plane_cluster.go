@@ -18,6 +18,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+// DataPlaneClusterService ...
 type DataPlaneClusterService interface {
 	UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *errors.ServiceError
 	GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *errors.ServiceError)
@@ -35,10 +36,12 @@ type dataPlaneClusterService struct {
 	DataplaneClusterConfig *config.DataplaneClusterConfig
 }
 
+// NewDataPlaneClusterService ...
 func NewDataPlaneClusterService(config dataPlaneClusterService) *dataPlaneClusterService {
 	return &config
 }
 
+// GetDataPlaneClusterConfig ...
 func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *errors.ServiceError) {
 	cluster, svcErr := d.ClusterService.FindClusterByID(clusterID)
 	if svcErr != nil {
@@ -59,6 +62,7 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 	}, nil
 }
 
+// UpdateDataPlaneClusterStatus ...
 func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *errors.ServiceError {
 	cluster, svcErr := d.ClusterService.FindClusterByID(clusterID)
 	if svcErr != nil {

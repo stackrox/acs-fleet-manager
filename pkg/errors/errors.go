@@ -16,6 +16,7 @@ type stackTracer interface {
 	StackTrace() errors.StackTrace
 }
 
+// ERROR_CODE_PREFIX ...
 const (
 	ERROR_CODE_PREFIX = "RHACS-MGMT"
 
@@ -193,8 +194,10 @@ const (
 	ErrorTooManyRequestsReason string           = "Too Many requests"
 )
 
+// ErrorList ...
 type ErrorList []error
 
+// Error ...
 func (e ErrorList) Error() string {
 	var res string
 	for _, err := range e {
@@ -205,10 +208,13 @@ func (e ErrorList) Error() string {
 	return res
 }
 
+// ServiceErrorCode ...
 type ServiceErrorCode int
 
+// ServiceErrors ...
 type ServiceErrors []ServiceError
 
+// Find ...
 func Find(code ServiceErrorCode) (bool, *ServiceError) {
 	for _, err := range Errors() {
 		if err.Code == code {
@@ -218,6 +224,7 @@ func Find(code ServiceErrorCode) (bool, *ServiceError) {
 	return false, nil
 }
 
+// Errors ...
 func Errors() ServiceErrors {
 	return ServiceErrors{
 		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden, nil},
@@ -265,6 +272,7 @@ func Errors() ServiceErrors {
 	}
 }
 
+// NewErrorFromHTTPStatusCode ...
 func NewErrorFromHTTPStatusCode(httpCode int, reason string, values ...interface{}) *ServiceError {
 	if httpCode >= http.StatusBadRequest && httpCode < http.StatusInternalServerError {
 		switch httpCode {
@@ -297,6 +305,7 @@ func NewErrorFromHTTPStatusCode(httpCode int, reason string, values ...interface
 	return GeneralError(reason, values...)
 }
 
+// ToServiceError ...
 func ToServiceError(err error) *ServiceError {
 	switch convertedErr := err.(type) {
 	case *ServiceError:
@@ -306,6 +315,7 @@ func ToServiceError(err error) *ServiceError {
 	}
 }
 
+// ServiceError ...
 type ServiceError struct {
 	// Code is the numeric and distinct ID for the error
 	Code ServiceErrorCode
@@ -317,11 +327,12 @@ type ServiceError struct {
 	cause error
 }
 
-// Reason can be a string with format verbs, which will be replace by the specified values
+// New Reason can be a string with format verbs, which will be replace by the specified values
 func New(code ServiceErrorCode, reason string, values ...interface{}) *ServiceError {
 	return NewWithCause(code, nil, reason, values...)
 }
 
+// NewWithCause ...
 func NewWithCause(code ServiceErrorCode, cause error, reason string, values ...interface{}) *ServiceError {
 	// If the code isn't defined, use the general error code
 	var err *ServiceError
@@ -367,6 +378,7 @@ func (e *ServiceError) StackTrace() errors.StackTrace {
 	return err.StackTrace()
 }
 
+// Error ...
 func (e *ServiceError) Error() string {
 	if e.cause != nil {
 		return fmt.Sprintf("%s: %s\n caused by: %s", CodeStr(e.Code), e.Reason, e.cause.Error())
@@ -375,81 +387,102 @@ func (e *ServiceError) Error() string {
 	return fmt.Sprintf("%s: %s", CodeStr(e.Code), e.Reason)
 }
 
+// AsError ...
 func (e *ServiceError) AsError() error {
 	return fmt.Errorf(e.Error())
 }
 
+// Is404 ...
 func (e *ServiceError) Is404() bool {
 	return e.Code == NotFound("").Code
 }
 
+// IsConflict ...
 func (e *ServiceError) IsConflict() bool {
 	return e.Code == Conflict("").Code
 }
 
+// IsForbidden ...
 func (e *ServiceError) IsForbidden() bool {
 	return e.Code == Forbidden("").Code
 }
 
+// IsFailedToCreateSSOClient ...
 func (e *ServiceError) IsFailedToCreateSSOClient() bool {
 	return e.Code == FailedToCreateSSOClient("").Code
 }
 
+// IsClientErrorClass ...
 func (e *ServiceError) IsClientErrorClass() bool {
 	return e.HttpCode >= http.StatusBadRequest && e.HttpCode < http.StatusInternalServerError
 }
 
+// IsServerErrorClass ...
 func (e *ServiceError) IsServerErrorClass() bool {
 	return e.HttpCode >= http.StatusInternalServerError
 }
 
+// IsFailedToGetSSOClientSecret ...
 func (e *ServiceError) IsFailedToGetSSOClientSecret() bool {
 	return e.Code == FailedToGetSSOClientSecret("").Code
 }
 
+// IsFailedToGetSSOClient ...
 func (e *ServiceError) IsFailedToGetSSOClient() bool {
 	return e.Code == FailedToGetSSOClient("").Code
 }
 
+// IsFailedToDeleteSSOClient ...
 func (e *ServiceError) IsFailedToDeleteSSOClient() bool {
 	return e.Code == FailedToDeleteSSOClient("").Code
 }
 
+// IsFailedToCreateServiceAccount ...
 func (e *ServiceError) IsFailedToCreateServiceAccount() bool {
 	return e.Code == FailedToCreateServiceAccount("").Code
 }
 
+// IsFailedToGetServiceAccount ...
 func (e *ServiceError) IsFailedToGetServiceAccount() bool {
 	return e.Code == FailedToGetServiceAccount("").Code
 }
 
+// IsFailedToDeleteServiceAccount ...
 func (e *ServiceError) IsFailedToDeleteServiceAccount() bool {
 	return e.Code == FailedToDeleteServiceAccount("").Code
 }
 
+// IsServiceAccountNotFound ...
 func (e *ServiceError) IsServiceAccountNotFound() bool {
 	return e.Code == ServiceAccountNotFound("").Code
 }
 
+// IsMaxLimitForServiceAccountReached ...
 func (e *ServiceError) IsMaxLimitForServiceAccountReached() bool {
 	return e.Code == ErrorMaxLimitForServiceAccountsReached
 }
 
+// IsBadRequest ...
 func (e *ServiceError) IsBadRequest() bool {
 	return e.Code == BadRequest("").Code
 }
+
+// InSufficientQuota ...
 func (e *ServiceError) InSufficientQuota() bool {
 	return e.Code == InsufficientQuotaError("").Code
 }
 
+// IsFailedToCheckQuota ...
 func (e *ServiceError) IsFailedToCheckQuota() bool {
 	return e.Code == FailedToCheckQuota("").Code
 }
 
+// IsInstanceTypeNotSupported ...
 func (e *ServiceError) IsInstanceTypeNotSupported() bool {
 	return e.Code == ErrorInstanceTypeNotSupported
 }
 
+// AsOpenapiError ...
 func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compat.Error {
 	href := Href(e.Code)
 	code := CodeStr(e.Code)
@@ -470,179 +503,222 @@ func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compa
 	}
 }
 
+// CodeStr ...
 func CodeStr(code ServiceErrorCode) string {
 	return fmt.Sprintf("%s-%d", ERROR_CODE_PREFIX, code)
 }
 
+// Href ...
 func Href(code ServiceErrorCode) string {
 	return fmt.Sprintf("%s%d", ERROR_HREF, code)
 }
 
+// NotFound ...
 func NotFound(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorNotFound, reason, values...)
 }
 
+// GeneralError ...
 func GeneralError(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorGeneral, reason, values...)
 }
 
+// Unauthorized ...
 func Unauthorized(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorUnauthorized, reason, values...)
 }
 
+// TermsNotAccepted ...
 func TermsNotAccepted(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorTermsNotAccepted, reason, values...)
 }
 
+// Unauthenticated ...
 func Unauthenticated(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorUnauthenticated, reason, values...)
 }
 
+// Forbidden ...
 func Forbidden(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorForbidden, reason, values...)
 }
 
+// MaximumAllowedInstanceReached ...
 func MaximumAllowedInstanceReached(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMaxAllowedInstanceReached, reason, values...)
 }
 
+// TooManyDinosaurInstancesReached ...
 func TooManyDinosaurInstancesReached(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorTooManyDinosaurInstancesReached, reason, values...)
 }
 
+// NotImplemented ...
 func NotImplemented(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorNotImplemented, reason, values...)
 }
 
+// Conflict ...
 func Conflict(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorConflict, reason, values...)
 }
 
+// Validation ...
 func Validation(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorValidation, reason, values...)
 }
 
+// MalformedRequest ...
 func MalformedRequest(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMalformedRequest, reason, values...)
 }
 
+// BadRequest ...
 func BadRequest(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorBadRequest, reason, values...)
 }
 
+// FailedToParseSearch ...
 func FailedToParseSearch(reason string, values ...interface{}) *ServiceError {
 	message := fmt.Sprintf("%s: %s", ErrorFailedToParseSearchReason, reason)
 	return New(ErrorFailedToParseSearch, message, values...)
 }
 
+// SyncActionNotSupported ...
 func SyncActionNotSupported() *ServiceError {
 	return New(ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason)
 }
 
+// NotMultiAzActionNotSupported ...
 func NotMultiAzActionNotSupported() *ServiceError {
 	return New(ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason)
 }
 
+// FailedToCreateSSOClient ...
 func FailedToCreateSSOClient(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToCreateSSOClient, reason, values...)
 }
 
+// FailedToGetSSOClientSecret ...
 func FailedToGetSSOClientSecret(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToGetSSOClientSecret, reason, values...)
 }
 
+// FailedToGetSSOClient ...
 func FailedToGetSSOClient(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToGetSSOClient, reason, values...)
 }
 
+// FailedToDeleteSSOClient ...
 func FailedToDeleteSSOClient(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToDeleteSSOClient, reason, values...)
 }
 
+// FailedToCreateServiceAccount ...
 func FailedToCreateServiceAccount(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToCreateServiceAccount, reason, values...)
 }
 
+// FailedToDeleteServiceAccount ...
 func FailedToDeleteServiceAccount(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToDeleteServiceAccount, reason, values...)
 }
 
+// MaxLimitForServiceAccountReached ...
 func MaxLimitForServiceAccountReached(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMaxLimitForServiceAccountsReached, reason, values...)
 }
 
+// FailedToGetServiceAccount ...
 func FailedToGetServiceAccount(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToGetServiceAccount, reason, values...)
 }
 
+// ServiceAccountNotFound ...
 func ServiceAccountNotFound(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorServiceAccountNotFound, reason, values...)
 }
 
+// RegionNotSupported ...
 func RegionNotSupported(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorRegionNotSupported, reason, values...)
 }
 
+// InstanceTypeNotSupported ...
 func InstanceTypeNotSupported(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorInstanceTypeNotSupported, reason, values...)
 }
 
+// ProviderNotSupported ...
 func ProviderNotSupported(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorProviderNotSupported, reason, values...)
 }
 
+// MalformedDinosaurClusterName ...
 func MalformedDinosaurClusterName(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMalformedDinosaurClusterName, reason, values...)
 }
 
+// InstancePlanNotSupported ...
 func InstancePlanNotSupported(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorInstancePlanNotSupported, reason, values...)
 }
 
+// MalformedServiceAccountName ...
 func MalformedServiceAccountName(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMalformedServiceAccountName, reason, values...)
 }
 
+// MalformedServiceAccountDesc ...
 func MalformedServiceAccountDesc(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMalformedServiceAccountDesc, reason, values...)
 }
 
+// MalformedServiceAccountId ...
 func MalformedServiceAccountId(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMalformedServiceAccountId, reason, values...)
 }
 
+// DuplicateDinosaurClusterName ...
 func DuplicateDinosaurClusterName() *ServiceError {
 	return New(ErrorDuplicateDinosaurClusterName, ErrorDuplicateDinosaurClusterNameReason)
 }
 
+// MinimumFieldLengthNotReached ...
 func MinimumFieldLengthNotReached(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMinimumFieldLength, reason, values...)
 }
 
+// MaximumFieldLengthMissing ...
 func MaximumFieldLengthMissing(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMaximumFieldLength, reason, values...)
 }
 
+// UnableToSendErrorResponse ...
 func UnableToSendErrorResponse() *ServiceError {
 	return New(ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason)
 }
 
+// FailedToParseQueryParms ...
 func FailedToParseQueryParms(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorBadRequest, reason, values...)
 
 }
 
+// FieldValidationError ...
 func FieldValidationError(reason string, values ...interface{}) *ServiceError {
 	message := fmt.Sprintf("%s: %s", ErrorFieldValidationErrorReason, reason)
 
 	return New(ErrorFieldValidationError, message, values...)
 }
 
+// InsufficientQuotaError ...
 func InsufficientQuotaError(reason string, values ...interface{}) *ServiceError {
 	message := fmt.Sprintf("%s: %s", ErrorInsufficientQuotaReason, reason)
 	return New(ErrorInsufficientQuota, message, values...)
 }
 
+// FailedToCheckQuota ...
 func FailedToCheckQuota(reason string, values ...interface{}) *ServiceError {
 	message := fmt.Sprintf("%s: %s", ErrorFailedToCheckQuotaReason, reason)
 	return New(ErrorFailedToCheckQuota, message, values...)

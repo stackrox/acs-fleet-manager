@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 )
 
+// Client ...
 //go:generate moq -out client_moq.go . Client
 type Client interface {
 	// route53
@@ -23,28 +24,35 @@ type Client interface {
 	GetChange(changeId string) (*route53.GetChangeOutput, error)
 }
 
+// ClientFactory ...
 type ClientFactory interface {
 	NewClient(credentials Config, region string) (Client, error)
 }
 
+// DefaultClientFactory ...
 type DefaultClientFactory struct{}
 
+// NewClient ...
 func (f *DefaultClientFactory) NewClient(credentials Config, region string) (Client, error) {
 	return newClient(credentials, region)
 }
 
+// NewDefaultClientFactory ...
 func NewDefaultClientFactory() *DefaultClientFactory {
 	return &DefaultClientFactory{}
 }
 
+// MockClientFactory ...
 type MockClientFactory struct {
 	mock Client
 }
 
+// NewClient ...
 func (m *MockClientFactory) NewClient(credentials Config, region string) (Client, error) {
 	return m.mock, nil
 }
 
+// NewMockClientFactory ...
 func NewMockClientFactory(client Client) *MockClientFactory {
 	return &MockClientFactory{
 		mock: client,
@@ -81,6 +89,7 @@ func newClient(credentials Config, region string) (Client, error) {
 	}, nil
 }
 
+// GetChange ...
 func (client *awsClient) GetChange(changeId string) (*route53.GetChangeOutput, error) {
 	changeInput := &route53.GetChangeInput{
 		Id: &changeId,
@@ -94,6 +103,7 @@ func (client *awsClient) GetChange(changeId string) (*route53.GetChangeOutput, e
 	return change, nil
 }
 
+// ListHostedZonesByNameInput ...
 func (client *awsClient) ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
 	maxItems := "1"
 	requestInput := &route53.ListHostedZonesByNameInput{
@@ -108,6 +118,7 @@ func (client *awsClient) ListHostedZonesByNameInput(dnsName string) (*route53.Li
 	return zone, nil
 }
 
+// ChangeResourceRecordSets ...
 func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
 	zones, err := client.ListHostedZonesByNameInput(dnsName)
 	if err != nil {

@@ -28,9 +28,8 @@ func getWaitTimeout() time.Duration {
 		timeout, err := time.ParseDuration(timeoutStr)
 		if err == nil {
 			return timeout
-		} else {
-			fmt.Printf("Error parsing timeout, using default timeout %v: %s\n", defaultTimeout, err)
 		}
+		fmt.Printf("Error parsing timeout, using default timeout %v: %s\n", defaultTimeout, err)
 	}
 	return defaultTimeout
 }

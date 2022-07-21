@@ -14,7 +14,7 @@ const (
 	ComputeMachineType = "m5.2xlarge"
 )
 
-// NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider
+// ClusterBuilder NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider
 // moving the type into a ocmtest package.
 //go:generate moq -out clusterbuilder_moq.go . ClusterBuilder
 // ClusterBuilder wrapper for the OCM-specific builder struct, to allow for mocking.
@@ -47,6 +47,7 @@ func NewClusterBuilder(awsConfig *config.AWSConfig, dataplaneClusterConfig *conf
 	}
 }
 
+// NewOCMClusterFromCluster ...
 func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error) {
 	// pre-req nil checks
 	if err := r.validate(); err != nil {

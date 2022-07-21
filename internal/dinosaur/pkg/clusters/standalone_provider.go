@@ -46,6 +46,7 @@ const dinosaurSREOpenIDPSecretName = "dinosaur-sre-idp-secret"
 
 var ctx = context.Background()
 
+// StandaloneProvider ...
 type StandaloneProvider struct {
 	connectionFactory      *db.ConnectionFactory
 	dataplaneClusterConfig *config.DataplaneClusterConfig
@@ -63,14 +64,17 @@ func newStandaloneProvider(connectionFactory *db.ConnectionFactory, dataplaneClu
 // blank assignment to verify that StandaloneProvider implements Provider
 var _ Provider = &StandaloneProvider{}
 
+// Create ...
 func (s *StandaloneProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 	return nil, nil
 }
 
+// Delete ...
 func (s *StandaloneProvider) Delete(spec *types.ClusterSpec) (bool, error) {
 	return true, nil
 }
 
+// InstallDinosaurOperator ...
 func (s *StandaloneProvider) InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error) {
 	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
 		Resources: []interface{}{
@@ -152,6 +156,7 @@ func (s *StandaloneProvider) buildDinosaurOperatorSubscription() *operatorsv1alp
 	}
 }
 
+// InstallFleetshard ...
 func (s *StandaloneProvider) InstallFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
 		Resources: []interface{}{
@@ -254,15 +259,18 @@ func (s *StandaloneProvider) buildFleetShardSyncSecret(params []types.Parameter)
 	}
 }
 
+// CheckClusterStatus ...
 func (s *StandaloneProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
 	spec.Status = api.ClusterProvisioned
 	return spec, nil
 }
 
+// GetClusterDNS ...
 func (s *StandaloneProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (string, error) {
 	return "", nil // NOOP for now
 }
 
+// AddIdentityProvider ...
 func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
 	// setup identity provider
 	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
@@ -329,6 +337,7 @@ func (s *StandaloneProvider) buildIdentityProviderResource(identityProvider type
 	}
 }
 
+// ApplyResources ...
 func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
 	if s.dataplaneClusterConfig.RawKubernetesConfig == nil {
 		return &resources, nil // no kubeconfig read, do nothing.
@@ -368,22 +377,27 @@ func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, reso
 	return &resources, nil
 }
 
+// ScaleUp ...
 func (s *StandaloneProvider) ScaleUp(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
 	return clusterSpec, nil // NOOP
 }
 
+// ScaleDown ...
 func (s *StandaloneProvider) ScaleDown(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
 	return clusterSpec, nil // NOOP
 }
 
+// SetComputeNodes ...
 func (s *StandaloneProvider) SetComputeNodes(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
 	return clusterSpec, nil // NOOP
 }
 
+// GetComputeNodes ...
 func (s *StandaloneProvider) GetComputeNodes(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
 	return &types.ComputeNodesInfo{}, nil // NOOP
 }
 
+// GetCloudProviders ...
 func (s *StandaloneProvider) GetCloudProviders() (*types.CloudProviderInfoList, error) {
 	type Cluster struct {
 		CloudProvider string
@@ -412,6 +426,7 @@ func (s *StandaloneProvider) GetCloudProviders() (*types.CloudProviderInfoList, 
 	return &types.CloudProviderInfoList{Items: items}, nil
 }
 
+// GetCloudProviderRegions ...
 func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
 	type Cluster struct {
 		Region  string
@@ -518,9 +533,8 @@ func shouldApplyChanges(dynamicClient dynamic.ResourceInterface, existingObj *un
 		lastApplied, ok := originalAnnotations[lastAppliedConfigurationAnnotation]
 		if !ok {
 			return true // new object, create it
-		} else {
-			return newConfiguration != lastApplied // check if configuration has changed before applying changes
 		}
+		return newConfiguration != lastApplied // check if configuration has changed before applying changes
 	}
 
 	return true

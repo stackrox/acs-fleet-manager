@@ -8,6 +8,7 @@ import (
 	"github.com/golang/glog"
 )
 
+// NewJSONLogFormatter ...
 func NewJSONLogFormatter() *jsonLogFormatter {
 	return &jsonLogFormatter{}
 }
@@ -16,6 +17,7 @@ type jsonLogFormatter struct{}
 
 var _ LogFormatter = &jsonLogFormatter{}
 
+// FormatRequestLog ...
 func (f *jsonLogFormatter) FormatRequestLog(r *http.Request) (string, error) {
 	jsonlog := jsonRequestLog{
 		Method:     r.Method,
@@ -34,6 +36,7 @@ func (f *jsonLogFormatter) FormatRequestLog(r *http.Request) (string, error) {
 	return string(log[:]), nil
 }
 
+// FormatResponseLog ...
 func (f *jsonLogFormatter) FormatResponseLog(info *ResponseInfo) (string, error) {
 	jsonlog := jsonResponseLog{Header: nil, Status: info.Status, Elapsed: info.Elapsed}
 	if glog.V(10) {
@@ -46,6 +49,7 @@ func (f *jsonLogFormatter) FormatResponseLog(info *ResponseInfo) (string, error)
 	return string(log[:]), nil
 }
 
+// FormatObject ...
 func (f *jsonLogFormatter) FormatObject(o interface{}) (string, error) {
 	log, err := json.Marshal(o)
 	if err != nil {

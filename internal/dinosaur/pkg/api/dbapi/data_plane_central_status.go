@@ -4,6 +4,7 @@ import (
 	"strings"
 )
 
+// DataPlaneCentralStatus ...
 type DataPlaneCentralStatus struct {
 	CentralClusterId string
 	Conditions       []DataPlaneCentralStatusCondition
@@ -13,6 +14,7 @@ type DataPlaneCentralStatus struct {
 	CentralOperatorVersion string
 }
 
+// DataPlaneCentralStatusCondition ...
 type DataPlaneCentralStatusCondition struct {
 	Type    string
 	Reason  string
@@ -20,17 +22,20 @@ type DataPlaneCentralStatusCondition struct {
 	Message string
 }
 
+// DataPlaneCentralRoute ...
 type DataPlaneCentralRoute struct {
 	Domain string
 	Router string
 }
 
+// DataPlaneCentralRouteRequest ...
 type DataPlaneCentralRouteRequest struct {
 	Name   string
 	Prefix string
 	Router string
 }
 
+// GetReadyCondition ...
 func (d *DataPlaneCentralStatus) GetReadyCondition() (DataPlaneCentralStatusCondition, bool) {
 	for _, c := range d.Conditions {
 		if strings.EqualFold(c.Type, "Ready") {

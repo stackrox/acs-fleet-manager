@@ -77,7 +77,7 @@ func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			validateFn := ValidateDinosaurClusterNameIsUnique(&tt.arg.name, tt.arg.dinosaurService, tt.arg.context)
+			validateFn := ValidateDinosaurClusterNameIsUnique(tt.arg.context, &tt.arg.name, tt.arg.dinosaurService)
 			err := validateFn()
 			gomega.Expect(tt.want).To(gomega.Equal(err))
 		})

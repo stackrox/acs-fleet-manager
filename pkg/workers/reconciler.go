@@ -13,8 +13,10 @@ import (
 	"github.com/golang/glog"
 )
 
-var RepeatInterval time.Duration = 30 * time.Second
+// RepeatInterval ...
+var RepeatInterval = 30 * time.Second
 
+// Reconciler ...
 type Reconciler struct {
 	di.Inject
 	wakeup chan *sync.WaitGroup
@@ -38,6 +40,7 @@ func (r *Reconciler) Wakeup(wait bool) {
 	}
 }
 
+// Start ...
 func (r *Reconciler) Start(worker Worker) {
 	r.wakeup = make(chan *sync.WaitGroup, 1)
 	*worker.GetStopChan() = make(chan struct{})
@@ -85,6 +88,7 @@ func (r *Reconciler) runReconcile(worker Worker) {
 	}
 }
 
+// Stop ...
 func (r *Reconciler) Stop(worker Worker) {
 	defer worker.SetIsRunning(false)
 	select {

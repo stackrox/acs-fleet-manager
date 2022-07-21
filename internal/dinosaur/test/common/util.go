@@ -35,6 +35,7 @@ func GetRunningOsdClusterID(h *test.Helper, t *testing.T) (string, *ocmErrors.Se
 	return GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterReady)
 }
 
+// GetOSDClusterIDAndWaitForStatus ...
 func GetOSDClusterIDAndWaitForStatus(h *test.Helper, t *testing.T, expectedStatus api.ClusterStatus) (string, *ocmErrors.ServiceError) {
 	return GetOSDClusterID(h, t, &expectedStatus)
 }
@@ -194,6 +195,7 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 	return "", nil
 }
 
+// RemoveClusterFile ...
 func RemoveClusterFile(t *testing.T) {
 	if fileExists(testClusterPath, t) {
 		if err := os.Remove(testClusterPath); err != nil {

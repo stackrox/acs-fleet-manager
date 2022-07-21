@@ -24,6 +24,7 @@ const (
 	cacheCleanupInterval = 299 * time.Second
 )
 
+// SSOClient ...
 //go:generate moq -out client_moq.go . SSOClient
 type SSOClient interface {
 	GetToken() (string, error)
@@ -37,6 +38,7 @@ type SSOClient interface {
 	RegenerateClientSecret(accessToken string, id string) (serviceaccountsclient.ServiceAccountData, error)
 }
 
+// NewSSOClient ...
 func NewSSOClient(config *iam.IAMConfig, realmConfig *iam.IAMRealmConfig) SSOClient {
 	return &rhSSOClient{
 		config:      config,
@@ -99,6 +101,7 @@ func (c *rhSSOClient) getCachedToken(tokenKey string) (string, error) {
 	return "", errors.Errorf("failed to retrieve cached token")
 }
 
+// GetToken ...
 func (c *rhSSOClient) GetToken() (string, error) {
 	cachedTokenKey := fmt.Sprintf("%s%s", c.realmConfig.Realm, c.realmConfig.ClientID)
 	cachedToken, _ := c.getCachedToken(cachedTokenKey)
@@ -145,14 +148,17 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	return tokenData.AccessToken, nil
 }
 
+// GetConfig ...
 func (c *rhSSOClient) GetConfig() *iam.IAMConfig {
 	return c.config
 }
 
+// GetRealmConfig ...
 func (c *rhSSOClient) GetRealmConfig() *iam.IAMRealmConfig {
 	return c.realmConfig
 }
 
+// GetServiceAccounts ...
 func (c *rhSSOClient) GetServiceAccounts(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error) {
 	serviceAccounts, resp, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.GetServiceAccounts(context.Background()).
@@ -165,6 +171,7 @@ func (c *rhSSOClient) GetServiceAccounts(accessToken string, first int, max int)
 	return serviceAccounts, err
 }
 
+// GetServiceAccount ...
 func (c *rhSSOClient) GetServiceAccount(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
 	serviceAccount, resp, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.GetServiceAccount(context.Background(), clientId).
@@ -180,6 +187,7 @@ func (c *rhSSOClient) GetServiceAccount(accessToken string, clientId string) (*s
 	return &serviceAccount, err == nil, err
 }
 
+// CreateServiceAccount ...
 func (c *rhSSOClient) CreateServiceAccount(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
 	serviceAccount, resp, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.CreateServiceAccount(context.Background()).
@@ -194,6 +202,7 @@ func (c *rhSSOClient) CreateServiceAccount(accessToken string, name string, desc
 	return serviceAccount, err
 }
 
+// DeleteServiceAccount ...
 func (c *rhSSOClient) DeleteServiceAccount(accessToken string, clientId string) error {
 	resp, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.DeleteServiceAccount(context.Background(), clientId).
@@ -204,6 +213,7 @@ func (c *rhSSOClient) DeleteServiceAccount(accessToken string, clientId string) 
 	return err
 }
 
+// UpdateServiceAccount ...
 func (c *rhSSOClient) UpdateServiceAccount(accessToken string, clientId string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
 	data, resp, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.UpdateServiceAccount(context.Background(), clientId).
@@ -217,6 +227,7 @@ func (c *rhSSOClient) UpdateServiceAccount(accessToken string, clientId string, 
 	return data, err
 }
 
+// RegenerateClientSecret ...
 func (c *rhSSOClient) RegenerateClientSecret(accessToken string, id string) (serviceaccountsclient.ServiceAccountData, error) {
 	data, resp, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.
