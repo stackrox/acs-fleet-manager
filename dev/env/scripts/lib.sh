@@ -204,10 +204,11 @@ wait_for_resource_to_appear() {
     local namespace="$1"
     local kind="$2"
     local name="$3"
+    local seconds="${4:-60}"
 
     log "Waiting for ${kind}/${name} to be created in namespace ${namespace}"
 
-    for i in $(seq 60); do
+    for i in $(seq "$seconds"); do
         if $KUBECTL -n "$namespace" get "$kind" "$name" 2>/dev/null >&2; then
             log "Resource ${kind}/${namespace} in namespace ${namespace} appeared"
             return 0
@@ -215,7 +216,7 @@ wait_for_resource_to_appear() {
         sleep 1
     done
 
-    log "Giving up waiting for ${kind}/${name} in namespace ${namespace}"
+    log "Giving up after ${seconds}s waiting for ${kind}/${name} in namespace ${namespace}"
 
     return 1
 }
