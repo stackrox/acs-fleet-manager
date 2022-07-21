@@ -2,12 +2,14 @@ package logging
 
 import (
 	"context"
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-	"github.com/gorilla/mux"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )
 
+// RequestLoggingMiddleware ...
 func RequestLoggingMiddleware(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		logEvent := logger.NewLogEventFromString(mux.CurrentRoute(request).GetName())

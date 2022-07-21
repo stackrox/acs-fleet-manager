@@ -17,14 +17,17 @@ type mock struct{}
 
 var _ AccountService = &mock{}
 
+// NewMockAccountService ...
 func NewMockAccountService() AccountService {
 	return &mock{}
 }
 
+// SearchOrganizations ...
 func (a mock) SearchOrganizations(filter string) (*OrganizationList, error) {
 	return buildMockOrganizationList(10), nil
 }
 
+// GetOrganization ...
 func (a mock) GetOrganization(filter string) (*Organization, error) {
 	orgs, _ := a.SearchOrganizations(filter)
 	return orgs.Get(0), nil

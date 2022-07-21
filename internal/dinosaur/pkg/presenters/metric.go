@@ -1,10 +1,10 @@
 package presenters
 
 import (
+	pmod "github.com/prometheus/common/model"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	pmod "github.com/prometheus/common/model"
 )
 
 func convertMatrix(from pmod.Matrix) []public.RangeQuery {
@@ -34,8 +34,8 @@ func convertSampleStream(from *pmod.SampleStream) public.RangeQuery {
 		labelSet[string(k)] = string(v)
 	}
 	values := make([]public.Values, len(from.Values))
-	for i, v := range from.Values {
-		values[i] = convertSamplePair(&v)
+	for i := range from.Values {
+		values[i] = convertSamplePair(&from.Values[i])
 	}
 	return public.RangeQuery{
 		Metric: labelSet,
@@ -64,6 +64,8 @@ func convertSamplePair(from *pmod.SamplePair) public.Values {
 		Value:     float64(from.Value),
 	}
 }
+
+// PresentMetricsByRangeQuery ...
 func PresentMetricsByRangeQuery(metrics *observatorium.DinosaurMetrics) ([]public.RangeQuery, *errors.ServiceError) {
 	out := []public.RangeQuery{}
 	for _, m := range *metrics {
@@ -76,6 +78,7 @@ func PresentMetricsByRangeQuery(metrics *observatorium.DinosaurMetrics) ([]publi
 	return out, nil
 }
 
+// PresentMetricsByInstantQuery ...
 func PresentMetricsByInstantQuery(metrics *observatorium.DinosaurMetrics) ([]public.InstantQuery, *errors.ServiceError) {
 	out := []public.InstantQuery{}
 	for _, m := range *metrics {

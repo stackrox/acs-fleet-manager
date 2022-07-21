@@ -12,8 +12,8 @@ import (
 
 	"github.com/patrickmn/go-cache"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
 const cloudProvidersCacheKey = "cloudProviderList"
@@ -24,6 +24,7 @@ type cloudProvidersHandler struct {
 	supportedProviders config.ProviderList
 }
 
+// NewCloudProviderHandler ...
 func NewCloudProviderHandler(service services.CloudProvidersService, providerConfig *config.ProviderConfig) *cloudProvidersHandler {
 	return &cloudProvidersHandler{
 		service:            service,
@@ -32,6 +33,7 @@ func NewCloudProviderHandler(service services.CloudProvidersService, providerCon
 	}
 }
 
+// ListCloudProviderRegions ...
 func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	query := r.URL.Query()
@@ -61,7 +63,8 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			}
 
 			provider, _ := h.supportedProviders.GetByName(id)
-			for _, cloudRegion := range cloudRegions {
+			for i := range cloudRegions {
+				cloudRegion := cloudRegions[i]
 				region, _ := provider.Regions.GetByName(cloudRegion.Id)
 
 				// skip any regions that do not support the specified instance type so its not included in the response
@@ -86,6 +89,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 	handlers.HandleGet(w, r, cfg)
 }
 
+// ListCloudProviders ...
 func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
@@ -105,7 +109,8 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 				Items: []public.CloudProvider{},
 			}
 
-			for _, cloudProvider := range cloudProviders {
+			for i := range cloudProviders {
+				cloudProvider := cloudProviders[i]
 				_, cloudProvider.Enabled = h.supportedProviders.GetByName(cloudProvider.Id)
 				converted := presenters.PresentCloudProvider(&cloudProvider)
 				cloudProviderList.Items = append(cloudProviderList.Items, converted)

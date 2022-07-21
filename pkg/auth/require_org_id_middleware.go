@@ -7,6 +7,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// RequireOrgIDMiddleware ...
 type RequireOrgIDMiddleware interface {
 	// RequireOrgID will check that org_id is set as part of the JWT claims in the
 	// request and that it is not empty and return code ServiceErrorCode in case
@@ -19,10 +20,12 @@ type requireOrgIDMiddleware struct {
 
 var _ RequireOrgIDMiddleware = &requireOrgIDMiddleware{}
 
+// NewRequireOrgIDMiddleware ...
 func NewRequireOrgIDMiddleware() RequireOrgIDMiddleware {
 	return &requireOrgIDMiddleware{}
 }
 
+// RequireOrgID ...
 func (m *requireOrgIDMiddleware) RequireOrgID(code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

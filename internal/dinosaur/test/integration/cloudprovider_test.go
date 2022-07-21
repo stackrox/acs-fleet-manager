@@ -10,9 +10,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/test"
 
+	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
-	. "github.com/onsi/gomega"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
@@ -296,7 +296,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 		Expect(cpr.Enabled).To(BeFalse())
 	}
 
-	//test with wrong provider id
+	// test with wrong provider id
 	wrongCloudProviderList, respFromWrongID, errFromWrongId := client.DefaultApi.GetCloudProviderRegions(ctx, "wrong_provider_id", nil)
 	Expect(errFromWrongId).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", errFromWrongId)
 	Expect(respFromWrongID.StatusCode).To(Equal(http.StatusOK))

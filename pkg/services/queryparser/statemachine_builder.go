@@ -1,10 +1,12 @@
 package services
 
+// StartState ...
 const (
 	StartState = "__$$_START_$$__"
 	EndState   = "__$$_END_$$__"
 )
 
+// TokenDefinition ...
 type TokenDefinition struct {
 	Name          string
 	Family        string
@@ -12,18 +14,22 @@ type TokenDefinition struct {
 	OnNewToken    func(token *ParsedToken) error
 }
 
+// TransitionDefinition ...
 type TransitionDefinition struct {
 	TokenName        string
 	ValidTransitions []string
 }
 
+// Grammar ...
 type Grammar struct {
 	Tokens      []TokenDefinition
 	Transitions []TransitionDefinition
 }
 
+// NewTokenHandler ...
 type NewTokenHandler func(token *ParsedToken) error
 
+// StateMachineBuilder ...
 type StateMachineBuilder interface {
 	OnNewToken(handler NewTokenHandler) StateMachineBuilder
 	Build() State
@@ -36,15 +42,18 @@ type stateMachineBuilder struct {
 
 var _ StateMachineBuilder = &stateMachineBuilder{}
 
+// NewStateMachineBuilder ...
 func NewStateMachineBuilder(grammar *Grammar) StateMachineBuilder {
 	return &stateMachineBuilder{grammar: grammar}
 }
 
+// OnNewToken ...
 func (smb *stateMachineBuilder) OnNewToken(handler NewTokenHandler) StateMachineBuilder {
 	smb.onNewToken = handler
 	return smb
 }
 
+// Build ...
 func (smb *stateMachineBuilder) Build() State {
 
 	tokenMap := make(map[string]State)

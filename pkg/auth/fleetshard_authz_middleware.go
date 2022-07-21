@@ -1,15 +1,17 @@
 package auth
 
 import (
-	"github.com/golang/glog"
 	"net/http"
 	"strings"
+
+	"github.com/golang/glog"
 
 	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// UseFleetShardAuthorizationMiddleware ...
 func UseFleetShardAuthorizationMiddleware(router *mux.Router, jwkValidIssuerURI string,
 	fleetShardAuthZConfig *FleetShardAuthZConfig) {
 	router.Use(

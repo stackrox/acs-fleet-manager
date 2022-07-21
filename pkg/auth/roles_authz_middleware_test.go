@@ -5,10 +5,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 func setContextToken(next http.Handler, token *jwt.Token) http.Handler {

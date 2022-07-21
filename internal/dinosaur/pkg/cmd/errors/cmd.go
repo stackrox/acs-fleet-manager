@@ -2,10 +2,11 @@
 package errors
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// NewErrorsCommand ...
 func NewErrorsCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "errors",

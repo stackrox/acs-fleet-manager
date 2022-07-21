@@ -1,12 +1,13 @@
 package migrate
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/db"
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// NewRollbackLast ...
 func NewRollbackLast(env *environments.Env) *cobra.Command {
 	return &cobra.Command{
 		Use:   "rollback-last",

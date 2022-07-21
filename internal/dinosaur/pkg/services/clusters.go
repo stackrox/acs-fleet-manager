@@ -20,6 +20,7 @@ import (
 	apiErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+// ClusterService ...
 //go:generate moq -out clusterservice_moq.go . ClusterService
 type ClusterService interface {
 	Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
@@ -156,6 +157,7 @@ func (c clusterService) GetClusterDNS(clusterID string) (string, *apiErrors.Serv
 	return clusterDNS, nil
 }
 
+// ListByStatus ...
 func (c clusterService) ListByStatus(status api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 	if status.String() == "" {
 		return nil, apiErrors.Validation("status is undefined")
@@ -171,6 +173,7 @@ func (c clusterService) ListByStatus(status api.ClusterStatus) ([]api.Cluster, *
 	return clusters, nil
 }
 
+// Update ...
 func (c clusterService) Update(cluster api.Cluster) *apiErrors.ServiceError {
 	if cluster.ID == "" {
 		return apiErrors.Validation("id is undefined")
@@ -187,6 +190,7 @@ func (c clusterService) Update(cluster api.Cluster) *apiErrors.ServiceError {
 	return nil
 }
 
+// UpdateStatus ...
 func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error {
 	if status.String() == "" {
 		return apiErrors.Validation("status is undefined")
@@ -220,6 +224,7 @@ func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStat
 	return nil
 }
 
+// ResGroupCPRegion ...
 type ResGroupCPRegion struct {
 	Provider string
 	Region   string
@@ -234,7 +239,7 @@ func (c clusterService) ListGroupByProviderAndRegion(providers []string, regions
 	dbConn := c.connectionFactory.New()
 	var grpResult []*ResGroupCPRegion
 
-	//only one record returns for each region if they exist
+	// only one record returns for each region if they exist
 	if err := dbConn.Model(&api.Cluster{}).
 		Select("cloud_provider as Provider, region as Region, count(1) as Count").
 		Where("cloud_provider in (?)", providers).
@@ -247,6 +252,7 @@ func (c clusterService) ListGroupByProviderAndRegion(providers []string, regions
 	return grpResult, nil
 }
 
+// FindClusterCriteria ...
 type FindClusterCriteria struct {
 	Provider              string
 	Region                string
@@ -255,6 +261,7 @@ type FindClusterCriteria struct {
 	SupportedInstanceType string
 }
 
+// FindCluster ...
 func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
 
@@ -286,13 +293,14 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 	return &cluster, nil
 }
 
+// FindClusterByID ...
 func (c clusterService) FindClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, apiErrors.Validation("clusterID is undefined")
 	}
 	dbConn := c.connectionFactory.New()
 
-	var cluster *api.Cluster = &api.Cluster{}
+	cluster := &api.Cluster{}
 
 	clusterDetails := &api.Cluster{
 		ClusterID: clusterID,
@@ -363,6 +371,7 @@ func (c clusterService) ScaleDownComputeNodes(clusterID string, decrement int) (
 	return clusterSpec, nil
 }
 
+// SetComputeNodes ...
 func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*types.ClusterSpec, *apiErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, apiErrors.Validation("clusterID is undefined")
@@ -386,6 +395,7 @@ func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*types.
 	return clusterSpec, nil
 }
 
+// GetComputeNodes ...
 func (c clusterService) GetComputeNodes(clusterID string) (*types.ComputeNodesInfo, *apiErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, apiErrors.Validation("clusterID is undefined")
@@ -407,6 +417,7 @@ func (c clusterService) GetComputeNodes(clusterID string) (*types.ComputeNodesIn
 	return nodesInfo, nil
 }
 
+// DeleteByClusterID ...
 func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceError {
 	dbConn := c.connectionFactory.New()
 	metrics.IncreaseClusterTotalOperationsCountMetric(constants2.ClusterOperationDelete)
@@ -420,10 +431,11 @@ func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceEr
 	return nil
 }
 
+// FindNonEmptyClusterById ...
 func (c clusterService) FindNonEmptyClusterById(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
 
-	var cluster *api.Cluster = &api.Cluster{}
+	cluster := &api.Cluster{}
 
 	clusterDetails := &api.Cluster{
 		ClusterID: clusterID,
@@ -440,6 +452,7 @@ func (c clusterService) FindNonEmptyClusterById(clusterID string) (*api.Cluster,
 	return cluster, nil
 }
 
+// ListAllClusterIds ...
 func (c clusterService) ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
 
@@ -459,11 +472,13 @@ func (c clusterService) ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceEr
 	return res, nil
 }
 
+// ResDinosaurInstanceCount ...
 type ResDinosaurInstanceCount struct {
 	Clusterid string
 	Count     int
 }
 
+// GetExternalID ...
 func (c clusterService) GetExternalID(clusterID string) (string, *apiErrors.ServiceError) {
 	cluster, err := c.FindClusterByID(clusterID)
 	if err != nil {
@@ -475,6 +490,7 @@ func (c clusterService) GetExternalID(clusterID string) (string, *apiErrors.Serv
 	return cluster.ExternalID, nil
 }
 
+// FindDinosaurInstanceCount ...
 func (c clusterService) FindDinosaurInstanceCount(clusterIDs []string) ([]ResDinosaurInstanceCount, *apiErrors.ServiceError) {
 	var res []ResDinosaurInstanceCount
 	query := c.connectionFactory.New().
@@ -510,6 +526,7 @@ func (c clusterService) FindDinosaurInstanceCount(clusterIDs []string) ([]ResDin
 	return res, nil
 }
 
+// FindAllClusters ...
 func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New().
 		Model(&api.Cluster{})
@@ -541,6 +558,7 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 	return cluster, nil
 }
 
+// UpdateMultiClusterStatus ...
 func (c clusterService) UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
 	if status.String() == "" {
 		return apiErrors.Validation("status is undefined")
@@ -574,11 +592,13 @@ func (c clusterService) UpdateMultiClusterStatus(clusterIds []string, status api
 	return nil
 }
 
+// ClusterStatusCount ...
 type ClusterStatusCount struct {
 	Status api.ClusterStatus
 	Count  int
 }
 
+// CountByStatus ...
 func (c clusterService) CountByStatus(status []api.ClusterStatus) ([]ClusterStatusCount, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
 	var results []ClusterStatusCount
@@ -603,6 +623,7 @@ func (c clusterService) CountByStatus(status []api.ClusterStatus) ([]ClusterStat
 	return results, nil
 }
 
+// CheckClusterStatus ...
 func (c clusterService) CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
 	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
@@ -626,18 +647,20 @@ func (c clusterService) CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, 
 	return cluster, nil
 }
 
+// Delete ...
 func (c clusterService) Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
-	if removed, err := p.Delete(buildClusterSpec(cluster)); err != nil {
+	removed, err := p.Delete(buildClusterSpec(cluster))
+	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to delete the cluster from the provider")
-	} else {
-		return removed, nil
 	}
+	return removed, nil
 }
 
+// ConfigureAndSaveIdentityProvider ...
 func (c clusterService) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
 	if cluster.IdentityProviderID != "" {
 		return cluster, nil
@@ -658,6 +681,7 @@ func (c clusterService) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, i
 	return cluster, nil
 }
 
+// ApplyResources ...
 func (c clusterService) ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
 	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
@@ -669,16 +693,17 @@ func (c clusterService) ApplyResources(cluster *api.Cluster, resources types.Res
 	return nil
 }
 
+// InstallDinosaurOperator ...
 func (c clusterService) InstallDinosaurOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
-	if ready, err := p.InstallDinosaurOperator(buildClusterSpec(cluster)); err != nil {
+	ready, err := p.InstallDinosaurOperator(buildClusterSpec(cluster))
+	if err != nil {
 		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install dinosaur for cluster %s", cluster.ClusterID)
-	} else {
-		return ready, nil
 	}
+	return ready, nil
 }
 
 func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
@@ -690,6 +715,7 @@ func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
 	}
 }
 
+// CheckDinosaurOperatorVersionReady ...
 func (c clusterService) CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error) {
 	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
 	if err != nil {
@@ -703,6 +729,7 @@ func (c clusterService) CheckDinosaurOperatorVersionReady(cluster *api.Cluster, 
 	return false, nil
 }
 
+// IsDinosaurVersionAvailableInCluster ...
 func (c clusterService) IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error) {
 	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
 	if err != nil {

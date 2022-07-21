@@ -5,12 +5,15 @@ import (
 	"fmt"
 
 	"github.com/golang/glog"
-	_ "github.com/lib/pq"
 	mocket "github.com/selvatico/go-mocket"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	// TODO why is this imported?
+	_ "github.com/lib/pq"
 )
 
+// ConnectionFactory ...
 type ConnectionFactory struct {
 	Config *DatabaseConfig
 	DB     *gorm.DB
@@ -95,7 +98,7 @@ func (f *ConnectionFactory) New() *gorm.DB {
 	return f.DB
 }
 
-// Checks to ensure a connection is present
+// CheckConnection Checks to ensure a connection is present
 func (f *ConnectionFactory) CheckConnection() error {
 	return f.DB.Exec("SELECT 1").Error
 }
@@ -126,15 +129,15 @@ type txFactory struct {
 }
 
 // newTransaction constructs a new Transaction object.
-func (c *ConnectionFactory) newTransaction() (*txFactory, error) {
-	sqlDB, sqlDBErr := c.DB.DB()
+func (f *ConnectionFactory) newTransaction() (*txFactory, error) {
+	sqlDB, sqlDBErr := f.DB.DB()
 	if sqlDBErr != nil {
 		return nil, sqlDBErr
 	}
-	f := &txFactory{
+	tx := &txFactory{
 		db: sqlDB,
 	}
-	return f, f.begin()
+	return tx, tx.begin()
 }
 
 func (f *txFactory) begin() error {
@@ -143,7 +146,7 @@ func (f *txFactory) begin() error {
 		return err
 	}
 
-	var txid int64 = 0
+	var txid int64
 
 	// current transaction ID set by postgres.  these are *not* distinct across time
 	// and do get reset after postgres performs "vacuuming" to reclaim used IDs.
@@ -163,6 +166,6 @@ func (f *txFactory) begin() error {
 }
 
 // markedForRollback returns true if a transaction is flagged for rollback and false otherwise.
-func (tx *txFactory) markedForRollback() bool {
-	return tx.rollbackFlag
+func (f *txFactory) markedForRollback() bool {
+	return f.rollbackFlag
 }

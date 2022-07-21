@@ -1,9 +1,10 @@
 package fleetmanager
 
 import (
+	"net/http"
+
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
-	"net/http"
 )
 
 const (
@@ -22,10 +23,12 @@ type staticTokenAuth struct {
 
 type staticTokenAuthFactory struct{}
 
+// GetName ...
 func (f *staticTokenAuthFactory) GetName() string {
 	return staticTokenAuthName
 }
 
+// CreateAuth ...
 func (f *staticTokenAuthFactory) CreateAuth() (Auth, error) {
 	cfg, err := config.Singleton()
 	if err != nil {
@@ -40,6 +43,7 @@ func (f *staticTokenAuthFactory) CreateAuth() (Auth, error) {
 	}, nil
 }
 
+// AddAuth ...
 func (s *staticTokenAuth) AddAuth(req *http.Request) error {
 	setBearer(req, s.token)
 	return nil

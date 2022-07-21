@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 	// parsed.
 	_ = flag.CommandLine.Parse([]string{})
 
-	//pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	// pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 
 	// Always log to stderr by default
 	if err := flag.Set("logtostderr", "true"); err != nil {

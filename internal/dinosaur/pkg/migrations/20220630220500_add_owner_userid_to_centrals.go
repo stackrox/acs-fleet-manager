@@ -1,11 +1,12 @@
 package migrations
 
 import (
+	"time"
+
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"gorm.io/gorm"
-	"time"
 )
 
 func addOwnerUserIdToCentralRequest() *gormigrate.Migration {

@@ -8,6 +8,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 )
 
+// ClusterPlacementStrategy ...
 //go:generate moq -out cluster_placement_strategy_moq.go . ClusterPlacementStrategy
 type ClusterPlacementStrategy interface {
 	// FindCluster finds and returns a Cluster depends on the specific impl.
@@ -28,10 +29,12 @@ func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneCluster
 // TODO(create-ticket): Revisit placement strategy before going live.
 var _ ClusterPlacementStrategy = (*FirstDBClusterPlacementStrategy)(nil)
 
+// FirstDBClusterPlacementStrategy ...
 type FirstDBClusterPlacementStrategy struct {
 	clusterService ClusterService
 }
 
+// FindCluster ...
 func (d FirstDBClusterPlacementStrategy) FindCluster(dinosaur *dbapi.CentralRequest) (*api.Cluster, error) {
 	clusters, err := d.clusterService.FindAllClusters(FindClusterCriteria{})
 	if err != nil {

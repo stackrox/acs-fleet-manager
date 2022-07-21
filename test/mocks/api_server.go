@@ -26,6 +26,7 @@ import (
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
+// EndpointPathClusters ...
 const (
 	// EndpointPathClusters ocm clusters management service clusters endpoint
 	EndpointPathClusters = "/api/clusters_mgmt/v1/clusters"
@@ -116,9 +117,9 @@ const (
 	MockMachinePoolReplicas = 3
 	// MockOpenshiftVersion default cluster openshift version
 	MockOpenshiftVersion = "openshift-v4.6.1"
-	//MockMultiAZ default value
+	// MockMultiAZ default value
 	MockMultiAZ = true
-	//MockClusterComputeNodes default nodes
+	// MockClusterComputeNodes default nodes
 	MockClusterComputeNodes = 3
 	// MockIdentityProviderID default identity provider ID
 	MockIdentityProviderID = "identity-provider-id"
@@ -126,7 +127,7 @@ const (
 	MockSubID = "pphCb6sIQPqtjMtL0GQaX6i4bP"
 )
 
-// variables for endpoints
+// EndpointClusterGet variables for endpoints
 var (
 	EndpointClusterGet                                   = Endpoint{EndpointPathCluster, http.MethodGet}
 	EndpointClusterPatch                                 = Endpoint{EndpointPathCluster, http.MethodPatch}
@@ -166,7 +167,7 @@ var (
 	EndpointTermsReviewPost                              = Endpoint{EndpointPathTermsReview, http.MethodPost}
 )
 
-// variables for mocked ocm types
+// MockIdentityProvider variables for mocked ocm types
 //
 // these are the default types that will be returned by the emulated ocm api
 // to override these values, do not set them directly e.g. mocks.MockSyncset = ...
@@ -283,6 +284,7 @@ func (b *MockConfigurableServerBuilder) SetClusterSyncsetPatchResponse(syncset *
 	b.handlerRegister[EndpointClusterSyncsetPatch] = buildMockRequestHandler(syncset, err)
 }
 
+// SetClusterSyncsetPostRequestHandler ...
 func (b *MockConfigurableServerBuilder) SetClusterSyncsetPostRequestHandler(customMockRequestHandler func() func(w http.ResponseWriter, r *http.Request)) {
 	b.handlerRegister[EndpointClusterSyncsetsPost] = customMockRequestHandler()
 }
@@ -372,38 +374,47 @@ func (b *MockConfigurableServerBuilder) SetAddonInstallationPatchResponse(ai *cl
 	b.handlerRegister[EndpointAddonInstallationPatch] = buildMockRequestHandler(ai, err)
 }
 
+// SetFleetshardOperatorAddonInstallationGetResponse ...
 func (b *MockConfigurableServerBuilder) SetFleetshardOperatorAddonInstallationGetResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointFleetshardOperatorAddonInstallationGet] = buildMockRequestHandler(ai, err)
 }
 
+// SetFleetshardOperatorAddonInstallationPatchResponse ...
 func (b *MockConfigurableServerBuilder) SetFleetshardOperatorAddonInstallationPatchResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointFleetshardOperatorAddonInstallationPatch] = buildMockRequestHandler(ai, err)
 }
 
+// SetFleetshardOperatorAddonInstallationPostResponse ...
 func (b *MockConfigurableServerBuilder) SetFleetshardOperatorAddonInstallationPostResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointFleetshardOperatorAddonInstallationPost] = buildMockRequestHandler(ai, err)
 }
 
+// SetClusterLoggingOperatorAddonInstallationGetResponse ...
 func (b *MockConfigurableServerBuilder) SetClusterLoggingOperatorAddonInstallationGetResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointClusterLoggingOperatorAddonInstallationGet] = buildMockRequestHandler(ai, err)
 }
 
+// SetClusterLoggingOperatorAddonInstallationPatchResponse ...
 func (b *MockConfigurableServerBuilder) SetClusterLoggingOperatorAddonInstallationPatchResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointClusterLoggingOperatorAddonInstallationPatch] = buildMockRequestHandler(ai, err)
 }
 
+// SetClusterLoggingOperatorAddonInstallationPostResponse ...
 func (b *MockConfigurableServerBuilder) SetClusterLoggingOperatorAddonInstallationPostResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointClusterLoggingOperatorAddonInstallationPost] = buildMockRequestHandler(ai, err)
 }
 
+// SetSubscriptionPathDeleteResponse ...
 func (b *MockConfigurableServerBuilder) SetSubscriptionPathDeleteResponse(idp *amsv1.Subscription, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointSubscriptionDelete] = buildMockRequestHandler(idp, err)
 }
 
+// SetSubscriptionSearchResponse ...
 func (b *MockConfigurableServerBuilder) SetSubscriptionSearchResponse(sl *amsv1.SubscriptionList, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointSubscriptionSearch] = buildMockRequestHandler(sl, err)
 }
 
+// SetTermsReviewPostResponse ...
 func (b *MockConfigurableServerBuilder) SetTermsReviewPostResponse(idp *authorizationsv1.TermsReviewResponse, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointTermsReviewPost] = buildMockRequestHandler(idp, err)
 }
@@ -613,8 +624,8 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 			return err
 		}
 		return json.NewEncoder(w).Encode(subscList)
-		//list := t.(*amsv1.SubscriptionList)
-		//return amsv1.MarshalSubscriptionList(list.Slice(), w)
+		// list := t.(*amsv1.SubscriptionList)
+		// return amsv1.MarshalSubscriptionList(list.Slice(), w)
 	// handle ocm error type
 	case *ocmErrors.ServiceError:
 		return json.NewEncoder(w).Encode(v.AsOpenapiError("", ""))
@@ -629,6 +640,7 @@ type ocmList struct {
 	Items json.RawMessage `json:"items"`
 }
 
+// NewOCMList ...
 func NewOCMList() *ocmList {
 	return &ocmList{
 		HREF:  nil,
@@ -637,16 +649,19 @@ func NewOCMList() *ocmList {
 	}
 }
 
+// WithHREF ...
 func (l *ocmList) WithHREF(href string) *ocmList {
 	l.HREF = &href
 	return l
 }
 
+// WithLink ...
 func (l *ocmList) WithLink(link bool) *ocmList {
 	l.Link = link
 	return l
 }
 
+// WithItems ...
 func (l *ocmList) WithItems(items interface{}) (*ocmList, error) {
 	var b bytes.Buffer
 	if err := marshalOCMType(items, &b); err != nil {
@@ -663,6 +678,7 @@ type subscriptionList struct {
 	Items json.RawMessage `json:"items"`
 }
 
+// WithItems ...
 func (l *subscriptionList) WithItems(items interface{}) (*subscriptionList, error) {
 	var b bytes.Buffer
 	if err := marshalOCMType(items, &b); err != nil {
@@ -672,6 +688,7 @@ func (l *subscriptionList) WithItems(items interface{}) (*subscriptionList, erro
 	return l, nil
 }
 
+// NewSubscriptionList ...
 func NewSubscriptionList() *subscriptionList {
 	return &subscriptionList{
 		Page:  0,
@@ -769,6 +786,7 @@ func init() {
 	}
 }
 
+// GetMockSubscription ...
 func GetMockSubscription(modifyFn func(b *amsv1.Subscription)) (*amsv1.Subscription, error) {
 	builder, err := amsv1.NewSubscription().ID(MockSubID).Build()
 	if modifyFn != nil {
@@ -777,6 +795,7 @@ func GetMockSubscription(modifyFn func(b *amsv1.Subscription)) (*amsv1.Subscript
 	return builder, err
 }
 
+// GetMockClusterAuthorization ...
 func GetMockClusterAuthorization(modifyFn func(b *amsv1.ClusterAuthorizationResponse)) (*amsv1.ClusterAuthorizationResponse, error) {
 	sub := amsv1.SubscriptionBuilder{}
 	sub.ID(MockSubID)
@@ -789,6 +808,7 @@ func GetMockClusterAuthorization(modifyFn func(b *amsv1.ClusterAuthorizationResp
 	return builder, err
 }
 
+// GetMockTermsReview ...
 func GetMockTermsReview(modifyFn func(b *authorizationsv1.TermsReviewResponse)) (*authorizationsv1.TermsReviewResponse, error) {
 	return authorizationsv1.NewTermsReviewResponse().TermsRequired(true).Build()
 }
@@ -996,6 +1016,7 @@ func GetMockClusterBuilder(modifyFn func(*clustersmgmtv1.ClusterBuilder)) *clust
 	return builder
 }
 
+// GetMockTermsReviewBuilder ...
 func GetMockTermsReviewBuilder(modifyFn func(builder *authorizationsv1.TermsReviewResponseBuilder)) *authorizationsv1.TermsReviewResponseBuilder {
 	builder := authorizationsv1.NewTermsReviewResponse()
 	if modifyFn != nil {

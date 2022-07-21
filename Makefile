@@ -8,6 +8,9 @@ SHELL = bash
 # The details of the application:
 binary:=fleet-manager
 
+# The image tag for building and pushing comes from TAG environment variable by default.
+# If there is no TAG env than CI_TAG is used instead.
+# Otherwise image tag is generated based on git tags.
 ifeq ($(TAG),)
 ifeq (,$(wildcard CI_TAG))
 TAG=$(shell git describe --tags --abbrev=10 --dirty --long)
@@ -44,7 +47,7 @@ internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 test_image:=test/fleet-manager
 
 DOCKER ?= docker
-DOCKER_CONFIG="${PWD}/.docker"
+DOCKER_CONFIG ?= "${PWD}/.docker"
 
 # Default Variables
 ENABLE_OCM_MOCK ?= false
@@ -458,7 +461,7 @@ db/generate/insert/cluster:
 
 # Login to docker
 docker/login:
-	$(DOCKER) --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
 .PHONY: docker/login
 
 # Login to the OpenShift internal registry
@@ -471,12 +474,12 @@ docker/login/internal:
 image/build: GOOS=linux
 image/build: GOARCH=amd64
 image/build: fleet-manager fleetshard-sync
-	$(DOCKER) --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
 .PHONY: image/build
 
 # Build and push the image
 image/push: image/build
-	$(DOCKER) --config="${DOCKER_CONFIG}" push "$(external_image_registry)/$(image_repository):$(image_tag)"
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push "$(external_image_registry)/$(image_repository):$(image_tag)"
 .PHONY: image/push
 
 # build binary and image for OpenShift deployment

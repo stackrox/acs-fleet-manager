@@ -3,11 +3,12 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
-	"github.com/golang/glog"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 
 	"github.com/gorilla/mux"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 )
 
+// NewMetricsServer ...
 func NewMetricsServer(metricsConfig *MetricsConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config) *MetricsServer {
 	mainRouter := mux.NewRouter()
 	mainRouter.NotFoundHandler = http.HandlerFunc(api.SendNotFound)
@@ -37,6 +39,7 @@ func NewMetricsServer(metricsConfig *MetricsConfig, serverConfig *ServerConfig, 
 	return s
 }
 
+// MetricsServer ...
 type MetricsServer struct {
 	httpServer    *http.Server
 	serverConfig  *ServerConfig
@@ -46,17 +49,21 @@ type MetricsServer struct {
 
 var _ Server = &MetricsServer{}
 
+// Listen ...
 func (s MetricsServer) Listen() (listener net.Listener, err error) {
 	return nil, nil
 }
 
+// Serve ...
 func (s MetricsServer) Serve(listener net.Listener) {
 }
 
+// Start ...
 func (s MetricsServer) Start() {
 	go s.Run()
 }
 
+// Run ...
 func (s MetricsServer) Run() {
 	glog.Infof("start metrics server")
 	var err error
@@ -79,6 +86,7 @@ func (s MetricsServer) Run() {
 	glog.Infof("Metrics server terminated")
 }
 
+// Stop ...
 func (s MetricsServer) Stop() {
 	err := s.httpServer.Shutdown(context.Background())
 	if err != nil {

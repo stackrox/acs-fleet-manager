@@ -5,13 +5,14 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"net/http"
+
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	acsErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/httputil"
-	"net/http"
 )
 
 // reusing transport allows us to benefit from connection pooling
@@ -23,6 +24,7 @@ func init() {
 	insecureTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 }
 
+// Client ...
 type Client struct {
 	address    string
 	pass       string
@@ -30,10 +32,12 @@ type Client struct {
 	central    private.ManagedCentral
 }
 
+// AuthProviderResponse ...
 type AuthProviderResponse struct {
 	Id string `json:"id"`
 }
 
+// NewCentralClient ...
 func NewCentralClient(central private.ManagedCentral, address, pass string) *Client {
 	return &Client{
 		central: central,
@@ -45,6 +49,7 @@ func NewCentralClient(central private.ManagedCentral, address, pass string) *Cli
 	}
 }
 
+// SendRequestToCentral ...
 func (c *Client) SendRequestToCentral(ctx context.Context, requestBody interface{}, path string) (*http.Response, error) {
 	jsonBytes, err := json.Marshal(requestBody)
 	if err != nil {
@@ -63,6 +68,7 @@ func (c *Client) SendRequestToCentral(ctx context.Context, requestBody interface
 	return resp, nil
 }
 
+// SendGroupRequest ...
 func (c *Client) SendGroupRequest(ctx context.Context, groupRequest *storage.Group) error {
 	resp, err := c.SendRequestToCentral(ctx, groupRequest, "/v1/groups")
 	if err != nil {
@@ -74,6 +80,7 @@ func (c *Client) SendGroupRequest(ctx context.Context, groupRequest *storage.Gro
 	return nil
 }
 
+// SendAuthProviderRequest ...
 func (c *Client) SendAuthProviderRequest(ctx context.Context, authProviderRequest *storage.AuthProvider) (*AuthProviderResponse, error) {
 	resp, err := c.SendRequestToCentral(ctx, authProviderRequest, "/v1/authProviders")
 	if err != nil {

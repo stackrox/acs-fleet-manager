@@ -1,14 +1,15 @@
 package clusters
 
 import (
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
-	"github.com/pkg/errors"
 )
 
+// Provider ...
 //go:generate moq -out provider_moq.go . Provider
 type Provider interface {
 	// Create using the information provided to request a new OpenShift/k8s cluster from the provider
@@ -54,6 +55,7 @@ type DefaultProviderFactory struct {
 	providerContainer map[api.ClusterProviderType]Provider
 }
 
+// NewDefaultProviderFactory ...
 func NewDefaultProviderFactory(
 	ocmClient ocm.ClusterManagementClient,
 	connectionFactory *db.ConnectionFactory,
@@ -71,6 +73,7 @@ func NewDefaultProviderFactory(
 	}
 }
 
+// GetProvider ...
 func (d *DefaultProviderFactory) GetProvider(providerType api.ClusterProviderType) (Provider, error) {
 	if providerType == "" {
 		providerType = api.ClusterProviderOCM

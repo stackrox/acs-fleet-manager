@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// GetAcceptedOrderByParams ...
 func GetAcceptedOrderByParams() []string {
 	return []string{"host", "cloud_provider", "cluster_id", "created_at", "href", "id", "instance_type", "multi_az", "name", "organisation_id", "owner", "region", "status", "updated_at", "version"}
 }
@@ -55,6 +56,7 @@ func NewListArguments(params url.Values) *ListArguments {
 	return listArgs
 }
 
+// Validate ...
 func (la *ListArguments) Validate() error {
 	if la.Page < 0 {
 		return errors.Errorf("page must be equal or greater than 0")

@@ -1,8 +1,9 @@
 package quota_management
 
 import (
-	. "github.com/onsi/gomega"
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func Test_OrganisationList_GetById(t *testing.T) {

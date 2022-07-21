@@ -68,19 +68,22 @@ var clusterMetricsStatuses = []api.ClusterStatus{
 	api.ClusterDeprovisioning,
 }
 
+// Worker ...
 type Worker = workers.Worker
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
 
+// ClusterManager ...
 type ClusterManager struct {
 	id           string
 	workerType   string
 	isRunning    bool
-	imStop       chan struct{} //a chan used only for cancellation
+	imStop       chan struct{} // a chan used only for cancellation
 	syncTeardown sync.WaitGroup
 	ClusterManagerOptions
 }
 
+// ClusterManagerOptions ...
 type ClusterManagerOptions struct {
 	di.Inject
 	Reconciler                 workers.Reconciler
@@ -104,10 +107,12 @@ func NewClusterManager(o ClusterManagerOptions) *ClusterManager {
 	}
 }
 
+// GetStopChan ...
 func (c *ClusterManager) GetStopChan() *chan struct{} {
 	return &c.imStop
 }
 
+// GetSyncGroup ...
 func (c *ClusterManager) GetSyncGroup() *sync.WaitGroup {
 	return &c.syncTeardown
 }
@@ -117,6 +122,7 @@ func (c *ClusterManager) GetID() string {
 	return c.id
 }
 
+// GetWorkerType ...
 func (c *ClusterManager) GetWorkerType() string {
 	return c.workerType
 }
@@ -135,14 +141,17 @@ func (c *ClusterManager) Stop() {
 	metrics.SetLeaderWorkerMetric(c.workerType, false)
 }
 
+// IsRunning ...
 func (c *ClusterManager) IsRunning() bool {
 	return c.isRunning
 }
 
+// SetIsRunning ...
 func (c *ClusterManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
+// Reconcile ...
 func (c *ClusterManager) Reconcile() []error {
 	glog.Infoln("reconciling clusters")
 	var encounteredErrors []error
@@ -187,11 +196,11 @@ func (c *ClusterManager) processDeprovisioningClusters() []error {
 	if serviceErr != nil {
 		errs = append(errs, serviceErr)
 		return errs
-	} else {
-		glog.Infof("deprovisioning clusters count = %d", len(deprovisioningClusters))
 	}
+	glog.Infof("deprovisioning clusters count = %d", len(deprovisioningClusters))
 
-	for _, cluster := range deprovisioningClusters {
+	for i := range deprovisioningClusters {
+		cluster := deprovisioningClusters[i]
 		glog.V(10).Infof("deprovision cluster ClusterID = %s", cluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterDeprovisioning)
 		if err := c.reconcileDeprovisioningCluster(&cluster); err != nil {
@@ -207,9 +216,8 @@ func (c *ClusterManager) processCleanupClusters() []error {
 	if serviceErr != nil {
 		errs = append(errs, errors.Wrap(serviceErr, "failed to list of cleaup clusters"))
 		return errs
-	} else {
-		glog.Infof("cleanup clusters count = %d", len(cleanupClusters))
 	}
+	glog.Infof("cleanup clusters count = %d", len(cleanupClusters))
 
 	for _, cluster := range cleanupClusters {
 		glog.V(10).Infof("cleanup cluster ClusterID = %s", cluster.ClusterID)
@@ -227,11 +235,11 @@ func (c *ClusterManager) processAcceptedClusters() []error {
 	if serviceErr != nil {
 		errs = append(errs, errors.Wrap(serviceErr, "failed to list accepted clusters"))
 		return errs
-	} else {
-		glog.Infof("accepted clusters count = %d", len(acceptedClusters))
 	}
+	glog.Infof("accepted clusters count = %d", len(acceptedClusters))
 
-	for _, cluster := range acceptedClusters {
+	for i := range acceptedClusters {
+		cluster := acceptedClusters[i]
 		glog.V(10).Infof("accepted cluster ClusterID = %s", cluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterAccepted)
 		if err := c.reconcileAcceptedCluster(&cluster); err != nil {
@@ -248,12 +256,12 @@ func (c *ClusterManager) processProvisioningClusters() []error {
 	if listErr != nil {
 		errs = append(errs, errors.Wrap(listErr, "failed to list pending clusters"))
 		return errs
-	} else {
-		glog.Infof("provisioning clusters count = %d", len(provisioningClusters))
 	}
+	glog.Infof("provisioning clusters count = %d", len(provisioningClusters))
 
 	// process each local pending cluster and compare to the underlying ocm cluster
-	for _, provisioningCluster := range provisioningClusters {
+	for i := range provisioningClusters {
+		provisioningCluster := provisioningClusters[i]
 		glog.V(10).Infof("provisioning cluster ClusterID = %s", provisioningCluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisioningCluster, api.ClusterProvisioning)
 		_, err := c.reconcileClusterStatus(&provisioningCluster)
@@ -274,9 +282,8 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 	if listErr != nil {
 		errs = append(errs, errors.Wrap(listErr, "failed to list provisioned clusters"))
 		return errs
-	} else {
-		glog.Infof("provisioned clusters count = %d", len(provisionedClusters))
 	}
+	glog.Infof("provisioned clusters count = %d", len(provisionedClusters))
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
@@ -299,9 +306,8 @@ func (c *ClusterManager) processReadyClusters() []error {
 	if listErr != nil {
 		errs = append(errs, errors.Wrap(listErr, "failed to list ready clusters"))
 		return errs
-	} else {
-		glog.Infof("ready clusters count = %d", len(readyClusters))
 	}
+	glog.Infof("ready clusters count = %d", len(readyClusters))
 
 	for _, readyCluster := range readyClusters {
 		glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
@@ -335,7 +341,7 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) er
 			return findClusterErr
 		}
 
-		//if it is the only cluster left in that region, set it back to ready.
+		// if it is the only cluster left in that region, set it back to ready.
 		if siblingCluster == nil {
 			return c.ClusterService.UpdateStatus(*cluster, api.ClusterReady)
 		}
@@ -390,13 +396,13 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 
 	// TODO(create-ticket): Install necessary OSD cluster resources.
 	//// resources update if needed
-	//if err := c.reconcileClusterResources(cluster); err != nil {
+	// if err := c.reconcileClusterResources(cluster); err != nil {
 	//	return errors.WithMessagef(err, "failed to reconcile ready cluster resources %s ", cluster.ClusterID)
 	//}
 
 	// TODO(create-ticket): Register what is necessary for SSO authn/authz.
-	//err = c.reconcileClusterIdentityProvider(cluster)
-	//if err != nil {
+	// err = c.reconcileClusterIdentityProvider(cluster)
+	// if err != nil {
 	//	return errors.WithMessagef(err, "failed to reconcile identity provider of ready cluster %s: %s", cluster.ClusterID, err.Error())
 	//}
 
@@ -406,7 +412,7 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	}
 
 	// TODO(create-ticket): Install the ACS Operator and Fleetshard Operator (Add-Ons)
-	//if c.FleetshardOperatorAddon != nil {
+	// if c.FleetshardOperatorAddon != nil {
 	//	if err := c.FleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
 	//		if err.IsBadRequest() {
 	//			glog.Infof("fleetshard operator is not found on cluster %s", cluster.ClusterID)
@@ -485,7 +491,7 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
 	// TODO(create-ticket): Register what is necessary for SSO authn/authz.
-	//if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
+	// if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
 	//	return err
 	//}
 
@@ -495,8 +501,8 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 
 	// TODO(create-ticket): Install necessary OSD cluster resources.
 	//// SyncSet creation step
-	//syncSetErr := c.reconcileClusterResources(cluster) //OSD cluster itself
-	//if syncSetErr != nil {
+	// syncSetErr := c.reconcileClusterResources(cluster) //OSD cluster itself
+	// if syncSetErr != nil {
 	//	return errors.WithMessagef(syncSetErr, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
 	//}
 
@@ -616,7 +622,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		clusterIdsMap[v.ClusterID] = v
 	}
 
-	//Create all missing clusters
+	// Create all missing clusters
 	for _, p := range c.DataplaneClusterConfig.ClusterConfig.MissingClusters(clusterIdsMap) {
 		clusterRequest := api.Cluster{
 			CloudProvider:         p.CloudProvider,
@@ -637,9 +643,8 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 
 		if err := c.ClusterService.RegisterClusterJob(&clusterRequest); err != nil {
 			return []error{errors.Wrapf(err, "Failed to register new cluster %s with config file", p.ClusterId)}
-		} else {
-			glog.Infof("Registered a new cluster with config file: %s ", p.ClusterId)
 		}
+		glog.Infof("Registered a new cluster with config file: %s ", p.ClusterId)
 	}
 
 	// Remove all clusters that are not in the config file
@@ -670,9 +675,8 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	err = c.ClusterService.UpdateMultiClusterStatus(idsOfClustersToDeprovision, api.ClusterDeprovisioning)
 	if err != nil {
 		return []error{errors.Wrapf(err, "Failed to deprovisioning a cluster: %s", idsOfClustersToDeprovision)}
-	} else {
-		glog.Infof("Deprovisioning clusters: not found in config file: %s ", idsOfClustersToDeprovision)
 	}
+	glog.Infof("Deprovisioning clusters: not found in config file: %s ", idsOfClustersToDeprovision)
 
 	return []error{}
 }
@@ -687,7 +691,7 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 	var providers []string
 	var regions []string
 	status := api.StatusForValidCluster
-	//gather the supported providers and regions
+	// gather the supported providers and regions
 	providerList := c.SupportedProviders.ProvidersConfig.SupportedProviders
 	for _, v := range providerList {
 		providers = append(providers, v.Name)
@@ -696,7 +700,7 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 		}
 	}
 
-	//get a list of clusters in Map group by their provider and region
+	// get a list of clusters in Map group by their provider and region
 	grpResult, err := c.ClusterService.ListGroupByProviderAndRegion(providers, regions, status)
 	if err != nil {
 		errs = append(errs, errors.Wrapf(err, "failed to find cluster with criteria"))
@@ -708,7 +712,7 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 		grpResultMap[v.Provider+"."+v.Region] = v
 	}
 
-	//create all the missing clusters in the supported provider and regions.
+	// create all the missing clusters in the supported provider and regions.
 	for _, p := range providerList {
 		for _, v := range p.Regions {
 			if _, exist := grpResultMap[p.Name+"."+v.Name]; !exist {
@@ -723,26 +727,25 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 				if err := c.ClusterService.RegisterClusterJob(&clusterRequest); err != nil {
 					errs = append(errs, errors.Wrapf(err, "Failed to auto-create cluster request in %s, region: %s", p.Name, v.Name))
 					return errs
-				} else {
-					glog.Infof("Auto-created cluster request in %s, region: %s, Id: %s ", p.Name, v.Name, clusterRequest.ID)
 				}
+				glog.Infof("Auto-created cluster request in %s, region: %s, Id: %s ", p.Name, v.Name, clusterRequest.ID)
 			} //
-		} //region
-	} //provider
+		} // region
+	} // provider
 	return errs
 }
 
 func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 	r := []interface{}{
-		//c.buildReadOnlyGroupResource(),
-		//c.buildDedicatedReaderClusterRoleBindingResource(),
-		//c.buildSREGroupResource(),
-		//c.buildDinosaurSREClusterRoleBindingResource(),
-		//c.buildObservabilityNamespaceResource(),
-		//c.buildObservatoriumSSOSecretResource(),
-		//c.buildObservabilityCatalogSourceResource(),
-		//c.buildObservabilityOperatorGroupResource(),
-		//c.buildObservabilitySubscriptionResource(),
+		// c.buildReadOnlyGroupResource(),
+		// c.buildDedicatedReaderClusterRoleBindingResource(),
+		// c.buildSREGroupResource(),
+		// c.buildDinosaurSREClusterRoleBindingResource(),
+		// c.buildObservabilityNamespaceResource(),
+		// c.buildObservatoriumSSOSecretResource(),
+		// c.buildObservabilityCatalogSourceResource(),
+		// c.buildObservabilityOperatorGroupResource(),
+		// c.buildObservabilitySubscriptionResource(),
 	}
 
 	managedDinosaurOperatorNamespace := dinosaurOperatorAddonNamespace
@@ -984,16 +987,17 @@ func (c *ClusterManager) setClusterStatusCountMetrics() error {
 }
 
 func (c *ClusterManager) setDinosaurPerClusterCountMetrics() error {
-	if counters, err := c.ClusterService.FindDinosaurInstanceCount([]string{}); err != nil {
+	counters, err := c.ClusterService.FindDinosaurInstanceCount([]string{})
+	if err != nil {
 		return err
-	} else {
-		for _, counter := range counters {
-			clusterExternalID, err := c.ClusterService.GetExternalID(counter.Clusterid)
-			if err != nil {
-				return err
-			}
-			metrics.UpdateDinosaurPerClusterCountMetric(counter.Clusterid, clusterExternalID, counter.Count)
-		}
 	}
+	for _, counter := range counters {
+		clusterExternalID, err := c.ClusterService.GetExternalID(counter.Clusterid)
+		if err != nil {
+			return err
+		}
+		metrics.UpdateDinosaurPerClusterCountMetric(counter.Clusterid, clusterExternalID, counter.Count)
+	}
+
 	return nil
 }

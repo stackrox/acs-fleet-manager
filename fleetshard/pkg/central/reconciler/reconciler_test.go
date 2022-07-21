@@ -2,6 +2,8 @@ package reconciler
 
 import (
 	"context"
+	"testing"
+
 	appsv1 "k8s.io/api/apps/v1"
 
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -17,7 +19,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 const (

@@ -2,13 +2,14 @@ package cloudprovider
 
 import (
 	"encoding/json"
+
+	"github.com/golang/glog"
+	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-	"github.com/golang/glog"
-	"github.com/spf13/cobra"
 )
 
 // NewProviderListCommand a new command for listing providers.
@@ -41,7 +42,8 @@ func runProviderList(
 	}
 
 	supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
-	for _, cloudProvider := range cloudProviders {
+	for i := range cloudProviders {
+		cloudProvider := cloudProviders[i]
 		_, cloudProvider.Enabled = supportedProviders.GetByName(cloudProvider.Id)
 		converted := presenters.PresentCloudProvider(&cloudProvider)
 		cloudProviderList.Items = append(cloudProviderList.Items, converted)

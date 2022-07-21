@@ -3,12 +3,14 @@ package secrets
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"reflect"
+
 	"github.com/santhosh-tekuri/jsonschema/v3"
 	"github.com/spyzhov/ajson"
-	"reflect"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
 )
 
+// ModifySecrets ...
 func ModifySecrets(schemaDom, doc api.JSON, f func(node *ajson.Node) error) (api.JSON, error) {
 	secrets, err := modifySecrets(schemaDom, doc, f)
 	if err != nil {
@@ -56,7 +58,7 @@ func getPathsToPasswordFields(schemaBytes []byte) ([]string, error) {
 	findPathsMatching(schema, "", paths, func(path string, s *jsonschema.Schema) bool {
 		if s.OneOf != nil {
 			if len(s.OneOf) == 2 {
-				//var s1, s2 *jsonschema.Schema
+				// var s1, s2 *jsonschema.Schema
 				if isTypeAndFormat(s.OneOf[0], "string", "password") && isTypeAndFormat(s.OneOf[1], "object", "") {
 					return true
 				}

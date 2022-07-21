@@ -17,6 +17,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
+// DataplaneClusterConfig ...
 type DataplaneClusterConfig struct {
 	OpenshiftVersion             string `json:"cluster_openshift_version"`
 	ComputeMachineType           string `json:"cluster_compute_machine_type"`
@@ -40,6 +41,7 @@ type DataplaneClusterConfig struct {
 	FleetshardOperatorOLMConfig           OperatorInstallationConfig `json:"fleetshard_operator_olm_config"`
 }
 
+// OperatorInstallationConfig ...
 type OperatorInstallationConfig struct {
 	Namespace              string `json:"namespace"`
 	IndexImage             string `json:"index_image"`
@@ -48,6 +50,7 @@ type OperatorInstallationConfig struct {
 	SubscriptionChannel    string `json:"subscription_channel"`
 }
 
+// ManualScaling ...
 const (
 	// ManualScaling is the manual DataPlaneClusterScalingType via the configuration file
 	ManualScaling string = "manual"
@@ -65,6 +68,7 @@ func getDefaultKubeconfig() string {
 	return filepath.Join(homeDir, ".kube", "config")
 }
 
+// NewDataplaneClusterConfig ...
 func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	return &DataplaneClusterConfig{
 		OpenshiftVersion:                      "",
@@ -94,7 +98,7 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	}
 }
 
-//manual cluster configuration
+// ManualCluster manual cluster configuration
 type ManualCluster struct {
 	Name                             string                       `yaml:"name"`
 	ClusterId                        string                       `yaml:"cluster_id"`
@@ -110,6 +114,7 @@ type ManualCluster struct {
 	AvailableCentralOperatorVersions []api.CentralOperatorVersion `yaml:"available_central_operator_versions"`
 }
 
+// UnmarshalYAML ...
 func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type t ManualCluster
 	temp := t{
@@ -148,13 +153,16 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+// ClusterList ...
 type ClusterList []ManualCluster
 
+// ClusterConfig ...
 type ClusterConfig struct {
 	clusterList      ClusterList
 	clusterConfigMap map[string]ManualCluster
 }
 
+// NewClusterConfig ...
 func NewClusterConfig(clusters ClusterList) *ClusterConfig {
 	clusterMap := make(map[string]ManualCluster)
 	for _, c := range clusters {
@@ -166,6 +174,7 @@ func NewClusterConfig(clusters ClusterList) *ClusterConfig {
 	}
 }
 
+// GetCapacityForRegion ...
 func (conf *ClusterConfig) GetCapacityForRegion(region string) int {
 	var capacity = 0
 	for _, cluster := range conf.clusterList {
@@ -176,6 +185,7 @@ func (conf *ClusterConfig) GetCapacityForRegion(region string) int {
 	return capacity
 }
 
+// IsNumberOfDinosaurWithinClusterLimit ...
 func (conf *ClusterConfig) IsNumberOfDinosaurWithinClusterLimit(clusterId string, count int) bool {
 	if _, exist := conf.clusterConfigMap[clusterId]; exist {
 		limit := conf.clusterConfigMap[clusterId].CentralInstanceLimit
@@ -184,6 +194,7 @@ func (conf *ClusterConfig) IsNumberOfDinosaurWithinClusterLimit(clusterId string
 	return true
 }
 
+// IsClusterSchedulable ...
 func (conf *ClusterConfig) IsClusterSchedulable(clusterId string) bool {
 	if _, exist := conf.clusterConfigMap[clusterId]; exist {
 		return conf.clusterConfigMap[clusterId].Schedulable
@@ -191,11 +202,13 @@ func (conf *ClusterConfig) IsClusterSchedulable(clusterId string) bool {
 	return true
 }
 
+// GetClusterSupportedInstanceType ...
 func (conf *ClusterConfig) GetClusterSupportedInstanceType(clusterId string) (string, bool) {
 	manualCluster, exist := conf.clusterConfigMap[clusterId]
 	return manualCluster.SupportedInstanceType, exist
 }
 
+// ExcessClusters ...
 func (conf *ClusterConfig) ExcessClusters(clusterList map[string]api.Cluster) []string {
 	var res []string
 
@@ -207,14 +220,16 @@ func (conf *ClusterConfig) ExcessClusters(clusterList map[string]api.Cluster) []
 	return res
 }
 
+// GetManualClusters ...
 func (conf *ClusterConfig) GetManualClusters() []ManualCluster {
 	return conf.clusterList
 }
 
+// MissingClusters ...
 func (conf *ClusterConfig) MissingClusters(clusterMap map[string]api.Cluster) []ManualCluster {
 	var res []ManualCluster
 
-	//ensure the order
+	// ensure the order
 	for _, p := range conf.clusterList {
 		if _, exists := clusterMap[p.ClusterId]; !exists {
 			res = append(res, p)
@@ -223,18 +238,22 @@ func (conf *ClusterConfig) MissingClusters(clusterMap map[string]api.Cluster) []
 	return res
 }
 
+// IsDataPlaneManualScalingEnabled ...
 func (c *DataplaneClusterConfig) IsDataPlaneManualScalingEnabled() bool {
 	return c.DataPlaneClusterScalingType == ManualScaling
 }
 
+// IsDataPlaneAutoScalingEnabled ...
 func (c *DataplaneClusterConfig) IsDataPlaneAutoScalingEnabled() bool {
 	return c.DataPlaneClusterScalingType == AutoScaling
 }
 
+// IsReadyDataPlaneClustersReconcileEnabled ...
 func (c *DataplaneClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool {
 	return c.EnableReadyDataPlaneClustersReconcile
 }
 
+// AddFlags ...
 func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OpenshiftVersion, "cluster-openshift-version", c.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
 	fs.StringVar(&c.ComputeMachineType, "cluster-compute-machine-type", c.ComputeMachineType, "The compute machine type")
@@ -256,6 +275,7 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.SubscriptionChannel, "fleetshard-operator-sub-channel", c.FleetshardOperatorOLMConfig.SubscriptionChannel, "fleetshard operator subscription channel")
 }
 
+// ReadFiles ...
 func (c *DataplaneClusterConfig) ReadFiles() error {
 	if c.ImagePullDockerConfigContent == "" && c.ImagePullDockerConfigFile != "" {
 		err := shared.ReadFileValueString(c.ImagePullDockerConfigFile, &c.ImagePullDockerConfigContent)
@@ -337,11 +357,11 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 
 	if err = yaml.Unmarshal([]byte(fileContents), &c); err != nil {
 		return nil, err
-	} else {
-		return c.ClusterList, nil
 	}
+	return c.ClusterList, nil
 }
 
+// FindClusterNameByClusterId ...
 func (c *DataplaneClusterConfig) FindClusterNameByClusterId(clusterId string) string {
 	for _, cluster := range c.ClusterConfig.clusterList {
 		if cluster.ClusterId == clusterId {

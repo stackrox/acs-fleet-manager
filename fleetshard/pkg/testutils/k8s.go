@@ -1,6 +1,8 @@
 package testutils
 
 import (
+	"testing"
+
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	platform "github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/require"
@@ -12,7 +14,6 @@ import (
 	k8sTesting "k8s.io/client-go/testing"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"testing"
 )
 
 var (
@@ -27,6 +28,7 @@ var (
 	}
 )
 
+// CentralCA ...
 const CentralCA = "test CA"
 
 type reconcileTracker struct {
@@ -50,6 +52,7 @@ func newReconcileTracker(scheme *runtime.Scheme) k8sTesting.ObjectTracker {
 	return reconcileTracker{ObjectTracker: k8sTesting.NewObjectTracker(scheme, clientgoscheme.Codecs.UniversalDecoder())}
 }
 
+// Create ...
 func (t reconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
 	if err := t.ObjectTracker.Create(gvr, obj, ns); err != nil {
 		return err

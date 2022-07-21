@@ -1,14 +1,15 @@
 package dinosaur_mgrs
 
 import (
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
+// DinosaurRoutesCNAMEManager ...
 type DinosaurRoutesCNAMEManager struct {
 	workers.BaseWorker
 	dinosaurService services.DinosaurService
@@ -17,6 +18,7 @@ type DinosaurRoutesCNAMEManager struct {
 
 var _ workers.Worker = &DinosaurRoutesCNAMEManager{}
 
+// NewDinosaurCNAMEManager ...
 func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConfig *config.DinosaurConfig) *DinosaurRoutesCNAMEManager {
 	return &DinosaurRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
@@ -29,14 +31,17 @@ func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConf
 	}
 }
 
+// Start ...
 func (k *DinosaurRoutesCNAMEManager) Start() {
 	k.StartWorker(k)
 }
 
+// Stop ...
 func (k *DinosaurRoutesCNAMEManager) Stop() {
 	k.StopWorker(k)
 }
 
+// Reconcile ...
 func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 	glog.Infoln("reconciling DNS for dinosaurs")
 	var errs []error

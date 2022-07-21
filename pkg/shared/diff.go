@@ -3,9 +3,11 @@ package shared
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/pmezard/go-difflib/difflib"
 )
 
+// DiffAsJson ...
 func DiffAsJson(a interface{}, b interface{}, aName string, bName string) string {
 	aData, err := json.MarshalIndent(a, "", "  ")
 	if err != nil {

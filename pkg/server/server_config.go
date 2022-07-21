@@ -5,6 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// ServerConfig ...
 type ServerConfig struct {
 	BindAddress    string `json:"bind_address"`
 	HTTPSCertFile  string `json:"https_cert_file"`
@@ -20,6 +21,7 @@ type ServerConfig struct {
 	EnableTermsAcceptance bool   `json:"enable_terms_acceptance"`
 }
 
+// NewServerConfig ...
 func NewServerConfig() *ServerConfig {
 	return &ServerConfig{
 		BindAddress:    "localhost:8000",
@@ -33,6 +35,7 @@ func NewServerConfig() *ServerConfig {
 	}
 }
 
+// AddFlags ...
 func (s *ServerConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.BindAddress, "api-server-bindaddress", s.BindAddress, "API server bind adddress")
 	fs.StringVar(&s.HTTPSCertFile, "https-cert-file", s.HTTPSCertFile, "The path to the tls.crt file.")
@@ -45,6 +48,7 @@ func (s *ServerConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.PublicHostURL, "public-host-url", s.PublicHostURL, "Public http host URL of the service")
 }
 
+// ReadFiles ...
 func (s *ServerConfig) ReadFiles() error {
 	s.JwksFile = shared.BuildFullFilePath(s.JwksFile)
 

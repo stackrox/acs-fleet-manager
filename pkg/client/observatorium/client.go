@@ -10,14 +10,15 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/pkg/errors"
 	pAPI "github.com/prometheus/client_golang/api"
 	pV1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	pModel "github.com/prometheus/common/model"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
+// ClientConfiguration ...
 type ClientConfiguration struct {
 	BaseURL    string
 	Timeout    time.Duration
@@ -26,6 +27,7 @@ type ClientConfiguration struct {
 	Insecure   bool
 }
 
+// Client ...
 type Client struct {
 	// Configuration
 	Config     *ClientConfiguration
@@ -33,6 +35,7 @@ type Client struct {
 	Service    APIObservatoriumService
 }
 
+// NewObservatoriumClient ...
 func NewObservatoriumClient(c *ObservabilityConfiguration) (client *Client, err error) {
 	// Create Observatorium client
 	observatoriumConfig := &Configuration{
@@ -55,6 +58,7 @@ func NewObservatoriumClient(c *ObservabilityConfiguration) (client *Client, err 
 	return
 }
 
+// NewClient ...
 func NewClient(config *Configuration) (*Client, error) {
 	client := &Client{
 		Config: &ClientConfiguration{
@@ -88,6 +92,7 @@ func NewClient(config *Configuration) (*Client, error) {
 	return client, nil
 }
 
+// NewClientMock ...
 func NewClientMock(config *Configuration) (*Client, error) {
 	client := &Client{
 		Config: &ClientConfiguration{
@@ -109,6 +114,7 @@ type observatoriumRoundTripper struct {
 	wrapped http.RoundTripper
 }
 
+// RoundTrip ...
 func (p observatoriumRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
 	var statusCode int
 	path := strings.TrimPrefix(request.URL.String(), p.config.BaseURL)
@@ -170,6 +176,8 @@ func (c *Client) Query(queryTemplate string, label string) Metric {
 	}
 	return Metric{Vector: v}
 }
+
+// QueryRange ...
 func (c *Client) QueryRange(queryTemplate string, label string, bounds pV1.Range) Metric {
 
 	queryString := fmt.Sprintf(queryTemplate, label)

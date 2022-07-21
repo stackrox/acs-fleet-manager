@@ -1,6 +1,8 @@
 # ACS MS Test Environment
 
-The `dev/env` directory contains scripts for bringing up a complete ACS MS test environment on different types of cluster (currently: Minikube, Infra OpenShift, OpenShift CI). The following components are set up:
+The `dev/env` directory contains scripts for bringing up a complete ACS MS test environment on different
+types of cluster (currently: Minikube, Colima, Infra OpenShift, OpenShift CI). The following
+components are set up:
 
 * A Postgres database
 * Fleet Manager
@@ -20,7 +22,8 @@ The following scripts exist currently in `dev/env/scripts`:
 
 The scripts can be configured using environment variables, the most important options being:
 
-* `CLUSTER_TYPE`: Can be `minikube`, `openshift-ci`, `infra-openshift`).
+* `CLUSTER_TYPE`: Can be `minikube`, `colima`, `openshift-ci`, `infra-openshift`). Will be
+  auto-sensed in most situations depending on the cluster name.
 * `FLEET_MANAGER_IMAGE`: Reference for an `acs-fleet-manager` image. If unset, build a fresh image from the current source and deploy that.
 * `AUTH_TYPE`: Can be `OCM` (in which case a new token will be created automatically using `ocm token --refresh`) or `STATIC_TOKEN`, in which case a valid static token is expected in the environment variable `STATIC_TOKEN`.
 * `QUAY_USER` & `QUAY_TOKEN`: Mandatory setting in case images need to be pulled from Quay.
@@ -76,3 +79,15 @@ suite manually:
 ```
 make test/e2e
 ```
+
+### Colima
+
+Make sure that Colima is running with options such as:
+```
+$ colima start -c 4 -d 60 -m 16 -k
+```
+
+and that the `colima` CLI is in `PATH` (if not, export `DOCKER=/path/to/bin/colima nerdctl -- -n k8s.io` accordingly). Furthermore, prepare your environment by setting:
+* `QUAY_USER`
+* `QUAY_TOKEN`
+* `STATIC_TOKEN` for `AUTH_TYPE=STATIC_TOKEN` or `OCM_TOKEN` for `AUTH_TYPE=OCM`

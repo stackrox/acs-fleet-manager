@@ -25,7 +25,7 @@ func (c *ConnectionFactory) NewContext(ctx context.Context) (context.Context, er
 
 	// adding txid explicitly to context with a simple string key and int value
 	// due to a cyclical import cycle between pkg/db and pkg/logging
-	ctx = context.WithValue(ctx, "txid", tx.txid) //nolint:staticcheck
+	ctx = context.WithValue(ctx, "txid", tx.txid) //nolint:staticcheck,revive
 	ctx = context.WithValue(ctx, transactionKey, tx)
 
 	return ctx, nil
@@ -66,6 +66,7 @@ func Resolve(ctx context.Context) error {
 	return nil
 }
 
+// Begin ...
 func Begin(ctx context.Context) error {
 	tx, ok := ctx.Value(transactionKey).(*txFactory)
 	if !ok {
@@ -79,6 +80,7 @@ func Begin(ctx context.Context) error {
 	return nil
 }
 
+// AddPostCommitAction ...
 func AddPostCommitAction(ctx context.Context, f func()) error {
 	tx, ok := ctx.Value(transactionKey).(*txFactory)
 	if !ok {

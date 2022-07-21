@@ -2,8 +2,9 @@ package redhatsso
 
 import (
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"testing"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 
 	. "github.com/onsi/gomega"
 	"github.com/patrickmn/go-cache"

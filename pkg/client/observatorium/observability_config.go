@@ -3,10 +3,11 @@ package observatorium
 import (
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// ObservabilityConfiguration ...
 type ObservabilityConfiguration struct {
 	// Red Hat SSO configuration
 	RedHatSsoGatewayUrl        string `json:"redhat_sso_gateway_url" yaml:"redhat_sso_gateway_url"`
@@ -37,6 +38,7 @@ type ObservabilityConfiguration struct {
 	ObservabilityConfigAccessTokenFile string `json:"observability_config_access_token_file"`
 }
 
+// NewObservabilityConfigurationConfig ...
 func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 	return &ObservabilityConfiguration{
 		Timeout:                            240 * time.Second,
@@ -60,6 +62,7 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 	}
 }
 
+// AddFlags ...
 func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.RedHatSsoTenant, "observability-red-hat-sso-tenant", c.RedHatSsoTenant, "Red Hat SSO tenant")
 	fs.StringVar(&c.RedHatSsoAuthServerUrl, "observability-red-hat-sso-auth-server-url", c.RedHatSsoAuthServerUrl, "Red Hat SSO auth server URL")
@@ -82,6 +85,7 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ObservabilityConfigTag, "observability-config-tag", c.ObservabilityConfigTag, "Tag or branch to use inside the observability configuration repo")
 }
 
+// ReadFiles ...
 func (c *ObservabilityConfiguration) ReadFiles() error {
 	configFileError := c.ReadObservatoriumConfigFiles()
 	if configFileError != nil {
@@ -94,6 +98,7 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 	return nil
 }
 
+// ReadObservatoriumConfigFiles ...
 func (c *ObservabilityConfiguration) ReadObservatoriumConfigFiles() error {
 	logsClientIdErr := shared.ReadFileValueString(c.LogsClientIdFile, &c.LogsClientId)
 	if logsClientIdErr != nil {

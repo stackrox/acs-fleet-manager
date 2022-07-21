@@ -1,21 +1,23 @@
 package e2e
 
 import (
+	"fmt"
+	"os"
+	"testing"
+	"time"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"k8s.io/client-go/rest"
-	"fmt"
-	"os"
-	"time"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 var cfg *rest.Config
 var k8sClient client.Client
 
 const defaultTimeout = 5 * time.Minute
+
 var waitTimeout = getWaitTimeout()
 var dpCloudProvider = getEnvDefault("DP_CLOUD_PROVIDER", "standalone")
 var dpRegion = getEnvDefault("DP_REGION", "standalone")
@@ -26,9 +28,8 @@ func getWaitTimeout() time.Duration {
 		timeout, err := time.ParseDuration(timeoutStr)
 		if err == nil {
 			return timeout
-		} else {
-			fmt.Printf("Error parsing timeout, using default timeout %v: %s\n", defaultTimeout, err)
 		}
+		fmt.Printf("Error parsing timeout, using default timeout %v: %s\n", defaultTimeout, err)
 	}
 	return defaultTimeout
 }

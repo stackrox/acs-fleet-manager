@@ -2,6 +2,7 @@ package converters
 
 import (
 	"encoding/json"
+
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 )
 
@@ -39,14 +40,15 @@ func ConvertCluster(cluster *api.Cluster) []map[string]interface{} {
 func ConvertClusterList(clusterList []api.Cluster) []map[string]interface{} {
 	var convertedClusterList []map[string]interface{}
 
-	for _, cluster := range clusterList {
-		data := ConvertCluster(&cluster)
+	for i := range clusterList {
+		data := ConvertCluster(&clusterList[i])
 		convertedClusterList = append(convertedClusterList, data...)
 	}
 
 	return convertedClusterList
 }
 
+// ConvertClusters ...
 func ConvertClusters(clusterList []*api.Cluster) []map[string]interface{} {
 	var convertedClusterList []map[string]interface{}
 

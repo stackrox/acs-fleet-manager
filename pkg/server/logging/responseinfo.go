@@ -2,6 +2,7 @@ package logging
 
 import "net/http"
 
+// ResponseInfo ...
 type ResponseInfo struct {
 	Header  http.Header `json:"response_header,omitempty"`
 	Body    []byte      `json:"response_body,omitempty"`

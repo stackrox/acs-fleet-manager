@@ -1,11 +1,12 @@
 package fleetmanager
 
 import (
+	"net/http"
+	"time"
+
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
-	"net/http"
-	"time"
 )
 
 const (
@@ -26,10 +27,12 @@ type ocmAuth struct {
 
 type ocmAuthFactory struct{}
 
+// GetName ...
 func (f *ocmAuthFactory) GetName() string {
 	return ocmAuthName
 }
 
+// CreateAuth ...
 func (f *ocmAuthFactory) CreateAuth() (Auth, error) {
 	cfg, err := config.Singleton()
 	if err != nil {
@@ -65,6 +68,7 @@ func (f *ocmAuthFactory) CreateAuth() (Auth, error) {
 	}, nil
 }
 
+// AddAuth ...
 func (o *ocmAuth) AddAuth(req *http.Request) error {
 	// This will only do an external request iff the current access token of the connection has an expiration time
 	// lower than 1 minute.

@@ -1,5 +1,6 @@
 package dinosaur
 
+// FlagID ...
 const (
 	// FlagID is a flag representing a Dinosaur ID
 	FlagID = "id"

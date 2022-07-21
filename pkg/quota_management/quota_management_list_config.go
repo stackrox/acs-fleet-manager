@@ -1,19 +1,22 @@
 package quota_management
 
 import (
+	"os"
+
+	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
-	"os"
 )
 
+// QuotaManagementListConfig ...
 type QuotaManagementListConfig struct {
 	QuotaList                  RegisteredUsersListConfiguration
 	QuotaListConfigFile        string
 	EnableInstanceLimitControl bool
 }
 
+// NewQuotaManagementListConfig ...
 func NewQuotaManagementListConfig() *QuotaManagementListConfig {
 	return &QuotaManagementListConfig{
 		QuotaListConfigFile:        "config/quota-management-list-configuration.yaml",
@@ -21,12 +24,14 @@ func NewQuotaManagementListConfig() *QuotaManagementListConfig {
 	}
 }
 
+// AddFlags ...
 func (c *QuotaManagementListConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.QuotaListConfigFile, "quota-management-list-config-file", c.QuotaListConfigFile, "QuotaList configuration file")
 	fs.IntVar(&MaxAllowedInstances, "max-allowed-instances", MaxAllowedInstances, "Default maximum number of allowed instances that can be created by a user")
 	fs.BoolVar(&c.EnableInstanceLimitControl, "enable-instance-limit-control", c.EnableInstanceLimitControl, "Enable to enforce limits on how much instances a user can create")
 }
 
+// ReadFiles ...
 func (c *QuotaManagementListConfig) ReadFiles() error {
 	// TODO: we should avoid reading the file if quota-type is not quota-management-list
 	// ATM, since the quota-type is inside DinosaurConfig and DinosaurConfig is not accessible from here, I will leave this for a
@@ -41,6 +46,7 @@ func (c *QuotaManagementListConfig) ReadFiles() error {
 	return err
 }
 
+// GetAllowedAccountByUsernameAndOrgId ...
 func (c *QuotaManagementListConfig) GetAllowedAccountByUsernameAndOrgId(username string, orgId string) (Account, bool) {
 	var user Account
 	var found bool

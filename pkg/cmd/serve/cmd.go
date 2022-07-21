@@ -2,14 +2,16 @@ package serve
 
 import (
 	"context"
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-	"github.com/golang/glog"
-	"github.com/spf13/cobra"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/golang/glog"
+	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// NewServeCommand ...
 func NewServeCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "serve",

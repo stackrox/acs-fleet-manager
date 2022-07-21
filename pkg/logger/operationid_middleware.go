@@ -8,12 +8,16 @@ import (
 	"github.com/rs/xid"
 )
 
+// OperationIDKey ...
 type OperationIDKey string
 
+// OpIDKey ...
 const OpIDKey OperationIDKey = "opID"
+
+// OpIDHeader ...
 const OpIDHeader OperationIDKey = "X-Operation-ID"
 
-// Middleware wraps the given HTTP handler so that the details of the request are sent to the log.
+// OperationIDMiddleware Middleware wraps the given HTTP handler so that the details of the request are sent to the log.
 func OperationIDMiddleware(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := WithOpID(r.Context())
@@ -34,6 +38,7 @@ func OperationIDMiddleware(handler http.Handler) http.Handler {
 	})
 }
 
+// WithOpID ...
 func WithOpID(ctx context.Context) context.Context {
 	if ctx.Value(OpIDKey) != nil {
 		return ctx

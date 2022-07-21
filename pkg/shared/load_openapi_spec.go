@@ -1,10 +1,11 @@
 package shared
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/ghodss/yaml"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+// LoadOpenAPISpec ...
 func LoadOpenAPISpec(assetFunc func(name string) ([]byte, error), asset string) (data []byte, err error) {
 	data, err = assetFunc(asset)
 	if err != nil {

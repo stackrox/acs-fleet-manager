@@ -6,10 +6,12 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// MaxCapacityConfig ...
 type MaxCapacityConfig struct {
 	MaxCapacity int64 `json:"maxCapacity"`
 }
 
+// DinosaurConfig ...
 type DinosaurConfig struct {
 	DinosaurTLSCert                   string `json:"dinosaur_tls_cert"`
 	DinosaurTLSCertFile               string `json:"dinosaur_tls_cert_file"`
@@ -26,6 +28,7 @@ type DinosaurConfig struct {
 	RhSsoClientSecretFile string                  `json:"rhsso_client_secret_file"`
 }
 
+// NewDinosaurConfig ...
 func NewDinosaurConfig() *DinosaurConfig {
 	return &DinosaurConfig{
 		DinosaurTLSCertFile:               "secrets/dinosaur-tls.crt",
@@ -37,6 +40,7 @@ func NewDinosaurConfig() *DinosaurConfig {
 	}
 }
 
+// AddFlags ...
 func (c *DinosaurConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.DinosaurTLSCertFile, "dinosaur-tls-cert-file", c.DinosaurTLSCertFile, "File containing dinosaur certificate")
 	fs.StringVar(&c.DinosaurTLSKeyFile, "dinosaur-tls-key-file", c.DinosaurTLSKeyFile, "File containing dinosaur certificate private key")
@@ -49,6 +53,7 @@ func (c *DinosaurConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.RhSsoClientSecretFile, "rhsso-client-secret-file", c.RhSsoClientSecretFile, "File containing OIDC client secret of sso.redhat.com client")
 }
 
+// ReadFiles ...
 func (c *DinosaurConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(c.DinosaurTLSCertFile, &c.DinosaurTLSCert)
 	if err != nil {

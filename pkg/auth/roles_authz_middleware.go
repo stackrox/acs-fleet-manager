@@ -1,9 +1,10 @@
 package auth
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 	"strings"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/golang/glog"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// FleetManagerAdminReadRole ...
 const (
 	FleetManagerAdminReadRole  = "fleet-manager-admin-read"
 	FleetManagerAdminWriteRole = "fleet-manager-admin-write"
@@ -29,10 +31,12 @@ type rolesAuthMiddleware struct{}
 
 var _ RolesAuthorizationMiddleware = &rolesAuthMiddleware{}
 
+// NewRolesAuhzMiddleware ...
 func NewRolesAuhzMiddleware() RolesAuthorizationMiddleware {
 	return &rolesAuthMiddleware{}
 }
 
+// RequireRealmRole ...
 func (m *rolesAuthMiddleware) RequireRealmRole(roleName string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -54,6 +58,7 @@ func (m *rolesAuthMiddleware) RequireRealmRole(roleName string, code errors.Serv
 	}
 }
 
+// RequireRolesForMethods ...
 func (m *rolesAuthMiddleware) RequireRolesForMethods(roles map[string][]string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

@@ -2,12 +2,13 @@ package errors
 
 import (
 	"encoding/json"
+	"os"
+	"sort"
+
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
-	"os"
-	"sort"
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
@@ -15,6 +16,7 @@ import (
 	svcErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+// FlagsSaveToFile ...
 const (
 	FlagsSaveToFile = "save-to-file"
 )
@@ -45,8 +47,8 @@ func runList(cmd *cobra.Command, _ []string) {
 	})
 
 	// add code prefix to service error code
-	for _, err := range errors {
-		svcErrors = append(svcErrors, handlers.PresentError(&err, ""))
+	for i := range errors {
+		svcErrors = append(svcErrors, handlers.PresentError(&errors[i], ""))
 	}
 
 	svcErrorsJson, err := json.MarshalIndent(svcErrors, "", "\t")

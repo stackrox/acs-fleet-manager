@@ -4,6 +4,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 )
 
+// ConvertDinosaurRequest ...
 func ConvertDinosaurRequest(request *dbapi.CentralRequest) []map[string]interface{} {
 	return []map[string]interface{}{
 		{

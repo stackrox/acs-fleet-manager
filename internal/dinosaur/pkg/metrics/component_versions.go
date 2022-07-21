@@ -3,9 +3,9 @@ package metrics
 import (
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type versionsMetrics struct {
@@ -14,7 +14,7 @@ type versionsMetrics struct {
 	dinosaurVersion         *prometheus.GaugeVec
 }
 
-// need to invoked when the server is started and dinosaurService is initialised
+// RegisterVersionMetrics need to invoked when the server is started and dinosaurService is initialised
 func RegisterVersionMetrics(dinosaurService services.DinosaurService) {
 	m := newVersionMetrics(dinosaurService)
 	// for tests. This function will be called multiple times when run integration tests because `prometheus` is singleton
@@ -44,10 +44,12 @@ If the type is 'upgrade' it means the Dinosaur is being upgraded.
 	}
 }
 
+// Describe ...
 func (m *versionsMetrics) Describe(ch chan<- *prometheus.Desc) {
 	ch <- m.dinosaurOperatorVersion.WithLabelValues("", "", "", "").Desc()
 }
 
+// Collect ...
 func (m *versionsMetrics) Collect(ch chan<- prometheus.Metric) {
 	// list all the Dinosaur instances from dinosaurServices and generate metrics for each
 	// the generated metrics will be put on the channel
@@ -57,7 +59,7 @@ func (m *versionsMetrics) Collect(ch chan<- prometheus.Metric) {
 			actualDinosaurOperatorMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "actual", v.ActualDinosaurOperatorVersion)
 			actualDinosaurOperatorMetric.Set(float64(time.Now().Unix()))
 			ch <- actualDinosaurOperatorMetric
-			//desired metric
+			// desired metric
 			desiredDinosaurOperatorMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "desired", v.DesiredDinosaurOperatorVersion)
 			desiredDinosaurOperatorMetric.Set(float64(time.Now().Unix()))
 			ch <- desiredDinosaurOperatorMetric
@@ -72,7 +74,7 @@ func (m *versionsMetrics) Collect(ch chan<- prometheus.Metric) {
 			actualDinosaurMetric := m.dinosaurVersion.WithLabelValues(v.ClusterID, v.ID, "actual", v.ActualDinosaurVersion)
 			actualDinosaurMetric.Set(float64(time.Now().Unix()))
 			ch <- actualDinosaurMetric
-			//desired dinosaur version
+			// desired dinosaur version
 			desiredDinosaurMetric := m.dinosaurVersion.WithLabelValues(v.ClusterID, v.ID, "desired", v.DesiredDinosaurVersion)
 			desiredDinosaurMetric.Set(float64(time.Now().Unix()))
 			ch <- desiredDinosaurMetric

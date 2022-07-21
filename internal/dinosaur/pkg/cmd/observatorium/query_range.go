@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewRunMetricsQueryRangeCommand ...
 func NewRunMetricsQueryRangeCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query_range",

@@ -1,14 +1,14 @@
 package migrate
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 )
 
-// migrate sub-command handles running migrations
+// NewMigrateCommand migrate sub-command handles running migrations
 func NewMigrateCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "migrate",

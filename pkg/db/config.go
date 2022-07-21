@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// DatabaseConfig ...
 type DatabaseConfig struct {
 	Dialect            string `json:"dialect"`
 	SSLMode            string `json:"sslmode"`
@@ -28,6 +29,7 @@ type DatabaseConfig struct {
 	PasswordFile       string `json:"password_file"`
 }
 
+// NewDatabaseConfig ...
 func NewDatabaseConfig() *DatabaseConfig {
 	return &DatabaseConfig{
 		Dialect:            "postgres",
@@ -44,6 +46,7 @@ func NewDatabaseConfig() *DatabaseConfig {
 	}
 }
 
+// AddFlags ...
 func (c *DatabaseConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.DatabaseCaCertFile, "db-ssl-certificate-file", c.DatabaseCaCertFile, "Database ssl cert string file")
 	fs.StringVar(&c.HostFile, "db-host-file", c.HostFile, "Database host string file")
@@ -56,6 +59,7 @@ func (c *DatabaseConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&c.MaxOpenConnections, "db-max-open-connections", c.MaxOpenConnections, "Maximum open DB connections for this instance")
 }
 
+// ReadFiles ...
 func (c *DatabaseConfig) ReadFiles() error {
 
 	err := shared.ReadFileValueString(c.HostFile, &c.Host)
@@ -82,6 +86,7 @@ func (c *DatabaseConfig) ReadFiles() error {
 	return err
 }
 
+// ConnectionString ...
 func (c *DatabaseConfig) ConnectionString() string {
 	if c.SSLMode != "disable" {
 		return fmt.Sprintf(
@@ -95,6 +100,7 @@ func (c *DatabaseConfig) ConnectionString() string {
 	)
 }
 
+// LogSafeConnectionString ...
 func (c *DatabaseConfig) LogSafeConnectionString() string {
 	if c.SSLMode != "disable" {
 		return fmt.Sprintf(

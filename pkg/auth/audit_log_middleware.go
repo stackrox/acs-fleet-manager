@@ -2,13 +2,15 @@ package auth
 
 import (
 	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/server/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"io"
-	"net/http"
 )
 
+// AuditLogMiddleware ...
 type AuditLogMiddleware interface {
 	AuditLog(code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
 }
@@ -28,10 +30,12 @@ type auditLogMiddleware struct {
 
 var _ AuditLogMiddleware = &auditLogMiddleware{}
 
+// NewAuditLogMiddleware ...
 func NewAuditLogMiddleware() AuditLogMiddleware {
 	return &auditLogMiddleware{}
 }
 
+// AuditLog ...
 func (a *auditLogMiddleware) AuditLog(code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

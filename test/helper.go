@@ -41,13 +41,14 @@ const (
 )
 
 // TODO jwk mock server needs to be refactored out of the helper and into the testing environment
-//var jwkURL string
+// var jwkURL string
 
 // TimeFunc defines a way to get a new Time instance common to the entire test suite.
 // Aria's environment has Virtual Time that may not be actual time. We compensate
 // by synchronizing on a common time func attached to the test harness.
 type TimeFunc func() time.Time
 
+// Helper ...
 type Helper struct {
 	AuthHelper    *auth.AuthHelper
 	JWTPrivateKey *rsa.PrivateKey
@@ -56,6 +57,7 @@ type Helper struct {
 	Env           *environments.Env
 }
 
+// NewHelper ...
 func NewHelper(t *testing.T, httpServer *httptest.Server, options ...di.Option) (*Helper, func()) {
 	return NewHelperWithHooks(t, httpServer, nil, options...)
 }
@@ -191,6 +193,7 @@ func (helper *Helper) NewUUID() string {
 	return uuid.New().String()
 }
 
+// RestURL ...
 func (helper *Helper) RestURL(path string) string {
 	var serverConfig *server.ServerConfig
 	helper.Env.MustResolveAll(&serverConfig)
@@ -202,12 +205,14 @@ func (helper *Helper) RestURL(path string) string {
 	return fmt.Sprintf("%s://%s/api/rhacs/v1%s", protocol, serverConfig.BindAddress, path)
 }
 
+// MetricsURL ...
 func (helper *Helper) MetricsURL(path string) string {
 	var metricsConfig *server.MetricsConfig
 	helper.Env.MustResolveAll(&metricsConfig)
 	return fmt.Sprintf("http://%s%s", metricsConfig.BindAddress, path)
 }
 
+// HealthCheckURL ...
 func (helper *Helper) HealthCheckURL(path string) string {
 	var healthCheckConfig *server.HealthCheckConfig
 	helper.Env.MustResolveAll(&healthCheckConfig)
@@ -222,6 +227,7 @@ func (helper *Helper) NewRandAccount() *amv1.Account {
 	return helper.NewAccountWithNameAndOrg(faker.Name(), orgId)
 }
 
+// NewAccountWithNameAndOrg ...
 func (helper *Helper) NewAccountWithNameAndOrg(name string, orgId string) *amv1.Account {
 	account, err := helper.AuthHelper.NewAccount(helper.NewID(), name, faker.Email(), orgId)
 	if err != nil {
@@ -242,6 +248,7 @@ func (helper *Helper) NewAllowedServiceAccount() *amv1.Account {
 	return account
 }
 
+// NewAccount ...
 func (helper *Helper) NewAccount(username, name, email string, orgId string) *amv1.Account {
 	account, err := helper.AuthHelper.NewAccount(username, name, email, orgId)
 	if err != nil {
@@ -250,7 +257,7 @@ func (helper *Helper) NewAccount(username, name, email string, orgId string) *am
 	return account
 }
 
-// Returns an authenticated context that can be used with openapi functions
+// NewAuthenticatedContext Returns an authenticated context that can be used with openapi functions
 func (helper *Helper) NewAuthenticatedContext(account *amv1.Account, claims jwt.MapClaims) context.Context {
 	token, err := helper.AuthHelper.CreateSignedJWT(account, claims)
 	if err != nil {
@@ -260,10 +267,12 @@ func (helper *Helper) NewAuthenticatedContext(account *amv1.Account, claims jwt.
 	return context.WithValue(context.Background(), compat.ContextAccessToken, token)
 }
 
+// StartJWKCertServerMock ...
 func (helper *Helper) StartJWKCertServerMock() (string, func()) {
 	return mocks.NewJWKCertServerMock(helper.T, helper.JWTCA, auth.JwkKID)
 }
 
+// DeleteAll ...
 func (helper *Helper) DeleteAll(table interface{}) {
 	gorm := helper.DBFactory().New()
 	err := gorm.Model(table).Unscoped().Delete(table).Error
@@ -272,6 +281,7 @@ func (helper *Helper) DeleteAll(table interface{}) {
 	}
 }
 
+// Delete ...
 func (helper *Helper) Delete(obj interface{}) {
 	gorm := helper.DBFactory().New()
 	err := gorm.Unscoped().Delete(obj).Error
@@ -280,12 +290,14 @@ func (helper *Helper) Delete(obj interface{}) {
 	}
 }
 
+// SkipIfShort ...
 func (helper *Helper) SkipIfShort() {
 	if testing.Short() {
 		helper.T.Skip("Skipping execution of test in short mode")
 	}
 }
 
+// Count ...
 func (helper *Helper) Count(table string) int64 {
 	gorm := helper.DBFactory().New()
 	var count int64
@@ -296,33 +308,39 @@ func (helper *Helper) Count(table string) int64 {
 	return count
 }
 
+// DBFactory ...
 func (helper *Helper) DBFactory() (connectionFactory *db.ConnectionFactory) {
 	helper.Env.MustResolveAll(&connectionFactory)
 	return
 }
 
+// Migrations ...
 func (helper *Helper) Migrations() (m []*db.Migration) {
 	helper.Env.MustResolveAll(&m)
 	return
 }
 
+// MigrateDB ...
 func (helper *Helper) MigrateDB() {
 	for _, migration := range helper.Migrations() {
 		migration.Migrate()
 	}
 }
 
+// CleanDB ...
 func (helper *Helper) CleanDB() {
 	for _, migration := range helper.Migrations() {
 		migration.RollbackAll()
 	}
 }
 
+// ResetDB ...
 func (helper *Helper) ResetDB() {
 	helper.CleanDB()
 	helper.MigrateDB()
 }
 
+// CreateJWTString ...
 func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 	token, err := helper.AuthHelper.CreateSignedJWT(account, nil)
 	if err != nil {
@@ -331,6 +349,7 @@ func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 	return token
 }
 
+// CreateJWTStringWithClaim ...
 func (helper *Helper) CreateJWTStringWithClaim(account *amv1.Account, jwtClaims jwt.MapClaims) string {
 	token, err := helper.AuthHelper.CreateSignedJWT(account, jwtClaims)
 	if err != nil {
@@ -339,6 +358,7 @@ func (helper *Helper) CreateJWTStringWithClaim(account *amv1.Account, jwtClaims 
 	return token
 }
 
+// CreateJWTToken ...
 func (helper *Helper) CreateJWTToken(account *amv1.Account, jwtClaims jwt.MapClaims) *jwt.Token {
 	token, err := helper.AuthHelper.CreateJWTWithClaims(account, jwtClaims)
 	if err != nil {
@@ -347,7 +367,7 @@ func (helper *Helper) CreateJWTToken(account *amv1.Account, jwtClaims jwt.MapCla
 	return token
 }
 
-// Convert an error response from the openapi client to an openapi error struct
+// OpenapiError Convert an error response from the openapi client to an openapi error struct
 func (helper *Helper) OpenapiError(err error) compat.Error {
 	generic := err.(compat.GenericOpenAPIError)
 	var exErr compat.Error

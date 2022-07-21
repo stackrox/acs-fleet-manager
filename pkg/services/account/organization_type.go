@@ -2,6 +2,7 @@ package account
 
 import "time"
 
+// Organization ...
 type Organization struct {
 	ID            string
 	Name          string
@@ -11,6 +12,7 @@ type Organization struct {
 	UpdatedAt     time.Time
 }
 
+// OrganizationList ...
 type OrganizationList struct {
 	items []*Organization
 }

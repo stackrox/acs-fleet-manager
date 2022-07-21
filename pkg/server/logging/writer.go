@@ -28,6 +28,7 @@ NEXT_HEADER:
 	return &requestCopy
 }
 
+// NewLoggingWriter ...
 func NewLoggingWriter(w http.ResponseWriter, r *http.Request, f LogFormatter) *loggingWriter {
 	r = redactRequest(r)
 	return &loggingWriter{ResponseWriter: w, request: r, formatter: f}
@@ -41,20 +42,24 @@ type loggingWriter struct {
 	responseBody   []byte
 }
 
+// Flush ...
 func (writer *loggingWriter) Flush() {
 	writer.ResponseWriter.(http.Flusher).Flush()
 }
 
+// Write ...
 func (writer *loggingWriter) Write(body []byte) (int, error) {
 	writer.responseBody = body
 	return writer.ResponseWriter.Write(body)
 }
 
+// WriteHeader ...
 func (writer *loggingWriter) WriteHeader(status int) {
 	writer.responseStatus = status
 	writer.ResponseWriter.WriteHeader(status)
 }
 
+// Log ...
 func (writer *loggingWriter) Log(log string, err error) {
 	ulog := logger.NewUHCLogger(writer.request.Context())
 	switch err {
@@ -65,6 +70,7 @@ func (writer *loggingWriter) Log(log string, err error) {
 	}
 }
 
+// LogObject ...
 func (writer *loggingWriter) LogObject(o interface{}, err error) error {
 	log, merr := writer.formatter.FormatObject(o)
 	if merr != nil {
@@ -74,6 +80,7 @@ func (writer *loggingWriter) LogObject(o interface{}, err error) error {
 	return nil
 }
 
+// GetResponseStatusCode ...
 func (writer *loggingWriter) GetResponseStatusCode() int {
 	return writer.responseStatus
 }

@@ -1,13 +1,14 @@
-// Package cluster contains commands for interacting with cluster logic of the service directly instead of through the
+// Package dinosaur contains commands for interacting with cluster logic of the service directly instead of through the
 // REST API exposed via the serve command.
 package dinosaur
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// NewDinosaurCommand ...
 func NewDinosaurCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "dinosaur",

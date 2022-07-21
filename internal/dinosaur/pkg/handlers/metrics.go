@@ -1,36 +1,39 @@
 package handlers
 
 import (
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/getsentry/sentry-go"
+	"github.com/golang/glog"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"github.com/getsentry/sentry-go"
-	"github.com/golang/glog"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/gorilla/mux"
 )
 
 type metricsHandler struct {
 	service services.ObservatoriumService
 }
 
+// NewMetricsHandler ...
 func NewMetricsHandler(service services.ObservatoriumService) *metricsHandler {
 	return &metricsHandler{
 		service: service,
 	}
 }
 
+// FederateMetrics ...
 func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) {
 	dinosaurId := strings.TrimSpace(mux.Vars(r)["id"])
 	if dinosaurId == "" {
@@ -74,6 +77,7 @@ func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) 
 	promHandler.ServeHTTP(w, r)
 }
 
+// GetMetricsByRangeQuery ...
 func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}
@@ -108,6 +112,7 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 	handlers.HandleGet(w, r, cfg)
 }
 
+// GetMetricsByInstantQuery ...
 func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}

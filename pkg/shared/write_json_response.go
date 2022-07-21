@@ -10,7 +10,7 @@ func WriteJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
 	WriteStreamJSONResponseWithContentType(w, code, payload, "application/json")
 }
 
-// WriteJSONResponse writes a HTTP response of the given HTTP status code and response payload with a given content type
+// WriteStreamJSONResponseWithContentType WriteJSONResponse writes a HTTP response of the given HTTP status code and response payload with a given content type
 func WriteStreamJSONResponseWithContentType(w http.ResponseWriter, code int, payload interface{}, contentType string) {
 	w.Header().Set("Content-Type", contentType)
 	// By default, decide whether or not a cache is usable based on the matching of the JWT
@@ -21,8 +21,8 @@ func WriteStreamJSONResponseWithContentType(w http.ResponseWriter, code int, pay
 	if payload != nil {
 		_ = json.NewEncoder(w).Encode(payload)
 		// In case we need to debug response encoding... use this instead:
-		//response, _ := json.Marshal(payload)
-		//fmt.Println(string(response))
-		//_, _ = w.Write(response)
+		// response, _ := json.Marshal(payload)
+		// fmt.Println(string(response))
+		// _, _ = w.Write(response)
 	}
 }

@@ -2,12 +2,14 @@ package sentry
 
 import (
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	"os"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
-	"os"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// Initialize ...
 func Initialize(envName environments.EnvName, c *Config) error {
 	options := sentry.ClientOptions{}
 

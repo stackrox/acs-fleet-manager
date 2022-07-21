@@ -1,12 +1,15 @@
 package handlers
 
 import (
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"strings"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+// ValidateOption ...
 type ValidateOption func(field string, value *string) *errors.ServiceError
 
+// Validation ...
 func Validation(field string, value *string, options ...ValidateOption) Validate {
 	return func() *errors.ServiceError {
 		for _, option := range options {
@@ -19,6 +22,7 @@ func Validation(field string, value *string, options ...ValidateOption) Validate
 	}
 }
 
+// WithDefault ...
 func WithDefault(d string) ValidateOption {
 	return func(field string, value *string) *errors.ServiceError {
 		if *value == "" {
@@ -28,6 +32,7 @@ func WithDefault(d string) ValidateOption {
 	}
 }
 
+// MinLen ...
 func MinLen(min int) ValidateOption {
 	return func(field string, value *string) *errors.ServiceError {
 		if value == nil || len(*value) < min {
@@ -36,6 +41,8 @@ func MinLen(min int) ValidateOption {
 		return nil
 	}
 }
+
+// MaxLen ...
 func MaxLen(min int) ValidateOption {
 	return func(field string, value *string) *errors.ServiceError {
 		if value != nil && len(*value) > min {
@@ -45,6 +52,7 @@ func MaxLen(min int) ValidateOption {
 	}
 }
 
+// IsOneOf ...
 func IsOneOf(options ...string) ValidateOption {
 	return func(field string, value *string) *errors.ServiceError {
 		if value != nil {

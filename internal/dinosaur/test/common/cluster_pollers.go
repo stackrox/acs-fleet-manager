@@ -2,11 +2,12 @@ package common
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
-	"github.com/pkg/errors"
-	"time"
 )
 
 const (
@@ -22,9 +23,8 @@ func WaitForClustersMatchCriteriaToBeGivenCount(db *db.ConnectionFactory, cluste
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentCount == -1 {
 				return fmt.Sprintf("Waiting for cluster count to be %d", count)
-			} else {
-				return fmt.Sprintf("Waiting for cluster count to be %d (current: %d)", count, currentCount)
 			}
+			return fmt.Sprintf("Waiting for cluster count to be %d (current: %d)", count, currentCount)
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			clusters, svcErr := (*clusterService).FindAllClusters(*clusterCriteria)
@@ -83,9 +83,8 @@ func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.Clu
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentStatus == "" {
 				return fmt.Sprintf("Waiting for cluster '%s' to reach status '%s'", clusterId, desiredStatus.String())
-			} else {
-				return fmt.Sprintf("Waiting for cluster '%s' to reach status '%s' (current status: '%s')", clusterId, desiredStatus.String(), currentStatus)
 			}
+			return fmt.Sprintf("Waiting for cluster '%s' to reach status '%s' (current status: '%s')", clusterId, desiredStatus.String(), currentStatus)
 		}).
 		OnRetry(func(attempt int, maxRetries int) (bool, error) {
 			foundCluster, err := (*clusterService).FindClusterByID(clusterId)

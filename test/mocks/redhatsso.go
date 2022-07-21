@@ -3,18 +3,21 @@ package mocks
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
-	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 )
 
+// Unlimited ...
 const (
 	Unlimited = -1
 )
 
+// RedhatSSOMock ...
 type RedhatSSOMock interface {
 	Start()
 	Stop()
@@ -44,14 +47,17 @@ type getTokenResponseMock struct {
 
 var _ RedhatSSOMock = &redhatSSOMock{}
 
+// MockServerOption ...
 type MockServerOption func(mock *redhatSSOMock)
 
+// WithServiceAccountLimit ...
 func WithServiceAccountLimit(limit int) MockServerOption {
 	return func(mock *redhatSSOMock) {
 		mock.serviceAccountsLimit = limit
 	}
 }
 
+// NewMockServer ...
 func NewMockServer(options ...MockServerOption) RedhatSSOMock {
 	mockServer := &redhatSSOMock{
 		serviceAccounts:      make(map[string]serviceaccountsclient.ServiceAccountData),
@@ -66,22 +72,27 @@ func NewMockServer(options ...MockServerOption) RedhatSSOMock {
 	return mockServer
 }
 
+// ServiceAccountsLimit ...
 func (mockServer *redhatSSOMock) ServiceAccountsLimit() int {
 	return mockServer.serviceAccountsLimit
 }
 
+// DeleteAllServiceAccounts ...
 func (mockServer *redhatSSOMock) DeleteAllServiceAccounts() {
 	mockServer.serviceAccounts = make(map[string]serviceaccountsclient.ServiceAccountData)
 }
 
+// Start ...
 func (mockServer *redhatSSOMock) Start() {
 	mockServer.server.Start()
 }
 
+// Stop ...
 func (mockServer *redhatSSOMock) Stop() {
 	mockServer.server.Close()
 }
 
+// BaseURL ...
 func (mockServer *redhatSSOMock) BaseURL() string {
 	return mockServer.server.URL
 }
@@ -300,12 +311,14 @@ func (mockServer *redhatSSOMock) regenerateSecretHandler(w http.ResponseWriter, 
 	w.WriteHeader(http.StatusNotFound)
 }
 
+// GenerateNewAuthToken ...
 func (mockServer *redhatSSOMock) GenerateNewAuthToken() string {
 	token := uuid.New().String()
 	mockServer.authTokens = append(mockServer.authTokens, token)
 	return token
 }
 
+// SetBearerToken ...
 func (mockServer *redhatSSOMock) SetBearerToken(token string) string {
 	mockServer.authTokens = append(mockServer.authTokens, token)
 	mockServer.sessionAuthToken = token
