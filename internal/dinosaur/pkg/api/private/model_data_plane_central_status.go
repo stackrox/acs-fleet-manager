@@ -15,5 +15,5 @@ type DataPlaneCentralStatus struct {
 	Conditions []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
 	Versions   DataPlaneCentralStatusVersions                  `json:"versions,omitempty"`
 	// Routes created for a Central
-	Routes *[]DataPlaneCentralStatusRoutes `json:"routes,omitempty"`
+	Routes []DataPlaneCentralStatusRoutes `json:"routes,omitempty"`
 }

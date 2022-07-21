@@ -8,11 +8,9 @@ import (
 	"strconv"
 	"sync/atomic"
 
-	openshiftRouteV1 "github.com/openshift/api/route/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
@@ -30,16 +28,8 @@ const (
 	FreeStatus int32 = iota
 	BlockedStatus
 
-	revisionAnnotationKey  = "rhacs.redhat.com/revision"
-	k8sManagedByLabelKey   = "app.kubernetes.io/managed-by"
-	k8sManagedByLabelValue = "rhacs-fleetshard"
-
-	centralReencryptRouteName = "central-reencrypt"
-	centralTLSSecretName      = "central-tls"
+	revisionAnnotationKey = "rhacs.redhat.com/revision"
 )
-
-// ErrTypeCentralNotChanged is an error returned when reconcilation runs more then once in a row with equal central
-var ErrTypeCentralNotChanged = errors.New("central not changed, skipping reconcilation")
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
@@ -50,6 +40,7 @@ type CentralReconciler struct {
 	lastCentralHash    [16]byte
 	useRoutes          bool
 	createAuthProvider bool
+	routeService       *k8s.RouteService
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -68,18 +59,19 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "checking if central changed")
 	}
 
-	if !changed && !r.createAuthProvider && remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String() {
-		return nil, ErrTypeCentralNotChanged
-	}
-
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteNamespace := remoteCentral.Metadata.Namespace
+
+	if !changed && !r.createAuthProvider && remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String() {
+		glog.Infof("Central %s/%s not changed, skipping reconciliation", remoteNamespace, remoteCentralName)
+		return r.readyStatus(ctx, remoteNamespace)
+	}
 
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
 			Namespace: remoteNamespace,
-			Labels:    map[string]string{k8sManagedByLabelKey: k8sManagedByLabelValue},
+			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
 		},
 		Spec: v1alpha1.CentralSpec{
 			Central: &v1alpha1.CentralComponentSpec{
@@ -168,7 +160,42 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
-	return readyStatus(), nil
+	return r.readyStatus(ctx, remoteNamespace)
+}
+
+func (r *CentralReconciler) readyStatus(ctx context.Context, namespace string) (*private.DataPlaneCentralStatus, error) {
+	status := readyStatus()
+	if r.useRoutes {
+		routesStatuses, err := r.getRoutesStatuses(ctx, namespace)
+		if err != nil {
+			return nil, err
+		}
+		status.Routes = routesStatuses
+	}
+	return status, nil
+}
+
+func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
+	reencryptHostname, err := r.routeService.FindReencryptCanonicalHostname(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+	mtlsHostname, err := r.routeService.FindMTLSCanonicalHostname(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+	return []private.DataPlaneCentralStatusRoutes{
+		{
+			Name:   "central-reencrypt",
+			Prefix: "",
+			Router: reencryptHostname,
+		},
+		{
+			Name:   "central-mtls",
+			Prefix: "data",
+			Router: mtlsHostname,
+		},
+	}, nil
 }
 
 func isCentralReady(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (bool, error) {
@@ -301,46 +328,11 @@ func (r CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remot
 		return nil
 	}
 	namespace := remoteCentral.Metadata.Namespace
-	route := &openshiftRouteV1.Route{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralReencryptRouteName,
-			Namespace: namespace,
-			Labels:    map[string]string{k8sManagedByLabelKey: k8sManagedByLabelValue},
-		},
-	}
-	err := r.findRoute(ctx, route)
+	_, err := r.routeService.FindReencryptRoute(ctx, namespace)
 	if apiErrors.IsNotFound(err) {
-		centralTLSSecret := &corev1.Secret{}
-		err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: centralTLSSecretName}, centralTLSSecret)
-		if err != nil {
-			return errors.Wrapf(err, "get central TLS secret %s/%s", namespace, remoteCentral.Metadata.Name)
-		}
-		centralCA, ok := centralTLSSecret.Data["ca.pem"]
-		if !ok {
-			return errors.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
-		}
-		route.Spec = openshiftRouteV1.RouteSpec{
-			Port: &openshiftRouteV1.RoutePort{
-				TargetPort: intstr.IntOrString{Type: intstr.String, StrVal: "https"},
-			},
-			To: openshiftRouteV1.RouteTargetReference{
-				Kind: "Service",
-				Name: "central",
-			},
-			TLS: &openshiftRouteV1.TLSConfig{
-				Termination:              openshiftRouteV1.TLSTerminationReencrypt,
-				Key:                      remoteCentral.Spec.Endpoint.Tls.Key,
-				Certificate:              remoteCentral.Spec.Endpoint.Tls.Cert,
-				DestinationCACertificate: string(centralCA),
-			},
-		}
-		err = r.client.Create(ctx, route)
+		err = r.routeService.CreateReencryptRoute(ctx, remoteCentral)
 	}
 	return err
-}
-
-func (r CentralReconciler) findRoute(ctx context.Context, route *openshiftRouteV1.Route) error {
-	return r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: route.GetNamespace(), Name: route.GetName()}, route)
 }
 
 // TODO(ROX-9310): Move re-encrypt route reconciliation to the StackRox operator
@@ -348,14 +340,8 @@ func (r CentralReconciler) ensureReencryptRouteDeleted(ctx context.Context, name
 	if !r.useRoutes {
 		return true, nil
 	}
-	route := &openshiftRouteV1.Route{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralReencryptRouteName,
-			Namespace: namespace,
-			Labels:    map[string]string{k8sManagedByLabelKey: k8sManagedByLabelValue},
-		},
-	}
-	if err := r.findRoute(ctx, route); err != nil {
+	route, err := r.routeService.FindReencryptRoute(ctx, namespace)
+	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return true, nil
 		}
@@ -375,5 +361,6 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		status:             pointer.Int32(FreeStatus),
 		useRoutes:          useRoutes,
 		createAuthProvider: createAuthProvider,
+		routeService:       k8s.NewRouteService(k8sClient),
 	}
 }
