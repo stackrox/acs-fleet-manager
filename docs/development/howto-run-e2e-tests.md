@@ -1,6 +1,6 @@
 # ACS MS Test Environment
 
-This directory contains scripts for bringing up a complete ACS MS test environment on different types of cluster (currently: Minikube, Infra OpenShift, OpenShift CI). The following components are set up:
+The `dev/env` directory contains scripts for bringing up a complete ACS MS test environment on different types of cluster (currently: Minikube, Infra OpenShift, OpenShift CI). The following components are set up:
 
 * A Postgres database
 * Fleet Manager
@@ -9,7 +9,7 @@ This directory contains scripts for bringing up a complete ACS MS test environme
 
 The RHACS operator can be installed from OpenShift marketplace or Quay. Images for Fleet Manager & Fleetshard Sync can either be pulled from Quay or built directly from the source.
 
-The following scripts exist currently:
+The following scripts exist currently in `dev/env/scripts`:
 
 * `lib.sh`: Basic initialization and library script for the other executable scripts.
 * `apply` & `delete`: Convenience scripts for applying and deleting Kubernetes resources supporting environment interpolation.
