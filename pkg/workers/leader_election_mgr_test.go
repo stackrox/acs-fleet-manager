@@ -126,7 +126,7 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 					WithArgs("cluster").
 					WithReply([]map[string]interface{}{mockEntry})
 				mocket.Catcher.NewMock().
-					WithQuery(`UPDATE "leader_leases" SET "expires"=$1,"leader"=$2,"updated_at"=$3 WHERE "id" = $4`)
+					WithQuery(`UPDATE "leader_leases" SET "expires"=$1,"leader"=$2,"updated_at"=$3 WHERE "leader_leases"."deleted_at" IS NULL AND "id" = $4`)
 				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 		},

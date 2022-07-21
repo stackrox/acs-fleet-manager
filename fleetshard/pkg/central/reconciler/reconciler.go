@@ -67,6 +67,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return r.readyStatus(ctx, remoteCentralNamespace)
 	}
 
+	centralMonitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
+
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
@@ -79,6 +81,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 					Route: &v1alpha1.ExposureRoute{
 						Enabled: pointer.BoolPtr(r.useRoutes),
 					},
+				},
+				Monitoring: &v1alpha1.Monitoring{
+					ExposeEndpoint: &centralMonitoringExposeEndpointEnabled,
 				},
 			},
 		},
