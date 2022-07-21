@@ -101,11 +101,6 @@ func (r *Runtime) Start() error {
 
 func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error) {
 	if err != nil {
-		if errors.Is(err, centralReconciler.ErrTypeCentralNotChanged) {
-			glog.Infof("%s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err)
-			return
-		}
-
 		glog.Errorf("error occurred %s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err.Error())
 		return
 	}
