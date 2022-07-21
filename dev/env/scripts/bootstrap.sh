@@ -59,6 +59,9 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
         log "Skipping installation of operator since the operator seems to be running already"
     else
         log "Installing operator"
+
+        apply "${MANIFESTS_DIR}"/rhacs-operator/[0-9]* # This installs the operator-group.
+
         if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
             apply "${MANIFESTS_DIR}"/rhacs-operator/quay/01*
         fi
@@ -87,7 +90,8 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
         fi
 
         if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
-            wait_for_resource_to_appear "$STACKROX_OPERATOR_NAMESPACE" "serviceaccount" "rhacs-operator-controller-manager"
+            # Apparently we potentially have to wait longer than the default of 60s sometimes...
+            wait_for_resource_to_appear "$STACKROX_OPERATOR_NAMESPACE" "serviceaccount" "rhacs-operator-controller-manager" 180
             inject_ips "$STACKROX_OPERATOR_NAMESPACE" "rhacs-operator-controller-manager" "quay-ips"
 
             # Wait for rhacs-operator pods to be created. Possibly the imagePullSecrets were not picked up yet, which is why we respawn them:
