@@ -29,6 +29,8 @@ fleetshardSync:
 
 acsOperator:
   enabled: false
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
   startingCSV: rhacs-operator.v3.70.0
 
 # See available parameters in charts/observability/values.yaml
