@@ -60,10 +60,10 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
     else
         log "Installing operator"
 
-        apply "${MANIFESTS_DIR}"/rhacs-operator/[0-9]* # This installs the operator-group.
+        apply "${MANIFESTS_DIR}"/rhacs-operator/*.yaml # This installs the operator-group.
 
         if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
-            apply "${MANIFESTS_DIR}"/rhacs-operator/quay/01*
+            apply "${MANIFESTS_DIR}"/rhacs-operator/quay/01-catalogsource.yaml
         fi
 
         if [[ "$OPERATOR_SOURCE" == "quay" && "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
@@ -84,9 +84,9 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
         fi
 
         if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
-            apply "${MANIFESTS_DIR}"/rhacs-operator/quay/0[23]*
+            apply "${MANIFESTS_DIR}"/rhacs-operator/quay/*.yaml
         elif [[ "$OPERATOR_SOURCE" == "marketplace" ]]; then
-            apply "${MANIFESTS_DIR}"/rhacs-operator/marketplace/0[23]*
+            apply "${MANIFESTS_DIR}"/rhacs-operator/marketplace/*.yaml
         fi
 
         if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
