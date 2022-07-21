@@ -71,7 +71,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
 			Namespace: remoteNamespace,
-			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByLabelValue},
+			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
 		},
 		Spec: v1alpha1.CentralSpec{
 			Central: &v1alpha1.CentralComponentSpec{

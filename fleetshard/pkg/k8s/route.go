@@ -84,7 +84,7 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      centralReencryptRouteName,
 			Namespace: namespace,
-			Labels:    map[string]string{ManagedByLabelKey: ManagedByLabelValue},
+			Labels:    map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
 		},
 		Spec: openshiftRouteV1.RouteSpec{
 			Host: remoteCentral.Spec.Endpoint.Host,
