@@ -16,6 +16,7 @@ func NewPrometheusMetricsHandler() *prometheusMetricsHandler {
 
 // create and register banned_user metrics
 
+// Handler ...
 func (h *prometheusMetricsHandler) Handler() http.Handler {
 	handler := promhttp.Handler()
 

@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Configuration ...
 type Configuration struct {
 	BaseURL   string
 	AuthToken string

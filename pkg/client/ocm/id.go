@@ -6,12 +6,13 @@ import (
 	"github.com/rs/xid"
 )
 
+// MaxClusterNameLength ...
 const (
 	// MaxClusterNameLength - defines maximum length of an OSD cluster name
 	MaxClusterNameLength = 15
 )
 
-// NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider
+// IDGenerator NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider
 // moving the type into a ocmtest package.
 //go:generate moq -out idgenerator_moq.go . IDGenerator
 // IDGenerator interface for string ID generators.
@@ -35,7 +36,7 @@ func NewIDGenerator(prefix string) IDGenerator {
 	}
 }
 
-// It is not allowed for the cluster name to be longer than 15 characters, hence
+// Generate It is not allowed for the cluster name to be longer than 15 characters, hence
 // the truncation
 func (i idGenerator) Generate() string {
 	return fmt.Sprintf("%s%s", i.prefix, xid.New().String())[0:MaxClusterNameLength]

@@ -2,6 +2,7 @@ package api
 
 import "time"
 
+// ServiceAccount ...
 type ServiceAccount struct {
 	ID           string    `json:"id,omitempty"`
 	ClientID     string    `json:"clientID,omitempty"`

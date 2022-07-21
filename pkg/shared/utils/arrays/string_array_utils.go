@@ -27,23 +27,24 @@ func FilterStringSlice(values []string, predicate func(x string) bool) []string 
 // FirstNonEmpty Returns the first non-empty string between the passed in values.
 // If no non-empty string can be found, returns an empty string and an error
 func FirstNonEmpty(values ...string) (string, error) {
-	if idx := FindFirstString(values, func(s string) bool { return s != "" }); idx == -1 {
+	idx := FindFirstString(values, func(s string) bool { return s != "" })
+	if idx == -1 {
 		return "", fmt.Errorf("all strings are empty")
-	} else {
-		return values[idx], nil
 	}
+	return values[idx], nil
 }
 
 // FirstNonEmptyOrDefault Returns the first non-empty string between the passed in values.
 // If no non-empty string can be found, returns defaultValue
 func FirstNonEmptyOrDefault(defaultValue string, values ...string) string {
-	if idx := FindFirstString(values, func(s string) bool { return s != "" }); idx == -1 {
+	idx := FindFirstString(values, func(s string) bool { return s != "" })
+	if idx == -1 {
 		return defaultValue
-	} else {
-		return values[idx]
 	}
+	return values[idx]
 }
 
+// Contains ...
 func Contains(values []string, s string) bool {
 	return FindFirstString(values, func(x string) bool { return x == s }) != -1
 }

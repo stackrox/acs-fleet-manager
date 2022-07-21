@@ -24,6 +24,7 @@ type dinosaurHandler struct {
 	authService    authorization.Authorization
 }
 
+// NewDinosaurHandler ...
 func NewDinosaurHandler(service services.DinosaurService, providerConfig *config.ProviderConfig, authService authorization.Authorization) *dinosaurHandler {
 	return &dinosaurHandler{
 		service:        service,
@@ -32,6 +33,7 @@ func NewDinosaurHandler(service services.DinosaurService, providerConfig *config
 	}
 }
 
+// Create ...
 func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var dinosaurRequest public.CentralRequestPayload
 	ctx := r.Context()
@@ -43,7 +45,7 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.ValidateAsyncEnabled(r, "creating central requests"),
 			handlers.ValidateLength(&dinosaurRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxDinosaurNameLength),
 			ValidDinosaurClusterName(&dinosaurRequest.Name, "name"),
-			ValidateDinosaurClusterNameIsUnique(&dinosaurRequest.Name, h.service, r.Context()),
+			ValidateDinosaurClusterNameIsUnique(r.Context(), &dinosaurRequest.Name, h.service),
 			ValidateDinosaurClaims(ctx, &dinosaurRequest, convDinosaur),
 			ValidateCloudProvider(&h.service, convDinosaur, h.providerConfig, "creating central requests"),
 			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating central requests"),
@@ -61,6 +63,7 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 	handlers.Handle(w, r, cfg, http.StatusAccepted)
 }
 
+// Get ...
 func (h dinosaurHandler) Get(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
@@ -93,6 +96,7 @@ func (h dinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
 }
 
+// List ...
 func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {

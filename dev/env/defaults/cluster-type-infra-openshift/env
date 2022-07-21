@@ -7,3 +7,4 @@ export FLEET_MANAGER_RESOURCES_DEFAULT='{"requests":{"cpu":"400m","memory":"1000
 export FLEETSHARD_SYNC_RESOURCES_DEFAULT='{"requests":{"cpu":"400m","memory":"1000Mi"},"limits":{"cpu":"400m","memory":"1000Mi"}}'
 export DB_RESOURCES_DEFAULT='{"requests":{"cpu":"400m","memory":"1000Mi"},"limits":{"cpu":"400m","memory":"1000Mi"}}'
 export RHACS_OPERATOR_RESOURCES_DEFAULTS='{"requests":{"cpu":"400m","memory":"1000Mi"},"limits":{"cpu":"400m","memory":"1000Mi"}}'
+export CLUSTER_DNS_DEFAULT=$(oc get -n "openshift-ingress-operator" ingresscontrollers default -o=jsonpath='{.status.domain}' --ignore-not-found)

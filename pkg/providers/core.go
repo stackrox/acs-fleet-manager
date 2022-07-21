@@ -23,6 +23,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
+// CoreConfigProviders ...
 func CoreConfigProviders() di.Option {
 	return di.Options(
 		di.Provide(func(env *environments.Env) environments.EnvName {
@@ -54,6 +55,7 @@ func CoreConfigProviders() di.Option {
 	)
 }
 
+// ServiceProviders ...
 func ServiceProviders() di.Option {
 	return di.Options(
 

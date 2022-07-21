@@ -7,6 +7,7 @@ import (
 	"fmt"
 )
 
+// JSON ...
 type JSON json.RawMessage
 
 // Scan scan value into Jsonb, implements sql.Scanner interface
@@ -30,28 +31,30 @@ func (j JSON) Value() (driver.Value, error) {
 	return json.RawMessage(j).MarshalJSON()
 }
 
-func (m JSON) MarshalJSON() ([]byte, error) {
-	if m == nil {
+// MarshalJSON ...
+func (j JSON) MarshalJSON() ([]byte, error) {
+	if j == nil {
 		return []byte("null"), nil
 	}
-	return m, nil
+	return j, nil
 }
 
 // UnmarshalJSON sets *m to a copy of data.
-func (m *JSON) UnmarshalJSON(data []byte) error {
-	if m == nil {
+func (j *JSON) UnmarshalJSON(data []byte) error {
+	if j == nil {
 		return errors.New("api.JSON: UnmarshalJSON on nil pointer")
 	}
-	*m = append((*m)[0:0], data...)
+	*j = append((*j)[0:0], data...)
 	return nil
 }
 
-func (m JSON) Object() (map[string]interface{}, error) {
-	if m == nil {
+// Object ...
+func (j JSON) Object() (map[string]interface{}, error) {
+	if j == nil {
 		return nil, nil
 	}
 
 	result := map[string]interface{}{}
-	err := json.Unmarshal(m, &result)
+	err := json.Unmarshal(j, &result)
 	return result, err
 }

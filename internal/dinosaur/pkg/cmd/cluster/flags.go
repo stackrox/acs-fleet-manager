@@ -1,5 +1,6 @@
 package cluster
 
+// FlagProvider ...
 const (
 	// FlagProvider is a flag representing an OCM provider ID
 	FlagProvider = "provider"

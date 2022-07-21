@@ -6,6 +6,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 )
 
+// ConvertDataPlaneClusterStatus ...
 func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRequest) (*dbapi.DataPlaneClusterStatus, error) {
 	var res dbapi.DataPlaneClusterStatus
 	res.Conditions = make([]dbapi.DataPlaneClusterStatusCondition, len(status.Conditions))
@@ -31,6 +32,7 @@ func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRe
 	return &res, nil
 }
 
+// PresentDataPlaneClusterConfig ...
 func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private.DataplaneClusterAgentConfig {
 	res := private.DataplaneClusterAgentConfig{
 		Spec: private.DataplaneClusterAgentConfigSpec{

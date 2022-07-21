@@ -24,6 +24,7 @@ type cloudProvidersHandler struct {
 	supportedProviders config.ProviderList
 }
 
+// NewCloudProviderHandler ...
 func NewCloudProviderHandler(service services.CloudProvidersService, providerConfig *config.ProviderConfig) *cloudProvidersHandler {
 	return &cloudProvidersHandler{
 		service:            service,
@@ -32,6 +33,7 @@ func NewCloudProviderHandler(service services.CloudProvidersService, providerCon
 	}
 }
 
+// ListCloudProviderRegions ...
 func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	query := r.URL.Query()
@@ -87,6 +89,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 	handlers.HandleGet(w, r, cfg)
 }
 
+// ListCloudProviders ...
 func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {

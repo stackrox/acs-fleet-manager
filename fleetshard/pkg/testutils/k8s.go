@@ -1,8 +1,11 @@
 package testutils
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/hashicorp/go-multierror"
+	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	platform "github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/require"
@@ -26,9 +29,18 @@ var (
 		Version:  "v1",
 		Resource: "secrets",
 	}
+	routesGVR = schema.GroupVersionResource{
+		Group:    "route.openshift.io",
+		Version:  "v1",
+		Resource: "routes",
+	}
 )
 
-const CentralCA = "test CA"
+const (
+	// CentralCA ...
+	CentralCA     = "test CA"
+	clusterDomain = "test.local"
+)
 
 type reconcileTracker struct {
 	k8sTesting.ObjectTracker
@@ -40,6 +52,7 @@ func NewFakeClientBuilder(t *testing.T, objects ...ctrlClient.Object) *fake.Clie
 	require.NoError(t, platform.AddToScheme(scheme))
 	require.NoError(t, clientgoscheme.AddToScheme(scheme))
 	require.NoError(t, openshiftRouteV1.Install(scheme))
+	require.NoError(t, openshiftOperatorV1.Install(scheme))
 
 	return fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -51,21 +64,83 @@ func newReconcileTracker(scheme *runtime.Scheme) k8sTesting.ObjectTracker {
 	return reconcileTracker{ObjectTracker: k8sTesting.NewObjectTracker(scheme, clientgoscheme.Codecs.UniversalDecoder())}
 }
 
+// Create ...
 func (t reconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
+	if gvr == routesGVR {
+		route := obj.(*openshiftRouteV1.Route)
+		route.Status = admittedStatus()
+	}
 	if err := t.ObjectTracker.Create(gvr, obj, ns); err != nil {
 		return err
 	}
 	if gvr == centralsGVR {
-		centralTlsSecret := &coreV1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "central-tls",
-				Namespace: ns,
-			},
-			Data: map[string][]byte{
-				"ca.pem": []byte(CentralCA),
-			},
-		}
-		return t.ObjectTracker.Create(secretsGVR, centralTlsSecret, ns)
+		var multiErr *multierror.Error
+		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(secretsGVR, newCentralTlsSecret(ns), ns))
+		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(routesGVR, newCentralRoute(ns), ns))
+		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(routesGVR, newCentralMtlsRoute(ns), ns))
+		return multiErr.ErrorOrNil()
 	}
 	return nil
+}
+
+func newCentralTlsSecret(ns string) *coreV1.Secret {
+	return &coreV1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "central-tls",
+			Namespace: ns,
+		},
+		Data: map[string][]byte{
+			"ca.pem": []byte(CentralCA),
+		},
+	}
+}
+
+func newCentralRoute(ns string) *openshiftRouteV1.Route {
+	return &openshiftRouteV1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "central",
+			Namespace: ns,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":      "stackrox",
+				"app.kubernetes.io/component": "central",
+			},
+		},
+		Spec: openshiftRouteV1.RouteSpec{
+			Host: fmt.Sprintf("central-%s.%s", ns, clusterDomain),
+		},
+		Status: admittedStatus(),
+	}
+}
+
+func newCentralMtlsRoute(ns string) *openshiftRouteV1.Route {
+	return &openshiftRouteV1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "central-mtls",
+			Namespace: ns,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":      "stackrox",
+				"app.kubernetes.io/component": "central",
+			},
+		},
+		Spec: openshiftRouteV1.RouteSpec{
+			Host: fmt.Sprintf("central.%s", ns),
+		},
+		Status: admittedStatus(),
+	}
+}
+
+func admittedStatus() openshiftRouteV1.RouteStatus {
+	return openshiftRouteV1.RouteStatus{
+		Ingress: []openshiftRouteV1.RouteIngress{
+			{
+				Conditions: []openshiftRouteV1.RouteIngressCondition{
+					{
+						Type:   openshiftRouteV1.RouteAdmitted,
+						Status: coreV1.ConditionTrue,
+					},
+				},
+				RouterCanonicalHostname: "router-default.apps.test.local",
+			},
+		},
+	}
 }

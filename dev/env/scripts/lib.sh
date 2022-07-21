@@ -13,19 +13,30 @@ log() {
     echo
 }
 
-get_current_cluster_name() {
-    local cluster_name
+try_kubectl() {
     local kubectl
     if which kubectl >/dev/null 2>&1; then
         kubectl="kubectl"
     elif which oc >/dev/null 2>&1; then
         kubectl="oc"
     else
-        log "Error: Failed to retrieve cluster name, please set CLUSTER_NAME"
+        log "Error: Neither 'kubectl' nor 'oc' found." >&2
+        return 1
     fi
 
-    if [[ -n "$kubectl" ]]; then
-        cluster_name=$($kubectl config view --minify=true | yq e '.clusters[].name' -)
+    if $kubectl "$@"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+get_current_cluster_name() {
+    local cluster_name
+    cluster_name=$(try_kubectl config view --minify=true | yq e '.clusters[].name' -)
+    if [[ -z "$cluster_name" ]]; then
+        log "Error: Failed to retrieve cluster name, please set CLUSTER_NAME" >&2
+        return 1
     fi
     echo "$cluster_name"
 }
@@ -48,10 +59,11 @@ init() {
     set -eu -o pipefail
 
     # For reading the defaults we need access to the
-    CLUSTER_NAME_DEFAULT=$(get_current_cluster_name)
-    export CLUSTER_NAME=${CLUSTER_NAME:-$CLUSTER_NAME_DEFAULT}
-    if [[ -z "$CLUSTER_NAME" ]]; then
-        die "Error: Failed to retrieve cluster name."
+    if [[ -z "${CLUSTER_NAME:-}" ]]; then
+        CLUSTER_NAME=$(get_current_cluster_name)
+        if [[ -z "$CLUSTER_NAME" ]]; then
+            die "Error: Failed to retrieve cluster name."
+        fi
     fi
     export CLUSTER_NAME
 
@@ -74,9 +86,10 @@ init() {
         source "$env_file"
     done
 
+    export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
     export ACSMS_NAMESPACE="${ACSMS_NAMESPACE:-$ACSMS_NAMESPACE_DEFAULT}"
     export CLUSTER_ID=${CLUSTER_ID:-$CLUSTER_ID_DEFAULT}
-    export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
+    export CLUSTER_DNS=${CLUSTER_DNS:-$CLUSTER_DNS_DEFAULT}
     export DOCKER=${DOCKER:-$DOCKER_DEFAULT}
     export IMAGE_REGISTRY="${IMAGE_REGISTRY:-$IMAGE_REGISTRY_DEFAULT}"
     IMAGE_REGISTRY_HOST=$(if [[ "$IMAGE_REGISTRY" =~ ^[^/]*\.[^/]*/ ]]; then echo "$IMAGE_REGISTRY" | cut -d / -f 1; fi)

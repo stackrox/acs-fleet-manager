@@ -13,18 +13,22 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// NewErrorsHandler ...
 func NewErrorsHandler() *ErrorHandler {
 	return &ErrorHandler{}
 }
 
+// ErrorHandler ...
 type ErrorHandler struct{}
 
 var _ RestHandler = ErrorHandler{}
 
+// PresentError ...
 func PresentError(err *errors.ServiceError, url string) compat.Error {
 	return err.AsOpenapiError("", url)
 }
 
+// List ...
 func (h ErrorHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -56,6 +60,7 @@ func (h ErrorHandler) List(w http.ResponseWriter, r *http.Request) {
 	HandleList(w, r, cfg)
 }
 
+// Get ...
 func (h ErrorHandler) Get(w http.ResponseWriter, r *http.Request) {
 	cfg := &HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -76,14 +81,17 @@ func (h ErrorHandler) Get(w http.ResponseWriter, r *http.Request) {
 	HandleGet(w, r, cfg)
 }
 
+// Create ...
 func (h ErrorHandler) Create(w http.ResponseWriter, r *http.Request) {
 	shared.HandleError(r, w, errors.NotImplemented("create"))
 }
 
+// Patch ...
 func (h ErrorHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	shared.HandleError(r, w, errors.NotImplemented("path"))
 }
 
+// Delete ...
 func (h ErrorHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	shared.HandleError(r, w, errors.NotImplemented("delete"))
 }

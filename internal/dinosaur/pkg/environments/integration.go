@@ -9,14 +9,17 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// IntegrationEnvLoader ...
 type IntegrationEnvLoader struct{}
 
 var _ environments.EnvLoader = IntegrationEnvLoader{}
 
+// NewIntegrationEnvLoader ...
 func NewIntegrationEnvLoader() environments.EnvLoader {
 	return IntegrationEnvLoader{}
 }
 
+// Defaults ...
 func (b IntegrationEnvLoader) Defaults() map[string]string {
 	return map[string]string{
 		"v":                                    "0",
@@ -45,7 +48,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 	}
 }
 
-// The integration environment is specifically for automated integration testing using an emulated server
+// ModifyConfiguration The integration environment is specifically for automated integration testing using an emulated server
 // Mocks are loaded by default.
 // The environment is expected to be modified as needed
 func (b IntegrationEnvLoader) ModifyConfiguration(env *environments.Env) error {

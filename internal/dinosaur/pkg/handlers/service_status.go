@@ -18,6 +18,7 @@ type serviceStatusHandler struct {
 	accessControlList *acl.AccessControlListConfig
 }
 
+// NewServiceStatusHandler ...
 func NewServiceStatusHandler(service services.DinosaurService, accessControlList *acl.AccessControlListConfig) *serviceStatusHandler {
 	return &serviceStatusHandler{
 		dinosaurService:   service,
@@ -25,6 +26,7 @@ func NewServiceStatusHandler(service services.DinosaurService, accessControlList
 	}
 }
 
+// Get ...
 func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {

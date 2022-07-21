@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// TestingEnv ...
 const (
 	TestingEnv     string = "testing"
 	DevelopmentEnv string = "development"
@@ -53,6 +54,7 @@ func New(name string, options ...di.Option) (env *Env, err error) {
 	return env, nil
 }
 
+// GetEnvironmentStrFromEnv ...
 func GetEnvironmentStrFromEnv() string {
 	envStr, specified := os.LookupEnv(EnvironmentStringKey)
 	if !specified || envStr == "" {
@@ -188,6 +190,7 @@ func (env *Env) CreateServices() error {
 	return nil
 }
 
+// MustInvoke ...
 func (env *Env) MustInvoke(invocation di.Invocation, options ...di.InvokeOption) {
 	container := env.ServiceContainer
 	containerName := "service container"
@@ -200,6 +203,7 @@ func (env *Env) MustInvoke(invocation di.Invocation, options ...di.InvokeOption)
 	}
 }
 
+// MustResolve ...
 func (env *Env) MustResolve(ptr di.Pointer, options ...di.ResolveOption) {
 	container := env.ServiceContainer
 	containerName := "service container"
@@ -212,6 +216,7 @@ func (env *Env) MustResolve(ptr di.Pointer, options ...di.ResolveOption) {
 	}
 }
 
+// MustResolveAll ...
 func (env *Env) MustResolveAll(ptrs ...di.Pointer) {
 	container := env.ServiceContainer
 	containerName := "service container"

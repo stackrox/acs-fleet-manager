@@ -2,6 +2,7 @@ package constants
 
 import "github.com/prometheus/client_golang/prometheus"
 
+// DinosaurServerBrokertopicmetricsMessagesInTotalDesc ...
 const (
 	DinosaurServerBrokertopicmetricsMessagesInTotalDesc            = "Attribute exposed for management (dinosaur.server<type=BrokerTopicMetrics, name=MessagesInPerSec, topic=__dinosaur_operator_canary><>Count)"
 	DinosaurServerBrokertopicmetricsBytesInTotalDesc               = "Attribute exposed for management (dinosaur.server<type=BrokerTopicMetrics, name=BytesInPerSec, topic=__dinosaur_operator_canary><>Count)"
@@ -22,6 +23,7 @@ const (
 	DinosaurServerSocketServerMetricsConnectionCreationRateDesc    = "Current rate of connections creation"
 )
 
+// MetricsMetadata ...
 type MetricsMetadata struct {
 	Name           string
 	Help           string
@@ -31,6 +33,7 @@ type MetricsMetadata struct {
 	ConstantLabels prometheus.Labels
 }
 
+// GetMetricsMetaData ...
 func GetMetricsMetaData() map[string]MetricsMetadata {
 	return map[string]MetricsMetadata{
 		"dinosaur_server_brokertopicmetrics_messages_in_total": {

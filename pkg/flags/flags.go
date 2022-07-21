@@ -1,4 +1,4 @@
-// flags package is a helper package for processing and interactive command line flags
+// Package flags is a helper package for processing and interactive command line flags
 package flags
 
 import (

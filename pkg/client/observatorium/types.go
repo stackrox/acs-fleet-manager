@@ -7,9 +7,13 @@ import (
 	"time"
 )
 
+// State ...
 type State string
+
+// ResultType ...
 type ResultType string
 
+// ClusterStateUnknown ...
 const (
 	ClusterStateUnknown State      = "unknown"
 	ClusterStateReady   State      = "ready"
@@ -17,10 +21,12 @@ const (
 	Query               ResultType = "query"
 )
 
+// DinosaurState ...
 type DinosaurState struct {
 	State State `json:",omitempty"`
 }
 
+// DinosaurMetrics ...
 type DinosaurMetrics []Metric
 
 // Metric holds the Prometheus Matrix or Vector model, which contains instant vector or range vector with time series (depending on result type)

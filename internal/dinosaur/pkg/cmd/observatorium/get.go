@@ -8,6 +8,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 )
 
+// NewRunGetStateCommand ...
 func NewRunGetStateCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-state",

@@ -20,6 +20,7 @@ var (
 
 var _ Server = &HealthCheckServer{}
 
+// HealthCheckServer ...
 type HealthCheckServer struct {
 	httpServer        *http.Server
 	serverConfig      *ServerConfig
@@ -27,6 +28,7 @@ type HealthCheckServer struct {
 	healthCheckConfig *HealthCheckConfig
 }
 
+// NewHealthCheckServer ...
 func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config) *HealthCheckServer {
 	router := mux.NewRouter()
 	health.DefaultRegistry = health.NewRegistry()
@@ -48,10 +50,12 @@ func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *Se
 	}
 }
 
+// Start ...
 func (s HealthCheckServer) Start() {
 	go s.Run()
 }
 
+// Run ...
 func (s HealthCheckServer) Run() {
 	var err error
 	if s.healthCheckConfig.EnableHTTPS {
@@ -73,6 +77,7 @@ func (s HealthCheckServer) Run() {
 	glog.Infof("HealthCheck server terminated")
 }
 
+// Stop ...
 func (s HealthCheckServer) Stop() {
 	err := s.httpServer.Shutdown(context.Background())
 	if err != nil {
@@ -80,12 +85,12 @@ func (s HealthCheckServer) Stop() {
 	}
 }
 
-// Unimplemented
+// Listen Unimplemented
 func (s HealthCheckServer) Listen() (listener net.Listener, err error) {
 	return nil, nil
 }
 
-// Unimplemented
+// Serve Unimplemented
 func (s HealthCheckServer) Serve(listener net.Listener) {
 }
 

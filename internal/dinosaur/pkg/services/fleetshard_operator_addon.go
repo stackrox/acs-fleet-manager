@@ -14,6 +14,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 )
 
+// FleetshardOperatorRoleName ...
 const (
 	FleetshardOperatorRoleName = "fleetshard_operator"
 
@@ -30,6 +31,7 @@ const (
 	fleetshardOperatorParamResyncInterval = "resync-interval"
 )
 
+// FleetshardOperatorAddon ...
 //go:generate moq -out fleetshard_operator_addon_moq.go . FleetshardOperatorAddon
 type FleetshardOperatorAddon interface {
 	Provision(cluster api.Cluster) (bool, *errors.ServiceError)
@@ -37,6 +39,7 @@ type FleetshardOperatorAddon interface {
 	RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError
 }
 
+// NewFleetshardOperatorAddon ...
 func NewFleetshardOperatorAddon(o fleetshardOperatorAddon) FleetshardOperatorAddon {
 	return &o
 }
@@ -51,6 +54,7 @@ type fleetshardOperatorAddon struct {
 	IAMConfig        *iam.IAMConfig
 }
 
+// Provision ...
 func (o *fleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {
 	fleetshardAddonID := o.OCMConfig.FleetshardAddonID
 	params, paramsErr := o.getAddonParams(cluster)
@@ -68,13 +72,14 @@ func (o *fleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.
 		Status:         cluster.Status,
 		AdditionalInfo: cluster.ClusterSpec,
 	}
-	if ready, err := p.InstallFleetshard(spec, params); err != nil {
+	ready, err := p.InstallFleetshard(spec, params)
+	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to install addon %s for cluster %s", fleetshardAddonID, cluster.ClusterID)
-	} else {
-		return ready, nil
 	}
+	return ready, nil
 }
 
+// ReconcileParameters ...
 func (o *fleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *errors.ServiceError {
 	fleetshardAddonID := o.OCMConfig.FleetshardAddonID
 	params, paramsErr := o.getAddonParams(cluster)
@@ -153,6 +158,7 @@ func (o *fleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAc
 	return p
 }
 
+// RemoveServiceAccount ...
 func (o *fleetshardOperatorAddon) RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError {
 	glog.V(5).Infof("Removing fleetshard-operator service account for cluster %s", cluster.ClusterID)
 	return o.IAMService.DeRegisterAcsFleetshardOperatorServiceAccount(cluster.ClusterID)

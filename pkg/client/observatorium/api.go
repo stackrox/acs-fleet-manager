@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// APIObservatoriumService ...
 type APIObservatoriumService interface {
 	GetDinosaurState(name string, namespaceName string) (DinosaurState, error)
 	GetMetrics(csMetrics *DinosaurMetrics, resourceNamespace string, rq *MetricsReqParams) error
@@ -19,10 +20,12 @@ type fetcher struct {
 }
 type callback func(m Metric)
 
+// ServiceObservatorium ...
 type ServiceObservatorium struct {
 	client *Client
 }
 
+// GetDinosaurState ...
 func (obs *ServiceObservatorium) GetDinosaurState(name string, resourceNamespace string) (DinosaurState, error) {
 	DinosaurState := DinosaurState{}
 	c := obs.client
@@ -44,6 +47,7 @@ func (obs *ServiceObservatorium) GetDinosaurState(name string, resourceNamespace
 	return DinosaurState, nil
 }
 
+// GetMetrics ...
 func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace string, rq *MetricsReqParams) error {
 	failedMetrics := []string{}
 	// TODO update metrics names and add more specifics metrics for your service
@@ -121,7 +125,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 
 	}
 	if len(failedMetrics) > 0 {
-		return errors.New(fmt.Sprintf("Failed to fetch metrics data [%s]", strings.Join(failedMetrics, ",")))
+		return errors.Errorf("Failed to fetch metrics data [%s]", strings.Join(failedMetrics, ","))
 	}
 	return nil
 }

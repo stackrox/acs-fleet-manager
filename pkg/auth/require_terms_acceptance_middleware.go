@@ -12,6 +12,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
+// RequireTermsAcceptanceMiddleware ...
 type RequireTermsAcceptanceMiddleware interface {
 	// RequireTermsAcceptance will check that the user has accepted the required terms.
 	// The current implementation is backed by OCM and can be disabled with the "enabled" flag set to false.
@@ -24,6 +25,7 @@ type requireTermsAcceptanceMiddleware struct {
 
 var _ RequireTermsAcceptanceMiddleware = &requireTermsAcceptanceMiddleware{}
 
+// NewRequireTermsAcceptanceMiddleware ...
 func NewRequireTermsAcceptanceMiddleware() RequireTermsAcceptanceMiddleware {
 	return &requireTermsAcceptanceMiddleware{
 		// entries will expire in 5 minutes and will be evicted every 10 minutes
@@ -31,6 +33,7 @@ func NewRequireTermsAcceptanceMiddleware() RequireTermsAcceptanceMiddleware {
 	}
 }
 
+// RequireTermsAcceptance ...
 func (m *requireTermsAcceptanceMiddleware) RequireTermsAcceptance(enabled bool, amsClient ocm.AMSClient, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

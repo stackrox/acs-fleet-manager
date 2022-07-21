@@ -5,7 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 )
 
-// Specify the parameters for an installation
+// Parameter Specify the parameters for an installation
 // Value will be string here and the provider will convert it to the right type
 type Parameter = ocm.Parameter
 
@@ -55,16 +55,19 @@ type ClusterSpec struct {
 	AdditionalInfo api.JSON `json:"additional_info"`
 }
 
+// CloudProviderInfo ...
 type CloudProviderInfo struct {
 	ID          string
 	Name        string
 	DisplayName string
 }
 
+// CloudProviderInfoList ...
 type CloudProviderInfoList struct {
 	Items []CloudProviderInfo
 }
 
+// CloudProviderRegionInfo ...
 type CloudProviderRegionInfo struct {
 	ID              string
 	CloudProviderID string
@@ -73,10 +76,12 @@ type CloudProviderRegionInfo struct {
 	SupportsMultiAZ bool
 }
 
+// CloudProviderRegionInfoList ...
 type CloudProviderRegionInfoList struct {
 	Items []CloudProviderRegionInfo
 }
 
+// ComputeNodesInfo ...
 type ComputeNodesInfo struct {
 	Actual  int
 	Desired int

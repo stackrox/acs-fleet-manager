@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewRunMetricsQueryCommand ...
 func NewRunMetricsQueryCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query",

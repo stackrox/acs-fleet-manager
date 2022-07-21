@@ -9,6 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// Initialize ...
 func Initialize(envName environments.EnvName, c *Config) error {
 	options := sentry.ClientOptions{}
 

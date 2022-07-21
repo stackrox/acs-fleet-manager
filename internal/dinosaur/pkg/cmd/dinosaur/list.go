@@ -19,6 +19,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// FlagPage ...
 const (
 	FlagPage = "page"
 	FlagSize = "size"

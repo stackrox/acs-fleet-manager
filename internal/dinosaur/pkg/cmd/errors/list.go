@@ -16,6 +16,7 @@ import (
 	svcErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+// FlagsSaveToFile ...
 const (
 	FlagsSaveToFile = "save-to-file"
 )

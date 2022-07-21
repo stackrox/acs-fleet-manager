@@ -2,6 +2,7 @@ package services
 
 import "github.com/pkg/errors"
 
+// OP ...
 const (
 	OP = iota
 	BRACE
@@ -10,12 +11,14 @@ const (
 	NO_TOKEN
 )
 
+// Token ...
 type Token struct {
 	TokenType int
 	Value     string
 	Position  int
 }
 
+// Scanner ...
 type Scanner interface {
 	// Next - Move to the next Token. Return false if no next Token are available
 	Next() bool
@@ -34,6 +37,7 @@ type scanner struct {
 
 var _ Scanner = &scanner{}
 
+// Init ...
 func (s *scanner) Init(txt string) {
 	var tokens []Token
 	currentTokenType := NO_TOKEN
@@ -156,6 +160,7 @@ func (s *scanner) Init(txt string) {
 	sendCurrentTokens()
 }
 
+// Next ...
 func (s *scanner) Next() bool {
 	if s.pos < (len(s.tokens) - 1) {
 		s.pos++
@@ -164,6 +169,7 @@ func (s *scanner) Next() bool {
 	return false
 }
 
+// Peek ...
 func (s *scanner) Peek() (bool, *Token) {
 	if s.pos < (len(s.tokens) - 1) {
 		return true, &s.tokens[s.pos+1]
@@ -171,6 +177,7 @@ func (s *scanner) Peek() (bool, *Token) {
 	return false, nil
 }
 
+// Token ...
 func (s *scanner) Token() *Token {
 	if s.pos < 0 || s.pos >= len(s.tokens) {
 		panic(errors.Errorf("Invalid scanner Position %d", s.pos))
@@ -178,6 +185,7 @@ func (s *scanner) Token() *Token {
 	return &s.tokens[s.pos]
 }
 
+// NewScanner ...
 func NewScanner() Scanner {
 	return &scanner{
 		pos: -1,

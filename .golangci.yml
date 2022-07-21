@@ -37,6 +37,27 @@ linters-settings:
     - G601
   revive:
     min-confidence: 0
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+        arguments: ["disableStutteringCheck"] #TODO(ROX-11892) enable revive naming checks
+      - name: if-return
+      - name: increment-decrement
+      # - name: var-naming #TODO(ROX-11892) enable revive naming checks
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
   govet:
     enable-all: true
     disable:
@@ -95,7 +116,7 @@ linters:
     # - goerr113
     - gofmt
     - goimports
-    # - revive # replaces golint TODO(ROX-10828): enable revive checks
+    - revive
     # - gomnd
     # - goprintffuncname
     - gosec

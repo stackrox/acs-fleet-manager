@@ -9,6 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )
 
+// RequestLoggingMiddleware ...
 func RequestLoggingMiddleware(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		logEvent := logger.NewLogEventFromString(mux.CurrentRoute(request).GetName())

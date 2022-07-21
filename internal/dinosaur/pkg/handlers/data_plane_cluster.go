@@ -16,12 +16,14 @@ type dataPlaneClusterHandler struct {
 	service services.DataPlaneClusterService
 }
 
+// NewDataPlaneClusterHandler ...
 func NewDataPlaneClusterHandler(service services.DataPlaneClusterService) *dataPlaneClusterHandler {
 	return &dataPlaneClusterHandler{
 		service: service,
 	}
 }
 
+// UpdateDataPlaneClusterStatus ...
 func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWriter, r *http.Request) {
 	dataPlaneClusterID := mux.Vars(r)["id"]
 
@@ -46,6 +48,7 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
+// GetDataPlaneClusterConfig ...
 func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWriter, r *http.Request) {
 	dataPlaneClusterID := mux.Vars(r)["id"]
 

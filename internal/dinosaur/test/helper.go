@@ -27,6 +27,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/test"
 )
 
+// Services ...
 type Services struct {
 	di.Inject
 	DBFactory             *db.ConnectionFactory
@@ -48,14 +49,16 @@ type Services struct {
 	ServerConfig          *server.ServerConfig
 }
 
+// TestServices ...
 var TestServices Services
 
-// Register a test
+// NewDinosaurHelper Register a test
 // This should be run before every integration test
 func NewDinosaurHelper(t *testing.T, server *httptest.Server) (*test.Helper, *public.APIClient, func()) {
 	return NewDinosaurHelperWithHooks(t, server, nil)
 }
 
+// NewDinosaurHelperWithHooks ...
 func NewDinosaurHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
 	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, dinosaur.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
 		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, dinosaurConfig *config.DinosaurConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, fleetshardConfig *config.FleetshardConfig) {
@@ -71,6 +74,7 @@ func NewDinosaurHelperWithHooks(t *testing.T, server *httptest.Server, configura
 	return h, NewApiClient(h), teardown
 }
 
+// NewApiClient ...
 func NewApiClient(helper *test.Helper) *public.APIClient {
 	var serverConfig *server.ServerConfig
 	helper.Env.MustResolveAll(&serverConfig)
@@ -81,6 +85,7 @@ func NewApiClient(helper *test.Helper) *public.APIClient {
 	return client
 }
 
+// NewPrivateAPIClient ...
 func NewPrivateAPIClient(helper *test.Helper) *private.APIClient {
 	var serverConfig *server.ServerConfig
 	helper.Env.MustResolveAll(&serverConfig)
@@ -91,6 +96,7 @@ func NewPrivateAPIClient(helper *test.Helper) *private.APIClient {
 	return client
 }
 
+// NewAdminPrivateAPIClient ...
 func NewAdminPrivateAPIClient(helper *test.Helper) *adminprivate.APIClient {
 	var serverConfig *server.ServerConfig
 	helper.Env.MustResolveAll(&serverConfig)
@@ -101,6 +107,7 @@ func NewAdminPrivateAPIClient(helper *test.Helper) *adminprivate.APIClient {
 	return client
 }
 
+// NewMockDataplaneCluster ...
 func NewMockDataplaneCluster(name string, capacity int) config.ManualCluster {
 	return config.ManualCluster{
 		Name:                  name,

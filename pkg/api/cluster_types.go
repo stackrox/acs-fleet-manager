@@ -11,18 +11,26 @@ import (
 	"gorm.io/gorm"
 )
 
+// ClusterStatus ...
 type ClusterStatus string
+
+// ClusterProviderType ...
 type ClusterProviderType string
+
+// ClusterInstanceTypeSupport ...
 type ClusterInstanceTypeSupport string
 
+// String ...
 func (k ClusterStatus) String() string {
 	return string(k)
 }
 
+// String ...
 func (k ClusterInstanceTypeSupport) String() string {
 	return string(k)
 }
 
+// UnmarshalYAML ...
 func (k *ClusterStatus) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var s string
 	err := unmarshal(&s)
@@ -57,10 +65,12 @@ func (k ClusterStatus) CompareTo(k1 ClusterStatus) int {
 	}
 }
 
+// String ...
 func (p ClusterProviderType) String() string {
 	return string(p)
 }
 
+// UnmarshalYAML ...
 func (p *ClusterProviderType) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var s string
 	err := unmarshal(&s)
@@ -80,6 +90,7 @@ func (p *ClusterProviderType) UnmarshalYAML(unmarshal func(interface{}) error) e
 	return nil
 }
 
+// ClusterAccepted ...
 const (
 	// The create cluster request has been recorder
 	ClusterAccepted ClusterStatus = "cluster_accepted"
@@ -124,13 +135,14 @@ var ordinals = map[string]int{
 	ClusterFailed.String():                       80,
 }
 
-// This represents the valid statuses of a dataplane cluster
+// StatusForValidCluster This represents the valid statuses of a dataplane cluster
 var StatusForValidCluster = []string{string(ClusterProvisioning), string(ClusterProvisioned), string(ClusterReady),
 	string(ClusterAccepted), string(ClusterWaitingForFleetShardOperator), string(ClusterComputeNodeScalingUp)}
 
 // ClusterDeletionStatuses are statuses of clusters under deletion
 var ClusterDeletionStatuses = []string{ClusterCleanup.String(), ClusterDeprovisioning.String()}
 
+// Cluster ...
 type Cluster struct {
 	Meta
 	CloudProvider      string        `json:"cloud_provider"`
@@ -160,9 +172,13 @@ type Cluster struct {
 	SupportedInstanceType string `json:"supported_instance_type"`
 }
 
+// ClusterList ...
 type ClusterList []*Cluster
+
+// ClusterIndex ...
 type ClusterIndex map[string]*Cluster
 
+// Index ...
 func (c ClusterList) Index() ClusterIndex {
 	index := ClusterIndex{}
 	for _, o := range c {
@@ -171,6 +187,7 @@ func (c ClusterList) Index() ClusterIndex {
 	return index
 }
 
+// BeforeCreate ...
 func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 	if cluster.Status == "" {
 		cluster.Status = ClusterAccepted
@@ -187,16 +204,19 @@ func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
+// CentralOperatorVersion ...
 type CentralOperatorVersion struct {
 	Version         string           `json:"version"`
 	Ready           bool             `json:"ready"`
 	CentralVersions []CentralVersion `json:"centralVersions" yaml:"central_versions"`
 }
 
+// CentralVersion ...
 type CentralVersion struct {
 	Version string `json:"version"`
 }
 
+// Compare ...
 func (s *CentralVersion) Compare(other CentralVersion) (int, error) {
 	return buildAwareSemanticVersioningCompare(s.Version, other.Version)
 }
@@ -226,16 +246,19 @@ func (s *CentralOperatorVersion) Compare(other CentralOperatorVersion) (int, err
 	return buildAwareSemanticVersioningCompare(v1VersionNumber, v2VersionNumber)
 }
 
+// CompareBuildAwareSemanticVersions ...
 func CompareBuildAwareSemanticVersions(v1, v2 string) (int, error) {
 	return buildAwareSemanticVersioningCompare(v1, v2)
 }
 
+// CompareSemanticVersionsMajorAndMinor ...
 func CompareSemanticVersionsMajorAndMinor(current, desired string) (int, error) {
 	return checkIfMinorDowngrade(current, desired)
 }
 
+// DeepCopy ...
 func (s *CentralOperatorVersion) DeepCopy() *CentralOperatorVersion {
-	var res CentralOperatorVersion = *s
+	res := *s
 	res.CentralVersions = nil
 
 	if s.CentralVersions != nil {
@@ -353,11 +376,10 @@ func (cluster *Cluster) SetAvailableCentralOperatorVersions(availableCentralOper
 	if sortedVersions == nil {
 		sortedVersions = []CentralOperatorVersion{}
 	}
-
-	if v, err := json.Marshal(sortedVersions); err != nil {
+	v, err := json.Marshal(sortedVersions)
+	if err != nil {
 		return err
-	} else {
-		cluster.AvailableCentralOperatorVersions = v
-		return nil
 	}
+	cluster.AvailableCentralOperatorVersions = v
+	return nil
 }

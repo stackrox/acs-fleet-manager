@@ -34,7 +34,7 @@ var backoff = wait.Backoff{
 type Runtime struct {
 	config           *config.Config
 	client           *fleetmanager.Client
-	reconcilers      reconcilerRegistry // TODO(yury): remove central instance after deletion
+	reconcilers      reconcilerRegistry // TODO(create-ticket): possible leak. consider reconcilerRegistry cleanup
 	k8sClient        ctrlClient.Client
 	statusResponseCh chan private.DataPlaneCentralStatus
 }

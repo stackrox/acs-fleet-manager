@@ -4,23 +4,28 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// ObservabilityAuthType ...
 type ObservabilityAuthType string
 
+// AuthTypeDex ...
 const (
 	AuthTypeDex ObservabilityAuthType = "dex"
 )
 
+// DexConfig ...
 type DexConfig struct {
 	Url                       string `json:"url" yaml:"url"`
 	CredentialSecretNamespace string `json:"credentialSecretNamespace" yaml:"credentialSecretNamespace"`
 	CredentialSecretName      string `json:"credentialSecretName" yaml:"credentialSecretName"`
 }
 
+// GrafanaConfig ...
 type GrafanaConfig struct {
 	// If false, the operator will install default dashboards and ignore list
 	Managed bool `json:"managed" yaml:"managed"`
 }
 
+// ObservatoriumConfig ...
 type ObservatoriumConfig struct {
 	// Observatorium Gateway API URL
 	Gateway string `json:"gateway" yaml:"gateway"`
@@ -34,6 +39,7 @@ type ObservatoriumConfig struct {
 	AuthDex *DexConfig `json:"dexConfig,omitempty" yaml:"dexConfig,omitempty"`
 }
 
+// AlertmanagerConfig ...
 type AlertmanagerConfig struct {
 	PagerDutySecretName           string `json:"pagerDutySecretName"`
 	PagerDutySecretNamespace      string `json:"pagerDutySecretNamespace,omitempty"`

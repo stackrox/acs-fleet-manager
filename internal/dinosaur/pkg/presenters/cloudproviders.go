@@ -5,6 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 )
 
+// PresentCloudProvider ...
 func PresentCloudProvider(cloudProvider *api.CloudProvider) public.CloudProvider {
 	reference := PresentReference(cloudProvider.Id, cloudProvider)
 	return public.CloudProvider{
@@ -15,6 +16,8 @@ func PresentCloudProvider(cloudProvider *api.CloudProvider) public.CloudProvider
 		Enabled:     cloudProvider.Enabled,
 	}
 }
+
+// PresentCloudRegion ...
 func PresentCloudRegion(cloudRegion *api.CloudRegion) public.CloudRegion {
 	reference := PresentReference(cloudRegion.Id, cloudRegion)
 	return public.CloudRegion{

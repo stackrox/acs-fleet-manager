@@ -1,6 +1,5 @@
 // Package cloudprovider contains commands for interacting with cloud provider service directly instead of through the
 // REST API exposed via the serve command.
-
 package cloudprovider
 
 import (
@@ -9,6 +8,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
+// NewCloudProviderCommand ...
 func NewCloudProviderCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cloud_providers",

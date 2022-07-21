@@ -1,5 +1,6 @@
 package api
 
+// CloudProvider ...
 type CloudProvider struct {
 	Kind        string `json:"kind"`
 	Id          string `json:"id"`
@@ -8,4 +9,5 @@ type CloudProvider struct {
 	Enabled     bool   `json:"enabled"`
 }
 
+// CloudProviderList ...
 type CloudProviderList []*CloudProvider
