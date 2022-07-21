@@ -67,8 +67,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return r.readyStatus(ctx, remoteCentralNamespace)
 	}
 
-	remoteCentralName := remoteCentral.Metadata.Name
-	remoteNamespace := remoteCentral.Metadata.Namespace
 	centralMonitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
 
 	central := &v1alpha1.Central{
