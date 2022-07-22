@@ -87,7 +87,7 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 			Labels:    map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
 		},
 		Spec: openshiftRouteV1.RouteSpec{
-			Host: remoteCentral.Spec.Endpoint.Host,
+			Host: remoteCentral.Spec.FrontendEndpoint.Host,
 			Port: &openshiftRouteV1.RoutePort{
 				TargetPort: intstr.IntOrString{Type: intstr.String, StrVal: "https"},
 			},
@@ -97,8 +97,8 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 			},
 			TLS: &openshiftRouteV1.TLSConfig{
 				Termination:              openshiftRouteV1.TLSTerminationReencrypt,
-				Key:                      remoteCentral.Spec.Endpoint.Tls.Key,
-				Certificate:              remoteCentral.Spec.Endpoint.Tls.Cert,
+				Key:                      remoteCentral.Spec.FrontendEndpoint.Tls.Key,
+				Certificate:              remoteCentral.Spec.FrontendEndpoint.Tls.Cert,
 				DestinationCACertificate: string(centralCA),
 			},
 		},
