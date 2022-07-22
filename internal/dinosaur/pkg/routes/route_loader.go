@@ -8,8 +8,8 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
+	"github.com/stackrox/fleet-manager-pkg/pkg/services/account"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 
