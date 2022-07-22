@@ -115,10 +115,10 @@ func (mockServer *redhatSSOMock) bearerAuthMiddleware(next http.Handler) http.Ha
 
 func (mockServer *redhatSSOMock) serviceAccountAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		clientId := request.FormValue("client_id")
+		clientID := request.FormValue("client_id")
 		clientSecret := request.FormValue("client_secret")
 
-		if serviceAccount, ok := mockServer.serviceAccounts[clientId]; ok {
+		if serviceAccount, ok := mockServer.serviceAccounts[clientID]; ok {
 			if *serviceAccount.Secret == clientSecret {
 				next.ServeHTTP(writer, request)
 				return
@@ -167,9 +167,9 @@ func (mockServer *redhatSSOMock) getTokenHandler(w http.ResponseWriter, r *http.
 func (mockServer *redhatSSOMock) deleteServiceAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	if clientId, ok := vars["clientId"]; ok {
-		if _, ok := mockServer.serviceAccounts[clientId]; ok {
-			delete(mockServer.serviceAccounts, clientId)
+	if clientID, ok := vars["clientId"]; ok {
+		if _, ok := mockServer.serviceAccounts[clientID]; ok {
+			delete(mockServer.serviceAccounts, clientID)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 		}
@@ -199,8 +199,8 @@ func (mockServer *redhatSSOMock) updateServiceAccountHandler(w http.ResponseWrit
 		}
 	}
 
-	if clientId, ok := vars["clientId"]; ok {
-		if serviceAccount, ok := mockServer.serviceAccounts[clientId]; ok {
+	if clientID, ok := vars["clientId"]; ok {
+		if serviceAccount, ok := mockServer.serviceAccounts[clientID]; ok {
 			updateField(serviceAccount.Name, update.Name)
 			updateField(serviceAccount.Description, update.Description)
 
@@ -221,8 +221,8 @@ func (mockServer *redhatSSOMock) updateServiceAccountHandler(w http.ResponseWrit
 func (mockServer *redhatSSOMock) getServiceAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	if clientId, ok := vars["clientId"]; ok {
-		if serviceAccount, ok := mockServer.serviceAccounts[clientId]; ok {
+	if clientID, ok := vars["clientId"]; ok {
+		if serviceAccount, ok := mockServer.serviceAccounts[clientID]; ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			data, _ := json.Marshal(serviceAccount)
@@ -273,18 +273,18 @@ func (mockServer *redhatSSOMock) createServiceAccountHandler(w http.ResponseWrit
 	}
 
 	id := uuid.New().String()
-	clientId := uuid.New().String()
+	clientID := uuid.New().String()
 	secret := uuid.New().String()
 
 	serviceAccountData := serviceaccountsclient.ServiceAccountData{
 		Id:          &id,
-		ClientId:    &clientId,
+		ClientId:    &clientID,
 		Secret:      &secret,
 		Name:        &serviceAccountCreateRequestData.Name,
 		Description: &serviceAccountCreateRequestData.Description,
 	}
 
-	mockServer.serviceAccounts[clientId] = serviceAccountData
+	mockServer.serviceAccounts[clientID] = serviceAccountData
 
 	data, _ := json.Marshal(serviceAccountData)
 	w.Header().Set("Content-Type", "application/json")
@@ -295,8 +295,8 @@ func (mockServer *redhatSSOMock) createServiceAccountHandler(w http.ResponseWrit
 func (mockServer *redhatSSOMock) regenerateSecretHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	if clientId, ok := vars["clientId"]; ok {
-		if serviceAccount, ok := mockServer.serviceAccounts[clientId]; ok {
+	if clientID, ok := vars["clientId"]; ok {
+		if serviceAccount, ok := mockServer.serviceAccounts[clientID]; ok {
 			*serviceAccount.Secret = uuid.New().String()
 			data, err := json.Marshal(serviceAccount)
 			if err != nil {

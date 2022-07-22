@@ -20,7 +20,7 @@ var _ IAMService = &IAMServiceMock{}
 //
 // 		// make and configure a mocked IAMService
 // 		mockedIAMService := &IAMServiceMock{
-// 			DeRegisterAcsFleetshardOperatorServiceAccountFunc: func(agentClusterId string) *errors.ServiceError {
+// 			DeRegisterAcsFleetshardOperatorServiceAccountFunc: func(agentClusterID string) *errors.ServiceError {
 // 				panic("mock out the DeRegisterAcsFleetshardOperatorServiceAccount method")
 // 			},
 // 			GetConfigFunc: func() *iam.IAMConfig {
@@ -29,7 +29,7 @@ var _ IAMService = &IAMServiceMock{}
 // 			GetRealmConfigFunc: func() *iam.IAMRealmConfig {
 // 				panic("mock out the GetRealmConfig method")
 // 			},
-// 			RegisterAcsFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
+// 			RegisterAcsFleetshardOperatorServiceAccountFunc: func(agentClusterID string) (*api.ServiceAccount, *errors.ServiceError) {
 // 				panic("mock out the RegisterAcsFleetshardOperatorServiceAccount method")
 // 			},
 // 		}
@@ -40,7 +40,7 @@ var _ IAMService = &IAMServiceMock{}
 // 	}
 type IAMServiceMock struct {
 	// DeRegisterAcsFleetshardOperatorServiceAccountFunc mocks the DeRegisterAcsFleetshardOperatorServiceAccount method.
-	DeRegisterAcsFleetshardOperatorServiceAccountFunc func(agentClusterId string) *errors.ServiceError
+	DeRegisterAcsFleetshardOperatorServiceAccountFunc func(agentClusterID string) *errors.ServiceError
 
 	// GetConfigFunc mocks the GetConfig method.
 	GetConfigFunc func() *iam.IAMConfig
@@ -49,14 +49,14 @@ type IAMServiceMock struct {
 	GetRealmConfigFunc func() *iam.IAMRealmConfig
 
 	// RegisterAcsFleetshardOperatorServiceAccountFunc mocks the RegisterAcsFleetshardOperatorServiceAccount method.
-	RegisterAcsFleetshardOperatorServiceAccountFunc func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError)
+	RegisterAcsFleetshardOperatorServiceAccountFunc func(agentClusterID string) (*api.ServiceAccount, *errors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// DeRegisterAcsFleetshardOperatorServiceAccount holds details about calls to the DeRegisterAcsFleetshardOperatorServiceAccount method.
 		DeRegisterAcsFleetshardOperatorServiceAccount []struct {
-			// AgentClusterId is the agentClusterId argument value.
-			AgentClusterId string
+			// AgentClusterID is the agentClusterID argument value.
+			AgentClusterID string
 		}
 		// GetConfig holds details about calls to the GetConfig method.
 		GetConfig []struct {
@@ -66,8 +66,8 @@ type IAMServiceMock struct {
 		}
 		// RegisterAcsFleetshardOperatorServiceAccount holds details about calls to the RegisterAcsFleetshardOperatorServiceAccount method.
 		RegisterAcsFleetshardOperatorServiceAccount []struct {
-			// AgentClusterId is the agentClusterId argument value.
-			AgentClusterId string
+			// AgentClusterID is the agentClusterID argument value.
+			AgentClusterID string
 		}
 	}
 	lockDeRegisterAcsFleetshardOperatorServiceAccount sync.RWMutex
@@ -77,29 +77,29 @@ type IAMServiceMock struct {
 }
 
 // DeRegisterAcsFleetshardOperatorServiceAccount calls DeRegisterAcsFleetshardOperatorServiceAccountFunc.
-func (mock *IAMServiceMock) DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
+func (mock *IAMServiceMock) DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterID string) *errors.ServiceError {
 	if mock.DeRegisterAcsFleetshardOperatorServiceAccountFunc == nil {
 		panic("IAMServiceMock.DeRegisterAcsFleetshardOperatorServiceAccountFunc: method is nil but IAMService.DeRegisterAcsFleetshardOperatorServiceAccount was just called")
 	}
 	callInfo := struct {
-		AgentClusterId string
+		AgentClusterID string
 	}{
-		AgentClusterId: agentClusterId,
+		AgentClusterID: agentClusterID,
 	}
 	mock.lockDeRegisterAcsFleetshardOperatorServiceAccount.Lock()
 	mock.calls.DeRegisterAcsFleetshardOperatorServiceAccount = append(mock.calls.DeRegisterAcsFleetshardOperatorServiceAccount, callInfo)
 	mock.lockDeRegisterAcsFleetshardOperatorServiceAccount.Unlock()
-	return mock.DeRegisterAcsFleetshardOperatorServiceAccountFunc(agentClusterId)
+	return mock.DeRegisterAcsFleetshardOperatorServiceAccountFunc(agentClusterID)
 }
 
 // DeRegisterAcsFleetshardOperatorServiceAccountCalls gets all the calls that were made to DeRegisterAcsFleetshardOperatorServiceAccount.
 // Check the length with:
 //     len(mockedIAMService.DeRegisterAcsFleetshardOperatorServiceAccountCalls())
 func (mock *IAMServiceMock) DeRegisterAcsFleetshardOperatorServiceAccountCalls() []struct {
-	AgentClusterId string
+	AgentClusterID string
 } {
 	var calls []struct {
-		AgentClusterId string
+		AgentClusterID string
 	}
 	mock.lockDeRegisterAcsFleetshardOperatorServiceAccount.RLock()
 	calls = mock.calls.DeRegisterAcsFleetshardOperatorServiceAccount
@@ -160,29 +160,29 @@ func (mock *IAMServiceMock) GetRealmConfigCalls() []struct {
 }
 
 // RegisterAcsFleetshardOperatorServiceAccount calls RegisterAcsFleetshardOperatorServiceAccountFunc.
-func (mock *IAMServiceMock) RegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
+func (mock *IAMServiceMock) RegisterAcsFleetshardOperatorServiceAccount(agentClusterID string) (*api.ServiceAccount, *errors.ServiceError) {
 	if mock.RegisterAcsFleetshardOperatorServiceAccountFunc == nil {
 		panic("IAMServiceMock.RegisterAcsFleetshardOperatorServiceAccountFunc: method is nil but IAMService.RegisterAcsFleetshardOperatorServiceAccount was just called")
 	}
 	callInfo := struct {
-		AgentClusterId string
+		AgentClusterID string
 	}{
-		AgentClusterId: agentClusterId,
+		AgentClusterID: agentClusterID,
 	}
 	mock.lockRegisterAcsFleetshardOperatorServiceAccount.Lock()
 	mock.calls.RegisterAcsFleetshardOperatorServiceAccount = append(mock.calls.RegisterAcsFleetshardOperatorServiceAccount, callInfo)
 	mock.lockRegisterAcsFleetshardOperatorServiceAccount.Unlock()
-	return mock.RegisterAcsFleetshardOperatorServiceAccountFunc(agentClusterId)
+	return mock.RegisterAcsFleetshardOperatorServiceAccountFunc(agentClusterID)
 }
 
 // RegisterAcsFleetshardOperatorServiceAccountCalls gets all the calls that were made to RegisterAcsFleetshardOperatorServiceAccount.
 // Check the length with:
 //     len(mockedIAMService.RegisterAcsFleetshardOperatorServiceAccountCalls())
 func (mock *IAMServiceMock) RegisterAcsFleetshardOperatorServiceAccountCalls() []struct {
-	AgentClusterId string
+	AgentClusterID string
 } {
 	var calls []struct {
-		AgentClusterId string
+		AgentClusterID string
 	}
 	mock.lockRegisterAcsFleetshardOperatorServiceAccount.RLock()
 	calls = mock.calls.RegisterAcsFleetshardOperatorServiceAccount

@@ -34,7 +34,7 @@ type Client struct {
 
 // AuthProviderResponse ...
 type AuthProviderResponse struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 // NewCentralClient ...

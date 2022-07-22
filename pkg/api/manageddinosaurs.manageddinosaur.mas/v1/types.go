@@ -31,8 +31,8 @@ type ManagedDinosaurStatus struct {
 	Versions   VersionsSpec       `json:"versions"`
 }
 
-// TlsSpec Spec
-type TlsSpec struct {
+// TLSSpec Spec
+type TLSSpec struct {
 	Cert string `json:"cert"`
 	Key  string `json:"key"`
 }
@@ -40,15 +40,15 @@ type TlsSpec struct {
 // EndpointSpec ...
 type EndpointSpec struct {
 	Host string   `json:"host"`
-	Tls  *TlsSpec `json:"tls,omitempty"`
+	TLS  *TLSSpec `json:"tls,omitempty"`
 }
 
 // AuthSpec ...
 type AuthSpec struct {
 	ClientSecret string `json:"clientSecret,omitempty"`
-	ClientId     string `json:"clientId,omitempty"`
-	OwnerUserId  string `json:"ownerUserId,omitempty"`
-	OwnerOrgId   string `json:"ownerOrgId,omitempty"`
+	ClientID     string `json:"clientId,omitempty"`
+	OwnerUserID  string `json:"ownerUserId,omitempty"`
+	OwnerOrgID   string `json:"ownerOrgId,omitempty"`
 }
 
 // ManagedDinosaurSpec ...
@@ -65,7 +65,7 @@ type ManagedDinosaur struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Id            string                `json:"id,omitempty"`
+	ID            string                `json:"id,omitempty"`
 	Spec          ManagedDinosaurSpec   `json:"spec,omitempty"`
 	Status        ManagedDinosaurStatus `json:"status,omitempty"`
 	RequestStatus string                `json:"requestStatus,omitempty"`

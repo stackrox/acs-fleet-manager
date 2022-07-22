@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func addOwnerUserIdToCentralRequest() *gormigrate.Migration {
+func addOwnerUserIDToCentralRequest() *gormigrate.Migration {
 	type CentralRequest struct {
 		db.Model
 		Region                        string     `json:"region"`
@@ -18,14 +18,14 @@ func addOwnerUserIdToCentralRequest() *gormigrate.Migration {
 		MultiAZ                       bool       `json:"multi_az"`
 		Name                          string     `json:"name" gorm:"index"`
 		Status                        string     `json:"status" gorm:"index"`
-		SubscriptionId                string     `json:"subscription_id"`
+		SubscriptionID                string     `json:"subscription_id"`
 		Owner                         string     `json:"owner" gorm:"index"`
-		OwnerAccountId                string     `json:"owner_account_id"`
-		OwnerUserId                   string     `json:"owner_user_id"`
+		OwnerAccountID                string     `json:"owner_account_id"`
+		OwnerUserID                   string     `json:"owner_user_id"`
 		Host                          string     `json:"host"`
-		OrganisationId                string     `json:"organisation_id" gorm:"index"`
+		OrganisationID                string     `json:"organisation_id" gorm:"index"`
 		FailedReason                  string     `json:"failed_reason"`
-		PlacementId                   string     `json:"placement_id"`
+		PlacementID                   string     `json:"placement_id"`
 		DesiredCentralVersion         string     `json:"desired_central_version"`
 		ActualCentralVersion          string     `json:"actual_central_version"`
 		DesiredCentralOperatorVersion string     `json:"desired_central_operator_version"`
@@ -37,17 +37,17 @@ func addOwnerUserIdToCentralRequest() *gormigrate.Migration {
 		Routes                        api.JSON   `json:"routes"`
 		RoutesCreated                 bool       `json:"routes_created"`
 		Namespace                     string     `json:"namespace"`
-		RoutesCreationId              string     `json:"routes_creation_id"`
+		RoutesCreationID              string     `json:"routes_creation_id"`
 		DeletionTimestamp             *time.Time `json:"deletionTimestamp"`
 	}
 
 	return &gormigrate.Migration{
 		ID: "20220630220500",
 		Migrate: func(tx *gorm.DB) error {
-			return tx.Migrator().AddColumn(&CentralRequest{}, "OwnerUserId")
+			return tx.Migrator().AddColumn(&CentralRequest{}, "OwnerUserID")
 		},
 		Rollback: func(tx *gorm.DB) error {
-			return tx.Migrator().DropColumn(&CentralRequest{}, "OwnerUserId")
+			return tx.Migrator().DropColumn(&CentralRequest{}, "OwnerUserID")
 		},
 	}
 }

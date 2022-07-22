@@ -163,7 +163,7 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 	}
 
 	type args struct {
-		requestClientId string
+		requestClientID string
 		accessToken     string
 	}
 
@@ -201,7 +201,7 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 				},
 			},
 			args: args{
-				requestClientId: otherClientID,
+				requestClientID: otherClientID,
 			},
 			wantErr: true,
 			want:    "",
@@ -233,7 +233,7 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 				},
 			},
 			args: args{
-				requestClientId: correctClientID,
+				requestClientID: correctClientID,
 			},
 			wantErr: false,
 			want:    correctInternalID,
@@ -246,10 +246,10 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 				kcClient:    tt.fields.goCloakClient,
 				realmConfig: tt.fields.realmConfig,
 			}
-			internalId, err := ic.IsClientExist(tt.args.requestClientId, tt.args.accessToken)
+			internalID, err := ic.IsClientExist(tt.args.requestClientID, tt.args.accessToken)
 
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-			gomega.Expect(internalId).To(gomega.Equal(tt.want))
+			gomega.Expect(internalID).To(gomega.Equal(tt.want))
 
 		})
 	}
@@ -262,7 +262,7 @@ func Test_kcClient_GetClient(t *testing.T) {
 	}
 
 	type args struct {
-		requestClientId string
+		requestClientID string
 		accessToken     string
 	}
 
@@ -300,7 +300,7 @@ func Test_kcClient_GetClient(t *testing.T) {
 				},
 			},
 			args: args{
-				requestClientId: otherClientID,
+				requestClientID: otherClientID,
 			},
 			wantErr: true,
 		},
@@ -331,7 +331,7 @@ func Test_kcClient_GetClient(t *testing.T) {
 				},
 			},
 			args: args{
-				requestClientId: "123",
+				requestClientID: "123",
 			},
 			wantErr: false,
 			want:    correctInternalID,
@@ -344,7 +344,7 @@ func Test_kcClient_GetClient(t *testing.T) {
 				kcClient:    tt.fields.goCloakClient,
 				realmConfig: tt.fields.realmConfig,
 			}
-			client, err := ic.GetClient(tt.args.requestClientId, tt.args.accessToken)
+			client, err := ic.GetClient(tt.args.requestClientID, tt.args.accessToken)
 
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if client != nil {

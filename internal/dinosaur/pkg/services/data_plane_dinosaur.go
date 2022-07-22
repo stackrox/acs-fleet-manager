@@ -33,7 +33,7 @@ const (
 
 // DataPlaneDinosaurService ...
 type DataPlaneDinosaurService interface {
-	UpdateDataPlaneDinosaurService(ctx context.Context, clusterId string, status []*dbapi.DataPlaneCentralStatus) *serviceError.ServiceError
+	UpdateDataPlaneDinosaurService(ctx context.Context, clusterID string, status []*dbapi.DataPlaneCentralStatus) *serviceError.ServiceError
 }
 
 type dataPlaneDinosaurService struct {
@@ -52,24 +52,24 @@ func NewDataPlaneDinosaurService(dinosaurSrv DinosaurService, clusterSrv Cluster
 }
 
 // UpdateDataPlaneDinosaurService ...
-func (d *dataPlaneDinosaurService) UpdateDataPlaneDinosaurService(ctx context.Context, clusterId string, status []*dbapi.DataPlaneCentralStatus) *serviceError.ServiceError {
-	cluster, err := d.clusterService.FindClusterByID(clusterId)
+func (d *dataPlaneDinosaurService) UpdateDataPlaneDinosaurService(ctx context.Context, clusterID string, status []*dbapi.DataPlaneCentralStatus) *serviceError.ServiceError {
+	cluster, err := d.clusterService.FindClusterByID(clusterID)
 	log := logger.NewUHCLogger(ctx)
 	if err != nil {
 		return err
 	}
 	if cluster == nil {
 		// 404 is used for authenticated requests. So to distinguish the errors, we use 400 here
-		return serviceError.BadRequest("Cluster id %s not found", clusterId)
+		return serviceError.BadRequest("Cluster id %s not found", clusterID)
 	}
 	for _, ks := range status {
-		dinosaur, getErr := d.dinosaurService.GetById(ks.CentralClusterId)
+		dinosaur, getErr := d.dinosaurService.GetByID(ks.CentralClusterID)
 		if getErr != nil {
-			glog.Error(errors.Wrapf(getErr, "failed to get dinosaur cluster by id %s", ks.CentralClusterId))
+			glog.Error(errors.Wrapf(getErr, "failed to get dinosaur cluster by id %s", ks.CentralClusterID))
 			continue
 		}
-		if dinosaur.ClusterID != clusterId {
-			log.Warningf("clusterId for dinosaur cluster %s does not match clusterId. dinosaur clusterId = %s :: clusterId = %s", dinosaur.ID, dinosaur.ClusterID, clusterId)
+		if dinosaur.ClusterID != clusterID {
+			log.Warningf("clusterId for dinosaur cluster %s does not match clusterId. dinosaur clusterId = %s :: clusterId = %s", dinosaur.ID, dinosaur.ClusterID, clusterID)
 			continue
 		}
 		var e *serviceError.ServiceError
@@ -91,17 +91,17 @@ func (d *dataPlaneDinosaurService) UpdateDataPlaneDinosaurService(ctx context.Co
 		case statusRejected:
 			e = d.reassignDinosaurCluster(dinosaur)
 		case statusUnknown:
-			log.Infof("dinosaur cluster %s status is unknown", ks.CentralClusterId)
+			log.Infof("dinosaur cluster %s status is unknown", ks.CentralClusterID)
 		default:
-			log.V(5).Infof("dinosaur cluster %s is still installing", ks.CentralClusterId)
+			log.V(5).Infof("dinosaur cluster %s is still installing", ks.CentralClusterID)
 		}
 		if e != nil {
-			log.Error(errors.Wrapf(e, "Error updating dinosaur %s status", ks.CentralClusterId))
+			log.Error(errors.Wrapf(e, "Error updating dinosaur %s status", ks.CentralClusterID))
 		}
 
 		e = d.setDinosaurRequestVersionFields(dinosaur, ks)
 		if e != nil {
-			log.Error(errors.Wrapf(e, "Error updating dinosaur '%s' version fields", ks.CentralClusterId))
+			log.Error(errors.Wrapf(e, "Error updating dinosaur '%s' version fields", ks.CentralClusterID))
 		}
 	}
 
@@ -241,7 +241,7 @@ func (d *dataPlaneDinosaurService) reassignDinosaurCluster(dinosaur *dbapi.Centr
 		// If a Dinosaur cluster is rejected by the fleetshard-operator, it should be assigned to another OSD cluster (via some scheduler service in the future).
 		// But now we only have one OSD cluster, so we need to change the placementId field so that the fleetshard-operator will try it again
 		// In the future, we may consider adding a new table to track the placement history for dinosaur clusters if there are multiple OSD clusters and the value here can be the key of that table
-		dinosaur.PlacementId = api.NewID()
+		dinosaur.PlacementID = api.NewID()
 		if err := d.dinosaurService.Update(dinosaur); err != nil {
 			return err
 		}
@@ -280,7 +280,7 @@ func getStatus(status *dbapi.DataPlaneCentralStatus) dinosaurStatus {
 }
 func (d *dataPlaneDinosaurService) checkDinosaurRequestCurrentStatus(dinosaur *dbapi.CentralRequest, status constants2.DinosaurStatus) (bool, *serviceError.ServiceError) {
 	matchStatus := false
-	if currentInstance, err := d.dinosaurService.GetById(dinosaur.ID); err != nil {
+	if currentInstance, err := d.dinosaurService.GetByID(dinosaur.ID); err != nil {
 		return matchStatus, err
 	} else if currentInstance.Status == status.String() {
 		matchStatus = true
@@ -303,7 +303,7 @@ func (d *dataPlaneDinosaurService) persistDinosaurRoutes(dinosaur *dbapi.Central
 	var routes []dbapi.DataPlaneCentralRoute
 
 	var routesErr error
-	baseClusterDomain := strings.TrimPrefix(clusterDNS, fmt.Sprintf("%s.", constants2.DefaultIngressDnsNamePrefix))
+	baseClusterDomain := strings.TrimPrefix(clusterDNS, fmt.Sprintf("%s.", constants2.DefaultIngressDNSNamePrefix))
 	if routes, routesErr = buildRoutes(routesInRequest, dinosaur, baseClusterDomain); routesErr != nil {
 		return serviceError.NewWithCause(serviceError.ErrorBadRequest, routesErr, "routes are not valid")
 	}

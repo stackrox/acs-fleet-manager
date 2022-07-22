@@ -248,7 +248,7 @@ func Test_rhSSOClient_GetToken(t *testing.T) {
 			name: "should successfully return a clients token",
 			fields: fields{
 				config: &iam.IAMConfig{
-					SsoBaseUrl: server.BaseURL(),
+					SsoBaseURL: server.BaseURL(),
 				},
 				realmConfig: &iam.IAMRealmConfig{
 					ClientID:         *serviceAccount.ClientId,
@@ -275,7 +275,7 @@ func Test_rhSSOClient_GetToken(t *testing.T) {
 			name: "should return an error when it fails to retrieve the token key",
 			fields: fields{
 				config: &iam.IAMConfig{
-					SsoBaseUrl: server.BaseURL(),
+					SsoBaseURL: server.BaseURL(),
 				},
 				realmConfig: &iam.IAMRealmConfig{
 					ClientID:         "",
@@ -495,7 +495,7 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 	}
 	type args struct {
 		accessToken string
-		clientId    string
+		clientID    string
 	}
 
 	server := mocks.NewMockServer()
@@ -536,7 +536,7 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 			},
 			args: args{
 				accessToken: accessToken,
-				clientId:    *serviceAccount.ClientId,
+				clientID:    *serviceAccount.ClientId,
 			},
 			want:    &serviceAccount,
 			found:   true,
@@ -566,7 +566,7 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 			},
 			args: args{
 				accessToken: accessToken,
-				clientId:    "wrong_clientId",
+				clientID:    "wrong_clientId",
 			},
 			want:    nil,
 			found:   false,
@@ -584,7 +584,7 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 				configuration: tt.fields.configuration,
 				cache:         tt.fields.cache,
 			}
-			got, httpStatus, err := c.GetServiceAccount(tt.args.accessToken, tt.args.clientId)
+			got, httpStatus, err := c.GetServiceAccount(tt.args.accessToken, tt.args.clientID)
 			g.Expect(err != nil).To(Equal(tt.wantErr))
 			g.Expect(got).To(Equal(tt.want))
 			g.Expect(httpStatus).To(Equal(tt.found))
@@ -709,7 +709,7 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 	}
 	type args struct {
 		accessToken string
-		clientId    string
+		clientID    string
 	}
 
 	server := mocks.NewMockServer()
@@ -748,7 +748,7 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 			},
 			args: args{
 				accessToken: accessToken,
-				clientId:    *serviceAccount.ClientId,
+				clientID:    *serviceAccount.ClientId,
 			},
 			wantErr: false,
 		},
@@ -776,7 +776,7 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 			},
 			args: args{
 				accessToken: accessToken,
-				clientId:    "",
+				clientID:    "",
 			},
 			wantErr: true,
 		},
@@ -792,7 +792,7 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 				configuration: tt.fields.configuration,
 				cache:         tt.fields.cache,
 			}
-			g.Expect(c.DeleteServiceAccount(tt.args.accessToken, tt.args.clientId) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.DeleteServiceAccount(tt.args.accessToken, tt.args.clientID) != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -806,7 +806,7 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 	}
 	type args struct {
 		accessToken string
-		clientId    string
+		clientID    string
 		name        string
 		description string
 	}
@@ -851,7 +851,7 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 			},
 			args: args{
 				accessToken: accessToken,
-				clientId:    *serviceAccount.ClientId,
+				clientID:    *serviceAccount.ClientId,
 				name:        "new name",
 				description: "new description",
 			},
@@ -890,7 +890,7 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 			},
 			args: args{
 				accessToken: accessToken,
-				clientId:    "",
+				clientID:    "",
 				name:        "new name",
 				description: "new description",
 			},
@@ -909,7 +909,7 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 				configuration: tt.fields.configuration,
 				cache:         tt.fields.cache,
 			}
-			got, err := c.UpdateServiceAccount(tt.args.accessToken, tt.args.clientId, tt.args.name, tt.args.description)
+			got, err := c.UpdateServiceAccount(tt.args.accessToken, tt.args.clientID, tt.args.name, tt.args.description)
 			g.Expect(err != nil).To(Equal(tt.wantErr))
 			g.Expect(got).To(Equal(tt.want))
 		})

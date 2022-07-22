@@ -30,20 +30,20 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 )
 
-// ApiServerReadyCondition ...
-type ApiServerReadyCondition interface {
+// APIServerReadyCondition ...
+type APIServerReadyCondition interface {
 	Wait()
 }
 
-// ApiServer ...
-type ApiServer struct {
+// APIServer ...
+type APIServer struct {
 	httpServer      *http.Server
 	serverConfig    *ServerConfig
 	sentryTimeout   time.Duration
-	readyConditions []ApiServerReadyCondition
+	readyConditions []APIServerReadyCondition
 }
 
-var _ Server = &ApiServer{}
+var _ Server = &APIServer{}
 
 // ServerOptions ...
 type ServerOptions struct {
@@ -53,12 +53,12 @@ type ServerOptions struct {
 	SentryConfig    *sentry.Config
 	RouteLoaders    []environments.RouteLoader
 	Env             *environments.Env
-	ReadyConditions []ApiServerReadyCondition `di:"optional"`
+	ReadyConditions []APIServerReadyCondition `di:"optional"`
 }
 
 // NewAPIServer ...
-func NewAPIServer(options ServerOptions) *ApiServer {
-	s := &ApiServer{
+func NewAPIServer(options ServerOptions) *APIServer {
+	s := &APIServer{
 		httpServer:      nil,
 		serverConfig:    options.ServerConfig,
 		sentryTimeout:   options.SentryConfig.Timeout,
@@ -129,7 +129,7 @@ func NewAPIServer(options ServerOptions) *ApiServer {
 
 // Serve start the blocking call to Serve.
 // Useful for breaking up ListenAndServer (Start) when you require the server to be listening before continuing
-func (s *ApiServer) Serve(listener net.Listener) {
+func (s *APIServer) Serve(listener net.Listener) {
 	var err error
 	if s.serverConfig.EnableHTTPS {
 		// Check https cert and key path path
@@ -156,17 +156,17 @@ func (s *ApiServer) Serve(listener net.Listener) {
 
 // Listen only start the listener, not the server.
 // Useful for breaking up ListenAndServer (Start) when you require the server to be listening before continuing
-func (s *ApiServer) Listen() (listener net.Listener, err error) {
+func (s *APIServer) Listen() (listener net.Listener, err error) {
 	return net.Listen("tcp", s.serverConfig.BindAddress)
 }
 
 // Start ...
-func (s *ApiServer) Start() {
+func (s *APIServer) Start() {
 	go s.Run()
 }
 
 // Run Start listening on the configured port and start the server. This is a convenience wrapper for Listen() and Serve(listener Listener)
-func (s *ApiServer) Run() {
+func (s *APIServer) Run() {
 	listener, err := s.Listen()
 	if err != nil {
 		glog.Fatalf("Unable to start API server: %s", err)
@@ -182,7 +182,7 @@ func (s *ApiServer) Run() {
 }
 
 // Stop ...
-func (s *ApiServer) Stop() {
+func (s *APIServer) Stop() {
 	err := s.httpServer.Shutdown(context.Background())
 	if err != nil {
 		glog.Warningf("Unable to stop API server: %s", err)

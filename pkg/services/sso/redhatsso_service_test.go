@@ -23,11 +23,11 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 		kcClient redhatsso.SSOClient
 	}
 	type args struct {
-		clusterId string
+		clusterID string
 	}
 
-	fakeId := "acs-fleetshard-agent-test-cluster-id"
-	fakeClientId := "acs-fleetshard-agent-test-cluster-id"
+	fakeID := "acs-fleetshard-agent-test-cluster-id"
+	fakeClientID := "acs-fleetshard-agent-test-cluster-id"
 	fakeClientSecret := "test-client-secret"
 	createdAt := int64(0)
 
@@ -47,8 +47,8 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 					},
 					CreateServiceAccountFunc: func(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
 						return serviceaccountsclient.ServiceAccountData{
-							Id:          &fakeId,
-							ClientId:    &fakeClientId,
+							Id:          &fakeID,
+							ClientId:    &fakeClientID,
 							Secret:      &fakeClientSecret,
 							Name:        &name,
 							Description: &description,
@@ -62,10 +62,10 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 				},
 			},
 			args: args{
-				clusterId: "test-cluster-id",
+				clusterID: "test-cluster-id",
 			},
 			want: &api.ServiceAccount{
-				ID:           fakeClientId,
+				ID:           fakeClientID,
 				ClientID:     "acs-fleetshard-agent-test-cluster-id",
 				ClientSecret: fakeClientSecret,
 				Name:         "test-cluster-id",
@@ -83,8 +83,8 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 					},
 					CreateServiceAccountFunc: func(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
 						return serviceaccountsclient.ServiceAccountData{
-							Id:          &fakeId,
-							ClientId:    &fakeClientId,
+							Id:          &fakeID,
+							ClientId:    &fakeClientID,
 							Secret:      &fakeClientSecret,
 							Name:        &name,
 							Description: &description,
@@ -98,10 +98,10 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 				},
 			},
 			args: args{
-				clusterId: "test-cluster-id",
+				clusterID: "test-cluster-id",
 			},
 			want: &api.ServiceAccount{
-				ID:           fakeClientId,
+				ID:           fakeClientID,
 				ClientID:     "acs-fleetshard-agent-test-cluster-id",
 				ClientSecret: fakeClientSecret,
 				Name:         "test-cluster-id",
@@ -117,7 +117,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			iamService := &redhatssoService{client: tt.fields.kcClient}
-			got, err := iamService.RegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterId)
+			got, err := iamService.RegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterAcsFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -131,7 +131,7 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 		kcClient redhatsso.SSOClient
 	}
 	type args struct {
-		clusterId string
+		clusterID string
 	}
 	tests := []struct {
 		name    string
@@ -152,7 +152,7 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 				},
 			},
 			args: args{
-				clusterId: "test-cluster-id",
+				clusterID: "test-cluster-id",
 			},
 			wantErr: true,
 		},
@@ -172,7 +172,7 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 				},
 			},
 			args: args{
-				clusterId: "test-cluster-id",
+				clusterID: "test-cluster-id",
 			},
 			wantErr: true,
 		},
@@ -192,7 +192,7 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 				},
 			},
 			args: args{
-				clusterId: "test-cluster-id",
+				clusterID: "test-cluster-id",
 			},
 			wantErr: false,
 		},
@@ -212,7 +212,7 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 				},
 			},
 			args: args{
-				clusterId: "test-cluster-id",
+				clusterID: "test-cluster-id",
 			},
 			wantErr: false,
 		},
@@ -221,7 +221,7 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			iamService := &redhatssoService{client: tt.fields.kcClient}
-			err := iamService.DeRegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterId)
+			err := iamService.DeRegisterAcsFleetshardOperatorServiceAccount(tt.args.clusterID)
 			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}

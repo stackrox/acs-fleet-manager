@@ -13,7 +13,7 @@ import (
 
 func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 	type args struct {
-		workerId   string
+		workerID   string
 		workerType string
 		dbConn     *gorm.DB
 	}
@@ -32,7 +32,7 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 		{
 			name: "failure listing any lease record in lease table",
 			args: args{
-				workerId:   "000-000",
+				workerID:   "000-000",
 				workerType: "cluster",
 				dbConn:     db.NewMockConnectionFactory(nil).DB,
 			},
@@ -53,7 +53,7 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 		{
 			name: "failure listing leases table results in error",
 			args: args{
-				workerId:   "000-001",
+				workerID:   "000-001",
 				workerType: "cluster",
 				dbConn:     db.NewMockConnectionFactory(nil).DB,
 			},
@@ -68,7 +68,7 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 		{
 			name: "successfully acquired lease and elected  as the leader",
 			args: args{
-				workerId:   "000-002",
+				workerID:   "000-002",
 				workerType: "cluster",
 				dbConn:     db.NewMockConnectionFactory(nil).DB,
 			},
@@ -95,7 +95,7 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 		{
 			name: "valid lease within a minute of expiry extends lease",
 			args: args{
-				workerId:   "000-003",
+				workerID:   "000-003",
 				workerType: "cluster",
 				dbConn:     db.NewMockConnectionFactory(nil).DB,
 			},
@@ -133,7 +133,7 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 		{
 			name: "valid lease for another worker not to be acquired",
 			args: args{
-				workerId:   "000-004",
+				workerID:   "000-004",
 				workerType: "cluster",
 				dbConn:     db.NewMockConnectionFactory(nil).DB,
 			},
@@ -166,7 +166,7 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
 			s := &LeaderElectionManager{leaseRenewTime: 3 * time.Minute}
-			got, err := s.acquireLeaderLease(tt.args.workerId, tt.args.workerType, tt.args.dbConn)
+			got, err := s.acquireLeaderLease(tt.args.workerID, tt.args.workerType, tt.args.dbConn)
 			if (err != nil) != tt.errorCheck.wantErr {
 				t.Errorf("acquireLeaderLease() error = %v, wantErr %v", err, tt.errorCheck.wantErr)
 				return

@@ -23,7 +23,7 @@ var _ QuotaService = &QuotaServiceMock{}
 // 			CheckIfQuotaIsDefinedForInstanceTypeFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *serviceError.ServiceError) {
 // 				panic("mock out the CheckIfQuotaIsDefinedForInstanceType method")
 // 			},
-// 			DeleteQuotaFunc: func(subscriptionId string) *serviceError.ServiceError {
+// 			DeleteQuotaFunc: func(subscriptionID string) *serviceError.ServiceError {
 // 				panic("mock out the DeleteQuota method")
 // 			},
 // 			ReserveQuotaFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError) {
@@ -40,7 +40,7 @@ type QuotaServiceMock struct {
 	CheckIfQuotaIsDefinedForInstanceTypeFunc func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *serviceError.ServiceError)
 
 	// DeleteQuotaFunc mocks the DeleteQuota method.
-	DeleteQuotaFunc func(subscriptionId string) *serviceError.ServiceError
+	DeleteQuotaFunc func(subscriptionID string) *serviceError.ServiceError
 
 	// ReserveQuotaFunc mocks the ReserveQuota method.
 	ReserveQuotaFunc func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError)
@@ -56,8 +56,8 @@ type QuotaServiceMock struct {
 		}
 		// DeleteQuota holds details about calls to the DeleteQuota method.
 		DeleteQuota []struct {
-			// SubscriptionId is the subscriptionId argument value.
-			SubscriptionId string
+			// SubscriptionID is the subscriptionID argument value.
+			SubscriptionID string
 		}
 		// ReserveQuota holds details about calls to the ReserveQuota method.
 		ReserveQuota []struct {
@@ -108,29 +108,29 @@ func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceTypeCalls() []stru
 }
 
 // DeleteQuota calls DeleteQuotaFunc.
-func (mock *QuotaServiceMock) DeleteQuota(subscriptionId string) *serviceError.ServiceError {
+func (mock *QuotaServiceMock) DeleteQuota(subscriptionID string) *serviceError.ServiceError {
 	if mock.DeleteQuotaFunc == nil {
 		panic("QuotaServiceMock.DeleteQuotaFunc: method is nil but QuotaService.DeleteQuota was just called")
 	}
 	callInfo := struct {
-		SubscriptionId string
+		SubscriptionID string
 	}{
-		SubscriptionId: subscriptionId,
+		SubscriptionID: subscriptionID,
 	}
 	mock.lockDeleteQuota.Lock()
 	mock.calls.DeleteQuota = append(mock.calls.DeleteQuota, callInfo)
 	mock.lockDeleteQuota.Unlock()
-	return mock.DeleteQuotaFunc(subscriptionId)
+	return mock.DeleteQuotaFunc(subscriptionID)
 }
 
 // DeleteQuotaCalls gets all the calls that were made to DeleteQuota.
 // Check the length with:
 //     len(mockedQuotaService.DeleteQuotaCalls())
 func (mock *QuotaServiceMock) DeleteQuotaCalls() []struct {
-	SubscriptionId string
+	SubscriptionID string
 } {
 	var calls []struct {
-		SubscriptionId string
+		SubscriptionID string
 	}
 	mock.lockDeleteQuota.RLock()
 	calls = mock.calls.DeleteQuota

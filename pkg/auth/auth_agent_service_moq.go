@@ -17,7 +17,7 @@ var _ AuthAgentService = &AuthAgentServiceMock{}
 //
 // 		// make and configure a mocked AuthAgentService
 // 		mockedAuthAgentService := &AuthAgentServiceMock{
-// 			GetClientIdFunc: func(clusterId string) (string, error) {
+// 			GetClientIdFunc: func(clusterID string) (string, error) {
 // 				panic("mock out the GetClientId method")
 // 			},
 // 		}
@@ -28,43 +28,43 @@ var _ AuthAgentService = &AuthAgentServiceMock{}
 // 	}
 type AuthAgentServiceMock struct {
 	// GetClientIdFunc mocks the GetClientId method.
-	GetClientIdFunc func(clusterId string) (string, error)
+	GetClientIdFunc func(clusterID string) (string, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// GetClientId holds details about calls to the GetClientId method.
 		GetClientId []struct {
-			// ClusterId is the clusterId argument value.
-			ClusterId string
+			// ClusterID is the clusterID argument value.
+			ClusterID string
 		}
 	}
 	lockGetClientId sync.RWMutex
 }
 
 // GetClientId calls GetClientIdFunc.
-func (mock *AuthAgentServiceMock) GetClientId(clusterId string) (string, error) {
+func (mock *AuthAgentServiceMock) GetClientId(clusterID string) (string, error) {
 	if mock.GetClientIdFunc == nil {
 		panic("AuthAgentServiceMock.GetClientIdFunc: method is nil but AuthAgentService.GetClientId was just called")
 	}
 	callInfo := struct {
-		ClusterId string
+		ClusterID string
 	}{
-		ClusterId: clusterId,
+		ClusterID: clusterID,
 	}
 	mock.lockGetClientId.Lock()
 	mock.calls.GetClientId = append(mock.calls.GetClientId, callInfo)
 	mock.lockGetClientId.Unlock()
-	return mock.GetClientIdFunc(clusterId)
+	return mock.GetClientIdFunc(clusterID)
 }
 
 // GetClientIdCalls gets all the calls that were made to GetClientId.
 // Check the length with:
 //     len(mockedAuthAgentService.GetClientIdCalls())
 func (mock *AuthAgentServiceMock) GetClientIdCalls() []struct {
-	ClusterId string
+	ClusterID string
 } {
 	var calls []struct {
-		ClusterId string
+		ClusterID string
 	}
 	mock.lockGetClientId.RLock()
 	calls = mock.calls.GetClientId

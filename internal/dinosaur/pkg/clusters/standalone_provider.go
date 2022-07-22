@@ -242,7 +242,7 @@ func (s *StandaloneProvider) buildFleetShardOperatorSubscription() *operatorsv1a
 func (s *StandaloneProvider) buildFleetShardSyncSecret(params []types.Parameter) *v1.Secret {
 	secretStringData := map[string]string{}
 	for _, param := range params {
-		secretStringData[param.Id] = param.Value
+		secretStringData[param.ID] = param.Value
 	}
 
 	fleetshardOLMConfig := s.dataplaneClusterConfig.FleetshardOperatorOLMConfig
@@ -343,7 +343,7 @@ func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, reso
 		return &resources, nil // no kubeconfig read, do nothing.
 	}
 
-	contextName := s.dataplaneClusterConfig.FindClusterNameByClusterId(clusterSpec.InternalID)
+	contextName := s.dataplaneClusterConfig.FindClusterNameByClusterID(clusterSpec.InternalID)
 	override := &clientcmd.ConfigOverrides{CurrentContext: contextName}
 	config := *s.dataplaneClusterConfig.RawKubernetesConfig
 	restConfig, err := clientcmd.NewNonInteractiveClientConfig(config, override.CurrentContext, override, &clientcmd.ClientConfigLoadingRules{}).

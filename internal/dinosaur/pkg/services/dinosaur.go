@@ -49,7 +49,7 @@ const DinosaurRoutesActionDelete DinosaurRoutesAction = "DELETE"
 
 // CNameRecordStatus ...
 type CNameRecordStatus struct {
-	Id     *string
+	ID     *string
 	Status *string
 }
 
@@ -66,9 +66,9 @@ type DinosaurService interface {
 	// Get method will retrieve the dinosaurRequest instance that the give ctx has access to from the database.
 	// This should be used when you want to make sure the result is filtered based on the request context.
 	Get(ctx context.Context, id string) (*dbapi.CentralRequest, *errors.ServiceError)
-	// GetById method will retrieve the DinosaurRequest instance from the database without checking any permissions.
+	// GetByID method will retrieve the DinosaurRequest instance from the database without checking any permissions.
 	// You should only use this if you are sure permission check is not required.
-	GetById(id string) (*dbapi.CentralRequest, *errors.ServiceError)
+	GetByID(id string) (*dbapi.CentralRequest, *errors.ServiceError)
 	// Delete cleans up all dependencies for a Dinosaur request and soft deletes the Dinosaur Request record from the database.
 	// The Dinosaur Request in the database will be updated with a deleted_at timestamp.
 	Delete(*dbapi.CentralRequest) *errors.ServiceError
@@ -182,7 +182,7 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralReque
 }
 
 // reserveQuota - reserves quota for the given dinosaur request. If a RHOSAK quota has been assigned, it will try to reserve RHOSAK quota, otherwise it will try with RHOSAKTrial
-func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (subscriptionId string, err *errors.ServiceError) {
+func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (subscriptionID string, err *errors.ServiceError) {
 	if dinosaurRequest.InstanceType == types.EVAL.String() {
 		if !k.dinosaurConfig.Quota.AllowEvaluatorInstance {
 			return "", errors.NewWithCause(errors.ErrorForbidden, err, "dinosaur eval instances are not allowed")
@@ -194,7 +194,7 @@ func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (s
 		if err := dbConn.Model(&dbapi.CentralRequest{}).
 			Where("instance_type = ?", types.EVAL).
 			Where("owner = ?", dinosaurRequest.Owner).
-			Where("organisation_id = ?", dinosaurRequest.OrganisationId).
+			Where("organisation_id = ?", dinosaurRequest.OrganisationID).
 			Count(&count).
 			Error; err != nil {
 			return "", errors.NewWithCause(errors.ErrorGeneral, err, "failed to count dinosaur eval instances")
@@ -209,8 +209,8 @@ func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (s
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
-	subscriptionId, err = quotaService.ReserveQuota(dinosaurRequest, types.DinosaurInstanceType(dinosaurRequest.InstanceType))
-	return subscriptionId, err
+	subscriptionID, err = quotaService.ReserveQuota(dinosaurRequest, types.DinosaurInstanceType(dinosaurRequest.InstanceType))
+	return subscriptionID, err
 }
 
 // RegisterDinosaurJob registers a new job in the dinosaur table
@@ -242,7 +242,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", dinosaurRequest.Region, dinosaurRequest.InstanceType))
 	}
 	dinosaurRequest.ClusterID = cluster.ClusterID
-	subscriptionId, err := k.reserveQuota(dinosaurRequest)
+	subscriptionID, err := k.reserveQuota(dinosaurRequest)
 
 	if err != nil {
 		return err
@@ -250,7 +250,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 
 	dbConn := k.connectionFactory.New()
 	dinosaurRequest.Status = constants2.DinosaurRequestStatusAccepted.String()
-	dinosaurRequest.SubscriptionId = subscriptionId
+	dinosaurRequest.SubscriptionID = subscriptionID
 
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a dinosaur A is created, at the time of creation the quota-type was ams. At some point in the future
@@ -276,7 +276,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		return errors.NewWithCause(errors.ErrorGeneral, formatErr, "invalid id format")
 	}
 	dinosaurRequest.Namespace = namespace
-	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedDinosaurIngressDnsNamePrefix, 1)
+	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDNSNamePrefix, constants2.ManagedDinosaurIngressDNSNamePrefix, 1)
 	dinosaurRequest.Host = fmt.Sprintf("%s.%s", namespace, clusterDNS)
 
 	if k.dinosaurConfig.EnableDinosaurExternalCertificate {
@@ -291,7 +291,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 			ID: dinosaurRequest.ID,
 		},
 		Host:        dinosaurRequest.Host,
-		PlacementId: api.NewID(),
+		PlacementID: api.NewID(),
 		Status:      constants2.DinosaurRequestStatusProvisioning.String(),
 		Namespace:   dinosaurRequest.Namespace,
 	}
@@ -338,12 +338,12 @@ func (k *dinosaurService) Get(ctx context.Context, id string) (*dbapi.CentralReq
 			return nil, errors.Unauthenticated("user not authenticated")
 		}
 
-		orgId, _ := claims.GetOrgId()
-		filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
+		orgID, _ := claims.GetOrgID()
+		filterByOrganisationID := auth.GetFilterByOrganisationFromContext(ctx)
 
 		// filter by organisationId if a user is part of an organisation and is not allowed as a service account
-		if filterByOrganisationId {
-			dbConn = dbConn.Where("organisation_id = ?", orgId)
+		if filterByOrganisationID {
+			dbConn = dbConn.Where("organisation_id = ?", orgID)
 		} else {
 			dbConn = dbConn.Where("owner = ?", user)
 		}
@@ -360,8 +360,8 @@ func (k *dinosaurService) Get(ctx context.Context, id string) (*dbapi.CentralReq
 	return &dinosaurRequest, nil
 }
 
-// GetById ...
-func (k *dinosaurService) GetById(id string) (*dbapi.CentralRequest, *errors.ServiceError) {
+// GetByID ...
+func (k *dinosaurService) GetByID(id string) (*dbapi.CentralRequest, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("id is undefined")
 	}
@@ -391,8 +391,8 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 	if auth.GetIsAdminFromContext(ctx) {
 		dbConn = dbConn.Where("id = ?", id)
 	} else if claims.IsOrgAdmin() {
-		orgId, _ := claims.GetOrgId()
-		dbConn = dbConn.Where("id = ?", id).Where("organisation_id = ?", orgId)
+		orgID, _ := claims.GetOrgID()
+		dbConn = dbConn.Where("id = ?", id).Where("organisation_id = ?", orgID)
 	} else {
 		user, _ := claims.GetUsername()
 		dbConn = dbConn.Where("id = ?", id).Where("owner = ? ", user)
@@ -518,13 +518,13 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 			return nil, nil, errors.Unauthenticated("user not authenticated")
 		}
 
-		orgId, _ := claims.GetOrgId()
-		filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
+		orgID, _ := claims.GetOrgID()
+		filterByOrganisationID := auth.GetFilterByOrganisationFromContext(ctx)
 
 		// filter by organisationId if a user is part of an organisation and is not allowed as a service account
-		if filterByOrganisationId {
+		if filterByOrganisationID {
 			// filter dinosaur requests by organisation_id since the user is allowed to see all dinosaur requests of my id
-			dbConn = dbConn.Where("organisation_id = ?", orgId)
+			dbConn = dbConn.Where("organisation_id = ?", orgID)
 		} else {
 			// filter dinosaur requests by owner as we are dealing with service accounts which may not have an org id
 			dbConn = dbConn.Where("owner = ?", user)
@@ -664,7 +664,7 @@ func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dino
 func (k *dinosaurService) UpdateStatus(id string, status constants2.DinosaurStatus) (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 
-	dinosaur, err := k.GetById(id)
+	dinosaur, err := k.GetByID(id)
 	if err != nil {
 		return true, errors.NewWithCause(errors.ErrorGeneral, err, "failed to update status")
 	}
@@ -729,13 +729,13 @@ func (k *dinosaurService) GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralReq
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
 	}
 
-	changeOutput, err := awsClient.GetChange(dinosaurRequest.RoutesCreationId)
+	changeOutput, err := awsClient.GetChange(dinosaurRequest.RoutesCreationID)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to CNAME record status")
 	}
 
 	return &CNameRecordStatus{
-		Id:     changeOutput.ChangeInfo.Id,
+		ID:     changeOutput.ChangeInfo.Id,
 		Status: changeOutput.ChangeInfo.Status,
 	}, nil
 }
@@ -750,7 +750,7 @@ type DinosaurStatusCount struct {
 type DinosaurRegionCount struct {
 	Region       string
 	InstanceType string `gorm:"column:instance_type"`
-	ClusterId    string `gorm:"column:cluster_id"`
+	ClusterID    string `gorm:"column:cluster_id"`
 	Count        int
 }
 
@@ -826,7 +826,7 @@ func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralR
 // BuildManagedDinosaurCR ...
 func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfig *config.DinosaurConfig, iamConfig *iam.IAMConfig) *manageddinosaur.ManagedDinosaur {
 	managedDinosaurCR := &manageddinosaur.ManagedDinosaur{
-		Id: dinosaurRequest.ID,
+		ID: dinosaurRequest.ID,
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ManagedCentral",
 			APIVersion: "manageddinosaur.mas/v1alpha1",
@@ -836,20 +836,20 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfi
 			Namespace: dinosaurRequest.Namespace,
 			Annotations: map[string]string{
 				"mas/id":          dinosaurRequest.ID,
-				"mas/placementId": dinosaurRequest.PlacementId,
+				"mas/placementId": dinosaurRequest.PlacementID,
 			},
 		},
 		Spec: manageddinosaur.ManagedDinosaurSpec{
 			Auth: manageddinosaur.AuthSpec{
 				ClientSecret: dinosaurConfig.RhSsoClientSecret,
 				// TODO: ROX-11593: make part of dinosaurConfig
-				ClientId:    "rhacs-ms-dev",
-				OwnerOrgId:  dinosaurRequest.OrganisationId,
-				OwnerUserId: dinosaurRequest.OwnerUserId,
+				ClientID:    "rhacs-ms-dev",
+				OwnerOrgID:  dinosaurRequest.OrganisationID,
+				OwnerUserID: dinosaurRequest.OwnerUserID,
 			},
 			Endpoint: manageddinosaur.EndpointSpec{
 				Host: dinosaurRequest.Host,
-				Tls: &manageddinosaur.TlsSpec{
+				TLS: &manageddinosaur.TLSSpec{
 					Cert: dinosaurConfig.DinosaurTLSCert,
 					Key:  dinosaurConfig.DinosaurTLSKey,
 				},
@@ -868,7 +868,7 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfi
 	}
 
 	if dinosaurConfig.EnableDinosaurExternalCertificate {
-		managedDinosaurCR.Spec.Endpoint.Tls = &manageddinosaur.TlsSpec{
+		managedDinosaurCR.Spec.Endpoint.TLS = &manageddinosaur.TLSSpec{
 			Cert: dinosaurConfig.DinosaurTLSCert,
 			Key:  dinosaurConfig.DinosaurTLSKey,
 		}

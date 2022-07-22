@@ -1,4 +1,4 @@
-package quota_management
+package quotamanagement
 
 // MaxAllowedInstances ...
 var MaxAllowedInstances = 1

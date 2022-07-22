@@ -96,18 +96,18 @@ func TestACSClaims_GetUsername(t *testing.T) {
 
 func TestACSClaims_GetAccountId(t *testing.T) {
 	const (
-		claimAccountId = "12345"
+		claimAccountID = "12345"
 	)
 	tests := map[string]struct {
 		claims    ACSClaims
-		accountId string
+		accountID string
 		error     bool
 	}{
 		"should yield account_id when claim is set": {
 			claims: ACSClaims(jwt.MapClaims{
-				"account_id": claimAccountId,
+				"account_id": claimAccountID,
 			}),
-			accountId: claimAccountId,
+			accountID: claimAccountID,
 		},
 		"should yield error when no claim is set": {
 			claims: ACSClaims(jwt.MapClaims{}),
@@ -123,34 +123,34 @@ func TestACSClaims_GetAccountId(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			accountId, err := tt.claims.GetAccountId()
+			accountID, err := tt.claims.GetAccountID()
 
 			assert.Equal(t, tt.error, err != nil)
-			assert.Equal(t, tt.accountId, accountId)
+			assert.Equal(t, tt.accountID, accountID)
 		})
 	}
 }
 
 func TestACSClaims_GetOrgId(t *testing.T) {
 	const (
-		claimOrgId = "12345"
+		claimOrgID = "12345"
 	)
 	tests := map[string]struct {
 		claims ACSClaims
-		orgId  string
+		orgID  string
 		error  bool
 	}{
 		"should yield org id when claim org_id is set": {
 			claims: ACSClaims(jwt.MapClaims{
-				"org_id": claimOrgId,
+				"org_id": claimOrgID,
 			}),
-			orgId: claimOrgId,
+			orgID: claimOrgID,
 		},
 		"should yield org id when claim rh-org-id is set": {
 			claims: ACSClaims(jwt.MapClaims{
-				"rh-org-id": claimOrgId,
+				"rh-org-id": claimOrgID,
 			}),
-			orgId: claimOrgId,
+			orgID: claimOrgID,
 		},
 		"should yield error when no claim is set": {
 			claims: ACSClaims(jwt.MapClaims{}),
@@ -166,28 +166,28 @@ func TestACSClaims_GetOrgId(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			orgId, err := tt.claims.GetOrgId()
+			orgID, err := tt.claims.GetOrgID()
 
 			assert.Equal(t, tt.error, err != nil)
-			assert.Equal(t, tt.orgId, orgId)
+			assert.Equal(t, tt.orgID, orgID)
 		})
 	}
 }
 
 func TestACSClaims_GetUserId(t *testing.T) {
 	const (
-		claimUserId = "12345"
+		claimUserID = "12345"
 	)
 	tests := map[string]struct {
 		claims ACSClaims
-		userId string
+		userID string
 		error  bool
 	}{
 		"should yield sub when claim is set": {
 			claims: ACSClaims(jwt.MapClaims{
-				"sub": claimUserId,
+				"sub": claimUserID,
 			}),
-			userId: claimUserId,
+			userID: claimUserID,
 		},
 		"should yield error when no claim is set": {
 			claims: ACSClaims(jwt.MapClaims{}),
@@ -203,10 +203,10 @@ func TestACSClaims_GetUserId(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			userId, err := tt.claims.GetUserId()
+			userID, err := tt.claims.GetUserID()
 
 			assert.Equal(t, tt.error, err != nil)
-			assert.Equal(t, tt.userId, userId)
+			assert.Equal(t, tt.userID, userID)
 		})
 	}
 }

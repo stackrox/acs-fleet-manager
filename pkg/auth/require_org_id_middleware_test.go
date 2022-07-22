@@ -23,7 +23,7 @@ func TestRequireOrgIDMiddleware(t *testing.T) {
 			name: "should success when org_id claim is set in JWT token and it is not empty",
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
-					tenantIdClaim: "correct_org_id",
+					tenantIDClaim: "correct_org_id",
 				},
 			},
 			errCode: errors.ErrorUnauthenticated,
@@ -49,7 +49,7 @@ func TestRequireOrgIDMiddleware(t *testing.T) {
 			name: "should fail when org_id claim is set in JWT token but it is empty",
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
-					tenantIdClaim: "",
+					tenantIDClaim: "",
 				},
 			},
 			errCode: errors.ErrorUnauthenticated,
@@ -62,7 +62,7 @@ func TestRequireOrgIDMiddleware(t *testing.T) {
 			name: "should fail when org_id claim is set in JWT token but it is a non-string type",
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
-					tenantIdClaim: 3,
+					tenantIDClaim: 3,
 				},
 			},
 			errCode: errors.ErrorUnauthenticated,

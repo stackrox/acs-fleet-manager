@@ -13,14 +13,14 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
-// TERMS_SITECODE ...
-const TERMS_SITECODE = "OCM"
+// TermsSitecode ...
+const TermsSitecode = "OCM"
 
-// TERMS_EVENTCODE_ONLINE_SERVICE ...
-const TERMS_EVENTCODE_ONLINE_SERVICE = "onlineService"
+// TermsEventcodeOnlineService ...
+const TermsEventcodeOnlineService = "onlineService"
 
-// TERMS_EVENTCODE_REGISTER ...
-const TERMS_EVENTCODE_REGISTER = "register"
+// TermsEventcodeRegister ...
+const TermsEventcodeRegister = "register"
 
 // Client ...
 //go:generate moq -out client_moq.go . Client
@@ -31,10 +31,10 @@ type Client interface {
 	GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, error)
 	GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error)
 	GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error)
-	GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
-	CreateAddonWithParams(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
-	CreateAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
-	UpdateAddonParameters(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
+	GetAddon(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error)
+	CreateAddonWithParams(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
+	CreateAddon(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error)
+	UpdateAddonParameters(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
 	GetClusterDNS(clusterID string) (string, error)
 	CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
 	UpdateSyncSet(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
@@ -49,9 +49,9 @@ type Client interface {
 	ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
 	DeleteSubscription(id string) (int, error)
 	FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error)
-	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error)
+	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectURL string, err error)
 	GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error)
-	GetOrganisationIdFromExternalId(externalId string) (string, error)
+	GetOrganisationIDFromExternalID(externalID string) (string, error)
 	Connection() *sdkClient.Connection
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 }
@@ -69,13 +69,13 @@ type AMSClient Client
 type ClusterManagementClient Client
 
 // NewOCMConnection ...
-func NewOCMConnection(ocmConfig *OCMConfig, BaseUrl string) (*sdkClient.Connection, func(), error) {
+func NewOCMConnection(ocmConfig *OCMConfig, BaseURL string) (*sdkClient.Connection, func(), error) {
 	if ocmConfig.EnableMock && ocmConfig.MockMode != MockModeEmulateServer {
 		return nil, func() {}, nil
 	}
 
 	builder := sdkClient.NewConnectionBuilder().
-		URL(BaseUrl).
+		URL(BaseURL).
 		MetricsSubsystem("api_outbound")
 
 	if !ocmConfig.EnableMock {
@@ -164,9 +164,9 @@ func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.Subscriptio
 	return subscriptionsMetrics[0], nil
 }
 
-// GetOrganisationIdFromExternalId ...
-func (c *client) GetOrganisationIdFromExternalId(externalId string) (string, error) {
-	res, err := c.connection.AccountsMgmt().V1().Organizations().List().Search(fmt.Sprintf("external_id='%s'", externalId)).Send()
+// GetOrganisationIDFromExternalID ...
+func (c *client) GetOrganisationIDFromExternalID(externalID string) (string, error) {
+	res, err := c.connection.AccountsMgmt().V1().Organizations().List().Search(fmt.Sprintf("external_id='%s'", externalID)).Send()
 	if err != nil {
 		return "", err
 	}
@@ -174,16 +174,16 @@ func (c *client) GetOrganisationIdFromExternalId(externalId string) (string, err
 	items := res.Items()
 	if items.Len() < 1 {
 		// should never happen...
-		return "", errors.New(errors.ErrorGeneral, "organisation with external_id '%s' can't be found", externalId)
+		return "", errors.New(errors.ErrorGeneral, "organisation with external_id '%s' can't be found", externalID)
 	}
 
 	return items.Get(0).ID(), nil
 }
 
 // GetRequiresTermsAcceptance ...
-func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error) {
+func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectURL string, err error) {
 	// Check for Appendix 4 Terms
-	request, err := v1.NewTermsReviewRequest().AccountUsername(username).SiteCode(TERMS_SITECODE).EventCode(TERMS_EVENTCODE_REGISTER).Build()
+	request, err := v1.NewTermsReviewRequest().AccountUsername(username).SiteCode(TermsSitecode).EventCode(TermsEventcodeRegister).Build()
 	if err != nil {
 		return false, "", err
 	}
@@ -197,9 +197,9 @@ func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool
 		return false, "", fmt.Errorf("empty response from authorization post request")
 	}
 
-	redirectUrl, _ = response.GetRedirectUrl()
+	redirectURL, _ = response.GetRedirectUrl()
 
-	return response.TermsRequired(), redirectUrl, nil
+	return response.TermsRequired(), redirectURL, nil
 }
 
 // GetClusterIngresses sends a GET request to ocm to retrieve the ingresses of an OSD cluster
@@ -255,8 +255,8 @@ func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmg
 }
 
 // CreateAddonWithParams ...
-func (c client) CreateAddonWithParams(clusterId string, addonId string, params []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
-	addon := clustersmgmtv1.NewAddOn().ID(addonId)
+func (c client) CreateAddonWithParams(clusterID string, addonID string, params []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+	addon := clustersmgmtv1.NewAddOn().ID(addonID)
 	addonParameters := newAddonParameterListBuilder(params)
 	addonInstallationBuilder := clustersmgmtv1.NewAddOnInstallation().Addon(addon)
 	if addonParameters != nil {
@@ -266,7 +266,7 @@ func (c client) CreateAddonWithParams(clusterId string, addonId string, params [
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterId).Addons().Add().Body(addonInstallation).Send()
+	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().Add().Body(addonInstallation).Send()
 	if err != nil {
 		return nil, err
 	}
@@ -274,20 +274,20 @@ func (c client) CreateAddonWithParams(clusterId string, addonId string, params [
 }
 
 // CreateAddon ...
-func (c client) CreateAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-	return c.CreateAddonWithParams(clusterId, addonId, []Parameter{})
+func (c client) CreateAddon(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
+	return c.CreateAddonWithParams(clusterID, addonID, []Parameter{})
 }
 
 // GetAddon ...
-func (c client) GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterId).Addons().List().Send()
+func (c client) GetAddon(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
+	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().List().Send()
 	if err != nil {
 		return nil, err
 	}
 
 	addon := &clustersmgmtv1.AddOnInstallation{}
 	resp.Items().Each(func(addOnInstallation *clustersmgmtv1.AddOnInstallation) bool {
-		if addOnInstallation.ID() == addonId {
+		if addOnInstallation.ID() == addonID {
 			addon = addOnInstallation
 			return false
 		}
@@ -298,8 +298,8 @@ func (c client) GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddO
 }
 
 // UpdateAddonParameters ...
-func (c client) UpdateAddonParameters(clusterId string, addonInstallationId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
-	addonInstallationResp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterId).Addons().Addoninstallation(addonInstallationId).Get().Send()
+func (c client) UpdateAddonParameters(clusterID string, addonInstallationID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+	addonInstallationResp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().Addoninstallation(addonInstallationID).Get().Send()
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +315,7 @@ func (c client) UpdateAddonParameters(clusterId string, addonInstallationId stri
 		if err != nil {
 			return nil, err
 		}
-		resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterId).Addons().Addoninstallation(addonInstallationId).Update().Body(addonInstallation).Send()
+		resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().Addoninstallation(addonInstallationID).Update().Body(addonInstallation).Send()
 		if err != nil {
 			return nil, err
 		}
@@ -507,7 +507,7 @@ func newAddonParameterListBuilder(params []Parameter) *clustersmgmtv1.AddOnInsta
 	if len(params) > 0 {
 		var items []*clustersmgmtv1.AddOnInstallationParameterBuilder
 		for _, p := range params {
-			pb := clustersmgmtv1.NewAddOnInstallationParameter().ID(p.Id).Value(p.Value)
+			pb := clustersmgmtv1.NewAddOnInstallationParameter().ID(p.ID).Value(p.Value)
 			items = append(items, pb)
 		}
 		return clustersmgmtv1.NewAddOnInstallationParameterList().Items(items...)
@@ -521,7 +521,7 @@ func sameParameters(parameterList *clustersmgmtv1.AddOnInstallationParameterList
 	}
 	paramsMap := map[string]string{}
 	for _, p := range params {
-		paramsMap[p.Id] = p.Value
+		paramsMap[p.ID] = p.Value
 	}
 	match := true
 	parameterList.Each(func(item *clustersmgmtv1.AddOnInstallationParameter) bool {

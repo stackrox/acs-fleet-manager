@@ -16,16 +16,16 @@ type stackTracer interface {
 	StackTrace() errors.StackTrace
 }
 
-// ERROR_CODE_PREFIX ...
+// ErrorCodePrefix ...
 const (
-	ERROR_CODE_PREFIX = "RHACS-MGMT"
+	ErrorCodePrefix = "RHACS-MGMT"
 
 	// HREF for API errors
-	ERROR_HREF = "/api/rhacs/v1/errors/"
+	ErrorHREF = "/api/rhacs/v1/errors/"
 
 	// To support connector errors too..
-	CONNECTOR_MGMT_ERROR_CODE_PREFIX = "CONNECTOR-MGMT"
-	CONNECTOR_MGMT_ERROR_HREF        = "/api/connector_mgmt/v1/errors/"
+	ConnectorMgmtErrorCodePrefix = "CONNECTOR-MGMT"
+	ConnectorMgmtErrorHREF       = "/api/connector_mgmt/v1/errors/"
 
 	// Forbidden occurs when a user is not allowed to access the service
 	ErrorForbidden       ServiceErrorCode = 4
@@ -178,8 +178,8 @@ const (
 	ErrorMalformedServiceAccountDescReason string           = "Service account desc is invalid"
 
 	// Invalid service account desc
-	ErrorMalformedServiceAccountId       ServiceErrorCode = 40
-	ErrorMalformedServiceAccountIdReason string           = "Service account id is invalid"
+	ErrorMalformedServiceAccountID       ServiceErrorCode = 40
+	ErrorMalformedServiceAccountIDReason string           = "Service account id is invalid"
 
 	// Region not supported
 	ErrorInstanceTypeNotSupported       ServiceErrorCode = 41
@@ -266,7 +266,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorMalformedServiceAccountName, ErrorMalformedServiceAccountNameReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorMalformedServiceAccountID, ErrorMalformedServiceAccountIDReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil},
 	}
@@ -321,8 +321,8 @@ type ServiceError struct {
 	Code ServiceErrorCode
 	// Reason is the context-specific reason the error was generated
 	Reason string
-	// HttpCode is the HttpCode associated with the error when the error is returned as an API response
-	HttpCode int
+	// HTTPCode is the HTTPCode associated with the error when the error is returned as an API response
+	HTTPCode int
 	// The original error that is causing the ServiceError, can be used for inspection
 	cause error
 }
@@ -414,12 +414,12 @@ func (e *ServiceError) IsFailedToCreateSSOClient() bool {
 
 // IsClientErrorClass ...
 func (e *ServiceError) IsClientErrorClass() bool {
-	return e.HttpCode >= http.StatusBadRequest && e.HttpCode < http.StatusInternalServerError
+	return e.HTTPCode >= http.StatusBadRequest && e.HTTPCode < http.StatusInternalServerError
 }
 
 // IsServerErrorClass ...
 func (e *ServiceError) IsServerErrorClass() bool {
-	return e.HttpCode >= http.StatusInternalServerError
+	return e.HTTPCode >= http.StatusInternalServerError
 }
 
 // IsFailedToGetSSOClientSecret ...
@@ -488,8 +488,8 @@ func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compa
 	code := CodeStr(e.Code)
 
 	if strings.Contains(basePath, "/api/connector_mgmt/") {
-		href = strings.Replace(href, ERROR_HREF, CONNECTOR_MGMT_ERROR_HREF, 1)
-		code = strings.Replace(code, ERROR_CODE_PREFIX, CONNECTOR_MGMT_ERROR_CODE_PREFIX, 1)
+		href = strings.Replace(href, ErrorHREF, ConnectorMgmtErrorHREF, 1)
+		code = strings.Replace(code, ErrorCodePrefix, ConnectorMgmtErrorCodePrefix, 1)
 	}
 
 	// end-temporary code
@@ -505,12 +505,12 @@ func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compa
 
 // CodeStr ...
 func CodeStr(code ServiceErrorCode) string {
-	return fmt.Sprintf("%s-%d", ERROR_CODE_PREFIX, code)
+	return fmt.Sprintf("%s-%d", ErrorCodePrefix, code)
 }
 
 // Href ...
 func Href(code ServiceErrorCode) string {
-	return fmt.Sprintf("%s%d", ERROR_HREF, code)
+	return fmt.Sprintf("%s%d", ErrorHREF, code)
 }
 
 // NotFound ...
@@ -674,9 +674,9 @@ func MalformedServiceAccountDesc(reason string, values ...interface{}) *ServiceE
 	return New(ErrorMalformedServiceAccountDesc, reason, values...)
 }
 
-// MalformedServiceAccountId ...
-func MalformedServiceAccountId(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorMalformedServiceAccountId, reason, values...)
+// MalformedServiceAccountID ...
+func MalformedServiceAccountID(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorMalformedServiceAccountID, reason, values...)
 }
 
 // DuplicateDinosaurClusterName ...

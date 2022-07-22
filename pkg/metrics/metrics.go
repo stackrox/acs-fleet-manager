@@ -206,21 +206,21 @@ func IncreaseClusterSuccessOperationsCountMetric(operation constants2.ClusterOpe
 }
 
 // UpdateClusterStatusCapacityMaxCount - sets maximum capacity per region and instance type
-func UpdateClusterStatusCapacityMaxCount(region, instanceType, clusterId string, count float64) {
+func UpdateClusterStatusCapacityMaxCount(region, instanceType, clusterID string, count float64) {
 	labels := prometheus.Labels{
 		LabelRegion:       region,
 		LabelInstanceType: instanceType,
-		LabelClusterID:    clusterId,
+		LabelClusterID:    clusterID,
 	}
 	clusterStatusCapacityMaxMetric.With(labels).Set(count)
 }
 
 // UpdateClusterStatusCapacityUsedCount - sets used capacity per region and instance type
-func UpdateClusterStatusCapacityUsedCount(region, instanceType, clusterId string, count float64) {
+func UpdateClusterStatusCapacityUsedCount(region, instanceType, clusterID string, count float64) {
 	labels := prometheus.Labels{
 		LabelRegion:       region,
 		LabelInstanceType: instanceType,
-		LabelClusterID:    clusterId,
+		LabelClusterID:    clusterID,
 	}
 	clusterStatusCapacityUsedMetric.With(labels).Set(count)
 }
@@ -309,9 +309,9 @@ var dinosaurPerClusterCountMetric = prometheus.NewGaugeVec(
 	DinosaurPerClusterCountMetricsLabels)
 
 // UpdateDinosaurPerClusterCountMetric ...
-func UpdateDinosaurPerClusterCountMetric(clusterId string, clusterExternalID string, count int) {
+func UpdateDinosaurPerClusterCountMetric(clusterID string, clusterExternalID string, count int) {
 	labels := prometheus.Labels{
-		LabelClusterID:         clusterId,
+		LabelClusterID:         clusterID,
 		LabelClusterExternalID: clusterExternalID,
 	}
 	dinosaurPerClusterCountMetric.With(labels).Set(float64(count))
@@ -378,11 +378,11 @@ var dinosaurOperationsSuccessCountMetric = prometheus.NewCounterVec(
 )
 
 // UpdateDinosaurRequestsStatusSinceCreatedMetric ...
-func UpdateDinosaurRequestsStatusSinceCreatedMetric(status constants2.DinosaurStatus, dinosaurId string, clusterId string, elapsed time.Duration) {
+func UpdateDinosaurRequestsStatusSinceCreatedMetric(status constants2.DinosaurStatus, dinosaurID string, clusterID string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		LabelStatus:    string(status),
-		LabelID:        dinosaurId,
-		LabelClusterID: clusterId,
+		LabelID:        dinosaurID,
+		LabelClusterID: clusterID,
 	}
 	dinosaurStatusSinceCreatedMetric.With(labels).Set(elapsed.Seconds())
 }

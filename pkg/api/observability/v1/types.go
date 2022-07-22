@@ -14,7 +14,7 @@ const (
 
 // DexConfig ...
 type DexConfig struct {
-	Url                       string `json:"url" yaml:"url"`
+	URL                       string `json:"url" yaml:"url"`
 	CredentialSecretNamespace string `json:"credentialSecretNamespace" yaml:"credentialSecretNamespace"`
 	CredentialSecretName      string `json:"credentialSecretName" yaml:"credentialSecretName"`
 }

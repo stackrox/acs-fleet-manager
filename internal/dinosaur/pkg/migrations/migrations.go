@@ -27,7 +27,7 @@ var migrations = []*gormigrate.Migration{
 	addClusters(),
 	addLeaderLease(),
 	sampleMigration(),
-	addOwnerUserIdToCentralRequest(),
+	addOwnerUserIDToCentralRequest(),
 }
 
 // New ...

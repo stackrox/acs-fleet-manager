@@ -13,9 +13,9 @@ type Provider string
 // CompleteServiceAccountRequest ...
 type CompleteServiceAccountRequest struct {
 	Owner          string
-	OwnerAccountId string
-	OrgId          string
-	ClientId       string
+	OwnerAccountID string
+	OrgID          string
+	ClientID       string
 	Name           string
 	Description    string
 }
@@ -25,8 +25,8 @@ type CompleteServiceAccountRequest struct {
 type IAMService interface {
 	GetConfig() *iam.IAMConfig
 	GetRealmConfig() *iam.IAMRealmConfig
-	RegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError)
-	DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError
+	RegisterAcsFleetshardOperatorServiceAccount(agentClusterID string) (*api.ServiceAccount, *errors.ServiceError)
+	DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterID string) *errors.ServiceError
 }
 
 // NewIAMService ...

@@ -98,7 +98,7 @@ func TestAuthFailure_withoutToken(t *testing.T) {
 		Get(h.RestURL("/centrals"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ErrorCodePrefix, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Request doesn't contain the 'Authorization' header or the 'cs_jwt' cookie"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
@@ -122,7 +122,7 @@ func TestAuthFailure_invalidTokenWithInvalidTyp(t *testing.T) {
 		Get(h.RestURL("/centrals"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ErrorCodePrefix, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Bearer token type 'Invalid' isn't allowed"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
@@ -145,7 +145,7 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 		Get(h.RestURL("/centrals"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ErrorCodePrefix, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Bearer token is expired"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
@@ -168,7 +168,7 @@ func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
 		Get(h.RestURL("/centrals"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ErrorCodePrefix, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Bearer token doesn't contain required claim 'iat'"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
@@ -200,7 +200,7 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 	Expect(err).To(BeNil())
 
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ErrorCodePrefix, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Bearer token can't be verified"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
@@ -230,7 +230,7 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 		Get(h.RestURL("/centrals"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ErrorCodePrefix, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Request doesn't contain the 'Authorization' header or the 'cs_jwt' cookie"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }

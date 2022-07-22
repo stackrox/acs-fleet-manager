@@ -26,7 +26,7 @@ func NewAccount(ocmConfig *ocm.OCMConfig) AccountService {
 	if ocmConfig.EnableMock {
 		return NewMockAccountService()
 	}
-	connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsUrl)
+	connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsURL)
 	if err != nil {
 		logger.Logger.Error(err)
 	}

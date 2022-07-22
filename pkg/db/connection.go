@@ -19,7 +19,7 @@ type ConnectionFactory struct {
 	DB     *gorm.DB
 }
 
-var gormConfig *gorm.Config = &gorm.Config{
+var gormConfig = &gorm.Config{
 	PrepareStmt:       true,
 	AllowGlobalUpdate: false, // change it to true to allow updates without the WHERE clause
 	QueryFields:       true,

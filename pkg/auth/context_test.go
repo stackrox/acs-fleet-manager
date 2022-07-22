@@ -21,7 +21,7 @@ func TestContext_GetAccountIdFromClaims(t *testing.T) {
 		{
 			name: "Should return when tenantUserIdClaim is not empty",
 			claims: ACSClaims{
-				tenantUserIdClaim: "Test_user_id",
+				tenantUserIDClaim: "Test_user_id",
 			},
 			want: "Test_user_id",
 		},
@@ -31,8 +31,8 @@ func TestContext_GetAccountIdFromClaims(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			accountId, _ := tt.claims.GetAccountId()
-			Expect(accountId).To(Equal(tt.want))
+			accountID, _ := tt.claims.GetAccountID()
+			Expect(accountID).To(Equal(tt.want))
 		})
 	}
 }
@@ -124,7 +124,7 @@ func TestContext_GetOrgIdFromClaims(t *testing.T) {
 		{
 			name: "Should return tenantIdClaim when tenantIdClaim is not empty",
 			claims: ACSClaims{
-				tenantIdClaim: "Test Tenant ID",
+				tenantIDClaim: "Test Tenant ID",
 			},
 			want: "Test Tenant ID",
 		},
@@ -134,8 +134,8 @@ func TestContext_GetOrgIdFromClaims(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			orgId, _ := tt.claims.GetOrgId()
-			Expect(orgId).To(Equal(tt.want))
+			orgID, _ := tt.claims.GetOrgID()
+			Expect(orgID).To(Equal(tt.want))
 		})
 	}
 }

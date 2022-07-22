@@ -17,7 +17,7 @@ var _ Authorization = &AuthorizationMock{}
 //
 // 		// make and configure a mocked Authorization
 // 		mockedAuthorization := &AuthorizationMock{
-// 			CheckUserValidFunc: func(username string, orgId string) (bool, error) {
+// 			CheckUserValidFunc: func(username string, orgID string) (bool, error) {
 // 				panic("mock out the CheckUserValid method")
 // 			},
 // 		}
@@ -28,7 +28,7 @@ var _ Authorization = &AuthorizationMock{}
 // 	}
 type AuthorizationMock struct {
 	// CheckUserValidFunc mocks the CheckUserValid method.
-	CheckUserValidFunc func(username string, orgId string) (bool, error)
+	CheckUserValidFunc func(username string, orgID string) (bool, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -36,29 +36,29 @@ type AuthorizationMock struct {
 		CheckUserValid []struct {
 			// Username is the username argument value.
 			Username string
-			// OrgId is the orgId argument value.
-			OrgId string
+			// OrgID is the orgID argument value.
+			OrgID string
 		}
 	}
 	lockCheckUserValid sync.RWMutex
 }
 
 // CheckUserValid calls CheckUserValidFunc.
-func (mock *AuthorizationMock) CheckUserValid(username string, orgId string) (bool, error) {
+func (mock *AuthorizationMock) CheckUserValid(username string, orgID string) (bool, error) {
 	if mock.CheckUserValidFunc == nil {
 		panic("AuthorizationMock.CheckUserValidFunc: method is nil but Authorization.CheckUserValid was just called")
 	}
 	callInfo := struct {
 		Username string
-		OrgId    string
+		OrgID    string
 	}{
 		Username: username,
-		OrgId:    orgId,
+		OrgID:    orgID,
 	}
 	mock.lockCheckUserValid.Lock()
 	mock.calls.CheckUserValid = append(mock.calls.CheckUserValid, callInfo)
 	mock.lockCheckUserValid.Unlock()
-	return mock.CheckUserValidFunc(username, orgId)
+	return mock.CheckUserValidFunc(username, orgID)
 }
 
 // CheckUserValidCalls gets all the calls that were made to CheckUserValid.
@@ -66,11 +66,11 @@ func (mock *AuthorizationMock) CheckUserValid(username string, orgId string) (bo
 //     len(mockedAuthorization.CheckUserValidCalls())
 func (mock *AuthorizationMock) CheckUserValidCalls() []struct {
 	Username string
-	OrgId    string
+	OrgID    string
 } {
 	var calls []struct {
 		Username string
-		OrgId    string
+		OrgID    string
 	}
 	mock.lockCheckUserValid.RLock()
 	calls = mock.calls.CheckUserValid

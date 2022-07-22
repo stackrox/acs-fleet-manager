@@ -124,7 +124,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 		workers.RepeatInterval = 1 * time.Second
 		fmt.Printf("Setting OCM base URL to %s\n", httpServer.URL)
 		ocmConfig.BaseURL = httpServer.URL
-		ocmConfig.AmsUrl = httpServer.URL
+		ocmConfig.AmsURL = httpServer.URL
 	}
 
 	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
@@ -223,13 +223,13 @@ func (helper *Helper) HealthCheckURL(path string) string {
 // The org id value is taken from config/quota-management-list-configuration.yaml
 func (helper *Helper) NewRandAccount() *amv1.Account {
 	// this value is taken from config/quota-management-list-configuration.yaml
-	orgId := "13640203"
-	return helper.NewAccountWithNameAndOrg(faker.Name(), orgId)
+	orgID := "13640203"
+	return helper.NewAccountWithNameAndOrg(faker.Name(), orgID)
 }
 
 // NewAccountWithNameAndOrg ...
-func (helper *Helper) NewAccountWithNameAndOrg(name string, orgId string) *amv1.Account {
-	account, err := helper.AuthHelper.NewAccount(helper.NewID(), name, faker.Email(), orgId)
+func (helper *Helper) NewAccountWithNameAndOrg(name string, orgID string) *amv1.Account {
+	account, err := helper.AuthHelper.NewAccount(helper.NewID(), name, faker.Email(), orgID)
 	if err != nil {
 		helper.T.Errorf("failed to create a new account: %s", err.Error())
 	}
@@ -249,8 +249,8 @@ func (helper *Helper) NewAllowedServiceAccount() *amv1.Account {
 }
 
 // NewAccount ...
-func (helper *Helper) NewAccount(username, name, email string, orgId string) *amv1.Account {
-	account, err := helper.AuthHelper.NewAccount(username, name, email, orgId)
+func (helper *Helper) NewAccount(username, name, email string, orgID string) *amv1.Account {
+	account, err := helper.AuthHelper.NewAccount(username, name, email, orgID)
 	if err != nil {
 		helper.T.Errorf(fmt.Sprintf("Unable to create a new account: %s", err.Error()))
 	}

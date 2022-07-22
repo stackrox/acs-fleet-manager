@@ -38,8 +38,8 @@ func TestOCMProvider_Create(t *testing.T) {
 	}
 	cb := NewClusterBuilder(awsConfig, osdCreateConfig)
 
-	internalId := "test-internal-id"
-	externalId := "test-external-id"
+	internalID := "test-internal-id"
+	externalID := "test-external-id"
 
 	cr := types.ClusterRequest{
 		CloudProvider:  "aws",
@@ -59,7 +59,7 @@ func TestOCMProvider_Create(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					CreateClusterFunc: func(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error) {
-						return clustersmgmtv1.NewCluster().ID(internalId).ExternalID(externalId).Build()
+						return clustersmgmtv1.NewCluster().ID(internalID).ExternalID(externalID).Build()
 					},
 				},
 			},
@@ -67,8 +67,8 @@ func TestOCMProvider_Create(t *testing.T) {
 				clusterReq: cr,
 			},
 			want: &types.ClusterSpec{
-				InternalID:     internalId,
-				ExternalID:     externalId,
+				InternalID:     internalID,
+				ExternalID:     externalID,
 				Status:         api.ClusterProvisioning,
 				AdditionalInfo: nil,
 			},
@@ -110,13 +110,13 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 		clusterSpec *types.ClusterSpec
 	}
 
-	internalId := "test-internal-id"
-	externalId := "test-external-id"
+	internalID := "test-internal-id"
+	externalID := "test-external-id"
 
 	clusterFailedProvisioningErrorText := "cluster provisioning failed test message"
 
 	spec := &types.ClusterSpec{
-		InternalID:     internalId,
+		InternalID:     internalID,
 		ExternalID:     "",
 		Status:         "",
 		AdditionalInfo: nil,
@@ -135,7 +135,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 				ocmClient: &ocm.ClientMock{
 					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
 						sb := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateReady)
-						return clustersmgmtv1.NewCluster().Status(sb).ExternalID(externalId).Build()
+						return clustersmgmtv1.NewCluster().Status(sb).ExternalID(externalID).Build()
 					},
 				},
 			},
@@ -143,8 +143,8 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 				clusterSpec: spec,
 			},
 			want: &types.ClusterSpec{
-				InternalID:     internalId,
-				ExternalID:     externalId,
+				InternalID:     internalID,
+				ExternalID:     externalID,
 				Status:         api.ClusterProvisioned,
 				AdditionalInfo: nil,
 			},
@@ -156,7 +156,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 				ocmClient: &ocm.ClientMock{
 					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
 						sb := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateError).ProvisionErrorMessage(clusterFailedProvisioningErrorText)
-						return clustersmgmtv1.NewCluster().Status(sb).ExternalID(externalId).Build()
+						return clustersmgmtv1.NewCluster().Status(sb).ExternalID(externalID).Build()
 					},
 				},
 			},
@@ -164,8 +164,8 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 				clusterSpec: spec,
 			},
 			want: &types.ClusterSpec{
-				InternalID:     internalId,
-				ExternalID:     externalId,
+				InternalID:     internalID,
+				ExternalID:     externalID,
 				Status:         api.ClusterFailed,
 				StatusDetails:  clusterFailedProvisioningErrorText,
 				AdditionalInfo: nil,
@@ -210,10 +210,10 @@ func TestOCMProvider_Delete(t *testing.T) {
 		clusterSpec *types.ClusterSpec
 	}
 
-	internalId := "test-internal-id"
+	internalID := "test-internal-id"
 
 	spec := &types.ClusterSpec{
-		InternalID:     internalId,
+		InternalID:     internalID,
 		ExternalID:     "",
 		Status:         "",
 		AdditionalInfo: nil,
@@ -294,10 +294,10 @@ func TestOCMProvider_GetClusterDNS(t *testing.T) {
 		clusterSpec *types.ClusterSpec
 	}
 
-	internalId := "test-internal-id"
+	internalID := "test-internal-id"
 
 	spec := &types.ClusterSpec{
-		InternalID:     internalId,
+		InternalID:     internalID,
 		ExternalID:     "",
 		Status:         "",
 		AdditionalInfo: nil,
@@ -366,23 +366,23 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 		identityProviderInfo types.IdentityProviderInfo
 	}
 
-	internalId := "test-internal-id"
+	internalID := "test-internal-id"
 
 	spec := &types.ClusterSpec{
-		InternalID:     internalId,
+		InternalID:     internalID,
 		ExternalID:     "",
 		Status:         "",
 		AdditionalInfo: nil,
 	}
 
-	testIdpId := "test-idp-ocm-id"
+	testIdpID := "test-idp-ocm-id"
 	testIdpName := "test-idp-name"
-	testIdpClientId := "test-client-id"
+	testIdpClientID := "test-client-id"
 	testIdpClientSecret := "test-client-secret"
 	testIdpIssuer := "test-issuer"
 	idpInfo := types.IdentityProviderInfo{OpenID: &types.OpenIDIdentityProviderInfo{
 		Name:         testIdpName,
-		ClientID:     testIdpClientId,
+		ClientID:     testIdpClientID,
 		ClientSecret: testIdpClientSecret,
 		Issuer:       testIdpIssuer,
 	}}
@@ -399,7 +399,7 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					CreateIdentityProviderFunc: func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
-						return clustersmgmtv1.NewIdentityProvider().ID(testIdpId).Build()
+						return clustersmgmtv1.NewIdentityProvider().ID(testIdpID).Build()
 					},
 					GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
 						return nil, errors.Errorf("this should not be called")
@@ -412,9 +412,9 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 			},
 			want: &types.IdentityProviderInfo{
 				OpenID: &types.OpenIDIdentityProviderInfo{
-					ID:           testIdpId,
+					ID:           testIdpID,
 					Name:         testIdpName,
-					ClientID:     testIdpClientId,
+					ClientID:     testIdpClientID,
 					ClientSecret: testIdpClientSecret,
 					Issuer:       testIdpIssuer,
 				},
@@ -429,7 +429,7 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 						return nil, errors.Errorf("idp already exists")
 					},
 					GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
-						idp := clustersmgmtv1.NewIdentityProvider().ID(testIdpId).Name(testIdpName)
+						idp := clustersmgmtv1.NewIdentityProvider().ID(testIdpID).Name(testIdpName)
 						return clustersmgmtv1.NewIdentityProviderList().Items(idp).Build()
 					},
 				},
@@ -440,9 +440,9 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 			},
 			want: &types.IdentityProviderInfo{
 				OpenID: &types.OpenIDIdentityProviderInfo{
-					ID:           testIdpId,
+					ID:           testIdpID,
 					Name:         testIdpName,
-					ClientID:     testIdpClientId,
+					ClientID:     testIdpClientID,
 					ClientSecret: testIdpClientSecret,
 					Issuer:       testIdpIssuer,
 				},
@@ -492,10 +492,10 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 		resources   types.ResourceSet
 	}
 
-	internalId := "test-internal-id"
+	internalID := "test-internal-id"
 
 	spec := &types.ClusterSpec{
-		InternalID:     internalId,
+		InternalID:     internalID,
 		ExternalID:     "",
 		Status:         "",
 		AdditionalInfo: nil,
@@ -641,10 +641,10 @@ func TestOCMProvider_ScaleUp(t *testing.T) {
 		increment   int
 	}
 
-	internalId := "test-internal-id"
+	internalID := "test-internal-id"
 
 	spec := &types.ClusterSpec{
-		InternalID:     internalId,
+		InternalID:     internalID,
 		ExternalID:     "",
 		Status:         "",
 		AdditionalInfo: nil,
@@ -713,10 +713,10 @@ func TestOCMProvider_ScaleDown(t *testing.T) {
 		decrement   int
 	}
 
-	internalId := "test-internal-id"
+	internalID := "test-internal-id"
 
 	spec := &types.ClusterSpec{
-		InternalID:     internalId,
+		InternalID:     internalID,
 		ExternalID:     "",
 		Status:         "",
 		AdditionalInfo: nil,
@@ -785,10 +785,10 @@ func TestOCMProvider_SetComputeNodes(t *testing.T) {
 		numNodes    int
 	}
 
-	internalId := "test-internal-id"
+	internalID := "test-internal-id"
 
 	spec := &types.ClusterSpec{
-		InternalID:     internalId,
+		InternalID:     internalID,
 		ExternalID:     "",
 		Status:         "",
 		AdditionalInfo: nil,
@@ -856,10 +856,10 @@ func TestOCMProvider_GetComputeNodes(t *testing.T) {
 		clusterSpec *types.ClusterSpec
 	}
 
-	internalId := "test-internal-id"
+	internalID := "test-internal-id"
 
 	spec := &types.ClusterSpec{
-		InternalID:     internalId,
+		InternalID:     internalID,
 		ExternalID:     "",
 		Status:         "",
 		AdditionalInfo: nil,
@@ -953,16 +953,16 @@ func TestOCMProvider_InstallAddon(t *testing.T) {
 		addonID     string
 	}
 
-	internalId := "test-internal-id"
+	internalID := "test-internal-id"
 
 	spec := &types.ClusterSpec{
-		InternalID:     internalId,
+		InternalID:     internalID,
 		ExternalID:     "",
 		Status:         "",
 		AdditionalInfo: nil,
 	}
 
-	testAddonId := "test-addon-id"
+	testAddonID := "test-addon-id"
 
 	tests := []struct {
 		name    string
@@ -979,14 +979,14 @@ func TestOCMProvider_InstallAddon(t *testing.T) {
 						return clustersmgmtv1.NewAddOnInstallation().Build()
 					},
 					CreateAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-						Expect(addonId).To(Equal(testAddonId))
+						Expect(addonId).To(Equal(testAddonID))
 						return clustersmgmtv1.NewAddOnInstallation().State(clustersmgmtv1.AddOnInstallationStateInstalling).Build()
 					},
 				},
 			},
 			args: args{
 				clusterSpec: spec,
-				addonID:     testAddonId,
+				addonID:     testAddonID,
 			},
 			want:    false,
 			wantErr: false,
@@ -996,7 +996,7 @@ func TestOCMProvider_InstallAddon(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-						Expect(addonId).To(Equal(testAddonId))
+						Expect(addonId).To(Equal(testAddonID))
 						return clustersmgmtv1.NewAddOnInstallation().ID("test-addon-id").State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 					},
 					CreateAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
@@ -1006,7 +1006,7 @@ func TestOCMProvider_InstallAddon(t *testing.T) {
 			},
 			args: args{
 				clusterSpec: spec,
-				addonID:     testAddonId,
+				addonID:     testAddonID,
 			},
 			want:    true,
 			wantErr: false,
@@ -1022,7 +1022,7 @@ func TestOCMProvider_InstallAddon(t *testing.T) {
 			},
 			args: args{
 				clusterSpec: spec,
-				addonID:     testAddonId,
+				addonID:     testAddonID,
 			},
 			wantErr: true,
 			want:    false,
@@ -1052,19 +1052,19 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 		params      []types.Parameter
 	}
 
-	internalId := "test-internal-id"
+	internalID := "test-internal-id"
 
 	spec := &types.ClusterSpec{
-		InternalID:     internalId,
+		InternalID:     internalID,
 		ExternalID:     "",
 		Status:         "",
 		AdditionalInfo: nil,
 	}
 
-	testAddonId := "test-addon-id"
+	testAddonID := "test-addon-id"
 	testParams := []types.Parameter{
 		{
-			Id:    "param1",
+			ID:    "param1",
 			Value: "param-value-1",
 		},
 	}
@@ -1084,7 +1084,7 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 						return clustersmgmtv1.NewAddOnInstallation().Build()
 					},
 					CreateAddonWithParamsFunc: func(clusterId string, addonId string, params []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
-						Expect(addonId).To(Equal(testAddonId))
+						Expect(addonId).To(Equal(testAddonID))
 						Expect(params).To(Equal(testParams))
 						return clustersmgmtv1.NewAddOnInstallation().State(clustersmgmtv1.AddOnInstallationStateInstalling).Build()
 					},
@@ -1092,7 +1092,7 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 			},
 			args: args{
 				clusterSpec: spec,
-				addonID:     testAddonId,
+				addonID:     testAddonID,
 				params:      testParams,
 			},
 			want:    false,
@@ -1106,7 +1106,7 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 						return clustersmgmtv1.NewAddOnInstallation().ID("test-addon-id").State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 					},
 					UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
-						Expect(addonId).To(Equal(testAddonId))
+						Expect(addonId).To(Equal(testAddonID))
 						Expect(parameters).To(Equal(testParams))
 						return clustersmgmtv1.NewAddOnInstallation().State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 					},
@@ -1114,7 +1114,7 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 			},
 			args: args{
 				clusterSpec: spec,
-				addonID:     testAddonId,
+				addonID:     testAddonID,
 				params:      testParams,
 			},
 			want:    true,
@@ -1155,7 +1155,7 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 		ocmClient ocm.Client
 	}
 
-	providerId1 := "provider-id-1"
+	providerID1 := "provider-id-1"
 	providerName1 := "provider-name-1"
 	providerDisplayName1 := "provider-display-name-1"
 
@@ -1182,13 +1182,13 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetCloudProvidersFunc: func() (*clustersmgmtv1.CloudProviderList, error) {
-						p := clustersmgmtv1.NewCloudProvider().ID(providerId1).Name(providerName1).DisplayName(providerDisplayName1)
+						p := clustersmgmtv1.NewCloudProvider().ID(providerID1).Name(providerName1).DisplayName(providerDisplayName1)
 						return clustersmgmtv1.NewCloudProviderList().Items(p).Build()
 					},
 				},
 			},
 			want: &types.CloudProviderInfoList{Items: []types.CloudProviderInfo{{
-				ID:          providerId1,
+				ID:          providerID1,
 				Name:        providerName1,
 				DisplayName: providerDisplayName1,
 			}}},
@@ -1230,11 +1230,11 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 		providerInfo types.CloudProviderInfo
 	}
 
-	providerId1 := "provider-id-1"
+	providerID1 := "provider-id-1"
 	providerName1 := "provider-name-1"
 	providerDisplayName1 := "provider-display-name-1"
 
-	regionId1 := "region-id-1"
+	regionID1 := "region-id-1"
 	regionName1 := "region-name-1"
 	regionDisplayName1 := "region-display-name-1"
 	regionSupportsMultiAZ1 := true
@@ -1251,7 +1251,7 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
-						Expect(provider.ID()).To(Equal(providerId1))
+						Expect(provider.ID()).To(Equal(providerID1))
 						Expect(provider.Name()).To(Equal(providerName1))
 						Expect(provider.DisplayName()).To(Equal(providerDisplayName1))
 						return clustersmgmtv1.NewCloudRegionList().Build()
@@ -1259,7 +1259,7 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 				},
 			},
 			args: args{providerInfo: types.CloudProviderInfo{
-				ID:          providerId1,
+				ID:          providerID1,
 				Name:        providerName1,
 				DisplayName: providerDisplayName1,
 			}},
@@ -1271,25 +1271,25 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
-						Expect(provider.ID()).To(Equal(providerId1))
+						Expect(provider.ID()).To(Equal(providerID1))
 						Expect(provider.Name()).To(Equal(providerName1))
 						Expect(provider.DisplayName()).To(Equal(providerDisplayName1))
-						p := clustersmgmtv1.NewCloudProvider().ID(providerId1)
-						r := clustersmgmtv1.NewCloudRegion().ID(regionId1).CloudProvider(p).Name(regionName1).DisplayName(regionDisplayName1).SupportsMultiAZ(regionSupportsMultiAZ1)
+						p := clustersmgmtv1.NewCloudProvider().ID(providerID1)
+						r := clustersmgmtv1.NewCloudRegion().ID(regionID1).CloudProvider(p).Name(regionName1).DisplayName(regionDisplayName1).SupportsMultiAZ(regionSupportsMultiAZ1)
 						return clustersmgmtv1.NewCloudRegionList().Items(r).Build()
 					},
 				},
 			},
 			args: args{providerInfo: types.CloudProviderInfo{
-				ID:          providerId1,
+				ID:          providerID1,
 				Name:        providerName1,
 				DisplayName: providerDisplayName1,
 			}},
 			want: &types.CloudProviderRegionInfoList{
 				Items: []types.CloudProviderRegionInfo{
 					{
-						ID:              regionId1,
-						CloudProviderID: providerId1,
+						ID:              regionID1,
+						CloudProviderID: providerID1,
 						Name:            regionName1,
 						DisplayName:     regionDisplayName1,
 						SupportsMultiAZ: regionSupportsMultiAZ1,

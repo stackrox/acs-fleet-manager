@@ -44,7 +44,7 @@ func NewObservatoriumClient(c *ObservabilityConfiguration) (client *Client, err 
 		Insecure: c.Insecure,
 	}
 
-	observatoriumConfig.BaseURL = c.RedHatSsoTokenRefresherUrl
+	observatoriumConfig.BaseURL = c.RedHatSSOTokenRefresherURL
 
 	if c.EnableMock {
 		glog.Infof("Using Mock Observatorium Client")

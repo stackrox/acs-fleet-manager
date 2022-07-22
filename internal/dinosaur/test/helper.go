@@ -37,7 +37,7 @@ type Services struct {
 	HealthCheckServer     *server.HealthCheckServer
 	Workers               []coreWorkers.Worker
 	LeaderElectionManager *coreWorkers.LeaderElectionManager
-	APIServer             *server.ApiServer
+	APIServer             *server.APIServer
 	BootupServices        []environments.BootService
 	CloudProvidersService services.CloudProvidersService
 	ClusterService        services.ClusterService
@@ -71,11 +71,11 @@ func NewDinosaurHelperWithHooks(t *testing.T, server *httptest.Server, configura
 	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
 		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
 	}
-	return h, NewApiClient(h), teardown
+	return h, NewAPIClient(h), teardown
 }
 
-// NewApiClient ...
-func NewApiClient(helper *test.Helper) *public.APIClient {
+// NewAPIClient ...
+func NewAPIClient(helper *test.Helper) *public.APIClient {
 	var serverConfig *server.ServerConfig
 	helper.Env.MustResolveAll(&serverConfig)
 

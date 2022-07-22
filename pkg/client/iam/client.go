@@ -35,12 +35,12 @@ type IAMClient interface {
 	GetToken() (string, error)
 	GetCachedToken(tokenKey string) (string, error)
 	DeleteClient(internalClientID string, accessToken string) error
-	GetClientSecret(internalClientId string, accessToken string) (string, error)
-	GetClient(clientId string, accessToken string) (*gocloak.Client, error)
-	IsClientExist(clientId string, accessToken string) (string, error)
+	GetClientSecret(internalClientID string, accessToken string) (string, error)
+	GetClient(clientID string, accessToken string) (*gocloak.Client, error)
+	IsClientExist(clientID string, accessToken string) (string, error)
 	GetConfig() *IAMConfig
 	GetRealmConfig() *IAMRealmConfig
-	GetClientById(id string, accessToken string) (*gocloak.Client, error)
+	GetClientByID(id string, accessToken string) (*gocloak.Client, error)
 	ClientConfig(client ClientRepresentation) gocloak.Client
 	CreateProtocolMapperConfig(string) []gocloak.ProtocolMapperRepresentation
 	GetClientServiceAccount(accessToken string, internalClient string) (*gocloak.User, error)
@@ -48,13 +48,13 @@ type IAMClient interface {
 	// GetClients returns IAM clients using the given method parameters. If max is less than 0, then returns all the clients.
 	// If it is 0, then default to using the default max allowed service accounts configuration.
 	GetClients(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error)
-	IsSameOrg(client *gocloak.Client, orgId string) bool
-	IsOwner(client *gocloak.Client, userId string) bool
+	IsSameOrg(client *gocloak.Client, orgID string) bool
+	IsOwner(client *gocloak.Client, userID string) bool
 	RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error)
 	GetRealmRole(accessToken string, roleName string) (*gocloak.Role, error)
 	CreateRealmRole(accessToken string, roleName string) (*gocloak.Role, error)
-	UserHasRealmRole(accessToken string, userId string, roleName string) (*gocloak.Role, error)
-	AddRealmRoleToUser(accessToken string, userId string, role gocloak.Role) error
+	UserHasRealmRole(accessToken string, userID string, roleName string) (*gocloak.Role, error)
+	AddRealmRoleToUser(accessToken string, userID string, role gocloak.Role) error
 }
 
 // ClientRepresentation ...
@@ -152,16 +152,16 @@ func (ic *iamClient) CreateClient(client gocloak.Client, accessToken string) (st
 }
 
 // GetClient ...
-func (ic *iamClient) GetClient(clientId string, accessToken string) (*gocloak.Client, error) {
+func (ic *iamClient) GetClient(clientID string, accessToken string) (*gocloak.Client, error) {
 	params := gocloak.GetClientsParams{
-		ClientID: &clientId,
+		ClientID: &clientID,
 	}
 	clients, err := ic.kcClient.GetClients(ic.ctx, accessToken, ic.realmConfig.Realm, params)
 	if err != nil {
 		return nil, err
 	}
 	for _, client := range clients {
-		if *client.ClientID == clientId {
+		if *client.ClientID == clientID {
 			return client, nil
 		}
 	}
@@ -201,8 +201,8 @@ func (ic *iamClient) GetCachedToken(tokenKey string) (string, error) {
 }
 
 // GetClientSecret ...
-func (ic *iamClient) GetClientSecret(internalClientId string, accessToken string) (string, error) {
-	resp, err := ic.kcClient.GetClientSecret(ic.ctx, accessToken, ic.realmConfig.Realm, internalClientId)
+func (ic *iamClient) GetClientSecret(internalClientID string, accessToken string) (string, error) {
+	resp, err := ic.kcClient.GetClientSecret(ic.ctx, accessToken, ic.realmConfig.Realm, internalClientID)
 	if err != nil {
 		return "", err
 	}
@@ -217,9 +217,9 @@ func (ic *iamClient) DeleteClient(internalClientID string, accessToken string) e
 	return ic.kcClient.DeleteClient(ic.ctx, accessToken, ic.realmConfig.Realm, internalClientID)
 }
 
-func (ic *iamClient) getClient(clientId string, accessToken string) ([]*gocloak.Client, error) {
+func (ic *iamClient) getClient(clientID string, accessToken string) ([]*gocloak.Client, error) {
 	params := gocloak.GetClientsParams{
-		ClientID: &clientId,
+		ClientID: &clientID,
 	}
 	client, err := ic.kcClient.GetClients(ic.ctx, accessToken, ic.realmConfig.Realm, params)
 	if err != nil {
@@ -228,9 +228,9 @@ func (ic *iamClient) getClient(clientId string, accessToken string) ([]*gocloak.
 	return client, err
 }
 
-// GetClientById ...
-func (ic *iamClient) GetClientById(internalId string, accessToken string) (*gocloak.Client, error) {
-	client, err := ic.kcClient.GetClient(ic.ctx, accessToken, ic.realmConfig.Realm, internalId)
+// GetClientByID ...
+func (ic *iamClient) GetClientByID(internalID string, accessToken string) (*gocloak.Client, error) {
+	client, err := ic.kcClient.GetClient(ic.ctx, accessToken, ic.realmConfig.Realm, internalID)
 	if err != nil {
 		return nil, err
 	}
@@ -248,16 +248,16 @@ func (ic *iamClient) GetRealmConfig() *IAMRealmConfig {
 }
 
 // IsClientExist ...
-func (ic *iamClient) IsClientExist(clientId string, accessToken string) (string, error) {
-	if clientId == "" {
+func (ic *iamClient) IsClientExist(clientID string, accessToken string) (string, error) {
+	if clientID == "" {
 		return "", errors.New("clientId cannot be empty")
 	}
-	clients, err := ic.getClient(clientId, accessToken)
+	clients, err := ic.getClient(clientID, accessToken)
 	if err != nil {
 		return "", err
 	}
 	for _, client := range clients {
-		if *client.ClientID == clientId {
+		if *client.ClientID == clientID {
 			return *client.ID, nil
 		}
 	}
@@ -306,22 +306,22 @@ func (ic *iamClient) GetClients(accessToken string, first int, max int, attribut
 }
 
 // IsSameOrg ...
-func (ic *iamClient) IsSameOrg(client *gocloak.Client, orgId string) bool {
-	if orgId == "" {
+func (ic *iamClient) IsSameOrg(client *gocloak.Client, orgID string) bool {
+	if orgID == "" {
 		return false
 	}
 	attributes := *client.Attributes
-	return attributes[OrgKey] == orgId
+	return attributes[OrgKey] == orgID
 }
 
 // IsOwner ...
-func (ic *iamClient) IsOwner(client *gocloak.Client, userId string) bool {
-	if userId == "" {
+func (ic *iamClient) IsOwner(client *gocloak.Client, userID string) bool {
+	if userID == "" {
 		return false
 	}
 	attributes := *client.Attributes
-	if rhUserId, found := attributes[UserKey]; found {
-		return rhUserId == userId
+	if rhUserID, found := attributes[UserKey]; found {
+		return rhUserID == userID
 	}
 	return false
 }
@@ -365,8 +365,8 @@ func (ic *iamClient) CreateRealmRole(accessToken string, roleName string) (*gocl
 }
 
 // UserHasRealmRole ...
-func (ic *iamClient) UserHasRealmRole(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
-	roles, err := ic.kcClient.GetRealmRolesByUserID(ic.ctx, accessToken, ic.realmConfig.Realm, userId)
+func (ic *iamClient) UserHasRealmRole(accessToken string, userID string, roleName string) (*gocloak.Role, error) {
+	roles, err := ic.kcClient.GetRealmRolesByUserID(ic.ctx, accessToken, ic.realmConfig.Realm, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -379,9 +379,9 @@ func (ic *iamClient) UserHasRealmRole(accessToken string, userId string, roleNam
 }
 
 // AddRealmRoleToUser ...
-func (ic *iamClient) AddRealmRoleToUser(accessToken string, userId string, role gocloak.Role) error {
+func (ic *iamClient) AddRealmRoleToUser(accessToken string, userID string, role gocloak.Role) error {
 	roles := []gocloak.Role{role}
-	err := ic.kcClient.AddRealmRoleToUser(ic.ctx, accessToken, ic.realmConfig.Realm, userId, roles)
+	err := ic.kcClient.AddRealmRoleToUser(ic.ctx, accessToken, ic.realmConfig.Realm, userID, roles)
 	if err != nil {
 		return err
 	}

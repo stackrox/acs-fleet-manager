@@ -1,4 +1,4 @@
-package dinosaur_mgrs
+package dinosaurmgrs
 
 import (
 	"github.com/golang/glog"
@@ -23,7 +23,7 @@ type ReadyDinosaurManager struct {
 func NewReadyDinosaurManager(dinosaurService services.DinosaurService, iamService sso.IAMService, iamConfig *iam.IAMConfig) *ReadyDinosaurManager {
 	return &ReadyDinosaurManager{
 		BaseWorker: workers.BaseWorker{
-			Id:         uuid.New().String(),
+			ID:         uuid.New().String(),
 			WorkerType: "ready_dinosaur",
 			Reconciler: workers.Reconciler{},
 		},

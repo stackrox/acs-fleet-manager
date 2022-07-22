@@ -26,7 +26,7 @@ func NewAuthorization(ocmConfig *ocm.OCMConfig) Authorization {
 	if ocmConfig.EnableMock {
 		return NewMockAuthorization()
 	}
-	connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsUrl)
+	connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsURL)
 	if err != nil {
 		logger.Logger.Error(err)
 	}

@@ -10,17 +10,17 @@ import (
 // ObservabilityConfiguration ...
 type ObservabilityConfiguration struct {
 	// Red Hat SSO configuration
-	RedHatSsoGatewayUrl        string `json:"redhat_sso_gateway_url" yaml:"redhat_sso_gateway_url"`
-	RedHatSsoAuthServerUrl     string `json:"redhat_sso_auth_server_url" yaml:"redhat_sso_auth_server_url"`
-	RedHatSsoRealm             string `json:"redhat_sso_realm" yaml:"redhat_sso_realm"`
-	RedHatSsoTenant            string `json:"redhat_sso_tenant" yaml:"redhat_sso_tenant"`
-	RedHatSsoTokenRefresherUrl string `json:"redhat_sso_token_refresher_url" yaml:"redhat_sso_token_refresher_url"`
-	MetricsClientId            string `json:"redhat_sso_metrics_client_id" yaml:"redhat_sso_metrics_client_id"`
-	MetricsClientIdFile        string `json:"redhat_sso_metrics_client_id_file" yaml:"redhat_sso_metrics_client_id_file"`
+	RedHatSSOGatewayURL        string `json:"redhat_sso_gateway_url" yaml:"redhat_sso_gateway_url"`
+	RedHatSSOAuthServerURL     string `json:"redhat_sso_auth_server_url" yaml:"redhat_sso_auth_server_url"`
+	RedHatSSORealm             string `json:"redhat_sso_realm" yaml:"redhat_sso_realm"`
+	RedHatSSOTenant            string `json:"redhat_sso_tenant" yaml:"redhat_sso_tenant"`
+	RedHatSSOTokenRefresherURL string `json:"redhat_sso_token_refresher_url" yaml:"redhat_sso_token_refresher_url"`
+	MetricsClientID            string `json:"redhat_sso_metrics_client_id" yaml:"redhat_sso_metrics_client_id"`
+	MetricsClientIDFile        string `json:"redhat_sso_metrics_client_id_file" yaml:"redhat_sso_metrics_client_id_file"`
 	MetricsSecret              string `json:"redhat_sso_metrics_secret" yaml:"redhat_sso_metrics_secret"`
 	MetricsSecretFile          string `json:"redhat_sso_metrics_secret_file" yaml:"redhat_sso_metrics_secret_file"`
-	LogsClientId               string `json:"redhat_sso_logs_client_id" yaml:"redhat_sso_logs_client_id"`
-	LogsClientIdFile           string `json:"redhat_sso_logs_client_id_file" yaml:"redhat_sso_logs_client_id_file"`
+	LogsClientID               string `json:"redhat_sso_logs_client_id" yaml:"redhat_sso_logs_client_id"`
+	LogsClientIDFile           string `json:"redhat_sso_logs_client_id_file" yaml:"redhat_sso_logs_client_id_file"`
 	LogsSecret                 string `json:"redhat_sso_logs_secret" yaml:"redhat_sso_logs_secret"`
 	LogsSecretFile             string `json:"redhat_sso_logs_secret_file" yaml:"redhat_sso_logs_secret_file"`
 
@@ -50,29 +50,29 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 		ObservabilityConfigAccessToken:     "",
 		ObservabilityConfigAccessTokenFile: "secrets/observability-config-access.token",
 		ObservabilityConfigTag:             "main",
-		MetricsClientIdFile:                "secrets/rhsso-metrics.clientId",
+		MetricsClientIDFile:                "secrets/rhsso-metrics.clientId",
 		MetricsSecretFile:                  "secrets/rhsso-metrics.clientSecret",
-		LogsClientIdFile:                   "secrets/rhsso-logs.clientId",
+		LogsClientIDFile:                   "secrets/rhsso-logs.clientId",
 		LogsSecretFile:                     "secrets/rhsso-logs.clientSecret",
-		RedHatSsoTenant:                    "",
-		RedHatSsoAuthServerUrl:             "",
-		RedHatSsoRealm:                     "",
-		RedHatSsoTokenRefresherUrl:         "",
-		RedHatSsoGatewayUrl:                "",
+		RedHatSSOTenant:                    "",
+		RedHatSSOAuthServerURL:             "",
+		RedHatSSORealm:                     "",
+		RedHatSSOTokenRefresherURL:         "",
+		RedHatSSOGatewayURL:                "",
 	}
 }
 
 // AddFlags ...
 func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.RedHatSsoTenant, "observability-red-hat-sso-tenant", c.RedHatSsoTenant, "Red Hat SSO tenant")
-	fs.StringVar(&c.RedHatSsoAuthServerUrl, "observability-red-hat-sso-auth-server-url", c.RedHatSsoAuthServerUrl, "Red Hat SSO auth server URL")
-	fs.StringVar(&c.RedHatSsoGatewayUrl, "observability-red-hat-sso-observatorium-gateway", c.RedHatSsoGatewayUrl, "Red Hat SSO gateway URL")
-	fs.StringVar(&c.RedHatSsoTokenRefresherUrl, "observability-red-hat-sso-token-refresher-url", c.RedHatSsoTokenRefresherUrl, "Red Hat SSO token refresher URL")
-	fs.StringVar(&c.LogsClientIdFile, "observability-red-hat-sso-logs-client-id-file", c.LogsClientIdFile, "Red Hat SSO logs client id file")
-	fs.StringVar(&c.MetricsClientIdFile, "observability-red-hat-sso-metrics-client-id-file", c.MetricsClientIdFile, "Red Hat SSO metrics client id file")
+	fs.StringVar(&c.RedHatSSOTenant, "observability-red-hat-sso-tenant", c.RedHatSSOTenant, "Red Hat SSO tenant")
+	fs.StringVar(&c.RedHatSSOAuthServerURL, "observability-red-hat-sso-auth-server-url", c.RedHatSSOAuthServerURL, "Red Hat SSO auth server URL")
+	fs.StringVar(&c.RedHatSSOGatewayURL, "observability-red-hat-sso-observatorium-gateway", c.RedHatSSOGatewayURL, "Red Hat SSO gateway URL")
+	fs.StringVar(&c.RedHatSSOTokenRefresherURL, "observability-red-hat-sso-token-refresher-url", c.RedHatSSOTokenRefresherURL, "Red Hat SSO token refresher URL")
+	fs.StringVar(&c.LogsClientIDFile, "observability-red-hat-sso-logs-client-id-file", c.LogsClientIDFile, "Red Hat SSO logs client id file")
+	fs.StringVar(&c.MetricsClientIDFile, "observability-red-hat-sso-metrics-client-id-file", c.MetricsClientIDFile, "Red Hat SSO metrics client id file")
 	fs.StringVar(&c.LogsSecretFile, "observability-red-hat-sso-logs-secret-file", c.LogsSecretFile, "Red Hat SSO logs secret file")
 	fs.StringVar(&c.MetricsSecretFile, "observability-red-hat-sso-metrics-secret-file", c.MetricsSecretFile, "Red Hat SSO metrics secret file")
-	fs.StringVar(&c.RedHatSsoRealm, "observability-red-hat-sso-realm", c.RedHatSsoRealm, "Red Hat SSO realm")
+	fs.StringVar(&c.RedHatSSORealm, "observability-red-hat-sso-realm", c.RedHatSSORealm, "Red Hat SSO realm")
 
 	fs.DurationVar(&c.Timeout, "observatorium-timeout", c.Timeout, "Timeout for Observatorium client")
 	fs.BoolVar(&c.Insecure, "observatorium-ignore-ssl", c.Insecure, "ignore SSL Observatorium certificate")
@@ -100,9 +100,9 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 
 // ReadObservatoriumConfigFiles ...
 func (c *ObservabilityConfiguration) ReadObservatoriumConfigFiles() error {
-	logsClientIdErr := shared.ReadFileValueString(c.LogsClientIdFile, &c.LogsClientId)
-	if logsClientIdErr != nil {
-		return logsClientIdErr
+	logsClientIDErr := shared.ReadFileValueString(c.LogsClientIDFile, &c.LogsClientID)
+	if logsClientIDErr != nil {
+		return logsClientIDErr
 	}
 
 	logsSecretErr := shared.ReadFileValueString(c.LogsSecretFile, &c.LogsSecret)
@@ -110,9 +110,9 @@ func (c *ObservabilityConfiguration) ReadObservatoriumConfigFiles() error {
 		return logsSecretErr
 	}
 
-	metricsClientIdErr := shared.ReadFileValueString(c.MetricsClientIdFile, &c.MetricsClientId)
-	if metricsClientIdErr != nil {
-		return metricsClientIdErr
+	metricsClientIDErr := shared.ReadFileValueString(c.MetricsClientIDFile, &c.MetricsClientID)
+	if metricsClientIDErr != nil {
+		return metricsClientIDErr
 	}
 
 	metricsSecretErr := shared.ReadFileValueString(c.MetricsSecretFile, &c.MetricsSecret)

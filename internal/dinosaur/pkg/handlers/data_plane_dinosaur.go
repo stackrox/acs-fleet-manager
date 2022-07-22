@@ -27,7 +27,7 @@ func NewDataPlaneDinosaurHandler(service services.DataPlaneDinosaurService, dino
 
 // UpdateDinosaurStatuses ...
 func (h *dataPlaneDinosaurHandler) UpdateDinosaurStatuses(w http.ResponseWriter, r *http.Request) {
-	clusterId := mux.Vars(r)["id"]
+	clusterID := mux.Vars(r)["id"]
 	var data = map[string]private.DataPlaneCentralStatus{}
 
 	cfg := &handlers.HandlerConfig{
@@ -36,7 +36,7 @@ func (h *dataPlaneDinosaurHandler) UpdateDinosaurStatuses(w http.ResponseWriter,
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			dataPlaneDinosaurStatus := presenters.ConvertDataPlaneDinosaurStatus(data)
-			err := h.service.UpdateDataPlaneDinosaurService(ctx, clusterId, dataPlaneDinosaurStatus)
+			err := h.service.UpdateDataPlaneDinosaurService(ctx, clusterID, dataPlaneDinosaurStatus)
 			return nil, err
 		},
 	}

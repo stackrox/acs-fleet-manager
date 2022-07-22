@@ -1,4 +1,4 @@
-package dinosaur_mgrs
+package dinosaurmgrs
 
 import (
 	"github.com/google/uuid"
@@ -26,7 +26,7 @@ type DeletingDinosaurManager struct {
 func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, iamConfig *iam.IAMConfig, quotaServiceFactory services.QuotaServiceFactory) *DeletingDinosaurManager {
 	return &DeletingDinosaurManager{
 		BaseWorker: workers.BaseWorker{
-			Id:         uuid.New().String(),
+			ID:         uuid.New().String(),
 			WorkerType: "deleting_dinosaur",
 			Reconciler: workers.Reconciler{},
 		},
@@ -99,9 +99,9 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 	if factoryErr != nil {
 		return factoryErr
 	}
-	err := quotaService.DeleteQuota(dinosaur.SubscriptionId)
+	err := quotaService.DeleteQuota(dinosaur.SubscriptionID)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete subscription id %s for dinosaur %s", dinosaur.SubscriptionId, dinosaur.ID)
+		return errors.Wrapf(err, "failed to delete subscription id %s for dinosaur %s", dinosaur.SubscriptionID, dinosaur.ID)
 	}
 
 	if err := k.dinosaurService.Delete(dinosaur); err != nil {

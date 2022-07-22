@@ -38,8 +38,8 @@ type state struct {
 	// last - this is set to true if this Token can be the last Token (just before the EOF)
 	last bool
 
-	// isEof - used internally to define the END Token. Not to be used by other tokens
-	isEof bool
+	// isEOF - used internally to define the END Token. Not to be used by other tokens
+	isEOF bool
 
 	// next - the list of valid transitions from this state
 	next []State
@@ -60,7 +60,7 @@ func NewStartState() State {
 func NewEndState() State {
 	return &state{
 		tokenName: "END",
-		isEof:     true,
+		isEOF:     true,
 	}
 }
 
@@ -101,7 +101,7 @@ func (s *state) eof() error {
 
 func (s *state) addNextState(next State) {
 	n := next.(*state)
-	if n.isEof {
+	if n.isEOF {
 		// if the passed in next state is an eof state, means this is a valid 'last' state
 		// Just save the info and discard the 'next' state
 		s.last = true

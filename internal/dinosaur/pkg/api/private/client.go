@@ -188,7 +188,7 @@ func (c *APIClient) ChangeBasePath(path string) {
 	c.cfg.BasePath = path
 }
 
-// GetConfig Allow modification of underlying config for alternate implementations and testing
+// GetConfig allows modification of underlying config for alternate implementations and testing
 // Caution: modifying the configuration while live can cause data races and potentially unwanted behavior
 func (c *APIClient) GetConfig() *Configuration {
 	return c.cfg

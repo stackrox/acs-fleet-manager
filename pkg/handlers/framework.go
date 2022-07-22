@@ -24,7 +24,7 @@ import (
 type HandlerConfig struct {
 	MarshalInto  interface{}
 	Validate     []Validate
-	Action       HttpAction
+	Action       HTTPAction
 	ErrorHandler ErrorHandlerFunc
 }
 
@@ -32,7 +32,7 @@ type HandlerConfig struct {
 type EventStream struct {
 	ContentType string
 	// GetNextEvent should block until there is an event to return.  GetNextEvent should unblock and return io.EOF when if context is canceled.
-	GetNextEvent HttpAction
+	GetNextEvent HTTPAction
 	Close        func()
 }
 
@@ -42,8 +42,8 @@ type Validate func() *errors.ServiceError
 // ErrorHandlerFunc ...
 type ErrorHandlerFunc func(r *http.Request, w http.ResponseWriter, err *errors.ServiceError)
 
-// HttpAction ...
-type HttpAction func() (interface{}, *errors.ServiceError)
+// HTTPAction ...
+type HTTPAction func() (interface{}, *errors.ServiceError)
 
 func success(r *http.Request) {
 	ctx := context.WithValue(r.Context(), logger.ActionResultKey, logger.ActionSuccess)
@@ -192,7 +192,7 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 				ulog := logger.NewUHCLogger(ctx)
 				operationID := logger.GetOperationID(ctx)
 				// If this is a 400 error, its the user's issue, log as info rather than error
-				if err.HttpCode >= 400 && err.HttpCode <= 499 {
+				if err.HTTPCode >= 400 && err.HTTPCode <= 499 {
 					ulog.Infof(err.Error())
 				} else {
 					ulog.Error(err)

@@ -11,6 +11,6 @@ func NewMockAuthorization() Authorization {
 }
 
 // CheckUserValid ...
-func (a mock) CheckUserValid(username string, orgId string) (bool, error) {
+func (a mock) CheckUserValid(username string, orgID string) (bool, error) {
 	return true, nil
 }

@@ -18,7 +18,7 @@ var _ IAMClient = &IAMClientMock{}
 //
 // 		// make and configure a mocked IAMClient
 // 		mockedIAMClient := &IAMClientMock{
-// 			AddRealmRoleToUserFunc: func(accessToken string, userId string, role gocloak.Role) error {
+// 			AddRealmRoleToUserFunc: func(accessToken string, userID string, role gocloak.Role) error {
 // 				panic("mock out the AddRealmRoleToUser method")
 // 			},
 // 			ClientConfigFunc: func(client ClientRepresentation) gocloak.Client {
@@ -39,13 +39,13 @@ var _ IAMClient = &IAMClientMock{}
 // 			GetCachedTokenFunc: func(tokenKey string) (string, error) {
 // 				panic("mock out the GetCachedToken method")
 // 			},
-// 			GetClientFunc: func(clientId string, accessToken string) (*gocloak.Client, error) {
+// 			GetClientFunc: func(clientID string, accessToken string) (*gocloak.Client, error) {
 // 				panic("mock out the GetClient method")
 // 			},
-// 			GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-// 				panic("mock out the GetClientById method")
+// 			GetClientByIDFunc: func(id string, accessToken string) (*gocloak.Client, error) {
+// 				panic("mock out the GetClientByID method")
 // 			},
-// 			GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
+// 			GetClientSecretFunc: func(internalClientID string, accessToken string) (string, error) {
 // 				panic("mock out the GetClientSecret method")
 // 			},
 // 			GetClientServiceAccountFunc: func(accessToken string, internalClient string) (*gocloak.User, error) {
@@ -66,13 +66,13 @@ var _ IAMClient = &IAMClientMock{}
 // 			GetTokenFunc: func() (string, error) {
 // 				panic("mock out the GetToken method")
 // 			},
-// 			IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+// 			IsClientExistFunc: func(clientID string, accessToken string) (string, error) {
 // 				panic("mock out the IsClientExist method")
 // 			},
-// 			IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+// 			IsOwnerFunc: func(client *gocloak.Client, userID string) bool {
 // 				panic("mock out the IsOwner method")
 // 			},
-// 			IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+// 			IsSameOrgFunc: func(client *gocloak.Client, orgID string) bool {
 // 				panic("mock out the IsSameOrg method")
 // 			},
 // 			RegenerateClientSecretFunc: func(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
@@ -81,7 +81,7 @@ var _ IAMClient = &IAMClientMock{}
 // 			UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
 // 				panic("mock out the UpdateServiceAccountUser method")
 // 			},
-// 			UserHasRealmRoleFunc: func(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
+// 			UserHasRealmRoleFunc: func(accessToken string, userID string, roleName string) (*gocloak.Role, error) {
 // 				panic("mock out the UserHasRealmRole method")
 // 			},
 // 		}
@@ -92,7 +92,7 @@ var _ IAMClient = &IAMClientMock{}
 // 	}
 type IAMClientMock struct {
 	// AddRealmRoleToUserFunc mocks the AddRealmRoleToUser method.
-	AddRealmRoleToUserFunc func(accessToken string, userId string, role gocloak.Role) error
+	AddRealmRoleToUserFunc func(accessToken string, userID string, role gocloak.Role) error
 
 	// ClientConfigFunc mocks the ClientConfig method.
 	ClientConfigFunc func(client ClientRepresentation) gocloak.Client
@@ -113,13 +113,13 @@ type IAMClientMock struct {
 	GetCachedTokenFunc func(tokenKey string) (string, error)
 
 	// GetClientFunc mocks the GetClient method.
-	GetClientFunc func(clientId string, accessToken string) (*gocloak.Client, error)
+	GetClientFunc func(clientID string, accessToken string) (*gocloak.Client, error)
 
-	// GetClientByIdFunc mocks the GetClientById method.
-	GetClientByIdFunc func(id string, accessToken string) (*gocloak.Client, error)
+	// GetClientByIDFunc mocks the GetClientByID method.
+	GetClientByIDFunc func(id string, accessToken string) (*gocloak.Client, error)
 
 	// GetClientSecretFunc mocks the GetClientSecret method.
-	GetClientSecretFunc func(internalClientId string, accessToken string) (string, error)
+	GetClientSecretFunc func(internalClientID string, accessToken string) (string, error)
 
 	// GetClientServiceAccountFunc mocks the GetClientServiceAccount method.
 	GetClientServiceAccountFunc func(accessToken string, internalClient string) (*gocloak.User, error)
@@ -140,13 +140,13 @@ type IAMClientMock struct {
 	GetTokenFunc func() (string, error)
 
 	// IsClientExistFunc mocks the IsClientExist method.
-	IsClientExistFunc func(clientId string, accessToken string) (string, error)
+	IsClientExistFunc func(clientID string, accessToken string) (string, error)
 
 	// IsOwnerFunc mocks the IsOwner method.
-	IsOwnerFunc func(client *gocloak.Client, userId string) bool
+	IsOwnerFunc func(client *gocloak.Client, userID string) bool
 
 	// IsSameOrgFunc mocks the IsSameOrg method.
-	IsSameOrgFunc func(client *gocloak.Client, orgId string) bool
+	IsSameOrgFunc func(client *gocloak.Client, orgID string) bool
 
 	// RegenerateClientSecretFunc mocks the RegenerateClientSecret method.
 	RegenerateClientSecretFunc func(accessToken string, id string) (*gocloak.CredentialRepresentation, error)
@@ -155,7 +155,7 @@ type IAMClientMock struct {
 	UpdateServiceAccountUserFunc func(accessToken string, serviceAccountUser gocloak.User) error
 
 	// UserHasRealmRoleFunc mocks the UserHasRealmRole method.
-	UserHasRealmRoleFunc func(accessToken string, userId string, roleName string) (*gocloak.Role, error)
+	UserHasRealmRoleFunc func(accessToken string, userID string, roleName string) (*gocloak.Role, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -163,8 +163,8 @@ type IAMClientMock struct {
 		AddRealmRoleToUser []struct {
 			// AccessToken is the accessToken argument value.
 			AccessToken string
-			// UserId is the userId argument value.
-			UserId string
+			// UserID is the userID argument value.
+			UserID string
 			// Role is the role argument value.
 			Role gocloak.Role
 		}
@@ -206,13 +206,13 @@ type IAMClientMock struct {
 		}
 		// GetClient holds details about calls to the GetClient method.
 		GetClient []struct {
-			// ClientId is the clientId argument value.
-			ClientId string
+			// ClientID is the clientID argument value.
+			ClientID string
 			// AccessToken is the accessToken argument value.
 			AccessToken string
 		}
-		// GetClientById holds details about calls to the GetClientById method.
-		GetClientById []struct {
+		// GetClientByID holds details about calls to the GetClientByID method.
+		GetClientByID []struct {
 			// ID is the id argument value.
 			ID string
 			// AccessToken is the accessToken argument value.
@@ -220,8 +220,8 @@ type IAMClientMock struct {
 		}
 		// GetClientSecret holds details about calls to the GetClientSecret method.
 		GetClientSecret []struct {
-			// InternalClientId is the internalClientId argument value.
-			InternalClientId string
+			// InternalClientID is the internalClientID argument value.
+			InternalClientID string
 			// AccessToken is the accessToken argument value.
 			AccessToken string
 		}
@@ -261,8 +261,8 @@ type IAMClientMock struct {
 		}
 		// IsClientExist holds details about calls to the IsClientExist method.
 		IsClientExist []struct {
-			// ClientId is the clientId argument value.
-			ClientId string
+			// ClientID is the clientID argument value.
+			ClientID string
 			// AccessToken is the accessToken argument value.
 			AccessToken string
 		}
@@ -270,15 +270,15 @@ type IAMClientMock struct {
 		IsOwner []struct {
 			// Client is the client argument value.
 			Client *gocloak.Client
-			// UserId is the userId argument value.
-			UserId string
+			// UserID is the userID argument value.
+			UserID string
 		}
 		// IsSameOrg holds details about calls to the IsSameOrg method.
 		IsSameOrg []struct {
 			// Client is the client argument value.
 			Client *gocloak.Client
-			// OrgId is the orgId argument value.
-			OrgId string
+			// OrgID is the orgID argument value.
+			OrgID string
 		}
 		// RegenerateClientSecret holds details about calls to the RegenerateClientSecret method.
 		RegenerateClientSecret []struct {
@@ -298,8 +298,8 @@ type IAMClientMock struct {
 		UserHasRealmRole []struct {
 			// AccessToken is the accessToken argument value.
 			AccessToken string
-			// UserId is the userId argument value.
-			UserId string
+			// UserID is the userID argument value.
+			UserID string
 			// RoleName is the roleName argument value.
 			RoleName string
 		}
@@ -312,7 +312,7 @@ type IAMClientMock struct {
 	lockDeleteClient               sync.RWMutex
 	lockGetCachedToken             sync.RWMutex
 	lockGetClient                  sync.RWMutex
-	lockGetClientById              sync.RWMutex
+	lockGetClientByID              sync.RWMutex
 	lockGetClientSecret            sync.RWMutex
 	lockGetClientServiceAccount    sync.RWMutex
 	lockGetClients                 sync.RWMutex
@@ -329,23 +329,23 @@ type IAMClientMock struct {
 }
 
 // AddRealmRoleToUser calls AddRealmRoleToUserFunc.
-func (mock *IAMClientMock) AddRealmRoleToUser(accessToken string, userId string, role gocloak.Role) error {
+func (mock *IAMClientMock) AddRealmRoleToUser(accessToken string, userID string, role gocloak.Role) error {
 	if mock.AddRealmRoleToUserFunc == nil {
 		panic("IAMClientMock.AddRealmRoleToUserFunc: method is nil but IAMClient.AddRealmRoleToUser was just called")
 	}
 	callInfo := struct {
 		AccessToken string
-		UserId      string
+		UserID      string
 		Role        gocloak.Role
 	}{
 		AccessToken: accessToken,
-		UserId:      userId,
+		UserID:      userID,
 		Role:        role,
 	}
 	mock.lockAddRealmRoleToUser.Lock()
 	mock.calls.AddRealmRoleToUser = append(mock.calls.AddRealmRoleToUser, callInfo)
 	mock.lockAddRealmRoleToUser.Unlock()
-	return mock.AddRealmRoleToUserFunc(accessToken, userId, role)
+	return mock.AddRealmRoleToUserFunc(accessToken, userID, role)
 }
 
 // AddRealmRoleToUserCalls gets all the calls that were made to AddRealmRoleToUser.
@@ -353,12 +353,12 @@ func (mock *IAMClientMock) AddRealmRoleToUser(accessToken string, userId string,
 //     len(mockedIAMClient.AddRealmRoleToUserCalls())
 func (mock *IAMClientMock) AddRealmRoleToUserCalls() []struct {
 	AccessToken string
-	UserId      string
+	UserID      string
 	Role        gocloak.Role
 } {
 	var calls []struct {
 		AccessToken string
-		UserId      string
+		UserID      string
 		Role        gocloak.Role
 	}
 	mock.lockAddRealmRoleToUser.RLock()
@@ -566,32 +566,32 @@ func (mock *IAMClientMock) GetCachedTokenCalls() []struct {
 }
 
 // GetClient calls GetClientFunc.
-func (mock *IAMClientMock) GetClient(clientId string, accessToken string) (*gocloak.Client, error) {
+func (mock *IAMClientMock) GetClient(clientID string, accessToken string) (*gocloak.Client, error) {
 	if mock.GetClientFunc == nil {
 		panic("IAMClientMock.GetClientFunc: method is nil but IAMClient.GetClient was just called")
 	}
 	callInfo := struct {
-		ClientId    string
+		ClientID    string
 		AccessToken string
 	}{
-		ClientId:    clientId,
+		ClientID:    clientID,
 		AccessToken: accessToken,
 	}
 	mock.lockGetClient.Lock()
 	mock.calls.GetClient = append(mock.calls.GetClient, callInfo)
 	mock.lockGetClient.Unlock()
-	return mock.GetClientFunc(clientId, accessToken)
+	return mock.GetClientFunc(clientID, accessToken)
 }
 
 // GetClientCalls gets all the calls that were made to GetClient.
 // Check the length with:
 //     len(mockedIAMClient.GetClientCalls())
 func (mock *IAMClientMock) GetClientCalls() []struct {
-	ClientId    string
+	ClientID    string
 	AccessToken string
 } {
 	var calls []struct {
-		ClientId    string
+		ClientID    string
 		AccessToken string
 	}
 	mock.lockGetClient.RLock()
@@ -600,10 +600,10 @@ func (mock *IAMClientMock) GetClientCalls() []struct {
 	return calls
 }
 
-// GetClientById calls GetClientByIdFunc.
-func (mock *IAMClientMock) GetClientById(id string, accessToken string) (*gocloak.Client, error) {
-	if mock.GetClientByIdFunc == nil {
-		panic("IAMClientMock.GetClientByIdFunc: method is nil but IAMClient.GetClientById was just called")
+// GetClientByID calls GetClientByIDFunc.
+func (mock *IAMClientMock) GetClientByID(id string, accessToken string) (*gocloak.Client, error) {
+	if mock.GetClientByIDFunc == nil {
+		panic("IAMClientMock.GetClientByIDFunc: method is nil but IAMClient.GetClientByID was just called")
 	}
 	callInfo := struct {
 		ID          string
@@ -612,16 +612,16 @@ func (mock *IAMClientMock) GetClientById(id string, accessToken string) (*gocloa
 		ID:          id,
 		AccessToken: accessToken,
 	}
-	mock.lockGetClientById.Lock()
-	mock.calls.GetClientById = append(mock.calls.GetClientById, callInfo)
-	mock.lockGetClientById.Unlock()
-	return mock.GetClientByIdFunc(id, accessToken)
+	mock.lockGetClientByID.Lock()
+	mock.calls.GetClientByID = append(mock.calls.GetClientByID, callInfo)
+	mock.lockGetClientByID.Unlock()
+	return mock.GetClientByIDFunc(id, accessToken)
 }
 
-// GetClientByIdCalls gets all the calls that were made to GetClientById.
+// GetClientByIDCalls gets all the calls that were made to GetClientByID.
 // Check the length with:
-//     len(mockedIAMClient.GetClientByIdCalls())
-func (mock *IAMClientMock) GetClientByIdCalls() []struct {
+//     len(mockedIAMClient.GetClientByIDCalls())
+func (mock *IAMClientMock) GetClientByIDCalls() []struct {
 	ID          string
 	AccessToken string
 } {
@@ -629,39 +629,39 @@ func (mock *IAMClientMock) GetClientByIdCalls() []struct {
 		ID          string
 		AccessToken string
 	}
-	mock.lockGetClientById.RLock()
-	calls = mock.calls.GetClientById
-	mock.lockGetClientById.RUnlock()
+	mock.lockGetClientByID.RLock()
+	calls = mock.calls.GetClientByID
+	mock.lockGetClientByID.RUnlock()
 	return calls
 }
 
 // GetClientSecret calls GetClientSecretFunc.
-func (mock *IAMClientMock) GetClientSecret(internalClientId string, accessToken string) (string, error) {
+func (mock *IAMClientMock) GetClientSecret(internalClientID string, accessToken string) (string, error) {
 	if mock.GetClientSecretFunc == nil {
 		panic("IAMClientMock.GetClientSecretFunc: method is nil but IAMClient.GetClientSecret was just called")
 	}
 	callInfo := struct {
-		InternalClientId string
+		InternalClientID string
 		AccessToken      string
 	}{
-		InternalClientId: internalClientId,
+		InternalClientID: internalClientID,
 		AccessToken:      accessToken,
 	}
 	mock.lockGetClientSecret.Lock()
 	mock.calls.GetClientSecret = append(mock.calls.GetClientSecret, callInfo)
 	mock.lockGetClientSecret.Unlock()
-	return mock.GetClientSecretFunc(internalClientId, accessToken)
+	return mock.GetClientSecretFunc(internalClientID, accessToken)
 }
 
 // GetClientSecretCalls gets all the calls that were made to GetClientSecret.
 // Check the length with:
 //     len(mockedIAMClient.GetClientSecretCalls())
 func (mock *IAMClientMock) GetClientSecretCalls() []struct {
-	InternalClientId string
+	InternalClientID string
 	AccessToken      string
 } {
 	var calls []struct {
-		InternalClientId string
+		InternalClientID string
 		AccessToken      string
 	}
 	mock.lockGetClientSecret.RLock()
@@ -862,32 +862,32 @@ func (mock *IAMClientMock) GetTokenCalls() []struct {
 }
 
 // IsClientExist calls IsClientExistFunc.
-func (mock *IAMClientMock) IsClientExist(clientId string, accessToken string) (string, error) {
+func (mock *IAMClientMock) IsClientExist(clientID string, accessToken string) (string, error) {
 	if mock.IsClientExistFunc == nil {
 		panic("IAMClientMock.IsClientExistFunc: method is nil but IAMClient.IsClientExist was just called")
 	}
 	callInfo := struct {
-		ClientId    string
+		ClientID    string
 		AccessToken string
 	}{
-		ClientId:    clientId,
+		ClientID:    clientID,
 		AccessToken: accessToken,
 	}
 	mock.lockIsClientExist.Lock()
 	mock.calls.IsClientExist = append(mock.calls.IsClientExist, callInfo)
 	mock.lockIsClientExist.Unlock()
-	return mock.IsClientExistFunc(clientId, accessToken)
+	return mock.IsClientExistFunc(clientID, accessToken)
 }
 
 // IsClientExistCalls gets all the calls that were made to IsClientExist.
 // Check the length with:
 //     len(mockedIAMClient.IsClientExistCalls())
 func (mock *IAMClientMock) IsClientExistCalls() []struct {
-	ClientId    string
+	ClientID    string
 	AccessToken string
 } {
 	var calls []struct {
-		ClientId    string
+		ClientID    string
 		AccessToken string
 	}
 	mock.lockIsClientExist.RLock()
@@ -897,21 +897,21 @@ func (mock *IAMClientMock) IsClientExistCalls() []struct {
 }
 
 // IsOwner calls IsOwnerFunc.
-func (mock *IAMClientMock) IsOwner(client *gocloak.Client, userId string) bool {
+func (mock *IAMClientMock) IsOwner(client *gocloak.Client, userID string) bool {
 	if mock.IsOwnerFunc == nil {
 		panic("IAMClientMock.IsOwnerFunc: method is nil but IAMClient.IsOwner was just called")
 	}
 	callInfo := struct {
 		Client *gocloak.Client
-		UserId string
+		UserID string
 	}{
 		Client: client,
-		UserId: userId,
+		UserID: userID,
 	}
 	mock.lockIsOwner.Lock()
 	mock.calls.IsOwner = append(mock.calls.IsOwner, callInfo)
 	mock.lockIsOwner.Unlock()
-	return mock.IsOwnerFunc(client, userId)
+	return mock.IsOwnerFunc(client, userID)
 }
 
 // IsOwnerCalls gets all the calls that were made to IsOwner.
@@ -919,11 +919,11 @@ func (mock *IAMClientMock) IsOwner(client *gocloak.Client, userId string) bool {
 //     len(mockedIAMClient.IsOwnerCalls())
 func (mock *IAMClientMock) IsOwnerCalls() []struct {
 	Client *gocloak.Client
-	UserId string
+	UserID string
 } {
 	var calls []struct {
 		Client *gocloak.Client
-		UserId string
+		UserID string
 	}
 	mock.lockIsOwner.RLock()
 	calls = mock.calls.IsOwner
@@ -932,21 +932,21 @@ func (mock *IAMClientMock) IsOwnerCalls() []struct {
 }
 
 // IsSameOrg calls IsSameOrgFunc.
-func (mock *IAMClientMock) IsSameOrg(client *gocloak.Client, orgId string) bool {
+func (mock *IAMClientMock) IsSameOrg(client *gocloak.Client, orgID string) bool {
 	if mock.IsSameOrgFunc == nil {
 		panic("IAMClientMock.IsSameOrgFunc: method is nil but IAMClient.IsSameOrg was just called")
 	}
 	callInfo := struct {
 		Client *gocloak.Client
-		OrgId  string
+		OrgID  string
 	}{
 		Client: client,
-		OrgId:  orgId,
+		OrgID:  orgID,
 	}
 	mock.lockIsSameOrg.Lock()
 	mock.calls.IsSameOrg = append(mock.calls.IsSameOrg, callInfo)
 	mock.lockIsSameOrg.Unlock()
-	return mock.IsSameOrgFunc(client, orgId)
+	return mock.IsSameOrgFunc(client, orgID)
 }
 
 // IsSameOrgCalls gets all the calls that were made to IsSameOrg.
@@ -954,11 +954,11 @@ func (mock *IAMClientMock) IsSameOrg(client *gocloak.Client, orgId string) bool 
 //     len(mockedIAMClient.IsSameOrgCalls())
 func (mock *IAMClientMock) IsSameOrgCalls() []struct {
 	Client *gocloak.Client
-	OrgId  string
+	OrgID  string
 } {
 	var calls []struct {
 		Client *gocloak.Client
-		OrgId  string
+		OrgID  string
 	}
 	mock.lockIsSameOrg.RLock()
 	calls = mock.calls.IsSameOrg
@@ -1037,23 +1037,23 @@ func (mock *IAMClientMock) UpdateServiceAccountUserCalls() []struct {
 }
 
 // UserHasRealmRole calls UserHasRealmRoleFunc.
-func (mock *IAMClientMock) UserHasRealmRole(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
+func (mock *IAMClientMock) UserHasRealmRole(accessToken string, userID string, roleName string) (*gocloak.Role, error) {
 	if mock.UserHasRealmRoleFunc == nil {
 		panic("IAMClientMock.UserHasRealmRoleFunc: method is nil but IAMClient.UserHasRealmRole was just called")
 	}
 	callInfo := struct {
 		AccessToken string
-		UserId      string
+		UserID      string
 		RoleName    string
 	}{
 		AccessToken: accessToken,
-		UserId:      userId,
+		UserID:      userID,
 		RoleName:    roleName,
 	}
 	mock.lockUserHasRealmRole.Lock()
 	mock.calls.UserHasRealmRole = append(mock.calls.UserHasRealmRole, callInfo)
 	mock.lockUserHasRealmRole.Unlock()
-	return mock.UserHasRealmRoleFunc(accessToken, userId, roleName)
+	return mock.UserHasRealmRoleFunc(accessToken, userID, roleName)
 }
 
 // UserHasRealmRoleCalls gets all the calls that were made to UserHasRealmRole.
@@ -1061,12 +1061,12 @@ func (mock *IAMClientMock) UserHasRealmRole(accessToken string, userId string, r
 //     len(mockedIAMClient.UserHasRealmRoleCalls())
 func (mock *IAMClientMock) UserHasRealmRoleCalls() []struct {
 	AccessToken string
-	UserId      string
+	UserID      string
 	RoleName    string
 } {
 	var calls []struct {
 		AccessToken string
-		UserId      string
+		UserID      string
 		RoleName    string
 	}
 	mock.lockUserHasRealmRole.RLock()

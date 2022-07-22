@@ -17,16 +17,16 @@ type CentralRequest struct {
 	MultiAZ        bool   `json:"multi_az"`
 	Name           string `json:"name" gorm:"index"`
 	Status         string `json:"status" gorm:"index"`
-	SubscriptionId string `json:"subscription_id"`
+	SubscriptionID string `json:"subscription_id"`
 	Owner          string `json:"owner" gorm:"index"` // TODO: ocm owner?
-	OwnerAccountId string `json:"owner_account_id"`
-	OwnerUserId    string `json:"owner_user_id"`
+	OwnerAccountID string `json:"owner_account_id"`
+	OwnerUserID    string `json:"owner_user_id"`
 	// The DNS host (domain) of the Central service
 	Host           string `json:"host"`
-	OrganisationId string `json:"organisation_id" gorm:"index"`
+	OrganisationID string `json:"organisation_id" gorm:"index"`
 	FailedReason   string `json:"failed_reason"`
-	// PlacementId field should be updated every time when a CentralRequest is assigned to an OSD cluster (even if it's the same one again)
-	PlacementId string `json:"placement_id"`
+	// PlacementID field should be updated every time when a CentralRequest is assigned to an OSD cluster (even if it's the same one again)
+	PlacementID string `json:"placement_id"`
 
 	DesiredCentralVersion         string `json:"desired_central_version"`
 	ActualCentralVersion          string `json:"actual_central_version"`
@@ -45,7 +45,7 @@ type CentralRequest struct {
 	// Namespace is the namespace of the provisioned central instance.
 	// We store this in the database to ensure that old centrals whose namespace contained "owner-<central-id>" information will continue to work.
 	Namespace        string `json:"namespace"`
-	RoutesCreationId string `json:"routes_creation_id"`
+	RoutesCreationID string `json:"routes_creation_id"`
 	// DeletionTimestamp stores the timestamp of the DELETE api call for the resource
 	DeletionTimestamp *time.Time `json:"deletionTimestamp"`
 }

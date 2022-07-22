@@ -12,11 +12,11 @@ func HandleError(r *http.Request, w http.ResponseWriter, err *errors.ServiceErro
 	ctx := r.Context()
 	ulog := logger.NewUHCLogger(ctx)
 	operationID := logger.GetOperationID(ctx)
-	if err.HttpCode >= 400 && err.HttpCode <= 499 {
+	if err.HTTPCode >= 400 && err.HTTPCode <= 499 {
 		ulog.Infof(err.Error())
 	} else {
 		ulog.Error(err)
 	}
 
-	WriteJSONResponse(w, err.HttpCode, err.AsOpenapiError(operationID, r.RequestURI))
+	WriteJSONResponse(w, err.HTTPCode, err.AsOpenapiError(operationID, r.RequestURI))
 }

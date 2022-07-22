@@ -23,7 +23,7 @@ type Worker interface {
 
 // BaseWorker ...
 type BaseWorker struct {
-	Id           string
+	ID           string
 	WorkerType   string
 	Reconciler   Reconciler
 	isRunning    bool
@@ -33,7 +33,7 @@ type BaseWorker struct {
 
 // GetID ...
 func (b *BaseWorker) GetID() string {
-	return b.Id
+	return b.ID
 }
 
 // GetWorkerType ...
@@ -69,7 +69,7 @@ func (b *BaseWorker) StartWorker(w Worker) {
 
 // StopWorker ...
 func (b *BaseWorker) StopWorker(w Worker) {
-	glog.Infof("Stopping reconciling worker id = %s", b.Id)
+	glog.Infof("Stopping reconciling worker id = %s", b.ID)
 	b.Reconciler.Stop(w)
 	metrics.ResetMetricsForDinosaurManagers()
 	metrics.SetLeaderWorkerMetric(b.WorkerType, false)

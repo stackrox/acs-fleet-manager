@@ -3,7 +3,7 @@ package quota
 import (
 	"fmt"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
+	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
@@ -14,14 +14,14 @@ import (
 // QuotaManagementListService ...
 type QuotaManagementListService struct {
 	connectionFactory   *db.ConnectionFactory
-	quotaManagementList *quota_management.QuotaManagementListConfig
+	quotaManagementList *quotamanagement.QuotaManagementListConfig
 }
 
 // CheckIfQuotaIsDefinedForInstanceType ...
 func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 	username := dinosaur.Owner
-	orgId := dinosaur.OrganisationId
-	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(orgId)
+	orgID := dinosaur.OrganisationID
+	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetByID(orgID)
 	userIsRegistered := false
 	if orgFound && org.IsUserRegistered(username) {
 		userIsRegistered = true
@@ -47,14 +47,14 @@ func (q QuotaManagementListService) ReserveQuota(dinosaur *dbapi.CentralRequest,
 	}
 
 	username := dinosaur.Owner
-	orgId := dinosaur.OrganisationId
-	var quotaManagementListItem quota_management.QuotaManagementListItem
-	message := fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, quota_management.GetDefaultMaxAllowedInstances())
-	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(orgId)
+	orgID := dinosaur.OrganisationID
+	var quotaManagementListItem quotamanagement.QuotaManagementListItem
+	message := fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, quotamanagement.GetDefaultMaxAllowedInstances())
+	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetByID(orgID)
 	filterByOrd := false
 	if orgFound && org.IsUserRegistered(username) {
 		quotaManagementListItem = org
-		message = fmt.Sprintf("Organization '%s' has reached a maximum number of %d allowed instances.", orgId, org.GetMaxAllowedInstances())
+		message = fmt.Sprintf("Organization '%s' has reached a maximum number of %d allowed instances.", orgID, org.GetMaxAllowedInstances())
 		filterByOrd = true
 	} else {
 		user, userFound := q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(username)
@@ -70,7 +70,7 @@ func (q QuotaManagementListService) ReserveQuota(dinosaur *dbapi.CentralRequest,
 		Where("instance_type = ?", instanceType.String())
 
 	if instanceType == types.STANDARD && filterByOrd {
-		dbConn = dbConn.Where("organisation_id = ?", orgId)
+		dbConn = dbConn.Where("organisation_id = ?", orgID)
 	} else {
 		dbConn = dbConn.Where("owner = ?", username)
 	}
@@ -88,7 +88,7 @@ func (q QuotaManagementListService) ReserveQuota(dinosaur *dbapi.CentralRequest,
 	}
 
 	if instanceType == types.EVAL && quotaManagementListItem == nil {
-		if totalInstanceCount >= quota_management.GetDefaultMaxAllowedInstances() {
+		if totalInstanceCount >= quotamanagement.GetDefaultMaxAllowedInstances() {
 			return "", errors.MaximumAllowedInstanceReached(message)
 		}
 		return "", nil
@@ -98,6 +98,6 @@ func (q QuotaManagementListService) ReserveQuota(dinosaur *dbapi.CentralRequest,
 }
 
 // DeleteQuota ...
-func (q QuotaManagementListService) DeleteQuota(SubscriptionId string) *errors.ServiceError {
+func (q QuotaManagementListService) DeleteQuota(SubscriptionID string) *errors.ServiceError {
 	return nil // NOOP
 }

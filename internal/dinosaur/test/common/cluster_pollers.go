@@ -56,14 +56,14 @@ func WaitForClusterIDToBeAssigned(db *db.ConnectionFactory, clusterService *serv
 }
 
 // WaitForClusterToBeDeleted - Awaits for the specified cluster to be deleted
-func WaitForClusterToBeDeleted(db *db.ConnectionFactory, clusterService *services.ClusterService, clusterId string) error {
+func WaitForClusterToBeDeleted(db *db.ConnectionFactory, clusterService *services.ClusterService, clusterID string) error {
 	return NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, clusterDeleteTimeout).
-		RetryLogMessagef("Waiting for cluster '%s' to be deleted", clusterId).
+		RetryLogMessagef("Waiting for cluster '%s' to be deleted", clusterID).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			clusterFromDb, findClusterByIdErr := (*clusterService).FindClusterByID(clusterId)
-			if findClusterByIdErr != nil {
-				return false, findClusterByIdErr
+			clusterFromDb, findClusterByIDErr := (*clusterService).FindClusterByID(clusterID)
+			if findClusterByIDErr != nil {
+				return false, findClusterByIDErr
 			}
 			return clusterFromDb == nil, nil // cluster has been deleted
 		}).
@@ -71,7 +71,7 @@ func WaitForClusterToBeDeleted(db *db.ConnectionFactory, clusterService *service
 }
 
 // WaitForClusterStatus - Awaits for the cluster to reach the desired status
-func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.ClusterService, clusterId string, desiredStatus api.ClusterStatus) (cluster *api.Cluster, err error) {
+func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.ClusterService, clusterID string, desiredStatus api.ClusterStatus) (cluster *api.Cluster, err error) {
 	pollingInterval := defaultPollInterval
 	if desiredStatus.String() != api.ClusterReady.String() {
 		pollingInterval = 1 * time.Second
@@ -79,15 +79,15 @@ func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.Clu
 	currentStatus := ""
 	err = NewPollerBuilder(db).
 		IntervalAndTimeout(pollingInterval, 120*time.Minute).
-		DumpCluster(clusterId).
+		DumpCluster(clusterID).
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentStatus == "" {
-				return fmt.Sprintf("Waiting for cluster '%s' to reach status '%s'", clusterId, desiredStatus.String())
+				return fmt.Sprintf("Waiting for cluster '%s' to reach status '%s'", clusterID, desiredStatus.String())
 			}
-			return fmt.Sprintf("Waiting for cluster '%s' to reach status '%s' (current status: '%s')", clusterId, desiredStatus.String(), currentStatus)
+			return fmt.Sprintf("Waiting for cluster '%s' to reach status '%s' (current status: '%s')", clusterID, desiredStatus.String(), currentStatus)
 		}).
 		OnRetry(func(attempt int, maxRetries int) (bool, error) {
-			foundCluster, err := (*clusterService).FindClusterByID(clusterId)
+			foundCluster, err := (*clusterService).FindClusterByID(clusterID)
 			if err != nil {
 				return true, err
 			}
@@ -112,7 +112,7 @@ func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.Clu
 					}
 				}
 
-				return false, errors.Errorf("Waiting for cluster '%s' to reach status '%s' but reached status '%s' instead. Details: %s", clusterId, desiredStatus.String(), foundCluster.Status.String(), details)
+				return false, errors.Errorf("Waiting for cluster '%s' to reach status '%s' but reached status '%s' instead. Details: %s", clusterID, desiredStatus.String(), foundCluster.Status.String(), details)
 			}
 
 			return foundCluster.Status.CompareTo(desiredStatus) >= 0, nil

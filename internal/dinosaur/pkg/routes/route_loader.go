@@ -62,8 +62,8 @@ func NewRouteLoader(s options) environments.RouteLoader {
 
 // AddRoutes ...
 func (s *options) AddRoutes(mainRouter *mux.Router) error {
-	basePath := fmt.Sprintf("%s/%s", routes.ApiEndpoint, routes.DinosaursFleetManagementApiPrefix)
-	err := s.buildApiBaseRouter(mainRouter, basePath, "fleet-manager.yaml")
+	basePath := fmt.Sprintf("%s/%s", routes.APIEndpoint, routes.DinosaursFleetManagementAPIPrefix)
+	err := s.buildAPIBaseRouter(mainRouter, basePath, "fleet-manager.yaml")
 	if err != nil {
 		return err
 	}
@@ -71,8 +71,8 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	return nil
 }
 
-func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, openApiFilePath string) error {
-	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, openApiFilePath)
+func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, openAPIFilePath string) error {
+	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, openAPIFilePath)
 	if err != nil {
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}

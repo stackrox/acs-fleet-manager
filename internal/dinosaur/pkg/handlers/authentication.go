@@ -38,10 +38,10 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, IAMConfig *iam.
 			KeysFile(ServerConfig.JwksFile).                   // ocm JWK backup JSON web token signing certificates
 			KeysURL(IAMConfig.RedhatSSORealm.JwksEndpointURI). // sso JWK Cert URL
 			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
-			Service(errors.ERROR_CODE_PREFIX).
-			Public(fmt.Sprintf("^%s/%s/?$", routes.ApiEndpoint, routes.DinosaursFleetManagementApiPrefix)).
-			Public(fmt.Sprintf("^%s/%s/%s/?$", routes.ApiEndpoint, routes.DinosaursFleetManagementApiPrefix, routes.Version)).
-			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", routes.ApiEndpoint, routes.DinosaursFleetManagementApiPrefix, routes.Version)).
-			Public(fmt.Sprintf("^%s/%s/%s/errors/?[0-9]*", routes.ApiEndpoint, routes.DinosaursFleetManagementApiPrefix, routes.Version)),
+			Service(errors.ErrorCodePrefix).
+			Public(fmt.Sprintf("^%s/%s/?$", routes.APIEndpoint, routes.DinosaursFleetManagementAPIPrefix)).
+			Public(fmt.Sprintf("^%s/%s/%s/?$", routes.APIEndpoint, routes.DinosaursFleetManagementAPIPrefix, routes.Version)).
+			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", routes.APIEndpoint, routes.DinosaursFleetManagementAPIPrefix, routes.Version)).
+			Public(fmt.Sprintf("^%s/%s/%s/errors/?[0-9]*", routes.APIEndpoint, routes.DinosaursFleetManagementAPIPrefix, routes.Version)),
 		nil
 }

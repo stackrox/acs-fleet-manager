@@ -30,7 +30,7 @@ func runGet(env *environments.Env, cmd *cobra.Command, _ []string) {
 	var dinosaurService services.DinosaurService
 	env.MustResolveAll(&dinosaurService)
 
-	dinosaurRequest, err := dinosaurService.GetById(id)
+	dinosaurRequest, err := dinosaurService.GetByID(id)
 	if err != nil {
 		glog.Fatalf("Unable to get dinosaur request: %s", err.Error())
 	}

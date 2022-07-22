@@ -2,13 +2,13 @@ package services
 
 import "github.com/pkg/errors"
 
-// OP ...
+// Op ...
 const (
-	OP = iota
-	BRACE
-	LITERAL
-	QUOTED_LITERAL
-	NO_TOKEN
+	Op = iota
+	Brace
+	Literal
+	QuotedLiteral
+	NoToken
 )
 
 // Token ...
@@ -40,7 +40,7 @@ var _ Scanner = &scanner{}
 // Init ...
 func (s *scanner) Init(txt string) {
 	var tokens []Token
-	currentTokenType := NO_TOKEN
+	currentTokenType := NoToken
 
 	quoted := false
 	escaped := false
@@ -60,7 +60,7 @@ func (s *scanner) Init(txt string) {
 			)
 		}
 		tokens = nil
-		currentTokenType = NO_TOKEN
+		currentTokenType = NoToken
 	}
 
 	// extract all the tokens from the string
@@ -69,7 +69,7 @@ func (s *scanner) Init(txt string) {
 		case ' ':
 			if quoted {
 				tokens = append(tokens, Token{
-					TokenType: LITERAL,
+					TokenType: Literal,
 					Value:     " ",
 					Position:  i,
 				})
@@ -82,7 +82,7 @@ func (s *scanner) Init(txt string) {
 			// found closebrace Token
 			sendCurrentTokens()
 			s.tokens = append(s.tokens, Token{
-				TokenType: BRACE,
+				TokenType: Brace,
 				Value:     string(currentChar),
 				Position:  i,
 			})
@@ -92,30 +92,30 @@ func (s *scanner) Init(txt string) {
 			fallthrough
 		case '>':
 			// found op Token
-			if currentTokenType != NO_TOKEN && currentTokenType != OP {
+			if currentTokenType != NoToken && currentTokenType != Op {
 				sendCurrentTokens()
 			}
 			tokens = append(tokens, Token{
-				TokenType: OP,
+				TokenType: Op,
 				Value:     string(currentChar),
 				Position:  i,
 			})
-			currentTokenType = OP
+			currentTokenType = Op
 		case '\\':
 			if quoted {
 				escaped = true
 				tokens = append(tokens, Token{
-					TokenType: QUOTED_LITERAL,
+					TokenType: QuotedLiteral,
 					Value:     "\\",
 					Position:  i,
 				})
 			} else {
-				if currentTokenType != NO_TOKEN && currentTokenType != LITERAL && currentTokenType != QUOTED_LITERAL {
+				if currentTokenType != NoToken && currentTokenType != Literal && currentTokenType != QuotedLiteral {
 					sendCurrentTokens()
 				}
-				currentTokenType = LITERAL
+				currentTokenType = Literal
 				tokens = append(tokens, Token{
-					TokenType: LITERAL,
+					TokenType: Literal,
 					Value:     `\`,
 					Position:  i,
 				})
@@ -123,34 +123,34 @@ func (s *scanner) Init(txt string) {
 		case '\'':
 			if quoted {
 				tokens = append(tokens, Token{
-					TokenType: QUOTED_LITERAL,
+					TokenType: QuotedLiteral,
 					Value:     "'",
 					Position:  i,
 				})
 				if !escaped {
 					sendCurrentTokens()
 					quoted = false
-					currentTokenType = NO_TOKEN
+					currentTokenType = NoToken
 				}
 				escaped = false
 			} else {
 				sendCurrentTokens()
 				quoted = true
-				currentTokenType = QUOTED_LITERAL
+				currentTokenType = QuotedLiteral
 				tokens = append(tokens, Token{
-					TokenType: OP,
+					TokenType: Op,
 					Value:     "'",
 					Position:  i,
 				})
 			}
 			// none of the previous: LITERAL
 		default:
-			if currentTokenType != NO_TOKEN && currentTokenType != LITERAL && currentTokenType != QUOTED_LITERAL {
+			if currentTokenType != NoToken && currentTokenType != Literal && currentTokenType != QuotedLiteral {
 				sendCurrentTokens()
 			}
-			currentTokenType = LITERAL
+			currentTokenType = Literal
 			tokens = append(tokens, Token{
-				TokenType: LITERAL,
+				TokenType: Literal,
 				Value:     string(currentChar),
 				Position:  i,
 			})

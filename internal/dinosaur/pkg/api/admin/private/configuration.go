@@ -26,6 +26,7 @@ func (c contextKey) String() string {
 	return "auth " + string(c)
 }
 
+// ContextOAuth2 ...
 var (
 	// ContextOAuth2 takes an oauth2.TokenSource as authentication for the request.
 	ContextOAuth2 = contextKey("token")

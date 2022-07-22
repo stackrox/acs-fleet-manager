@@ -7,8 +7,8 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 )
 
-// DiffAsJson ...
-func DiffAsJson(a interface{}, b interface{}, aName string, bName string) string {
+// DiffAsJSON ...
+func DiffAsJSON(a interface{}, b interface{}, aName string, bName string) string {
 	aData, err := json.MarshalIndent(a, "", "  ")
 	if err != nil {
 		return fmt.Sprintf("could not marshal %s to json: %v", aName, err)

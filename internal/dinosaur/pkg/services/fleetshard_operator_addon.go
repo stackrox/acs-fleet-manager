@@ -19,11 +19,11 @@ const (
 	FleetshardOperatorRoleName = "fleetshard_operator"
 
 	// parameter names for the fleetshard-operator service account
-	fleetshardOperatorParamSSOBaseUrl           = "sso-auth-server-url"
-	fleetshardOperatorParamServiceAccountId     = "sso-client-id"
+	fleetshardOperatorParamSSOBaseURL           = "sso-auth-server-url"
+	fleetshardOperatorParamServiceAccountID     = "sso-client-id"
 	fleetshardOperatorParamServiceAccountSecret = "sso-secret"
 	// parameter names for the cluster id
-	fleetshardOperatorParamClusterId = "cluster-id"
+	fleetshardOperatorParamClusterID = "cluster-id"
 	// parameter names for the control plane url
 	fleetshardOperatorParamControlPlaneBaseURL = "control-plane-url"
 	// parameter names for fleetshardoperator synchronizer
@@ -118,40 +118,40 @@ func (o *fleetshardOperatorAddon) getAddonParams(cluster api.Cluster) ([]types.P
 	return params, nil
 }
 
-func (o *fleetshardOperatorAddon) provisionServiceAccount(clusterId string) (*api.ServiceAccount, *errors.ServiceError) {
-	glog.V(5).Infof("Provisioning service account for cluster %s", clusterId)
-	return o.IAMService.RegisterAcsFleetshardOperatorServiceAccount(clusterId)
+func (o *fleetshardOperatorAddon) provisionServiceAccount(clusterID string) (*api.ServiceAccount, *errors.ServiceError) {
+	glog.V(5).Infof("Provisioning service account for cluster %s", clusterID)
+	return o.IAMService.RegisterAcsFleetshardOperatorServiceAccount(clusterID)
 }
 
-func (o *fleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []types.Parameter {
+func (o *fleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAccount, clusterID string) []types.Parameter {
 	p := []types.Parameter{
 
 		{
-			Id:    fleetshardOperatorParamSSOBaseUrl,
+			ID:    fleetshardOperatorParamSSOBaseURL,
 			Value: o.IAMConfig.RedhatSSORealm.ValidIssuerURI,
 		},
 		{
-			Id:    fleetshardOperatorParamServiceAccountId,
+			ID:    fleetshardOperatorParamServiceAccountID,
 			Value: serviceAccount.ClientID,
 		},
 		{
-			Id:    fleetshardOperatorParamServiceAccountSecret,
+			ID:    fleetshardOperatorParamServiceAccountSecret,
 			Value: serviceAccount.ClientSecret,
 		},
 		{
-			Id:    fleetshardOperatorParamControlPlaneBaseURL,
+			ID:    fleetshardOperatorParamControlPlaneBaseURL,
 			Value: o.ServerConfig.PublicHostURL,
 		},
 		{
-			Id:    fleetshardOperatorParamClusterId,
-			Value: clusterId,
+			ID:    fleetshardOperatorParamClusterID,
+			Value: clusterID,
 		},
 		{
-			Id:    fleetshardOperatorParamPollinterval,
+			ID:    fleetshardOperatorParamPollinterval,
 			Value: o.FleetShardConfig.PollInterval,
 		},
 		{
-			Id:    fleetshardOperatorParamResyncInterval,
+			ID:    fleetshardOperatorParamResyncInterval,
 			Value: o.FleetShardConfig.ResyncInterval,
 		},
 	}

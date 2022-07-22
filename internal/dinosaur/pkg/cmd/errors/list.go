@@ -51,14 +51,14 @@ func runList(cmd *cobra.Command, _ []string) {
 		svcErrors = append(svcErrors, handlers.PresentError(&errors[i], ""))
 	}
 
-	svcErrorsJson, err := json.MarshalIndent(svcErrors, "", "\t")
+	svcErrorsJSON, err := json.MarshalIndent(svcErrors, "", "\t")
 	if err != nil {
 		glog.Fatalf("failed to unmarshal struct")
 	}
 
 	// Write to stdout if filepath is not defined, otherwise save to the specified file
 	if filePath == "" {
-		glog.Infoln(string(svcErrorsJson))
+		glog.Infoln(string(svcErrorsJSON))
 	} else {
 		file, err := os.Create(filePath)
 		if err != nil {
@@ -66,7 +66,7 @@ func runList(cmd *cobra.Command, _ []string) {
 		}
 		defer file.Close()
 
-		if _, err = file.WriteString(string(svcErrorsJson)); err != nil {
+		if _, err = file.WriteString(string(svcErrorsJSON)); err != nil {
 			glog.Fatalf("failed to write to file: %v", err)
 		}
 		glog.Infof("Service errors saved to %s", file.Name())

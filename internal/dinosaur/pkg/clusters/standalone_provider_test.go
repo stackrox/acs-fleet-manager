@@ -736,7 +736,7 @@ func TestStandaloneProvider_buildFleetshardSyncSecret(t *testing.T) {
 			args: args{
 				params: []types.Parameter{
 					{
-						Id:    "id-1",
+						ID:    "id-1",
 						Value: "value-1",
 					},
 				},
@@ -776,11 +776,11 @@ func TestStandaloneProvider_buildFleetshardSyncSecret(t *testing.T) {
 			args: args{
 				params: []types.Parameter{
 					{
-						Id:    "id",
+						ID:    "id",
 						Value: "value",
 					},
 					{
-						Id:    "id-2",
+						ID:    "id-2",
 						Value: "value-2",
 					},
 				},

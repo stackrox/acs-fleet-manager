@@ -73,7 +73,7 @@ func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 
 	// Initiate sso.redhat.com auth provider groups.
 	for _, groupCreator := range groupCreators {
-		group := groupCreator(authProviderResp.Id, central.Spec.Auth)
+		group := groupCreator(authProviderResp.ID, central.Spec.Auth)
 		err = centralClient.SendGroupRequest(ctx, group)
 		if err != nil {
 			return err
@@ -111,7 +111,7 @@ func getServiceAddress(ctx context.Context, central private.ManagedCentral, clie
 	if err != nil {
 		return "", errors.Wrapf(err, "getting k8s service for central")
 	}
-	port, err := getHttpsServicePort(service)
+	port, err := getHTTPSServicePort(service)
 	if err != nil {
 		return "", err
 	}
@@ -119,7 +119,7 @@ func getServiceAddress(ctx context.Context, central private.ManagedCentral, clie
 	return address, nil
 }
 
-func getHttpsServicePort(service *core.Service) (int32, error) {
+func getHTTPSServicePort(service *core.Service) (int32, error) {
 	for _, servicePort := range service.Spec.Ports {
 		if servicePort.Name == "https" {
 			return servicePort.Port, nil

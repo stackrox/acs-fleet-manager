@@ -12,8 +12,8 @@ const (
 	ClusterOperationDelete ClusterOperation = "delete"
 
 	// The DNS prefixes used for traffic ingress
-	ManagedDinosaurIngressDnsNamePrefix = "kas"
-	DefaultIngressDnsNamePrefix         = "apps"
+	ManagedDinosaurIngressDNSNamePrefix = "kas"
+	DefaultIngressDNSNamePrefix         = "apps"
 )
 
 // String ...

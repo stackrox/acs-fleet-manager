@@ -49,7 +49,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
 						return ca, nil
 					},
-					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -87,7 +87,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return ca, nil
 					},
-					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -121,7 +121,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return ca, nil
 					},
-					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -146,7 +146,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return nil, fmt.Errorf("some errors")
 					},
-					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -222,7 +222,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
 						return ca, nil
 					},
-					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -254,7 +254,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
 						return ca, nil
 					},
-					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -291,7 +291,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
 						return ca, nil
 					},
-					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -328,7 +328,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
 						return ca, nil
 					},
-					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -360,7 +360,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
 						return ca, nil
 					},
-					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -395,7 +395,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
 						return ca, nil
 					},
-					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -420,7 +420,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
 						return ca, nil
 					},
-					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -452,7 +452,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return ca, nil
 					},
-					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -480,8 +480,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				Owner: tt.args.owner,
 			}
-			subId, err := quotaService.ReserveQuota(dinosaur, types.STANDARD)
-			gomega.Expect(subId).To(gomega.Equal(tt.want))
+			subID, err := quotaService.ReserveQuota(dinosaur, types.STANDARD)
+			gomega.Expect(subID).To(gomega.Equal(tt.want))
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 
 			if tt.wantBillingModel != "" {
@@ -502,7 +502,7 @@ func Test_Delete_Quota(t *testing.T) {
 		ocmClient ocm.Client
 	}
 	type args struct {
-		subscriptionId string
+		subscriptionID string
 	}
 	tests := []struct {
 		// name is just a description of the test
@@ -518,7 +518,7 @@ func Test_Delete_Quota(t *testing.T) {
 		{
 			name: "delete a quota by id",
 			args: args{
-				subscriptionId: "1223",
+				subscriptionID: "1223",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -532,7 +532,7 @@ func Test_Delete_Quota(t *testing.T) {
 		{
 			name: "failed to delete a quota by id",
 			args: args{
-				subscriptionId: "1223",
+				subscriptionID: "1223",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -549,7 +549,7 @@ func Test_Delete_Quota(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
-			err := quotaService.DeleteQuota(tt.args.subscriptionId)
+			err := quotaService.DeleteQuota(tt.args.subscriptionID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeleteQuota() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -573,7 +573,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns false if no quota cost exists for the dinosaur's organization",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -581,7 +581,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			want:    false,
@@ -590,7 +590,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns false if the quota cost billing model is not among the supported ones",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -604,7 +604,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			want:    false,
@@ -613,7 +613,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns true if there is at least a 'standard' quota cost billing model",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -627,7 +627,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			want:    true,
@@ -636,7 +636,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns true if there is at least a 'marketplace' quota cost billing model",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -655,7 +655,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			want:    true,
@@ -664,7 +664,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns false if there is no supported billing model with an 'allowed' value greater than 0",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -682,7 +682,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			want:    false,
@@ -691,7 +691,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns an error if it fails retrieving the organization ID",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 					return "", fmt.Errorf("error getting org")
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -699,7 +699,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			wantErr: true,
@@ -707,7 +707,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns an error if it fails retrieving quota costs",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
@@ -715,7 +715,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationId: "dinosaur-org-1"},
+				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			wantErr: true,
