@@ -1,8 +1,8 @@
-package quota_management
+package quotamanagement
 
 // Organisation ...
 type Organisation struct {
-	Id                  string      `yaml:"id"`
+	ID                  string      `yaml:"id"`
 	AnyUser             bool        `yaml:"any_user"`
 	MaxAllowedInstances int         `yaml:"max_allowed_instances"`
 	RegisteredUsers     AccountList `yaml:"registered_users"`
@@ -39,10 +39,10 @@ func (org Organisation) GetMaxAllowedInstances() int {
 // OrganisationList ...
 type OrganisationList []Organisation
 
-// GetById ...
-func (orgList OrganisationList) GetById(Id string) (Organisation, bool) {
+// GetByID ...
+func (orgList OrganisationList) GetByID(ID string) (Organisation, bool) {
 	for _, organisation := range orgList {
-		if Id == organisation.Id {
+		if ID == organisation.ID {
 			return organisation, true
 		}
 	}

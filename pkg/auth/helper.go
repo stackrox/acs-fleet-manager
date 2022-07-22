@@ -52,7 +52,7 @@ func NewAuthHelper(jwtKeyFilePath, jwtCAFilePath, ocmTokenIssuer string) (*AuthH
 }
 
 // NewAccount Creates a new account with the specified values
-func (authHelper *AuthHelper) NewAccount(username, name, email string, orgId string) (*amv1.Account, error) {
+func (authHelper *AuthHelper) NewAccount(username, name, email string, orgID string) (*amv1.Account, error) {
 	var firstName string
 	var lastName string
 	names := strings.SplitN(name, " ", 2)
@@ -70,7 +70,7 @@ func (authHelper *AuthHelper) NewAccount(username, name, email string, orgId str
 		FirstName(firstName).
 		LastName(lastName).
 		Email(email).
-		Organization(amv1.NewOrganization().ExternalID(orgId))
+		Organization(amv1.NewOrganization().ExternalID(orgID))
 
 	acct, err := builder.Build()
 	if err != nil {
@@ -110,7 +110,7 @@ func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClai
 		claims["rh-user-id"] = account.ID()
 		org, ok := account.GetOrganization()
 		if ok {
-			claims[tenantIdClaim] = org.ExternalID()
+			claims[tenantIDClaim] = org.ExternalID()
 		}
 
 		if account.Email() != "" {

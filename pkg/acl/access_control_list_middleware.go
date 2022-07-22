@@ -41,10 +41,10 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 			}
 		}
 
-		orgId, _ := claims.GetOrgId()
+		orgID, _ := claims.GetOrgID()
 
 		// If the users claim has an orgId, resources should be filtered by their organisation. Otherwise, filter them by owner.
-		context = auth.SetFilterByOrganisationContext(context, orgId != "")
+		context = auth.SetFilterByOrganisationContext(context, orgID != "")
 		*r = *r.WithContext(context)
 
 		next.ServeHTTP(w, r)

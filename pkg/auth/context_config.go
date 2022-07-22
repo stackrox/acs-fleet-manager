@@ -7,15 +7,15 @@ import (
 var (
 	// OCM token claim keys.
 	tenantUsernameClaim = "username"
-	tenantIdClaim       = "org_id"
+	tenantIDClaim       = "org_id"
 	tenantOrgAdminClaim = "is_org_admin"
 
 	// sso.redhat.com token claim keys.
 	alternateTenantUsernameClaim = "preferred_username"
-	tenantUserIdClaim            = "account_id"
+	tenantUserIDClaim            = "account_id"
 	tenantSubClaim               = "sub"
 	// Only service accounts that have been created via the service_accounts API have this claim set.
-	alternateTenantIdClaim = "rh-org-id"
+	alternateTenantIDClaim = "rh-org-id"
 )
 
 // ContextConfig ...
@@ -31,15 +31,15 @@ func NewContextConfig() *ContextConfig {
 func (c *ContextConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&tenantUsernameClaim, "tenant-username-claim", tenantUsernameClaim,
 		"Token claims key to retrieve the corresponding user principal.")
-	fs.StringVar(&tenantIdClaim, "tenant-id-claim", tenantIdClaim,
+	fs.StringVar(&tenantIDClaim, "tenant-id-claim", tenantIDClaim,
 		"Token claims key to retrieve the corresponding organisation ID.")
-	fs.StringVar(&alternateTenantIdClaim, "alternate-tenant-id-claim", alternateTenantIdClaim,
+	fs.StringVar(&alternateTenantIDClaim, "alternate-tenant-id-claim", alternateTenantIDClaim,
 		"Token claims key to retrieve the corresponding organisation ID using an alternative claim.")
 	fs.StringVar(&tenantOrgAdminClaim, "tenant-org-admin-claim", tenantOrgAdminClaim,
 		"Token claims key to retrieve the corresponding organisation admin role.")
 	fs.StringVar(&alternateTenantUsernameClaim, "alternate-tenant-username-claim", alternateTenantUsernameClaim,
 		"Token claims key to retrieve the corresponding user principal using an alternative claim.")
-	fs.StringVar(&tenantUserIdClaim, "tenant-user-id-claim", tenantUserIdClaim,
+	fs.StringVar(&tenantUserIDClaim, "tenant-user-id-claim", tenantUserIDClaim,
 		"Token claims key to retrieve the corresponding  Account ID.")
 
 }

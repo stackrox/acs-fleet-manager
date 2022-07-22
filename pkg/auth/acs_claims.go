@@ -27,29 +27,29 @@ func (c *ACSClaims) GetUsername() (string, error) {
 		tenantUsernameClaim, alternateTenantUsernameClaim)
 }
 
-// GetAccountId ...
-func (c *ACSClaims) GetAccountId() (string, error) {
-	if accountId, ok := (*c)[tenantUserIdClaim].(string); ok {
-		return accountId, nil
+// GetAccountID ...
+func (c *ACSClaims) GetAccountID() (string, error) {
+	if accountID, ok := (*c)[tenantUserIDClaim].(string); ok {
+		return accountID, nil
 	}
-	return "", fmt.Errorf("can't find %q attribute in claims", tenantUserIdClaim)
+	return "", fmt.Errorf("can't find %q attribute in claims", tenantUserIDClaim)
 }
 
-// GetOrgId ...
-func (c *ACSClaims) GetOrgId() (string, error) {
+// GetOrgID ...
+func (c *ACSClaims) GetOrgID() (string, error) {
 	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil },
-		(*c)[tenantIdClaim], (*c)[alternateTenantIdClaim]); idx != -1 {
-		if orgId, ok := val.(string); ok {
-			return orgId, nil
+		(*c)[tenantIDClaim], (*c)[alternateTenantIDClaim]); idx != -1 {
+		if orgID, ok := val.(string); ok {
+			return orgID, nil
 		}
 	}
 
 	return "", fmt.Errorf("can't find neither %q or %q attribute in claims",
-		tenantIdClaim, alternateTenantIdClaim)
+		tenantIDClaim, alternateTenantIDClaim)
 }
 
-// GetUserId ...
-func (c *ACSClaims) GetUserId() (string, error) {
+// GetUserID ...
+func (c *ACSClaims) GetUserID() (string, error) {
 	if sub, ok := (*c)[tenantSubClaim].(string); ok {
 		return sub, nil
 	}

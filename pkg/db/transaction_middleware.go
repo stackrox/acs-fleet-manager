@@ -30,7 +30,7 @@ func transactionMiddleware(db *ConnectionFactory, next http.Handler) http.Handle
 			// use default error to avoid exposing internals to users
 			err := serviceError.GeneralError("")
 			operationID := logger.GetOperationID(ctx)
-			writeJSONResponse(w, err.HttpCode, err.AsOpenapiError(operationID, r.RequestURI))
+			writeJSONResponse(w, err.HTTPCode, err.AsOpenapiError(operationID, r.RequestURI))
 			return
 		}
 

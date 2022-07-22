@@ -35,12 +35,12 @@ func NewMetricsHandler(service services.ObservatoriumService) *metricsHandler {
 
 // FederateMetrics ...
 func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) {
-	dinosaurId := strings.TrimSpace(mux.Vars(r)["id"])
-	if dinosaurId == "" {
+	dinosaurID := strings.TrimSpace(mux.Vars(r)["id"])
+	if dinosaurID == "" {
 		shared.HandleError(r, w, &errors.ServiceError{
 			Code:     errors.ErrorBadRequest,
 			Reason:   "missing path parameter: dinosaur id",
-			HttpCode: http.StatusBadRequest,
+			HTTPCode: http.StatusBadRequest,
 		})
 		return
 	}
@@ -50,7 +50,7 @@ func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) 
 		ResultType: observatorium.Query,
 	}
 
-	_, err := h.service.GetMetricsByDinosaurId(r.Context(), dinosaurMetrics, dinosaurId, params)
+	_, err := h.service.GetMetricsByDinosaurID(r.Context(), dinosaurMetrics, dinosaurID, params)
 	if err != nil {
 		if err.Code == errors.ErrorNotFound {
 			shared.HandleError(r, w, err)
@@ -60,7 +60,7 @@ func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) 
 			shared.HandleError(r, w, &errors.ServiceError{
 				Code:     err.Code,
 				Reason:   "error getting metrics",
-				HttpCode: http.StatusInternalServerError,
+				HTTPCode: http.StatusInternalServerError,
 			})
 		}
 		return
@@ -92,13 +92,13 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 			params.ResultType = observatorium.RangeQuery
 			extractMetricsQueryParams(r, &params)
 			dinosaurMetrics := &observatorium.DinosaurMetrics{}
-			foundDinosaurId, err := h.service.GetMetricsByDinosaurId(ctx, dinosaurMetrics, id, params)
+			foundDinosaurID, err := h.service.GetMetricsByDinosaurID(ctx, dinosaurMetrics, id, params)
 			if err != nil {
 				return nil, err
 			}
 			metricList := public.MetricsRangeQueryList{
 				Kind: "MetricsRangeQueryList",
-				Id:   foundDinosaurId,
+				Id:   foundDinosaurID,
 			}
 			metricsResult, err := presenters.PresentMetricsByRangeQuery(dinosaurMetrics)
 			if err != nil {
@@ -122,13 +122,13 @@ func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.
 			params.ResultType = observatorium.Query
 			extractMetricsQueryParams(r, &params)
 			dinosaurMetrics := &observatorium.DinosaurMetrics{}
-			foundDinosaurId, err := h.service.GetMetricsByDinosaurId(ctx, dinosaurMetrics, id, params)
+			foundDinosaurID, err := h.service.GetMetricsByDinosaurID(ctx, dinosaurMetrics, id, params)
 			if err != nil {
 				return nil, err
 			}
 			metricList := public.MetricsInstantQueryList{
 				Kind: "MetricsInstantQueryList",
-				Id:   foundDinosaurId,
+				Id:   foundDinosaurID,
 			}
 			metricsResult, err := presenters.PresentMetricsByInstantQuery(dinosaurMetrics)
 			if err != nil {

@@ -1,4 +1,4 @@
-package quota_management
+package quotamanagement
 
 // Account ...
 type Account struct {

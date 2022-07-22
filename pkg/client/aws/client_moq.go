@@ -21,7 +21,7 @@ var _ Client = &ClientMock{}
 // 			ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
 // 				panic("mock out the ChangeResourceRecordSets method")
 // 			},
-// 			GetChangeFunc: func(changeId string) (*route53.GetChangeOutput, error) {
+// 			GetChangeFunc: func(changeID string) (*route53.GetChangeOutput, error) {
 // 				panic("mock out the GetChange method")
 // 			},
 // 			ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
@@ -38,7 +38,7 @@ type ClientMock struct {
 	ChangeResourceRecordSetsFunc func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
 
 	// GetChangeFunc mocks the GetChange method.
-	GetChangeFunc func(changeId string) (*route53.GetChangeOutput, error)
+	GetChangeFunc func(changeID string) (*route53.GetChangeOutput, error)
 
 	// ListHostedZonesByNameInputFunc mocks the ListHostedZonesByNameInput method.
 	ListHostedZonesByNameInputFunc func(dnsName string) (*route53.ListHostedZonesByNameOutput, error)
@@ -54,8 +54,8 @@ type ClientMock struct {
 		}
 		// GetChange holds details about calls to the GetChange method.
 		GetChange []struct {
-			// ChangeId is the changeId argument value.
-			ChangeId string
+			// ChangeID is the changeID argument value.
+			ChangeID string
 		}
 		// ListHostedZonesByNameInput holds details about calls to the ListHostedZonesByNameInput method.
 		ListHostedZonesByNameInput []struct {
@@ -104,29 +104,29 @@ func (mock *ClientMock) ChangeResourceRecordSetsCalls() []struct {
 }
 
 // GetChange calls GetChangeFunc.
-func (mock *ClientMock) GetChange(changeId string) (*route53.GetChangeOutput, error) {
+func (mock *ClientMock) GetChange(changeID string) (*route53.GetChangeOutput, error) {
 	if mock.GetChangeFunc == nil {
 		panic("ClientMock.GetChangeFunc: method is nil but Client.GetChange was just called")
 	}
 	callInfo := struct {
-		ChangeId string
+		ChangeID string
 	}{
-		ChangeId: changeId,
+		ChangeID: changeID,
 	}
 	mock.lockGetChange.Lock()
 	mock.calls.GetChange = append(mock.calls.GetChange, callInfo)
 	mock.lockGetChange.Unlock()
-	return mock.GetChangeFunc(changeId)
+	return mock.GetChangeFunc(changeID)
 }
 
 // GetChangeCalls gets all the calls that were made to GetChange.
 // Check the length with:
 //     len(mockedClient.GetChangeCalls())
 func (mock *ClientMock) GetChangeCalls() []struct {
-	ChangeId string
+	ChangeID string
 } {
 	var calls []struct {
-		ChangeId string
+		ChangeID string
 	}
 	mock.lockGetChange.RLock()
 	calls = mock.calls.GetChange

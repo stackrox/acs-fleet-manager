@@ -59,12 +59,12 @@ func checkClusterFields(this *api.Cluster, that *api.Cluster) bool {
 }
 
 func Test_Cluster_Create(t *testing.T) {
-	testClusterInternalId := "test-cluster-id"
-	testClusterExternalId := "test-cluster-external-id"
+	testClusterInternalID := "test-cluster-id"
+	testClusterExternalID := "test-cluster-external-id"
 	wantedCluster := &api.Cluster{
 		CloudProvider: testProvider,
-		ClusterID:     testClusterInternalId,
-		ExternalID:    testClusterExternalId,
+		ClusterID:     testClusterInternalID,
+		ExternalID:    testClusterExternalID,
 		MultiAZ:       testMultiAZ,
 		Region:        testRegion,
 		Status:        api.ClusterProvisioning,
@@ -96,8 +96,8 @@ func Test_Cluster_Create(t *testing.T) {
 					return &clusters.ProviderMock{
 						CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 							return &types.ClusterSpec{
-								InternalID: testClusterInternalId,
-								ExternalID: testClusterExternalId,
+								InternalID: testClusterInternalID,
+								ExternalID: testClusterExternalID,
 								Status:     api.ClusterProvisioning,
 							}, nil
 						},
@@ -139,8 +139,8 @@ func Test_Cluster_Create(t *testing.T) {
 					return &clusters.ProviderMock{
 						CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 							return &types.ClusterSpec{
-								InternalID: testClusterInternalId,
-								ExternalID: testClusterExternalId,
+								InternalID: testClusterInternalID,
+								ExternalID: testClusterExternalID,
 								Status:     api.ClusterProvisioning,
 							}, nil
 						},
@@ -1067,14 +1067,14 @@ func Test_DeleteByClusterId(t *testing.T) {
 	}
 }
 
-func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
+func Test_Cluster_FindNonEmptyClusterByID(t *testing.T) {
 	now := time.Now()
 
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
 	type args struct {
-		clusterId string
+		clusterID string
 	}
 	tests := []struct {
 		name    string
@@ -1090,7 +1090,7 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				clusterId: "non-existentID",
+				clusterID: "non-existentID",
 			},
 			wantErr: false,
 			want:    nil,
@@ -1105,7 +1105,7 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				clusterId: testClusterID,
+				clusterID: testClusterID,
 			},
 			wantErr: true,
 			want:    nil,
@@ -1119,7 +1119,7 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				clusterId: testClusterID,
+				clusterID: testClusterID,
 			},
 			want: &api.Cluster{ClusterID: testClusterID, Meta: api.Meta{CreatedAt: now, UpdatedAt: now, DeletedAt: gorm.DeletedAt{Valid: true}}},
 			setupFn: func() {
@@ -1138,7 +1138,7 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 			k := &clusterService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
-			got, err := k.FindNonEmptyClusterById(tt.args.clusterId)
+			got, err := k.FindNonEmptyClusterByID(tt.args.clusterID)
 			gomega.Expect(got).To(gomega.Equal(tt.want))
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
@@ -1630,8 +1630,8 @@ func TestClusterService_CheckClusterStatus(t *testing.T) {
 		cluster *api.Cluster
 	}
 
-	clusterId := "test-internal-id"
-	clusterExternalId := "test-external-id"
+	clusterID := "test-internal-id"
+	clusterExternalID := "test-external-id"
 	clusterStatus := api.ClusterProvisioning
 
 	tests := []struct {
@@ -1650,8 +1650,8 @@ func TestClusterService_CheckClusterStatus(t *testing.T) {
 					return &clusters.ProviderMock{
 						CheckClusterStatusFunc: func(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
 							return &types.ClusterSpec{
-								InternalID: clusterId,
-								ExternalID: clusterExternalId,
+								InternalID: clusterID,
+								ExternalID: clusterExternalID,
 								Status:     api.ClusterProvisioned,
 							}, nil
 						},
@@ -1661,10 +1661,10 @@ func TestClusterService_CheckClusterStatus(t *testing.T) {
 			args: args{
 				cluster: &api.Cluster{
 					Meta: api.Meta{
-						ID: clusterId,
+						ID: clusterID,
 					},
-					ExternalID: clusterExternalId,
-					ClusterID:  clusterId,
+					ExternalID: clusterExternalID,
+					ClusterID:  clusterID,
 					Status:     clusterStatus,
 				},
 			},
@@ -1674,9 +1674,9 @@ func TestClusterService_CheckClusterStatus(t *testing.T) {
 			},
 			wantErr: false,
 			want: &api.Cluster{
-				Meta:       api.Meta{ID: clusterId},
-				ClusterID:  clusterId,
-				ExternalID: clusterExternalId,
+				Meta:       api.Meta{ID: clusterID},
+				ClusterID:  clusterID,
+				ExternalID: clusterExternalID,
 				Status:     api.ClusterProvisioned,
 			},
 		},
@@ -1694,10 +1694,10 @@ func TestClusterService_CheckClusterStatus(t *testing.T) {
 			args: args{
 				cluster: &api.Cluster{
 					Meta: api.Meta{
-						ID: clusterId,
+						ID: clusterID,
 					},
-					ExternalID: clusterExternalId,
-					ClusterID:  clusterId,
+					ExternalID: clusterExternalID,
+					ClusterID:  clusterID,
 					Status:     clusterStatus,
 				},
 			},
@@ -1736,16 +1736,16 @@ func TestClusterService_RemoveClusterFromProvider(t *testing.T) {
 		cluster *api.Cluster
 	}
 
-	clusterId := "test-internal-id"
-	clusterExternalId := "test-external-id"
+	clusterID := "test-internal-id"
+	clusterExternalID := "test-external-id"
 	clusterStatus := api.ClusterProvisioning
 
 	cluster := &api.Cluster{
 		Meta: api.Meta{
-			ID: clusterId,
+			ID: clusterID,
 		},
-		ExternalID: clusterExternalId,
-		ClusterID:  clusterId,
+		ExternalID: clusterExternalID,
+		ClusterID:  clusterID,
 		Status:     clusterStatus,
 	}
 
@@ -1826,16 +1826,16 @@ func TestClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 		identityProvider types.IdentityProviderInfo
 	}
 
-	clusterId := "test-internal-id"
-	clusterExternalId := "test-external-id"
+	clusterID := "test-internal-id"
+	clusterExternalID := "test-external-id"
 	clusterStatus := api.ClusterProvisioning
 
 	cluster := &api.Cluster{
 		Meta: api.Meta{
-			ID: clusterId,
+			ID: clusterID,
 		},
-		ExternalID: clusterExternalId,
-		ClusterID:  clusterId,
+		ExternalID: clusterExternalID,
+		ClusterID:  clusterID,
 		Status:     clusterStatus,
 	}
 
@@ -1866,10 +1866,10 @@ func TestClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 			args: args{
 				cluster: &api.Cluster{
 					Meta: api.Meta{
-						ID: clusterId,
+						ID: clusterID,
 					},
-					ExternalID: clusterExternalId,
-					ClusterID:  clusterId,
+					ExternalID: clusterExternalID,
+					ClusterID:  clusterID,
 					Status:     clusterStatus,
 				},
 				identityProvider: types.IdentityProviderInfo{OpenID: &types.OpenIDIdentityProviderInfo{
@@ -1886,10 +1886,10 @@ func TestClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 			wantErr: false,
 			want: &api.Cluster{
 				Meta: api.Meta{
-					ID: clusterId,
+					ID: clusterID,
 				},
-				ExternalID:         clusterExternalId,
-				ClusterID:          clusterId,
+				ExternalID:         clusterExternalID,
+				ClusterID:          clusterID,
 				Status:             clusterStatus,
 				IdentityProviderID: "test-id",
 			},
@@ -1950,16 +1950,16 @@ func TestClusterService_ApplyResources(t *testing.T) {
 		resources types.ResourceSet
 	}
 
-	clusterId := "test-internal-id"
-	clusterExternalId := "test-external-id"
+	clusterID := "test-internal-id"
+	clusterExternalID := "test-external-id"
 	clusterStatus := api.ClusterProvisioning
 
 	cluster := &api.Cluster{
 		Meta: api.Meta{
-			ID: clusterId,
+			ID: clusterID,
 		},
-		ExternalID: clusterExternalId,
-		ClusterID:  clusterId,
+		ExternalID: clusterExternalID,
+		ClusterID:  clusterID,
 		Status:     clusterStatus,
 	}
 
@@ -2039,16 +2039,16 @@ func TestClusterService_InstallDinosaurOperator(t *testing.T) {
 		addonID string
 	}
 
-	clusterId := "test-internal-id"
-	clusterExternalId := "test-external-id"
+	clusterID := "test-internal-id"
+	clusterExternalID := "test-external-id"
 	clusterStatus := api.ClusterProvisioning
 
 	cluster := &api.Cluster{
 		Meta: api.Meta{
-			ID: clusterId,
+			ID: clusterID,
 		},
-		ExternalID:   clusterExternalId,
-		ClusterID:    clusterId,
+		ExternalID:   clusterExternalID,
+		ClusterID:    clusterID,
 		Status:       clusterStatus,
 		ProviderType: api.ClusterProviderOCM,
 	}

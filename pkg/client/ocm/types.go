@@ -2,7 +2,7 @@ package ocm
 
 // Parameter ...
 type Parameter struct {
-	Id    string
+	ID    string
 	Value string
 }
 

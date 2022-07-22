@@ -32,14 +32,14 @@ var supportedAMSBillingModels = map[string]struct{}{
 
 // CheckIfQuotaIsDefinedForInstanceType ...
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
-	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(dinosaur.OrganisationId)
+	orgID, err := q.amsClient.GetOrganisationIDFromExternalID(dinosaur.OrganisationID)
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", dinosaur.OrganisationId))
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", dinosaur.OrganisationID))
 	}
 
-	hasQuota, err := q.hasConfiguredQuotaCost(orgId, instanceType.GetQuotaType())
+	hasQuota, err := q.hasConfiguredQuotaCost(orgID, instanceType.GetQuotaType())
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get assigned quota of type %v for organization with id %v", instanceType.GetQuotaType(), orgId))
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get assigned quota of type %v for organization with id %v", instanceType.GetQuotaType(), orgID))
 	}
 
 	return hasQuota, nil
@@ -86,12 +86,12 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 // "standard" and "marketplace" billing models are considered. If both are
 // detected "standard" is returned.
 func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(externalID string, instanceType types.DinosaurInstanceType) (string, error) {
-	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(externalID)
+	orgID, err := q.amsClient.GetOrganisationIDFromExternalID(externalID)
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", externalID))
 	}
 
-	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgId, instanceType.GetQuotaType().GetResourceName(), instanceType.GetQuotaType().GetProduct())
+	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgID, instanceType.GetQuotaType().GetResourceName(), instanceType.GetQuotaType().GetProduct())
 	if err != nil {
 		return "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, instanceType.GetQuotaType().GetProduct())
 	}
@@ -114,11 +114,11 @@ func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(extern
 
 // ReserveQuota ...
 func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
-	dinosaurId := dinosaur.ID
+	dinosaurID := dinosaur.ID
 
 	rr := newBaseQuotaReservedResourceResourceBuilder()
 
-	bm, err := q.getAvailableBillingModelFromDinosaurInstanceType(dinosaur.OrganisationId, instanceType)
+	bm, err := q.getAvailableBillingModelFromDinosaurInstanceType(dinosaur.OrganisationID, instanceType)
 	if err != nil {
 		svcErr := errors.ToServiceError(err)
 		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
@@ -133,8 +133,8 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 		CloudProviderID(dinosaur.CloudProvider).
 		ProductID(instanceType.GetQuotaType().GetProduct()).
 		Managed(true).
-		ClusterID(dinosaurId).
-		ExternalClusterID(dinosaurId).
+		ClusterID(dinosaurID).
+		ExternalClusterID(dinosaurID).
 		Disconnected(false).
 		BYOC(false).
 		AvailabilityZone("single").
@@ -154,12 +154,12 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 }
 
 // DeleteQuota ...
-func (q amsQuotaService) DeleteQuota(subscriptionId string) *errors.ServiceError {
-	if subscriptionId == "" {
+func (q amsQuotaService) DeleteQuota(subscriptionID string) *errors.ServiceError {
+	if subscriptionID == "" {
 		return nil
 	}
 
-	_, err := q.amsClient.DeleteSubscription(subscriptionId)
+	_, err := q.amsClient.DeleteSubscription(subscriptionID)
 	if err != nil {
 		return errors.GeneralError("failed to delete the quota: %v", err)
 	}

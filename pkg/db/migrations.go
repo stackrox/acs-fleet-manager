@@ -216,7 +216,7 @@ func DropTableColumnsAction(table interface{}, tableName ...string) MigrationAct
 }
 
 // ExecAction ...
-func ExecAction(applySql string, unapplySql string) MigrationAction {
+func ExecAction(applySQL string, unapplySQL string) MigrationAction {
 	caller := ""
 	if _, file, no, ok := runtime.Caller(1); ok {
 		caller = fmt.Sprintf("[ %s:%d ]", file, no)
@@ -224,15 +224,15 @@ func ExecAction(applySql string, unapplySql string) MigrationAction {
 
 	return func(tx *gorm.DB, apply bool) error {
 		if apply {
-			if applySql != "" {
-				err := tx.Exec(applySql).Error
+			if applySQL != "" {
+				err := tx.Exec(applySQL).Error
 				if err != nil {
 					return errors.Wrap(err, caller)
 				}
 			}
 		} else {
-			if unapplySql != "" {
-				err := tx.Exec(unapplySql).Error
+			if unapplySQL != "" {
+				err := tx.Exec(unapplySQL).Error
 				if err != nil {
 					return errors.Wrap(err, caller)
 				}

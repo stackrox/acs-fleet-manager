@@ -6,7 +6,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
+	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 )
 
 // DefaultQuotaServiceFactory the default implementation for ProviderFactory
@@ -18,7 +18,7 @@ type DefaultQuotaServiceFactory struct {
 func NewDefaultQuotaServiceFactory(
 	amsClient ocm.AMSClient,
 	connectionFactory *db.ConnectionFactory,
-	quotaManagementListConfig *quota_management.QuotaManagementListConfig,
+	quotaManagementListConfig *quotamanagement.QuotaManagementListConfig,
 ) services.QuotaServiceFactory {
 	quoataServiceContainer := map[api.QuotaType]services.QuotaService{
 		api.AMSQuotaType:                 &amsQuotaService{amsClient: amsClient},

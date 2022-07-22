@@ -34,7 +34,7 @@ func checkAllowedOrgIDs(allowedOrgIDs AllowedOrgIDs) mux.MiddlewareFunc {
 				return
 			}
 
-			orgID, _ := claims.GetOrgId()
+			orgID, _ := claims.GetOrgID()
 			if allowedOrgIDs.IsOrgIDAllowed(orgID) {
 				next.ServeHTTP(writer, request)
 				return

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
+	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 
 	. "github.com/onsi/gomega"
 )
@@ -260,48 +260,48 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 func Test_configService_GetOrganisationById(t *testing.T) {
 	type result struct {
 		found        bool
-		organisation quota_management.Organisation
+		organisation quotamanagement.Organisation
 	}
 
 	tests := []struct {
 		name                string
-		QuotaManagementList *quota_management.QuotaManagementListConfig
+		QuotaManagementList *quotamanagement.QuotaManagementListConfig
 		arg                 string
 		want                result
 	}{
 		{
 			name: "return 'false' when organisation does not exist in the allowed list",
 			arg:  "some-id",
-			QuotaManagementList: &quota_management.QuotaManagementListConfig{
-				QuotaList: quota_management.RegisteredUsersListConfiguration{
-					Organisations: quota_management.OrganisationList{
-						quota_management.Organisation{
-							Id: "different-id",
+			QuotaManagementList: &quotamanagement.QuotaManagementListConfig{
+				QuotaList: quotamanagement.RegisteredUsersListConfiguration{
+					Organisations: quotamanagement.OrganisationList{
+						quotamanagement.Organisation{
+							ID: "different-id",
 						},
 					},
 				},
 			},
 			want: result{
 				found:        false,
-				organisation: quota_management.Organisation{},
+				organisation: quotamanagement.Organisation{},
 			},
 		},
 		{
 			name: "return 'true' when organisation exists in the allowed list",
 			arg:  "some-id",
-			QuotaManagementList: &quota_management.QuotaManagementListConfig{
-				QuotaList: quota_management.RegisteredUsersListConfiguration{
-					Organisations: quota_management.OrganisationList{
-						quota_management.Organisation{
-							Id: "some-id",
+			QuotaManagementList: &quotamanagement.QuotaManagementListConfig{
+				QuotaList: quotamanagement.RegisteredUsersListConfiguration{
+					Organisations: quotamanagement.OrganisationList{
+						quotamanagement.Organisation{
+							ID: "some-id",
 						},
 					},
 				},
 			},
 			want: result{
 				found: true,
-				organisation: quota_management.Organisation{
-					Id: "some-id",
+				organisation: quotamanagement.Organisation{
+					ID: "some-id",
 				},
 			},
 		},
@@ -309,7 +309,7 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			org, found := tt.QuotaManagementList.QuotaList.Organisations.GetById(tt.arg)
+			org, found := tt.QuotaManagementList.QuotaList.Organisations.GetByID(tt.arg)
 			Expect(org).To(Equal(tt.want.organisation))
 			Expect(found).To(Equal(tt.want.found))
 		})
@@ -319,19 +319,19 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 	type args struct {
 		username string
-		orgId    string
+		orgID    string
 	}
 
 	type result struct {
-		AllowedAccount quota_management.Account
+		AllowedAccount quotamanagement.Account
 		found          bool
 	}
 
-	organisation := quota_management.Organisation{
-		Id: "some-id",
-		RegisteredUsers: quota_management.AccountList{
-			quota_management.Account{Username: "username-0"},
-			quota_management.Account{Username: "username-1"},
+	organisation := quotamanagement.Organisation{
+		ID: "some-id",
+		RegisteredUsers: quotamanagement.AccountList{
+			quotamanagement.Account{Username: "username-0"},
+			quotamanagement.Account{Username: "username-1"},
 		},
 	}
 
@@ -339,63 +339,63 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 		name                string
 		arg                 args
 		want                result
-		QuotaManagementList *quota_management.QuotaManagementListConfig
+		QuotaManagementList *quotamanagement.QuotaManagementListConfig
 	}{
 		{
 			name: "return 'true' and the found user when organisation contains the user",
 			arg: args{
 				username: "username-1",
-				orgId:    organisation.Id,
+				orgID:    organisation.ID,
 			},
-			QuotaManagementList: &quota_management.QuotaManagementListConfig{
-				QuotaList: quota_management.RegisteredUsersListConfiguration{
-					Organisations: quota_management.OrganisationList{
+			QuotaManagementList: &quotamanagement.QuotaManagementListConfig{
+				QuotaList: quotamanagement.RegisteredUsersListConfiguration{
+					Organisations: quotamanagement.OrganisationList{
 						organisation,
 					},
 				},
 			},
 			want: result{
 				found:          true,
-				AllowedAccount: quota_management.Account{Username: "username-1"},
+				AllowedAccount: quotamanagement.Account{Username: "username-1"},
 			},
 		},
 		{
 			name: "return 'true' and the user when user is not among the listed organisation but is contained in list of allowed service accounts",
 			arg: args{
 				username: "username-10",
-				orgId:    organisation.Id,
+				orgID:    organisation.ID,
 			},
-			QuotaManagementList: &quota_management.QuotaManagementListConfig{
-				QuotaList: quota_management.RegisteredUsersListConfiguration{
-					Organisations: quota_management.OrganisationList{
+			QuotaManagementList: &quotamanagement.QuotaManagementListConfig{
+				QuotaList: quotamanagement.RegisteredUsersListConfiguration{
+					Organisations: quotamanagement.OrganisationList{
 						organisation,
 					},
-					ServiceAccounts: quota_management.AccountList{
-						quota_management.Account{Username: "username-0"},
-						quota_management.Account{Username: "username-10"},
-						quota_management.Account{Username: "username-3"},
+					ServiceAccounts: quotamanagement.AccountList{
+						quotamanagement.Account{Username: "username-0"},
+						quotamanagement.Account{Username: "username-10"},
+						quotamanagement.Account{Username: "username-3"},
 					},
 				},
 			},
 			want: result{
 				found:          true,
-				AllowedAccount: quota_management.Account{Username: "username-10"},
+				AllowedAccount: quotamanagement.Account{Username: "username-10"},
 			},
 		},
 		{
 			name: "return 'false' when user is not among the listed organisation and in list of allowed service accounts",
 			arg: args{
 				username: "username-10",
-				orgId:    "some-org-id",
+				orgID:    "some-org-id",
 			},
-			QuotaManagementList: &quota_management.QuotaManagementListConfig{
-				QuotaList: quota_management.RegisteredUsersListConfiguration{
-					Organisations: quota_management.OrganisationList{
+			QuotaManagementList: &quotamanagement.QuotaManagementListConfig{
+				QuotaList: quotamanagement.RegisteredUsersListConfiguration{
+					Organisations: quotamanagement.OrganisationList{
 						organisation,
 					},
-					ServiceAccounts: quota_management.AccountList{
-						quota_management.Account{Username: "username-0"},
-						quota_management.Account{Username: "username-3"},
+					ServiceAccounts: quotamanagement.AccountList{
+						quotamanagement.Account{Username: "username-0"},
+						quotamanagement.Account{Username: "username-3"},
 					},
 				},
 			},
@@ -408,7 +408,7 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			user, ok := tt.QuotaManagementList.GetAllowedAccountByUsernameAndOrgId(tt.arg.username, tt.arg.orgId)
+			user, ok := tt.QuotaManagementList.GetAllowedAccountByUsernameAndOrgID(tt.arg.username, tt.arg.orgID)
 			Expect(user).To(Equal(tt.want.AllowedAccount))
 			Expect(ok).To(Equal(tt.want.found))
 		})
@@ -421,15 +421,15 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 	}
 
 	type result struct {
-		AllowedAccount quota_management.Account
+		AllowedAccount quotamanagement.Account
 		found          bool
 	}
 
-	organisation := quota_management.Organisation{
-		Id: "some-id",
-		RegisteredUsers: quota_management.AccountList{
-			quota_management.Account{Username: "username-0"},
-			quota_management.Account{Username: "username-1"},
+	organisation := quotamanagement.Organisation{
+		ID: "some-id",
+		RegisteredUsers: quotamanagement.AccountList{
+			quotamanagement.Account{Username: "username-0"},
+			quotamanagement.Account{Username: "username-1"},
 		},
 	}
 
@@ -437,28 +437,28 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 		name                string
 		arg                 args
 		want                result
-		QuotaManagementList *quota_management.QuotaManagementListConfig
+		QuotaManagementList *quotamanagement.QuotaManagementListConfig
 	}{
 		{
 			name: "return 'true' and the user when user is contained in list of allowed service accounts",
 			arg: args{
 				username: "username-10",
 			},
-			QuotaManagementList: &quota_management.QuotaManagementListConfig{
-				QuotaList: quota_management.RegisteredUsersListConfiguration{
-					Organisations: quota_management.OrganisationList{
+			QuotaManagementList: &quotamanagement.QuotaManagementListConfig{
+				QuotaList: quotamanagement.RegisteredUsersListConfiguration{
+					Organisations: quotamanagement.OrganisationList{
 						organisation,
 					},
-					ServiceAccounts: quota_management.AccountList{
-						quota_management.Account{Username: "username-0"},
-						quota_management.Account{Username: "username-10"},
-						quota_management.Account{Username: "username-3"},
+					ServiceAccounts: quotamanagement.AccountList{
+						quotamanagement.Account{Username: "username-0"},
+						quotamanagement.Account{Username: "username-10"},
+						quotamanagement.Account{Username: "username-3"},
 					},
 				},
 			},
 			want: result{
 				found:          true,
-				AllowedAccount: quota_management.Account{Username: "username-10"},
+				AllowedAccount: quotamanagement.Account{Username: "username-10"},
 			},
 		},
 		{
@@ -466,14 +466,14 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 			arg: args{
 				username: "username-10",
 			},
-			QuotaManagementList: &quota_management.QuotaManagementListConfig{
-				QuotaList: quota_management.RegisteredUsersListConfiguration{
-					Organisations: quota_management.OrganisationList{
+			QuotaManagementList: &quotamanagement.QuotaManagementListConfig{
+				QuotaList: quotamanagement.RegisteredUsersListConfiguration{
+					Organisations: quotamanagement.OrganisationList{
 						organisation,
 					},
-					ServiceAccounts: quota_management.AccountList{
-						quota_management.Account{Username: "username-0"},
-						quota_management.Account{Username: "username-3"},
+					ServiceAccounts: quotamanagement.AccountList{
+						quotamanagement.Account{Username: "username-0"},
+						quotamanagement.Account{Username: "username-3"},
 					},
 				},
 			},

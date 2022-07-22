@@ -37,7 +37,7 @@ func (m *requireOrgIDMiddleware) RequireOrgID(code errors.ServiceErrorCode) func
 				return
 			}
 
-			orgID, _ := claims.GetOrgId()
+			orgID, _ := claims.GetOrgID()
 			if orgID == "" {
 				shared.HandleError(request, writer, serviceErr)
 				return

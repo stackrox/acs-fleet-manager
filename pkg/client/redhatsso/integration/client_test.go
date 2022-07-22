@@ -13,7 +13,7 @@ import (
 
 func getClient(baseURL string) redhatsso.SSOClient {
 	config := iam.IAMConfig{
-		SsoBaseUrl: baseURL,
+		SsoBaseURL: baseURL,
 		RedhatSSORealm: &iam.IAMRealmConfig{
 			Realm:            "redhat-external",
 			APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", baseURL),
@@ -184,7 +184,7 @@ func Test_SSOClient_GetToken(t *testing.T) {
 	defer server.Stop()
 
 	config := iam.IAMConfig{
-		SsoBaseUrl: server.BaseURL(),
+		SsoBaseURL: server.BaseURL(),
 		RedhatSSORealm: &iam.IAMRealmConfig{
 			Realm:            "redhat-external",
 			APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),

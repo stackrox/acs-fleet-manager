@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	// TODO(ROX-10709) "github.com/stackrox/acs-fleet-manager/pkg/quota_management"
+	// TODO(ROX-10709) "github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -102,7 +102,7 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 
 	dinosaurCloudProvider := "dummy"
 	// this value is taken from config/quota-management-list-configuration.yaml
-	orgId := "13640203"
+	orgID := "13640203"
 
 	// create dummy dinosaurs
 	db := test.TestServices.DBFactory.New()
@@ -113,7 +113,7 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 			Region:         mocks.MockCluster.Region().ID(),
 			CloudProvider:  dinosaurCloudProvider,
 			Name:           "dummy-dinosaur",
-			OrganisationId: orgId,
+			OrganisationID: orgID,
 			Status:         constants2.DinosaurRequestStatusAccepted.String(),
 			InstanceType:   types.STANDARD.String(),
 		},
@@ -123,7 +123,7 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 			Region:         mocks.MockCluster.Region().ID(),
 			CloudProvider:  dinosaurCloudProvider,
 			Name:           "dummy-dinosaur-2",
-			OrganisationId: orgId,
+			OrganisationID: orgID,
 			Status:         constants2.DinosaurRequestStatusAccepted.String(),
 			InstanceType:   types.STANDARD.String(),
 		},
@@ -299,7 +299,7 @@ func TestDinosaurGet(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
+	h, client, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(acl *quotamanagement.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
 		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 1)})
 	})
 	defer teardown()
@@ -368,7 +368,7 @@ func TestDinosaurGet(t *testing.T) {
 func TestDinosaur_Delete(t *testing.T) {
 	owner := "test-user"
 
-	orgId := "13640203"
+	orgID := "13640203"
 
 	sampleDinosaurID := api.NewID()
 
@@ -385,7 +385,7 @@ func TestDinosaur_Delete(t *testing.T) {
 	h, _, tearDown := test.NewDinosaurHelper(t, ocmServer)
 	defer tearDown()
 
-	userAccount := h.NewAccount(owner, "test-user", "test@gmail.com", orgId)
+	userAccount := h.NewAccount(owner, "test-user", "test@gmail.com", orgID)
 
 	userCtx := h.NewAuthenticatedContext(userAccount, nil)
 
@@ -466,7 +466,7 @@ func TestDinosaur_Delete(t *testing.T) {
 		Region:                        "test",
 		CloudProvider:                 "test",
 		Name:                          "test-dinosaur",
-		OrganisationId:                orgId,
+		OrganisationID:                orgID,
 		Status:                        constants.DinosaurRequestStatusReady.String(),
 		ClusterID:                     cluster.ClusterID,
 		ActualCentralVersion:          "2.6.0",
@@ -482,7 +482,7 @@ func TestDinosaur_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := test.NewApiClient(h)
+			client := test.NewAPIClient(h)
 			resp, err := client.DefaultApi.DeleteCentralById(tt.args.ctx, tt.args.dinosaurID, tt.args.async)
 			tt.verifyResponse(resp, err)
 		})
@@ -501,7 +501,7 @@ func TestDinosaurList_Success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
+	h, client, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(acl *quotamanagement.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
 		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 1)})
 	})
 	defer teardown()

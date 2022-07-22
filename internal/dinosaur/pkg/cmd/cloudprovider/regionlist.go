@@ -53,7 +53,7 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	provider, _ := supportedProviders.GetByName(id)
 	for i := range cloudRegions {
 		cloudRegion := cloudRegions[i]
-		region, _ := provider.Regions.GetByName(cloudRegion.Id)
+		region, _ := provider.Regions.GetByName(cloudRegion.ID)
 
 		// if instance_type was specified, only set enabled to true for regions that supports the specified instance type. Otherwise,
 		// set enable to true for all region that supports any instance types

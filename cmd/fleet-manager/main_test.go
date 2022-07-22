@@ -24,7 +24,7 @@ func TestInjections(t *testing.T) {
 	env.MustResolve(&bootList)
 	Expect(len(bootList)).To(Equal(4))
 
-	_, ok := bootList[0].(*server.ApiServer)
+	_, ok := bootList[0].(*server.APIServer)
 	Expect(ok).To(Equal(true))
 	_, ok = bootList[1].(*server.MetricsServer)
 	Expect(ok).To(Equal(true))

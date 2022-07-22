@@ -129,7 +129,7 @@ func (s *LeaderElectionManager) isWorkerLeader(worker Worker) bool {
 
 // acquireLeaderLease attempt to claim the leader role using a provided table and return a leaderLeaseAcquisition
 // containing the lease
-func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType string, dbConn *gorm.DB) (*leaderLeaseAcquisition, error) {
+func (s *LeaderElectionManager) acquireLeaderLease(workerID string, workerType string, dbConn *gorm.DB) (*leaderLeaseAcquisition, error) {
 	// read the leader lease, to see whether the worker has an opportunity to:
 	// - acquire the lease
 	// - extend their lease, if they are the leader, if they are the leader and the lease expiry time is close
@@ -152,7 +152,7 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType s
 	isLeader := false
 
 	// determine if we have an opportunity to acquire or extend the lease (extend if the lease is going to expire in one min)
-	if isExpired(lease) || (lease.Leader == workerId && lease.Expires.Before(time.Now().Add(30*time.Second))) {
+	if isExpired(lease) || (lease.Leader == workerID && lease.Expires.Before(time.Now().Add(30*time.Second))) {
 		// begin a new transaction
 		// we must ensure we commit or rollback this transaction to avoid stale transactions being left around
 		leaderTx := dbConn.Begin() // starts a new transaction
@@ -181,7 +181,7 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType s
 		// if length is non-zero then we have claimed a lock on the lease entry
 		// we have the opportunity to extend or acquire the leader lease
 		if len(leaseList) > 0 {
-			if err := leaderTx.Model(&lease).Updates(map[string]interface{}{"leader": workerId, "expires": newExpiryTime}).Error; err != nil {
+			if err := leaderTx.Model(&lease).Updates(map[string]interface{}{"leader": workerID, "expires": newExpiryTime}).Error; err != nil {
 				leaderTx.Rollback()
 				return nil, errors.Wrap(err, "failed to update leader lease")
 			}
@@ -197,7 +197,7 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType s
 
 		// ensure we persist our update by committing the transaction
 		leaderTx.Commit()
-	} else if lease.Leader == workerId {
+	} else if lease.Leader == workerID {
 		// we didn't have the opportunity to acquire or extend the lease, but we are marked as the leader on the
 		// existing, unexpired lease, so continue assuming we're leader
 		isLeader = true

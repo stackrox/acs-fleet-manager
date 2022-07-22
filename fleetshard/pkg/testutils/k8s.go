@@ -75,7 +75,7 @@ func (t reconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.Ob
 	}
 	if gvr == centralsGVR {
 		var multiErr *multierror.Error
-		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(secretsGVR, newCentralTlsSecret(ns), ns))
+		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(secretsGVR, newCentralTLSSecret(ns), ns))
 		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(routesGVR, newCentralRoute(ns), ns))
 		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(routesGVR, newCentralMtlsRoute(ns), ns))
 		return multiErr.ErrorOrNil()
@@ -83,7 +83,7 @@ func (t reconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.Ob
 	return nil
 }
 
-func newCentralTlsSecret(ns string) *coreV1.Secret {
+func newCentralTLSSecret(ns string) *coreV1.Secret {
 	return &coreV1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "central-tls",

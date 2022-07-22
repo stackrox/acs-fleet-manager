@@ -1,4 +1,4 @@
-package dinosaur_mgrs
+package dinosaurmgrs
 
 import (
 	"github.com/golang/glog"
@@ -36,7 +36,7 @@ type DinosaurManager struct {
 func NewDinosaurManager(dinosaurService services.DinosaurService, accessControlList *acl.AccessControlListConfig, dinosaur *config.DinosaurConfig) *DinosaurManager {
 	return &DinosaurManager{
 		BaseWorker: workers.BaseWorker{
-			Id:         uuid.New().String(),
+			ID:         uuid.New().String(),
 			WorkerType: "general_dinosaur_worker",
 			Reconciler: workers.Reconciler{},
 		},
@@ -127,7 +127,7 @@ func (k *DinosaurManager) setClusterStatusCapacityUsedMetric() []error {
 
 	for _, region := range regions {
 		used := float64(region.Count)
-		metrics.UpdateClusterStatusCapacityUsedCount(region.Region, region.InstanceType, region.ClusterId, used)
+		metrics.UpdateClusterStatusCapacityUsedCount(region.Region, region.InstanceType, region.ClusterID, used)
 	}
 
 	return nil

@@ -6,7 +6,7 @@ import (
 
 // DataPlaneCentralStatus ...
 type DataPlaneCentralStatus struct {
-	CentralClusterId string
+	CentralClusterID string
 	Conditions       []DataPlaneCentralStatusCondition
 	// Going to ignore the rest of fields (like capacity and versions) for now, until when they are needed
 	Routes                 []DataPlaneCentralRouteRequest

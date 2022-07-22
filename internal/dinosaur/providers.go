@@ -17,7 +17,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services/quota"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/workers"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/workers/dinosaur_mgrs"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/workers/dinosaurmgrs"
 	observatoriumClient "github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	environments2 "github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/providers"
@@ -78,12 +78,12 @@ func ServiceProviders() di.Option {
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(quota.NewDefaultQuotaServiceFactory),
 		di.Provide(workers.NewClusterManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaur_mgrs.NewDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaur_mgrs.NewAcceptedDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaur_mgrs.NewPreparingDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaur_mgrs.NewDeletingDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaur_mgrs.NewProvisioningDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaur_mgrs.NewReadyDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaur_mgrs.NewDinosaurCNAMEManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewDinosaurManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewAcceptedDinosaurManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewPreparingDinosaurManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewDeletingDinosaurManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewProvisioningDinosaurManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewReadyDinosaurManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewDinosaurCNAMEManager, di.As(new(workers.Worker))),
 	)
 }

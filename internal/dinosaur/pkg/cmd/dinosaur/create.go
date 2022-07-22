@@ -40,7 +40,7 @@ func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
 	multiAZ := flags.MustGetBool(FlagMultiAZ, cmd.Flags())
 	clusterID := flags.MustGetDefinedString(FlagClusterID, cmd.Flags())
-	orgId := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
+	orgID := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 
 	var dinosaurService services.DinosaurService
 	env.MustResolveAll(&dinosaurService)
@@ -52,7 +52,7 @@ func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
 		MultiAZ:        multiAZ,
 		Name:           name,
 		Owner:          owner,
-		OrganisationId: orgId,
+		OrganisationID: orgID,
 	}
 
 	if err := dinosaurService.RegisterDinosaurJob(dinosaurRequest); err != nil {

@@ -14,7 +14,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-	"github.com/stackrox/acs-fleet-manager/pkg/quota_management"
+	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
@@ -37,7 +37,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(ocm.NewOCMConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(iam.NewIAMConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(acl.NewAccessControlListConfig, di.As(new(environments.ConfigModule))),
-		di.Provide(quota_management.NewQuotaManagementListConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(quotamanagement.NewQuotaManagementListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(server.NewMetricsConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(auth.NewContextConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(auth.NewFleetShardAuthZConfig, di.As(new(environments.ConfigModule))),
@@ -72,7 +72,7 @@ func ServiceProviders() di.Option {
 		}),
 
 		di.Provide(func(config *ocm.OCMConfig) ocm.AMSClient {
-			conn, _, err := ocm.NewOCMConnection(config, config.AmsUrl)
+			conn, _, err := ocm.NewOCMConnection(config, config.AmsURL)
 			if err != nil {
 				logger.Logger.Error(err)
 			}

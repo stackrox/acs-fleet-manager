@@ -26,10 +26,10 @@ var _ Client = &ClientMock{}
 // 			ConnectionFunc: func() *sdkClient.Connection {
 // 				panic("mock out the Connection method")
 // 			},
-// 			CreateAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+// 			CreateAddonFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
 // 				panic("mock out the CreateAddon method")
 // 			},
-// 			CreateAddonWithParamsFunc: func(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+// 			CreateAddonWithParamsFunc: func(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 // 				panic("mock out the CreateAddonWithParams method")
 // 			},
 // 			CreateClusterFunc: func(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error) {
@@ -53,7 +53,7 @@ var _ Client = &ClientMock{}
 // 			FindSubscriptionsFunc: func(query string) (*amsv1.SubscriptionsListResponse, error) {
 // 				panic("mock out the FindSubscriptions method")
 // 			},
-// 			GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+// 			GetAddonFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
 // 				panic("mock out the GetAddon method")
 // 			},
 // 			GetCloudProvidersFunc: func() (*clustersmgmtv1.CloudProviderList, error) {
@@ -77,8 +77,8 @@ var _ Client = &ClientMock{}
 // 			GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
 // 				panic("mock out the GetIdentityProviderList method")
 // 			},
-// 			GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
-// 				panic("mock out the GetOrganisationIdFromExternalId method")
+// 			GetOrganisationIDFromExternalIDFunc: func(externalID string) (string, error) {
+// 				panic("mock out the GetOrganisationIDFromExternalID method")
 // 			},
 // 			GetQuotaCostsForProductFunc: func(organizationID string, resourceName string, product string) ([]*amsv1.QuotaCost, error) {
 // 				panic("mock out the GetQuotaCostsForProduct method")
@@ -101,7 +101,7 @@ var _ Client = &ClientMock{}
 // 			SetComputeNodesFunc: func(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
 // 				panic("mock out the SetComputeNodes method")
 // 			},
-// 			UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+// 			UpdateAddonParametersFunc: func(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 // 				panic("mock out the UpdateAddonParameters method")
 // 			},
 // 			UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
@@ -121,10 +121,10 @@ type ClientMock struct {
 	ConnectionFunc func() *sdkClient.Connection
 
 	// CreateAddonFunc mocks the CreateAddon method.
-	CreateAddonFunc func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
+	CreateAddonFunc func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error)
 
 	// CreateAddonWithParamsFunc mocks the CreateAddonWithParams method.
-	CreateAddonWithParamsFunc func(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
+	CreateAddonWithParamsFunc func(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
 
 	// CreateClusterFunc mocks the CreateCluster method.
 	CreateClusterFunc func(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error)
@@ -148,7 +148,7 @@ type ClientMock struct {
 	FindSubscriptionsFunc func(query string) (*amsv1.SubscriptionsListResponse, error)
 
 	// GetAddonFunc mocks the GetAddon method.
-	GetAddonFunc func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
+	GetAddonFunc func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error)
 
 	// GetCloudProvidersFunc mocks the GetCloudProviders method.
 	GetCloudProvidersFunc func() (*clustersmgmtv1.CloudProviderList, error)
@@ -171,8 +171,8 @@ type ClientMock struct {
 	// GetIdentityProviderListFunc mocks the GetIdentityProviderList method.
 	GetIdentityProviderListFunc func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 
-	// GetOrganisationIdFromExternalIdFunc mocks the GetOrganisationIdFromExternalId method.
-	GetOrganisationIdFromExternalIdFunc func(externalId string) (string, error)
+	// GetOrganisationIDFromExternalIDFunc mocks the GetOrganisationIDFromExternalID method.
+	GetOrganisationIDFromExternalIDFunc func(externalID string) (string, error)
 
 	// GetQuotaCostsForProductFunc mocks the GetQuotaCostsForProduct method.
 	GetQuotaCostsForProductFunc func(organizationID string, resourceName string, product string) ([]*amsv1.QuotaCost, error)
@@ -196,7 +196,7 @@ type ClientMock struct {
 	SetComputeNodesFunc func(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
 
 	// UpdateAddonParametersFunc mocks the UpdateAddonParameters method.
-	UpdateAddonParametersFunc func(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
+	UpdateAddonParametersFunc func(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
 
 	// UpdateSyncSetFunc mocks the UpdateSyncSet method.
 	UpdateSyncSetFunc func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
@@ -213,17 +213,17 @@ type ClientMock struct {
 		}
 		// CreateAddon holds details about calls to the CreateAddon method.
 		CreateAddon []struct {
-			// ClusterId is the clusterId argument value.
-			ClusterId string
-			// AddonId is the addonId argument value.
-			AddonId string
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// AddonID is the addonID argument value.
+			AddonID string
 		}
 		// CreateAddonWithParams holds details about calls to the CreateAddonWithParams method.
 		CreateAddonWithParams []struct {
-			// ClusterId is the clusterId argument value.
-			ClusterId string
-			// AddonId is the addonId argument value.
-			AddonId string
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// AddonID is the addonID argument value.
+			AddonID string
 			// Parameters is the parameters argument value.
 			Parameters []Parameter
 		}
@@ -270,10 +270,10 @@ type ClientMock struct {
 		}
 		// GetAddon holds details about calls to the GetAddon method.
 		GetAddon []struct {
-			// ClusterId is the clusterId argument value.
-			ClusterId string
-			// AddonId is the addonId argument value.
-			AddonId string
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// AddonID is the addonID argument value.
+			AddonID string
 		}
 		// GetCloudProviders holds details about calls to the GetCloudProviders method.
 		GetCloudProviders []struct {
@@ -308,10 +308,10 @@ type ClientMock struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
-		// GetOrganisationIdFromExternalId holds details about calls to the GetOrganisationIdFromExternalId method.
-		GetOrganisationIdFromExternalId []struct {
-			// ExternalId is the externalId argument value.
-			ExternalId string
+		// GetOrganisationIDFromExternalID holds details about calls to the GetOrganisationIDFromExternalID method.
+		GetOrganisationIDFromExternalID []struct {
+			// ExternalID is the externalID argument value.
+			ExternalID string
 		}
 		// GetQuotaCostsForProduct holds details about calls to the GetQuotaCostsForProduct method.
 		GetQuotaCostsForProduct []struct {
@@ -362,10 +362,10 @@ type ClientMock struct {
 		}
 		// UpdateAddonParameters holds details about calls to the UpdateAddonParameters method.
 		UpdateAddonParameters []struct {
-			// ClusterId is the clusterId argument value.
-			ClusterId string
-			// AddonId is the addonId argument value.
-			AddonId string
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// AddonID is the addonID argument value.
+			AddonID string
 			// Parameters is the parameters argument value.
 			Parameters []Parameter
 		}
@@ -398,7 +398,7 @@ type ClientMock struct {
 	lockGetClusterStatus                sync.RWMutex
 	lockGetExistingClusterMetrics       sync.RWMutex
 	lockGetIdentityProviderList         sync.RWMutex
-	lockGetOrganisationIdFromExternalId sync.RWMutex
+	lockGetOrganisationIDFromExternalID sync.RWMutex
 	lockGetQuotaCostsForProduct         sync.RWMutex
 	lockGetRegions                      sync.RWMutex
 	lockGetRequiresTermsAcceptance      sync.RWMutex
@@ -468,33 +468,33 @@ func (mock *ClientMock) ConnectionCalls() []struct {
 }
 
 // CreateAddon calls CreateAddonFunc.
-func (mock *ClientMock) CreateAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+func (mock *ClientMock) CreateAddon(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
 	if mock.CreateAddonFunc == nil {
 		panic("ClientMock.CreateAddonFunc: method is nil but Client.CreateAddon was just called")
 	}
 	callInfo := struct {
-		ClusterId string
-		AddonId   string
+		ClusterID string
+		AddonID   string
 	}{
-		ClusterId: clusterId,
-		AddonId:   addonId,
+		ClusterID: clusterID,
+		AddonID:   addonID,
 	}
 	mock.lockCreateAddon.Lock()
 	mock.calls.CreateAddon = append(mock.calls.CreateAddon, callInfo)
 	mock.lockCreateAddon.Unlock()
-	return mock.CreateAddonFunc(clusterId, addonId)
+	return mock.CreateAddonFunc(clusterID, addonID)
 }
 
 // CreateAddonCalls gets all the calls that were made to CreateAddon.
 // Check the length with:
 //     len(mockedClient.CreateAddonCalls())
 func (mock *ClientMock) CreateAddonCalls() []struct {
-	ClusterId string
-	AddonId   string
+	ClusterID string
+	AddonID   string
 } {
 	var calls []struct {
-		ClusterId string
-		AddonId   string
+		ClusterID string
+		AddonID   string
 	}
 	mock.lockCreateAddon.RLock()
 	calls = mock.calls.CreateAddon
@@ -503,36 +503,36 @@ func (mock *ClientMock) CreateAddonCalls() []struct {
 }
 
 // CreateAddonWithParams calls CreateAddonWithParamsFunc.
-func (mock *ClientMock) CreateAddonWithParams(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+func (mock *ClientMock) CreateAddonWithParams(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 	if mock.CreateAddonWithParamsFunc == nil {
 		panic("ClientMock.CreateAddonWithParamsFunc: method is nil but Client.CreateAddonWithParams was just called")
 	}
 	callInfo := struct {
-		ClusterId  string
-		AddonId    string
+		ClusterID  string
+		AddonID    string
 		Parameters []Parameter
 	}{
-		ClusterId:  clusterId,
-		AddonId:    addonId,
+		ClusterID:  clusterID,
+		AddonID:    addonID,
 		Parameters: parameters,
 	}
 	mock.lockCreateAddonWithParams.Lock()
 	mock.calls.CreateAddonWithParams = append(mock.calls.CreateAddonWithParams, callInfo)
 	mock.lockCreateAddonWithParams.Unlock()
-	return mock.CreateAddonWithParamsFunc(clusterId, addonId, parameters)
+	return mock.CreateAddonWithParamsFunc(clusterID, addonID, parameters)
 }
 
 // CreateAddonWithParamsCalls gets all the calls that were made to CreateAddonWithParams.
 // Check the length with:
 //     len(mockedClient.CreateAddonWithParamsCalls())
 func (mock *ClientMock) CreateAddonWithParamsCalls() []struct {
-	ClusterId  string
-	AddonId    string
+	ClusterID  string
+	AddonID    string
 	Parameters []Parameter
 } {
 	var calls []struct {
-		ClusterId  string
-		AddonId    string
+		ClusterID  string
+		AddonID    string
 		Parameters []Parameter
 	}
 	mock.lockCreateAddonWithParams.RLock()
@@ -771,33 +771,33 @@ func (mock *ClientMock) FindSubscriptionsCalls() []struct {
 }
 
 // GetAddon calls GetAddonFunc.
-func (mock *ClientMock) GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+func (mock *ClientMock) GetAddon(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
 	if mock.GetAddonFunc == nil {
 		panic("ClientMock.GetAddonFunc: method is nil but Client.GetAddon was just called")
 	}
 	callInfo := struct {
-		ClusterId string
-		AddonId   string
+		ClusterID string
+		AddonID   string
 	}{
-		ClusterId: clusterId,
-		AddonId:   addonId,
+		ClusterID: clusterID,
+		AddonID:   addonID,
 	}
 	mock.lockGetAddon.Lock()
 	mock.calls.GetAddon = append(mock.calls.GetAddon, callInfo)
 	mock.lockGetAddon.Unlock()
-	return mock.GetAddonFunc(clusterId, addonId)
+	return mock.GetAddonFunc(clusterID, addonID)
 }
 
 // GetAddonCalls gets all the calls that were made to GetAddon.
 // Check the length with:
 //     len(mockedClient.GetAddonCalls())
 func (mock *ClientMock) GetAddonCalls() []struct {
-	ClusterId string
-	AddonId   string
+	ClusterID string
+	AddonID   string
 } {
 	var calls []struct {
-		ClusterId string
-		AddonId   string
+		ClusterID string
+		AddonID   string
 	}
 	mock.lockGetAddon.RLock()
 	calls = mock.calls.GetAddon
@@ -1017,34 +1017,34 @@ func (mock *ClientMock) GetIdentityProviderListCalls() []struct {
 	return calls
 }
 
-// GetOrganisationIdFromExternalId calls GetOrganisationIdFromExternalIdFunc.
-func (mock *ClientMock) GetOrganisationIdFromExternalId(externalId string) (string, error) {
-	if mock.GetOrganisationIdFromExternalIdFunc == nil {
-		panic("ClientMock.GetOrganisationIdFromExternalIdFunc: method is nil but Client.GetOrganisationIdFromExternalId was just called")
+// GetOrganisationIDFromExternalID calls GetOrganisationIDFromExternalIDFunc.
+func (mock *ClientMock) GetOrganisationIDFromExternalID(externalID string) (string, error) {
+	if mock.GetOrganisationIDFromExternalIDFunc == nil {
+		panic("ClientMock.GetOrganisationIDFromExternalIDFunc: method is nil but Client.GetOrganisationIDFromExternalID was just called")
 	}
 	callInfo := struct {
-		ExternalId string
+		ExternalID string
 	}{
-		ExternalId: externalId,
+		ExternalID: externalID,
 	}
-	mock.lockGetOrganisationIdFromExternalId.Lock()
-	mock.calls.GetOrganisationIdFromExternalId = append(mock.calls.GetOrganisationIdFromExternalId, callInfo)
-	mock.lockGetOrganisationIdFromExternalId.Unlock()
-	return mock.GetOrganisationIdFromExternalIdFunc(externalId)
+	mock.lockGetOrganisationIDFromExternalID.Lock()
+	mock.calls.GetOrganisationIDFromExternalID = append(mock.calls.GetOrganisationIDFromExternalID, callInfo)
+	mock.lockGetOrganisationIDFromExternalID.Unlock()
+	return mock.GetOrganisationIDFromExternalIDFunc(externalID)
 }
 
-// GetOrganisationIdFromExternalIdCalls gets all the calls that were made to GetOrganisationIdFromExternalId.
+// GetOrganisationIDFromExternalIDCalls gets all the calls that were made to GetOrganisationIDFromExternalID.
 // Check the length with:
-//     len(mockedClient.GetOrganisationIdFromExternalIdCalls())
-func (mock *ClientMock) GetOrganisationIdFromExternalIdCalls() []struct {
-	ExternalId string
+//     len(mockedClient.GetOrganisationIDFromExternalIDCalls())
+func (mock *ClientMock) GetOrganisationIDFromExternalIDCalls() []struct {
+	ExternalID string
 } {
 	var calls []struct {
-		ExternalId string
+		ExternalID string
 	}
-	mock.lockGetOrganisationIdFromExternalId.RLock()
-	calls = mock.calls.GetOrganisationIdFromExternalId
-	mock.lockGetOrganisationIdFromExternalId.RUnlock()
+	mock.lockGetOrganisationIDFromExternalID.RLock()
+	calls = mock.calls.GetOrganisationIDFromExternalID
+	mock.lockGetOrganisationIDFromExternalID.RUnlock()
 	return calls
 }
 
@@ -1290,36 +1290,36 @@ func (mock *ClientMock) SetComputeNodesCalls() []struct {
 }
 
 // UpdateAddonParameters calls UpdateAddonParametersFunc.
-func (mock *ClientMock) UpdateAddonParameters(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+func (mock *ClientMock) UpdateAddonParameters(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 	if mock.UpdateAddonParametersFunc == nil {
 		panic("ClientMock.UpdateAddonParametersFunc: method is nil but Client.UpdateAddonParameters was just called")
 	}
 	callInfo := struct {
-		ClusterId  string
-		AddonId    string
+		ClusterID  string
+		AddonID    string
 		Parameters []Parameter
 	}{
-		ClusterId:  clusterId,
-		AddonId:    addonId,
+		ClusterID:  clusterID,
+		AddonID:    addonID,
 		Parameters: parameters,
 	}
 	mock.lockUpdateAddonParameters.Lock()
 	mock.calls.UpdateAddonParameters = append(mock.calls.UpdateAddonParameters, callInfo)
 	mock.lockUpdateAddonParameters.Unlock()
-	return mock.UpdateAddonParametersFunc(clusterId, addonId, parameters)
+	return mock.UpdateAddonParametersFunc(clusterID, addonID, parameters)
 }
 
 // UpdateAddonParametersCalls gets all the calls that were made to UpdateAddonParameters.
 // Check the length with:
 //     len(mockedClient.UpdateAddonParametersCalls())
 func (mock *ClientMock) UpdateAddonParametersCalls() []struct {
-	ClusterId  string
-	AddonId    string
+	ClusterID  string
+	AddonID    string
 	Parameters []Parameter
 } {
 	var calls []struct {
-		ClusterId  string
-		AddonId    string
+		ClusterID  string
+		AddonID    string
 		Parameters []Parameter
 	}
 	mock.lockUpdateAddonParameters.RLock()

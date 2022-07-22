@@ -1,4 +1,4 @@
-package dinosaur_mgrs
+package dinosaurmgrs
 
 import (
 	"github.com/golang/glog"
@@ -22,7 +22,7 @@ var _ workers.Worker = &DinosaurRoutesCNAMEManager{}
 func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConfig *config.DinosaurConfig) *DinosaurRoutesCNAMEManager {
 	return &DinosaurRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
-			Id:         uuid.New().String(),
+			ID:         uuid.New().String(),
 			WorkerType: "dinosaur_dns",
 			Reconciler: workers.Reconciler{},
 		},
@@ -55,7 +55,7 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 
 	for _, dinosaur := range dinosaurs {
 		if k.dinosaurConfig.EnableDinosaurExternalCertificate {
-			if dinosaur.RoutesCreationId == "" {
+			if dinosaur.RoutesCreationID == "" {
 				glog.Infof("creating CNAME records for dinosaur %s", dinosaur.ID)
 
 				changeOutput, err := k.dinosaurService.ChangeDinosaurCNAMErecords(dinosaur, services.DinosaurRoutesActionCreate)
@@ -65,7 +65,7 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 					continue
 				}
 
-				dinosaur.RoutesCreationId = *changeOutput.ChangeInfo.Id
+				dinosaur.RoutesCreationID = *changeOutput.ChangeInfo.Id
 				dinosaur.RoutesCreated = *changeOutput.ChangeInfo.Status == "INSYNC"
 			} else {
 				recordStatus, err := k.dinosaurService.GetCNAMERecordStatus(dinosaur)

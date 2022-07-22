@@ -22,7 +22,7 @@ var _ SSOClient = &SSOClientMock{}
 // 			CreateServiceAccountFunc: func(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
 // 				panic("mock out the CreateServiceAccount method")
 // 			},
-// 			DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
+// 			DeleteServiceAccountFunc: func(accessToken string, clientID string) error {
 // 				panic("mock out the DeleteServiceAccount method")
 // 			},
 // 			GetConfigFunc: func() *iam.IAMConfig {
@@ -31,7 +31,7 @@ var _ SSOClient = &SSOClientMock{}
 // 			GetRealmConfigFunc: func() *iam.IAMRealmConfig {
 // 				panic("mock out the GetRealmConfig method")
 // 			},
-// 			GetServiceAccountFunc: func(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+// 			GetServiceAccountFunc: func(accessToken string, clientID string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
 // 				panic("mock out the GetServiceAccount method")
 // 			},
 // 			GetServiceAccountsFunc: func(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error) {
@@ -43,7 +43,7 @@ var _ SSOClient = &SSOClientMock{}
 // 			RegenerateClientSecretFunc: func(accessToken string, id string) (serviceaccountsclient.ServiceAccountData, error) {
 // 				panic("mock out the RegenerateClientSecret method")
 // 			},
-// 			UpdateServiceAccountFunc: func(accessToken string, clientId string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
+// 			UpdateServiceAccountFunc: func(accessToken string, clientID string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
 // 				panic("mock out the UpdateServiceAccount method")
 // 			},
 // 		}
@@ -57,7 +57,7 @@ type SSOClientMock struct {
 	CreateServiceAccountFunc func(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error)
 
 	// DeleteServiceAccountFunc mocks the DeleteServiceAccount method.
-	DeleteServiceAccountFunc func(accessToken string, clientId string) error
+	DeleteServiceAccountFunc func(accessToken string, clientID string) error
 
 	// GetConfigFunc mocks the GetConfig method.
 	GetConfigFunc func() *iam.IAMConfig
@@ -66,7 +66,7 @@ type SSOClientMock struct {
 	GetRealmConfigFunc func() *iam.IAMRealmConfig
 
 	// GetServiceAccountFunc mocks the GetServiceAccount method.
-	GetServiceAccountFunc func(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error)
+	GetServiceAccountFunc func(accessToken string, clientID string) (*serviceaccountsclient.ServiceAccountData, bool, error)
 
 	// GetServiceAccountsFunc mocks the GetServiceAccounts method.
 	GetServiceAccountsFunc func(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error)
@@ -78,7 +78,7 @@ type SSOClientMock struct {
 	RegenerateClientSecretFunc func(accessToken string, id string) (serviceaccountsclient.ServiceAccountData, error)
 
 	// UpdateServiceAccountFunc mocks the UpdateServiceAccount method.
-	UpdateServiceAccountFunc func(accessToken string, clientId string, name string, description string) (serviceaccountsclient.ServiceAccountData, error)
+	UpdateServiceAccountFunc func(accessToken string, clientID string, name string, description string) (serviceaccountsclient.ServiceAccountData, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -95,8 +95,8 @@ type SSOClientMock struct {
 		DeleteServiceAccount []struct {
 			// AccessToken is the accessToken argument value.
 			AccessToken string
-			// ClientId is the clientId argument value.
-			ClientId string
+			// ClientID is the clientID argument value.
+			ClientID string
 		}
 		// GetConfig holds details about calls to the GetConfig method.
 		GetConfig []struct {
@@ -108,8 +108,8 @@ type SSOClientMock struct {
 		GetServiceAccount []struct {
 			// AccessToken is the accessToken argument value.
 			AccessToken string
-			// ClientId is the clientId argument value.
-			ClientId string
+			// ClientID is the clientID argument value.
+			ClientID string
 		}
 		// GetServiceAccounts holds details about calls to the GetServiceAccounts method.
 		GetServiceAccounts []struct {
@@ -134,8 +134,8 @@ type SSOClientMock struct {
 		UpdateServiceAccount []struct {
 			// AccessToken is the accessToken argument value.
 			AccessToken string
-			// ClientId is the clientId argument value.
-			ClientId string
+			// ClientID is the clientID argument value.
+			ClientID string
 			// Name is the name argument value.
 			Name string
 			// Description is the description argument value.
@@ -193,21 +193,21 @@ func (mock *SSOClientMock) CreateServiceAccountCalls() []struct {
 }
 
 // DeleteServiceAccount calls DeleteServiceAccountFunc.
-func (mock *SSOClientMock) DeleteServiceAccount(accessToken string, clientId string) error {
+func (mock *SSOClientMock) DeleteServiceAccount(accessToken string, clientID string) error {
 	if mock.DeleteServiceAccountFunc == nil {
 		panic("SSOClientMock.DeleteServiceAccountFunc: method is nil but SSOClient.DeleteServiceAccount was just called")
 	}
 	callInfo := struct {
 		AccessToken string
-		ClientId    string
+		ClientID    string
 	}{
 		AccessToken: accessToken,
-		ClientId:    clientId,
+		ClientID:    clientID,
 	}
 	mock.lockDeleteServiceAccount.Lock()
 	mock.calls.DeleteServiceAccount = append(mock.calls.DeleteServiceAccount, callInfo)
 	mock.lockDeleteServiceAccount.Unlock()
-	return mock.DeleteServiceAccountFunc(accessToken, clientId)
+	return mock.DeleteServiceAccountFunc(accessToken, clientID)
 }
 
 // DeleteServiceAccountCalls gets all the calls that were made to DeleteServiceAccount.
@@ -215,11 +215,11 @@ func (mock *SSOClientMock) DeleteServiceAccount(accessToken string, clientId str
 //     len(mockedSSOClient.DeleteServiceAccountCalls())
 func (mock *SSOClientMock) DeleteServiceAccountCalls() []struct {
 	AccessToken string
-	ClientId    string
+	ClientID    string
 } {
 	var calls []struct {
 		AccessToken string
-		ClientId    string
+		ClientID    string
 	}
 	mock.lockDeleteServiceAccount.RLock()
 	calls = mock.calls.DeleteServiceAccount
@@ -280,21 +280,21 @@ func (mock *SSOClientMock) GetRealmConfigCalls() []struct {
 }
 
 // GetServiceAccount calls GetServiceAccountFunc.
-func (mock *SSOClientMock) GetServiceAccount(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+func (mock *SSOClientMock) GetServiceAccount(accessToken string, clientID string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
 	if mock.GetServiceAccountFunc == nil {
 		panic("SSOClientMock.GetServiceAccountFunc: method is nil but SSOClient.GetServiceAccount was just called")
 	}
 	callInfo := struct {
 		AccessToken string
-		ClientId    string
+		ClientID    string
 	}{
 		AccessToken: accessToken,
-		ClientId:    clientId,
+		ClientID:    clientID,
 	}
 	mock.lockGetServiceAccount.Lock()
 	mock.calls.GetServiceAccount = append(mock.calls.GetServiceAccount, callInfo)
 	mock.lockGetServiceAccount.Unlock()
-	return mock.GetServiceAccountFunc(accessToken, clientId)
+	return mock.GetServiceAccountFunc(accessToken, clientID)
 }
 
 // GetServiceAccountCalls gets all the calls that were made to GetServiceAccount.
@@ -302,11 +302,11 @@ func (mock *SSOClientMock) GetServiceAccount(accessToken string, clientId string
 //     len(mockedSSOClient.GetServiceAccountCalls())
 func (mock *SSOClientMock) GetServiceAccountCalls() []struct {
 	AccessToken string
-	ClientId    string
+	ClientID    string
 } {
 	var calls []struct {
 		AccessToken string
-		ClientId    string
+		ClientID    string
 	}
 	mock.lockGetServiceAccount.RLock()
 	calls = mock.calls.GetServiceAccount
@@ -415,25 +415,25 @@ func (mock *SSOClientMock) RegenerateClientSecretCalls() []struct {
 }
 
 // UpdateServiceAccount calls UpdateServiceAccountFunc.
-func (mock *SSOClientMock) UpdateServiceAccount(accessToken string, clientId string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
+func (mock *SSOClientMock) UpdateServiceAccount(accessToken string, clientID string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
 	if mock.UpdateServiceAccountFunc == nil {
 		panic("SSOClientMock.UpdateServiceAccountFunc: method is nil but SSOClient.UpdateServiceAccount was just called")
 	}
 	callInfo := struct {
 		AccessToken string
-		ClientId    string
+		ClientID    string
 		Name        string
 		Description string
 	}{
 		AccessToken: accessToken,
-		ClientId:    clientId,
+		ClientID:    clientID,
 		Name:        name,
 		Description: description,
 	}
 	mock.lockUpdateServiceAccount.Lock()
 	mock.calls.UpdateServiceAccount = append(mock.calls.UpdateServiceAccount, callInfo)
 	mock.lockUpdateServiceAccount.Unlock()
-	return mock.UpdateServiceAccountFunc(accessToken, clientId, name, description)
+	return mock.UpdateServiceAccountFunc(accessToken, clientID, name, description)
 }
 
 // UpdateServiceAccountCalls gets all the calls that were made to UpdateServiceAccount.
@@ -441,13 +441,13 @@ func (mock *SSOClientMock) UpdateServiceAccount(accessToken string, clientId str
 //     len(mockedSSOClient.UpdateServiceAccountCalls())
 func (mock *SSOClientMock) UpdateServiceAccountCalls() []struct {
 	AccessToken string
-	ClientId    string
+	ClientID    string
 	Name        string
 	Description string
 } {
 	var calls []struct {
 		AccessToken string
-		ClientId    string
+		ClientID    string
 		Name        string
 		Description string
 	}

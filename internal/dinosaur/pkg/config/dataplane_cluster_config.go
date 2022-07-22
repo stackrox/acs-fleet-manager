@@ -101,7 +101,7 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 // ManualCluster manual cluster configuration
 type ManualCluster struct {
 	Name                             string                       `yaml:"name"`
-	ClusterId                        string                       `yaml:"cluster_id"`
+	ClusterID                        string                       `yaml:"cluster_id"`
 	CloudProvider                    string                       `yaml:"cloud_provider"`
 	Region                           string                       `yaml:"region"`
 	MultiAZ                          bool                         `yaml:"multi_az"`
@@ -128,17 +128,17 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 	*c = ManualCluster(temp)
-	if c.ClusterId == "" {
+	if c.ClusterID == "" {
 		return fmt.Errorf("cluster_id is empty")
 	}
 
 	if c.ProviderType == api.ClusterProviderStandalone {
 		if c.ClusterDNS == "" {
-			return errors.Errorf("Standalone cluster with id %s does not have the cluster dns field provided", c.ClusterId)
+			return errors.Errorf("Standalone cluster with id %s does not have the cluster dns field provided", c.ClusterID)
 		}
 
 		if c.Name == "" {
-			return errors.Errorf("Standalone cluster with id %s does not have the name field provided", c.ClusterId)
+			return errors.Errorf("Standalone cluster with id %s does not have the name field provided", c.ClusterID)
 		}
 
 		if c.Status != api.ClusterProvisioning && c.Status != api.ClusterProvisioned && c.Status != api.ClusterReady {
@@ -166,7 +166,7 @@ type ClusterConfig struct {
 func NewClusterConfig(clusters ClusterList) *ClusterConfig {
 	clusterMap := make(map[string]ManualCluster)
 	for _, c := range clusters {
-		clusterMap[c.ClusterId] = c
+		clusterMap[c.ClusterID] = c
 	}
 	return &ClusterConfig{
 		clusterList:      clusters,
@@ -186,25 +186,25 @@ func (conf *ClusterConfig) GetCapacityForRegion(region string) int {
 }
 
 // IsNumberOfDinosaurWithinClusterLimit ...
-func (conf *ClusterConfig) IsNumberOfDinosaurWithinClusterLimit(clusterId string, count int) bool {
-	if _, exist := conf.clusterConfigMap[clusterId]; exist {
-		limit := conf.clusterConfigMap[clusterId].CentralInstanceLimit
+func (conf *ClusterConfig) IsNumberOfDinosaurWithinClusterLimit(clusterID string, count int) bool {
+	if _, exist := conf.clusterConfigMap[clusterID]; exist {
+		limit := conf.clusterConfigMap[clusterID].CentralInstanceLimit
 		return limit == -1 || count <= limit
 	}
 	return true
 }
 
 // IsClusterSchedulable ...
-func (conf *ClusterConfig) IsClusterSchedulable(clusterId string) bool {
-	if _, exist := conf.clusterConfigMap[clusterId]; exist {
-		return conf.clusterConfigMap[clusterId].Schedulable
+func (conf *ClusterConfig) IsClusterSchedulable(clusterID string) bool {
+	if _, exist := conf.clusterConfigMap[clusterID]; exist {
+		return conf.clusterConfigMap[clusterID].Schedulable
 	}
 	return true
 }
 
 // GetClusterSupportedInstanceType ...
-func (conf *ClusterConfig) GetClusterSupportedInstanceType(clusterId string) (string, bool) {
-	manualCluster, exist := conf.clusterConfigMap[clusterId]
+func (conf *ClusterConfig) GetClusterSupportedInstanceType(clusterID string) (string, bool) {
+	manualCluster, exist := conf.clusterConfigMap[clusterID]
 	return manualCluster.SupportedInstanceType, exist
 }
 
@@ -212,8 +212,8 @@ func (conf *ClusterConfig) GetClusterSupportedInstanceType(clusterId string) (st
 func (conf *ClusterConfig) ExcessClusters(clusterList map[string]api.Cluster) []string {
 	var res []string
 
-	for clusterId, v := range clusterList {
-		if _, exist := conf.clusterConfigMap[clusterId]; !exist {
+	for clusterID, v := range clusterList {
+		if _, exist := conf.clusterConfigMap[clusterID]; !exist {
 			res = append(res, v.ClusterID)
 		}
 	}
@@ -231,7 +231,7 @@ func (conf *ClusterConfig) MissingClusters(clusterMap map[string]api.Cluster) []
 
 	// ensure the order
 	for _, p := range conf.clusterList {
-		if _, exists := clusterMap[p.ClusterId]; !exists {
+		if _, exists := clusterMap[p.ClusterID]; !exists {
 			res = append(res, p)
 		}
 	}
@@ -342,7 +342,7 @@ func validateClusterIsInKubeconfigContext(rawConfig clientcmdapi.Config, cluster
 	if _, found := rawConfig.Contexts[cluster.Name]; found {
 		return nil
 	}
-	return errors.Errorf("standalone cluster with ID: %s, and Name %s not in kubeconfig context", cluster.ClusterId, cluster.Name)
+	return errors.Errorf("standalone cluster with ID: %s, and Name %s not in kubeconfig context", cluster.ClusterID, cluster.Name)
 }
 
 func readDataPlaneClusterConfig(file string) (ClusterList, error) {
@@ -361,10 +361,10 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 	return c.ClusterList, nil
 }
 
-// FindClusterNameByClusterId ...
-func (c *DataplaneClusterConfig) FindClusterNameByClusterId(clusterId string) string {
+// FindClusterNameByClusterID ...
+func (c *DataplaneClusterConfig) FindClusterNameByClusterID(clusterID string) string {
 	for _, cluster := range c.ClusterConfig.clusterList {
-		if cluster.ClusterId == clusterId {
+		if cluster.ClusterID == clusterID {
 			return cluster.Name
 		}
 	}

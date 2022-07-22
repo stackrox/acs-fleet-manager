@@ -21,7 +21,7 @@ type Client interface {
 	// route53
 	ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error)
 	ChangeResourceRecordSets(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
-	GetChange(changeId string) (*route53.GetChangeOutput, error)
+	GetChange(changeID string) (*route53.GetChangeOutput, error)
 }
 
 // ClientFactory ...
@@ -90,9 +90,9 @@ func newClient(credentials Config, region string) (Client, error) {
 }
 
 // GetChange ...
-func (client *awsClient) GetChange(changeId string) (*route53.GetChangeOutput, error) {
+func (client *awsClient) GetChange(changeID string) (*route53.GetChangeOutput, error) {
 	changeInput := &route53.GetChangeInput{
-		Id: &changeId,
+		Id: &changeID,
 	}
 
 	change, err := client.route53Client.GetChange(changeInput)
@@ -128,10 +128,10 @@ func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBa
 		return nil, fmt.Errorf("No Hosted Zones found")
 	}
 
-	hostedZoneId := zones.HostedZones[0].Id
+	hostedZoneID := zones.HostedZones[0].Id
 
 	recordChanges := &route53.ChangeResourceRecordSetsInput{
-		HostedZoneId: hostedZoneId,
+		HostedZoneId: hostedZoneID,
 		ChangeBatch:  recordChangeBatch,
 	}
 

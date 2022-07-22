@@ -461,7 +461,7 @@ func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error
 // reconcileEmptyCluster checks wether a cluster is empty and mark it for deletion
 func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error) {
 	glog.V(10).Infof("check if cluster is empty, ClusterID = %s", cluster.ClusterID)
-	clusterFromDb, err := c.ClusterService.FindNonEmptyClusterById(cluster.ClusterID)
+	clusterFromDb, err := c.ClusterService.FindNonEmptyClusterByID(cluster.ClusterID)
 	if err != nil {
 		return false, err
 	}
@@ -628,7 +628,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			CloudProvider:         p.CloudProvider,
 			Region:                p.Region,
 			MultiAZ:               p.MultiAZ,
-			ClusterID:             p.ClusterId,
+			ClusterID:             p.ClusterID,
 			Status:                p.Status,
 			ProviderType:          p.ProviderType,
 			ClusterDNS:            p.ClusterDNS,
@@ -637,14 +637,14 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 
 		if len(p.AvailableCentralOperatorVersions) > 0 {
 			if err := clusterRequest.SetAvailableCentralOperatorVersions(p.AvailableCentralOperatorVersions); err != nil {
-				return []error{errors.Wrapf(err, "Failed to set operator versions for manual cluster %s with config file", p.ClusterId)}
+				return []error{errors.Wrapf(err, "Failed to set operator versions for manual cluster %s with config file", p.ClusterID)}
 			}
 		}
 
 		if err := c.ClusterService.RegisterClusterJob(&clusterRequest); err != nil {
-			return []error{errors.Wrapf(err, "Failed to register new cluster %s with config file", p.ClusterId)}
+			return []error{errors.Wrapf(err, "Failed to register new cluster %s with config file", p.ClusterID)}
 		}
-		glog.Infof("Registered a new cluster with config file: %s ", p.ClusterId)
+		glog.Infof("Registered a new cluster with config file: %s ", p.ClusterID)
 	}
 
 	// Remove all clusters that are not in the config file
@@ -785,13 +785,13 @@ func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret
 	observabilityConfig := c.ObservabilityConfiguration
 	stringDataMap := map[string]string{
 		"authType":               observatoriumAuthType,
-		"gateway":                observabilityConfig.RedHatSsoGatewayUrl,
+		"gateway":                observabilityConfig.RedHatSsoGatewayURL,
 		"tenant":                 observabilityConfig.RedHatSsoTenant,
-		"redHatSsoAuthServerUrl": observabilityConfig.RedHatSsoAuthServerUrl,
+		"redHatSsoAuthServerUrl": observabilityConfig.RedHatSsoAuthServerURL,
 		"redHatSsoRealm":         observabilityConfig.RedHatSsoRealm,
-		"metricsClientId":        observabilityConfig.MetricsClientId,
+		"metricsClientId":        observabilityConfig.MetricsClientID,
 		"metricsSecret":          observabilityConfig.MetricsSecret,
-		"logsClientId":           observabilityConfig.LogsClientId,
+		"logsClientId":           observabilityConfig.LogsClientID,
 		"logsSecret":             observabilityConfig.LogsSecret,
 	}
 	return &k8sCoreV1.Secret{
@@ -969,7 +969,7 @@ func (c *ClusterManager) setClusterStatusMaxCapacityMetrics() {
 		for _, instanceType := range supportedInstanceTypes {
 			if instanceType != "" {
 				capacity := float64(cluster.CentralInstanceLimit)
-				metrics.UpdateClusterStatusCapacityMaxCount(cluster.Region, instanceType, cluster.ClusterId, capacity)
+				metrics.UpdateClusterStatusCapacityMaxCount(cluster.Region, instanceType, cluster.ClusterID, capacity)
 			}
 		}
 	}

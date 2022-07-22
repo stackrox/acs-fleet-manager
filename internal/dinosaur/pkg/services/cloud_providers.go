@@ -16,7 +16,7 @@ import (
 
 const keyCloudProvidersWithRegions = "cloudProviderWithRegions"
 
-var cloudPoviderIdToDisplayNameMapping = map[string]string{
+var cloudPoviderIDToDisplayNameMapping = map[string]string{
 	"aws":   "Amazon Web Services",
 	"azure": "Microsoft Azure",
 	"gcp":   "Google Cloud Platform",
@@ -153,7 +153,7 @@ func (p cloudProvidersService) ListCloudProviders() ([]api.CloudProvider, *error
 				continue
 			}
 			cloudProviderList = append(cloudProviderList, api.CloudProvider{
-				Id:          cp.ID,
+				ID:          cp.ID,
 				Name:        cp.Name,
 				DisplayName: setDisplayName(cp.ID, cp.DisplayName),
 			})
@@ -176,7 +176,7 @@ func (p cloudProvidersService) ListCloudProviderRegions(id string) ([]api.CloudR
 		if cloudProvider.ID == id {
 			for _, r := range cloudProvider.RegionList.Items {
 				cloudRegionList = append(cloudRegionList, api.CloudRegion{
-					Id:            r.ID,
+					ID:            r.ID,
 					CloudProvider: r.CloudProviderID,
 					DisplayName:   r.DisplayName,
 				})
@@ -203,8 +203,8 @@ func (p cloudProvidersService) getAvailableClusterProviderTypes() ([]Cluster, *e
 	return results, nil
 }
 
-func setDisplayName(providerId string, defaultDisplayName string) string {
-	displayName, ok := cloudPoviderIdToDisplayNameMapping[strings.ToLower(providerId)]
+func setDisplayName(providerID string, defaultDisplayName string) string {
+	displayName, ok := cloudPoviderIDToDisplayNameMapping[strings.ToLower(providerID)]
 	if ok {
 		return displayName
 	}

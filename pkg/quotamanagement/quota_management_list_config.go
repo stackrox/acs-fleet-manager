@@ -1,4 +1,4 @@
-package quota_management
+package quotamanagement
 
 import (
 	"os"
@@ -46,11 +46,11 @@ func (c *QuotaManagementListConfig) ReadFiles() error {
 	return err
 }
 
-// GetAllowedAccountByUsernameAndOrgId ...
-func (c *QuotaManagementListConfig) GetAllowedAccountByUsernameAndOrgId(username string, orgId string) (Account, bool) {
+// GetAllowedAccountByUsernameAndOrgID ...
+func (c *QuotaManagementListConfig) GetAllowedAccountByUsernameAndOrgID(username string, orgID string) (Account, bool) {
 	var user Account
 	var found bool
-	org, _ := c.QuotaList.Organisations.GetById(orgId)
+	org, _ := c.QuotaList.Organisations.GetByID(orgID)
 	user, found = org.RegisteredUsers.GetByUsername(username)
 	if found {
 		return user, found

@@ -47,14 +47,14 @@ func runGetMetricsByRangeQuery(env *environments.Env, cmd *cobra.Command, _args 
 	params.ResultType = observatorium.RangeQuery
 	params.FillDefaults()
 
-	dinosaurId, err := observatoriumService.GetMetricsByDinosaurId(ctx, dinosaurMetrics, id, params)
+	dinosaurID, err := observatoriumService.GetMetricsByDinosaurID(ctx, dinosaurMetrics, id, params)
 	if err != nil {
 		glog.Error("An error occurred while attempting to get metrics data ", err.Error())
 		return
 	}
 	metricsList := public.MetricsRangeQueryList{
 		Kind: "MetricsRangeQueryList",
-		Id:   dinosaurId,
+		Id:   dinosaurID,
 	}
 	metrics, err := presenters.PresentMetricsByRangeQuery(dinosaurMetrics)
 	if err != nil {
@@ -67,6 +67,6 @@ func runGetMetricsByRangeQuery(env *environments.Env, cmd *cobra.Command, _args 
 		glog.Fatalf("Failed to format metrics list: %s", err.Error())
 	}
 
-	glog.V(10).Infof("%s %s", dinosaurId, output)
+	glog.V(10).Infof("%s %s", dinosaurID, output)
 
 }

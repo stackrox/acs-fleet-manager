@@ -44,7 +44,7 @@ func runProviderList(
 	supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
 	for i := range cloudProviders {
 		cloudProvider := cloudProviders[i]
-		_, cloudProvider.Enabled = supportedProviders.GetByName(cloudProvider.Id)
+		_, cloudProvider.Enabled = supportedProviders.GetByName(cloudProvider.ID)
 		converted := presenters.PresentCloudProvider(&cloudProvider)
 		cloudProviderList.Items = append(cloudProviderList.Items, converted)
 	}

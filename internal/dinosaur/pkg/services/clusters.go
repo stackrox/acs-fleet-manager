@@ -44,9 +44,9 @@ type ClusterService interface {
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
 	// DeleteByClusterID will delete the cluster from the database
 	DeleteByClusterID(clusterID string) *apiErrors.ServiceError
-	// FindNonEmptyClusterById returns a cluster if it present and it is not empty.
+	// FindNonEmptyClusterByID returns a cluster if it present and it is not empty.
 	// Cluster emptiness is determined by checking whether the cluster contains Dinosaurs that have been provisioned, are being provisioned on it, or are being deprovisioned from it i.e dinosaur that are not in failure state.
-	FindNonEmptyClusterById(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
+	FindNonEmptyClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
 	// ListAllClusterIds returns all the valid cluster ids in array
 	ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError)
 	// FindAllClusters return all the valid clusters in array
@@ -431,8 +431,8 @@ func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceEr
 	return nil
 }
 
-// FindNonEmptyClusterById ...
-func (c clusterService) FindNonEmptyClusterById(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+// FindNonEmptyClusterByID ...
+func (c clusterService) FindNonEmptyClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
 
 	cluster := &api.Cluster{}
@@ -516,9 +516,9 @@ func (c clusterService) FindDinosaurInstanceCount(clusterIDs []string) ([]ResDin
 		for _, c := range res {
 			countersMap[c.Clusterid] = c.Count
 		}
-		for _, clusterId := range clusterIDs {
-			if _, ok := countersMap[clusterId]; !ok {
-				res = append(res, ResDinosaurInstanceCount{Clusterid: clusterId, Count: 0})
+		for _, clusterID := range clusterIDs {
+			if _, ok := countersMap[clusterID]; !ok {
+				res = append(res, ResDinosaurInstanceCount{Clusterid: clusterID, Count: 0})
 			}
 		}
 	}

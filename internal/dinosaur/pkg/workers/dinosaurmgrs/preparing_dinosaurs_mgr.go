@@ -1,4 +1,4 @@
-package dinosaur_mgrs
+package dinosaurmgrs
 
 import (
 	"time"
@@ -27,7 +27,7 @@ type PreparingDinosaurManager struct {
 func NewPreparingDinosaurManager(dinosaurService services.DinosaurService) *PreparingDinosaurManager {
 	return &PreparingDinosaurManager{
 		BaseWorker: workers.BaseWorker{
-			Id:         uuid.New().String(),
+			ID:         uuid.New().String(),
 			WorkerType: "preparing_dinosaur",
 			Reconciler: workers.Reconciler{},
 		},

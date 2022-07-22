@@ -1,4 +1,4 @@
-package quota_management
+package quotamanagement
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func Test_OrganisationList_GetById(t *testing.T) {
+func Test_OrganisationList_GetByID(t *testing.T) {
 	t.Parallel()
 	id := "org-id"
 	type result struct {
@@ -34,7 +34,7 @@ func Test_OrganisationList_GetById(t *testing.T) {
 			arg:  id,
 			orgs: OrganisationList{
 				Organisation{
-					Id:              "org-1",
+					ID:              "org-1",
 					RegisteredUsers: AccountList{},
 				},
 			},
@@ -48,18 +48,18 @@ func Test_OrganisationList_GetById(t *testing.T) {
 			arg:  id,
 			orgs: OrganisationList{
 				Organisation{
-					Id:              "org-2",
+					ID:              "org-2",
 					RegisteredUsers: AccountList{Account{Username: "username"}},
 				},
 				Organisation{
-					Id:              id,
+					ID:              id,
 					RegisteredUsers: AccountList{Account{Username: "user-1"}},
 				},
 			},
 			want: result{
 				ok: true,
 				organisation: Organisation{
-					Id:              id,
+					ID:              id,
 					RegisteredUsers: AccountList{Account{Username: "user-1"}},
 				},
 			},
@@ -70,7 +70,7 @@ func Test_OrganisationList_GetById(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			RegisterTestingT(t)
-			organisation, ok := tt.orgs.GetById(tt.arg)
+			organisation, ok := tt.orgs.GetByID(tt.arg)
 			Expect(organisation).To(Equal(tt.want.organisation))
 			Expect(ok).To(Equal(tt.want.ok))
 		})

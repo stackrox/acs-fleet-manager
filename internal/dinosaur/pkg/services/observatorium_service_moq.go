@@ -23,8 +23,8 @@ var _ ObservatoriumService = &ObservatoriumServiceMock{}
 // 			GetDinosaurStateFunc: func(name string, namespaceName string) (observatorium.DinosaurState, error) {
 // 				panic("mock out the GetDinosaurState method")
 // 			},
-// 			GetMetricsByDinosaurIdFunc: func(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError) {
-// 				panic("mock out the GetMetricsByDinosaurId method")
+// 			GetMetricsByDinosaurIDFunc: func(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError) {
+// 				panic("mock out the GetMetricsByDinosaurID method")
 // 			},
 // 		}
 //
@@ -36,8 +36,8 @@ type ObservatoriumServiceMock struct {
 	// GetDinosaurStateFunc mocks the GetDinosaurState method.
 	GetDinosaurStateFunc func(name string, namespaceName string) (observatorium.DinosaurState, error)
 
-	// GetMetricsByDinosaurIdFunc mocks the GetMetricsByDinosaurId method.
-	GetMetricsByDinosaurIdFunc func(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError)
+	// GetMetricsByDinosaurIDFunc mocks the GetMetricsByDinosaurID method.
+	GetMetricsByDinosaurIDFunc func(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -48,8 +48,8 @@ type ObservatoriumServiceMock struct {
 			// NamespaceName is the namespaceName argument value.
 			NamespaceName string
 		}
-		// GetMetricsByDinosaurId holds details about calls to the GetMetricsByDinosaurId method.
-		GetMetricsByDinosaurId []struct {
+		// GetMetricsByDinosaurID holds details about calls to the GetMetricsByDinosaurID method.
+		GetMetricsByDinosaurID []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// CsMetrics is the csMetrics argument value.
@@ -61,7 +61,7 @@ type ObservatoriumServiceMock struct {
 		}
 	}
 	lockGetDinosaurState       sync.RWMutex
-	lockGetMetricsByDinosaurId sync.RWMutex
+	lockGetMetricsByDinosaurID sync.RWMutex
 }
 
 // GetDinosaurState calls GetDinosaurStateFunc.
@@ -99,10 +99,10 @@ func (mock *ObservatoriumServiceMock) GetDinosaurStateCalls() []struct {
 	return calls
 }
 
-// GetMetricsByDinosaurId calls GetMetricsByDinosaurIdFunc.
-func (mock *ObservatoriumServiceMock) GetMetricsByDinosaurId(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError) {
-	if mock.GetMetricsByDinosaurIdFunc == nil {
-		panic("ObservatoriumServiceMock.GetMetricsByDinosaurIdFunc: method is nil but ObservatoriumService.GetMetricsByDinosaurId was just called")
+// GetMetricsByDinosaurID calls GetMetricsByDinosaurIDFunc.
+func (mock *ObservatoriumServiceMock) GetMetricsByDinosaurID(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError) {
+	if mock.GetMetricsByDinosaurIDFunc == nil {
+		panic("ObservatoriumServiceMock.GetMetricsByDinosaurIDFunc: method is nil but ObservatoriumService.GetMetricsByDinosaurID was just called")
 	}
 	callInfo := struct {
 		Ctx       context.Context
@@ -115,16 +115,16 @@ func (mock *ObservatoriumServiceMock) GetMetricsByDinosaurId(ctx context.Context
 		ID:        id,
 		Query:     query,
 	}
-	mock.lockGetMetricsByDinosaurId.Lock()
-	mock.calls.GetMetricsByDinosaurId = append(mock.calls.GetMetricsByDinosaurId, callInfo)
-	mock.lockGetMetricsByDinosaurId.Unlock()
-	return mock.GetMetricsByDinosaurIdFunc(ctx, csMetrics, id, query)
+	mock.lockGetMetricsByDinosaurID.Lock()
+	mock.calls.GetMetricsByDinosaurID = append(mock.calls.GetMetricsByDinosaurID, callInfo)
+	mock.lockGetMetricsByDinosaurID.Unlock()
+	return mock.GetMetricsByDinosaurIDFunc(ctx, csMetrics, id, query)
 }
 
-// GetMetricsByDinosaurIdCalls gets all the calls that were made to GetMetricsByDinosaurId.
+// GetMetricsByDinosaurIDCalls gets all the calls that were made to GetMetricsByDinosaurID.
 // Check the length with:
-//     len(mockedObservatoriumService.GetMetricsByDinosaurIdCalls())
-func (mock *ObservatoriumServiceMock) GetMetricsByDinosaurIdCalls() []struct {
+//     len(mockedObservatoriumService.GetMetricsByDinosaurIDCalls())
+func (mock *ObservatoriumServiceMock) GetMetricsByDinosaurIDCalls() []struct {
 	Ctx       context.Context
 	CsMetrics *observatorium.DinosaurMetrics
 	ID        string
@@ -136,8 +136,8 @@ func (mock *ObservatoriumServiceMock) GetMetricsByDinosaurIdCalls() []struct {
 		ID        string
 		Query     observatorium.MetricsReqParams
 	}
-	mock.lockGetMetricsByDinosaurId.RLock()
-	calls = mock.calls.GetMetricsByDinosaurId
-	mock.lockGetMetricsByDinosaurId.RUnlock()
+	mock.lockGetMetricsByDinosaurID.RLock()
+	calls = mock.calls.GetMetricsByDinosaurID
+	mock.lockGetMetricsByDinosaurID.RUnlock()
 	return calls
 }

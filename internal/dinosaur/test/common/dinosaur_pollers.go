@@ -66,7 +66,7 @@ func WaitForDinosaurCreateToBeAccepted(ctx context.Context, db *db.ConnectionFac
 }
 
 // WaitForDinosaurToReachStatus - Awaits for a dinosaur to reach a specified status
-func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, dinosaurId string, status constants2.DinosaurStatus) (dinosaur public.CentralRequest, err error) {
+func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, dinosaurID string, status constants2.DinosaurStatus) (dinosaur public.CentralRequest, err error) {
 	currentStatus := ""
 
 	glog.Infof("status: " + status.String())
@@ -75,12 +75,12 @@ func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory,
 		IntervalAndTimeout(1*time.Second, defaultDinosaurReadyTimeout).
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentStatus == "" {
-				return fmt.Sprintf("Waiting for dinosaur '%s' to reach status '%s'", dinosaurId, status.String())
+				return fmt.Sprintf("Waiting for dinosaur '%s' to reach status '%s'", dinosaurID, status.String())
 			}
-			return fmt.Sprintf("Waiting for dinosaur '%s' to reach status '%s' (current status %s)", dinosaurId, status.String(), currentStatus)
+			return fmt.Sprintf("Waiting for dinosaur '%s' to reach status '%s' (current status %s)", dinosaurID, status.String(), currentStatus)
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			dinosaur, _, err = client.DefaultApi.GetCentralById(ctx, dinosaurId)
+			dinosaur, _, err = client.DefaultApi.GetCentralById(ctx, dinosaurID)
 			if err != nil {
 				return true, err
 			}
@@ -91,7 +91,7 @@ func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory,
 			case constants2.DinosaurRequestStatusDeprovision.String():
 				fallthrough
 			case constants2.DinosaurRequestStatusDeleting.String():
-				return false, errors.Errorf("Waiting for dinosaur '%s' to reach status '%s', but status '%s' has been reached instead", dinosaurId, status.String(), dinosaur.Status)
+				return false, errors.Errorf("Waiting for dinosaur '%s' to reach status '%s', but status '%s' has been reached instead", dinosaurID, status.String(), dinosaur.Status)
 			}
 
 			currentStatus = dinosaur.Status
@@ -102,12 +102,12 @@ func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory,
 }
 
 // WaitForDinosaurToBeDeleted - Awaits for a dinosaur to be deleted
-func WaitForDinosaurToBeDeleted(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, dinosaurId string) error {
+func WaitForDinosaurToBeDeleted(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, dinosaurID string) error {
 	return NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, defaultDinosaurReadyTimeout).
-		RetryLogMessagef("Waiting for dinosaur '%s' to be deleted", dinosaurId).
+		RetryLogMessagef("Waiting for dinosaur '%s' to be deleted", dinosaurID).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			if _, _, err := client.DefaultApi.GetCentralById(ctx, dinosaurId); err != nil {
+			if _, _, err := client.DefaultApi.GetCentralById(ctx, dinosaurID); err != nil {
 				if err.Error() == "404 Not Found" {
 					return true, nil
 				}

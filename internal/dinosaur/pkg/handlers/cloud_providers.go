@@ -38,9 +38,9 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 	id := mux.Vars(r)["id"]
 	query := r.URL.Query()
 	instanceTypeFilter := query.Get("instance_type")
-	cacheId := id
+	cacheID := id
 	if instanceTypeFilter != "" {
-		cacheId = cacheId + "-" + instanceTypeFilter
+		cacheID = cacheID + "-" + instanceTypeFilter
 	}
 
 	cfg := &handlers.HandlerConfig{
@@ -48,7 +48,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			handlers.ValidateLength(&id, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			cachedRegionList, cached := h.cache.Get(cacheId)
+			cachedRegionList, cached := h.cache.Get(cacheID)
 			if cached {
 				return cachedRegionList, nil
 			}
@@ -65,7 +65,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			provider, _ := h.supportedProviders.GetByName(id)
 			for i := range cloudRegions {
 				cloudRegion := cloudRegions[i]
-				region, _ := provider.Regions.GetByName(cloudRegion.Id)
+				region, _ := provider.Regions.GetByName(cloudRegion.ID)
 
 				// skip any regions that do not support the specified instance type so its not included in the response
 				if instanceTypeFilter != "" && !region.IsInstanceTypeSupported(config.InstanceType(instanceTypeFilter)) {
@@ -82,7 +82,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			regionList.Total = int32(len(regionList.Items))
 			regionList.Size = int32(len(regionList.Items))
 
-			h.cache.Set(cacheId, regionList, cache.DefaultExpiration)
+			h.cache.Set(cacheID, regionList, cache.DefaultExpiration)
 			return regionList, nil
 		},
 	}
@@ -111,7 +111,7 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 
 			for i := range cloudProviders {
 				cloudProvider := cloudProviders[i]
-				_, cloudProvider.Enabled = h.supportedProviders.GetByName(cloudProvider.Id)
+				_, cloudProvider.Enabled = h.supportedProviders.GetByName(cloudProvider.ID)
 				converted := presenters.PresentCloudProvider(&cloudProvider)
 				cloudProviderList.Items = append(cloudProviderList.Items, converted)
 			}

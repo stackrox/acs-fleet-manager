@@ -522,7 +522,7 @@ func buildMockRequestHandler(successType interface{}, serviceErr *ocmErrors.Serv
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if serviceErr != nil {
-			w.WriteHeader(serviceErr.HttpCode)
+			w.WriteHeader(serviceErr.HTTPCode)
 			if err := marshalOCMType(serviceErr, w); err != nil {
 				panic(err)
 			}
@@ -932,14 +932,14 @@ func GetMockClusterStatusBuilder(modifyFn func(*clustersmgmtv1.ClusterStatusBuil
 }
 
 // GetMockClusterAddonBuilder for emulated OCM server
-func GetMockClusterAddonBuilder(modifyFn func(*clustersmgmtv1.AddOnBuilder), addonId string) *clustersmgmtv1.AddOnBuilder {
-	if addonId == "" {
-		addonId = MockClusterAddonID
+func GetMockClusterAddonBuilder(modifyFn func(*clustersmgmtv1.AddOnBuilder), addonID string) *clustersmgmtv1.AddOnBuilder {
+	if addonID == "" {
+		addonID = MockClusterAddonID
 	}
 
 	builder := clustersmgmtv1.NewAddOn().
-		ID(addonId).
-		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/addons/%s", addonId))
+		ID(addonID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/addons/%s", addonID))
 	if modifyFn != nil {
 		modifyFn(builder)
 	}
@@ -947,14 +947,14 @@ func GetMockClusterAddonBuilder(modifyFn func(*clustersmgmtv1.AddOnBuilder), add
 }
 
 // GetMockClusterAddonInstallationBuilder for emulated OCM server
-func GetMockClusterAddonInstallationBuilder(modifyFn func(*clustersmgmtv1.AddOnInstallationBuilder), addonId string) *clustersmgmtv1.AddOnInstallationBuilder {
-	if addonId == "" {
-		addonId = MockClusterAddonID
+func GetMockClusterAddonInstallationBuilder(modifyFn func(*clustersmgmtv1.AddOnInstallationBuilder), addonID string) *clustersmgmtv1.AddOnInstallationBuilder {
+	if addonID == "" {
+		addonID = MockClusterAddonID
 	}
 	addonInstallation := clustersmgmtv1.NewAddOnInstallation().
-		ID(addonId).
-		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/addons/%s", MockClusterID, addonId)).
-		Addon(GetMockClusterAddonBuilder(nil, addonId)).
+		ID(addonID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/addons/%s", MockClusterID, addonID)).
+		Addon(GetMockClusterAddonBuilder(nil, addonID)).
 		State(MockClusterAddonState).
 		StateDescription(MockClusterAddonDescription)
 
@@ -965,8 +965,8 @@ func GetMockClusterAddonInstallationBuilder(modifyFn func(*clustersmgmtv1.AddOnI
 }
 
 // GetMockClusterAddonInstallation for emulated OCM server
-func GetMockClusterAddonInstallation(modifyFn func(*clustersmgmtv1.AddOnInstallation, error), addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-	addonInstall, err := GetMockClusterAddonInstallationBuilder(nil, addonId).Build()
+func GetMockClusterAddonInstallation(modifyFn func(*clustersmgmtv1.AddOnInstallation, error), addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
+	addonInstall, err := GetMockClusterAddonInstallationBuilder(nil, addonID).Build()
 	if modifyFn != nil {
 		modifyFn(addonInstall, err)
 	}

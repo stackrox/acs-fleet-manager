@@ -10,7 +10,7 @@ import (
 // Authorization ...
 //go:generate moq -out authorization_moq.go . Authorization
 type Authorization interface {
-	CheckUserValid(username string, orgId string) (bool, error)
+	CheckUserValid(username string, orgID string) (bool, error)
 }
 
 type authorization struct {
@@ -27,7 +27,7 @@ func NewOCMAuthorization(client *sdkClient.Connection) Authorization {
 }
 
 // CheckUserValid ...
-func (a authorization) CheckUserValid(username string, orgId string) (bool, error) {
+func (a authorization) CheckUserValid(username string, orgID string) (bool, error) {
 	resp, err := a.client.AccountsMgmt().V1().Accounts().List().
 		Parameter("page", 1).
 		Parameter("size", 1).
@@ -35,5 +35,5 @@ func (a authorization) CheckUserValid(username string, orgId string) (bool, erro
 		Send()
 
 	return resp.Status() == http.StatusOK && resp.Size() > 0 && !resp.Items().Get(0).Banned() &&
-		resp.Items().Get(0).Organization().ExternalID() == orgId, err
+		resp.Items().Get(0).Organization().ExternalID() == orgID, err
 }

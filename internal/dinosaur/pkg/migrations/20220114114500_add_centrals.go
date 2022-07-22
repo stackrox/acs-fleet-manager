@@ -23,13 +23,13 @@ func addCentralRequest() *gormigrate.Migration {
 		MultiAZ                       bool       `json:"multi_az"`
 		Name                          string     `json:"name" gorm:"index"`
 		Status                        string     `json:"status" gorm:"index"`
-		SubscriptionId                string     `json:"subscription_id"`
+		SubscriptionID                string     `json:"subscription_id"`
 		Owner                         string     `json:"owner" gorm:"index"`
-		OwnerAccountId                string     `json:"owner_account_id"`
+		OwnerAccountID                string     `json:"owner_account_id"`
 		Host                          string     `json:"host"`
-		OrganisationId                string     `json:"organisation_id" gorm:"index"`
+		OrganisationID                string     `json:"organisation_id" gorm:"index"`
 		FailedReason                  string     `json:"failed_reason"`
-		PlacementId                   string     `json:"placement_id"`
+		PlacementID                   string     `json:"placement_id"`
 		DesiredCentralVersion         string     `json:"desired_central_version"`
 		ActualCentralVersion          string     `json:"actual_central_version"`
 		DesiredCentralOperatorVersion string     `json:"desired_central_operator_version"`
@@ -41,7 +41,7 @@ func addCentralRequest() *gormigrate.Migration {
 		Routes                        api.JSON   `json:"routes"`
 		RoutesCreated                 bool       `json:"routes_created"`
 		Namespace                     string     `json:"namespace"`
-		RoutesCreationId              string     `json:"routes_creation_id"`
+		RoutesCreationID              string     `json:"routes_creation_id"`
 		DeletionTimestamp             *time.Time `json:"deletionTimestamp"`
 	}
 

@@ -21,7 +21,6 @@ import (
 
 type contextKey string
 
-// String ...
 func (c contextKey) String() string {
 	return "auth " + string(c)
 }

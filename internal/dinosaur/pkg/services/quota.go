@@ -14,5 +14,5 @@ type QuotaService interface {
 	// ReserveQuota reserves a quota for a user and return the reservation id or an error in case of failure
 	ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError)
 	// DeleteQuota deletes a reserved quota
-	DeleteQuota(subscriptionId string) *errors.ServiceError
+	DeleteQuota(subscriptionID string) *errors.ServiceError
 }

@@ -49,7 +49,7 @@ linters-settings:
         arguments: ["disableStutteringCheck"] #TODO(ROX-11892) enable revive naming checks
       - name: if-return
       - name: increment-decrement
-      # - name: var-naming #TODO(ROX-11892) enable revive naming checks
+      - name: var-naming #TODO(ROX-11892) enable revive naming checks
       - name: var-declaration
       - name: package-comments
       - name: range

@@ -166,7 +166,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 		Region:                        "test",
 		CloudProvider:                 "test",
 		Name:                          "test-dinosaur",
-		OrganisationId:                "13640203",
+		OrganisationID:                "13640203",
 		DesiredCentralOperatorVersion: desiredDinosaurOperatorVersion,
 		Status:                        constants.DinosaurRequestStatusReady.String(),
 		Namespace:                     fmt.Sprintf("dinosaur-%s", sampleDinosaurID),

@@ -6,32 +6,32 @@ import (
 
 // PresentReferenceWith ...
 func PresentReferenceWith(id, obj interface{}, ObjectKind func(i interface{}) string, ObjectPath func(id string, obj interface{}) string) compat.ObjectReference {
-	refId, ok := MakeReferenceId(id)
+	refID, ok := MakeReferenceID(id)
 
 	if !ok {
 		return compat.ObjectReference{}
 	}
 
 	return compat.ObjectReference{
-		Id:   refId,
+		Id:   refID,
 		Kind: ObjectKind(obj),
-		Href: ObjectPath(refId, obj),
+		Href: ObjectPath(refID, obj),
 	}
 }
 
-// MakeReferenceId ...
-func MakeReferenceId(id interface{}) (string, bool) {
-	var refId string
+// MakeReferenceID ...
+func MakeReferenceID(id interface{}) (string, bool) {
+	var refID string
 
 	if i, ok := id.(string); ok {
-		refId = i
+		refID = i
 	}
 
 	if i, ok := id.(*string); ok {
 		if i != nil {
-			refId = *i
+			refID = *i
 		}
 	}
 
-	return refId, refId != ""
+	return refID, refID != ""
 }

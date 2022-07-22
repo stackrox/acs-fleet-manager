@@ -50,8 +50,8 @@ var _ DinosaurService = &DinosaurServiceMock{}
 // 			GetFunc: func(ctx context.Context, id string) (*dbapi.CentralRequest, *serviceError.ServiceError) {
 // 				panic("mock out the Get method")
 // 			},
-// 			GetByIdFunc: func(id string) (*dbapi.CentralRequest, *serviceError.ServiceError) {
-// 				panic("mock out the GetById method")
+// 			GetByIDFunc: func(id string) (*dbapi.CentralRequest, *serviceError.ServiceError) {
+// 				panic("mock out the GetByID method")
 // 			},
 // 			GetCNAMERecordStatusFunc: func(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error) {
 // 				panic("mock out the GetCNAMERecordStatus method")
@@ -129,8 +129,8 @@ type DinosaurServiceMock struct {
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, id string) (*dbapi.CentralRequest, *serviceError.ServiceError)
 
-	// GetByIdFunc mocks the GetById method.
-	GetByIdFunc func(id string) (*dbapi.CentralRequest, *serviceError.ServiceError)
+	// GetByIDFunc mocks the GetByID method.
+	GetByIDFunc func(id string) (*dbapi.CentralRequest, *serviceError.ServiceError)
 
 	// GetCNAMERecordStatusFunc mocks the GetCNAMERecordStatus method.
 	GetCNAMERecordStatusFunc func(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error)
@@ -221,8 +221,8 @@ type DinosaurServiceMock struct {
 			// ID is the id argument value.
 			ID string
 		}
-		// GetById holds details about calls to the GetById method.
-		GetById []struct {
+		// GetByID holds details about calls to the GetByID method.
+		GetByID []struct {
 			// ID is the id argument value.
 			ID string
 		}
@@ -314,7 +314,7 @@ type DinosaurServiceMock struct {
 	lockDeprovisionExpiredDinosaurs       sync.RWMutex
 	lockDetectInstanceType                sync.RWMutex
 	lockGet                               sync.RWMutex
-	lockGetById                           sync.RWMutex
+	lockGetByID                           sync.RWMutex
 	lockGetCNAMERecordStatus              sync.RWMutex
 	lockGetManagedDinosaurByClusterID     sync.RWMutex
 	lockHasAvailableCapacity              sync.RWMutex
@@ -583,34 +583,34 @@ func (mock *DinosaurServiceMock) GetCalls() []struct {
 	return calls
 }
 
-// GetById calls GetByIdFunc.
-func (mock *DinosaurServiceMock) GetById(id string) (*dbapi.CentralRequest, *serviceError.ServiceError) {
-	if mock.GetByIdFunc == nil {
-		panic("DinosaurServiceMock.GetByIdFunc: method is nil but DinosaurService.GetById was just called")
+// GetByID calls GetByIDFunc.
+func (mock *DinosaurServiceMock) GetByID(id string) (*dbapi.CentralRequest, *serviceError.ServiceError) {
+	if mock.GetByIDFunc == nil {
+		panic("DinosaurServiceMock.GetByIDFunc: method is nil but DinosaurService.GetByID was just called")
 	}
 	callInfo := struct {
 		ID string
 	}{
 		ID: id,
 	}
-	mock.lockGetById.Lock()
-	mock.calls.GetById = append(mock.calls.GetById, callInfo)
-	mock.lockGetById.Unlock()
-	return mock.GetByIdFunc(id)
+	mock.lockGetByID.Lock()
+	mock.calls.GetByID = append(mock.calls.GetByID, callInfo)
+	mock.lockGetByID.Unlock()
+	return mock.GetByIDFunc(id)
 }
 
-// GetByIdCalls gets all the calls that were made to GetById.
+// GetByIDCalls gets all the calls that were made to GetByID.
 // Check the length with:
-//     len(mockedDinosaurService.GetByIdCalls())
-func (mock *DinosaurServiceMock) GetByIdCalls() []struct {
+//     len(mockedDinosaurService.GetByIDCalls())
+func (mock *DinosaurServiceMock) GetByIDCalls() []struct {
 	ID string
 } {
 	var calls []struct {
 		ID string
 	}
-	mock.lockGetById.RLock()
-	calls = mock.calls.GetById
-	mock.lockGetById.RUnlock()
+	mock.lockGetByID.RLock()
+	calls = mock.calls.GetByID
+	mock.lockGetByID.RUnlock()
 	return calls
 }
 

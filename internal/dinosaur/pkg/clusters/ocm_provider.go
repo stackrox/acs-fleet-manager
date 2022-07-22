@@ -72,11 +72,11 @@ func (o *OCMProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.Cluste
 
 	if clusterStatus.State() == clustersmgmtv1.ClusterStateReady {
 		if spec.ExternalID == "" {
-			externalId, ok := ocmCluster.GetExternalID()
+			externalID, ok := ocmCluster.GetExternalID()
 			if !ok {
 				return nil, errors.Errorf("External ID for cluster %s cannot be found", ocmCluster.ID())
 			}
-			spec.ExternalID = externalId
+			spec.ExternalID = externalID
 		}
 		spec.Status = api.ClusterProvisioned
 	}
@@ -107,11 +107,11 @@ func (o *OCMProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (string, err
 // AddIdentityProvider ...
 func (o *OCMProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProviderInfo types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
 	if identityProviderInfo.OpenID != nil {
-		idpId, err := o.addOpenIDIdentityProvider(clusterSpec, *identityProviderInfo.OpenID)
+		idpID, err := o.addOpenIDIdentityProvider(clusterSpec, *identityProviderInfo.OpenID)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to add identity provider for cluster %s", clusterSpec.InternalID)
 		}
-		identityProviderInfo.OpenID.ID = idpId
+		identityProviderInfo.OpenID.ID = idpID
 		return &identityProviderInfo, nil
 	}
 	return nil, nil
@@ -221,15 +221,15 @@ func (o *OCMProvider) InstallFleetshard(clusterSpec *types.ClusterSpec, params [
 }
 
 func (o *OCMProvider) installAddon(clusterSpec *types.ClusterSpec, addonID string) (bool, error) {
-	clusterId := clusterSpec.InternalID
-	addonInstallation, err := o.ocmClient.GetAddon(clusterId, addonID)
+	clusterID := clusterSpec.InternalID
+	addonInstallation, err := o.ocmClient.GetAddon(clusterID, addonID)
 	if err != nil {
 		return false, errors.Wrapf(err, "failed to get addon %s for cluster %s", addonID, clusterSpec.InternalID)
 	}
 
 	// Addon needs to be installed if addonInstallation doesn't exist
 	if addonInstallation.ID() == "" {
-		addonInstallation, err = o.ocmClient.CreateAddon(clusterId, addonID)
+		addonInstallation, err = o.ocmClient.CreateAddon(clusterID, addonID)
 		if err != nil {
 			return false, errors.Wrapf(err, "failed to create addon %s for cluster %s", addonID, clusterSpec.InternalID)
 		}
@@ -243,17 +243,17 @@ func (o *OCMProvider) installAddon(clusterSpec *types.ClusterSpec, addonID strin
 	return false, nil
 }
 
-func (o *OCMProvider) installAddonWithParams(clusterSpec *types.ClusterSpec, addonId string, params []types.Parameter) (bool, error) {
-	addonInstallation, addonErr := o.ocmClient.GetAddon(clusterSpec.InternalID, addonId)
+func (o *OCMProvider) installAddonWithParams(clusterSpec *types.ClusterSpec, addonID string, params []types.Parameter) (bool, error) {
+	addonInstallation, addonErr := o.ocmClient.GetAddon(clusterSpec.InternalID, addonID)
 	if addonErr != nil {
-		return false, errors.Wrapf(addonErr, "failed to get addon %s for cluster %s", addonId, clusterSpec.InternalID)
+		return false, errors.Wrapf(addonErr, "failed to get addon %s for cluster %s", addonID, clusterSpec.InternalID)
 	}
 
 	if addonInstallation != nil && addonInstallation.ID() == "" {
-		glog.V(5).Infof("No existing %s addon found, create a new one", addonId)
-		addonInstallation, addonErr = o.ocmClient.CreateAddonWithParams(clusterSpec.InternalID, addonId, params)
+		glog.V(5).Infof("No existing %s addon found, create a new one", addonID)
+		addonInstallation, addonErr = o.ocmClient.CreateAddonWithParams(clusterSpec.InternalID, addonID, params)
 		if addonErr != nil {
-			return false, errors.Wrapf(addonErr, "failed to create addon %s for cluster %s", addonId, clusterSpec.InternalID)
+			return false, errors.Wrapf(addonErr, "failed to create addon %s for cluster %s", addonID, clusterSpec.InternalID)
 		}
 	}
 
@@ -327,8 +327,8 @@ func newOCMProvider(ocmClient ocm.ClusterManagementClient, clusterBuilder Cluste
 	}
 }
 
-func (o *OCMProvider) addOpenIDIdentityProvider(clusterSpec *types.ClusterSpec, openIdIdpInfo types.OpenIDIdentityProviderInfo) (string, error) {
-	provider, buildErr := buildIdentityProvider(openIdIdpInfo)
+func (o *OCMProvider) addOpenIDIdentityProvider(clusterSpec *types.ClusterSpec, openIDIdpInfo types.OpenIDIdentityProviderInfo) (string, error) {
+	provider, buildErr := buildIdentityProvider(openIDIdpInfo)
 	if buildErr != nil {
 		return "", errors.WithStack(buildErr)
 	}
@@ -342,7 +342,7 @@ func (o *OCMProvider) addOpenIDIdentityProvider(clusterSpec *types.ClusterSpec, 
 			}
 
 			for _, identityProvider := range identityProvidersList.Slice() {
-				if identityProvider.Name() == openIdIdpInfo.Name {
+				if identityProvider.Name() == openIDIdpInfo.Name {
 					return identityProvider.ID(), nil
 				}
 			}

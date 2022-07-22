@@ -31,7 +31,7 @@ func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralSt
 			}
 		}
 		res = append(res, &dbapi.DataPlaneCentralStatus{
-			CentralClusterId:       k,
+			CentralClusterID:       k,
 			Conditions:             c,
 			Routes:                 routes,
 			CentralVersion:         v.Versions.Central,

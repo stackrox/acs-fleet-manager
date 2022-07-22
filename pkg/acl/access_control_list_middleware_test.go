@@ -49,7 +49,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 		name           string
 		arg            *acl.AccessControlListConfig
 		wantErr        bool
-		wantHttpStatus int
+		wantHTTPStatus int
 	}{
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service",
@@ -58,7 +58,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 				DenyList:       acl.DeniedUsers{"username"},
 			},
 			wantErr:        true,
-			wantHttpStatus: http.StatusForbidden,
+			wantHTTPStatus: http.StatusForbidden,
 		},
 		{
 			name: "returns 200 status if denyList is disabled",
@@ -66,7 +66,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 				EnableDenyList: false,
 			},
 			wantErr:        false,
-			wantHttpStatus: http.StatusOK,
+			wantHTTPStatus: http.StatusOK,
 		},
 		{
 			name: "returns 200 status if denyList is enabled and deny list is empty",
@@ -74,7 +74,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 				EnableDenyList: true,
 			},
 			wantErr:        false,
-			wantHttpStatus: http.StatusOK,
+			wantHTTPStatus: http.StatusOK,
 		},
 	}
 
@@ -102,7 +102,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 
 			body, err := ioutil.ReadAll(rr.Body)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(rr.Code).To(Equal(tt.wantHttpStatus))
+			Expect(rr.Code).To(Equal(tt.wantHTTPStatus))
 
 			if tt.wantErr {
 				Expect(rr.Header().Get("Content-Type")).To(Equal("application/json"))

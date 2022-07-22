@@ -90,15 +90,15 @@ type ComputeNodesInfo struct {
 // Merge merges the items of source regions list with items of the target regions list
 func (target *CloudProviderRegionInfoList) Merge(source *CloudProviderRegionInfoList) {
 	// create a map for faster iteration
-	existingRegionIdToContentMapping := map[string]CloudProviderRegionInfo{}
+	existingRegionIDToContentMapping := map[string]CloudProviderRegionInfo{}
 	for _, existingRegion := range target.Items {
-		existingRegionIdToContentMapping[existingRegion.ID] = existingRegion
+		existingRegionIDToContentMapping[existingRegion.ID] = existingRegion
 	}
 
 	for _, region := range source.Items {
-		_, alreadyExists := existingRegionIdToContentMapping[region.ID]
+		_, alreadyExists := existingRegionIDToContentMapping[region.ID]
 		if !alreadyExists { // only add it if it does not exist
-			existingRegionIdToContentMapping[region.ID] = region
+			existingRegionIDToContentMapping[region.ID] = region
 			target.Items = append(target.Items, region)
 		}
 	}

@@ -7,7 +7,7 @@ import (
 
 // PresentCloudProvider ...
 func PresentCloudProvider(cloudProvider *api.CloudProvider) public.CloudProvider {
-	reference := PresentReference(cloudProvider.Id, cloudProvider)
+	reference := PresentReference(cloudProvider.ID, cloudProvider)
 	return public.CloudProvider{
 		Id:          reference.Id,
 		Kind:        reference.Kind,
@@ -19,7 +19,7 @@ func PresentCloudProvider(cloudProvider *api.CloudProvider) public.CloudProvider
 
 // PresentCloudRegion ...
 func PresentCloudRegion(cloudRegion *api.CloudRegion) public.CloudRegion {
-	reference := PresentReference(cloudRegion.Id, cloudRegion)
+	reference := PresentReference(cloudRegion.ID, cloudRegion)
 	return public.CloudRegion{
 		Id:                     reference.Id,
 		Kind:                   reference.Kind,
