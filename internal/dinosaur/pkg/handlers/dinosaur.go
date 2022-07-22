@@ -10,7 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
+	"github.com/stackrox/fleet-manager-pkg/pkg/services/authorization"
 
 	"github.com/gorilla/mux"
 

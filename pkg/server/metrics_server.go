@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
+	"github.com/stackrox/fleet-manager-pkg/pkg/services/sentry"
 
 	"github.com/gorilla/mux"
 

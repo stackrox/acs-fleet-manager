@@ -16,11 +16,11 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/stackrox/fleet-manager-pkg/pkg/services/account"
+	"github.com/stackrox/fleet-manager-pkg/pkg/services/authorization"
+	"github.com/stackrox/fleet-manager-pkg/pkg/services/sentry"
 )
 
 // CoreConfigProviders ...

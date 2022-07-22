@@ -15,8 +15,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
-	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
+	"github.com/stackrox/fleet-manager-pkg/pkg/services/authorization"
+	coreServices "github.com/stackrox/fleet-manager-pkg/pkg/services/queryparser"
 
 	"time"
 
