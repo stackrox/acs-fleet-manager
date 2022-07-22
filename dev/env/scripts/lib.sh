@@ -186,7 +186,7 @@ wait_for_container_to_become_ready() {
     local namespace="$1"
     local pod_selector="$2"
     local container_name="$3"
-    local timeout="120s"
+    local timeout="${4:-300}s"
 
     log "Waiting for pod ${pod_selector} within namespace ${namespace} to become ready..."
     wait_for_container_to_appear "$namespace" "$pod_selector" "$container_name" || return 1
