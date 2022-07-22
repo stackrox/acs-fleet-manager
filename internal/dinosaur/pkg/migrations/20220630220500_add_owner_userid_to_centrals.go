@@ -44,10 +44,10 @@ func addOwnerUserIDToCentralRequest() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "20220630220500",
 		Migrate: func(tx *gorm.DB) error {
-			return tx.Migrator().AddColumn(&CentralRequest{}, "OwnerUserId")
+			return tx.Migrator().AddColumn(&CentralRequest{}, "OwnerUserID")
 		},
 		Rollback: func(tx *gorm.DB) error {
-			return tx.Migrator().DropColumn(&CentralRequest{}, "OwnerUserId")
+			return tx.Migrator().DropColumn(&CentralRequest{}, "OwnerUserID")
 		},
 	}
 }
