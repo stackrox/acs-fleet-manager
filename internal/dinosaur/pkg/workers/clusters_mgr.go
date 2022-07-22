@@ -785,10 +785,10 @@ func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret
 	observabilityConfig := c.ObservabilityConfiguration
 	stringDataMap := map[string]string{
 		"authType":               observatoriumAuthType,
-		"gateway":                observabilityConfig.RedHatSsoGatewayURL,
-		"tenant":                 observabilityConfig.RedHatSsoTenant,
-		"redHatSsoAuthServerUrl": observabilityConfig.RedHatSsoAuthServerURL,
-		"redHatSsoRealm":         observabilityConfig.RedHatSsoRealm,
+		"gateway":                observabilityConfig.RedHatSSOGatewayURL,
+		"tenant":                 observabilityConfig.RedHatSSOTenant,
+		"redHatSsoAuthServerUrl": observabilityConfig.RedHatSSOAuthServerURL,
+		"redHatSsoRealm":         observabilityConfig.RedHatSSORealm,
 		"metricsClientId":        observabilityConfig.MetricsClientID,
 		"metricsSecret":          observabilityConfig.MetricsSecret,
 		"logsClientId":           observabilityConfig.LogsClientID,

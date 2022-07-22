@@ -10,11 +10,11 @@ import (
 // ObservabilityConfiguration ...
 type ObservabilityConfiguration struct {
 	// Red Hat SSO configuration
-	RedHatSsoGatewayURL        string `json:"redhat_sso_gateway_url" yaml:"redhat_sso_gateway_url"`
-	RedHatSsoAuthServerURL     string `json:"redhat_sso_auth_server_url" yaml:"redhat_sso_auth_server_url"`
-	RedHatSsoRealm             string `json:"redhat_sso_realm" yaml:"redhat_sso_realm"`
-	RedHatSsoTenant            string `json:"redhat_sso_tenant" yaml:"redhat_sso_tenant"`
-	RedHatSsoTokenRefresherURL string `json:"redhat_sso_token_refresher_url" yaml:"redhat_sso_token_refresher_url"`
+	RedHatSSOGatewayURL        string `json:"redhat_sso_gateway_url" yaml:"redhat_sso_gateway_url"`
+	RedHatSSOAuthServerURL     string `json:"redhat_sso_auth_server_url" yaml:"redhat_sso_auth_server_url"`
+	RedHatSSORealm             string `json:"redhat_sso_realm" yaml:"redhat_sso_realm"`
+	RedHatSSOTenant            string `json:"redhat_sso_tenant" yaml:"redhat_sso_tenant"`
+	RedHatSSOTokenRefresherURL string `json:"redhat_sso_token_refresher_url" yaml:"redhat_sso_token_refresher_url"`
 	MetricsClientID            string `json:"redhat_sso_metrics_client_id" yaml:"redhat_sso_metrics_client_id"`
 	MetricsClientIDFile        string `json:"redhat_sso_metrics_client_id_file" yaml:"redhat_sso_metrics_client_id_file"`
 	MetricsSecret              string `json:"redhat_sso_metrics_secret" yaml:"redhat_sso_metrics_secret"`
@@ -54,25 +54,25 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 		MetricsSecretFile:                  "secrets/rhsso-metrics.clientSecret",
 		LogsClientIDFile:                   "secrets/rhsso-logs.clientId",
 		LogsSecretFile:                     "secrets/rhsso-logs.clientSecret",
-		RedHatSsoTenant:                    "",
-		RedHatSsoAuthServerURL:             "",
-		RedHatSsoRealm:                     "",
-		RedHatSsoTokenRefresherURL:         "",
-		RedHatSsoGatewayURL:                "",
+		RedHatSSOTenant:                    "",
+		RedHatSSOAuthServerURL:             "",
+		RedHatSSORealm:                     "",
+		RedHatSSOTokenRefresherURL:         "",
+		RedHatSSOGatewayURL:                "",
 	}
 }
 
 // AddFlags ...
 func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.RedHatSsoTenant, "observability-red-hat-sso-tenant", c.RedHatSsoTenant, "Red Hat SSO tenant")
-	fs.StringVar(&c.RedHatSsoAuthServerURL, "observability-red-hat-sso-auth-server-url", c.RedHatSsoAuthServerURL, "Red Hat SSO auth server URL")
-	fs.StringVar(&c.RedHatSsoGatewayURL, "observability-red-hat-sso-observatorium-gateway", c.RedHatSsoGatewayURL, "Red Hat SSO gateway URL")
-	fs.StringVar(&c.RedHatSsoTokenRefresherURL, "observability-red-hat-sso-token-refresher-url", c.RedHatSsoTokenRefresherURL, "Red Hat SSO token refresher URL")
+	fs.StringVar(&c.RedHatSSOTenant, "observability-red-hat-sso-tenant", c.RedHatSSOTenant, "Red Hat SSO tenant")
+	fs.StringVar(&c.RedHatSSOAuthServerURL, "observability-red-hat-sso-auth-server-url", c.RedHatSSOAuthServerURL, "Red Hat SSO auth server URL")
+	fs.StringVar(&c.RedHatSSOGatewayURL, "observability-red-hat-sso-observatorium-gateway", c.RedHatSSOGatewayURL, "Red Hat SSO gateway URL")
+	fs.StringVar(&c.RedHatSSOTokenRefresherURL, "observability-red-hat-sso-token-refresher-url", c.RedHatSSOTokenRefresherURL, "Red Hat SSO token refresher URL")
 	fs.StringVar(&c.LogsClientIDFile, "observability-red-hat-sso-logs-client-id-file", c.LogsClientIDFile, "Red Hat SSO logs client id file")
 	fs.StringVar(&c.MetricsClientIDFile, "observability-red-hat-sso-metrics-client-id-file", c.MetricsClientIDFile, "Red Hat SSO metrics client id file")
 	fs.StringVar(&c.LogsSecretFile, "observability-red-hat-sso-logs-secret-file", c.LogsSecretFile, "Red Hat SSO logs secret file")
 	fs.StringVar(&c.MetricsSecretFile, "observability-red-hat-sso-metrics-secret-file", c.MetricsSecretFile, "Red Hat SSO metrics secret file")
-	fs.StringVar(&c.RedHatSsoRealm, "observability-red-hat-sso-realm", c.RedHatSsoRealm, "Red Hat SSO realm")
+	fs.StringVar(&c.RedHatSSORealm, "observability-red-hat-sso-realm", c.RedHatSSORealm, "Red Hat SSO realm")
 
 	fs.DurationVar(&c.Timeout, "observatorium-timeout", c.Timeout, "Timeout for Observatorium client")
 	fs.BoolVar(&c.Insecure, "observatorium-ignore-ssl", c.Insecure, "ignore SSL Observatorium certificate")
