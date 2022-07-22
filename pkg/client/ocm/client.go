@@ -164,7 +164,7 @@ func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.Subscriptio
 	return subscriptionsMetrics[0], nil
 }
 
-// GetOrganisationIdFromExternalId ...
+// GetOrganisationIDFromExternalID ...
 func (c *client) GetOrganisationIDFromExternalID(externalID string) (string, error) {
 	res, err := c.connection.AccountsMgmt().V1().Organizations().List().Search(fmt.Sprintf("external_id='%s'", externalID)).Send()
 	if err != nil {

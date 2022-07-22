@@ -36,6 +36,7 @@ var (
 	}
 )
 
+// CentralCA ...
 const (
 	// CentralCA ...
 	CentralCA     = "test CA"
