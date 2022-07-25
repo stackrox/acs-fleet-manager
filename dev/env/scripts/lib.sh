@@ -156,8 +156,8 @@ wait_for_container_to_appear() {
     log "Waiting for container ${container_name} within pod ${pod_selector} in namespace ${namespace} to appear..."
     for i in $(seq "$seconds"); do
         local status
-        status=$($KUBECTL -n "$namespace" get pod -l "$pod_selector" -o jsonpath="{.items[0].status.initContainerStatuses[?(@.name == '${container_name}')]} {.items[0].status.containerStatuses[?(@.name == '${container_name}')]}" 2>/dev/null)
-        local state=
+        status=$($KUBECTL -n "$namespace" get pod -l "$pod_selector" -o jsonpath="{.items[0].status.initContainerStatuses[?(@.name == '${container_name}')]} {.items[0].status.containerStatuses[?(@.name == '${container_name}')]}" 2>/dev/null || true)
+        local state=""
         state=$(echo "${status}" | jq -r ".state | keys[]")
         if [[ "$state" == "running" ]]; then
             echo "Container ${pod_selector}/${container_name} is in state ${state}"
