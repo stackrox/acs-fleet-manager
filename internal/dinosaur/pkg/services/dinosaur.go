@@ -6,14 +6,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
-
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
@@ -417,13 +416,17 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 	return nil
 }
 
-// DeprovisionDinosaurForUsers ...
+// DeprovisionDinosaurForUsers registers all dinosaurs for deprovisioning given the list of owners
 func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.ServiceError {
+	now := time.Now()
 	dbConn := k.connectionFactory.New().
 		Model(&dbapi.CentralRequest{}).
 		Where("owner IN (?)", users).
 		Where("status NOT IN (?)", dinosaurDeletionStatuses).
-		Update("status", constants2.DinosaurRequestStatusDeprovision)
+		Updates(map[string]interface{}{
+			"status":             constants2.DinosaurRequestStatusDeprovision,
+			"deletion_timestamp": now,
+		})
 
 	err := dbConn.Error
 	if err != nil {
@@ -442,15 +445,19 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 	return nil
 }
 
-// DeprovisionExpiredDinosaurs ...
+// DeprovisionExpiredDinosaurs cleaning up expired dinosaurs
 func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *errors.ServiceError {
+	now := time.Now()
 	dbConn := k.connectionFactory.New().
 		Model(&dbapi.CentralRequest{}).
 		Where("instance_type = ?", types.EVAL.String()).
-		Where("created_at  <=  ?", time.Now().Add(-1*time.Duration(dinosaurAgeInHours)*time.Hour)).
+		Where("created_at  <=  ?", now.Add(-1*time.Duration(dinosaurAgeInHours)*time.Hour)).
 		Where("status NOT IN (?)", dinosaurDeletionStatuses)
 
-	db := dbConn.Update("status", constants2.DinosaurRequestStatusDeprovision)
+	db := dbConn.Updates(map[string]interface{}{
+		"status":             constants2.DinosaurRequestStatusDeprovision,
+		"deletion_timestamp": now,
+	})
 	err := db.Error
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to deprovision expired dinosaurs")
