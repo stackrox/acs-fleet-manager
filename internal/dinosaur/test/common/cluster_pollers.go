@@ -18,7 +18,7 @@ const (
 // WaitForClustersMatchCriteriaToBeGivenCount - Awaits for the number of clusters with an assigned cluster id to be exactly `count`
 func WaitForClustersMatchCriteriaToBeGivenCount(db *db.ConnectionFactory, clusterService *services.ClusterService, clusterCriteria *services.FindClusterCriteria, count int) error {
 	currentCount := -1
-	return NewPollerBuilder(db).
+	err := NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, clusterIDAssignmentTimeout).
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentCount == -1 {
@@ -35,12 +35,17 @@ func WaitForClustersMatchCriteriaToBeGivenCount(db *db.ConnectionFactory, cluste
 			return currentCount == count, nil
 		}).
 		Build().Poll()
+
+	if err != nil {
+		return fmt.Errorf("waiting for clusters match criteria: %w", err)
+	}
+	return nil
 }
 
 // WaitForClusterIDToBeAssigned - Awaits for clusterID to be assigned to the designed cluster
 func WaitForClusterIDToBeAssigned(db *db.ConnectionFactory, clusterService *services.ClusterService, criteria *services.FindClusterCriteria) (string, error) {
 	var clusterID string
-	return clusterID, NewPollerBuilder(db).
+	err := NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, clusterIDAssignmentTimeout).
 		RetryLogMessagef("Waiting for an ID to be assigned to the cluster (%+v)", criteria).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
@@ -53,11 +58,16 @@ func WaitForClusterIDToBeAssigned(db *db.ConnectionFactory, clusterService *serv
 			return foundCluster.ClusterID != "", nil
 		}).
 		Build().Poll()
+
+	if err != nil {
+		return "", fmt.Errorf("waiting for cluster ID to be assigned: %w", err)
+	}
+	return clusterID, nil
 }
 
 // WaitForClusterToBeDeleted - Awaits for the specified cluster to be deleted
 func WaitForClusterToBeDeleted(db *db.ConnectionFactory, clusterService *services.ClusterService, clusterID string) error {
-	return NewPollerBuilder(db).
+	err := NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, clusterDeleteTimeout).
 		RetryLogMessagef("Waiting for cluster '%s' to be deleted", clusterID).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
@@ -68,6 +78,11 @@ func WaitForClusterToBeDeleted(db *db.ConnectionFactory, clusterService *service
 			return clusterFromDb == nil, nil // cluster has been deleted
 		}).
 		Build().Poll()
+
+	if err != nil {
+		return fmt.Errorf("waiting for cluster to be deleted %w", err)
+	}
+	return nil
 }
 
 // WaitForClusterStatus - Awaits for the cluster to reach the desired status
@@ -118,5 +133,8 @@ func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.Clu
 			return foundCluster.Status.CompareTo(desiredStatus) >= 0, nil
 		}).Build().Poll()
 
-	return cluster, err
+	if err != nil {
+		return nil, fmt.Errorf("waiting for cluster status: %w", err)
+	}
+	return cluster, nil
 }

@@ -1,8 +1,10 @@
 package quotamanagement
 
 import (
-	"os"
+	"fmt"
+	"io/fs"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -38,7 +40,7 @@ func (c *QuotaManagementListConfig) ReadFiles() error {
 	// future implementation
 	err := readQuotaManagementListConfigFile(c.QuotaListConfigFile, &c.QuotaList)
 
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		logger.Logger.Warningf("Configuration file for quota-management-list not found: '%s'", c.QuotaListConfigFile)
 		return nil
 	}
@@ -62,8 +64,12 @@ func (c *QuotaManagementListConfig) GetAllowedAccountByUsernameAndOrgID(username
 func readQuotaManagementListConfigFile(file string, val *RegisteredUsersListConfiguration) error {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading file: %w", err)
 	}
 
-	return yaml.UnmarshalStrict([]byte(fileContents), val)
+	err = yaml.UnmarshalStrict([]byte(fileContents), val)
+	if err != nil {
+		return fmt.Errorf("unmarshalling: %w", err)
+	}
+	return nil
 }

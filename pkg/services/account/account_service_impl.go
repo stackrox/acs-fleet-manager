@@ -1,6 +1,8 @@
 package account
 
 import (
+	"fmt"
+
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
@@ -32,7 +34,7 @@ func (as *accountService) SearchOrganizations(filter string) (*OrganizationList,
 func (as *accountService) searchOrganizations(filter string) (*v1.OrganizationList, error) {
 	res, err := as.connection.AccountsMgmt().V1().Organizations().List().Search(filter).Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("searching organizations: %w", err)
 	}
 
 	return res.Items(), nil

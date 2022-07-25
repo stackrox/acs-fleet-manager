@@ -117,7 +117,7 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	parameters.Set("client_secret", c.realmConfig.ClientSecret)
 	req, err := http.NewRequest("POST", c.realmConfig.TokenEndpointURI, strings.NewReader(parameters.Encode()))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("getting token: %w", err)
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Content-Length", strconv.Itoa(len(parameters.Encode())))
@@ -125,7 +125,7 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("getting token: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -135,13 +135,13 @@ func (c *rhSSOClient) GetToken() (string, error) {
 
 	token, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("getting token: %w", err)
 	}
 
 	var tokenData tokenResponse
 	err = json.Unmarshal(token, &tokenData)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("getting token: %w", err)
 	}
 	c.cache.Set(cachedTokenKey, tokenData.AccessToken, cacheCleanupInterval)
 
@@ -168,7 +168,10 @@ func (c *rhSSOClient) GetServiceAccounts(accessToken string, first int, max int)
 
 	defer shared.CloseResponseBody(resp)
 
-	return serviceAccounts, err
+	if err != nil {
+		return nil, fmt.Errorf("getting service accounts: %w", err)
+	}
+	return serviceAccounts, nil
 }
 
 // GetServiceAccount ...
@@ -184,7 +187,10 @@ func (c *rhSSOClient) GetServiceAccount(accessToken string, clientID string) (*s
 		}
 	}
 
-	return &serviceAccount, err == nil, err
+	if err != nil {
+		return nil, false, fmt.Errorf("getting service accounts: %w", err)
+	}
+	return &serviceAccount, err == nil, nil
 }
 
 // CreateServiceAccount ...
@@ -199,7 +205,10 @@ func (c *rhSSOClient) CreateServiceAccount(accessToken string, name string, desc
 
 	defer shared.CloseResponseBody(resp)
 
-	return serviceAccount, err
+	if err != nil {
+		return serviceAccount, fmt.Errorf("creating service account: %w", err)
+	}
+	return serviceAccount, nil
 }
 
 // DeleteServiceAccount ...
@@ -210,7 +219,10 @@ func (c *rhSSOClient) DeleteServiceAccount(accessToken string, clientID string) 
 
 	defer shared.CloseResponseBody(resp)
 
-	return err
+	if err != nil {
+		return fmt.Errorf("deleting service account: %w", err)
+	}
+	return nil
 }
 
 // UpdateServiceAccount ...
@@ -224,7 +236,10 @@ func (c *rhSSOClient) UpdateServiceAccount(accessToken string, clientID string, 
 
 	defer shared.CloseResponseBody(resp)
 
-	return data, err
+	if err != nil {
+		return data, fmt.Errorf("updating service accounts: %w", err)
+	}
+	return data, nil
 }
 
 // RegenerateClientSecret ...
@@ -236,5 +251,8 @@ func (c *rhSSOClient) RegenerateClientSecret(accessToken string, id string) (ser
 
 	defer shared.CloseResponseBody(resp)
 
-	return data, err
+	if err != nil {
+		return data, fmt.Errorf("regenerating client secret: %w", err)
+	}
+	return data, nil
 }

@@ -3,6 +3,7 @@ package clusters
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -350,18 +351,18 @@ func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, reso
 		ClientConfig()
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating config: %w", err)
 	}
 
 	dynamicClient, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating dynamic client: %w", err)
 	}
 
 	// Create a REST mapper that tracks information about the available resources in the cluster.
 	dc, err := discovery.NewDiscoveryClientForConfig(restConfig)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating discovery client: %w", err)
 	}
 
 	discoveryCachedClient := memory.NewMemCacheClient(dc)
@@ -463,14 +464,14 @@ func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredD
 	// parse resource obj to unstructure.Unstructered
 	data, err := json.Marshal(resource)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshalling resource: %w", err)
 	}
 
 	var obj unstructured.Unstructured
 	err = json.Unmarshal(data, &obj)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshalling data: %w", err)
 	}
 
 	newConfiguration := string(data)
@@ -488,13 +489,13 @@ func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredD
 	gvk := obj.GroupVersionKind()
 	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting REST mapping: %w", err)
 	}
 
 	desiredObj := &obj
 	namespace, err := meta.NewAccessor().Namespace(desiredObj)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating namespace accessor: %w", err)
 	}
 
 	var dr dynamic.ResourceInterface
@@ -508,7 +509,7 @@ func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredD
 
 	name, err := meta.NewAccessor().Name(desiredObj)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating name accessor: %w", err)
 	}
 
 	// check if resources needs to be applied
@@ -542,16 +543,24 @@ func shouldApplyChanges(dynamicClient dynamic.ResourceInterface, existingObj *un
 
 func applyChangesFn(client dynamic.ResourceInterface, desiredObj *unstructured.Unstructured, existingObj *unstructured.Unstructured) (runtime.Object, error) {
 	if existingObj == nil { // create object if it does not exist
-		return client.Create(ctx, desiredObj, metav1.CreateOptions{
+		c, err := client.Create(ctx, desiredObj, metav1.CreateOptions{
 			FieldManager: fieldManager,
 		})
+		if err != nil {
+			return nil, fmt.Errorf("creating client: %w", err)
+		}
+		return c, nil
 	}
 
 	desiredObj.SetResourceVersion(existingObj.GetResourceVersion())
 
 	// we are replacing the whole object instead of using server-side apply which is in beta
 	// the object is set to exactly desired object
-	return client.Update(ctx, desiredObj, metav1.UpdateOptions{
+	u, err := client.Update(ctx, desiredObj, metav1.UpdateOptions{
 		FieldManager: fieldManager,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("updating client: %w", err)
+	}
+	return u, nil
 }

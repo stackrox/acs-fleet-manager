@@ -2,7 +2,9 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -143,7 +145,7 @@ func findFirstValidCluster(h *test.Helper) (*api.Cluster, *ocmErrors.ServiceErro
 // try using it to prevent further errors.
 func fileExists(filename string, t *testing.T) bool {
 	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		t.Logf("%s not found", filename)
 		return false
 	}

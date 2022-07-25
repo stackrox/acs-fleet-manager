@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
@@ -29,7 +30,7 @@ func addLeaderLease() *gormigrate.Migration {
 		Migrate: func(tx *gorm.DB) error {
 			err := tx.AutoMigrate(&LeaderLease{})
 			if err != nil {
-				return err
+				return fmt.Errorf("auto migrating: %w", err)
 			}
 
 			// Set an initial already expired lease
@@ -45,11 +46,14 @@ func addLeaderLease() *gormigrate.Migration {
 					return err
 				}
 			}
-
-			return err
+			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			return tx.Migrator().DropTable(&LeaderLease{})
+			err := tx.Migrator().DropTable(&LeaderLease{})
+			if err != nil {
+				return fmt.Errorf("rolling back: %w", err)
+			}
+			return nil
 		},
 	}
 }

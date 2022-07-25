@@ -1,6 +1,7 @@
 package clusters
 
 import (
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
@@ -124,7 +125,7 @@ func (o *OCMProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources t
 	if err != nil {
 		svcErr := svcErrors.ToServiceError(err)
 		if !svcErr.Is404() {
-			return nil, err
+			return nil, fmt.Errorf("applying resources: %w", svcErr)
 		}
 		syncSetFound = false
 	}
@@ -359,7 +360,11 @@ func (o *OCMProvider) createSyncSet(clusterID string, resourceSet types.Resource
 		return nil, errors.WithStack(sysnsetBuilderErr)
 	}
 
-	return o.ocmClient.CreateSyncSet(clusterID, syncset)
+	s, err := o.ocmClient.CreateSyncSet(clusterID, syncset)
+	if err != nil {
+		return nil, fmt.Errorf("creating SyncSet: %w", err)
+	}
+	return s, nil
 }
 
 func (o *OCMProvider) updateSyncSet(clusterID string, resourceSet types.ResourceSet, existingSyncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
@@ -369,7 +374,11 @@ func (o *OCMProvider) updateSyncSet(clusterID string, resourceSet types.Resource
 	}
 	if syncsetResourcesChanged(existingSyncset, syncset) {
 		glog.V(5).Infof("SyncSet for cluster %s is changed, will update", clusterID)
-		return o.ocmClient.UpdateSyncSet(clusterID, resourceSet.Name, syncset)
+		s, err := o.ocmClient.UpdateSyncSet(clusterID, resourceSet.Name, syncset)
+		if err != nil {
+			return nil, fmt.Errorf("updating SyncSet: %w", err)
+		}
+		return s, nil
 	}
 	glog.V(10).Infof("SyncSet for cluster %s is not changed, no update needed", clusterID)
 	return syncset, nil
@@ -418,7 +427,7 @@ func buildIdentityProvider(idpInfo types.OpenIDIdentityProviderInfo) (*clustersm
 
 	identityProvider, idpBuildErr := identityProviderBuilder.Build()
 	if idpBuildErr != nil {
-		return nil, idpBuildErr
+		return nil, fmt.Errorf("building identity provider: %w", idpBuildErr)
 	}
 
 	return identityProvider, nil

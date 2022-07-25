@@ -56,7 +56,7 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.Ce
 func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType ocm.DinosaurQuotaType) (bool, error) {
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(organizationID, quotaType.GetResourceName(), quotaType.GetProduct())
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("checking configured quota cost: %w", err)
 	}
 
 	var foundUnsupportedBillingModel string

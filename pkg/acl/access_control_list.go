@@ -1,6 +1,8 @@
 package acl
 
 import (
+	"fmt"
+
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
@@ -51,8 +53,12 @@ func (c *AccessControlListConfig) ReadFiles() (err error) {
 func readDenyListConfigFile(file string, val *DeniedUsers) error {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading file: %w", err)
 	}
 
-	return yaml.UnmarshalStrict([]byte(fileContents), val)
+	err = yaml.UnmarshalStrict([]byte(fileContents), val)
+	if err != nil {
+		return fmt.Errorf("unmarshalling file contents: %w", err)
+	}
+	return nil
 }

@@ -88,7 +88,11 @@ func (authHelper *AuthHelper) CreateSignedJWT(account *amv1.Account, jwtClaims j
 
 	// private key and public key taken from http://kjur.github.io/jsjws/tool_jwt.html
 	// the go-jwt-middleware pkg we use does the same for their tests
-	return token.SignedString(authHelper.JWTPrivateKey)
+	str, err := token.SignedString(authHelper.JWTPrivateKey)
+	if err != nil {
+		return "", fmt.Errorf("creating signed JWT: %w", err)
+	}
+	return str, nil
 }
 
 // CreateJWTWithClaims Creates a JSON web token with the claims specified. By default, this will create an ocm JWT if the issuer was not specified in the given claims.
@@ -141,9 +145,13 @@ func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClai
 
 // GetJWTFromSignedToken ...
 func (authHelper *AuthHelper) GetJWTFromSignedToken(signedToken string) (*jwt.Token, error) {
-	return jwt.Parse(signedToken, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(signedToken, func(token *jwt.Token) (interface{}, error) {
 		return authHelper.JWTCA, nil
 	})
+	if err != nil {
+		return nil, fmt.Errorf("getting JWT from signed token: %w", err)
+	}
+	return token, nil
 }
 
 // ParseJWTKeys Parses JWT Private and Public Keys from the given path

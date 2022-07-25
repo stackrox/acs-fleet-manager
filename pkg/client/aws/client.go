@@ -82,7 +82,7 @@ func newClient(credentials Config, region string) (Client, error) {
 	}
 	sess, err := session.NewSession(cfg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating new session: %w", err)
 	}
 	return &awsClient{
 		route53Client: route53.New(sess),
@@ -163,7 +163,7 @@ func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBa
 func wrapAWSError(err error, msg string) error {
 	switch err.(type) {
 	case awserr.RequestFailure:
-		return errors.BadRequest.UserWrapf(err, msg)
+		return errors.BadRequest.UserWrapf(err, msg) //nolint:wrapcheck
 	default:
 		return err
 	}

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -57,15 +59,15 @@ func (c *DinosaurConfig) AddFlags(fs *pflag.FlagSet) {
 func (c *DinosaurConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(c.DinosaurTLSCertFile, &c.DinosaurTLSCert)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading TLS cert file file: %w", err)
 	}
 	err = shared.ReadFileValueString(c.DinosaurTLSKeyFile, &c.DinosaurTLSKey)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading TLS key file: %w", err)
 	}
 	err = shared.ReadFileValueString(c.RhSsoClientSecretFile, &c.RhSsoClientSecret)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading Red Hat SSO client secret file: %w", err)
 	}
 	if c.RhSsoClientSecret != "" {
 		glog.Info("Central Red Hat OIDC client secret is configured.")

@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -50,7 +51,11 @@ func (writer *loggingWriter) Flush() {
 // Write ...
 func (writer *loggingWriter) Write(body []byte) (int, error) {
 	writer.responseBody = body
-	return writer.ResponseWriter.Write(body)
+	i, err := writer.ResponseWriter.Write(body)
+	if err != nil {
+		return i, fmt.Errorf("writing log body: %w", err)
+	}
+	return i, nil
 }
 
 // WriteHeader ...
@@ -74,7 +79,7 @@ func (writer *loggingWriter) Log(log string, err error) {
 func (writer *loggingWriter) LogObject(o interface{}, err error) error {
 	log, merr := writer.formatter.FormatObject(o)
 	if merr != nil {
-		return merr
+		return fmt.Errorf("logging object: %w", merr)
 	}
 	writer.Log(log, err)
 	return nil
@@ -86,7 +91,11 @@ func (writer *loggingWriter) GetResponseStatusCode() int {
 }
 
 func (writer *loggingWriter) prepareRequestLog() (string, error) {
-	return writer.formatter.FormatRequestLog(writer.request)
+	s, err := writer.formatter.FormatRequestLog(writer.request)
+	if err != nil {
+		return "", fmt.Errorf("preparing request log: %w", err)
+	}
+	return s, nil
 }
 
 func (writer *loggingWriter) prepareResponseLog(elapsed string) (string, error) {
@@ -97,5 +106,9 @@ func (writer *loggingWriter) prepareResponseLog(elapsed string) (string, error) 
 		Elapsed: elapsed,
 	}
 
-	return writer.formatter.FormatResponseLog(info)
+	s, err := writer.formatter.FormatResponseLog(info)
+	if err != nil {
+		return "", fmt.Errorf("preparing response log: %w", err)
+	}
+	return s, nil
 }

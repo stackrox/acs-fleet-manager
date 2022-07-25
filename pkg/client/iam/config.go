@@ -2,9 +2,10 @@ package iam
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -99,20 +100,20 @@ func (ic *IAMConfig) AddFlags(fs *pflag.FlagSet) {
 func (ic *IAMConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(ic.RedhatSSORealm.ClientIDFile, &ic.RedhatSSORealm.ClientID)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading from file: %w", err)
 	}
 	err = shared.ReadFileValueString(ic.RedhatSSORealm.ClientSecretFile, &ic.RedhatSSORealm.ClientSecret)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading from file: %w", err)
 	}
 
 	// Read the service account limits check skip org ID yaml file
 	err = shared.ReadYamlFile(ic.ServiceAccounttLimitCheckSkipOrgIDListFile, &ic.ServiceAccounttLimitCheckSkipOrgIDList)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			glog.V(10).Infof("Specified service account limits skip org IDs  file %q does not exist. Proceeding as if no service account org ID skip list was provided", ic.ServiceAccounttLimitCheckSkipOrgIDListFile)
 		} else {
-			return err
+			return fmt.Errorf("reading IAM config yaml file: %w", err)
 		}
 	}
 
@@ -123,7 +124,7 @@ func (ic *IAMConfig) ReadFiles() error {
 	if ic.AdditionalSSOIssuers.Enabled {
 		err = readAdditionalIssuersFile(ic.AdditionalSSOIssuers.File, ic.AdditionalSSOIssuers)
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				glog.V(10).Infof("Specified additional SSO issuers file %q does not exist. "+
 					"Proceeding as if no additional SSO issuers list was provided", ic.AdditionalSSOIssuers.File)
 			} else {
@@ -169,7 +170,7 @@ func getOpenIDConfiguration(c http.Client, baseURL string) (*openIDConfiguration
 	url := strings.TrimRight(baseURL, "/") + openidConfigurationPath
 	resp, err := c.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("making GET request: %w", err)
 	}
 
 	defer resp.Body.Close()
@@ -184,7 +185,7 @@ func getOpenIDConfiguration(c http.Client, baseURL string) (*openIDConfiguration
 	}
 	var cfg openIDConfiguration
 	if err := json.Unmarshal(bytes, &cfg); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshalling json: %w", err)
 	}
 	return &cfg, nil
 }
@@ -192,7 +193,7 @@ func getOpenIDConfiguration(c http.Client, baseURL string) (*openIDConfiguration
 func readAdditionalIssuersFile(file string, endpoints *AdditionalSSOIssuers) error {
 	var issuers []string
 	if err := shared.ReadYamlFile(file, &issuers); err != nil {
-		return err
+		return fmt.Errorf("reading from yaml file: %w", err)
 	}
 	endpoints.URIs = issuers
 	return nil

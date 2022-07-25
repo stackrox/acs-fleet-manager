@@ -72,14 +72,17 @@ func (t reconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.Ob
 		route.Status = admittedStatus()
 	}
 	if err := t.ObjectTracker.Create(gvr, obj, ns); err != nil {
-		return err
+		return fmt.Errorf("creating group version resource: %w", err)
 	}
 	if gvr == centralsGVR {
 		var multiErr *multierror.Error
 		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(secretsGVR, newCentralTLSSecret(ns), ns))
 		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(routesGVR, newCentralRoute(ns), ns))
 		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(routesGVR, newCentralMtlsRoute(ns), ns))
-		return multiErr.ErrorOrNil()
+		err := multiErr.ErrorOrNil()
+		if err != nil {
+			return fmt.Errorf("creating group version resource: %w", err)
+		}
 	}
 	return nil
 }

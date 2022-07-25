@@ -143,5 +143,5 @@ linters:
     # - unused
     # - varcheck
     # - whitespace
-    # - wrapcheck #TODO(ROX-10829): enable wrapcheck checks
+    - wrapcheck
     # - wsl

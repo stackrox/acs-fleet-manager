@@ -541,21 +541,45 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 	switch v := t.(type) {
 	// handle cluster types
 	case *clustersmgmtv1.Cluster:
-		return clustersmgmtv1.MarshalCluster(v, w)
+		err := clustersmgmtv1.MarshalCluster(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling Cluster: %w", err)
+		}
+		return nil
 	// handle cluster status types
 	case *clustersmgmtv1.ClusterStatus:
-		return clustersmgmtv1.MarshalClusterStatus(v, w)
+		err := clustersmgmtv1.MarshalClusterStatus(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling ClusterStatus: %w", err)
+		}
+		return nil
 	// handle syncset types
 	case *clustersmgmtv1.Syncset:
-		return clustersmgmtv1.MarshalSyncset(v, w)
+		err := clustersmgmtv1.MarshalSyncset(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling Syncset: %w", err)
+		}
+		return nil
 	// handle identiy provider types
 	case *clustersmgmtv1.IdentityProvider:
-		return clustersmgmtv1.MarshalIdentityProvider(v, w)
+		err := clustersmgmtv1.MarshalIdentityProvider(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling IdentityProvider: %w", err)
+		}
+		return nil
 	// handle ingress types
 	case *clustersmgmtv1.Ingress:
-		return clustersmgmtv1.MarshalIngress(v, w)
+		err := clustersmgmtv1.MarshalIngress(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling Ingress: %w", err)
+		}
+		return nil
 	case []*clustersmgmtv1.Ingress:
-		return clustersmgmtv1.MarshalIngressList(v, w)
+		err := clustersmgmtv1.MarshalIngressList(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling IngressList: %w", err)
+		}
+		return nil
 	// for any <type>List ocm type we'll need to follow this pattern to ensure the array of objects
 	// is wrapped with an OCMList object
 	case *clustersmgmtv1.IngressList:
@@ -563,72 +587,152 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 		if err != nil {
 			return err
 		}
-		return json.NewEncoder(w).Encode(ocmList)
+		err = json.NewEncoder(w).Encode(ocmList)
+		if err != nil {
+			return fmt.Errorf("encoding IngressList: %w", err)
+		}
+		return nil
 	// handle cloud provider types
 	case *clustersmgmtv1.CloudProvider:
-		return clustersmgmtv1.MarshalCloudProvider(v, w)
+		err := clustersmgmtv1.MarshalCloudProvider(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling CloudProvider: %w", err)
+		}
+		return nil
 	case []*clustersmgmtv1.CloudProvider:
-		return clustersmgmtv1.MarshalCloudProviderList(v, w)
+		err := clustersmgmtv1.MarshalCloudProviderList(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling CloudProviderList: %w", err)
+		}
+		return nil
 	case *clustersmgmtv1.CloudProviderList:
 		ocmList, err := NewOCMList().WithItems(v.Slice())
 		if err != nil {
 			return err
 		}
-		return json.NewEncoder(w).Encode(ocmList)
+		err = json.NewEncoder(w).Encode(ocmList)
+		if err != nil {
+			return fmt.Errorf("encoding CloudProviderList: %w", err)
+		}
+		return nil
 	// handle cloud region types
 	case *clustersmgmtv1.CloudRegion:
-		return clustersmgmtv1.MarshalCloudRegion(v, w)
+		err := clustersmgmtv1.MarshalCloudRegion(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling CloudRegion: %w", err)
+		}
+		return nil
 	case []*clustersmgmtv1.CloudRegion:
-		return clustersmgmtv1.MarshalCloudRegionList(v, w)
+		err := clustersmgmtv1.MarshalCloudRegionList(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling CloudRegionList: %w", err)
+		}
+		return nil
 	case *clustersmgmtv1.CloudRegionList:
 		ocmList, err := NewOCMList().WithItems(v.Slice())
 		if err != nil {
 			return err
 		}
-		return json.NewEncoder(w).Encode(ocmList)
+		err = json.NewEncoder(w).Encode(ocmList)
+		if err != nil {
+			return fmt.Errorf("encoding CloudRegionList: %w", err)
+		}
+		return nil
 	// handle cluster addon installations
 	case *clustersmgmtv1.AddOnInstallation:
-		return clustersmgmtv1.MarshalAddOnInstallation(v, w)
+		err := clustersmgmtv1.MarshalAddOnInstallation(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling AddOnnInstallation: %w", err)
+		}
+		return nil
 	case []*clustersmgmtv1.AddOnInstallation:
-		return clustersmgmtv1.MarshalAddOnInstallationList(v, w)
+		err := clustersmgmtv1.MarshalAddOnInstallationList(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling AddOnInstallationList: %w", err)
+		}
+		return nil
 	case *clustersmgmtv1.AddOnInstallationList:
 		ocmList, err := NewOCMList().WithItems(v.Slice())
 		if err != nil {
 			return err
 		}
-		return json.NewEncoder(w).Encode(ocmList)
+		err = json.NewEncoder(w).Encode(ocmList)
+		if err != nil {
+			return fmt.Errorf("encoding AddOnInstallationList: %w", err)
+		}
+		return nil
 	case *clustersmgmtv1.MachinePool:
-		return clustersmgmtv1.MarshalMachinePool(v, w)
+		err := clustersmgmtv1.MarshalMachinePool(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling MachinePool: %w", err)
+		}
+		return nil
 	case []*clustersmgmtv1.MachinePool:
-		return clustersmgmtv1.MarshalMachinePoolList(v, w)
+		err := clustersmgmtv1.MarshalMachinePoolList(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling MachinePoolList: %w", err)
+		}
+		return nil
 	case *clustersmgmtv1.MachinePoolList:
 		ocmList, err := NewOCMList().WithItems(v.Slice())
 		if err != nil {
 			return err
 		}
-		return json.NewEncoder(w).Encode(ocmList)
+		err = json.NewEncoder(w).Encode(ocmList)
+		if err != nil {
+			return fmt.Errorf("encoding MachinePoolList: %w", err)
+		}
+		return nil
 	// handle the generic ocm list type
 	case *ocmList:
-		return json.NewEncoder(w).Encode(t)
+		err := json.NewEncoder(w).Encode(t)
+		if err != nil {
+			return fmt.Errorf("encoding ocm list: %w", err)
+		}
+		return nil
 	case *amsv1.ClusterAuthorizationResponse:
-		return amsv1.MarshalClusterAuthorizationResponse(v, w)
+		err := amsv1.MarshalClusterAuthorizationResponse(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling ClusterAuthorizationResponse: %w", err)
+		}
+		return nil
 	case *amsv1.Subscription:
-		return amsv1.MarshalSubscription(t.(*amsv1.Subscription), w)
+		err := amsv1.MarshalSubscription(t.(*amsv1.Subscription), w)
+		if err != nil {
+			return fmt.Errorf("marshalling Subscription: %w", err)
+		}
+		return nil
 	case *authorizationsv1.TermsReviewResponse:
-		return authorizationsv1.MarshalTermsReviewResponse(v, w)
+		err := authorizationsv1.MarshalTermsReviewResponse(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling TermsReviewResponse: %w", err)
+		}
+		return nil
 	case []*amsv1.Subscription:
-		return amsv1.MarshalSubscriptionList(v, w)
+		err := amsv1.MarshalSubscriptionList(v, w)
+		if err != nil {
+			return fmt.Errorf("marshalling SubscriptionList: %w", err)
+		}
+		return nil
 	case *amsv1.SubscriptionList:
 		subscList, err := NewSubscriptionList().WithItems(v.Slice())
 		if err != nil {
 			return err
 		}
-		return json.NewEncoder(w).Encode(subscList)
+		err = json.NewEncoder(w).Encode(subscList)
+		if err != nil {
+			return fmt.Errorf("encoding SubscriptionList: %w", err)
+		}
+		return nil
 		// list := t.(*amsv1.SubscriptionList)
 		// return amsv1.MarshalSubscriptionList(list.Slice(), w)
 	// handle ocm error type
 	case *ocmErrors.ServiceError:
-		return json.NewEncoder(w).Encode(v.AsOpenapiError("", ""))
+		err := json.NewEncoder(w).Encode(v.AsOpenapiError("", ""))
+		if err != nil {
+			return fmt.Errorf("encoding ServiceError: %w", err)
+		}
+		return nil
 	}
 	return fmt.Errorf("could not recognise type %s in ocm type marshaller", reflect.TypeOf(t).String())
 }
@@ -792,7 +896,10 @@ func GetMockSubscription(modifyFn func(b *amsv1.Subscription)) (*amsv1.Subscript
 	if modifyFn != nil {
 		modifyFn(builder)
 	}
-	return builder, err
+	if err != nil {
+		return nil, fmt.Errorf("building Subscription: %w", err)
+	}
+	return builder, nil
 }
 
 // GetMockClusterAuthorization ...
@@ -805,12 +912,20 @@ func GetMockClusterAuthorization(modifyFn func(b *amsv1.ClusterAuthorizationResp
 	if modifyFn != nil {
 		modifyFn(builder)
 	}
-	return builder, err
+
+	if err != nil {
+		return nil, fmt.Errorf("building ClusterAuthorizationResponse: %w", err)
+	}
+	return builder, nil
 }
 
 // GetMockTermsReview ...
 func GetMockTermsReview(modifyFn func(b *authorizationsv1.TermsReviewResponse)) (*authorizationsv1.TermsReviewResponse, error) {
-	return authorizationsv1.NewTermsReviewResponse().TermsRequired(true).Build()
+	resp, err := authorizationsv1.NewTermsReviewResponse().TermsRequired(true).Build()
+	if err != nil {
+		return nil, fmt.Errorf("building TermsReviewResponse: %w", err)
+	}
+	return resp, nil
 }
 
 // GetMockSyncsetBuilder for emulated OCM server
@@ -827,7 +942,11 @@ func GetMockSyncsetBuilder(modifyFn func(b *clustersmgmtv1.SyncsetBuilder)) *clu
 
 // GetMockSyncset for emulated OCM server
 func GetMockSyncset(syncsetBuilder *clustersmgmtv1.SyncsetBuilder) (*clustersmgmtv1.Syncset, error) {
-	return syncsetBuilder.Build()
+	s, err := syncsetBuilder.Build()
+	if err != nil {
+		return nil, fmt.Errorf("building Syncset: %w", err)
+	}
+	return s, nil
 }
 
 // GetMockIngressList for emulated OCM server
@@ -838,7 +957,10 @@ func GetMockIngressList(modifyFn func(l *v1.IngressList, err error)) (*clustersm
 	if modifyFn != nil {
 		modifyFn(list, err)
 	}
-	return list, err
+	if err != nil {
+		return nil, fmt.Errorf("building IngressList: %w", err)
+	}
+	return list, nil
 }
 
 // GetMockCloudProviderBuilder for emulated OCM server
@@ -861,7 +983,10 @@ func GetMockCloudProvider(modifyFn func(*clustersmgmtv1.CloudProvider, error)) (
 	if modifyFn != nil {
 		modifyFn(cloudProvider, err)
 	}
-	return cloudProvider, err
+	if err != nil {
+		return nil, fmt.Errorf("building CloudProvier: %w", err)
+	}
+	return cloudProvider, nil
 }
 
 // GetMockCloudProviderList for emulated OCM server
@@ -872,7 +997,10 @@ func GetMockCloudProviderList(modifyFn func(*clustersmgmtv1.CloudProviderList, e
 	if modifyFn != nil {
 		modifyFn(list, err)
 	}
-	return list, err
+	if err != nil {
+		return nil, fmt.Errorf("building CloudProviderList: %w", err)
+	}
+	return list, nil
 }
 
 // GetMockCloudProviderRegionBuilder for emulated OCM server
@@ -897,7 +1025,10 @@ func GetMockCloudProviderRegion(modifyFn func(*clustersmgmtv1.CloudRegion, error
 	if modifyFn != nil {
 		modifyFn(cloudRegion, err)
 	}
-	return cloudRegion, err
+	if err != nil {
+		return nil, fmt.Errorf("building CloudRegion: %w", err)
+	}
+	return cloudRegion, nil
 }
 
 // GetMockCloudProviderRegionList for emulated OCM server
@@ -906,7 +1037,10 @@ func GetMockCloudProviderRegionList(modifyFn func(*clustersmgmtv1.CloudRegionLis
 	if modifyFn != nil {
 		modifyFn(list, err)
 	}
-	return list, err
+	if err != nil {
+		return nil, fmt.Errorf("building CloudRegionList: %w", err)
+	}
+	return list, nil
 }
 
 // GetMockClusterStatus for emulated OCM server
@@ -915,7 +1049,10 @@ func GetMockClusterStatus(modifyFn func(*clustersmgmtv1.ClusterStatus, error)) (
 	if modifyFn != nil {
 		modifyFn(status, err)
 	}
-	return status, err
+	if err != nil {
+		return nil, fmt.Errorf("building ClusterStatus: %w", err)
+	}
+	return status, nil
 }
 
 // GetMockClusterStatusBuilder for emulated OCM server
@@ -970,7 +1107,10 @@ func GetMockClusterAddonInstallation(modifyFn func(*clustersmgmtv1.AddOnInstalla
 	if modifyFn != nil {
 		modifyFn(addonInstall, err)
 	}
-	return addonInstall, err
+	if err != nil {
+		return nil, fmt.Errorf("building AddOnInstallation: %w", err)
+	}
+	return addonInstall, nil
 }
 
 // GetMockClusterAddonInstallationList for emulated OCM server
@@ -983,7 +1123,10 @@ func GetMockClusterAddonInstallationList(modifyFn func(*clustersmgmtv1.AddOnInst
 	if modifyFn != nil {
 		modifyFn(list, err)
 	}
-	return list, err
+	if err != nil {
+		return nil, fmt.Errorf("building AddOnInstallationList: %w", err)
+	}
+	return list, nil
 }
 
 // GetMockClusterNodesBuilder for emulated OCM server
@@ -1031,7 +1174,10 @@ func GetMockCluster(modifyFn func(*clustersmgmtv1.Cluster, error)) (*clustersmgm
 	if modifyFn != nil {
 		modifyFn(cluster, err)
 	}
-	return cluster, err
+	if err != nil {
+		return nil, fmt.Errorf("building Cluster: %w", err)
+	}
+	return cluster, nil
 }
 
 // GetMockMachineBuilder for emulated OCM server
@@ -1053,7 +1199,10 @@ func GetMachinePoolList(modifyFn func(*clustersmgmtv1.MachinePoolList, error)) (
 	if modifyFn != nil {
 		modifyFn(list, err)
 	}
-	return list, err
+	if err != nil {
+		return nil, fmt.Errorf("building MachinePoolList: %w", err)
+	}
+	return list, nil
 }
 
 // GetMockMachinePool for emulated OCM server
@@ -1062,7 +1211,10 @@ func GetMockMachinePool(modifyFn func(*clustersmgmtv1.MachinePool, error)) (*clu
 	if modifyFn != nil {
 		modifyFn(machinePool, err)
 	}
-	return machinePool, err
+	if err != nil {
+		return nil, fmt.Errorf("building MachinePool: %w", err)
+	}
+	return machinePool, nil
 }
 
 // GetMockOpenshiftVersionBuilder for emulated OCM server
@@ -1092,5 +1244,8 @@ func GetMockIdentityProvider(modifyFn func(*clustersmgmtv1.IdentityProvider, err
 	if modifyFn != nil {
 		modifyFn(identityProvider, err)
 	}
-	return identityProvider, err
+	if err != nil {
+		return nil, fmt.Errorf("building IdentityProvider: %w", err)
+	}
+	return identityProvider, nil
 }

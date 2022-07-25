@@ -301,7 +301,7 @@ func (cluster *Cluster) GetAvailableCentralOperatorVersions() ([]CentralOperator
 
 	err := json.Unmarshal(cluster.AvailableCentralOperatorVersions, &versions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting available central operator versions: %w", err)
 	}
 
 	return versions, nil
@@ -378,7 +378,7 @@ func (cluster *Cluster) SetAvailableCentralOperatorVersions(availableCentralOper
 	}
 	v, err := json.Marshal(sortedVersions)
 	if err != nil {
-		return err
+		return fmt.Errorf("setting available central operator versions: %w", err)
 	}
 	cluster.AvailableCentralOperatorVersions = v
 	return nil

@@ -103,7 +103,12 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 			},
 		},
 	}
-	return s.client.Create(ctx, route)
+
+	err = s.client.Create(ctx, route)
+	if err != nil {
+		return fmt.Errorf("creating reencrypt route: %w", err)
+	}
+	return nil
 }
 
 func (s *RouteService) findRoute(ctx context.Context, namespace string, routeName string) (*openshiftRouteV1.Route, error) {
@@ -114,5 +119,8 @@ func (s *RouteService) findRoute(ctx context.Context, namespace string, routeNam
 		},
 	}
 	err := s.client.Get(ctx, ctrlClient.ObjectKey{Namespace: route.GetNamespace(), Name: route.GetName()}, route)
-	return route, err
+	if err != nil {
+		return nil, fmt.Errorf("finding route: %w", err)
+	}
+	return route, nil
 }

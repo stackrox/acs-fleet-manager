@@ -68,7 +68,7 @@ func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 	authProviderRequest := createAuthProviderRequest(central)
 	authProviderResp, err := centralClient.SendAuthProviderRequest(ctx, authProviderRequest)
 	if err != nil {
-		return err
+		return fmt.Errorf("sending AuthProvider request to central: %w", err)
 	}
 
 	// Initiate sso.redhat.com auth provider groups.
@@ -76,7 +76,7 @@ func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 		group := groupCreator(authProviderResp.ID, central.Spec.Auth)
 		err = centralClient.SendGroupRequest(ctx, group)
 		if err != nil {
-			return err
+			return fmt.Errorf("sending group request to central: %w", err)
 		}
 	}
 	return nil

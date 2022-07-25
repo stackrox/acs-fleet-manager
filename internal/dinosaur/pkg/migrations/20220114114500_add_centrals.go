@@ -6,6 +6,7 @@ package migrations
 // is done here, even though the same type is defined in pkg/api
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
@@ -48,10 +49,18 @@ func addCentralRequest() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "20220114114500",
 		Migrate: func(tx *gorm.DB) error {
-			return tx.AutoMigrate(&CentralRequest{})
+			err := tx.AutoMigrate(&CentralRequest{})
+			if err != nil {
+				return fmt.Errorf("migrating: %w", err)
+			}
+			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			return tx.Migrator().DropTable(&CentralRequest{})
+			err := tx.Migrator().DropTable(&CentralRequest{})
+			if err != nil {
+				return fmt.Errorf("rolling back: %w", err)
+			}
+			return nil
 		},
 	}
 }
