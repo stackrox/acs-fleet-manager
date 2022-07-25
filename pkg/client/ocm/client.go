@@ -84,7 +84,7 @@ func NewOCMConnection(ocmConfig *OCMConfig, BaseURL string) (*sdkClient.Connecti
 			Debug(ocmConfig.Debug).
 			Build()
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("creating logger for OCM client connection: %w", err)
 		}
 		builder = builder.Logger(logger)
 	}
@@ -99,7 +99,7 @@ func NewOCMConnection(ocmConfig *OCMConfig, BaseURL string) (*sdkClient.Connecti
 
 	connection, err := builder.Build()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("building OCM client connection: %w", err)
 	}
 	return connection, func() {
 		_ = connection.Close()
@@ -141,7 +141,7 @@ func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1
 func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error) {
 	subscriptions, err := c.connection.AccountsMgmt().V1().Subscriptions().List().Search(fmt.Sprintf("cluster_id='%s'", clusterID)).Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("retrieving subscriptions: %w", err)
 	}
 	items := subscriptions.Items()
 	if items == nil || items.Len() == 0 {
@@ -168,7 +168,7 @@ func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.Subscriptio
 func (c *client) GetOrganisationIDFromExternalID(externalID string) (string, error) {
 	res, err := c.connection.AccountsMgmt().V1().Organizations().List().Search(fmt.Sprintf("external_id='%s'", externalID)).Send()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("retrieving organizations: %w", err)
 	}
 
 	items := res.Items()
@@ -185,12 +185,12 @@ func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool
 	// Check for Appendix 4 Terms
 	request, err := v1.NewTermsReviewRequest().AccountUsername(username).SiteCode(TermsSitecode).EventCode(TermsEventcodeRegister).Build()
 	if err != nil {
-		return false, "", err
+		return false, "", fmt.Errorf("creating terms review request: %w", err)
 	}
 	selfTermsReview := c.connection.Authorizations().V1().TermsReview()
 	postResp, err := selfTermsReview.Post().Request(request).Send()
 	if err != nil {
-		return false, "", err
+		return false, "", fmt.Errorf("getting terms review: %w", err)
 	}
 	response, ok := postResp.GetResponse()
 	if !ok {
@@ -207,7 +207,7 @@ func (c *client) GetClusterIngresses(clusterID string) (*clustersmgmtv1.Ingresse
 	clusterIngresses := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Ingresses()
 	ingressList, err := clusterIngresses.List().Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("sending cluster ingresses list request: %w", err)
 	}
 
 	return ingressList, nil
@@ -217,7 +217,7 @@ func (c *client) GetClusterIngresses(clusterID string) (*clustersmgmtv1.Ingresse
 func (c client) GetCluster(clusterID string) (*clustersmgmtv1.Cluster, error) {
 	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Get().Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("sending get cluster request: %w", err)
 	}
 	return resp.Body(), nil
 }
@@ -226,7 +226,7 @@ func (c client) GetCluster(clusterID string) (*clustersmgmtv1.Cluster, error) {
 func (c client) GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, error) {
 	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(id).Status().Get().Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("sending cluster status request: %w", err)
 	}
 	return resp.Body(), nil
 }
@@ -264,11 +264,11 @@ func (c client) CreateAddonWithParams(clusterID string, addonID string, params [
 	}
 	addonInstallation, err := addonInstallationBuilder.Build()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("building addonInstallation: %w", err)
 	}
 	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().Add().Body(addonInstallation).Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("sending AddOnInstallationAdd request: %w", err)
 	}
 	return resp.Body(), nil
 }
@@ -282,7 +282,7 @@ func (c client) CreateAddon(clusterID string, addonID string) (*clustersmgmtv1.A
 func (c client) GetAddon(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
 	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().List().Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("sending AddOnInstallationList request: %w", err)
 	}
 
 	addon := &clustersmgmtv1.AddOnInstallation{}
@@ -301,7 +301,7 @@ func (c client) GetAddon(clusterID string, addonID string) (*clustersmgmtv1.AddO
 func (c client) UpdateAddonParameters(clusterID string, addonInstallationID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 	addonInstallationResp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().Addoninstallation(addonInstallationID).Get().Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("sending AddOnInstallationGet request: %w", err)
 	}
 	if existingParameters, ok := addonInstallationResp.Body().GetParameters(); ok {
 		if sameParameters(existingParameters, parameters) {
@@ -313,11 +313,11 @@ func (c client) UpdateAddonParameters(clusterID string, addonInstallationID stri
 	if updatedParamsListBuilder != nil {
 		addonInstallation, err := addonInstallationBuilder.Parameters(updatedParamsListBuilder).Build()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("building AddOnInstallation: %w", err)
 		}
 		resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().Addoninstallation(addonInstallationID).Update().Body(addonInstallation).Send()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("sending AddOnInstallation update request: %w", err)
 		}
 		return resp.Body(), nil
 	}
@@ -461,7 +461,7 @@ func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmt
 
 	cluster, err := clusterClient.Get().Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("scaling compute nodes: %w", err)
 	}
 
 	// get current number of compute nodes
@@ -472,13 +472,13 @@ func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmt
 	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(currentNumOfNodes + numNodes)).
 		Build()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("scaling compute nodes: %w", err)
 	}
 
 	// patch cluster with updated number of compute nodes
 	resp, err := clusterClient.Update().Body(patch).Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("scaling compute nodes: %w", err)
 	}
 
 	return resp.Body(), nil
@@ -491,13 +491,13 @@ func (c client) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1
 	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(numNodes)).
 		Build()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("setting compute nodes: %w", err)
 	}
 
 	// patch cluster with updated number of compute nodes
 	resp, err := clusterClient.Update().Body(patch).Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("setting compute nodes: %w", err)
 	}
 
 	return resp.Body(), nil
@@ -553,7 +553,7 @@ func (c client) ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*am
 		Post().Request(cb).Send()
 	if err != nil && r.Status() != http.StatusTooManyRequests {
 		err = errors.NewErrorFromHTTPStatusCode(r.Status(), "OCM client failed to create cluster authorization")
-		return nil, err
+		return nil, fmt.Errorf("creating cluster authorization: %w", err)
 	}
 	resp, _ := r.GetResponse()
 	return resp, nil
@@ -570,7 +570,7 @@ func (c client) DeleteSubscription(id string) (int, error) {
 func (c client) FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error) {
 	r, err := c.connection.AccountsMgmt().V1().Subscriptions().List().Search(query).Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("finding subscriptions: %w", err)
 	}
 	return r, nil
 }
@@ -585,7 +585,7 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 
 	quotaCostList, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("retrieving quota list: %w", err)
 	}
 
 	quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {

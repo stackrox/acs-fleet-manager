@@ -1,10 +1,11 @@
 package k8s
 
 import (
+	"fmt"
+
 	"github.com/golang/glog"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
-	"github.com/pkg/errors"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -48,22 +49,27 @@ func CreateClientOrDie() ctrlClient.Client {
 func newClientGoClientSet() (client kubernetes.Interface, err error) {
 	config, err := ctrl.GetConfig()
 	if err != nil {
-		return client, err
+		return client, fmt.Errorf("geting k8s config: %w", err)
 	}
 
 	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return client, err
+		return client, fmt.Errorf("creating Clientset for config: %w", err)
 	}
 
-	return clientSet, err
+	return clientSet, nil
 }
 
 // IsRoutesResourceEnabled ...
 func IsRoutesResourceEnabled() (bool, error) {
 	clientSet, err := newClientGoClientSet()
 	if err != nil {
-		return false, errors.Wrapf(err, "create client-go k8s client set")
+		return false, fmt.Errorf("create client-go k8s client set: %w", err)
 	}
-	return discovery.IsResourceEnabled(clientSet.Discovery(), routesGVK)
+
+	enabled, err := discovery.IsResourceEnabled(clientSet.Discovery(), routesGVK)
+	if err != nil {
+		return false, fmt.Errorf("getting resource state: %w", err)
+	}
+	return enabled, nil
 }

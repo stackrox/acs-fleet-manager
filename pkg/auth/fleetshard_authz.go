@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"fmt"
+
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
@@ -52,8 +54,13 @@ func (c *FleetShardAuthZConfig) ReadFiles() error {
 func readFleetShardAuthZConfigFile(file string, val *AllowedOrgIDs) error {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading FleedShard AuthZ config: %w", err)
 	}
 
-	return yaml.UnmarshalStrict([]byte(fileContents), val)
+	err = yaml.UnmarshalStrict([]byte(fileContents), val)
+	if err != nil {
+		return fmt.Errorf("reading FleedShard AuthZ config: %w", err)
+	}
+
+	return nil
 }

@@ -42,7 +42,7 @@ func Initialize(envName environments.EnvName, c *Config) error {
 	err = sentry.Init(options)
 	if err != nil {
 		glog.Errorf("Unable to initialize sentry integration: %s", err.Error())
-		return err
+		return fmt.Errorf("initializing sentry integration: %w", err)
 	}
 	return nil
 }

@@ -37,12 +37,12 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, priv
 	for _, cluster := range clusters {
 		managedDinosaurAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.DinosaurOperatorAddonID)
 		if err != nil {
-			return err
+			return fmt.Errorf("retrieving ocmClient operator addon: %w", err)
 		}
 
 		fleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.FleetshardAddonID)
 		if err != nil {
-			return err
+			return fmt.Errorf("retrieving ocmClient FleetShard addon: %w", err)
 		}
 
 		if managedDinosaurAddon.State() == clustersmgmtv1.AddOnInstallationStateReady && (fleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateReady || fleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateInstalling) {
@@ -88,7 +88,7 @@ var defaultUpdateDinosaurStatusFunc = func(helper *coreTest.Helper, privateClien
 
 		dinosaurList, _, err := privateClient.AgentClustersApi.GetCentrals(ctx, dataplaneCluster.ClusterID)
 		if err != nil {
-			return err
+			return fmt.Errorf("retrieving Centrals: %w", err)
 		}
 
 		dinosaurStatusList := make(map[string]private.DataPlaneCentralStatus)
@@ -103,7 +103,7 @@ var defaultUpdateDinosaurStatusFunc = func(helper *coreTest.Helper, privateClien
 		}
 
 		if _, err = privateClient.AgentClustersApi.UpdateCentralClusterStatus(ctx, dataplaneCluster.ClusterID, dinosaurStatusList); err != nil {
-			return err
+			return fmt.Errorf("updating CentralClusterStatus: %w", err)
 		}
 	}
 	return nil

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/stackrox/rox/pkg/errorhelpers"
@@ -54,5 +55,8 @@ func loadConfig() {
 // Singleton retrieves the current runtime configuration from the environment and returns it.
 func Singleton() (*Config, error) {
 	once.Do(loadConfig)
-	return cfg, cfgErr
+	if cfgErr != nil {
+		return nil, fmt.Errorf("loading configuration: %w", cfgErr)
+	}
+	return cfg, nil
 }

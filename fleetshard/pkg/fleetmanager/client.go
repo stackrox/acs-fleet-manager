@@ -70,7 +70,7 @@ func (c *Client) GetManagedCentralList() (*private.ManagedCentralList, error) {
 func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus) error {
 	updateBody, err := json.Marshal(statuses)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshalling status: %w", err)
 	}
 
 	resp, err := c.newRequest(http.MethodPut, fmt.Sprintf("%s/%s", c.fleetshardAPIEndpoint, statusRoute), bytes.NewBuffer(updateBody))
@@ -88,7 +88,7 @@ func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus
 func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.CentralRequest, error) {
 	reqBody, err := json.Marshal(request)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshalling request: %w", err)
 	}
 
 	resp, err := c.newRequest(http.MethodPost, fmt.Sprintf("%s?async=true", c.consoleAPIEndpoint), bytes.NewBuffer(reqBody))
@@ -138,15 +138,15 @@ func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Re
 	glog.Infof("Send request to %s", url)
 	r, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating HTTP request: %w", err)
 	}
 	if err := c.auth.AddAuth(r); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("adding authentication information to request: %w", err)
 	}
 
 	resp, err := c.client.Do(r)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("sending HTTP request: %w", err)
 	}
 	return resp, nil
 }
@@ -158,7 +158,7 @@ func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading response body: %w", err)
 	}
 	if len(data) == 0 {
 		return nil
@@ -169,7 +169,7 @@ func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 	}{}
 	err = json.Unmarshal(data, &into)
 	if err != nil {
-		return err
+		return fmt.Errorf("unmarshalling resonse data: %w", err)
 	}
 
 	// Unmarshal error
@@ -177,7 +177,7 @@ func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 		apiError := compat.Error{}
 		err = json.Unmarshal(data, &apiError)
 		if err != nil {
-			return err
+			return fmt.Errorf("unmarshalling resonse data: %w", err)
 		}
 		return errors.Errorf("API error (HTTP status %d) occured %s: %s", resp.StatusCode, apiError.Code, apiError.Reason)
 	}
@@ -186,5 +186,9 @@ func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 		return nil
 	}
 
-	return json.Unmarshal(data, v)
+	err = json.Unmarshal(data, v)
+	if err != nil {
+		return fmt.Errorf("unmarshalling data: %w", err)
+	}
+	return nil
 }

@@ -1,6 +1,7 @@
 package sentry
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -44,5 +45,9 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 
 // ReadFiles ...
 func (c *Config) ReadFiles() error {
-	return shared.ReadFileValueString(c.KeyFile, &c.Key)
+	err := shared.ReadFileValueString(c.KeyFile, &c.Key)
+	if err != nil {
+		return fmt.Errorf("reading config files: %w", err)
+	}
+	return nil
 }

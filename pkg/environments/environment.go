@@ -4,6 +4,7 @@ import (
 	"context"
 	goerrors "errors"
 	"flag"
+	"fmt"
 	"os"
 
 	"github.com/goava/di"
@@ -48,7 +49,7 @@ func New(name string, options ...di.Option) (env *Env, err error) {
 
 	env.ConfigContainer, err = di.New(append(options, di.ProvideValue(env))...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating env: %w", err)
 	}
 
 	return env, nil
@@ -82,7 +83,7 @@ func (env *Env) AddFlags(flags *pflag.FlagSet) error {
 
 	modules := []ConfigModule{}
 	if err := env.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
-		return err
+		return fmt.Errorf("adding flags: %w", err)
 	}
 	for i := range modules {
 		modules[i].AddFlags(flags)
@@ -112,7 +113,7 @@ func (env *Env) CreateServices() error {
 	// Read in all config files
 	modules := []ConfigModule{}
 	if err := env.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
-		return err
+		return fmt.Errorf("creating services: %w", err)
 	}
 	for i := range modules {
 		err := modules[i].ReadFiles()
@@ -132,7 +133,7 @@ func (env *Env) CreateServices() error {
 	}
 	err = namedEnv.ModifyConfiguration(env)
 	if err != nil {
-		return err
+		return fmt.Errorf("modifying configuration: %w", err)
 	}
 
 	type injections struct {
@@ -143,7 +144,7 @@ func (env *Env) CreateServices() error {
 	}
 	in := injections{}
 	if err := env.ConfigContainer.Resolve(&in); err != nil {
-		return err
+		return fmt.Errorf("creating services: %w", err)
 	}
 
 	// Right before we create the services, run the any before create service hooks
@@ -159,26 +160,26 @@ func (env *Env) CreateServices() error {
 	}
 	env.ServiceContainer, err = di.New(serviceProviders...)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating services: %w", err)
 	}
 
 	// add the parent so the ServiceContainer can automatically resolve
 	// types in the ConfigContainer.
 	err = env.ServiceContainer.AddParent(env.ConfigContainer)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating services: %w", err)
 	}
 
 	var validators []ServiceValidator
 	err = env.ServiceContainer.Resolve(&validators)
 	if err != nil {
 		if !errors.Is(err, di.ErrTypeNotExists) {
-			return err
+			return fmt.Errorf("creating services: %w", err)
 		}
 	} else {
 		for _, validator := range validators {
 			if err := validator.Validate(); err != nil {
-				return err
+				return fmt.Errorf("creating services: %w", err)
 			}
 		}
 	}
@@ -271,7 +272,7 @@ func setConfigDefaults(flags *pflag.FlagSet, defaults map[string]string) error {
 		err := flags.Set(name, value)
 		if err != nil {
 			glog.Errorf("Error setting flag %s: %v", name, err)
-			return err
+			return fmt.Errorf("setting flag: %w", err)
 		}
 	}
 	return nil

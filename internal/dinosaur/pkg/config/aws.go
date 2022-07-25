@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
@@ -46,20 +48,23 @@ func (c *AWSConfig) AddFlags(fs *pflag.FlagSet) {
 func (c *AWSConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(c.AccountIDFile, &c.AccountID)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading account ID file: %w", err)
 	}
 	err = shared.ReadFileValueString(c.AccessKeyFile, &c.AccessKey)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading access key file: %w", err)
 	}
 	err = shared.ReadFileValueString(c.SecretAccessKeyFile, &c.SecretAccessKey)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading secret access key file: %w", err)
 	}
 	err = shared.ReadFileValueString(c.Route53AccessKeyFile, &c.Route53AccessKey)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading route 53 access key file: %w", err)
 	}
 	err = shared.ReadFileValueString(c.Route53SecretAccessKeyFile, &c.Route53SecretAccessKey)
-	return err
+	if err != nil {
+		return fmt.Errorf("reading route 53 secret access key file: %w", err)
+	}
+	return nil
 }

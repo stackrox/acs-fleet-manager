@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -280,7 +281,7 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 	if c.ImagePullDockerConfigContent == "" && c.ImagePullDockerConfigFile != "" {
 		err := shared.ReadFileValueString(c.ImagePullDockerConfigFile, &c.ImagePullDockerConfigContent)
 		if err != nil {
-			return err
+			return fmt.Errorf("reading image pull docker config file: %w", err)
 		}
 	}
 
@@ -322,17 +323,17 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 func (c *DataplaneClusterConfig) readKubeconfig() error {
 	_, err := os.Stat(c.Kubeconfig)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return errors.Errorf("The kubeconfig file %s does not exist", c.Kubeconfig)
 		}
-		return err
+		return fmt.Errorf("opening kubeconfig: %w", err)
 	}
 	config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{Precedence: []string{c.Kubeconfig}},
 		&clientcmd.ConfigOverrides{})
 	rawConfig, err := config.RawConfig()
 	if err != nil {
-		return err
+		return fmt.Errorf("reading kubeconfig: %w", err)
 	}
 	c.RawKubernetesConfig = &rawConfig
 	return nil
@@ -348,7 +349,7 @@ func validateClusterIsInKubeconfigContext(rawConfig clientcmdapi.Config, cluster
 func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading data plane cluster config file: %w", err)
 	}
 
 	c := struct {
@@ -356,7 +357,7 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 	}{}
 
 	if err = yaml.Unmarshal([]byte(fileContents), &c); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading data plane cluster config file: %w", err)
 	}
 	return c.ClusterList, nil
 }
@@ -375,18 +376,26 @@ func (c *DataplaneClusterConfig) FindClusterNameByClusterID(clusterID string) st
 func readOnlyUserListFile(file string, val *userv1.OptionalNames) error {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading read-only user list file: %w", err)
 	}
 
-	return yaml.UnmarshalStrict([]byte(fileContents), val)
+	err = yaml.UnmarshalStrict([]byte(fileContents), val)
+	if err != nil {
+		return fmt.Errorf("reading read-only user list file: %w", err)
+	}
+	return nil
 }
 
 // Read the dinosaur-sre users from the file into the dinosaur-sre user list config
 func readDinosaurSREUserFile(file string, val *userv1.OptionalNames) error {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading SRE user list file: %w", err)
 	}
 
-	return yaml.UnmarshalStrict([]byte(fileContents), val)
+	err = yaml.UnmarshalStrict([]byte(fileContents), val)
+	if err != nil {
+		return fmt.Errorf("reading SRE user list file: %w", err)
+	}
+	return nil
 }

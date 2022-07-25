@@ -1,6 +1,7 @@
 package fleetmanager
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -32,7 +33,7 @@ func (f *staticTokenAuthFactory) GetName() string {
 func (f *staticTokenAuthFactory) CreateAuth() (Auth, error) {
 	cfg, err := config.Singleton()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating the config singleton: %w", err)
 	}
 	staticToken := cfg.StaticToken
 	if staticToken == "" {

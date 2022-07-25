@@ -2,6 +2,7 @@ package logging
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -31,7 +32,7 @@ func (f *jsonLogFormatter) FormatRequestLog(r *http.Request) (string, error) {
 
 	log, err := json.Marshal(jsonlog)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("marshalling json: %w", err)
 	}
 	return string(log[:]), nil
 }
@@ -44,7 +45,7 @@ func (f *jsonLogFormatter) FormatResponseLog(info *ResponseInfo) (string, error)
 	}
 	log, err := json.Marshal(jsonlog)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("marshalling json: %w", err)
 	}
 	return string(log[:]), nil
 }
@@ -53,7 +54,7 @@ func (f *jsonLogFormatter) FormatResponseLog(info *ResponseInfo) (string, error)
 func (f *jsonLogFormatter) FormatObject(o interface{}) (string, error) {
 	log, err := json.Marshal(o)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("marshalling json: %w", err)
 	}
 	return string(log), nil
 }

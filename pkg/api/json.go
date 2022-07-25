@@ -3,8 +3,9 @@ package api
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 // JSON ...
@@ -20,7 +21,10 @@ func (j *JSON) Scan(value interface{}) error {
 	result := json.RawMessage{}
 	err := json.Unmarshal(bytes, &result)
 	*j = JSON(result)
-	return err
+	if err != nil {
+		return fmt.Errorf("unmarshalling json: %w", err)
+	}
+	return nil
 }
 
 // Value return json value, implement driver.Valuer interface
@@ -28,7 +32,12 @@ func (j JSON) Value() (driver.Value, error) {
 	if len(j) == 0 || string(j) == "null" {
 		return nil, nil
 	}
-	return json.RawMessage(j).MarshalJSON()
+
+	v, err := json.RawMessage(j).MarshalJSON()
+	if err != nil {
+		return v, fmt.Errorf("marshalling json: %w", err)
+	}
+	return v, nil
 }
 
 // MarshalJSON ...
@@ -56,5 +65,8 @@ func (j JSON) Object() (map[string]interface{}, error) {
 
 	result := map[string]interface{}{}
 	err := json.Unmarshal(j, &result)
-	return result, err
+	if err != nil {
+		return nil, fmt.Errorf("marshalling json: %w", err)
+	}
+	return result, nil
 }
