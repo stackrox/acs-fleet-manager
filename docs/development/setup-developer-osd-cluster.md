@@ -196,7 +196,7 @@ helm upgrade --install rhacs-terraform \
   --set fleetshardSync.staticToken="${STATIC_TOKEN}" \
   --set fleetshardSync.clusterId="${CLUSTER_ID}" \
   --set acsOperator.enabled=true \
-  --set acsOperator.source="rhacs-operators" \
+  --set acsOperator.source="${RHACS_OPERATOR_CATALOG_NAME}" \
   --set acsOperator.startingCSV="${STARTING_CSV}" \
   --set observability.enabled=false ./dp-terraform/helm/rhacs-terraform
 ```
