@@ -5,6 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	"github.com/stackrox/fleet-manager-pkg/pkg/services/account"
 )
 
 // ConfigProviders ...
@@ -22,13 +23,13 @@ func ServiceProviders() di.Option {
 }
 
 // NewAccount ...
-func NewAccount(ocmConfig *ocm.OCMConfig) AccountService {
+func NewAccount(ocmConfig *ocm.OCMConfig) account.AccountService {
 	if ocmConfig.EnableMock {
-		return NewMockAccountService()
+		return account.NewMockAccountService()
 	}
 	connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsURL)
 	if err != nil {
 		logger.Logger.Error(err)
 	}
-	return NewAccountService(connection)
+	return account.NewAccountService(connection)
 }

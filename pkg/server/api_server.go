@@ -12,7 +12,7 @@ import (
 
 	"github.com/goava/di"
 	"github.com/stackrox/acs-fleet-manager/pkg/server/logging"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
+	"github.com/stackrox/fleet-manager-pkg/pkg/services/sentry"
 
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 

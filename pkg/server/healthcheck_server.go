@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
+	"github.com/stackrox/fleet-manager-pkg/pkg/services/sentry"
 
 	health "github.com/docker/go-healthcheck"
 	"github.com/golang/glog"

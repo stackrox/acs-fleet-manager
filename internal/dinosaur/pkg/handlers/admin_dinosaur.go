@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
+	"github.com/stackrox/fleet-manager-pkg/pkg/services/account"
 
 	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"

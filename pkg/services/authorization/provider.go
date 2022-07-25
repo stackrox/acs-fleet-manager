@@ -5,6 +5,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	"github.com/stackrox/fleet-manager-pkg/pkg/services/authorization"
 )
 
 // ConfigProviders ...
@@ -22,13 +23,13 @@ func ServiceProviders() di.Option {
 }
 
 // NewAuthorization ...
-func NewAuthorization(ocmConfig *ocm.OCMConfig) Authorization {
+func NewAuthorization(ocmConfig *ocm.OCMConfig) authorization.Authorization {
 	if ocmConfig.EnableMock {
-		return NewMockAuthorization()
+		return authorization.NewMockAuthorization()
 	}
 	connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsURL)
 	if err != nil {
 		logger.Logger.Error(err)
 	}
-	return NewOCMAuthorization(connection)
+	return authorization.NewOCMAuthorization(connection)
 }
