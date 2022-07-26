@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// TODO(create-ticket): Add testing for config file marshaling or switch to a simpler format / parsing logic.
+// TODO(create-ticket): Add testing for config file marshalling or switch to a simpler format / parsing logic.
 func Test_UnmarshalYAML(t *testing.T) {
 	configFile := []byte(`
 name: minikube  # Uncomment if using minikube

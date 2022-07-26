@@ -471,7 +471,7 @@ func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredD
 	err = json.Unmarshal(data, &obj)
 
 	if err != nil {
-		return nil, fmt.Errorf("unmarshaling data from JSON: %w", err)
+		return nil, fmt.Errorf("unmarshalling data from JSON: %w", err)
 	}
 
 	newConfiguration := string(data)
