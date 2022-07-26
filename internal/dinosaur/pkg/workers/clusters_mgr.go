@@ -347,7 +347,7 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) er
 		if siblingCluster == nil {
 			err := c.ClusterService.UpdateStatus(*cluster, api.ClusterReady)
 			if err != nil {
-				return fmt.Errorf("updating status for cluster %s to %s: %w", cluster.clusterID, api.ClusterReady, err)
+				return fmt.Errorf("updating status for cluster %s to %s: %w", cluster.ClusterID, api.ClusterReady, err)
 			}
 			return nil
 		}
