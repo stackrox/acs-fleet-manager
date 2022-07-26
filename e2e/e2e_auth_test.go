@@ -34,6 +34,9 @@ const (
 )
 
 var _ = Describe("AuthN/Z Fleet* components", func() {
+	// Need the GinkgoRecover due to Skip being called within the Describe node.
+	defer GinkgoRecover()
+
 	if env := getEnvDefault("RUN_AUTH_E2E", "false"); env == "false" {
 		Skip("The RUN_AUTH_E2E variable was not set, skipping the tests. If you want to run the auth tests, " +
 			"set RUN_AUTH_E2E=true")
