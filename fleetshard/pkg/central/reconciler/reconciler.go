@@ -187,7 +187,7 @@ func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace str
 	}
 	mtlsHostname, err := r.routeService.FindMTLSCanonicalHostname(ctx, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("finding MTLS canonical hostname: %w", err)
+		return nil, fmt.Errorf("obtaining canonical hostname for MTLS route: %w", err)
 	}
 	return []private.DataPlaneCentralStatusRoutes{
 		{
@@ -209,7 +209,7 @@ func isCentralReady(ctx context.Context, client ctrlClient.Client, central priva
 		ctrlClient.ObjectKey{Name: "central", Namespace: central.Metadata.Namespace},
 		deployment)
 	if err != nil {
-		return false, fmt.Errorf("getting kubernetes object: %w", err)
+		return false, fmt.Errorf("retrieving central deployment resource from Kubernetes: %w", err)
 	}
 	if deployment.Status.UnavailableReplicas == 0 {
 		return true, nil
@@ -279,7 +279,7 @@ func (r CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) 
 	}
 	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("getting kubernetes object: %w", err)
+		return nil, fmt.Errorf("retrieving resource for namespace %q from Kubernetes: %w", name, err)
 	}
 	return namespace, nil
 }

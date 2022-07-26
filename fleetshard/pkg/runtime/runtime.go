@@ -99,7 +99,7 @@ func (r *Runtime) Start() error {
 
 	err := ticker.Start()
 	if err != nil {
-		return fmt.Errorf("starting the fleetshard runtime: %w", err)
+		return fmt.Errorf("starting ticker: %w", err)
 	}
 
 	return nil
