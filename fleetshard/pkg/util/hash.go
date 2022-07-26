@@ -10,7 +10,7 @@ import (
 func MD5SumFromJSONStruct(in interface{}) ([16]byte, error) {
 	b, err := json.Marshal(in)
 	if err != nil {
-		return [16]byte{}, fmt.Errorf("marshalling json: %w", err)
+		return [16]byte{}, fmt.Errorf("marshaling JSON: %w", err)
 	}
 
 	return md5.Sum(b), nil
