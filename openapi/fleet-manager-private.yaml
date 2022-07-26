@@ -262,9 +262,9 @@ components:
                       type: string
                     ownerOrgId:
                       type: string
-                frontendEndpoint:
+                uiEndpoint:
                   type: object
-                  description: 'Serves GUI/CLI/API connections'
+                  description: 'Handles GUI/CLI/API connections'
                   properties:
                     host:
                       type: string
@@ -277,7 +277,7 @@ components:
                           type: string
                 dataEndpoint:
                   type: object
-                  description: 'Serves Sensor connections'
+                  description: 'Handles Sensor connections'
                   properties:
                     host:
                       type: string

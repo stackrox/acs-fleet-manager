@@ -432,21 +432,21 @@ components:
           type: string
         ownerOrgId:
           type: string
-    ManagedCentral_allOf_spec_frontendEndpoint_tls:
+    ManagedCentral_allOf_spec_uiEndpoint_tls:
       properties:
         cert:
           type: string
         key:
           type: string
-    ManagedCentral_allOf_spec_frontendEndpoint:
-      description: Serves GUI/CLI/API connections
+    ManagedCentral_allOf_spec_uiEndpoint:
+      description: Handles GUI/CLI/API connections
       properties:
         host:
           type: string
         tls:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_frontendEndpoint_tls'
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_uiEndpoint_tls'
     ManagedCentral_allOf_spec_dataEndpoint:
-      description: Serves Sensor connections
+      description: Handles Sensor connections
       properties:
         host:
           type: string
@@ -494,8 +494,8 @@ components:
           type: array
         auth:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_auth'
-        frontendEndpoint:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_frontendEndpoint'
+        uiEndpoint:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_uiEndpoint'
         dataEndpoint:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_dataEndpoint'
         versions:

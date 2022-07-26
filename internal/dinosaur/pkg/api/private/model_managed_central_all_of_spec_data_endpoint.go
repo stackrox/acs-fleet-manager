@@ -9,7 +9,7 @@
 
 package private
 
-// ManagedCentralAllOfSpecDataEndpoint Serves Sensor connections
+// ManagedCentralAllOfSpecDataEndpoint Handles Sensor connections
 type ManagedCentralAllOfSpecDataEndpoint struct {
 	Host string `json:"host,omitempty"`
 }

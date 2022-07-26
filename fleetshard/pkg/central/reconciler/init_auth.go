@@ -87,7 +87,7 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 		// TODO: ROX-11619: change depending on whether environment is stage or not
 		Name:       "Red Hat SSO(Stage)",
 		Type:       "oidc",
-		UiEndpoint: central.Spec.FrontendEndpoint.Host,
+		UiEndpoint: central.Spec.UiEndpoint.Host,
 		Enabled:    true,
 		Config: map[string]string{
 			// TODO: ROX-11619: make configurable

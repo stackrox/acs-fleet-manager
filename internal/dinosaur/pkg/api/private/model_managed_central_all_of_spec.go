@@ -11,11 +11,11 @@ package private
 
 // ManagedCentralAllOfSpec struct for ManagedCentralAllOfSpec
 type ManagedCentralAllOfSpec struct {
-	Owners           []string                                `json:"owners,omitempty"`
-	Auth             ManagedCentralAllOfSpecAuth             `json:"auth,omitempty"`
-	FrontendEndpoint ManagedCentralAllOfSpecFrontendEndpoint `json:"frontendEndpoint,omitempty"`
-	DataEndpoint     ManagedCentralAllOfSpecDataEndpoint     `json:"dataEndpoint,omitempty"`
-	Versions         ManagedCentralVersions                  `json:"versions,omitempty"`
-	Central          ManagedCentralAllOfSpecCentral          `json:"central,omitempty"`
-	Scanner          ManagedCentralAllOfSpecScanner          `json:"scanner,omitempty"`
+	Owners       []string                            `json:"owners,omitempty"`
+	Auth         ManagedCentralAllOfSpecAuth         `json:"auth,omitempty"`
+	UiEndpoint   ManagedCentralAllOfSpecUiEndpoint   `json:"uiEndpoint,omitempty"`
+	DataEndpoint ManagedCentralAllOfSpecDataEndpoint `json:"dataEndpoint,omitempty"`
+	Versions     ManagedCentralVersions              `json:"versions,omitempty"`
+	Central      ManagedCentralAllOfSpecCentral      `json:"central,omitempty"`
+	Scanner      ManagedCentralAllOfSpecScanner      `json:"scanner,omitempty"`
 }

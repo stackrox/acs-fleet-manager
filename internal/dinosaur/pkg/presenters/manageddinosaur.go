@@ -46,9 +46,9 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 				OwnerUserId:  from.Spec.Auth.OwnerUserID,
 				OwnerOrgId:   from.Spec.Auth.OwnerOrgID,
 			},
-			FrontendEndpoint: private.ManagedCentralAllOfSpecFrontendEndpoint{
+			UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
 				Host: from.Spec.Endpoint.Host,
-				Tls: private.ManagedCentralAllOfSpecFrontendEndpointTls{
+				Tls: private.ManagedCentralAllOfSpecUiEndpointTls{
 					Cert: from.Spec.Endpoint.TLS.Cert,
 					Key:  from.Spec.Endpoint.TLS.Key,
 				},
