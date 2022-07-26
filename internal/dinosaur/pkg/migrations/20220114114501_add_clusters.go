@@ -38,14 +38,14 @@ func addClusters() *gormigrate.Migration {
 		Migrate: func(tx *gorm.DB) error {
 			err := tx.AutoMigrate(&Cluster{})
 			if err != nil {
-				return fmt.Errorf("migrating: %w", err)
+				return fmt.Errorf("migrating 20220114114501: %w", err)
 			}
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
 			err := tx.Migrator().DropTable(&Cluster{})
 			if err != nil {
-				return fmt.Errorf("rolling back: %w", err)
+				return fmt.Errorf("rolling back 20220114114501: %w", err)
 			}
 			return nil
 		},
