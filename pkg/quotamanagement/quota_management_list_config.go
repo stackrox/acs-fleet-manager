@@ -64,12 +64,12 @@ func (c *QuotaManagementListConfig) GetAllowedAccountByUsernameAndOrgID(username
 func readQuotaManagementListConfigFile(file string, val *RegisteredUsersListConfiguration) error {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
-		return fmt.Errorf("reading file: %w", err)
+		return fmt.Errorf("reading quota management list config file: %w", err)
 	}
 
 	err = yaml.UnmarshalStrict([]byte(fileContents), val)
 	if err != nil {
-		return fmt.Errorf("unmarshalling: %w", err)
+		return fmt.Errorf("unmarshalling quota management list config file: %w", err)
 	}
 	return nil
 }
