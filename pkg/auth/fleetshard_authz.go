@@ -59,7 +59,7 @@ func readFleetShardAuthZConfigFile(file string, val *AllowedOrgIDs) error {
 
 	err = yaml.UnmarshalStrict([]byte(fileContents), val)
 	if err != nil {
-		return fmt.Errorf("reading FleedShard AuthZ config: %w", err)
+		return fmt.Errorf("unmarshalling FleedShard AuthZ config: %w", err)
 	}
 
 	return nil
