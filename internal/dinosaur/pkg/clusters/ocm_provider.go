@@ -125,7 +125,7 @@ func (o *OCMProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources t
 	if err != nil {
 		svcErr := svcErrors.ToServiceError(err)
 		if !svcErr.Is404() {
-			return nil, fmt.Errorf("retrieving sync set %s for cluster %s: %w", resources.Name, clusterSpec.InternalID, svcErr)
+			return nil, fmt.Errorf("retrieving SyncSet %s for cluster %s: %w", resources.Name, clusterSpec.InternalID, svcErr)
 		}
 		syncSetFound = false
 	}
