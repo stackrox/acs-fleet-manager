@@ -88,7 +88,7 @@ func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus
 func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.CentralRequest, error) {
 	reqBody, err := json.Marshal(request)
 	if err != nil {
-		return nil, fmt.Errorf("marshaling request for cental creation: %w", err)
+		return nil, fmt.Errorf("marshalling request for cental creation: %w", err)
 	}
 
 	resp, err := c.newRequest(http.MethodPost, fmt.Sprintf("%s?async=true", c.consoleAPIEndpoint), bytes.NewBuffer(reqBody))
@@ -177,7 +177,7 @@ func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 		apiError := compat.Error{}
 		err = json.Unmarshal(data, &apiError)
 		if err != nil {
-			return fmt.Errorf("unmarshaling error HTTP response: %w", err)
+			return fmt.Errorf("unmarshalling error HTTP response: %w", err)
 		}
 		return errors.Errorf("API error (HTTP status %d) occured %s: %s", resp.StatusCode, apiError.Code, apiError.Reason)
 	}
@@ -188,7 +188,7 @@ func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 
 	err = json.Unmarshal(data, v)
 	if err != nil {
-		return fmt.Errorf("unmarshaling HTTP response as %T: %w", v, err)
+		return fmt.Errorf("unmarshalling HTTP response as %T: %w", v, err)
 	}
 	return nil
 }
