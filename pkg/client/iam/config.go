@@ -100,7 +100,7 @@ func (ic *IAMConfig) AddFlags(fs *pflag.FlagSet) {
 func (ic *IAMConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(ic.RedhatSSORealm.ClientIDFile, &ic.RedhatSSORealm.ClientID)
 	if err != nil {
-		return fmt.Errorf("reading from file: %w", err)
+		return fmt.Errorf("reading  Red Hat SSO Realm ClientID file %q: %w", ic.RedhatSSORealm.ClientIDFile, err)
 	}
 	err = shared.ReadFileValueString(ic.RedhatSSORealm.ClientSecretFile, &ic.RedhatSSORealm.ClientSecret)
 	if err != nil {
