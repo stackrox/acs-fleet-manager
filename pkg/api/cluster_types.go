@@ -378,7 +378,7 @@ func (cluster *Cluster) SetAvailableCentralOperatorVersions(availableCentralOper
 	}
 	v, err := json.Marshal(sortedVersions)
 	if err != nil {
-		return fmt.Errorf("setting available central operator versions: %w", err)
+		return fmt.Errorf("marshalling sorted versions:%w", err)
 	}
 	cluster.AvailableCentralOperatorVersions = v
 	return nil
