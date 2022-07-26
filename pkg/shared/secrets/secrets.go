@@ -23,7 +23,7 @@ func ModifySecrets(schemaDom, doc api.JSON, f func(node *ajson.Node) error) (api
 func modifySecrets(schemaBytes, doc []byte, f func(node *ajson.Node) error) ([]byte, error) {
 	fields, err := getPathsToPasswordFields(schemaBytes)
 	if err != nil {
-		return nil, fmt.Errorf("modifying secrets: %w", err)
+		return nil, fmt.Errorf("retrieving paths to password fields: %w", err)
 	}
 
 	root, err := ajson.Unmarshal(doc)

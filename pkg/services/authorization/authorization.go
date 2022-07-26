@@ -35,7 +35,7 @@ func (a authorization) CheckUserValid(username string, orgID string) (bool, erro
 		Send()
 
 	if err != nil {
-		return false, fmt.Errorf("checking if user is valid: %w", err)
+		return false, fmt.Errorf("retrieving accounts list: %w", err)
 	}
 	return resp.Status() == http.StatusOK && resp.Size() > 0 && !resp.Items().Get(0).Banned() &&
 		resp.Items().Get(0).Organization().ExternalID() == orgID, nil
