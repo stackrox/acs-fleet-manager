@@ -170,7 +170,7 @@ func getOpenIDConfiguration(c http.Client, baseURL string) (*openIDConfiguration
 	url := strings.TrimRight(baseURL, "/") + openidConfigurationPath
 	resp, err := c.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("making GET request: %w", err)
+		return nil, fmt.Errorf("executing HTTP GET request for URL %q: %w", url, err)
 	}
 
 	defer resp.Body.Close()
