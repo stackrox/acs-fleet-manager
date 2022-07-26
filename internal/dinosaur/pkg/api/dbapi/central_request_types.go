@@ -83,7 +83,7 @@ func (k *CentralRequest) GetRoutes() ([]DataPlaneCentralRoute, error) {
 		return routes, nil
 	}
 	if err := json.Unmarshal(k.Routes, &routes); err != nil {
-		return nil, fmt.Errorf("unmarshaling routes from JSON: %w", err)
+		return nil, fmt.Errorf("unmarshalling routes from JSON: %w", err)
 	}
 	return routes, nil
 }
@@ -92,7 +92,7 @@ func (k *CentralRequest) GetRoutes() ([]DataPlaneCentralRoute, error) {
 func (k *CentralRequest) SetRoutes(routes []DataPlaneCentralRoute) error {
 	r, err := json.Marshal(routes)
 	if err != nil {
-		return fmt.Errorf("marshaling routes into JSON: %w", err)
+		return fmt.Errorf("marshalling routes into JSON: %w", err)
 	}
 	k.Routes = r
 	return nil
