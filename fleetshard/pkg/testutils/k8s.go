@@ -72,7 +72,7 @@ func (t reconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.Ob
 		route.Status = admittedStatus()
 	}
 	if err := t.ObjectTracker.Create(gvr, obj, ns); err != nil {
-		return fmt.Errorf("creating group version resource: %w", err)
+		return fmt.Errorf("adding GVR %q to reconcile tracker: %w", gvr, err)
 	}
 	if gvr == centralsGVR {
 		var multiErr *multierror.Error

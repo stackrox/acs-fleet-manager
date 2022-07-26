@@ -125,7 +125,7 @@ func (o *OCMProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources t
 	if err != nil {
 		svcErr := svcErrors.ToServiceError(err)
 		if !svcErr.Is404() {
-			return nil, fmt.Errorf("applying resources: %w", svcErr)
+			return nil, fmt.Errorf("retrieving sync set %s for cluster %s: %w", resources.Name, clusterSpec.InternalID, svcErr)
 		}
 		syncSetFound = false
 	}
@@ -362,7 +362,7 @@ func (o *OCMProvider) createSyncSet(clusterID string, resourceSet types.Resource
 
 	s, err := o.ocmClient.CreateSyncSet(clusterID, syncset)
 	if err != nil {
-		return nil, fmt.Errorf("creating SyncSet: %w", err)
+		return nil, fmt.Errorf("creating SyncSet for cluster %q: %w", clusterID, err)
 	}
 	return s, nil
 }
@@ -376,7 +376,7 @@ func (o *OCMProvider) updateSyncSet(clusterID string, resourceSet types.Resource
 		glog.V(5).Infof("SyncSet for cluster %s is changed, will update", clusterID)
 		s, err := o.ocmClient.UpdateSyncSet(clusterID, resourceSet.Name, syncset)
 		if err != nil {
-			return nil, fmt.Errorf("updating SyncSet: %w", err)
+			return nil, fmt.Errorf("updating SyncSet %q for cluster %q: %w", resourceSet.Name, clusterID, err)
 		}
 		return s, nil
 	}

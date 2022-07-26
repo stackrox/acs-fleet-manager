@@ -120,7 +120,7 @@ func (s *RouteService) findRoute(ctx context.Context, namespace string, routeNam
 	}
 	err := s.client.Get(ctx, ctrlClient.ObjectKey{Namespace: route.GetNamespace(), Name: route.GetName()}, route)
 	if err != nil {
-		return nil, fmt.Errorf("finding route: %w", err)
+		return nil, fmt.Errorf("retrieving route %q from Kubernetes: %w", route.GetName(),  err)
 	}
 	return route, nil
 }

@@ -70,7 +70,7 @@ func (c *Client) GetManagedCentralList() (*private.ManagedCentralList, error) {
 func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus) error {
 	updateBody, err := json.Marshal(statuses)
 	if err != nil {
-		return fmt.Errorf("marshalling status: %w", err)
+		return fmt.Errorf("marshalling data-plane central status: %w", err)
 	}
 
 	resp, err := c.newRequest(http.MethodPut, fmt.Sprintf("%s/%s", c.fleetshardAPIEndpoint, statusRoute), bytes.NewBuffer(updateBody))
@@ -146,7 +146,7 @@ func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Re
 
 	resp, err := c.client.Do(r)
 	if err != nil {
-		return nil, fmt.Errorf("sending HTTP request: %w", err)
+		return nil, fmt.Errorf("executing HTTP request: %w", err)
 	}
 	return resp, nil
 }
@@ -169,7 +169,7 @@ func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 	}{}
 	err = json.Unmarshal(data, &into)
 	if err != nil {
-		return fmt.Errorf("unmarshalling resonse data: %w", err)
+		return fmt.Errorf("retrieving 'kind' property from HTTP response: %w", err)
 	}
 
 	// Unmarshal error

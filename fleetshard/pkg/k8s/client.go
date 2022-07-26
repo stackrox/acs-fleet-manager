@@ -49,12 +49,12 @@ func CreateClientOrDie() ctrlClient.Client {
 func newClientGoClientSet() (client kubernetes.Interface, err error) {
 	config, err := ctrl.GetConfig()
 	if err != nil {
-		return client, fmt.Errorf("geting k8s config: %w", err)
+		return client, fmt.Errorf("retrieving Kubernetes config: %w", err)
 	}
 
 	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return client, fmt.Errorf("creating Clientset for config: %w", err)
+		return client, fmt.Errorf("creating Clientset for Kubernetes config: %w", err)
 	}
 
 	return clientSet, nil
@@ -64,12 +64,12 @@ func newClientGoClientSet() (client kubernetes.Interface, err error) {
 func IsRoutesResourceEnabled() (bool, error) {
 	clientSet, err := newClientGoClientSet()
 	if err != nil {
-		return false, fmt.Errorf("create client-go k8s client set: %w", err)
+		return false, fmt.Errorf("creating Kubernetes clientset: %w", err)
 	}
 
 	enabled, err := discovery.IsResourceEnabled(clientSet.Discovery(), routesGVK)
 	if err != nil {
-		return false, fmt.Errorf("getting resource state: %w", err)
+		return false, fmt.Errorf("checking availability of resource type %s: %w", routesGVK.String(), err)
 	}
 	return enabled, nil
 }
