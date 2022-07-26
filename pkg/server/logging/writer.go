@@ -53,7 +53,7 @@ func (writer *loggingWriter) Write(body []byte) (int, error) {
 	writer.responseBody = body
 	i, err := writer.ResponseWriter.Write(body)
 	if err != nil {
-		return i, fmt.Errorf("writing log body: %w", err)
+		return i, fmt.Errorf("writing body: %w", err)
 	}
 	return i, nil
 }
@@ -93,7 +93,7 @@ func (writer *loggingWriter) GetResponseStatusCode() int {
 func (writer *loggingWriter) prepareRequestLog() (string, error) {
 	s, err := writer.formatter.FormatRequestLog(writer.request)
 	if err != nil {
-		return "", fmt.Errorf("preparing request log: %w", err)
+		return "", fmt.Errorf("formatting request: %w", err)
 	}
 	return s, nil
 }
@@ -108,7 +108,7 @@ func (writer *loggingWriter) prepareResponseLog(elapsed string) (string, error) 
 
 	s, err := writer.formatter.FormatResponseLog(info)
 	if err != nil {
-		return "", fmt.Errorf("preparing response log: %w", err)
+		return "", fmt.Errorf("formatting request: %w", err)
 	}
 	return s, nil
 }
