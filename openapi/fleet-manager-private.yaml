@@ -262,8 +262,9 @@ components:
                       type: string
                     ownerOrgId:
                       type: string
-                endpoint:
+                uiEndpoint:
                   type: object
+                  description: 'Handles GUI/CLI/API connections'
                   properties:
                     host:
                       type: string
@@ -274,6 +275,12 @@ components:
                           type: string
                         key:
                           type: string
+                dataEndpoint:
+                  type: object
+                  description: 'Handles Sensor connections'
+                  properties:
+                    host:
+                      type: string
                 versions:
                   $ref: "#/components/schemas/ManagedCentralVersions"
                 central:
@@ -395,7 +402,6 @@ components:
         routes:
           description: "Routes created for a Central"
           type: array
-          nullable: true
           items:
             type: object
             properties:

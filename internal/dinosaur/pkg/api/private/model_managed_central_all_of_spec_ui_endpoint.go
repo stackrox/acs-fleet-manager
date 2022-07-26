@@ -9,8 +9,8 @@
 
 package private
 
-// ManagedCentralAllOfSpecEndpointTls struct for ManagedCentralAllOfSpecEndpointTls
-type ManagedCentralAllOfSpecEndpointTls struct {
-	Cert string `json:"cert,omitempty"`
-	Key  string `json:"key,omitempty"`
+// ManagedCentralAllOfSpecUiEndpoint Handles GUI/CLI/API connections
+type ManagedCentralAllOfSpecUiEndpoint struct {
+	Host string                               `json:"host,omitempty"`
+	Tls  ManagedCentralAllOfSpecUiEndpointTls `json:"tls,omitempty"`
 }

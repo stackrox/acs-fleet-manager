@@ -357,7 +357,6 @@ components:
           description: Routes created for a Central
           items:
             $ref: '#/components/schemas/DataPlaneCentralStatus_routes'
-          nullable: true
           type: array
       type: object
     DataPlaneCentralStatusUpdateRequest:
@@ -433,18 +432,24 @@ components:
           type: string
         ownerOrgId:
           type: string
-    ManagedCentral_allOf_spec_endpoint_tls:
+    ManagedCentral_allOf_spec_uiEndpoint_tls:
       properties:
         cert:
           type: string
         key:
           type: string
-    ManagedCentral_allOf_spec_endpoint:
+    ManagedCentral_allOf_spec_uiEndpoint:
+      description: Handles GUI/CLI/API connections
       properties:
         host:
           type: string
         tls:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_endpoint_tls'
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_uiEndpoint_tls'
+    ManagedCentral_allOf_spec_dataEndpoint:
+      description: Handles Sensor connections
+      properties:
+        host:
+          type: string
     ManagedCentral_allOf_spec_central:
       properties:
         resources:
@@ -489,8 +494,10 @@ components:
           type: array
         auth:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_auth'
-        endpoint:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_endpoint'
+        uiEndpoint:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_uiEndpoint'
+        dataEndpoint:
+          $ref: '#/components/schemas/ManagedCentral_allOf_spec_dataEndpoint'
         versions:
           $ref: '#/components/schemas/ManagedCentralVersions'
         central:

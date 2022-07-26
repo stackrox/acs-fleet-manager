@@ -236,7 +236,7 @@ func TestCentralChanged(t *testing.T) {
 			currentCentral: private.ManagedCentral{
 				Metadata: simpleManagedCentral.Metadata,
 				Spec: private.ManagedCentralAllOfSpec{
-					Endpoint: private.ManagedCentralAllOfSpecEndpoint{
+					UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
 						Host: "central.cluster.local",
 					},
 				},
