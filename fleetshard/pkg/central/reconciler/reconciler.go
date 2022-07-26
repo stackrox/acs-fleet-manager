@@ -337,12 +337,17 @@ func (r CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remot
 	}
 	namespace := remoteCentral.Metadata.Namespace
 	_, err := r.routeService.FindReencryptRoute(ctx, namespace)
-	if apiErrors.IsNotFound(err) {
+	if err != nil && !apiErrors.IsNotFound(err) {
+		return fmt.Errorf("retrieving reencrypt route for namespace %q: %w", namespace, err)
+	}
+
+	if err != nil && apiErrors.IsNotFound(err) {
 		err = r.routeService.CreateReencryptRoute(ctx, remoteCentral)
+		if err != nil {
+			return fmt.Errorf("creating reencrypt route for central %s: %w", remoteCentral.Id, err)
+		}
 	}
-	if err != nil {
-		return fmt.Errorf("finding / creating reencrypt route: %w", err)
-	}
+
 	return nil
 }
 
