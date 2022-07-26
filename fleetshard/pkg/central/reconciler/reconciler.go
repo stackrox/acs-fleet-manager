@@ -183,7 +183,7 @@ func (r *CentralReconciler) readyStatus(ctx context.Context, namespace string) (
 func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
 	reencryptHostname, err := r.routeService.FindReencryptCanonicalHostname(ctx, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("finding reencrypt canonical hostanem: %w", err)
+		return nil, fmt.Errorf("obtaining canonical hostname for reencrypt route: %w", err)
 	}
 	mtlsHostname, err := r.routeService.FindMTLSCanonicalHostname(ctx, namespace)
 	if err != nil {
