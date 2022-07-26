@@ -51,14 +51,14 @@ func addCentralRequest() *gormigrate.Migration {
 		Migrate: func(tx *gorm.DB) error {
 			err := tx.AutoMigrate(&CentralRequest{})
 			if err != nil {
-				return fmt.Errorf("migrating: %w", err)
+				return fmt.Errorf("migrating 20220114114500: %w", err)
 			}
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
 			err := tx.Migrator().DropTable(&CentralRequest{})
 			if err != nil {
-				return fmt.Errorf("rolling back: %w", err)
+				return fmt.Errorf("rolling back 20220114114500: %w", err)
 			}
 			return nil
 		},

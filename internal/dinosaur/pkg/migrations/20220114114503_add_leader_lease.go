@@ -30,7 +30,7 @@ func addLeaderLease() *gormigrate.Migration {
 		Migrate: func(tx *gorm.DB) error {
 			err := tx.AutoMigrate(&LeaderLease{})
 			if err != nil {
-				return fmt.Errorf("auto migrating: %w", err)
+				return fmt.Errorf("migrating 20220114114503: %w", err)
 			}
 
 			// Set an initial already expired lease
@@ -51,7 +51,7 @@ func addLeaderLease() *gormigrate.Migration {
 		Rollback: func(tx *gorm.DB) error {
 			err := tx.Migrator().DropTable(&LeaderLease{})
 			if err != nil {
-				return fmt.Errorf("rolling back: %w", err)
+				return fmt.Errorf("rolling back 20220114114503: %w", err)
 			}
 			return nil
 		},

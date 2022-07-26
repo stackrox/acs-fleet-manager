@@ -47,14 +47,14 @@ func addOwnerUserIDToCentralRequest() *gormigrate.Migration {
 		Migrate: func(tx *gorm.DB) error {
 			err := tx.Migrator().AddColumn(&CentralRequest{}, "OwnerUserID")
 			if err != nil {
-				return fmt.Errorf("migrating: %w", err)
+				return fmt.Errorf("migrating 20220630220500: %w", err)
 			}
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
 			err := tx.Migrator().DropColumn(&CentralRequest{}, "OwnerUserID")
 			if err != nil {
-				return fmt.Errorf("rolling back: %w", err)
+				return fmt.Errorf("rolling back 20220630220500: %w", err)
 			}
 			return nil
 		},

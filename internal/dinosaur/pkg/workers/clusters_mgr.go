@@ -495,7 +495,7 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 	if updateStatusErr != nil {
 		return false, fmt.Errorf("reconciling empty cluster: %w", updateStatusErr)
 	}
-	return updateStatusErr == nil, nil
+	return true, nil
 }
 
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
