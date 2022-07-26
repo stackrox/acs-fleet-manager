@@ -374,11 +374,11 @@ func (o *OCMProvider) updateSyncSet(clusterID string, resourceSet types.Resource
 	}
 	if syncsetResourcesChanged(existingSyncset, syncset) {
 		glog.V(5).Infof("SyncSet for cluster %s is changed, will update", clusterID)
-		s, err := o.ocmClient.UpdateSyncSet(clusterID, resourceSet.Name, syncset)
+		updatedSyncSet, err := o.ocmClient.UpdateSyncSet(clusterID, resourceSet.Name, syncset)
 		if err != nil {
 			return nil, fmt.Errorf("updating SyncSet %q for cluster %q: %w", resourceSet.Name, clusterID, err)
 		}
-		return s, nil
+		return updatedSyncSet, nil
 	}
 	glog.V(10).Infof("SyncSet for cluster %s is not changed, no update needed", clusterID)
 	return syncset, nil
