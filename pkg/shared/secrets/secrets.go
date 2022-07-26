@@ -52,7 +52,7 @@ func getPathsToPasswordFields(schemaBytes []byte) ([]string, error) {
 
 	c := jsonschema.NewCompiler()
 	if err := c.AddResource("schema.json", bytes.NewReader(schemaBytes)); err != nil {
-		return nil, fmt.Errorf("adding JSON schmema to compiler: %w", err)
+		return nil, fmt.Errorf("adding JSON schema to compiler: %w", err)
 	}
 	schema, err := c.Compile("schema.json")
 	if err != nil {
