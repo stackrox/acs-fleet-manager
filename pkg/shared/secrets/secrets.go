@@ -28,7 +28,7 @@ func modifySecrets(schemaBytes, doc []byte, f func(node *ajson.Node) error) ([]b
 
 	root, err := ajson.Unmarshal(doc)
 	if err != nil {
-		return nil, fmt.Errorf("modifying secrets: %w", err)
+		return nil, fmt.Errorf("unmarshalling: %w", err)
 	}
 
 	for _, field := range fields {
@@ -43,7 +43,7 @@ func modifySecrets(schemaBytes, doc []byte, f func(node *ajson.Node) error) ([]b
 	}
 	bytes, err := ajson.Marshal(root)
 	if err != nil {
-		return nil, fmt.Errorf("modifying secrets: %w", err)
+		return nil, fmt.Errorf("marshalling: %w", err)
 	}
 	return bytes, nil
 }
@@ -52,11 +52,11 @@ func getPathsToPasswordFields(schemaBytes []byte) ([]string, error) {
 
 	c := jsonschema.NewCompiler()
 	if err := c.AddResource("schema.json", bytes.NewReader(schemaBytes)); err != nil {
-		return nil, fmt.Errorf("getting paths to password fields: %w", err)
+		return nil, fmt.Errorf("adding JSON schmema to compiler: %w", err)
 	}
 	schema, err := c.Compile("schema.json")
 	if err != nil {
-		return nil, fmt.Errorf("getting paths to password fields: %w", err)
+		return nil, fmt.Errorf("compiling JSON schema: %w", err)
 	}
 
 	paths := map[string]bool{}
