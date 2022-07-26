@@ -99,7 +99,7 @@ func ReadYamlFile(filename string, out interface{}) (err error) {
 
 	err = yaml.UnmarshalStrict([]byte(fileContents), out)
 	if err != nil {
-		return fmt.Errorf("reading config yaml file: %w", err)
+		return fmt.Errorf("unmarshalling YAML file contents: %w", err)
 	}
 	return nil
 }
