@@ -3,6 +3,12 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strconv"
+	"time"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
@@ -13,11 +19,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
 	"github.com/stackrox/rox/pkg/retry"
-	"io"
-	"net/http"
-	"os"
-	"strconv"
-	"time"
 )
 
 const (
@@ -47,14 +48,10 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 		clusterID = clusterIDEnv
 	}
 
-	isNonProdEnv := false
-	if env := getEnvDefault("OCM_ENV", "DEVELOPMENT"); env != "production" {
-		isNonProdEnv = true
-	}
-	isProdEnv := false
-	if env := getEnvDefault("OCM_ENV", "DEVELOPMENT"); env == "production" {
-		isProdEnv = true
-	}
+	env := getEnvDefault("OCM_ENV", "DEVELOPMENT")
+
+	skipOnProd := env == "production"
+	skipOnNonProd := env != "production"
 
 	var client *authTestClientFleetManager
 
@@ -98,9 +95,9 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			Entry("should allow access to fleet manager's public API endpoints",
 				publicAPI, false, 0, false),
 			Entry("should allow access to fleet manager's internal API endpoints in non-prod environment",
-				internalAPI, false, 0, isProdEnv),
+				internalAPI, false, 0, skipOnProd),
 			Entry("should not allow access to fleet manager's internal API endpoints in prod environment",
-				internalAPI, true, http.StatusNotFound, isNonProdEnv),
+				internalAPI, true, http.StatusNotFound, skipOnNonProd),
 			Entry("should not allow access to fleet manager's the admin API",
 				adminAPI, true, http.StatusNotFound, false),
 		)
@@ -110,9 +107,9 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 		BeforeEach(func() {
 			auth, err := fleetmanager.NewAuth(staticTokenAuthType)
 			Expect(err).ToNot(HaveOccurred())
-			fmClient, err := fleetmanager.NewClient("http://localhost:8000", "cluster-id", auth)
+			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, clusterID, auth)
 			Expect(err).ToNot(HaveOccurred())
-			client = newAuthTestClient(fmClient, auth, "http://localhost:8000")
+			client = newAuthTestClient(fmClient, auth, fleetManagerEndpoint)
 		})
 
 		DescribeTable("AuthN/Z tests",
@@ -120,9 +117,9 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			Entry("should allow access to fleet manager's public API endpoints",
 				publicAPI, false, 0, false),
 			Entry("should allow access to fleet manager's internal API endpoints in non-prod environment",
-				internalAPI, false, 0, isProdEnv),
+				internalAPI, false, 0, skipOnNonProd),
 			Entry("should not allow access to fleet manager's internal API endpoints in prod environment",
-				internalAPI, true, http.StatusNotFound, isNonProdEnv),
+				internalAPI, true, http.StatusNotFound, skipOnProd),
 			Entry("should not allow access to fleet manager's the admin API",
 				adminAPI, true, http.StatusNotFound, false),
 		)
@@ -155,9 +152,9 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			// Create the auth type for RH SSO.
 			auth, err := fleetmanager.NewAuth(rhSSOAuthType)
 			Expect(err).ToNot(HaveOccurred())
-			fmClient, err := fleetmanager.NewClient("http://localhost:8000", "cluster-id", auth)
+			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, clusterID, auth)
 			Expect(err).ToNot(HaveOccurred())
-			client = newAuthTestClient(fmClient, auth, "http://localhost:8000")
+			client = newAuthTestClient(fmClient, auth, fleetManagerEndpoint)
 
 			DeferCleanup(func() {
 				// Unset the environment variable.
@@ -176,10 +173,8 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			testCase,
 			Entry("should allow access to fleet manager's public API endpoints",
 				publicAPI, false, 0, false),
-			Entry("should allow access to fleet manager's internal API endpoints in non-prod environment",
-				internalAPI, false, 0, isProdEnv),
-			Entry("should not allow access to fleet manager's internal API endpoints in prod environment",
-				internalAPI, true, http.StatusNotFound, isNonProdEnv),
+			Entry("should allow access to fleet manager's internal API endpoints",
+				internalAPI, false, 0, false),
 			Entry("should not allow access to fleet manager's the admin API",
 				adminAPI, true, http.StatusNotFound, false),
 		)

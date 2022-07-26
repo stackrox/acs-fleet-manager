@@ -127,7 +127,7 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("getting token: %w", err)
 	}
-	defer resp.Body.Close()
+	defer shared.CloseResponseBody(resp)
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("error getting token [%d]", resp.StatusCode)
@@ -181,10 +181,8 @@ func (c *rhSSOClient) GetServiceAccount(accessToken string, clientID string) (*s
 		Execute()
 
 	defer shared.CloseResponseBody(resp)
-	if resp != nil {
-		if resp.StatusCode == http.StatusNotFound {
-			return nil, false, nil
-		}
+	if resp != nil && resp.StatusCode == http.StatusNotFound {
+		return nil, false, nil
 	}
 
 	if err != nil {
