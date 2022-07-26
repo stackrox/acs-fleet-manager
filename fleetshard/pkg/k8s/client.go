@@ -64,7 +64,7 @@ func newClientGoClientSet() (client kubernetes.Interface, err error) {
 func IsRoutesResourceEnabled() (bool, error) {
 	clientSet, err := newClientGoClientSet()
 	if err != nil {
-		return false, fmt.Errorf("creating Kubernetes clientset: %w", err)
+		return false, fmt.Errorf("creating Kubernetes Clientset: %w", err)
 	}
 
 	enabled, err := discovery.IsResourceEnabled(clientSet.Discovery(), routesGVK)
