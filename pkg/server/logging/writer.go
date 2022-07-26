@@ -79,7 +79,7 @@ func (writer *loggingWriter) Log(log string, err error) {
 func (writer *loggingWriter) LogObject(o interface{}, err error) error {
 	log, merr := writer.formatter.FormatObject(o)
 	if merr != nil {
-		return fmt.Errorf("logging object: %w", merr)
+		return fmt.Errorf("formatting object: %w", merr)
 	}
 	writer.Log(log, err)
 	return nil

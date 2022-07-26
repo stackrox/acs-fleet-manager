@@ -34,7 +34,7 @@ func (as *accountService) SearchOrganizations(filter string) (*OrganizationList,
 func (as *accountService) searchOrganizations(filter string) (*v1.OrganizationList, error) {
 	res, err := as.connection.AccountsMgmt().V1().Organizations().List().Search(filter).Send()
 	if err != nil {
-		return nil, fmt.Errorf("searching organizations: %w", err)
+		return nil, fmt.Errorf("retrieving list of organizations: %w", err)
 	}
 
 	return res.Items(), nil
