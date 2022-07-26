@@ -326,7 +326,7 @@ func (c *DataplaneClusterConfig) readKubeconfig() error {
 		if errors.Is(err, fs.ErrNotExist) {
 			return errors.Errorf("The kubeconfig file %s does not exist", c.Kubeconfig)
 		}
-		return fmt.Errorf("opening kubeconfig: %w", err)
+		return fmt.Errorf("retrieving FileInfo for kubeconfig: %w", err)
 	}
 	config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{Precedence: []string{c.Kubeconfig}},

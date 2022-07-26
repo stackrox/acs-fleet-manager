@@ -170,7 +170,7 @@ func readFileProvidersConfig(file string, val *ProviderConfiguration) error {
 	}
 	err = yaml.UnmarshalStrict([]byte(fileContents), val)
 	if err != nil {
-		return fmt.Errorf("reading providers config file: %w", err)
+		return fmt.Errorf("unmarshalling providers config file from YAML: %w", err)
 	}
 	return nil
 }

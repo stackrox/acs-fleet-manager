@@ -59,7 +59,7 @@ func (c *DinosaurConfig) AddFlags(fs *pflag.FlagSet) {
 func (c *DinosaurConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(c.DinosaurTLSCertFile, &c.DinosaurTLSCert)
 	if err != nil {
-		return fmt.Errorf("reading TLS cert file file: %w", err)
+		return fmt.Errorf("reading TLS certificate file: %w", err)
 	}
 	err = shared.ReadFileValueString(c.DinosaurTLSKeyFile, &c.DinosaurTLSKey)
 	if err != nil {

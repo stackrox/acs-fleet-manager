@@ -719,7 +719,7 @@ func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
 func (c clusterService) CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error) {
 	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
 	if err != nil {
-		return false, fmt.Errorf("checking operator version ready: %w", err)
+		return false, fmt.Errorf("retrieving ready central operator versions: %w", err)
 	}
 	for _, version := range readyDinosaurOperatorVersions {
 		if version.Version == dinosaurOperatorVersion {
@@ -733,7 +733,7 @@ func (c clusterService) CheckDinosaurOperatorVersionReady(cluster *api.Cluster, 
 func (c clusterService) IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error) {
 	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
 	if err != nil {
-		return false, fmt.Errorf("checking if version is available in cluster: %w", err)
+		return false, fmt.Errorf("retrieving ready central operator versions: %w", err)
 	}
 	for _, version := range readyDinosaurOperatorVersions {
 		if version.Version == dinosaurOperatorVersion {

@@ -542,11 +542,11 @@ func shouldApplyChanges(dynamicClient dynamic.ResourceInterface, existingObj *un
 
 func applyChangesFn(client dynamic.ResourceInterface, desiredObj *unstructured.Unstructured, existingObj *unstructured.Unstructured) (runtime.Object, error) {
 	if existingObj == nil { // create object if it does not exist
-		c, err := client.Create(ctx, desiredObj, metav1.CreateOptions{
+		newObj, err := client.Create(ctx, desiredObj, metav1.CreateOptions{
 			FieldManager: fieldManager,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("creating client: %w", err)
+			return nil, fmt.Errorf("creating new object: %w", err)
 		}
 		return c, nil
 	}
@@ -555,11 +555,11 @@ func applyChangesFn(client dynamic.ResourceInterface, desiredObj *unstructured.U
 
 	// we are replacing the whole object instead of using server-side apply which is in beta
 	// the object is set to exactly desired object
-	u, err := client.Update(ctx, desiredObj, metav1.UpdateOptions{
+	updatedObj, err := client.Update(ctx, desiredObj, metav1.UpdateOptions{
 		FieldManager: fieldManager,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("updating client: %w", err)
+		return nil, fmt.Errorf("updating object: %w", err)
 	}
-	return u, nil
+	return updatedObj, nil
 }

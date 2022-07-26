@@ -360,7 +360,7 @@ func (o *OCMProvider) createSyncSet(clusterID string, resourceSet types.Resource
 		return nil, errors.WithStack(sysnsetBuilderErr)
 	}
 
-	s, err := o.ocmClient.CreateSyncSet(clusterID, syncset)
+	syncset, err := o.ocmClient.CreateSyncSet(clusterID, syncset)
 	if err != nil {
 		return nil, fmt.Errorf("creating SyncSet for cluster %q: %w", clusterID, err)
 	}
