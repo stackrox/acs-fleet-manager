@@ -100,11 +100,11 @@ func (ic *IAMConfig) AddFlags(fs *pflag.FlagSet) {
 func (ic *IAMConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(ic.RedhatSSORealm.ClientIDFile, &ic.RedhatSSORealm.ClientID)
 	if err != nil {
-		return fmt.Errorf("reading  Red Hat SSO Realm ClientID file %q: %w", ic.RedhatSSORealm.ClientIDFile, err)
+		return fmt.Errorf("reading Red Hat SSO Realm ClientID file %q: %w", ic.RedhatSSORealm.ClientIDFile, err)
 	}
 	err = shared.ReadFileValueString(ic.RedhatSSORealm.ClientSecretFile, &ic.RedhatSSORealm.ClientSecret)
 	if err != nil {
-		return fmt.Errorf("reading from file: %w", err)
+		return fmt.Errorf("reading Red Hat SSO Real Client secret file %q: %w", ic.RedhatSSORealm.ClientSecretFile, err)
 	}
 
 	// Read the service account limits check skip org ID yaml file
@@ -113,7 +113,7 @@ func (ic *IAMConfig) ReadFiles() error {
 		if errors.Is(err, fs.ErrNotExist) {
 			glog.V(10).Infof("Specified service account limits skip org IDs  file %q does not exist. Proceeding as if no service account org ID skip list was provided", ic.ServiceAccounttLimitCheckSkipOrgIDListFile)
 		} else {
-			return fmt.Errorf("reading IAM config yaml file: %w", err)
+			return fmt.Errorf("reading the service account limits check skip org ID yaml file %q: %w", ic.ServiceAccounttLimitCheckSkipOrgIDListFile, err)
 		}
 	}
 
