@@ -54,12 +54,12 @@ func buildAwareSemanticVersioningCompare(v1, v2 string) (int, error) {
 func checkIfMinorDowngrade(current, desired string) (int, error) {
 	currentSemver, err := semver.ParseTolerant(current)
 	if err != nil {
-		return 0, fmt.Errorf("checking minor downgrade: %w", err)
+		return 0, fmt.Errorf("parsing current semantic version: %w", err)
 	}
 
 	desiredSemver, err := semver.ParseTolerant(desired)
 	if err != nil {
-		return 0, fmt.Errorf("checking minor downgrade: %w", err)
+		return 0, fmt.Errorf("parsing desired semantic version: %w", err)
 	}
 	if currentSemver.Major < desiredSemver.Major {
 		return -1, nil
