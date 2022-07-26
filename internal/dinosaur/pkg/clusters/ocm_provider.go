@@ -364,7 +364,7 @@ func (o *OCMProvider) createSyncSet(clusterID string, resourceSet types.Resource
 	if err != nil {
 		return nil, fmt.Errorf("creating SyncSet for cluster %q: %w", clusterID, err)
 	}
-	return s, nil
+	return syncset, nil
 }
 
 func (o *OCMProvider) updateSyncSet(clusterID string, resourceSet types.ResourceSet, existingSyncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {

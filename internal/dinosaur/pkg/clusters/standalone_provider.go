@@ -548,7 +548,7 @@ func applyChangesFn(client dynamic.ResourceInterface, desiredObj *unstructured.U
 		if err != nil {
 			return nil, fmt.Errorf("creating new object: %w", err)
 		}
-		return c, nil
+		return newObj, nil
 	}
 
 	desiredObj.SetResourceVersion(existingObj.GetResourceVersion())
