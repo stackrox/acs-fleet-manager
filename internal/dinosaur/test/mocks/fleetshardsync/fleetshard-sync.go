@@ -103,7 +103,7 @@ var defaultUpdateDinosaurStatusFunc = func(helper *coreTest.Helper, privateClien
 		}
 
 		if _, err = privateClient.AgentClustersApi.UpdateCentralClusterStatus(ctx, dataplaneCluster.ClusterID, dinosaurStatusList); err != nil {
-			return fmt.Errorf("updating CentralClusterStatus: %w", err)
+			return fmt.Errorf("updating central status for cluster %s: %w", dataplaneCluster.clusterID, err)
 		}
 	}
 	return nil

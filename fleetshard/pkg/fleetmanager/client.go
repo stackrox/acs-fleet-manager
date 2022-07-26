@@ -88,7 +88,7 @@ func (c *Client) UpdateStatus(statuses map[string]private.DataPlaneCentralStatus
 func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.CentralRequest, error) {
 	reqBody, err := json.Marshal(request)
 	if err != nil {
-		return nil, fmt.Errorf("marshalling request for cental creation: %w", err)
+		return nil, fmt.Errorf("marshalling request for central creation: %w", err)
 	}
 
 	resp, err := c.newRequest(http.MethodPost, fmt.Sprintf("%s?async=true", c.consoleAPIEndpoint), bytes.NewBuffer(reqBody))

@@ -42,7 +42,7 @@ func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
 	}, migrations)
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("migrating: %w", err)
+		return nil, nil, fmt.Errorf("assembling database migration: %w", err)
 	}
 	return m, f, nil
 }
