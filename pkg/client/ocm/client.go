@@ -461,7 +461,7 @@ func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmt
 
 	cluster, err := clusterClient.Get().Send()
 	if err != nil {
-		return nil, fmt.Errorf("scaling compute nodes: %w", err)
+		return nil, fmt.Errorf("retrieving cluster: %w", err)
 	}
 
 	// get current number of compute nodes
@@ -472,13 +472,13 @@ func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmt
 	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(currentNumOfNodes + numNodes)).
 		Build()
 	if err != nil {
-		return nil, fmt.Errorf("scaling compute nodes: %w", err)
+		return nil, fmt.Errorf("scaling compute nodes by %d nodes: %w", numNodes, err)
 	}
 
 	// patch cluster with updated number of compute nodes
 	resp, err := clusterClient.Update().Body(patch).Send()
 	if err != nil {
-		return nil, fmt.Errorf("scaling compute nodes: %w", err)
+		return nil, fmt.Errorf("patching cluster with updated number of compute nodes: %w", err)
 	}
 
 	return resp.Body(), nil
@@ -491,13 +491,13 @@ func (c client) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1
 	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(numNodes)).
 		Build()
 	if err != nil {
-		return nil, fmt.Errorf("setting compute nodes: %w", err)
+		return nil, fmt.Errorf("building %d compute nodes: %w", numNodes, err)
 	}
 
 	// patch cluster with updated number of compute nodes
 	resp, err := clusterClient.Update().Body(patch).Send()
 	if err != nil {
-		return nil, fmt.Errorf("setting compute nodes: %w", err)
+		return nil, fmt.Errorf("patching cluster with updated number of compute nodes: %w", err)
 	}
 
 	return resp.Body(), nil
@@ -552,8 +552,7 @@ func (c client) ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*am
 		ClusterAuthorizations().
 		Post().Request(cb).Send()
 	if err != nil && r.Status() != http.StatusTooManyRequests {
-		err = errors.NewErrorFromHTTPStatusCode(r.Status(), "OCM client failed to create cluster authorization")
-		return nil, fmt.Errorf("creating cluster authorization: %w", err)
+		return nil, errors.NewErrorFromHTTPStatusCode(r.Status(), "OCM client failed to create cluster authorization")
 	}
 	resp, _ := r.GetResponse()
 	return resp, nil
