@@ -83,7 +83,7 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 
 	cluster, err := clusterBuilder.Build()
 	if err != nil {
-		return nil, fmt.Errorf("building cluster: %w", err)
+		return cluster, fmt.Errorf("building cluster: %w", err)
 	}
 	return cluster, nil
 }

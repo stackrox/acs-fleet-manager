@@ -108,7 +108,7 @@ func (writer *loggingWriter) prepareResponseLog(elapsed string) (string, error) 
 
 	s, err := writer.formatter.FormatResponseLog(info)
 	if err != nil {
-		return "", fmt.Errorf("formatting request: %w", err)
+		return s, fmt.Errorf("formatting request: %w", err)
 	}
 	return s, nil
 }

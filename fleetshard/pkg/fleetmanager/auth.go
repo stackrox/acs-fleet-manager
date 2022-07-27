@@ -38,7 +38,7 @@ func NewAuth(t string) (Auth, error) {
 	}
 	auth, err := factory.CreateAuth()
 	if err != nil {
-		return nil, fmt.Errorf("creating Auth: %w", err)
+		return auth, fmt.Errorf("creating Auth: %w", err)
 	}
 	return auth, nil
 }

@@ -68,7 +68,7 @@ func WaitForDinosaurCreateToBeAccepted(ctx context.Context, db *db.ConnectionFac
 		Build().Poll()
 
 	if err != nil {
-		return dinosaur, nil, fmt.Errorf("waiting for dinosaur creation to be accepted: %w", err)
+		return dinosaur, resp, fmt.Errorf("waiting for dinosaur creation to be accepted: %w", err)
 	}
 	return dinosaur, resp, nil
 

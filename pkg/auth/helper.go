@@ -90,7 +90,7 @@ func (authHelper *AuthHelper) CreateSignedJWT(account *amv1.Account, jwtClaims j
 	// the go-jwt-middleware pkg we use does the same for their tests
 	str, err := token.SignedString(authHelper.JWTPrivateKey)
 	if err != nil {
-		return "", fmt.Errorf("creating signed JWT: %w", err)
+		return str, fmt.Errorf("creating signed JWT: %w", err)
 	}
 	return str, nil
 }

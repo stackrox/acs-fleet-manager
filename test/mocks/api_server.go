@@ -944,7 +944,7 @@ func GetMockSyncsetBuilder(modifyFn func(b *clustersmgmtv1.SyncsetBuilder)) *clu
 func GetMockSyncset(syncsetBuilder *clustersmgmtv1.SyncsetBuilder) (*clustersmgmtv1.Syncset, error) {
 	s, err := syncsetBuilder.Build()
 	if err != nil {
-		return nil, fmt.Errorf("building Syncset: %w", err)
+		return s, fmt.Errorf("building Syncset: %w", err)
 	}
 	return s, nil
 }

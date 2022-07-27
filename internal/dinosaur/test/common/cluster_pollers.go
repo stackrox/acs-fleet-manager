@@ -60,7 +60,7 @@ func WaitForClusterIDToBeAssigned(db *db.ConnectionFactory, clusterService *serv
 		Build().Poll()
 
 	if err != nil {
-		return "", fmt.Errorf("waiting for cluster ID to be assigned: %w", err)
+		return clusterID, fmt.Errorf("waiting for cluster ID to be assigned: %w", err)
 	}
 	return clusterID, nil
 }
