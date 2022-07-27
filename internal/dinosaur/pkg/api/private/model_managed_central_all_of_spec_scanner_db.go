@@ -11,5 +11,6 @@ package private
 
 // ManagedCentralAllOfSpecScannerDb struct for ManagedCentralAllOfSpecScannerDb
 type ManagedCentralAllOfSpecScannerDb struct {
-	Host string `json:"host,omitempty"`
+	Host      string               `json:"host,omitempty"`
+	Resources ResourceRequirements `json:"resources,omitempty"`
 }
