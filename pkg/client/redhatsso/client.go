@@ -169,7 +169,7 @@ func (c *rhSSOClient) GetServiceAccounts(accessToken string, first int, max int)
 	defer shared.CloseResponseBody(resp)
 
 	if err != nil {
-		return nil, fmt.Errorf("getting service accounts: %w", err)
+		return serviceAccounts, fmt.Errorf("getting service accounts: %w", err)
 	}
 	return serviceAccounts, nil
 }
@@ -188,7 +188,7 @@ func (c *rhSSOClient) GetServiceAccount(accessToken string, clientID string) (*s
 	}
 
 	if err != nil {
-		return nil, false, fmt.Errorf("getting service accounts: %w", err)
+		return &serviceAccount, false, fmt.Errorf("getting service accounts: %w", err)
 	}
 	return &serviceAccount, true, nil
 }

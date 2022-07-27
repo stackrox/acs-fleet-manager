@@ -133,7 +133,7 @@ func (p observatoriumRoundTripper) RoundTrip(request *http.Request) (*http.Respo
 	metrics.UpdateObservatoriumRequestDurationMetric(statusCode, path, request.Method, elapsedTime)
 
 	if err != nil {
-		return nil, fmt.Errorf("executing round trip: %w", err)
+		return resp, fmt.Errorf("executing round trip: %w", err)
 	}
 	return resp, nil
 }

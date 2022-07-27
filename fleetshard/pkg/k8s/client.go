@@ -69,7 +69,7 @@ func IsRoutesResourceEnabled() (bool, error) {
 
 	enabled, err := discovery.IsResourceEnabled(clientSet.Discovery(), routesGVK)
 	if err != nil {
-		return false, fmt.Errorf("checking availability of resource type %s: %w", routesGVK.String(), err)
+		return enabled, fmt.Errorf("checking availability of resource type %s: %w", routesGVK.String(), err)
 	}
 	return enabled, nil
 }

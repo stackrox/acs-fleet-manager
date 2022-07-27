@@ -897,7 +897,7 @@ func GetMockSubscription(modifyFn func(b *amsv1.Subscription)) (*amsv1.Subscript
 		modifyFn(builder)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building Subscription: %w", err)
+		return builder, fmt.Errorf("building Subscription: %w", err)
 	}
 	return builder, nil
 }
@@ -914,7 +914,7 @@ func GetMockClusterAuthorization(modifyFn func(b *amsv1.ClusterAuthorizationResp
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("building ClusterAuthorizationResponse: %w", err)
+		return builder, fmt.Errorf("building ClusterAuthorizationResponse: %w", err)
 	}
 	return builder, nil
 }
@@ -923,7 +923,7 @@ func GetMockClusterAuthorization(modifyFn func(b *amsv1.ClusterAuthorizationResp
 func GetMockTermsReview(modifyFn func(b *authorizationsv1.TermsReviewResponse)) (*authorizationsv1.TermsReviewResponse, error) {
 	resp, err := authorizationsv1.NewTermsReviewResponse().TermsRequired(true).Build()
 	if err != nil {
-		return nil, fmt.Errorf("building TermsReviewResponse: %w", err)
+		return resp, fmt.Errorf("building TermsReviewResponse: %w", err)
 	}
 	return resp, nil
 }
@@ -958,7 +958,7 @@ func GetMockIngressList(modifyFn func(l *v1.IngressList, err error)) (*clustersm
 		modifyFn(list, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building IngressList: %w", err)
+		return list, fmt.Errorf("building IngressList: %w", err)
 	}
 	return list, nil
 }
@@ -984,7 +984,7 @@ func GetMockCloudProvider(modifyFn func(*clustersmgmtv1.CloudProvider, error)) (
 		modifyFn(cloudProvider, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building CloudProvier: %w", err)
+		return cloudProvider, fmt.Errorf("building CloudProvier: %w", err)
 	}
 	return cloudProvider, nil
 }
@@ -998,7 +998,7 @@ func GetMockCloudProviderList(modifyFn func(*clustersmgmtv1.CloudProviderList, e
 		modifyFn(list, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building CloudProviderList: %w", err)
+		return list, fmt.Errorf("building CloudProviderList: %w", err)
 	}
 	return list, nil
 }
@@ -1026,7 +1026,7 @@ func GetMockCloudProviderRegion(modifyFn func(*clustersmgmtv1.CloudRegion, error
 		modifyFn(cloudRegion, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building CloudRegion: %w", err)
+		return cloudRegion, fmt.Errorf("building CloudRegion: %w", err)
 	}
 	return cloudRegion, nil
 }
@@ -1038,7 +1038,7 @@ func GetMockCloudProviderRegionList(modifyFn func(*clustersmgmtv1.CloudRegionLis
 		modifyFn(list, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building CloudRegionList: %w", err)
+		return list, fmt.Errorf("building CloudRegionList: %w", err)
 	}
 	return list, nil
 }
@@ -1050,7 +1050,7 @@ func GetMockClusterStatus(modifyFn func(*clustersmgmtv1.ClusterStatus, error)) (
 		modifyFn(status, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building ClusterStatus: %w", err)
+		return status, fmt.Errorf("building ClusterStatus: %w", err)
 	}
 	return status, nil
 }
@@ -1108,7 +1108,7 @@ func GetMockClusterAddonInstallation(modifyFn func(*clustersmgmtv1.AddOnInstalla
 		modifyFn(addonInstall, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building AddOnInstallation: %w", err)
+		return addonInstall, fmt.Errorf("building AddOnInstallation: %w", err)
 	}
 	return addonInstall, nil
 }
@@ -1124,7 +1124,7 @@ func GetMockClusterAddonInstallationList(modifyFn func(*clustersmgmtv1.AddOnInst
 		modifyFn(list, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building AddOnInstallationList: %w", err)
+		return list, fmt.Errorf("building AddOnInstallationList: %w", err)
 	}
 	return list, nil
 }
@@ -1175,7 +1175,7 @@ func GetMockCluster(modifyFn func(*clustersmgmtv1.Cluster, error)) (*clustersmgm
 		modifyFn(cluster, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building Cluster: %w", err)
+		return cluster, fmt.Errorf("building Cluster: %w", err)
 	}
 	return cluster, nil
 }
@@ -1200,7 +1200,7 @@ func GetMachinePoolList(modifyFn func(*clustersmgmtv1.MachinePoolList, error)) (
 		modifyFn(list, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building MachinePoolList: %w", err)
+		return list, fmt.Errorf("building MachinePoolList: %w", err)
 	}
 	return list, nil
 }
@@ -1212,7 +1212,7 @@ func GetMockMachinePool(modifyFn func(*clustersmgmtv1.MachinePool, error)) (*clu
 		modifyFn(machinePool, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building MachinePool: %w", err)
+		return machinePool, fmt.Errorf("building MachinePool: %w", err)
 	}
 	return machinePool, nil
 }
@@ -1245,7 +1245,7 @@ func GetMockIdentityProvider(modifyFn func(*clustersmgmtv1.IdentityProvider, err
 		modifyFn(identityProvider, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("building IdentityProvider: %w", err)
+		return identityProvider, fmt.Errorf("building IdentityProvider: %w", err)
 	}
 	return identityProvider, nil
 }

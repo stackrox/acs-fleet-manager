@@ -134,7 +134,7 @@ func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.Clu
 		}).Build().Poll()
 
 	if err != nil {
-		return nil, fmt.Errorf("waiting for cluster status: %w", err)
+		return cluster, fmt.Errorf("waiting for cluster status: %w", err)
 	}
 	return cluster, nil
 }
