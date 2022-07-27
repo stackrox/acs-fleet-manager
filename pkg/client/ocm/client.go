@@ -569,7 +569,7 @@ func (c client) DeleteSubscription(id string) (int, error) {
 func (c client) FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error) {
 	r, err := c.connection.AccountsMgmt().V1().Subscriptions().List().Search(query).Send()
 	if err != nil {
-		return nil, fmt.Errorf("finding subscriptions: %w", err)
+		return nil, fmt.Errorf("querying the accounts management service for subscriptions: %w", err)
 	}
 	return r, nil
 }
@@ -584,7 +584,7 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 
 	quotaCostList, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Send()
 	if err != nil {
-		return nil, fmt.Errorf("retrieving quota list: %w", err)
+		return nil, fmt.Errorf("retrieving relatedResources from the QuotaCosts service: %w", err)
 	}
 
 	quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {
