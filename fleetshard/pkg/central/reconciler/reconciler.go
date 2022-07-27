@@ -293,7 +293,9 @@ func (r CentralReconciler) ensureNamespaceExists(name string) error {
 			if err != nil {
 				return fmt.Errorf("creating namespace %q: %w", name, err)
 			}
+			return nil
 		}
+		return fmt.Errorf("getting namespace %s: %w", name, err)
 	}
 	return nil
 }
