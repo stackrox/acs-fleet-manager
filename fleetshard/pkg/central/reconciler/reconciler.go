@@ -278,11 +278,8 @@ func (r CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) 
 		},
 	}
 	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace)
-	if err != nil {
-		// do not wrap this error, because `apiErrors.isNotFound()` does not work with wrapped errors
-		return nil, err //nolint:wrapcheck
-	}
-	return namespace, nil
+	// do not wrap this error, because `apiErrors.isNotFound()` does not work with wrapped errors
+	return namespace, err //nolint:wrapcheck
 }
 
 func (r CentralReconciler) ensureNamespaceExists(name string) error {
