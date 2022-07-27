@@ -1,6 +1,8 @@
 package migrations
 
 import (
+	"fmt"
+
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 )
@@ -32,10 +34,15 @@ var migrations = []*gormigrate.Migration{
 
 // New ...
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
-	return db.NewMigration(dbConfig, &gormigrate.Options{
+	m, f, err := db.NewMigration(dbConfig, &gormigrate.Options{
 		TableName:      "migrations",
 		IDColumnName:   "id",
 		IDColumnSize:   255,
 		UseTransaction: false,
 	}, migrations)
+
+	if err != nil {
+		return m, f, fmt.Errorf("assembling database migration: %w", err)
+	}
+	return m, f, nil
 }

@@ -22,8 +22,7 @@ const (
 // WaitForNumberOfDinosaurToBeGivenCount - Awaits for the number of dinosaurs to be exactly X
 func WaitForNumberOfDinosaurToBeGivenCount(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, count int32) error {
 	currentCount := int32(-1)
-
-	return NewPollerBuilder(db).
+	err := NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, defaultDinosaurPollTimeout).
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentCount == -1 {
@@ -34,12 +33,17 @@ func WaitForNumberOfDinosaurToBeGivenCount(ctx context.Context, db *db.Connectio
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			list, _, err := client.DefaultApi.GetCentrals(ctx, nil)
 			if err != nil {
-				return false, err
+				return false, fmt.Errorf("retrying: %w", err)
 			}
 			currentCount = list.Size
-			return currentCount == count, err
+			return currentCount == count, nil
 		}).
 		Build().Poll()
+
+	if err != nil {
+		return fmt.Errorf("waiting for number of dinosaurs: %w", err)
+	}
+	return nil
 }
 
 // WaitForDinosaurCreateToBeAccepted - Creates a dinosaur and awaits for the request to be accepted
@@ -57,12 +61,17 @@ func WaitForDinosaurCreateToBeAccepted(ctx context.Context, db *db.ConnectionFac
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			dinosaur, resp, err = client.DefaultApi.CreateCentral(ctx, true, k)
 			if err != nil {
-				return true, err
+				return true, fmt.Errorf("waiting for dinosaur creation to be accepted: %w", err)
 			}
-			return resp.StatusCode == http.StatusAccepted, err
+			return resp.StatusCode == http.StatusAccepted, nil
 		}).
 		Build().Poll()
-	return dinosaur, resp, err
+
+	if err != nil {
+		return dinosaur, resp, fmt.Errorf("waiting for dinosaur creation to be accepted: %w", err)
+	}
+	return dinosaur, resp, nil
+
 }
 
 // WaitForDinosaurToReachStatus - Awaits for a dinosaur to reach a specified status
@@ -82,7 +91,7 @@ func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory,
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			dinosaur, _, err = client.DefaultApi.GetCentralById(ctx, dinosaurID)
 			if err != nil {
-				return true, err
+				return true, fmt.Errorf("waiting for dinosaur to reach status: %w", err)
 			}
 
 			switch dinosaur.Status {
@@ -98,12 +107,16 @@ func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory,
 			return constants2.DinosaurStatus(dinosaur.Status).CompareTo(status) >= 0, nil
 		}).
 		Build().Poll()
-	return dinosaur, err
+
+	if err != nil {
+		return dinosaur, fmt.Errorf("waiting for dinosaur to reach status: %w", err)
+	}
+	return dinosaur, nil
 }
 
 // WaitForDinosaurToBeDeleted - Awaits for a dinosaur to be deleted
 func WaitForDinosaurToBeDeleted(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, dinosaurID string) error {
-	return NewPollerBuilder(db).
+	err := NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, defaultDinosaurReadyTimeout).
 		RetryLogMessagef("Waiting for dinosaur '%s' to be deleted", dinosaurID).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
@@ -112,11 +125,16 @@ func WaitForDinosaurToBeDeleted(ctx context.Context, db *db.ConnectionFactory, c
 					return true, nil
 				}
 
-				return false, err
+				return false, fmt.Errorf("on retrying: %w", err)
 			}
 			return false, nil
 		}).
 		Build().Poll()
+
+	if err != nil {
+		return fmt.Errorf("waiting for dinosaur to be deleted: %w", err)
+	}
+	return nil
 }
 
 // WaitForDinosaurClusterIDToBeAssigned ...
@@ -134,5 +152,8 @@ func WaitForDinosaurClusterIDToBeAssigned(dbFactory *db.ConnectionFactory, dinos
 			return dinosaurFound.ClusterID != "", nil
 		}).Build().Poll()
 
-	return dinosaurFound, dinosaurErr
+	if dinosaurErr != nil {
+		return dinosaurFound, fmt.Errorf("waiting for dinosaur cluster ID to be assigned: %w", dinosaurErr)
+	}
+	return dinosaurFound, nil
 }

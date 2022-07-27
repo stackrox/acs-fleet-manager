@@ -183,11 +183,11 @@ func (r *CentralReconciler) readyStatus(ctx context.Context, namespace string) (
 func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
 	reencryptHostname, err := r.routeService.FindReencryptCanonicalHostname(ctx, namespace)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("obtaining canonical hostname for reencrypt route: %w", err)
 	}
 	mtlsHostname, err := r.routeService.FindMTLSCanonicalHostname(ctx, namespace)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("obtaining canonical hostname for MTLS route: %w", err)
 	}
 	return []private.DataPlaneCentralStatusRoutes{
 		{
@@ -209,7 +209,7 @@ func isCentralReady(ctx context.Context, client ctrlClient.Client, central priva
 		ctrlClient.ObjectKey{Name: "central", Namespace: central.Metadata.Namespace},
 		deployment)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("retrieving central deployment resource from Kubernetes: %w", err)
 	}
 	if deployment.Status.UnavailableReplicas == 0 {
 		return true, nil
@@ -254,7 +254,7 @@ func (r *CentralReconciler) centralChanged(central private.ManagedCentral) (bool
 func (r *CentralReconciler) setLastCentralHash(central private.ManagedCentral) error {
 	hash, err := util.MD5SumFromJSONStruct(&central)
 	if err != nil {
-		return err
+		return fmt.Errorf("calculating MD5 from JSON: %w", err)
 	}
 
 	r.lastCentralHash = hash
@@ -278,7 +278,11 @@ func (r CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) 
 		},
 	}
 	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace)
-	return namespace, err
+	if err != nil {
+		// Propagate corev1.Namespace to the caller so that the namespace can be easily created
+		return namespace, fmt.Errorf("retrieving resource for namespace %q from Kubernetes: %w", name, err)
+	}
+	return namespace, nil
 }
 
 func (r CentralReconciler) ensureNamespaceExists(name string) error {
@@ -289,9 +293,11 @@ func (r CentralReconciler) ensureNamespaceExists(name string) error {
 			if err != nil {
 				return fmt.Errorf("creating namespace %q: %w", name, err)
 			}
+			return nil
 		}
+		return fmt.Errorf("getting namespace %s: %w", name, err)
 	}
-	return err
+	return nil
 }
 
 func (r CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name string) (bool, error) {
@@ -334,10 +340,18 @@ func (r CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remot
 	}
 	namespace := remoteCentral.Metadata.Namespace
 	_, err := r.routeService.FindReencryptRoute(ctx, namespace)
+	if err != nil && !apiErrors.IsNotFound(err) {
+		return fmt.Errorf("retrieving reencrypt route for namespace %q: %w", namespace, err)
+	}
+
 	if apiErrors.IsNotFound(err) {
 		err = r.routeService.CreateReencryptRoute(ctx, remoteCentral)
+		if err != nil {
+			return fmt.Errorf("creating reencrypt route for central %s: %w", remoteCentral.Id, err)
+		}
 	}
-	return err
+
+	return nil
 }
 
 // TODO(ROX-9310): Move re-encrypt route reconciliation to the StackRox operator

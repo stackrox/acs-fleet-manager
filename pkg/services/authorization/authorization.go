@@ -34,6 +34,9 @@ func (a authorization) CheckUserValid(username string, orgID string) (bool, erro
 		Parameter("search", fmt.Sprintf("username = '%s'", username)).
 		Send()
 
+	if err != nil {
+		return false, fmt.Errorf("retrieving accounts list: %w", err)
+	}
 	return resp.Status() == http.StatusOK && resp.Size() > 0 && !resp.Items().Get(0).Banned() &&
-		resp.Items().Get(0).Organization().ExternalID() == orgID, err
+		resp.Items().Get(0).Organization().ExternalID() == orgID, nil
 }

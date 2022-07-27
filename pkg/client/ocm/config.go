@@ -1,6 +1,8 @@
 package ocm
 
 import (
+	"fmt"
+
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
@@ -68,15 +70,15 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 func (c *OCMConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(c.ClientIDFile, &c.ClientID)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading client ID file: %w", err)
 	}
 	err = shared.ReadFileValueString(c.ClientSecretFile, &c.ClientSecret)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading client secret file: %w", err)
 	}
 	err = shared.ReadFileValueString(c.SelfTokenFile, &c.SelfToken)
 	if err != nil && (c.ClientSecret == "" || c.ClientID == "") {
-		return err
+		return fmt.Errorf("reading self token file: %w", err)
 	}
 
 	return nil

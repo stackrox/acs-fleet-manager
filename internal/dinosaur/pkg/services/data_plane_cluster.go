@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"strconv"
 	"time"
@@ -110,18 +111,18 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) error {
 	prevAvailableDinosaurOperatorVersions, err := cluster.GetAvailableCentralOperatorVersions()
 	if err != nil {
-		return err
+		return fmt.Errorf("retrieving central operator versions: %w", err)
 	}
 	if len(status.AvailableDinosaurOperatorVersions) > 0 && !reflect.DeepEqual(prevAvailableDinosaurOperatorVersions, status.AvailableDinosaurOperatorVersions) {
 		err := cluster.SetAvailableCentralOperatorVersions(status.AvailableDinosaurOperatorVersions)
 		if err != nil {
-			return err
+			return fmt.Errorf("updating central operator versions: %w", err)
 		}
 		glog.Infof("Updating Dinosaur operator available versions for cluster ID '%s'. From versions '%v' to versions '%v'\n",
 			cluster.ClusterID, prevAvailableDinosaurOperatorVersions, status.AvailableDinosaurOperatorVersions)
 		svcErr := d.ClusterService.Update(*cluster)
 		if svcErr != nil {
-			return err
+			return fmt.Errorf("updating cluster: %w", svcErr)
 		}
 	}
 
@@ -129,7 +130,7 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 		clusterIsWaitingForFleetShardOperator := cluster.Status == api.ClusterWaitingForFleetShardOperator
 		err := d.ClusterService.UpdateStatus(*cluster, api.ClusterReady)
 		if err != nil {
-			return err
+			return fmt.Errorf("updating cluster status to %s: %w", api.ClusterReady, err)
 		}
 		if clusterIsWaitingForFleetShardOperator {
 			metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(cluster.CreatedAt))
@@ -152,7 +153,7 @@ func (d *dataPlaneClusterService) isFleetShardOperatorReady(status *dbapi.DataPl
 		if cond.Type == dataPlaneClusterStatusCondReadyName {
 			condVal, err := strconv.ParseBool(cond.Status)
 			if err != nil {
-				return false, err
+				return false, fmt.Errorf("parsing data plane cluster condition %q: %w", dataPlaneClusterStatusCondReadyName, err)
 			}
 			return condVal, nil
 		}

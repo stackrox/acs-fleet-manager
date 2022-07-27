@@ -6,6 +6,8 @@ package migrations
 // is done here, even though the same type is defined in pkg/api
 
 import (
+	"fmt"
+
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
@@ -34,10 +36,18 @@ func addClusters() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "20220114114501",
 		Migrate: func(tx *gorm.DB) error {
-			return tx.AutoMigrate(&Cluster{})
+			err := tx.AutoMigrate(&Cluster{})
+			if err != nil {
+				return fmt.Errorf("migrating 20220114114501: %w", err)
+			}
+			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			return tx.Migrator().DropTable(&Cluster{})
+			err := tx.Migrator().DropTable(&Cluster{})
+			if err != nil {
+				return fmt.Errorf("rolling back 20220114114501: %w", err)
+			}
+			return nil
 		},
 	}
 }

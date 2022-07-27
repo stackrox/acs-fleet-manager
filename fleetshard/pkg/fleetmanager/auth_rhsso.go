@@ -1,6 +1,7 @@
 package fleetmanager
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -33,11 +34,11 @@ func (f *rhSSOAuthFactory) GetName() string {
 func (f *rhSSOAuthFactory) CreateAuth() (Auth, error) {
 	cfg, err := config.Singleton()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating the config singleton: %w", err)
 	}
 	tokenFilePath := cfg.RHSSOTokenFilePath
 	if _, err := shared.ReadFile(tokenFilePath); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading token file: %w", err)
 	}
 	return &rhSSOAuth{
 		tokenFilePath: tokenFilePath,

@@ -1,6 +1,8 @@
 package workers
 
 import (
+	"fmt"
+
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -343,7 +345,11 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) er
 
 		// if it is the only cluster left in that region, set it back to ready.
 		if siblingCluster == nil {
-			return c.ClusterService.UpdateStatus(*cluster, api.ClusterReady)
+			err := c.ClusterService.UpdateStatus(*cluster, api.ClusterReady)
+			if err != nil {
+				return fmt.Errorf("updating status for cluster %s to %s: %w", cluster.ClusterID, api.ClusterReady, err)
+			}
+			return nil
 		}
 	}
 
@@ -486,7 +492,10 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 	}
 
 	updateStatusErr := c.ClusterService.UpdateStatus(cluster, api.ClusterDeprovisioning)
-	return updateStatusErr == nil, updateStatusErr
+	if updateStatusErr != nil {
+		return false, fmt.Errorf("updating status for cluster %s to %s: %w", cluster.ClusterID, api.ClusterDeprovisioning, updateStatusErr)
+	}
+	return true, nil
 }
 
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {

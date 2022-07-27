@@ -146,9 +146,9 @@ func setTokenEndpoints(config *IAMConfig, realmConfig *IAMRealmConfig) {
 func (ic *iamClient) CreateClient(client gocloak.Client, accessToken string) (string, error) {
 	internalClientID, err := ic.kcClient.CreateClient(ic.ctx, accessToken, ic.realmConfig.Realm, client)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("creating client: %w", err)
 	}
-	return internalClientID, err
+	return internalClientID, nil
 }
 
 // GetClient ...
@@ -158,7 +158,7 @@ func (ic *iamClient) GetClient(clientID string, accessToken string) (*gocloak.Cl
 	}
 	clients, err := ic.kcClient.GetClients(ic.ctx, accessToken, ic.realmConfig.Realm, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting clients: %w", err)
 	}
 	for _, client := range clients {
 		if *client.ClientID == clientID {
@@ -204,17 +204,21 @@ func (ic *iamClient) GetCachedToken(tokenKey string) (string, error) {
 func (ic *iamClient) GetClientSecret(internalClientID string, accessToken string) (string, error) {
 	resp, err := ic.kcClient.GetClientSecret(ic.ctx, accessToken, ic.realmConfig.Realm, internalClientID)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("getting client secret: %w", err)
 	}
 	if resp.Value == nil {
 		return "", errors.Errorf("failed to retrieve credentials")
 	}
-	return *resp.Value, err
+	return *resp.Value, nil
 }
 
 // DeleteClient ...
 func (ic *iamClient) DeleteClient(internalClientID string, accessToken string) error {
-	return ic.kcClient.DeleteClient(ic.ctx, accessToken, ic.realmConfig.Realm, internalClientID)
+	err := ic.kcClient.DeleteClient(ic.ctx, accessToken, ic.realmConfig.Realm, internalClientID)
+	if err != nil {
+		return fmt.Errorf("deleting client: %w", err)
+	}
+	return nil
 }
 
 func (ic *iamClient) getClient(clientID string, accessToken string) ([]*gocloak.Client, error) {
@@ -223,18 +227,18 @@ func (ic *iamClient) getClient(clientID string, accessToken string) ([]*gocloak.
 	}
 	client, err := ic.kcClient.GetClients(ic.ctx, accessToken, ic.realmConfig.Realm, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting clients: %w", err)
 	}
-	return client, err
+	return client, nil
 }
 
 // GetClientByID ...
 func (ic *iamClient) GetClientByID(internalID string, accessToken string) (*gocloak.Client, error) {
 	client, err := ic.kcClient.GetClient(ic.ctx, accessToken, ic.realmConfig.Realm, internalID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting client by ID: %w", err)
 	}
-	return client, err
+	return client, nil
 }
 
 // GetConfig ...
@@ -268,19 +272,19 @@ func (ic *iamClient) IsClientExist(clientID string, accessToken string) (string,
 func (ic *iamClient) GetClientServiceAccount(accessToken string, internalClient string) (*gocloak.User, error) {
 	serviceAccountUser, err := ic.kcClient.GetClientServiceAccount(ic.ctx, accessToken, ic.realmConfig.Realm, internalClient)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting client ServiceAccount: %w", err)
 
 	}
-	return serviceAccountUser, err
+	return serviceAccountUser, nil
 }
 
 // UpdateServiceAccountUser ...
 func (ic *iamClient) UpdateServiceAccountUser(accessToken string, serviceAccountUser gocloak.User) error {
 	err := ic.kcClient.UpdateUser(ic.ctx, accessToken, ic.realmConfig.Realm, serviceAccountUser)
 	if err != nil {
-		return err
+		return fmt.Errorf("updating service account user: %w", err)
 	}
-	return err
+	return nil
 }
 
 // GetClients ...
@@ -300,9 +304,9 @@ func (ic *iamClient) GetClients(accessToken string, first int, max int, attribut
 
 	clients, err := ic.kcClient.GetClients(ic.ctx, accessToken, ic.realmConfig.Realm, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting clients: %w", err)
 	}
-	return clients, err
+	return clients, nil
 }
 
 // IsSameOrg ...
@@ -330,9 +334,9 @@ func (ic *iamClient) IsOwner(client *gocloak.Client, userID string) bool {
 func (ic *iamClient) RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
 	credRep, err := ic.kcClient.RegenerateClientSecret(ic.ctx, accessToken, ic.realmConfig.Realm, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("regenerating client secrets: %w", err)
 	}
-	return credRep, err
+	return credRep, nil
 }
 
 // GetRealmRole ...
@@ -342,9 +346,9 @@ func (ic *iamClient) GetRealmRole(accessToken string, roleName string) (*gocloak
 		if isNotFoundError(err) {
 			return nil, nil
 		}
-		return nil, err
+		return nil, fmt.Errorf("getting realm role: %w", err)
 	}
-	return r, err
+	return r, nil
 }
 
 // CreateRealmRole ...
@@ -354,12 +358,12 @@ func (ic *iamClient) CreateRealmRole(accessToken string, roleName string) (*gocl
 	}
 	_, err := ic.kcClient.CreateRealmRole(ic.ctx, accessToken, ic.realmConfig.Realm, *r)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating realm role: %w", err)
 	}
 	// for some reason, the internal id of the role is not returned by iamClient.CreateRealmRole, so we have to get the role again to get the full details
 	r, err = ic.kcClient.GetRealmRole(ic.ctx, accessToken, ic.realmConfig.Realm, roleName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting realm role: %w", err)
 	}
 	return r, nil
 }
@@ -368,7 +372,7 @@ func (ic *iamClient) CreateRealmRole(accessToken string, roleName string) (*gocl
 func (ic *iamClient) UserHasRealmRole(accessToken string, userID string, roleName string) (*gocloak.Role, error) {
 	roles, err := ic.kcClient.GetRealmRolesByUserID(ic.ctx, accessToken, ic.realmConfig.Realm, userID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting realm roles by UserID: %w", err)
 	}
 	for _, r := range roles {
 		if *r.Name == roleName {
@@ -383,7 +387,7 @@ func (ic *iamClient) AddRealmRoleToUser(accessToken string, userID string, role 
 	roles := []gocloak.Role{role}
 	err := ic.kcClient.AddRealmRoleToUser(ic.ctx, accessToken, ic.realmConfig.Realm, userID, roles)
 	if err != nil {
-		return err
+		return fmt.Errorf("adding realm to user: %w", err)
 	}
 	return nil
 }

@@ -1,9 +1,9 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
@@ -166,9 +166,13 @@ func (c *ProviderConfig) ReadFiles() error {
 func readFileProvidersConfig(file string, val *ProviderConfiguration) error {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading providers config file: %w", err)
 	}
-	return yaml.UnmarshalStrict([]byte(fileContents), val)
+	err = yaml.UnmarshalStrict([]byte(fileContents), val)
+	if err != nil {
+		return fmt.Errorf("unmarshalling providers config file from YAML: %w", err)
+	}
+	return nil
 }
 
 // GetDefault ...

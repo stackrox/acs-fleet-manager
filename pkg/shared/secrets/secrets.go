@@ -3,6 +3,7 @@ package secrets
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"reflect"
 
 	"github.com/santhosh-tekuri/jsonschema/v3"
@@ -22,12 +23,12 @@ func ModifySecrets(schemaDom, doc api.JSON, f func(node *ajson.Node) error) (api
 func modifySecrets(schemaBytes, doc []byte, f func(node *ajson.Node) error) ([]byte, error) {
 	fields, err := getPathsToPasswordFields(schemaBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("retrieving paths to password fields: %w", err)
 	}
 
 	root, err := ajson.Unmarshal(doc)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshalling: %w", err)
 	}
 
 	for _, field := range fields {
@@ -40,18 +41,22 @@ func modifySecrets(schemaBytes, doc []byte, f func(node *ajson.Node) error) ([]b
 		}
 
 	}
-	return ajson.Marshal(root)
+	bytes, err := ajson.Marshal(root)
+	if err != nil {
+		return bytes, fmt.Errorf("marshalling: %w", err)
+	}
+	return bytes, nil
 }
 
 func getPathsToPasswordFields(schemaBytes []byte) ([]string, error) {
 
 	c := jsonschema.NewCompiler()
 	if err := c.AddResource("schema.json", bytes.NewReader(schemaBytes)); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("adding JSON schema to compiler: %w", err)
 	}
 	schema, err := c.Compile("schema.json")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("compiling JSON schema: %w", err)
 	}
 
 	paths := map[string]bool{}

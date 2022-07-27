@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
@@ -44,10 +45,18 @@ func addOwnerUserIDToCentralRequest() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "20220630220500",
 		Migrate: func(tx *gorm.DB) error {
-			return tx.Migrator().AddColumn(&CentralRequest{}, "OwnerUserID")
+			err := tx.Migrator().AddColumn(&CentralRequest{}, "OwnerUserID")
+			if err != nil {
+				return fmt.Errorf("migrating 20220630220500: %w", err)
+			}
+			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			return tx.Migrator().DropColumn(&CentralRequest{}, "OwnerUserID")
+			err := tx.Migrator().DropColumn(&CentralRequest{}, "OwnerUserID")
+			if err != nil {
+				return fmt.Errorf("rolling back 20220630220500: %w", err)
+			}
+			return nil
 		},
 	}
 }

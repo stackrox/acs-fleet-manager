@@ -117,7 +117,10 @@ func (poller *poller) Poll() error {
 		poller.outputFunction("%d/%d [%s] - Polling finished", attempt, maxAttempts, elapsed)
 	}
 
-	return err
+	if err != nil {
+		return fmt.Errorf("polling: %w", err)
+	}
+	return nil
 }
 
 func (poller *poller) dumpDB() {

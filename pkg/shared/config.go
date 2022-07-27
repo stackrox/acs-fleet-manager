@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
@@ -19,7 +20,10 @@ func ReadFileValueInt(file string, val *int) error {
 	}
 
 	*val, err = strconv.Atoi(fileContents)
-	return err
+	if err != nil {
+		return fmt.Errorf("reading int value from file: %w", err)
+	}
+	return nil
 }
 
 // ReadFileValueString Read the contents of file into string value
@@ -41,7 +45,10 @@ func ReadFileValueBool(file string, val *bool) error {
 	}
 
 	*val, err = strconv.ParseBool(fileContents)
-	return err
+	if err != nil {
+		return fmt.Errorf("reading bool value from file: %w", err)
+	}
+	return nil
 }
 
 // ReadFile ...
@@ -56,7 +63,7 @@ func ReadFile(file string) (string, error) {
 	// Read the file
 	buf, err := ioutil.ReadFile(absFilePath)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("reading file %q: %w", absFilePath, err)
 	}
 	return string(buf), nil
 }
@@ -89,5 +96,10 @@ func ReadYamlFile(filename string, out interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	return yaml.UnmarshalStrict([]byte(fileContents), out)
+
+	err = yaml.UnmarshalStrict([]byte(fileContents), out)
+	if err != nil {
+		return fmt.Errorf("unmarshalling YAML file contents: %w", err)
+	}
+	return nil
 }

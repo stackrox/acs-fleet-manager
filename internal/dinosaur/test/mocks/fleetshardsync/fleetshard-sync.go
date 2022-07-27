@@ -37,19 +37,19 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, priv
 	for _, cluster := range clusters {
 		managedDinosaurAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.DinosaurOperatorAddonID)
 		if err != nil {
-			return err
+			return fmt.Errorf("retrieving ocmClient operator addon for cluster ID %q and addon ID %q: %w", cluster.ClusterID, ocmConfig.DinosaurOperatorAddonID, err)
 		}
 
 		fleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.FleetshardAddonID)
 		if err != nil {
-			return err
+			return fmt.Errorf("retrieving ocmClient FleetShard addon for cluster ID %q and addon ID %q: %w", cluster.ClusterID, ocmConfig.FleetshardAddonID, err)
 		}
 
 		if managedDinosaurAddon.State() == clustersmgmtv1.AddOnInstallationStateReady && (fleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateReady || fleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateInstalling) {
 			ctx := NewAuthenticatedContextForDataPlaneCluster(helper, cluster.ClusterID)
 			clusterStatusUpdateRequest := SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 			if _, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, cluster.ClusterID, *clusterStatusUpdateRequest); err != nil {
-				return fmt.Errorf("failed to update cluster status via agent endpoint: %v", err)
+				return fmt.Errorf("updating cluster status via agent endpoint for cluster ID %q: %v", cluster.ClusterID, err)
 			}
 		}
 	}
@@ -88,7 +88,7 @@ var defaultUpdateDinosaurStatusFunc = func(helper *coreTest.Helper, privateClien
 
 		dinosaurList, _, err := privateClient.AgentClustersApi.GetCentrals(ctx, dataplaneCluster.ClusterID)
 		if err != nil {
-			return err
+			return fmt.Errorf("retrieving Centrals for cluster ID %q: %w", dataplaneCluster.ClusterID, err)
 		}
 
 		dinosaurStatusList := make(map[string]private.DataPlaneCentralStatus)
@@ -103,7 +103,7 @@ var defaultUpdateDinosaurStatusFunc = func(helper *coreTest.Helper, privateClien
 		}
 
 		if _, err = privateClient.AgentClustersApi.UpdateCentralClusterStatus(ctx, dataplaneCluster.ClusterID, dinosaurStatusList); err != nil {
-			return err
+			return fmt.Errorf("updating central status for cluster %s: %w", dataplaneCluster.ClusterID, err)
 		}
 	}
 	return nil

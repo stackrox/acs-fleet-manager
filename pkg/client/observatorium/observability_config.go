@@ -1,6 +1,7 @@
 package observatorium
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -93,7 +94,11 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 	}
 
 	if c.ObservabilityConfigAccessToken == "" && c.ObservabilityConfigAccessTokenFile != "" {
-		return shared.ReadFileValueString(c.ObservabilityConfigAccessTokenFile, &c.ObservabilityConfigAccessToken)
+		err := shared.ReadFileValueString(c.ObservabilityConfigAccessTokenFile, &c.ObservabilityConfigAccessToken)
+		if err != nil {
+			return fmt.Errorf("reading observability config access token file: %w", err)
+		}
+		return nil
 	}
 	return nil
 }
@@ -102,22 +107,22 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 func (c *ObservabilityConfiguration) ReadObservatoriumConfigFiles() error {
 	logsClientIDErr := shared.ReadFileValueString(c.LogsClientIDFile, &c.LogsClientID)
 	if logsClientIDErr != nil {
-		return logsClientIDErr
+		return fmt.Errorf("reading observatorium config client ID file: %w", logsClientIDErr)
 	}
 
 	logsSecretErr := shared.ReadFileValueString(c.LogsSecretFile, &c.LogsSecret)
 	if logsSecretErr != nil {
-		return logsSecretErr
+		return fmt.Errorf("reading observatorium config secret file: %w", logsSecretErr)
 	}
 
 	metricsClientIDErr := shared.ReadFileValueString(c.MetricsClientIDFile, &c.MetricsClientID)
 	if metricsClientIDErr != nil {
-		return metricsClientIDErr
+		return fmt.Errorf("reading observatorium config metrics client ID file: %w", metricsClientIDErr)
 	}
 
 	metricsSecretErr := shared.ReadFileValueString(c.MetricsSecretFile, &c.MetricsSecret)
 	if metricsSecretErr != nil {
-		return metricsSecretErr
+		return fmt.Errorf("reading observatorium config metrics secret file: %w", metricsSecretErr)
 	}
 
 	return nil

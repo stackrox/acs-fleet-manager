@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
@@ -96,7 +97,12 @@ func (r *Runtime) Start() error {
 		return r.config.RuntimePollPeriod, nil
 	}, 10*time.Minute, backoff)
 
-	return ticker.Start()
+	err := ticker.Start()
+	if err != nil {
+		return fmt.Errorf("starting ticker: %w", err)
+	}
+
+	return nil
 }
 
 func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error) {

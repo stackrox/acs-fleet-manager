@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"strings"
 
 	semver "github.com/blang/semver/v4"
@@ -22,12 +23,12 @@ import (
 func buildAwareSemanticVersioningCompare(v1, v2 string) (int, error) {
 	v1Semver, err := semver.ParseTolerant(v1)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("parsing first version: %w", err)
 	}
 
 	v2Semver, err := semver.ParseTolerant(v2)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("parsing second version: %w", err)
 	}
 
 	res := v1Semver.Compare(v2Semver)
@@ -53,12 +54,12 @@ func buildAwareSemanticVersioningCompare(v1, v2 string) (int, error) {
 func checkIfMinorDowngrade(current, desired string) (int, error) {
 	currentSemver, err := semver.ParseTolerant(current)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("parsing current semantic version: %w", err)
 	}
 
 	desiredSemver, err := semver.ParseTolerant(desired)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("parsing desired semantic version: %w", err)
 	}
 	if currentSemver.Major < desiredSemver.Major {
 		return -1, nil
@@ -67,9 +68,9 @@ func checkIfMinorDowngrade(current, desired string) (int, error) {
 		return 1, nil
 	}
 	if currentSemver.Minor == desiredSemver.Minor {
-		return 0, err
+		return 0, nil
 	} else if currentSemver.Minor > desiredSemver.Minor {
-		return 1, err
+		return 1, nil
 	}
 	return -1, nil
 }

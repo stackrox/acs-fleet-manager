@@ -36,7 +36,11 @@ func NewAuth(t string) (Auth, error) {
 		return nil, errors.Errorf("invalid auth type found: %q, must be one of [%s]",
 			t, strings.Join(getAllAuthTypes(), ","))
 	}
-	return factory.CreateAuth()
+	auth, err := factory.CreateAuth()
+	if err != nil {
+		return auth, fmt.Errorf("creating Auth: %w", err)
+	}
+	return auth, nil
 }
 
 // setBearer is a helper to set a bearer token as authorization header on the http.Request.

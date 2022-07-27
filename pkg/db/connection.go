@@ -109,9 +109,14 @@ func (f *ConnectionFactory) CheckConnection() error {
 func (f *ConnectionFactory) close() error {
 	sqlDB, sqlDBErr := f.DB.DB()
 	if sqlDBErr != nil {
-		return sqlDBErr
+		return fmt.Errorf("getting DB connection: %w", sqlDBErr)
 	}
-	return sqlDB.Close()
+
+	err := sqlDB.Close()
+	if err != nil {
+		return fmt.Errorf("closing SQL DB: %w", err)
+	}
+	return nil
 }
 
 // By default do no roll back transaction.
@@ -132,7 +137,7 @@ type txFactory struct {
 func (f *ConnectionFactory) newTransaction() (*txFactory, error) {
 	sqlDB, sqlDBErr := f.DB.DB()
 	if sqlDBErr != nil {
-		return nil, sqlDBErr
+		return nil, fmt.Errorf("getting DB connection: %w", sqlDBErr)
 	}
 	tx := &txFactory{
 		db: sqlDB,
@@ -143,7 +148,7 @@ func (f *ConnectionFactory) newTransaction() (*txFactory, error) {
 func (f *txFactory) begin() error {
 	tx, err := f.db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("beginning DB transaction: %w", err)
 	}
 
 	var txid int64
@@ -154,7 +159,7 @@ func (f *txFactory) begin() error {
 	if row != nil {
 		err := row.Scan(&txid)
 		if err != nil {
-			return err
+			return fmt.Errorf("scanning row: %w", err)
 		}
 	}
 

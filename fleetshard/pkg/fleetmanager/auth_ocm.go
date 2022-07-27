@@ -1,6 +1,7 @@
 package fleetmanager
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -36,7 +37,7 @@ func (f *ocmAuthFactory) GetName() string {
 func (f *ocmAuthFactory) CreateAuth() (Auth, error) {
 	cfg, err := config.Singleton()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating the config singleton: %w", err)
 	}
 	initialToken := cfg.OCMRefreshToken
 	if initialToken == "" {
@@ -45,7 +46,7 @@ func (f *ocmAuthFactory) CreateAuth() (Auth, error) {
 
 	l, err := sdk.NewGlogLoggerBuilder().Build()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating Glog logger: %w", err)
 	}
 
 	builder := sdk.NewConnectionBuilder().
@@ -56,11 +57,11 @@ func (f *ocmAuthFactory) CreateAuth() (Auth, error) {
 	// Check if the connection can be established and tokens can be retrieved.
 	conn, err := builder.Build()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating connection: %w", err)
 	}
 	_, _, err = conn.Tokens()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("retrieving tokens: %w", err)
 	}
 
 	return &ocmAuth{

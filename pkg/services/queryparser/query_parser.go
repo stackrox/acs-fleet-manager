@@ -208,7 +208,7 @@ func (p *queryParser) Parse(sql string) (*DBQuery, error) {
 	}
 
 	if err := state.eof(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unexpected EOF during parsing of database query: %w", err)
 	}
 
 	if err := checkBalancedBraces(); err != nil {

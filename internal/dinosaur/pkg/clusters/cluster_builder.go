@@ -1,6 +1,8 @@
 package clusters
 
 import (
+	"fmt"
+
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
@@ -79,7 +81,11 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 	// Set compute node size
 	clusterBuilder.Nodes(clustersmgmtv1.NewClusterNodes().ComputeMachineType(clustersmgmtv1.NewMachineType().ID(r.dataplaneClusterConfig.ComputeMachineType)))
 
-	return clusterBuilder.Build()
+	cluster, err := clusterBuilder.Build()
+	if err != nil {
+		return cluster, fmt.Errorf("building cluster: %w", err)
+	}
+	return cluster, nil
 }
 
 // validate validate the state of the clusterBuilder struct.

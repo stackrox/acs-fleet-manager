@@ -154,10 +154,14 @@ func (s *APIServer) Serve(listener net.Listener) {
 	glog.Info("Web server terminated")
 }
 
-// Listen only start the listener, not the server.
+// Listen only starts the listener, not the server.
 // Useful for breaking up ListenAndServer (Start) when you require the server to be listening before continuing
 func (s *APIServer) Listen() (listener net.Listener, err error) {
-	return net.Listen("tcp", s.serverConfig.BindAddress)
+	l, err := net.Listen("tcp", s.serverConfig.BindAddress)
+	if err != nil {
+		return l, fmt.Errorf("starting the listener: %w", err)
+	}
+	return l, nil
 }
 
 // Start ...

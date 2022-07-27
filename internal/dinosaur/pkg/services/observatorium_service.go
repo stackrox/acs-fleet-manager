@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -31,7 +32,11 @@ type ObservatoriumService interface {
 
 // GetDinosaurState ...
 func (obs observatoriumService) GetDinosaurState(name string, namespaceName string) (observatorium.DinosaurState, error) {
-	return obs.observatorium.Service.GetDinosaurState(name, namespaceName)
+	state, err := obs.observatorium.Service.GetDinosaurState(name, namespaceName)
+	if err != nil {
+		return state, fmt.Errorf("getting dinosaur state for %q in namespace %q: %w", name, namespaceName, err)
+	}
+	return state, nil
 }
 
 // GetMetricsByDinosaurID ...

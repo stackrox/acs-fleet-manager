@@ -85,7 +85,7 @@ func NewClient(config *Configuration) (*Client, error) {
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating new client: %w", err)
 	}
 	client.connection = pV1.NewAPI(apiClient)
 	client.Service = &ServiceObservatorium{client: client}
@@ -132,21 +132,34 @@ func (p observatoriumRoundTripper) RoundTrip(request *http.Request) (*http.Respo
 	metrics.IncreaseObservatoriumRequestCount(statusCode, path, request.Method)
 	metrics.UpdateObservatoriumRequestDurationMetric(statusCode, path, request.Method, elapsedTime)
 
-	return resp, err
+	if err != nil {
+		return resp, fmt.Errorf("executing round trip: %w", err)
+	}
+	return resp, nil
 }
 
 // Send a POST request to server.
 func (c *Client) send(query string) (pModel.Value, pV1.Warnings, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.Config.Timeout)
 	defer cancel()
-	return c.connection.Query(ctx, query, time.Now())
+
+	v, w, err := c.connection.Query(ctx, query, time.Now())
+	if err != nil {
+		return v, w, fmt.Errorf("executing POST request: %w", err)
+	}
+	return v, w, nil
 }
 
 // Send a POST request to server.
 func (c *Client) sendRange(query string, bounds pV1.Range) (pModel.Value, pV1.Warnings, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.Config.Timeout)
 	defer cancel()
-	return c.connection.QueryRange(ctx, query, bounds)
+
+	v, w, err := c.connection.QueryRange(ctx, query, bounds)
+	if err != nil {
+		return v, w, fmt.Errorf("executing range POST request: %w", err)
+	}
+	return v, w, nil
 
 }
 
