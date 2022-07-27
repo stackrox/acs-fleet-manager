@@ -120,9 +120,9 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			Entry("should allow access to fleet manager's public API endpoints",
 				publicAPI, false, 0, false),
 			Entry("should allow access to fleet manager's internal API endpoints in non-prod environment",
-				internalAPI, false, 0, skipOnNonProd),
+				internalAPI, false, 0, skipOnProd),
 			Entry("should not allow access to fleet manager's internal API endpoints in prod environment",
-				internalAPI, true, http.StatusNotFound, skipOnProd),
+				internalAPI, true, http.StatusNotFound, skipOnNonProd),
 			Entry("should not allow access to fleet manager's the admin API",
 				adminAPI, true, http.StatusNotFound, false),
 		)
