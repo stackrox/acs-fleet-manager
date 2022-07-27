@@ -190,7 +190,7 @@ func (c *rhSSOClient) GetServiceAccount(accessToken string, clientID string) (*s
 	if err != nil {
 		return nil, false, fmt.Errorf("getting service accounts: %w", err)
 	}
-	return &serviceAccount, err == nil, nil
+	return &serviceAccount, true, nil
 }
 
 // CreateServiceAccount ...

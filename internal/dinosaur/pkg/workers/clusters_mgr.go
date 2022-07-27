@@ -493,7 +493,7 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 
 	updateStatusErr := c.ClusterService.UpdateStatus(cluster, api.ClusterDeprovisioning)
 	if updateStatusErr != nil {
-		return false, fmt.Errorf("reconciling empty cluster: %w", updateStatusErr)
+		return false, fmt.Errorf("updating status for cluster %s to %s: %w", cluster.ClusterID, api.ClusterDeprovisioning, updateStatusErr)
 	}
 	return true, nil
 }

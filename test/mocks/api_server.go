@@ -642,7 +642,7 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 	case *clustersmgmtv1.AddOnInstallation:
 		err := clustersmgmtv1.MarshalAddOnInstallation(v, w)
 		if err != nil {
-			return fmt.Errorf("marshalling AddOnnInstallation: %w", err)
+			return fmt.Errorf("marshalling AddOnInstallation: %w", err)
 		}
 		return nil
 	case []*clustersmgmtv1.AddOnInstallation:

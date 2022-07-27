@@ -109,7 +109,7 @@ func (f *ConnectionFactory) CheckConnection() error {
 func (f *ConnectionFactory) close() error {
 	sqlDB, sqlDBErr := f.DB.DB()
 	if sqlDBErr != nil {
-		return fmt.Errorf("getting DB object: %w", sqlDBErr)
+		return fmt.Errorf("getting DB connection: %w", sqlDBErr)
 	}
 
 	err := sqlDB.Close()
@@ -137,7 +137,7 @@ type txFactory struct {
 func (f *ConnectionFactory) newTransaction() (*txFactory, error) {
 	sqlDB, sqlDBErr := f.DB.DB()
 	if sqlDBErr != nil {
-		return nil, fmt.Errorf("getting DB object: %w", sqlDBErr)
+		return nil, fmt.Errorf("getting DB connection: %w", sqlDBErr)
 	}
 	tx := &txFactory{
 		db: sqlDB,
