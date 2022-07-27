@@ -464,7 +464,7 @@ func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredD
 	// parse resource obj to unstructure.Unstructered
 	data, err := json.Marshal(resource)
 	if err != nil {
-		return nil, fmt.Errorf("marshalling resource of type %T with value %v into JSON: %w", resource, resource, err)
+		return nil, fmt.Errorf("marshalling resource into JSON: %w", err)
 	}
 
 	var obj unstructured.Unstructured

@@ -63,7 +63,7 @@ func ReadFile(file string) (string, error) {
 	// Read the file
 	buf, err := ioutil.ReadFile(absFilePath)
 	if err != nil {
-		return "", fmt.Errorf("reading config file: %w", err)
+		return "", fmt.Errorf("reading file %q: %w", absFilePath, err)
 	}
 	return string(buf), nil
 }
