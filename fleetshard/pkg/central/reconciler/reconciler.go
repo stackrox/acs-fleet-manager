@@ -287,7 +287,7 @@ func (r CentralReconciler) ensureNamespaceExists(name string) error {
 		if apiErrors.IsNotFound(err) {
 			err = r.client.Create(context.Background(), namespace)
 			if err != nil {
-				return nil
+				return fmt.Errorf("creating namespace %q: %w", name, err)
 			}
 		}
 	}
