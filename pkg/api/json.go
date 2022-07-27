@@ -66,7 +66,7 @@ func (j JSON) Object() (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 	err := json.Unmarshal(j, &result)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshalling json: %w", err)
+		return result, fmt.Errorf("unmarshalling json: %w", err)
 	}
 	return result, nil
 }

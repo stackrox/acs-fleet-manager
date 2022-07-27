@@ -362,7 +362,7 @@ func (o *OCMProvider) createSyncSet(clusterID string, resourceSet types.Resource
 
 	syncset, err := o.ocmClient.CreateSyncSet(clusterID, syncset)
 	if err != nil {
-		return nil, fmt.Errorf("creating SyncSet for cluster %q: %w", clusterID, err)
+		return syncset, fmt.Errorf("creating SyncSet for cluster %q: %w", clusterID, err)
 	}
 	return syncset, nil
 }
@@ -376,7 +376,7 @@ func (o *OCMProvider) updateSyncSet(clusterID string, resourceSet types.Resource
 		glog.V(5).Infof("SyncSet for cluster %s is changed, will update", clusterID)
 		updatedSyncSet, err := o.ocmClient.UpdateSyncSet(clusterID, resourceSet.Name, syncset)
 		if err != nil {
-			return nil, fmt.Errorf("updating SyncSet %q for cluster %q: %w", resourceSet.Name, clusterID, err)
+			return updatedSyncSet, fmt.Errorf("updating SyncSet %q for cluster %q: %w", resourceSet.Name, clusterID, err)
 		}
 		return updatedSyncSet, nil
 	}

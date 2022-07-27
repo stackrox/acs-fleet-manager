@@ -43,7 +43,7 @@ func modifySecrets(schemaBytes, doc []byte, f func(node *ajson.Node) error) ([]b
 	}
 	bytes, err := ajson.Marshal(root)
 	if err != nil {
-		return nil, fmt.Errorf("marshalling: %w", err)
+		return bytes, fmt.Errorf("marshalling: %w", err)
 	}
 	return bytes, nil
 }

@@ -56,7 +56,7 @@ func loadConfig() {
 func Singleton() (*Config, error) {
 	once.Do(loadConfig)
 	if cfgErr != nil {
-		return nil, fmt.Errorf("loading configuration: %w", cfgErr)
+		return cfg, fmt.Errorf("loading configuration: %w", cfgErr)
 	}
 	return cfg, nil
 }

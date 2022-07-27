@@ -153,7 +153,7 @@ func WaitForDinosaurClusterIDToBeAssigned(dbFactory *db.ConnectionFactory, dinos
 		}).Build().Poll()
 
 	if dinosaurErr != nil {
-		return nil, fmt.Errorf("waiting for dinosaur cluster ID to be assigned: %w", dinosaurErr)
+		return dinosaurFound, fmt.Errorf("waiting for dinosaur cluster ID to be assigned: %w", dinosaurErr)
 	}
 	return dinosaurFound, nil
 }

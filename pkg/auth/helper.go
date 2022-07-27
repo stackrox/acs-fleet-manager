@@ -149,7 +149,7 @@ func (authHelper *AuthHelper) GetJWTFromSignedToken(signedToken string) (*jwt.To
 		return authHelper.JWTCA, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("getting JWT from signed token: %w", err)
+		return token, fmt.Errorf("getting JWT from signed token: %w", err)
 	}
 	return token, nil
 }

@@ -546,7 +546,7 @@ func applyChangesFn(client dynamic.ResourceInterface, desiredObj *unstructured.U
 			FieldManager: fieldManager,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("creating new object: %w", err)
+			return newObj, fmt.Errorf("creating new object: %w", err)
 		}
 		return newObj, nil
 	}
@@ -559,7 +559,7 @@ func applyChangesFn(client dynamic.ResourceInterface, desiredObj *unstructured.U
 		FieldManager: fieldManager,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("updating object: %w", err)
+		return updatedObj, fmt.Errorf("updating object: %w", err)
 	}
 	return updatedObj, nil
 }
