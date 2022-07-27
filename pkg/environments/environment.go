@@ -49,7 +49,7 @@ func New(name string, options ...di.Option) (env *Env, err error) {
 
 	env.ConfigContainer, err = di.New(append(options, di.ProvideValue(env))...)
 	if err != nil {
-		return nil, fmt.Errorf("creating env: %w", err)
+		return nil, fmt.Errorf("initializing dependency injection: %w", err)
 	}
 
 	return env, nil
