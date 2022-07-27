@@ -58,7 +58,7 @@ func readDenyListConfigFile(file string, val *DeniedUsers) error {
 
 	err = yaml.UnmarshalStrict([]byte(fileContents), val)
 	if err != nil {
-		return fmt.Errorf("unmarshalling file %q contents: %w", file, err)
+		return fmt.Errorf("unmarshalling file %q: %w", file, err)
 	}
 	return nil
 }

@@ -64,27 +64,27 @@ func (c *DatabaseConfig) ReadFiles() error {
 
 	err := shared.ReadFileValueString(c.HostFile, &c.Host)
 	if err != nil {
-		return fmt.Errorf("reading host value from file: %w", err)
+		return fmt.Errorf("reading database host file: %w", err)
 	}
 
 	err = shared.ReadFileValueInt(c.PortFile, &c.Port)
 	if err != nil {
-		return fmt.Errorf("reading port value from file: %w", err)
+		return fmt.Errorf("reading database port file: %w", err)
 	}
 
 	err = shared.ReadFileValueString(c.UsernameFile, &c.Username)
 	if err != nil {
-		return fmt.Errorf("reading username value from file: %w", err)
+		return fmt.Errorf("reading database username file: %w", err)
 	}
 
 	err = shared.ReadFileValueString(c.PasswordFile, &c.Password)
 	if err != nil {
-		return fmt.Errorf("reading password value from file: %w", err)
+		return fmt.Errorf("reading database password file: %w", err)
 	}
 
 	err = shared.ReadFileValueString(c.NameFile, &c.Name)
 	if err != nil {
-		return fmt.Errorf("reading name value from file: %w", err)
+		return fmt.Errorf("reading database name file: %w", err)
 	}
 	return nil
 }

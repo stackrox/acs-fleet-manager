@@ -342,7 +342,7 @@ func (r CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remot
 		return fmt.Errorf("retrieving reencrypt route for namespace %q: %w", namespace, err)
 	}
 
-	if err != nil && apiErrors.IsNotFound(err) {
+	if apiErrors.IsNotFound(err) {
 		err = r.routeService.CreateReencryptRoute(ctx, remoteCentral)
 		if err != nil {
 			return fmt.Errorf("creating reencrypt route for central %s: %w", remoteCentral.Id, err)

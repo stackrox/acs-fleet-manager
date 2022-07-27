@@ -264,7 +264,7 @@ func (c client) CreateAddonWithParams(clusterID string, addonID string, params [
 	}
 	addonInstallation, err := addonInstallationBuilder.Build()
 	if err != nil {
-		return nil, fmt.Errorf("building addonInstallation: %w", err)
+		return nil, fmt.Errorf("building addon installation: %w", err)
 	}
 	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().Add().Body(addonInstallation).Send()
 	if err != nil {
