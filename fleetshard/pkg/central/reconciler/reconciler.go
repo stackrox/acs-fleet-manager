@@ -278,8 +278,11 @@ func (r CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) 
 		},
 	}
 	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Name: name}, namespace)
-	// do not wrap this error, because `apiErrors.isNotFound()` does not work with wrapped errors
-	return namespace, err //nolint:wrapcheck
+	if err != nil {
+		// Propagate corev1.Namespace to the caller so that the namespace can be easily created
+		return namespace, fmt.Errorf("retrieving resource for namespace %q from Kubernetes: %w", name, err)
+	}
+	return namespace, nil
 }
 
 func (r CentralReconciler) ensureNamespaceExists(name string) error {
