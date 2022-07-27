@@ -14,6 +14,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	api "github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -69,6 +70,23 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	centralMonitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
 
+	centralResources, err := api.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Central.Resources)
+	if err != nil {
+		return nil, errors.Wrap(err, "converting Central resources")
+	}
+	scannerAnalyzerResources, err := api.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Scanner.Analyzer.Resources)
+	if err != nil {
+		return nil, errors.Wrap(err, "converting Scanner Analyzer resources")
+	}
+	scannerAnalyzerScaling, err := api.ConvertPrivateScalingToV1(&remoteCentral.Spec.Scanner.Analyzer.Scaling)
+	if err != nil {
+		return nil, errors.Wrap(err, "converting Scanner Scaling resources")
+	}
+	scannerDbResources, err := api.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Scanner.Db.Resources)
+	if err != nil {
+		return nil, errors.Wrap(err, "converting Scanner DB resources")
+	}
+
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
@@ -84,6 +102,20 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				},
 				Monitoring: &v1alpha1.Monitoring{
 					ExposeEndpoint: &centralMonitoringExposeEndpointEnabled,
+				},
+				DeploymentSpec: v1alpha1.DeploymentSpec{
+					Resources: centralResources,
+				},
+			},
+			Scanner: &v1alpha1.ScannerComponentSpec{
+				Analyzer: &v1alpha1.ScannerAnalyzerComponent{
+					DeploymentSpec: v1alpha1.DeploymentSpec{
+						Resources: scannerAnalyzerResources,
+					},
+					Scaling: scannerAnalyzerScaling,
+				},
+				DB: &v1alpha1.DeploymentSpec{
+					Resources: scannerDbResources,
 				},
 			},
 		},

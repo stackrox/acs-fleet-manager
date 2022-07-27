@@ -16,6 +16,7 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -51,6 +52,36 @@ type AuthSpec struct {
 	OwnerOrgID   string `json:"ownerOrgId,omitempty"`
 }
 
+// CentralSpec ...
+type CentralSpec struct {
+	Resources corev1.ResourceRequirements `json:"resources"`
+}
+
+// ScannerAnalyzerScaling ...
+type ScannerAnalyzerScaling struct {
+	AutoScaling string `json:"autoScaling,omitempty"`
+	Replicas    int32  `json:"replicas,omitempty"`
+	MinReplicas int32  `json:"minReplicas,omitempty"`
+	MaxReplicas int32  `json:"maxReplicas,omitempty"`
+}
+
+// ScannerAnalyzerSpec ...
+type ScannerAnalyzerSpec struct {
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	Scaling   ScannerAnalyzerScaling      `json:"scaling,omitempty"`
+}
+
+// ScannerDbSpec ...
+type ScannerDbSpec struct {
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+}
+
+// ScannerSpec ...
+type ScannerSpec struct {
+	Analyzer ScannerAnalyzerSpec `json:"analyzer,omitempty"`
+	Db       ScannerDbSpec       `json:"db,omitempty"`
+}
+
 // ManagedDinosaurSpec ...
 type ManagedDinosaurSpec struct {
 	Auth     AuthSpec     `json:"auth"`
@@ -58,6 +89,8 @@ type ManagedDinosaurSpec struct {
 	Versions VersionsSpec `json:"versions"`
 	Deleted  bool         `json:"deleted"`
 	Owners   []string     `json:"owners"`
+	Central  CentralSpec  `json:"central"`
+	Scanner  ScannerSpec  `json:"scanner"`
 }
 
 // ManagedDinosaur ...
