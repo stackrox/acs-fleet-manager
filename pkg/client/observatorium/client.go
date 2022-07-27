@@ -145,7 +145,7 @@ func (c *Client) send(query string) (pModel.Value, pV1.Warnings, error) {
 
 	v, w, err := c.connection.Query(ctx, query, time.Now())
 	if err != nil {
-		return nil, nil, fmt.Errorf("executing POST request: %w", err)
+		return v, w, fmt.Errorf("executing POST request: %w", err)
 	}
 	return v, w, nil
 }
@@ -157,7 +157,7 @@ func (c *Client) sendRange(query string, bounds pV1.Range) (pModel.Value, pV1.Wa
 
 	v, w, err := c.connection.QueryRange(ctx, query, bounds)
 	if err != nil {
-		return nil, nil, fmt.Errorf("executing range POST request: %w", err)
+		return v, w, fmt.Errorf("executing range POST request: %w", err)
 	}
 	return v, w, nil
 
