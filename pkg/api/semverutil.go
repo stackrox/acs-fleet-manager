@@ -23,12 +23,12 @@ import (
 func buildAwareSemanticVersioningCompare(v1, v2 string) (int, error) {
 	v1Semver, err := semver.ParseTolerant(v1)
 	if err != nil {
-		return 0, fmt.Errorf("comparing versions: %w", err)
+		return 0, fmt.Errorf("parsing first version: %w", err)
 	}
 
 	v2Semver, err := semver.ParseTolerant(v2)
 	if err != nil {
-		return 0, fmt.Errorf("comparing versions: %w", err)
+		return 0, fmt.Errorf("parsing second version: %w", err)
 	}
 
 	res := v1Semver.Compare(v2Semver)
