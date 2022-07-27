@@ -31,4 +31,7 @@ RUN mkdir -p /stackrox/crds && \
     https://raw.githubusercontent.com/stackrox/stackrox/release/3.70.x/operator/config/crd/bases/platform.stackrox.io_centrals.yaml && \
     curl -L --retry 10 --silent --show-error --fail -o /stackrox/crds/platform.stackrox.io_securedclusters.yaml \
     https://raw.githubusercontent.com/stackrox/stackrox/release/3.70.x/operator/config/crd/bases/platform.stackrox.io_securedclusters.yaml
+RUN curl -L --retry 10 --silent --show-error --fail -o "/usr/local/bin/ocm" \
+    https://github.com/openshift-online/ocm-cli/releases/download/v0.1.30/ocm-linux-amd64 && \
+    chmod +x /usr/local/bin/ocm
 ENV PATH="/usr/local/lib/nodejs/node-v16.15.1-linux-x64/bin:${PATH}"
