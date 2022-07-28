@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	centralReencryptRouteName = "central-reencrypt"
-	centralMTLSRouteName      = "central-mtls"
-	centralTLSSecretName      = "central-tls"
+	centralReencryptRouteName   = "managed-central-reencrypt"
+	centralPassthroughRouteName = "managed-central-passthrough"
+	centralTLSSecretName        = "central-tls"
 )
 
 // RouteService is responsible for performing read and write operations on the OpenShift Route objects in the cluster.
@@ -36,14 +36,19 @@ func (s *RouteService) FindReencryptRoute(ctx context.Context, namespace string)
 	return s.findRoute(ctx, namespace, centralReencryptRouteName)
 }
 
+// FindPassthroughRoute returns central passthrough route or error if not found.
+func (s *RouteService) FindPassthroughRoute(ctx context.Context, namespace string) (*openshiftRouteV1.Route, error) {
+	return s.findRoute(ctx, namespace, centralPassthroughRouteName)
+}
+
 // FindReencryptIngress returns central reencrypt route ingress or error if not found.
 func (s *RouteService) FindReencryptIngress(ctx context.Context, namespace string) (*openshiftRouteV1.RouteIngress, error) {
 	return s.findFirstAdmittedIngress(ctx, namespace, centralReencryptRouteName)
 }
 
-// FindMTLSIngress returns central MTLS route ingress or error if not found.
-func (s *RouteService) FindMTLSIngress(ctx context.Context, namespace string) (*openshiftRouteV1.RouteIngress, error) {
-	return s.findFirstAdmittedIngress(ctx, namespace, centralMTLSRouteName)
+// FindPassthroughIngress returns central passthrough route ingress or error if not found.
+func (s *RouteService) FindPassthroughIngress(ctx context.Context, namespace string) (*openshiftRouteV1.RouteIngress, error) {
+	return s.findFirstAdmittedIngress(ctx, namespace, centralPassthroughRouteName)
 }
 
 // FindFirstAdmittedIngress returns first admitted ingress or error if not found
@@ -108,6 +113,35 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 	err = s.client.Create(ctx, route)
 	if err != nil {
 		return fmt.Errorf("creating reencrypt route: %w", err)
+	}
+	return nil
+}
+
+// CreatePassthroughRoute creates a new managed central passthrough route.
+func (s *RouteService) CreatePassthroughRoute(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	route := &openshiftRouteV1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      centralPassthroughRouteName,
+			Namespace: remoteCentral.Metadata.Namespace,
+			Labels:    map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
+		},
+		Spec: openshiftRouteV1.RouteSpec{
+			Host: remoteCentral.Spec.DataEndpoint.Host,
+			Port: &openshiftRouteV1.RoutePort{
+				TargetPort: intstr.IntOrString{Type: intstr.String, StrVal: "https"},
+			},
+			To: openshiftRouteV1.RouteTargetReference{
+				Kind: "Service",
+				Name: "central",
+			},
+			TLS: &openshiftRouteV1.TLSConfig{
+				Termination: openshiftRouteV1.TLSTerminationPassthrough,
+			},
+		},
+	}
+
+	if err := s.client.Create(ctx, route); err != nil {
+		return fmt.Errorf("creating passthrough route: %w", err)
 	}
 	return nil
 }
