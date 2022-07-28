@@ -12,7 +12,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
@@ -21,9 +20,6 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-
-	manageddinosaur "github.com/stackrox/acs-fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
@@ -73,7 +69,7 @@ type DinosaurService interface {
 	// The Dinosaur Request in the database will be updated with a deleted_at timestamp.
 	Delete(*dbapi.CentralRequest) *errors.ServiceError
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError)
-	GetManagedDinosaurByClusterID(clusterID string) ([]manageddinosaur.ManagedDinosaur, *errors.ServiceError)
+	ListByClusterID(clusterID string) ([]*dbapi.CentralRequest, *errors.ServiceError)
 	RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	ListByStatus(status ...constants2.DinosaurStatus) ([]*dbapi.CentralRequest, *errors.ServiceError)
 	// UpdateStatus change the status of the Dinosaur cluster
@@ -567,8 +563,8 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 	return dinosaurRequestList, pagingMeta, nil
 }
 
-// GetManagedDinosaurByClusterID ...
-func (k *dinosaurService) GetManagedDinosaurByClusterID(clusterID string) ([]manageddinosaur.ManagedDinosaur, *errors.ServiceError) {
+// ListByClusterID returns a list of CentralRequests with specified clusterID
+func (k *dinosaurService) ListByClusterID(clusterID string) ([]*dbapi.CentralRequest, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New().
 		Where("cluster_id = ?", clusterID).
 		Where("status IN (?)", dinosaurManagedCRStatuses).
@@ -579,14 +575,7 @@ func (k *dinosaurService) GetManagedDinosaurByClusterID(clusterID string) ([]man
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list dinosaur requests")
 	}
 
-	var res []manageddinosaur.ManagedDinosaur
-	// convert dinosaur requests to managed dinosaur
-	for _, dinosaurRequest := range dinosaurRequestList {
-		mk := BuildManagedDinosaurCR(dinosaurRequest, k.dinosaurConfig, k.iamService.GetConfig())
-		res = append(res, *mk)
-	}
-
-	return res, nil
+	return dinosaurRequestList, nil
 }
 
 // Update ...
@@ -821,65 +810,6 @@ func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralR
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list dinosaur requests")
 	}
 	return results, nil
-}
-
-// BuildManagedDinosaurCR ...
-func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfig *config.DinosaurConfig, iamConfig *iam.IAMConfig) *manageddinosaur.ManagedDinosaur {
-	managedDinosaurCR := &manageddinosaur.ManagedDinosaur{
-		ID: dinosaurRequest.ID,
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ManagedCentral",
-			APIVersion: "manageddinosaur.mas/v1alpha1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      dinosaurRequest.Name,
-			Namespace: dinosaurRequest.Namespace,
-			Annotations: map[string]string{
-				"mas/id":          dinosaurRequest.ID,
-				"mas/placementId": dinosaurRequest.PlacementID,
-			},
-		},
-		Spec: manageddinosaur.ManagedDinosaurSpec{
-			Auth: manageddinosaur.AuthSpec{
-				ClientSecret: dinosaurConfig.RhSsoClientSecret,
-				// TODO: ROX-11593: make part of dinosaurConfig
-				ClientID:    "rhacs-ms-dev",
-				OwnerOrgID:  dinosaurRequest.OrganisationID,
-				OwnerUserID: dinosaurRequest.OwnerUserID,
-				Issuer:      dinosaurConfig.RhSsoIssuer,
-			},
-			Endpoint: manageddinosaur.EndpointSpec{
-				Host: dinosaurRequest.Host,
-				TLS: &manageddinosaur.TLSSpec{
-					Cert: dinosaurConfig.DinosaurTLSCert,
-					Key:  dinosaurConfig.DinosaurTLSKey,
-				},
-			},
-			Versions: manageddinosaur.VersionsSpec{
-				Dinosaur:         dinosaurRequest.DesiredCentralVersion,
-				DinosaurOperator: dinosaurRequest.DesiredCentralOperatorVersion,
-			},
-			Deleted: dinosaurRequest.Status == constants2.DinosaurRequestStatusDeprovision.String(),
-			Owners: []string{
-				dinosaurRequest.Owner,
-			},
-		},
-		Status:        manageddinosaur.ManagedDinosaurStatus{},
-		RequestStatus: dinosaurRequest.Status,
-	}
-
-	if dinosaurConfig.EnableDinosaurExternalCertificate {
-		managedDinosaurCR.Spec.Endpoint.TLS = &manageddinosaur.TLSSpec{
-			Cert: dinosaurConfig.DinosaurTLSCert,
-			Key:  dinosaurConfig.DinosaurTLSKey,
-		}
-	}
-
-	if dinosaurRequest.DeletionTimestamp != nil {
-		managedDinosaurCR.DeletionTimestamp = &metav1.Time{Time: *dinosaurRequest.DeletionTimestamp}
-	}
-
-	return managedDinosaurCR
 }
 
 func buildDinosaurClusterCNAMESRecordBatch(routes []dbapi.DataPlaneCentralRoute, action string) *route53.ChangeBatch {

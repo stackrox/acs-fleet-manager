@@ -15,13 +15,15 @@ import (
 type dataPlaneDinosaurHandler struct {
 	service         services.DataPlaneDinosaurService
 	dinosaurService services.DinosaurService
+	presenter       *presenters.ManagedCentralPresenter
 }
 
 // NewDataPlaneDinosaurHandler ...
-func NewDataPlaneDinosaurHandler(service services.DataPlaneDinosaurService, dinosaurService services.DinosaurService) *dataPlaneDinosaurHandler {
+func NewDataPlaneDinosaurHandler(service services.DataPlaneDinosaurService, dinosaurService services.DinosaurService, presenter *presenters.ManagedCentralPresenter) *dataPlaneDinosaurHandler {
 	return &dataPlaneDinosaurHandler{
 		service:         service,
 		dinosaurService: dinosaurService,
+		presenter:       presenter,
 	}
 }
 
@@ -52,7 +54,7 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 			handlers.ValidateLength(&clusterID, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			managedDinosaurs, err := h.dinosaurService.GetManagedDinosaurByClusterID(clusterID)
+			centralRequests, err := h.dinosaurService.ListByClusterID(clusterID)
 			if err != nil {
 				return nil, err
 			}
@@ -62,8 +64,8 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 				Items: []private.ManagedCentral{},
 			}
 
-			for i := range managedDinosaurs {
-				converted := presenters.PresentManagedDinosaur(&managedDinosaurs[i])
+			for i := range centralRequests {
+				converted := h.presenter.PresentManagedCentral(centralRequests[i])
 				managedDinosaurList.Items = append(managedDinosaurList.Items, converted)
 			}
 			return managedDinosaurList, nil
