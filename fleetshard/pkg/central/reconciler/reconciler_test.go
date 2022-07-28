@@ -26,7 +26,7 @@ const (
 	centralName               = "test-central"
 	centralID                 = "cb45idheg5ip6dq1jo4g"
 	centralNamespace          = "rhacs-" + centralID
-	centralReencryptRouteName = "central-reencrypt"
+	centralReencryptRouteName = "managed-central-reencrypt"
 	conditionTypeReady        = "Ready"
 )
 
