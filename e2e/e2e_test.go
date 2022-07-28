@@ -13,8 +13,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -209,19 +209,19 @@ var _ = Describe("Central", func() {
 
 		It("central resources match configured settings", func() {
 			coreV1Resources := central.Spec.Central.DeploymentSpec.Resources
-			expectedResources, err := api.ConvertPublicResourceRequirementsToCoreV1(&centralResources)
+			expectedResources, err := converters.ConvertPublicResourceRequirementsToCoreV1(&centralResources)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(coreV1Resources).To(Equal(expectedResources))
 		})
 
 		It("scanner analyzer resources match configured settings", func() {
 			coreV1Resources := central.Spec.Scanner.Analyzer.DeploymentSpec.Resources
-			expectedResources, err := api.ConvertPublicResourceRequirementsToCoreV1(&scannerResources)
+			expectedResources, err := converters.ConvertPublicResourceRequirementsToCoreV1(&scannerResources)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(coreV1Resources).To(Equal(expectedResources))
 
 			a := central.Spec.Scanner.Analyzer.Scaling
-			b, err := api.ConvertPublicScalingToV1(&scannerScaling)
+			b, err := converters.ConvertPublicScalingToV1(&scannerScaling)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(a).To(Equal(b))
 		})
