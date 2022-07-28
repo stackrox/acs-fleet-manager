@@ -35,7 +35,7 @@ func (f *ocmAuthFactory) GetName() string {
 
 // CreateAuth ...
 func (f *ocmAuthFactory) CreateAuth() (Auth, error) {
-	cfg, err := config.Singleton()
+	cfg, err := config.GetConfig()
 	if err != nil {
 		return nil, fmt.Errorf("creating the config singleton: %w", err)
 	}

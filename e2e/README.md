@@ -16,6 +16,16 @@ $ CLUSTER_ID=1234567890abcdef1234567890abcdef OCM_TOKEN=$(ocm token --refresh) .
 # Run e2e tests (invalidate cache to run it multiple times)
 $ go clean -testcache && CLUSTER_ID=1234567890abcdef1234567890abcdef RUN_E2E=true OCM_TOKEN=$(ocm token --refresh) go test ./e2e/...
 
+# Run auth e2e tests:
+$ go clean -testcache && CLUSTER_ID=1234567890abcdef1234567890abcdef \
+  RUN_E2E=true \
+  RUN_AUTH_E2E=true \
+  CLUSTER_ID=1234567890abcdef1234567890abcdef \
+  STATIC_TOKEN=$(bw get item "64173bbc-d9fb-4d4a-b397-aec20171b025" | jq '.fields[] | select(.name | contains("JWT")) | .value' --raw-output) \
+  OCM_TOKEN=$(ocm token --refresh) \
+  RHSSO_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b) RHSSO_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b) \
+  go test ./e2e/...
+
 # To clean up the environment run
 $ ./e2e/cleanup.sh
 ```
