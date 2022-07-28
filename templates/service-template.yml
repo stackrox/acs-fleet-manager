@@ -153,9 +153,9 @@ parameters:
   description: A list of supported cloud providers in a yaml format.
   value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, eval: {}}}]}]"
 
-- name: ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE
-  displayName: Enable Dinosaur TLS
-  description: Enable the Dinosaur TLS certificate
+- name: ENABLE_CENTRAL_EXTERNAL_CERTIFICATE
+  displayName: Enable Central TLS
+  description: Enable the Central TLS certificate
   value: "false"
 
 - name: OBSERVATORIUM_RHSSO_GATEWAY
@@ -198,7 +198,7 @@ parameters:
 
 - name: ENABLE_TERMS_ACCEPTANCE
   displayName: Enable terms acceptance
-  description: If enabled, dinosaurs can't be created unless required terms are accepted
+  description: If enabled, centrals can't be created unless required terms are accepted
   value: "false"
 
 - name: ENABLE_DENY_LIST
@@ -223,12 +223,12 @@ parameters:
 
 - name: REGISTERED_SERVICE_ACCOUNTS
   displayName: A list of service accounts
-  description: A list of service accounts that are allowed to create standard DINOSAUR instances without requiring an organisation to do so in a yaml format.
+  description: A list of service accounts that are allowed to create standard CENTRAL instances without requiring an organisation to do so in a yaml format.
   value: "[]"
 
 - name: REGISTERED_USERS_PER_ORGANISATION
   displayName: A list of users per organisation
-  description: A list of users that are allowed to create standard DINOSAUR instances via their organisation in a yaml format.
+  description: A list of users that are allowed to create standard CENTRAL instances via their organisation in a yaml format.
   value: "[{id: 13640203, max_allowed_instances: 5, any_user: true, registered_users: []}, {id: 12147054, max_allowed_instances: 1, any_user: true, registered_users: []}, {id: 13639843, max_allowed_instances: 1, any_user: true, registered_users: []}]"
 
 - name: DENIED_USERS
@@ -251,8 +251,8 @@ parameters:
   description: SSO Host url
 
 - name: SSO_REALM
-  displayName: SSO REALM for Dinosaur SSO Clients and Service Accounts
-  description: SSO realm for Dinosaur SSO Clients and Service Accounts
+  displayName: SSO REALM for Central SSO Clients and Service Accounts
+  description: SSO realm for Central SSO Clients and Service Accounts
 
 - name: CLUSTER_OPENSHIFT_VERSION
   displayName: The version of openshift
@@ -266,7 +266,7 @@ parameters:
 
 - name: ALLOW_EVALUATOR_INSTANCE
   displayName: Allow Evaluator Instance
-  description: Allow the creation of one dinosaur evaluator instance per user
+  description: Allow the creation of one central evaluator instance per user
   value: "true"
 
 - name: QUOTA_TYPE
@@ -304,14 +304,14 @@ parameters:
   description: The public HTTP host URL of the service
   value: "https://api.openshift.com"
 
-- name: DINOSAUR_LIFE_SPAN
-  displayName: Dinosaur life span expiration in hours
-  description: Time period in hours after which dinosaur instances are deleted. This value must be a positive value
+- name: CENTRAL_LIFE_SPAN
+  displayName: Central life span expiration in hours
+  description: Time period in hours after which central instances are deleted. This value must be a positive value
   value: "48"
 
-- name: ENABLE_DINOSAUR_LIFE_SPAN
-  displayName: Enables Dinosaur life span for expiration in hours
-  description: Enables the ability to set a Dinosaur life span for expiration in hours
+- name: ENABLE_CENTRAL_LIFE_SPAN
+  displayName: Enables Central life span for expiration in hours
+  description: Enables the ability to set a Central life span for expiration in hours
   value: "false"
 
 - name: DATAPLANE_CLUSTER_SCALING_TYPE
@@ -328,14 +328,14 @@ parameters:
   description: Envoy image
   value: envoyproxy/envoy:v1.16.1
 
-- name: DINOSAUR_DOMAIN_NAME
-  description: The domain name to use for Dinosaur instances
-  value: bf2.dinosaur-stage.rhcloud.com
+- name: CENTRAL_DOMAIN_NAME
+  description: The domain name to use for Central instances
+  value: bf2.central-stage.rhcloud.com
 
-- name: DINOSAUR_OPERATOR_OPERATOR_ADDON_ID
-  displayName: Dinosaur operator addon ID
-  description: ID of the Dinosaur operator addon
-  value: "managed-dinosaur-qe"
+- name: CENTRAL_OPERATOR_OPERATOR_ADDON_ID
+  displayName: Central operator addon ID
+  description: ID of the Central operator addon
+  value: "managed-central-qe"
 
 - name: FLEETSHARD_ADDON_ID
   displayName: fleetshard addon ID
@@ -346,10 +346,10 @@ parameters:
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
 
-- name: DINOSAUR_OPERATOR_OLM_INDEX_IMAGE
-  displayName: Dinosaur operator OLM index image
-  description: Dinosaur operator OLM index image
-  value: "quay.io/osd-addons/managed-dinosaur:production-82b42db"
+- name: CENTRAL_OPERATOR_OLM_INDEX_IMAGE
+  displayName: Central operator OLM index image
+  description: Central operator OLM index image
+  value: "quay.io/osd-addons/managed-central:production-82b42db"
 
 - name: FLEETSHARD_OLM_INDEX_IMAGE
   displayName: fleetshard operator OLM index image
@@ -828,7 +828,7 @@ objects:
                   #         kind: "Error"
                   #         id: "429"
                   #         href: "/api/rhacs/v1/errors/429"
-                  #         code: "DINOSAURS-MGMT-429"
+                  #         code: "CENTRALS-MGMT-429"
                   #         reason: "Too Many Requests"
 
   - kind: Deployment
@@ -1007,15 +1007,15 @@ objects:
             command:
             - /usr/local/bin/fleet-manager
             - serve
-            - --dinosaur-tls-cert-file=/secrets/dataplane-certificate/tls.crt
-            - --dinosaur-tls-key-file=/secrets/dataplane-certificate/tls.key
-            - --enable-dinosaur-external-certificate=${ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE}
+            - --central-tls-cert-file=/secrets/dataplane-certificate/tls.crt
+            - --central-tls-key-file=/secrets/dataplane-certificate/tls.key
+            - --enable-central-external-certificate=${ENABLE_CENTRAL_EXTERNAL_CERTIFICATE}
             - --providers-config-file=${PROVIDERS_CONFIG_FILE}
             - --quota-management-list-config-file=/config/quota-management-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml
             - --read-only-user-list-file=/config/read-only-user-list.yaml
-            - --dinosaur-lifespan=${DINOSAUR_LIFE_SPAN}
-            - --enable-deletion-of-expired-dinosaur=${ENABLE_DINOSAUR_LIFE_SPAN}
+            - --central-lifespan=${CENTRAL_LIFE_SPAN}
+            - --enable-deletion-of-expired-central=${ENABLE_CENTRAL_LIFE_SPAN}
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
@@ -1091,11 +1091,11 @@ objects:
             - --observability-config-tag=${OBSERVABILITY_CONFIG_TAG}
             - --image-pull-docker-config-file=/secrets/service/image-pull.dockerconfigjson
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
-            - --dinosaur-operator-index-image=${DINOSAUR_OPERATOR_OLM_INDEX_IMAGE}
+            - --central-operator-index-image=${CENTRAL_OPERATOR_OLM_INDEX_IMAGE}
             - --fleetshard-operator-index-image=${FLEETSHARD_OLM_INDEX_IMAGE}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
-            - --dinosaur-domain-name=${DINOSAUR_DOMAIN_NAME}
-            - --dinosaur-operator-addon-id=${DINOSAUR_OPERATOR_OPERATOR_ADDON_ID}
+            - --central-domain-name=${CENTRAL_DOMAIN_NAME}
+            - --central-operator-addon-id=${CENTRAL_OPERATOR_OPERATOR_ADDON_ID}
             - --fleetshard-addon-id=${FLEETSHARD_ADDON_ID}
             - --alsologtostderr
             - -v=${GLOG_V}

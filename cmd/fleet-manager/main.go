@@ -32,7 +32,7 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:  "fleet-manager",
-		Long: "fleet-manager is a service that exposes a Rest API to manage Dinosaur instances.",
+		Long: "fleet-manager is a service that exposes a Rest API to manage ACS Central instances.",
 	}
 
 	err = env.AddFlags(rootCmd.PersistentFlags())

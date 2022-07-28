@@ -62,7 +62,7 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Debug, "ocm-debug", c.Debug, "Debug flag for OCM API")
 	fs.BoolVar(&c.EnableMock, "enable-ocm-mock", c.EnableMock, "Enable mock ocm clients")
 	fs.StringVar(&c.MockMode, "ocm-mock-mode", c.MockMode, "Set mock type")
-	fs.StringVar(&c.DinosaurOperatorAddonID, "dinosaur-operator-addon-id", c.DinosaurOperatorAddonID, "The name of the Dinosaur operator addon")
+	fs.StringVar(&c.DinosaurOperatorAddonID, "central-operator-addon-id", c.DinosaurOperatorAddonID, "The name of the Central operator addon")
 	fs.StringVar(&c.FleetshardAddonID, "fleetshard-addon-id", c.FleetshardAddonID, "The name of the fleetshard operator addon")
 }
 

@@ -28,11 +28,11 @@ const (
 
 // ManagedCentralPresenter helper service which converts Central DB representation to the private API representation
 type ManagedCentralPresenter struct {
-	centralConfig *config.DinosaurConfig
+	centralConfig *config.CentralConfig
 }
 
 // NewManagedCentralPresenter creates a new instance of ManagedCentralPresenter
-func NewManagedCentralPresenter(config *config.DinosaurConfig) *ManagedCentralPresenter {
+func NewManagedCentralPresenter(config *config.CentralConfig) *ManagedCentralPresenter {
 	return &ManagedCentralPresenter{centralConfig: config}
 }
 
@@ -64,8 +64,8 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 			UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
 				Host: from.GetUIHost(),
 				Tls: private.ManagedCentralAllOfSpecUiEndpointTls{
-					Cert: c.centralConfig.DinosaurTLSCert,
-					Key:  c.centralConfig.DinosaurTLSKey,
+					Cert: c.centralConfig.CentralTLSCert,
+					Key:  c.centralConfig.CentralTLSKey,
 				},
 			},
 			DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
