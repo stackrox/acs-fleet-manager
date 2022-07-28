@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -34,35 +33,6 @@ func NewDinosaurHandler(service services.DinosaurService, providerConfig *config
 	}
 }
 
-func validateResourcesUnspecified(ctx context.Context, component string, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
-	fields := map[string]string{
-		"resources.requests.cpu":    dinosaurRequest.Central.Resources.Requests.Cpu,
-		"resources.requests.memory": dinosaurRequest.Central.Resources.Requests.Memory,
-		"resources.limits.cpu":      dinosaurRequest.Central.Resources.Limits.Cpu,
-		"resources.limits.memory":   dinosaurRequest.Central.Resources.Limits.Memory,
-	}
-
-	validateFunc := func() *errors.ServiceError {
-		for k, v := range fields {
-			if v != "" {
-				return errors.Forbidden("not allowed to specify %s resources (%s)", component, k)
-			}
-		}
-		return nil
-	}
-
-	return validateFunc
-
-}
-
-func validateCentralResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
-	return validateResourcesUnspecified(ctx, "central", dinosaurRequest)
-}
-
-func validateScannerResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
-	return validateResourcesUnspecified(ctx, "scanner", dinosaurRequest)
-}
-
 // Create ...
 func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var dinosaurRequest public.CentralRequestPayload
@@ -79,10 +49,6 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateDinosaurClaims(ctx, &dinosaurRequest, convDinosaur),
 			ValidateCloudProvider(&h.service, convDinosaur, h.providerConfig, "creating central requests"),
 			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating central requests"),
-			validateCentralResourcesUnspecified(ctx, &dinosaurRequest),
-			validateScannerResourcesUnspecified(ctx, &dinosaurRequest),
-			ValidateCentralSpec(ctx, &dinosaurRequest, "central", convDinosaur),
-			ValidateScannerSpec(ctx, &dinosaurRequest, "scanner", convDinosaur),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(convDinosaur)

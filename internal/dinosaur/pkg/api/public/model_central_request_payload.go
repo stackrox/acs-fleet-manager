@@ -18,7 +18,5 @@ type CentralRequestPayload struct {
 	// The name of the Central component. It must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character, and can not be longer than 32 characters.
 	Name string `json:"name"`
 	// The region where the Central component cluster will be created in
-	Region  string      `json:"region,omitempty"`
-	Central CentralSpec `json:"central,omitempty"`
-	Scanner ScannerSpec `json:"scanner,omitempty"`
+	Region string `json:"region,omitempty"`
 }

@@ -204,11 +204,6 @@ data:
         any_user: true
         max_allowed_instances: 3
         registered_users: []
-        # Static token's org_id, see config/static-token-payload.json
-      - id: 12345678
-        any_user: true
-        max_allowed_instances: 100
-        registered_users: []
   read-only-user-list.yaml: |-
     ---
     # A list of users with read-only permissions for data plane clusters

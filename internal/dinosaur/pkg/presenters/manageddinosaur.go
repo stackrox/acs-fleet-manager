@@ -5,30 +5,24 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	v1 "github.com/stackrox/acs-fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-var (
-	defaultCentralRequestMemory = resource.MustParse("250Mi")
-	defaultCentralRequestCPU    = resource.MustParse("250m")
-	defaultCentralLimitMemory   = resource.MustParse("4Gi")
-	defaultCentralLimitCPU      = resource.MustParse("1000m")
+// TODO(create-ticket): implement configurable central and scanner resources
+const (
+	defaultCentralRequestMemory = "250Mi"
+	defaultCentralRequestCPU    = "250m"
+	defaultCentralLimitMemory   = "4Gi"
+	defaultCentralLimitCPU      = "1000m"
 
-	defaultScannerAnalyzerRequestMemory = resource.MustParse("100Mi")
-	defaultScannerAnalyzerRequestCPU    = resource.MustParse("250m")
-	defaultScannerAnalyzerLimitMemory   = resource.MustParse("2500Mi")
-	defaultScannerAnalyzerLimitCPU      = resource.MustParse("2000m")
+	defaultScannerAnalyzerRequestMemory = "100Mi"
+	defaultScannerAnalyzerRequestCPU    = "250m"
+	defaultScannerAnalyzerLimitMemory   = "2500Mi"
+	defaultScannerAnalyzerLimitCPU      = "2000m"
 
-	defaultScannerAnalyzerAutoScaling              = "Enabled"
-	defaultScannerAnalyzerScalingReplicas    int32 = 1
-	defaultScannerAnalyzerScalingMinReplicas int32 = 1
-	defaultScannerAnalyzerScalingMaxReplicas int32 = 3
-
-	defaultScannerDbRequestMemory = resource.MustParse("100Mi")
-	defaultScannerDbRequestCPU    = resource.MustParse("250m")
-	defaultScannerDbLimitMemory   = resource.MustParse("2500Mi")
-	defaultScannerDbLimitCPU      = resource.MustParse("2000m")
+	defaultScannerAnalyzerAutoScaling        = "enabled"
+	defaultScannerAnalyzerScalingReplicas    = 1
+	defaultScannerAnalyzerScalingMinReplicas = 1
+	defaultScannerAnalyzerScalingMaxReplicas = 3
 )
 
 // PresentManagedDinosaur ...
@@ -67,47 +61,37 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 			Central: private.ManagedCentralAllOfSpecCentral{
 				Resources: private.ResourceRequirements{
 					Requests: private.ResourceList{
-						Cpu:    orDefaultQty(from.Spec.Central.Resources.Requests[corev1.ResourceCPU], defaultCentralRequestCPU).String(),
-						Memory: orDefaultQty(from.Spec.Central.Resources.Requests[corev1.ResourceMemory], defaultCentralRequestMemory).String(),
+						Cpu:    defaultCentralRequestCPU,
+						Memory: defaultCentralRequestMemory,
 					},
 					Limits: private.ResourceList{
-						Cpu:    orDefaultQty(from.Spec.Central.Resources.Limits[corev1.ResourceCPU], defaultCentralLimitCPU).String(),
-						Memory: orDefaultQty(from.Spec.Central.Resources.Limits[corev1.ResourceMemory], defaultCentralLimitMemory).String(),
+						Cpu:    defaultCentralLimitCPU,
+						Memory: defaultCentralLimitMemory,
 					},
 				},
 			},
 			Scanner: private.ManagedCentralAllOfSpecScanner{
 				Analyzer: private.ManagedCentralAllOfSpecScannerAnalyzer{
 					Scaling: private.ManagedCentralAllOfSpecScannerAnalyzerScaling{
-						AutoScaling: orDefaultString(from.Spec.Scanner.Analyzer.Scaling.AutoScaling, defaultScannerAnalyzerAutoScaling),
-						Replicas:    orDefaultInt32(from.Spec.Scanner.Analyzer.Scaling.Replicas, defaultScannerAnalyzerScalingReplicas),
-						MinReplicas: orDefaultInt32(from.Spec.Scanner.Analyzer.Scaling.MinReplicas, defaultScannerAnalyzerScalingMinReplicas),
-						MaxReplicas: orDefaultInt32(from.Spec.Scanner.Analyzer.Scaling.MaxReplicas, defaultScannerAnalyzerScalingMaxReplicas),
+						AutoScaling: defaultScannerAnalyzerAutoScaling,
+						Replicas:    defaultScannerAnalyzerScalingReplicas,
+						MinReplicas: defaultScannerAnalyzerScalingMinReplicas,
+						MaxReplicas: defaultScannerAnalyzerScalingMaxReplicas,
 					},
 					Resources: private.ResourceRequirements{
 						Requests: private.ResourceList{
-							Cpu:    orDefaultQty(from.Spec.Scanner.Analyzer.Resources.Requests[corev1.ResourceCPU], defaultScannerAnalyzerRequestCPU).String(),
-							Memory: orDefaultQty(from.Spec.Scanner.Analyzer.Resources.Requests[corev1.ResourceMemory], defaultScannerAnalyzerRequestMemory).String(),
+							Cpu:    defaultScannerAnalyzerRequestCPU,
+							Memory: defaultScannerAnalyzerRequestMemory,
 						},
 						Limits: private.ResourceList{
-							Cpu:    orDefaultQty(from.Spec.Scanner.Analyzer.Resources.Limits[corev1.ResourceCPU], defaultScannerAnalyzerLimitCPU).String(),
-							Memory: orDefaultQty(from.Spec.Scanner.Analyzer.Resources.Limits[corev1.ResourceMemory], defaultScannerAnalyzerLimitMemory).String(),
+							Cpu:    defaultScannerAnalyzerLimitCPU,
+							Memory: defaultScannerAnalyzerLimitMemory,
 						},
 					},
 				},
 				Db: private.ManagedCentralAllOfSpecScannerDb{
 					// TODO:(create-ticket): add DB configuration values to ManagedCentral Scanner
 					Host: "dbhost.rhacs-psql-instance",
-					Resources: private.ResourceRequirements{
-						Requests: private.ResourceList{
-							Cpu:    orDefaultQty(from.Spec.Scanner.Db.Resources.Requests[corev1.ResourceCPU], defaultScannerDbRequestCPU).String(),
-							Memory: orDefaultQty(from.Spec.Scanner.Db.Resources.Requests[corev1.ResourceMemory], defaultScannerDbRequestMemory).String(),
-						},
-						Limits: private.ResourceList{
-							Cpu:    orDefaultQty(from.Spec.Scanner.Db.Resources.Limits[corev1.ResourceCPU], defaultScannerDbLimitCPU).String(),
-							Memory: orDefaultQty(from.Spec.Scanner.Db.Resources.Limits[corev1.ResourceMemory], defaultScannerDbLimitMemory).String(),
-						},
-					},
 				},
 			},
 		},
@@ -119,25 +103,4 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 	}
 
 	return res
-}
-
-func orDefaultQty(qty resource.Quantity, def resource.Quantity) *resource.Quantity {
-	if qty != (resource.Quantity{}) {
-		return &qty
-	}
-	return &def
-}
-
-func orDefaultString(s string, def string) string {
-	if s != "" {
-		return s
-	}
-	return def
-}
-
-func orDefaultInt32(i int32, def int32) int32 {
-	if i != 0 {
-		return i
-	}
-	return def
 }

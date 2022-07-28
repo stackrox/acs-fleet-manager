@@ -7,8 +7,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
@@ -30,38 +28,6 @@ func NewAdminDinosaurHandler(service services.DinosaurService, accountService ac
 		accountService: accountService,
 		providerConfig: providerConfig,
 	}
-}
-
-// Create ...
-func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var dinosaurRequest public.CentralRequestPayload
-	ctx := r.Context()
-	convDinosaur := &dbapi.CentralRequest{}
-
-	cfg := &handlers.HandlerConfig{
-		MarshalInto: &dinosaurRequest,
-		Validate: []handlers.Validate{
-			handlers.ValidateAsyncEnabled(r, "creating central requests"),
-			handlers.ValidateLength(&dinosaurRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxDinosaurNameLength),
-			ValidDinosaurClusterName(&dinosaurRequest.Name, "name"),
-			ValidateDinosaurClusterNameIsUnique(r.Context(), &dinosaurRequest.Name, h.service),
-			ValidateDinosaurClaims(ctx, &dinosaurRequest, convDinosaur),
-			ValidateCloudProvider(&h.service, convDinosaur, h.providerConfig, "creating central requests"),
-			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating central requests"),
-			ValidateCentralSpec(ctx, &dinosaurRequest, "central", convDinosaur),
-			ValidateScannerSpec(ctx, &dinosaurRequest, "scanner", convDinosaur),
-		},
-		Action: func() (interface{}, *errors.ServiceError) {
-			svcErr := h.service.RegisterDinosaurJob(convDinosaur)
-			if svcErr != nil {
-				return nil, svcErr
-			}
-			return presenters.PresentDinosaurRequest(convDinosaur), nil
-		},
-	}
-
-	// return 202 status accepted
-	handlers.Handle(w, r, cfg, http.StatusAccepted)
 }
 
 // Get ...

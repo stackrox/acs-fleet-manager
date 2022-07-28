@@ -480,8 +480,6 @@ components:
       properties:
         host:
           type: string
-        resources:
-          $ref: '#/components/schemas/ResourceRequirements'
     ManagedCentral_allOf_spec_scanner:
       properties:
         analyzer:
