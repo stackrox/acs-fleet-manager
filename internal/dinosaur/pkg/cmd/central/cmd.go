@@ -1,6 +1,6 @@
-// Package dinosaur contains commands for interacting with cluster logic of the service directly instead of through the
+// Package central contains commands for interacting with central logic of the service directly instead of through the
 // REST API exposed via the serve command.
-package dinosaur
+package central
 
 import (
 	"github.com/golang/glog"
@@ -8,12 +8,12 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
-// NewDinosaurCommand ...
-func NewDinosaurCommand(env *environments.Env) *cobra.Command {
+// NewCentralCommand ...
+func NewCentralCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "dinosaur",
-		Short: "Perform dinosaur CRUD actions directly",
-		Long:  "Perform dinosaur CRUD actions directly.",
+		Use:   "central",
+		Short: "Perform central CRUD actions directly",
+		Long:  "Perform central CRUD actions directly.",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			err := env.CreateServices()
 			if err != nil {

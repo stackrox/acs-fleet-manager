@@ -53,25 +53,25 @@ Manager by running:
 make ocm/setup OCM_OFFLINE_TOKEN=<your-retrieved-ocm-offline-token>
 ```
 
-## Allowing creation of *Standard* Dinosaur instances
+## Allowing creation of *Standard* Central instances
 
-Fleet Manager is able to create two types of Dinosaur instances:
+Fleet Manager is able to create two types of Central instances:
 * Eval instances
   * Instances of this type are automatically deleted after 48 hours by default
-    > NOTE: This can be controlled by setting the `--dinosaur-lifespan` Fleet
+    > NOTE: This can be controlled by setting the `--central-lifespan` Fleet
             Manager binary CLI flag
   * All authenticated users that make use of the Fleet Manager can
-    request the creation of a Dinosaur eval instance
+    request the creation of a Central eval instance
   * There is a limit of one instance per user
 * Standard instances
   * Instances of this type are not automatically deleted
   * In order to be able to create an instance of this type, the user that
     is creating it must have enough quota
 
-If you are not interested in making use of Standard Dinosaur instances you
+If you are not interested in making use of Standard Central instances you
 can skip this section. Otherwise, keep reading below.
 
-As commented above, In order o be able to create an instance of this type, the
+As commented above, in order to be able to create an instance of this type, the
 user must have enough quota to do it. There are currently two ways to define
 quotas for users in Fleet Manager:
 * Through a Quota Management List configuration file. This is the default
@@ -89,11 +89,11 @@ Fleet Manager interacts with AWS to provide the following functionalities:
 * To be able to create and manage Data Plane clusters in a specific AWS account
   by passing the needed credentials to OpenShift Cluster Management
 * To create [AWS's Route53](https://aws.amazon.com/route53/) DNS records in a
-  specific AWS account. This records are DNS records that point to some
-  routes related to Dinosaurs instances that are created.
-  > NOTE: The domain name used for this records can be configured by setting
-    the domain name to be used for Dinosaur instances. This cane be done
-    through the `--dinosaur-domain-name` Fleet Manager binary CLI flag
+  specific AWS account. These records are DNS records that point to some
+  routes related to Central instances that are created.
+  > NOTE: The domain name used for these records can be configured by setting
+    the domain name to be used for Central instances. This can be done
+    through the `--central-domain-name` Fleet Manager binary CLI flag
 For both functionalities, the same underlying AWS account is used.
 
 In order for the Fleet Manager to be able to start, create the following files:
@@ -200,7 +200,7 @@ make dinosaurcert/setup
   the newlines
 
 Additionally, make sure that the functionality is enabled by setting the
-`--enable-dinosaur-external-certificate` Fleet Manager binary CLI flag
+`--enable-central-external-certificate` Fleet Manager binary CLI flag
 
 ## Configure Sentry logging
 Fleet Manager can be configured to send its logs to the

@@ -29,11 +29,11 @@ type DinosaurManager struct {
 	workers.BaseWorker
 	dinosaurService         services.DinosaurService
 	accessControlListConfig *acl.AccessControlListConfig
-	dinosaurConfig          *config.DinosaurConfig
+	dinosaurConfig          *config.CentralConfig
 }
 
 // NewDinosaurManager creates a new dinosaur manager
-func NewDinosaurManager(dinosaurService services.DinosaurService, accessControlList *acl.AccessControlListConfig, dinosaur *config.DinosaurConfig) *DinosaurManager {
+func NewDinosaurManager(dinosaurService services.DinosaurService, accessControlList *acl.AccessControlListConfig, dinosaur *config.CentralConfig) *DinosaurManager {
 	return &DinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
@@ -86,9 +86,9 @@ func (k *DinosaurManager) Reconcile() []error {
 
 	// cleaning up expired dinosaurs
 	dinosaurConfig := k.dinosaurConfig
-	if dinosaurConfig.DinosaurLifespan.EnableDeletionOfExpiredDinosaur {
+	if dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral {
 		glog.Infoln("deprovisioning expired dinosaurs")
-		expiredDinosaursError := k.dinosaurService.DeprovisionExpiredDinosaurs(dinosaurConfig.DinosaurLifespan.DinosaurLifespanInHours)
+		expiredDinosaursError := k.dinosaurService.DeprovisionExpiredDinosaurs(dinosaurConfig.CentralLifespan.CentralLifespanInHours)
 		if expiredDinosaursError != nil {
 			wrappedError := errors.Wrap(expiredDinosaursError, "failed to deprovision expired Dinosaur instances")
 			encounteredErrors = append(encounteredErrors, wrappedError)

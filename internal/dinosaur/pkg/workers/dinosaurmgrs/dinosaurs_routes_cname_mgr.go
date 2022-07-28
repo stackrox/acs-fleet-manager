@@ -13,13 +13,13 @@ import (
 type DinosaurRoutesCNAMEManager struct {
 	workers.BaseWorker
 	dinosaurService services.DinosaurService
-	dinosaurConfig  *config.DinosaurConfig
+	dinosaurConfig  *config.CentralConfig
 }
 
 var _ workers.Worker = &DinosaurRoutesCNAMEManager{}
 
 // NewDinosaurCNAMEManager ...
-func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConfig *config.DinosaurConfig) *DinosaurRoutesCNAMEManager {
+func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConfig *config.CentralConfig) *DinosaurRoutesCNAMEManager {
 	return &DinosaurRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
@@ -54,7 +54,7 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 	}
 
 	for _, dinosaur := range dinosaurs {
-		if k.dinosaurConfig.EnableDinosaurExternalCertificate {
+		if k.dinosaurConfig.EnableCentralExternalCertificate {
 			if dinosaur.RoutesCreationID == "" {
 				glog.Infof("creating CNAME records for dinosaur %s", dinosaur.ID)
 

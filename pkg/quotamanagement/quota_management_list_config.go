@@ -36,7 +36,7 @@ func (c *QuotaManagementListConfig) AddFlags(fs *pflag.FlagSet) {
 // ReadFiles ...
 func (c *QuotaManagementListConfig) ReadFiles() error {
 	// TODO: we should avoid reading the file if quota-type is not quota-management-list
-	// ATM, since the quota-type is inside DinosaurConfig and DinosaurConfig is not accessible from here, I will leave this for a
+	// ATM, since the quota-type is inside CentralConfig and CentralConfig is not accessible from here, I will leave this for a
 	// future implementation
 	err := readQuotaManagementListConfigFile(c.QuotaListConfigFile, &c.QuotaList)
 
