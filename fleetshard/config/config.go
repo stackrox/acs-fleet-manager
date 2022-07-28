@@ -40,7 +40,7 @@ func GetConfig() (*Config, error) {
 	}
 	cfgErr := configErrors.ToError()
 	if cfgErr != nil {
-		return nil, cfgErr
+		return nil, errors.Wrap(cfgErr, "unexpected configuration settings")
 	}
 	return &c, nil
 }
