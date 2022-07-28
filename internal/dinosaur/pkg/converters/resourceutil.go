@@ -1,4 +1,4 @@
-package api
+package converters
 
 import (
 	"github.com/pkg/errors"
