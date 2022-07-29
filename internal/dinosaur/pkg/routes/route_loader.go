@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
@@ -53,6 +54,8 @@ type options struct {
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
 	FleetShardAuthZConfig       *auth.FleetShardAuthZConfig
+
+	ManagedCentralPresenter *presenters.ManagedCentralPresenter
 }
 
 // NewRouteLoader ...
@@ -190,7 +193,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	// /agent-clusters/{id}
 	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
-	dataPlaneDinosaurHandler := handlers.NewDataPlaneDinosaurHandler(s.DataPlaneDinosaurService, s.Dinosaur)
+	dataPlaneDinosaurHandler := handlers.NewDataPlaneDinosaurHandler(s.DataPlaneDinosaurService, s.Dinosaur, s.ManagedCentralPresenter)
 	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).
 		Name(logger.NewLogEvent("get-dataplane-cluster-config", "get dataplane cluster config by id").ToString()).

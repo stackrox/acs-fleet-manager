@@ -3,8 +3,9 @@ package presenters
 import (
 	"time"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	v1 "github.com/stackrox/acs-fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 )
 
 // TODO(create-ticket): implement configurable central and scanner resources
@@ -25,37 +26,50 @@ const (
 	defaultScannerAnalyzerScalingMaxReplicas = 3
 )
 
-// PresentManagedDinosaur ...
-func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
+// ManagedCentralPresenter helper service which converts Central DB representation to the private API representation
+type ManagedCentralPresenter struct {
+	centralConfig *config.DinosaurConfig
+}
+
+// NewManagedCentralPresenter creates a new instance of ManagedCentralPresenter
+func NewManagedCentralPresenter(config *config.DinosaurConfig) *ManagedCentralPresenter {
+	return &ManagedCentralPresenter{centralConfig: config}
+}
+
+// PresentManagedCentral converts DB representation of Central to the private API representation
+func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralRequest) private.ManagedCentral {
 	res := private.ManagedCentral{
-		Id:   from.Annotations["mas/id"],
-		Kind: from.Kind,
+		Id:   from.ID,
+		Kind: "ManagedCentral",
 		Metadata: private.ManagedCentralAllOfMetadata{
 			Name:      from.Name,
 			Namespace: from.Namespace,
 			Annotations: private.ManagedCentralAllOfMetadataAnnotations{
-				MasId:          from.Annotations["mas/id"],
-				MasPlacementId: from.Annotations["mas/placementId"],
+				MasId:          from.ID,
+				MasPlacementId: from.PlacementID,
 			},
 		},
 		Spec: private.ManagedCentralAllOfSpec{
-			Owners: from.Spec.Owners,
+			Owners: []string{
+				from.Owner,
+			},
 			Auth: private.ManagedCentralAllOfSpecAuth{
-				ClientSecret: from.Spec.Auth.ClientSecret,
-				ClientId:     from.Spec.Auth.ClientID,
-				OwnerUserId:  from.Spec.Auth.OwnerUserID,
-				OwnerOrgId:   from.Spec.Auth.OwnerOrgID,
+				ClientSecret: c.centralConfig.RhSsoClientSecret, // pragma: allowlist secret
+				// TODO: ROX-11593: make part of centralConfig
+				ClientId:    "rhacs-ms-dev",
+				OwnerOrgId:  from.OrganisationID,
+				OwnerUserId: from.OwnerUserID,
 			},
 			UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
-				Host: from.Spec.Endpoint.Host,
+				Host: from.Host,
 				Tls: private.ManagedCentralAllOfSpecUiEndpointTls{
-					Cert: from.Spec.Endpoint.TLS.Cert,
-					Key:  from.Spec.Endpoint.TLS.Key,
+					Cert: c.centralConfig.DinosaurTLSCert,
+					Key:  c.centralConfig.DinosaurTLSKey,
 				},
 			},
 			Versions: private.ManagedCentralVersions{
-				Central:         from.Spec.Versions.Dinosaur,
-				CentralOperator: from.Spec.Versions.DinosaurOperator,
+				Central:         from.DesiredCentralVersion,
+				CentralOperator: from.DesiredCentralOperatorVersion,
 			},
 			// TODO(create-ticket): add additional CAs to public create/get centrals api and internal models
 			Central: private.ManagedCentralAllOfSpecCentral{
@@ -95,7 +109,7 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedCentral {
 				},
 			},
 		},
-		RequestStatus: from.RequestStatus,
+		RequestStatus: from.Status,
 	}
 
 	if from.DeletionTimestamp != nil {

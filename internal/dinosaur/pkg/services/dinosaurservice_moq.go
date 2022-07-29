@@ -10,7 +10,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	manageddinosaur "github.com/stackrox/acs-fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 	"sync"
@@ -56,9 +55,6 @@ var _ DinosaurService = &DinosaurServiceMock{}
 // 			GetCNAMERecordStatusFunc: func(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error) {
 // 				panic("mock out the GetCNAMERecordStatus method")
 // 			},
-// 			GetManagedDinosaurByClusterIDFunc: func(clusterID string) ([]manageddinosaur.ManagedDinosaur, *serviceError.ServiceError) {
-// 				panic("mock out the GetManagedDinosaurByClusterID method")
-// 			},
 // 			HasAvailableCapacityFunc: func() (bool, *serviceError.ServiceError) {
 // 				panic("mock out the HasAvailableCapacity method")
 // 			},
@@ -67,6 +63,9 @@ var _ DinosaurService = &DinosaurServiceMock{}
 // 			},
 // 			ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *serviceError.ServiceError) {
 // 				panic("mock out the List method")
+// 			},
+// 			ListByClusterIDFunc: func(clusterID string) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
+// 				panic("mock out the ListByClusterID method")
 // 			},
 // 			ListByStatusFunc: func(status ...constants2.DinosaurStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 // 				panic("mock out the ListByStatus method")
@@ -135,9 +134,6 @@ type DinosaurServiceMock struct {
 	// GetCNAMERecordStatusFunc mocks the GetCNAMERecordStatus method.
 	GetCNAMERecordStatusFunc func(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error)
 
-	// GetManagedDinosaurByClusterIDFunc mocks the GetManagedDinosaurByClusterID method.
-	GetManagedDinosaurByClusterIDFunc func(clusterID string) ([]manageddinosaur.ManagedDinosaur, *serviceError.ServiceError)
-
 	// HasAvailableCapacityFunc mocks the HasAvailableCapacity method.
 	HasAvailableCapacityFunc func() (bool, *serviceError.ServiceError)
 
@@ -146,6 +142,9 @@ type DinosaurServiceMock struct {
 
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *serviceError.ServiceError)
+
+	// ListByClusterIDFunc mocks the ListByClusterID method.
+	ListByClusterIDFunc func(clusterID string) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
 
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status ...constants2.DinosaurStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
@@ -231,11 +230,6 @@ type DinosaurServiceMock struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
 			DinosaurRequest *dbapi.CentralRequest
 		}
-		// GetManagedDinosaurByClusterID holds details about calls to the GetManagedDinosaurByClusterID method.
-		GetManagedDinosaurByClusterID []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-		}
 		// HasAvailableCapacity holds details about calls to the HasAvailableCapacity method.
 		HasAvailableCapacity []struct {
 		}
@@ -250,6 +244,11 @@ type DinosaurServiceMock struct {
 			Ctx context.Context
 			// ListArgs is the listArgs argument value.
 			ListArgs *services.ListArguments
+		}
+		// ListByClusterID holds details about calls to the ListByClusterID method.
+		ListByClusterID []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
 		}
 		// ListByStatus holds details about calls to the ListByStatus method.
 		ListByStatus []struct {
@@ -316,10 +315,10 @@ type DinosaurServiceMock struct {
 	lockGet                               sync.RWMutex
 	lockGetByID                           sync.RWMutex
 	lockGetCNAMERecordStatus              sync.RWMutex
-	lockGetManagedDinosaurByClusterID     sync.RWMutex
 	lockHasAvailableCapacity              sync.RWMutex
 	lockHasAvailableCapacityInRegion      sync.RWMutex
 	lockList                              sync.RWMutex
+	lockListByClusterID                   sync.RWMutex
 	lockListByStatus                      sync.RWMutex
 	lockListComponentVersions             sync.RWMutex
 	lockListDinosaursWithRoutesNotCreated sync.RWMutex
@@ -645,37 +644,6 @@ func (mock *DinosaurServiceMock) GetCNAMERecordStatusCalls() []struct {
 	return calls
 }
 
-// GetManagedDinosaurByClusterID calls GetManagedDinosaurByClusterIDFunc.
-func (mock *DinosaurServiceMock) GetManagedDinosaurByClusterID(clusterID string) ([]manageddinosaur.ManagedDinosaur, *serviceError.ServiceError) {
-	if mock.GetManagedDinosaurByClusterIDFunc == nil {
-		panic("DinosaurServiceMock.GetManagedDinosaurByClusterIDFunc: method is nil but DinosaurService.GetManagedDinosaurByClusterID was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-	}{
-		ClusterID: clusterID,
-	}
-	mock.lockGetManagedDinosaurByClusterID.Lock()
-	mock.calls.GetManagedDinosaurByClusterID = append(mock.calls.GetManagedDinosaurByClusterID, callInfo)
-	mock.lockGetManagedDinosaurByClusterID.Unlock()
-	return mock.GetManagedDinosaurByClusterIDFunc(clusterID)
-}
-
-// GetManagedDinosaurByClusterIDCalls gets all the calls that were made to GetManagedDinosaurByClusterID.
-// Check the length with:
-//     len(mockedDinosaurService.GetManagedDinosaurByClusterIDCalls())
-func (mock *DinosaurServiceMock) GetManagedDinosaurByClusterIDCalls() []struct {
-	ClusterID string
-} {
-	var calls []struct {
-		ClusterID string
-	}
-	mock.lockGetManagedDinosaurByClusterID.RLock()
-	calls = mock.calls.GetManagedDinosaurByClusterID
-	mock.lockGetManagedDinosaurByClusterID.RUnlock()
-	return calls
-}
-
 // HasAvailableCapacity calls HasAvailableCapacityFunc.
 func (mock *DinosaurServiceMock) HasAvailableCapacity() (bool, *serviceError.ServiceError) {
 	if mock.HasAvailableCapacityFunc == nil {
@@ -765,6 +733,37 @@ func (mock *DinosaurServiceMock) ListCalls() []struct {
 	mock.lockList.RLock()
 	calls = mock.calls.List
 	mock.lockList.RUnlock()
+	return calls
+}
+
+// ListByClusterID calls ListByClusterIDFunc.
+func (mock *DinosaurServiceMock) ListByClusterID(clusterID string) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
+	if mock.ListByClusterIDFunc == nil {
+		panic("DinosaurServiceMock.ListByClusterIDFunc: method is nil but DinosaurService.ListByClusterID was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	mock.lockListByClusterID.Lock()
+	mock.calls.ListByClusterID = append(mock.calls.ListByClusterID, callInfo)
+	mock.lockListByClusterID.Unlock()
+	return mock.ListByClusterIDFunc(clusterID)
+}
+
+// ListByClusterIDCalls gets all the calls that were made to ListByClusterID.
+// Check the length with:
+//     len(mockedDinosaurService.ListByClusterIDCalls())
+func (mock *DinosaurServiceMock) ListByClusterIDCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	mock.lockListByClusterID.RLock()
+	calls = mock.calls.ListByClusterID
+	mock.lockListByClusterID.RUnlock()
 	return calls
 }
 
