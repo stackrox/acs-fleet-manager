@@ -15,17 +15,17 @@ type MaxCapacityConfig struct {
 
 // CentralConfig ...
 type CentralConfig struct {
-	CentralTLSCert                   string `json:"dinosaur_tls_cert"`
-	CentralTLSCertFile               string `json:"dinosaur_tls_cert_file"`
-	CentralTLSKey                    string `json:"dinosaur_tls_key"`
-	CentralTLSKeyFile                string `json:"dinosaur_tls_key_file"`
-	EnableCentralExternalCertificate bool   `json:"enable_dinosaur_external_certificate"`
-	CentralDomainName                string `json:"dinosaur_domain_name"`
+	CentralTLSCert                   string `json:"central_tls_cert"`
+	CentralTLSCertFile               string `json:"central_tls_cert_file"`
+	CentralTLSKey                    string `json:"central_tls_key"`
+	CentralTLSKeyFile                string `json:"central_tls_key_file"`
+	EnableCentralExternalCertificate bool   `json:"enable_central_external_certificate"`
+	CentralDomainName                string `json:"central_domain_name"`
 	// TODO(ROX-11289): drop MaxCapacity
 	MaxCapacity MaxCapacityConfig `json:"max_capacity_config"`
 
-	CentralLifespan       *CentralLifespanConfig `json:"dinosaur_lifespan"`
-	Quota                 *CentralQuotaConfig    `json:"dinosaur_quota"`
+	CentralLifespan       *CentralLifespanConfig `json:"central_lifespan"`
+	Quota                 *CentralQuotaConfig    `json:"central_quota"`
 	RhSsoClientSecret     string                 `json:"rhsso_client_secret"`
 	RhSsoClientSecretFile string                 `json:"rhsso_client_secret_file"`
 	RhSsoIssuer           string                 `json:"rhsso_issuer"`

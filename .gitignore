@@ -47,7 +47,6 @@ cmd/fleet-manager/fleet-manager
 /secrets/db.ca_cert
 /secrets/aws.*
 /secrets/ocm-service.*
-/secrets/dinosaur-tls.*
 /secrets/central-tls.*
 /secrets/dx.*
 /secrets/observatorium.*

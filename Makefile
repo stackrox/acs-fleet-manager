@@ -209,7 +209,7 @@ endif
 
 # Prints a list of useful targets.
 help:
-	@echo "Dinosaur Service Fleet Manager make targets"
+	@echo "Central Service Fleet Manager make targets"
 	@echo ""
 	@echo "make verify                      verify source code"
 	@echo "make lint                        lint go files and .yaml templates"
@@ -228,7 +228,7 @@ help:
 	@echo "make image/push                  push docker image"
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make secrets/touch               touch all required secret files"
-	@echo "make dinosaurcert/setup          setup the dinosaur TLS certificate used for Managed Dinosaur Service"
+	@echo "make centralcert/setup           setup the central TLS certificate used for Managed Central Service"
 	@echo "make observatorium/setup         setup observatorium secrets used by CI"
 	@echo "make observatorium/token-refresher/setup" setup a local observatorium token refresher
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
@@ -562,11 +562,11 @@ redhatsso/setup:
 	@echo -n "$(SSO_CLIENT_SECRET)" > secrets/redhatsso-service.clientSecret
 .PHONY:redhatsso/setup
 
-# Setup for the dinosaur broker certificate
-dinosaurcert/setup:
-	@echo -n "$(DINOSAUR_TLS_CERT)" > secrets/central-tls.crt
-	@echo -n "$(DINOSAUR_TLS_KEY)" > secrets/central-tls.key
-.PHONY:dinosaurcert/setup
+# Setup for the central broker certificate
+centralcert/setup:
+	@echo -n "$(CENTRAL_TLS_CERT)" > secrets/central-tls.crt
+	@echo -n "$(CENTRAL_TLS_KEY)" > secrets/central-tls.key
+.PHONY:centralcert/setup
 
 observatorium/setup:
 	@echo -n "$(OBSERVATORIUM_CONFIG_ACCESS_TOKEN)" > secrets/observability-config-access.token;
@@ -638,8 +638,8 @@ deploy/secrets:
 		-p ROUTE53_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53secretaccesskey' ] && [ -z '${ROUTE53_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.route53secretaccesskey || echo '${ROUTE53_SECRET_ACCESS_KEY}')" \
 		-p SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${SSO_CLIENT_ID}')" \
 		-p SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${SSO_CLIENT_SECRET}')" \
-		-p DINOSAUR_TLS_CERT="$(shell ([ -s './secrets/central-tls.crt' ] && [ -z '${DINOSAUR_TLS_CERT}' ]) && cat ./secrets/central-tls.crt || echo '${DINOSAUR_TLS_CERT}')" \
-		-p DINOSAUR_TLS_KEY="$(shell ([ -s './secrets/central-tls.key' ] && [ -z '${DINOSAUR_TLS_KEY}' ]) && cat ./secrets/central-tls.key || echo '${DINOSAUR_TLS_KEY}')" \
+		-p CENTRAL_TLS_CERT="$(shell ([ -s './secrets/central-tls.crt' ] && [ -z '${CENTRAL_TLS_CERT}' ]) && cat ./secrets/central-tls.crt || echo '${CENTRAL_TLS_CERT}')" \
+		-p CENTRAL_TLS_KEY="$(shell ([ -s './secrets/central-tls.key' ] && [ -z '${CENTRAL_TLS_KEY}' ]) && cat ./secrets/central-tls.key || echo '${CENTRAL_TLS_KEY}')" \
 		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
 		-p IMAGE_PULL_DOCKER_CONFIG="$(shell ([ -s './secrets/image-pull.dockerconfigjson' ] && [ -z '${IMAGE_PULL_DOCKER_CONFIG}' ]) && cat ./secrets/image-pull.dockerconfigjson || echo '${IMAGE_PULL_DOCKER_CONFIG}')" \
 		-p KUBE_CONFIG="${KUBE_CONFIG}" \
@@ -665,9 +665,9 @@ deploy/service: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy/service: IMAGE_REPOSITORY ?= $(image_repository)
 deploy/service: FLEET_MANAGER_ENV ?= "development"
 deploy/service: REPLICAS ?= "1"
-deploy/service: ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE ?= "false"
-deploy/service: ENABLE_DINOSAUR_LIFE_SPAN ?= "false"
-deploy/service: DINOSAUR_LIFE_SPAN ?= "48"
+deploy/service: ENABLE_CENTRAL_EXTERNAL_CERTIFICATE ?= "false"
+deploy/service: ENABLE_CENTRAL_LIFE_SPAN ?= "false"
+deploy/service: CENTRAL_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
 deploy/service: SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy/service: SSO_REALM ?= "rhoas"
@@ -695,9 +695,9 @@ deploy/service: deploy/envoy deploy/route
 		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
 		-p IMAGE_TAG=$(IMAGE_TAG) \
 		-p REPLICAS="${REPLICAS}" \
-		-p ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE="${ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE}" \
-		-p ENABLE_DINOSAUR_LIFE_SPAN="${ENABLE_DINOSAUR_LIFE_SPAN}" \
-		-p DINOSAUR_LIFE_SPAN="${DINOSAUR_LIFE_SPAN}" \
+		-p ENABLE_CENTRAL_EXTERNAL_CERTIFICATE="${ENABLE_CENTRAL_EXTERNAL_CERTIFICATE}" \
+		-p ENABLE_CENTRAL_LIFE_SPAN="${ENABLE_CENTRAL_LIFE_SPAN}" \
+		-p CENTRAL_LIFE_SPAN="${CENTRAL_LIFE_SPAN}" \
 		-p ENABLE_OCM_MOCK=$(ENABLE_OCM_MOCK) \
 		-p OCM_MOCK_MODE=$(OCM_MOCK_MODE) \
 		-p OCM_URL="$(OCM_URL)" \

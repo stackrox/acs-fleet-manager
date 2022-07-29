@@ -19,8 +19,8 @@ ENV OSD_IDP_SSO_CLIENT_ID <osd_idp_sso_client_id>
 ENV OSD_IDP_SSO_CLIENT_SECRET <osd_idp_sso_client_secret>
 ENV ROUTE53_ACCESS_KEY <aws_route53_access_key>
 ENV ROUTE53_SECRET_ACCESS_KEY <aws_route53_secret_access_key>
-ENV DINOSAUR_TLS_CERT <dinosaur_tls_cert>
-ENV DINOSAUR_TLS_KEY <dinosaur_tls_key>
+ENV CENTRAL_TLS_CERT <central_tls_cert>
+ENV CENTRAL_TLS_KEY <central_tls_key>
 ENV OBSERVATORIUM_CONFIG_ACCESS_TOKEN <observatorium_config_access_token>
 ENV DOCKER_PR_CHECK true
 ENV DEBIAN_FRONTEND=noninteractive
@@ -66,7 +66,7 @@ RUN make aws/setup
 RUN make ocm/setup
 RUN make osd/setup
 RUN make redhatsso/setup
-RUN make dinosaurcert/setup
+RUN make centralcert/setup
 RUN make observatorium/setup
 
 # Docker built / owned  as 'root' but the 'postgres' user runs the image
