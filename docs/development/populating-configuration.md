@@ -190,9 +190,9 @@ To configure Fleet Manager so it sends the custom TLS certificate, provide the
 certificate and its corresponding key to the Fleet Manager by running the
 following command:
 ```
-DINOSAUR_TLS_CERT=<central-tls-cert> \
-DINOSAUR_TLS_KEY=<central-tls-key> \
-make dinosaurcert/setup
+CENTRAL_TLS_CERT=<central-tls-cert> \
+CENTRAL_TLS_KEY=<central-tls-key> \
+make centralcert/setup
 ```
 > NOTE: The certificate domain/s should match the URL endpoint domain if you
   want the certificate to be valid when accessing the endpoint

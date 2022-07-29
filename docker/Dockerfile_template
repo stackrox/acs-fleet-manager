@@ -24,8 +24,8 @@ ENV SSO_CLIENT_ID <sso_client_id>
 ENV SSO_CLIENT_SECRET <sso_client_secret>
 ENV OSD_IDP_SSO_CLIENT_ID <osd_idp_sso_client_id>
 ENV OSD_IDP_SSO_CLIENT_SECRET <osd_idp_sso_client_secret>
-ENV DINOSAUR_TLS_CERT <dinosaur_tls_cert>
-ENV DINOSAUR_TLS_KEY <dinosaur_tls_key>
+ENV CENTRAL_TLS_CERT <central_tls_cert>
+ENV CENTRAL_TLS_KEY <central_tls_key>
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
@@ -69,7 +69,7 @@ RUN make aws/setup
 RUN make ocm/setup
 RUN make osd/setup
 RUN make redhatsso/setup
-RUN make dinosaurcert/setup
+RUN make centralcert/setup
 RUN make observatorium/setup
 
 # Docker built / owned  as 'root' but the 'postgres' user runs the image
