@@ -40,7 +40,7 @@ func NewDinosaurConfig() *DinosaurConfig {
 		DinosaurDomainName:                "rhacs-dev.com",
 		DinosaurLifespan:                  NewDinosaurLifespanConfig(),
 		Quota:                             NewDinosaurQuotaConfig(),
-		RHSsoIssuer:                       "https://sso.redhat.com/auth/realsm/redhat-external",
+		RHSsoIssuer:                       "https://sso.redhat.com/auth/realms/redhat-external",
 	}
 }
 
