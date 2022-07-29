@@ -47,3 +47,5 @@ RUN mkdir -p /stackrox/crds && \
 RUN curl -L --retry 10 --silent --show-error --fail -o "/usr/local/bin/ocm" \
     https://github.com/openshift-online/ocm-cli/releases/download/v0.1.30/ocm-linux-amd64 && \
     chmod +x /usr/local/bin/ocm
+
+RUN dnf -y install make
