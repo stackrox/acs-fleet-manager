@@ -80,8 +80,10 @@ ifeq (, $(shell which $(LOCAL_BIN_PATH)/golangci-lint 2> /dev/null))
 	}
 endif
 
-GOTESTSUM ?=$(LOCAL_BIN_PATH)/gotestsum
+LOCAL_GOTESTSUM = $(LOCAL_BIN_PATH)/gotestsum
+GOTESTSUM ?= $(LOCAL_GOTESTSUM)
 gotestsum:
+ifeq ($(GOTESTSUM), $(LOCAL_GOTESTSUM))
 ifeq (, $(shell which $(LOCAL_BIN_PATH)/gotestsum 2> /dev/null))
 	@{ \
 	set -e ;\
@@ -93,6 +95,7 @@ ifeq (, $(shell which $(LOCAL_BIN_PATH)/gotestsum 2> /dev/null))
 	$(GO) build -o ${LOCAL_BIN_PATH}/gotestsum gotest.tools/gotestsum ;\
 	rm -rf $$GOTESTSUM_TMP_DIR ;\
 	}
+endif
 endif
 
 MOQ ?= ${LOCAL_BIN_PATH}/moq
@@ -185,9 +188,7 @@ ifndef OCM_ENV
 	OCM_ENV:=integration
 endif
 
-ifndef TEST_SUMMARY_FORMAT
-	TEST_SUMMARY_FORMAT=short-verbose
-endif
+GOTESTSUM_FORMAT ?= standard-verbose
 
 # Enable Go modules:
 export GO111MODULE=on
@@ -317,7 +318,7 @@ clean:
 # Examples:
 #   make test TESTFLAGS="-run TestSomething"
 test: gotestsum
-	OCM_ENV=testing $(GOTESTSUM) --junitfile data/results/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
+	OCM_ENV=testing $(GOTESTSUM) --junitfile data/results/unit-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
 		$(shell go list ./... | grep -v /test)
 .PHONY: test
 
@@ -337,7 +338,7 @@ test/prepare:
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
 test/integration/dinosaur: test/prepare gotestsum
-	$(GOTESTSUM) --junitfile data/results/fleet-manager-integration-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
+	$(GOTESTSUM) --junitfile data/results/fleet-manager-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
 				./internal/dinosaur/test/integration/...
 .PHONY: test/integration/dinosaur
 
@@ -350,8 +351,10 @@ test/cluster/cleanup:
 	./scripts/cleanup_test_cluster.sh
 .PHONY: test/cluster/cleanup
 
-test/e2e:
-	CLUSTER_ID=1234567890abcdef1234567890abcdef RUN_E2E=true go test $(GOARGS) -bench -v -count=1 ./e2e/...
+test/e2e: gotestsum
+	CLUSTER_ID=1234567890abcdef1234567890abcdef \
+	RUN_E2E=true \
+	$(GOTESTSUM) --format $(GOTESTSUM_FORMAT) -- $(GOARGS) -bench -v -count=1 -p 1 -timeout $(TEST_TIMEOUT) $(TESTFLAGS) ./e2e/...
 .PHONY: test/e2e
 
 test/e2e/cleanup:
