@@ -32,7 +32,7 @@ func PresentDinosaurRequest(request *dbapi.CentralRequest) public.CentralRequest
 		Region:        request.Region,
 		Owner:         request.Owner,
 		Name:          request.Name,
-		Host:          request.Host,
+		Host:          request.GetUIHost(), // TODO(ROX-11990): Split the Host in Fleet Manager Public API to UI and Data hosts
 		CreatedAt:     request.CreatedAt,
 		UpdatedAt:     request.UpdatedAt,
 		FailedReason:  request.FailedReason,

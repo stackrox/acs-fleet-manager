@@ -97,3 +97,19 @@ func (k *CentralRequest) SetRoutes(routes []DataPlaneCentralRoute) error {
 	k.Routes = r
 	return nil
 }
+
+// GetUIHost returns host for CLI/GUI/API connections
+func (k *CentralRequest) GetUIHost() string {
+	if k.Host == "" {
+		return ""
+	}
+	return fmt.Sprintf("acs-%s.%s", k.ID, k.Host)
+}
+
+// GetDataHost return host for Sensor connections
+func (k *CentralRequest) GetDataHost() string {
+	if k.Host == "" {
+		return ""
+	}
+	return fmt.Sprintf("acs-data-%s.%s", k.ID, k.Host)
+}

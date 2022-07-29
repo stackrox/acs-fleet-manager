@@ -11,7 +11,7 @@ func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralSt
 
 	for k, v := range status {
 		c := make([]dbapi.DataPlaneCentralStatusCondition, 0, len(v.Conditions))
-		var routes []dbapi.DataPlaneCentralRouteRequest
+		var routes []dbapi.DataPlaneCentralRoute
 		for _, s := range v.Conditions {
 			c = append(c, dbapi.DataPlaneCentralStatusCondition{
 				Type:    s.Type,
@@ -21,11 +21,10 @@ func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralSt
 			})
 		}
 		if v.Routes != nil {
-			routes = make([]dbapi.DataPlaneCentralRouteRequest, 0, len(v.Routes))
+			routes = make([]dbapi.DataPlaneCentralRoute, 0, len(v.Routes))
 			for _, ro := range v.Routes {
-				routes = append(routes, dbapi.DataPlaneCentralRouteRequest{
-					Name:   ro.Name,
-					Prefix: ro.Prefix,
+				routes = append(routes, dbapi.DataPlaneCentralRoute{
+					Domain: ro.Domain,
 					Router: ro.Router,
 				})
 			}

@@ -302,9 +302,7 @@ func (d *dataPlaneDinosaurService) persistDinosaurRoutes(dinosaur *dbapi.Central
 	routesInRequest := dinosaurStatus.Routes
 	var routes []dbapi.DataPlaneCentralRoute
 
-	var routesErr error
-	baseClusterDomain := strings.TrimPrefix(clusterDNS, fmt.Sprintf("%s.", constants2.DefaultIngressDNSNamePrefix))
-	if routes, routesErr = buildRoutes(routesInRequest, dinosaur, baseClusterDomain); routesErr != nil {
+	if routesErr := validateRouters(routesInRequest, dinosaur, clusterDNS); routesErr != nil {
 		return serviceError.NewWithCause(serviceError.ErrorBadRequest, routesErr, "routes are not valid")
 	}
 
@@ -318,23 +316,14 @@ func (d *dataPlaneDinosaurService) persistDinosaurRoutes(dinosaur *dbapi.Central
 	return nil
 }
 
-func buildRoutes(routesInRequest []dbapi.DataPlaneCentralRouteRequest, dinosaur *dbapi.CentralRequest, clusterDNS string) ([]dbapi.DataPlaneCentralRoute, error) {
-	routes := []dbapi.DataPlaneCentralRoute{}
-	dinosaurHost := dinosaur.Host
+func validateRouters(routesInRequest []dbapi.DataPlaneCentralRoute, dinosaur *dbapi.CentralRequest, clusterDNS string) error {
 	for _, r := range routesInRequest {
-		if strings.HasSuffix(r.Router, clusterDNS) {
-			router := dbapi.DataPlaneCentralRoute{
-				Router: r.Router,
-			}
-			if r.Prefix != "" {
-				router.Domain = fmt.Sprintf("%s-%s", r.Prefix, dinosaurHost)
-			} else {
-				router.Domain = dinosaurHost
-			}
-			routes = append(routes, router)
-		} else {
-			return nil, errors.Errorf("router domain is not valid. router = %s, expected domain = %s", r.Router, clusterDNS)
+		if !strings.HasSuffix(r.Router, clusterDNS) {
+			return errors.Errorf("cluster router is not valid. router = %s, expected = %s", r.Router, clusterDNS)
+		}
+		if !strings.HasSuffix(r.Domain, dinosaur.Host) {
+			return errors.Errorf("exposed domain is not valid. domain = %s, expected = %s", r.Domain, dinosaur.Host)
 		}
 	}
-	return routes, nil
+	return nil
 }

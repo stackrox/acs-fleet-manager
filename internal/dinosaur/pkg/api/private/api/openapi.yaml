@@ -563,9 +563,7 @@ components:
           type: string
     DataPlaneCentralStatus_routes:
       properties:
-        name:
-          type: string
-        prefix:
+        domain:
           type: string
         router:
           type: string

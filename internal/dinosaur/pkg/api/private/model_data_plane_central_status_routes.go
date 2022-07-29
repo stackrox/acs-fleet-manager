@@ -11,7 +11,6 @@ package private
 
 // DataPlaneCentralStatusRoutes struct for DataPlaneCentralStatusRoutes
 type DataPlaneCentralStatusRoutes struct {
-	Name   string `json:"name,omitempty"`
-	Prefix string `json:"prefix,omitempty"`
+	Domain string `json:"domain,omitempty"`
 	Router string `json:"router,omitempty"`
 }
