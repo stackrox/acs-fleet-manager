@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/golang/glog"
+	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
@@ -171,28 +172,35 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 func (r *CentralReconciler) readyStatus(ctx context.Context, namespace string) (*private.DataPlaneCentralStatus, error) {
 	status := readyStatus()
 	if r.useRoutes {
-		statusRoutes, err := r.getStatusRoutes(ctx, namespace)
+		routesStatuses, err := r.getRoutesStatuses(ctx, namespace)
 		if err != nil {
 			return nil, err
 		}
-		status.Routes = statusRoutes
+		status.Routes = routesStatuses
 	}
 	return status, nil
 }
 
-func (r *CentralReconciler) getStatusRoutes(ctx context.Context, namespace string) (private.DataPlaneCentralStatusRoutes, error) {
-	reencryptHostname, err := r.routeService.FindReencryptCanonicalHostname(ctx, namespace)
+func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
+	reencryptIngress, err := r.routeService.FindReencryptIngress(ctx, namespace)
 	if err != nil {
-		return private.DataPlaneCentralStatusRoutes{}, fmt.Errorf("obtaining canonical hostname for reencrypt route: %w", err)
+		return nil, fmt.Errorf("obtaining ingress for reencrypt route: %w", err)
 	}
-	mtlsHostname, err := r.routeService.FindMTLSCanonicalHostname(ctx, namespace)
+	mtlsIngress, err := r.routeService.FindMTLSIngress(ctx, namespace)
 	if err != nil {
-		return private.DataPlaneCentralStatusRoutes{}, fmt.Errorf("obtaining canonical hostname for MTLS route: %w", err)
+		return nil, fmt.Errorf("obtaining ingress for MTLS route: %w", err)
 	}
-	return private.DataPlaneCentralStatusRoutes{
-		UiRouter:   reencryptHostname,
-		DataRouter: mtlsHostname,
+	return []private.DataPlaneCentralStatusRoutes{
+		getRouteStatus(reencryptIngress),
+		getRouteStatus(mtlsIngress),
 	}, nil
+}
+
+func getRouteStatus(ingress *openshiftRouteV1.RouteIngress) private.DataPlaneCentralStatusRoutes {
+	return private.DataPlaneCentralStatusRoutes{
+		Domain: ingress.Host,
+		Router: ingress.RouterCanonicalHostname,
+	}
 }
 
 func isCentralReady(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (bool, error) {

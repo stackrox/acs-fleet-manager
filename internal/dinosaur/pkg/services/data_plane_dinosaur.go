@@ -302,9 +302,7 @@ func (d *dataPlaneDinosaurService) persistDinosaurRoutes(dinosaur *dbapi.Central
 	routesInRequest := dinosaurStatus.Routes
 	var routes []dbapi.DataPlaneCentralRoute
 
-	var routesErr error
-	baseClusterDomain := strings.TrimPrefix(clusterDNS, fmt.Sprintf("%s.", constants2.DefaultIngressDNSNamePrefix))
-	if routes, routesErr = buildRoutes(routesInRequest, dinosaur, baseClusterDomain); routesErr != nil {
+	if routesErr := validateRouters(routesInRequest, dinosaur, clusterDNS); routesErr != nil {
 		return serviceError.NewWithCause(serviceError.ErrorBadRequest, routesErr, "routes are not valid")
 	}
 
@@ -318,22 +316,14 @@ func (d *dataPlaneDinosaurService) persistDinosaurRoutes(dinosaur *dbapi.Central
 	return nil
 }
 
-func buildRoutes(routesInRequest dbapi.DataPlaneCentralRoutesRequest, dinosaur *dbapi.CentralRequest, clusterDNS string) ([]dbapi.DataPlaneCentralRoute, error) {
-	if !strings.HasSuffix(routesInRequest.UIRouter, clusterDNS) {
-		return nil, errors.Errorf("UI router domain is not valid. UI router = %s, expected domain = %s", routesInRequest.UIRouter, clusterDNS)
+func validateRouters(routesInRequest []dbapi.DataPlaneCentralRoute, dinosaur *dbapi.CentralRequest, clusterDNS string) error {
+	for _, r := range routesInRequest {
+		if !strings.HasSuffix(r.Router, clusterDNS) {
+			return errors.Errorf("cluster router is not valid. router = %s, expected = %s", r.Router, clusterDNS)
+		}
+		if !strings.HasSuffix(r.Domain, dinosaur.Host) {
+			return errors.Errorf("exposed domain is not valid. domain = %s, expected = %s", r.Domain, dinosaur.Host)
+		}
 	}
-	if !strings.HasSuffix(routesInRequest.DataRouter, clusterDNS) {
-		return nil, errors.Errorf("Data router domain is not valid. Data router = %s, expected domain = %s", routesInRequest.DataRouter, clusterDNS)
-	}
-
-	return []dbapi.DataPlaneCentralRoute{
-		{
-			Domain: dinosaur.GetUIHost(),
-			Router: routesInRequest.UIRouter,
-		},
-		{
-			Domain: dinosaur.GetDataHost(),
-			Router: routesInRequest.DataRouter,
-		},
-	}, nil
+	return nil
 }

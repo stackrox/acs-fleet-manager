@@ -354,7 +354,10 @@ components:
         versions:
           $ref: '#/components/schemas/DataPlaneCentralStatus_versions'
         routes:
-          $ref: '#/components/schemas/DataPlaneCentralStatus_routes'
+          description: Routes created for a Central
+          items:
+            $ref: '#/components/schemas/DataPlaneCentralStatus_routes'
+          type: array
       type: object
     DataPlaneCentralStatusUpdateRequest:
       additionalProperties:
@@ -561,11 +564,10 @@ components:
         centralOperator:
           type: string
     DataPlaneCentralStatus_routes:
-      description: Routes created for a Central
       properties:
-        uiRouter:
+        domain:
           type: string
-        dataRouter:
+        router:
           type: string
     DataplaneClusterAgentConfig_spec_observability:
       description: Observability configurations

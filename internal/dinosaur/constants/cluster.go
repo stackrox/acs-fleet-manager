@@ -10,9 +10,6 @@ const (
 
 	// ClusterOperationDelete - OpenShift/k8s cluster delete operation
 	ClusterOperationDelete ClusterOperation = "delete"
-
-	// DefaultIngressDNSNamePrefix DNS prefix used for traffic ingress
-	DefaultIngressDNSNamePrefix = "apps"
 )
 
 // String ...

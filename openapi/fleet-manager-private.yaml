@@ -403,12 +403,14 @@ components:
               type: string
         routes:
           description: "Routes created for a Central"
-          type: object
-          properties:
-            uiRouter:
-              type: string
-            dataRouter:
-              type: string
+          type: array
+          items:
+            type: object
+            properties:
+              domain:
+                type: string
+              router:
+                type: string
       example:
         $ref: '#/components/examples/DataPlaneCentralStatusRequestExample'
 

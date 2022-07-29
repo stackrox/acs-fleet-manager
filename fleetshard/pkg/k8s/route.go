@@ -36,27 +36,28 @@ func (s *RouteService) FindReencryptRoute(ctx context.Context, namespace string)
 	return s.findRoute(ctx, namespace, centralReencryptRouteName)
 }
 
-// FindReencryptCanonicalHostname returns a canonical hostname of central reencrypt route or error if not found.
-func (s *RouteService) FindReencryptCanonicalHostname(ctx context.Context, namespace string) (string, error) {
-	return s.findCanonicalHostname(ctx, namespace, centralReencryptRouteName)
+// FindReencryptIngress returns central reencrypt route ingress or error if not found.
+func (s *RouteService) FindReencryptIngress(ctx context.Context, namespace string) (*openshiftRouteV1.RouteIngress, error) {
+	return s.findFirstAdmittedIngress(ctx, namespace, centralReencryptRouteName)
 }
 
-// FindMTLSCanonicalHostname returns a canonical hostname of central MTLS route or error if not found.
-func (s *RouteService) FindMTLSCanonicalHostname(ctx context.Context, namespace string) (string, error) {
-	return s.findCanonicalHostname(ctx, namespace, centralMTLSRouteName)
+// FindMTLSIngress returns central MTLS route ingress or error if not found.
+func (s *RouteService) FindMTLSIngress(ctx context.Context, namespace string) (*openshiftRouteV1.RouteIngress, error) {
+	return s.findFirstAdmittedIngress(ctx, namespace, centralMTLSRouteName)
 }
 
-func (s *RouteService) findCanonicalHostname(ctx context.Context, namespace string, routeName string) (string, error) {
+// FindFirstAdmittedIngress returns first admitted ingress or error if not found
+func (s *RouteService) findFirstAdmittedIngress(ctx context.Context, namespace string, routeName string) (*openshiftRouteV1.RouteIngress, error) {
 	route, err := s.findRoute(ctx, namespace, routeName)
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("route not found")
 	}
 	for _, ingress := range route.Status.Ingress {
 		if isAdmitted(ingress) {
-			return ingress.RouterCanonicalHostname, nil
+			return &ingress, nil
 		}
 	}
-	return "", fmt.Errorf("route canonical hostname is not found. route: %s/%s", namespace, routeName)
+	return nil, fmt.Errorf("unable to find admitted ingress. route: %s/%s", route.GetNamespace(), route.GetName())
 }
 
 func isAdmitted(ingress openshiftRouteV1.RouteIngress) bool {
