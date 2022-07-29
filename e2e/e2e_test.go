@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/service/route53"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -25,6 +28,8 @@ var (
 
 const (
 	defaultPolling = 1 * time.Second
+	skipRouteMsg   = "route resource is not known to test cluster"
+	skipDNSMsg     = "external DNS is not enabled for this test run"
 )
 
 // TODO(create-ticket): Use correct OCM_TOKEN for different clients (console.redhat.com, fleetshard)
@@ -92,6 +97,58 @@ var _ = Describe("Central", func() {
 		// TODO(create-ticket): create test to check that Central and Scanner are healthy
 		// TODO(create-ticket): Create test to check Central is correctly exposed
 
+		// TODO(create-ticket): Add test for passthrough route created by fleetshard-sync
+		It("should create central routes", func() {
+			if !routesEnabled {
+				Skip(skipRouteMsg)
+			}
+
+			central := getCentral(createdCentral, client)
+
+			var reencryptRoute *openshiftRouteV1.Route
+			Eventually(func() error {
+				reencryptRoute, err = routeService.FindReencryptRoute(context.Background(), namespaceName)
+				return err
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+
+			Expect(reencryptRoute.Spec.Host).To(Equal(central.Host))
+			Expect(reencryptRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationReencrypt))
+		})
+
+		It("should create AWS Route53 records", func() {
+			if !dnsEnabled {
+				Skip(skipDNSMsg)
+			}
+
+			central := getCentral(createdCentral, client)
+			routeCanonicalName, err := routeService.FindReencryptCanonicalHostname(context.Background(), namespaceName)
+			Expect(err).ToNot(HaveOccurred())
+
+			rhacsZone, err := getHostedZone(central)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(rhacsZone).ToNot(BeNil())
+
+			var records *route53.ListResourceRecordSetsOutput
+			Eventually(func() int {
+				records, err = route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
+					HostedZoneId:    rhacsZone.Id,
+					StartRecordName: &central.Host,
+				})
+				Expect(err).ToNot(HaveOccurred())
+				return len(records.ResourceRecordSets)
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(1))
+
+			Expect(len(records.ResourceRecordSets)).To(Equal(1))
+			recordSet := records.ResourceRecordSets[0]
+			Expect(len(recordSet.ResourceRecords)).To(Equal(1))
+			record := recordSet.ResourceRecords[0]
+
+			name := removeLastChar(*recordSet.Name)
+			Expect(name).To(Equal(central.Host))
+			Expect(*record.Value).To(Equal(routeCanonicalName))
+
+		})
+
 		It("should transition central's state to ready", func() {
 			Eventually(func() string {
 				return centralStatus(createdCentral, client)
@@ -124,12 +181,65 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
 		})
 
+		It("should delete external DNS entries", func() {
+			if !dnsEnabled {
+				Skip(skipDNSMsg)
+			}
+
+			central := getCentral(createdCentral, client)
+
+			rhacsZone, err := getHostedZone(central)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(rhacsZone).ToNot(BeNil())
+
+			var records *route53.ListResourceRecordSetsOutput
+			Eventually(func() int {
+				records, err = route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
+					HostedZoneId:    rhacsZone.Id,
+					StartRecordName: &central.Host,
+				})
+				Expect(err).ToNot(HaveOccurred())
+				return len(records.ResourceRecordSets)
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(0))
+		})
 	})
 })
 
-func centralStatus(createdCentral *public.CentralRequest, client *fleetmanager.Client) string {
+func getCentral(createdCentral *public.CentralRequest, client *fleetmanager.Client) *public.CentralRequest {
 	Expect(createdCentral).NotTo(BeNil())
 	central, err := client.GetCentral(createdCentral.Id)
 	Expect(err).To(BeNil())
-	return central.Status
+	return central
+}
+
+func centralStatus(createdCentral *public.CentralRequest, client *fleetmanager.Client) string {
+	return getCentral(createdCentral, client).Status
+}
+
+func isDNSEnabled(routesEnabled bool) bool {
+	hasRoute53Creds := os.Getenv("ROUTE53_ACCESS_KEY") != "" && os.Getenv("ROUTE53_SECRET_ACCESS_KEY") != ""
+	return hasRoute53Creds && routesEnabled
+}
+
+func removeLastChar(s string) string {
+	return s[:len(s)-1]
+}
+
+func getHostedZone(central *public.CentralRequest) (*route53.HostedZone, error) {
+	hostedZones, err := route53Client.ListHostedZones(&route53.ListHostedZonesInput{})
+	if err != nil {
+		return nil, err
+	}
+
+	var rhacsZone *route53.HostedZone
+	for _, zone := range hostedZones.HostedZones {
+		// Omit the . at the end of hosted zone name
+		name := removeLastChar(*zone.Name)
+		if strings.Contains(central.Host, name) {
+			rhacsZone = zone
+			break
+		}
+	}
+
+	return rhacsZone, nil
 }
