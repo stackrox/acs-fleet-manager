@@ -532,8 +532,8 @@ secrets/touch:
           secrets/db.password \
           secrets/db.port \
           secrets/db.user \
-          secrets/dinosaur-tls.crt \
-          secrets/dinosaur-tls.key \
+          secrets/central-tls.crt \
+          secrets/central-tls.key \
           secrets/image-pull.dockerconfigjson \
           secrets/observability-config-access.token \
           secrets/ocm-service.clientId \
@@ -564,8 +564,8 @@ redhatsso/setup:
 
 # Setup for the dinosaur broker certificate
 dinosaurcert/setup:
-	@echo -n "$(DINOSAUR_TLS_CERT)" > secrets/dinosaur-tls.crt
-	@echo -n "$(DINOSAUR_TLS_KEY)" > secrets/dinosaur-tls.key
+	@echo -n "$(DINOSAUR_TLS_CERT)" > secrets/central-tls.crt
+	@echo -n "$(DINOSAUR_TLS_KEY)" > secrets/central-tls.key
 .PHONY:dinosaurcert/setup
 
 observatorium/setup:
@@ -638,8 +638,8 @@ deploy/secrets:
 		-p ROUTE53_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53secretaccesskey' ] && [ -z '${ROUTE53_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.route53secretaccesskey || echo '${ROUTE53_SECRET_ACCESS_KEY}')" \
 		-p SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${SSO_CLIENT_ID}')" \
 		-p SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${SSO_CLIENT_SECRET}')" \
-		-p DINOSAUR_TLS_CERT="$(shell ([ -s './secrets/dinosaur-tls.crt' ] && [ -z '${DINOSAUR_TLS_CERT}' ]) && cat ./secrets/dinosaur-tls.crt || echo '${DINOSAUR_TLS_CERT}')" \
-		-p DINOSAUR_TLS_KEY="$(shell ([ -s './secrets/dinosaur-tls.key' ] && [ -z '${DINOSAUR_TLS_KEY}' ]) && cat ./secrets/dinosaur-tls.key || echo '${DINOSAUR_TLS_KEY}')" \
+		-p DINOSAUR_TLS_CERT="$(shell ([ -s './secrets/central-tls.crt' ] && [ -z '${DINOSAUR_TLS_CERT}' ]) && cat ./secrets/central-tls.crt || echo '${DINOSAUR_TLS_CERT}')" \
+		-p DINOSAUR_TLS_KEY="$(shell ([ -s './secrets/central-tls.key' ] && [ -z '${DINOSAUR_TLS_KEY}' ]) && cat ./secrets/central-tls.key || echo '${DINOSAUR_TLS_KEY}')" \
 		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
 		-p IMAGE_PULL_DOCKER_CONFIG="$(shell ([ -s './secrets/image-pull.dockerconfigjson' ] && [ -z '${IMAGE_PULL_DOCKER_CONFIG}' ]) && cat ./secrets/image-pull.dockerconfigjson || echo '${IMAGE_PULL_DOCKER_CONFIG}')" \
 		-p KUBE_CONFIG="${KUBE_CONFIG}" \
@@ -678,13 +678,13 @@ deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
 deploy/service: ENABLE_DENY_LIST ?= "false"
 deploy/service: ALLOW_EVALUATOR_INSTANCE ?= "true"
 deploy/service: QUOTA_TYPE ?= "quota-management-list"
-deploy/service: DINOSAUR_OPERATOR_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-dinosaur:production-82b42db"
+deploy/service: CENTRAL_OPERATOR_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-central:production-82b42db"
 deploy/service: FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/fleetshard-operator:production-82b42db"
 deploy/service: OBSERVABILITY_CONFIG_REPO ?= "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents"
 deploy/service: OBSERVABILITY_CONFIG_CHANNEL ?= "resources"
 deploy/service: OBSERVABILITY_CONFIG_TAG ?= "main"
 deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
-deploy/service: DINOSAUR_OPERATOR_OPERATOR_ADDON_ID ?= "managed-dinosaur-qe"
+deploy/service: CENTRAL_OPERATOR_OPERATOR_ADDON_ID ?= "managed-central-qe"
 deploy/service: FLEETSHARD_ADDON_ID ?= "fleetshard-operator-qe"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
@@ -719,8 +719,8 @@ deploy/service: deploy/envoy deploy/route
 		-p ALLOW_EVALUATOR_INSTANCE="${ALLOW_EVALUATOR_INSTANCE}" \
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
 		-p FLEETSHARD_OLM_INDEX_IMAGE="${FLEETSHARD_OLM_INDEX_IMAGE}" \
-		-p DINOSAUR_OPERATOR_OLM_INDEX_IMAGE="${DINOSAUR_OPERATOR_OLM_INDEX_IMAGE}" \
-		-p DINOSAUR_OPERATOR_OPERATOR_ADDON_ID="${DINOSAUR_OPERATOR_OPERATOR_ADDON_ID}" \
+		-p CENTRAL_OPERATOR_OLM_INDEX_IMAGE="${CENTRAL_OPERATOR_OLM_INDEX_IMAGE}" \
+		-p CENTRAL_OPERATOR_OPERATOR_ADDON_ID="${CENTRAL_OPERATOR_OPERATOR_ADDON_ID}" \
 		-p FLEETSHARD_ADDON_ID="${FLEETSHARD_ADDON_ID}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
 		| oc apply -f - -n $(NAMESPACE)

@@ -34,8 +34,8 @@ type CentralConfig struct {
 // NewCentralConfig ...
 func NewCentralConfig() *CentralConfig {
 	return &CentralConfig{
-		CentralTLSCertFile:               "secrets/dinosaur-tls.crt",
-		CentralTLSKeyFile:                "secrets/dinosaur-tls.key",
+		CentralTLSCertFile:               "secrets/central-tls.crt",
+		CentralTLSKeyFile:                "secrets/central-tls.key",
 		EnableCentralExternalCertificate: false,
 		CentralDomainName:                "rhacs-dev.com",
 		CentralLifespan:                  NewCentralLifespanConfig(),

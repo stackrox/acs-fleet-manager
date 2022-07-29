@@ -35,9 +35,9 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, priv
 	}
 
 	for _, cluster := range clusters {
-		managedDinosaurAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.DinosaurOperatorAddonID)
+		managedDinosaurAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.CentralOperatorAddonID)
 		if err != nil {
-			return fmt.Errorf("retrieving ocmClient operator addon for cluster ID %q and addon ID %q: %w", cluster.ClusterID, ocmConfig.DinosaurOperatorAddonID, err)
+			return fmt.Errorf("retrieving ocmClient operator addon for cluster ID %q and addon ID %q: %w", cluster.ClusterID, ocmConfig.CentralOperatorAddonID, err)
 		}
 
 		fleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.FleetshardAddonID)

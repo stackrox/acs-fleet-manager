@@ -142,7 +142,7 @@ you can set Fleet Manager to use them by running the following command:
 ```
 
 ## Setup the data plane image pull secret
-In the Data Plane cluster, the Dinosaur Operator and the FleetShard Deployments
+In the Data Plane cluster, the Central Operator and the FleetShard Deployments
 might reference container images that are located in authenticated container
 image registries.
 
@@ -170,28 +170,28 @@ The following command is used to setup the various secrets needed by the Observa
 make observatorium/setup
 ```
 
-## Setup a custom TLS certificate for Dinosaur Host URLs
+## Setup a custom TLS certificate for Central Host URLs
 
-When Fleet Manager creates Dinosaur instances, it can be configured to
-send a custom TLS certificate to associate to each one of the Dinosaur instances
+When Fleet Manager creates Central instances, it can be configured to
+send a custom TLS certificate to associate to each one of the Central instances
 host URLs. That custom TLS certificate is sent to the data plane clusters where
 those instances are located.
 
 In order for the Fleet Manager to be able to start, create the following files:
 ```
-touch secrets/dinosaur-tls.crt
-touch secrets/dinosaur-tls.key
+touch secrets/central-tls.crt
+touch secrets/central-tls.key
 ```
 
-If you need to setup a custom TLS certificate for the Dinosaur instances' host
+If you need to setup a custom TLS certificate for the Central instances' host
 URLs keep reading. Otherwise, this section can be skipped.
 
 To configure Fleet Manager so it sends the custom TLS certificate, provide the
 certificate and its corresponding key to the Fleet Manager by running the
 following command:
 ```
-DINOSAUR_TLS_CERT=<dinosaur-tls-cert> \
-DINOSAUR_TLS_KEY=<dinosaur-tls-key> \
+DINOSAUR_TLS_CERT=<central-tls-cert> \
+DINOSAUR_TLS_KEY=<central-tls-key> \
 make dinosaurcert/setup
 ```
 > NOTE: The certificate domain/s should match the URL endpoint domain if you

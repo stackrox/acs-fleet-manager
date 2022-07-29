@@ -213,7 +213,7 @@ func (o *OCMProvider) GetComputeNodes(clusterSpec *types.ClusterSpec) (*types.Co
 
 // InstallDinosaurOperator ...
 func (o *OCMProvider) InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error) {
-	return o.installAddon(clusterSpec, o.ocmConfig.DinosaurOperatorAddonID)
+	return o.installAddon(clusterSpec, o.ocmConfig.CentralOperatorAddonID)
 }
 
 // InstallFleetshard ...

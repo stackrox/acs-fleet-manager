@@ -32,8 +32,8 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **enable-deletion-of-expired-central**: Enables deletion of eval Central instances when its life span has expired.
     - `central-lifespan` [Optional]: The desired lifespan of a Central instance in hour(s) (default: `48`).
 - **enable-central-external-certificate**: Enables custom Central TLS certificate.
-    - `central-tls-cert-file` [Required]: The path to the file containing the Central TLS certificate (default: `'secrets/dinosaur-tls.crt'`).
-    - `central-tls-key-file` [Required]: The path to the file containing the Central TLS private key (default: `'secrets/dinosaur-tls.key'`).
+    - `central-tls-cert-file` [Required]: The path to the file containing the Central TLS certificate (default: `'secrets/central-tls.crt'`).
+    - `central-tls-key-file` [Required]: The path to the file containing the Central TLS private key (default: `'secrets/central-tls.key'`).
 - **enable-evaluator-instance**: Enable the creation of one central evaluator instances per user  
 - **rhsso-client-secret-file**: OIDC client secret to connect Central instances to sso.redhat.com
 - **quota-type**: Sets the quota service to be used for access control when requesting Central instances (options: `ams` or `quota-management-list`, default: `quota-management-list`).
