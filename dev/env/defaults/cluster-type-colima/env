@@ -1,8 +1,12 @@
-export COLIMA="${COLIMA:-colima}"
 export KUBECONF_CLUSTER_SERVER_OVERRIDE_DEFAULT="true"
 export ENABLE_DB_PORT_FORWARDING_DEFAULT="true"
 export ENABLE_FM_PORT_FORWARDING_DEFAULT="true"
 export OPERATOR_SOURCE_DEFAULT="quay"
 export INHERIT_IMAGEPULLSECRETS_DEFAULT="true" # pragma: allowlist secret
 export INSTALL_OLM_DEFAULT="true"
-export DOCKER_DEFAULT="colima nerdctl -- -n k8s.io" # When nerdctl and docker can be used
+
+if grep -q "runtime: docker" <(colima status 2>&1); then
+  export DOCKER_HOST="unix://$HOME/.colima/docker.sock"
+else
+  export DOCKER_DEFAULT="colima nerdctl -- -n k8s.io" # When nerdctl and docker can be used
+fi
