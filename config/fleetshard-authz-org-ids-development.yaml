@@ -4,8 +4,8 @@
 - "11009103"
 # RHACS Managed Service Org for staging (Entry `RHACS Managed Service Org for AWS Billing` in Bitwarden).
 - "16064548"
-- # ACS RH SSO Org Prod
-  - "16134752"
+# ACS RH SSO Org Prod
+- "16134752"
 # org_id for the static token
 - "12345678"
 # ACS RH SSO ORG Development
