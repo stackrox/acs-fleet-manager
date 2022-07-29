@@ -281,12 +281,18 @@ func TestReportRoutesStatuses(t *testing.T) {
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
 
-	expected := private.DataPlaneCentralStatusRoutes{
-		UiRouter:   "router-default.apps.test.local",
-		DataRouter: "router-default.apps.test.local",
+	expected := []private.DataPlaneCentralStatusRoutes{
+		{
+			Domain: "acs-cb45idheg5ip6dq1jo4g.acs.rhcloud.test",
+			Router: "router-default.apps.test.local",
+		},
+		{
+			Domain: "central.rhacs-cb45idheg5ip6dq1jo4g",
+			Router: "router-default.apps.test.local",
+		},
 	}
 	actual := status.Routes
-	assert.Equal(t, expected, actual)
+	assert.ElementsMatch(t, expected, actual)
 }
 
 func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
@@ -301,12 +307,18 @@ func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
 	existingCentral.RequestStatus = centralConstants.DinosaurRequestStatusReady.String()
 	status, _ := r.Reconcile(context.TODO(), existingCentral) // cache hit
 	// then
-	expected := private.DataPlaneCentralStatusRoutes{
-		UiRouter:   "router-default.apps.test.local",
-		DataRouter: "router-default.apps.test.local",
+	expected := []private.DataPlaneCentralStatusRoutes{
+		{
+			Domain: "acs-cb45idheg5ip6dq1jo4g.acs.rhcloud.test",
+			Router: "router-default.apps.test.local",
+		},
+		{
+			Domain: "central.rhacs-cb45idheg5ip6dq1jo4g",
+			Router: "router-default.apps.test.local",
+		},
 	}
 	actual := status.Routes
-	assert.Equal(t, expected, actual)
+	assert.ElementsMatch(t, expected, actual)
 }
 
 func centralDeploymentObject() *appsv1.Deployment {

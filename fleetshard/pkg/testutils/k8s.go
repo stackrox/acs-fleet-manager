@@ -69,7 +69,7 @@ func newReconcileTracker(scheme *runtime.Scheme) k8sTesting.ObjectTracker {
 func (t reconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
 	if gvr == routesGVR {
 		route := obj.(*openshiftRouteV1.Route)
-		route.Status = admittedStatus()
+		route.Status = admittedStatus(route.Spec.Host)
 	}
 	if err := t.ObjectTracker.Create(gvr, obj, ns); err != nil {
 		return fmt.Errorf("adding GVR %q to reconcile tracker: %w", gvr, err)
@@ -100,6 +100,7 @@ func newCentralTLSSecret(ns string) *coreV1.Secret {
 }
 
 func newCentralRoute(ns string) *openshiftRouteV1.Route {
+	host := fmt.Sprintf("central-%s.%s", ns, clusterDomain)
 	return &openshiftRouteV1.Route{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "central",
@@ -110,13 +111,14 @@ func newCentralRoute(ns string) *openshiftRouteV1.Route {
 			},
 		},
 		Spec: openshiftRouteV1.RouteSpec{
-			Host: fmt.Sprintf("central-%s.%s", ns, clusterDomain),
+			Host: host,
 		},
-		Status: admittedStatus(),
+		Status: admittedStatus(host),
 	}
 }
 
 func newCentralMtlsRoute(ns string) *openshiftRouteV1.Route {
+	host := fmt.Sprintf("central.%s", ns)
 	return &openshiftRouteV1.Route{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "central-mtls",
@@ -127,13 +129,13 @@ func newCentralMtlsRoute(ns string) *openshiftRouteV1.Route {
 			},
 		},
 		Spec: openshiftRouteV1.RouteSpec{
-			Host: fmt.Sprintf("central.%s", ns),
+			Host: host,
 		},
-		Status: admittedStatus(),
+		Status: admittedStatus(host),
 	}
 }
 
-func admittedStatus() openshiftRouteV1.RouteStatus {
+func admittedStatus(host string) openshiftRouteV1.RouteStatus {
 	return openshiftRouteV1.RouteStatus{
 		Ingress: []openshiftRouteV1.RouteIngress{
 			{
@@ -143,6 +145,7 @@ func admittedStatus() openshiftRouteV1.RouteStatus {
 						Status: coreV1.ConditionTrue,
 					},
 				},
+				Host:                    host,
 				RouterCanonicalHostname: "router-default.apps.test.local",
 			},
 		},
