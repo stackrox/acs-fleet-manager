@@ -49,6 +49,7 @@ type AuthSpec struct {
 	ClientID     string `json:"clientId,omitempty"`
 	OwnerUserID  string `json:"ownerUserId,omitempty"`
 	OwnerOrgID   string `json:"ownerOrgId,omitempty"`
+	Issuer       string `json:"issuer,omitempty"`
 }
 
 // ManagedDinosaurSpec ...

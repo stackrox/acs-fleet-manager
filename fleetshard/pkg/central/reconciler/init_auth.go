@@ -3,11 +3,13 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/generated/storage"
+	"github.com/stackrox/rox/pkg/ternary"
 	core "k8s.io/api/core/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -84,14 +86,13 @@ func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 
 func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProvider {
 	request := &storage.AuthProvider{
-		// TODO: ROX-11619: change depending on whether environment is stage or not
-		Name:       "Red Hat SSO(Stage)",
+		Name: ternary.String(strings.Contains(central.Spec.Auth.Issuer, "stage"),
+			" Red Hat SSO (Stage)", "Red Hat SSO"),
 		Type:       "oidc",
 		UiEndpoint: central.Spec.UiEndpoint.Host,
 		Enabled:    true,
 		Config: map[string]string{
-			// TODO: ROX-11619: make configurable
-			"issuer":        "https://sso.stage.redhat.com/auth/realms/redhat-external",
+			"issuer":        central.Spec.Auth.Issuer,
 			"client_id":     central.Spec.Auth.ClientId,
 			"client_secret": central.Spec.Auth.ClientSecret,
 			"mode":          "post",

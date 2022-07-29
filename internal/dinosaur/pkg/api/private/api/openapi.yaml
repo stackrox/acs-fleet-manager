@@ -432,6 +432,8 @@ components:
           type: string
         ownerOrgId:
           type: string
+        issuer:
+          type: string
     ManagedCentral_allOf_spec_uiEndpoint_tls:
       properties:
         cert:
