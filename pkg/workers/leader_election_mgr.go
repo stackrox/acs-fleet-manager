@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"gorm.io/gorm"
 )
 
@@ -25,6 +26,7 @@ type LeaderElectionManager struct {
 	mgrRepeatInterval time.Duration
 	leaseRenewTime    time.Duration
 	workerGrp         sync.WaitGroup
+	forceLeader       bool
 }
 
 // leaderLeaseAcquisition a wrapper for a lease and whether it's been acquired/is owned by another worker
@@ -36,12 +38,16 @@ type leaderLeaseAcquisition struct {
 }
 
 // NewLeaderElectionManager ...
-func NewLeaderElectionManager(workers []Worker, connectionFactory *db.ConnectionFactory) *LeaderElectionManager {
+func NewLeaderElectionManager(workers []Worker, connectionFactory *db.ConnectionFactory, serverConfig *server.ServerConfig) *LeaderElectionManager {
+	if serverConfig.ForceLeader {
+		glog.Warningf("LEADER ELECTION HAS BEEN DISABLED FOR TEST ENVIRONMENT")
+	}
 	return &LeaderElectionManager{
 		workers:           workers,
 		connectionFactory: connectionFactory,
 		mgrRepeatInterval: mgrRepeatInterval,
 		leaseRenewTime:    leaseRenewTime,
+		forceLeader:       serverConfig.ForceLeader,
 	}
 }
 
@@ -110,6 +116,9 @@ func (s *LeaderElectionManager) startWorkers() {
 }
 
 func (s *LeaderElectionManager) isWorkerLeader(worker Worker) bool {
+	if s.forceLeader {
+		return true
+	}
 	dbConn := s.connectionFactory.New()
 	leaderLeaseAcquisition, err := s.acquireLeaderLease(worker.GetID(), worker.GetWorkerType(), dbConn)
 	if err != nil {

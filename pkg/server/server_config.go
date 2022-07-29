@@ -19,6 +19,7 @@ type ServerConfig struct {
 	// For production it is "https://api.openshift.com"
 	PublicHostURL         string `json:"public_url"`
 	EnableTermsAcceptance bool   `json:"enable_terms_acceptance"`
+	ForceLeader           bool   `json:"force_leader"`
 }
 
 // NewServerConfig ...
@@ -46,6 +47,8 @@ func (s *ServerConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.JwksFile, "jwks-file", s.JwksFile, "File containing the the JSON web token signing certificates.")
 	fs.StringVar(&s.TokenIssuerURL, "token-issuer-url", s.TokenIssuerURL, "A token issuer URL. Used to validate if a JWT token used for public endpoints was issued from the given URL.")
 	fs.StringVar(&s.PublicHostURL, "public-host-url", s.PublicHostURL, "Public http host URL of the service")
+	fs.BoolVar(&s.ForceLeader, "force-leader", s.ForceLeader, "Disable leader election (for testing)")
+	fs.MarkHidden("force-leader")
 }
 
 // ReadFiles ...
