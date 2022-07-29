@@ -91,13 +91,20 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 		Enabled:    true,
 		Config: map[string]string{
 			// TODO: ROX-11619: make configurable
-			"issuer":        "https://sso.stage.redhat.com/auth/realms/redhat-external",
-			"client_id":     central.Spec.Auth.ClientId,
-			"client_secret": central.Spec.Auth.ClientSecret,
-			"mode":          "post",
+			"issuer":                 "https://sso.stage.redhat.com/auth/realms/redhat-external",
+			"client_id":              central.Spec.Auth.ClientId,
+			"client_secret":          central.Spec.Auth.ClientSecret,
+			"mode":                   "post",
+			"disable_offline_access": "true",
 		},
 		// TODO: for testing purposes only; remove once host is correctly specified in fleet-manager
 		ExtraUiEndpoints: []string{"localhost:8443"},
+		RequiredAttributes: []*storage.AuthProvider_RequiredAttribute{
+			{
+				AttributeKey:   "org_id",
+				AttributeValue: central.Spec.Auth.OwnerOrgId,
+			},
+		},
 	}
 	return request
 }
