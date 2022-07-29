@@ -32,6 +32,11 @@ ocm login --url staging --token="<your token from OpenShift console UI - console
 ```
 Staging UI is accessible on this URL: https://qaprodauth.cloud.redhat.com
 
+To ensure that we have enough quota on the account, you can run the following command and see the output:
+```
+ocm list quota | grep -E "QUOTA|osd"
+```
+
 Create cluster with `ocm` command
 ```
 # Get AWS Keyes from BitWarden
@@ -294,6 +299,35 @@ Sensor uses `stackrox` namespace by default.
 ```
 oc get pods -n stackrox
 ```
+
+### Run local front-end (UI project)
+
+The front-end is located in the following repo: https://github.com/RedHatInsights/acs-ui. Clone that repo locally.
+
+22. Prepare `/etc/hosts` file. Add development host to the hosts file. The grep command ensures that entry is added only once.
+```
+sudo sh -c 'grep -qxF "127.0.0.1 stage.foo.redhat.com" /etc/hosts || echo "127.0.0.1 stage.foo.redhat.com" >> /etc/hosts'
+```
+**Note:** If you are unsure what the command will do, be free to manually add the entry `127.0.0.1 stage.foo.redhat.com` in the `/etc/hosts` file.
+
+23. Install the UI project
+
+Execute the following commands in the root directory of the UI project:
+```
+npm install
+```
+
+24. Start the UI project
+
+Execute the following commands in the root directory of the UI project:
+```
+export FLEET_MANAGER_API_ENDPOINT=http://localhost:8000
+
+npm run start:beta
+```
+After that, you can open the following URL in your browser: https://stage.foo.redhat.com:1337/beta/application-services/acs
+
+**Note:** Since staging External RedHat SSO is used for authentication, you may have to create your personal account.
 
 ### Extend OSD cluster lifetime to 7 days
 
