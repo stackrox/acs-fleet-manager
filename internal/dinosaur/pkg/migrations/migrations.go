@@ -30,6 +30,7 @@ var migrations = []*gormigrate.Migration{
 	addLeaderLease(),
 	sampleMigration(),
 	addOwnerUserIDToCentralRequest(),
+	addResourcesToCentralRequest(),
 }
 
 // New ...
