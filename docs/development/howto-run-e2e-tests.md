@@ -43,6 +43,23 @@ Required tools:
 * `yq` & `jq`
 * `kubectl` or `oc`
 
+## Running with DNS tests
+
+There is autosensing logic to skip DNS e2e tests, when the environment is not set up like expected.
+
+To run the DNS e2e tests additionally to the default e2e test setup the cluster you're running against needs to know the openshift route CRD and you need to set following environment variables:
+
+```
+export ROUTE53_ACCESS_KEY="<key-id>"
+export ROUTE53_SECRET_ACCESS_KEY="<secret-key>"
+
+# Depending on cluster type and its default configuration you might need
+export ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE_DEFAULT=true
+
+# If the domain you test against is not the default dev domain
+export DINOSAUR_DOMAIN_NAME="<domain>"
+```
+
 ## Examples
 
 ### Minikube
@@ -88,6 +105,22 @@ $ colima start -c 4 -d 60 -m 16 -k
 ```
 
 and that the `colima` CLI is in `PATH` (if not, export `DOCKER=/path/to/bin/colima nerdctl -- -n k8s.io` accordingly). Furthermore, prepare your environment by setting:
+* `QUAY_USER`
+* `QUAY_TOKEN`
+* `STATIC_TOKEN` for `AUTH_TYPE=STATIC_TOKEN` or `OCM_TOKEN` for `AUTH_TYPE=OCM`
+
+### CRC
+
+CRC needs a lot of resources and so does a central tenant. Following resource settings were required to make the test work on CRC.
+
+```
+crc config set memory 18432
+crc config set cpus 7
+```
+
+There's currently no automated way to upload the fleet-manager image to CRC. Set the `FLEET_MANAGER_IMAGE` environment variable to an available Image in quay or build locally and load it into CRC registry manually.
+
+Furthermore, prepare your environment by setting:
 * `QUAY_USER`
 * `QUAY_TOKEN`
 * `STATIC_TOKEN` for `AUTH_TYPE=STATIC_TOKEN` or `OCM_TOKEN` for `AUTH_TYPE=OCM`

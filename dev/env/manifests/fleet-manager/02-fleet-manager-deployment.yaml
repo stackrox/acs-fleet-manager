@@ -34,7 +34,7 @@ spec:
         - command:
             - sh
             - "-c"
-            - "cd /; /usr/local/bin/fleet-manager serve --force-leader --api-server-bindaddress=0.0.0.0:8000 --health-check-server-bindaddress=0.0.0.0:8083 --kubeconfig=/secrets/kubeconfig --enable-dinosaur-external-certificate --dinosaur-domain-name 'rhacs-dev.com' || { sleep 120; false; }"
+            - "cd /; $FLEET_MANAGER_COMMAND || { sleep 120; false; }"
           image: "$FLEET_MANAGER_IMAGE"
           imagePullPolicy: IfNotPresent
           name: fleet-manager
