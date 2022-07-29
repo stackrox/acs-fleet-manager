@@ -28,6 +28,7 @@ type DinosaurConfig struct {
 	Quota                 *DinosaurQuotaConfig    `json:"dinosaur_quota"`
 	RhSsoClientSecret     string                  `json:"rhsso_client_secret"`
 	RhSsoClientSecretFile string                  `json:"rhsso_client_secret_file"`
+	RHSsoIssuer           string                  `json:"rhsso_issuer"`
 }
 
 // NewDinosaurConfig ...
@@ -39,6 +40,7 @@ func NewDinosaurConfig() *DinosaurConfig {
 		DinosaurDomainName:                "rhacs-dev.com",
 		DinosaurLifespan:                  NewDinosaurLifespanConfig(),
 		Quota:                             NewDinosaurQuotaConfig(),
+		RHSsoIssuer:                       "https://sso.redhat.com/auth/realsm/redhat-external",
 	}
 }
 
@@ -53,6 +55,7 @@ func (c *DinosaurConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
 	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of dinosaur evaluator instances")
 	fs.StringVar(&c.RhSsoClientSecretFile, "rhsso-client-secret-file", c.RhSsoClientSecretFile, "File containing OIDC client secret of sso.redhat.com client")
+	fs.StringVar(&c.RHSsoIssuer, "rhsso-issuer", c.RHSsoIssuer, "Issuer of sso.redhat.com client")
 }
 
 // ReadFiles ...
