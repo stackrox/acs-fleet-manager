@@ -102,7 +102,7 @@ const (
 	// MockIngressListening default mock ingress listening used in the mock ocm server
 	MockIngressListening = clustersmgmtv1.ListeningMethodExternal
 	// MockClusterAddonID default mock cluster addon ID
-	MockClusterAddonID = "managed-dinosaur-qe"
+	MockClusterAddonID = "managed-central-qe"
 	// MockFleetshardAddonID default mock ID for the Fleetshard Operator
 	MockFleetshardAddonID = "fleetshard-operator-qe"
 	// MockClusterLoggingOperatorAddonID default mock ID for the Cluster Logging Operator

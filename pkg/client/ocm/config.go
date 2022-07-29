@@ -11,43 +11,43 @@ import (
 const (
 	MockModeStubServer            = "stub-server"
 	MockModeEmulateServer         = "emulate-server"
-	dinosaurOperatorAddonID       = "managed-dinosaur"
+	centralOperatorAddonID        = "managed-central"
 	fleetshardAddonID             = "fleetshard-operator"
 	ClusterLoggingOperatorAddonID = "cluster-logging-operator"
 )
 
 // OCMConfig ...
 type OCMConfig struct {
-	BaseURL                 string `json:"base_url"`
-	AmsURL                  string `json:"ams_url"`
-	ClientID                string `json:"client-id"`
-	ClientIDFile            string `json:"client-id_file"`
-	ClientSecret            string `json:"client-secret"`
-	ClientSecretFile        string `json:"client-secret_file"`
-	SelfToken               string `json:"self_token"`
-	SelfTokenFile           string `json:"self_token_file"`
-	TokenURL                string `json:"token_url"`
-	Debug                   bool   `json:"debug"`
-	EnableMock              bool   `json:"enable_mock"`
-	MockMode                string `json:"mock_type"`
-	DinosaurOperatorAddonID string `json:"dinosaur_operator_addon_id"`
-	FleetshardAddonID       string `json:"fleetshard_addon_id"`
+	BaseURL                string `json:"base_url"`
+	AmsURL                 string `json:"ams_url"`
+	ClientID               string `json:"client-id"`
+	ClientIDFile           string `json:"client-id_file"`
+	ClientSecret           string `json:"client-secret"`
+	ClientSecretFile       string `json:"client-secret_file"`
+	SelfToken              string `json:"self_token"`
+	SelfTokenFile          string `json:"self_token_file"`
+	TokenURL               string `json:"token_url"`
+	Debug                  bool   `json:"debug"`
+	EnableMock             bool   `json:"enable_mock"`
+	MockMode               string `json:"mock_type"`
+	CentralOperatorAddonID string `json:"central_operator_addon_id"`
+	FleetshardAddonID      string `json:"fleetshard_addon_id"`
 }
 
 // NewOCMConfig ...
 func NewOCMConfig() *OCMConfig {
 	return &OCMConfig{
-		BaseURL:                 "https://api-integration.6943.hive-integration.openshiftapps.com",
-		AmsURL:                  "https://api.stage.openshift.com",
-		TokenURL:                "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
-		ClientIDFile:            "secrets/ocm-service.clientId",
-		ClientSecretFile:        "secrets/ocm-service.clientSecret",
-		SelfTokenFile:           "secrets/ocm-service.token",
-		Debug:                   false,
-		EnableMock:              false,
-		MockMode:                MockModeStubServer,
-		DinosaurOperatorAddonID: dinosaurOperatorAddonID,
-		FleetshardAddonID:       fleetshardAddonID,
+		BaseURL:                "https://api-integration.6943.hive-integration.openshiftapps.com",
+		AmsURL:                 "https://api.stage.openshift.com",
+		TokenURL:               "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
+		ClientIDFile:           "secrets/ocm-service.clientId",
+		ClientSecretFile:       "secrets/ocm-service.clientSecret",
+		SelfTokenFile:          "secrets/ocm-service.token",
+		Debug:                  false,
+		EnableMock:             false,
+		MockMode:               MockModeStubServer,
+		CentralOperatorAddonID: centralOperatorAddonID,
+		FleetshardAddonID:      fleetshardAddonID,
 	}
 }
 
@@ -62,7 +62,7 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Debug, "ocm-debug", c.Debug, "Debug flag for OCM API")
 	fs.BoolVar(&c.EnableMock, "enable-ocm-mock", c.EnableMock, "Enable mock ocm clients")
 	fs.StringVar(&c.MockMode, "ocm-mock-mode", c.MockMode, "Set mock type")
-	fs.StringVar(&c.DinosaurOperatorAddonID, "central-operator-addon-id", c.DinosaurOperatorAddonID, "The name of the Central operator addon")
+	fs.StringVar(&c.CentralOperatorAddonID, "central-operator-addon-id", c.CentralOperatorAddonID, "The name of the Central operator addon")
 	fs.StringVar(&c.FleetshardAddonID, "fleetshard-addon-id", c.FleetshardAddonID, "The name of the fleetshard operator addon")
 }
 
