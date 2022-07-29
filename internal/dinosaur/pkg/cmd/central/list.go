@@ -1,4 +1,4 @@
-package dinosaur
+package central
 
 import (
 	"context"
@@ -25,19 +25,19 @@ const (
 	FlagSize = "size"
 )
 
-// NewListCommand creates a new command for listing dinosaurs.
+// NewListCommand creates a new command for listing centrals.
 func NewListCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "lists all managed dinosaur requests",
-		Long:  "lists all managed dinosaur requests",
+		Short: "lists all managed central requests",
+		Long:  "lists all managed central requests",
 		Run: func(cmd *cobra.Command, args []string) {
 			runList(env, cmd, args)
 		},
 	}
 	cmd.Flags().String(FlagOwner, "test-user", "Username")
 	cmd.Flags().String(FlagPage, "1", "Page index")
-	cmd.Flags().String(FlagSize, "100", "Number of dinosaur requests per page")
+	cmd.Flags().String(FlagSize, "100", "Number of central requests per page")
 
 	return cmd
 }
@@ -46,8 +46,8 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
 	page := flags.MustGetString(FlagPage, cmd.Flags())
 	size := flags.MustGetString(FlagSize, cmd.Flags())
-	var dinosaurService services.DinosaurService
-	env.MustResolveAll(&dinosaurService)
+	var centralService services.DinosaurService
+	env.MustResolveAll(&centralService)
 
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
@@ -62,28 +62,28 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	query.Add(FlagSize, size)
 	listArgs := coreServices.NewListArguments(query)
 
-	dinosaurList, paging, err := dinosaurService.List(ctx, listArgs)
+	centralList, paging, err := centralService.List(ctx, listArgs)
 	if err != nil {
-		glog.Fatalf("Unable to list dinosaur request: %s", err.Error())
+		glog.Fatalf("Unable to list central request: %s", err.Error())
 	}
 
 	// format output
-	dinosaurRequestList := public.CentralRequestList{
-		Kind:  "DinosaurRequestList",
+	centralRequestList := public.CentralRequestList{
+		Kind:  "CentralRequestList",
 		Page:  int32(paging.Page),
 		Size:  int32(paging.Size),
 		Total: int32(paging.Total),
 		Items: []public.CentralRequest{},
 	}
 
-	for _, dinosaurRequest := range dinosaurList {
-		converted := presenters.PresentDinosaurRequest(dinosaurRequest)
-		dinosaurRequestList.Items = append(dinosaurRequestList.Items, converted)
+	for _, centralRequest := range centralList {
+		converted := presenters.PresentDinosaurRequest(centralRequest)
+		centralRequestList.Items = append(centralRequestList.Items, converted)
 	}
 
-	output, marshalErr := json.MarshalIndent(dinosaurRequestList, "", "    ")
+	output, marshalErr := json.MarshalIndent(centralRequestList, "", "    ")
 	if marshalErr != nil {
-		glog.Fatalf("Failed to format dinosaur request list: %s", err.Error())
+		glog.Fatalf("Failed to format central request list: %s", err.Error())
 	}
 
 	glog.V(10).Infof("%s", output)

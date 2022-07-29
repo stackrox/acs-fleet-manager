@@ -44,7 +44,7 @@ const (
 	observatoriumAuthType            = "redhat"
 	syncsetName                      = "ext-managedservice-cluster-mgr"
 	imagePullSecretName              = "rhoas-image-pull-secret"
-	dinosaurOperatorAddonNamespace   = constants.DinosaurOperatorNamespace
+	dinosaurOperatorAddonNamespace   = constants.CentralOperatorNamespace
 	dinosaurOperatorQEAddonNamespace = "redhat-managed-dinosaur-operator-qe"
 	fleetshardAddonNamespace         = constants.FleetShardOperatorNamespace
 	fleetshardQEAddonNamespace       = "redhat-fleetshard-operator-qe"
@@ -758,7 +758,7 @@ func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 	}
 
 	managedDinosaurOperatorNamespace := dinosaurOperatorAddonNamespace
-	if c.OCMConfig.DinosaurOperatorAddonID == "managed-dinosaur-qe" {
+	if c.OCMConfig.CentralOperatorAddonID == "managed-central-qe" {
 		managedDinosaurOperatorNamespace = dinosaurOperatorQEAddonNamespace
 	}
 	fleetshardNS := fleetshardAddonNamespace

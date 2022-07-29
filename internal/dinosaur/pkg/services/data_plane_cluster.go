@@ -32,7 +32,7 @@ const dataPlaneClusterStatusCondReadyName = "Ready"
 type dataPlaneClusterService struct {
 	di.Inject
 	ClusterService         ClusterService
-	DinosaurConfig         *config.DinosaurConfig
+	CentralConfig          *config.CentralConfig
 	ObservabilityConfig    *observatorium.ObservabilityConfiguration
 	DataplaneClusterConfig *config.DataplaneClusterConfig
 }
