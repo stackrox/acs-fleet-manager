@@ -92,13 +92,20 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 		UiEndpoint: central.Spec.UiEndpoint.Host,
 		Enabled:    true,
 		Config: map[string]string{
-			"issuer":        central.Spec.Auth.Issuer,
-			"client_id":     central.Spec.Auth.ClientId,
-			"client_secret": central.Spec.Auth.ClientSecret,
-			"mode":          "post",
+			"issuer":                 central.Spec.Auth.Issuer,
+			"client_id":              central.Spec.Auth.ClientId,
+			"client_secret":          central.Spec.Auth.ClientSecret,
+			"mode":                   "post",
+			"disable_offline_access": "true",
 		},
 		// TODO: for testing purposes only; remove once host is correctly specified in fleet-manager
 		ExtraUiEndpoints: []string{"localhost:8443"},
+		RequiredAttributes: []*storage.AuthProvider_RequiredAttribute{
+			{
+				AttributeKey:   "org_id",
+				AttributeValue: central.Spec.Auth.OwnerOrgId,
+			},
+		},
 	}
 	return request
 }
