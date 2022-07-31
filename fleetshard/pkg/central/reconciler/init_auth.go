@@ -87,7 +87,7 @@ func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProvider {
 	request := &storage.AuthProvider{
 		Name: ternary.String(strings.Contains(central.Spec.Auth.Issuer, "stage"),
-			" Red Hat SSO (Stage)", "Red Hat SSO"),
+			"Red Hat SSO (Stage)", "Red Hat SSO"),
 		Type:       "oidc",
 		UiEndpoint: central.Spec.UiEndpoint.Host,
 		Enabled:    true,
