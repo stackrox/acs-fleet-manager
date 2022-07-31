@@ -846,7 +846,7 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.CentralRequest, dinosaurConfi
 				ClientID:    "rhacs-ms-dev",
 				OwnerOrgID:  dinosaurRequest.OrganisationID,
 				OwnerUserID: dinosaurRequest.OwnerUserID,
-				Issuer:      dinosaurConfig.RHSsoIssuer,
+				Issuer:      dinosaurConfig.RhSsoIssuer,
 			},
 			Endpoint: manageddinosaur.EndpointSpec{
 				Host: dinosaurRequest.Host,
