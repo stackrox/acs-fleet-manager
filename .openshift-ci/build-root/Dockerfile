@@ -22,6 +22,16 @@ RUN rm -f /etc/yum.repos.d/* && { \
     echo "metadata_expire=6h"; \
     echo "countme=1"; \
     echo "enabled=1"; \
+    echo; \
+    echo "[appstream]"; \
+    echo "name=CentOS Stream $releasever - AppStream"; \
+    echo "baseurl=http://mirror.stream.centos.org/\$releasever-stream/AppStream/\$basearch/os/"; \
+    echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial"; \
+    echo "gpgcheck=1"; \
+    echo "repo_gpgcheck=0"; \
+    echo "metadata_expire=6h"; \
+    echo "countme=1"; \
+    echo "enabled=1"; \
     } > "/etc/yum.repos.d/centos.repo"
 
 RUN dnf update && dnf -y install make which git
