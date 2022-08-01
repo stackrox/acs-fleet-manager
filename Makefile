@@ -759,12 +759,12 @@ deploy/token-refresher:
 
 # Deploys ingress router on a k8s cluster
 deploy/ingress-router:
-	@kubectl create namespace openshift-ingress && kubectl apply -f ./dev/env/manifests/ingress-router
+	./scripts/ingress-router.sh deploy
 .PHONY: deploy/ingress-router
 
 # Un-deploys ingress router from a k8s cluster
 undeploy/ingress-router:
-	@kubectl delete -f ./dev/env/manifests/ingress-router; kubectl delete namespace openshift-ingress
+	./scripts/ingress-router.sh undeploy
 .PHONY: undeploy/ingress-router
 
 tag:
