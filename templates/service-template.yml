@@ -1179,7 +1179,7 @@ objects:
     metadata:
       name: fleet-manager-pdb
     spec:
-      maxUnavailabe: "50%"
+      maxUnavailable: "50%"
       selector:
         matchLabels:
           app: fleet-manager
