@@ -1,0 +1,9 @@
+[baseos]
+name=CentOS Stream $releasever - BaseOS
+baseurl=http://mirror.stream.centos.org/$releasever-stream/BaseOS/$basearch/os/
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
+gpgcheck=1
+repo_gpgcheck=0
+metadata_expire=6h
+countme=1
+enabled=1

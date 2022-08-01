@@ -12,6 +12,8 @@
 
 FROM quay.io/centos/centos:stream9
 
+RUN rm -f /etc/yum.repos.d/*
+COPY centos.repo /etc/yum.repos.d
 RUN dnf update && dnf -y install make which
 
 RUN curl -L --retry 10 --silent --show-error --fail -o /tmp/go1.17.12.linux-amd64.tar.gz \
@@ -49,3 +51,18 @@ RUN mkdir -p /stackrox/crds && \
 RUN curl -L --retry 10 --silent --show-error --fail -o "/usr/local/bin/ocm" \
     https://github.com/openshift-online/ocm-cli/releases/download/v0.1.30/ocm-linux-amd64 && \
     chmod +x /usr/local/bin/ocm
+
+ARG GOPATH=/go
+ENV GOPATH=${GOPATH}
+
+ARG GOCACHE=/go/.cache
+ENV GOCACHE=${GOCACHE}
+
+ARG GOROOT=/usr/local/go
+ENV GOROOT=${GOROOT}
+
+ARG GOFLAGS=-mod=mod
+ENV GOFLAGS=${GOFLAGS}
+
+RUN mkdir -p ${GOPATH}
+WORKDIR ${GOPATH}
