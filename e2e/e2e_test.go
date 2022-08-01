@@ -220,7 +220,9 @@ func centralStatus(createdCentral *public.CentralRequest, client *fleetmanager.C
 }
 
 func isDNSEnabled(routesEnabled bool) bool {
-	hasRoute53Creds := os.Getenv("ROUTE53_ACCESS_KEY") != "" && os.Getenv("ROUTE53_SECRET_ACCESS_KEY") != ""
+	hasRoute53Creds := os.Getenv("ROUTE53_ACCESS_KEY") != "" &&
+		os.Getenv("ROUTE53_SECRET_ACCESS_KEY") != "" &&
+		os.Getenv("ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE") != ""
 	return hasRoute53Creds && routesEnabled
 }
 
