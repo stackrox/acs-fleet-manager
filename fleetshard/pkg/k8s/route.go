@@ -86,47 +86,39 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 	if !ok {
 		return errors.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
 	}
-	route := &openshiftRouteV1.Route{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralReencryptRouteName,
-			Namespace: namespace,
-			Labels:    map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
-		},
-		Spec: openshiftRouteV1.RouteSpec{
-			Host: remoteCentral.Spec.UiEndpoint.Host,
-			Port: &openshiftRouteV1.RoutePort{
-				TargetPort: intstr.IntOrString{Type: intstr.String, StrVal: "https"},
-			},
-			To: openshiftRouteV1.RouteTargetReference{
-				Kind: "Service",
-				Name: "central",
-			},
-			TLS: &openshiftRouteV1.TLSConfig{
-				Termination:              openshiftRouteV1.TLSTerminationReencrypt,
-				Key:                      remoteCentral.Spec.UiEndpoint.Tls.Key,
-				Certificate:              remoteCentral.Spec.UiEndpoint.Tls.Cert,
-				DestinationCACertificate: string(centralCA),
-			},
-		},
-	}
 
-	err = s.client.Create(ctx, route)
-	if err != nil {
-		return fmt.Errorf("creating reencrypt route: %w", err)
-	}
-	return nil
+	return s.createCentralRoute(ctx,
+		centralReencryptRouteName,
+		remoteCentral.Metadata.Namespace,
+		remoteCentral.Spec.UiEndpoint.Host,
+		&openshiftRouteV1.TLSConfig{
+			Termination:              openshiftRouteV1.TLSTerminationReencrypt,
+			Key:                      remoteCentral.Spec.UiEndpoint.Tls.Key,
+			Certificate:              remoteCentral.Spec.UiEndpoint.Tls.Cert,
+			DestinationCACertificate: string(centralCA),
+		})
 }
 
 // CreatePassthroughRoute creates a new managed central passthrough route.
 func (s *RouteService) CreatePassthroughRoute(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	return s.createCentralRoute(ctx,
+		centralPassthroughRouteName,
+		remoteCentral.Metadata.Namespace,
+		remoteCentral.Spec.DataEndpoint.Host,
+		&openshiftRouteV1.TLSConfig{
+			Termination: openshiftRouteV1.TLSTerminationPassthrough,
+		})
+}
+
+func (s *RouteService) createCentralRoute(ctx context.Context, name string, namespace string, host string, tls *openshiftRouteV1.TLSConfig) error {
 	route := &openshiftRouteV1.Route{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralPassthroughRouteName,
-			Namespace: remoteCentral.Metadata.Namespace,
+			Name:      name,
+			Namespace: namespace,
 			Labels:    map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
 		},
 		Spec: openshiftRouteV1.RouteSpec{
-			Host: remoteCentral.Spec.DataEndpoint.Host,
+			Host: host,
 			Port: &openshiftRouteV1.RoutePort{
 				TargetPort: intstr.IntOrString{Type: intstr.String, StrVal: "https"},
 			},
@@ -134,14 +126,12 @@ func (s *RouteService) CreatePassthroughRoute(ctx context.Context, remoteCentral
 				Kind: "Service",
 				Name: "central",
 			},
-			TLS: &openshiftRouteV1.TLSConfig{
-				Termination: openshiftRouteV1.TLSTerminationPassthrough,
-			},
+			TLS: tls,
 		},
 	}
 
 	if err := s.client.Create(ctx, route); err != nil {
-		return fmt.Errorf("creating passthrough route: %w", err)
+		return fmt.Errorf("creating route %s/%s: %w", namespace, name, err)
 	}
 	return nil
 }
