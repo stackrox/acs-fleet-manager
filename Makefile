@@ -757,6 +757,16 @@ deploy/token-refresher:
 		 | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/token-refresher
 
+# Deploys ingress router on a k8s cluster
+deploy/ingress-router:
+	@kubectl create namespace openshift-ingress && kubectl apply -f ./dev/env/manifests/ingress-router
+.PHONY: deploy/ingress-router
+
+# Un-deploys ingress router from a k8s cluster
+undeploy/ingress-router:
+	@kubectl delete -f ./dev/env/manifests/ingress-router; kubectl delete namespace openshift-ingress
+.PHONY: undeploy/ingress-router
+
 tag:
 	@echo "$(image_tag)"
 .PHONY: tag
