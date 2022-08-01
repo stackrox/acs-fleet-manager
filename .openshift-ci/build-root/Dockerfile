@@ -12,8 +12,19 @@
 
 FROM quay.io/centos/centos:stream9
 
-RUN rm -f /etc/yum.repos.d/*
-COPY centos.repo /etc/yum.repos.d
+# syntax=docker/dockerfile:1
+RUN rm -f /etc/yum.repos.d/* && cat <<EOT > "/etc/yum.repos.d/centos.repo"
+[baseos]
+name=CentOS Stream \$releasever - BaseOS
+baseurl=http://mirror.stream.centos.org/\$releasever-stream/BaseOS/\$basearch/os/
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
+gpgcheck=1
+repo_gpgcheck=0
+metadata_expire=6h
+countme=1
+enabled=1
+EOT
+
 RUN dnf update && dnf -y install make which
 
 RUN curl -L --retry 10 --silent --show-error --fail -o /tmp/go1.17.12.linux-amd64.tar.gz \
