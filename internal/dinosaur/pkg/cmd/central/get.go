@@ -20,7 +20,7 @@ func NewGetCommand(env *environments.Env) *cobra.Command {
 			runGet(env, cmd, args)
 		},
 	}
-	cmd.Flags().String(FlagID, "", "Central id")
+	cmd.Flags().String(FlagID, "", "Central ID")
 
 	return cmd
 }

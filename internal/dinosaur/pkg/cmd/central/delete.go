@@ -23,7 +23,7 @@ func NewDeleteCommand(env *environments.Env) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(FlagID, "", "Central id")
+	cmd.Flags().String(FlagID, "", "Central ID")
 	cmd.Flags().String(FlagOwner, "test-user", "Username")
 	return cmd
 }
