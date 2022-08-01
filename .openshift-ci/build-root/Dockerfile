@@ -12,18 +12,17 @@
 
 FROM quay.io/centos/centos:stream9
 
-# syntax=docker/dockerfile:1
-RUN rm -f /etc/yum.repos.d/* && cat <<EOT > "/etc/yum.repos.d/centos.repo"
-[baseos]
-name=CentOS Stream \$releasever - BaseOS
-baseurl=http://mirror.stream.centos.org/\$releasever-stream/BaseOS/\$basearch/os/
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
-gpgcheck=1
-repo_gpgcheck=0
-metadata_expire=6h
-countme=1
-enabled=1
-EOT
+RUN rm -f /etc/yum.repos.d/* && { \
+    echo "[baseos]"; \
+    echo "name=CentOS Stream \$releasever - BaseOS"; \
+    echo "baseurl=http://mirror.stream.centos.org/\$releasever-stream/BaseOS/\$basearch/os/"; \
+    echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial"; \
+    echo "gpgcheck=1"; \
+    echo "repo_gpgcheck=0"; \
+    echo "metadata_expire=6h"; \
+    echo "countme=1"; \
+    echo "enabled=1"; \
+    } > "/etc/yum.repos.d/centos.repo"
 
 RUN dnf update && dnf -y install make which
 
