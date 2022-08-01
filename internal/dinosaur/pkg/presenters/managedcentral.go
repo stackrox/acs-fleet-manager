@@ -55,7 +55,7 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 			},
 			Auth: private.ManagedCentralAllOfSpecAuth{
 				ClientSecret: c.centralConfig.RhSsoClientSecret, // pragma: allowlist secret
-				// TODO: ROX-11593: make part of centralConfig
+				// TODO(ROX-11593): make part of centralConfig
 				ClientId:    "rhacs-ms-dev",
 				OwnerOrgId:  from.OrganisationID,
 				OwnerUserId: from.OwnerUserID,
