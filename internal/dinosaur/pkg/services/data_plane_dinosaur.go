@@ -300,13 +300,12 @@ func (d *dataPlaneDinosaurService) persistDinosaurRoutes(dinosaur *dbapi.Central
 	}
 
 	routesInRequest := dinosaurStatus.Routes
-	var routes []dbapi.DataPlaneCentralRoute
 
 	if routesErr := validateRouters(routesInRequest, dinosaur, clusterDNS); routesErr != nil {
 		return serviceError.NewWithCause(serviceError.ErrorBadRequest, routesErr, "routes are not valid")
 	}
 
-	if err := dinosaur.SetRoutes(routes); err != nil {
+	if err := dinosaur.SetRoutes(routesInRequest); err != nil {
 		return serviceError.NewWithCause(serviceError.ErrorGeneral, err, "failed to set routes for dinosaur %s", dinosaur.ID)
 	}
 
