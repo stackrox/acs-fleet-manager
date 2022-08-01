@@ -48,6 +48,7 @@ cmd/fleet-manager/fleet-manager
 /secrets/aws.*
 /secrets/ocm-service.*
 /secrets/central-tls.*
+/secrets/dinosaur-tls.*
 /secrets/dx.*
 /secrets/observatorium.*
 /secrets/observability-config-access.token
