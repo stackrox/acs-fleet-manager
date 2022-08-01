@@ -24,7 +24,7 @@ RUN rm -f /etc/yum.repos.d/* && { \
     echo "enabled=1"; \
     } > "/etc/yum.repos.d/centos.repo"
 
-RUN dnf update && dnf -y install make which
+RUN dnf update && dnf -y install make which git
 
 RUN curl -L --retry 10 --silent --show-error --fail -o /tmp/go1.17.12.linux-amd64.tar.gz \
     https://go.dev/dl/go1.17.12.linux-amd64.tar.gz && \
