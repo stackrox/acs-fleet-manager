@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -23,7 +24,8 @@ import (
 
 const (
 	centralName               = "test-central"
-	centralNamespace          = "rhacs-cb45idheg5ip6dq1jo4g"
+	centralID                 = "cb45idheg5ip6dq1jo4g"
+	centralNamespace          = "rhacs-" + centralID
 	centralReencryptRouteName = "central-reencrypt"
 	conditionTypeReady        = "Ready"
 )
@@ -32,6 +34,14 @@ var simpleManagedCentral = private.ManagedCentral{
 	Metadata: private.ManagedCentralAllOfMetadata{
 		Name:      centralName,
 		Namespace: centralNamespace,
+	},
+	Spec: private.ManagedCentralAllOfSpec{
+		UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
+			Host: fmt.Sprintf("acs-%s.acs.rhcloud.test", centralID),
+		},
+		DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
+			Host: fmt.Sprintf("acs-data-%s.acs.rhcloud.test", centralID),
+		},
 	},
 }
 
@@ -273,12 +283,7 @@ func TestReportRoutesStatuses(t *testing.T) {
 
 	expected := []private.DataPlaneCentralStatusRoutes{
 		{
-			Name:   "central-reencrypt",
-			Router: "router-default.apps.test.local",
-		},
-		{
-			Name:   "central-mtls",
-			Prefix: "data",
+			Domain: "acs-cb45idheg5ip6dq1jo4g.acs.rhcloud.test",
 			Router: "router-default.apps.test.local",
 		},
 	}
@@ -300,12 +305,7 @@ func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
 	// then
 	expected := []private.DataPlaneCentralStatusRoutes{
 		{
-			Name:   "central-reencrypt",
-			Router: "router-default.apps.test.local",
-		},
-		{
-			Name:   "central-mtls",
-			Prefix: "data",
+			Domain: "acs-cb45idheg5ip6dq1jo4g.acs.rhcloud.test",
 			Router: "router-default.apps.test.local",
 		},
 	}

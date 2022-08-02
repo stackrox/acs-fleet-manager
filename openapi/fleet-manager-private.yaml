@@ -407,9 +407,7 @@ components:
           items:
             type: object
             properties:
-              name:
-                type: string
-              prefix:
+              domain:
                 type: string
               router:
                 type: string
