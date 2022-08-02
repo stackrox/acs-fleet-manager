@@ -18,5 +18,6 @@ func NewStageEnvLoader() environments.EnvLoader {
 		"jwks-file":                           "config/jwks-file-static.json",
 		"fleetshard-authz-config-file":        "config/fleetshard-authz-org-ids-development.yaml",
 		"rhsso-issuer":                        "https://sso.stage.redhat.com/auth/realms/redhat-external",
+		"role-authz-config-file":              "config/role-authz-roles-dev.yaml",
 	}
 }

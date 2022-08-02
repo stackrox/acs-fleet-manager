@@ -1,0 +1,14 @@
+# This file contains the role mapping for the admin API based on the HTTP methods.
+# Each HTTP method allows configuring an arbitrary amount of roles that authorize requests to the API.
+- method: GET
+  roles:
+    - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+    - "acs-fleet-manager-admin-read"      # Prod rover group, will only include selected members + SREs.
+    - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.
+- method: PATCH
+  roles:
+    - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+    - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.
+- method: DELETE
+  roles:
+    - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
