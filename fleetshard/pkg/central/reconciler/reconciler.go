@@ -186,13 +186,13 @@ func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace str
 	if err != nil {
 		return nil, fmt.Errorf("obtaining ingress for reencrypt route: %w", err)
 	}
-	mtlsIngress, err := r.routeService.FindMTLSIngress(ctx, namespace)
-	if err != nil {
-		return nil, fmt.Errorf("obtaining ingress for MTLS route: %w", err)
-	}
+	// mtlsIngress, err := r.routeService.FindMTLSIngress(ctx, namespace)
+	// if err != nil {
+	//	 return nil, fmt.Errorf("obtaining ingress for MTLS route: %w", err)
+	// }
 	return []private.DataPlaneCentralStatusRoutes{
 		getRouteStatus(reencryptIngress),
-		getRouteStatus(mtlsIngress),
+		// getRouteStatus(mtlsIngress),
 	}, nil
 }
 

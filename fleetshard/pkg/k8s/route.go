@@ -16,7 +16,7 @@ import (
 
 const (
 	centralReencryptRouteName = "central-reencrypt"
-	centralMTLSRouteName      = "central"
+	centralMTLSRouteName      = "central-mtls"
 	centralTLSSecretName      = "central-tls"
 )
 
