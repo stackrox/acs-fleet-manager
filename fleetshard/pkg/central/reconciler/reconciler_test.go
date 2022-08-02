@@ -287,7 +287,7 @@ func TestReportRoutesStatuses(t *testing.T) {
 			Router: "router-default.apps.test.local",
 		},
 		{
-			Domain: "central.rhacs-cb45idheg5ip6dq1jo4g",
+			Domain: "central-rhacs-cb45idheg5ip6dq1jo4g.test.local",
 			Router: "router-default.apps.test.local",
 		},
 	}
@@ -313,7 +313,7 @@ func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
 			Router: "router-default.apps.test.local",
 		},
 		{
-			Domain: "central.rhacs-cb45idheg5ip6dq1jo4g",
+			Domain: "central-rhacs-cb45idheg5ip6dq1jo4g.test.local",
 			Router: "router-default.apps.test.local",
 		},
 	}
