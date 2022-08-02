@@ -2,12 +2,13 @@ package auth
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"gopkg.in/yaml.v2"
-	"net/http"
-	"strings"
 )
 
 /*
