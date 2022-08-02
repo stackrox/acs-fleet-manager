@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	centralReencryptRouteName = "central-reencrypt"
-	centralMTLSRouteName      = "central-mtls"
-	centralTLSSecretName      = "central-tls"
+	centralReencryptRouteName   = "managed-central-reencrypt"
+	centralPassthroughRouteName = "managed-central-passthrough"
+	centralTLSSecretName        = "central-tls"
 )
 
 // RouteService is responsible for performing read and write operations on the OpenShift Route objects in the cluster.
@@ -36,14 +36,19 @@ func (s *RouteService) FindReencryptRoute(ctx context.Context, namespace string)
 	return s.findRoute(ctx, namespace, centralReencryptRouteName)
 }
 
+// FindPassthroughRoute returns central passthrough route or error if not found.
+func (s *RouteService) FindPassthroughRoute(ctx context.Context, namespace string) (*openshiftRouteV1.Route, error) {
+	return s.findRoute(ctx, namespace, centralPassthroughRouteName)
+}
+
 // FindReencryptIngress returns central reencrypt route ingress or error if not found.
 func (s *RouteService) FindReencryptIngress(ctx context.Context, namespace string) (*openshiftRouteV1.RouteIngress, error) {
 	return s.findFirstAdmittedIngress(ctx, namespace, centralReencryptRouteName)
 }
 
-// FindMTLSIngress returns central MTLS route ingress or error if not found.
-func (s *RouteService) FindMTLSIngress(ctx context.Context, namespace string) (*openshiftRouteV1.RouteIngress, error) {
-	return s.findFirstAdmittedIngress(ctx, namespace, centralMTLSRouteName)
+// FindPassthroughIngress returns central passthrough route ingress or error if not found.
+func (s *RouteService) FindPassthroughIngress(ctx context.Context, namespace string) (*openshiftRouteV1.RouteIngress, error) {
+	return s.findFirstAdmittedIngress(ctx, namespace, centralPassthroughRouteName)
 }
 
 // FindFirstAdmittedIngress returns first admitted ingress or error if not found
@@ -81,14 +86,39 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 	if !ok {
 		return errors.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
 	}
+
+	return s.createCentralRoute(ctx,
+		centralReencryptRouteName,
+		remoteCentral.Metadata.Namespace,
+		remoteCentral.Spec.UiEndpoint.Host,
+		&openshiftRouteV1.TLSConfig{
+			Termination:              openshiftRouteV1.TLSTerminationReencrypt,
+			Key:                      remoteCentral.Spec.UiEndpoint.Tls.Key,
+			Certificate:              remoteCentral.Spec.UiEndpoint.Tls.Cert,
+			DestinationCACertificate: string(centralCA),
+		})
+}
+
+// CreatePassthroughRoute creates a new managed central passthrough route.
+func (s *RouteService) CreatePassthroughRoute(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	return s.createCentralRoute(ctx,
+		centralPassthroughRouteName,
+		remoteCentral.Metadata.Namespace,
+		remoteCentral.Spec.DataEndpoint.Host,
+		&openshiftRouteV1.TLSConfig{
+			Termination: openshiftRouteV1.TLSTerminationPassthrough,
+		})
+}
+
+func (s *RouteService) createCentralRoute(ctx context.Context, name string, namespace string, host string, tls *openshiftRouteV1.TLSConfig) error {
 	route := &openshiftRouteV1.Route{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralReencryptRouteName,
+			Name:      name,
 			Namespace: namespace,
 			Labels:    map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
 		},
 		Spec: openshiftRouteV1.RouteSpec{
-			Host: remoteCentral.Spec.UiEndpoint.Host,
+			Host: host,
 			Port: &openshiftRouteV1.RoutePort{
 				TargetPort: intstr.IntOrString{Type: intstr.String, StrVal: "https"},
 			},
@@ -96,18 +126,12 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 				Kind: "Service",
 				Name: "central",
 			},
-			TLS: &openshiftRouteV1.TLSConfig{
-				Termination:              openshiftRouteV1.TLSTerminationReencrypt,
-				Key:                      remoteCentral.Spec.UiEndpoint.Tls.Key,
-				Certificate:              remoteCentral.Spec.UiEndpoint.Tls.Cert,
-				DestinationCACertificate: string(centralCA),
-			},
+			TLS: tls,
 		},
 	}
 
-	err = s.client.Create(ctx, route)
-	if err != nil {
-		return fmt.Errorf("creating reencrypt route: %w", err)
+	if err := s.client.Create(ctx, route); err != nil {
+		return fmt.Errorf("creating route %s/%s: %w", namespace, name, err)
 	}
 	return nil
 }

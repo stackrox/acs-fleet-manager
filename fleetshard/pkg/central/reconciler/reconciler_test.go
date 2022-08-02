@@ -26,7 +26,7 @@ const (
 	centralName               = "test-central"
 	centralID                 = "cb45idheg5ip6dq1jo4g"
 	centralNamespace          = "rhacs-" + centralID
-	centralReencryptRouteName = "central-reencrypt"
+	centralReencryptRouteName = "managed-central-reencrypt"
 	conditionTypeReady        = "Ready"
 )
 
@@ -286,6 +286,10 @@ func TestReportRoutesStatuses(t *testing.T) {
 			Domain: "acs-cb45idheg5ip6dq1jo4g.acs.rhcloud.test",
 			Router: "router-default.apps.test.local",
 		},
+		{
+			Domain: "acs-data-cb45idheg5ip6dq1jo4g.acs.rhcloud.test",
+			Router: "router-default.apps.test.local",
+		},
 	}
 	actual := status.Routes
 	assert.ElementsMatch(t, expected, actual)
@@ -306,6 +310,10 @@ func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
 	expected := []private.DataPlaneCentralStatusRoutes{
 		{
 			Domain: "acs-cb45idheg5ip6dq1jo4g.acs.rhcloud.test",
+			Router: "router-default.apps.test.local",
+		},
+		{
+			Domain: "acs-data-cb45idheg5ip6dq1jo4g.acs.rhcloud.test",
 			Router: "router-default.apps.test.local",
 		},
 	}

@@ -136,8 +136,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
-	if err := r.ensureReencryptRouteExists(ctx, remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "updating re-encrypt route")
+	if r.useRoutes {
+		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
+			return nil, errors.Wrapf(err, "updating routes")
+		}
 	}
 
 	if err := r.setLastCentralHash(remoteCentral); err != nil {
@@ -186,13 +188,13 @@ func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace str
 	if err != nil {
 		return nil, fmt.Errorf("obtaining ingress for reencrypt route: %w", err)
 	}
-	// mtlsIngress, err := r.routeService.FindMTLSIngress(ctx, namespace)
-	// if err != nil {
-	//	 return nil, fmt.Errorf("obtaining ingress for MTLS route: %w", err)
-	// }
+	passthroughIngress, err := r.routeService.FindPassthroughIngress(ctx, namespace)
+	if err != nil {
+		return nil, fmt.Errorf("obtaining ingress for passthrough route: %w", err)
+	}
 	return []private.DataPlaneCentralStatusRoutes{
 		getRouteStatus(reencryptIngress),
-		// getRouteStatus(mtlsIngress),
+		getRouteStatus(passthroughIngress),
 	}, nil
 }
 
@@ -219,11 +221,18 @@ func isCentralReady(ctx context.Context, client ctrlClient.Client, central priva
 
 func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
 	globalDeleted := true
-	routeDeleted, err := r.ensureReencryptRouteDeleted(ctx, central.GetNamespace())
-	if err != nil {
-		return false, err
+	if r.useRoutes {
+		reencryptRouteDeleted, err := r.ensureReencryptRouteDeleted(ctx, central.GetNamespace())
+		if err != nil {
+			return false, err
+		}
+		passthroughRouteDeleted, err := r.ensurePassthroughRouteDeleted(ctx, central.GetNamespace())
+		if err != nil {
+			return false, err
+		}
+
+		globalDeleted = globalDeleted && reencryptRouteDeleted && passthroughRouteDeleted
 	}
-	globalDeleted = routeDeleted && globalDeleted
 
 	centralDeleted, err := r.ensureCentralCRDeleted(ctx, central)
 	if err != nil {
@@ -333,11 +342,16 @@ func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *
 	return false, nil
 }
 
+func (r CentralReconciler) ensureRoutesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	err := r.ensureReencryptRouteExists(ctx, remoteCentral)
+	if err != nil {
+		return err
+	}
+	return r.ensurePassthroughRouteExists(ctx, remoteCentral)
+}
+
 // TODO(ROX-9310): Move re-encrypt route reconciliation to the StackRox operator
 func (r CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
-	if !r.useRoutes {
-		return nil
-	}
 	namespace := remoteCentral.Metadata.Namespace
 	_, err := r.routeService.FindReencryptRoute(ctx, namespace)
 	if err != nil && !apiErrors.IsNotFound(err) {
@@ -354,20 +368,51 @@ func (r CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remot
 	return nil
 }
 
+type routeSupplierFunc func() (*openshiftRouteV1.Route, error)
+
 // TODO(ROX-9310): Move re-encrypt route reconciliation to the StackRox operator
+// TODO(ROX-11918): Make hostname configurable on the StackRox operator
 func (r CentralReconciler) ensureReencryptRouteDeleted(ctx context.Context, namespace string) (bool, error) {
-	if !r.useRoutes {
-		return true, nil
+	return r.ensureRouteDeleted(ctx, func() (*openshiftRouteV1.Route, error) {
+		return r.routeService.FindReencryptRoute(ctx, namespace) //nolint:wrapcheck
+	})
+}
+
+// TODO(ROX-11918): Make hostname configurable on the StackRox operator
+func (r *CentralReconciler) ensurePassthroughRouteExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	namespace := remoteCentral.Metadata.Namespace
+	_, err := r.routeService.FindPassthroughRoute(ctx, namespace)
+	if err != nil && !apiErrors.IsNotFound(err) {
+		return fmt.Errorf("retrieving passthrough route for namespace %q: %w", namespace, err)
 	}
-	route, err := r.routeService.FindReencryptRoute(ctx, namespace)
+
+	if apiErrors.IsNotFound(err) {
+		err = r.routeService.CreatePassthroughRoute(ctx, remoteCentral)
+		if err != nil {
+			return fmt.Errorf("creating passthrough route for central %s: %w", remoteCentral.Id, err)
+		}
+	}
+
+	return nil
+}
+
+// TODO(ROX-11918): Make hostname configurable on the StackRox operator
+func (r CentralReconciler) ensurePassthroughRouteDeleted(ctx context.Context, namespace string) (bool, error) {
+	return r.ensureRouteDeleted(ctx, func() (*openshiftRouteV1.Route, error) {
+		return r.routeService.FindPassthroughRoute(ctx, namespace) //nolint:wrapcheck
+	})
+}
+
+func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplier routeSupplierFunc) (bool, error) {
+	route, err := routeSupplier()
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return true, nil
 		}
-		return false, errors.Wrapf(err, "get central re-encrypt route %s/%s", namespace, route.GetName())
+		return false, errors.Wrapf(err, "get central route %s/%s", route.GetNamespace(), route.GetName())
 	}
 	if err := r.client.Delete(ctx, route); err != nil {
-		return false, errors.Wrapf(err, "delete central re-encrypt route %s/%s", namespace, route.GetName())
+		return false, errors.Wrapf(err, "delete central route %s/%s", route.GetNamespace(), route.GetName())
 	}
 	return false, nil
 }
