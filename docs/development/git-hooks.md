@@ -14,6 +14,7 @@ Currently, the following plugins are enabled:
 - [trailing-whitespace](https://github.com/pre-commit/pre-commit-hooks#trailing-whitespace): detect trailing whitespaces.
 - [end-of-file-fixer](https://github.com/pre-commit/pre-commit-hooks#end-of-file-fixer): ensure files end in a newline.
 - [check-json](https://github.com/pre-commit/pre-commit-hooks#check-json): ensure all JSON files have valid syntax.
+- [shellcheck](https://github.com/shellcheck-py/shellcheck-py): run shellcheck against shell scripts.
 
 **Troubleshooting:**
 In case you run into any issues with the secrets, the output typically is enough to highlight the problem.

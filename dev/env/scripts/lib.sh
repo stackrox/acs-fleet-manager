@@ -2,6 +2,7 @@
 
 die() {
     {
+        # shellcheck disable=SC2059
         printf "$*"
         echo
     } >&2
@@ -9,6 +10,7 @@ die() {
 }
 
 log() {
+    # shellcheck disable=SC2059
     printf "$*"
     echo
 }
@@ -222,6 +224,7 @@ wait_for_resource_to_appear() {
 
     log "Waiting for ${kind}/${name} to be created in namespace ${namespace}"
 
+    # shellcheck disable=SC2034
     for i in $(seq "$seconds"); do
         if $KUBECTL -n "$namespace" get "$kind" "$name" 2>/dev/null >&2; then
             log "Resource ${kind}/${namespace} in namespace ${namespace} appeared"
@@ -258,7 +261,7 @@ assemble_kubeconfig() {
     if [[ "$KUBECONF_CLUSTER_SERVER_OVERRIDE" == "true" ]]; then
         local server
         $KUBECTL delete pod alpine >/dev/null 2>&1 || true
-        server=$($KUBECTL run --rm -it alpine --quiet --image=alpine --restart=Never -- sh -c 'echo $KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT' | tr -d '\r')
+        server=$($KUBECTL run --rm -it alpine --quiet --image=alpine --restart=Never -- sh -c "echo $KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT" | tr -d '\r')
         CLUSTER=$(echo "$CLUSTER" | jq ".cluster.server = \"https://${server}\"" -)
         $KUBECTL delete pod alpine >/dev/null 2>&1 || true
     fi

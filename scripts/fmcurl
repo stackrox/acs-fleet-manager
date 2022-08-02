@@ -14,4 +14,4 @@ shift
 # Normalize
 resource=$(echo "$resource" | sed -e 's/^\///;')
 
-curl -LH "Authorization: Bearer ${OCM_TOKEN}" http://localhost:8000/api/${resource} "$@" | jq .
+curl -LH "Authorization: Bearer ${OCM_TOKEN}" http://localhost:8000/api/"${resource}" "$@" | jq .

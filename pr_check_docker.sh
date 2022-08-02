@@ -9,7 +9,9 @@ export TEST_SUMMARY_FORMAT="standard-verbose"
 
 # start postgres
 which pg_ctl
+# shellcheck disable=SC2037,SC2211
 PGDATA=/var/lib/postgresql/data /usr/lib/postgresql/*/bin/pg_ctl -w stop
+# shellcheck disable=SC2037,SC2211
 PGDATA=/var/lib/postgresql/data /usr/lib/postgresql/*/bin/pg_ctl start -o "-c listen_addresses='*' -p 5432"
 
 # check the code. Then run the unit and integration tests and cleanup cluster (if running against real OCM)

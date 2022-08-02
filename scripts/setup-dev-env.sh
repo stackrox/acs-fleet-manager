@@ -7,7 +7,7 @@ DIRNAME=$(dirname "$SCRIPT")
 make secrets/touch
 
 set +e
-$(docker ps | grep -q fleet-manager-db)
+docker ps | grep -q fleet-manager-db
 setup_db_container=$?
 set -e
 
