@@ -9,6 +9,8 @@ export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 
+export RUN_AUTH_E2E="false"
+
 if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     # We are running in an OpenShift CI context, configure accordingly.
     log "Executing in OpenShift CI context"
@@ -27,7 +29,6 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
     # When running in OpenShift CI, ensure we also run the auth E2E tests.
     RUN_AUTH_E2E="true"
-    export RUN_AUTH_E2E
 fi
 
 init
@@ -57,7 +58,7 @@ if [[ "$RUN_AUTH_E2E" == "true" ]]; then
     export STATIC_TOKEN=${STATIC_TOKEN:-$FLEET_STATIC_TOKEN}
 
     # Ensure we set the OCM refresh token once more, in case AUTH_TYPE!=OCM.
-    ocm login --token ${OCM_OFFLINE_TOKEN}
+    ocm login --token "${OCM_OFFLINE_TOKEN}"
     OCM_TOKEN=$(ocm token --refresh)
     export OCM_TOKEN
 
@@ -68,7 +69,7 @@ case "$AUTH_TYPE" in
 OCM)
 
     log "Logging in with client credentials + Refreshing OCM Service Token"
-    ocm login --token ${OCM_OFFLINE_TOKEN}
+    ocm login --token "${OCM_OFFLINE_TOKEN}"
     OCM_TOKEN=$(ocm token --refresh)
     export OCM_TOKEN
     ;;
@@ -83,7 +84,7 @@ esac
 
 log
 
-if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
+if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then # pragma: allowlist secret
     if [[ -z "${QUAY_USER:-}" ]]; then
         die "QUAY_USER needs to be set"
     fi
@@ -113,7 +114,7 @@ fi
 # Terminate loggers.
 for p in $(jobs -pr); do
     log "Terminating background process ${p}"
-    kill $p || true
+    kill "$p" || true
 done
 
 log
