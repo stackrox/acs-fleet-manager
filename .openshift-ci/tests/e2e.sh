@@ -9,7 +9,7 @@ export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 
-export RUN_AUTH_E2E="false"
+RUN_AUTH_E2E_DEFAULT="false"
 
 if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     # We are running in an OpenShift CI context, configure accordingly.
@@ -28,7 +28,7 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export CLUSTER_TYPE="openshift-ci"
     export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
     # When running in OpenShift CI, ensure we also run the auth E2E tests.
-    RUN_AUTH_E2E="true"
+    RUN_AUTH_E2E_DEFAULT="true"
 fi
 
 init
@@ -38,6 +38,7 @@ if [[ "$SPAWN_LOGGER" == "true" && "$LOG_DIR" == "" ]]; then
     LOG_DIR=$(mktemp -d)
 fi
 export LOG_DIR
+export RUN_AUTH_E2E=${RUN_AUTH_E2E:-$RUN_AUTH_E2E_DEFAULT}
 
 log
 log "** Entrypoint for ACS MS E2E Tests **"
@@ -47,6 +48,7 @@ log "Cluster type: ${CLUSTER_TYPE}"
 log "Cluster name: ${CLUSTER_NAME}"
 log "Image: ${FLEET_MANAGER_IMAGE}"
 log "Log directory: ${LOG_DIR:-(none)}"
+log "Executing Auth E2E tests: ${RUN_AUTH_E2E}"
 
 # If auth E2E tests shall be run, ensure we have all authentication related secrets correctly set up.
 if [[ "$RUN_AUTH_E2E" == "true" ]]; then
