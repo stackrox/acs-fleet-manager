@@ -88,7 +88,7 @@ var _ = AfterSuite(func() {
 func isDNSEnabled(routesEnabled bool) (bool, string, string) {
 	accessKey := os.Getenv("ROUTE53_ACCESS_KEY")
 	secretKey := os.Getenv("ROUTE53_SECRET_ACCESS_KEY")
-	enableExternal := os.Getenv("ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE")
+	enableExternal := os.Getenv("ENABLE_CENTRAL_EXTERNAL_CERTIFICATE")
 	dnsEnabled := accessKey != "" &&
 		secretKey != "" &&
 		enableExternal != "" && routesEnabled
