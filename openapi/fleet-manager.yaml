@@ -197,62 +197,6 @@ paths:
       summary: Deletes a Central request by ID
       security:
         - Bearer: [ ]
-    patch:
-      summary: Update a Central instance by id
-      description: |
-        The only users authorized for this operation are:
-        1) The administrator of the owner organisation of the specified Central.
-        2) The owner user, and only if it is also part of the owner organisation of the specified Central.
-      security:
-        - Bearer: [ ]
-      operationId: updateCentralById
-      requestBody:
-        description: Update owner of Cental
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CentralUpdateRequest'
-        required: true
-      responses:
-        "200":
-          description: Cental updated by ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CentralRequest'
-              examples:
-                CentralRequestPostResponseExample:
-                  $ref: '#/components/examples/CentralRequestExample'
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        "401":
-          description: Auth token is invalid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        "403":
-          description: User is not authorised to access the service
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        "404":
-          description: No Central found with the specified ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        "500":
-          description: Unexpected error occurred
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
     parameters:
       - $ref: "#/components/parameters/id"
   /api/rhacs/v1/centrals:
@@ -910,13 +854,6 @@ components:
           format: double
       required:
         - value
-    CentralUpdateRequest:
-      type: object
-      properties:
-        # for now owner is the only supported field for update
-        owner:
-          type: string
-          nullable: true
 
   parameters:
     id:

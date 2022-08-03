@@ -125,9 +125,6 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Delete).
 		Name(logger.NewLogEvent("delete-central", "delete a central instance").ToString()).
 		Methods(http.MethodDelete)
-	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Update).
-		Name(logger.NewLogEvent("update-central", "update a central instance").ToString()).
-		Methods(http.MethodPatch)
 	apiV1DinosaursRouter.HandleFunc("", dinosaurHandler.List).
 		Name(logger.NewLogEvent("list-central", "list all central").ToString()).
 		Methods(http.MethodGet)
