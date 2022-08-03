@@ -81,15 +81,24 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
                     jq -r '.items[].metadata.name' | grep -q '^rhacs-operator$' && break
                 sleep 1
             done
-        fi
 
-        if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
+            # It seems that before creating the subscription (part of the next apply call) all catalog sources need to be healthy,
+            # otherwise the subscription will end up in the following state:
+            # Conditions:
+            #   Message:               all available catalogsources are healthy
+            #   Reason:                AllCatalogSourcesHealthy
+            #   Status:                False
+            #   Type:                  CatalogSourcesUnhealthy
+            #   Message:               error using catalog operatorhubio-catalog (in namespace olm): failed to list bundles: rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing dial tcp 10.43.96.123:50051: i/o timeout"
+            #   Status:                True
+            #   Type:                  ResolutionFailed
+            #
+            # Therefore we wait for the operatorhubio-catalog/registry-server container to become ready.
+            wait_for_container_to_become_ready "olm" "olm.catalogSource=operatorhubio-catalog" "registry-server"
+
+            # This creates the subscription.
             apply "${MANIFESTS_DIR}"/rhacs-operator/quay/*.yaml
-        elif [[ "$OPERATOR_SOURCE" == "marketplace" ]]; then
-            apply "${MANIFESTS_DIR}"/rhacs-operator/marketplace/*.yaml
-        fi
 
-        if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
             # Apparently we potentially have to wait longer than the default of 60s sometimes...
             wait_for_resource_to_appear "$STACKROX_OPERATOR_NAMESPACE" "serviceaccount" "rhacs-operator-controller-manager" 180
             inject_ips "$STACKROX_OPERATOR_NAMESPACE" "rhacs-operator-controller-manager" "quay-ips"
@@ -97,6 +106,8 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
             # Wait for rhacs-operator pods to be created. Possibly the imagePullSecrets were not picked up yet, which is why we respawn them:
             sleep 2
             $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" delete pod -l app=rhacs-operator
+        elif [[ "$OPERATOR_SOURCE" == "marketplace" ]]; then
+            apply "${MANIFESTS_DIR}"/rhacs-operator/marketplace/*.yaml
         fi
 
         wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "app=rhacs-operator" "manager"
