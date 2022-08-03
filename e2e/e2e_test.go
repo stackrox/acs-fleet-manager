@@ -105,7 +105,10 @@ var _ = Describe("Central", func() {
 			var reencryptRoute *openshiftRouteV1.Route
 			Eventually(func() error {
 				reencryptRoute, err = routeService.FindReencryptRoute(context.Background(), namespaceName)
-				return fmt.Errorf("failed finding reencrypt route: %v", err)
+				if err != nil {
+					return fmt.Errorf("failed finding reencrypt route: %v", err)
+				}
+				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
 			Expect(reencryptRoute.Spec.Host).To(Equal(central.Host))
@@ -114,7 +117,10 @@ var _ = Describe("Central", func() {
 			var passthroughRoute *openshiftRouteV1.Route
 			Eventually(func() error {
 				passthroughRoute, err = routeService.FindPassthroughRoute(context.Background(), namespaceName)
-				return fmt.Errorf("failed finding reencrypt route: %v", err)
+				if err != nil {
+					return fmt.Errorf("failed finding reencrypt route: %v", err)
+				}
+				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
 			// Expect(passthroughRoute.Spec.DataHost).To(Equal(central.Host)) TODO(ROX-11990): add field for data endpoint in public central
