@@ -45,9 +45,9 @@ Required tools:
 
 ## Running with DNS tests
 
-There is autosensing logic to skip DNS e2e tests, when the environment is not set up like expected.
+The test suite has auto-sensing logic built in to skip DNS e2e tests when the test environment does  not support execution of DNS e2e tests. Currently this is only supported in OpenShift environments.
 
-To run the DNS e2e tests additionally to the default e2e test setup the cluster you're running against needs to know the openshift route CRD and you need to set following environment variables:
+To run the DNS e2e tests additionally to the default e2e test setup the cluster you're running against needs to have the openshift Route Custom Resource Definition installed and you need to set following environment variables:
 
 ```
 export ROUTE53_ACCESS_KEY="<key-id>"
@@ -111,7 +111,7 @@ and that the `colima` CLI is in `PATH` (if not, export `DOCKER=/path/to/bin/coli
 
 ### CRC
 
-CRC needs a lot of resources and so does a central tenant. Following resource settings were required to make the test work on CRC.
+CRC needs a lot of resources and so does a Central tenant. At least the following resource settings were required to make the test succeed on CRC.
 
 ```
 crc config set memory 18432

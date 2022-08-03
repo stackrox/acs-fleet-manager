@@ -108,7 +108,7 @@ var _ = Describe("Central", func() {
 			var reencryptRoute *openshiftRouteV1.Route
 			Eventually(func() error {
 				reencryptRoute, err = routeService.FindReencryptRoute(context.Background(), namespaceName)
-				return err
+				return fmt.Errorf("failed finding reencrypt route: %v", err)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
 			Expect(reencryptRoute.Spec.Host).To(Equal(central.Host))
@@ -121,7 +121,7 @@ var _ = Describe("Central", func() {
 			}
 
 			central := getCentral(createdCentral, client)
-			routeCanonicalName, err := routeService.FindReencryptCanonicalHostname(context.Background(), namespaceName)
+			reencryptIngress, err := routeService.FindReencryptIngress(context.Background(), namespaceName)
 			Expect(err).ToNot(HaveOccurred())
 
 			rhacsZone, err := getHostedZone(central)
@@ -138,14 +138,14 @@ var _ = Describe("Central", func() {
 				return len(records.ResourceRecordSets)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(1))
 
-			Expect(len(records.ResourceRecordSets)).To(Equal(1))
 			recordSet := records.ResourceRecordSets[0]
 			Expect(len(recordSet.ResourceRecords)).To(Equal(1))
 			record := recordSet.ResourceRecords[0]
 
+			// Omit the . at the end of hosted zone name
 			name := removeLastChar(*recordSet.Name)
 			Expect(name).To(Equal(central.Host))
-			Expect(*record.Value).To(Equal(routeCanonicalName))
+			Expect(*record.Value).To(Equal(reencryptIngress.RouterCanonicalHostname))
 
 		})
 
@@ -219,13 +219,6 @@ func centralStatus(createdCentral *public.CentralRequest, client *fleetmanager.C
 	return getCentral(createdCentral, client).Status
 }
 
-func isDNSEnabled(routesEnabled bool) bool {
-	hasRoute53Creds := os.Getenv("ROUTE53_ACCESS_KEY") != "" &&
-		os.Getenv("ROUTE53_SECRET_ACCESS_KEY") != "" &&
-		os.Getenv("ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE") != ""
-	return hasRoute53Creds && routesEnabled
-}
-
 func removeLastChar(s string) string {
 	return s[:len(s)-1]
 }
@@ -233,7 +226,7 @@ func removeLastChar(s string) string {
 func getHostedZone(central *public.CentralRequest) (*route53.HostedZone, error) {
 	hostedZones, err := route53Client.ListHostedZones(&route53.ListHostedZonesInput{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list hosted zones: %v", err)
 	}
 
 	var rhacsZone *route53.HostedZone
@@ -244,6 +237,10 @@ func getHostedZone(central *public.CentralRequest) (*route53.HostedZone, error) 
 			rhacsZone = zone
 			break
 		}
+	}
+
+	if rhacsZone == nil {
+		return nil, fmt.Errorf("hosted zone for central host: %v not found", central.Host)
 	}
 
 	return rhacsZone, nil

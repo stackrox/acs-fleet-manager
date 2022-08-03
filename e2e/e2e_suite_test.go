@@ -66,12 +66,14 @@ var _ = BeforeSuite(func() {
 	var err error
 	routesEnabled, err = k8s.IsRoutesResourceEnabled()
 	Expect(err).ToNot(HaveOccurred())
-	dnsEnabled = isDNSEnabled(routesEnabled)
+
+	var accessKey, secretKey string
+	dnsEnabled, accessKey, secretKey = isDNSEnabled(routesEnabled)
 
 	if dnsEnabled {
 		creds := credentials.NewStaticCredentials(
-			os.Getenv("ROUTE53_ACCESS_KEY"),
-			os.Getenv("ROUTE53_SECRET_ACCESS_KEY"),
+			accessKey,
+			secretKey,
 			"")
 		sess, err := session.NewSession(aws.NewConfig().WithCredentials(creds))
 		Expect(err).ToNot(HaveOccurred())
@@ -82,3 +84,13 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 })
+
+func isDNSEnabled(routesEnabled bool) (bool, string, string) {
+	accessKey := os.Getenv("ROUTE53_ACCESS_KEY")
+	secretKey := os.Getenv("ROUTE53_SECRET_ACCESS_KEY")
+	enableExternal := os.Getenv("ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE")
+	dnsEnabled := accessKey != "" &&
+		secretKey != "" &&
+		enableExternal != "" && routesEnabled
+	return dnsEnabled, accessKey, secretKey
+}

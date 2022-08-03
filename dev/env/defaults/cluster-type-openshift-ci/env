@@ -4,7 +4,7 @@ export AUTH_TYPE_DEFAULT="STATIC_TOKEN"
 export FINAL_TEAR_DOWN_DEFAULT="true"
 export GOTESTSUM="/usr/local/bin/gotestsum"
 export GOTESTSUM_FORMAT="testname"
-
+export ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE=true
 # To be adjusted for runnign in OpenShift CI
 # export FLEET_MANAGER_RESOURCES_DEFAULT='{"requests":{"cpu":"200m","memory":"300Mi"},"limits":{"cpu":"200m","memory":"300Mi"}}'
 # export FLEETSHARD_SYNC_RESOURCES_DEFAULT='{"requests":{"cpu":"200m","memory":"300Mi"},"limits":{"cpu":"200m","memory":"300Mi"}}'

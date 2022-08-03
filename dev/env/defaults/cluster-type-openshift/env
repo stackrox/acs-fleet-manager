@@ -3,5 +3,5 @@ export KUBECTL_DEFAULT="oc"
 export OPERATOR_SOURCE_DEFAULT="marketplace"
 export INSTALL_OLM_DEFAULT="false"
 export ENABLE_FM_PORT_FORWARDING_DEFAULT="true"
-export CLUSTER_DNS_DEFAULT=$(try_kubectl get -n "openshift-ingress-operator" ingresscontrollers default -o=jsonpath='{.status.domain}' --ignore-not-found)
-export ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE=true
+CLUSTER_DNS_DEFAULT=$(try_kubectl get -n "openshift-ingress-operator" ingresscontrollers default -o=jsonpath='{.status.domain}' --ignore-not-found)
+export CLUSTER_DNS_DEFAULT
