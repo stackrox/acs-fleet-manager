@@ -95,9 +95,6 @@ var _ = Describe("Central", func() {
 		})
 
 		// TODO(create-ticket): create test to check that Central and Scanner are healthy
-		// TODO(create-ticket): Create test to check Central is correctly exposed
-
-		// TODO(create-ticket): Add test for passthrough route created by fleetshard-sync
 		It("should create central routes", func() {
 			if !routesEnabled {
 				Skip(skipRouteMsg)
@@ -113,8 +110,18 @@ var _ = Describe("Central", func() {
 
 			Expect(reencryptRoute.Spec.Host).To(Equal(central.Host))
 			Expect(reencryptRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationReencrypt))
+
+			var passthroughRoute *openshiftRouteV1.Route
+			Eventually(func() error {
+				passthroughRoute, err = routeService.FindPassthroughRoute(context.Background(), namespaceName)
+				return fmt.Errorf("failed finding reencrypt route: %v", err)
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+
+			// Expect(passthroughRoute.Spec.DataHost).To(Equal(central.Host)) TODO(ROX-11990): add field for data endpoint in public central
+			Expect(passthroughRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationPassthrough))
 		})
 
+		// TODO(ROX-11990): add test for data endpoint once it is exposed by public API
 		It("should create AWS Route53 records", func() {
 			if !dnsEnabled {
 				Skip(skipDNSMsg)
@@ -184,6 +191,7 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
 		})
 
+		// TODO(ROX-11990): add test for data endpoint once it is exposed by public API
 		It("should delete external DNS entries", func() {
 			if !dnsEnabled {
 				Skip(skipDNSMsg)
