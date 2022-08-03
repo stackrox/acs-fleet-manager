@@ -1,6 +1,5 @@
 approvers:
   - SimonBaeumer
-  - juanrh
   - kovayur
   - mtesseract
   - porridge
@@ -10,9 +9,9 @@ approvers:
   - dhaus67
   - mtodor
   - ivan-degtiarenko
+  - vladbologa
 reviewers:
   - SimonBaeumer
-  - juanrh
   - kovayur
   - mtesseract
   - porridge
@@ -22,3 +21,4 @@ reviewers:
   - dhaus67
   - mtodor
   - ivan-degtiarenko
+  - vladbologa
