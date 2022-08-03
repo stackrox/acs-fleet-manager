@@ -11,34 +11,20 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-/*
-# Could be a YAML as such:
-
-# This file contains the role mapping for the admin API.
-# Based on the HTTP method you can specify a list of roles authorized to do such a request.
-# At the moment, GET PATCH DELETE (list / get, update, delete) are the three available methods by the admin API
-- method: GET
-  roles:
-  - role-name
-- method: PATCH
-  roles:
-  - role-name
-- method: DELETE
-  roles:
-  - role-name
-*/
-
 // RolesConfiguration is the configuration of required roles per HTTP method of the admin API.
 type RolesConfiguration struct {
 	HTTPMethod string   `yaml:"method"`
 	RoleNames  []string `yaml:"roles"`
 }
 
+// RoleConfig represents the role configuration.
+type RoleConfig []RolesConfiguration
+
 // RoleAuthZConfig is the configuration of the role authZ middleware.
 type RoleAuthZConfig struct {
 	Enabled         bool
 	RolesConfigFile string
-	RolesConfig     []RolesConfiguration
+	RolesConfig     RoleConfig
 }
 
 // NewRoleAuthZConfig creates a default RoleAuthZConfig which is enabled and uses the production configuration.
@@ -59,7 +45,7 @@ func (c *RoleAuthZConfig) AddFlags(fs *pflag.FlagSet) {
 // ReadFiles will read and validate the contents of the configuration file.
 func (c *RoleAuthZConfig) ReadFiles() error {
 	if c.Enabled {
-		if err := readRoleAuthZConfigFile(c.RolesConfigFile, c.RolesConfig); err != nil {
+		if err := readRoleAuthZConfigFile(c.RolesConfigFile, &c.RolesConfig); err != nil {
 			return err
 		}
 		return validateRolesConfiguration(c.RolesConfig)
@@ -79,7 +65,7 @@ func (c *RoleAuthZConfig) GetRoleMapping() map[string][]string {
 	return roleMapping
 }
 
-func readRoleAuthZConfigFile(file string, val []RolesConfiguration) error {
+func readRoleAuthZConfigFile(file string, val *RoleConfig) error {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
 		return errors.Wrap(err, "reading role authz config")
