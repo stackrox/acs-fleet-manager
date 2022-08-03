@@ -45,7 +45,7 @@ type RoleAuthZConfig struct {
 func NewRoleAuthZConfig() *RoleAuthZConfig {
 	return &RoleAuthZConfig{
 		Enabled:         true,
-		RolesConfigFile: "config/admin-api-roles-prod.yaml",
+		RolesConfigFile: "config/role-authz-roles-prod.yaml",
 	}
 }
 
