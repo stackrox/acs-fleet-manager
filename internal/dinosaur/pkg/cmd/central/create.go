@@ -1,4 +1,4 @@
-package dinosaur
+package central
 
 import (
 	"encoding/json"
@@ -11,23 +11,23 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 )
 
-// NewCreateCommand creates a new command for creating dinosaurs.
+// NewCreateCommand creates a new command for creating centrals.
 func NewCreateCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "Create a new dinosaur request",
-		Long:  "Create a new dinosaur request.",
+		Short: "Create a new central request",
+		Long:  "Create a new central request.",
 		Run: func(cmd *cobra.Command, args []string) {
 			runCreate(env, cmd, args)
 		},
 	}
 
-	cmd.Flags().String(FlagName, "", "Dinosaur request name")
+	cmd.Flags().String(FlagName, "", "Central request name")
 	cmd.Flags().String(FlagRegion, "us-east-1", "OCM region ID")
 	cmd.Flags().String(FlagProvider, "aws", "OCM provider ID")
 	cmd.Flags().String(FlagOwner, "test-user", "User name")
-	cmd.Flags().String(FlagClusterID, "000", "Dinosaur  request cluster ID")
-	cmd.Flags().Bool(FlagMultiAZ, true, "Whether Dinosaur request should be Multi AZ or not")
+	cmd.Flags().String(FlagClusterID, "000", "Central request cluster ID")
+	cmd.Flags().Bool(FlagMultiAZ, true, "Whether Central request should be Multi AZ or not")
 	cmd.Flags().String(FlagOrgID, "", "OCM org id")
 
 	return cmd
@@ -42,10 +42,10 @@ func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
 	clusterID := flags.MustGetDefinedString(FlagClusterID, cmd.Flags())
 	orgID := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 
-	var dinosaurService services.DinosaurService
-	env.MustResolveAll(&dinosaurService)
+	var centralService services.DinosaurService
+	env.MustResolveAll(&centralService)
 
-	dinosaurRequest := &dbapi.CentralRequest{
+	centralRequest := &dbapi.CentralRequest{
 		Region:         region,
 		ClusterID:      clusterID,
 		CloudProvider:  provider,
@@ -55,12 +55,12 @@ func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
 		OrganisationID: orgID,
 	}
 
-	if err := dinosaurService.RegisterDinosaurJob(dinosaurRequest); err != nil {
-		glog.Fatalf("Unable to create dinosaur request: %s", err.Error())
+	if err := centralService.RegisterDinosaurJob(centralRequest); err != nil {
+		glog.Fatalf("Unable to create central request: %s", err.Error())
 	}
-	indentedDinosaurRequest, err := json.MarshalIndent(dinosaurRequest, "", "    ")
+	indentedCentralRequest, err := json.MarshalIndent(centralRequest, "", "    ")
 	if err != nil {
-		glog.Fatalf("Failed to format dinosaur request: %s", err.Error())
+		glog.Fatalf("Failed to format central request: %s", err.Error())
 	}
-	glog.V(10).Infof("%s", indentedDinosaurRequest)
+	glog.V(10).Infof("%s", indentedCentralRequest)
 }

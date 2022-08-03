@@ -1,4 +1,4 @@
-package dinosaur
+package central
 
 import (
 	"context"
@@ -12,18 +12,18 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 )
 
-// NewDeleteCommand command for deleting dinosaurs.
+// NewDeleteCommand command for deleting centrals.
 func NewDeleteCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete",
-		Short: "Delete a dinosaur request",
-		Long:  "Delete a dinosaur request.",
+		Short: "Delete a central request",
+		Long:  "Delete a central request.",
 		Run: func(cmd *cobra.Command, args []string) {
 			runDelete(env, cmd, args)
 		},
 	}
 
-	cmd.Flags().String(FlagID, "", "Dinosaur id")
+	cmd.Flags().String(FlagID, "", "Central ID")
 	cmd.Flags().String(FlagOwner, "test-user", "Username")
 	return cmd
 }
@@ -31,8 +31,8 @@ func NewDeleteCommand(env *environments.Env) *cobra.Command {
 func runDelete(env *environments.Env, cmd *cobra.Command, _ []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
-	var dinosaurService services.DinosaurService
-	env.MustResolveAll(&dinosaurService)
+	var centralService services.DinosaurService
+	env.MustResolveAll(&centralService)
 
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
@@ -40,9 +40,9 @@ func runDelete(env *environments.Env, cmd *cobra.Command, _ []string) {
 	})
 	ctx := auth.SetTokenInContext(context.TODO(), jwt)
 
-	if err := dinosaurService.RegisterDinosaurDeprovisionJob(ctx, id); err != nil {
+	if err := centralService.RegisterDinosaurDeprovisionJob(ctx, id); err != nil {
 		glog.Fatalf("Unable to register the deprovisioning request: %s", err.Error())
 	} else {
-		glog.V(10).Infof("Deprovisioning request accepted for dinosaur cluster with id %s", id)
+		glog.V(10).Infof("Deprovisioning request accepted for central cluster with id %s", id)
 	}
 }

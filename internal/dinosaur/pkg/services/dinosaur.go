@@ -102,7 +102,7 @@ type dinosaurService struct {
 	connectionFactory        *db.ConnectionFactory
 	clusterService           ClusterService
 	iamService               sso.IAMService
-	dinosaurConfig           *config.DinosaurConfig
+	dinosaurConfig           *config.CentralConfig
 	awsConfig                *config.AWSConfig
 	quotaServiceFactory      QuotaServiceFactory
 	mu                       sync.Mutex
@@ -113,7 +113,7 @@ type dinosaurService struct {
 }
 
 // NewDinosaurService ...
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.DinosaurConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy) *dinosaurService {
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy) *dinosaurService {
 	return &dinosaurService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
@@ -267,9 +267,9 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 	}
 	dinosaurRequest.Namespace = namespace
 
-	if k.dinosaurConfig.EnableDinosaurExternalCertificate {
+	if k.dinosaurConfig.EnableCentralExternalCertificate {
 		// If we enable DinosaurTLS, the host should use the external domain name rather than the cluster domain
-		dinosaurRequest.Host = k.dinosaurConfig.DinosaurDomainName
+		dinosaurRequest.Host = k.dinosaurConfig.CentralDomainName
 	} else {
 		clusterDNS, err := k.clusterService.GetClusterDNS(dinosaurRequest.ClusterID)
 		if err != nil {
@@ -473,7 +473,7 @@ func (k *dinosaurService) Delete(dinosaurRequest *dbapi.CentralRequest) *errors.
 			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
 		}
 		// Only delete the routes when they are set
-		if routes != nil && k.dinosaurConfig.EnableDinosaurExternalCertificate {
+		if routes != nil && k.dinosaurConfig.EnableCentralExternalCertificate {
 			_, err := k.ChangeDinosaurCNAMErecords(dinosaurRequest, DinosaurRoutesActionDelete)
 			if err != nil {
 				return err
@@ -697,7 +697,7 @@ func (k *dinosaurService) ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.Cent
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
 	}
 
-	changeRecordsOutput, err := awsClient.ChangeResourceRecordSets(k.dinosaurConfig.DinosaurDomainName, domainRecordBatch)
+	changeRecordsOutput, err := awsClient.ChangeResourceRecordSets(k.dinosaurConfig.CentralDomainName, domainRecordBatch)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create domain record sets")
 	}

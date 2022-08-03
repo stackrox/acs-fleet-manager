@@ -38,7 +38,7 @@ type DataplaneClusterConfig struct {
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
 	Kubeconfig                            string         `json:"kubeconfig"`
 	RawKubernetesConfig                   *clientcmdapi.Config
-	DinosaurOperatorOLMConfig             OperatorInstallationConfig `json:"dinosaur_operator_olm_config"`
+	CentralOperatorOLMConfig              OperatorInstallationConfig `json:"dinosaur_operator_olm_config"`
 	FleetshardOperatorOLMConfig           OperatorInstallationConfig `json:"fleetshard_operator_olm_config"`
 }
 
@@ -82,12 +82,12 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 		ClusterConfig:                         &ClusterConfig{},
 		EnableReadyDataPlaneClustersReconcile: true,
 		Kubeconfig:                            getDefaultKubeconfig(),
-		DinosaurOperatorOLMConfig: OperatorInstallationConfig{
-			IndexImage:             "quay.io/osd-addons/managed-dinosaur:production-82b42db",
+		CentralOperatorOLMConfig: OperatorInstallationConfig{
+			IndexImage:             "quay.io/osd-addons/managed-central:production-82b42db",
 			CatalogSourceNamespace: "openshift-marketplace",
-			Namespace:              constants.DinosaurOperatorNamespace,
+			Namespace:              constants.CentralOperatorNamespace,
 			SubscriptionChannel:    "alpha",
-			Package:                "managed-dinosaur",
+			Package:                "managed-central",
 		},
 		FleetshardOperatorOLMConfig: OperatorInstallationConfig{
 			IndexImage:             "quay.io/osd-addons/fleetshard-operator:production-82b42db",
@@ -264,11 +264,11 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")
 	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
 	fs.StringVar(&c.Kubeconfig, "kubeconfig", c.Kubeconfig, "A path to kubeconfig file used for communication with standalone clusters")
-	fs.StringVar(&c.DinosaurOperatorOLMConfig.CatalogSourceNamespace, "dinosaur-operator-cs-namespace", c.DinosaurOperatorOLMConfig.CatalogSourceNamespace, "Dinosaur operator catalog source namespace.")
-	fs.StringVar(&c.DinosaurOperatorOLMConfig.IndexImage, "dinosaur-operator-index-image", c.DinosaurOperatorOLMConfig.IndexImage, "Dinosaur operator index image")
-	fs.StringVar(&c.DinosaurOperatorOLMConfig.Namespace, "dinosaur-operator-namespace", c.DinosaurOperatorOLMConfig.Namespace, "Dinosaur operator namespace")
-	fs.StringVar(&c.DinosaurOperatorOLMConfig.Package, "dinosaur-operator-package", c.DinosaurOperatorOLMConfig.Package, "Dinosaur operator package")
-	fs.StringVar(&c.DinosaurOperatorOLMConfig.SubscriptionChannel, "dinosaur-operator-sub-channel", c.DinosaurOperatorOLMConfig.SubscriptionChannel, "Dinosaur operator subscription channel")
+	fs.StringVar(&c.CentralOperatorOLMConfig.CatalogSourceNamespace, "central-operator-cs-namespace", c.CentralOperatorOLMConfig.CatalogSourceNamespace, "Central operator catalog source namespace.")
+	fs.StringVar(&c.CentralOperatorOLMConfig.IndexImage, "central-operator-index-image", c.CentralOperatorOLMConfig.IndexImage, "Central operator index image")
+	fs.StringVar(&c.CentralOperatorOLMConfig.Namespace, "central-operator-namespace", c.CentralOperatorOLMConfig.Namespace, "Central operator namespace")
+	fs.StringVar(&c.CentralOperatorOLMConfig.Package, "central-operator-package", c.CentralOperatorOLMConfig.Package, "Central operator package")
+	fs.StringVar(&c.CentralOperatorOLMConfig.SubscriptionChannel, "central-operator-sub-channel", c.CentralOperatorOLMConfig.SubscriptionChannel, "Central operator subscription channel")
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.CatalogSourceNamespace, "fleetshard-operator-cs-namespace", c.FleetshardOperatorOLMConfig.CatalogSourceNamespace, "fleetshard operator catalog source namespace.")
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.IndexImage, "fleetshard-operator-index-image", c.FleetshardOperatorOLMConfig.IndexImage, "fleetshard operator index image")
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.Namespace, "fleetshard-operator-namespace", c.FleetshardOperatorOLMConfig.Namespace, "fleetshard operator namespace")

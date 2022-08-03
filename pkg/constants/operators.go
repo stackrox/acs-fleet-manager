@@ -1,7 +1,7 @@
 package constants
 
-// DinosaurOperatorNamespace ...
-const DinosaurOperatorNamespace = "redhat-managed-dinosaur-operator"
+// CentralOperatorNamespace ...
+const CentralOperatorNamespace = "redhat-managed-central-operator"
 
 // FleetShardOperatorNamespace ...
 const FleetShardOperatorNamespace = "redhat-fleetshard-operator"

@@ -39,11 +39,11 @@ type DataPlaneDinosaurService interface {
 type dataPlaneDinosaurService struct {
 	dinosaurService DinosaurService
 	clusterService  ClusterService
-	dinosaurConfig  *config.DinosaurConfig
+	dinosaurConfig  *config.CentralConfig
 }
 
 // NewDataPlaneDinosaurService ...
-func NewDataPlaneDinosaurService(dinosaurSrv DinosaurService, clusterSrv ClusterService, dinosaurConfig *config.DinosaurConfig) *dataPlaneDinosaurService {
+func NewDataPlaneDinosaurService(dinosaurSrv DinosaurService, clusterSrv ClusterService, dinosaurConfig *config.CentralConfig) *dataPlaneDinosaurService {
 	return &dataPlaneDinosaurService{
 		dinosaurService: dinosaurSrv,
 		clusterService:  clusterSrv,

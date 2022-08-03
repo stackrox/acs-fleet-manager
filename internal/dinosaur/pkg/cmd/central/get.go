@@ -1,4 +1,4 @@
-package dinosaur
+package central
 
 import (
 	"encoding/json"
@@ -10,33 +10,33 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 )
 
-// NewGetCommand gets a new command for getting dinosaurs.
+// NewGetCommand gets a new command for getting centrals.
 func NewGetCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get",
-		Short: "Get a dinosaur request",
-		Long:  "Get a dinosaur request.",
+		Short: "Get a central request",
+		Long:  "Get a central request.",
 		Run: func(cmd *cobra.Command, args []string) {
 			runGet(env, cmd, args)
 		},
 	}
-	cmd.Flags().String(FlagID, "", "Dinosaur id")
+	cmd.Flags().String(FlagID, "", "Central ID")
 
 	return cmd
 }
 
 func runGet(env *environments.Env, cmd *cobra.Command, _ []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
-	var dinosaurService services.DinosaurService
-	env.MustResolveAll(&dinosaurService)
+	var centralService services.DinosaurService
+	env.MustResolveAll(&centralService)
 
-	dinosaurRequest, err := dinosaurService.GetByID(id)
+	centralRequest, err := centralService.GetByID(id)
 	if err != nil {
-		glog.Fatalf("Unable to get dinosaur request: %s", err.Error())
+		glog.Fatalf("Unable to get central request: %s", err.Error())
 	}
-	indentedDinosaurRequest, marshalErr := json.MarshalIndent(dinosaurRequest, "", "    ")
+	indentedCentralRequest, marshalErr := json.MarshalIndent(centralRequest, "", "    ")
 	if marshalErr != nil {
-		glog.Fatalf("Failed to format dinosaur request: %s", marshalErr.Error())
+		glog.Fatalf("Failed to format central request: %s", marshalErr.Error())
 	}
-	glog.V(10).Infof("%s", indentedDinosaurRequest)
+	glog.V(10).Infof("%s", indentedCentralRequest)
 }

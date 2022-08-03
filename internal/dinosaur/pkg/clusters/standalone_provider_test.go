@@ -370,7 +370,7 @@ func TestStandaloneProvider_buildDinosaurOperatorNamespace(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
+					CentralOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace: "namespace-name",
 					},
 				},
@@ -390,7 +390,7 @@ func TestStandaloneProvider_buildDinosaurOperatorNamespace(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
+					CentralOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace: "another-namespace-name",
 					},
 				},
@@ -433,7 +433,7 @@ func TestStandaloneProvider_buildDinosaurOperatorCatalogSource(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
+					CentralOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace:              "namespace-name",
 						CatalogSourceNamespace: "catalog-namespace",
 						IndexImage:             "index-image-1",
@@ -446,7 +446,7 @@ func TestStandaloneProvider_buildDinosaurOperatorCatalogSource(t *testing.T) {
 					Kind:       operatorsv1alpha1.CatalogSourceKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      dinosaurOperatorCatalogSourceName,
+					Name:      centralOperatorCatalogSourceName,
 					Namespace: "catalog-namespace",
 				},
 				Spec: operatorsv1alpha1.CatalogSourceSpec{
@@ -460,7 +460,7 @@ func TestStandaloneProvider_buildDinosaurOperatorCatalogSource(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
+					CentralOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace:              "another-namespace-name",
 						CatalogSourceNamespace: "another-catalog-namespace",
 						IndexImage:             "index-image-2",
@@ -473,7 +473,7 @@ func TestStandaloneProvider_buildDinosaurOperatorCatalogSource(t *testing.T) {
 					Kind:       operatorsv1alpha1.CatalogSourceKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      dinosaurOperatorCatalogSourceName,
+					Name:      centralOperatorCatalogSourceName,
 					Namespace: "another-catalog-namespace",
 				},
 				Spec: operatorsv1alpha1.CatalogSourceSpec{
@@ -510,7 +510,7 @@ func TestStandaloneProvider_buildDinosaurOperatorOperatorGroup(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
+					CentralOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace:              "namespace-name",
 						CatalogSourceNamespace: "catalog-namespace",
 						IndexImage:             "index-image-1",
@@ -523,7 +523,7 @@ func TestStandaloneProvider_buildDinosaurOperatorOperatorGroup(t *testing.T) {
 					Kind:       operatorsv1alpha2.OperatorGroupKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      dinosaurOperatorOperatorGroupName,
+					Name:      centralOperatorOperatorGroupName,
 					Namespace: "namespace-name",
 				},
 				Spec: operatorsv1alpha2.OperatorGroupSpec{},
@@ -534,7 +534,7 @@ func TestStandaloneProvider_buildDinosaurOperatorOperatorGroup(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
+					CentralOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace:              "another-namespace-name",
 						CatalogSourceNamespace: "another-catalog-namespace",
 						IndexImage:             "index-image-2",
@@ -547,7 +547,7 @@ func TestStandaloneProvider_buildDinosaurOperatorOperatorGroup(t *testing.T) {
 					Kind:       operatorsv1alpha2.OperatorGroupKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      dinosaurOperatorOperatorGroupName,
+					Name:      centralOperatorOperatorGroupName,
 					Namespace: "another-namespace-name",
 				},
 				Spec: operatorsv1alpha2.OperatorGroupSpec{},
@@ -581,7 +581,7 @@ func TestStandaloneProvider_buildDinosaurOperatorSubscription(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
+					CentralOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace:              "namespace-name",
 						CatalogSourceNamespace: "catalog-namespace",
 						IndexImage:             "index-image-1",
@@ -596,11 +596,11 @@ func TestStandaloneProvider_buildDinosaurOperatorSubscription(t *testing.T) {
 					Kind:       operatorsv1alpha1.SubscriptionKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      dinosaurOperatorSubscriptionName,
+					Name:      centralOperatorSubscriptionName,
 					Namespace: "namespace-name",
 				},
 				Spec: &operatorsv1alpha1.SubscriptionSpec{
-					CatalogSource:          dinosaurOperatorCatalogSourceName,
+					CatalogSource:          centralOperatorCatalogSourceName,
 					Channel:                "alpha",
 					CatalogSourceNamespace: "catalog-namespace",
 					InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
@@ -613,7 +613,7 @@ func TestStandaloneProvider_buildDinosaurOperatorSubscription(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
+					CentralOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace:              "another-namespace-name",
 						CatalogSourceNamespace: "another-catalog-namespace",
 						IndexImage:             "index-image-2",
@@ -628,11 +628,11 @@ func TestStandaloneProvider_buildDinosaurOperatorSubscription(t *testing.T) {
 					Kind:       operatorsv1alpha1.SubscriptionKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      dinosaurOperatorSubscriptionName,
+					Name:      centralOperatorSubscriptionName,
 					Namespace: "another-namespace-name",
 				},
 				Spec: &operatorsv1alpha1.SubscriptionSpec{
-					CatalogSource:          dinosaurOperatorCatalogSourceName,
+					CatalogSource:          centralOperatorCatalogSourceName,
 					Channel:                "beta",
 					CatalogSourceNamespace: "another-catalog-namespace",
 					InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,

@@ -34,7 +34,7 @@ const (
 	DinosaurOperationDeprovision DinosaurOperation = "deprovision"
 
 	// ObservabilityCanaryPodLabelKey that will be used by the observability operator to scrap metrics
-	ObservabilityCanaryPodLabelKey = "managed-dinosaur-canary"
+	ObservabilityCanaryPodLabelKey = "managed-central-canary"
 
 	// ObservabilityCanaryPodLabelValue the value for ObservabilityCanaryPodLabelKey
 	ObservabilityCanaryPodLabelValue = "true"

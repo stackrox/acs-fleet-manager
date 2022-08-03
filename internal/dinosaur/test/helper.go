@@ -32,7 +32,7 @@ type Services struct {
 	di.Inject
 	DBFactory             *db.ConnectionFactory
 	IAMConfig             *iam.IAMConfig
-	DinosaurConfig        *config.DinosaurConfig
+	CentralConfig         *config.CentralConfig
 	MetricsServer         *server.MetricsServer
 	HealthCheckServer     *server.HealthCheckServer
 	Workers               []coreWorkers.Worker
@@ -61,8 +61,8 @@ func NewDinosaurHelper(t *testing.T, server *httptest.Server) (*test.Helper, *pu
 // NewDinosaurHelperWithHooks ...
 func NewDinosaurHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
 	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, dinosaur.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
-		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, dinosaurConfig *config.DinosaurConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, fleetshardConfig *config.FleetshardConfig) {
-			dinosaurConfig.DinosaurLifespan.EnableDeletionOfExpiredDinosaur = true
+		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, dinosaurConfig *config.CentralConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, fleetshardConfig *config.FleetshardConfig) {
+			dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral = true
 			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters

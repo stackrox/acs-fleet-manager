@@ -26,9 +26,9 @@ import (
 )
 
 const (
-	dinosaurOperatorCatalogSourceName      = "managed-dinosaur-cs"
-	dinosaurOperatorOperatorGroupName      = "managed-dinosaur-og"
-	dinosaurOperatorSubscriptionName       = "managed-dinosaur-sub"
+	centralOperatorCatalogSourceName       = "managed-central-cs"
+	centralOperatorOperatorGroupName       = "managed-central-og"
+	centralOperatorSubscriptionName        = "managed-central-sub"
 	fleetShardOperatorCatalogSourceName    = "fleetshard-operator-cs"
 	fleetShardOperatorOperatorGroupName    = "fleetshard-operator-og"
 	fleetShardOperatorSubscriptionName     = "fleetshard-operator-sub"
@@ -90,7 +90,7 @@ func (s *StandaloneProvider) InstallDinosaurOperator(clusterSpec *types.ClusterS
 }
 
 func (s *StandaloneProvider) buildDinosaurOperatorNamespace() *v1.Namespace {
-	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.DinosaurOperatorOLMConfig
+	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
 	return &v1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: v1.SchemeGroupVersion.String(),
@@ -103,14 +103,14 @@ func (s *StandaloneProvider) buildDinosaurOperatorNamespace() *v1.Namespace {
 }
 
 func (s *StandaloneProvider) buildDinosaurOperatorCatalogSource() *operatorsv1alpha1.CatalogSource {
-	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.DinosaurOperatorOLMConfig
+	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
 	return &operatorsv1alpha1.CatalogSource{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
 			Kind:       operatorsv1alpha1.CatalogSourceKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dinosaurOperatorCatalogSourceName,
+			Name:      centralOperatorCatalogSourceName,
 			Namespace: dinosaurOperatorOLMConfig.CatalogSourceNamespace,
 		},
 		Spec: operatorsv1alpha1.CatalogSourceSpec{
@@ -121,14 +121,14 @@ func (s *StandaloneProvider) buildDinosaurOperatorCatalogSource() *operatorsv1al
 }
 
 func (s *StandaloneProvider) buildDinosaurOperatorOperatorGroup() *operatorsv1alpha2.OperatorGroup {
-	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.DinosaurOperatorOLMConfig
+	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
 	return &operatorsv1alpha2.OperatorGroup{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: operatorsv1alpha2.SchemeGroupVersion.String(),
 			Kind:       operatorsv1alpha2.OperatorGroupKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dinosaurOperatorOperatorGroupName,
+			Name:      centralOperatorOperatorGroupName,
 			Namespace: dinosaurOperatorOLMConfig.Namespace,
 		},
 		// Spec.TargetNamespaces intentionally not set, which means "select all namespaces"
@@ -137,18 +137,18 @@ func (s *StandaloneProvider) buildDinosaurOperatorOperatorGroup() *operatorsv1al
 }
 
 func (s *StandaloneProvider) buildDinosaurOperatorSubscription() *operatorsv1alpha1.Subscription {
-	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.DinosaurOperatorOLMConfig
+	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
 	return &operatorsv1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
 			Kind:       operatorsv1alpha1.SubscriptionKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dinosaurOperatorSubscriptionName,
+			Name:      centralOperatorSubscriptionName,
 			Namespace: dinosaurOperatorOLMConfig.Namespace,
 		},
 		Spec: &operatorsv1alpha1.SubscriptionSpec{
-			CatalogSource:          dinosaurOperatorCatalogSourceName,
+			CatalogSource:          centralOperatorCatalogSourceName,
 			Channel:                dinosaurOperatorOLMConfig.SubscriptionChannel,
 			CatalogSourceNamespace: dinosaurOperatorOLMConfig.CatalogSourceNamespace,
 			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
