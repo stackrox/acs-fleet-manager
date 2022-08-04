@@ -81,8 +81,6 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating central requests"),
 			validateCentralResourcesUnspecified(ctx, &dinosaurRequest),
 			validateScannerResourcesUnspecified(ctx, &dinosaurRequest),
-			ValidateCentralSpec(ctx, &dinosaurRequest, "central", convDinosaur),
-			ValidateScannerSpec(ctx, &dinosaurRequest, "scanner", convDinosaur),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(convDinosaur)

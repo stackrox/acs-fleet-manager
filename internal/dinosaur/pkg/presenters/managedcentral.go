@@ -49,21 +49,25 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 	var central dbapi.CentralSpec
 	var scanner dbapi.ScannerSpec
 
-	err := json.Unmarshal(from.Central, &central)
-	if err != nil {
-		// In case of a JSON unmarshaling problem we don't interrupt the complete workflow, instead we drop the resources
-		// specification as a way of defensive programing.
-		// TOOD: return error?
-		glog.Errorf("Failed to unmarshal Central specification for Central request %q/%s: %v", from.Name, from.ClusterID, err)
-		glog.Errorf("Ignoring Central specification for Central request %q/%s", from.Name, from.ClusterID)
+	if len(from.Central) > 0 {
+		err := json.Unmarshal(from.Central, &central)
+		if err != nil {
+			// In case of a JSON unmarshaling problem we don't interrupt the complete workflow, instead we drop the resources
+			// specification as a way of defensive programing.
+			// TOOD: return error?
+			glog.Errorf("Failed to unmarshal Central specification for Central request %q/%s: %v", from.Name, from.ClusterID, err)
+			glog.Errorf("Ignoring Central specification for Central request %q/%s", from.Name, from.ClusterID)
+		}
 	}
-	err = json.Unmarshal(from.Scanner, &scanner)
-	if err != nil {
-		// In case of a JSON unmarshaling problem we don't interrupt the complete workflow, instead we drop the resources
-		// specification as a way of defensive programing.
-		// TOOD: return error?
-		glog.Errorf("Failed to unmarshal Scanner specification for Central request %q/%s: %v", from.Name, from.ClusterID, err)
-		glog.Errorf("Ignoring Scanner specification for Central request %q/%s", from.Name, from.ClusterID)
+	if len(from.Scanner) > 0 {
+		err := json.Unmarshal(from.Scanner, &scanner)
+		if err != nil {
+			// In case of a JSON unmarshaling problem we don't interrupt the complete workflow, instead we drop the resources
+			// specification as a way of defensive programing.
+			// TOOD: return error?
+			glog.Errorf("Failed to unmarshal Scanner specification for Central request %q/%s: %v", from.Name, from.ClusterID, err)
+			glog.Errorf("Ignoring Scanner specification for Central request %q/%s", from.Name, from.ClusterID)
+		}
 	}
 
 	res := private.ManagedCentral{

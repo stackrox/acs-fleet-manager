@@ -354,7 +354,6 @@ var _ = Describe("Central", func() {
 		})
 
 	})
-
 })
 
 func getCentral(createdCentral *public.CentralRequest, client *fleetmanager.Client) *public.CentralRequest {

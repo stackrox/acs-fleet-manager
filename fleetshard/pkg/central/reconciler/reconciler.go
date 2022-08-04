@@ -79,10 +79,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, errors.Wrap(err, "converting Scanner Analyzer resources")
 	}
-	scannerAnalyzerScaling, err := converters.ConvertPrivateScalingToV1(&remoteCentral.Spec.Scanner.Analyzer.Scaling)
-	if err != nil {
-		return nil, errors.Wrap(err, "converting Scanner Scaling resources")
-	}
+	scannerAnalyzerScaling := converters.ConvertPrivateScalingToV1(&remoteCentral.Spec.Scanner.Analyzer.Scaling)
 	scannerDbResources, err := converters.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Scanner.Db.Resources)
 	if err != nil {
 		return nil, errors.Wrap(err, "converting Scanner DB resources")
@@ -105,18 +102,18 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 					ExposeEndpoint: &centralMonitoringExposeEndpointEnabled,
 				},
 				DeploymentSpec: v1alpha1.DeploymentSpec{
-					Resources: centralResources,
+					Resources: &centralResources,
 				},
 			},
 			Scanner: &v1alpha1.ScannerComponentSpec{
 				Analyzer: &v1alpha1.ScannerAnalyzerComponent{
 					DeploymentSpec: v1alpha1.DeploymentSpec{
-						Resources: scannerAnalyzerResources,
+						Resources: &scannerAnalyzerResources,
 					},
-					Scaling: scannerAnalyzerScaling,
+					Scaling: &scannerAnalyzerScaling,
 				},
 				DB: &v1alpha1.DeploymentSpec{
-					Resources: scannerDbResources,
+					Resources: &scannerDbResources,
 				},
 			},
 		},

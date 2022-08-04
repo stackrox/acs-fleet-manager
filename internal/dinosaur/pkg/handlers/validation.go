@@ -148,6 +148,10 @@ func ValidateCentralSpec(ctx context.Context, centralRequestPayload *public.Cent
 			return errors.Validation("marshaling Central spec failed: %v", err)
 		}
 
+		if err := json.Unmarshal(central, &dbapi.CentralSpec{}); err != nil {
+			return errors.Validation("invalid value as Central spec: %v", err)
+		}
+
 		dbCentral.Central = central
 		return nil
 	}
@@ -192,6 +196,10 @@ func ValidateScannerSpec(ctx context.Context, centralRequestPayload *public.Cent
 		scanner, err := json.Marshal(centralRequestPayload.Scanner)
 		if err != nil {
 			return errors.Validation("marshaling Scanner spec failed: %v", err)
+		}
+
+		if err := json.Unmarshal(scanner, &dbapi.ScannerSpec{}); err != nil {
+			return errors.Validation("invalid value as Scanner spec: %v", err)
 		}
 
 		dbCentral.Scanner = scanner
