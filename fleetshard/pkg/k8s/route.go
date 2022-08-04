@@ -9,6 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -19,6 +20,9 @@ const (
 	centralPassthroughRouteName = "managed-central-passthrough"
 	centralTLSSecretName        = "central-tls" // pragma: allowlist secret
 )
+
+// ErrCentralTLSSecretNotFound returned when central-tls secret is not found during creation of the reencrypt route
+var ErrCentralTLSSecretNotFound = errors.New("central-tls secret not found")
 
 // RouteService is responsible for performing read and write operations on the OpenShift Route objects in the cluster.
 // This service is specific to ACS Managed Services and provides methods to work on specific routes.
@@ -80,6 +84,9 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 	namespace := remoteCentral.Metadata.Namespace
 	err := s.client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: centralTLSSecretName}, centralTLSSecret)
 	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return ErrCentralTLSSecretNotFound
+		}
 		return errors.Wrapf(err, "get central TLS secret %s/%s", namespace, remoteCentral.Metadata.Name)
 	}
 	centralCA, ok := centralTLSSecret.Data["ca.pem"]
