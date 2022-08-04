@@ -1,6 +1,6 @@
 apiVersion: v2
-name: rhacs-terraform
-description: "Chart to terraform data plane OSD clusters"
+name: logging
+description: "Chart to terraform logging stack for dataplane OSD clusters"
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -22,10 +22,3 @@ version: "0.1.0"
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "0.1.0"
-
-# List of sub-charts and other dependencies
-dependencies:
-  - name: observability
-    condition: observability.enabled
-  - name: logging
-    condition: logging.enabled

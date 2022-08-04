@@ -28,4 +28,4 @@ helm upgrade --install rhacs-terraform-obs \
 helm uninstall rhacs-terraform-obs --namespace rhacs
 ```
 
-See internal wiki for an example file `~/.rh/obs-values.yaml`.
+See internal wiki for an example file `~/acs-terraform-obs-values.yaml`.

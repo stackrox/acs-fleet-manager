@@ -45,4 +45,4 @@ helm upgrade --install rhacs-terraform \
 helm uninstall rhacs-terraform --namespace rhacs
 ```
 
-See internal wiki for an example file `~/.rh/terraform-values.yaml`.
+See internal wiki for an example file `~/acs-terraform-values.yaml`.
