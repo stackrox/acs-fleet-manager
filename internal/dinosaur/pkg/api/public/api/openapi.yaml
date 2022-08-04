@@ -222,71 +222,6 @@ paths:
       security:
       - Bearer: []
       summary: Returns a Central request by ID
-    patch:
-      description: |
-        The only users authorized for this operation are:
-        1) The administrator of the owner organisation of the specified Central.
-        2) The owner user, and only if it is also part of the owner organisation of the specified Central.
-      operationId: updateCentralById
-      parameters:
-      - description: The ID of record
-        explode: false
-        in: path
-        name: id
-        required: true
-        schema:
-          type: string
-        style: simple
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CentralUpdateRequest'
-        description: Update owner of Cental
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              examples:
-                CentralRequestPostResponseExample:
-                  $ref: '#/components/examples/CentralRequestExample'
-              schema:
-                $ref: '#/components/schemas/CentralRequest'
-          description: Cental updated by ID
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Bad request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Auth token is invalid
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: User is not authorised to access the service
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: No Central found with the specified ID
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error occurred
-      security:
-      - Bearer: []
-      summary: Update a Central instance by id
   /api/rhacs/v1/centrals:
     get:
       description: Only returns those centrals that are owned by the organisation
@@ -1432,14 +1367,6 @@ components:
           type: number
       required:
       - value
-      type: object
-    CentralUpdateRequest:
-      example:
-        owner: owner
-      properties:
-        owner:
-          nullable: true
-          type: string
       type: object
     Error_allOf:
       properties:
