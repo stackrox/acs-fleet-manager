@@ -117,7 +117,7 @@ else
     apply "${MANIFESTS_DIR}/crds"
 fi
 
-if [[ "$CLUSTER_TYPE" == "minikube" || "$CLUSTER_TYPE" == "colima" ]]; then
+if is_local_cluster "$CLUSTER_TYPE"; then
     if [[ ("$INSTALL_OPERATOR" == "true" && "$OPERATOR_SOURCE" == "quay") || "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
         log "Logging into Quay image registry"
         $DOCKER login quay.io -u "$QUAY_USER" --password-stdin <<EOF
