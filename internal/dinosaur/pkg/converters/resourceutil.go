@@ -78,21 +78,29 @@ func ConvertPrivateResourceRequirementsToCoreV1(res *private.ResourceRequirement
 	var limitsCPU, limitsMemory, requestsCPU, requestsMemory resource.Quantity
 	var err error
 
-	limitsCPU, err = resource.ParseQuantity(res.Limits.Cpu)
-	if err != nil {
-		return corev1.ResourceRequirements{}, fmt.Errorf("parsing CPU limit %q: %v", res.Limits.Cpu, err)
+	if res.Limits.Cpu != "" {
+		limitsCPU, err = resource.ParseQuantity(res.Limits.Cpu)
+		if err != nil {
+			return corev1.ResourceRequirements{}, fmt.Errorf("parsing CPU limit %q: %v", res.Limits.Cpu, err)
+		}
 	}
-	limitsMemory, err = resource.ParseQuantity(res.Limits.Memory)
-	if err != nil {
-		return corev1.ResourceRequirements{}, fmt.Errorf("parsing memory limit %q: %v", res.Limits.Memory, err)
+	if res.Limits.Memory != "" {
+		limitsMemory, err = resource.ParseQuantity(res.Limits.Memory)
+		if err != nil {
+			return corev1.ResourceRequirements{}, fmt.Errorf("parsing memory limit %q: %v", res.Limits.Memory, err)
+		}
 	}
-	requestsCPU, err = resource.ParseQuantity(res.Requests.Cpu)
-	if err != nil {
-		return corev1.ResourceRequirements{}, fmt.Errorf("parsing CPU request %q: %v", res.Requests.Cpu, err)
+	if res.Requests.Cpu != "" {
+		requestsCPU, err = resource.ParseQuantity(res.Requests.Cpu)
+		if err != nil {
+			return corev1.ResourceRequirements{}, fmt.Errorf("parsing CPU request %q: %v", res.Requests.Cpu, err)
+		}
 	}
-	requestsMemory, err = resource.ParseQuantity(res.Requests.Memory)
-	if err != nil {
-		return corev1.ResourceRequirements{}, fmt.Errorf("parsing memory requst %q: %v", res.Limits.Memory, err)
+	if res.Requests.Memory != "" {
+		requestsMemory, err = resource.ParseQuantity(res.Requests.Memory)
+		if err != nil {
+			return corev1.ResourceRequirements{}, fmt.Errorf("parsing memory requst %q: %v", res.Limits.Memory, err)
+		}
 	}
 
 	return corev1.ResourceRequirements{
