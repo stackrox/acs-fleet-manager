@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"sync/atomic"
 
+	"github.com/stackrox/rox/pkg/ternary"
+
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
@@ -36,13 +38,13 @@ const (
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client             ctrlClient.Client
-	central            private.ManagedCentral
-	status             *int32
-	lastCentralHash    [16]byte
-	useRoutes          bool
-	createAuthProvider bool
-	routeService       *k8s.RouteService
+	client          ctrlClient.Client
+	central         private.ManagedCentral
+	status          *int32
+	lastCentralHash [16]byte
+	useRoutes       bool
+	authInitStatus  AuthInitStatus
+	routeService    *k8s.RouteService
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -64,7 +66,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
-	if !changed && !r.createAuthProvider && remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String() {
+	if !changed && r.authInitStatus == AuthInitCompleted && remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String() {
 		glog.Infof("Central %s/%s not changed, skipping reconciliation", remoteCentralNamespace, remoteCentralName)
 		return r.readyStatus(ctx, remoteCentralNamespace)
 	}
@@ -101,6 +103,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				Monitoring: &v1alpha1.Monitoring{
 					ExposeEndpoint: &centralMonitoringExposeEndpointEnabled,
 				},
+				AdminPasswordGenerationDisabled: pointer.BoolPtr(r.authInitStatus != CreateRhSso),
 				DeploymentSpec: v1alpha1.DeploymentSpec{
 					Resources: &centralResources,
 				},
@@ -167,6 +170,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
+	// At this point Central custom resource should've been updated
+	if r.authInitStatus == DisableAdminPassword {
+		r.authInitStatus = AuthInitCompleted
+	}
+
 	if r.useRoutes {
 		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
 			return nil, errors.Wrapf(err, "updating routes")
@@ -190,12 +198,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// 1. Auth provider is created by this specific reconciler
 	// 2. OR reconciler creator specified auth provider not to be created
 	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
-	if r.createAuthProvider && remoteCentral.RequestStatus != centralConstants.DinosaurRequestStatusReady.String() {
+	if r.authInitStatus == CreateRhSso && remoteCentral.RequestStatus != centralConstants.DinosaurRequestStatusReady.String() {
 		err = createRHSSOAuthProvider(ctx, remoteCentral, r.client)
 		if err != nil {
 			return nil, err
 		}
-		r.createAuthProvider = false
+		r.authInitStatus = DisableAdminPassword
 	}
 
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
@@ -451,11 +459,11 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, useRoutes, createAuthProvider bool) *CentralReconciler {
 	return &CentralReconciler{
-		client:             k8sClient,
-		central:            central,
-		status:             pointer.Int32(FreeStatus),
-		useRoutes:          useRoutes,
-		createAuthProvider: createAuthProvider,
-		routeService:       k8s.NewRouteService(k8sClient),
+		client:         k8sClient,
+		central:        central,
+		status:         pointer.Int32(FreeStatus),
+		useRoutes:      useRoutes,
+		authInitStatus: AuthInitStatus(ternary.Int(createAuthProvider, int(CreateRhSso), int(AuthInitCompleted))),
+		routeService:   k8s.NewRouteService(k8sClient),
 	}
 }
