@@ -66,6 +66,7 @@ log "Database is ready."
 
 # Deploy MS components.
 log "Deploying fleet-manager"
+export FLEET_MANAGER_COMMAND="/usr/local/bin/fleet-manager serve --force-leader --api-server-bindaddress=0.0.0.0:8000 --health-check-server-bindaddress=0.0.0.0:8083 --kubeconfig=/secrets/kubeconfig --enable-central-external-certificate=$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE --central-domain-name='$CENTRAL_DOMAIN_NAME'"
 apply "${MANIFESTS_DIR}/fleet-manager"
 wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleet-manager" "fleet-manager"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
