@@ -40,7 +40,7 @@ func NewDatabaseConfig() *DatabaseConfig {
 		HostFile:           "secrets/db.host",
 		PortFile:           "secrets/db.port",
 		UsernameFile:       "secrets/db.user",
-		PasswordFile:       "secrets/db.password",
+		PasswordFile:       "secrets/db.password", // pragma: allowlist secret
 		NameFile:           "secrets/db.name",
 		DatabaseCaCertFile: "secrets/db.ca_cert",
 	}

@@ -119,7 +119,7 @@ func (mockServer *redhatSSOMock) serviceAccountAuthMiddleware(next http.Handler)
 		clientSecret := request.FormValue("client_secret")
 
 		if serviceAccount, ok := mockServer.serviceAccounts[clientID]; ok {
-			if *serviceAccount.Secret == clientSecret {
+			if *serviceAccount.Secret == clientSecret { // pragma: allowlist secret
 				next.ServeHTTP(writer, request)
 				return
 			}

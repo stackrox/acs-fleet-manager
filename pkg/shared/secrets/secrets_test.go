@@ -110,7 +110,7 @@ func Test_changePasswordFields(t *testing.T) {
 					"queueNameOrArn": "test",
 					"accessKey": "test",
 					"dinosaur.topic": "test",
-					"dinosaur.secret": "test"
+					"dinosaur.secret": "test" // pragma: allowlist secret
 				}`,
 				f: func(node *ajson.Node) error {
 					if node.Type() == ajson.String {

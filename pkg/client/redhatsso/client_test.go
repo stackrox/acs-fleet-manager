@@ -71,7 +71,7 @@ func TestNewSSOClient(t *testing.T) {
 				},
 				realmConfig: &iam.IAMRealmConfig{
 					ClientID:     "Client_Id",
-					ClientSecret: "ClientSecret",
+					ClientSecret: "ClientSecret", // pragma: allowlist secret
 				},
 			},
 		},
