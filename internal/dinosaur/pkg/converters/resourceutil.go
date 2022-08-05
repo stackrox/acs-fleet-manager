@@ -28,12 +28,12 @@ func ConvertPrivateScalingToV1(scaling *private.ManagedCentralAllOfSpecScannerAn
 }
 
 // ConvertPublicScalingToV1 ...
-func ConvertPublicScalingToV1(scaling *public.ScannerSpecAnalyzerScaling) (*v1alpha1.ScannerAnalyzerScaling, error) {
+func ConvertPublicScalingToV1(scaling *public.ScannerSpecAnalyzerScaling) (v1alpha1.ScannerAnalyzerScaling, error) {
 	if scaling == nil {
-		return nil, nil
+		return v1alpha1.ScannerAnalyzerScaling{}, nil
 	}
 	autoScaling := scaling.AutoScaling
-	return &v1alpha1.ScannerAnalyzerScaling{
+	return v1alpha1.ScannerAnalyzerScaling{
 		AutoScaling: (*v1alpha1.AutoScalingPolicy)(&autoScaling), // TODO(create-ticket): validate.
 		Replicas:    &scaling.Replicas,
 		MinReplicas: &scaling.MinReplicas,
