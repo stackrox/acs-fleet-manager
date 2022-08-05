@@ -94,11 +94,14 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 				Issuer:      c.centralConfig.RhSsoIssuer,
 			},
 			UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
-				Host: from.Host,
+				Host: from.GetUIHost(),
 				Tls: private.ManagedCentralAllOfSpecUiEndpointTls{
 					Cert: c.centralConfig.CentralTLSCert,
 					Key:  c.centralConfig.CentralTLSKey,
 				},
+			},
+			DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
+				Host: from.GetDataHost(),
 			},
 			Versions: private.ManagedCentralVersions{
 				Central:         from.DesiredCentralVersion,
