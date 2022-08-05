@@ -196,7 +196,7 @@ helm upgrade --install rhacs-terraform \
   --set fleetshardSync.staticToken="${STATIC_TOKEN}" \
   --set fleetshardSync.clusterId="${CLUSTER_ID}" \
   --set acsOperator.enabled=true \
-  --set acsOperator.source="rhacs-operators" \
+  --set acsOperator.source="${RHACS_OPERATOR_CATALOG_NAME}" \
   --set acsOperator.startingCSV="${STARTING_CSV}" \
   --set observability.enabled=false ./dp-terraform/helm/rhacs-terraform
 ```
@@ -333,12 +333,12 @@ After that, you can open the following URL in your browser: https://stage.foo.re
 
 By default, staging cluster will be up for 2 days. You can extend it to 7 days. To do that, execute the following command for MacOS:
 ```
-echo "{\"expiration_timestamp\":\"$(date --iso-8601=seconds -d '+7 days')\"}" | ocm patch "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}"
+echo "{\"expiration_timestamp\":\"$(date -v+7d -u +'%Y-%m-%dT%H:%M:%SZ')\"}" | ocm patch "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}"
 ```
 
 Or on Linux:
 ```
-echo "{\"expiration_timestamp\":\"$(date -v+7d -u +'%Y-%m-%dT%H:%M:%SZ')\"}" | ocm patch "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}"
+echo "{\"expiration_timestamp\":\"$(date --iso-8601=seconds -d '+7 days')\"}" | ocm patch "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}"
 ```
 
 ### Re-deploy new Fleetshard synchronizer
