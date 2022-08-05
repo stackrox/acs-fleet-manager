@@ -210,6 +210,37 @@ data:
     # A user is represented in the below list by their Kerboros ID
     - read-only-user-1
     - read-only-user-2
+  admin-authz-roles-dev.yaml: |-
+    ---
+    - method: GET
+      roles:
+        - "acs-general-engineering"           # Will include all of ACS engineering. Available also within staging environment.
+        - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+        - "acs-fleet-manager-admin-read"      # Prod rover group, will only include selected members + SREs.
+        - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.
+    - method: PATCH
+      roles:
+        - "acs-general-engineering"           # Will include all of ACS engineering. Available also within staging environment.
+        - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+        - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.
+    - method: DELETE
+      roles:
+        - "acs-general-engineering"           # Will include all of ACS engineering. Available also within staging environment.
+        - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+  admin-authz-roles-prod.yaml: |-
+    ---
+    - method: GET
+      roles:
+        - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+        - "acs-fleet-manager-admin-read"      # Prod rover group, will only include selected members + SREs.
+        - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.
+    - method: PATCH
+      roles:
+        - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+        - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.
+    - method: DELETE
+      roles:
+        - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
 kind: ConfigMap
 metadata:
   name: config
