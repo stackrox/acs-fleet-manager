@@ -240,7 +240,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		Methods(http.MethodPatch)
 
 	adminCreateRouter := adminDinosaursRouter.NewRoute().Subrouter()
-	adminCreateRouter.HandleFunc("", dinosaurHandler.Create).Methods(http.MethodPost)
+	adminCreateRouter.HandleFunc("", adminDinosaurHandler.Create).Methods(http.MethodPost)
 
 	return nil
 }

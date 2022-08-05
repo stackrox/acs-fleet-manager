@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -34,33 +35,38 @@ func NewDinosaurHandler(service services.DinosaurService, providerConfig *config
 	}
 }
 
-func validateResourcesUnspecified(ctx context.Context, component string, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
-	fields := map[string]string{
-		"resources.requests.cpu":    dinosaurRequest.Central.Resources.Requests.Cpu,
-		"resources.requests.memory": dinosaurRequest.Central.Resources.Requests.Memory,
-		"resources.limits.cpu":      dinosaurRequest.Central.Resources.Limits.Cpu,
-		"resources.limits.memory":   dinosaurRequest.Central.Resources.Limits.Memory,
-	}
+func validateCentralResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
+	return func() *errors.ServiceError {
+		glog.Errorf("[validateCentralResourcesUnspecified]  req = %v\n", dinosaurRequest)
 
-	validateFunc := func() *errors.ServiceError {
-		for k, v := range fields {
-			if v != "" {
-				return errors.Forbidden("not allowed to specify %s resources (%s)", component, k)
-			}
+		if dinosaurRequest.Central.Resources.Limits.Cpu != "" ||
+			dinosaurRequest.Central.Resources.Limits.Memory != "" ||
+			dinosaurRequest.Central.Resources.Requests.Cpu != "" ||
+			dinosaurRequest.Central.Resources.Requests.Memory != "" {
+			return errors.Forbidden("not allowed to specify central resources")
 		}
 		return nil
 	}
-
-	return validateFunc
-
-}
-
-func validateCentralResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
-	return validateResourcesUnspecified(ctx, "central", dinosaurRequest)
 }
 
 func validateScannerResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
-	return validateResourcesUnspecified(ctx, "scanner", dinosaurRequest)
+	return func() *errors.ServiceError {
+		glog.Errorf("[validateScannerResourcesUnspecified]  req = %v\n", dinosaurRequest)
+
+		if dinosaurRequest.Scanner.Analyzer.Resources.Limits.Cpu != "" ||
+			dinosaurRequest.Scanner.Analyzer.Resources.Limits.Memory != "" ||
+			dinosaurRequest.Scanner.Analyzer.Resources.Requests.Cpu != "" ||
+			dinosaurRequest.Scanner.Analyzer.Resources.Requests.Memory != "" {
+			return errors.Forbidden("not allowed to specify scanner analyzer resources")
+		}
+		if dinosaurRequest.Scanner.Db.Resources.Limits.Cpu != "" ||
+			dinosaurRequest.Scanner.Db.Resources.Limits.Memory != "" ||
+			dinosaurRequest.Scanner.Db.Resources.Requests.Cpu != "" ||
+			dinosaurRequest.Scanner.Db.Resources.Requests.Memory != "" {
+			return errors.Forbidden("not allowed to specify scanner db resources")
+		}
+		return nil
+	}
 }
 
 // Create ...

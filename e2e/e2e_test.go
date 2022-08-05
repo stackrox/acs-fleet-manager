@@ -287,7 +287,7 @@ var _ = Describe("Central", func() {
 
 		var createdCentral *public.CentralRequest
 		var namespaceName string
-		It("created a central with custom resource configuration", func() {
+		It("should create central with custom resource configuration", func() {
 			createdCentral, err = adminClient.CreateCentral(request)
 			Expect(err).To(BeNil())
 			namespaceName, err = services.FormatNamespace(createdCentral.Id)
