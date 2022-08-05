@@ -121,7 +121,7 @@ func (c *ObservabilityConfiguration) ReadObservatoriumConfigFiles() error {
 	}
 
 	metricsSecretErr := shared.ReadFileValueString(c.MetricsSecretFile, &c.MetricsSecret)
-	if metricsSecretErr != nil {
+	if metricsSecretErr != nil { // pragma: allowlist secret
 		return fmt.Errorf("reading observatorium config metrics secret file: %w", metricsSecretErr)
 	}
 

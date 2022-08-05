@@ -62,7 +62,7 @@ func TestNewSSOClient(t *testing.T) {
 				},
 				realmConfig: &iam.IAMRealmConfig{
 					ClientID:     "Client_Id",
-					ClientSecret: "ClientSecret",
+					ClientSecret: "ClientSecret", // pragma: allowlist secret
 				},
 			},
 			want: &rhSSOClient{
@@ -858,7 +858,7 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 			want: serviceaccountsclient.ServiceAccountData{
 				Id:          serviceAccount.Id,
 				ClientId:    serviceAccount.ClientId,
-				Secret:      serviceAccount.Secret,
+				Secret:      serviceAccount.Secret, // pragma: allowlist secret
 				Name:        &name,
 				Description: &description,
 				CreatedBy:   nil,
