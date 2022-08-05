@@ -132,33 +132,3 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	handlers.HandleList(w, r, cfg)
 }
-
-// Update is the handler for updating a dinosaur request
-func (h dinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
-	var dinosaurUpdateReq public.CentralUpdateRequest
-	id := mux.Vars(r)["id"]
-	ctx := r.Context()
-	dinosaurRequest, dinosaurGetError := h.service.Get(ctx, id)
-	validateDinosaurFound := func() handlers.Validate {
-		return func() *errors.ServiceError {
-			return dinosaurGetError
-		}
-	}
-	cfg := &handlers.HandlerConfig{
-		MarshalInto: &dinosaurUpdateReq,
-		Validate: []handlers.Validate{
-			validateDinosaurFound(),
-		},
-		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			// TODO implement update logic
-			var updDinosaurRequest *dbapi.CentralRequest
-			svcErr := h.service.Update(updDinosaurRequest)
-			if svcErr != nil {
-				return nil, svcErr
-			}
-
-			return presenters.PresentDinosaurRequest(dinosaurRequest), nil
-		},
-	}
-	handlers.Handle(w, r, cfg, http.StatusOK)
-}
