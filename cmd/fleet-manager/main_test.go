@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
+	dinosaur "github.com/stackrox/acs-fleet-manager/internal/central"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"

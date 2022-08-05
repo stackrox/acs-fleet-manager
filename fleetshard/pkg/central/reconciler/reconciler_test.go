@@ -10,8 +10,8 @@ import (
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
-	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	centralConstants "github.com/stackrox/acs-fleet-manager/internal/central/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 
 	"github.com/stretchr/testify/assert"

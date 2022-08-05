@@ -61,7 +61,7 @@ cmd/fleet-manager/fleet-manager
 /secrets/keycloak-service.crt
 
 # cluster details (used for testing)
-/internal/dinosaur/test/integration/test_cluster.json
+/internal/central/test/integration/test_cluster.json
 
 # cluster configuration, overwritten locally to custom clusters
 config/dataplane-cluster-configuration.yaml

@@ -1,8 +1,8 @@
 run:
   skip-dirs:
-    - internal/dinosaur/pkg/api/public
-    - internal/dinosaur/pkg/api/private
-    - internal/dinosaur/pkg/api/admin/private
+    - internal/central/pkg/api/public
+    - internal/central/pkg/api/private
+    - internal/central/pkg/api/admin/private
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 10m
 

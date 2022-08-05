@@ -22,18 +22,18 @@
 # Then explicitly reverse the ignore rule for a single file:
 #!docs/README.md
 
-internal/dinosaur/pkg/api/public/README.md
-internal/dinosaur/pkg/api/public/docs/**.md
-internal/dinosaur/pkg/api/public/**all_of.go
-internal/dinosaur/pkg/api/public/go.mod
-internal/dinosaur/pkg/api/public/go.sum
-internal/dinosaur/pkg/api/private/README.md
-internal/dinosaur/pkg/api/private/docs/**.md
-internal/dinosaur/pkg/api/private/**all_of.go
-internal/dinosaur/pkg/api/private/go.mod
-internal/dinosaur/pkg/api/private/go.sum
-internal/dinosaur/pkg/api/admin/private/README.md
-internal/dinosaur/pkg/api/admin/private/docs/**.md
-internal/dinosaur/pkg/api/admin/private/**all_of.go
-internal/dinosaur/pkg/api/admin/private/go.mod
-internal/dinosaur/pkg/api/admin/private/go.sum
+internal/central/pkg/api/public/README.md
+internal/central/pkg/api/public/docs/**.md
+internal/central/pkg/api/public/**all_of.go
+internal/central/pkg/api/public/go.mod
+internal/central/pkg/api/public/go.sum
+internal/central/pkg/api/private/README.md
+internal/central/pkg/api/private/docs/**.md
+internal/central/pkg/api/private/**all_of.go
+internal/central/pkg/api/private/go.mod
+internal/central/pkg/api/private/go.sum
+internal/central/pkg/api/admin/private/README.md
+internal/central/pkg/api/admin/private/docs/**.md
+internal/central/pkg/api/admin/private/**all_of.go
+internal/central/pkg/api/admin/private/go.mod
+internal/central/pkg/api/admin/private/go.sum

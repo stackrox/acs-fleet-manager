@@ -1,6 +1,6 @@
 package reconciler
 
-import "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+import "github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 
 func readyStatus() *private.DataPlaneCentralStatus {
 	return &private.DataPlaneCentralStatus{

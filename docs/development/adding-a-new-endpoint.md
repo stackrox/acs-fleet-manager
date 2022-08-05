@@ -23,7 +23,7 @@ Converters/presenters are defined in the `pkg/api/presenters` directory. Please 
 ## Add a new handler
 Handlers are defined in the one of the `handlers` directory.
 * [`pkg/handlers`](../pkg/handlers) - for generic handlers that can be resused by different services
-* [`internal/dinosaur/pkg/handlers`](../internal/dinosaur/pkg/handlers) - for dinosaur service handlers
+* [`internal/central/pkg/handlers`](../internal/central/pkg/handlers) - for dinosaur service handlers
 
 ### Format
 All handlers should follow a specific format as defined in this [framework](https://github.com/stackrox/acs-fleet-manager/blob/main/pkg/handlers/framework.go). See existing handlers as an example.
@@ -48,13 +48,13 @@ Validation functions are available in [validation.go](https://github.com/stackro
 Any backend functionality called from your handler should be specified in `services` or it's subdirectory.
 
 * [`pkg/services`](../pkg/services) - for generic services that can be reused by different services
-* [`internal/dinosaur/pkg/services`](../internal/dinosaur/pkg/services) - for dinosaur specific services
+* [`internal/central/pkg/services`](../internal/central/pkg/services) - for dinosaur specific services
 
 ## Add your new endpoint to the Route Loader
 
 The `route_loader.go` contains the definition of the service's endpoints. Add your new endpoint to the router and attach your handler using `HandleFunc()` here.
 
-* [`internal/dinosaur/pkg/routes/route_loader.go`](../internal/dinosaur/pkg/routes/route_loader.go) - for the dinosaur service
+* [`internal/central/pkg/routes/route_loader.go`](../internal/central/pkg/routes/route_loader.go) - for the dinosaur service
 
 For example
 
@@ -79,7 +79,7 @@ The CLI is built using [Cobra](https://github.com/spf13/cobra).  All of the comm
 
 * [`cmd`](../cmd) - main binary entry points
 * [`pkg/cmd`](../pkg/cmd) - common sub commands
-* [`internal/dinosaur/pkg/cmd`](../internal/dinosaur/pkg/cmd) - dinosaur sub commands
+* [`internal/central/pkg/cmd`](../internal/central/pkg/cmd) - dinosaur sub commands
 
 ```
 /cloudprovider - command definition for the /cloudprovider endpoint

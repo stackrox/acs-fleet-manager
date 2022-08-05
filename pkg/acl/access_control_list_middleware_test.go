@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/golang/glog"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
+	dinosaur "github.com/stackrox/acs-fleet-manager/internal/central"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 

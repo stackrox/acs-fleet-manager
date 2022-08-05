@@ -5,7 +5,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
+	dinosaur "github.com/stackrox/acs-fleet-manager/internal/central"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
