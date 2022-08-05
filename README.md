@@ -117,7 +117,7 @@ eval $(crc oc-env)
 # Login as a developer to test:
 oc login -u developer -p developer https://api.crc.testing:6443
 ```
-
+##### Install olm
 ```bash
 # OpenShift clusters have the Operator Lifecycle Manager installed by default.
 # If running with a non-OpenShift Kubernetes cluster, you'll need to install the
@@ -166,6 +166,20 @@ To bootstrap your application, after cloning the repository.
    ```go
    // TODO
    ```
+
+## Prepare a cluster for the local environment
+You can run ACS Fleet Manager on a local k8s cluster (colima, rancher, minikube).
+This requires some preparations on a cluster:
+
+1. Install ACS Operator. Recommended way is to use [OLM](#install-olm) for this.
+The process is described in [operator documentation](https://github.com/stackrox/stackrox/tree/master/operator)
+2. Deploy ingress router
+   ```
+   make deploy/ingress-router
+   ```
+   Use `make undeploy/ingress-router` to undeploy router from a cluster.
+   Refer to the router [repo](https://github.com/openshift/router) for more information.
+3. For accessing the hostnames exposed by routes locally read the documentation [here](docs/development/test-locally-route-hosts.md)
 
 ## Running Fleet Manager for the first time in your local environment
 Please make sure you have followed all of the prerequisites above first.  
