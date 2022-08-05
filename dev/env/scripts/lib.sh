@@ -144,6 +144,13 @@ init() {
     export CENTRAL_DOMAIN_NAME=${CENTRAL_DOMAIN_NAME:-$CENTRAL_DOMAIN_NAME_DEFAULT}
     export FLEET_MANAGER_IMAGE="${FLEET_MANAGER_IMAGE:-$FLEET_MANAGER_IMAGE_DEFAULT}"
 
+
+    if [[ "$ROUTE53_ACCESS_KEY" == "" || "$ROUTE53_SECRET_ACCESS_KEY" == "" ]]; then
+        log "setting ENABLE_CENTRAL_EXTERNAL_CERTIFICATE to false since no Route53 credentials were provided"
+        ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=false
+    fi
+
+
     if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
         eval "$(minikube docker-env)"
     fi
