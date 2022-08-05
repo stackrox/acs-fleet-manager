@@ -306,19 +306,19 @@ var _ = Describe("Central", func() {
 			coreV1Resources := central.Spec.Central.DeploymentSpec.Resources
 			expectedResources, err := converters.ConvertPublicResourceRequirementsToCoreV1(&centralResources)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(coreV1Resources).To(Equal(expectedResources))
+			Expect(*coreV1Resources).To(Equal(expectedResources))
 		})
 
 		It("scanner analyzer resources match configured settings", func() {
 			coreV1Resources := central.Spec.Scanner.Analyzer.DeploymentSpec.Resources
 			expectedResources, err := converters.ConvertPublicResourceRequirementsToCoreV1(&scannerResources)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(coreV1Resources).To(Equal(expectedResources))
+			Expect(*coreV1Resources).To(Equal(expectedResources))
 
-			a := central.Spec.Scanner.Analyzer.Scaling
-			b, err := converters.ConvertPublicScalingToV1(&scannerScaling)
+			scaling := central.Spec.Scanner.Analyzer.Scaling
+			expectedScaling, err := converters.ConvertPublicScalingToV1(&scannerScaling)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(a).To(Equal(b))
+			Expect(*scaling).To(Equal(expectedScaling))
 		})
 
 		It("should transition central's state to ready", func() {
