@@ -172,7 +172,7 @@ You can run ACS Fleet Manager on a local k8s cluster (colima, rancher, minikube)
 This requires some preparations on a cluster:
 
 1. Install ACS Operator. Recommended way is to use [OLM](#install-olm) for this.
-The process described in [operator documentation](https://github.com/stackrox/stackrox/tree/master/operator)
+The process is described in [operator documentation](https://github.com/stackrox/stackrox/tree/master/operator)
 2. Deploy ingress router
    ```
    make deploy/ingress-router
