@@ -94,12 +94,12 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - name: Run Migration Script
-        run: make db/migrate
       - name: Setup tests secrets
         run: |
           make ocm/setup aws/setup redhatsso/setup centralcert/setup observatorium/setup secrets/touch
           echo -n "${{ secrets.POSTGRES_PASSWORD }}" > secrets/db.password
+      - name: Run Migration Script
+        run: make db/migrate
       - name: Lint & Test
         run: |
           export GOPATH=$(go env GOPATH)
