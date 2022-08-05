@@ -269,7 +269,7 @@ EOF
 }
 
 is_local_cluster() {
-    local cluster_type={1:-}
+    local cluster_type=${1:-}
     if [[ "$cluster_type" == "minikube" || "$cluster_type" == "colima" || "$cluster_type" == "rancher-desktop" ]]; then
         return 0
     else
