@@ -148,15 +148,8 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 
 	assert.Equal(t, expectedHash, r.lastCentralHash)
 
-	status, err := r.Reconcile(context.TODO(), managedCentral)
-	require.NoError(t, err)
-	assert.Equal(t, "Ready", status.Conditions[0].Type)
-	assert.Equal(t, "True", status.Conditions[0].Status)
-
-	central := &v1alpha1.Central{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
-	require.NoError(t, err)
-	assert.Equal(t, "4", central.Annotations[revisionAnnotationKey])
+	_, err = r.Reconcile(context.TODO(), managedCentral)
+	require.ErrorIs(t, err, ErrCentralNotChanged)
 }
 
 func TestIgnoreCacheForCentralNotReady(t *testing.T) {
@@ -195,7 +188,7 @@ func TestReconcileDelete(t *testing.T) {
 
 	// trigger deletion
 	statusTrigger, err := r.Reconcile(context.TODO(), deletedCentral)
-	require.NoError(t, err)
+	require.Error(t, err, ErrDeletionInProgress)
 	require.Nil(t, statusTrigger)
 
 	// deletion completed needs second reconcile to check as deletion is async in a kubernetes cluster
@@ -293,27 +286,15 @@ func TestReportRoutesStatuses(t *testing.T) {
 }
 
 func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
 	existingCentral := simpleManagedCentral
 	existingCentral.RequestStatus = centralConstants.DinosaurRequestStatusReady.String()
-	status, _ := r.Reconcile(context.TODO(), existingCentral) // cache hit
-	expected := []private.DataPlaneCentralStatusRoutes{
-		{
-			Domain: "acs-cb45idheg5ip6dq1jo4g.acs.rhcloud.test",
-			Router: "router-default.apps.test.local",
-		},
-		{
-			Domain: "acs-data-cb45idheg5ip6dq1jo4g.acs.rhcloud.test",
-			Router: "router-default.apps.test.local",
-		},
-	}
-	actual := status.Routes
-	assert.ElementsMatch(t, expected, actual)
+	_, err := r.Reconcile(context.TODO(), existingCentral)
+	require.NoError(t, err)
+	status, err := r.Reconcile(context.TODO(), existingCentral) // cache hit
+	require.Nil(t, status)
+	require.ErrorIs(t, err, ErrCentralNotChanged)
 }
 
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
