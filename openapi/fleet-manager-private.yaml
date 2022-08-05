@@ -469,7 +469,7 @@ components:
         kind: "ManagedCentral"
         metadata:
           name: "example-central"
-          namespace: "example-central-1rfpsqbvq1em2u9u0z54ymjcwac"
+          namespace: "example-central-1rfpsqbvq1em2u9u0z54ymjcwac" # pragma: allowlist secret
           annotations:
             mas/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
             mas/placementId: ""

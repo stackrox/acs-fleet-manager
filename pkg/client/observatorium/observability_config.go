@@ -52,9 +52,9 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 		ObservabilityConfigAccessTokenFile: "secrets/observability-config-access.token",
 		ObservabilityConfigTag:             "main",
 		MetricsClientIDFile:                "secrets/rhsso-metrics.clientId",
-		MetricsSecretFile:                  "secrets/rhsso-metrics.clientSecret",
+		MetricsSecretFile:                  "secrets/rhsso-metrics.clientSecret", // pragma: allowlist secret
 		LogsClientIDFile:                   "secrets/rhsso-logs.clientId",
-		LogsSecretFile:                     "secrets/rhsso-logs.clientSecret",
+		LogsSecretFile:                     "secrets/rhsso-logs.clientSecret", // pragma: allowlist secret
 		RedHatSSOTenant:                    "",
 		RedHatSSOAuthServerURL:             "",
 		RedHatSSORealm:                     "",
@@ -111,7 +111,7 @@ func (c *ObservabilityConfiguration) ReadObservatoriumConfigFiles() error {
 	}
 
 	logsSecretErr := shared.ReadFileValueString(c.LogsSecretFile, &c.LogsSecret)
-	if logsSecretErr != nil {
+	if logsSecretErr != nil { // pragma: allowlist secret
 		return fmt.Errorf("reading observatorium config secret file: %w", logsSecretErr)
 	}
 

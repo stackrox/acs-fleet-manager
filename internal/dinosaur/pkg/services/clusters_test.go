@@ -1875,7 +1875,7 @@ func TestClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 				identityProvider: types.IdentityProviderInfo{OpenID: &types.OpenIDIdentityProviderInfo{
 					Name:         "test-name",
 					ClientID:     "test-client-id",
-					ClientSecret: "test-client-secret",
+					ClientSecret: "test-client-secret", // pragma: allowlist secret
 					Issuer:       "test-issuer",
 				}},
 			},
@@ -1910,7 +1910,7 @@ func TestClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 				identityProvider: types.IdentityProviderInfo{OpenID: &types.OpenIDIdentityProviderInfo{
 					Name:         "test-name",
 					ClientID:     "test-client-id",
-					ClientSecret: "test-client-secret",
+					ClientSecret: "test-client-secret", // pragma: allowlist secret
 					Issuer:       "test-issuer",
 				}},
 			},

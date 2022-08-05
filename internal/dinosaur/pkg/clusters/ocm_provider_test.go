@@ -378,12 +378,12 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 	testIdpID := "test-idp-ocm-id"
 	testIdpName := "test-idp-name"
 	testIdpClientID := "test-client-id"
-	testIdpClientSecret := "test-client-secret"
+	testIdpClientSecret := "test-client-secret" // pragma: allowlist secret
 	testIdpIssuer := "test-issuer"
 	idpInfo := types.IdentityProviderInfo{OpenID: &types.OpenIDIdentityProviderInfo{
 		Name:         testIdpName,
 		ClientID:     testIdpClientID,
-		ClientSecret: testIdpClientSecret,
+		ClientSecret: testIdpClientSecret, // pragma: allowlist secret
 		Issuer:       testIdpIssuer,
 	}}
 
@@ -415,7 +415,7 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 					ID:           testIdpID,
 					Name:         testIdpName,
 					ClientID:     testIdpClientID,
-					ClientSecret: testIdpClientSecret,
+					ClientSecret: testIdpClientSecret, // pragma: allowlist secret
 					Issuer:       testIdpIssuer,
 				},
 			},
@@ -443,7 +443,7 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 					ID:           testIdpID,
 					Name:         testIdpName,
 					ClientID:     testIdpClientID,
-					ClientSecret: testIdpClientSecret,
+					ClientSecret: testIdpClientSecret, // pragma: allowlist secret
 					Issuer:       testIdpIssuer,
 				},
 			},

@@ -45,7 +45,7 @@ func NewAuthHelper(jwtKeyFilePath, jwtCAFilePath, ocmTokenIssuer string) (*AuthH
 	}
 
 	return &AuthHelper{
-		JWTPrivateKey:  jwtKey,
+		JWTPrivateKey:  jwtKey, // pragma: allowlist secret
 		JWTCA:          jwtCA,
 		ocmTokenIssuer: ocmTokenIss,
 	}, nil

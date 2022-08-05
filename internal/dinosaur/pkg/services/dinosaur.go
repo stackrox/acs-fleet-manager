@@ -697,7 +697,7 @@ func (k *dinosaurService) ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.Cent
 	// Create AWS client with the region of this Dinosaur Cluster
 	awsConfig := aws.Config{
 		AccessKeyID:     k.awsConfig.Route53AccessKey,
-		SecretAccessKey: k.awsConfig.Route53SecretAccessKey,
+		SecretAccessKey: k.awsConfig.Route53SecretAccessKey, // pragma: allowlist secret
 	}
 	awsClient, err := k.awsClientFactory.NewClient(awsConfig, dinosaurRequest.Region)
 	if err != nil {
@@ -716,7 +716,7 @@ func (k *dinosaurService) ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.Cent
 func (k *dinosaurService) GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error) {
 	awsConfig := aws.Config{
 		AccessKeyID:     k.awsConfig.Route53AccessKey,
-		SecretAccessKey: k.awsConfig.Route53SecretAccessKey,
+		SecretAccessKey: k.awsConfig.Route53SecretAccessKey, // pragma: allowlist secret
 	}
 	awsClient, err := k.awsClientFactory.NewClient(awsConfig, dinosaurRequest.Region)
 	if err != nil {
