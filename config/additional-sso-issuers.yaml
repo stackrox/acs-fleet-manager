@@ -4,4 +4,3 @@
 # to be unblocked.
 # Endpoints must be given in the format https://<endpoint>/auth/realms/<your-realm> without trailing slash.
 - https://sso.stage.redhat.com/auth/realms/redhat-external
-- https://auth.stage.redhat.com/auth/realms/EmployeeIDP

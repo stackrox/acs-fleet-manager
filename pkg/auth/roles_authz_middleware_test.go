@@ -58,7 +58,7 @@ func TestRolesAuthMiddleware_RequireRealmRole(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rolesHandler := NewRolesAuhzMiddleware(&RoleAuthZConfig{})
+			rolesHandler := NewRolesAuhzMiddleware(&AdminRoleAuthZConfig{})
 			toTest := setContextToken(rolesHandler.RequireRealmRole(tt.wantRole, errors.ErrorUnauthenticated)(tt.next), tt.token)
 			req := httptest.NewRequest("GET", "http://example.com", nil)
 			recorder := httptest.NewRecorder()
@@ -163,7 +163,7 @@ func TestRolesAuthMiddleware_RequireRolesForMethods(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rolesHandler := NewRolesAuhzMiddleware(&RoleAuthZConfig{RolesConfig: tt.rolesConfig})
+			rolesHandler := NewRolesAuhzMiddleware(&AdminRoleAuthZConfig{RolesConfig: tt.rolesConfig})
 			toTest := setContextToken(rolesHandler.RequireRolesForMethods(errors.ErrorUnauthenticated)(tt.next), tt.token)
 			recorder := httptest.NewRecorder()
 			toTest.ServeHTTP(recorder, tt.request)

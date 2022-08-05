@@ -54,7 +54,7 @@ type options struct {
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
 	FleetShardAuthZConfig       *auth.FleetShardAuthZConfig
-	RoleAuthZConfig             *auth.RoleAuthZConfig
+	AdminRoleAuthZConfig        *auth.AdminRoleAuthZConfig
 
 	ManagedCentralPresenter *presenters.ManagedCentralPresenter
 }
@@ -212,9 +212,8 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminDinosaurHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
-		append(s.IAM.GetConfig().AdditionalSSOIssuers.URIs, s.IAM.GetConfig().InternalSSORealm.ValidIssuerURI),
-		errors.ErrorNotFound))
-	adminRouter.Use(auth.NewRolesAuhzMiddleware(s.RoleAuthZConfig).RequireRolesForMethods(errors.ErrorNotFound))
+		[]string{s.IAM.GetConfig().InternalSSORealm.ValidIssuerURI}, errors.ErrorNotFound))
+	adminRouter.Use(auth.NewRolesAuhzMiddleware(s.AdminRoleAuthZConfig).RequireRolesForMethods(errors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
 	adminRouter.HandleFunc("/dinosaurs", adminDinosaurHandler.List).
 		Name(logger.NewLogEvent("admin-list-dinosaurs", "[admin] list all dinosaurs").ToString()).

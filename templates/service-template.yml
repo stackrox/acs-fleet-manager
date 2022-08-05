@@ -414,15 +414,14 @@ objects:
     data:
       additional-sso-issuers.yaml: |-
         - https://sso.stage.redhat.com/auth/realms/redhat-external
-        - https://auth.stage.redhat.com/auth/realms/EmployeeIDP
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: fleet-manager-role-authz-config
+      name: fleet-manager-admin-authz-config
       annotations:
         qontract.recycle: "true"
       data:
-        role-authz-roles-dev.yaml: |-
+        admin-authz-roles-dev.yaml: |-
           - method: GET
             roles:
               - "acs-general-engineering"
@@ -438,7 +437,7 @@ objects:
             roles:
               - "acs-general-engineering"
               - "acs-fleet-manager-admin-full"
-        role-autzh-roles-prod.yaml: |-
+        admin-authz-roles-prod.yaml: |-
           - method: GET
             roles:
               - "acs-fleet-manager-admin-full"
@@ -948,9 +947,9 @@ objects:
           - name: fleet-manager-fleetshard-authz-config
             configMap:
               name: fleet-manager-fleetshard-authz-config
-          - name: fleet-manager-role-authz-config
+          - name: fleet-manager-admin-authz-config
             configMap:
-              name: fleet-manager-role-authz-config
+              name: fleet-manager-admin-authz-config
           - name: envoy-config
             configMap:
               # Temporarily use a minimum version of the configmap deployed from this file
@@ -1037,12 +1036,12 @@ objects:
             - name: fleet-manager-fleetshard-authz-config
               mountPath: /config/fleetshard-authz-org-ids-prod.yaml
               subPath: fleetshard-authz-org-ids-prod.yaml
-            - name: fleet-manager-role-authz-config
-              mountPath: /config/role-authz-roles-dev.yaml
-              subPath: role-authz-roles-dev.yaml
-            - name: fleet-manager-role-authz-config
-              mountPath: /config/role-authz-roles-prod.yaml
-              subPath: role-authz-roles-prod.yaml
+            - name: fleet-manager-admin-authz-config
+              mountPath: /config/admin-authz-roles-dev.yaml
+              subPath: admin-authz-roles-dev.yaml
+            - name: fleet-manager-admin-authz-config
+              mountPath: /config/admin-authz-roles-prod.yaml
+              subPath: admin-authz-roles-prod.yaml
             - name: fleet-manager-dataplane-cluster-scaling-config
               mountPath: /config/dataplane-cluster-configuration.yaml
               subPath: dataplane-cluster-configuration.yaml

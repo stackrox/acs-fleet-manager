@@ -27,7 +27,7 @@ type rolesAuthMiddleware struct {
 var _ RolesAuthorizationMiddleware = &rolesAuthMiddleware{}
 
 // NewRolesAuhzMiddleware ...
-func NewRolesAuhzMiddleware(config *RoleAuthZConfig) RolesAuthorizationMiddleware {
+func NewRolesAuhzMiddleware(config *AdminRoleAuthZConfig) RolesAuthorizationMiddleware {
 	return &rolesAuthMiddleware{
 		roleMapping: config.GetRoleMapping(),
 	}
