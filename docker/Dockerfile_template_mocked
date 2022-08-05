@@ -4,14 +4,6 @@ ENV POSTGRES_PASSWORD foobar-bizz-buzz
 ENV POSTGRES_USER fleet_manager
 ENV POSTGRES_DB serviceapitests
 
-ENV GORM_DIALECT postgres
-ENV GORM_HOST 127.0.0.1
-ENV GORM_PORT 5432
-ENV GORM_NAME serviceapitests
-ENV GORM_USERNAME fleet_manager
-ENV GORM_PASSWORD foobar-bizz-buzz
-ENV GORM_SSLMODE disable
-ENV GORM_DEBUG false
 ENV OCM_ENV integration
 ENV SSO_CLIENT_ID <sso_client_id>
 ENV SSO_CLIENT_SECRET <sso_client_secret>
