@@ -54,6 +54,7 @@ type options struct {
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
 	FleetShardAuthZConfig       *auth.FleetShardAuthZConfig
+	AdminRoleAuthZConfig        *auth.AdminRoleAuthZConfig
 
 	ManagedCentralPresenter *presenters.ManagedCentralPresenter
 }
@@ -210,16 +211,9 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	adminDinosaurHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
-	rolesMapping := map[string][]string{
-		http.MethodGet:    {auth.FleetManagerAdminReadRole, auth.FleetManagerAdminWriteRole, auth.FleetManagerAdminFullRole},
-		http.MethodPatch:  {auth.FleetManagerAdminWriteRole, auth.FleetManagerAdminFullRole},
-		http.MethodDelete: {auth.FleetManagerAdminFullRole},
-	}
-
-	// TODO(ROX-11683): For now using RH SSO issuer for the admin API, but needs to be re-visited within this ticket.
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
-		[]string{s.IAM.GetConfig().RedhatSSORealm.ValidIssuerURI}, errors.ErrorNotFound))
-	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, errors.ErrorNotFound))
+		[]string{s.IAM.GetConfig().InternalSSORealm.ValidIssuerURI}, errors.ErrorNotFound))
+	adminRouter.Use(auth.NewRolesAuhzMiddleware(s.AdminRoleAuthZConfig).RequireRolesForMethods(errors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
 	adminRouter.HandleFunc("/dinosaurs", adminDinosaurHandler.List).
 		Name(logger.NewLogEvent("admin-list-dinosaurs", "[admin] list all dinosaurs").ToString()).

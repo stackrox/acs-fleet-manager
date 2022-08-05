@@ -41,6 +41,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(server.NewMetricsConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(auth.NewContextConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(auth.NewFleetShardAuthZConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(auth.NewAdminAuthZConfig, di.As(new(environments.ConfigModule))),
 
 		// Add common CLI sub commands
 		di.Provide(serve.NewServeCommand),
