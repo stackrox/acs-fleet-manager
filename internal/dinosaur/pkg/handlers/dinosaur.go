@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -37,8 +36,6 @@ func NewDinosaurHandler(service services.DinosaurService, providerConfig *config
 
 func validateCentralResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
-		glog.Errorf("[validateCentralResourcesUnspecified]  req = %v\n", dinosaurRequest)
-
 		if dinosaurRequest.Central.Resources.Limits.Cpu != "" ||
 			dinosaurRequest.Central.Resources.Limits.Memory != "" ||
 			dinosaurRequest.Central.Resources.Requests.Cpu != "" ||
@@ -51,8 +48,6 @@ func validateCentralResourcesUnspecified(ctx context.Context, dinosaurRequest *p
 
 func validateScannerResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
-		glog.Errorf("[validateScannerResourcesUnspecified]  req = %v\n", dinosaurRequest)
-
 		if dinosaurRequest.Scanner.Analyzer.Resources.Limits.Cpu != "" ||
 			dinosaurRequest.Scanner.Analyzer.Resources.Limits.Memory != "" ||
 			dinosaurRequest.Scanner.Analyzer.Resources.Requests.Cpu != "" ||
