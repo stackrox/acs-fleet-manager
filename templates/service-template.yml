@@ -420,36 +420,36 @@ objects:
       name: fleet-manager-admin-authz-config
       annotations:
         qontract.recycle: "true"
-      data:
-        admin-authz-roles-dev.yaml: |-
-          - method: GET
-            roles:
-              - "acs-general-engineering"
-              - "acs-fleet-manager-admin-full"
-              - "acs-fleet-manager-admin-read"
-              - "acs-fleet-manager-admin-write"
-          - method: PATCH
-            roles:
-              - "acs-general-engineering"
-              - "acs-fleet-manager-admin-full"
-              - "acs-fleet-manager-admin-write"
-          - method: DELETE
-            roles:
-              - "acs-general-engineering"
-              - "acs-fleet-manager-admin-full"
-        admin-authz-roles-prod.yaml: |-
-          - method: GET
-            roles:
-              - "acs-fleet-manager-admin-full"
-              - "acs-fleet-manager-admin-read"
-              - "acs-fleet-manager-admin-write"
-          - method: PATCH
-            roles:
-              - "acs-fleet-manager-admin-full"
-              - "acs-fleet-manager-admin-write"
-          - method: DELETE
-            roles:
-              - "acs-fleet-manager-admin-full"
+    data:
+      admin-authz-roles-dev.yaml: |-
+        - method: GET
+          roles:
+            - "acs-general-engineering"
+            - "acs-fleet-manager-admin-full"
+            - "acs-fleet-manager-admin-read"
+            - "acs-fleet-manager-admin-write"
+        - method: PATCH
+          roles:
+            - "acs-general-engineering"
+            - "acs-fleet-manager-admin-full"
+            - "acs-fleet-manager-admin-write"
+        - method: DELETE
+          roles:
+            - "acs-general-engineering"
+            - "acs-fleet-manager-admin-full"
+      admin-authz-roles-prod.yaml: |-
+        - method: GET
+          roles:
+            - "acs-fleet-manager-admin-full"
+            - "acs-fleet-manager-admin-read"
+            - "acs-fleet-manager-admin-write"
+        - method: PATCH
+          roles:
+            - "acs-fleet-manager-admin-full"
+            - "acs-fleet-manager-admin-write"
+        - method: DELETE
+          roles:
+            - "acs-fleet-manager-admin-full"
   - kind: ConfigMap
     apiVersion: v1
     metadata:
