@@ -26,10 +26,10 @@ helm template rhacs-terraform \
   --set acsOperator.enabled=true .
 ```
 
-**Install or update the chart**
+**Install the chart**
 
 ```bash
-helm upgrade --install rhacs-terraform \
+helm install rhacs-terraform \
   --namespace rhacs \
   --create-namespace \
   --values ~/acs-terraform-values.yaml \
@@ -37,6 +37,22 @@ helm upgrade --install rhacs-terraform \
   --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
   --set fleetshardSync.clusterId=${CLUSTER_ID} \
   --set acsOperator.enabled=true .
+```
+
+**Update the helm release (re-terraform data plane cluster)**
+
+1. Get values used for the latest terraforming
+```
+helm get values rhacs-terraform --namespace rhacs > ~/re-terraform-dp-cluster-values.yaml
+```
+2. Adjust values in the values file `~/re-terraform-dp-cluster.yaml` accordingly
+3. Check changes with the diff plugin. To install diff plugin please check documentation here: [https://github.com/databus23/helm-diff](https://github.com/databus23/helm-diff)
+```
+helm diff upgrade rhacs-terraform --namespace rhacs --values ~/re-terraform-dp-cluster-values.yaml .
+```
+4. Update the helm release
+```
+helm upgrade rhacs-terraform --namespace rhacs --values ~/re-terraform-dp-cluster-values.yaml .
 ```
 
 **Uninstall the chart and cleanup all created resources**
