@@ -53,37 +53,6 @@ Manager by running:
 make ocm/setup OCM_OFFLINE_TOKEN=<your-retrieved-ocm-offline-token>
 ```
 
-## Allowing creation of *Standard* Central instances
-
-Fleet Manager is able to create two types of Central instances:
-* Eval instances
-  * Instances of this type are automatically deleted after 48 hours by default
-    > NOTE: This can be controlled by setting the `--central-lifespan` Fleet
-            Manager binary CLI flag
-  * All authenticated users that make use of the Fleet Manager can
-    request the creation of a Central eval instance
-  * There is a limit of one instance per user
-* Standard instances
-  * Instances of this type are not automatically deleted
-  * In order to be able to create an instance of this type, the user that
-    is creating it must have enough quota
-
-If you are not interested in making use of Standard Central instances you
-can skip this section. Otherwise, keep reading below.
-
-As commented above, in order to be able to create an instance of this type, the
-user must have enough quota to do it. There are currently two ways to define
-quotas for users in Fleet Manager:
-* Through a Quota Management List configuration file. This is the default
-  method used. Follow the the [Quota Management List Configurations](quota-management-list-configuration.md)
-  guide for more detail on how to configure it
-* By leveraging Red Hat's Account Management Service (AMS). For more information
-  about this method, look at the [Quota Management with Account Management Service (AMS) SKU](getting-credentials-and-accounts.md#quota-management-with-account-management-service-ams-sku)
-
-To select the type of quota to be used by Fleet Manager set the `--quota-type`
-which accepts either `ams` or `quota-management-list`Fleet Manager binary CLI
-flag.
-
 ## Setup AWS configuration
 Fleet Manager interacts with AWS to provide the following functionalities:
 * To be able to create and manage Data Plane clusters in a specific AWS account

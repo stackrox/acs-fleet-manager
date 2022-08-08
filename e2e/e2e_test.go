@@ -25,7 +25,6 @@ import (
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// TODO(ROX-11468): Why is a central always created as a "eval" instance type?
 func newCentralName() string {
 	rnd := make([]byte, 8)
 	_, err := rand.Read(rnd)

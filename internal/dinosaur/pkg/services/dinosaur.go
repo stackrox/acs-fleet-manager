@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -14,8 +15,6 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
-
-	"time"
 
 	"github.com/golang/glog"
 
@@ -29,8 +28,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
-var dinosaurDeletionStatuses = []string{constants2.DinosaurRequestStatusDeleting.String(), constants2.DinosaurRequestStatusDeprovision.String()}
-var dinosaurManagedCRStatuses = []string{constants2.DinosaurRequestStatusProvisioning.String(), constants2.DinosaurRequestStatusDeprovision.String(), constants2.DinosaurRequestStatusReady.String(), constants2.DinosaurRequestStatusFailed.String()}
+var (
+	dinosaurDeletionStatuses  = []string{constants2.DinosaurRequestStatusDeleting.String(), constants2.DinosaurRequestStatusDeprovision.String()}
+	dinosaurManagedCRStatuses = []string{constants2.DinosaurRequestStatusProvisioning.String(), constants2.DinosaurRequestStatusDeprovision.String(), constants2.DinosaurRequestStatusReady.String(), constants2.DinosaurRequestStatusFailed.String()}
+)
 
 // DinosaurRoutesAction ...
 type DinosaurRoutesAction string
@@ -159,23 +160,26 @@ func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.Ce
 
 // DetectInstanceType ...
 func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
-	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.dinosaurConfig.Quota.Type))
+	quotaType := api.QuotaType(k.dinosaurConfig.Quota.Type)
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(quotaType)
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
 
-	hasRhosakQuota, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(dinosaurRequest, types.STANDARD)
+	hasQuota, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(dinosaurRequest, types.STANDARD)
 	if err != nil {
 		return "", err
 	}
-	if hasRhosakQuota {
+	if hasQuota {
+		glog.Infof("Quota detected for central request %s with quota type %s. Granting instance type %s.", dinosaurRequest.ID, quotaType, types.STANDARD)
 		return types.STANDARD, nil
 	}
 
+	glog.Infof("No quota detected for central request %s with quota type %s. Granting instance type %s.", dinosaurRequest.ID, quotaType, types.EVAL)
 	return types.EVAL, nil
 }
 
-// reserveQuota - reserves quota for the given dinosaur request. If a RHOSAK quota has been assigned, it will try to reserve RHOSAK quota, otherwise it will try with RHOSAKTrial
+// reserveQuota - reserves quota for the given dinosaur request. If a RHACS quota has been assigned, it will try to reserve RHACS quota, otherwise it will try with RHACSTrial
 func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (subscriptionID string, err *errors.ServiceError) {
 	if dinosaurRequest.InstanceType == types.EVAL.String() {
 		if !k.dinosaurConfig.Quota.AllowEvaluatorInstance {
@@ -237,7 +241,6 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	}
 	dinosaurRequest.ClusterID = cluster.ClusterID
 	subscriptionID, err := k.reserveQuota(dinosaurRequest)
-
 	if err != nil {
 		return err
 	}
@@ -245,7 +248,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	dbConn := k.connectionFactory.New()
 	dinosaurRequest.Status = constants2.DinosaurRequestStatusAccepted.String()
 	dinosaurRequest.SubscriptionID = subscriptionID
-
+	glog.Infof("Central request %s has been assigned the subscription %s.", dinosaurRequest.ID, subscriptionID)
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a dinosaur A is created, at the time of creation the quota-type was ams. At some point in the future
 	// the API is restarted this time changing the --quota-type flag to quota-management-list, when dinosaur A is deleted at this point,
