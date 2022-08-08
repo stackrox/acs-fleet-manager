@@ -164,6 +164,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if err != nil {
 			return nil, err
 		}
+		(&existingCentral).Spec = *central.Spec.DeepCopy()
 
 		if err := r.client.Update(ctx, &existingCentral); err != nil {
 			return nil, errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
@@ -312,7 +313,7 @@ func (r *CentralReconciler) setLastCentralHash(central private.ManagedCentral) e
 func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) error {
 	revision, err := strconv.Atoi(central.Annotations[revisionAnnotationKey])
 	if err != nil {
-		return errors.Wrapf(err, "failed incerement central revision %s", central.GetName())
+		return errors.Wrapf(err, "failed increment central revision %s", central.GetName())
 	}
 	revision++
 	central.Annotations[revisionAnnotationKey] = fmt.Sprintf("%d", revision)
