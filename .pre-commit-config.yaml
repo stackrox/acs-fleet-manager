@@ -1,4 +1,12 @@
 repos:
+  - repo: local
+    hooks:
+    - id: generated-files
+      name: Verifying generated files are uptodate
+      entry: ./scripts/generated-files-uptodate.sh
+      language: system
+      require_serial: true
+      files: '(internal/dinosaur/pkg/api/(private|public)/.*|.*_moq.go|internal/dinosaur/pkg/generated/.*)'
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.2.0
     hooks:
