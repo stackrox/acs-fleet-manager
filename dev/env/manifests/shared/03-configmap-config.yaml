@@ -232,6 +232,11 @@ data:
       roles:
         - "acs-general-engineering"           # Will include all of ACS engineering. Available also within staging environment.
         - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+    - method: POST
+      roles:
+        - "acs-general-engineering"           # Will include all of ACS engineering. Available also within staging environment.
+        - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+        - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.
   admin-authz-roles-prod.yaml: |-
     ---
     - method: GET
@@ -246,6 +251,10 @@ data:
     - method: DELETE
       roles:
         - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+    - method: POST
+      roles:
+        - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+        - "acs-fleet-manager-admin-write"     # Prod rover group, will only include selected members + SREs.
 kind: ConfigMap
 metadata:
   name: config
