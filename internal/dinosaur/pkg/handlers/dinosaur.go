@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -33,6 +34,36 @@ func NewDinosaurHandler(service services.DinosaurService, providerConfig *config
 	}
 }
 
+func validateCentralResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
+	return func() *errors.ServiceError {
+		if dinosaurRequest.Central.Resources.Limits.Cpu != "" ||
+			dinosaurRequest.Central.Resources.Limits.Memory != "" ||
+			dinosaurRequest.Central.Resources.Requests.Cpu != "" ||
+			dinosaurRequest.Central.Resources.Requests.Memory != "" {
+			return errors.Forbidden("not allowed to specify central resources")
+		}
+		return nil
+	}
+}
+
+func validateScannerResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
+	return func() *errors.ServiceError {
+		if dinosaurRequest.Scanner.Analyzer.Resources.Limits.Cpu != "" ||
+			dinosaurRequest.Scanner.Analyzer.Resources.Limits.Memory != "" ||
+			dinosaurRequest.Scanner.Analyzer.Resources.Requests.Cpu != "" ||
+			dinosaurRequest.Scanner.Analyzer.Resources.Requests.Memory != "" {
+			return errors.Forbidden("not allowed to specify scanner analyzer resources")
+		}
+		if dinosaurRequest.Scanner.Db.Resources.Limits.Cpu != "" ||
+			dinosaurRequest.Scanner.Db.Resources.Limits.Memory != "" ||
+			dinosaurRequest.Scanner.Db.Resources.Requests.Cpu != "" ||
+			dinosaurRequest.Scanner.Db.Resources.Requests.Memory != "" {
+			return errors.Forbidden("not allowed to specify scanner db resources")
+		}
+		return nil
+	}
+}
+
 // Create ...
 func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var dinosaurRequest public.CentralRequestPayload
@@ -49,6 +80,8 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateDinosaurClaims(ctx, &dinosaurRequest, convDinosaur),
 			ValidateCloudProvider(&h.service, convDinosaur, h.providerConfig, "creating central requests"),
 			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating central requests"),
+			validateCentralResourcesUnspecified(ctx, &dinosaurRequest),
+			validateScannerResourcesUnspecified(ctx, &dinosaurRequest),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(convDinosaur)

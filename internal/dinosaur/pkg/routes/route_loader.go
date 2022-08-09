@@ -211,22 +211,29 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	adminDinosaurHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
+
+	// TODO(ROX-11683): For now using RH SSO issuer for the admin API, but needs to be re-visited within this ticket.
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
 		[]string{s.IAM.GetConfig().InternalSSORealm.ValidIssuerURI}, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewRolesAuhzMiddleware(s.AdminRoleAuthZConfig).RequireRolesForMethods(errors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
-	adminRouter.HandleFunc("/dinosaurs", adminDinosaurHandler.List).
+	adminDinosaursRouter := adminRouter.PathPrefix("/dinosaurs").Subrouter()
+
+	adminDinosaursRouter.HandleFunc("", adminDinosaurHandler.List).
 		Name(logger.NewLogEvent("admin-list-dinosaurs", "[admin] list all dinosaurs").ToString()).
 		Methods(http.MethodGet)
-	adminRouter.HandleFunc("/dinosaurs/{id}", adminDinosaurHandler.Get).
+	adminDinosaursRouter.HandleFunc("/{id}", adminDinosaurHandler.Get).
 		Name(logger.NewLogEvent("admin-get-dinosaur", "[admin] get dinosaur by id").ToString()).
 		Methods(http.MethodGet)
-	adminRouter.HandleFunc("/dinosaurs/{id}", adminDinosaurHandler.Delete).
+	adminDinosaursRouter.HandleFunc("/{id}", adminDinosaurHandler.Delete).
 		Name(logger.NewLogEvent("admin-delete-dinosaur", "[admin] delete dinosaur by id").ToString()).
 		Methods(http.MethodDelete)
-	adminRouter.HandleFunc("/dinosaurs/{id}", adminDinosaurHandler.Update).
+	adminDinosaursRouter.HandleFunc("/{id}", adminDinosaurHandler.Update).
 		Name(logger.NewLogEvent("admin-update-dinosaur", "[admin] update dinosaur by id").ToString()).
 		Methods(http.MethodPatch)
+
+	adminCreateRouter := adminDinosaursRouter.NewRoute().Subrouter()
+	adminCreateRouter.HandleFunc("", adminDinosaurHandler.Create).Methods(http.MethodPost)
 
 	return nil
 }

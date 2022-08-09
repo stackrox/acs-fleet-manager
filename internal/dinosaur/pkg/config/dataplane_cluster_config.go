@@ -254,6 +254,36 @@ func (c *DataplaneClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool
 	return c.EnableReadyDataPlaneClustersReconcile
 }
 
+type stringValue string
+
+func (s *stringValue) Set(val string) error {
+	*s = stringValue(val)
+	return nil
+}
+func (s *stringValue) Type() string {
+	return "string"
+}
+
+func (s *stringValue) String() string { return string(*s) }
+
+func (c *DataplaneClusterConfig) addKubeconfigFlag(fs *pflag.FlagSet) {
+	name := "kubeconfig"
+	usage := "A path to kubeconfig file used for communication with standalone clusters"
+	if kubeconfigFlag := fs.Lookup(name); kubeconfigFlag != nil {
+		// controller-runtime has already added a "kubeconfig" flag. We make sure that its definition
+		// aligns with our expectations.
+		*kubeconfigFlag = pflag.Flag{
+			Name:      name,
+			Shorthand: "",
+			Usage:     usage,
+			Value:     (*stringValue)(&c.Kubeconfig),
+			DefValue:  c.Kubeconfig,
+		}
+	} else {
+		fs.StringVar(&c.Kubeconfig, name, c.Kubeconfig, usage)
+	}
+}
+
 // AddFlags ...
 func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OpenshiftVersion, "cluster-openshift-version", c.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
@@ -263,7 +293,7 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", c.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
 	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")
 	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
-	fs.StringVar(&c.Kubeconfig, "kubeconfig", c.Kubeconfig, "A path to kubeconfig file used for communication with standalone clusters")
+	c.addKubeconfigFlag(fs)
 	fs.StringVar(&c.CentralOperatorOLMConfig.CatalogSourceNamespace, "central-operator-cs-namespace", c.CentralOperatorOLMConfig.CatalogSourceNamespace, "Central operator catalog source namespace.")
 	fs.StringVar(&c.CentralOperatorOLMConfig.IndexImage, "central-operator-index-image", c.CentralOperatorOLMConfig.IndexImage, "Central operator index image")
 	fs.StringVar(&c.CentralOperatorOLMConfig.Namespace, "central-operator-namespace", c.CentralOperatorOLMConfig.Namespace, "Central operator namespace")
