@@ -23,6 +23,7 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
         export "${secret_name}"="${secret_value}"
     done
     export STATIC_TOKEN="${FLEET_STATIC_TOKEN:-}"
+    export STATIC_TOKEN_ADMIN="${FLEET_STATIC_TOKEN_ADMIN:-}"
     export QUAY_USER="${IMAGE_PUSH_USERNAME:-}"
     export QUAY_TOKEN="${IMAGE_PUSH_PASSWORD:-}"
     export CLUSTER_TYPE="openshift-ci"

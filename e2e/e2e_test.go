@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
+	"github.com/stackrox/acs-fleet-manager/e2e/envtokenauth"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -66,7 +67,9 @@ var _ = Describe("Central", func() {
 		client, err = fleetmanager.NewClient(fleetManagerEndpoint, "cluster-id", auth)
 		Expect(err).ToNot(HaveOccurred())
 
-		adminClient, err = NewAdminClient(fleetManagerEndpoint, auth)
+		adminAuth, err := envtokenauth.CreateAuth("STATIC_TOKEN_ADMIN")
+		Expect(err).ToNot(HaveOccurred())
+		adminClient, err = NewAdminClient(fleetManagerEndpoint, adminAuth)
 		Expect(err).ToNot(HaveOccurred())
 
 	})
