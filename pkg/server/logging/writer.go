@@ -17,7 +17,7 @@ func redactRequest(request *http.Request) *http.Request {
 	requestCopy.Header = make(map[string][]string, len(request.Header))
 NEXT_HEADER:
 	for headerName, headerValue := range request.Header {
-		for _, secretName := range secretNames {
+		for _, secretName := range secretNames { // pragma: allowlist secret
 			if strings.EqualFold(headerName, secretName) {
 				// Redact this header.
 				requestCopy.Header[headerName] = []string{redacted}

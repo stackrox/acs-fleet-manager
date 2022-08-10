@@ -38,6 +38,7 @@ inject_ips() {
     $KUBECTL -n "$namespace" patch sa "$service_account" -p "\"imagePullSecrets\": [{\"name\": \"${secret_name}\" }]"
 }
 
+# pragma: allowlist nextline secret
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
     create-imagepullsecrets
     inject_ips "$ACSMS_NAMESPACE" "default" "quay-ips"
@@ -66,6 +67,7 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
             apply "${MANIFESTS_DIR}"/rhacs-operator/quay/01-catalogsource.yaml
         fi
 
+        # pragma: allowlist nextline secret
         if [[ "$OPERATOR_SOURCE" == "quay" && "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
             inject_ips "$STACKROX_OPERATOR_NAMESPACE" "stackrox-operator-test-index" "quay-ips"
         fi

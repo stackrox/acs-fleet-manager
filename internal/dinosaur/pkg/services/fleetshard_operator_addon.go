@@ -21,7 +21,7 @@ const (
 	// parameter names for the fleetshard-operator service account
 	fleetshardOperatorParamSSOBaseURL           = "sso-auth-server-url"
 	fleetshardOperatorParamServiceAccountID     = "sso-client-id"
-	fleetshardOperatorParamServiceAccountSecret = "sso-secret"
+	fleetshardOperatorParamServiceAccountSecret = "sso-secret" // pragma: allowlist secret
 	// parameter names for the cluster id
 	fleetshardOperatorParamClusterID = "cluster-id"
 	// parameter names for the control plane url

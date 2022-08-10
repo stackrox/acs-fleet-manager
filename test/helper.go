@@ -115,7 +115,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	if err != nil {
 		t.Fatalf("failed to create a new auth helper %s", err.Error())
 	}
-	h.JWTPrivateKey = authHelper.JWTPrivateKey
+	h.JWTPrivateKey = authHelper.JWTPrivateKey // pragma: allowlist secret
 	h.JWTCA = authHelper.JWTCA
 	h.AuthHelper = authHelper
 

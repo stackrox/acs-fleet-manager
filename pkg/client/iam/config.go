@@ -73,7 +73,7 @@ func NewIAMConfig() *IAMConfig {
 			APIEndpointURI:   "/auth/realms/redhat-external",
 			Realm:            "redhat-external",
 			ClientIDFile:     "secrets/redhatsso-service.clientId",
-			ClientSecretFile: "secrets/redhatsso-service.clientSecret",
+			ClientSecretFile: "secrets/redhatsso-service.clientSecret", // pragma: allowlist secret
 			GrantType:        "client_credentials",
 		},
 		InternalSSORealm: &IAMRealmConfig{

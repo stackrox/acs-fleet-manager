@@ -40,10 +40,10 @@ const (
 	observabilityOperatorGroupName   = "observability-operator-group-name"
 	observabilityCatalogSourceName   = "observability-operator-manifests"
 	observabilitySubscriptionName    = "observability-operator"
-	observatoriumSSOSecretName       = "observatorium-configuration-red-hat-sso"
+	observatoriumSSOSecretName       = "observatorium-configuration-red-hat-sso" // pragma: allowlist secret
 	observatoriumAuthType            = "redhat"
 	syncsetName                      = "ext-managedservice-cluster-mgr"
-	imagePullSecretName              = "rhoas-image-pull-secret"
+	imagePullSecretName              = "rhoas-image-pull-secret" // pragma: allowlist secret
 	dinosaurOperatorAddonNamespace   = constants.CentralOperatorNamespace
 	dinosaurOperatorQEAddonNamespace = "redhat-managed-dinosaur-operator-qe"
 	fleetshardAddonNamespace         = constants.FleetShardOperatorNamespace
@@ -799,9 +799,9 @@ func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret
 		"redHatSsoAuthServerUrl": observabilityConfig.RedHatSSOAuthServerURL,
 		"redHatSsoRealm":         observabilityConfig.RedHatSSORealm,
 		"metricsClientId":        observabilityConfig.MetricsClientID,
-		"metricsSecret":          observabilityConfig.MetricsSecret,
+		"metricsSecret":          observabilityConfig.MetricsSecret, // pragma: allowlist secret
 		"logsClientId":           observabilityConfig.LogsClientID,
-		"logsSecret":             observabilityConfig.LogsSecret,
+		"logsSecret":             observabilityConfig.LogsSecret, // pragma: allowlist secret
 	}
 	return &k8sCoreV1.Secret{
 		TypeMeta: metav1.TypeMeta{

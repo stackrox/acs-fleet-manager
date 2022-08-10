@@ -32,7 +32,7 @@ const (
 	fleetShardOperatorCatalogSourceName    = "fleetshard-operator-cs"
 	fleetShardOperatorOperatorGroupName    = "fleetshard-operator-og"
 	fleetShardOperatorSubscriptionName     = "fleetshard-operator-sub"
-	fleetShardOperatorParametersSecretName = "addon-fleetshard-operator-parameters"
+	fleetShardOperatorParametersSecretName = "addon-fleetshard-operator-parameters" // pragma: allowlist secret
 )
 
 // fieldManager indicates that the fleet-manager will be used as a field manager for conflict resolution
@@ -43,7 +43,7 @@ const fieldManager = "fleet-manager"
 const lastAppliedConfigurationAnnotation = "fleet-manager/last-applied-resource-configuration"
 
 // dinosaurSREOpenIDPSecretName is the secret name holding the clientSecret content
-const dinosaurSREOpenIDPSecretName = "dinosaur-sre-idp-secret"
+const dinosaurSREOpenIDPSecretName = "dinosaur-sre-idp-secret" // pragma: allowlist secret
 
 var ctx = context.Background()
 
@@ -298,7 +298,7 @@ func (s *StandaloneProvider) buildOpenIDPClientSecret(identityProvider types.Ide
 		},
 		Type: v1.SecretTypeOpaque,
 		StringData: map[string]string{
-			"clientSecret": identityProvider.OpenID.ClientSecret,
+			"clientSecret": identityProvider.OpenID.ClientSecret, // pragma: allowlist secret
 		},
 	}
 }

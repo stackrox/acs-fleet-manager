@@ -815,7 +815,7 @@ components:
       value:
         id: 1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
         kind: central
-        href: /api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
+        href: /api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg # pragma: allowlist secret
         status: ready
         cloud_provider: aws
         multi_az: true
@@ -831,7 +831,7 @@ components:
       value:
         id: 1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
         kind: central
-        href: /api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
+        href: /api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg # pragma: allowlist secret
         status: failed
         cloud_provider: aws
         multi_az: true
@@ -852,7 +852,7 @@ components:
         items:
         - id: 1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
           kind: central
-          href: /api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
+          href: /api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg # pragma: allowlist secret
           status: ready
           cloud_provider: aws
           multi_az: true

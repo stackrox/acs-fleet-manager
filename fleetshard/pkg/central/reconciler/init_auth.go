@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	centralHtpasswdSecretName = "central-htpasswd"
-	adminPasswordSecretKey    = "password"
+	centralHtpasswdSecretName = "central-htpasswd" // pragma: allowlist secret
+	adminPasswordSecretKey    = "password"         // pragma: allowlist secret
 	centralServiceName        = "central"
 )
 
@@ -94,7 +94,7 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 		Config: map[string]string{
 			"issuer":                       central.Spec.Auth.Issuer,
 			"client_id":                    central.Spec.Auth.ClientId,
-			"client_secret":                central.Spec.Auth.ClientSecret,
+			"client_secret":                central.Spec.Auth.ClientSecret, // pragma: allowlist secret
 			"mode":                         "post",
 			"disable_offline_access_scope": "true",
 		},
@@ -137,6 +137,7 @@ func getHTTPSServicePort(service *core.Service) (int32, error) {
 }
 
 func getAdminPassword(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (string, error) {
+	// pragma: allowlist nextline secret
 	secretRef := ctrlClient.ObjectKey{
 		Name:      centralHtpasswdSecretName,
 		Namespace: central.Metadata.Namespace,

@@ -28,7 +28,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 
 	fakeID := "acs-fleetshard-agent-test-cluster-id"
 	fakeClientID := "acs-fleetshard-agent-test-cluster-id"
-	fakeClientSecret := "test-client-secret"
+	fakeClientSecret := "test-client-secret" // pragma: allowlist secret
 	createdAt := int64(0)
 
 	tests := []struct {
@@ -67,7 +67,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 			want: &api.ServiceAccount{
 				ID:           fakeClientID,
 				ClientID:     "acs-fleetshard-agent-test-cluster-id",
-				ClientSecret: fakeClientSecret,
+				ClientSecret: fakeClientSecret, // pragma: allowlist secret
 				Name:         "test-cluster-id",
 				Description:  "service account for agent on cluster test-cluster-id",
 				CreatedAt:    time.Unix(0, shared.SafeInt64(&createdAt)*int64(time.Millisecond)),
@@ -103,7 +103,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 			want: &api.ServiceAccount{
 				ID:           fakeClientID,
 				ClientID:     "acs-fleetshard-agent-test-cluster-id",
-				ClientSecret: fakeClientSecret,
+				ClientSecret: fakeClientSecret, // pragma: allowlist secret
 				Name:         "test-cluster-id",
 				Description:  "service account for agent on cluster test-cluster-id",
 				CreatedAt:    time.Unix(0, 0),

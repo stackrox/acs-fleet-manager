@@ -56,7 +56,7 @@ spec:
       volumes:
         - name: secrets
           secret:
-            secretName: fleet-manager
+            secretName: fleet-manager # pragma: allowlist secret
             optional: false
         - name: config
           configMap:

@@ -29,9 +29,9 @@ func NewAWSConfig() *AWSConfig {
 	return &AWSConfig{
 		AccountIDFile:              "secrets/aws.accountid",
 		AccessKeyFile:              "secrets/aws.accesskey",
-		SecretAccessKeyFile:        "secrets/aws.secretaccesskey",
+		SecretAccessKeyFile:        "secrets/aws.secretaccesskey", // pragma: allowlist secret
 		Route53AccessKeyFile:       "secrets/aws.route53accesskey",
-		Route53SecretAccessKeyFile: "secrets/aws.route53secretaccesskey",
+		Route53SecretAccessKeyFile: "secrets/aws.route53secretaccesskey", // pragma: allowlist secret
 	}
 }
 
