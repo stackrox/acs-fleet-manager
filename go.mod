@@ -53,7 +53,7 @@ require (
 	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
-	gorm.io/driver/postgres v1.3.5
+	gorm.io/driver/postgres v1.3.8
 	gorm.io/gorm v1.23.6
 	k8s.io/api v0.24.1
 	k8s.io/apimachinery v0.24.1
