@@ -8,7 +8,7 @@
 - [ ] CI and all relevant tests are passing
 - [ ] Discussed security and business related topics privately
 
-## Test manual pitched of git status return
+## Test manual
 
 TODO: Add manual testing efforts
 
