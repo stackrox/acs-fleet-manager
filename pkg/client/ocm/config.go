@@ -41,7 +41,7 @@ func NewOCMConfig() *OCMConfig {
 		AmsURL:                 "https://api.stage.openshift.com",
 		TokenURL:               "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
 		ClientIDFile:           "secrets/ocm-service.clientId",
-		ClientSecretFile:       "secrets/ocm-service.clientSecret",
+		ClientSecretFile:       "secrets/ocm-service.clientSecret", // pragma: allowlist secret
 		SelfTokenFile:          "secrets/ocm-service.token",
 		Debug:                  false,
 		EnableMock:             false,

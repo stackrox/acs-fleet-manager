@@ -1,15 +1,5 @@
 #!/bin/bash -ex
 
-# reflects defaults found in pkg/config/db.go
-export GORM_DIALECT="postgres"
-export GORM_HOST="localhost"
-export GORM_PORT="5432"
-export GORM_NAME="managed-services-api"
-export GORM_USERNAME="managed-services-api"
-export GORM_PASSWORD="secret"
-export GORM_SSLMODE="disable"
-export GORM_DEBUG="false"
-
 export LOGLEVEL="1"
 export TEST_SUMMARY_FORMAT="standard-verbose"
 

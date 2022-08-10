@@ -17,7 +17,7 @@ import (
 const (
 	centralReencryptRouteName   = "managed-central-reencrypt"
 	centralPassthroughRouteName = "managed-central-passthrough"
-	centralTLSSecretName        = "central-tls"
+	centralTLSSecretName        = "central-tls" // pragma: allowlist secret
 )
 
 // RouteService is responsible for performing read and write operations on the OpenShift Route objects in the cluster.

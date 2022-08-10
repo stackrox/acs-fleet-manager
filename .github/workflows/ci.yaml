@@ -38,15 +38,6 @@ on:
 env:
   # set ocm env to integration
   OCM_ENV: integration
-  # GORM env variables. These values are defined in the postgres service definition above
-  GORM_DIALECT: postgres
-  GORM_HOST: 127.0.0.1
-  GORM_PORT: 5432
-  GORM_NAME: serviceapitests
-  GORM_USERNAME: fleet_manager
-  GORM_PASSWORD: foobar-bizz-buzz
-  GORM_SSLMODE: disable
-  GORM_DEBUG: false
   # Dummy SSO variables
   SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
   SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
@@ -55,12 +46,12 @@ env:
   # Dummy AWS credentials
   AWS_ACCOUNT_ID: aws_accountid
   AWS_ACCESS_KEY: aws_accesskey
-  AWS_SECRET_ACCESS_KEY: aws_secretaccesskey
-  ROUTE53_ACCESS_KEY: aws_route53_access_key
-  ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key
+  AWS_SECRET_ACCESS_KEY: aws_secretaccesskey # pragma: allowlist secret - dummy value
+  ROUTE53_ACCESS_KEY: aws_route53_access_key # pragma: allowlist secret - dummy value
+  ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key # pragma: allowlist secret - dummy value
   # Dummy Central TLS env variables
-  CENTRAL_TLS_CERT: central_tls_cert
-  CENTRAL_TLS_KEY: central_tls_key
+  CENTRAL_TLS_CERT: central_tls_cert # pragma: allowlist secret - dummy value
+  CENTRAL_TLS_KEY: central_tls_key # pragma: allowlist secret - dummy value
   # So that OCM secrets are initialised
   DOCKER_PR_CHECK: true
   TEST_TIMEOUT: 30m
@@ -73,7 +64,7 @@ jobs:
       postgres:
         image: postgres:11
         env:
-          POSTGRES_PASSWORD: foobar-bizz-buzz
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_USER: fleet_manager
           POSTGRES_DB: serviceapitests
         ports:
@@ -103,11 +94,12 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - name: Run Migration Script
-        run: make db/migrate
       - name: Setup tests secrets
         run: |
           make ocm/setup aws/setup redhatsso/setup centralcert/setup observatorium/setup secrets/touch
+          echo -n "${{ secrets.POSTGRES_PASSWORD }}" > secrets/db.password
+      - name: Run Migration Script
+        run: make db/migrate
       - name: Lint & Test
         run: |
           export GOPATH=$(go env GOPATH)

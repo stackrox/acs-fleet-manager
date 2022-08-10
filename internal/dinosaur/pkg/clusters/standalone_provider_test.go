@@ -193,7 +193,7 @@ func TestStandaloneProvider_buildOpenIDPClientSecret(t *testing.T) {
 			args: args{
 				idpProviderInfo: types.IdentityProviderInfo{
 					OpenID: &types.OpenIDIdentityProviderInfo{
-						ClientSecret: "some-client-secret",
+						ClientSecret: "some-client-secret", // pragma: allowlist secret
 					},
 				},
 			},
@@ -208,7 +208,7 @@ func TestStandaloneProvider_buildOpenIDPClientSecret(t *testing.T) {
 				},
 				Type: v1.SecretTypeOpaque,
 				StringData: map[string]string{
-					"clientSecret": "some-client-secret",
+					"clientSecret": "some-client-secret", // pragma: allowlist secret
 				},
 			},
 		},
@@ -217,7 +217,7 @@ func TestStandaloneProvider_buildOpenIDPClientSecret(t *testing.T) {
 			args: args{
 				idpProviderInfo: types.IdentityProviderInfo{
 					OpenID: &types.OpenIDIdentityProviderInfo{
-						ClientSecret: "some-other-client-secret",
+						ClientSecret: "some-other-client-secret", // pragma: allowlist secret
 					},
 				},
 			},
@@ -232,7 +232,7 @@ func TestStandaloneProvider_buildOpenIDPClientSecret(t *testing.T) {
 				},
 				Type: v1.SecretTypeOpaque,
 				StringData: map[string]string{
-					"clientSecret": "some-other-client-secret",
+					"clientSecret": "some-other-client-secret", // pragma: allowlist secret
 				},
 			},
 		},
@@ -263,7 +263,7 @@ func TestStandaloneProvider_buildIdentityProviderResource(t *testing.T) {
 			args: args{
 				idpProviderInfo: types.IdentityProviderInfo{
 					OpenID: &types.OpenIDIdentityProviderInfo{
-						ClientSecret: "some-client-secret",
+						ClientSecret: "some-client-secret", // pragma: allowlist secret
 						ID:           "some-id",
 						Name:         "some-name",
 						ClientID:     "some-client-id",
@@ -305,7 +305,7 @@ func TestStandaloneProvider_buildIdentityProviderResource(t *testing.T) {
 			args: args{
 				idpProviderInfo: types.IdentityProviderInfo{
 					OpenID: &types.OpenIDIdentityProviderInfo{
-						ClientSecret: "some-other-client-secret",
+						ClientSecret: "some-other-client-secret", // pragma: allowlist secret
 						ID:           "some-id-1",
 						Name:         "some-name-1",
 						ClientID:     "some-client-id-1",

@@ -907,13 +907,13 @@ objects:
           volumes:
           - name: fleet-manager-credentials
             secret:
-              secretName: fleet-manager
+              secretName: fleet-manager # pragma: allowlist secret
           - name: rhsso-client-secret
             secret:
-              secretName: fleet-manager-central-rhsso-client-secret
+              secretName: fleet-manager-central-rhsso-client-secret # pragma: allowlist secret
           - name: tls
             secret:
-              secretName: fleet-manager-tls
+              secretName: fleet-manager-tls # pragma: allowlist secret
           - name: service
             configMap:
               name: fake-fleet-manager-secret
@@ -922,7 +922,7 @@ objects:
               name: fake-fleet-manager-dataplane-cert-secret
           - name: rds
             secret:
-              secretName: acs-fleet-manager-rds
+              secretName: acs-fleet-manager-rds # pragma: allowlist secret
           - name: fleet-manager-providers-config
             configMap:
               name: fleet-manager-providers-config
@@ -957,7 +957,7 @@ objects:
               name: fleet-manager-envoy-config-cd
           - name: envoy-tls
             secret:
-              secretName: fleet-manager-envoy-tls
+              secretName: fleet-manager-envoy-tls # pragma: allowlist secret
           - name: envoy-unix-sockets
             emptyDir:
               medium: Memory

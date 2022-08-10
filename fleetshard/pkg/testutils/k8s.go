@@ -25,6 +25,7 @@ var (
 		Version:  "v1alpha1",
 		Resource: "centrals",
 	}
+	// pragma: allowlist nextline secret
 	secretsGVR = schema.GroupVersionResource{
 		Version:  "v1",
 		Resource: "secrets",

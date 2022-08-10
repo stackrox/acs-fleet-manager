@@ -268,7 +268,7 @@ func obtainRHSSOToken(clientID, clientSecret string) (string, error) {
 		BaseURL:          "https://sso.redhat.com",
 		Realm:            "redhat-external",
 		ClientID:         clientID,
-		ClientSecret:     clientSecret,
+		ClientSecret:     clientSecret, // pragma: allowlist secret
 		TokenEndpointURI: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
 		JwksEndpointURI:  "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
 		APIEndpointURI:   "/auth/realms/redhat-external",
