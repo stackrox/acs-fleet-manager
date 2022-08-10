@@ -144,8 +144,9 @@ for provisioning and managing service instances.
 To help you while reading the code the example service implements a simple collection
 of _dinosaurs_ and their provisioning, so you can immediately know when something is
 infrastructure or business logic. Anything that talks about dinosaurs is business logic,
-which you will want to replace with your our concepts. The rest is infrastructure, and you
-will probably want to preserve without change.
+which you will want to replace with your own concepts. There is a counter badge on top of this
+README to help estimate the remaining "dinosaur extinction" efforts 🦖.
+The rest is infrastructure, and you will probably want to preserve without change.
 
 For a real service written using the same fleet management pattern see the
 [kas-fleet-manager](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager).
