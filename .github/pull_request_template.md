@@ -6,8 +6,9 @@
 - [ ] Unit and integration tests added
 - [ ] Documentation added if necessary
 - [ ] CI and all relevant tests are passing
+- [ ] Discussed security and business related topics privately
 
-## Test manual
+## Test manual pitched of git status return
 
 TODO: Add manual testing efforts
 
