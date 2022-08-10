@@ -54,11 +54,11 @@ log "Executing Auth E2E tests: ${RUN_AUTH_E2E}"
 # If auth E2E tests shall be run, ensure we have all authentication related secrets correctly set up.
 if [[ "$RUN_AUTH_E2E" == "true" ]]; then
     log "Setting up authentication related environment variables for auth E2E tests"
-    # FLEET_STATIC_TOKEN is the name of the secret in Vault,
-    # STATIC_TOKEN is the name expected by the application (when running directly),
-    # hence we support both names here.
-    FLEET_STATIC_TOKEN=${FLEET_STATIC_TOKEN:-}
-    export STATIC_TOKEN=${STATIC_TOKEN:-$FLEET_STATIC_TOKEN}
+
+    OCM_OFFLINE_TOKEN=${OCM_OFFLINE_TOKEN:-}
+    if [[ -z "$OCM_OFFLINE_TOKEN" ]]; then
+        die "Error: OCM_OFFLINE_TOKEN not set, which is required for execution of Auth E2E tests"
+    fi
 
     # Ensure we set the OCM refresh token once more, in case AUTH_TYPE!=OCM.
     ocm login --token "${OCM_OFFLINE_TOKEN}"
