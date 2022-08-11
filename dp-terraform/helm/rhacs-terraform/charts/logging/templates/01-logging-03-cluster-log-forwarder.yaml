@@ -1,0 +1,26 @@
+apiVersion: logging.openshift.io/v1
+kind: ClusterLogForwarder
+metadata:
+  name: instance
+  namespace: openshift-logging
+  annotations:
+    # Add custom resource last.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+spec:
+  outputs:
+    - name: cloudwatch-output
+      type: cloudwatch
+      cloudwatch:
+        groupBy: namespaceName
+        region: {{ .Values.aws.region | quote }}
+      secret:
+        name: cloudwatch
+  pipelines:
+    - name: data-plane-logs
+      inputRefs:
+        - infrastructure
+        - audit
+        - application
+      outputRefs:
+        - cloudwatch-output

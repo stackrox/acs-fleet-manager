@@ -61,4 +61,4 @@ helm upgrade rhacs-terraform --namespace rhacs --values ~/re-terraform-dp-cluste
 helm uninstall rhacs-terraform --namespace rhacs
 ```
 
-See internal wiki for an example file `~/.rh/terraform-values.yaml`.
+See internal wiki for an example file `~/acs-terraform-values.yaml`.
