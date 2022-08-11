@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	appsv1 "k8s.io/api/apps/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/pkg/errors"
 	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
@@ -18,6 +21,7 @@ const (
 	centralHtpasswdSecretName = "central-htpasswd" // pragma: allowlist secret
 	adminPasswordSecretKey    = "password"         // pragma: allowlist secret
 	centralServiceName        = "central"
+	oidcType                  = "oidc"
 )
 
 var (
@@ -53,6 +57,50 @@ var (
 	}
 )
 
+func isCentralReady(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (bool, error) {
+	deployment := &appsv1.Deployment{}
+	err := client.Get(ctx,
+		ctrlClient.ObjectKey{Name: "central", Namespace: central.Metadata.Namespace},
+		deployment)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("retrieving central deployment resource from Kubernetes: %w", err)
+	}
+	if deployment.Status.UnavailableReplicas == 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func existsRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error) {
+	ready, err := isCentralReady(ctx, client, central)
+	if !ready || err != nil {
+		return false, err
+	}
+	address, err := getServiceAddress(ctx, central, client)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	centralClient := centralClientPkg.NewCentralClientNoAuth(central, address)
+	authProvidersResp, err := centralClient.GetLoginAuthProviders(ctx)
+	if err != nil {
+		return false, fmt.Errorf("sending GetLoginAuthProviders request to central: %w", err)
+	}
+
+	for _, provider := range authProvidersResp.AuthProviders {
+		if provider.Type == oidcType && provider.Name == authProviderName(central) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // createRHSSOAuthProvider initialises sso.redhat.com auth provider in a deployed Central instance.
 func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) error {
 	pass, err := getAdminPassword(ctx, central, client)
@@ -86,9 +134,8 @@ func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 
 func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProvider {
 	request := &storage.AuthProvider{
-		Name: ternary.String(strings.Contains(central.Spec.Auth.Issuer, "stage"),
-			"Red Hat SSO (Stage)", "Red Hat SSO"),
-		Type:       "oidc",
+		Name:       authProviderName(central),
+		Type:       oidcType,
 		UiEndpoint: central.Spec.UiEndpoint.Host,
 		Enabled:    true,
 		Config: map[string]string{
@@ -108,6 +155,11 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 		},
 	}
 	return request
+}
+
+func authProviderName(central private.ManagedCentral) string {
+	return ternary.String(strings.Contains(central.Spec.Auth.Issuer, "stage"),
+		"Red Hat SSO (Stage)", "Red Hat SSO")
 }
 
 // TODO: ROX-11644: doesn't work when fleetshard-sync deployed outside of Central's cluster
