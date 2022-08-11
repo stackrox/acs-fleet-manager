@@ -30,4 +30,4 @@ helm upgrade --install rhacs-terraform-logging \
 helm uninstall rhacs-terraform-logging --namespace rhacs
 ```
 
-**NOTE:** The custom resource definitions crated by logging operator will not be removed.
+**NOTE:** The custom resource definitions created by logging operator will not be removed.
