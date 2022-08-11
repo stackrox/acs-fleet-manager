@@ -189,12 +189,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
+	centralTLSSecretFound := true // pragma: allowlist secret
 	if r.useRoutes {
 		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
 			if errors.Is(err, k8s.ErrCentralTLSSecretNotFound) {
-				return installingStatus(), nil
+				centralTLSSecretFound = false // pragma: allowlist secret
+			} else {
+				return nil, errors.Wrapf(err, "updating routes")
 			}
-			return nil, errors.Wrapf(err, "updating routes")
 		}
 	}
 
@@ -203,7 +205,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, err
 	}
-	if !centralReady {
+	if !centralReady || !centralTLSSecretFound {
+		remoteCentralProvisioning := remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusProvisioning.String()
+		if remoteCentralProvisioning && !changed { // no changes detected, wait until central become ready
+			return nil, ErrCentralNotChanged
+		}
 		return installingStatus(), nil
 	}
 
