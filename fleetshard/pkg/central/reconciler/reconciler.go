@@ -121,7 +121,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	// Check whether auth provider is actually created and this reconciler just is not aware of that.
 	if r.wantsAuthProvider && !r.hasAuthProvider {
-		glog.Info("Wants no has")
 		exists, err := existsRHSSOAuthProvider(ctx, remoteCentral, r.client)
 		if err != nil {
 			return nil, err
