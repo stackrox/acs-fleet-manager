@@ -455,13 +455,13 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 }
 
 // NewCentralReconciler ...
-func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, useRoutes, createAuthProvider bool) *CentralReconciler {
+func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, useRoutes, wantsAuthProvider bool) *CentralReconciler {
 	return &CentralReconciler{
 		client:            k8sClient,
 		central:           central,
 		status:            pointer.Int32(FreeStatus),
 		useRoutes:         useRoutes,
-		wantsAuthProvider: createAuthProvider,
+		wantsAuthProvider: wantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
 	}
 }
