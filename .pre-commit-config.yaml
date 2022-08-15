@@ -13,13 +13,7 @@ repos:
     rev: v1.2.0
     hooks:
       - id: detect-secrets
-        args:
-          - --baseline
-          - .secrets.baseline
-          - --exclude-secrets
-          - example-central-1rfpsqbvq1em2u9u0z54ymjcwac
-          - --exclude-secrets
-          - /api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
+        args: ["--baseline", ".secrets.baseline"]
   - repo: https://github.com/golangci/golangci-lint
     rev: v1.46.2
     hooks:
