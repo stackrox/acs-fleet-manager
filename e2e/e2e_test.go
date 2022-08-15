@@ -1,30 +1,6 @@
 package e2e
 
-import (
-	"context"
-	"crypto/rand"
-	"encoding/hex"
-	"fmt"
-	"os"
-	"strings"
-	"time"
-
-	"github.com/aws/aws-sdk-go/service/route53"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	openshiftRouteV1 "github.com/openshift/api/route/v1"
-	"github.com/stackrox/acs-fleet-manager/e2e/envtokenauth"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	v1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-)
-
+/*
 // TODO(ROX-11468): Why is a central always created as a "eval" instance type?
 func newCentralName() string {
 	rnd := make([]byte, 8)
@@ -396,3 +372,4 @@ func getHostedZone(central *public.CentralRequest) (*route53.HostedZone, error) 
 
 	return rhacsZone, nil
 }
+*/

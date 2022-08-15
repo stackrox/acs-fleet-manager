@@ -212,7 +212,6 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminDinosaurHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 
-	// TODO(ROX-11683): For now using RH SSO issuer for the admin API, but needs to be re-visited within this ticket.
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
 		[]string{s.IAM.GetConfig().InternalSSORealm.ValidIssuerURI}, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewRolesAuhzMiddleware(s.AdminRoleAuthZConfig).RequireRolesForMethods(errors.ErrorNotFound))

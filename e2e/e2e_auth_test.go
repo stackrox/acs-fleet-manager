@@ -182,9 +182,54 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 				adminAPI, true, http.StatusNotFound, false),
 		)
 	})
+
+	Describe("Internal SSO auth type", func() {
+		BeforeEach(func() {
+			// Read the client ID / secret from environment variables. If not set, skip the tests.
+			clientID := os.Getenv("INTERNALSSO_CLIENT_ID")
+			clientSecret := os.Getenv("INTERNALSSO_CLIENT_SECRET")
+			if clientID == "" || clientSecret == "" {
+				Skip("INTERNALSSO_CLIENT_ID / INTERNALSSO_CLIENT_SECRET not set, cannot initialize auth type")
+			}
+
+			// Obtain a token from RH SSO using the client ID / secret + client_credentials grant. Write the token to
+			// the temporary file.
+			token, err := obtainInternalSSOToken(clientID, clientSecret)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Create the auth type for RH SSO.
+			auth := &internalSSOAuth{token: token}
+			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, clusterID, auth)
+			Expect(err).ToNot(HaveOccurred())
+			client = newAuthTestClient(fmClient, auth, fleetManagerEndpoint)
+		})
+
+		DescribeTable("AuthN/Z tests",
+			testCase,
+			Entry("should not allow access to fleet manager's public API endpoints",
+				publicAPI, true, http.StatusUnauthorized, false),
+			Entry("should not allow access to fleet manager's internal API endpoints",
+				internalAPI, true, http.StatusNotFound, false),
+			// The service account itself only is valid for the staging environment, since the production access is
+			// strictly limited.
+			Entry("should allow access to fleet manager's the admin API",
+				adminAPI, false, 0, skipOnProd),
+		)
+	})
 })
 
 // Helpers.
+
+var _ fleetmanager.Auth = (*internalSSOAuth)(nil)
+
+type internalSSOAuth struct {
+	token string
+}
+
+func (i *internalSSOAuth) AddAuth(req *http.Request) error {
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", i.token))
+	return nil
+}
 
 // authTestClientFleetManager embeds the fleetmanager.Client and adds additional method for admin API (which shouldn't
 // be a part of the fleetmanager.Client as it is only used within tests).
@@ -261,20 +306,25 @@ func (a *authTestClientFleetManager) doRequestAndUnmarshal(url string, v interfa
 	return json.Unmarshal(data, v)
 }
 
-// obtainRHSSOToken will create a redhatsso.SSOClient and retrieve an access token for the specified client ID / secret
-// using the client_credentials grant.
+// obtainRHSSOToken will obtain a token issued by sso.redhat.com for the specified client ID / secret using
+//// the client_credentials grant.
 func obtainRHSSOToken(clientID, clientSecret string) (string, error) {
+	return doClientCredentialGrant(clientID, clientSecret, "https://sso.redhat.com", "redhat-external")
+}
+
+func doClientCredentialGrant(clientID, clientSecret, baseURL, realm string) (string, error) {
 	client := redhatsso.NewSSOClient(&iam.IAMConfig{}, &iam.IAMRealmConfig{
-		BaseURL:          "https://sso.redhat.com",
-		Realm:            "redhat-external",
+		BaseURL:          baseURL,
+		Realm:            realm,
 		ClientID:         clientID,
 		ClientSecret:     clientSecret, // pragma: allowlist secret
-		TokenEndpointURI: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
-		JwksEndpointURI:  "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
-		APIEndpointURI:   "/auth/realms/redhat-external",
+		TokenEndpointURI: fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", baseURL, realm),
+		JwksEndpointURI:  fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/certs", baseURL, realm),
+		APIEndpointURI:   fmt.Sprintf("/auth/realms/%s", realm),
 	})
 
 	var accessToken string
+
 	err := retry.WithRetry(
 		func() error {
 			var getTokenErr, retryableErr error
@@ -290,7 +340,12 @@ func obtainRHSSOToken(clientID, clientSecret string) (string, error) {
 		retry.Tries(3),
 		retry.BetweenAttempts(func(previousAttemptNumber int) {
 			time.Sleep(10 * time.Second)
-		}),
-	)
+		}))
 	return accessToken, err
+}
+
+// obtainInternalSSOToken will obtain a token issued by auth.redhat.com for the specified client ID / secret using
+// the client_credentials grant.
+func obtainInternalSSOToken(clientID, clientSecret string) (string, error) {
+	return doClientCredentialGrant(clientID, clientSecret, "https://auth.redhat.com", "EmployeeIDP")
 }
