@@ -153,6 +153,75 @@ paths:
       security:
       - Bearer: []
       summary: Returns a list of Dinosaurs
+    post:
+      description: |
+        Each central has a single owner organisation and a single owner user. Creates a new Central that is owned by the user and organisation authenticated for the request.
+        This API allows providing custom resource settings for the new Central instance.
+      operationId: createCentral
+      parameters:
+      - description: Perform the action in an asynchronous manner
+        explode: true
+        in: query
+        name: async
+        required: true
+        schema:
+          type: boolean
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CentralRequestPayload'
+        description: Central data
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CentralRequest'
+          description: Accepted
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Validation errors occurred
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User forbidden either because the user is not authorized to
+            access the service or because the maximum number of instances that can
+            be created by this user has been reached.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The requested resource doesn't exist
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: A conflict has been detected in the creation of this resource
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: An unexpected error occurred while creating the Central request
+      security:
+      - Bearer: []
+      summary: Creates a Central request
   /api/dinosaurs_mgmt/v1/admin/dinosaurs/{id}:
     delete:
       operationId: deleteDinosaurById
@@ -341,6 +410,137 @@ components:
         href:
           type: string
       type: object
+    CentralRequestPayload:
+      description: Schema for the request body sent to /centrals POST
+      example:
+        central:
+          resources:
+            requests:
+              memory: memory
+              cpu: cpu
+            limits:
+              memory: memory
+              cpu: cpu
+        multi_az: true
+        name: name
+        scanner:
+          analyzer:
+            scaling:
+              maxReplicas: 1
+              autoScaling: autoScaling
+              minReplicas: 1
+              replicas: 1
+            resources:
+              requests:
+                memory: memory
+                cpu: cpu
+              limits:
+                memory: memory
+                cpu: cpu
+          db:
+            resources:
+              requests:
+                memory: memory
+                cpu: cpu
+              limits:
+                memory: memory
+                cpu: cpu
+        cloud_provider: cloud_provider
+        region: region
+      properties:
+        cloud_provider:
+          description: The cloud provider where the Central component will be created
+            in
+          type: string
+        multi_az:
+          description: Set this to true to configure the Central component to be multiAZ
+          type: boolean
+        name:
+          description: The name of the Central component. It must consist of lower-case
+            alphanumeric characters or '-', start with an alphabetic character, and
+            end with an alphanumeric character, and can not be longer than 32 characters.
+          type: string
+        region:
+          description: The region where the Central component cluster will be created
+            in
+          type: string
+        central:
+          $ref: '#/components/schemas/CentralSpec'
+        scanner:
+          $ref: '#/components/schemas/ScannerSpec'
+      required:
+      - name
+      type: object
+    CentralSpec:
+      example:
+        resources:
+          requests:
+            memory: memory
+            cpu: cpu
+          limits:
+            memory: memory
+            cpu: cpu
+      properties:
+        resources:
+          $ref: '#/components/schemas/ResourceRequirements'
+      type: object
+    ResourceRequirements:
+      example:
+        requests:
+          memory: memory
+          cpu: cpu
+        limits:
+          memory: memory
+          cpu: cpu
+      properties:
+        requests:
+          $ref: '#/components/schemas/ResourceList'
+        limits:
+          $ref: '#/components/schemas/ResourceList'
+      type: object
+    ResourceList:
+      example:
+        memory: memory
+        cpu: cpu
+      properties:
+        cpu:
+          type: string
+        memory:
+          type: string
+      type: object
+    ScannerSpec:
+      example:
+        analyzer:
+          scaling:
+            maxReplicas: 1
+            autoScaling: autoScaling
+            minReplicas: 1
+            replicas: 1
+          resources:
+            requests:
+              memory: memory
+              cpu: cpu
+            limits:
+              memory: memory
+              cpu: cpu
+        db:
+          resources:
+            requests:
+              memory: memory
+              cpu: cpu
+            limits:
+              memory: memory
+              cpu: cpu
+      properties:
+        analyzer:
+          $ref: '#/components/schemas/ScannerSpec_analyzer'
+        db:
+          $ref: '#/components/schemas/ScannerSpec_db'
+      type: object
+    CentralRequest:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/CentralRequest_allOf'
     List:
       properties:
         kind:
@@ -442,6 +642,98 @@ components:
           type: string
         operation_id:
           type: string
+    ScannerSpec_analyzer_scaling:
+      example:
+        maxReplicas: 1
+        autoScaling: autoScaling
+        minReplicas: 1
+        replicas: 1
+      properties:
+        autoScaling:
+          type: string
+        replicas:
+          format: int32
+          minimum: 1
+          type: integer
+        minReplicas:
+          format: int32
+          minimum: 1
+          type: integer
+        maxReplicas:
+          format: int32
+          minimum: 1
+          type: integer
+    ScannerSpec_analyzer:
+      example:
+        scaling:
+          maxReplicas: 1
+          autoScaling: autoScaling
+          minReplicas: 1
+          replicas: 1
+        resources:
+          requests:
+            memory: memory
+            cpu: cpu
+          limits:
+            memory: memory
+            cpu: cpu
+      properties:
+        resources:
+          $ref: '#/components/schemas/ResourceRequirements'
+        scaling:
+          $ref: '#/components/schemas/ScannerSpec_analyzer_scaling'
+    ScannerSpec_db:
+      example:
+        resources:
+          requests:
+            memory: memory
+            cpu: cpu
+          limits:
+            memory: memory
+            cpu: cpu
+      properties:
+        resources:
+          $ref: '#/components/schemas/ResourceRequirements'
+    CentralRequest_allOf:
+      example: '{"$ref":"#/components/examples/CentralRequestExample"}'
+      properties:
+        status:
+          description: 'Values: [accepted, preparing, provisioning, ready, failed,
+            deprovision, deleting] '
+          type: string
+        cloud_provider:
+          description: Name of Cloud used to deploy. For example AWS
+          type: string
+        multi_az:
+          type: boolean
+        region:
+          description: 'Values will be regions of specific cloud provider. For example:
+            us-east-1 for AWS'
+          type: string
+        owner:
+          type: string
+        name:
+          type: string
+        host:
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        failed_reason:
+          type: string
+        version:
+          type: string
+        instance_type:
+          type: string
+        central:
+          $ref: '#/components/schemas/CentralSpec'
+        scanner:
+          $ref: '#/components/schemas/ScannerSpec'
+      required:
+      - multi_az
   securitySchemes:
     Bearer:
       bearerFormat: JWT

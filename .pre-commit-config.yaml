@@ -24,5 +24,5 @@ repos:
       - id: trailing-whitespace
         args: ["--markdown-linebreak-ext=md"]
       - id: end-of-file-fixer
-        exclude: '^(?:secrets/db.*|.*?VERSION)$' # Matches either secrets/db.* files or the VERSION file under internal/dinosaur/pkg/api/<group>/.openapi-generator
+        exclude: '^(?:secrets/db.*|internal/dinosaur/pkg/api/(admin|private|public)/.*)$' # Matches either secrets/db.* files or the generated files under internal/dinosaur/pkg/api/(admin|private|public)
       - id: check-json

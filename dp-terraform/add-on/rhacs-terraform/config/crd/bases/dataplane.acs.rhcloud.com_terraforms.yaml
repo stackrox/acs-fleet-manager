@@ -81,7 +81,7 @@ spec:
                   observatorium:
                     type: object
                     properties:
-                      gateway: 
+                      gateway:
                         type: string
                       metricsClientId:
                         type: string

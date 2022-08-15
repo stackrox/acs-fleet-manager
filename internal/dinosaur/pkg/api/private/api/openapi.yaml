@@ -186,13 +186,13 @@ components:
   examples:
     ManagedCentralExample:
       value:
-        id: 1rfpsqbvq1em2u9u0z54ymjcwac
+        id: a3a9c5b9-0283-4ff8-9b9e-da2209da17c3
         kind: ManagedCentral
         metadata:
           name: example-central
-          namespace: example-central-1rfpsqbvq1em2u9u0z54ymjcwac # pragma: allowlist secret
+          namespace: example-central-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3
           annotations:
-            mas/id: 1rfpsqbvq1em2u9u0z54ymjcwac
+            mas/id: a3a9c5b9-0283-4ff8-9b9e-da2209da17c3
             mas/placementId: ""
           deletionTimestamp: 2022-06-01T11:04:09Z
         spec:

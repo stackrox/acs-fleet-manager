@@ -73,7 +73,7 @@ func translate(t v1alpha1.Terraform) (chartutil.Values, error) {
 		}
 		v.AddChild("acsOperator", &acsOperator)
 	}
-	
+
 	if t.Spec.Observability != nil {
 		observability := translation.NewValuesBuilder()
 		observability.SetBool("enabled", &t.Spec.Observability.Enabled)
