@@ -135,23 +135,22 @@ var _ = Describe("Central", func() {
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
-			Expect(reencryptRoute.Spec.Host).To(Equal(central.Host))
+			Expect(reencryptRoute.Spec.Host).To(Equal(central.UiHost))
 			Expect(reencryptRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationReencrypt))
 
 			var passthroughRoute *openshiftRouteV1.Route
 			Eventually(func() error {
 				passthroughRoute, err = routeService.FindPassthroughRoute(context.Background(), namespaceName)
 				if err != nil {
-					return fmt.Errorf("failed finding reencrypt route: %v", err)
+					return fmt.Errorf("failed finding passthrough route: %v", err)
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
-			// Expect(passthroughRoute.Spec.DataHost).To(Equal(central.Host)) TODO(ROX-11990): add field for data endpoint in public central
+			Expect(passthroughRoute.Spec.Host).To(Equal(central.DataHost))
 			Expect(passthroughRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationPassthrough))
 		})
 
-		// TODO(ROX-11990): add test for data endpoint once it is exposed by public API
 		It("should create AWS Route53 records", func() {
 			if !dnsEnabled {
 				Skip(skipDNSMsg)
@@ -167,13 +166,8 @@ var _ = Describe("Central", func() {
 
 			var records *route53.ListResourceRecordSetsOutput
 			Eventually(func() int {
-				records, err = route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
-					HostedZoneId:    rhacsZone.Id,
-					StartRecordName: &central.Host,
-				})
-				Expect(err).ToNot(HaveOccurred())
-				return len(records.ResourceRecordSets)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(1))
+				return countDNSRecords(rhacsZone, central)
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(2))
 
 			recordSet := records.ResourceRecordSets[0]
 			Expect(len(recordSet.ResourceRecords)).To(Equal(1))
@@ -181,7 +175,7 @@ var _ = Describe("Central", func() {
 
 			// Omit the . at the end of hosted zone name
 			name := removeLastChar(*recordSet.Name)
-			Expect(name).To(Equal(central.Host))
+			Expect(name).To(Equal(central.UiHost))
 			Expect(*record.Value).To(Equal(reencryptIngress.RouterCanonicalHostname))
 
 		})
@@ -221,7 +215,6 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
 		})
 
-		// TODO(ROX-11990): add test for data endpoint once it is exposed by public API
 		It("should delete external DNS entries", func() {
 			if !dnsEnabled {
 				Skip(skipDNSMsg)
@@ -233,14 +226,8 @@ var _ = Describe("Central", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(rhacsZone).ToNot(BeNil())
 
-			var records *route53.ListResourceRecordSetsOutput
 			Eventually(func() int {
-				records, err = route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
-					HostedZoneId:    rhacsZone.Id,
-					StartRecordName: &central.Host,
-				})
-				Expect(err).ToNot(HaveOccurred())
-				return len(records.ResourceRecordSets)
+				return countDNSRecords(rhacsZone, central)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(0))
 		})
 	})
@@ -428,15 +415,29 @@ func getHostedZone(central *public.CentralRequest) (*route53.HostedZone, error) 
 	for _, zone := range hostedZones.HostedZones {
 		// Omit the . at the end of hosted zone name
 		name := removeLastChar(*zone.Name)
-		if strings.Contains(central.Host, name) {
+		if strings.Contains(central.UiHost, name) {
 			rhacsZone = zone
 			break
 		}
 	}
 
 	if rhacsZone == nil {
-		return nil, fmt.Errorf("hosted zone for central host: %v not found", central.Host)
+		return nil, fmt.Errorf("hosted zone for central host: %v not found", central.UiHost)
 	}
 
 	return rhacsZone, nil
+}
+
+func countDNSRecords(rhacsZone *route53.HostedZone, central *public.CentralRequest) int {
+	uiRecords, err := route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
+		HostedZoneId:    rhacsZone.Id,
+		StartRecordName: &central.UiHost,
+	})
+	Expect(err).ToNot(HaveOccurred())
+	dataRecords, err := route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
+		HostedZoneId:    rhacsZone.Id,
+		StartRecordName: &central.DataHost,
+	})
+	Expect(err).ToNot(HaveOccurred())
+	return len(uiRecords.ResourceRecordSets) + len(dataRecords.ResourceRecordSets)
 }

@@ -43,7 +43,8 @@ paths:
           similar to the syntax of the `order by` clause of an SQL statement.
           Each query can be ordered by any of the following `centralRequests` fields:
 
-          * host
+          * ui_host
+          * data_host
           * cloud_provider
           * cluster_id
           * created_at
@@ -728,7 +729,9 @@ components:
           type: string
         name:
           type: string
-        host:
+        ui_host:
+          type: string
+        data_host:
           type: string
         created_at:
           format: date-time
