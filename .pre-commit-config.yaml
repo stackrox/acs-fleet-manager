@@ -13,7 +13,13 @@ repos:
     rev: v1.2.0
     hooks:
       - id: detect-secrets
-        args: ["--baseline", ".secrets.baseline"]
+        args:
+          - --baseline
+          - .secrets.baseline
+          - --exclude-secrets
+          - example-central-1rfpsqbvq1em2u9u0z54ymjcwac
+          - --exclude-secrets
+          - /api/rhacs/v1/centrals/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
   - repo: https://github.com/golangci/golangci-lint
     rev: v1.46.2
     hooks:
@@ -24,5 +30,5 @@ repos:
       - id: trailing-whitespace
         args: ["--markdown-linebreak-ext=md"]
       - id: end-of-file-fixer
-        exclude: '^(?:secrets/db.*|.*?VERSION)$' # Matches either secrets/db.* files or the VERSION file under internal/dinosaur/pkg/api/<group>/.openapi-generator
+        exclude: '^(?:secrets/db.*|internal/dinosaur/pkg/api/(admin|private|public)/.*)$' # Matches either secrets/db.* files or the generated files under internal/dinosaur/pkg/api/(admin|private|public)
       - id: check-json

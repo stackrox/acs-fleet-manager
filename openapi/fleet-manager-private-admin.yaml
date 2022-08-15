@@ -18,6 +18,71 @@ tags:
 
 paths:
   '/api/dinosaurs_mgmt/v1/admin/dinosaurs':
+    post:
+      operationId: createCentral
+      description: |
+        Each central has a single owner organisation and a single owner user. Creates a new Central that is owned by the user and organisation authenticated for the request.
+        This API allows providing custom resource settings for the new Central instance.
+      parameters:
+        - in: query
+          name: async
+          description: Perform the action in an asynchronous manner
+          schema:
+            type: boolean
+          required: true
+      requestBody:
+        description: Central data
+        content:
+          application/json:
+            schema:
+              $ref: "fleet-manager.yaml#/components/schemas/CentralRequestPayload"
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: "fleet-manager.yaml#/components/schemas/CentralRequest"
+          description: Accepted
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "fleet-manager.yaml#/components/schemas/Error"
+          description: Validation errors occurred
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "fleet-manager.yaml#/components/schemas/Error"
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "fleet-manager.yaml#/components/schemas/Error"
+          description: User forbidden either because the user is not authorized to access the service or because the maximum number of instances that can be created by this user has been reached.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "fleet-manager.yaml#/components/schemas/Error"
+          description: The requested resource doesn't exist
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "fleet-manager.yaml#/components/schemas/Error"
+          description: A conflict has been detected in the creation of this resource
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "fleet-manager.yaml#/components/schemas/Error"
+          description: An unexpected error occurred while creating the Central request
+      security:
+        - Bearer: []
+      summary: Creates a Central request
     get:
       summary: Returns a list of Dinosaurs
       operationId: getDinosaurs
