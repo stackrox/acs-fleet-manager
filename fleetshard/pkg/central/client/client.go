@@ -1,14 +1,17 @@
 package client
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
-	"github.com/golang/glog"
+	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/jsonpb"
+	v1 "github.com/stackrox/rox/generated/api/v1"
+	"github.com/stackrox/rox/pkg/utils"
+
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	acsErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -16,7 +19,7 @@ import (
 	"github.com/stackrox/rox/pkg/httputil"
 )
 
-// reusing transport allows us to benefit from connection pooling
+// reusing transport allows us to benefit from connection pooling.
 var insecureTransport *http.Transport
 
 func init() {
@@ -31,23 +34,6 @@ type Client struct {
 	pass       string
 	httpClient http.Client
 	central    private.ManagedCentral
-}
-
-// AuthProviderResponse ...
-type AuthProviderResponse struct {
-	ID string `json:"id"`
-}
-
-// GetLoginAuthProviderResponse ...
-type GetLoginAuthProviderResponse struct {
-	AuthProviders []*GetLoginAuthProviderResponseAuthProvider `json:"authProviders"`
-}
-
-// GetLoginAuthProviderResponseAuthProvider ...
-type GetLoginAuthProviderResponseAuthProvider struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
-	Name string `json:"name"`
 }
 
 // NewCentralClient ...
@@ -74,15 +60,14 @@ func NewCentralClientNoAuth(central private.ManagedCentral, address string) *Cli
 }
 
 // SendRequestToCentral ...
-func (c *Client) SendRequestToCentral(ctx context.Context, requestBody interface{}, method, path string) (*http.Response, error) {
-	req, err := c.createRequest(requestBody, method, path)
+func (c *Client) SendRequestToCentral(ctx context.Context, requestMessage proto.Message, method, path string) (*http.Response, error) {
+	req, err := c.createRequest(ctx, requestMessage, method, path)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating HTTP request to central")
 	}
 	if c.pass != "" {
 		req.SetBasicAuth("admin", c.pass)
 	}
-	req = req.WithContext(ctx)
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "sending new request to central")
@@ -90,16 +75,20 @@ func (c *Client) SendRequestToCentral(ctx context.Context, requestBody interface
 	return resp, nil
 }
 
-func (c *Client) createRequest(requestBody interface{}, method, path string) (*http.Request, error) {
+func (c *Client) createRequest(ctx context.Context, requestMessage proto.Message, method, path string) (*http.Request, error) {
 	var body io.Reader
-	if requestBody != nil {
-		jsonBytes, err := json.Marshal(requestBody)
+	if requestMessage != nil {
+		marshaller := jsonpb.Marshaler{
+			EmitDefaults: true,
+			Indent:       "  ",
+		}
+		jsonString, err := marshaller.MarshalToString(requestMessage)
 		if err != nil {
 			return nil, errors.Wrap(err, "marshalling new request to central")
 		}
-		body = bytes.NewReader(jsonBytes)
+		body = strings.NewReader(jsonString)
 	}
-	req, err := http.NewRequest(method, c.address+path, body)
+	req, err := http.NewRequestWithContext(ctx, method, c.address+path, body)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create request")
 	}
@@ -112,54 +101,63 @@ func (c *Client) SendGroupRequest(ctx context.Context, groupRequest *storage.Gro
 	if err != nil {
 		return errors.Wrap(err, "sending new group to central")
 	}
+
+	if resp.Body != nil {
+		defer utils.IgnoreError(resp.Body.Close)
+	}
+
 	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create group for central %s/%s", c.central.Metadata.Namespace, c.central.Metadata.Name)
+		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode,
+			"failed to create group for central %s/%s",
+			c.central.Metadata.Namespace, c.central.Metadata.Name)
 	}
 	return nil
 }
 
 // SendAuthProviderRequest ...
-func (c *Client) SendAuthProviderRequest(ctx context.Context, authProviderRequest *storage.AuthProvider) (*AuthProviderResponse, error) {
+func (c *Client) SendAuthProviderRequest(ctx context.Context, authProviderRequest *storage.AuthProvider) (*storage.AuthProvider, error) {
 	resp, err := c.SendRequestToCentral(ctx, authProviderRequest, http.MethodPost, "/v1/authProviders")
 	if err != nil {
 		return nil, errors.Wrap(err, "sending new auth provider to central")
-	} else if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return nil, acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create auth provider for central %s/%s", c.central.Metadata.Namespace, c.central.Metadata.Name)
 	}
 
-	defer func() {
-		err := resp.Body.Close()
-		if err != nil {
-			glog.Warningf("Attempt to close auth provider response failed: %s", err)
-		}
-	}()
-	var authProviderResp AuthProviderResponse
-	err = json.NewDecoder(resp.Body).Decode(&authProviderResp)
-	if err != nil {
-		return nil, errors.Wrap(err, "decoding auth provider POST response")
+	if resp.Body != nil {
+		defer utils.IgnoreError(resp.Body.Close)
 	}
-	return &authProviderResp, nil
+
+	if !httputil.Is2xxStatusCode(resp.StatusCode) {
+		return nil, acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode,
+			"failed to create auth provider for central %s/%s",
+			c.central.Metadata.Namespace, c.central.Metadata.Name)
+	}
+
+	authProvider := &storage.AuthProvider{}
+	if err := jsonpb.Unmarshal(resp.Body, authProvider); err != nil {
+		return nil, errors.Wrap(err, "decoding auth provider creation response")
+	}
+	return authProvider, nil
 }
 
 // GetLoginAuthProviders ...
-func (c *Client) GetLoginAuthProviders(ctx context.Context) (*GetLoginAuthProviderResponse, error) {
+func (c *Client) GetLoginAuthProviders(ctx context.Context) (*v1.GetLoginAuthProvidersResponse, error) {
 	resp, err := c.SendRequestToCentral(ctx, nil, http.MethodGet, "/v1/login/authproviders")
 	if err != nil {
-		return nil, errors.Wrap(err, "sending GetLoginAuthProviders request to central")
-	} else if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return nil, acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to GetLoginAuthProviders from central %s/%s", c.central.Metadata.Namespace, c.central.Metadata.Name)
+		return nil, errors.Wrap(err, "sending get login auth providers request to central")
 	}
 
-	defer func() {
-		err := resp.Body.Close()
-		if err != nil {
-			glog.Warningf("Attempt to close GetLoginAuthProviders response failed: %s", err)
-		}
-	}()
-	var authProvidersResp GetLoginAuthProviderResponse
-	err = json.NewDecoder(resp.Body).Decode(&authProvidersResp)
-	if err != nil {
-		return nil, errors.Wrap(err, "decoding GetLoginAuthProviders response")
+	if resp.Body != nil {
+		defer utils.IgnoreError(resp.Body.Close)
 	}
-	return &authProvidersResp, nil
+
+	if !httputil.Is2xxStatusCode(resp.StatusCode) {
+		return nil, acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode,
+			"failed to get login auth providers from central %s/%s",
+			c.central.Metadata.Namespace, c.central.Metadata.Name)
+	}
+
+	authProvidersResp := &v1.GetLoginAuthProvidersResponse{}
+	if err := jsonpb.Unmarshal(resp.Body, authProvidersResp); err != nil {
+		return nil, errors.Wrap(err, "decoding get login auth providers response")
+	}
+	return authProvidersResp, nil
 }

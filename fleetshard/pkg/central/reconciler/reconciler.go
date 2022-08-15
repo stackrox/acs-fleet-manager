@@ -309,7 +309,7 @@ func (r *CentralReconciler) setLastCentralHash(central private.ManagedCentral) e
 func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) error {
 	revision, err := strconv.Atoi(central.Annotations[revisionAnnotationKey])
 	if err != nil {
-		return errors.Wrapf(err, "failed increment central revision %s", central.GetName())
+		return errors.Wrapf(err, "failed to increment central revision %s", central.GetName())
 	}
 	revision++
 	central.Annotations[revisionAnnotationKey] = fmt.Sprintf("%d", revision)

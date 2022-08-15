@@ -66,9 +66,9 @@ func isCentralReady(ctx context.Context, client ctrlClient.Client, central priva
 		if apiErrors.IsNotFound(err) {
 			return false, nil
 		}
-		return false, fmt.Errorf("retrieving central deployment resource from Kubernetes: %w", err)
+		return false, errors.Wrap(err, "retrieving central deployment resource from Kubernetes")
 	}
-	if deployment.Status.UnavailableReplicas == 0 {
+	if deployment.Status.AvailableReplicas > 0 && deployment.Status.UnavailableReplicas == 0 {
 		return true, nil
 	}
 	return false, nil
@@ -90,7 +90,7 @@ func existsRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 	centralClient := centralClientPkg.NewCentralClientNoAuth(central, address)
 	authProvidersResp, err := centralClient.GetLoginAuthProviders(ctx)
 	if err != nil {
-		return false, fmt.Errorf("sending GetLoginAuthProviders request to central: %w", err)
+		return false, errors.Wrap(err, "sending GetLoginAuthProviders request to central")
 	}
 
 	for _, provider := range authProvidersResp.AuthProviders {
@@ -118,15 +118,15 @@ func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 	authProviderRequest := createAuthProviderRequest(central)
 	authProviderResp, err := centralClient.SendAuthProviderRequest(ctx, authProviderRequest)
 	if err != nil {
-		return fmt.Errorf("sending AuthProvider request to central: %w", err)
+		return errors.Wrap(err, "sending AuthProvider request to central")
 	}
 
 	// Initiate sso.redhat.com auth provider groups.
 	for _, groupCreator := range groupCreators {
-		group := groupCreator(authProviderResp.ID, central.Spec.Auth)
+		group := groupCreator(authProviderResp.GetId(), central.Spec.Auth)
 		err = centralClient.SendGroupRequest(ctx, group)
 		if err != nil {
-			return fmt.Errorf("sending group request to central: %w", err)
+			return errors.Wrap(err, "sending group request to central")
 		}
 	}
 	return nil
