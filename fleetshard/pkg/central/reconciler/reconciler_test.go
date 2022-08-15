@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
@@ -16,18 +18,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	centralName               = "test-central"
-	centralID                 = "cb45idheg5ip6dq1jo4g"
-	centralNamespace          = "rhacs-" + centralID
-	centralReencryptRouteName = "managed-central-reencrypt"
-	conditionTypeReady        = "Ready"
+	centralName                 = "test-central"
+	centralID                   = "cb45idheg5ip6dq1jo4g"
+	centralNamespace            = "rhacs-" + centralID
+	centralReencryptRouteName   = "managed-central-reencrypt"
+	centralPassthroughRouteName = "managed-central-passthrough"
+	conditionTypeReady          = "Ready"
 )
 
 var simpleManagedCentral = private.ManagedCentral{
@@ -55,7 +58,7 @@ func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestCo
 }
 
 func TestReconcileCreate(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -163,7 +166,7 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        centralName,
-			Namespace:   centralName,
+			Namespace:   centralNamespace,
 			Annotations: map[string]string{revisionAnnotationKey: "3"},
 		},
 	}, centralDeploymentObject()).Build()
@@ -186,8 +189,7 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 
 func TestReconcileDelete(t *testing.T) {
 	// given
-	// centralDeploymentObject() is needed to pass first reconcile loop without an error
-	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -213,11 +215,11 @@ func TestReconcileDelete(t *testing.T) {
 
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
-	assert.True(t, errors.IsNotFound(err))
+	assert.True(t, k8sErrors.IsNotFound(err))
 
 	route := &openshiftRouteV1.Route{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
-	assert.True(t, errors.IsNotFound(err))
+	assert.True(t, k8sErrors.IsNotFound(err))
 }
 
 func TestCentralChanged(t *testing.T) {
@@ -275,7 +277,7 @@ func TestCentralChanged(t *testing.T) {
 }
 
 func TestReportRoutesStatuses(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -297,7 +299,7 @@ func TestReportRoutesStatuses(t *testing.T) {
 
 func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
 	// given
-	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -319,6 +321,54 @@ func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
 	}
 	actual := status.Routes
 	assert.ElementsMatch(t, expected, actual)
+}
+
+func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
+	// given
+	scheme := testutils.NewScheme(t)
+	tracker := testutils.NewReconcileTracker(scheme)
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjectTracker(tracker).
+		Build()
+	tracker.AddRouteError(centralReencryptRouteName, errors.New("fake error"))
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
+	// when
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	// then
+	require.Errorf(t, err, "fake error")
+}
+
+func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
+	// given
+	scheme := testutils.NewScheme(t)
+	tracker := testutils.NewReconcileTracker(scheme)
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjectTracker(tracker).
+		Build()
+	tracker.SetRouteAdmitted(centralReencryptRouteName, false)
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
+	// when
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	// then
+	require.Errorf(t, err, "unable to find admitted ingress")
+}
+
+func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
+	// given
+	scheme := testutils.NewScheme(t)
+	tracker := testutils.NewReconcileTracker(scheme)
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjectTracker(tracker).
+		Build()
+	tracker.SetSkipRoute(centralReencryptRouteName, true)
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
+	// when
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	// then
+	require.Errorf(t, err, "unable to find admitted ingress")
 }
 
 func centralDeploymentObject() *appsv1.Deployment {
