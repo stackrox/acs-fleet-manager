@@ -11,6 +11,8 @@ package private
 
 // DinosaurUpdateRequest struct for DinosaurUpdateRequest
 type DinosaurUpdateRequest struct {
-	DinosaurOperatorVersion string `json:"dinosaur_operator_version,omitempty"`
-	DinosaurVersion         string `json:"dinosaur_version,omitempty"`
+	DinosaurOperatorVersion string      `json:"dinosaur_operator_version,omitempty"`
+	DinosaurVersion         string      `json:"dinosaur_version,omitempty"`
+	Central                 CentralSpec `json:"central,omitempty"`
+	Scanner                 ScannerSpec `json:"scanner,omitempty"`
 }

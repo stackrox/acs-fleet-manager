@@ -66,6 +66,7 @@ func PresentDinosaurRequest(request *dbapi.CentralRequest) public.CentralRequest
 		Scanner: public.ScannerSpec{
 			Analyzer: public.ScannerSpecAnalyzer{
 				Resources: converters.ConvertCoreV1ResourceRequirementsToPublic(&scanner.Analyzer.Resources),
+				// TODO(mclasmeier): add scaling
 			},
 			Db: public.ScannerSpecDb{
 				Resources: converters.ConvertCoreV1ResourceRequirementsToPublic(&scanner.Db.Resources),

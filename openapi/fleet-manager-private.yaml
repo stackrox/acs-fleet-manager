@@ -197,11 +197,8 @@ components:
 
     ResourceList:
       type: object
-      properties:
-        cpu:
-          type: string
-        memory:
-          type: string
+      additionalProperties:
+        type: string
 
     ResourceRequirements:
       type: object

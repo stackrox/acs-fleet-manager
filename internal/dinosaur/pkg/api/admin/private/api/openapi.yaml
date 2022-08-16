@@ -390,12 +390,40 @@ components:
     DinosaurUpdateRequest:
       example:
         dinosaur_version: dinosaur_version
+        central:
+          resources:
+            requests:
+              key: requests
+            limits:
+              key: limits
+        scanner:
+          analyzer:
+            scaling:
+              maxReplicas: 1
+              autoScaling: autoScaling
+              minReplicas: 1
+              replicas: 1
+            resources:
+              requests:
+                key: requests
+              limits:
+                key: limits
+          db:
+            resources:
+              requests:
+                key: requests
+              limits:
+                key: limits
         dinosaur_operator_version: dinosaur_operator_version
       properties:
         dinosaur_operator_version:
           type: string
         dinosaur_version:
           type: string
+        central:
+          $ref: '#/components/schemas/CentralSpec'
+        scanner:
+          $ref: '#/components/schemas/ScannerSpec'
       type: object
     Error:
       allOf:
@@ -416,11 +444,9 @@ components:
         central:
           resources:
             requests:
-              memory: memory
-              cpu: cpu
+              key: requests
             limits:
-              memory: memory
-              cpu: cpu
+              key: limits
         multi_az: true
         name: name
         scanner:
@@ -432,19 +458,15 @@ components:
               replicas: 1
             resources:
               requests:
-                memory: memory
-                cpu: cpu
+                key: requests
               limits:
-                memory: memory
-                cpu: cpu
+                key: limits
           db:
             resources:
               requests:
-                memory: memory
-                cpu: cpu
+                key: requests
               limits:
-                memory: memory
-                cpu: cpu
+                key: limits
         cloud_provider: cloud_provider
         region: region
       properties:
@@ -475,11 +497,9 @@ components:
       example:
         resources:
           requests:
-            memory: memory
-            cpu: cpu
+            key: requests
           limits:
-            memory: memory
-            cpu: cpu
+            key: limits
       properties:
         resources:
           $ref: '#/components/schemas/ResourceRequirements'
@@ -487,26 +507,22 @@ components:
     ResourceRequirements:
       example:
         requests:
-          memory: memory
-          cpu: cpu
+          key: requests
         limits:
-          memory: memory
-          cpu: cpu
+          key: limits
       properties:
         requests:
-          $ref: '#/components/schemas/ResourceList'
+          additionalProperties:
+            type: string
+          type: object
         limits:
-          $ref: '#/components/schemas/ResourceList'
+          additionalProperties:
+            type: string
+          type: object
       type: object
     ResourceList:
-      example:
-        memory: memory
-        cpu: cpu
-      properties:
-        cpu:
-          type: string
-        memory:
-          type: string
+      additionalProperties:
+        type: string
       type: object
     ScannerSpec:
       example:
@@ -518,19 +534,15 @@ components:
             replicas: 1
           resources:
             requests:
-              memory: memory
-              cpu: cpu
+              key: requests
             limits:
-              memory: memory
-              cpu: cpu
+              key: limits
         db:
           resources:
             requests:
-              memory: memory
-              cpu: cpu
+              key: requests
             limits:
-              memory: memory
-              cpu: cpu
+              key: limits
       properties:
         analyzer:
           $ref: '#/components/schemas/ScannerSpec_analyzer'
@@ -672,11 +684,9 @@ components:
           replicas: 1
         resources:
           requests:
-            memory: memory
-            cpu: cpu
+            key: requests
           limits:
-            memory: memory
-            cpu: cpu
+            key: limits
       properties:
         resources:
           $ref: '#/components/schemas/ResourceRequirements'
@@ -686,11 +696,9 @@ components:
       example:
         resources:
           requests:
-            memory: memory
-            cpu: cpu
+            key: requests
           limits:
-            memory: memory
-            cpu: cpu
+            key: limits
       properties:
         resources:
           $ref: '#/components/schemas/ResourceRequirements'

@@ -12,6 +12,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
@@ -128,21 +129,18 @@ func validateQuantity(qty string, path string) *errors.ServiceError {
 }
 
 // ValidateCentralSpec ...
-func ValidateCentralSpec(ctx context.Context, centralRequestPayload *public.CentralRequestPayload, field string, dbCentral *dbapi.CentralRequest) handlers.Validate {
+func ValidateCentralSpec(ctx context.Context, centralRequestPayload *public.CentralRequestPayload, dbCentral *dbapi.CentralRequest) handlers.Validate {
 	return func() *errors.ServiceError {
 		// Validate Central resources.
-		if err := validateQuantity(centralRequestPayload.Central.Resources.Requests.Cpu, "central.resources.requests.cpu"); err != nil {
-			return err
+		err := validateResourceList(centralRequestPayload.Central.Resources.Requests, "central.resources.requests")
+		if err != nil {
+			return errors.Validation("invalid resource requests for Central: %v", err)
 		}
-		if err := validateQuantity(centralRequestPayload.Central.Resources.Requests.Memory, "central.resources.requests.memory"); err != nil {
-			return err
+		err = validateResourceList(centralRequestPayload.Central.Resources.Limits, "central.resources.limits")
+		if err != nil {
+			return errors.Validation("invalid resource limits for Central: %v", err)
 		}
-		if err := validateQuantity(centralRequestPayload.Central.Resources.Limits.Cpu, "central.resources.limits.cpu"); err != nil {
-			return err
-		}
-		if err := validateQuantity(centralRequestPayload.Central.Resources.Limits.Cpu, "central.resources.limits.memory"); err != nil {
-			return err
-		}
+
 		central, err := json.Marshal(centralRequestPayload.Central)
 		if err != nil {
 			return errors.Validation("marshaling Central spec failed: %v", err)
@@ -157,22 +155,36 @@ func ValidateCentralSpec(ctx context.Context, centralRequestPayload *public.Cent
 	}
 }
 
+func validateResourceList(resources map[string]string, path string) error {
+	for name, qty := range resources {
+		resourceName := corev1.ResourceName(name)
+		if resourceName != corev1.ResourceCPU && resourceName != corev1.ResourceMemory {
+			return errors.Validation("unsupported resource type %q in %s", name, path)
+		}
+		if qty == "" {
+			continue
+		}
+		_, err := resource.ParseQuantity(qty)
+		if err != nil {
+			return errors.Validation("invalid resources: failed to parse quantity %q at %s.%s due to: %v", qty, path, name, err)
+		}
+	}
+	return nil
+}
+
 // ValidateScannerSpec ...
-func ValidateScannerSpec(ctx context.Context, centralRequestPayload *public.CentralRequestPayload, field string, dbCentral *dbapi.CentralRequest) handlers.Validate {
+func ValidateScannerSpec(ctx context.Context, centralRequestPayload *public.CentralRequestPayload, dbCentral *dbapi.CentralRequest) handlers.Validate {
 	return func() *errors.ServiceError {
 		// Validate Scanner Analyzer resources and scaling settings.
-		if err := validateQuantity(centralRequestPayload.Scanner.Analyzer.Resources.Requests.Cpu, "scanner.analyzer.resources.requests.cpu"); err != nil {
-			return err
+		err := validateResourceList(centralRequestPayload.Scanner.Analyzer.Resources.Requests, "scanner.analyzer.resources.requests")
+		if err != nil {
+			return errors.Validation("invalid resource requests for Scanner Analyzer: %v", err)
 		}
-		if err := validateQuantity(centralRequestPayload.Scanner.Analyzer.Resources.Requests.Memory, "scanner.analyzer.resources.requests.memory"); err != nil {
-			return err
+		err = validateResourceList(centralRequestPayload.Scanner.Analyzer.Resources.Limits, "scanner.analyzer.resources.limits")
+		if err != nil {
+			return errors.Validation("invalid resource limits for Scanner Analyzer: %v", err)
 		}
-		if err := validateQuantity(centralRequestPayload.Scanner.Analyzer.Resources.Limits.Cpu, "scanner.analyzer.resources.limits.cpu"); err != nil {
-			return err
-		}
-		if err := validateQuantity(centralRequestPayload.Scanner.Analyzer.Resources.Limits.Cpu, "scanner.analyzer.resources.limits.memory"); err != nil {
-			return err
-		}
+
 		if centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "" &&
 			centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "Enabled" &&
 			centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "Disabled" {
@@ -180,17 +192,13 @@ func ValidateScannerSpec(ctx context.Context, centralRequestPayload *public.Cent
 		}
 
 		// Validate Scanner DB resources.
-		if err := validateQuantity(centralRequestPayload.Scanner.Db.Resources.Requests.Cpu, "scanner.db.resources.requests.cpu"); err != nil {
-			return err
+		err = validateResourceList(centralRequestPayload.Scanner.Db.Resources.Requests, "scanner.db.resources.requests")
+		if err != nil {
+			return errors.Validation("invalid resource requests for Scanner DB: %v", err)
 		}
-		if err := validateQuantity(centralRequestPayload.Scanner.Db.Resources.Requests.Memory, "scanner.db.resources.requests.memory"); err != nil {
-			return err
-		}
-		if err := validateQuantity(centralRequestPayload.Scanner.Db.Resources.Limits.Cpu, "scanner.db.resources.limits.cpu"); err != nil {
-			return err
-		}
-		if err := validateQuantity(centralRequestPayload.Scanner.Db.Resources.Limits.Cpu, "scanner.db.resources.limits.memory"); err != nil {
-			return err
+		err = validateResourceList(centralRequestPayload.Scanner.Analyzer.Resources.Limits, "scanner.db.resources.limits")
+		if err != nil {
+			return errors.Validation("invalid resource limits for Scanner DB: %v", err)
 		}
 
 		scanner, err := json.Marshal(centralRequestPayload.Scanner)

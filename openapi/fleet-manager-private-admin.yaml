@@ -353,6 +353,10 @@ components:
           type: string
         dinosaur_version:
           type: string
+        central:
+          $ref: "fleet-manager.yaml#/components/schemas/CentralSpec"
+        scanner:
+          $ref: "fleet-manager.yaml#/components/schemas/ScannerSpec"
 
   securitySchemes:
     Bearer:

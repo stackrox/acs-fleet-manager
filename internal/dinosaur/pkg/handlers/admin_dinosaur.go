@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
@@ -48,14 +49,15 @@ func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateDinosaurClaims(ctx, &dinosaurRequest, convDinosaur),
 			ValidateCloudProvider(&h.service, convDinosaur, h.providerConfig, "creating central requests"),
 			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating central requests"),
-			ValidateCentralSpec(ctx, &dinosaurRequest, "central", convDinosaur),
-			ValidateScannerSpec(ctx, &dinosaurRequest, "scanner", convDinosaur),
+			ValidateCentralSpec(ctx, &dinosaurRequest, convDinosaur),
+			ValidateScannerSpec(ctx, &dinosaurRequest, convDinosaur),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(convDinosaur)
 			if svcErr != nil {
 				return nil, svcErr
 			}
+			// TODO(mclasmeier): Do we need PresentDinosaurRequestAdminEndpoint?
 			return presenters.PresentDinosaurRequest(convDinosaur), nil
 		},
 	}
@@ -141,7 +143,59 @@ func (h adminDinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
 }
 
-// Update ...
+func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.DinosaurUpdateRequest) error {
+	if updateRequest == nil {
+		return nil
+	}
+
+	centralSpec, err := request.GetCentralSpec()
+	if err != nil {
+		return fmt.Errorf("retrieving CentralSpec from CentralRequest: %w", err)
+	}
+	scannerSpec, err := request.GetScannerSpec()
+	if err != nil {
+		return fmt.Errorf("retrieving ScannerSpec from CentralRequest: %w", err)
+	}
+
+	err = centralSpec.UpdateFromPrivateAPI(&updateRequest.Central)
+	if err != nil {
+		return fmt.Errorf("updating CentralSpec from CentralUpdateRequest: %w", err)
+	}
+	err = scannerSpec.UpdateFromPrivateAPI(&updateRequest.Scanner)
+	if err != nil {
+		return fmt.Errorf("updating ScannerSpec from CentralUpdateRequest: %w", err)
+	}
+
+	new := *request
+
+	err = new.SetCentralSpec(centralSpec)
+	if err != nil {
+		return fmt.Errorf("updating CentralSpec within CentralRequest: %w", err)
+	}
+
+	err = new.SetScannerSpec(scannerSpec)
+	if err != nil {
+		return fmt.Errorf("updating ScannerSpec within CentralRequest: %w", err)
+	}
+
+	// Disabled this for now, since it is unclear as of now what our specific requirements
+	// and dependencies are for this to work.
+	//
+	// TODO(create-ticket): Evaluate use-case and potentially enable version updating.
+	//
+	// if updateRequest.DinosaurOperatorVersion != "" {
+	// 	new.DesiredCentralOperatorVersion = updateRequest.DinosaurOperatorVersion
+	// }
+
+	// if updateRequest.DinosaurVersion != "" {
+	// 	new.DesiredCentralVersion = updateRequest.DinosaurVersion
+	// }
+
+	*request = new
+	return nil
+}
+
+// Update a Central instance.
 func (h adminDinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var dinosaurUpdateReq private.DinosaurUpdateRequest
@@ -154,6 +208,11 @@ func (h adminDinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
 			dinosaurRequest, svcErr := h.service.Get(ctx, id)
 			if svcErr != nil {
 				return nil, svcErr
+			}
+
+			err := updateCentralRequest(dinosaurRequest, &dinosaurUpdateReq)
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Updating CentralRequest")
 			}
 
 			svcErr = h.service.VerifyAndUpdateDinosaurAdmin(ctx, dinosaurRequest)

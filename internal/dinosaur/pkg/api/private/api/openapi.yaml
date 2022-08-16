@@ -278,18 +278,19 @@ components:
           type: string
       type: object
     ResourceList:
-      properties:
-        cpu:
-          type: string
-        memory:
-          type: string
+      additionalProperties:
+        type: string
       type: object
     ResourceRequirements:
       properties:
         requests:
-          $ref: '#/components/schemas/ResourceList'
+          additionalProperties:
+            type: string
+          type: object
         limits:
-          $ref: '#/components/schemas/ResourceList'
+          additionalProperties:
+            type: string
+          type: object
       type: object
     ManagedCentralVersions:
       properties:

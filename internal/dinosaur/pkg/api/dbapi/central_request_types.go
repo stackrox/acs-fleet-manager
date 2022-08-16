@@ -115,3 +115,49 @@ func (k *CentralRequest) GetDataHost() string {
 	}
 	return fmt.Sprintf("acs-data-%s.%s", k.ID, k.Host)
 }
+
+// GetCentralSpec retrieves the CentralSpec from the CentralRequest in unmarshalled form.
+func (k *CentralRequest) GetCentralSpec() (*CentralSpec, error) {
+	var centralSpec CentralSpec
+	err := json.Unmarshal(k.Central, &centralSpec)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling CentralSpec: %w", err)
+	}
+	return &centralSpec, nil
+}
+
+// GetScannerSpec retrieves the ScannerSpec from the CentralRequest in unmarshalled form.
+func (k *CentralRequest) GetScannerSpec() (*ScannerSpec, error) {
+	var scannerSpec ScannerSpec
+	err := json.Unmarshal(k.Scanner, &scannerSpec)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling ScannerSpec: %w", err)
+	}
+	return &scannerSpec, nil
+}
+
+// SetCentralSpec updates the CentralSpec within the CentralRequest.
+func (k *CentralRequest) SetCentralSpec(centralSpec *CentralSpec) error {
+	centralSpecBytes, err := json.Marshal(centralSpec)
+	if err != nil {
+		return fmt.Errorf("marshalling CentralSpec into JSON: %w", err)
+	}
+	err = k.Central.UnmarshalJSON(centralSpecBytes)
+	if err != nil {
+		return fmt.Errorf("updating CentralSpec within CentralRequest: %w", err)
+	}
+	return nil
+}
+
+// SetScannerSpec updates the ScannerSpec within the CentralRequest.
+func (k *CentralRequest) SetScannerSpec(scannerSpec *ScannerSpec) error {
+	scannerSpecBytes, err := json.Marshal(scannerSpec)
+	if err != nil {
+		return fmt.Errorf("marshalling ScannerSpec into JSON: %w", err)
+	}
+	err = k.Scanner.UnmarshalJSON(scannerSpecBytes)
+	if err != nil {
+		return fmt.Errorf("updating ScannerSpec within CentralRequest: %w", err)
+	}
+	return nil
+}

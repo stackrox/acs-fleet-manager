@@ -42,21 +42,54 @@ func ConvertPublicScalingToV1(scaling *public.ScannerSpecAnalyzerScaling) (v1alp
 }
 
 func qtyAsString(qty resource.Quantity) string {
+	if qty == (resource.Quantity{}) {
+		return ""
+	}
 	return (&qty).String()
 }
 
 // ConvertCoreV1ResourceRequirementsToPublic ...
 func ConvertCoreV1ResourceRequirementsToPublic(res *v1.ResourceRequirements) public.ResourceRequirements {
-	return public.ResourceRequirements{
-		Limits: public.ResourceList{
-			Cpu:    qtyAsString(res.Limits[corev1.ResourceCPU]),
-			Memory: qtyAsString(res.Limits[corev1.ResourceMemory]),
-		},
-		Requests: public.ResourceList{
-			Cpu:    qtyAsString(res.Requests[corev1.ResourceCPU]),
-			Memory: qtyAsString(res.Requests[corev1.ResourceMemory]),
-		},
+	var resources public.ResourceRequirements
+	limits := make(map[string]string)
+	requests := make(map[string]string)
+
+	for k, v := range res.Limits {
+		limits[k.String()] = v.String()
 	}
+	if len(limits) > 0 {
+		resources.Limits = limits
+	}
+	for k, v := range res.Requests {
+		requests[k.String()] = v.String()
+	}
+	if len(requests) > 0 {
+		resources.Requests = requests
+	}
+
+	return resources
+}
+
+// ConvertCoreV1ResourceRequirementsToPrivate ...
+func ConvertCoreV1ResourceRequirementsToPrivate(res *v1.ResourceRequirements) private.ResourceRequirements {
+	var resources private.ResourceRequirements
+	limits := make(map[string]string)
+	requests := make(map[string]string)
+
+	for k, v := range res.Limits {
+		limits[k.String()] = v.String()
+	}
+	if len(limits) > 0 {
+		resources.Limits = limits
+	}
+	for k, v := range res.Requests {
+		requests[k.String()] = v.String()
+	}
+	if len(requests) > 0 {
+		resources.Requests = requests
+	}
+
+	return resources
 }
 
 // ConvertPublicResourceRequirementsToCoreV1 ...
@@ -73,44 +106,39 @@ func ConvertPublicResourceRequirementsToCoreV1(res *public.ResourceRequirements)
 	return ConvertPrivateResourceRequirementsToCoreV1(&privateRes)
 }
 
+func apiResourcesToCoreV1(resources map[string]string) (map[corev1.ResourceName]resource.Quantity, error) {
+	var v1Resources map[corev1.ResourceName]resource.Quantity
+	// := make(map[corev1.ResourceName]resource.Quantity)
+	for name, qty := range resources {
+		if qty == "" {
+			continue
+		}
+		resourceQty, err := resource.ParseQuantity(qty)
+		if err != nil {
+			return nil, fmt.Errorf("parsing quantity %q for resource %s: %v", qty, name, err)
+		}
+		if v1Resources == nil {
+			v1Resources = make(map[corev1.ResourceName]resource.Quantity)
+		}
+		v1Resources[corev1.ResourceName(name)] = resourceQty
+	}
+	return v1Resources, nil
+}
+
 // ConvertPrivateResourceRequirementsToCoreV1 ...
 func ConvertPrivateResourceRequirementsToCoreV1(res *private.ResourceRequirements) (corev1.ResourceRequirements, error) {
-	var limitsCPU, limitsMemory, requestsCPU, requestsMemory resource.Quantity
-	var err error
+	requests, err := apiResourcesToCoreV1(res.Requests)
+	if err != nil {
+		return corev1.ResourceRequirements{}, err
+	}
 
-	if res.Limits.Cpu != "" {
-		limitsCPU, err = resource.ParseQuantity(res.Limits.Cpu)
-		if err != nil {
-			return corev1.ResourceRequirements{}, fmt.Errorf("parsing CPU limit %q: %v", res.Limits.Cpu, err)
-		}
-	}
-	if res.Limits.Memory != "" {
-		limitsMemory, err = resource.ParseQuantity(res.Limits.Memory)
-		if err != nil {
-			return corev1.ResourceRequirements{}, fmt.Errorf("parsing memory limit %q: %v", res.Limits.Memory, err)
-		}
-	}
-	if res.Requests.Cpu != "" {
-		requestsCPU, err = resource.ParseQuantity(res.Requests.Cpu)
-		if err != nil {
-			return corev1.ResourceRequirements{}, fmt.Errorf("parsing CPU request %q: %v", res.Requests.Cpu, err)
-		}
-	}
-	if res.Requests.Memory != "" {
-		requestsMemory, err = resource.ParseQuantity(res.Requests.Memory)
-		if err != nil {
-			return corev1.ResourceRequirements{}, fmt.Errorf("parsing memory requst %q: %v", res.Limits.Memory, err)
-		}
+	limits, err := apiResourcesToCoreV1(res.Limits)
+	if err != nil {
+		return corev1.ResourceRequirements{}, err
 	}
 
 	return corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    limitsCPU,
-			corev1.ResourceMemory: limitsMemory,
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    requestsCPU,
-			corev1.ResourceMemory: requestsMemory,
-		},
+		Limits:   limits,
+		Requests: requests,
 	}, nil
 }
