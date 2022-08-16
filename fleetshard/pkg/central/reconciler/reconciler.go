@@ -135,7 +135,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	centralExists := true
-	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}, central)
+	existingCentral := v1alpha1.Central{}
+	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}, &existingCentral)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return nil, errors.Wrapf(err, "unable to check the existence of central %s/%s", central.GetNamespace(), central.GetName())
@@ -154,13 +155,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	} else {
 		// TODO(create-ticket): implement update logic
 		glog.Infof("Update central %s/%s", central.GetNamespace(), central.GetName())
+		existingCentral.Spec = central.Spec
 
-		err = r.incrementCentralRevision(central)
+		err = r.incrementCentralRevision(&existingCentral)
 		if err != nil {
 			return nil, err
 		}
 
-		if err := r.client.Update(ctx, central); err != nil {
+		if err := r.client.Update(ctx, &existingCentral); err != nil {
 			return nil, errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
 		}
 	}
