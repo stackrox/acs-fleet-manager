@@ -1,8 +1,9 @@
 # Quota control
 
 When fleet manager receives a creation request from a client, for example the Red Hat console,
-the OCM token attached to the request identifies the user. Fleet manager then determines if
-the organization of the user has sufficient quota.
+the OCM token attached to the request identifies the user. The `org_id` claim of the token specifies
+the Red Hat organization of the user. Quota is always assigned on the organization level. Fleet
+manager then determines if the organization of the user has sufficient quota.
 
 <img src="./quota-flow.png" width="300">
 
