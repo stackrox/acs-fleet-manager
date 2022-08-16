@@ -5,6 +5,8 @@ import "github.com/stackrox/acs-fleet-manager/pkg/environments"
 // NewProductionEnvLoader ...
 func NewProductionEnvLoader() environments.EnvLoader {
 	return environments.SimpleEnvLoader{
+		"ocm-base-url":                        "https://api.openshift.com",
+		"ams-base-url":                        "https://api.openshift.com",
 		"v":                                   "1",
 		"ocm-debug":                           "false",
 		"enable-ocm-mock":                     "false",

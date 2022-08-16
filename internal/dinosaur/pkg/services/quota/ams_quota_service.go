@@ -3,6 +3,7 @@ package quota
 import (
 	"fmt"
 
+	"github.com/golang/glog"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
@@ -16,11 +17,10 @@ type amsQuotaService struct {
 
 func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder {
 	rr := amsv1.ReservedResourceBuilder{}
-	rr.ResourceType("cluster.aws") // cluster.aws
-	rr.BYOC(false)                 // false
-	rr.ResourceName("rhosak")      // TODO change this to correspond to your product resource name
-	rr.BillingModel("marketplace") // "marketplace" or "standard"
-	rr.AvailabilityZoneType("single")
+	rr.ResourceType("cluster.aws")
+	rr.BYOC(false)
+	rr.ResourceName("rhacs")
+	rr.AvailabilityZoneType("multi")
 	rr.Count(1)
 	return rr
 }
@@ -127,8 +127,9 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 		return "", errors.InsufficientQuotaError("Error getting billing model: No available billing model found")
 	}
 	rr.BillingModel(amsv1.BillingModel(bm))
+	glog.Infof("Billing model of Central request %s with quota type %s has been set to %s.", dinosaur.ID, instanceType.GetQuotaType(), bm)
 
-	cb, _ := amsv1.NewClusterAuthorizationRequest().
+	cb, err := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(dinosaur.Owner).
 		CloudProviderID(dinosaur.CloudProvider).
 		ProductID(instanceType.GetQuotaType().GetProduct()).
@@ -137,10 +138,13 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 		ExternalClusterID(dinosaurID).
 		Disconnected(false).
 		BYOC(false).
-		AvailabilityZone("single").
+		AvailabilityZone("multi").
 		Reserve(true).
 		Resources(&rr).
 		Build()
+	if err != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
+	}
 
 	resp, err := q.amsClient.ClusterAuthorization(cb)
 	if err != nil {

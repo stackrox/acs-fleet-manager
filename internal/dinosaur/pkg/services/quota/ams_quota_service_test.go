@@ -53,10 +53,10 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						if product != string(ocm.RHOSAKProduct) {
+						if product != string(ocm.RHACSProduct) {
 							return []*v1.QuotaCost{}, nil
 						}
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						if err != nil {
 							panic("unexpected error")
@@ -80,7 +80,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
-						if cb.ProductID() == string(ocm.RHOSAKProduct) {
+						if cb.ProductID() == string(ocm.RHACSProduct) {
 							ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
 							return ca, nil
 						}
@@ -91,10 +91,10 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						if product != string(ocm.RHOSAKProduct) {
+						if product != string(ocm.RHACSProduct) {
 							return []*v1.QuotaCost{}, nil
 						}
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						if err != nil {
 							panic("unexpected error")
@@ -150,10 +150,10 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						if product != string(ocm.RHOSAKProduct) {
+						if product != string(ocm.RHACSProduct) {
 							return []*v1.QuotaCost{}, nil
 						}
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						if err != nil {
 							panic("unexpected error")
@@ -182,7 +182,6 @@ func Test_AMSCheckQuota(t *testing.T) {
 			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(dinosaur, types.EVAL)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			gomega.Expect(sq).To(gomega.Equal(tt.args.hasStandardQuota))
-			fmt.Printf("eq is %v\n", eq)
 			gomega.Expect(eq).To(gomega.Equal(tt.args.hasEvalQuota))
 
 			_, err = quotaService.ReserveQuota(dinosaur, tt.args.dinosaurInstanceType)
@@ -226,7 +225,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						if err != nil {
 							panic("unexpected error")
@@ -258,12 +257,12 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb1, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						if err != nil {
 							panic("unexpected error")
 						}
-						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
 						if err != nil {
 							panic("unexpected error")
@@ -295,12 +294,12 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb1, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						if err != nil {
 							panic("unexpected error")
 						}
-						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
 						if err != nil {
 							panic("unexpected error")
@@ -332,7 +331,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKTrialProduct)).ResourceName(resourceName).Cost(0)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
 						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						if err != nil {
 							panic("unexpected error")
@@ -364,12 +363,12 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb1, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						if err != nil {
 							panic("unexpected error")
 						}
-						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
 						if err != nil {
 							panic("unexpected error")
@@ -424,12 +423,12 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string("unknownbillingmodelone")).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string("unknownbillingmodelone")).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb1, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						if err != nil {
 							panic("unexpected error")
 						}
-						rrbq2 := v1.NewRelatedResource().BillingModel(string("unknownbillingmodeltwo")).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq2 := v1.NewRelatedResource().BillingModel(string("unknownbillingmodeltwo")).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
 						if err != nil {
 							panic("unexpected error")
@@ -456,7 +455,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						if err != nil {
 							panic("unexpected error")
@@ -594,8 +593,8 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-					rrbq1 := v1.NewRelatedResource().BillingModel("unknownbillingmodel").Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
-					rrbq2 := v1.NewRelatedResource().BillingModel("unknownbillingmodel2").Product(string(ocm.RHOSAKTrialProduct)).ResourceName(resourceName).Cost(1)
+					rrbq1 := v1.NewRelatedResource().BillingModel("unknownbillingmodel").Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+					rrbq2 := v1.NewRelatedResource().BillingModel("unknownbillingmodel2").Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(1)
 					qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1, rrbq2).Build()
 					if err != nil {
 						panic("unexpected error")
@@ -617,8 +616,8 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-					rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
-					rrbq2 := v1.NewRelatedResource().BillingModel("unknownbillingmodel2").Product(string(ocm.RHOSAKTrialProduct)).ResourceName(resourceName).Cost(1)
+					rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+					rrbq2 := v1.NewRelatedResource().BillingModel("unknownbillingmodel2").Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(1)
 					qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1, rrbq2).Build()
 					if err != nil {
 						panic("unexpected error")
@@ -640,12 +639,12 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-					rrbq1 := v1.NewRelatedResource().BillingModel("unknownbillingmodel").Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+					rrbq1 := v1.NewRelatedResource().BillingModel("unknownbillingmodel").Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 					qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 					if err != nil {
 						panic("unexpected error")
 					}
-					rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+					rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 					qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
 					if err != nil {
 						panic("unexpected error")
@@ -668,12 +667,12 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-					rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+					rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 					qcb, err := v1.NewQuotaCost().Allowed(0).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 					if err != nil {
 						panic("unexpected error")
 					}
-					rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+					rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
 					qcb2, err := v1.NewQuotaCost().Allowed(0).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
 					if err != nil {
 						panic("unexpected error")
