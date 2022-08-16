@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
@@ -29,8 +29,8 @@ import (
 )
 
 var (
-	dinosaurDeletionStatuses  = []string{constants2.DinosaurRequestStatusDeleting.String(), constants2.DinosaurRequestStatusDeprovision.String()}
-	dinosaurManagedCRStatuses = []string{constants2.DinosaurRequestStatusProvisioning.String(), constants2.DinosaurRequestStatusDeprovision.String(), constants2.DinosaurRequestStatusReady.String(), constants2.DinosaurRequestStatusFailed.String()}
+	dinosaurDeletionStatuses  = []string{dinosaurConstants.DinosaurRequestStatusDeleting.String(), dinosaurConstants.DinosaurRequestStatusDeprovision.String()}
+	dinosaurManagedCRStatuses = []string{dinosaurConstants.DinosaurRequestStatusProvisioning.String(), dinosaurConstants.DinosaurRequestStatusDeprovision.String(), dinosaurConstants.DinosaurRequestStatusReady.String(), dinosaurConstants.DinosaurRequestStatusFailed.String()}
 )
 
 // DinosaurRoutesAction ...
@@ -70,13 +70,13 @@ type DinosaurService interface {
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError)
 	ListByClusterID(clusterID string) ([]*dbapi.CentralRequest, *errors.ServiceError)
 	RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
-	ListByStatus(status ...constants2.DinosaurStatus) ([]*dbapi.CentralRequest, *errors.ServiceError)
+	ListByStatus(status ...dinosaurConstants.DinosaurStatus) ([]*dbapi.CentralRequest, *errors.ServiceError)
 	// UpdateStatus change the status of the Dinosaur cluster
 	// The returned boolean is to be used to know if the update has been tried or not. An update is not tried if the
 	// original status is 'deprovision' (cluster in deprovision state can't be change state) or if the final status is the
 	// same as the original status. The error will contain any error encountered when attempting to update or the reason
 	// why no attempt has been done
-	UpdateStatus(id string, status constants2.DinosaurStatus) (bool, *errors.ServiceError)
+	UpdateStatus(id string, status dinosaurConstants.DinosaurStatus) (bool, *errors.ServiceError)
 	Update(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	// Updates() updates the given fields of a dinosaur. This takes in a map so that even zero-fields can be updated.
 	// Use this only when you want to update the multiple columns that may contain zero-fields, otherwise use the `DinosaurService.Update()` method.
@@ -89,7 +89,7 @@ type DinosaurService interface {
 	// DeprovisionDinosaurForUsers registers all dinosaurs for deprovisioning given the list of owners
 	DeprovisionDinosaurForUsers(users []string) *errors.ServiceError
 	DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *errors.ServiceError
-	CountByStatus(status []constants2.DinosaurStatus) ([]DinosaurStatusCount, error)
+	CountByStatus(status []dinosaurConstants.DinosaurStatus) ([]DinosaurStatusCount, error)
 	CountByRegionAndInstanceType() ([]DinosaurRegionCount, error)
 	ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
@@ -246,7 +246,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	}
 
 	dbConn := k.connectionFactory.New()
-	dinosaurRequest.Status = constants2.DinosaurRequestStatusAccepted.String()
+	dinosaurRequest.Status = dinosaurConstants.DinosaurRequestStatusAccepted.String()
 	dinosaurRequest.SubscriptionID = subscriptionID
 	glog.Infof("Central request %s has been assigned the subscription %s.", dinosaurRequest.ID, subscriptionID)
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
@@ -257,7 +257,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	if err := dbConn.Create(dinosaurRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create dinosaur request") // hide the db error to http caller
 	}
-	metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusAccepted, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
+	metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(dinosaurConstants.DinosaurRequestStatusAccepted, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
 	return nil
 }
 
@@ -288,7 +288,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		},
 		Host:        dinosaurRequest.Host,
 		PlacementID: api.NewID(),
-		Status:      constants2.DinosaurRequestStatusProvisioning.String(),
+		Status:      dinosaurConstants.DinosaurRequestStatusProvisioning.String(),
 		Namespace:   dinosaurRequest.Namespace,
 	}
 	if err := k.Update(updatedDinosaurRequest); err != nil {
@@ -299,7 +299,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 }
 
 // ListByStatus ...
-func (k *dinosaurService) ListByStatus(status ...constants2.DinosaurStatus) ([]*dbapi.CentralRequest, *errors.ServiceError) {
+func (k *dinosaurService) ListByStatus(status ...dinosaurConstants.DinosaurStatus) ([]*dbapi.CentralRequest, *errors.ServiceError) {
 	if len(status) == 0 {
 		return nil, errors.GeneralError("no status provided")
 	}
@@ -398,15 +398,15 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 	if err := dbConn.First(&dinosaurRequest).Error; err != nil {
 		return services.HandleGetError("DinosaurResource", "id", id, err)
 	}
-	metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.DinosaurOperationDeprovision)
+	metrics.IncreaseDinosaurTotalOperationsCountMetric(dinosaurConstants.DinosaurOperationDeprovision)
 
-	deprovisionStatus := constants2.DinosaurRequestStatusDeprovision
+	deprovisionStatus := dinosaurConstants.DinosaurRequestStatusDeprovision
 
 	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
 		if err != nil {
 			return services.HandleGetError("DinosaurResource", "id", id, err)
 		}
-		metrics.IncreaseDinosaurSuccessOperationsCountMetric(constants2.DinosaurOperationDeprovision)
+		metrics.IncreaseDinosaurSuccessOperationsCountMetric(dinosaurConstants.DinosaurOperationDeprovision)
 		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(deprovisionStatus, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
 	}
 
@@ -421,7 +421,7 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 		Where("owner IN (?)", users).
 		Where("status NOT IN (?)", dinosaurDeletionStatuses).
 		Updates(map[string]interface{}{
-			"status":             constants2.DinosaurRequestStatusDeprovision,
+			"status":             dinosaurConstants.DinosaurRequestStatusDeprovision,
 			"deletion_timestamp": now,
 		})
 
@@ -434,8 +434,8 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 		glog.Infof("%v dinosaurs are now deprovisioning for users %v", dbConn.RowsAffected, users)
 		var counter int64
 		for ; counter < dbConn.RowsAffected; counter++ {
-			metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.DinosaurOperationDeprovision)
-			metrics.IncreaseDinosaurSuccessOperationsCountMetric(constants2.DinosaurOperationDeprovision)
+			metrics.IncreaseDinosaurTotalOperationsCountMetric(dinosaurConstants.DinosaurOperationDeprovision)
+			metrics.IncreaseDinosaurSuccessOperationsCountMetric(dinosaurConstants.DinosaurOperationDeprovision)
 		}
 	}
 
@@ -452,7 +452,7 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *e
 		Where("status NOT IN (?)", dinosaurDeletionStatuses)
 
 	db := dbConn.Updates(map[string]interface{}{
-		"status":             constants2.DinosaurRequestStatusDeprovision,
+		"status":             dinosaurConstants.DinosaurRequestStatusDeprovision,
 		"deletion_timestamp": now,
 	})
 	err := db.Error
@@ -464,8 +464,8 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *e
 		glog.Infof("%v dinosaur_request's lifespans are over %d hours and have had their status updated to deprovisioning", db.RowsAffected, dinosaurAgeInHours)
 		var counter int64
 		for ; counter < db.RowsAffected; counter++ {
-			metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.DinosaurOperationDeprovision)
-			metrics.IncreaseDinosaurSuccessOperationsCountMetric(constants2.DinosaurOperationDeprovision)
+			metrics.IncreaseDinosaurTotalOperationsCountMetric(dinosaurConstants.DinosaurOperationDeprovision)
+			metrics.IncreaseDinosaurSuccessOperationsCountMetric(dinosaurConstants.DinosaurOperationDeprovision)
 		}
 	}
 
@@ -496,8 +496,8 @@ func (k *dinosaurService) Delete(dinosaurRequest *dbapi.CentralRequest) *errors.
 		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to delete dinosaur request with id %s", dinosaurRequest.ID)
 	}
 
-	metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.DinosaurOperationDelete)
-	metrics.IncreaseDinosaurSuccessOperationsCountMetric(constants2.DinosaurOperationDelete)
+	metrics.IncreaseDinosaurTotalOperationsCountMetric(dinosaurConstants.DinosaurOperationDelete)
+	metrics.IncreaseDinosaurSuccessOperationsCountMetric(dinosaurConstants.DinosaurOperationDelete)
 
 	return nil
 }
@@ -658,7 +658,7 @@ func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dino
 }
 
 // UpdateStatus ...
-func (k *dinosaurService) UpdateStatus(id string, status constants2.DinosaurStatus) (bool, *errors.ServiceError) {
+func (k *dinosaurService) UpdateStatus(id string, status dinosaurConstants.DinosaurStatus) (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 
 	dinosaur, err := k.GetByID(id)
@@ -666,7 +666,7 @@ func (k *dinosaurService) UpdateStatus(id string, status constants2.DinosaurStat
 		return true, errors.NewWithCause(errors.ErrorGeneral, err, "failed to update status")
 	}
 	// only allow to change the status to "deleting" if the cluster is already in "deprovision" status
-	if dinosaur.Status == constants2.DinosaurRequestStatusDeprovision.String() && status != constants2.DinosaurRequestStatusDeleting {
+	if dinosaur.Status == dinosaurConstants.DinosaurRequestStatusDeprovision.String() && status != dinosaurConstants.DinosaurRequestStatusDeleting {
 		return false, errors.GeneralError("failed to update status: cluster is deprovisioning")
 	}
 
@@ -676,7 +676,7 @@ func (k *dinosaurService) UpdateStatus(id string, status constants2.DinosaurStat
 	}
 
 	update := &dbapi.CentralRequest{Status: status.String()}
-	if status.String() == constants2.DinosaurRequestStatusDeprovision.String() {
+	if status.String() == dinosaurConstants.DinosaurRequestStatusDeprovision.String() {
 		now := time.Now()
 		update.DeletionTimestamp = &now
 	}
@@ -739,7 +739,7 @@ func (k *dinosaurService) GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralReq
 
 // DinosaurStatusCount ...
 type DinosaurStatusCount struct {
-	Status constants2.DinosaurStatus
+	Status dinosaurConstants.DinosaurStatus
 	Count  int
 }
 
@@ -764,7 +764,7 @@ func (k *dinosaurService) CountByRegionAndInstanceType() ([]DinosaurRegionCount,
 }
 
 // CountByStatus ...
-func (k *dinosaurService) CountByStatus(status []constants2.DinosaurStatus) ([]DinosaurStatusCount, error) {
+func (k *dinosaurService) CountByStatus(status []dinosaurConstants.DinosaurStatus) ([]DinosaurStatusCount, error) {
 	dbConn := k.connectionFactory.New()
 	var results []DinosaurStatusCount
 	if err := dbConn.Model(&dbapi.CentralRequest{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
@@ -774,7 +774,7 @@ func (k *dinosaurService) CountByStatus(status []constants2.DinosaurStatus) ([]D
 	// if there is no count returned for a status from the above query because there is no dinosaurs in such a status,
 	// we should return the count for these as well to avoid any confusion
 	if len(status) > 0 {
-		countersMap := map[constants2.DinosaurStatus]int{}
+		countersMap := map[dinosaurConstants.DinosaurStatus]int{}
 		for _, r := range results {
 			countersMap[r.Status] = r.Count
 		}
