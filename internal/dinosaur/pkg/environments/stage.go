@@ -5,8 +5,8 @@ import "github.com/stackrox/acs-fleet-manager/pkg/environments"
 // NewStageEnvLoader ...
 func NewStageEnvLoader() environments.EnvLoader {
 	return environments.SimpleEnvLoader{
-		"ocm-base-url":                        "https://api.stage.openshift.com",
-		"ams-base-url":                        "https://api.stage.openshift.com",
+		"ocm-base-url":                        "https://api.openshift.com",
+		"ams-base-url":                        "https://api.openshift.com",
 		"enable-ocm-mock":                     "false",
 		"enable-deny-list":                    "true",
 		"max-allowed-instances":               "1",
