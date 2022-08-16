@@ -1,11 +1,10 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
-	"io"
 	"net/http"
-	"strings"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/jsonpb"
@@ -59,8 +58,8 @@ func NewCentralClientNoAuth(central private.ManagedCentral, address string) *Cli
 	}
 }
 
-// SendRequestToCentral sends the request message to central and returns the http response.
-func (c *Client) SendRequestToCentral(ctx context.Context, requestMessage proto.Message, method, path string) (*http.Response, error) {
+// SendRequestToCentralRaw sends the request message to central and returns the http response.
+func (c *Client) SendRequestToCentralRaw(ctx context.Context, requestMessage proto.Message, method, path string) (*http.Response, error) {
 	req, err := c.createRequest(ctx, requestMessage, method, path)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating HTTP request to central")
@@ -75,18 +74,46 @@ func (c *Client) SendRequestToCentral(ctx context.Context, requestMessage proto.
 	return resp, nil
 }
 
+// SendRequestToCentral sends the request message to central and returns the response message.
+// If no response message is given, the response body will not be unmarshalled.
+// It will return an error if any error occurs during request creation, unmarshalling or the request returned with a
+// non-successful HTTP status code.
+func (c *Client) SendRequestToCentral(ctx context.Context, requestMessage proto.Message, method, path string,
+	responseMessage proto.Message) error {
+	resp, err := c.SendRequestToCentralRaw(ctx, requestMessage, method, path)
+	if err != nil {
+		return err
+	}
+
+	// Only required to close the response body if we plan on unmarshalling it. If no response message is set, we won't
+	// unmarshal and can hence skip closing the body.
+	if responseMessage != nil && resp.Body != nil {
+		defer utils.IgnoreError(resp.Body.Close)
+	}
+
+	if !httputil.Is2xxStatusCode(resp.StatusCode) {
+		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to execute request: %s %s",
+			method, path)
+	}
+
+	// Do not try to unmarshal the response body if no response message is set.
+	if responseMessage == nil {
+		return nil
+	}
+
+	if err := jsonpb.Unmarshal(resp.Body, responseMessage); err != nil {
+		return errors.Wrap(err, "decoding response body")
+	}
+	return nil
+}
+
 func (c *Client) createRequest(ctx context.Context, requestMessage proto.Message, method, path string) (*http.Request, error) {
-	var body io.Reader
+	body := &bytes.Buffer{}
 	if requestMessage != nil {
-		marshaller := jsonpb.Marshaler{
-			EmitDefaults: true,
-			Indent:       "  ",
-		}
-		jsonString, err := marshaller.MarshalToString(requestMessage)
-		if err != nil {
+		marshaller := jsonpb.Marshaler{}
+		if err := marshaller.Marshal(body, requestMessage); err != nil {
 			return nil, errors.Wrap(err, "marshalling new request to central")
 		}
-		body = strings.NewReader(jsonString)
 	}
 	req, err := http.NewRequestWithContext(ctx, method, c.address+path, body)
 	if err != nil {
@@ -99,18 +126,9 @@ func (c *Client) createRequest(ctx context.Context, requestMessage proto.Message
 // It will return an error if any error occurs during request creation or the request returned with a non-successful
 // HTTP status code.
 func (c *Client) SendGroupRequest(ctx context.Context, groupRequest *storage.Group) error {
-	resp, err := c.SendRequestToCentral(ctx, groupRequest, http.MethodPost, "/v1/groups")
-	if err != nil {
-		return errors.Wrap(err, "sending new group to central")
-	}
-
-	if resp.Body != nil {
-		defer utils.IgnoreError(resp.Body.Close)
-	}
-
-	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode,
-			"failed to create group for central %s/%s",
+	if err := c.SendRequestToCentral(ctx, groupRequest, http.MethodPost, "/v1/groups",
+		nil); err != nil {
+		return errors.Wrapf(err, "failed to create group for central %s/%s",
 			c.central.Metadata.Namespace, c.central.Metadata.Name)
 	}
 	return nil
@@ -120,50 +138,24 @@ func (c *Client) SendGroupRequest(ctx context.Context, groupRequest *storage.Gro
 // It will return an error if any error occurs during request creation or the request returned with a non-successful
 // HTTP status code.
 func (c *Client) SendAuthProviderRequest(ctx context.Context, authProviderRequest *storage.AuthProvider) (*storage.AuthProvider, error) {
-	resp, err := c.SendRequestToCentral(ctx, authProviderRequest, http.MethodPost, "/v1/authProviders")
-	if err != nil {
-		return nil, errors.Wrap(err, "sending new auth provider to central")
-	}
-
-	if resp.Body != nil {
-		defer utils.IgnoreError(resp.Body.Close)
-	}
-
-	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return nil, acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode,
-			"failed to create auth provider for central %s/%s",
+	var authProviderResponse storage.AuthProvider
+	if err := c.SendRequestToCentral(ctx, authProviderRequest, http.MethodPost, "/v1/authProviders",
+		&authProviderResponse); err != nil {
+		return nil, errors.Wrapf(err, "failed to create auth provider for central %s/%s",
 			c.central.Metadata.Namespace, c.central.Metadata.Name)
 	}
-
-	authProvider := &storage.AuthProvider{}
-	if err := jsonpb.Unmarshal(resp.Body, authProvider); err != nil {
-		return nil, errors.Wrap(err, "decoding auth provider creation response")
-	}
-	return authProvider, nil
+	return &authProviderResponse, nil
 }
 
 // GetLoginAuthProviders sends a request to retrieve all login auth providers and returns them.
 // It will return an error if any error occurs during request creation or the request returned with a non-successful
 // HTTP status code.
 func (c *Client) GetLoginAuthProviders(ctx context.Context) (*v1.GetLoginAuthProvidersResponse, error) {
-	resp, err := c.SendRequestToCentral(ctx, nil, http.MethodGet, "/v1/login/authproviders")
-	if err != nil {
-		return nil, errors.Wrap(err, "sending get login auth providers request to central")
-	}
-
-	if resp.Body != nil {
-		defer utils.IgnoreError(resp.Body.Close)
-	}
-
-	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return nil, acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode,
-			"failed to get login auth providers from central %s/%s",
+	var loginAuthProvidersResponse v1.GetLoginAuthProvidersResponse
+	if err := c.SendRequestToCentral(ctx, nil, http.MethodGet, "/v1/login/authproviders",
+		&loginAuthProvidersResponse); err != nil {
+		return nil, errors.Wrapf(err, "failed to get login auth providers from central %s/%s",
 			c.central.Metadata.Namespace, c.central.Metadata.Name)
 	}
-
-	authProvidersResp := &v1.GetLoginAuthProvidersResponse{}
-	if err := jsonpb.Unmarshal(resp.Body, authProvidersResp); err != nil {
-		return nil, errors.Wrap(err, "decoding get login auth providers response")
-	}
-	return authProvidersResp, nil
+	return &loginAuthProvidersResponse, nil
 }
