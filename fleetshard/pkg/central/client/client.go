@@ -28,7 +28,7 @@ func init() {
 	insecureTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 }
 
-// Client ...
+// Client represents the client for central.
 type Client struct {
 	address    string
 	pass       string
@@ -36,7 +36,7 @@ type Client struct {
 	central    private.ManagedCentral
 }
 
-// NewCentralClient ...
+// NewCentralClient creates a new client for central with basic password authentication.
 func NewCentralClient(central private.ManagedCentral, address, pass string) *Client {
 	return &Client{
 		central: central,
@@ -48,7 +48,7 @@ func NewCentralClient(central private.ManagedCentral, address, pass string) *Cli
 	}
 }
 
-// NewCentralClientNoAuth ...
+// NewCentralClientNoAuth creates a new client for central without authentication.
 func NewCentralClientNoAuth(central private.ManagedCentral, address string) *Client {
 	return &Client{
 		central: central,
@@ -59,7 +59,7 @@ func NewCentralClientNoAuth(central private.ManagedCentral, address string) *Cli
 	}
 }
 
-// SendRequestToCentral ...
+// SendRequestToCentral sends the request message to central and returns the http response.
 func (c *Client) SendRequestToCentral(ctx context.Context, requestMessage proto.Message, method, path string) (*http.Response, error) {
 	req, err := c.createRequest(ctx, requestMessage, method, path)
 	if err != nil {
@@ -95,7 +95,9 @@ func (c *Client) createRequest(ctx context.Context, requestMessage proto.Message
 	return req, nil
 }
 
-// SendGroupRequest ...
+// SendGroupRequest sends a request to create the specified group.
+// It will return an error if any error occurs during request creation or the request returned with a non-successful
+// HTTP status code.
 func (c *Client) SendGroupRequest(ctx context.Context, groupRequest *storage.Group) error {
 	resp, err := c.SendRequestToCentral(ctx, groupRequest, http.MethodPost, "/v1/groups")
 	if err != nil {
@@ -114,7 +116,9 @@ func (c *Client) SendGroupRequest(ctx context.Context, groupRequest *storage.Gro
 	return nil
 }
 
-// SendAuthProviderRequest ...
+// SendAuthProviderRequest sends a request to create the specified auth provider and returns the created auth provider.
+// It will return an error if any error occurs during request creation or the request returned with a non-successful
+// HTTP status code.
 func (c *Client) SendAuthProviderRequest(ctx context.Context, authProviderRequest *storage.AuthProvider) (*storage.AuthProvider, error) {
 	resp, err := c.SendRequestToCentral(ctx, authProviderRequest, http.MethodPost, "/v1/authProviders")
 	if err != nil {
@@ -138,7 +142,9 @@ func (c *Client) SendAuthProviderRequest(ctx context.Context, authProviderReques
 	return authProvider, nil
 }
 
-// GetLoginAuthProviders ...
+// GetLoginAuthProviders sends a request to retrieve all login auth providers and returns them.
+// It will return an error if any error occurs during request creation or the request returned with a non-successful
+// HTTP status code.
 func (c *Client) GetLoginAuthProviders(ctx context.Context) (*v1.GetLoginAuthProvidersResponse, error) {
 	resp, err := c.SendRequestToCentral(ctx, nil, http.MethodGet, "/v1/login/authproviders")
 	if err != nil {
