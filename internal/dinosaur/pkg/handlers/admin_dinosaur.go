@@ -273,6 +273,9 @@ func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.
 		return err
 	}
 
+	// TODO(create-ticket): We should also validate the resource configuration here. If the configuration is invalid
+	// the operator will not be able to create the Central instance and we could fail early here.
+
 	new := *request
 
 	err = new.SetCentralSpec(centralSpec)
