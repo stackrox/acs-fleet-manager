@@ -59,7 +59,7 @@ docker run -it --rm -p 8000:8000 \
    -v "$(git rev-parse --show-toplevel)/config":/config \
    -v "$(git rev-parse --show-toplevel)/secrets":/secrets \
    <IMAGE REFERENCE> \
-   --db-host-file secrets/db.host.internal-docker \
+   --db-host-file /secrets/db.host.internal-docker \
    --api-server-bindaddress 0.0.0.0:8000
 ```
 
