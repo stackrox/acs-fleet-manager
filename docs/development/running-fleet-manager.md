@@ -24,7 +24,7 @@ details.
 The `OCM_ENV` environment variable should be set before running any Fleet
 Manager binary command or Makefile target
 
-### Running the fleet manager with an OSD cluster form infractl
+### Running the fleet manager with an OSD cluster from infractl
 
 Write a Cloud provider configuration file that matches the cloud provider and region used for the cluster, see `dev/config/provider-configuration-infractl-osd.yaml` for an example OSD cluster running in GCP. See the cluster creation logs in https://infra.rox.systems/cluster/YOUR_CLUSTER to locate the provider and region. See `internal/dinosaur/pkg/services/cloud_providers.go` for the provider constant.
 

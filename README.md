@@ -14,7 +14,6 @@ ACS fleet-manager repository for the ACS managed service.
 ├── dashboards          -- grafana dashboards
 ├── docs                -- documentation
 ├── docker              -- docker images
-├── docs                -- documentation
 ├── dp-terraform        -- terraforming scripts for data-plane clusters
 ├── e2e                 -- e2e tests
 ├── fleetshard          -- source code for fleetshard-synchronizer
@@ -63,7 +62,7 @@ $ ./scripts/fmcurl
 You can run ACS Fleet Manager on a local k8s cluster (colima, rancher, minikube).
 This requires some preparations on a cluster:
 
-1. Install ACS Operator. Recommended way is to use [OLM](#install-olm) for this.
+1. Install ACS Operator
    The process is described in [operator documentation](https://github.com/stackrox/stackrox/tree/master/operator)
 2. Deploy ingress router
    ```
