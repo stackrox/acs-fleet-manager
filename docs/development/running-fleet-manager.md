@@ -8,17 +8,16 @@ function differently. Environments can be set using the `OCM_ENV` environment
 variable. Below are the list of known environments and their
 details.
 
-- `development` - The `staging` OCM environment is used. Sentry is disabled.
+- `development` (default) - The `staging` OCM environment is used. Sentry is disabled.
   Debugging utilities are enabled. This should be used in local development.
-  This is the default environment used when directly running the Fleet
-  Manager binary and the `OCM_ENV` variable has not been set.
+  The `OCM_ENV` variable has not been set.
 - `testing` - The OCM API is mocked/stubbed out, meaning network calls to OCM
   will fail. The auth service is mocked. This should be used for unit testing.
 - `integration` - Identical to `testing` but using an emulated OCM API server
   to respond to OCM API calls, instead of a basic mock. This can be used for
   integration testing to mock OCM behaviour.
 - `production` - Debugging utilities are disabled, Sentry is enabled.
-  environment can be ignored in most development and is only used when
+  This environment can be ignored in most development and is only used when
   the service is deployed.
 
 The `OCM_ENV` environment variable should be set before running any Fleet
@@ -34,7 +33,7 @@ Download the kubeconfig for the cluster. Without this the fleet manager will ref
 
 ```bash
 CLUSTER=... # your cluster's name
-infractl artifacts $CLUSTER --download-dir ~/infra/$CLUSTER
+infractl artifacts "${CLUSTER}" --download-dir "~/infra/${CLUSTER}"
 ```
 
 Launch the fleet manager using those configuration files:
@@ -43,7 +42,7 @@ Launch the fleet manager using those configuration files:
 make binary && ./fleet-manager serve \
    --dataplane-cluster-config-file=$(pwd)/dev/config/dataplane-cluster-configuration-infractl-osd.yaml \
    --providers-config-file=$(pwd)/dev/config/provider-configuration-infractl-osd.yaml \
-   --kubeconfig=${HOME}/infra/${CLUSTER}/kubeconfig \
+   --kubeconfig="~/infra/${CLUSTER}/kubeconfig" \
    2>&1 | tee fleet-manager-serve.log
 ```
 
