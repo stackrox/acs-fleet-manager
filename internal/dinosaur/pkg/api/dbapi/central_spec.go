@@ -71,7 +71,7 @@ func updateCoreV1Resources(to *corev1.ResourceRequirements, from private.Resourc
 func (c *CentralSpec) UpdateFromPrivateAPI(apiCentralSpec *private.CentralSpec) error {
 	err := updateCoreV1Resources(&c.Resources, apiCentralSpec.Resources)
 	if err != nil {
-		return fmt.Errorf("updating CentralSpec: %w", err)
+		return fmt.Errorf("updating resources within CentralSpec: %w", err)
 	}
 	return nil
 }
@@ -117,7 +117,7 @@ func updateScannerAnalyzerScaling(s *ScannerAnalyzerScaling, apiScaling private.
 		new.Replicas = apiScaling.Replicas
 	}
 
-	// TODO: validation of the resulting configuration new.
+	// TODO(create-ticket): validation of the resulting configuration new scaling configuration.
 
 	*s = new
 	return nil
@@ -130,15 +130,15 @@ func (s *ScannerSpec) UpdateFromPrivateAPI(apiSpec *private.ScannerSpec) error {
 
 	err = updateCoreV1Resources(&new.Analyzer.Resources, apiSpec.Analyzer.Resources)
 	if err != nil {
-		return fmt.Errorf("updating ScannerSpec Analyzer: %w", err)
+		return fmt.Errorf("updating resources within ScannerSpec Analyzer: %w", err)
 	}
 	err = updateScannerAnalyzerScaling(&new.Analyzer.Scaling, apiSpec.Analyzer.Scaling)
 	if err != nil {
-		return fmt.Errorf("updating ScannerSpec Analyzer Scaling: %w", err)
+		return fmt.Errorf("updating scaling configuration within ScannerSpec Analyzer: %w", err)
 	}
 	err = updateCoreV1Resources(&new.Db.Resources, apiSpec.Db.Resources)
 	if err != nil {
-		return fmt.Errorf("updating ScannerSpec DB: %w", err)
+		return fmt.Errorf("updating resources within ScannerSpec DB: %w", err)
 	}
 	*s = new
 	return nil

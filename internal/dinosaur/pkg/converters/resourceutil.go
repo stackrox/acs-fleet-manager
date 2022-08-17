@@ -1,18 +1,30 @@
 package converters
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-// ConvertPrivateScalingToV1 ...
+// ConvertPublicScalingToV1 converts public API Scanner Scaling configuration into v1alpha1 Scanner Scaling configuration.
+func ConvertPublicScalingToV1(scaling *public.ScannerSpecAnalyzerScaling) (v1alpha1.ScannerAnalyzerScaling, error) {
+	if scaling == nil {
+		return v1alpha1.ScannerAnalyzerScaling{}, nil
+	}
+	autoScaling := scaling.AutoScaling
+	return v1alpha1.ScannerAnalyzerScaling{
+		AutoScaling: (*v1alpha1.AutoScalingPolicy)(&autoScaling), // TODO(create-ticket): validate.
+		Replicas:    &scaling.Replicas,
+		MinReplicas: &scaling.MinReplicas,
+		MaxReplicas: &scaling.MaxReplicas,
+	}, nil
+}
+
+// ConvertPrivateScalingToV1 converts private API Scanner Scaling configuration into v1alpha1 Scanner Scaling configuration.
 func ConvertPrivateScalingToV1(scaling *private.ManagedCentralAllOfSpecScannerAnalyzerScaling) v1alpha1.ScannerAnalyzerScaling {
 	if scaling == nil {
 		return v1alpha1.ScannerAnalyzerScaling{}
@@ -27,88 +39,79 @@ func ConvertPrivateScalingToV1(scaling *private.ManagedCentralAllOfSpecScannerAn
 
 }
 
-// ConvertPublicScalingToV1 ...
-func ConvertPublicScalingToV1(scaling *public.ScannerSpecAnalyzerScaling) (v1alpha1.ScannerAnalyzerScaling, error) {
-	if scaling == nil {
-		return v1alpha1.ScannerAnalyzerScaling{}, nil
+// convertCoreV1ResourceListToMap converts corev1 ResourceList into generic map.
+func convertCoreV1ResourceListToMap(v1ResourceList corev1.ResourceList) map[string]string {
+	v1Resources := (map[corev1.ResourceName]resource.Quantity)(v1ResourceList)
+	if v1Resources == nil {
+		return nil
 	}
-	autoScaling := scaling.AutoScaling
-	return v1alpha1.ScannerAnalyzerScaling{
-		AutoScaling: (*v1alpha1.AutoScalingPolicy)(&autoScaling), // TODO(create-ticket): validate.
-		Replicas:    &scaling.Replicas,
-		MinReplicas: &scaling.MinReplicas,
-		MaxReplicas: &scaling.MaxReplicas,
+	resources := make(map[string]string)
+
+	for name, qty := range v1Resources {
+		if qtyString := qtyAsString(qty); qtyString != "" {
+			resources[name.String()] = qtyString
+		}
+	}
+	if len(resources) == 0 {
+		return nil
+	}
+	return resources
+}
+
+// ConvertCoreV1ResourceRequirementsToPublic converts corev1 ResourceRequirements into public API ResourceRequirements.
+func ConvertCoreV1ResourceRequirementsToPublic(v1Resources *corev1.ResourceRequirements) public.ResourceRequirements {
+	return public.ResourceRequirements{
+		Limits:   convertCoreV1ResourceListToMap(v1Resources.Limits),
+		Requests: convertCoreV1ResourceListToMap(v1Resources.Requests),
+	}
+}
+
+// ConvertCoreV1ResourceRequirementsToPrivate converts corev1 ResourceRequirements into private API ResourceRequirements.
+func ConvertCoreV1ResourceRequirementsToPrivate(v1Resources *corev1.ResourceRequirements) private.ResourceRequirements {
+	return private.ResourceRequirements{
+		Limits:   convertCoreV1ResourceListToMap(v1Resources.Limits),
+		Requests: convertCoreV1ResourceListToMap(v1Resources.Requests),
+	}
+}
+
+// ConvertPublicResourceRequirementsToCoreV1 converts public API ResourceRequirements into corev1 ResourceRequirements.
+func ConvertPublicResourceRequirementsToCoreV1(res *public.ResourceRequirements) (corev1.ResourceRequirements, error) {
+	requests, err := apiResourcesToCoreV1(res.Requests)
+	if err != nil {
+		return corev1.ResourceRequirements{}, err
+	}
+
+	limits, err := apiResourcesToCoreV1(res.Limits)
+	if err != nil {
+		return corev1.ResourceRequirements{}, err
+	}
+
+	return corev1.ResourceRequirements{
+		Limits:   limits,
+		Requests: requests,
 	}, nil
 }
 
-func qtyAsString(qty resource.Quantity) string {
-	if qty == (resource.Quantity{}) {
-		return ""
-	}
-	return (&qty).String()
-}
-
-// ConvertCoreV1ResourceRequirementsToPublic ...
-func ConvertCoreV1ResourceRequirementsToPublic(res *v1.ResourceRequirements) public.ResourceRequirements {
-	var resources public.ResourceRequirements
-	limits := make(map[string]string)
-	requests := make(map[string]string)
-
-	for k, v := range res.Limits {
-		limits[k.String()] = v.String()
-	}
-	if len(limits) > 0 {
-		resources.Limits = limits
-	}
-	for k, v := range res.Requests {
-		requests[k.String()] = v.String()
-	}
-	if len(requests) > 0 {
-		resources.Requests = requests
-	}
-
-	return resources
-}
-
-// ConvertCoreV1ResourceRequirementsToPrivate ...
-func ConvertCoreV1ResourceRequirementsToPrivate(res *v1.ResourceRequirements) private.ResourceRequirements {
-	var resources private.ResourceRequirements
-	limits := make(map[string]string)
-	requests := make(map[string]string)
-
-	for k, v := range res.Limits {
-		limits[k.String()] = v.String()
-	}
-	if len(limits) > 0 {
-		resources.Limits = limits
-	}
-	for k, v := range res.Requests {
-		requests[k.String()] = v.String()
-	}
-	if len(requests) > 0 {
-		resources.Requests = requests
-	}
-
-	return resources
-}
-
-// ConvertPublicResourceRequirementsToCoreV1 ...
-func ConvertPublicResourceRequirementsToCoreV1(res *public.ResourceRequirements) (corev1.ResourceRequirements, error) {
-	val, err := json.Marshal(res)
+// ConvertPrivateResourceRequirementsToCoreV1 converts private API ResourceRequirements into corev1 ResourceRequirements.
+func ConvertPrivateResourceRequirementsToCoreV1(res *private.ResourceRequirements) (corev1.ResourceRequirements, error) {
+	requests, err := apiResourcesToCoreV1(res.Requests)
 	if err != nil {
-		return corev1.ResourceRequirements{}, nil
+		return corev1.ResourceRequirements{}, err
 	}
-	var privateRes private.ResourceRequirements
-	err = json.Unmarshal(val, &privateRes)
+
+	limits, err := apiResourcesToCoreV1(res.Limits)
 	if err != nil {
-		return corev1.ResourceRequirements{}, nil
+		return corev1.ResourceRequirements{}, err
 	}
-	return ConvertPrivateResourceRequirementsToCoreV1(&privateRes)
+
+	return corev1.ResourceRequirements{
+		Limits:   limits,
+		Requests: requests,
+	}, nil
 }
 
 func apiResourcesToCoreV1(resources map[string]string) (map[corev1.ResourceName]resource.Quantity, error) {
 	var v1Resources map[corev1.ResourceName]resource.Quantity
-	// := make(map[corev1.ResourceName]resource.Quantity)
 	for name, qty := range resources {
 		if qty == "" {
 			continue
@@ -125,20 +128,10 @@ func apiResourcesToCoreV1(resources map[string]string) (map[corev1.ResourceName]
 	return v1Resources, nil
 }
 
-// ConvertPrivateResourceRequirementsToCoreV1 ...
-func ConvertPrivateResourceRequirementsToCoreV1(res *private.ResourceRequirements) (corev1.ResourceRequirements, error) {
-	requests, err := apiResourcesToCoreV1(res.Requests)
-	if err != nil {
-		return corev1.ResourceRequirements{}, err
+func qtyAsString(qty resource.Quantity) string {
+	if qty == (resource.Quantity{}) {
+		// Otherwise a zero-value Quantity would produce the non-zero-value string "0".
+		return ""
 	}
-
-	limits, err := apiResourcesToCoreV1(res.Limits)
-	if err != nil {
-		return corev1.ResourceRequirements{}, err
-	}
-
-	return corev1.ResourceRequirements{
-		Limits:   limits,
-		Requests: requests,
-	}, nil
+	return (&qty).String()
 }

@@ -17,30 +17,11 @@ var (
 	defaultCentralRequestCPU    = resource.MustParse("250m")
 	defaultCentralLimitMemory   = resource.MustParse("4Gi")
 	defaultCentralLimitCPU      = resource.MustParse("1000m")
-	defaultCentralResources     = corev1.ResourceRequirements{
-		Limits: map[corev1.ResourceName]resource.Quantity{
-			corev1.ResourceCPU:    defaultCentralLimitCPU,
-			corev1.ResourceMemory: defaultCentralLimitMemory,
-		},
-		Requests: map[corev1.ResourceName]resource.Quantity{
-			corev1.ResourceCPU:    defaultCentralRequestCPU,
-			corev1.ResourceMemory: defaultCentralRequestMemory,
-		},
-	}
+
 	defaultScannerAnalyzerRequestMemory = resource.MustParse("100Mi")
 	defaultScannerAnalyzerRequestCPU    = resource.MustParse("250m")
 	defaultScannerAnalyzerLimitMemory   = resource.MustParse("2500Mi")
 	defaultScannerAnalyzerLimitCPU      = resource.MustParse("2000m")
-	defaultScannerAnalyzerResources     = corev1.ResourceRequirements{
-		Limits: map[corev1.ResourceName]resource.Quantity{
-			corev1.ResourceCPU:    defaultScannerAnalyzerLimitCPU,
-			corev1.ResourceMemory: defaultScannerAnalyzerLimitMemory,
-		},
-		Requests: map[corev1.ResourceName]resource.Quantity{
-			corev1.ResourceCPU:    defaultScannerAnalyzerRequestCPU,
-			corev1.ResourceMemory: defaultScannerAnalyzerRequestMemory,
-		},
-	}
 
 	defaultScannerAnalyzerAutoScaling              = "Enabled"
 	defaultScannerAnalyzerScalingReplicas    int32 = 1
@@ -51,16 +32,6 @@ var (
 	defaultScannerDbRequestCPU    = resource.MustParse("250m")
 	defaultScannerDbLimitMemory   = resource.MustParse("2500Mi")
 	defaultScannerDbLimitCPU      = resource.MustParse("2000m")
-	defaultScannerDbResources     = corev1.ResourceRequirements{
-		Limits: map[corev1.ResourceName]resource.Quantity{
-			corev1.ResourceCPU:    defaultScannerDbLimitCPU,
-			corev1.ResourceMemory: defaultScannerDbLimitMemory,
-		},
-		Requests: map[corev1.ResourceName]resource.Quantity{
-			corev1.ResourceCPU:    defaultScannerDbRequestCPU,
-			corev1.ResourceMemory: defaultScannerDbRequestMemory,
-		},
-	}
 )
 
 // ManagedCentralPresenter helper service which converts Central DB representation to the private API representation

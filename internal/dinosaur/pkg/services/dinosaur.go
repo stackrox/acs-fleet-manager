@@ -609,6 +609,10 @@ func (k *dinosaurService) Updates(dinosaurRequest *dbapi.CentralRequest, fields 
 	return nil
 }
 
+// Disabled this for now.
+// verifyVersions fails when `ActualCentralVersion` is empty, which seems to be the case during testing.
+// TODO(create-ticket): Enable versions validation when versions are updatable.
+//
 // func (k *dinosaurService) verifyVersions(cluster *api.Cluster, dinosaurRequest *dbapi.CentralRequest) error {
 // 	dinosaurVersionAvailable, err := k.clusterService.IsDinosaurVersionAvailableInCluster(cluster, dinosaurRequest.DesiredCentralOperatorVersion, dinosaurRequest.DesiredCentralVersion)
 // 	if err != nil {

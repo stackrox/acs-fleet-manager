@@ -2,7 +2,6 @@
 
 set -o pipefail
 
-TOKEN=${TOKEN:-$OCM_TOKEN}
 resource=${1}
 
 if [[ -z "${resource}" ]]; then
@@ -14,6 +13,5 @@ shift
 
 # Normalize
 resource=$(echo "$resource" | sed -e 's/^\///;')
-url="http://localhost:8000/api/${resource}"
-echo "Requesting URL ${url} with parameters " "$@" "..." >&2
-curl -LH "Authorization: Bearer ${TOKEN}" "$url" "$@" | jq .
+
+curl -LH "Authorization: Bearer ${OCM_TOKEN}" http://localhost:8000/api/${resource} "$@" | jq .
