@@ -192,6 +192,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		r.createAuthProvider = false
 	}
 
+	// Setting the last central hash must always be executed as the last step.
+	// defer can't be used for this call because it is also executed after the reconcile failed.
 	if err := r.setLastCentralHash(remoteCentral); err != nil {
 		return nil, errors.Wrapf(err, "setting central reconcilation cache")
 	}
