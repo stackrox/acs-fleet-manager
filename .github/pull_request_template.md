@@ -6,7 +6,7 @@
 - [ ] Unit and integration tests added
 - [ ] Documentation added if necessary
 - [ ] CI and all relevant tests are passing
-- [ ] Discussed security and business related topics privately
+- [ ] Discussed security and business related topics privately. Will move any security and business related topics that arise to private communication channel.
 
 ## Test manual
 
