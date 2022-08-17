@@ -54,7 +54,7 @@ func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	ctx := r.Context()
-	convDinosaur := &dbapi.CentralRequest{}
+	convDinosaur := dbapi.CentralRequest{}
 
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &dinosaurRequest,
@@ -63,19 +63,19 @@ func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.ValidateLength(&dinosaurRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxDinosaurNameLength),
 			ValidDinosaurClusterName(&dinosaurRequest.Name, "name"),
 			ValidateDinosaurClusterNameIsUnique(r.Context(), &dinosaurRequest.Name, h.service),
-			ValidateDinosaurClaims(ctx, &dinosaurRequest, convDinosaur),
-			ValidateCloudProvider(&h.service, convDinosaur, h.providerConfig, "creating central requests"),
+			ValidateDinosaurClaims(ctx, &dinosaurRequest, &convDinosaur),
+			ValidateCloudProvider(&h.service, &convDinosaur, h.providerConfig, "creating central requests"),
 			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating central requests"),
-			ValidateCentralSpec(ctx, &dinosaurRequest, convDinosaur),
-			ValidateScannerSpec(ctx, &dinosaurRequest, convDinosaur),
+			ValidateCentralSpec(ctx, &dinosaurRequest, &convDinosaur),
+			ValidateScannerSpec(ctx, &dinosaurRequest, &convDinosaur),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			svcErr := h.service.RegisterDinosaurJob(convDinosaur)
+			svcErr := h.service.RegisterDinosaurJob(&convDinosaur)
 			if svcErr != nil {
 				return nil, svcErr
 			}
 			// TODO(mclasmeier): Do we need PresentDinosaurRequestAdminEndpoint?
-			return presenters.PresentDinosaurRequest(convDinosaur), nil
+			return presenters.PresentDinosaurRequest(&convDinosaur), nil
 		},
 	}
 
