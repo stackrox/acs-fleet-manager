@@ -3,6 +3,7 @@ package converters
 import (
 	"fmt"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
@@ -36,7 +37,16 @@ func ConvertPrivateScalingToV1(scaling *private.ManagedCentralAllOfSpecScannerAn
 		MinReplicas: &scaling.MinReplicas,
 		MaxReplicas: &scaling.MaxReplicas,
 	}
+}
 
+// ConvertScalingToPublic converts the internal dbapi ScannerAnalyzerScaling model into the ScannerSpecAnalyzerScaling model from the public API.
+func ConvertScalingToPublic(from *dbapi.ScannerAnalyzerScaling) public.ScannerSpecAnalyzerScaling {
+	return public.ScannerSpecAnalyzerScaling{
+		AutoScaling: from.AutoScaling,
+		Replicas:    from.Replicas,
+		MinReplicas: from.MinReplicas,
+		MaxReplicas: from.MaxReplicas,
+	}
 }
 
 // convertCoreV1ResourceListToMap converts corev1 ResourceList into generic map.

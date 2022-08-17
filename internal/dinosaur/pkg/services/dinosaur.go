@@ -609,43 +609,6 @@ func (k *dinosaurService) Updates(dinosaurRequest *dbapi.CentralRequest, fields 
 	return nil
 }
 
-// Disabled this for now.
-// verifyVersions fails when `ActualCentralVersion` is empty, which seems to be the case during testing.
-// TODO(create-ticket): Enable versions validation when versions are updatable.
-//
-// func (k *dinosaurService) verifyVersions(cluster *api.Cluster, dinosaurRequest *dbapi.CentralRequest) error {
-// 	dinosaurVersionAvailable, err := k.clusterService.IsDinosaurVersionAvailableInCluster(cluster, dinosaurRequest.DesiredCentralOperatorVersion, dinosaurRequest.DesiredCentralVersion)
-// 	if err != nil {
-// 		return errors.Validation(err.Error())
-// 	}
-//
-// 	if !dinosaurVersionAvailable {
-// 		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update dinosaur: %s with dinosaur version: %s", dinosaurRequest.ID, dinosaurRequest.DesiredCentralVersion))
-// 	}
-//
-// 	dinosaruOperatorVersionReady, err := k.clusterService.CheckDinosaurOperatorVersionReady(cluster, dinosaurRequest.DesiredCentralOperatorVersion)
-// 	if err != nil {
-// 		return errors.Validation(err.Error())
-// 	}
-//
-// 	if !dinosaruOperatorVersionReady {
-// 		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update dinosaur: %s with dinosaur operator version: %s", dinosaurRequest.ID, dinosaurRequest.DesiredCentralOperatorVersion))
-// 	}
-//
-// 	vCompDinosaur, ek := api.CompareSemanticVersionsMajorAndMinor(dinosaurRequest.ActualCentralVersion, dinosaurRequest.DesiredCentralVersion)
-//
-// 	if ek != nil {
-// 		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare desired dinosaur version: %s with actual dinosaur version: %s", dinosaurRequest.DesiredCentralVersion, dinosaurRequest.ActualCentralVersion))
-// 	}
-//
-// 	// no minor/ major version downgrades allowed for dinosaur version
-// 	if vCompDinosaur > 0 {
-// 		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade dinosaur: %s version: %s to the following dinosaur version: %s", dinosaurRequest.ID, dinosaurRequest.ActualCentralVersion, dinosaurRequest.DesiredCentralVersion))
-// 	}
-//
-// 	return nil
-// }
-
 // VerifyAndUpdateDinosaurAdmin ...
 func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	if !auth.GetIsAdminFromContext(ctx) {
@@ -659,15 +622,6 @@ func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dino
 	if cluster == nil {
 		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to get cluster for dinosaur %s", dinosaurRequest.ID))
 	}
-
-	// Disabled this for now.
-	// verifyVersions fails when `ActualCentralVersion` is empty, which seems to be the case during testing.
-	// TODO(create-ticket): Enable versions validation when versions are updatable.
-	//
-	// err := k.verifyVersions(cluster, dinosaurRequest)
-	// if err != nil {
-	// 	return errors.NewWithCause(errors.ErrorBadRequest, err, "verifying desired versions in CentralRequest")
-	// }
 
 	return k.Update(dinosaurRequest)
 }

@@ -118,7 +118,7 @@ func (k *CentralRequest) GetDataHost() string {
 
 // GetCentralSpec retrieves the CentralSpec from the CentralRequest in unmarshalled form.
 func (k *CentralRequest) GetCentralSpec() (*CentralSpec, error) {
-	var centralSpec CentralSpec
+	var centralSpec = DefaultCentralSpec
 	err := json.Unmarshal(k.Central, &centralSpec)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshalling CentralSpec: %w", err)
@@ -128,7 +128,7 @@ func (k *CentralRequest) GetCentralSpec() (*CentralSpec, error) {
 
 // GetScannerSpec retrieves the ScannerSpec from the CentralRequest in unmarshalled form.
 func (k *CentralRequest) GetScannerSpec() (*ScannerSpec, error) {
-	var scannerSpec ScannerSpec
+	var scannerSpec = DefaultScannerSpec
 	err := json.Unmarshal(k.Scanner, &scannerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshalling ScannerSpec: %w", err)

@@ -5,12 +5,16 @@ import (
 	"net/http"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/defaults"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -35,7 +39,20 @@ func NewAdminDinosaurHandler(service services.DinosaurService, accountService ac
 
 // Create ...
 func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var dinosaurRequest public.CentralRequestPayload
+	dinosaurRequest := public.CentralRequestPayload{
+		Central: public.CentralSpec{
+			Resources: converters.ConvertCoreV1ResourceRequirementsToPublic(&defaults.CentralResources),
+		},
+		Scanner: public.ScannerSpec{
+			Analyzer: public.ScannerSpecAnalyzer{
+				Resources: converters.ConvertCoreV1ResourceRequirementsToPublic(&defaults.ScannerAnalyzerResources),
+				Scaling:   converters.ConvertScalingToPublic(&dbapi.DefaultScannerAnalyzerScaling),
+			},
+			Db: public.ScannerSpecDb{
+				Resources: converters.ConvertCoreV1ResourceRequirementsToPublic(&defaults.ScannerDbResources),
+			},
+		},
+	}
 	ctx := r.Context()
 	convDinosaur := &dbapi.CentralRequest{}
 
@@ -143,6 +160,91 @@ func (h adminDinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
 }
 
+func updateResourcesList(to *corev1.ResourceList, from map[string]string) error {
+	newResourceList := to.DeepCopy()
+	for name, qty := range from {
+		if qty == "" {
+			continue
+		}
+		resourceName, isSupported := ValidateResourceName(name)
+		if !isSupported {
+			return fmt.Errorf("resource type %q is not supported", name)
+		}
+		resourceQty, err := resource.ParseQuantity(qty)
+		if err != nil {
+			return fmt.Errorf("parsing %s quantity %q: %w", resourceName, qty, err)
+		}
+		if newResourceList == nil {
+			newResourceList = corev1.ResourceList(make(map[corev1.ResourceName]resource.Quantity))
+		}
+		newResourceList[resourceName] = resourceQty
+	}
+	*to = newResourceList
+	return nil
+}
+
+func updateCoreV1Resources(to *corev1.ResourceRequirements, from private.ResourceRequirements) error {
+	newResources := to.DeepCopy()
+
+	err := updateResourcesList(&newResources.Limits, from.Limits)
+	if err != nil {
+		return err
+	}
+	err = updateResourcesList(&newResources.Requests, from.Requests)
+	if err != nil {
+		return err
+	}
+
+	*to = *newResources
+	return nil
+}
+
+// updateCentralFromPrivateAPI updates the CentralSpec using the non-zero fields from the API's CentralSpec.
+func updateCentralFromPrivateAPI(c *dbapi.CentralSpec, apiCentralSpec *private.CentralSpec) error {
+	err := updateCoreV1Resources(&c.Resources, apiCentralSpec.Resources)
+	if err != nil {
+		return fmt.Errorf("updating resources within CentralSpec: %w", err)
+	}
+	return nil
+}
+
+// updateScannerFromPrivateAPI updates the ScannerSpec using the non-zero fields from the API's ScannerSpec.
+func updateScannerFromPrivateAPI(s *dbapi.ScannerSpec, apiSpec *private.ScannerSpec) error {
+	var err error
+	new := *s
+
+	err = updateCoreV1Resources(&new.Analyzer.Resources, apiSpec.Analyzer.Resources)
+	if err != nil {
+		return fmt.Errorf("updating resources within ScannerSpec Analyzer: %w", err)
+	}
+	err = updateScannerAnalyzerScaling(&new.Analyzer.Scaling, apiSpec.Analyzer.Scaling)
+	if err != nil {
+		return fmt.Errorf("updating scaling configuration within ScannerSpec Analyzer: %w", err)
+	}
+	err = updateCoreV1Resources(&new.Db.Resources, apiSpec.Db.Resources)
+	if err != nil {
+		return fmt.Errorf("updating resources within ScannerSpec DB: %w", err)
+	}
+	*s = new
+	return nil
+}
+
+func updateScannerAnalyzerScaling(s *dbapi.ScannerAnalyzerScaling, apiScaling private.ScannerSpecAnalyzerScaling) error {
+	if apiScaling.AutoScaling != "" {
+		s.AutoScaling = apiScaling.AutoScaling
+	}
+	if apiScaling.MaxReplicas > 0 {
+		s.MaxReplicas = apiScaling.MaxReplicas
+	}
+	if apiScaling.MinReplicas > 0 {
+		s.MinReplicas = apiScaling.MinReplicas
+	}
+	if apiScaling.Replicas > 0 {
+		s.Replicas = apiScaling.Replicas
+	}
+	return nil
+}
+
 func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.DinosaurUpdateRequest) error {
 	if updateRequest == nil {
 		return nil
@@ -157,13 +259,18 @@ func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.
 		return fmt.Errorf("retrieving ScannerSpec from CentralRequest: %w", err)
 	}
 
-	err = centralSpec.UpdateFromPrivateAPI(&updateRequest.Central)
+	err = updateCentralFromPrivateAPI(centralSpec, &updateRequest.Central)
 	if err != nil {
 		return fmt.Errorf("updating CentralSpec from CentralUpdateRequest: %w", err)
 	}
-	err = scannerSpec.UpdateFromPrivateAPI(&updateRequest.Scanner)
+	err = updateScannerFromPrivateAPI(scannerSpec, &updateRequest.Scanner)
 	if err != nil {
 		return fmt.Errorf("updating ScannerSpec from CentralUpdateRequest: %w", err)
+	}
+
+	err = ValidateScannerAnalyzerScaling(&scannerSpec.Analyzer.Scaling)
+	if err != nil {
+		return err
 	}
 
 	new := *request
@@ -177,19 +284,6 @@ func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.
 	if err != nil {
 		return fmt.Errorf("updating ScannerSpec within CentralRequest: %w", err)
 	}
-
-	// Disabled this for now, since it is unclear as of now what our specific requirements
-	// and dependencies are for this to work.
-	//
-	// TODO(create-ticket): Evaluate use-case and potentially enable version updating.
-	//
-	// if updateRequest.DinosaurOperatorVersion != "" {
-	// 	new.DesiredCentralOperatorVersion = updateRequest.DinosaurOperatorVersion
-	// }
-
-	// if updateRequest.DinosaurVersion != "" {
-	// 	new.DesiredCentralVersion = updateRequest.DinosaurVersion
-	// }
 
 	*request = new
 	return nil
@@ -212,7 +306,7 @@ func (h adminDinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 			err := updateCentralRequest(dinosaurRequest, &dinosaurUpdateReq)
 			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Updating CentralRequest")
+				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Updating CentralRequest: %s", err.Error())
 			}
 
 			svcErr = h.service.VerifyAndUpdateDinosaurAdmin(ctx, dinosaurRequest)

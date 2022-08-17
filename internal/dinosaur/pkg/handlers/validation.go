@@ -19,11 +19,15 @@ import (
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 )
 
-// ValidDinosaurClusterNameRegexp ...
-var ValidDinosaurClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
+var (
+	// ValidDinosaurClusterNameRegexp ...
+	ValidDinosaurClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 
-// MaxDinosaurNameLength ...
-var MaxDinosaurNameLength = 32
+	// MaxDinosaurNameLength ...
+	MaxDinosaurNameLength = 32
+
+	supportedResources = []corev1.ResourceName{corev1.ResourceCPU, corev1.ResourceMemory}
+)
 
 // ValidDinosaurClusterName ...
 func ValidDinosaurClusterName(value *string, field string) handlers.Validate {
@@ -201,6 +205,7 @@ func ValidateScannerSpec(ctx context.Context, centralRequestPayload *public.Cent
 			return errors.Validation("invalid resource limits for Scanner DB: %v", err)
 		}
 
+		// Marshal ScannerSpec into byte string.
 		scanner, err := json.Marshal(centralRequestPayload.Scanner)
 		if err != nil {
 			return errors.Validation("marshaling Scanner spec failed: %v", err)
@@ -213,4 +218,43 @@ func ValidateScannerSpec(ctx context.Context, centralRequestPayload *public.Cent
 		dbCentral.Scanner = scanner
 		return nil
 	}
+}
+
+// ValidateScannerAnalyzerScaling validates the provided Scanner Analyzer Scaling configuration.
+func ValidateScannerAnalyzerScaling(scaling *dbapi.ScannerAnalyzerScaling) error {
+	if scaling == nil {
+		return nil
+	}
+
+	if scaling.AutoScaling != "Enabled" && scaling.AutoScaling != "Disabled" {
+		return fmt.Errorf("invalid scaling configuration: unknown AutoScaling %q, must be 'Enabled' or 'Disabled'", scaling.AutoScaling)
+	}
+	if scaling.MinReplicas <= 0 {
+		return fmt.Errorf("invalid scaling configuration: MinReplicas (%v) must be positive", scaling.MinReplicas)
+	}
+	if scaling.Replicas <= 0 {
+		return fmt.Errorf("invalid scaling configuration: Replicas (%v) must be positive", scaling.Replicas)
+	}
+	if scaling.MaxReplicas <= 0 {
+		return fmt.Errorf("invalid scaling configuration: MaxReplicas (%v) must be positive", scaling.MaxReplicas)
+	}
+	if scaling.Replicas < scaling.MinReplicas {
+		return fmt.Errorf("invalid scaling configuration: Replicas (%v) < MinReplicas (%v)", scaling.Replicas, scaling.MinReplicas)
+	}
+	if scaling.Replicas > scaling.MaxReplicas {
+		return fmt.Errorf("invalid scaling configuration: Replicas (%v) > MaxReplicas (%v)", scaling.Replicas, scaling.MaxReplicas)
+	}
+
+	return nil
+}
+
+// ValidateResourceName checks if the given name denotes a supported resource.
+func ValidateResourceName(name string) (corev1.ResourceName, bool) {
+	resourceName := corev1.ResourceName(name)
+	for _, supportedResource := range supportedResources {
+		if supportedResource == resourceName {
+			return resourceName, true
+		}
+	}
+	return corev1.ResourceName(""), false
 }
