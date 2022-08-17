@@ -23,3 +23,7 @@ observatorium:
   gateway: ""
   metricsClientId: ""
   metricsSecret: ""
+
+pagerduty:
+  # PagerDuty integration key, which is generated within a Ruleset.
+  key: ""
