@@ -3,9 +3,10 @@ package dbapi
 import (
 	"fmt"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 )
 
 // CentralSpec ...
@@ -35,8 +36,7 @@ func updateResourcesList(to *corev1.ResourceList, from map[string]string) error 
 		}
 		resourceName, isSupported := isResourceSupported(name)
 		if !isSupported {
-			// TODO(mclasmei): log
-			continue
+			return fmt.Errorf("resource type %q is not supported", name)
 		}
 		resourceQty, err := resource.ParseQuantity(qty)
 		if err != nil {
