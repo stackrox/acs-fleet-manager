@@ -85,11 +85,7 @@ func (c *Client) SendRequestToCentral(ctx context.Context, requestMessage proto.
 		return err
 	}
 
-	// Only required to close the response body if we plan on unmarshalling it. If no response message is set, we won't
-	// unmarshal and can hence skip closing the body.
-	if responseMessage != nil && resp.Body != nil {
-		defer utils.IgnoreError(resp.Body.Close)
-	}
+	defer utils.IgnoreError(resp.Body.Close)
 
 	if !httputil.Is2xxStatusCode(resp.StatusCode) {
 		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to execute request: %s %s",
