@@ -68,8 +68,14 @@ var _ = Describe("Central", func() {
 		client, err = fleetmanager.NewClient(fleetManagerEndpoint, "cluster-id", auth)
 		Expect(err).ToNot(HaveOccurred())
 
-		adminAuth, err := envtokenauth.CreateAuth("STATIC_TOKEN_ADMIN")
-		Expect(err).ToNot(HaveOccurred())
+		var adminAuth fleetmanager.Auth
+		if adminToken := os.Getenv("STATIC_TOKEN_ADMIN"); adminToken != "" {
+			adminAuth, err = envtokenauth.CreateAuth("STATIC_TOKEN_ADMIN")
+			Expect(err).ToNot(HaveOccurred())
+		} else {
+			adminAuth = auth
+		}
+
 		adminClient, err = NewAdminClient(fleetManagerEndpoint, adminAuth)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -164,20 +170,21 @@ var _ = Describe("Central", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(rhacsZone).ToNot(BeNil())
 
-			var records *route53.ListResourceRecordSetsOutput
-			Eventually(func() int {
-				return countDNSRecords(rhacsZone, central)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(2))
+			centralDomainNames := getCentralDomainNamesSorted(central)
+			dnsRecordsLoader := newDNSRecordsLoader(rhacsZone, centralDomainNames)
+			Eventually(dnsRecordsLoader.loadDNSRecords).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(HaveLen(len(centralDomainNames)))
 
-			recordSet := records.ResourceRecordSets[0]
-			Expect(len(recordSet.ResourceRecords)).To(Equal(1))
-			record := recordSet.ResourceRecords[0]
-
-			// Omit the . at the end of hosted zone name
-			name := removeLastChar(*recordSet.Name)
-			Expect(name).To(Equal(central.UiHost))
-			Expect(*record.Value).To(Equal(reencryptIngress.RouterCanonicalHostname))
-
+			recordSets := dnsRecordsLoader.result
+			for idx, domain := range centralDomainNames {
+				recordSet := recordSets[idx]
+				Expect(len(recordSet.ResourceRecords)).To(Equal(1))
+				record := recordSet.ResourceRecords[0]
+				Expect(*recordSet.Name).To(Equal(domain))
+				Expect(*record.Value).To(Equal(reencryptIngress.RouterCanonicalHostname)) // TODO use route specific ingress
+			}
 		})
 
 		It("should transition central's state to ready", func() {
@@ -226,9 +233,12 @@ var _ = Describe("Central", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(rhacsZone).ToNot(BeNil())
 
-			Eventually(func() int {
-				return countDNSRecords(rhacsZone, central)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(0))
+			centralDomainNames := getCentralDomainNamesSorted(central)
+			dnsRecordsLoader := newDNSRecordsLoader(rhacsZone, centralDomainNames)
+			Eventually(dnsRecordsLoader.loadDNSRecords).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(BeEmpty())
 		})
 	})
 
@@ -428,16 +438,55 @@ func getHostedZone(central *public.CentralRequest) (*route53.HostedZone, error) 
 	return rhacsZone, nil
 }
 
-func countDNSRecords(rhacsZone *route53.HostedZone, central *public.CentralRequest) int {
-	uiRecords, err := route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
-		HostedZoneId:    rhacsZone.Id,
-		StartRecordName: &central.UiHost,
-	})
-	Expect(err).ToNot(HaveOccurred())
-	dataRecords, err := route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
-		HostedZoneId:    rhacsZone.Id,
-		StartRecordName: &central.DataHost,
-	})
-	Expect(err).ToNot(HaveOccurred())
-	return len(uiRecords.ResourceRecordSets) + len(dataRecords.ResourceRecordSets)
+func getCentralDomainNamesSorted(central *public.CentralRequest) []string {
+	centralUIDomain := central.UiHost + "."
+	centralDataDomain := central.DataHost + "."
+
+	if centralUIDomain > centralDataDomain {
+		return []string{centralDataDomain, centralUIDomain}
+	}
+	return []string{centralUIDomain, centralDataDomain}
+}
+
+type dnsRecordsLoader struct {
+	rhacsZone          *route53.HostedZone
+	centralDomainNames []string
+	result             []*route53.ResourceRecordSet
+}
+
+func newDNSRecordsLoader(rhacsZone *route53.HostedZone, centralDomainNames []string) *dnsRecordsLoader {
+	return &dnsRecordsLoader{
+		rhacsZone:          rhacsZone,
+		centralDomainNames: centralDomainNames,
+		result:             make([]*route53.ResourceRecordSet, 0, len(centralDomainNames)),
+	}
+}
+
+func (loader *dnsRecordsLoader) loadDNSRecords() []*route53.ResourceRecordSet {
+	if len(loader.result) == len(loader.centralDomainNames) {
+		return loader.result
+	}
+	idx := len(loader.result)
+	loadingRecords := true
+	nextRecord := &loader.centralDomainNames[idx]
+loading:
+	for loadingRecords {
+		output, err := route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
+			HostedZoneId:    loader.rhacsZone.Id,
+			StartRecordName: nextRecord,
+		})
+		Expect(err).ToNot(HaveOccurred())
+		for _, recordSet := range output.ResourceRecordSets {
+			if *recordSet.Name == loader.centralDomainNames[idx] {
+				loader.result = append(loader.result, recordSet)
+				idx = idx + 1
+				if idx == len(loader.centralDomainNames) {
+					break loading
+				}
+			}
+		}
+		loadingRecords = *output.IsTruncated
+		nextRecord = output.NextRecordName
+	}
+	return loader.result
 }
