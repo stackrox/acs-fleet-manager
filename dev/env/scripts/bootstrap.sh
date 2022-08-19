@@ -18,7 +18,7 @@ Using OLM: ${INSTALL_OLM}
 
 EOF
 
-if ! command -v ${KUBECTL} &> /dev/null; then
+if ! command -v "${KUBECTL}" &> /dev/null; then
     die "Cannot find kubectl or equivalent tool: ${KUBECTL}"
 fi
 
