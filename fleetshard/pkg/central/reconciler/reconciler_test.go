@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/pkg/errors"
-	appsv1 "k8s.io/api/apps/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -325,12 +323,7 @@ func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
 
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
 	// given
-	scheme := testutils.NewScheme(t)
-	tracker := testutils.NewReconcileTracker(scheme)
-	fakeClient := fake.NewClientBuilder().
-		WithScheme(scheme).
-		WithObjectTracker(tracker).
-		Build()
+	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
 	tracker.AddRouteError(centralReencryptRouteName, errors.New("fake error"))
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
 	// when
@@ -341,12 +334,7 @@ func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
 
 func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
 	// given
-	scheme := testutils.NewScheme(t)
-	tracker := testutils.NewReconcileTracker(scheme)
-	fakeClient := fake.NewClientBuilder().
-		WithScheme(scheme).
-		WithObjectTracker(tracker).
-		Build()
+	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
 	tracker.SetRouteAdmitted(centralReencryptRouteName, false)
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
 	// when
@@ -357,12 +345,7 @@ func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
 
 func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
 	// given
-	scheme := testutils.NewScheme(t)
-	tracker := testutils.NewReconcileTracker(scheme)
-	fakeClient := fake.NewClientBuilder().
-		WithScheme(scheme).
-		WithObjectTracker(tracker).
-		Build()
+	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
 	tracker.SetSkipRoute(centralReencryptRouteName, true)
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
 	// when

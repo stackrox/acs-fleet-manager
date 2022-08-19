@@ -75,6 +75,17 @@ func NewFakeClientBuilder(t *testing.T, objects ...ctrlClient.Object) *fake.Clie
 		WithObjects(objects...)
 }
 
+// NewFakeClientWithTracker returns a new fake client and a ReconcileTracker to mock k8s responses
+func NewFakeClientWithTracker(t *testing.T) (ctrlClient.WithWatch, *ReconcileTracker) {
+	scheme := NewScheme(t)
+	tracker := NewReconcileTracker(scheme)
+	client := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjectTracker(tracker).
+		Build()
+	return client, tracker
+}
+
 // NewScheme returns a new scheme instance used for fleetshard testing
 func NewScheme(t *testing.T) *runtime.Scheme {
 	scheme := runtime.NewScheme()
