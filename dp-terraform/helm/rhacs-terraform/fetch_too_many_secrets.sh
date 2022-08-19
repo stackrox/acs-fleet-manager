@@ -4,7 +4,7 @@ set -o errexit   # -e
 set -o pipefail
 set -o nounset   # -u
 
-export OUTPUT_FILE="/var/tmp/tmp_secrets/secrets.yaml"
+export OUTPUT_FILE="/home/$USER/tmp_secrets/secrets.yaml"
 export OUTPUT_DIRECTORY="$(dirname ${OUTPUT_FILE})"
 
 # Requires BitWarden CLI (for now)
