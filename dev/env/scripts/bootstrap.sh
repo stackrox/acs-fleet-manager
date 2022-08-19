@@ -18,6 +18,10 @@ Using OLM: ${INSTALL_OLM}
 
 EOF
 
+if ! command -v ${KUBECTL} &> /dev/null; then
+    die "Cannot find kubectl or equivalent tool: ${KUBECTL}"
+fi
+
 if ! kc_output=$($KUBECTL api-versions >/dev/null 2>&1); then
     die "Sanity check for contacting Kubernetes cluster failed: ${kc_output}"
 fi
