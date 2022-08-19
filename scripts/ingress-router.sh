@@ -54,7 +54,8 @@ add_host() {
   context=$(kubectl config current-context)
   host=$1
   if [[ -z $host ]]; then
-    host=$(kubectl get routes -l 'app.kubernetes.io/managed-by=rhacs-fleetshard' --all-namespaces -o json | jq -r '.items[].spec.host' | fzf --header "Using context $context")
+    routes=$(kubectl get routes -l 'app.kubernetes.io/managed-by=rhacs-fleetshard' --all-namespaces -o json)
+    host=$(jq -r '.items[].spec.host' <<< "$routes" | fzf --header "Using context $context")
   fi
   sudo hostctl add domains "$HOSTCTL_PROFILE" "$host"
 }
