@@ -52,13 +52,18 @@ list_manifests_reversed() {
 add_host() {
   local host context
   context=$(kubectl config current-context)
-  host=$(kubectl get routes -l 'app.kubernetes.io/managed-by=rhacs-fleetshard' --all-namespaces -o json | jq -r '.items[].spec.host' | fzf --header "Using context $context")
+  host=$1
+  if [[ -z $host ]]; then
+    host=$(kubectl get routes -l 'app.kubernetes.io/managed-by=rhacs-fleetshard' --all-namespaces -o json | jq -r '.items[].spec.host' | fzf --header "Using context $context")
+  fi
   sudo hostctl add domains "$HOSTCTL_PROFILE" "$host"
 }
 
 remove_host() {
-  local host
-  host=$(hostctl list "$HOSTCTL_PROFILE" -o json | jq -r ".[].Host" | fzf)
+  local host=$1
+  if [[ -z $host ]]; then
+    host=$(hostctl list "$HOSTCTL_PROFILE" -o json | jq -r ".[].Host" | fzf)
+  fi
   sudo hostctl remove domains "$HOSTCTL_PROFILE" "$host"
 }
 
