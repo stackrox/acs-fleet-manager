@@ -17,7 +17,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,13 +35,14 @@ const (
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client             ctrlClient.Client
-	central            private.ManagedCentral
-	status             *int32
-	lastCentralHash    [16]byte
-	useRoutes          bool
-	createAuthProvider bool
-	routeService       *k8s.RouteService
+	client            ctrlClient.Client
+	central           private.ManagedCentral
+	status            *int32
+	lastCentralHash   [16]byte
+	useRoutes         bool
+	wantsAuthProvider bool
+	hasAuthProvider   bool
+	routeService      *k8s.RouteService
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -64,7 +64,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
-	if !changed && !r.createAuthProvider && remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String() {
+	if !changed && r.wantsAuthProvider == r.hasAuthProvider && remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String() {
 		glog.Infof("Central %s/%s not changed, skipping reconciliation", remoteCentralNamespace, remoteCentralName)
 		return r.readyStatus(ctx, remoteCentralNamespace)
 	}
@@ -119,6 +119,24 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		},
 	}
 
+	// Check whether auth provider is actually created and this reconciler just is not aware of that.
+	if r.wantsAuthProvider && !r.hasAuthProvider {
+		exists, err := existsRHSSOAuthProvider(ctx, remoteCentral, r.client)
+		if err != nil {
+			return nil, err
+		}
+		// If sso.redhat.com auth provider exists, there is no need for admin/password login.
+		// We also store whether auth provider exists within reconciler instance to avoid polluting network.
+		if exists {
+			glog.Infof("Auth provider for %s/%s already exists", remoteCentralNamespace, remoteCentralName)
+			r.hasAuthProvider = true
+		}
+	}
+
+	if r.hasAuthProvider {
+		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.BoolPtr(true)
+	}
+
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
 		deleted, err := r.ensureCentralDeleted(ctx, central)
 		if err != nil {
@@ -161,6 +179,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if err != nil {
 			return nil, err
 		}
+		existingCentral.Spec = *central.Spec.DeepCopy()
 
 		if err := r.client.Update(ctx, &existingCentral); err != nil {
 			return nil, errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
@@ -187,15 +206,15 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	// Skip auth provider initialisation if:
-	// 1. Auth provider is created by this specific reconciler
+	// 1. Auth provider is already created
 	// 2. OR reconciler creator specified auth provider not to be created
 	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
-	if r.createAuthProvider && remoteCentral.RequestStatus != centralConstants.DinosaurRequestStatusReady.String() {
+	if r.wantsAuthProvider && !r.hasAuthProvider && remoteCentral.RequestStatus != centralConstants.DinosaurRequestStatusReady.String() {
 		err = createRHSSOAuthProvider(ctx, remoteCentral, r.client)
 		if err != nil {
 			return nil, err
 		}
-		r.createAuthProvider = false
+		r.hasAuthProvider = true
 	}
 
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
@@ -234,20 +253,6 @@ func getRouteStatus(ingress *openshiftRouteV1.RouteIngress) private.DataPlaneCen
 		Domain: ingress.Host,
 		Router: ingress.RouterCanonicalHostname,
 	}
-}
-
-func isCentralReady(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (bool, error) {
-	deployment := &appsv1.Deployment{}
-	err := client.Get(ctx,
-		ctrlClient.ObjectKey{Name: "central", Namespace: central.Metadata.Namespace},
-		deployment)
-	if err != nil {
-		return false, fmt.Errorf("retrieving central deployment resource from Kubernetes: %w", err)
-	}
-	if deployment.Status.UnavailableReplicas == 0 {
-		return true, nil
-	}
-	return false, nil
 }
 
 func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
@@ -304,7 +309,7 @@ func (r *CentralReconciler) setLastCentralHash(central private.ManagedCentral) e
 func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) error {
 	revision, err := strconv.Atoi(central.Annotations[revisionAnnotationKey])
 	if err != nil {
-		return errors.Wrapf(err, "failed incerement central revision %s", central.GetName())
+		return errors.Wrapf(err, "failed to increment central revision %s", central.GetName())
 	}
 	revision++
 	central.Annotations[revisionAnnotationKey] = fmt.Sprintf("%d", revision)
@@ -449,13 +454,13 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 }
 
 // NewCentralReconciler ...
-func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, useRoutes, createAuthProvider bool) *CentralReconciler {
+func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, useRoutes, wantsAuthProvider bool) *CentralReconciler {
 	return &CentralReconciler{
-		client:             k8sClient,
-		central:            central,
-		status:             pointer.Int32(FreeStatus),
-		useRoutes:          useRoutes,
-		createAuthProvider: createAuthProvider,
-		routeService:       k8s.NewRouteService(k8sClient),
+		client:            k8sClient,
+		central:           central,
+		status:            pointer.Int32(FreeStatus),
+		useRoutes:         useRoutes,
+		wantsAuthProvider: wantsAuthProvider,
+		routeService:      k8s.NewRouteService(k8sClient),
 	}
 }

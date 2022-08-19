@@ -2718,6 +2718,7 @@ github.com/stackrox/helmtest v0.0.0-20220118100812-1ad97c4de347/go.mod h1:vWZFsz
 github.com/stackrox/k8s-cves v0.0.0-20201110001126-cc333981eaab/go.mod h1:EBskgGC5Gzt/r8ToNsuD6tYMcf+AWY0ubaFSRy5/3QM=
 github.com/stackrox/k8s-istio-cve-pusher v0.0.0-20210422200002-d89f671ac4f5/go.mod h1:GEtZ9DYAzmOtyqQPCJCEIzXJ7NcrHbMy6ZPJbcyfmLM=
 github.com/stackrox/nvdtools v0.0.0-20210326191554-5daeb6395b56/go.mod h1:AIeN7k60Q/kcW9aeiMpA0PY8CU3zsrLV0UhIksolMn4=
+github.com/stackrox/scanner v0.0.0-20220426001230-9ab6777c9581 h1:RtbHwBxqH1ghFRoV56ruy8dAUqRcIkL3jJxEUiWwd7s=
 github.com/stackrox/scanner v0.0.0-20220426001230-9ab6777c9581/go.mod h1:2bfJIIKJeNQRQA4mAc+zRgjLZON+sImIsZ1mcaoTT1A=
 github.com/stackrox/stackrox v0.0.0-20220623061650-372b7a04e3ef h1:mOVRGek9sfW1js/KCJnF1hLnoxY53gUXrTHdtHAd2bI=
 github.com/stackrox/stackrox v0.0.0-20220623061650-372b7a04e3ef/go.mod h1:cV0CfhOIKdekw+WY2EcMuX8QQM51Z7acUTQHIJkg7WY=

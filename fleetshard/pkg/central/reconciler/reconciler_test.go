@@ -327,5 +327,8 @@ func centralDeploymentObject() *appsv1.Deployment {
 			Name:      "central",
 			Namespace: centralNamespace,
 		},
+		Status: appsv1.DeploymentStatus{
+			AvailableReplicas: 1,
+		},
 	}
 }
