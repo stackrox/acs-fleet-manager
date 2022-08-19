@@ -16,12 +16,14 @@ import (
 	"github.com/stackrox/acs-fleet-manager/e2e/envtokenauth"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -245,25 +247,30 @@ var _ = Describe("Central", func() {
 
 	Describe("should be created and deployed to k8s with admin API", func() {
 		var err error
+		var centralID string
 		centralName := newCentralName()
 
 		centralResources := public.ResourceRequirements{
-			Requests: public.ResourceList{
-				Cpu: "501m", Memory: "201M",
+			Requests: map[string]string{
+				v1.ResourceCPU.String():    "501m",
+				v1.ResourceMemory.String(): "201M",
 			},
-			Limits: public.ResourceList{
-				Cpu: "502m", Memory: "202M",
+			Limits: map[string]string{
+				v1.ResourceCPU.String():    "502m",
+				v1.ResourceMemory.String(): "202M",
 			},
 		}
 		centralSpec := public.CentralSpec{
 			Resources: centralResources,
 		}
 		scannerResources := public.ResourceRequirements{
-			Requests: public.ResourceList{
-				Cpu: "301m", Memory: "151M",
+			Requests: map[string]string{
+				v1.ResourceCPU.String():    "301m",
+				v1.ResourceMemory.String(): "151M",
 			},
-			Limits: public.ResourceList{
-				Cpu: "302m", Memory: "152M",
+			Limits: map[string]string{
+				v1.ResourceCPU.String():    "302m",
+				v1.ResourceMemory.String(): "152M",
 			},
 		}
 		scannerScaling := public.ScannerSpecAnalyzerScaling{
@@ -292,7 +299,8 @@ var _ = Describe("Central", func() {
 		It("should create central with custom resource configuration", func() {
 			createdCentral, err = adminClient.CreateCentral(request)
 			Expect(err).To(BeNil())
-			namespaceName, err = services.FormatNamespace(createdCentral.Id)
+			centralID = createdCentral.Id
+			namespaceName, err = services.FormatNamespace(centralID)
 			Expect(err).To(BeNil())
 			Expect(constants.DinosaurRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
 		})
@@ -321,6 +329,43 @@ var _ = Describe("Central", func() {
 			expectedScaling, err := converters.ConvertPublicScalingToV1(&scannerScaling)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(*scaling).To(Equal(expectedScaling))
+		})
+
+		It("resources should be updatable", func() {
+			updateReq := private.DinosaurUpdateRequest{
+				Central: private.CentralSpec{
+					Resources: private.ResourceRequirements{
+						Requests: map[string]string{
+							v1.ResourceMemory.String(): "199M",
+						},
+						Limits: map[string]string{
+							v1.ResourceCPU.String(): "499m",
+						},
+					},
+				},
+			}
+			newCentralResources := v1.ResourceRequirements{
+				Requests: v1.ResourceList{
+					v1.ResourceCPU:    resource.MustParse("501m"),
+					v1.ResourceMemory: resource.MustParse("199M"),
+				},
+				Limits: v1.ResourceList{
+					v1.ResourceCPU:    resource.MustParse("499m"),
+					v1.ResourceMemory: resource.MustParse("202M"),
+				},
+			}
+
+			_, err = adminClient.UpdateCentral(centralID, updateReq)
+			Expect(err).ToNot(HaveOccurred())
+			Eventually(func() v1.ResourceRequirements {
+				central := &v1alpha1.Central{}
+				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: namespaceName}, central)
+				Expect(err).ToNot(HaveOccurred())
+				if central.Spec.Central == nil || central.Spec.Central.Resources == nil {
+					return v1.ResourceRequirements{}
+				}
+				return *central.Spec.Central.Resources
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(newCentralResources))
 		})
 
 		It("should transition central's state to ready", func() {

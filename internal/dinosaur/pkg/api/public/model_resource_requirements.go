@@ -11,6 +11,6 @@ package public
 
 // ResourceRequirements struct for ResourceRequirements
 type ResourceRequirements struct {
-	Requests ResourceList `json:"requests,omitempty"`
-	Limits   ResourceList `json:"limits,omitempty"`
+	Requests map[string]string `json:"requests,omitempty"`
+	Limits   map[string]string `json:"limits,omitempty"`
 }

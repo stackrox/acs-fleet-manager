@@ -26,6 +26,7 @@ The scripts can be configured using environment variables, the most important op
   auto-sensed in most situations depending on the cluster name.
 * `FLEET_MANAGER_IMAGE`: Reference for an `acs-fleet-manager` image. If unset, build a fresh image from the current source and deploy that.
 * `AUTH_TYPE`: Can be `OCM` (in which case a new token will be created automatically using `ocm token --refresh`) or `STATIC_TOKEN`, in which case a valid static token is expected in the environment variable `STATIC_TOKEN`.
+* `STATIC_TOKEN_ADMIN`: Needs to contain a valid admin token (can be found in BitWarden)
 * `QUAY_USER` & `QUAY_TOKEN`: Mandatory setting in case images need to be pulled from Quay.
 
 ## Prerequisites
