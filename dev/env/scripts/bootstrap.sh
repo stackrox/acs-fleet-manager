@@ -18,7 +18,7 @@ Using OLM: ${INSTALL_OLM}
 
 EOF
 
-if ! kc_output=$($KUBECTL api-versions >/dev/null 2>&1); then
+if ! kc_output=$($KUBECTL api-versions 2>&1); then
     die "Error: Sanity check for contacting Kubernetes cluster failed:
 
 Command tried: '$KUBECTL api-versions'
