@@ -32,11 +32,11 @@ chmod 1700 "${OUTPUT_DIRECTORY}"
 
 # TODO: Write helpers to extract specific fields, including by bash variable as field name.
 
-FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID="rhacs-fleetshard-staging"
 # TODO: Handle multiple environments - right now this assumes staging!
 # Unlike Observability tokens that exist in a single bitwarden item, the fleetshard
 # sync red hat sso client secret is one item per environment. This means that we would
 # need something fancier to handle environment selection. For now, we assume staging.
+FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
 FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b)
 LOGGING_AWS_ACCESS_KEY_ID=$(bw get item "84e2d673-27dd-4e87-bb16-aee800da4d73" | jq '.fields[] | select(.name | contains("AccessKeyID")) | .value' --raw-output)
 LOGGING_AWS_SECRET_ACCESS_KEY=$(bw get item "84e2d673-27dd-4e87-bb16-aee800da4d73" | jq '.fields[] | select(.name | contains("SecretAccessKey")) | .value' --raw-output)
