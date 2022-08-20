@@ -12,19 +12,9 @@ CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
 #   --set acsOperator.source=redhat-operators
 #   --set acsOperator.sourceNamespace=openshift-marketplace
 
-# helm template rhacs-terraform \
-#   --debug \
-#   --namespace=rhacs \
-#   --values=/home/$USER/tmp_secrets/secrets.yaml \
-#   --set fleetshardSync.authType="RHSSO" \
-#   --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
-#   --set fleetshardSync.clusterId=${CLUSTER_ID} \
-#   --set acsOperator.enabled=true . \
-#   --set acsOperator.source=rhacs-operators \
-#   --set acsOperator.startingCSV=rhacs-operator.v3.71.0
-
 # helm uninstall rhacs-terraform --namespace rhacs
 
+# helm template ... to debug changes
 helm install rhacs-terraform \
   --debug \
   --namespace rhacs \
