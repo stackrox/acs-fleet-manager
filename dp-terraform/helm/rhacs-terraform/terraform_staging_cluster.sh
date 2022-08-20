@@ -23,10 +23,10 @@ CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
 #   --set acsOperator.source=rhacs-operators \
 #   --set acsOperator.startingCSV=rhacs-operator.v3.71.0
 
-# helm uninstall rhacs-terraform \
-#   --namespace rhacs
+# helm uninstall rhacs-terraform --namespace rhacs
 
 helm install rhacs-terraform \
+  --debug \
   --namespace rhacs \
   --create-namespace \
   --values=/home/$USER/tmp_secrets/secrets.yaml \
@@ -35,7 +35,8 @@ helm install rhacs-terraform \
   --set fleetshardSync.clusterId=${CLUSTER_ID} \
   --set acsOperator.enabled=true . \
   --set acsOperator.source=rhacs-operators \
-  --set acsOperator.startingCSV=rhacs-operator.v3.71.0 \
-  --set observability.enabled=true . \
-  --set observability.github.repository=https://api.github.com/repos/stackrox/rhacs-observability-resources/contents \
-  --set observability.gateway=https://observatorium-mst.api.stage.openshift.com
+  --set acsOperator.startingCSV=rhacs-operator.v3.71.0
+
+# To delete all resources:
+# helm template ... > /var/tmp/resources.yaml
+# kubectl delete -f /var/tmp/resources.yaml
