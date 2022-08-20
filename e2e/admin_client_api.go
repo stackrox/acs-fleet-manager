@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 )
 
@@ -90,7 +91,7 @@ func NewAdminClient(uriBase string, auth fleetmanager.Auth) (*Client, error) {
 	}, nil
 }
 
-// CreateCentral creates a central from the public fleet-manager API
+// CreateCentral creates a central using fleet-manager's private Admin API.
 func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.CentralRequest, error) {
 	reqBody, err := json.Marshal(request)
 	if err != nil {
@@ -103,6 +104,26 @@ func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.Ce
 	}
 
 	result := &public.CentralRequest{}
+	err = c.unmarshalResponse(resp, result)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling HTTP response: %w", err)
+	}
+	return result, nil
+}
+
+// UpdateCentral updates a central using fleet-manager's private Admin API.
+func (c *Client) UpdateCentral(id string, updateReq private.DinosaurUpdateRequest) (*private.Dinosaur, error) {
+	reqBody, err := json.Marshal(updateReq)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling HTTP request: %w", err)
+	}
+
+	resp, err := c.newRequest(http.MethodPatch, fmt.Sprintf("%s/dinosaurs/%s", c.adminAPIEndpoint, id), bytes.NewBuffer(reqBody))
+	if err != nil {
+		return nil, fmt.Errorf("executing HTTP request: %w", err)
+	}
+
+	result := &private.Dinosaur{}
 	err = c.unmarshalResponse(resp, result)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshalling HTTP response: %w", err)

@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"net/http"
 
-	"github.com/golang/glog"
+	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/jsonpb"
+	v1 "github.com/stackrox/rox/generated/api/v1"
+	"github.com/stackrox/rox/pkg/utils"
+
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	acsErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -15,7 +18,7 @@ import (
 	"github.com/stackrox/rox/pkg/httputil"
 )
 
-// reusing transport allows us to benefit from connection pooling
+// reusing transport allows us to benefit from connection pooling.
 var insecureTransport *http.Transport
 
 func init() {
@@ -24,7 +27,7 @@ func init() {
 	insecureTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 }
 
-// Client ...
+// Client represents the client for central.
 type Client struct {
 	address    string
 	pass       string
@@ -32,12 +35,7 @@ type Client struct {
 	central    private.ManagedCentral
 }
 
-// AuthProviderResponse ...
-type AuthProviderResponse struct {
-	ID string `json:"id"`
-}
-
-// NewCentralClient ...
+// NewCentralClient creates a new client for central with basic password authentication.
 func NewCentralClient(central private.ManagedCentral, address, pass string) *Client {
 	return &Client{
 		central: central,
@@ -49,18 +47,26 @@ func NewCentralClient(central private.ManagedCentral, address, pass string) *Cli
 	}
 }
 
-// SendRequestToCentral ...
-func (c *Client) SendRequestToCentral(ctx context.Context, requestBody interface{}, path string) (*http.Response, error) {
-	jsonBytes, err := json.Marshal(requestBody)
-	if err != nil {
-		return nil, errors.Wrap(err, "marshalling new request to central")
+// NewCentralClientNoAuth creates a new client for central without authentication.
+func NewCentralClientNoAuth(central private.ManagedCentral, address string) *Client {
+	return &Client{
+		central: central,
+		address: address,
+		httpClient: http.Client{
+			Transport: insecureTransport,
+		},
 	}
-	req, err := http.NewRequest(http.MethodPost, c.address+path, bytes.NewReader(jsonBytes))
+}
+
+// SendRequestToCentralRaw sends the request message to central and returns the http response.
+func (c *Client) SendRequestToCentralRaw(ctx context.Context, requestMessage proto.Message, method, path string) (*http.Response, error) {
+	req, err := c.createRequest(ctx, requestMessage, method, path)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating HTTP request to central")
 	}
-	req.SetBasicAuth("admin", c.pass)
-	req = req.WithContext(ctx)
+	if c.pass != "" {
+		req.SetBasicAuth("admin", c.pass)
+	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "sending new request to central")
@@ -68,37 +74,84 @@ func (c *Client) SendRequestToCentral(ctx context.Context, requestBody interface
 	return resp, nil
 }
 
-// SendGroupRequest ...
-func (c *Client) SendGroupRequest(ctx context.Context, groupRequest *storage.Group) error {
-	resp, err := c.SendRequestToCentral(ctx, groupRequest, "/v1/groups")
+// SendRequestToCentral sends the request message to central and returns the response message.
+// If no response message is given, the response body will not be unmarshalled.
+// It will return an error if any error occurs during request creation, unmarshalling or the request returned with a
+// non-successful HTTP status code.
+func (c *Client) SendRequestToCentral(ctx context.Context, requestMessage proto.Message, method, path string,
+	responseMessage proto.Message) error {
+	resp, err := c.SendRequestToCentralRaw(ctx, requestMessage, method, path)
 	if err != nil {
-		return errors.Wrap(err, "sending new group to central")
+		return err
 	}
+
+	defer utils.IgnoreError(resp.Body.Close)
+
 	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create group for central %s/%s", c.central.Metadata.Namespace, c.central.Metadata.Name)
+		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to execute request: %s %s",
+			method, path)
+	}
+
+	// Do not try to unmarshal the response body if no response message is set.
+	if responseMessage == nil {
+		return nil
+	}
+
+	if err := jsonpb.Unmarshal(resp.Body, responseMessage); err != nil {
+		return errors.Wrap(err, "decoding response body")
 	}
 	return nil
 }
 
-// SendAuthProviderRequest ...
-func (c *Client) SendAuthProviderRequest(ctx context.Context, authProviderRequest *storage.AuthProvider) (*AuthProviderResponse, error) {
-	resp, err := c.SendRequestToCentral(ctx, authProviderRequest, "/v1/authProviders")
-	if err != nil {
-		return nil, errors.Wrap(err, "sending new auth provider to central")
-	} else if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return nil, acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to create auth provider for central %s/%s", c.central.Metadata.Namespace, c.central.Metadata.Name)
-	}
-
-	defer func() {
-		err := resp.Body.Close()
-		if err != nil {
-			glog.Warningf("Attempt to close auth provider response failed: %s", err)
+func (c *Client) createRequest(ctx context.Context, requestMessage proto.Message, method, path string) (*http.Request, error) {
+	body := &bytes.Buffer{}
+	if requestMessage != nil {
+		marshaller := jsonpb.Marshaler{}
+		if err := marshaller.Marshal(body, requestMessage); err != nil {
+			return nil, errors.Wrap(err, "marshalling new request to central")
 		}
-	}()
-	var authProviderResp AuthProviderResponse
-	err = json.NewDecoder(resp.Body).Decode(&authProviderResp)
-	if err != nil {
-		return nil, errors.Wrap(err, "decoding auth provider POST response")
 	}
-	return &authProviderResp, nil
+	req, err := http.NewRequestWithContext(ctx, method, c.address+path, body)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create request")
+	}
+	return req, nil
+}
+
+// SendGroupRequest sends a request to create the specified group.
+// It will return an error if any error occurs during request creation or the request returned with a non-successful
+// HTTP status code.
+func (c *Client) SendGroupRequest(ctx context.Context, groupRequest *storage.Group) error {
+	if err := c.SendRequestToCentral(ctx, groupRequest, http.MethodPost, "/v1/groups",
+		nil); err != nil {
+		return errors.Wrapf(err, "failed to create group for central %s/%s",
+			c.central.Metadata.Namespace, c.central.Metadata.Name)
+	}
+	return nil
+}
+
+// SendAuthProviderRequest sends a request to create the specified auth provider and returns the created auth provider.
+// It will return an error if any error occurs during request creation or the request returned with a non-successful
+// HTTP status code.
+func (c *Client) SendAuthProviderRequest(ctx context.Context, authProviderRequest *storage.AuthProvider) (*storage.AuthProvider, error) {
+	var authProviderResponse storage.AuthProvider
+	if err := c.SendRequestToCentral(ctx, authProviderRequest, http.MethodPost, "/v1/authProviders",
+		&authProviderResponse); err != nil {
+		return nil, errors.Wrapf(err, "failed to create auth provider for central %s/%s",
+			c.central.Metadata.Namespace, c.central.Metadata.Name)
+	}
+	return &authProviderResponse, nil
+}
+
+// GetLoginAuthProviders sends a request to retrieve all login auth providers and returns them.
+// It will return an error if any error occurs during request creation or the request returned with a non-successful
+// HTTP status code.
+func (c *Client) GetLoginAuthProviders(ctx context.Context) (*v1.GetLoginAuthProvidersResponse, error) {
+	var loginAuthProvidersResponse v1.GetLoginAuthProvidersResponse
+	if err := c.SendRequestToCentral(ctx, nil, http.MethodGet, "/v1/login/authproviders",
+		&loginAuthProvidersResponse); err != nil {
+		return nil, errors.Wrapf(err, "failed to get login auth providers from central %s/%s",
+			c.central.Metadata.Namespace, c.central.Metadata.Name)
+	}
+	return &loginAuthProvidersResponse, nil
 }

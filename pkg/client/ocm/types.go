@@ -18,24 +18,24 @@ const (
 // DinosaurProduct ...
 type DinosaurProduct string
 
-// RHOSAKProduct TODO change this to correspond to your own product types created in AMS
+// RHACSProduct
 const (
-	RHOSAKProduct      DinosaurProduct = "RHOSAK"      // this is the standard product type
-	RHOSAKTrialProduct DinosaurProduct = "RHOSAKTrial" // this is trial product type which does not have any cost
+	RHACSProduct      DinosaurProduct = "RHACS"      // this is the standard product type
+	RHACSTrialProduct DinosaurProduct = "RHACSTrial" // this is trial product type which does not have any cost
 )
 
 // GetProduct ...
 func (t DinosaurQuotaType) GetProduct() string {
 	if t == StandardQuota {
-		return string(RHOSAKProduct)
+		return string(RHACSProduct)
 	}
 
-	return string(RHOSAKTrialProduct)
+	return string(RHACSTrialProduct)
 }
 
 // GetResourceName ...
 func (t DinosaurQuotaType) GetResourceName() string {
-	return "rhosak" // TODO change this to match your own AMS resource type. Usually it is the name of the product
+	return "rhacs"
 }
 
 // Equals ...

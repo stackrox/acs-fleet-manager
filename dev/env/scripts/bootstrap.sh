@@ -18,8 +18,12 @@ Using OLM: ${INSTALL_OLM}
 
 EOF
 
-if ! kc_output=$($KUBECTL api-versions >/dev/null 2>&1); then
-    die "Sanity check for contacting Kubernetes cluster failed: ${kc_output}"
+if ! kc_output=$($KUBECTL api-versions 2>&1); then
+    die "Error: Sanity check for contacting Kubernetes cluster failed:
+
+Command tried: '$KUBECTL api-versions'
+Output:
+${kc_output:-(no output)}"
 fi
 
 # Create Namespaces.

@@ -44,6 +44,8 @@ observability:
     gateway: ""
     metricsClientId: ""
     metricsSecret: ""
+  pagerduty:
+    key: ""
 
 # See available parameters in charts/logging/values.yaml
 # - enabled flag is used to completely enable/disable logging sub-chart

@@ -36,10 +36,8 @@ func NewDinosaurHandler(service services.DinosaurService, providerConfig *config
 
 func validateCentralResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
-		if dinosaurRequest.Central.Resources.Limits.Cpu != "" ||
-			dinosaurRequest.Central.Resources.Limits.Memory != "" ||
-			dinosaurRequest.Central.Resources.Requests.Cpu != "" ||
-			dinosaurRequest.Central.Resources.Requests.Memory != "" {
+		if len(dinosaurRequest.Central.Resources.Limits) > 0 ||
+			len(dinosaurRequest.Central.Resources.Requests) > 0 {
 			return errors.Forbidden("not allowed to specify central resources")
 		}
 		return nil
@@ -48,16 +46,12 @@ func validateCentralResourcesUnspecified(ctx context.Context, dinosaurRequest *p
 
 func validateScannerResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
-		if dinosaurRequest.Scanner.Analyzer.Resources.Limits.Cpu != "" ||
-			dinosaurRequest.Scanner.Analyzer.Resources.Limits.Memory != "" ||
-			dinosaurRequest.Scanner.Analyzer.Resources.Requests.Cpu != "" ||
-			dinosaurRequest.Scanner.Analyzer.Resources.Requests.Memory != "" {
+		if len(dinosaurRequest.Scanner.Analyzer.Resources.Limits) > 0 ||
+			len(dinosaurRequest.Scanner.Analyzer.Resources.Requests) > 0 {
 			return errors.Forbidden("not allowed to specify scanner analyzer resources")
 		}
-		if dinosaurRequest.Scanner.Db.Resources.Limits.Cpu != "" ||
-			dinosaurRequest.Scanner.Db.Resources.Limits.Memory != "" ||
-			dinosaurRequest.Scanner.Db.Resources.Requests.Cpu != "" ||
-			dinosaurRequest.Scanner.Db.Resources.Requests.Memory != "" {
+		if len(dinosaurRequest.Scanner.Db.Resources.Limits) > 0 ||
+			len(dinosaurRequest.Scanner.Db.Resources.Requests) > 0 {
 			return errors.Forbidden("not allowed to specify scanner db resources")
 		}
 		return nil
