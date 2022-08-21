@@ -1500,10 +1500,6 @@ components:
           type: string
         instance_type:
           type: string
-        central:
-          $ref: '#/components/schemas/CentralSpec'
-        scanner:
-          $ref: '#/components/schemas/ScannerSpec'
       required:
       - multi_az
     CentralRequestList_allOf:
