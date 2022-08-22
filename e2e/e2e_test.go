@@ -175,7 +175,7 @@ var _ = Describe("Central", func() {
 			Eventually(dnsRecordsLoader.loadDNSRecords).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
-				Should(HaveLen(len(centralDomainNames)))
+				Should(HaveLen(len(centralDomainNames)), "Finished at %s", time.Now())
 
 			recordSets := dnsRecordsLoader.result
 			for idx, domain := range centralDomainNames {
@@ -238,7 +238,7 @@ var _ = Describe("Central", func() {
 			Eventually(dnsRecordsLoader.loadDNSRecords).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
-				Should(BeEmpty())
+				Should(BeEmpty(), "Finished at %s", time.Now())
 		})
 	})
 
