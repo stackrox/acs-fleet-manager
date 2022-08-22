@@ -175,7 +175,7 @@ var _ = Describe("Central", func() {
 			Eventually(dnsRecordsLoader.loadDNSRecords).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
-				Should(HaveLen(len(centralDomainNames)), "Finished at %s", time.Now())
+				Should(HaveLen(len(centralDomainNames)), "Started at %s", time.Now())
 
 			recordSets := dnsRecordsLoader.result
 			for idx, domain := range centralDomainNames {
@@ -236,9 +236,9 @@ var _ = Describe("Central", func() {
 			centralDomainNames := getCentralDomainNamesSorted(central)
 			dnsRecordsLoader := newDNSRecordsLoader(rhacsZone, centralDomainNames)
 			Eventually(dnsRecordsLoader.loadDNSRecords).
-				WithTimeout(waitTimeout).
+				WithTimeout(max(waitTimeout, 10*time.Minute)).
 				WithPolling(defaultPolling).
-				Should(BeEmpty(), "Finished at %s", time.Now())
+				Should(BeEmpty(), "Started at %s", time.Now())
 		})
 	})
 
@@ -399,6 +399,13 @@ var _ = Describe("Central", func() {
 
 	})
 })
+
+func max(a time.Duration, b time.Duration) time.Duration {
+	if a >= b {
+		return a
+	}
+	return b
+}
 
 func getCentral(createdCentral *public.CentralRequest, client *fleetmanager.Client) *public.CentralRequest {
 	Expect(createdCentral).NotTo(BeNil())
