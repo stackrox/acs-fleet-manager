@@ -14,7 +14,7 @@ require (
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-gormigrate/gormigrate/v2 v2.0.0
+	github.com/go-gormigrate/gormigrate/v2 v2.0.2
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/goava/di v1.11.0
 	github.com/gogo/protobuf v1.3.2
@@ -55,7 +55,7 @@ require (
 	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
-	gorm.io/driver/postgres v1.3.5
+	gorm.io/driver/postgres v1.3.7
 	gorm.io/gorm v1.23.8
 	k8s.io/api v0.24.1
 	k8s.io/apimachinery v0.24.1
