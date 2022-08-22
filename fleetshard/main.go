@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/runtime"
 	"golang.org/x/sys/unix"
@@ -42,6 +43,13 @@ func main() {
 		err := runtime.Start()
 		if err != nil {
 			glog.Fatal(err)
+		}
+	}()
+
+	metricServer := fleetshardmetrics.NewMetricsServer(":8081")
+	go func() {
+		if err := metricServer.ListenAndServe(); err != nil {
+			glog.Errorf("serving metrics server: %v", err)
 		}
 	}()
 
