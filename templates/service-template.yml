@@ -618,13 +618,6 @@ objects:
   - apiVersion: v1
     kind: ConfigMap
     metadata:
-      name: fake-fleet-manager-dataplane-cert-secret
-    data:
-      tls.crt: badger
-      tls.key: badger
-  - apiVersion: v1
-    kind: ConfigMap
-    metadata:
       name: fleet-manager-dataplane-cluster-configuration-staging
       annotations:
         qontract.recycle: "true"
@@ -907,9 +900,11 @@ objects:
           volumes:
           - name: fleet-manager-credentials
             secret:
+              # secret name in the Vault
               secretName: fleet-manager # pragma: allowlist secret
           - name: rhsso-client-secret
             secret:
+              # secret name in the Vault
               secretName: fleet-manager-central-rhsso-client-secret # pragma: allowlist secret
           - name: tls
             secret:
@@ -918,8 +913,9 @@ objects:
             configMap:
               name: fake-fleet-manager-secret
           - name: dataplane-certificate
-            configMap:
-              name: fake-fleet-manager-dataplane-cert-secret
+            secret:
+              # secret name in the Vault
+              secretName: fleet-manager-dataplane-certificate # pragma: allowlist secret
           - name: rds
             secret:
               secretName: acs-fleet-manager-rds # pragma: allowlist secret
