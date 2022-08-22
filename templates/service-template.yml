@@ -900,11 +900,11 @@ objects:
           volumes:
           - name: fleet-manager-credentials
             secret:
-              # secret name in the Vault
+              # secretName is a vault-secret provider name in the app-interface
               secretName: fleet-manager # pragma: allowlist secret
           - name: rhsso-client-secret
             secret:
-              # secret name in the Vault
+              # secretName is a vault-secret provider name in the app-interface
               secretName: fleet-manager-central-rhsso-client-secret # pragma: allowlist secret
           - name: tls
             secret:
@@ -914,7 +914,7 @@ objects:
               name: fake-fleet-manager-secret
           - name: dataplane-certificate
             secret:
-              # secret name in the Vault
+              # secretName is a vault-secret provider name in the app-interface
               secretName: fleet-manager-dataplane-certificate # pragma: allowlist secret
           - name: rds
             secret:
