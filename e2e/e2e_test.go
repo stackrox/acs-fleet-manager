@@ -177,7 +177,7 @@ var _ = Describe("Central", func() {
 				WithPolling(defaultPolling).
 				Should(HaveLen(len(centralDomainNames)), "Started at %s", time.Now())
 
-			recordSets := dnsRecordsLoader.result
+			recordSets := dnsRecordsLoader.lastResult
 			for idx, domain := range centralDomainNames {
 				recordSet := recordSets[idx]
 				Expect(len(recordSet.ResourceRecords)).To(Equal(1))
@@ -451,24 +451,22 @@ func getCentralDomainNamesSorted(central *public.CentralRequest) []string {
 type dnsRecordsLoader struct {
 	rhacsZone          *route53.HostedZone
 	centralDomainNames []string
-	result             []*route53.ResourceRecordSet
+	lastResult         []*route53.ResourceRecordSet
 }
 
 func newDNSRecordsLoader(rhacsZone *route53.HostedZone, centralDomainNames []string) *dnsRecordsLoader {
 	return &dnsRecordsLoader{
 		rhacsZone:          rhacsZone,
 		centralDomainNames: centralDomainNames,
-		result:             make([]*route53.ResourceRecordSet, 0, len(centralDomainNames)),
 	}
 }
 
 func (loader *dnsRecordsLoader) loadDNSRecords() []*route53.ResourceRecordSet {
-	if len(loader.result) == len(loader.centralDomainNames) {
-		return loader.result
-	}
-	idx := len(loader.result)
+	idx := 0
 	loadingRecords := true
 	nextRecord := &loader.centralDomainNames[idx]
+	result := make([]*route53.ResourceRecordSet, 0, len(loader.centralDomainNames))
+
 loading:
 	for loadingRecords {
 		output, err := route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
@@ -478,7 +476,7 @@ loading:
 		Expect(err).ToNot(HaveOccurred())
 		for _, recordSet := range output.ResourceRecordSets {
 			if *recordSet.Name == loader.centralDomainNames[idx] {
-				loader.result = append(loader.result, recordSet)
+				result = append(result, recordSet)
 				idx = idx + 1
 				if idx == len(loader.centralDomainNames) {
 					break loading
@@ -488,5 +486,6 @@ loading:
 		loadingRecords = *output.IsTruncated
 		nextRecord = output.NextRecordName
 	}
-	return loader.result
+	loader.lastResult = result
+	return result
 }
