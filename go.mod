@@ -16,7 +16,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.2
 	github.com/go-resty/resty/v2 v2.7.0
-	github.com/goava/di v1.11.0
+	github.com/goava/di v1.11.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/golang/glog v1.0.0
@@ -41,7 +41,7 @@ require (
 	github.com/prometheus/common v0.35.0
 	github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.4.0
 	github.com/rs/xid v1.4.0
-	github.com/santhosh-tekuri/jsonschema/v3 v3.0.1
+	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0
 	github.com/selvatico/go-mocket v1.0.7
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
