@@ -354,7 +354,14 @@ test/cluster/cleanup:
 test/e2e: gotestsum
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	RUN_E2E=true \
-	$(GOTESTSUM) --format $(GOTESTSUM_FORMAT) -- $(GOARGS) -bench -v -count=1 -p 1 -timeout $(TEST_TIMEOUT) $(TESTFLAGS) ./e2e/...
+	go run github.com/onsi/ginkgo/v2/ginkgo -r $(GINKGO_FLAGS) \
+		--randomize-all --randomize-suites \
+		--fail-on-pending --keep-going \
+		--cover --coverprofile=cover.profile \
+		--race --trace \
+		--json-report=e2e-report.json \
+		--timeout=$(TEST_TIMEOUT) \
+		 ./e2e/...
 .PHONY: test/e2e
 
 test/e2e/cleanup:
