@@ -156,7 +156,7 @@ parameters:
 - name: ENABLE_CENTRAL_EXTERNAL_CERTIFICATE
   displayName: Enable Central TLS
   description: Enable the Central TLS certificate
-  value: "false"
+  value: "true"
 
 - name: OBSERVATORIUM_RHSSO_GATEWAY
   displayName: Observatorium Red Hat SSO gateway
@@ -330,7 +330,7 @@ parameters:
 
 - name: CENTRAL_DOMAIN_NAME
   description: The domain name to use for Central instances
-  value: bf2.central-stage.rhcloud.com
+  value: acs-stage.rhcloud.com
 
 - name: CENTRAL_OPERATOR_OPERATOR_ADDON_ID
   displayName: Central operator addon ID
