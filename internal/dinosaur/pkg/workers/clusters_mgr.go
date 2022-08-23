@@ -656,6 +656,20 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		glog.Infof("Registered a new cluster with config file: %s ", p.ClusterID)
 	}
 
+	// Update existing clusters.
+	for _, manualCluster := range c.DataplaneClusterConfig.ClusterConfig.ExistingClusters(clusterIdsMap) {
+		cluster, err := c.ClusterService.FindClusterByID(manualCluster.ClusterID)
+		if err != nil {
+			glog.Warningf("Failed to lookup cluster %s in cluster service: %v", manualCluster.ClusterID, err)
+			continue
+		}
+		glog.Infof("Updating data-plane cluster %s", manualCluster.ClusterID)
+		cluster.ClusterDNS = manualCluster.ClusterDNS
+		if err := c.ClusterService.Update(*cluster); err != nil {
+			return []error{errors.Wrapf(err, "Failed to update manual cluster %s", cluster.ClusterID)}
+		}
+	}
+
 	// Remove all clusters that are not in the config file
 	excessClusterIds := c.DataplaneClusterConfig.ClusterConfig.ExcessClusters(clusterIdsMap)
 	if len(excessClusterIds) == 0 {
