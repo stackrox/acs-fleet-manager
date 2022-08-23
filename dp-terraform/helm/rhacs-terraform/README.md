@@ -46,8 +46,12 @@ helm install rhacs-terraform \
 helm get values rhacs-terraform --namespace rhacs > ~/re-terraform-dp-cluster-values.yaml
 ```
 2. Adjust values in the values file `~/re-terraform-dp-cluster.yaml` accordingly
-3. Check changes with the diff plugin. To install diff plugin please check documentation here: [https://github.com/databus23/helm-diff](https://github.com/databus23/helm-diff)
+3. Check changes with the diff plugin
 ```
+# To install diff plugin please check documentation here: [https://github.com/databus23/helm-diff](https://github.com/databus23/helm-diff)
+# TL;DR:
+helm plugin install https://github.com/databus23/helm-diff
+
 helm diff upgrade rhacs-terraform --namespace rhacs --values ~/re-terraform-dp-cluster-values.yaml .
 ```
 4. Update the helm release
