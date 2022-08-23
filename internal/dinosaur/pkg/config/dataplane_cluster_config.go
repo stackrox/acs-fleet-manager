@@ -239,6 +239,19 @@ func (conf *ClusterConfig) MissingClusters(clusterMap map[string]api.Cluster) []
 	return res
 }
 
+// ExistingClusters produces the subset of clusters which do already exist for fleet-manager.
+func (conf *ClusterConfig) ExistingClusters(clusterMap map[string]api.Cluster) []ManualCluster {
+	var res []ManualCluster
+
+	// ensure the order
+	for _, p := range conf.clusterList {
+		if _, exists := clusterMap[p.ClusterID]; exists {
+			res = append(res, p)
+		}
+	}
+	return res
+}
+
 // IsDataPlaneManualScalingEnabled ...
 func (c *DataplaneClusterConfig) IsDataPlaneManualScalingEnabled() bool {
 	return c.DataPlaneClusterScalingType == ManualScaling
