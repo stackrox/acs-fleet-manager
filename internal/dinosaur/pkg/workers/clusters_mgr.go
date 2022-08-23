@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/goava/di"
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
@@ -663,9 +664,28 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			glog.Warningf("Failed to lookup cluster %s in cluster service: %v", manualCluster.ClusterID, err)
 			continue
 		}
-		glog.Infof("Updating data-plane cluster %s", manualCluster.ClusterID)
-		cluster.ClusterDNS = manualCluster.ClusterDNS
-		if err := c.ClusterService.Update(*cluster); err != nil {
+		newCluster := *cluster
+		newCluster.CloudProvider = manualCluster.CloudProvider
+		newCluster.Region = manualCluster.Region
+		newCluster.MultiAZ = manualCluster.MultiAZ
+		newCluster.Status = manualCluster.Status
+		newCluster.ProviderType = manualCluster.ProviderType
+		newCluster.ClusterDNS = manualCluster.ClusterDNS
+		newCluster.SupportedInstanceType = manualCluster.SupportedInstanceType
+		if err := cluster.SetAvailableCentralOperatorVersions(manualCluster.AvailableCentralOperatorVersions); err != nil {
+			return []error{errors.Wrapf(err, "Failed to update operator versions for manual cluster %s with config file", manualCluster.ClusterID)}
+		}
+
+		if cmp.Equal(*cluster, newCluster) {
+			glog.Infof("Data-plane cluster %s unchanged", manualCluster.ClusterID)
+			continue
+		}
+		diff := cmp.Diff(*cluster, newCluster)
+		glog.Infof("Updating data-plane cluster %s. Changes in cluster configuration:\n", manualCluster.ClusterID)
+		for _, diffLine := range strings.Split(diff, "\n") {
+			glog.Infoln(diffLine)
+		}
+		if err := c.ClusterService.Update(newCluster); err != nil {
 			return []error{errors.Wrapf(err, "Failed to update manual cluster %s", cluster.ClusterID)}
 		}
 	}
