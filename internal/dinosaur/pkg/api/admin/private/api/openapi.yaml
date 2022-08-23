@@ -639,6 +639,10 @@ components:
           type: string
         namespace:
           type: string
+        central:
+          $ref: '#/components/schemas/CentralSpec'
+        scanner:
+          $ref: '#/components/schemas/ScannerSpec'
     DinosaurList_allOf:
       properties:
         items:
@@ -736,10 +740,6 @@ components:
           type: string
         instance_type:
           type: string
-        central:
-          $ref: '#/components/schemas/CentralSpec'
-        scanner:
-          $ref: '#/components/schemas/ScannerSpec'
       required:
       - multi_az
   securitySchemes:

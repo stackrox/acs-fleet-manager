@@ -640,10 +640,6 @@ components:
               type: string
             instance_type:
               type: string
-            central:
-              $ref: "#/components/schemas/CentralSpec"
-            scanner:
-              $ref: "#/components/schemas/ScannerSpec"
           example:
             $ref: "#/components/examples/CentralRequestExample"
     CentralRequestList:

@@ -334,6 +334,10 @@ components:
               type: string
             namespace:
               type: string
+            central:
+              $ref: "#/components/schemas/CentralSpec"
+            scanner:
+              $ref: "#/components/schemas/ScannerSpec"
     DinosaurList:
       allOf:
         - $ref: "fleet-manager.yaml#/components/schemas/List"
