@@ -6,14 +6,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
-	"sort"
-	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/route53"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
+	"github.com/stackrox/acs-fleet-manager/e2e/dns"
 	"github.com/stackrox/acs-fleet-manager/e2e/envtokenauth"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -166,20 +164,15 @@ var _ = Describe("Central", func() {
 			central := getCentral(createdCentral, client)
 			reencryptIngress, err := routeService.FindReencryptIngress(context.Background(), namespaceName)
 			Expect(err).ToNot(HaveOccurred())
+			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
 
-			rhacsZone, err := getHostedZone(central)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(rhacsZone).ToNot(BeNil())
-
-			centralDomainNames := getCentralDomainNamesSorted(central)
-			dnsRecordsLoader := newDNSRecordsLoader(rhacsZone, centralDomainNames)
-			Eventually(dnsRecordsLoader.loadDNSRecords).
+			Eventually(dnsRecordsLoader.LoadDNSRecords).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
-				Should(HaveLen(len(centralDomainNames)), "Started at %s", time.Now())
+				Should(HaveLen(len(dnsRecordsLoader.CentralDomainNames)), "Started at %s", time.Now())
 
-			recordSets := dnsRecordsLoader.lastResult
-			for idx, domain := range centralDomainNames {
+			recordSets := dnsRecordsLoader.LastResult
+			for idx, domain := range dnsRecordsLoader.CentralDomainNames {
 				recordSet := recordSets[idx]
 				Expect(len(recordSet.ResourceRecords)).To(Equal(1))
 				record := recordSet.ResourceRecords[0]
@@ -229,14 +222,9 @@ var _ = Describe("Central", func() {
 			}
 
 			central := getCentral(createdCentral, client)
+			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
 
-			rhacsZone, err := getHostedZone(central)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(rhacsZone).ToNot(BeNil())
-
-			centralDomainNames := getCentralDomainNamesSorted(central)
-			dnsRecordsLoader := newDNSRecordsLoader(rhacsZone, centralDomainNames)
-			Eventually(dnsRecordsLoader.loadDNSRecords).
+			Eventually(dnsRecordsLoader.LoadDNSRecords).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(BeEmpty(), "Started at %s", time.Now())
@@ -410,81 +398,4 @@ func getCentral(createdCentral *public.CentralRequest, client *fleetmanager.Clie
 
 func centralStatus(createdCentral *public.CentralRequest, client *fleetmanager.Client) string {
 	return getCentral(createdCentral, client).Status
-}
-
-func removeLastChar(s string) string {
-	return s[:len(s)-1]
-}
-
-func getHostedZone(central *public.CentralRequest) (*route53.HostedZone, error) {
-	hostedZones, err := route53Client.ListHostedZones(&route53.ListHostedZonesInput{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list hosted zones: %v", err)
-	}
-
-	var rhacsZone *route53.HostedZone
-	for _, zone := range hostedZones.HostedZones {
-		// Omit the . at the end of hosted zone name
-		name := removeLastChar(*zone.Name)
-		if strings.Contains(central.UiHost, name) {
-			rhacsZone = zone
-			break
-		}
-	}
-
-	if rhacsZone == nil {
-		return nil, fmt.Errorf("hosted zone for central host: %v not found", central.UiHost)
-	}
-
-	return rhacsZone, nil
-}
-
-func getCentralDomainNamesSorted(central *public.CentralRequest) []string {
-	centralUIDomain := central.UiHost + "."
-	centralDataDomain := central.DataHost + "."
-	domains := []string{centralUIDomain, centralDataDomain}
-	sort.Strings(domains)
-	return domains
-}
-
-type dnsRecordsLoader struct {
-	rhacsZone          *route53.HostedZone
-	centralDomainNames []string
-	lastResult         []*route53.ResourceRecordSet
-}
-
-func newDNSRecordsLoader(rhacsZone *route53.HostedZone, centralDomainNames []string) *dnsRecordsLoader {
-	return &dnsRecordsLoader{
-		rhacsZone:          rhacsZone,
-		centralDomainNames: centralDomainNames,
-	}
-}
-
-func (loader *dnsRecordsLoader) loadDNSRecords() []*route53.ResourceRecordSet {
-	idx := 0
-	loadingRecords := true
-	nextRecord := &loader.centralDomainNames[idx]
-	result := make([]*route53.ResourceRecordSet, 0, len(loader.centralDomainNames))
-
-loading:
-	for loadingRecords {
-		output, err := route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
-			HostedZoneId:    loader.rhacsZone.Id,
-			StartRecordName: nextRecord,
-		})
-		Expect(err).ToNot(HaveOccurred())
-		for _, recordSet := range output.ResourceRecordSets {
-			if *recordSet.Name == loader.centralDomainNames[idx] {
-				result = append(result, recordSet)
-				idx = idx + 1
-				if idx == len(loader.centralDomainNames) {
-					break loading
-				}
-			}
-		}
-		loadingRecords = *output.IsTruncated
-		nextRecord = output.NextRecordName
-	}
-	loader.lastResult = result
-	return result
 }
