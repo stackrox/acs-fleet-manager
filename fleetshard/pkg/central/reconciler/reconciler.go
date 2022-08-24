@@ -192,10 +192,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
-	if err := r.setLastCentralHash(remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "setting central reconcilation cache")
-	}
-
 	// Check whether deployment is ready.
 	centralReady, err := isCentralReady(ctx, r.client, remoteCentral)
 	if err != nil {
@@ -215,6 +211,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			return nil, err
 		}
 		r.hasAuthProvider = true
+	}
+
+	// Setting the last central hash must always be executed as the last step.
+	// defer can't be used for this call because it is also executed after the reconcile failed.
+	if err := r.setLastCentralHash(remoteCentral); err != nil {
+		return nil, errors.Wrapf(err, "setting central reconcilation cache")
 	}
 
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
