@@ -81,6 +81,10 @@ type iamClient struct {
 
 var _ IAMClient = &iamClient{}
 
+// GoCloak an alias for gocloak.GoCloak
+//go:generate moq -out gocloak_moq.go . GoCloak
+type GoCloak = gocloak.GoCloak
+
 // NewClient ...
 func NewClient(config *IAMConfig, realmConfig *IAMRealmConfig) *iamClient {
 	setTokenEndpoints(config, realmConfig)

@@ -12,15 +12,15 @@ import (
 	"sync"
 )
 
-// Ensure, that GoCloakMock does implement gocloak.GoCloak.
+// Ensure, that GoCloakMock does implement GoCloak.
 // If this is not the case, regenerate this file with moq.
-var _ gocloak.GoCloak = &GoCloakMock{}
+var _ GoCloak = &GoCloakMock{}
 
-// GoCloakMock is a mock implementation of gocloak.GoCloak.
+// GoCloakMock is a mock implementation of GoCloak.
 //
 // 	func TestSomethingThatUsesGoCloak(t *testing.T) {
 //
-// 		// make and configure a mocked gocloak.GoCloak
+// 		// make and configure a mocked GoCloak
 // 		mockedGoCloak := &GoCloakMock{
 // 			AddClientRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
 // 				panic("mock out the AddClientRoleComposite method")
@@ -729,7 +729,7 @@ var _ gocloak.GoCloak = &GoCloakMock{}
 // 			},
 // 		}
 //
-// 		// use mockedGoCloak in code that requires gocloak.GoCloak
+// 		// use mockedGoCloak in code that requires GoCloak
 // 		// and then make assertions.
 //
 // 	}
