@@ -50,7 +50,7 @@ require (
 	github.com/stretchr/testify v1.7.2
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yaacov/tree-search-language v0.0.0-20190923184055-1c2dad2e354b
-	github.com/zgalor/weberr v0.6.0
+	github.com/zgalor/weberr v0.7.0
 	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb
 	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d
 	gopkg.in/resty.v1 v1.12.0
