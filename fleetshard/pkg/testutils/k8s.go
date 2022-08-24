@@ -145,7 +145,7 @@ func (t *ReconcileTracker) Create(gvr schema.GroupVersionResource, obj runtime.O
 		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(secretsGVR, newCentralTLSSecret(ns), ns))
 		multiErr = multierror.Append(multiErr, t.createRoute(t.newCentralRoute(ns)))
 		multiErr = multierror.Append(multiErr, t.createRoute(t.newCentralMtlsRoute(ns)))
-		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(deploymentGVR, t.newCentralDeployment(ns), ns))
+		multiErr = multierror.Append(multiErr, t.ObjectTracker.Create(deploymentGVR, NewCentralDeployment(ns), ns))
 		err := multiErr.ErrorOrNil()
 		if err != nil {
 			return fmt.Errorf("creating group version resource: %w", err)
@@ -230,12 +230,16 @@ func (t *ReconcileTracker) admittedStatus(routeName string, host string) openshi
 	}
 }
 
-func (t *ReconcileTracker) newCentralDeployment(ns string) *appsv1.Deployment {
+// NewCentralDeployment creates a new k8s Deployment in a given namespace
+func NewCentralDeployment(ns string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "central",
 			Namespace: ns,
 			Labels:    centralLabels,
+		},
+		Status: appsv1.DeploymentStatus{
+			AvailableReplicas: 1,
 		},
 	}
 }

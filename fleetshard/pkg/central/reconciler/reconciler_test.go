@@ -23,12 +23,11 @@ import (
 )
 
 const (
-	centralName                 = "test-central"
-	centralID                   = "cb45idheg5ip6dq1jo4g"
-	centralNamespace            = "rhacs-" + centralID
-	centralReencryptRouteName   = "managed-central-reencrypt"
-	centralPassthroughRouteName = "managed-central-passthrough"
-	conditionTypeReady          = "Ready"
+	centralName               = "test-central"
+	centralID                 = "cb45idheg5ip6dq1jo4g"
+	centralNamespace          = "rhacs-" + centralID
+	centralReencryptRouteName = "managed-central-reencrypt"
+	conditionTypeReady        = "Ready"
 )
 
 var simpleManagedCentral = private.ManagedCentral{
@@ -342,13 +341,5 @@ func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
 }
 
 func centralDeploymentObject() *appsv1.Deployment {
-	return &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "central",
-			Namespace: centralNamespace,
-		},
-		Status: appsv1.DeploymentStatus{
-			AvailableReplicas: 1,
-		},
-	}
+	return testutils.NewCentralDeployment(centralNamespace)
 }
