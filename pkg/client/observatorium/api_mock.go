@@ -15,17 +15,16 @@ func (c *Client) MockAPI() pV1.API {
 	return &httpAPIMock{}
 }
 
-type httpAPIMock struct {
-}
+type httpAPIMock struct{}
 
 // Query performs a query for the dinosaur metrics.
-func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time) (pModel.Value, pV1.Warnings, error) {
+func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time, opts ...pV1.Option) (pModel.Value, pV1.Warnings, error) {
 	values := getMockQueryData(query)
 	return values, []string{}, nil
 }
 
 // QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) Performs a query range for the dinosaur metrics
-func (*httpAPIMock) QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) {
+func (*httpAPIMock) QueryRange(ctx context.Context, query string, r pV1.Range, opts ...pV1.Option) (pModel.Value, pV1.Warnings, error) {
 	values := getMockQueryRangeData(query)
 	return values, []string{}, nil
 }
@@ -107,7 +106,6 @@ func (*httpAPIMock) TSDB(ctx context.Context) (pV1.TSDBResult, error) {
 
 // Runtimeinfo ...
 func (*httpAPIMock) Runtimeinfo(ctx context.Context) (pV1.RuntimeinfoResult, error) {
-
 	return pV1.RuntimeinfoResult{}, fmt.Errorf("not implemented")
 }
 
@@ -134,7 +132,6 @@ func getMockQueryData(query string) pModel.Vector {
 		}
 	}
 	return pModel.Vector{}
-
 }
 
 // getMockQueryRangeData
@@ -145,7 +142,6 @@ func getMockQueryRangeData(query string) pModel.Matrix {
 		}
 	}
 	return pModel.Matrix{}
-
 }
 
 var rangeQuerydata = map[string]pModel.Matrix{
@@ -200,8 +196,10 @@ func fakeMetricData(name string, value int) *pModel.SampleStream {
 			"pod":                          "whatever",
 			"dinosaur_operator_io_cluster": "whatever",
 		},
-		Values: []pModel.SamplePair{{Timestamp: 0, Value: pModel.SampleValue(value)},
-			{Timestamp: 0, Value: pModel.SampleValue(value)}},
+		Values: []pModel.SamplePair{
+			{Timestamp: 0, Value: pModel.SampleValue(value)},
+			{Timestamp: 0, Value: pModel.SampleValue(value)},
+		},
 	}
 }
 
