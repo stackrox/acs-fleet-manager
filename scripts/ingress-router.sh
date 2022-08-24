@@ -9,6 +9,7 @@ ROUTER_CRD_YAML="https://raw.githubusercontent.com/openshift/api/master/route/v1
 ROUTER_DEPLOYMENT_YAML="https://raw.githubusercontent.com/openshift/router/master/deploy/router.yaml"
 APPS_OPENSHIFT_CRD_YAML="$SCRIPT_DIR/../dev/env/manifests/ingress-router/dummy.crd.yaml"
 HOSTCTL_PROFILE="acs"
+KUBECTL=${KUBECTL:-kubectl}
 
 usage() {
   echo "Usage: $(basename "$0") [-h | --help] <command> [<args>]"
@@ -31,13 +32,13 @@ usage() {
 
 deploy() {
   for manifest in $(list_manifests); do
-    kubectl create -f "$manifest"
+    $KUBECTL create -f "$manifest"
   done
 }
 
 undeploy() {
     for manifest in $(list_manifests_reversed); do
-      kubectl delete -f "$manifest" || true
+      $KUBECTL delete -f "$manifest" || true
     done
 }
 
@@ -51,10 +52,10 @@ list_manifests_reversed() {
 
 add_host() {
   local host context
-  context=$(kubectl config current-context)
+  context=$($KUBECTL config current-context)
   host=$1
   if [[ -z $host ]]; then
-    routes=$(kubectl get routes -l 'app.kubernetes.io/managed-by=rhacs-fleetshard' --all-namespaces -o json)
+    routes=$($KUBECTL get routes -l 'app.kubernetes.io/managed-by=rhacs-fleetshard' --all-namespaces -o json)
     host=$(jq -r '.items[].spec.host' <<< "$routes" | fzf --header "Using context $context")
   fi
   sudo hostctl add domains "$HOSTCTL_PROFILE" "$host"
