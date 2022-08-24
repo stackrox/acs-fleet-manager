@@ -2572,8 +2572,8 @@ github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da/go.mod h1:gi+0
 github.com/sanposhiho/wastedassign/v2 v2.0.6/go.mod h1:KyZ0MWTwxxBmfwn33zh3k1dmsbF2ud9pAAGfoLfjhtI=
 github.com/santhosh-tekuri/jsonschema v1.2.4 h1:hNhW8e7t+H1vgY+1QeEQpveR6D4+OwKPXCfD2aieJis=
 github.com/santhosh-tekuri/jsonschema v1.2.4/go.mod h1:TEAUOeZSmIxTTuHatJzrvARHiuO9LYd+cIxzgEHCQI4=
-github.com/santhosh-tekuri/jsonschema/v3 v3.0.1 h1:tQVL4vmtH0NYlua++DZCaCUCIs8JdnxKB1Fto2BiEfY=
-github.com/santhosh-tekuri/jsonschema/v3 v3.0.1/go.mod h1:oOUSf2vgwmcYO4CkIJnEKle02MmEeI3cyItX+fxgpzg=
+github.com/santhosh-tekuri/jsonschema/v3 v3.1.0 h1:levPcBfnazlA1CyCMC3asL/QLZkq9pa8tQZOH513zQw=
+github.com/santhosh-tekuri/jsonschema/v3 v3.1.0/go.mod h1:8kzK2TC0k0YjOForaAHdNEa7ik0fokNa2k30BKJ/W7Y=
 github.com/sassoftware/go-rpmutils v0.0.0-20190420191620-a8f1baeba37b/go.mod h1:am+Fp8Bt506lA3Rk3QCmSqmYmLMnPDhdDUcosQCAx+I=
 github.com/sassoftware/go-rpmutils v0.1.1/go.mod h1:euhXULoBpvAxqrBHEyJS4Tsu3hHxUmQWNymxoJbzgUY=
 github.com/sassoftware/relic v0.0.0-20210427151427-dfb082b79b74/go.mod h1:YlB8wFIZmFLZ1JllNBfSURzz52fBxbliNgYALk1UDmk=
