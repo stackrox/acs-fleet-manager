@@ -63,7 +63,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-	remoteCentralReady := remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String()
+	remoteCentralReady := isRemoteCentralReady(remoteCentral)
 
 	if !changed && r.wantsAuthProvider == r.hasAuthProvider && remoteCentralReady {
 		return nil, ErrCentralNotChanged
@@ -206,8 +206,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 	if !centralDeploymentReady || !centralTLSSecretFound {
-		remoteCentralProvisioning := remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusProvisioning.String()
-		if remoteCentralProvisioning && !changed { // no changes detected, wait until central become ready
+		if isRemoteCentralProvisioning(remoteCentral) && !changed { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
 		}
 		return installingStatus(), nil
@@ -250,6 +249,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	return status, nil
+}
+
+func isRemoteCentralProvisioning(remoteCentral private.ManagedCentral) bool {
+	return remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusProvisioning.String()
+}
+
+func isRemoteCentralReady(remoteCentral private.ManagedCentral) bool {
+	return remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String()
 }
 
 func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
