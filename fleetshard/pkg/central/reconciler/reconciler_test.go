@@ -186,13 +186,11 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 }
 
 func TestReconcileDelete(t *testing.T) {
-	// given
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
-	// when
 	deletedCentral := simpleManagedCentral
 	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
 
@@ -296,17 +294,15 @@ func TestReportRoutesStatuses(t *testing.T) {
 }
 
 func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
-	// given
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
-	// when
+
 	existingCentral := simpleManagedCentral
 	existingCentral.RequestStatus = centralConstants.DinosaurRequestStatusReady.String()
 	status, _ := r.Reconcile(context.TODO(), existingCentral) // cache hit
-	// then
 	expected := []private.DataPlaneCentralStatusRoutes{
 		{
 			Domain: "acs-cb45idheg5ip6dq1jo4g.acs.rhcloud.test",
