@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -441,11 +442,9 @@ func getHostedZone(central *public.CentralRequest) (*route53.HostedZone, error) 
 func getCentralDomainNamesSorted(central *public.CentralRequest) []string {
 	centralUIDomain := central.UiHost + "."
 	centralDataDomain := central.DataHost + "."
-
-	if centralUIDomain > centralDataDomain {
-		return []string{centralDataDomain, centralUIDomain}
-	}
-	return []string{centralUIDomain, centralDataDomain}
+	domains := []string{centralUIDomain, centralDataDomain}
+	sort.Strings(domains)
+	return domains
 }
 
 type dnsRecordsLoader struct {
