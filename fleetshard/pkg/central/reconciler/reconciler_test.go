@@ -322,35 +322,26 @@ func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
 }
 
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
-	// given
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
 	tracker.AddRouteError(centralReencryptRouteName, errors.New("fake error"))
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
-	// when
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	// then
 	require.Errorf(t, err, "fake error")
 }
 
 func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
-	// given
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
 	tracker.SetRouteAdmitted(centralReencryptRouteName, false)
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
-	// when
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	// then
 	require.Errorf(t, err, "unable to find admitted ingress")
 }
 
 func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
-	// given
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
 	tracker.SetSkipRoute(centralReencryptRouteName, true)
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
-	// when
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	// then
 	require.Errorf(t, err, "unable to find admitted ingress")
 }
 
