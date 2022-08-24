@@ -150,6 +150,11 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 
 	_, err = r.Reconcile(context.TODO(), managedCentral)
 	require.ErrorIs(t, err, ErrCentralNotChanged)
+
+	central := &v1alpha1.Central{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
+	require.NoError(t, err)
+	assert.Equal(t, "4", central.Annotations[revisionAnnotationKey])
 }
 
 func TestIgnoreCacheForCentralNotReady(t *testing.T) {
