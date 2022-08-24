@@ -10,6 +10,14 @@ Below is the example of adding the route hostname to `/etc/hosts` using `hostctl
 
 ### Adding a host
 After the central instance is provisioned and the routes are created, it's time to add the host to the `/etc/hosts`
+#### Using the script
+
+```
+# requires: kubectl, hostctl, fzf, jq
+./scripts/ingress-router.sh host add
+```
+
+#### Manually
 ```
 # Get hostname
 $ kubectl get routes managed-central-reencrypt -n rhacs-cblb0hq87d5sb2n3aesg -o jsonpath='{.spec.host}'
@@ -29,6 +37,13 @@ $ sudo hostctl add domains acs acs-cblb0hq87d5sb2n3aesg.kubernetes.docker.intern
 ```
 After the host is added, you can access it in a browser
 ### Removing the host
+#### Using the script
+
+```
+# requires: kubectl, hostctl, fzf, jq
+./scripts/ingress-router.sh host remove
+```
+#### Manually
 When you are finished with testing the concrete instance, you can remove the host from the list
 ```
 $ sudo hostctl remove domains acs acs-cblb0hq87d5sb2n3aesg.kubernetes.docker.internal
