@@ -259,7 +259,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	dinosaurRequest.Status = dinosaurConstants.CentralRequestStatusAccepted.String()
 	dinosaurRequest.SubscriptionID = subscriptionID
 	glog.Infof("Central request %s has been assigned the subscription %s.", dinosaurRequest.ID, subscriptionID)
-	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
+	// Persist the QuotaType to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a dinosaur A is created, at the time of creation the quota-type was ams. At some point in the future
 	// the API is restarted this time changing the --quota-type flag to quota-management-list, when dinosaur A is deleted at this point,
 	// we want to use the correct quota to perform the deletion.
