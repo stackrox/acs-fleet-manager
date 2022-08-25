@@ -63,9 +63,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-	remoteCentralReady := isRemoteCentralReady(remoteCentral)
-
-	if !changed && r.wantsAuthProvider == r.hasAuthProvider && remoteCentralReady {
+	if !changed && r.wantsAuthProvider == r.hasAuthProvider && isRemoteCentralReady(remoteCentral) {
 		return nil, ErrCentralNotChanged
 	}
 
@@ -216,7 +214,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// 1. Auth provider is already created
 	// 2. OR reconciler creator specified auth provider not to be created
 	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
-	if r.wantsAuthProvider && !r.hasAuthProvider && !remoteCentralReady {
+	if r.wantsAuthProvider && !r.hasAuthProvider && !isRemoteCentralReady(remoteCentral) {
 		err = createRHSSOAuthProvider(ctx, remoteCentral, r.client)
 		if err != nil {
 			return nil, err
@@ -235,7 +233,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// Do not report routes statuses if:
 	// 1. Routes are not used on the cluster
 	// 2. Central request is in status "Ready" - assuming that routes are already reported and saved
-	if r.useRoutes && !remoteCentralReady {
+	if r.useRoutes && !isRemoteCentralReady(remoteCentral) {
 		status.Routes, err = r.getRoutesStatuses(ctx, remoteCentralNamespace)
 		if err != nil {
 			return nil, err
