@@ -22,7 +22,8 @@ type CentralRequest struct {
 	Owner          string `json:"owner" gorm:"index"` // TODO: ocm owner?
 	OwnerAccountID string `json:"owner_account_id"`
 	OwnerUserID    string `json:"owner_user_id"`
-	// The DNS host (domain) of the Central service
+	// Instance-independent part of the Central's hostname. For example, this
+	// can be `rhacs-dev.com`, `acs-stage.rhcloud.com`, etc.
 	Host           string `json:"host"`
 	OrganisationID string `json:"organisation_id" gorm:"index"`
 	FailedReason   string `json:"failed_reason"`
