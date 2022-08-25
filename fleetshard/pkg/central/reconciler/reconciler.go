@@ -196,7 +196,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	// Check whether deployment is ready.
-	centralReady, err := isCentralReady(ctx, r.client, remoteCentral)
+	centralReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral)
 	if err != nil {
 		return nil, err
 	}

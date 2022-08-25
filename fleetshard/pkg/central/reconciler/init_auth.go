@@ -57,7 +57,7 @@ var (
 	}
 )
 
-func isCentralReady(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (bool, error) {
+func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (bool, error) {
 	deployment := &appsv1.Deployment{}
 	err := client.Get(ctx,
 		ctrlClient.ObjectKey{Name: "central", Namespace: central.Metadata.Namespace},
@@ -75,7 +75,7 @@ func isCentralReady(ctx context.Context, client ctrlClient.Client, central priva
 }
 
 func existsRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error) {
-	ready, err := isCentralReady(ctx, client, central)
+	ready, err := isCentralDeploymentReady(ctx, client, central)
 	if !ready || err != nil {
 		return false, err
 	}
