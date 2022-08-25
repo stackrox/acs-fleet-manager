@@ -102,6 +102,7 @@ type DinosaurService interface {
 	CountByStatus(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error)
 	CountByRegionAndInstanceType() ([]DinosaurRegionCount, error)
 	ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
+	ListDinosaursWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	ListComponentVersions() ([]DinosaurComponentVersions, error)
 }
@@ -318,7 +319,15 @@ func (k *dinosaurService) AcceptDinosaurRequest(dinosaurRequest *dbapi.CentralRe
 func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	// Check if the request is ready to be transitioned to provisioning.
 
-	// TODO(alexr): check RH SSO is set up
+	// Check IdP config is ready.
+	//
+	// TODO(alexr): Shall this go into "preparing_dinosaurs_mgr.go"? Ideally,
+	//     all CentralRequest updating logic is in one place, either in this
+	//     service or workers.
+	if dinosaurRequest.AuthConfig.ClientID == "" {
+		// We can't provision this request, skip
+		return nil
+	}
 
 	// Update the fields of the CentralRequest record in the database.
 	updatedDinosaurRequest := &dbapi.CentralRequest{
@@ -823,6 +832,28 @@ func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralR
 	dbConn := k.connectionFactory.New()
 	var results []*dbapi.CentralRequest
 	if err := dbConn.Where("routes IS NOT NULL").Where("routes_created = ?", "no").Find(&results).Error; err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list dinosaur requests")
+	}
+	return results, nil
+}
+
+// ListDinosaursWithoutAuthConfig returns all _relevant_ central requests with
+// no auth config.
+func (k *dinosaurService) ListDinosaursWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError) {
+	// There is no value in augmenting auth config for central requests beyond
+	// 'Preparing'.
+	status := []dinosaurConstants.DinosaurStatus{
+		dinosaurConstants.DinosaurRequestStatusAccepted,
+		dinosaurConstants.DinosaurRequestStatusPreparing,
+	}
+
+	dbConn := k.connectionFactory.New()
+	var results []*dbapi.CentralRequest
+	if err := dbConn.
+		Where("status IN (?)", status).
+		Where("idp_client_id != ''").
+		Scan(&results).
+		Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list dinosaur requests")
 	}
 	return results, nil

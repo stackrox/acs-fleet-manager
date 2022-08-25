@@ -52,6 +52,9 @@ type CentralRequest struct {
 	RoutesCreationID string `json:"routes_creation_id"`
 	// DeletionTimestamp stores the timestamp of the DELETE api call for the resource
 	DeletionTimestamp *time.Time `json:"deletionTimestamp"`
+
+	// All we need to integrate Central with an IdP.
+	AuthConfig
 }
 
 // CentralList ...
@@ -59,6 +62,13 @@ type CentralList []*CentralRequest
 
 // CentralIndex ...
 type CentralIndex map[string]*CentralRequest
+
+// AuthConfig keeps all we need to set up IdP for a Central instance.
+type AuthConfig struct {
+	ClientID     string `json:"idp_client_id"`
+	ClientSecret string `json:"idp_client_secret"`
+	Issuer       string `json:"idp_issuer"`
+}
 
 // Index ...
 func (l CentralList) Index() CentralIndex {
