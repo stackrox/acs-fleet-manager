@@ -776,4 +776,8 @@ tag:
 	@echo "$(image_tag)"
 .PHONY: tag
 
+setup-dev-env:
+	./scripts/setup-dev-env.sh
+.PHONY: setup-dev-env
+
 # TODO CRC Deployment stuff
