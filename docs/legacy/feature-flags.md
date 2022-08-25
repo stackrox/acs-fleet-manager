@@ -36,6 +36,7 @@ This lists the feature flags and their sub-configurations to enable/disable and 
     - `central-tls-key-file` [Required]: The path to the file containing the Central TLS private key (default: `'secrets/central-tls.key'`).
 - **enable-evaluator-instance**: Enable the creation of one central evaluator instances per user  
 - **rhsso-client-secret-file**: OIDC client secret to connect Central instances to sso.redhat.com
+- **rhsso-issuer**: RHSSO issuer to pass to Central's auth config to set up RHSSO IdP
 - **quota-type**: Sets the quota service to be used for access control when requesting Central instances (options: `ams` or `quota-management-list`, default: `quota-management-list`).
     > For more information on the quota service implementation, see the [quota service architecture](./architecture/quota-service-implementation) architecture documentation.
     - If this is set to `quota-management-list`, quotas will be managed via the quota management list configuration.
