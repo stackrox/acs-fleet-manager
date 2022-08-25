@@ -371,8 +371,6 @@ test/e2e/cleanup:
 # generate files
 generate: moq openapi/generate
 	$(GO) generate ./...
-	$(GO) mod vendor
-	$(MOQ) -out ./pkg/client/iam/gocloak_moq.go -pkg iam vendor/github.com/Nerzal/gocloak/v11 GoCloak:GoCloakMock
 .PHONY: generate
 
 # validate the openapi schema
