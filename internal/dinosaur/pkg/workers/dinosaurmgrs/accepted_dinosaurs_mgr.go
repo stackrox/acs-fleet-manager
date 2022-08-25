@@ -126,10 +126,10 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Cent
 	}
 	dinosaur.DesiredCentralVersion = selectedDinosaurOperatorVersion.CentralVersions[len(selectedDinosaurOperatorVersion.CentralVersions)-1].Version
 
-	glog.Infof("Dinosaur instance with id %s is assigned to cluster with id %s", dinosaur.ID, dinosaur.ClusterID)
-	dinosaur.Status = constants2.CentralRequestStatusPreparing.String()
-	if err2 := k.dinosaurService.Update(dinosaur); err2 != nil {
-		return errors.Wrapf(err2, "failed to update dinosaur %s with cluster details", dinosaur.ID)
+	glog.Infof("Central instance with id %s is assigned to cluster with id %s", dinosaur.ID, dinosaur.ClusterID)
+
+	if err = k.dinosaurService.AcceptDinosaurRequest(dinosaur); err != nil {
+		return errors.Wrapf(err, "failed to accept Central %s with cluster details", dinosaur.ID)
 	}
 	return nil
 }

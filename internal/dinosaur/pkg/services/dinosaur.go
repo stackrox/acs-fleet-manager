@@ -64,9 +64,9 @@ type DinosaurService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
 	// HasAvailableCapacityInRegion checks if there is capacity in the clusters for a given region
 	HasAvailableCapacityInRegion(dinosaurRequest *dbapi.CentralRequest) (bool, *errors.ServiceError)
-	// PrepareDinosaurRequest sets any required information (i.e. dinosaur host, sso client id and secret)
-	// to the Dinosaur Request record in the database. The dinosaur request will also be updated with an updated_at
-	// timestamp and the corresponding cluster identifier.
+	// AcceptDinosaurRequest transitions CentralRequest to 'Preparing'.
+	AcceptDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
+	// PrepareDinosaurRequest transitions CentralRequest to 'Provisioning'.
 	PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	// Get method will retrieve the dinosaurRequest instance that the give ctx has access to from the database.
 	// This should be used when you want to make sure the result is filtered based on the request context.
@@ -271,14 +271,19 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	return nil
 }
 
-// PrepareDinosaurRequest ...
-func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
+// AcceptDinosaurRequest sets any information about Central that does not
+// require blocking operations (e.g., requesting a RHSSO client). Upon success,
+// CentralRequest is transitioned to 'Preparing' status and might not be fully
+// prepared yet.
+func (k *dinosaurService) AcceptDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
+	// Set namespace.
 	namespace, formatErr := FormatNamespace(dinosaurRequest.ID)
 	if formatErr != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, formatErr, "invalid id format")
 	}
 	dinosaurRequest.Namespace = namespace
 
+	// Set host.
 	if k.dinosaurConfig.EnableCentralExternalCertificate {
 		// If we enable DinosaurTLS, the host should use the external domain name rather than the cluster domain
 		dinosaurRequest.Host = k.dinosaurConfig.CentralDomainName
@@ -290,16 +295,37 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		dinosaurRequest.Host = clusterDNS
 	}
 
-	// Update the Dinosaur Request record in the database
-	// Only updates the fields below
+	// Update the fields of the CentralRequest record in the database.
 	updatedDinosaurRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
 		},
 		Host:        dinosaurRequest.Host,
 		PlacementID: api.NewID(),
-		Status:      dinosaurConstants.CentralRequestStatusProvisioning.String(),
+		Status:      dinosaurConstants.CentralRequestStatusPreparing.String(),
 		Namespace:   dinosaurRequest.Namespace,
+	}
+	if err := k.Update(updatedDinosaurRequest); err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update dinosaur request")
+	}
+
+	return nil
+}
+
+// PrepareDinosaurRequest ensures that any required information (e.g.,
+// CentralRequest's host, RHSSO auth config, etc) has been set. Upon success,
+// the request is transitioned to 'Provisioning' status.
+func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
+	// Check if the request is ready to be transitioned to provisioning.
+
+	// TODO(alexr): check RH SSO is set up
+
+	// Update the fields of the CentralRequest record in the database.
+	updatedDinosaurRequest := &dbapi.CentralRequest{
+		Meta: api.Meta{
+			ID: dinosaurRequest.ID,
+		},
+		Status:      dinosaurConstants.CentralRequestStatusProvisioning.String(),
 	}
 	if err := k.Update(updatedDinosaurRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update dinosaur request")
