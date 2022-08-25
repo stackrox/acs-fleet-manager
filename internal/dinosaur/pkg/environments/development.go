@@ -35,6 +35,7 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"additional-sso-issuers-file":                     "config/additional-sso-issuers.yaml",
 		"jwks-file":                                       "config/jwks-file-static.json",
 		"fleetshard-authz-config-file":                    "config/fleetshard-authz-org-ids-development.yaml",
+		"rhsso-client-id":                                 "rhacs-ms-dev",
 		"rhsso-issuer":                                    "https://sso.stage.redhat.com/auth/realms/redhat-external",
 		"admin-authz-config-file":                         "config/admin-authz-roles-dev.yaml",
 	}
