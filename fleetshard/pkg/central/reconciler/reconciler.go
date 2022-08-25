@@ -69,7 +69,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return r.readyStatus(ctx, remoteCentralNamespace)
 	}
 
-	centralMonitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
+	monitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
 
 	centralResources, err := converters.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Central.Resources)
 	if err != nil {
@@ -99,7 +99,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 					},
 				},
 				Monitoring: &v1alpha1.Monitoring{
-					ExposeEndpoint: &centralMonitoringExposeEndpointEnabled,
+					ExposeEndpoint: &monitoringExposeEndpointEnabled,
 				},
 				DeploymentSpec: v1alpha1.DeploymentSpec{
 					Resources: &centralResources,
@@ -114,6 +114,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				},
 				DB: &v1alpha1.DeploymentSpec{
 					Resources: &scannerDbResources,
+				},
+				Monitoring: &v1alpha1.Monitoring{
+					ExposeEndpoint: &monitoringExposeEndpointEnabled,
 				},
 			},
 		},
