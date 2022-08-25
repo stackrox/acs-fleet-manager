@@ -148,7 +148,8 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 
 	assert.Equal(t, expectedHash, r.lastCentralHash)
 
-	_, err = r.Reconcile(context.TODO(), managedCentral)
+	status, err := r.Reconcile(context.TODO(), managedCentral)
+	require.Nil(t, status)
 	require.ErrorIs(t, err, ErrCentralNotChanged)
 
 	central := &v1alpha1.Central{}
@@ -288,18 +289,6 @@ func TestReportRoutesStatuses(t *testing.T) {
 	}
 	actual := status.Routes
 	assert.ElementsMatch(t, expected, actual)
-}
-
-func TestReportRoutesStatusWhenCentralNotChanged(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
-	existingCentral := simpleManagedCentral
-	existingCentral.RequestStatus = centralConstants.DinosaurRequestStatusReady.String()
-	_, err := r.Reconcile(context.TODO(), existingCentral)
-	require.NoError(t, err)
-	status, err := r.Reconcile(context.TODO(), existingCentral) // cache hit
-	require.Nil(t, status)
-	require.ErrorIs(t, err, ErrCentralNotChanged)
 }
 
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
