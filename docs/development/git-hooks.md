@@ -31,4 +31,7 @@ $ detect-secrets audit .secrets.baseline
 
 # Afterwards, make sure you commit the updated .secrets.baseline file and the plugin should not return any errors
 # anymore!
+
+# To exclude a false positive secret use:
+// pragma: allowlist secret
 ```

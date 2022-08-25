@@ -50,7 +50,7 @@ make binary && ./fleet-manager serve \
 
 The makefile target `image/build` builds a combined image, containing both applications, `fleet-manager` and `fleetshard-sync`.
 
-So far only `fleet-manager` can be successfully spawned from this image, because `fleetshard-sync` tries to reach `fleet-manager` at `127.0.0.1` (hard-coded).
+`fleetshard-sync` bu default tries to reach `fleet-manager` on `127.0.0.1`. To configure the endpoint use the `FLEET_MANAGER_ENDPOINT` env variable.
 
 Using e.g. the Docker CLI, `fleet-manager` can be spawned as follows:
 

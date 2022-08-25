@@ -76,7 +76,7 @@ This requires some preparations on a cluster:
 #### Common make targets
 
 ```
-# Install git-hooks, for more information see ./docs/development/git-hooks.md
+# Install git-hooks, for more information see git-hooks.md [1]
 $ make setup/git/hooks
 
 # To generate code and compile binaries run 
@@ -88,6 +88,9 @@ $ make binary
 # Run API docs server
 $ make run/docs
 
+# Generate code such as openapi
+$ make generate
+
 # Testing related targets
 $ make test
 $ make test/e2e
@@ -98,6 +101,8 @@ $ make db/teardown
 $ make db/setup
 $ make db/migrate
 ```
+
+[1] [git-hooks.md](./docs/development/git-hooks.md)
 
 #### Background
 
