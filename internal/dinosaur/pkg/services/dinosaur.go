@@ -29,8 +29,17 @@ import (
 )
 
 var (
-	dinosaurDeletionStatuses  = []string{dinosaurConstants.CentralRequestStatusDeleting.String(), dinosaurConstants.CentralRequestStatusDeprovision.String()}
-	dinosaurManagedCRStatuses = []string{dinosaurConstants.CentralRequestStatusProvisioning.String(), dinosaurConstants.CentralRequestStatusDeprovision.String(), dinosaurConstants.CentralRequestStatusReady.String(), dinosaurConstants.CentralRequestStatusFailed.String()}
+	dinosaurDeletionStatuses = []string{
+		dinosaurConstants.CentralRequestStatusDeleting.String(),
+		dinosaurConstants.CentralRequestStatusDeprovision.String(),
+	}
+
+	dinosaurManagedCRStatuses = []string{
+		dinosaurConstants.CentralRequestStatusProvisioning.String(),
+		dinosaurConstants.CentralRequestStatusDeprovision.String(),
+		dinosaurConstants.CentralRequestStatusReady.String(),
+		dinosaurConstants.CentralRequestStatusFailed.String(),
+	}
 )
 
 // DinosaurRoutesAction ...
