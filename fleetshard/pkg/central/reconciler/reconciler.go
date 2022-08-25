@@ -222,12 +222,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		r.hasAuthProvider = true
 	}
 
-	// Setting the last central hash must always be executed as the last step.
-	// defer can't be used for this call because it is also executed after the reconcile failed.
-	if err := r.setLastCentralHash(remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "setting central reconcilation cache")
-	}
-
 	// TODO(create-ticket): When should we create failed conditions for the reconciler?
 	status := readyStatus()
 	// Do not report routes statuses if:
@@ -240,8 +234,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
-	// Cache MUST be updated right before returning "ready" result.
-	// Otherwise, the hash will be saved without sending the actual status (in case of error).
+	// Setting the last central hash must always be executed as the last step.
+	// defer can't be used for this call because it is also executed after the reconcile failed.
 	if err := r.setLastCentralHash(remoteCentral); err != nil {
 		return nil, errors.Wrapf(err, "setting central reconcilation cache")
 	}
