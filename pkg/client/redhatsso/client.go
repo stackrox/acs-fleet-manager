@@ -198,7 +198,7 @@ func (c *rhSSOClient) CreateServiceAccount(accessToken string, name string, desc
 		ServiceAccountCreateRequestData(
 			serviceaccountsclient.ServiceAccountCreateRequestData{
 				Name:        name,
-				Description: description,
+				Description: &description,
 			}).Execute()
 
 	defer shared.CloseResponseBody(resp)

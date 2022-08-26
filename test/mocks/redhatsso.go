@@ -281,7 +281,7 @@ func (mockServer *redhatSSOMock) createServiceAccountHandler(w http.ResponseWrit
 		ClientId:    &clientID,
 		Secret:      &secret,
 		Name:        &serviceAccountCreateRequestData.Name,
-		Description: &serviceAccountCreateRequestData.Description,
+		Description: serviceAccountCreateRequestData.Description,
 	}
 
 	mockServer.serviceAccounts[clientID] = serviceAccountData
