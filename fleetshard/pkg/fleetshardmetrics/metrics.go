@@ -31,8 +31,8 @@ func registerCustomMetrics(r prometheus.Registerer) {
 	r.MustRegister(fleetManagerRequests)
 }
 
-// IncrementsK8sRequests increments the metric counter for k8s requests
-func IncrementsK8sRequests() {
+// IncrementK8sRequests increments the metric counter for k8s requests
+func IncrementK8sRequests() {
 	k8sRequests.Inc()
 }
 

@@ -58,6 +58,10 @@ func main() {
 
 	sig := <-sigs
 	runtime.Stop()
+	if err := metricServer.Close(); err != nil {
+		glog.Errorf("closing metric server: %v", err)
+	}
+
 	glog.Infof("Caught %s signal", sig)
 	glog.Info("fleetshard application has been stopped")
 }

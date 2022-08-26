@@ -9,10 +9,16 @@ import (
 
 // NewMetricsServer returns the metrics server
 func NewMetricsServer(address string) *http.Server {
-	mux := http.NewServeMux()
-	mux.Handle("/metrics", promhttp.Handler())
+	registry := prometheus.NewRegistry()
+	// Register default metrics to use a dedicated registry instead of prometheus.DefaultRegistry
+	// this makes it easier to isolate metric state when unit testing this package
+	registry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
+	registry.MustRegister(prometheus.NewGoCollector())
+	registerCustomMetrics(registry)
 
-	registerCustomMetrics(prometheus.DefaultRegisterer)
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+
 	server := &http.Server{Addr: address, Handler: mux}
 	return server
 }
