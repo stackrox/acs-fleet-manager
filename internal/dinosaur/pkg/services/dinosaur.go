@@ -64,8 +64,8 @@ type DinosaurService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
 	// HasAvailableCapacityInRegion checks if there is capacity in the clusters for a given region
 	HasAvailableCapacityInRegion(dinosaurRequest *dbapi.CentralRequest) (bool, *errors.ServiceError)
-	// AcceptDinosaurRequest transitions CentralRequest to 'Preparing'.
-	AcceptDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
+	// AcceptCentralRequest transitions CentralRequest to 'Preparing'.
+	AcceptCentralRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	// PrepareDinosaurRequest transitions CentralRequest to 'Provisioning'.
 	PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	// Get method will retrieve the dinosaurRequest instance that the give ctx has access to from the database.
@@ -102,7 +102,7 @@ type DinosaurService interface {
 	CountByStatus(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error)
 	CountByRegionAndInstanceType() ([]DinosaurRegionCount, error)
 	ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
-	ListDinosaursWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
+	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	ListComponentVersions() ([]DinosaurComponentVersions, error)
 }
@@ -272,11 +272,11 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	return nil
 }
 
-// AcceptDinosaurRequest sets any information about Central that does not
-// require blocking operations (e.g., requesting a RHSSO client). Upon success,
-// CentralRequest is transitioned to 'Preparing' status and might not be fully
-// prepared yet.
-func (k *dinosaurService) AcceptDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
+// AcceptCentralRequest sets any information about Central that does not
+// require blocking operations (deducing namespace or instance hostname). Upon
+// success, CentralRequest is transitioned to 'Preparing' status and might not
+// be fully prepared yet.
+func (k *dinosaurService) AcceptCentralRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	// Set namespace.
 	namespace, formatErr := FormatNamespace(dinosaurRequest.ID)
 	if formatErr != nil {
@@ -837,9 +837,9 @@ func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralR
 	return results, nil
 }
 
-// ListDinosaursWithoutAuthConfig returns all _relevant_ central requests with
+// ListCentralsWithoutAuthConfig returns all _relevant_ central requests with
 // no auth config.
-func (k *dinosaurService) ListDinosaursWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError) {
+func (k *dinosaurService) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError) {
 	// There is no value in augmenting auth config for central requests beyond
 	// 'Preparing'.
 	status := []dinosaurConstants.DinosaurStatus{
@@ -851,7 +851,7 @@ func (k *dinosaurService) ListDinosaursWithoutAuthConfig() ([]*dbapi.CentralRequ
 	var results []*dbapi.CentralRequest
 	if err := dbConn.
 		Where("status IN (?)", status).
-		Where("idp_client_id != ''").
+		Where("idp_client_id == ''").
 		Scan(&results).
 		Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list dinosaur requests")

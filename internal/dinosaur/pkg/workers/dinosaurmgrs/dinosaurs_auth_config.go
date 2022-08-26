@@ -47,7 +47,7 @@ func (k *CentralAuthConfigManager) Reconcile() []error {
 	glog.Infoln("reconciling auth config for Centrals")
 	var errs []error
 
-	centralRequests, listErr := k.centralService.ListDinosaursWithoutAuthConfig()
+	centralRequests, listErr := k.centralService.ListCentralsWithoutAuthConfig()
 	if listErr != nil {
 		errs = append(errs, errors.Wrap(listErr, "failed to list centrals without auth config"))
 	} else {
@@ -55,7 +55,22 @@ func (k *CentralAuthConfigManager) Reconcile() []error {
 	}
 
 	for _, cr := range centralRequests {
-		if err := augmentWithAuthConfig(cr, k.centralConfig); err != nil {
+		glog.V(5).Infof("augmenting Central %q with auth config", cr.Meta.ID)
+		// Auth config can either be:
+		//   1) static, i.e., the same for all Centrals,
+		//   2) dynamic, i.e., each Central has its own.
+		// In case of 1), all necessary information should be provided in
+		// CentralConfig. For 2), we need to request a dynamic client from the
+		// RHSSO API.
+
+		var augmentWithAuthConfigF func(r *dbapi.CentralRequest, centralConfig *config.CentralConfig) error
+		if k.centralConfig.HasStaticAuth() {
+			augmentWithAuthConfigF = augmentWithStaticAuthConfig
+		} else {
+			augmentWithAuthConfigF = augmentWithDynamicAuthConfig
+		}
+
+		if err := augmentWithAuthConfigF(cr, k.centralConfig); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -63,40 +78,34 @@ func (k *CentralAuthConfigManager) Reconcile() []error {
 	return errs
 }
 
-// augmentWithAuthConfig augments provided CentralRequest with auth config
-// information. For that, it performs all necessary rituals, if any.
-func augmentWithAuthConfig(r *dbapi.CentralRequest, centralConfig *config.CentralConfig) error {
-	glog.V(5).Infof("augmenting Central %q with auth config", r.Meta.ID)
-	// Auth config can either be:
-	//   1) static, i.e., the same for all Centrals,
-	//   2) dynamic, i.e., each Central has its own.
-	// In case of 1), all necessary information should be provided in
-	// CentralConfig. For 2), we need to request a dynamic client from the
-	// RHSSO API.
+// augmentWithStaticAuthConfig augments provided CentralRequest with static auth
+// config information, i.e., the same for all Centrals.
+func augmentWithStaticAuthConfig(r *dbapi.CentralRequest, centralConfig *config.CentralConfig) error {
+	glog.V(7).Infoln("static config found; no dynamic client will be requested from IdP")
 
-	// If CentralConfig contains auth info, take it and be done.
-	if centralConfig.RhSsoClientID != "" && centralConfig.RhSsoIssuer != "" {
-		glog.V(7).Infoln("static config found; no dynamic client will be requested from IdP")
-		if centralConfig.RhSsoClientSecret == "" {
-			glog.Warningf("no client_secret specified for static client_id %q;" +
-				" auth configuration is either incorrect or insecure", centralConfig.RhSsoClientID)
-		}
-		if centralConfig.RhSsoIssuer == "" {
-			glog.Errorf("no issuer specified for static client_id %q;" +
-				" auth configuration will likely not work properly", centralConfig.RhSsoClientID)
-		}
-
-		r.AuthConfig.ClientID = centralConfig.RhSsoClientID
-		r.AuthConfig.ClientSecret = centralConfig.RhSsoClientSecret
-		r.AuthConfig.Issuer = centralConfig.RhSsoIssuer
-
-		return nil
+	// TODO(alexr): Ideally this belongs in a config validation routine.
+	if centralConfig.RhSsoClientSecret == "" {
+		glog.Warningf("no client_secret specified for static client_id %q;" +
+			" auth configuration is either incorrect or insecure", centralConfig.RhSsoClientID)
+	}
+	if centralConfig.RhSsoIssuer == "" {
+		glog.Errorf("no issuer specified for static client_id %q;" +
+			" auth configuration will likely not work properly", centralConfig.RhSsoClientID)
 	}
 
-	// Proceed with the dynamic path.
-	glog.V(7).Infoln("no static config found; requesting dynamic client")
+	r.AuthConfig.ClientID = centralConfig.RhSsoClientID
+	r.AuthConfig.ClientSecret = centralConfig.RhSsoClientSecret
+	r.AuthConfig.Issuer = centralConfig.RhSsoIssuer
+
+	return nil
+}
+
+// augmentWithDynamicAuthConfig performs all necessary rituals to obtain auth
+// configuration via RHSSO API.
+func augmentWithDynamicAuthConfig(_ *dbapi.CentralRequest, _ *config.CentralConfig) error {
+	glog.V(7).Infoln("")
 
 	// TODO(alexr): Talk to RHSSO dynamic client API.
 
-	return nil
+	return errors.New("dynamic auth config is currently not supported")
 }

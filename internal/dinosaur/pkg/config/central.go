@@ -89,3 +89,12 @@ func (c *CentralConfig) ReadFiles() error {
 	c.MaxCapacity = MaxCapacityConfig{1000}
 	return nil
 }
+
+// HasStaticAuth returns true if the static auth config for Centrals has been
+// specified and false otherwise.
+func (c *CentralConfig) HasStaticAuth() bool {
+	// We don't look at other integral parts of the auth config like
+	// RhSsoIssuer or RhSsoClientSecret. Failure to provide a working auth
+	// configuration should not mask an intent to use static configuration.
+	return c.RhSsoClientID != ""
+}
