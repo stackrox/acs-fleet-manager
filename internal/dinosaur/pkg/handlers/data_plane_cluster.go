@@ -13,13 +13,15 @@ import (
 )
 
 type dataPlaneClusterHandler struct {
-	service services.DataPlaneClusterService
+	dataPlaneService services.DataPlaneClusterService
+	service          services.ClusterService
 }
 
-// NewDataPlaneClusterHandler ...
-func NewDataPlaneClusterHandler(service services.DataPlaneClusterService) *dataPlaneClusterHandler {
+// NewDataPlaneClusterHandler creates a new instance of dataPlaneClusterHandler
+func NewDataPlaneClusterHandler(dataPlaneClusterService services.DataPlaneClusterService, clusterService services.ClusterService) *dataPlaneClusterHandler {
 	return &dataPlaneClusterHandler{
-		service: service,
+		dataPlaneService: dataPlaneClusterService,
+		service:          clusterService,
 	}
 }
 
@@ -40,7 +42,7 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 			if err != nil {
 				return nil, errors.Validation(err.Error())
 			}
-			svcErr := h.service.UpdateDataPlaneClusterStatus(ctx, dataPlaneClusterID, dataPlaneClusterStatus)
+			svcErr := h.dataPlaneService.UpdateDataPlaneClusterStatus(ctx, dataPlaneClusterID, dataPlaneClusterStatus)
 			return nil, svcErr
 		},
 	}
@@ -48,8 +50,8 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
-// GetDataPlaneClusterConfig ...
-func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWriter, r *http.Request) {
+// GetDataPlaneCluster returns current cluster state
+func (h *dataPlaneClusterHandler) GetDataPlaneCluster(w http.ResponseWriter, r *http.Request) {
 	dataPlaneClusterID := mux.Vars(r)["id"]
 
 	cfg := &handlers.HandlerConfig{
@@ -57,12 +59,11 @@ func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWrite
 			handlers.ValidateLength(&dataPlaneClusterID, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			ctx := r.Context()
-			dataClusterConfig, err := h.service.GetDataPlaneClusterConfig(ctx, dataPlaneClusterID)
+			cluster, err := h.service.FindClusterByID(dataPlaneClusterID)
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentDataPlaneClusterConfig(dataClusterConfig), nil
+			return presenters.PresentDataPlaneCluster(cluster), nil
 		},
 	}
 

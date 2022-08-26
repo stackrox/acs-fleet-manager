@@ -31,6 +31,7 @@ var migrations = []*gormigrate.Migration{
 	sampleMigration(),
 	addOwnerUserIDToCentralRequest(),
 	addResourcesToCentralRequest(),
+	addStackroxOperatorUpgradeStatusToCluster(),
 }
 
 // New ...

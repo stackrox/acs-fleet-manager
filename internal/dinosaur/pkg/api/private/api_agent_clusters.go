@@ -122,19 +122,19 @@ func (a *AgentClustersApiService) GetCentrals(ctx _context.Context, id string) (
 }
 
 /*
-GetDataPlaneClusterAgentConfig Get the data plane cluster agent configuration
+GetDataPlaneClusterAgent Get the data plane cluster agent
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
-@return DataplaneClusterAgentConfig
+@return DataPlaneClusterAgent
 */
-func (a *AgentClustersApiService) GetDataPlaneClusterAgentConfig(ctx _context.Context, id string) (DataplaneClusterAgentConfig, *_nethttp.Response, error) {
+func (a *AgentClustersApiService) GetDataPlaneClusterAgent(ctx _context.Context, id string) (DataPlaneClusterAgent, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  DataplaneClusterAgentConfig
+		localVarReturnValue  DataPlaneClusterAgent
 	)
 
 	// create path and map variables

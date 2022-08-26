@@ -9,7 +9,7 @@
 
 package private
 
-// DataplaneClusterAgentConfigSpec Data plane cluster agent spec
-type DataplaneClusterAgentConfigSpec struct {
-	Observability DataplaneClusterAgentConfigSpecObservability `json:"observability,omitempty"`
+// DataPlaneClusterAgent Data plane cluster agent
+type DataPlaneClusterAgent struct {
+	StackroxOperatorUpgradeStatus string `json:"stackroxOperatorUpgradeStatus,omitempty"`
 }

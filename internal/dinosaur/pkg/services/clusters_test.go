@@ -62,15 +62,16 @@ func Test_Cluster_Create(t *testing.T) {
 	testClusterInternalID := "test-cluster-id"
 	testClusterExternalID := "test-cluster-external-id"
 	wantedCluster := &api.Cluster{
-		CloudProvider: testProvider,
-		ClusterID:     testClusterInternalID,
-		ExternalID:    testClusterExternalID,
-		MultiAZ:       testMultiAZ,
-		Region:        testRegion,
-		Status:        api.ClusterProvisioning,
-		ProviderType:  api.ClusterProviderOCM,
-		ProviderSpec:  nil,
-		ClusterSpec:   nil,
+		CloudProvider:                 testProvider,
+		ClusterID:                     testClusterInternalID,
+		ExternalID:                    testClusterExternalID,
+		MultiAZ:                       testMultiAZ,
+		Region:                        testRegion,
+		Status:                        api.ClusterProvisioning,
+		ProviderType:                  api.ClusterProviderOCM,
+		ProviderSpec:                  nil,
+		ClusterSpec:                   nil,
+		StackroxOperatorUpgradeStatus: api.OperatorUpgradeNone,
 	}
 
 	type fields struct {

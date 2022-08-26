@@ -20,6 +20,9 @@ type ClusterProviderType string
 // ClusterInstanceTypeSupport ...
 type ClusterInstanceTypeSupport string
 
+// OperatorUpgradeStatus indicates a current state of the operator upgrade
+type OperatorUpgradeStatus string
+
 // String ...
 func (k ClusterStatus) String() string {
 	return string(k)
@@ -90,9 +93,8 @@ func (p *ClusterProviderType) UnmarshalYAML(unmarshal func(interface{}) error) e
 	return nil
 }
 
-// ClusterAccepted ...
 const (
-	// The create cluster request has been recorder
+	// ClusterAccepted the create cluster request has been recorder
 	ClusterAccepted ClusterStatus = "cluster_accepted"
 	// ClusterProvisioning the underlying ocm cluster is provisioning
 	ClusterProvisioning ClusterStatus = "cluster_provisioning"
@@ -113,13 +115,28 @@ const (
 	// ClusterComputeNodeScalingUp the cluster is in the process of scaling up a compute node
 	ClusterComputeNodeScalingUp ClusterStatus = "compute_node_scaling_up"
 
-	ClusterProviderOCM        ClusterProviderType = "ocm"
-	ClusterProviderAwsEKS     ClusterProviderType = "aws_eks"
+	// ClusterProviderOCM cluster is managed by ocm
+	ClusterProviderOCM ClusterProviderType = "ocm"
+	// ClusterProviderAwsEKS cluster is managed by AWS EKS
+	ClusterProviderAwsEKS ClusterProviderType = "aws_eks"
+	// ClusterProviderStandalone cluster is managed manually
 	ClusterProviderStandalone ClusterProviderType = "standalone"
 
-	EvalTypeSupport        ClusterInstanceTypeSupport = "eval"
-	StandardTypeSupport    ClusterInstanceTypeSupport = "standard"
+	// EvalTypeSupport eval instances are supported on the cluster
+	EvalTypeSupport ClusterInstanceTypeSupport = "eval"
+	// StandardTypeSupport standard instances are supported on the cluster
+	StandardTypeSupport ClusterInstanceTypeSupport = "standard"
+	// AllInstanceTypeSupport both eval and standard instance types are supported on the cluster
 	AllInstanceTypeSupport ClusterInstanceTypeSupport = "standard,eval"
+
+	// OperatorUpgradeNone operator is not being upgraded
+	OperatorUpgradeNone OperatorUpgradeStatus = "none"
+	// OperatorUpgradePending pending operator upgrade
+	OperatorUpgradePending OperatorUpgradeStatus = "pending"
+	// OperatorUpgradeInProgress operator is currently upgrading
+	OperatorUpgradeInProgress OperatorUpgradeStatus = "in_progress"
+	// OperatorUpgradeFailed operator upgrade failed
+	OperatorUpgradeFailed OperatorUpgradeStatus = "failed"
 )
 
 // ordinals - Used to decide if a status comes after or before a given state
@@ -170,6 +187,8 @@ type Cluster struct {
 	// SupportedInstanceType holds information on what kind of instances types can be provisioned on this cluster.
 	// A cluster can support two kinds of instance types: 'eval', 'standard' or both in this case it will be a comma separated list of instance types e.g 'standard,eval'.
 	SupportedInstanceType string `json:"supported_instance_type"`
+	// StackroxOperatorUpgradeStatus represents current state of the operator upgrade on the cluster
+	StackroxOperatorUpgradeStatus OperatorUpgradeStatus `json:"stackrox_operator_upgrade_status" gorm:"not null;default:none"`
 }
 
 // ClusterList ...

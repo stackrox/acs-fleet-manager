@@ -42,6 +42,7 @@ type options struct {
 
 	AMSClient                ocm.AMSClient
 	Dinosaur                 services.DinosaurService
+	Cluster                  services.ClusterService
 	CloudProviders           services.CloudProvidersService
 	Observatorium            services.ObservatoriumService
 	IAM                      sso.IAMService
@@ -190,10 +191,10 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
 
 	// /agent-clusters/{id}
-	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
+	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster, s.Cluster)
 	dataPlaneDinosaurHandler := handlers.NewDataPlaneDinosaurHandler(s.DataPlaneDinosaurService, s.Dinosaur, s.ManagedCentralPresenter)
 	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneCluster).
 		Name(logger.NewLogEvent("get-dataplane-cluster-config", "get dataplane cluster config by id").ToString()).
 		Methods(http.MethodGet)
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).

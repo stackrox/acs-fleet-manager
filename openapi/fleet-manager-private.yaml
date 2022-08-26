@@ -147,11 +147,11 @@ paths:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       responses:
         "200":
-          description: The Data Plane Cluster Agent configuration
+          description: The Data Plane Cluster Agent
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DataplaneClusterAgentConfig"
+                $ref: "#/components/schemas/DataPlaneClusterAgent"
         "400":
           content:
             application/json:
@@ -173,8 +173,8 @@ paths:
           description: Auth token is not valid.
       security:
         - Bearer: []
-      operationId: getDataPlaneClusterAgentConfig
-      summary: Get the data plane cluster agent configuration
+      operationId: getDataPlaneClusterAgent
+      summary: Get the data plane cluster agent
 
 components:
   schemas:
@@ -419,27 +419,12 @@ components:
       additionalProperties:
         $ref: "#/components/schemas/DataPlaneCentralStatus"
 
-    DataplaneClusterAgentConfig:
-      description: "Configuration for the data plane cluster agent"
+    DataPlaneClusterAgent:
+      description: "Data plane cluster agent"
       type: object
       properties:
-        spec:
-          description: "Data plane cluster agent spec"
-          type: object
-          properties:
-            observability:
-              description: "Observability configurations"
-              type: object
-              properties:
-                accessToken:
-                  type: string
-                  nullable: true
-                channel:
-                  type: string
-                repository:
-                  type: string
-                tag:
-                  type: string
+        stackroxOperatorUpgradeStatus:
+          type: string
 
     WatchEvent:
       required:

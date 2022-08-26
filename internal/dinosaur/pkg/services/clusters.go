@@ -62,7 +62,7 @@ type ClusterService interface {
 	Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
 	ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
-	// Install the dinosaur operator in a given cluster
+	// InstallDinosaurOperator install the dinosaur operator in a given cluster
 	InstallDinosaurOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error)
 	IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error)
@@ -90,7 +90,7 @@ func (c clusterService) RegisterClusterJob(clusterRequest *api.Cluster) *apiErro
 	return nil
 }
 
-// Create Creates a new OpenShift/k8s cluster via the provider and save the details of the cluster in the database
+// Create creates a new OpenShift/k8s cluster via the provider and save the details of the cluster in the database
 // Returns the newly created cluster object
 func (c clusterService) Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()

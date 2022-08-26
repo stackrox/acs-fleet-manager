@@ -22,7 +22,6 @@ import (
 // DataPlaneClusterService ...
 type DataPlaneClusterService interface {
 	UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *errors.ServiceError
-	GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *errors.ServiceError)
 }
 
 var _ DataPlaneClusterService = &dataPlaneClusterService{}
@@ -40,27 +39,6 @@ type dataPlaneClusterService struct {
 // NewDataPlaneClusterService ...
 func NewDataPlaneClusterService(config dataPlaneClusterService) *dataPlaneClusterService {
 	return &config
-}
-
-// GetDataPlaneClusterConfig ...
-func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *errors.ServiceError) {
-	cluster, svcErr := d.ClusterService.FindClusterByID(clusterID)
-	if svcErr != nil {
-		return nil, svcErr
-	}
-	if cluster == nil {
-		// 404 is used for authenticated requests. So to distinguish the errors, we use 400 here
-		return nil, errors.BadRequest("Cluster agent with ID '%s' not found", clusterID)
-	}
-
-	return &dbapi.DataPlaneClusterConfig{
-		Observability: dbapi.DataPlaneClusterConfigObservability{
-			AccessToken: d.ObservabilityConfig.ObservabilityConfigAccessToken,
-			Channel:     d.ObservabilityConfig.ObservabilityConfigChannel,
-			Repository:  d.ObservabilityConfig.ObservabilityConfigRepo,
-			Tag:         d.ObservabilityConfig.ObservabilityConfigTag,
-		},
-	}, nil
 }
 
 // UpdateDataPlaneClusterStatus ...

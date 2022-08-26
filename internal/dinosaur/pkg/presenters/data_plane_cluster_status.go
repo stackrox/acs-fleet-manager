@@ -32,18 +32,9 @@ func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRe
 	return &res, nil
 }
 
-// PresentDataPlaneClusterConfig ...
-func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private.DataplaneClusterAgentConfig {
-	res := private.DataplaneClusterAgentConfig{
-		Spec: private.DataplaneClusterAgentConfigSpec{
-			Observability: private.DataplaneClusterAgentConfigSpecObservability{
-				AccessToken: &config.Observability.AccessToken,
-				Channel:     config.Observability.Channel,
-				Repository:  config.Observability.Repository,
-				Tag:         config.Observability.Tag,
-			},
-		},
+// PresentDataPlaneCluster converts api.Cluster to the Private API representation
+func PresentDataPlaneCluster(cluster *api.Cluster) private.DataPlaneClusterAgent {
+	return private.DataPlaneClusterAgent{
+		StackroxOperatorUpgradeStatus: string(cluster.StackroxOperatorUpgradeStatus),
 	}
-
-	return res
 }
