@@ -52,7 +52,7 @@ type CentralReconciler struct {
 func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	// Only allow to start reconcile function once
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
-		return nil, errors.New("Reconciler still busy, skipping reconciliation attempt.")
+		return nil, ErrBusy
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
@@ -63,10 +63,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
-	if !changed && r.wantsAuthProvider == r.hasAuthProvider && remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String() {
-		glog.Infof("Central %s/%s not changed, skipping reconciliation", remoteCentralNamespace, remoteCentralName)
-		return r.readyStatus(ctx, remoteCentralNamespace)
+	if !changed && r.wantsAuthProvider == r.hasAuthProvider && isRemoteCentralReady(remoteCentral) {
+		return nil, ErrCentralNotChanged
 	}
 
 	monitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
@@ -148,7 +146,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if deleted {
 			return deletedStatus(), nil
 		}
-		return nil, nil
+		return nil, ErrDeletionInProgress
 	}
 
 	if err := r.ensureNamespaceExists(remoteCentralNamespace); err != nil {
@@ -189,18 +187,26 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
+	centralTLSSecretFound := true // pragma: allowlist secret
 	if r.useRoutes {
 		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
-			return nil, errors.Wrapf(err, "updating routes")
+			if errors.Is(err, k8s.ErrCentralTLSSecretNotFound) {
+				centralTLSSecretFound = false // pragma: allowlist secret
+			} else {
+				return nil, errors.Wrapf(err, "updating routes")
+			}
 		}
 	}
 
 	// Check whether deployment is ready.
-	centralReady, err := isCentralReady(ctx, r.client, remoteCentral)
+	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral)
 	if err != nil {
 		return nil, err
 	}
-	if !centralReady {
+	if !centralDeploymentReady || !centralTLSSecretFound {
+		if isRemoteCentralProvisioning(remoteCentral) && !changed { // no changes detected, wait until central become ready
+			return nil, ErrCentralNotChanged
+		}
 		return installingStatus(), nil
 	}
 
@@ -208,12 +214,24 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// 1. Auth provider is already created
 	// 2. OR reconciler creator specified auth provider not to be created
 	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
-	if r.wantsAuthProvider && !r.hasAuthProvider && remoteCentral.RequestStatus != centralConstants.DinosaurRequestStatusReady.String() {
+	if r.wantsAuthProvider && !r.hasAuthProvider && !isRemoteCentralReady(remoteCentral) {
 		err = createRHSSOAuthProvider(ctx, remoteCentral, r.client)
 		if err != nil {
 			return nil, err
 		}
 		r.hasAuthProvider = true
+	}
+
+	// TODO(create-ticket): When should we create failed conditions for the reconciler?
+	status := readyStatus()
+	// Do not report routes statuses if:
+	// 1. Routes are not used on the cluster
+	// 2. Central request is in status "Ready" - assuming that routes are already reported and saved
+	if r.useRoutes && !isRemoteCentralReady(remoteCentral) {
+		status.Routes, err = r.getRoutesStatuses(ctx, remoteCentralNamespace)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Setting the last central hash must always be executed as the last step.
@@ -222,20 +240,15 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "setting central reconcilation cache")
 	}
 
-	// TODO(create-ticket): When should we create failed conditions for the reconciler?
-	return r.readyStatus(ctx, remoteCentralNamespace)
+	return status, nil
 }
 
-func (r *CentralReconciler) readyStatus(ctx context.Context, namespace string) (*private.DataPlaneCentralStatus, error) {
-	status := readyStatus()
-	if r.useRoutes {
-		routesStatuses, err := r.getRoutesStatuses(ctx, namespace)
-		if err != nil {
-			return nil, err
-		}
-		status.Routes = routesStatuses
-	}
-	return status, nil
+func isRemoteCentralProvisioning(remoteCentral private.ManagedCentral) bool {
+	return remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusProvisioning.String()
+}
+
+func isRemoteCentralReady(remoteCentral private.ManagedCentral) bool {
+	return remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String()
 }
 
 func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
@@ -321,7 +334,7 @@ func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) 
 	return nil
 }
 
-func (r CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) {
+func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) {
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -335,7 +348,7 @@ func (r CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) 
 	return namespace, nil
 }
 
-func (r CentralReconciler) ensureNamespaceExists(name string) error {
+func (r *CentralReconciler) ensureNamespaceExists(name string) error {
 	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
@@ -350,7 +363,7 @@ func (r CentralReconciler) ensureNamespaceExists(name string) error {
 	return nil
 }
 
-func (r CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name string) (bool, error) {
+func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name string) (bool, error) {
 	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
@@ -368,7 +381,7 @@ func (r CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name stri
 	return false, nil
 }
 
-func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
 	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: central.GetNamespace(), Name: central.GetName()}, central)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
@@ -383,7 +396,7 @@ func (r CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *
 	return false, nil
 }
 
-func (r CentralReconciler) ensureRoutesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
+func (r *CentralReconciler) ensureRoutesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	err := r.ensureReencryptRouteExists(ctx, remoteCentral)
 	if err != nil {
 		return err
@@ -392,7 +405,7 @@ func (r CentralReconciler) ensureRoutesExist(ctx context.Context, remoteCentral 
 }
 
 // TODO(ROX-9310): Move re-encrypt route reconciliation to the StackRox operator
-func (r CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
+func (r *CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	namespace := remoteCentral.Metadata.Namespace
 	_, err := r.routeService.FindReencryptRoute(ctx, namespace)
 	if err != nil && !apiErrors.IsNotFound(err) {
@@ -413,7 +426,7 @@ type routeSupplierFunc func() (*openshiftRouteV1.Route, error)
 
 // TODO(ROX-9310): Move re-encrypt route reconciliation to the StackRox operator
 // TODO(ROX-11918): Make hostname configurable on the StackRox operator
-func (r CentralReconciler) ensureReencryptRouteDeleted(ctx context.Context, namespace string) (bool, error) {
+func (r *CentralReconciler) ensureReencryptRouteDeleted(ctx context.Context, namespace string) (bool, error) {
 	return r.ensureRouteDeleted(ctx, func() (*openshiftRouteV1.Route, error) {
 		return r.routeService.FindReencryptRoute(ctx, namespace) //nolint:wrapcheck
 	})
@@ -438,7 +451,7 @@ func (r *CentralReconciler) ensurePassthroughRouteExists(ctx context.Context, re
 }
 
 // TODO(ROX-11918): Make hostname configurable on the StackRox operator
-func (r CentralReconciler) ensurePassthroughRouteDeleted(ctx context.Context, namespace string) (bool, error) {
+func (r *CentralReconciler) ensurePassthroughRouteDeleted(ctx context.Context, namespace string) (bool, error) {
 	return r.ensureRouteDeleted(ctx, func() (*openshiftRouteV1.Route, error) {
 		return r.routeService.FindPassthroughRoute(ctx, namespace) //nolint:wrapcheck
 	})
