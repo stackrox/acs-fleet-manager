@@ -8,6 +8,7 @@ import (
 )
 
 // Authorization ...
+//
 //go:generate moq -out authorization_moq.go . Authorization
 type Authorization interface {
 	CheckUserValid(username string, orgID string) (bool, error)

@@ -15,9 +15,10 @@ import (
 // If v1 x.y.z and pre-release elements are equal to v2 x.y.z and pre-release
 // elements then a lexicographical comparison between the build metadata
 // elements is performed:
-//  - If v1's build metadata is smaller than v2's build metadata -1 is returned
-//  - If v1's build metadata is greater than v2's build metadata 1 is returned
-//  - If v2 and v2's metadata are equal then 0 is returned
+//   - If v1's build metadata is smaller than v2's build metadata -1 is returned
+//   - If v1's build metadata is greater than v2's build metadata 1 is returned
+//   - If v2 and v2's metadata are equal then 0 is returned
+//
 // An error is returned if the provided version strings cannot be interpreted
 // as semantic versioning strings
 func buildAwareSemanticVersioningCompare(v1, v2 string) (int, error) {
@@ -48,9 +49,9 @@ func buildAwareSemanticVersioningCompare(v1, v2 string) (int, error) {
 }
 
 // only concerned about major and minor version differences, hence only those components of version are compared:
-//  - If current major.minor is greater than desired major.minor - return 1
-//  - If current major.minor is equal to  desired major.minor - return 0
-//  - If current major.minor is smaller than desired major.minor - return -1
+//   - If current major.minor is greater than desired major.minor - return 1
+//   - If current major.minor is equal to  desired major.minor - return 0
+//   - If current major.minor is smaller than desired major.minor - return -1
 func checkIfMinorDowngrade(current, desired string) (int, error) {
 	currentSemver, err := semver.ParseTolerant(current)
 	if err != nil {

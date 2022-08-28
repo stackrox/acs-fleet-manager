@@ -32,6 +32,7 @@ const (
 )
 
 // FleetshardOperatorAddon ...
+//
 //go:generate moq -out fleetshard_operator_addon_moq.go . FleetshardOperatorAddon
 type FleetshardOperatorAddon interface {
 	Provision(cluster api.Cluster) (bool, *errors.ServiceError)

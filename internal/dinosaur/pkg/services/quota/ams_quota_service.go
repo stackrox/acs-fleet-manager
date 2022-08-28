@@ -47,10 +47,11 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.Ce
 
 // hasConfiguredQuotaCost returns true if the given organizationID has at least
 // one AMS QuotaCost that complies with the following conditions:
-// - Matches the given input quotaType
-// - Contains at least one AMS RelatedResources whose billing model is one
-//   of the supported Billing Models specified in supportedAMSBillingModels
-// - Has an "Allowed" value greater than 0
+//   - Matches the given input quotaType
+//   - Contains at least one AMS RelatedResources whose billing model is one
+//     of the supported Billing Models specified in supportedAMSBillingModels
+//   - Has an "Allowed" value greater than 0
+//
 // An error is returned if the given organizationID has a QuotaCost
 // with an unsupported billing model and there are no supported billing models
 func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType ocm.DinosaurQuotaType) (bool, error) {
