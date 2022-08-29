@@ -171,7 +171,7 @@ var _ = Describe("Central", func() {
 				Expect(len(recordSet.ResourceRecords)).To(Equal(1))
 				record := recordSet.ResourceRecords[0]
 				Expect(*recordSet.Name).To(Equal(domain))
-				Expect(*record.Value).To(Equal(reencryptIngress.RouterCanonicalHostname)) // TODO use route specific ingress
+				Expect(*record.Value).To(Equal(reencryptIngress.RouterCanonicalHostname)) // TODO use route specific ingress instead of comparing with reencryptIngress for all cases
 			}
 		})
 

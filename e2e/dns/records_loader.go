@@ -32,6 +32,9 @@ func NewRecordsLoader(route53Client *route53.Route53, central *public.CentralReq
 
 // LoadDNSRecords loads DNS records from Route53
 func (loader *RecordsLoader) LoadDNSRecords() []*route53.ResourceRecordSet {
+	if len(loader.CentralDomainNames) == 0 {
+		return []*route53.ResourceRecordSet{}
+	}
 	idx := 0
 	loadingRecords := true
 	nextRecord := &loader.CentralDomainNames[idx]
@@ -48,7 +51,7 @@ loading:
 		for _, recordSet := range output.ResourceRecordSets {
 			if *recordSet.Name == loader.CentralDomainNames[idx] {
 				result = append(result, recordSet)
-				idx = idx + 1
+				idx++
 				if idx == len(loader.CentralDomainNames) {
 					break loading
 				}
@@ -64,7 +67,7 @@ loading:
 func getHostedZone(route53Client *route53.Route53, central *public.CentralRequest) (*route53.HostedZone, error) {
 	hostedZones, err := route53Client.ListHostedZones(&route53.ListHostedZonesInput{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to list hosted zones: %v", err)
+		return nil, fmt.Errorf("failed to list hosted zones: %w", err)
 	}
 
 	var rhacsZone *route53.HostedZone
@@ -78,7 +81,7 @@ func getHostedZone(route53Client *route53.Route53, central *public.CentralReques
 	}
 
 	if rhacsZone == nil {
-		return nil, fmt.Errorf("hosted zone for central host: %v not found", central.UiHost)
+		return nil, fmt.Errorf("failed to find Route53 hosted zone for Central UI host %v", central.UiHost)
 	}
 
 	return rhacsZone, nil
