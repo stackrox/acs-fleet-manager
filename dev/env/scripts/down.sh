@@ -18,7 +18,7 @@ delete "${MANIFESTS_DIR}/fleetshard-sync" || true
 central_namespaces=$($KUBECTL get namespace -o jsonpath='{range .items[?(@.status.phase == "Active")]}{.metadata.name}{"\n"}{end}' | grep '^rhacs-.*$')
 
 for namespace in $central_namespaces; do
-    kubectl delete namespace "$namespace" &
+    $KUBECTL delete namespace "$namespace" &
 done
 log "Waiting for leftover RHACS namespaces to be deleted... "
 for p in $(jobs -pr); do
