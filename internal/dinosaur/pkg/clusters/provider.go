@@ -10,6 +10,7 @@ import (
 )
 
 // Provider ...
+//
 //go:generate moq -out provider_moq.go . Provider
 type Provider interface {
 	// Create using the information provided to request a new OpenShift/k8s cluster from the provider
@@ -45,6 +46,7 @@ type Provider interface {
 }
 
 // ProviderFactory used to return an instance of Provider implementation
+//
 //go:generate moq -out provider_factory_moq.go . ProviderFactory
 type ProviderFactory interface {
 	GetProvider(providerType api.ClusterProviderType) (Provider, error)

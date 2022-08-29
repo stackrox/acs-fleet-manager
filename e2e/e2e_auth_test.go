@@ -199,8 +199,8 @@ func newAuthTestClient(c *fleetmanager.Client, auth fleetmanager.Auth, endpoint 
 	return &authTestClientFleetManager{c, auth, http.Client{}, endpoint}
 }
 
-func (a *authTestClientFleetManager) ListAdminAPI() (*private.DinosaurList, error) {
-	dinosaurList := &private.DinosaurList{}
+func (a *authTestClientFleetManager) ListAdminAPI() (*private.CentralList, error) {
+	dinosaurList := &private.CentralList{}
 	if err := a.doRequestAndUnmarshal(fmt.Sprintf("%s/%s", a.endpoint, "admin/dinosaurs"), dinosaurList); err != nil {
 		return nil, err
 	}

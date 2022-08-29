@@ -112,7 +112,7 @@ func (c *Client) CreateCentral(request public.CentralRequestPayload) (*public.Ce
 }
 
 // UpdateCentral updates a central using fleet-manager's private Admin API.
-func (c *Client) UpdateCentral(id string, updateReq private.DinosaurUpdateRequest) (*private.Dinosaur, error) {
+func (c *Client) UpdateCentral(id string, updateReq private.CentralUpdateRequest) (*private.Central, error) {
 	reqBody, err := json.Marshal(updateReq)
 	if err != nil {
 		return nil, fmt.Errorf("marshalling HTTP request: %w", err)
@@ -123,7 +123,7 @@ func (c *Client) UpdateCentral(id string, updateReq private.DinosaurUpdateReques
 		return nil, fmt.Errorf("executing HTTP request: %w", err)
 	}
 
-	result := &private.Dinosaur{}
+	result := &private.Central{}
 	err = c.unmarshalResponse(resp, result)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshalling HTTP response: %w", err)

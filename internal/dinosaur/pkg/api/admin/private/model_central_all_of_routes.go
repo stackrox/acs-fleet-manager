@@ -9,8 +9,8 @@
 
 package private
 
-// ScannerSpec struct for ScannerSpec
-type ScannerSpec struct {
-	Analyzer ScannerSpecAnalyzer `json:"analyzer,omitempty"`
-	Db       ScannerSpecDb       `json:"db,omitempty"`
+// CentralAllOfRoutes struct for CentralAllOfRoutes
+type CentralAllOfRoutes struct {
+	Domain string `json:"domain,omitempty"`
+	Router string `json:"router,omitempty"`
 }

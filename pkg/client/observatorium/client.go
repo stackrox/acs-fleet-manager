@@ -169,7 +169,7 @@ func (c *Client) sendRange(query string, bounds pV1.Range) (pModel.Value, pV1.Wa
 //
 // queryTemplate must contain one %s for labels, e.g. `some_metric{%s}` or `count(some_metric{state="up",%s})`.
 // (Undocumented PromQL: empty labels some_metric{} are OK - https://github.com/prometheus/prometheus/issues/3697)
-// labels 0 or more constraints separated by comma e.g. `` or `foo="bar",quux="baz"`.
+// labels 0 or more constraints separated by comma e.g. “ or `foo="bar",quux="baz"`.
 func (c *Client) Query(queryTemplate string, label string) Metric {
 
 	queryString := fmt.Sprintf(queryTemplate, label)

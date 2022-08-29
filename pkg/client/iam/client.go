@@ -29,6 +29,7 @@ var (
 )
 
 // IAMClient ...
+//
 //go:generate moq -out client_moq.go . IAMClient
 type IAMClient interface {
 	CreateClient(client gocloak.Client, accessToken string) (string, error)
@@ -82,6 +83,7 @@ type iamClient struct {
 var _ IAMClient = &iamClient{}
 
 // GoCloak an alias for gocloak.GoCloak
+//
 //go:generate moq -out gocloak_moq.go . GoCloak
 type GoCloak = gocloak.GoCloak
 

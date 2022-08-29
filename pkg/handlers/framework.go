@@ -17,10 +17,10 @@ import (
 // The corresponding handle() func runs the basic HandlerConfig.
 // This is not meant to be an HTTP framework or anything larger than simple CRUD in handlers.
 //
-//   MarshalInto is a pointer to the object to hold the unmarshaled JSON.
-//   Validate is a list of Validation function that run in order, returning fast on the first error.
-//   Action is the specific logic a handler must take (e.g, find an object, save an object)
-//   ErrorHandler is the way errors are returned to the client
+//	MarshalInto is a pointer to the object to hold the unmarshaled JSON.
+//	Validate is a list of Validation function that run in order, returning fast on the first error.
+//	Action is the specific logic a handler must take (e.g, find an object, save an object)
+//	ErrorHandler is the way errors are returned to the client
 type HandlerConfig struct {
 	MarshalInto  interface{}
 	Validate     []Validate

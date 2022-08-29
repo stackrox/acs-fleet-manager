@@ -16,6 +16,7 @@ import (
 )
 
 // Client ...
+//
 //go:generate moq -out client_moq.go . Client
 type Client interface {
 	// route53

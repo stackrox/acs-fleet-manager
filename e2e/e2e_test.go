@@ -332,7 +332,7 @@ var _ = Describe("Central", func() {
 		})
 
 		It("resources should be updatable", func() {
-			updateReq := private.DinosaurUpdateRequest{
+			updateReq := private.CentralUpdateRequest{
 				Central: private.CentralSpec{
 					Resources: private.ResourceRequirements{
 						Requests: map[string]string{

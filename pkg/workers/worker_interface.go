@@ -8,6 +8,7 @@ import (
 )
 
 // Worker ...
+//
 //go:generate moq -out woker_interface_moq.go . Worker
 type Worker interface {
 	GetID() string

@@ -24,6 +24,7 @@ func NewObservatoriumService(observatorium *observatorium.Client, dinosaurServic
 }
 
 // ObservatoriumService ...
+//
 //go:generate moq -out observatorium_service_moq.go . ObservatoriumService
 type ObservatoriumService interface {
 	GetDinosaurState(name string, namespaceName string) (observatorium.DinosaurState, error)

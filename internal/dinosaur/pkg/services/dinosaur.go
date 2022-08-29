@@ -49,6 +49,7 @@ type CNameRecordStatus struct {
 }
 
 // DinosaurService ...
+//
 //go:generate moq -out dinosaurservice_moq.go . DinosaurService
 type DinosaurService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
