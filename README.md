@@ -8,7 +8,7 @@ ACS fleet-manager repository for the ACS managed service.
 ### Overview
 
 ```
-├── bin                 -- binary output directory   
+├── bin                 -- binary output directory  
 ├── cmd                 -- cmd entry points
 ├── config              -- various fleet-manager configurations
 ├── dashboards          -- grafana dashboards
@@ -79,7 +79,7 @@ This requires some preparations on a cluster:
 # Install git-hooks, for more information see git-hooks.md [1]
 $ make setup/git/hooks
 
-# To generate code and compile binaries run 
+# To generate code and compile binaries run
 $ make all
 
 # To only compile fleet-manager and fleetshard-synchronizer run
