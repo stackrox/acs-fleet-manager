@@ -46,7 +46,7 @@ func main() {
 		}
 	}()
 
-	metricServer := fleetshardmetrics.NewMetricsServer(":8081")
+	metricServer := fleetshardmetrics.NewMetricsServer(config.MetricsAddress)
 	go func() {
 		if err := metricServer.ListenAndServe(); err != nil {
 			glog.Errorf("serving metrics server: %v", err)
