@@ -67,14 +67,8 @@ var _ = Describe("Central", func() {
 		client, err = fleetmanager.NewClient(fleetManagerEndpoint, "cluster-id", auth)
 		Expect(err).ToNot(HaveOccurred())
 
-		var adminAuth fleetmanager.Auth
-		if adminToken := os.Getenv("STATIC_TOKEN_ADMIN"); adminToken != "" {
-			adminAuth, err = envtokenauth.CreateAuth("STATIC_TOKEN_ADMIN")
-			Expect(err).ToNot(HaveOccurred())
-		} else {
-			adminAuth = auth
-		}
-
+		adminAuth, err := envtokenauth.CreateAuth("STATIC_TOKEN_ADMIN")
+		Expect(err).ToNot(HaveOccurred())
 		adminClient, err = NewAdminClient(fleetManagerEndpoint, adminAuth)
 		Expect(err).ToNot(HaveOccurred())
 
