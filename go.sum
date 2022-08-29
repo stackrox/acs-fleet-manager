@@ -2316,8 +2316,9 @@ github.com/onsi/gomega v1.14.0/go.mod h1:cIuvLEne0aoVhAgh/O6ac0Op8WWw9H6eYCriF+t
 github.com/onsi/gomega v1.16.0/go.mod h1:HnhC7FXeEQY45zxNK3PPoIUhzk/80Xly9PcubAlGdZY=
 github.com/onsi/gomega v1.17.0/go.mod h1:HnhC7FXeEQY45zxNK3PPoIUhzk/80Xly9PcubAlGdZY=
 github.com/onsi/gomega v1.18.1/go.mod h1:0q+aL8jAiMXy9hbwj2mr5GziHiwhAIQpFmmtT5hitRs=
-github.com/onsi/gomega v1.19.0 h1:4ieX6qQjPP/BfC3mpsAtIGGlxTWPeA3Inl/7DtXw1tw=
 github.com/onsi/gomega v1.19.0/go.mod h1:LY+I3pBVzYsTBU1AnDwOSxaYi9WoWiqgwooUqq9yPro=
+github.com/onsi/gomega v1.20.1 h1:PA/3qinGoukvymdIDV8pii6tiZgC8kbmJO6Z5+b002Q=
+github.com/onsi/gomega v1.20.1/go.mod h1:DtrZpjmvpn2mPm4YWQa0/ALMDj9v4YxLgojwPeREyVo=
 github.com/op/go-logging v0.0.0-20160315200505-970db520ece7/go.mod h1:HzydrMdWErDVzsI23lYNej1Htcns9BCg93Dk0bBINWk=
 github.com/open-policy-agent/opa v0.35.0/go.mod h1:xEmekKlk6/c+so5HF9wtPnGPXDfBuBsrMGhSHOHEF+U=
 github.com/opencontainers/go-digest v0.0.0-20170106003457-a6d0ee40d420/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQYUd2OVphdqWwCJHrFt2s=
@@ -2538,8 +2539,6 @@ github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0/go.mod h1:bCqn
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/redhat-developer/app-services-sdk-go v0.10.0 h1:zI0X5FR0NOj6IwBWk3y1TWn0JASEV8qoBPQjzkv8wbQ=
 github.com/redhat-developer/app-services-sdk-go v0.10.0/go.mod h1:enn8Zz6IT0HZYzS6LSttiME2apwnvfVWZnGRS81A4rk=
-github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.4.0 h1:vQVP520MHG0bIgbeRJD2wmcCXOA1Aik8zdWjhHOiJ4k=
-github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.4.0/go.mod h1:fTjoxpUyPOWpns7RNHANurfy6gfWdVHvuTJPk1AYbjk=
 github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.5.0 h1:RLLHQA5Pxf3a5khNYaEqqj22xjIpEh6IUN+sCt4t90o=
 github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.5.0/go.mod h1:SXhFcIpBh7Qu804KHXrKEQg+5BgSBeoeNq0yuWVskxA=
 github.com/remind101/migrate v0.0.0-20170729031349-52c1edff7319/go.mod h1:rhSvwcijY9wfmrBYrfCvapX8/xOTV46NAUjBRgUyJqc=
