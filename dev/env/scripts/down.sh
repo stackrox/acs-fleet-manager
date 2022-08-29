@@ -15,7 +15,7 @@ delete "${MANIFESTS_DIR}/db" || true
 delete "${MANIFESTS_DIR}/fleet-manager" || true
 delete "${MANIFESTS_DIR}/fleetshard-sync" || true
 
-central_namespaces=$($KUBECTL get namespace -o jsonpath='{range .items[?(@.status.phase == "Active")]}{.metadata.name}{"\n"}{end}' | grep '^rhacs-.*$')
+central_namespaces=$($KUBECTL get namespace -o jsonpath='{range .items[?(@.status.phase == "Active")]}{.metadata.name}{"\n"}{end}' | grep '^rhacs-.*$' || true)
 
 for namespace in $central_namespaces; do
     $KUBECTL delete namespace "$namespace" &
