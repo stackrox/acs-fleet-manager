@@ -35,6 +35,9 @@ fi
 
 init
 
+_T0=$(date "+%s")
+export _T0
+
 LOG_DIR=${LOG_DIR:-}
 if [[ "$SPAWN_LOGGER" == "true" && "$LOG_DIR" == "" ]]; then
     LOG_DIR=$(mktemp -d)

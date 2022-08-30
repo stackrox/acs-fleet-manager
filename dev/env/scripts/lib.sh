@@ -9,8 +9,34 @@ die() {
 }
 
 log() {
-    printf "$*"
-    echo
+    local fmt=${1:-}
+    if [[ -z "$fmt" ]]; then
+        echo
+        return
+    fi
+    shift
+
+    local timestamp=""
+    if [[ -n "$_T0" ]]; then
+        local t0=$_T0
+        local t1
+        t1=$(date "+%s")
+        local dt=$((t1 - t0))
+
+        local seconds=$dt
+        local minutes=$((seconds / 60))
+        seconds=$((seconds % 60))
+        local hours=$((minutes / 60))
+        minutes=$((minutes % 60))
+
+        timestamp=$(printf "%02d:%02d:%02d" $hours $minutes $seconds)
+    fi
+
+    if [[ -n "$timestamp" ]]; then
+        fmt="[${timestamp}] ${fmt}"
+    fi
+    # shellcheck disable=SC2059
+    printf "${fmt}\n" "$*"
 }
 
 try_kubectl() {
