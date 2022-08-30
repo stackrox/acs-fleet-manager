@@ -5,3 +5,4 @@ export INSTALL_OLM_DEFAULT="false"
 export ENABLE_FM_PORT_FORWARDING_DEFAULT="true"
 CLUSTER_DNS_DEFAULT=$(try_kubectl get -n "openshift-ingress-operator" ingresscontrollers default -o=jsonpath='{.status.domain}' --ignore-not-found)
 export CLUSTER_DNS_DEFAULT
+export INSTALL_OPENSHIFT_ROUTER_DEFAULT="false"

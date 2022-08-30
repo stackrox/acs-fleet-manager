@@ -15,6 +15,7 @@ Inheriting ImagePullSecrets for Quay.io: ${INHERIT_IMAGEPULLSECRETS}
 Installing RHACS Operator: ${INSTALL_OPERATOR}
 Operator Source: ${OPERATOR_SOURCE}
 Using OLM: ${INSTALL_OLM}
+Installing OpenShift Router: ${INSTALL_OPENSHIFT_ROUTER}
 
 EOF
 
@@ -47,6 +48,11 @@ if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
     create-imagepullsecrets
     inject_ips "$ACSMS_NAMESPACE" "default" "quay-ips"
     inject_ips "$STACKROX_OPERATOR_NAMESPACE" "default" "quay-ips"
+fi
+
+if [[ "$INSTALL_OPENSHIFT_ROUTER" == "true" ]]; then
+    log "Installing OpenShift Router"
+    apply "${MANIFESTS_DIR}/openshift-router"
 fi
 
 if [[ "$INSTALL_OPERATOR" == "true" ]]; then
