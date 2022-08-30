@@ -766,7 +766,7 @@ deploy/token-refresher:
 # Deploys OpenShift ingress router on a k8s cluster
 deploy/openshift-router:
 	./scripts/openshift-router.sh deploy
-.PHONY: deploy/ingress-router
+.PHONY: deploy/openshift-router
 
 # Un-deploys OpenShift ingress router from a k8s cluster
 undeploy/openshift-router:
