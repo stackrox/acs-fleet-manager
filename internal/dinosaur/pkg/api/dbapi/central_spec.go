@@ -28,10 +28,10 @@ var (
 	}
 	// DefaultScannerAnalyzerScaling ...
 	DefaultScannerAnalyzerScaling = ScannerAnalyzerScaling{
-		AutoScaling: defaults.ScannerAnalyzerAutoScaling,
-		Replicas:    defaults.ScannerAnalyzerScalingReplicas,
-		MinReplicas: defaults.ScannerAnalyzerScalingMinReplicas,
-		MaxReplicas: defaults.ScannerAnalyzerScalingMaxReplicas,
+		AutoScaling: defaults.Scanner.Analyzer.AutoScaling,
+		Replicas:    defaults.Scanner.Analyzer.Replicas,
+		MinReplicas: defaults.Scanner.Analyzer.MinReplicas,
+		MaxReplicas: defaults.Scanner.Analyzer.MaxReplicas,
 	}
 )
 

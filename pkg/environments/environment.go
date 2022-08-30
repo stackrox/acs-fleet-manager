@@ -9,6 +9,7 @@ import (
 
 	"github.com/goava/di"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/defaults"
 
 	sentryGo "github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
@@ -132,6 +133,13 @@ func (env *Env) CreateServices() error {
 	err = namedEnv.ModifyConfiguration(env)
 	if err != nil {
 		return fmt.Errorf("modifying configuration: %w", err)
+	}
+	glog.Info("Active defaults for new Central tenants:")
+	for _, line := range defaults.PettyPrintCentralDefaults() {
+		glog.Info("  " + line)
+	}
+	for _, line := range defaults.PettyPrintScannerDefaults() {
+		glog.Info("  " + line)
 	}
 
 	type injections struct {

@@ -41,6 +41,35 @@ spec:
           ports:
             - containerPort: 8000
             - containerPort: 8083
+          env:
+          - name: CENTRAL_CPU_REQUEST
+            value: 200m
+          - name: CENTRAL_MEMORY_REQUEST
+            value: 300M
+          - name: CENTRAL_CPU_LIMIT
+            value: 200m
+          - name: CENTRAL_MEMORY_LIMIT
+            value: 300M
+          - name: SCANNER_ANALYZER_CPU_REQUEST
+            value: 200m
+          - name: SCANNER_ANALYZER_MEMORY_REQUEST
+            value: 300M
+          - name: SCANNER_ANALYZER_CPU_LIMIT
+            value: 200m
+          - name: SCANNER_ANALYZER_MEMORY_LIMIT
+            value: 300M
+          - name: SCANNER_ANALYZER_AUTOSCALING
+            value: Disabled
+          - name: SCANNER_ANALYZER_REPLICAS
+            value: "1"
+          - name: SCANNER_DB_CPU_REQUEST
+            value: 200m
+          - name: SCANNER_DB_MEMORY_REQUEST
+            value: 200M
+          - name: SCANNER_DB_CPU_LIMIT
+            value: 200m
+          - name: SCANNER_DB_MEMORY_LIMIT
+            value: 200M
           readinessProbe:
             httpGet:
               path: /healthcheck
