@@ -763,8 +763,8 @@ deploy/token-refresher:
 		 | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/token-refresher
 
-# Deploys ingress router on a k8s cluster
-deploy/ingress-router:
+# Deploys OpenShift ingress router on a k8s cluster
+deploy/openshift-router:
 	./scripts/openshift-router.sh deploy
 .PHONY: deploy/ingress-router
 
