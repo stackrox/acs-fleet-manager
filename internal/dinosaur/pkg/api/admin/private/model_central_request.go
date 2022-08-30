@@ -27,7 +27,8 @@ type CentralRequest struct {
 	Region       string    `json:"region,omitempty"`
 	Owner        string    `json:"owner,omitempty"`
 	Name         string    `json:"name,omitempty"`
-	Host         string    `json:"host,omitempty"`
+	UiHost       string    `json:"ui_host,omitempty"`
+	DataHost     string    `json:"data_host,omitempty"`
 	CreatedAt    time.Time `json:"created_at,omitempty"`
 	UpdatedAt    time.Time `json:"updated_at,omitempty"`
 	FailedReason string    `json:"failed_reason,omitempty"`

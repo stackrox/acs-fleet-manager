@@ -354,6 +354,7 @@ test/cluster/cleanup:
 test/e2e: gotestsum
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	RUN_E2E=true \
+	ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=$(ENABLE_CENTRAL_EXTERNAL_CERTIFICATE) \
 	go run github.com/onsi/ginkgo/v2/ginkgo -r $(GINKGO_FLAGS) \
 		--randomize-suites \
 		--fail-on-pending --keep-going \
