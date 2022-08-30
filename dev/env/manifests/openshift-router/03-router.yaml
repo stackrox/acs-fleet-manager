@@ -1,3 +1,5 @@
+# Downloaded from https://raw.githubusercontent.com/openshift/router/master/deploy/router.yaml
+# and slightly modified (see README.md).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
