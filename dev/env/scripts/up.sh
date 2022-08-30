@@ -39,7 +39,7 @@ if [[ ! ("$CLUSTER_TYPE" == "openshift-ci" || "$CLUSTER_TYPE" == "infra-openshif
         fi
     else
         log "Trying to pull image '${FLEET_MANAGER_IMAGE}'..."
-        $DOCKER pull "$FLEET_MANAGER_IMAGE"
+        docker_pull "$FLEET_MANAGER_IMAGE"
     fi
 
     # Verify that the image is there.
