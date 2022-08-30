@@ -14,7 +14,7 @@ After the central instance is provisioned and the routes are created, it's time 
 
 ```
 # requires: kubectl, hostctl, fzf, jq
-./scripts/ingress-router.sh host add
+./scripts/openshift-router.sh host add
 ```
 
 #### Manually
@@ -41,7 +41,7 @@ After the host is added, you can access it in a browser
 
 ```
 # requires: kubectl, hostctl, fzf, jq
-./scripts/ingress-router.sh host remove
+./scripts/openshift-router.sh host remove
 ```
 #### Manually
 When you are finished with testing the concrete instance, you can remove the host from the list

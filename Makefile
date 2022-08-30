@@ -765,12 +765,12 @@ deploy/token-refresher:
 
 # Deploys ingress router on a k8s cluster
 deploy/ingress-router:
-	./scripts/ingress-router.sh deploy
+	./scripts/openshift-router.sh deploy
 .PHONY: deploy/ingress-router
 
 # Un-deploys ingress router from a k8s cluster
 undeploy/ingress-router:
-	./scripts/ingress-router.sh undeploy
+	./scripts/openshift-router.sh undeploy
 .PHONY: undeploy/ingress-router
 
 tag:
