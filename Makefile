@@ -771,7 +771,7 @@ deploy/openshift-router:
 # Un-deploys OpenShift ingress router from a k8s cluster
 undeploy/openshift-router:
 	./scripts/openshift-router.sh undeploy
-.PHONY: undeploy/ingress-router
+.PHONY: undeploy/openshift-router
 
 tag:
 	@echo "$(image_tag)"
