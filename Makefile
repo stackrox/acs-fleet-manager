@@ -768,8 +768,8 @@ deploy/ingress-router:
 	./scripts/openshift-router.sh deploy
 .PHONY: deploy/ingress-router
 
-# Un-deploys ingress router from a k8s cluster
-undeploy/ingress-router:
+# Un-deploys OpenShift ingress router from a k8s cluster
+undeploy/openshift-router:
 	./scripts/openshift-router.sh undeploy
 .PHONY: undeploy/ingress-router
 
