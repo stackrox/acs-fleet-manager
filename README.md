@@ -8,7 +8,7 @@ ACS fleet-manager repository for the ACS managed service.
 ### Overview
 
 ```
-├── bin                 -- binary output directory   
+├── bin                 -- binary output directory  
 ├── cmd                 -- cmd entry points
 ├── config              -- various fleet-manager configurations
 ├── dashboards          -- grafana dashboards
@@ -64,11 +64,11 @@ This requires some preparations on a cluster:
 
 1. Install ACS Operator
    The process is described in [operator documentation](https://github.com/stackrox/stackrox/tree/master/operator)
-2. Deploy ingress router
+2. Deploy OpenShift Router
    ```
-   make deploy/ingress-router
+   make deploy/openshift-router
    ```
-   Use `make undeploy/ingress-router` to undeploy router from a cluster.
+   Use `make undeploy/openshift-router` to undeploy the OpenShift router from a cluster.
    Refer to the router [repo](https://github.com/openshift/router) for more information.
 3. For accessing the hostnames exposed by routes locally read the documentation [here](docs/development/test-locally-route-hosts.md)
 
@@ -79,7 +79,7 @@ This requires some preparations on a cluster:
 # Install git-hooks, for more information see git-hooks.md [1]
 $ make setup/git/hooks
 
-# To generate code and compile binaries run 
+# To generate code and compile binaries run
 $ make all
 
 # To only compile fleet-manager and fleetshard-synchronizer run
