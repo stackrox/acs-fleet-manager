@@ -4,6 +4,14 @@ Chart to terraform data plane OSD clusters.
 
 ## Usage
 
+**Preferred method for terraforming Stage and Prod data plane clusters**
+
+Run the script for your environment and cluster name:
+
+```bash
+./terraform_cluster.sh stage acs-stage-dp-01
+```
+
 **Prepare environment variables**
 
 The env var `FM_ENDPOINT` should point to an endpoint for the fleet manager. An option to use a fleet manager instance running in your laptop is to [setup ngrok](https://ngrok.com/docs/getting-started), launch the fleet manager, and run `ngrok http 8000` to expose it to the internet. That commands outputs an endpoint that you can use for `FM_ENDPOINT`.  
