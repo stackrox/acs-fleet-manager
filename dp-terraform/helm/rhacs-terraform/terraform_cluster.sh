@@ -66,8 +66,6 @@ case $ENVIRONMENT in
     ;;
 esac
 
-# helm uninstall rhacs-terraform --namespace rhacs
-
 # To use ACS Operator from the OpenShift Marketplace:
 #   --set acsOperator.source=redhat-operators
 #   --set acsOperator.sourceNamespace=openshift-marketplace
@@ -94,6 +92,9 @@ helm install rhacs-terraform ./ \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}"
 
-# To delete all resources:
+# To uninstall an existing release:
+# helm uninstall rhacs-terraform --namespace rhacs
+#
+# To delete all resources specified by the template:
 # helm template ... > /var/tmp/resources.yaml
 # kubectl delete -f /var/tmp/resources.yaml
