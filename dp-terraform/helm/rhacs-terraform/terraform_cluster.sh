@@ -71,7 +71,9 @@ esac
 #   --set acsOperator.sourceNamespace=openshift-marketplace
 
 # helm template ... to debug changes
-helm install rhacs-terraform ./ \
+helm upgrade rhacs-terraform ./ \
+  --install \
+  # Set --dry-run to test changes; TODO: add a --dry-run parameter to this script.
   --debug \
   --namespace rhacs \
   --create-namespace \
