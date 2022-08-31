@@ -299,8 +299,6 @@ func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1
 		return false, err
 	}
 	globalDeleted = globalDeleted && nsDeleted
-
-	glog.Infof("All central resources were deleted: %s/%s", central.GetNamespace(), central.GetName())
 	return globalDeleted, nil
 }
 

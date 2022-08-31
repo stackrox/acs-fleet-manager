@@ -71,6 +71,7 @@ config/dataplane-cluster-configuration.yaml
 /data/results/*
 !/data/results/.keep
 e2e-report.json
+e2e/e2e.test
 
 # Docker template
 Dockerfile_integration_tests
