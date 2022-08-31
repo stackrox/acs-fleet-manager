@@ -57,6 +57,9 @@ fi
 
 if [[ "$INSTALL_OPERATOR" == "true" ]]; then
     if [[ "$INSTALL_OLM" == "true" ]]; then
+        if ! command -v operator-sdk; then
+          die "Error: Unable to install OLM, operator-sdk executable is not found"
+        fi
         # Setup OLM
         if { operator-sdk olm status 2>&1 || true; } | grep -q "no existing installation found"; then
             log "Installing OLM..."
