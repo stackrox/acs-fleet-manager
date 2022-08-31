@@ -18,7 +18,7 @@
 
 ### Overview
 
-ACS Fleet Manager allows [Red Hat Cloud Console](https://console.redhat.com/) users to request and manage [ACS instance](https://github.com/stackrox/stackrox).
+ACS Fleet Manager allows [Red Hat Cloud Console](https://console.redhat.com/) users to request and manage [ACS Central & Scanner instances](https://github.com/stackrox/stackrox).
 
 ![high level overview](./images/high_level_overview.png "High level overview diagram")
 
@@ -46,15 +46,15 @@ See [miro ACSMS dashboard](https://miro.com/app/board/uXjVOh7XtrE=/)
 
 Deployment steps:
 1. AppSRE JenkinsCI runs [build main job](https://ci.ext.devshift.net/job/stackrox-acs-fleet-manager-gh-build-main/).
-   - It includes building an image from source and pushing it to the quay.io under appSRE organisation.
-2. AppSRE JenkinsCI triggers Tekton pipeline for selected target namespaces.
+   - It includes building an image from source and pushing it to quay.io under the appSRE organisation.
+2. The AppSRE JenkinsCI triggers a Tekton pipeline for the selected target namespaces.
 3. Tekton deploys the latest version to the control plane OSD cluster.
 
 There are two triggers for the service deployment:
 - New commit in the main branch in the GitHub ACS Fleet Manager repository.
 - Any ACS Fleet Manager file is changed on [app-interface repository](https://gitlab.cee.redhat.com/service/app-interface).
   - The first deployment step is skipped if only ACS Fleet Manager [saas.yml](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/acs-fleet-manager/cicd/saas.yaml) is changed.
-    It makes sense because saas.yml do not have any impact on image so there is no need to build a new one.
+    It makes sense because `saas.yml` does not have any impact on the image, so there is no need to build a new one.
 
 ![deployment flow](./images/deployment_flow.png "Deployment flow diagram")
 
@@ -68,7 +68,7 @@ There is a list of SLO [documents](https://gitlab.cee.redhat.com/service/app-int
 
 ### Grafana dashboards
 
-There are two ACS grafana dashboard hosted on appSRE grafana instance:
+There are two ACS Grafana dashboards hosted on the appSRE Grafana instance:
 - General service [overview dashboard](https://grafana.stage.devshift.net/d/D1C839d82/acs-fleet-manager?orgId=1).
 - [SLO/SLI service dashboard](https://grafana.stage.devshift.net/d/T2kek3H9a/acs-fleet-manager-slos?orgId=1).
 
@@ -89,16 +89,16 @@ The service metadata overview can be found in two places:
 
 The dev team expects that ACS Fleet Manager CPU, memory, and disk usage will grow proportionally to the number of users 
 for both OSD cluster and AWS RDS instance.
-The number of running ACS Fleet Manager replicas can be configured via `REPLICAS` environment variable on [saas.yml](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/acs-fleet-manager/cicd/saas.yaml) file on app-interface.
+The number of running ACS Fleet Manager replicas can be configured via the `REPLICAS` environment variable in the [saas.yml](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/acs-fleet-manager/cicd/saas.yaml) file on app-interface.
 The AWS RDS instance can be scaled with ACS Fleet Manager RDS resource configuration on app-interface
 ([prod](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/terraform/resources/acs-fleet-manager/production/rds-pg14.yml)
 and [stage](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/terraform/resources/acs-fleet-manager/staging/rds-pg14.yml)).
 
-There are factors which affect storage/database growth:
+Factors which affect storage/database growth:
 - ACS Fleet Manager retains information for each ACS instance for each user.
-- ACS Fleet Manager retains information for each ongoing request for provisioning/deleting ACS instance.
+- ACS Fleet Manager retains information for each ongoing request for provisioning/deleting ACS instances.
 
-There are factor which affect CPU and memory usage:
+Factors which affect CPU and memory usage:
 - ACS Fleet Manager receives users requests from https://console.redhat.com.
 - ACS Fleet Manager leader replica has a reconciler loop which handles all ongoing provisioning/deleting requests.
 
@@ -107,7 +107,7 @@ There are factor which affect CPU and memory usage:
 
 - AWS RDS:
   - ACS Fleet manager uses only AWS RDS (PostgreSQL) for persisting critical data. 
-  - The AWS RDS instances is managed AppSRE team.
+  - The AWS RDS instances are managed by the AppSRE team.
   - Both ACS Fleet Manager RDS resources are defined in app-interface repository ([prod](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/terraform/resources/acs-fleet-manager/production/rds-pg14.yml) 
     and [stage](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/terraform/resources/acs-fleet-manager/staging/rds-pg14.yml)).
   - In case of a database disaster, AppSRE would need to recreate that database and restore the latest backup.
@@ -124,17 +124,15 @@ In summary, ACS Fleet Manager AWS RDS is the only critical data store that may n
 
 ### Data Loss Impact
 
-If there is a disaster that results in the database losing any data. 
-And lost data was recorded after last backup. 
-In that case the only option is to manually restore it using ACS Fleet Manager logs.
+If there is a disaster that results in the database losing data, and lost data was recorded after the last backup, then the only option is to manually restore it using the ACS Fleet Manager logs.
 
 Consequences of data loss may include but are not limited to:
 - Provisioned ACS instance may disappear from users dashboard on https://console.redhat.com.
-- Ongoing ACS instance provisioning request might be lost.
-- Ongoing ACS instance deleting request might be lost.
+- Ongoing ACS instance provisioning requests might be lost.
+- Ongoing ACS instance deleting requests might be lost.
 
 ACS Fleet Manager does not retain or report any personally identifying information (PII) or critical financial records. 
-Losing data in ACS Fleet Manager due to a disaster only noticeably affects the displayed users ACS instances on https://console.redhat.com. 
+Losing data in ACS Fleet Manager due to a disaster only noticeably affects the displayed users of ACS instances on https://console.redhat.com. 
 The ACS instances itself are hosted on separate cluster and should persist regardless ACS Fleet Manager AWS RDS lost data.
 Requesting a new ACS Instance after data loss should not have any issue.
 
