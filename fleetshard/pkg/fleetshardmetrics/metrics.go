@@ -2,27 +2,40 @@ package fleetshardmetrics
 
 import "github.com/prometheus/client_golang/prometheus"
 
+const metricsPrefix = "acs_fleetshard_"
+
 var (
+	k8sRequests               prometheus.Counter
+	k8sRequestErrors          prometheus.Counter
+	fleetManagerRequests      prometheus.Counter
+	fleetManagerRequestErrors prometheus.Counter
+)
+
+func init() {
+	initMetrics()
+}
+
+func initMetrics() {
 	k8sRequests = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "total_k8s_requests",
+		Name: metricsPrefix + "total_k8s_requests",
 		Help: "The total number of requests send to the target kubernetes cluster",
 	})
 
 	k8sRequestErrors = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "total_k8s_request_errors",
+		Name: metricsPrefix + "total_k8s_request_errors",
 		Help: "The total number of unexpected errors for requests send to the target kubernetes cluster",
 	})
 
 	fleetManagerRequests = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "total_fleet_manager_requests",
+		Name: metricsPrefix + "total_fleet_manager_requests",
 		Help: "The total number of requests send to fleet-manager",
 	})
 
 	fleetManagerRequestErrors = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "total_fleet_manager_request_errors",
+		Name: metricsPrefix + "total_fleet_manager_request_errors",
 		Help: "The total number of request errors for requests send to fleet-manager",
 	})
-)
+}
 
 func registerCustomMetrics(r prometheus.Registerer) {
 	r.MustRegister(k8sRequestErrors)

@@ -19,6 +19,5 @@ func NewMetricsServer(address string) *http.Server {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 
-	server := &http.Server{Addr: address, Handler: mux}
-	return server
+	return &http.Server{Addr: address, Handler: mux}
 }

@@ -112,7 +112,7 @@ func CreateClientOrDie() ctrlClient.Client {
 	}
 
 	glog.Infof("Connected to k8s cluster: %s", config.Host)
-	return k8sClient
+	return &ClientMetricsWrapper{Client: k8sClient}
 }
 
 func newClientGoClientSet() (client kubernetes.Interface, err error) {

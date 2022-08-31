@@ -5,9 +5,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+type metricResponse map[string]*io_prometheus_client.MetricFamily
 
 func TestMetricsServerCorrectAddress(t *testing.T) {
 	server := NewMetricsServer(":8081")
@@ -15,37 +19,13 @@ func TestMetricsServerCorrectAddress(t *testing.T) {
 }
 
 func TestMetricsServerServesDefaultMetrics(t *testing.T) {
-	server := NewMetricsServer(":8081")
-
-	rec := httptest.NewRecorder()
-	req, err := http.NewRequest(http.MethodGet, "/metrics", nil)
-	assert.NoError(t, err, "failed creating metrics requests")
-
-	server.Handler.ServeHTTP(rec, req)
-	assert.Equal(t, http.StatusOK, rec.Code, "status code should be OK")
-
-	promParser := expfmt.TextParser{}
-	metrics, err := promParser.TextToMetricFamilies(rec.Body)
-	assert.NoError(t, err, "failed parsing metrics file")
-
+	metrics := serveMetrics(t)
 	_, hasKey := metrics["go_memstats_alloc_bytes"]
 	assert.Truef(t, hasKey, "expected metrics to contain go default metrics but it did not: %v", metrics)
 }
 
 func TestMetricsServerServesCustomMetrics(t *testing.T) {
-	server := NewMetricsServer(":8081")
-
-	rec := httptest.NewRecorder()
-	req, err := http.NewRequest(http.MethodGet, "/metrics", nil)
-	assert.NoError(t, err, "failed creating metrics requests")
-
-	server.Handler.ServeHTTP(rec, req)
-	assert.Equal(t, http.StatusOK, rec.Code, "status code should be OK")
-
-	promParser := expfmt.TextParser{}
-	metrics, err := promParser.TextToMetricFamilies(rec.Body)
-	assert.NoError(t, err, "failed creating metrics requests")
-	assert.NoError(t, err, "failed parsing metrics file")
+	metrics := serveMetrics(t)
 
 	expectedKeys := []string{
 		"total_k8s_requests",
@@ -53,8 +33,23 @@ func TestMetricsServerServesCustomMetrics(t *testing.T) {
 		"total_fleet_manager_requests",
 		"total_fleet_manager_request_errors",
 	}
+
 	for _, key := range expectedKeys {
-		_, hasKey := metrics[key]
-		assert.Truef(t, hasKey, "expected metrics to contain %s but it did not: %v", key, metrics)
+		assert.Containsf(t, metrics, metricsPrefix+key, "expected metrics to contain %s but it did not: %v", key, metrics)
 	}
+}
+
+func serveMetrics(t *testing.T) metricResponse {
+	rec := httptest.NewRecorder()
+	req, err := http.NewRequest(http.MethodGet, "/metrics", nil)
+	require.NoError(t, err, "failed creating metrics requests")
+
+	server := NewMetricsServer(":8081")
+	server.Handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code, "status code should be OK")
+
+	promParser := expfmt.TextParser{}
+	metrics, err := promParser.TextToMetricFamilies(rec.Body)
+	require.NoError(t, err, "failed parsing metrics file")
+	return metrics
 }

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"runtime/pprof"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -34,7 +35,7 @@ func main() {
 	glog.Infof("ClusterID: %s", config.ClusterID)
 	glog.Infof("RuntimePollPeriod: %s", config.RuntimePollPeriod.String())
 
-	runtime, err := runtime.NewRuntime(config, &k8s.ClientMetricsWrapper{Client: k8s.CreateClientOrDie()})
+	runtime, err := runtime.NewRuntime(config, k8s.CreateClientOrDie())
 	if err != nil {
 		glog.Fatal(err)
 	}
@@ -62,6 +63,7 @@ func main() {
 		glog.Errorf("closing metric server: %v", err)
 	}
 
+	pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
 	glog.Infof("Caught %s signal", sig)
 	glog.Info("fleetshard application has been stopped")
 }

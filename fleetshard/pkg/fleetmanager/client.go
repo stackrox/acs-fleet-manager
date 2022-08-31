@@ -177,7 +177,7 @@ func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 
 	// Unmarshal error
 	if into.Kind == "Error" || into.Kind == "error" {
-		fleetshardmetrics.IncrementK8sRequestErrors()
+		fleetshardmetrics.IncrementFleetManagerRequestErrors()
 		apiError := compat.Error{}
 		err = json.Unmarshal(data, &apiError)
 		if err != nil {
