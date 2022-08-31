@@ -33,7 +33,7 @@ require (
 	github.com/onsi/gomega v1.20.1
 	github.com/openshift-online/ocm-sdk-go v0.1.286
 	github.com/openshift/api v3.9.1-0.20191201231411-9f834e337466+incompatible
-	github.com/operator-framework/api v0.4.0
+	github.com/operator-framework/api v0.17.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
@@ -69,7 +69,6 @@ require (
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210826220005-b48c857c3a0e // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

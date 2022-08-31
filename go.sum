@@ -1927,6 +1927,7 @@ github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd/go.mod h1:CT
 github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF4nAY/ojJ6r6mM=
 github.com/kevinburke/ssh_config v1.1.0/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF4nAY/ojJ6r6mM=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
+github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/errcheck v1.6.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/kisielk/sqlstruct v0.0.0-20150923205031-648daed35d49/go.mod h1:yyMNCyc/Ib3bDTKd379tNMpB/7/H5TjM2Y9QJ5THLbE=
@@ -2375,8 +2376,9 @@ github.com/openzipkin/zipkin-go v0.2.2/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnh
 github.com/openzipkin/zipkin-go v0.3.0/go.mod h1:4c3sLeE8xjNqehmF5RpAFLPLJxXscc0R4l6Zg0P1tTQ=
 github.com/operator-framework/api v0.3.7-0.20200602203552-431198de9fc2/go.mod h1:Xbje9x0SHmh0nihE21kpesB38vk3cyxnE6JdDS8Jo1Q=
 github.com/operator-framework/api v0.3.13/go.mod h1:Xbje9x0SHmh0nihE21kpesB38vk3cyxnE6JdDS8Jo1Q=
-github.com/operator-framework/api v0.4.0 h1:OeuGMXScjwosNKXttH3uorywr7APT5luTNPWy3zvqXs=
 github.com/operator-framework/api v0.4.0/go.mod h1:xXYReW8+PpSBHMxsf0e7uhtfQTLqIM1iz4X6zUs20+c=
+github.com/operator-framework/api v0.17.0 h1:OXpCP0XJzM7MYgr/zEZDqdOahUxHR9JSYAmmNUIj4W8=
+github.com/operator-framework/api v0.17.0/go.mod h1:kk8xJahHJR3bKqrA+A+1VIrhOTmyV76k+ARv+iV+u1Q=
 github.com/operator-framework/operator-lib v0.3.0/go.mod h1:LTp5UQd8ivq4MXqm/W/XHulHQ0RRoZXsAj73sNMAQxc=
 github.com/operator-framework/operator-registry v1.13.4/go.mod h1:YhnIzOVjRU2ZwZtzt+fjcjW8ujJaSFynBEu7QVKaSdU=
 github.com/operator-framework/operator-sdk v0.19.4/go.mod h1:+gIlE/CfBGFGj51qJ2sLTPZWE1X27cKtjZ0m5vwY8Hw=
