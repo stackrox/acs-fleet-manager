@@ -355,13 +355,13 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(newCentralResources))
 		})
 
-		It("should transition central's state to ready", func() {
+		It("[Admin] should transition central's state to ready", func() {
 			Eventually(func() string {
 				return centralStatus(createdCentral, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusReady.String()))
 		})
 
-		It("should transition central to deprovisioning state", func() {
+		It("[Admin] should transition central to deprovisioning state", func() {
 			err = client.DeleteCentral(createdCentral.Id)
 			Expect(err).To(Succeed())
 			Eventually(func() string {
@@ -371,7 +371,7 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusDeprovision.String()))
 		})
 
-		It("should delete central CR", func() {
+		It("[Admin] should delete central CR", func() {
 			Eventually(func() bool {
 				central := &v1alpha1.Central{}
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: centralName}, central)
@@ -379,12 +379,26 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
 		})
 
-		It("should remove central namespace", func() {
+		It("[Admin] should remove central namespace", func() {
 			Eventually(func() bool {
 				ns := &v1.Namespace{}
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
 				return apiErrors.IsNotFound(err)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
+		})
+
+		It("[Admin] should delete external DNS entries", func() {
+			if !dnsEnabled {
+				Skip(skipDNSMsg)
+			}
+
+			central := getCentral(createdCentral, client)
+			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
+
+			Eventually(dnsRecordsLoader.LoadDNSRecords).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(BeEmpty(), "Started at %s", time.Now())
 		})
 
 	})
