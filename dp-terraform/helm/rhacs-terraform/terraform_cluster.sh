@@ -1,11 +1,13 @@
 #!/bin/bash
-set -exo pipefail
+set -eo pipefail
 
 # Requires: `jq`
 # Requires: BitWarden CLI `bw`
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
+    echo "Known environments: stage"
+    echo "Cluster typically looks like: acs-{environment}-dp-01"
     exit 2
 fi
 
@@ -28,15 +30,16 @@ function ensure_bitwarden_session_exists () {
 case $ENVIRONMENT in
   stage)
     EXPECT_OCM_ID="29ygxk0eRzRrhgQN96RdOYKt28e"
-    ACTUAL_OCM_ID=$(ocm whoami | jq '.id')
-    if [[ "${EXPECT_OCM_ID}" -ne "${ACTUAL_OCM_ID}" ]]; then
+    ACTUAL_OCM_ID=$(ocm whoami | jq -r '.id')
+    if [[ "${EXPECT_OCM_ID}" != "${ACTUAL_OCM_ID}" ]]; then
       echo "Must be logged into rhacs-managed-service account in OCM to get cluster ID"
+      exit 1
     fi
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
 
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
 
-    ensure_bitwarden_session_exists()
+    ensure_bitwarden_session_exists
     FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
     FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b)
     LOGGING_AWS_ACCESS_KEY_ID=$(bw get item "84e2d673-27dd-4e87-bb16-aee800da4d73" | jq '.fields[] | select(.name | contains("AccessKeyID")) | .value' --raw-output)
@@ -53,10 +56,12 @@ case $ENVIRONMENT in
   prod)
     echo "TODO: Handle environment 'prod'"
     exit 2
+    ;;
 
   *)
     echo "Unknown environment ${ENVIRONMENT}"
     exit 2
+    ;;
 esac
 
 # helm uninstall rhacs-terraform --namespace rhacs
@@ -66,7 +71,7 @@ esac
 #   --set acsOperator.sourceNamespace=openshift-marketplace
 
 # helm template ... to debug changes
-helm install rhacs-terraform \
+helm template rhacs-terraform \
   --debug \
   --namespace rhacs \
   --create-namespace \
