@@ -9,6 +9,7 @@ import (
 )
 
 // ClusterPlacementStrategy ...
+//
 //go:generate moq -out cluster_placement_strategy_moq.go . ClusterPlacementStrategy
 type ClusterPlacementStrategy interface {
 	// FindCluster finds and returns a Cluster depends on the specific impl.

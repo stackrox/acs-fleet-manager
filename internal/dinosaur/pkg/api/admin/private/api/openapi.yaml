@@ -1,8 +1,9 @@
 openapi: 3.0.0
 info:
-  description: The admin APIs for the fleet manager of Dinosaur service
-  title: Dinosaur Service Fleet Manager Admin APIs
-  version: 0.0.2
+  description: Red Hat Advanced Cluster Security (RHACS) Service Fleet Manager Admin
+    APIs that can be used by RHACS Managed Service Operations Team.
+  title: Red Hat Advanced Cluster Security Service Fleet Manager Admin API
+  version: 0.0.3
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -15,9 +16,9 @@ servers:
 tags:
 - name: Admin APIs
 paths:
-  /api/dinosaurs_mgmt/v1/admin/dinosaurs:
+  /api/rhacs/v1/admin/centrals:
     get:
-      operationId: getDinosaurs
+      operationId: getCentrals
       parameters:
       - description: Page index
         examples:
@@ -42,7 +43,8 @@ paths:
           similar to the syntax of the `order by` clause of an SQL statement.
           Each query can be ordered by any of the following `centralRequests` fields:
 
-          * host
+          * ui_host
+          * data_host
           * cloud_provider
           * cluster_id
           * created_at
@@ -122,9 +124,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DinosaurList'
-          description: Return a list of Dinosaur instances. This endpoint will return
-            all Dinosaur instances that are stored in the database and the are not
+                $ref: '#/components/schemas/CentralList'
+          description: Return a list of Central instances. This endpoint will return
+            all Central instances that are stored in the database and the are not
             filtered based on user ids or org ids.
         "400":
           content:
@@ -152,11 +154,12 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Returns a list of Dinosaurs
+      summary: Returns a list of Centrals
     post:
-      description: |
-        Each central has a single owner organisation and a single owner user. Creates a new Central that is owned by the user and organisation authenticated for the request.
-        This API allows providing custom resource settings for the new Central instance.
+      description: "Creates a new Central that is owned by the user and organisation\
+        \ authenticated for the request.\nEach Central has a single owner organisation\
+        \ and a single owner user. \nThis API allows providing custom resource settings\
+        \ for the new Central instance.\n"
       operationId: createCentral
       parameters:
       - description: Perform the action in an asynchronous manner
@@ -222,9 +225,9 @@ paths:
       security:
       - Bearer: []
       summary: Creates a Central request
-  /api/dinosaurs_mgmt/v1/admin/dinosaurs/{id}:
+  /api/rhacs/v1/admin/centrals/{id}:
     delete:
-      operationId: deleteDinosaurById
+      operationId: deleteCentralById
       parameters:
       - description: The ID of record
         in: path
@@ -245,8 +248,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dinosaur'
-          description: Dinosaur updated by ID
+                $ref: '#/components/schemas/Central'
+          description: Central updated by ID
         "401":
           content:
             application/json:
@@ -264,7 +267,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: No Dinosaur found with the specified ID
+          description: No Central found with the specified ID
         "500":
           content:
             application/json:
@@ -273,9 +276,9 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Delete a Dinosaur by ID
+      summary: Delete a Central by ID
     get:
-      operationId: getDinosaurById
+      operationId: getCentralById
       parameters:
       - description: The ID of record
         in: path
@@ -288,8 +291,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dinosaur'
-          description: Dinosaur found by ID
+                $ref: '#/components/schemas/Central'
+          description: Central found by ID
         "401":
           content:
             application/json:
@@ -307,7 +310,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: No Dinosaur found with the specified ID
+          description: No Central found with the specified ID
         "500":
           content:
             application/json:
@@ -316,9 +319,9 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Return the details of Dinosaur instance by id
+      summary: Return the details of Central instance by ID
     patch:
-      operationId: updateDinosaurById
+      operationId: updateCentralById
       parameters:
       - description: The ID of record
         in: path
@@ -330,16 +333,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DinosaurUpdateRequest'
-        description: Dinosaur update data
+              $ref: '#/components/schemas/CentralUpdateRequest'
+        description: Central update data
         required: true
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dinosaur'
-          description: Dinosaur updated by ID
+                $ref: '#/components/schemas/Central'
+          description: Central updated by ID
         "400":
           content:
             application/json:
@@ -363,7 +366,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: No Dinosaur found with the specified ID
+          description: No Central found with the specified ID
         "500":
           content:
             application/json:
@@ -372,24 +375,24 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Update a Dinosaur instance by id
+      summary: Update a Central instance by ID
 components:
   schemas:
-    Dinosaur:
+    Central:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - required:
-        - dinosaur_operator_upgrading
-        - dinosaur_upgrading
+        - central_operator_upgrading
+        - central_upgrading
         - multi_az
-      - $ref: '#/components/schemas/Dinosaur_allOf'
-    DinosaurList:
+      - $ref: '#/components/schemas/Central_allOf'
+    CentralList:
       allOf:
       - $ref: '#/components/schemas/List'
-      - $ref: '#/components/schemas/DinosaurList_allOf'
-    DinosaurUpdateRequest:
+      - $ref: '#/components/schemas/CentralList_allOf'
+    CentralUpdateRequest:
       example:
-        dinosaur_version: dinosaur_version
+        central_operator_version: central_operator_version
         central:
           resources:
             requests:
@@ -414,11 +417,11 @@ components:
                 key: requests
               limits:
                 key: limits
-        dinosaur_operator_version: dinosaur_operator_version
+        central_version: central_version
       properties:
-        dinosaur_operator_version:
+        central_operator_version:
           type: string
-        dinosaur_version:
+        central_version:
           type: string
         central:
           $ref: '#/components/schemas/CentralSpec'
@@ -570,13 +573,13 @@ components:
       - size
       - total
       type: object
-    Dinosaur_allOf_routes:
+    Central_allOf_routes:
       properties:
         domain:
           type: string
         router:
           type: string
-    Dinosaur_allOf:
+    Central_allOf:
       properties:
         status:
           description: 'Values: [accepted, preparing, provisioning, ready, failed,
@@ -605,17 +608,17 @@ components:
           type: string
         failed_reason:
           type: string
-        actual_dinosaur_version:
+        actual_central_version:
           type: string
-        actual_dinosaur_operator_version:
+        actual_central_operator_version:
           type: string
-        desired_dinosaur_version:
+        desired_central_version:
           type: string
-        desired_dinosaur_operator_version:
+        desired_central_operator_version:
           type: string
-        dinosaur_upgrading:
+        central_upgrading:
           type: boolean
-        dinosaur_operator_upgrading:
+        central_operator_upgrading:
           type: boolean
         organisation_id:
           type: string
@@ -631,7 +634,7 @@ components:
           type: string
         routes:
           items:
-            $ref: '#/components/schemas/Dinosaur_allOf_routes'
+            $ref: '#/components/schemas/Central_allOf_routes'
           type: array
         routes_created:
           type: boolean
@@ -639,12 +642,16 @@ components:
           type: string
         namespace:
           type: string
-    DinosaurList_allOf:
+        central:
+          $ref: '#/components/schemas/CentralSpec'
+        scanner:
+          $ref: '#/components/schemas/ScannerSpec'
+    CentralList_allOf:
       properties:
         items:
           items:
             allOf:
-            - $ref: '#/components/schemas/Dinosaur'
+            - $ref: '#/components/schemas/Central'
           type: array
     Error_allOf:
       properties:
@@ -722,7 +729,9 @@ components:
           type: string
         name:
           type: string
-        host:
+        ui_host:
+          type: string
+        data_host:
           type: string
         created_at:
           format: date-time
@@ -736,10 +745,6 @@ components:
           type: string
         instance_type:
           type: string
-        central:
-          $ref: '#/components/schemas/CentralSpec'
-        scanner:
-          $ref: '#/components/schemas/ScannerSpec'
       required:
       - multi_az
   securitySchemes:

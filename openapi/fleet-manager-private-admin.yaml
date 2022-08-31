@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
-  title: Dinosaur Service Fleet Manager Admin APIs
-  description: The admin APIs for the fleet manager of Dinosaur service
-  version: 0.0.2
+  title: Red Hat Advanced Cluster Security Service Fleet Manager Admin API
+  description: Red Hat Advanced Cluster Security (RHACS) Service Fleet Manager Admin APIs that can be used by RHACS Managed Service Operations Team.
+  version: 0.0.3
 servers:
   - url: https://api.openshift.com
     description: Main (production) server
@@ -17,11 +17,12 @@ tags:
     description: ""
 
 paths:
-  '/api/dinosaurs_mgmt/v1/admin/dinosaurs':
+  '/api/rhacs/v1/admin/centrals':
     post:
       operationId: createCentral
       description: |
-        Each central has a single owner organisation and a single owner user. Creates a new Central that is owned by the user and organisation authenticated for the request.
+        Creates a new Central that is owned by the user and organisation authenticated for the request.
+        Each Central has a single owner organisation and a single owner user. 
         This API allows providing custom resource settings for the new Central instance.
       parameters:
         - in: query
@@ -84,17 +85,17 @@ paths:
         - Bearer: []
       summary: Creates a Central request
     get:
-      summary: Returns a list of Dinosaurs
-      operationId: getDinosaurs
+      summary: Returns a list of Centrals
+      operationId: getCentrals
       security:
         - Bearer: []
       responses:
         "200":
-          description: Return a list of Dinosaur instances. This endpoint will return all Dinosaur instances that are stored in the database and the are not filtered based on user ids or org ids.
+          description: Return a list of Central instances. This endpoint will return all Central instances that are stored in the database and the are not filtered based on user ids or org ids.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DinosaurList'
+                $ref: '#/components/schemas/CentralList'
         "400":
           description: Bad request
           content:
@@ -124,21 +125,21 @@ paths:
         - $ref: 'fleet-manager.yaml#/components/parameters/size'
         - $ref: 'fleet-manager.yaml#/components/parameters/orderBy'
         - $ref: 'fleet-manager.yaml#/components/parameters/search'
-  '/api/dinosaurs_mgmt/v1/admin/dinosaurs/{id}':
+  '/api/rhacs/v1/admin/centrals/{id}':
     get:
-      summary: Return the details of Dinosaur instance by id
+      summary: Return the details of Central instance by ID
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       security:
         - Bearer: []
-      operationId: getDinosaurById
+      operationId: getCentralById
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dinosaur'
-          description: Dinosaur found by ID
+                $ref: '#/components/schemas/Central'
+          description: Central found by ID
         "401":
           description: Auth token is invalid
           content:
@@ -152,7 +153,7 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "404":
-          description: No Dinosaur found with the specified ID
+          description: No Central found with the specified ID
           content:
             application/json:
               schema:
@@ -164,26 +165,26 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
     patch:
-      summary: Update a Dinosaur instance by id
+      summary: Update a Central instance by ID
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       security:
         - Bearer: []
-      operationId: updateDinosaurById
+      operationId: updateCentralById
       requestBody:
-        description: Dinosaur update data
+        description: Central update data
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DinosaurUpdateRequest'
+              $ref: '#/components/schemas/CentralUpdateRequest'
         required: true
       responses:
         "200":
-          description: Dinosaur updated by ID
+          description: Central updated by ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dinosaur'
+                $ref: '#/components/schemas/Central'
         "400":
           description: Bad request
           content:
@@ -203,7 +204,7 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "404":
-          description: No Dinosaur found with the specified ID
+          description: No Central found with the specified ID
           content:
             application/json:
               schema:
@@ -215,7 +216,7 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
     delete:
-      summary: Delete a Dinosaur by ID
+      summary: Delete a Central by ID
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
         - in: query
@@ -226,14 +227,14 @@ paths:
           required: true
       security:
         - Bearer: [ ]
-      operationId: deleteDinosaurById
+      operationId: deleteCentralById
       responses:
         "200":
-          description: Dinosaur updated by ID
+          description: Central updated by ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dinosaur'
+                $ref: '#/components/schemas/Central'
         "401":
           description: Auth token is invalid
           content:
@@ -247,7 +248,7 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "404":
-          description: No Dinosaur found with the specified ID
+          description: No Central found with the specified ID
           content:
             application/json:
               schema:
@@ -261,13 +262,13 @@ paths:
 
 components:
   schemas:
-    Dinosaur:
+    Central:
       allOf:
         - $ref: 'fleet-manager.yaml#/components/schemas/ObjectReference'
         - required:
           - multi_az
-          - dinosaur_operator_upgrading
-          - dinosaur_upgrading
+          - central_operator_upgrading
+          - central_upgrading
         - type: object
           properties:
             status:
@@ -295,17 +296,17 @@ components:
               type: string
             failed_reason:
               type: string
-            actual_dinosaur_version:
+            actual_central_version:
               type: string
-            actual_dinosaur_operator_version:
+            actual_central_operator_version:
               type: string
-            desired_dinosaur_version:
+            desired_central_version:
               type: string
-            desired_dinosaur_operator_version:
+            desired_central_operator_version:
               type: string
-            dinosaur_upgrading:
+            central_upgrading:
               type: boolean
-            dinosaur_operator_upgrading:
+            central_operator_upgrading:
               type: boolean
             organisation_id:
               type: string
@@ -334,7 +335,11 @@ components:
               type: string
             namespace:
               type: string
-    DinosaurList:
+            central:
+              $ref: "#/components/schemas/CentralSpec"
+            scanner:
+              $ref: "#/components/schemas/ScannerSpec"
+    CentralList:
       allOf:
         - $ref: "fleet-manager.yaml#/components/schemas/List"
         - type: object
@@ -343,15 +348,15 @@ components:
               type: array
               items:
                 allOf:
-                  - $ref: "#/components/schemas/Dinosaur"
+                  - $ref: "#/components/schemas/Central"
 
-    DinosaurUpdateRequest:
+    CentralUpdateRequest:
       type: object
       properties:
         # for now only support updating the following fields. May add more when use cases arise.
-        dinosaur_operator_version:
+        central_operator_version:
           type: string
-        dinosaur_version:
+        central_version:
           type: string
         central:
           $ref: "fleet-manager.yaml#/components/schemas/CentralSpec"

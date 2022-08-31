@@ -14,3 +14,13 @@ port-forwarding stop db 5432 || true
 delete "${MANIFESTS_DIR}/db" || true
 delete "${MANIFESTS_DIR}/fleet-manager" || true
 delete "${MANIFESTS_DIR}/fleetshard-sync" || true
+
+central_namespaces=$($KUBECTL get namespace -o jsonpath='{range .items[?(@.status.phase == "Active")]}{.metadata.name}{"\n"}{end}' | grep '^rhacs-.*$' || true)
+
+for namespace in $central_namespaces; do
+    $KUBECTL delete namespace "$namespace" &
+done
+log "Waiting for leftover RHACS namespaces to be deleted... "
+for p in $(jobs -pr); do
+    wait "$p"
+done

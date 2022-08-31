@@ -15,6 +15,7 @@ Inheriting ImagePullSecrets for Quay.io: ${INHERIT_IMAGEPULLSECRETS}
 Installing RHACS Operator: ${INSTALL_OPERATOR}
 Operator Source: ${OPERATOR_SOURCE}
 Using OLM: ${INSTALL_OLM}
+Installing OpenShift Router: ${INSTALL_OPENSHIFT_ROUTER}
 
 EOF
 
@@ -47,6 +48,11 @@ if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
     create-imagepullsecrets
     inject_ips "$ACSMS_NAMESPACE" "default" "quay-ips"
     inject_ips "$STACKROX_OPERATOR_NAMESPACE" "default" "quay-ips"
+fi
+
+if [[ "$INSTALL_OPENSHIFT_ROUTER" == "true" ]]; then
+    log "Installing OpenShift Router"
+    apply "${MANIFESTS_DIR}/openshift-router"
 fi
 
 if [[ "$INSTALL_OPERATOR" == "true" ]]; then
@@ -125,19 +131,23 @@ fi
 
 if is_local_cluster "$CLUSTER_TYPE"; then
     if [[ ("$INSTALL_OPERATOR" == "true" && "$OPERATOR_SOURCE" == "quay") || "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
-        log "Logging into Quay image registry"
-        $DOCKER login quay.io -u "$QUAY_USER" --password-stdin <<EOF
+        if docker_logged_in "quay.io"; then
+            log "Looks like we are already logged into Quay"
+        else
+            log "Logging into Quay image registry"
+            $DOCKER login quay.io -u "$QUAY_USER" --password-stdin <<EOF
 $QUAY_TOKEN
 EOF
+        fi
     fi
 
     log "Preloading images into ${CLUSTER_TYPE} cluster..."
-    $DOCKER pull "postgres:13"
+    docker_pull "postgres:13"
     if [[ "$INSTALL_OPERATOR" == "true" ]]; then
         # Preload images required by Central installation.
-        $DOCKER pull "${IMAGE_REGISTRY}/scanner:${SCANNER_VERSION}"
-        $DOCKER pull "${IMAGE_REGISTRY}/scanner-db:${SCANNER_VERSION}"
-        $DOCKER pull "${IMAGE_REGISTRY}/main:${CENTRAL_VERSION}"
+        docker_pull "${IMAGE_REGISTRY}/scanner:${SCANNER_VERSION}"
+        docker_pull "${IMAGE_REGISTRY}/scanner-db:${SCANNER_VERSION}"
+        docker_pull "${IMAGE_REGISTRY}/main:${CENTRAL_VERSION}"
     fi
     log "Images preloaded"
 fi

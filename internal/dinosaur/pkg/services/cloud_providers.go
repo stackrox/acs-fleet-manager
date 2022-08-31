@@ -23,6 +23,7 @@ var cloudPoviderIDToDisplayNameMapping = map[string]string{
 }
 
 // CloudProvidersService ...
+//
 //go:generate moq -out cloud_providers_moq.go . CloudProvidersService
 type CloudProvidersService interface {
 	GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError)

@@ -102,6 +102,7 @@ init() {
     export STACKROX_OPERATOR_INDEX_IMAGE="${IMAGE_REGISTRY}/stackrox-operator-index:v${STACKROX_OPERATOR_VERSION}"
     export OPENSHIFT_MARKETPLACE="${OPENSHIFT_MARKETPLACE:-$OPENSHIFT_MARKETPLACE_DEFAULT}"
     export INSTALL_OPERATOR="${INSTALL_OPERATOR:-$INSTALL_OPERATOR_DEFAULT}"
+    export INSTALL_OPENSHIFT_ROUTER="${INSTALL_OPENSHIFT_ROUTER:-$INSTALL_OPENSHIFT_ROUTER_DEFAULT}"
     export DATABASE_HOST=${DATABASE_HOST:-$DATABASE_HOST_DEFAULT}
     export DATABASE_PORT=${DATABASE_PORT:-$DATABASE_PORT_DEFAULT}
     export DATABASE_NAME=${DATABASE_NAME:-$DATABASE_NAME_DEFAULT}
@@ -271,6 +272,34 @@ EOF
 is_local_cluster() {
     local cluster_type=${1:-}
     if [[ "$cluster_type" == "minikube" || "$cluster_type" == "colima" || "$cluster_type" == "rancher-desktop" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+_docker_images=""
+
+docker_pull() {
+    local image_ref="${1:-}"
+    if [[ -z "${_docker_images}" ]]; then
+        _docker_images=$($DOCKER images --format '{{.Repository}}:{{.Tag}}')
+    fi
+    if echo "${_docker_images}" | grep -q "^${image_ref}$"; then
+        log "Skipping pulling of image ${image_ref}, as it is already there"
+    else
+        log "Pulling image ${image_ref}"
+        $DOCKER pull "$image_ref"
+    fi
+}
+
+docker_logged_in() {
+    local registry="${1:-}"
+    if [[ -z "$registry" ]]; then
+        log "docker_logged_in() called with empty registry argument"
+        return 1
+    fi
+    if jq -ec ".auths[\"${registry}\"]" <"$DOCKER_CONFIG/config.json" >/dev/null 2>&1; then
         return 0
     else
         return 1

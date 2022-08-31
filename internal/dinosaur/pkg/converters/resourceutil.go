@@ -3,6 +3,7 @@ package converters
 import (
 	"fmt"
 
+	admin "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -79,6 +80,14 @@ func ConvertCoreV1ResourceRequirementsToPublic(v1Resources *corev1.ResourceRequi
 // ConvertCoreV1ResourceRequirementsToPrivate converts corev1 ResourceRequirements into private API ResourceRequirements.
 func ConvertCoreV1ResourceRequirementsToPrivate(v1Resources *corev1.ResourceRequirements) private.ResourceRequirements {
 	return private.ResourceRequirements{
+		Limits:   convertCoreV1ResourceListToMap(v1Resources.Limits),
+		Requests: convertCoreV1ResourceListToMap(v1Resources.Requests),
+	}
+}
+
+// ConvertCoreV1ResourceRequirementsToAdmin converts corev1 ResourceRequirements into private admin API ResourceRequirements.
+func ConvertCoreV1ResourceRequirementsToAdmin(v1Resources *corev1.ResourceRequirements) admin.ResourceRequirements {
+	return admin.ResourceRequirements{
 		Limits:   convertCoreV1ResourceListToMap(v1Resources.Limits),
 		Requests: convertCoreV1ResourceListToMap(v1Resources.Requests),
 	}

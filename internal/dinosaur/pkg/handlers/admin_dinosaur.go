@@ -116,12 +116,12 @@ func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			dinosaurRequestList := private.DinosaurList{
+			dinosaurRequestList := private.CentralList{
 				Kind:  "DinosaurList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
 				Total: int32(paging.Total),
-				Items: []private.Dinosaur{},
+				Items: []private.Central{},
 			}
 
 			for _, dinosaurRequest := range dinosaurRequests {
@@ -245,7 +245,7 @@ func updateScannerAnalyzerScaling(s *dbapi.ScannerAnalyzerScaling, apiScaling pr
 	return nil
 }
 
-func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.DinosaurUpdateRequest) error {
+func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.CentralUpdateRequest) error {
 	if updateRequest == nil {
 		return nil
 	}
@@ -295,7 +295,7 @@ func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.
 // Update a Central instance.
 func (h adminDinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
 
-	var dinosaurUpdateReq private.DinosaurUpdateRequest
+	var dinosaurUpdateReq private.CentralUpdateRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &dinosaurUpdateReq,
 		Validate:    []handlers.Validate{},

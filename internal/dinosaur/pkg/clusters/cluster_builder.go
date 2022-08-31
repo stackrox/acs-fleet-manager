@@ -18,8 +18,9 @@ const (
 
 // ClusterBuilder NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider
 // moving the type into a ocmtest package.
-//go:generate moq -out clusterbuilder_moq.go . ClusterBuilder
 // ClusterBuilder wrapper for the OCM-specific builder struct, to allow for mocking.
+//
+//go:generate moq -out clusterbuilder_moq.go . ClusterBuilder
 type ClusterBuilder interface {
 	// NewOCMClusterFromCluster create an OCM cluster definition that can be used to create a new cluster with the OCM
 	// Cluster Service.

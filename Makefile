@@ -354,7 +354,15 @@ test/cluster/cleanup:
 test/e2e: gotestsum
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	RUN_E2E=true \
-	$(GOTESTSUM) --format $(GOTESTSUM_FORMAT) -- $(GOARGS) -bench -v -count=1 -p 1 -timeout $(TEST_TIMEOUT) $(TESTFLAGS) ./e2e/...
+	ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=$(ENABLE_CENTRAL_EXTERNAL_CERTIFICATE) \
+	go run github.com/onsi/ginkgo/v2/ginkgo -r $(GINKGO_FLAGS) \
+		--randomize-suites \
+		--fail-on-pending --keep-going \
+		--cover --coverprofile=cover.profile \
+		--race --trace \
+		--json-report=e2e-report.json \
+		--timeout=$(TEST_TIMEOUT) \
+		 ./e2e/...
 .PHONY: test/e2e
 
 test/e2e/cleanup:
@@ -364,8 +372,6 @@ test/e2e/cleanup:
 # generate files
 generate: moq openapi/generate
 	$(GO) generate ./...
-	$(GO) mod vendor
-	$(MOQ) -out ./pkg/client/iam/gocloak_moq.go -pkg iam vendor/github.com/Nerzal/gocloak/v11 GoCloak:GoCloakMock
 .PHONY: generate
 
 # validate the openapi schema
@@ -757,18 +763,22 @@ deploy/token-refresher:
 		 | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/token-refresher
 
-# Deploys ingress router on a k8s cluster
-deploy/ingress-router:
-	./scripts/ingress-router.sh deploy
-.PHONY: deploy/ingress-router
+# Deploys OpenShift ingress router on a k8s cluster
+deploy/openshift-router:
+	./scripts/openshift-router.sh deploy
+.PHONY: deploy/openshift-router
 
-# Un-deploys ingress router from a k8s cluster
-undeploy/ingress-router:
-	./scripts/ingress-router.sh undeploy
-.PHONY: undeploy/ingress-router
+# Un-deploys OpenShift ingress router from a k8s cluster
+undeploy/openshift-router:
+	./scripts/openshift-router.sh undeploy
+.PHONY: undeploy/openshift-router
 
 tag:
 	@echo "$(image_tag)"
 .PHONY: tag
+
+setup-dev-env:
+	./scripts/setup-dev-env.sh
+.PHONY: setup-dev-env
 
 # TODO CRC Deployment stuff

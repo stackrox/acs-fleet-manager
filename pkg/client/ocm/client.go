@@ -23,6 +23,7 @@ const TermsEventcodeOnlineService = "onlineService"
 const TermsEventcodeRegister = "register"
 
 // Client ...
+//
 //go:generate moq -out client_moq.go . Client
 type Client interface {
 	CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error)

@@ -25,6 +25,7 @@ const (
 )
 
 // SSOClient ...
+//
 //go:generate moq -out client_moq.go . SSOClient
 type SSOClient interface {
 	GetToken() (string, error)
@@ -198,7 +199,7 @@ func (c *rhSSOClient) CreateServiceAccount(accessToken string, name string, desc
 		ServiceAccountCreateRequestData(
 			serviceaccountsclient.ServiceAccountCreateRequestData{
 				Name:        name,
-				Description: description,
+				Description: &description,
 			}).Execute()
 
 	defer shared.CloseResponseBody(resp)

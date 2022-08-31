@@ -156,7 +156,7 @@ parameters:
 - name: ENABLE_CENTRAL_EXTERNAL_CERTIFICATE
   displayName: Enable Central TLS
   description: Enable the Central TLS certificate
-  value: "false"
+  value: "true"
 
 - name: OBSERVATORIUM_RHSSO_GATEWAY
   displayName: Observatorium Red Hat SSO gateway
@@ -330,7 +330,7 @@ parameters:
 
 - name: CENTRAL_DOMAIN_NAME
   description: The domain name to use for Central instances
-  value: bf2.central-stage.rhcloud.com
+  value: acs-stage.rhcloud.com
 
 - name: CENTRAL_OPERATOR_OPERATOR_ADDON_ID
   displayName: Central operator addon ID
@@ -618,13 +618,6 @@ objects:
   - apiVersion: v1
     kind: ConfigMap
     metadata:
-      name: fake-fleet-manager-dataplane-cert-secret
-    data:
-      tls.crt: badger
-      tls.key: badger
-  - apiVersion: v1
-    kind: ConfigMap
-    metadata:
       name: fleet-manager-dataplane-cluster-configuration-staging
       annotations:
         qontract.recycle: "true"
@@ -907,9 +900,11 @@ objects:
           volumes:
           - name: fleet-manager-credentials
             secret:
+              # secretName is a vault-secret provider name in the app-interface
               secretName: fleet-manager # pragma: allowlist secret
           - name: rhsso-client-secret
             secret:
+              # secretName is a vault-secret provider name in the app-interface
               secretName: fleet-manager-central-rhsso-client-secret # pragma: allowlist secret
           - name: tls
             secret:
@@ -918,8 +913,9 @@ objects:
             configMap:
               name: fake-fleet-manager-secret
           - name: dataplane-certificate
-            configMap:
-              name: fake-fleet-manager-dataplane-cert-secret
+            secret:
+              # secretName is a vault-secret provider name in the app-interface
+              secretName: fleet-manager-dataplane-certificate # pragma: allowlist secret
           - name: rds
             secret:
               secretName: acs-fleet-manager-rds # pragma: allowlist secret
@@ -979,7 +975,6 @@ objects:
             command:
             - /usr/local/bin/fleet-manager
             - migrate
-            - rollback-all
             - --db-host-file=/secrets/rds/db.host
             - --db-port-file=/secrets/rds/db.port
             - --db-user-file=/secrets/rds/db.user
@@ -1065,10 +1060,10 @@ objects:
             - --central-lifespan=${CENTRAL_LIFE_SPAN}
             - --enable-deletion-of-expired-central=${ENABLE_CENTRAL_LIFE_SPAN}
             - --aws-access-key-file=/secrets/service/aws.accesskey
-            - --aws-account-id-file=/secrets/service/aws.accountid
+            - --aws-account-id-file=/secrets/fleet-manager-credentials/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
-            - --aws-route53-access-key-file=/secrets/service/aws.route53accesskey
-            - --aws-route53-secret-access-key-file=/secrets/service/aws.route53secretaccesskey
+            - --aws-route53-access-key-file=/secrets/fleet-manager-credentials/aws.route53accesskey
+            - --aws-route53-secret-access-key-file=/secrets/fleet-manager-credentials/aws.route53secretaccesskey
             - --rhsso-client-secret-file=/secrets/rhsso-client-secret/clientSecret
             - --observatorium-debug=${ENABLE_OBSERVATORIUM_DEBUG}
             - --observatorium-ignore-ssl=${OBSERVATORIUM_INSECURE}

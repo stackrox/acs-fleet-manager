@@ -2,7 +2,6 @@ package observatorium
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -10,120 +9,23 @@ import (
 	pModel "github.com/prometheus/common/model"
 )
 
-// MockAPI ...
+// API an alias for pV1.API
+//
+//go:generate moq -out api_moq.go . API
+type API = pV1.API
+
+// MockAPI returns a mocked instance of pV1.API
 func (c *Client) MockAPI() pV1.API {
-	return &httpAPIMock{}
-}
-
-type httpAPIMock struct {
-}
-
-// Query performs a query for the dinosaur metrics.
-func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time) (pModel.Value, pV1.Warnings, error) {
-	values := getMockQueryData(query)
-	return values, []string{}, nil
-}
-
-// QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) Performs a query range for the dinosaur metrics
-func (*httpAPIMock) QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) {
-	values := getMockQueryRangeData(query)
-	return values, []string{}, nil
-}
-
-// Alerts Not implemented
-func (*httpAPIMock) Alerts(ctx context.Context) (pV1.AlertsResult, error) {
-	return pV1.AlertsResult{}, fmt.Errorf("not implemented")
-}
-
-// AlertManagers ...
-func (*httpAPIMock) AlertManagers(ctx context.Context) (pV1.AlertManagersResult, error) {
-	return pV1.AlertManagersResult{}, fmt.Errorf("not implemented")
-}
-
-// CleanTombstones ...
-func (*httpAPIMock) CleanTombstones(ctx context.Context) error {
-	return fmt.Errorf("not implemented")
-}
-
-// Config ...
-func (*httpAPIMock) Config(ctx context.Context) (pV1.ConfigResult, error) {
-	return pV1.ConfigResult{}, fmt.Errorf("not implemented")
-}
-
-// DeleteSeries ...
-func (*httpAPIMock) DeleteSeries(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) error {
-	return fmt.Errorf("not implemented")
-}
-
-// Flags ...
-func (*httpAPIMock) Flags(ctx context.Context) (pV1.FlagsResult, error) {
-	return pV1.FlagsResult{}, fmt.Errorf("not implemented")
-}
-
-// LabelNames ...
-func (*httpAPIMock) LabelNames(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]string, pV1.Warnings, error) {
-	return []string{}, pV1.Warnings{}, fmt.Errorf("not implemented")
-}
-
-// LabelValues ...
-func (*httpAPIMock) LabelValues(ctx context.Context, label string, matches []string, startTime time.Time, endTime time.Time) (pModel.LabelValues, pV1.Warnings, error) {
-	return pModel.LabelValues{}, pV1.Warnings{}, fmt.Errorf("not implemented")
-}
-
-// Series ...
-func (*httpAPIMock) Series(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]pModel.LabelSet, pV1.Warnings, error) {
-	return []pModel.LabelSet{}, pV1.Warnings{}, fmt.Errorf("not implemented")
-}
-
-// Snapshot ...
-func (*httpAPIMock) Snapshot(ctx context.Context, skipHead bool) (pV1.SnapshotResult, error) {
-	return pV1.SnapshotResult{}, fmt.Errorf("not implemented")
-}
-
-// Rules ...
-func (*httpAPIMock) Rules(ctx context.Context) (pV1.RulesResult, error) {
-	return pV1.RulesResult{}, fmt.Errorf("not implemented")
-}
-
-// Targets ...
-func (*httpAPIMock) Targets(ctx context.Context) (pV1.TargetsResult, error) {
-	return pV1.TargetsResult{}, fmt.Errorf("not implemented")
-}
-
-// TargetsMetadata ...
-func (*httpAPIMock) TargetsMetadata(ctx context.Context, matchTarget string, metric string, limit string) ([]pV1.MetricMetadata, error) {
-	return []pV1.MetricMetadata{}, fmt.Errorf("not implemented")
-}
-
-// Metadata ...
-func (*httpAPIMock) Metadata(ctx context.Context, metric string, limit string) (map[string][]pV1.Metadata, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
-// TSDB ...
-func (*httpAPIMock) TSDB(ctx context.Context) (pV1.TSDBResult, error) {
-	return pV1.TSDBResult{}, fmt.Errorf("not implemented")
-}
-
-// Runtimeinfo ...
-func (*httpAPIMock) Runtimeinfo(ctx context.Context) (pV1.RuntimeinfoResult, error) {
-
-	return pV1.RuntimeinfoResult{}, fmt.Errorf("not implemented")
-}
-
-// Buildinfo ...
-func (*httpAPIMock) Buildinfo(ctx context.Context) (pV1.BuildinfoResult, error) {
-	return pV1.BuildinfoResult{}, fmt.Errorf("not implemented")
-}
-
-// QueryExemplars ...
-func (*httpAPIMock) QueryExemplars(ctx context.Context, query string, startTime time.Time, endTime time.Time) ([]pV1.ExemplarQueryResult, error) {
-	return []pV1.ExemplarQueryResult{}, fmt.Errorf("not implemented")
-}
-
-// WalReplay ...
-func (*httpAPIMock) WalReplay(ctx context.Context) (pV1.WalReplayStatus, error) {
-	return pV1.WalReplayStatus{}, fmt.Errorf("not implemented")
+	return &APIMock{
+		QueryFunc: func(ctx context.Context, query string, ts time.Time, opts ...pV1.Option) (pModel.Value, pV1.Warnings, error) {
+			values := getMockQueryData(query)
+			return values, []string{}, nil
+		},
+		QueryRangeFunc: func(ctx context.Context, query string, r pV1.Range, opts ...pV1.Option) (pModel.Value, pV1.Warnings, error) {
+			values := getMockQueryRangeData(query)
+			return values, []string{}, nil
+		},
+	}
 }
 
 // getMockQueryData

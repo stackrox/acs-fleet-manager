@@ -626,7 +626,9 @@ components:
               type: string
             name:
               type: string
-            host:
+            ui_host:
+              type: string
+            data_host:
               type: string
             created_at:
               format: date-time
@@ -640,10 +642,6 @@ components:
               type: string
             instance_type:
               type: string
-            central:
-              $ref: "#/components/schemas/CentralSpec"
-            scanner:
-              $ref: "#/components/schemas/ScannerSpec"
           example:
             $ref: "#/components/examples/CentralRequestExample"
     CentralRequestList:
@@ -980,7 +978,8 @@ components:
         similar to the syntax of the `order by` clause of an SQL statement.
         Each query can be ordered by any of the following `centralRequests` fields:
 
-        * host
+        * ui_host
+        * data_host
         * cloud_provider
         * cluster_id
         * created_at
@@ -1086,32 +1085,34 @@ components:
         name: "serviceapitest"
     CentralRequestExample:
       value:
-        id: "afdb69c1-23e8-4189-8450-77e76a02c740"
+        id: "a3a9c5b9-0283-4ff8-9b9e-da2209da17c3"
         kind: "central"
-        href: "/api/rhacs/v1/centrals/afdb69c1-23e8-4189-8450-77e76a02c740"
+        href: "/api/rhacs/v1/centrals/a3a9c5b9-0283-4ff8-9b9e-da2209da17c3" # pragma: allowlist secret
         status: "ready"
         cloud_provider: "aws"
         multi_az: true
         region: "us-east-1"
         owner: "api_central_service"
         name: "serviceapi"
-        host: "serviceapi-afdb69c1-23e8-4189-8450-77e76a02c740.example.rhacs.com"
+        ui_host: "rhacs-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
+        data_host: "rhacs-data-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
         created_at: "2020-10-05T12:51:24.053142Z"
         updated_at: "2020-10-05T12:56:36.362208Z"
         version: "2.6.0"
         instance_type: standard
     CentralRequestFailedCreationStatusExample:
       value:
-        id: "afdb69c1-23e8-4189-8450-77e76a02c740"
+        id: "a3a9c5b9-0283-4ff8-9b9e-da2209da17c3"
         kind: "central"
-        href: "/api/rhacs/v1/centrals/afdb69c1-23e8-4189-8450-77e76a02c740"
+        href: "/api/rhacs/v1/centrals/a3a9c5b9-0283-4ff8-9b9e-da2209da17c3" # pragma: allowlist secret
         status: "failed"
         cloud_provider: "aws"
         multi_az: true
         region: "us-east-1"
         owner: "api_central_service"
         name: "serviceapi"
-        host: "serviceapi-afdb69c1-23e8-4189-8450-77e76a02c740.example.rhacs.com"
+        ui_host: "rhacs-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
+        data_host: "rhacs-data-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
         created_at: "2020-10-05T12:51:24.053142Z"
         updated_at: "2020-10-05T12:56:36.362208Z"
         failed_reason: "a reason the Central request creation failed"
@@ -1123,16 +1124,17 @@ components:
         page: "1"
         total: "1"
         items:
-          - id: "afdb69c1-23e8-4189-8450-77e76a02c740"
+          - id: "a3a9c5b9-0283-4ff8-9b9e-da2209da17c3"
             kind: "central"
-            href: "/api/rhacs/v1/centrals/afdb69c1-23e8-4189-8450-77e76a02c740"
+            href: "/api/rhacs/v1/centrals/a3a9c5b9-0283-4ff8-9b9e-da2209da17c3" # pragma: allowlist secret
             status: "ready"
             cloud_provider: "aws"
             multi_az: true
             region: "us-east-1"
             owner: "alice"
             name: "serviceapi"
-            host: "serviceapi-afdb69c1-23e8-4189-8450-77e76a02c740.example.rhacs.com"
+            ui_host: "rhacs-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
+            data_host: "rhacs-data-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
             created_at: "2020-10-05T12:51:24.053142Z"
             updated_at: "2020-10-05T12:56:36.362208Z"
             version: "2.6.0"

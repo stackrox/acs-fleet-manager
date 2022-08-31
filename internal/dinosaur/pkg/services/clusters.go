@@ -21,6 +21,7 @@ import (
 )
 
 // ClusterService ...
+//
 //go:generate moq -out clusterservice_moq.go . ClusterService
 type ClusterService interface {
 	Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)

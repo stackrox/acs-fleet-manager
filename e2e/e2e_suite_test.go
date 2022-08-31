@@ -53,13 +53,13 @@ func getEnvDefault(key, defaultValue string) string {
 
 func TestE2E(t *testing.T) {
 	if os.Getenv("RUN_E2E") != "true" {
-		t.Skip("Skip e2e tests. Set RUN_E2E=1 env variable to enable e2e tests.")
+		t.Skip("Skip e2e tests. Set RUN_E2E=true env variable to enable e2e tests.")
 	}
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "RHACS ManagedServices Suite")
 }
 
-//TODO: Deploy fleet-manager, fleetshard-sync and database into a cluster
+// TODO: Deploy fleet-manager, fleetshard-sync and database into a cluster
 var _ = BeforeSuite(func() {
 	k8sClient = k8s.CreateClientOrDie()
 	routeService = k8s.NewRouteService(k8sClient)

@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/goava/di"
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
@@ -654,6 +655,39 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			return []error{errors.Wrapf(err, "Failed to register new cluster %s with config file", p.ClusterID)}
 		}
 		glog.Infof("Registered a new cluster with config file: %s ", p.ClusterID)
+	}
+
+	// Update existing clusters.
+	for _, manualCluster := range c.DataplaneClusterConfig.ClusterConfig.ExistingClusters(clusterIdsMap) {
+		cluster, err := c.ClusterService.FindClusterByID(manualCluster.ClusterID)
+		if err != nil {
+			glog.Warningf("Failed to lookup cluster %s in cluster service: %v", manualCluster.ClusterID, err)
+			continue
+		}
+		newCluster := *cluster
+		newCluster.CloudProvider = manualCluster.CloudProvider
+		newCluster.Region = manualCluster.Region
+		newCluster.MultiAZ = manualCluster.MultiAZ
+		newCluster.Status = manualCluster.Status
+		newCluster.ProviderType = manualCluster.ProviderType
+		newCluster.ClusterDNS = manualCluster.ClusterDNS
+		newCluster.SupportedInstanceType = manualCluster.SupportedInstanceType
+		if err := cluster.SetAvailableCentralOperatorVersions(manualCluster.AvailableCentralOperatorVersions); err != nil {
+			return []error{errors.Wrapf(err, "Failed to update operator versions for manual cluster %s with config file", manualCluster.ClusterID)}
+		}
+
+		if cmp.Equal(*cluster, newCluster) {
+			glog.Infof("Data-plane cluster %s unchanged", manualCluster.ClusterID)
+			continue
+		}
+		diff := cmp.Diff(*cluster, newCluster)
+		glog.Infof("Updating data-plane cluster %s. Changes in cluster configuration:\n", manualCluster.ClusterID)
+		for _, diffLine := range strings.Split(diff, "\n") {
+			glog.Infoln(diffLine)
+		}
+		if err := c.ClusterService.Update(newCluster); err != nil {
+			return []error{errors.Wrapf(err, "Failed to update manual cluster %s", cluster.ClusterID)}
+		}
 	}
 
 	// Remove all clusters that are not in the config file

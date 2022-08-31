@@ -29,7 +29,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 	tests := []struct {
 		name           string
 		args           args
-		verifyResponse func(result adminprivate.Dinosaur, resp *http.Response, err error)
+		verifyResponse func(result adminprivate.Central, resp *http.Response, err error)
 	}{}
 	/* TODO(ROX-9821) restore when admin API is properly implemented
 	 {
@@ -181,7 +181,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := tt.args.ctx(h)
 			client := test.NewAdminPrivateAPIClient(h)
-			result, resp, err := client.DefaultApi.GetDinosaurById(ctx, tt.args.dinosaurID)
+			result, resp, err := client.DefaultApi.GetCentralById(ctx, tt.args.dinosaurID)
 			tt.verifyResponse(result, resp, err)
 		})
 	}

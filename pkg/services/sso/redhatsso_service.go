@@ -85,7 +85,7 @@ func (r *redhatssoService) getToken() (string, *errors.ServiceError) {
 	return accessToken, nil
 }
 
-//// utility functions
+// // utility functions
 func convertServiceAccountDataToAPIServiceAccount(data *serviceaccountsclient.ServiceAccountData) *api.ServiceAccount {
 	return &api.ServiceAccount{
 		ID:           shared.SafeString(data.Id),
