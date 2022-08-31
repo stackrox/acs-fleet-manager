@@ -89,7 +89,7 @@ init() {
     done
 
     if [[ -z "${CENTRAL_IDP_CLIENT_SECRET:-}" ]]; then
-      die "Error: CENTRAL_IDP_CLIENT_SECRET not set. Please make sure that it is initialized properly."
+        die "Error: CENTRAL_IDP_CLIENT_SECRET not set. Please make sure that it is initialized properly."
     fi
 
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
@@ -130,7 +130,6 @@ init() {
     export ROUTE53_SECRET_ACCESS_KEY=${ROUTE53_SECRET_ACCESS_KEY:-$ROUTE53_SECRET_ACCESS_KEY_DEFAULT}
     export OBSERVABILITY_CONFIG_ACCESS_TOKEN=${OBSERVABILITY_CONFIG_ACCESS_TOKEN:-$OBSERVABILITY_CONFIG_ACCESS_TOKEN_DEFAULT}
     export IMAGE_PULL_DOCKER_CONFIG=${IMAGE_PULL_DOCKER_CONFIG:-$IMAGE_PULL_DOCKER_CONFIG_DEFAULT}
-    export KUBECONF_CLUSTER_SERVER_OVERRIDE=${KUBECONF_CLUSTER_SERVER_OVERRIDE:-$KUBECONF_CLUSTER_SERVER_OVERRIDE_DEFAULT}
     export INHERIT_IMAGEPULLSECRETS=${INHERIT_IMAGEPULLSECRETS:-$INHERIT_IMAGEPULLSECRETS_DEFAULT}
     export SPAWN_LOGGER=${SPAWN_LOGGER:-$SPAWN_LOGGER_DEFAULT}
     export DUMP_LOGS=${DUMP_LOGS:-$DUMP_LOGS_DEFAULT}
@@ -151,12 +150,10 @@ init() {
     export CENTRAL_DOMAIN_NAME=${CENTRAL_DOMAIN_NAME:-$CENTRAL_DOMAIN_NAME_DEFAULT}
     export FLEET_MANAGER_IMAGE="${FLEET_MANAGER_IMAGE:-$FLEET_MANAGER_IMAGE_DEFAULT}"
 
-
     if [[ "$ROUTE53_ACCESS_KEY" == "" || "$ROUTE53_SECRET_ACCESS_KEY" == "" ]]; then
         log "setting ENABLE_CENTRAL_EXTERNAL_CERTIFICATE to false since no Route53 credentials were provided"
         ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=false
     fi
-
 
     if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
         eval "$(minikube docker-env)"
@@ -252,25 +249,17 @@ assemble_kubeconfig() {
     CONTEXT="$(echo "$kubeconf" | yq e ".contexts[] | select(.name == \"${CONTEXT_NAME}\")" -o=json - | jq -c)"
     USER_NAME=$(echo "$CONTEXT" | jq -r .context.user -)
     CLUSTER_NAME=$(echo "$CONTEXT" | jq -r .context.cluster -)
-    CLUSTER=$(echo "$kubeconf" | yq e ".clusters[] | select(.name == \"${CLUSTER_NAME}\")" -o=json - | jq -c)
     NEW_CONTEXT_NAME="$CLUSTER_NAME"
     CONTEXT=$(echo "$CONTEXT" | jq ".name = \"$NEW_CONTEXT_NAME\"" -c -)
     KUBEUSER="$(echo "$kubeconf" | yq e ".users[] | select(.name == \"${USER_NAME}\")" -o=json - | jq -c)"
-
-    if [[ "$KUBECONF_CLUSTER_SERVER_OVERRIDE" == "true" ]]; then
-        local server
-        $KUBECTL delete pod alpine >/dev/null 2>&1 || true
-        # shellcheck disable=SC2086,SC2016
-        server=$($KUBECTL run --rm -it alpine --quiet --image=alpine --restart=Never -- sh -c 'echo $KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT' | tr -d '\r')
-        CLUSTER=$(echo "$CLUSTER" | jq ".cluster.server = \"https://${server}\"" -)
-        $KUBECTL delete pod alpine >/dev/null 2>&1 || true
-    fi
 
     config=$(
         cat <<EOF
 apiVersion: v1
 clusters:
-    - $CLUSTER
+    - cluster:
+        server: kubernetes.default.svc
+      name: \"$CLUSTER_NAME\"
 contexts:
     - $CONTEXT
 current-context: "$NEW_CONTEXT_NAME"
