@@ -75,7 +75,7 @@ set -x
 #   --set acsOperator.sourceNamespace=openshift-marketplace
 
 # helm template ... to debug changes
-helm template rhacs-terraform \
+helm template rhacs-terraform ./ \
   --debug \
   --namespace rhacs \
   --create-namespace \
@@ -86,7 +86,7 @@ helm template rhacs-terraform \
   --set fleetshardSync.clusterId=${CLUSTER_ID} \
   --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
   --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID}" \
-  --set fleetshardSync.redHatSSO.clientSecret="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET}"
+  --set fleetshardSync.redHatSSO.clientSecret="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET}" \
   --set logging.aws.accessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \
   --set logging.aws.secretAccessKey="${LOGGING_AWS_SECRET_ACCESS_KEY}" \
   --set observability.enabled=true \
@@ -94,7 +94,7 @@ helm template rhacs-terraform \
   --set observability.github.repository=https://api.github.com/repos/stackrox/rhacs-observability-resources/contents \
   --set observability.gateway=https://observatorium-mst.api.stage.openshift.com \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
-  --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
+  --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}"
 
 # To delete all resources:
 # helm template ... > /var/tmp/resources.yaml
