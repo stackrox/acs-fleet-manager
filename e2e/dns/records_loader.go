@@ -2,6 +2,7 @@ package dns
 
 import (
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 
@@ -74,14 +75,14 @@ func getHostedZone(route53Client *route53.Route53, central *public.CentralReques
 	for _, zone := range hostedZones.HostedZones {
 		// Omit the . at the end of hosted zone name
 		name := removeLastChar(*zone.Name)
-		if strings.Contains(central.UiHost, name) {
+		if strings.Contains(central.CentralUIURL, name) {
 			rhacsZone = zone
 			break
 		}
 	}
 
 	if rhacsZone == nil {
-		return nil, fmt.Errorf("failed to find Route53 hosted zone for Central UI host %v", central.UiHost)
+		return nil, fmt.Errorf("failed to find Route53 hosted zone for Central UI URL %v", central.CentralUIURL)
 	}
 
 	return rhacsZone, nil
@@ -92,8 +93,13 @@ func removeLastChar(s string) string {
 }
 
 func getCentralDomainNamesSorted(central *public.CentralRequest) []string {
-	centralUIDomain := central.UiHost + "."
-	centralDataDomain := central.DataHost + "."
+	uiURL, err := url.Parse(central.CentralUIURL)
+	Expect(err).ToNot(HaveOccurred())
+	dataURL, err := url.Parse(central.CentralDataURL)
+	Expect(err).ToNot(HaveOccurred())
+
+	centralUIDomain := uiURL.Host + "."
+	centralDataDomain := dataURL.Host + "."
 	domains := []string{centralUIDomain, centralDataDomain}
 	sort.Strings(domains)
 	return domains

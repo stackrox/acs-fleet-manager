@@ -20,24 +20,24 @@ func ConvertDinosaurRequest(dinosaurRequestPayload public.CentralRequestPayload,
 	return dinosaur
 }
 
-// PresentDinosaurRequest - create CentralRequest in an appropriate format ready to be returned by the API
-func PresentDinosaurRequest(request *dbapi.CentralRequest) public.CentralRequest {
+// PresentCentralRequest - create CentralRequest in an appropriate format ready to be returned by the API
+func PresentCentralRequest(request *dbapi.CentralRequest) public.CentralRequest {
 	return public.CentralRequest{
-		Id:            request.ID,
-		Kind:          "CentralRequest",
-		Href:          fmt.Sprintf("/api/rhacs/v1/centrals/%s", request.ID),
-		Status:        request.Status,
-		CloudProvider: request.CloudProvider,
-		MultiAz:       request.MultiAZ,
-		Region:        request.Region,
-		Owner:         request.Owner,
-		Name:          request.Name,
-		UiHost:        request.GetUIHost(),
-		DataHost:      request.GetDataHost(),
-		CreatedAt:     request.CreatedAt,
-		UpdatedAt:     request.UpdatedAt,
-		FailedReason:  request.FailedReason,
-		Version:       request.ActualCentralVersion,
-		InstanceType:  request.InstanceType,
+		Id:             request.ID,
+		Kind:           "CentralRequest",
+		Href:           fmt.Sprintf("/api/rhacs/v1/centrals/%s", request.ID),
+		Status:         request.Status,
+		CloudProvider:  request.CloudProvider,
+		MultiAz:        request.MultiAZ,
+		Region:         request.Region,
+		Owner:          request.Owner,
+		Name:           request.Name,
+		CentralUIURL:   fmt.Sprintf("https://%s", request.GetUIHost()),
+		CentralDataURL: fmt.Sprintf("https://%s", request.GetDataHost()),
+		CreatedAt:      request.CreatedAt,
+		UpdatedAt:      request.UpdatedAt,
+		FailedReason:   request.FailedReason,
+		Version:        request.ActualCentralVersion,
+		InstanceType:   request.InstanceType,
 	}
 }
