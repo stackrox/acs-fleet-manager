@@ -66,8 +66,6 @@ case $ENVIRONMENT in
     ;;
 esac
 
-set -x
-
 # helm uninstall rhacs-terraform --namespace rhacs
 
 # To use ACS Operator from the OpenShift Marketplace:
@@ -75,7 +73,7 @@ set -x
 #   --set acsOperator.sourceNamespace=openshift-marketplace
 
 # helm template ... to debug changes
-helm template rhacs-terraform ./ \
+helm install rhacs-terraform ./ \
   --debug \
   --namespace rhacs \
   --create-namespace \
