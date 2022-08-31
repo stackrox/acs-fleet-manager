@@ -8,6 +8,8 @@ if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
     echo "Known environments: stage"
     echo "Cluster typically looks like: acs-{environment}-dp-01"
+    echo ""
+    echo "Note: you will need to be logged in (oc login --token=...) to use Helm"
     exit 2
 fi
 
@@ -64,6 +66,8 @@ case $ENVIRONMENT in
     ;;
 esac
 
+set -x
+
 # helm uninstall rhacs-terraform --namespace rhacs
 
 # To use ACS Operator from the OpenShift Marketplace:
@@ -75,22 +79,22 @@ helm template rhacs-terraform \
   --debug \
   --namespace rhacs \
   --create-namespace \
-  --set acsOperator.enabled=true . \
+  --set acsOperator.enabled=true \
   --set acsOperator.source=rhacs-operators \
   --set acsOperator.startingCSV=rhacs-operator.v3.71.0 \
   --set fleetshardSync.authType="RHSSO" \
-  --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
   --set fleetshardSync.clusterId=${CLUSTER_ID} \
+  --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
+  --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID}" \
+  --set fleetshardSync.redHatSSO.clientSecret="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET}"
   --set logging.aws.accessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \
   --set logging.aws.secretAccessKey="${LOGGING_AWS_SECRET_ACCESS_KEY}" \
-  --set observability.enabled=true . \
+  --set observability.enabled=true \
   --set observability.github.accessToken="${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" \
   --set observability.github.repository=https://api.github.com/repos/stackrox/rhacs-observability-resources/contents \
   --set observability.gateway=https://observatorium-mst.api.stage.openshift.com \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
-  --set redHatSSO.clientId="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID}" \
-  --set redHatSSO.clientSecret="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET}"
 
 # To delete all resources:
 # helm template ... > /var/tmp/resources.yaml
