@@ -308,7 +308,7 @@ data:
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "sum(rate(fleet_manager_dinosaur_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))/sum(rate(fleet_manager_dinosaur_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))",
+              "expr": "sum(rate(acs_fleet_manager_central_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))/sum(rate(acs_fleet_manager_central_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))",
               "interval": "",
               "legendFormat": "Create Operation",
               "refId": "A"
@@ -375,7 +375,7 @@ data:
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "sum(rate(fleet_manager_dinosaur_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range]))/sum(rate(fleet_manager_dinosaur_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range]))",
+              "expr": "sum(rate(acs_fleet_manager_central_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range]))/sum(rate(acs_fleet_manager_central_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range]))",
               "interval": "",
               "legendFormat": "Create Operation",
               "refId": "A"
@@ -441,7 +441,7 @@ data:
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "sum(rate(fleet_manager_worker_dinosaur_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"dinosaur_create\", le=\"3600\"}[$__range])+1) / sum(rate(fleet_manager_worker_dinosaur_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"dinosaur_create\"}[$__range])+1)",
+              "expr": "sum(rate(acs_fleet_manager_worker_central_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"central_create\", le=\"3600\"}[$__range])+1) / sum(rate(acs_fleet_manager_worker_central_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"central_create\"}[$__range])+1)",
               "interval": "",
               "legendFormat": "Create Operation",
               "refId": "A"
@@ -552,7 +552,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "(1-sum(rate(fleet_manager_dinosaur_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))/sum(rate(fleet_manager_dinosaur_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range])))/(1-0.95)",
+              "expr": "(1-sum(rate(acs_fleet_manager_central_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range]))/sum(rate(acs_fleet_manager_central_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[$__range])))/(1-0.95)",
               "hide": false,
               "legendFormat": "Correctness (Create) > 95%",
               "range": true,
@@ -564,7 +564,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "(1-sum(rate(fleet_manager_dinosaur_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range]))/sum(rate(fleet_manager_dinosaur_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range])))/(1-0.95)",
+              "expr": "(1-sum(rate(acs_fleet_manager_central_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range]))/sum(rate(acs_fleet_manager_central_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\", operation=\"delete\"}[$__range])))/(1-0.95)",
               "hide": false,
               "legendFormat": "Correctness (Delete) > 95%",
               "range": true,
@@ -576,7 +576,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "(1-sum(rate(fleet_manager_worker_dinosaur_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"dinosaur_create\", le=\"3600\"}[$__range])+1) / sum(rate(fleet_manager_worker_dinosaur_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"dinosaur_create\"}[$__range])+1))/(1-0.9)",
+              "expr": "(1-sum(rate(acs_fleet_manager_worker_central_duration_bucket{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"central_create\", le=\"3600\"}[$__range])+1) / sum(rate(acs_fleet_manager_worker_central_duration_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\",jobType=\"central_create\"}[$__range])+1))/(1-0.9)",
               "hide": false,
               "legendFormat": "Creation latency p90 < 60m",
               "range": true,
@@ -881,7 +881,7 @@ data:
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "sum(rate(fleet_manager_dinosaur_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[1w]))/sum(rate(fleet_manager_dinosaur_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[1w]))",
+              "expr": "sum(rate(acs_fleet_manager_central_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[1w]))/sum(rate(acs_fleet_manager_central_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\"}[1w]))",
               "interval": "",
               "legendFormat": "Create Operation",
               "refId": "A"
@@ -890,7 +890,7 @@ data:
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "sum(rate(fleet_manager_dinosaur_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\",operation=\"delete\"}[1w]))/sum(rate(fleet_manager_dinosaur_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\",operation=\"delete\"}[1w]))",
+              "expr": "sum(rate(acs_fleet_manager_central_operations_success_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\",operation=\"delete\"}[1w]))/sum(rate(acs_fleet_manager_central_operations_total_count{job=\"fleet-manager-metrics\",namespace=\"$namespace\",operation=\"delete\"}[1w]))",
               "interval": "",
               "legendFormat": "Delete Operation",
               "refId": "B"
@@ -954,7 +954,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "sum(fleet_manager_worker_dinosaur_duration_bucket{namespace=\"$namespace\",jobType=\"dinosaur_create\"}) by (le)",
+              "expr": "sum(acs_fleet_manager_worker_central_duration_bucket{namespace=\"$namespace\",jobType=\"central_create\"}) by (le)",
               "format": "heatmap",
               "instant": false,
               "interval": "",
@@ -1049,6 +1049,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager SLOs",
       "uid": "T2kek3H9a",
-      "version": 19,
+      "version": 20,
       "weekStart": ""
     }

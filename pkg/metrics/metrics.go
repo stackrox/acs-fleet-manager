@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	constants2 "github.com/stackrox/acs-fleet-manager/internal/central/constants"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
@@ -14,12 +14,12 @@ import (
 // FleetManager ...
 const (
 	// FleetManager - metrics prefix
-	FleetManager = "fleet_manager"
+	FleetManager = "acs_fleet_manager"
 
 	// ClusterCreateRequestDuration - name of cluster creation duration metric
 	ClusterCreateRequestDuration = "worker_cluster_duration"
-	// DinosaurCreateRequestDuration - name of dinosaur creation duration metric
-	DinosaurCreateRequestDuration = "worker_dinosaur_duration"
+	// CentralCreateRequestDuration - name of central creation duration metric
+	CentralCreateRequestDuration = "worker_central_duration"
 
 	labelJobType           = "jobType"
 	LabelID                = "id"
@@ -27,14 +27,14 @@ const (
 	LabelClusterID         = "cluster_id"
 	LabelClusterExternalID = "external_id"
 
-	// DinosaurOperationsSuccessCount - name of the metric for Dinosaur-related successful operations
-	DinosaurOperationsSuccessCount = "dinosaur_operations_success_count"
-	// DinosaurOperationsTotalCount - name of the metric for all Dinosaur-related operations
-	DinosaurOperationsTotalCount = "dinosaur_operations_total_count"
+	// CentralOperationsSuccessCount - name of the metric for Central-related successful operations
+	CentralOperationsSuccessCount = "central_operations_success_count"
+	// CentralOperationsTotalCount - name of the metric for all Central-related operations
+	CentralOperationsTotalCount = "central_operations_total_count"
 
-	// DinosaurRequestsStatus - dinosaur requests status metric
-	DinosaurRequestsStatusSinceCreated = "dinosaur_requests_status_since_created_in_seconds"
-	DinosaurRequestsStatusCount        = "dinosaur_requests_status_count"
+	// CentralRequestsStatus - central requests status metric
+	CentralRequestsStatusSinceCreated = "central_requests_status_since_created_in_seconds"
+	CentralRequestsStatusCount        = "central_requests_status_count"
 
 	// ClusterOperationsSuccessCount - name of the metric for cluster-related successful operations
 	ClusterOperationsSuccessCount = "cluster_operations_success_count"
@@ -51,7 +51,7 @@ const (
 	ClusterStatusSinceCreated = "cluster_status_since_created_in_seconds"
 	ClusterStatusCount        = "cluster_status_count"
 
-	DinosaurPerClusterCount = "dinosaur_per_cluster_count"
+	CentralPerClusterCount = "central_per_cluster_count"
 
 	LeaderWorker = "leader_worker"
 
@@ -65,7 +65,7 @@ const (
 	// DatabaseQueryDuration - metric name for database query duration in milliseconds
 	DatabaseQueryDuration = "database_query_duration"
 
-	// ClusterStatusMaxCapacity - metric name for the maximum dinosaur instance capacity
+	// ClusterStatusMaxCapacity - metric name for the maximum central instance capacity
 	ClusterStatusCapacityMax = "cluster_status_capacity_max"
 
 	// ClusterStatusCapacityUsed - metric name for the current number of instances
@@ -88,8 +88,8 @@ type JobType string
 var (
 	// JobTypeClusterCreate - cluster_create job type
 	JobTypeClusterCreate JobType = "cluster_create"
-	// JobTypeDinosaurCreate - dinosaur_create job type
-	JobTypeDinosaurCreate JobType = "dinosaur_create"
+	// JobTypeCentralCreate - central_create job type
+	JobTypeCentralCreate JobType = "central_create"
 )
 
 // JobsMetricsLabels is the slice of labels to add to job metrics
@@ -97,30 +97,30 @@ var JobsMetricsLabels = []string{
 	labelJobType,
 }
 
-// dinosaurStatusSinceCreatedMetricLabels  is the slice of labels to add to
-var dinosaurStatusSinceCreatedMetricLabels = []string{
+// centralStatusSinceCreatedMetricLabels  is the slice of labels to add to
+var centralStatusSinceCreatedMetricLabels = []string{
 	LabelStatus,
 	LabelID,
 	LabelClusterID,
 }
 
-// dinosaurStatusCountMetricLabels  is the slice of labels to add to
-var dinosaurStatusCountMetricLabels = []string{
+// centralStatusCountMetricLabels  is the slice of labels to add to
+var centralStatusCountMetricLabels = []string{
 	LabelStatus,
 }
 
-// DinosaurOperationsCountMetricsLabels - is the slice of labels to add to Dinosaur operations count metrics
-var DinosaurOperationsCountMetricsLabels = []string{
+// CentralOperationsCountMetricsLabels - is the slice of labels to add to Central operations count metrics
+var CentralOperationsCountMetricsLabels = []string{
 	labelOperation,
 }
 
-// DinosaurPerClusterCountMetricsLabels ...
-var DinosaurPerClusterCountMetricsLabels = []string{
+// CentralPerClusterCountMetricsLabels ...
+var CentralPerClusterCountMetricsLabels = []string{
 	LabelClusterID,
 	LabelClusterExternalID,
 }
 
-// ClusterOperationsCountMetricsLabels - is the slice of labels to add to Dinosaur operations count metrics
+// ClusterOperationsCountMetricsLabels - is the slice of labels to add to Central operations count metrics
 var ClusterOperationsCountMetricsLabels = []string{
 	labelOperation,
 }
@@ -235,7 +235,7 @@ var clusterOperationsTotalCountMetric = prometheus.NewCounterVec(
 	ClusterOperationsCountMetricsLabels,
 )
 
-// create a new gaugeVec for the maximum dinosaur instance capacity per region
+// create a new gaugeVec for the maximum central instance capacity per region
 var clusterStatusCapacityMaxMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: FleetManager,
@@ -245,7 +245,7 @@ var clusterStatusCapacityMaxMetric = prometheus.NewGaugeVec(
 	clusterStatusCapacityLabels,
 )
 
-// create a new gauge vec fot the number of dinosaur instances grouped by region and instance type
+// create a new gauge vec fot the number of central instances grouped by region and instance type
 var clusterStatusCapacityUsedMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: FleetManager,
@@ -300,32 +300,32 @@ func UpdateClusterStatusCountMetric(status api.ClusterStatus, count int) {
 	clusterStatusCountMetric.With(labels).Set(float64(count))
 }
 
-var dinosaurPerClusterCountMetric = prometheus.NewGaugeVec(
+var centralPerClusterCountMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: FleetManager,
-		Name:      DinosaurPerClusterCount,
-		Help:      "the number of Dinosaur instances per data plane cluster",
+		Name:      CentralPerClusterCount,
+		Help:      "the number of Central instances per data plane cluster",
 	},
-	DinosaurPerClusterCountMetricsLabels)
+	CentralPerClusterCountMetricsLabels)
 
-// UpdateDinosaurPerClusterCountMetric ...
-func UpdateDinosaurPerClusterCountMetric(clusterID string, clusterExternalID string, count int) {
+// UpdateCentralPerClusterCountMetric ...
+func UpdateCentralPerClusterCountMetric(clusterID string, clusterExternalID string, count int) {
 	labels := prometheus.Labels{
 		LabelClusterID:         clusterID,
 		LabelClusterExternalID: clusterExternalID,
 	}
-	dinosaurPerClusterCountMetric.With(labels).Set(float64(count))
+	centralPerClusterCountMetric.With(labels).Set(float64(count))
 }
 
 // #### Metrics for Dataplane clusters - End ####
 
-// #### Metrics for Dinosaurs - Start ####
-// create a new histogramVec for dinosaur creation duration
-var requestDinosaurCreationDurationMetric = prometheus.NewHistogramVec(
+// #### Metrics for Centrals - Start ####
+// create a new histogramVec for central creation duration
+var requestCentralCreationDurationMetric = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Subsystem: FleetManager,
-		Name:      DinosaurCreateRequestDuration,
-		Help:      "Dinosaur creation duration in seconds.",
+		Name:      CentralCreateRequestDuration,
+		Help:      "Central creation duration in seconds.",
 		Buckets: []float64{
 			1.0,
 			30.0,
@@ -359,89 +359,89 @@ var requestDinosaurCreationDurationMetric = prometheus.NewHistogramVec(
 	JobsMetricsLabels,
 )
 
-// UpdateDinosaurCreationDurationMetric records the duration of a job type
-func UpdateDinosaurCreationDurationMetric(jobType JobType, elapsed time.Duration) {
+// UpdateCentralCreationDurationMetric records the duration of a job type
+func UpdateCentralCreationDurationMetric(jobType JobType, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		labelJobType: string(jobType),
 	}
-	requestDinosaurCreationDurationMetric.With(labels).Observe(elapsed.Seconds())
+	requestCentralCreationDurationMetric.With(labels).Observe(elapsed.Seconds())
 }
 
-// create a new counterVec for Dinosaur operations counts
-var dinosaurOperationsSuccessCountMetric = prometheus.NewCounterVec(
+// create a new counterVec for Central operations counts
+var centralOperationsSuccessCountMetric = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Subsystem: FleetManager,
-		Name:      DinosaurOperationsSuccessCount,
-		Help:      "number of successful dinosaur operations",
+		Name:      CentralOperationsSuccessCount,
+		Help:      "number of successful central operations",
 	},
-	DinosaurOperationsCountMetricsLabels,
+	CentralOperationsCountMetricsLabels,
 )
 
-// UpdateDinosaurRequestsStatusSinceCreatedMetric ...
-func UpdateDinosaurRequestsStatusSinceCreatedMetric(status constants2.DinosaurStatus, dinosaurID string, clusterID string, elapsed time.Duration) {
+// UpdateCentralRequestsStatusSinceCreatedMetric ...
+func UpdateCentralRequestsStatusSinceCreatedMetric(status constants2.CentralStatus, centralID string, clusterID string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		LabelStatus:    string(status),
-		LabelID:        dinosaurID,
+		LabelID:        centralID,
 		LabelClusterID: clusterID,
 	}
-	dinosaurStatusSinceCreatedMetric.With(labels).Set(elapsed.Seconds())
+	centralStatusSinceCreatedMetric.With(labels).Set(elapsed.Seconds())
 }
 
-// UpdateDinosaurRequestsStatusCountMetric ...
-func UpdateDinosaurRequestsStatusCountMetric(status constants2.DinosaurStatus, count int) {
+// UpdateCentralRequestsStatusCountMetric ...
+func UpdateCentralRequestsStatusCountMetric(status constants2.CentralStatus, count int) {
 	labels := prometheus.Labels{
 		LabelStatus: string(status),
 	}
-	DinosaurStatusCountMetric.With(labels).Set(float64(count))
+	CentralStatusCountMetric.With(labels).Set(float64(count))
 }
 
-// DinosaurStatusCountMetric create a new GaugeVec for status counts
-var DinosaurStatusCountMetric = prometheus.NewGaugeVec(
+// CentralStatusCountMetric create a new GaugeVec for status counts
+var CentralStatusCountMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: FleetManager,
-		Name:      DinosaurRequestsStatusCount,
-		Help:      "number of total Dinosaur instances in each status",
+		Name:      CentralRequestsStatusCount,
+		Help:      "number of total Central instances in each status",
 	},
-	dinosaurStatusCountMetricLabels,
+	centralStatusCountMetricLabels,
 )
 
-// create a new GaugeVec for dinosaurs status duration
-var dinosaurStatusSinceCreatedMetric = prometheus.NewGaugeVec(
+// create a new GaugeVec for centrals status duration
+var centralStatusSinceCreatedMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: FleetManager,
-		Name:      DinosaurRequestsStatusSinceCreated,
-		Help:      "metrics to track the status of a Dinosaur instance and how long since it's been created",
+		Name:      CentralRequestsStatusSinceCreated,
+		Help:      "metrics to track the status of a Central instance and how long since it's been created",
 	},
-	dinosaurStatusSinceCreatedMetricLabels,
+	centralStatusSinceCreatedMetricLabels,
 )
 
-// IncreaseDinosaurSuccessOperationsCountMetric - increase counter for the dinosaurOperationsSuccessCountMetric
-func IncreaseDinosaurSuccessOperationsCountMetric(operation constants2.DinosaurOperation) {
+// IncreaseCentralSuccessOperationsCountMetric - increase counter for the centralOperationsSuccessCountMetric
+func IncreaseCentralSuccessOperationsCountMetric(operation constants2.CentralOperation) {
 	labels := prometheus.Labels{
 		labelOperation: operation.String(),
 	}
-	dinosaurOperationsSuccessCountMetric.With(labels).Inc()
+	centralOperationsSuccessCountMetric.With(labels).Inc()
 }
 
-// create a new counterVec for total Dinosaur operations counts
-var dinosaurOperationsTotalCountMetric = prometheus.NewCounterVec(
+// create a new counterVec for total Central operations counts
+var centralOperationsTotalCountMetric = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Subsystem: FleetManager,
-		Name:      DinosaurOperationsTotalCount,
-		Help:      "number of total dinosaur operations",
+		Name:      CentralOperationsTotalCount,
+		Help:      "number of total central operations",
 	},
-	DinosaurOperationsCountMetricsLabels,
+	CentralOperationsCountMetricsLabels,
 )
 
-// IncreaseDinosaurTotalOperationsCountMetric - increase counter for the dinosaurOperationsTotalCountMetric
-func IncreaseDinosaurTotalOperationsCountMetric(operation constants2.DinosaurOperation) {
+// IncreaseCentralTotalOperationsCountMetric - increase counter for the centralOperationsTotalCountMetric
+func IncreaseCentralTotalOperationsCountMetric(operation constants2.CentralOperation) {
 	labels := prometheus.Labels{
 		labelOperation: operation.String(),
 	}
-	dinosaurOperationsTotalCountMetric.With(labels).Inc()
+	centralOperationsTotalCountMetric.With(labels).Inc()
 }
 
-// #### Metrics for Dinosaurs - End ####
+// #### Metrics for Centrals - End ####
 
 // #### Metrics for Reconcilers - Start ####
 // create a new gaugeVec for reconciler duration
@@ -674,16 +674,16 @@ func init() {
 	prometheus.MustRegister(clusterOperationsTotalCountMetric)
 	prometheus.MustRegister(clusterStatusSinceCreatedMetric)
 	prometheus.MustRegister(clusterStatusCountMetric)
-	prometheus.MustRegister(dinosaurPerClusterCountMetric)
+	prometheus.MustRegister(centralPerClusterCountMetric)
 	prometheus.MustRegister(clusterStatusCapacityMaxMetric)
 	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
 
-	// metrics for Dinosaurs
-	prometheus.MustRegister(requestDinosaurCreationDurationMetric)
-	prometheus.MustRegister(dinosaurOperationsSuccessCountMetric)
-	prometheus.MustRegister(dinosaurOperationsTotalCountMetric)
-	prometheus.MustRegister(dinosaurStatusSinceCreatedMetric)
-	prometheus.MustRegister(DinosaurStatusCountMetric)
+	// metrics for Centrals
+	prometheus.MustRegister(requestCentralCreationDurationMetric)
+	prometheus.MustRegister(centralOperationsSuccessCountMetric)
+	prometheus.MustRegister(centralOperationsTotalCountMetric)
+	prometheus.MustRegister(centralStatusSinceCreatedMetric)
+	prometheus.MustRegister(CentralStatusCountMetric)
 
 	// metrics for reconcilers
 	prometheus.MustRegister(reconcilerDurationMetric)
@@ -701,11 +701,11 @@ func init() {
 	prometheus.MustRegister(databaseQueryDurationMetric)
 }
 
-// ResetMetricsForDinosaurManagers will reset the metrics for the DinosaurManager background reconciler
+// ResetMetricsForCentralManagers will reset the metrics for the CentralManager background reconciler
 // This is needed because if current process is not the leader anymore, the metrics need to be reset otherwise staled data will be scraped
-func ResetMetricsForDinosaurManagers() {
-	dinosaurStatusSinceCreatedMetric.Reset()
-	DinosaurStatusCountMetric.Reset()
+func ResetMetricsForCentralManagers() {
+	centralStatusSinceCreatedMetric.Reset()
+	CentralStatusCountMetric.Reset()
 }
 
 // ResetMetricsForClusterManagers will reset the metrics for the ClusterManager background reconciler
@@ -713,7 +713,7 @@ func ResetMetricsForDinosaurManagers() {
 func ResetMetricsForClusterManagers() {
 	clusterStatusSinceCreatedMetric.Reset()
 	clusterStatusCountMetric.Reset()
-	dinosaurPerClusterCountMetric.Reset()
+	centralPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
 }
@@ -741,15 +741,15 @@ func Reset() {
 	clusterOperationsTotalCountMetric.Reset()
 	clusterStatusSinceCreatedMetric.Reset()
 	clusterStatusCountMetric.Reset()
-	dinosaurPerClusterCountMetric.Reset()
+	centralPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
 
-	requestDinosaurCreationDurationMetric.Reset()
-	dinosaurOperationsSuccessCountMetric.Reset()
-	dinosaurOperationsTotalCountMetric.Reset()
-	dinosaurStatusSinceCreatedMetric.Reset()
-	DinosaurStatusCountMetric.Reset()
+	requestCentralCreationDurationMetric.Reset()
+	centralOperationsSuccessCountMetric.Reset()
+	centralOperationsTotalCountMetric.Reset()
+	centralStatusSinceCreatedMetric.Reset()
+	CentralStatusCountMetric.Reset()
 
 	reconcilerDurationMetric.Reset()
 	reconcilerSuccessCountMetric.Reset()
