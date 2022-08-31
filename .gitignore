@@ -28,6 +28,7 @@
 /config/master.key
 
 /coverage
+cover.profile
 
 # Ignore built binaries
 /fleet-manager
@@ -69,6 +70,7 @@ config/dataplane-cluster-configuration.yaml
 # integration test's results
 /data/results/*
 !/data/results/.keep
+e2e-report.json
 
 # Docker template
 Dockerfile_integration_tests
