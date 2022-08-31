@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	constants2 "github.com/stackrox/acs-fleet-manager/internal/central/constants"
+	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
