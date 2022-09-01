@@ -1,0 +1,7 @@
+
+egressProxy:
+  image: registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0
+  replicas: 2
+
+labels: {}
+annotations: {}
