@@ -360,7 +360,7 @@ test/e2e: gotestsum
 		--fail-on-pending --keep-going \
 		--cover --coverprofile=cover.profile \
 		--race --trace \
-		--json-report=../data/results/e2e-report.json \
+		--json-report=e2e-report.json \
 		--timeout=$(TEST_TIMEOUT) \
 		 ./e2e/...
 .PHONY: test/e2e
