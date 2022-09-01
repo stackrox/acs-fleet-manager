@@ -8,6 +8,11 @@ import (
 	"strconv"
 	"sync/atomic"
 
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
@@ -30,6 +35,8 @@ const (
 	BlockedStatus
 
 	revisionAnnotationKey = "rhacs.redhat.com/revision"
+
+	helmReleaseName = "tenant-resources"
 )
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -43,6 +50,8 @@ type CentralReconciler struct {
 	wantsAuthProvider bool
 	hasAuthProvider   bool
 	routeService      *k8s.RouteService
+
+	resourcesChart *chart.Chart
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -139,7 +148,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
-		deleted, err := r.ensureCentralDeleted(ctx, central)
+		deleted, err := r.ensureCentralDeleted(ctx, remoteCentral, central)
 		if err != nil {
 			return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
 		}
@@ -151,6 +160,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	if err := r.ensureNamespaceExists(remoteCentralNamespace); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
+	}
+
+	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
+		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
 	}
 
 	centralExists := true
@@ -273,7 +286,7 @@ func getRouteStatus(ingress *openshiftRouteV1.RouteIngress) private.DataPlaneCen
 	}
 }
 
-func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
+func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) (bool, error) {
 	globalDeleted := true
 	if r.useRoutes {
 		reencryptRouteDeleted, err := r.ensureReencryptRouteDeleted(ctx, central.GetNamespace())
@@ -293,6 +306,12 @@ func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, central *v1
 		return false, err
 	}
 	globalDeleted = globalDeleted && centralDeleted
+
+	chartResourcesDeleted, err := r.ensureChartResourcesDeleted(ctx, remoteCentral)
+	if err != nil {
+		return false, err
+	}
+	globalDeleted = globalDeleted && chartResourcesDeleted
 
 	nsDeleted, err := r.ensureNamespaceDeleted(ctx, central.GetNamespace())
 	if err != nil {
@@ -396,6 +415,76 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 	return false, nil
 }
 
+func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	vals, err := r.chartValues(remoteCentral)
+	if err != nil {
+		return fmt.Errorf("obtaining values for resources chart: %w", err)
+	}
+
+	objs, err := charts.RenderToObjects(helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
+	if err != nil {
+		return fmt.Errorf("rendering resources chart: %w", err)
+	}
+	for _, obj := range objs {
+		if obj.GetNamespace() == "" {
+			obj.SetNamespace(remoteCentral.Metadata.Namespace)
+		}
+		key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
+		var out unstructured.Unstructured
+		out.SetGroupVersionKind(obj.GroupVersionKind())
+		err := r.client.Get(ctx, key, &out)
+		if err == nil {
+			continue
+		}
+		if !apiErrors.IsNotFound(err) {
+			return fmt.Errorf("failed to retrieve object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
+		}
+		err = r.client.Create(ctx, obj)
+		if err != nil && !apiErrors.IsAlreadyExists(err) {
+			return fmt.Errorf("failed to create object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
+		}
+	}
+	return nil
+}
+
+func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
+	vals, err := r.chartValues(remoteCentral)
+	if err != nil {
+		return false, fmt.Errorf("obtaining values for resources chart: %w", err)
+	}
+
+	objs, err := charts.RenderToObjects(helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
+	if err != nil {
+		return false, fmt.Errorf("rendering resources chart: %w", err)
+	}
+
+	waitForDelete := false
+	for _, obj := range objs {
+		key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
+		if key.Namespace == "" {
+			key.Namespace = remoteCentral.Metadata.Namespace
+		}
+		var out unstructured.Unstructured
+		out.SetGroupVersionKind(obj.GroupVersionKind())
+		err := r.client.Get(ctx, key, &out)
+		if err != nil {
+			if apiErrors.IsNotFound(err) {
+				continue
+			}
+			return false, fmt.Errorf("retrieving object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
+		}
+		if out.GetDeletionTimestamp() != nil {
+			waitForDelete = true
+			continue
+		}
+		err = r.client.Delete(ctx, &out)
+		if err != nil && !apiErrors.IsNotFound(err) {
+			return false, fmt.Errorf("retrieving object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
+		}
+	}
+	return !waitForDelete, nil
+}
+
 func (r *CentralReconciler) ensureRoutesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	err := r.ensureReencryptRouteExists(ctx, remoteCentral)
 	if err != nil {
@@ -471,6 +560,18 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 	return false, nil
 }
 
+func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (chartutil.Values, error) {
+	return chartutil.Values{
+		"labels": map[string]interface{}{
+			k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
+		},
+	}, nil
+}
+
+var (
+	resourcesChart = charts.MustGetChart("tenant-resources")
+)
+
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, useRoutes, wantsAuthProvider bool) *CentralReconciler {
 	return &CentralReconciler{
@@ -480,5 +581,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		useRoutes:         useRoutes,
 		wantsAuthProvider: wantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
+
+		resourcesChart: resourcesChart,
 	}
 }
