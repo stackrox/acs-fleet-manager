@@ -22,7 +22,7 @@ paths:
       operationId: createCentral
       description: |
         Creates a new Central that is owned by the user and organisation authenticated for the request.
-        Each Central has a single owner organisation and a single owner user. 
+        Each Central has a single owner organisation and a single owner user.
         This API allows providing custom resource settings for the new Central instance.
       parameters:
         - in: query
