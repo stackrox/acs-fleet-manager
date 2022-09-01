@@ -22,6 +22,12 @@ EOF
 KUBE_CONFIG=$(assemble_kubeconfig | yq e . -j - | jq -c . -)
 export KUBE_CONFIG
 
+if [[ "$FLEET_MANAGER_IMAGE" =~ ^[0-9a-z.-]+$ ]]; then
+    log "FLEET_MANAGER_IMAGE='${FLEET_MANAGER_IMAGE}' looks like an image tag. Setting:"
+    FLEET_MANAGER_IMAGE="quay.io/rhacs-eng/fleet-manager:${FLEET_MANAGER_IMAGE}"
+    log "FLEET_MANAGER_IMAGE='${FLEET_MANAGER_IMAGE}'"
+fi
+
 if [[ ! ("$CLUSTER_TYPE" == "openshift-ci" || "$CLUSTER_TYPE" == "infra-openshift") ]]; then
     # We are deploying locally. Locally we support Quay images and freshly built images.
     if [[ "$FLEET_MANAGER_IMAGE" =~ ^fleet-manager:.* ]]; then
