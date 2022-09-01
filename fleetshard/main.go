@@ -4,7 +4,6 @@ import (
 	"flag"
 	"os"
 	"os/signal"
-	"runtime/pprof"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -63,7 +62,6 @@ func main() {
 		glog.Errorf("closing metric server: %v", err)
 	}
 
-	pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
 	glog.Infof("Caught %s signal", sig)
 	glog.Info("fleetshard application has been stopped")
 }
