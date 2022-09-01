@@ -355,13 +355,13 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(newCentralResources))
 		})
 
-		It("[Admin] should transition central's state to ready", func() {
+		It("should transition central's state to ready", func() {
 			Eventually(func() string {
 				return centralStatus(createdCentral, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusReady.String()))
 		})
 
-		It("[Admin] should transition central to deprovisioning state", func() {
+		It("should transition central to deprovisioning state", func() {
 			err = client.DeleteCentral(createdCentral.Id)
 			Expect(err).To(Succeed())
 			Eventually(func() string {
@@ -371,7 +371,7 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusDeprovision.String()))
 		})
 
-		It("[Admin] should delete central CR", func() {
+		It("should delete central CR", func() {
 			Eventually(func() bool {
 				central := &v1alpha1.Central{}
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: centralName}, central)
@@ -379,7 +379,7 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
 		})
 
-		It("[Admin] should remove central namespace", func() {
+		It("should remove central namespace", func() {
 			Eventually(func() bool {
 				ns := &v1.Namespace{}
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
@@ -387,7 +387,7 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
 		})
 
-		It("[Admin] should delete external DNS entries", func() {
+		It("should delete external DNS entries", func() {
 			if !dnsEnabled {
 				Skip(skipDNSMsg)
 			}
