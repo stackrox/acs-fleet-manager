@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"net/url"
 	"os"
 	"time"
 
@@ -134,7 +135,10 @@ var _ = Describe("Central", func() {
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
-			Expect(reencryptRoute.Spec.Host).To(Equal(central.UiHost))
+			centralUIURL, err := url.Parse(central.CentralUIURL)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(centralUIURL.Scheme).To(Equal("https"))
+			Expect(reencryptRoute.Spec.Host).To(Equal(centralUIURL.Host))
 			Expect(reencryptRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationReencrypt))
 
 			var passthroughRoute *openshiftRouteV1.Route
@@ -146,7 +150,10 @@ var _ = Describe("Central", func() {
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
-			Expect(passthroughRoute.Spec.Host).To(Equal(central.DataHost))
+			centralDataURL, err := url.Parse(central.CentralDataURL)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(centralDataURL.Scheme).To(Equal("https"))
+			Expect(passthroughRoute.Spec.Host).To(Equal(centralDataURL.Host))
 			Expect(passthroughRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationPassthrough))
 		})
 
@@ -378,6 +385,20 @@ var _ = Describe("Central", func() {
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
 				return apiErrors.IsNotFound(err)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
+		})
+
+		It("should delete external DNS entries", func() {
+			if !dnsEnabled {
+				Skip(skipDNSMsg)
+			}
+
+			central := getCentral(createdCentral, client)
+			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
+
+			Eventually(dnsRecordsLoader.LoadDNSRecords).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(BeEmpty(), "Started at %s", time.Now())
 		})
 
 	})

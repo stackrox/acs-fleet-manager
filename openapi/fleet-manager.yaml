@@ -626,9 +626,9 @@ components:
               type: string
             name:
               type: string
-            ui_host:
+            centralUIURL:
               type: string
-            data_host:
+            centralDataURL:
               type: string
             created_at:
               format: date-time
@@ -978,8 +978,8 @@ components:
         similar to the syntax of the `order by` clause of an SQL statement.
         Each query can be ordered by any of the following `centralRequests` fields:
 
-        * ui_host
-        * data_host
+        * centralUIURL
+        * centralDataURL
         * cloud_provider
         * cluster_id
         * created_at
@@ -1094,8 +1094,8 @@ components:
         region: "us-east-1"
         owner: "api_central_service"
         name: "serviceapi"
-        ui_host: "rhacs-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
-        data_host: "rhacs-data-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
+        centralUIURL: "https://rhacs-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
+        centralDataURL: "https://rhacs-data-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
         created_at: "2020-10-05T12:51:24.053142Z"
         updated_at: "2020-10-05T12:56:36.362208Z"
         version: "2.6.0"
@@ -1111,8 +1111,8 @@ components:
         region: "us-east-1"
         owner: "api_central_service"
         name: "serviceapi"
-        ui_host: "rhacs-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
-        data_host: "rhacs-data-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
+        centralUIURL: "https://rhacs-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
+        centralDataURL: "https://rhacs-data-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
         created_at: "2020-10-05T12:51:24.053142Z"
         updated_at: "2020-10-05T12:56:36.362208Z"
         failed_reason: "a reason the Central request creation failed"
@@ -1133,8 +1133,8 @@ components:
             region: "us-east-1"
             owner: "alice"
             name: "serviceapi"
-            ui_host: "rhacs-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
-            data_host: "rhacs-data-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
+            centralUIURL: "https://rhacs-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
+            centralDataURL: "https://rhacs-data-a3a9c5b9-0283-4ff8-9b9e-da2209da17c3.example.rhacs.com"
             created_at: "2020-10-05T12:51:24.053142Z"
             updated_at: "2020-10-05T12:56:36.362208Z"
             version: "2.6.0"

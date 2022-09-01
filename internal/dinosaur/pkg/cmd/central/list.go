@@ -77,7 +77,7 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 
 	for _, centralRequest := range centralList {
-		converted := presenters.PresentDinosaurRequest(centralRequest)
+		converted := presenters.PresentCentralRequest(centralRequest)
 		centralRequestList.Items = append(centralRequestList.Items, converted)
 	}
 

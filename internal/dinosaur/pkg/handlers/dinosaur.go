@@ -82,7 +82,7 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			return presenters.PresentDinosaurRequest(convDinosaur), nil
+			return presenters.PresentCentralRequest(convDinosaur), nil
 		},
 	}
 
@@ -100,7 +100,7 @@ func (h dinosaurHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentDinosaurRequest(dinosaurRequest), nil
+			return presenters.PresentCentralRequest(dinosaurRequest), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -149,7 +149,7 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, dinosaurRequest := range dinosaurRequests {
-				converted := presenters.PresentDinosaurRequest(dinosaurRequest)
+				converted := presenters.PresentCentralRequest(dinosaurRequest)
 				dinosaurRequestList.Items = append(dinosaurRequestList.Items, converted)
 			}
 

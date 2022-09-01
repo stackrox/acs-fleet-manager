@@ -75,7 +75,7 @@ func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 				return nil, svcErr
 			}
 			// TODO(mclasmeier): Do we need PresentDinosaurRequestAdminEndpoint?
-			return presenters.PresentDinosaurRequest(&convDinosaur), nil
+			return presenters.PresentCentralRequest(&convDinosaur), nil
 		},
 	}
 
