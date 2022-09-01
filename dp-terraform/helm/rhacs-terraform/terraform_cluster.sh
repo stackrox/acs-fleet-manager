@@ -53,6 +53,7 @@ case $ENVIRONMENT in
         jq --arg OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID "${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
             '.fields[] | select(.name | contains($OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID)) | .value' --raw-output
     )
+    PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name | contains("Integration Key")) | .value' --raw-output)
     ;;
 
   prod)
@@ -91,7 +92,8 @@ helm upgrade rhacs-terraform ./ \
   --set observability.github.repository=https://api.github.com/repos/stackrox/rhacs-observability-resources/contents \
   --set observability.gateway=https://observatorium-mst.api.stage.openshift.com \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
-  --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}"
+  --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
+  --set observability.pagerduty.key="${PAGERDUTY_SERVICE_KEY}"
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs
