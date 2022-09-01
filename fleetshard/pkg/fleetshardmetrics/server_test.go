@@ -19,17 +19,15 @@ func TestMetricsServerCorrectAddress(t *testing.T) {
 }
 
 func TestMetricsServerServesDefaultMetrics(t *testing.T) {
-	metrics := serveMetrics(t)
+	metrics := serveMetrics(t, newMetrics())
 	_, hasKey := metrics["go_memstats_alloc_bytes"]
 	assert.Truef(t, hasKey, "expected metrics to contain go default metrics but it did not: %v", metrics)
 }
 
 func TestMetricsServerServesCustomMetrics(t *testing.T) {
-	metrics := serveMetrics(t)
+	metrics := serveMetrics(t, newMetrics())
 
 	expectedKeys := []string{
-		"total_k8s_requests",
-		"total_k8s_request_errors",
 		"total_fleet_manager_requests",
 		"total_fleet_manager_request_errors",
 	}
@@ -39,12 +37,12 @@ func TestMetricsServerServesCustomMetrics(t *testing.T) {
 	}
 }
 
-func serveMetrics(t *testing.T) metricResponse {
+func serveMetrics(t *testing.T, customMetrics *Metrics) metricResponse {
 	rec := httptest.NewRecorder()
 	req, err := http.NewRequest(http.MethodGet, "/metrics", nil)
 	require.NoError(t, err, "failed creating metrics requests")
 
-	server := NewMetricsServer(":8081")
+	server := newMetricsServer(":8081", customMetrics)
 	server.Handler.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code, "status code should be OK")
 

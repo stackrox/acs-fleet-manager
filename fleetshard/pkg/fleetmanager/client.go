@@ -145,10 +145,10 @@ func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Re
 		return nil, fmt.Errorf("adding authentication information to request: %w", err)
 	}
 
-	fleetshardmetrics.IncrementFleetManagerRequests()
+	fleetshardmetrics.MetricsInstance().IncrementFleetManagerRequests()
 	resp, err := c.client.Do(r)
 	if err != nil {
-		fleetshardmetrics.IncrementFleetManagerRequestErrors()
+		fleetshardmetrics.MetricsInstance().IncrementFleetManagerRequestErrors()
 		return nil, fmt.Errorf("executing HTTP request: %w", err)
 	}
 	return resp, nil
@@ -177,7 +177,7 @@ func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 
 	// Unmarshal error
 	if into.Kind == "Error" || into.Kind == "error" {
-		fleetshardmetrics.IncrementFleetManagerRequestErrors()
+		fleetshardmetrics.MetricsInstance().IncrementFleetManagerRequestErrors()
 		apiError := compat.Error{}
 		err = json.Unmarshal(data, &apiError)
 		if err != nil {

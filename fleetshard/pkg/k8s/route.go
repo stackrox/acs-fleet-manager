@@ -6,7 +6,6 @@ import (
 
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
@@ -139,7 +138,6 @@ func (s *RouteService) createCentralRoute(ctx context.Context, name string, name
 	}
 
 	if err := s.client.Create(ctx, route); err != nil {
-		fleetshardmetrics.IncrementK8sRequestErrors()
 		return fmt.Errorf("creating route %s/%s: %w", namespace, name, err)
 	}
 	return nil

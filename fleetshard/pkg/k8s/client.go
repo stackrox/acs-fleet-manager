@@ -1,15 +1,12 @@
 package k8s
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/golang/glog"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
@@ -24,72 +21,6 @@ var routesGVK = schema.GroupVersionResource{
 	Version:  "v1",
 	Resource: "routes",
 }
-
-// ClientMetricsWrapper is a decorator for a k8s client that decorates each request
-// method with incrementing the requests counter for k8s in the metrics package
-type ClientMetricsWrapper struct {
-	Client ctrlClient.Client
-}
-
-// Get wraps the Client Get method with incrementing K8sRequests metric
-func (cmw *ClientMetricsWrapper) Get(ctx context.Context, key ctrlClient.ObjectKey, obj ctrlClient.Object) error {
-	fleetshardmetrics.IncrementK8sRequests()
-	return cmw.Client.Get(ctx, key, obj) //nolint:wrapcheck
-}
-
-// List wraps the Client List method with incrementing K8sRequests metric
-func (cmw *ClientMetricsWrapper) List(ctx context.Context, list ctrlClient.ObjectList, opts ...ctrlClient.ListOption) error {
-	fleetshardmetrics.IncrementK8sRequests()
-	return cmw.Client.List(ctx, list, opts...) //nolint:wrapcheck
-}
-
-// Create wraps the Client Create method with incrementing K8sRequests metric
-func (cmw *ClientMetricsWrapper) Create(ctx context.Context, obj ctrlClient.Object, opts ...ctrlClient.CreateOption) error {
-	fleetshardmetrics.IncrementK8sRequests()
-	return cmw.Client.Create(ctx, obj, opts...) //nolint:wrapcheck
-}
-
-// Delete wraps the Client Delete method with incrementing K8sRequests metric
-func (cmw *ClientMetricsWrapper) Delete(ctx context.Context, obj ctrlClient.Object, opts ...ctrlClient.DeleteOption) error {
-	fleetshardmetrics.IncrementK8sRequests()
-	return cmw.Client.Delete(ctx, obj, opts...) //nolint:wrapcheck
-}
-
-// Update wraps the Client Update method with incrementing K8sRequests metric
-func (cmw *ClientMetricsWrapper) Update(ctx context.Context, obj ctrlClient.Object, opts ...ctrlClient.UpdateOption) error {
-	fleetshardmetrics.IncrementK8sRequests()
-	return cmw.Client.Update(ctx, obj, opts...) //nolint:wrapcheck
-}
-
-// Patch wraps the Client Patch method with incrementing K8sRequests metric
-func (cmw *ClientMetricsWrapper) Patch(ctx context.Context, obj ctrlClient.Object, patch ctrlClient.Patch, opts ...ctrlClient.PatchOption) error {
-	fleetshardmetrics.IncrementK8sRequests()
-	return cmw.Client.Patch(ctx, obj, patch, opts...) //nolint:wrapcheck
-}
-
-// DeleteAllOf wraps the Client DeleteAllOf method with incrementing K8sRequests metric
-func (cmw *ClientMetricsWrapper) DeleteAllOf(ctx context.Context, obj ctrlClient.Object, opts ...ctrlClient.DeleteAllOfOption) error {
-	fleetshardmetrics.IncrementK8sRequests()
-	return cmw.Client.DeleteAllOf(ctx, obj, opts...) //nolint:wrapcheck
-}
-
-// Status wraps the Client Status method with incrementing K8sRequests metric
-func (cmw *ClientMetricsWrapper) Status() ctrlClient.StatusWriter {
-	fleetshardmetrics.IncrementK8sRequests()
-	return cmw.Client.Status()
-}
-
-// Scheme wraps the Client Scheme method
-func (cmw *ClientMetricsWrapper) Scheme() *runtime.Scheme {
-	return cmw.Client.Scheme()
-}
-
-// RESTMapper wraps the Client RESTMapper method
-func (cmw *ClientMetricsWrapper) RESTMapper() meta.RESTMapper {
-	return cmw.Client.RESTMapper()
-}
-
-var _ ctrlClient.Client = &ClientMetricsWrapper{}
 
 // CreateClientOrDie creates a new kubernetes client or dies
 func CreateClientOrDie() ctrlClient.Client {
@@ -112,7 +43,7 @@ func CreateClientOrDie() ctrlClient.Client {
 	}
 
 	glog.Infof("Connected to k8s cluster: %s", config.Host)
-	return &ClientMetricsWrapper{Client: k8sClient}
+	return k8sClient
 }
 
 func newClientGoClientSet() (client kubernetes.Interface, err error) {

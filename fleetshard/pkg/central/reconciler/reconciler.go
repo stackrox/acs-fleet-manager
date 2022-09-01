@@ -11,7 +11,6 @@ import (
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -159,7 +158,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}, &existingCentral)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			fleetshardmetrics.IncrementK8sRequestErrors()
 			return nil, errors.Wrapf(err, "unable to check the existence of central %s/%s", central.GetNamespace(), central.GetName())
 		}
 		centralExists = false
@@ -170,7 +168,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 		glog.Infof("Creating central %s/%s", central.GetNamespace(), central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
-			fleetshardmetrics.IncrementK8sRequestErrors()
 			return nil, errors.Wrapf(err, "creating new central %s/%s", remoteCentralNamespace, remoteCentralName)
 		}
 		glog.Infof("Central %s/%s created", central.GetNamespace(), central.GetName())
@@ -186,7 +183,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		existingCentral.Spec = *central.Spec.DeepCopy()
 
 		if err := r.client.Update(ctx, &existingCentral); err != nil {
-			fleetshardmetrics.IncrementK8sRequestErrors()
 			return nil, errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
 		}
 	}
@@ -258,12 +254,10 @@ func isRemoteCentralReady(remoteCentral private.ManagedCentral) bool {
 func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
 	reencryptIngress, err := r.routeService.FindReencryptIngress(ctx, namespace)
 	if err != nil {
-		fleetshardmetrics.IncrementK8sRequestErrors()
 		return nil, fmt.Errorf("obtaining ingress for reencrypt route: %w", err)
 	}
 	passthroughIngress, err := r.routeService.FindPassthroughIngress(ctx, namespace)
 	if err != nil {
-		fleetshardmetrics.IncrementK8sRequestErrors()
 		return nil, fmt.Errorf("obtaining ingress for passthrough route: %w", err)
 	}
 	return []private.DataPlaneCentralStatusRoutes{
@@ -358,12 +352,10 @@ func (r *CentralReconciler) ensureNamespaceExists(name string) error {
 		if apiErrors.IsNotFound(err) {
 			err = r.client.Create(context.Background(), namespace)
 			if err != nil {
-				fleetshardmetrics.IncrementK8sRequestErrors()
 				return fmt.Errorf("creating namespace %q: %w", name, err)
 			}
 			return nil
 		}
-		fleetshardmetrics.IncrementK8sRequestErrors()
 		return fmt.Errorf("getting namespace %s: %w", name, err)
 	}
 	return nil
@@ -375,14 +367,12 @@ func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name str
 		if apiErrors.IsNotFound(err) {
 			return true, nil
 		}
-		fleetshardmetrics.IncrementK8sRequestErrors()
 		return false, errors.Wrapf(err, "delete central namespace %s", name)
 	}
 	if namespace.Status.Phase == corev1.NamespaceTerminating {
 		return false, nil // Deletion is already in progress, skipping deletion request
 	}
 	if err = r.client.Delete(ctx, namespace); err != nil {
-		fleetshardmetrics.IncrementK8sRequestErrors()
 		return false, errors.Wrapf(err, "delete central namespace %s", name)
 	}
 	glog.Infof("Central namespace %s is marked for deletion", name)
@@ -396,11 +386,9 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 			return true, nil
 		}
 
-		fleetshardmetrics.IncrementK8sRequestErrors()
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
 	if err := r.client.Delete(ctx, central); err != nil {
-		fleetshardmetrics.IncrementK8sRequestErrors()
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
 	glog.Infof("Central CR %s/%s is marked for deletion", central.GetNamespace(), central.GetName())
@@ -420,7 +408,6 @@ func (r *CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remo
 	namespace := remoteCentral.Metadata.Namespace
 	_, err := r.routeService.FindReencryptRoute(ctx, namespace)
 	if err != nil && !apiErrors.IsNotFound(err) {
-		fleetshardmetrics.IncrementK8sRequestErrors()
 		return fmt.Errorf("retrieving reencrypt route for namespace %q: %w", namespace, err)
 	}
 
@@ -449,7 +436,6 @@ func (r *CentralReconciler) ensurePassthroughRouteExists(ctx context.Context, re
 	namespace := remoteCentral.Metadata.Namespace
 	_, err := r.routeService.FindPassthroughRoute(ctx, namespace)
 	if err != nil && !apiErrors.IsNotFound(err) {
-		fleetshardmetrics.IncrementK8sRequestErrors()
 		return fmt.Errorf("retrieving passthrough route for namespace %q: %w", namespace, err)
 	}
 
@@ -479,7 +465,6 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 		return false, errors.Wrapf(err, "get central route %s/%s", route.GetNamespace(), route.GetName())
 	}
 	if err := r.client.Delete(ctx, route); err != nil {
-		fleetshardmetrics.IncrementK8sRequestErrors()
 		return false, errors.Wrapf(err, "delete central route %s/%s", route.GetNamespace(), route.GetName())
 	}
 	return false, nil

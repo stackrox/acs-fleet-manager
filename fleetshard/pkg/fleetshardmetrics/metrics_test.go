@@ -11,34 +11,29 @@ func TestMetricIncrements(t *testing.T) {
 	const expectedIncrement = 1.0
 
 	tt := []struct {
-		metricName    string
-		incrementFunc func()
+		metricName        string
+		callIncrementFunc func(m *Metrics)
 	}{
 		{
-			metricName:    "total_k8s_requests",
-			incrementFunc: IncrementK8sRequests,
+			metricName: "total_fleet_manager_requests",
+			callIncrementFunc: func(m *Metrics) {
+				m.IncrementFleetManagerRequests()
+			},
 		},
 		{
-			metricName:    "total_k8s_request_errors",
-			incrementFunc: IncrementK8sRequestErrors,
-		},
-		{
-			metricName:    "total_fleet_manager_requests",
-			incrementFunc: IncrementFleetManagerRequests,
-		},
-		{
-			metricName:    "total_fleet_manager_request_errors",
-			incrementFunc: IncrementFleetManagerRequestErrors,
+			metricName: "total_fleet_manager_request_errors",
+			callIncrementFunc: func(m *Metrics) {
+				m.IncrementFleetManagerRequestErrors()
+			},
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.metricName, func(t *testing.T) {
-			// reinit metrics to make sure global state of counters is at 0
-			initMetrics()
-			tc.incrementFunc()
+			m := newMetrics()
+			tc.callIncrementFunc(m)
 
-			metrics := serveMetrics(t)
+			metrics := serveMetrics(t, m)
 			targetMetric, hasKey := metrics[metricsPrefix+tc.metricName]
 			require.Truef(t, hasKey, "expected metrics to contain %s but it did not: %v", tc.metricName, metrics)
 
