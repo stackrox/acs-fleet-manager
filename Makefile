@@ -358,7 +358,7 @@ test/e2e: gotestsum
 	go run github.com/onsi/ginkgo/v2/ginkgo -r $(GINKGO_FLAGS) \
 		--randomize-suites \
 		--fail-on-pending --keep-going \
-		--cover --coverprofile=../data/results/cover.profile \
+		--cover --coverprofile=cover.profile \
 		--race --trace \
 		--json-report=../data/results/e2e-report.json \
 		--timeout=$(TEST_TIMEOUT) \
