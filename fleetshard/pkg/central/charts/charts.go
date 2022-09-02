@@ -11,7 +11,10 @@ import (
 )
 
 var (
-	//go:embed all:data
+	// The templates/* entry is necessary because files starting with an underscore are only embedded when matched
+	// via *, not when recursively traversing a directory. Once we switch to go1.18, we can change the embed spec
+	// to all:data.
+	//go:embed data data/tenant-resources/templates/*
 	data embed.FS
 )
 
