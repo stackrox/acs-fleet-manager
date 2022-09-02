@@ -258,7 +258,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	if err := dbConn.Create(dinosaurRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create dinosaur request") // hide the db error to http caller
 	}
-	metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(dinosaurConstants.CentralRequestStatusAccepted, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
+	metrics.UpdateCentralRequestsStatusSinceCreatedMetric(dinosaurConstants.CentralRequestStatusAccepted, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
 	return nil
 }
 
@@ -399,7 +399,7 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 	if err := dbConn.First(&dinosaurRequest).Error; err != nil {
 		return services.HandleGetError("DinosaurResource", "id", id, err)
 	}
-	metrics.IncreaseDinosaurTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
+	metrics.IncreaseCentralTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
 
 	deprovisionStatus := dinosaurConstants.CentralRequestStatusDeprovision
 
@@ -407,8 +407,8 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 		if err != nil {
 			return services.HandleGetError("DinosaurResource", "id", id, err)
 		}
-		metrics.IncreaseDinosaurSuccessOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(deprovisionStatus, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
+		metrics.IncreaseCentralSuccessOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
+		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(deprovisionStatus, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
 	}
 
 	return nil
@@ -435,8 +435,8 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 		glog.Infof("%v dinosaurs are now deprovisioning for users %v", dbConn.RowsAffected, users)
 		var counter int64
 		for ; counter < dbConn.RowsAffected; counter++ {
-			metrics.IncreaseDinosaurTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
-			metrics.IncreaseDinosaurSuccessOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
+			metrics.IncreaseCentralTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
+			metrics.IncreaseCentralSuccessOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
 		}
 	}
 
@@ -465,8 +465,8 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *e
 		glog.Infof("%v dinosaur_request's lifespans are over %d hours and have had their status updated to deprovisioning", db.RowsAffected, dinosaurAgeInHours)
 		var counter int64
 		for ; counter < db.RowsAffected; counter++ {
-			metrics.IncreaseDinosaurTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
-			metrics.IncreaseDinosaurSuccessOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
+			metrics.IncreaseCentralTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
+			metrics.IncreaseCentralSuccessOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
 		}
 	}
 
@@ -497,8 +497,8 @@ func (k *dinosaurService) Delete(dinosaurRequest *dbapi.CentralRequest) *errors.
 		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to delete dinosaur request with id %s", dinosaurRequest.ID)
 	}
 
-	metrics.IncreaseDinosaurTotalOperationsCountMetric(dinosaurConstants.CentralOperationDelete)
-	metrics.IncreaseDinosaurSuccessOperationsCountMetric(dinosaurConstants.CentralOperationDelete)
+	metrics.IncreaseCentralTotalOperationsCountMetric(dinosaurConstants.CentralOperationDelete)
+	metrics.IncreaseCentralSuccessOperationsCountMetric(dinosaurConstants.CentralOperationDelete)
 
 	return nil
 }
