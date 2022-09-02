@@ -1,6 +1,6 @@
 
 egressProxy:
-  image: registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0
+  image: ubuntu/squid:5.2-22.04_beta
   replicas: 2
 
 labels: {}

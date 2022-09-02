@@ -22,6 +22,9 @@ metadata:
     {{- include "annotations" . | nindent 4 }}
 spec:
   replicas: {{ .Values.egressProxy.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: egress-proxy
   template:
     metadata:
       labels:
@@ -41,10 +44,10 @@ spec:
           mountPath: /etc/squid/squid.conf
           subPath: squid.conf
           readOnly: true
-  volumes:
-  - name: config-volume
-    configMap:
-      name: egress-proxy-config
+      volumes:
+      - name: config-volume
+        configMap:
+          name: egress-proxy-config
 ---
 apiVersion: v1
 kind: Service
