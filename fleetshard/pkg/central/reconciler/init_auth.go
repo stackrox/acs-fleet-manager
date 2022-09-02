@@ -160,9 +160,12 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 // authProviderName deduces auth provider name from issuer URL.
 func authProviderName(central private.ManagedCentral) (name string) {
 	switch {
-	case strings.Contains(central.Spec.Auth.Issuer, "sso.stage.redhat"): name = "Red Hat SSO (stage)"
-	case strings.Contains(central.Spec.Auth.Issuer, "sso.redhat"): name = "Red Hat SSO"
-	default: name = urlfmt.GetServerFromURL(central.Spec.Auth.Issuer)
+	case strings.Contains(central.Spec.Auth.Issuer, "sso.stage.redhat"):
+		name = "Red Hat SSO (stage)"
+	case strings.Contains(central.Spec.Auth.Issuer, "sso.redhat"):
+		name = "Red Hat SSO"
+	default:
+		name = urlfmt.GetServerFromURL(central.Spec.Auth.Issuer)
 	}
 	if name == "" {
 		name = "SSO"
