@@ -56,20 +56,20 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	// from the data plane cluster by the Fleetshard operator. This reconcile phase ensures that any other
 	// dependencies (i.e. SSO clients, CNAME records) are cleaned up for these Dinosaurs and their records soft deleted from the database.
 
-	deletingDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.DinosaurRequestStatusDeleting)
+	deletingDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusDeleting)
 	originalTotalDinosaurInDeleting := len(deletingDinosaurs)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list deleting dinosaur requests"))
 	} else {
-		glog.Infof("%s dinosaurs count = %d", constants2.DinosaurRequestStatusDeleting.String(), originalTotalDinosaurInDeleting)
+		glog.Infof("%s dinosaurs count = %d", constants2.CentralRequestStatusDeleting.String(), originalTotalDinosaurInDeleting)
 	}
 
 	// We also want to remove Dinosaurs that are set to deprovisioning but have not been provisioned on a data plane cluster
-	deprovisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.DinosaurRequestStatusDeprovision)
+	deprovisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusDeprovision)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list dinosaur deprovisioning requests"))
 	} else {
-		glog.Infof("%s dinosaurs count = %d", constants2.DinosaurRequestStatusDeprovision.String(), len(deprovisioningDinosaurs))
+		glog.Infof("%s dinosaurs count = %d", constants2.CentralRequestStatusDeprovision.String(), len(deprovisioningDinosaurs))
 	}
 
 	for _, deprovisioningDinosaur := range deprovisioningDinosaurs {

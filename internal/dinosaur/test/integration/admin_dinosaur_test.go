@@ -168,7 +168,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 		Name:                          "test-dinosaur",
 		OrganisationID:                "13640203",
 		DesiredCentralOperatorVersion: desiredDinosaurOperatorVersion,
-		Status:                        constants.DinosaurRequestStatusReady.String(),
+		Status:                        constants.CentralRequestStatusReady.String(),
 		Namespace:                     fmt.Sprintf("dinosaur-%s", sampleDinosaurID),
 	}
 	dinosaur.ID = sampleDinosaurID

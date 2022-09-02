@@ -75,7 +75,7 @@ func WaitForDinosaurCreateToBeAccepted(ctx context.Context, db *db.ConnectionFac
 }
 
 // WaitForDinosaurToReachStatus - Awaits for a dinosaur to reach a specified status
-func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, dinosaurID string, status constants2.DinosaurStatus) (dinosaur public.CentralRequest, err error) {
+func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, dinosaurID string, status constants2.CentralStatus) (dinosaur public.CentralRequest, err error) {
 	currentStatus := ""
 
 	glog.Infof("status: " + status.String())
@@ -95,16 +95,16 @@ func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory,
 			}
 
 			switch dinosaur.Status {
-			case constants2.DinosaurRequestStatusFailed.String():
+			case constants2.CentralRequestStatusFailed.String():
 				fallthrough
-			case constants2.DinosaurRequestStatusDeprovision.String():
+			case constants2.CentralRequestStatusDeprovision.String():
 				fallthrough
-			case constants2.DinosaurRequestStatusDeleting.String():
+			case constants2.CentralRequestStatusDeleting.String():
 				return false, errors.Errorf("Waiting for dinosaur '%s' to reach status '%s', but status '%s' has been reached instead", dinosaurID, status.String(), dinosaur.Status)
 			}
 
 			currentStatus = dinosaur.Status
-			return constants2.DinosaurStatus(dinosaur.Status).CompareTo(status) >= 0, nil
+			return constants2.CentralStatus(dinosaur.Status).CompareTo(status) >= 0, nil
 		}).
 		Build().Poll()
 

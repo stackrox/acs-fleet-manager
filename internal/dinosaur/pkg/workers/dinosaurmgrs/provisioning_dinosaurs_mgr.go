@@ -53,7 +53,7 @@ func (k *ProvisioningDinosaurManager) Reconcile() []error {
 	// Dinosaurs in a "provisioning" state means that it is ready to be sent to the Fleetshard Operator for Dinosaur creation in the data plane cluster.
 	// The update of the Dinosaur request status from 'provisioning' to another state will be handled by the Fleetshard Operator.
 	// We only need to update the metrics here.
-	provisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.DinosaurRequestStatusProvisioning)
+	provisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusProvisioning)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list provisioning dinosaurs"))
 	} else {
@@ -61,7 +61,7 @@ func (k *ProvisioningDinosaurManager) Reconcile() []error {
 	}
 	for _, dinosaur := range provisioningDinosaurs {
 		glog.V(10).Infof("provisioning dinosaur id = %s", dinosaur.ID)
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		// TODO implement additional reconcilation logic for provisioning dinosaurs
 	}
 

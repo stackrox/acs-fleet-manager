@@ -93,13 +93,13 @@ var _ = Describe("Central", func() {
 			Expect(err).To(BeNil())
 			namespaceName, err = services.FormatNamespace(createdCentral.Id)
 			Expect(err).To(BeNil())
-			Expect(constants.DinosaurRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
+			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
 		})
 
 		It("should transition central's state to provisioning", func() {
 			Eventually(func() string {
 				return centralStatus(createdCentral, client)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusProvisioning.String()))
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusProvisioning.String()))
 		})
 
 		// TODO(create-ticket): fails because the namespace is not centralName anymore but `formatNamespace(dinosaurRequest.ID)`
@@ -185,7 +185,7 @@ var _ = Describe("Central", func() {
 		It("should transition central's state to ready", func() {
 			Eventually(func() string {
 				return centralStatus(createdCentral, client)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusReady.String()))
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
 		})
 		// TODO(ROX-11368): Add test to eventually reach ready state
 		// TODO(ROX-11368): create test to check that Central and Scanner are healthy
@@ -198,7 +198,7 @@ var _ = Describe("Central", func() {
 				deprovisioningCentral, err := client.GetCentral(createdCentral.Id)
 				Expect(err).To(BeNil())
 				return deprovisioningCentral.Status
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusDeprovision.String()))
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusDeprovision.String()))
 		})
 
 		It("should delete central CR", func() {
@@ -289,7 +289,7 @@ var _ = Describe("Central", func() {
 			centralID = createdCentral.Id
 			namespaceName, err = services.FormatNamespace(centralID)
 			Expect(err).To(BeNil())
-			Expect(constants.DinosaurRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
+			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
 		})
 
 		central := &v1alpha1.Central{}
@@ -358,7 +358,7 @@ var _ = Describe("Central", func() {
 		It("should transition central's state to ready", func() {
 			Eventually(func() string {
 				return centralStatus(createdCentral, client)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusReady.String()))
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
 		})
 
 		It("should transition central to deprovisioning state", func() {
@@ -368,7 +368,7 @@ var _ = Describe("Central", func() {
 				deprovisioningCentral, err := client.GetCentral(createdCentral.Id)
 				Expect(err).To(BeNil())
 				return deprovisioningCentral.Status
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusDeprovision.String()))
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusDeprovision.String()))
 		})
 
 		It("should delete central CR", func() {

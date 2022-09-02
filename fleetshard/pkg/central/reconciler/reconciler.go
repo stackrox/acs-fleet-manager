@@ -244,11 +244,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 }
 
 func isRemoteCentralProvisioning(remoteCentral private.ManagedCentral) bool {
-	return remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusProvisioning.String()
+	return remoteCentral.RequestStatus == centralConstants.CentralRequestStatusProvisioning.String()
 }
 
 func isRemoteCentralReady(remoteCentral private.ManagedCentral) bool {
-	return remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String()
+	return remoteCentral.RequestStatus == centralConstants.CentralRequestStatusReady.String()
 }
 
 func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
