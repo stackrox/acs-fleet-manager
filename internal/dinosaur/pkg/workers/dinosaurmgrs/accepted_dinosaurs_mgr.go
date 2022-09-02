@@ -59,7 +59,7 @@ func (k *AcceptedDinosaurManager) Reconcile() []error {
 	var encounteredErrors []error
 
 	// handle accepted dinosaurs
-	acceptedDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.DinosaurRequestStatusAccepted)
+	acceptedDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusAccepted)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list accepted dinosaurs"))
 	} else {
@@ -68,7 +68,7 @@ func (k *AcceptedDinosaurManager) Reconcile() []error {
 
 	for _, dinosaur := range acceptedDinosaurs {
 		glog.V(10).Infof("accepted dinosaur id = %s", dinosaur.ID)
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusAccepted, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusAccepted, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		if err := k.reconcileAcceptedDinosaur(dinosaur); err != nil {
 			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile accepted dinosaur %s", dinosaur.ID))
 			continue
@@ -100,11 +100,11 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Cent
 		// We need to allow the reconciler to retry getting and setting of the desired Dinosaur Operator version for a Dinosaur request
 		// until the max retry duration is reached before updating its status to 'failed'.
 		durationSinceCreation := time.Since(dinosaur.CreatedAt)
-		if durationSinceCreation < constants2.AcceptedDinosaurMaxRetryDuration {
+		if durationSinceCreation < constants2.AcceptedCentralMaxRetryDuration {
 			glog.V(10).Infof("No available dinosaur operator version found for Dinosaur '%s' in Cluster ID '%s'", dinosaur.ID, dinosaur.ClusterID)
 			return nil
 		}
-		dinosaur.Status = constants2.DinosaurRequestStatusFailed.String()
+		dinosaur.Status = constants2.CentralRequestStatusFailed.String()
 		if err != nil {
 			err = errors.Wrapf(err, "failed to get desired dinosaur operator version %s", dinosaur.ID)
 		} else {
@@ -127,7 +127,7 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Cent
 	dinosaur.DesiredCentralVersion = selectedDinosaurOperatorVersion.CentralVersions[len(selectedDinosaurOperatorVersion.CentralVersions)-1].Version
 
 	glog.Infof("Dinosaur instance with id %s is assigned to cluster with id %s", dinosaur.ID, dinosaur.ClusterID)
-	dinosaur.Status = constants2.DinosaurRequestStatusPreparing.String()
+	dinosaur.Status = constants2.CentralRequestStatusPreparing.String()
 	if err2 := k.dinosaurService.Update(dinosaur); err2 != nil {
 		return errors.Wrapf(err2, "failed to update dinosaur %s with cluster details", dinosaur.ID)
 	}

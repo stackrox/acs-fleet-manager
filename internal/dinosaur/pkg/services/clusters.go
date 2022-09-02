@@ -442,7 +442,7 @@ func (c clusterService) FindNonEmptyClusterByID(clusterID string) (*api.Cluster,
 		ClusterID: clusterID,
 	}
 
-	subQuery := dbConn.Select("cluster_id").Where("status != ? AND cluster_id = ?", constants2.DinosaurRequestStatusFailed, clusterID).Model(dbapi.CentralRequest{})
+	subQuery := dbConn.Select("cluster_id").Where("status != ? AND cluster_id = ?", constants2.CentralRequestStatusFailed, clusterID).Model(dbapi.CentralRequest{})
 	if err := dbConn.Where(clusterDetails).Where("cluster_id IN (?)", subQuery).First(cluster).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -497,7 +497,7 @@ func (c clusterService) FindDinosaurInstanceCount(clusterIDs []string) ([]ResDin
 	query := c.connectionFactory.New().
 		Model(&dbapi.CentralRequest{}).
 		Select("cluster_id as Clusterid, count(1) as Count").
-		Where("status != ?", constants2.DinosaurRequestStatusAccepted.String()) // dinosaur in accepted state do not have a cluster_id assigned to them
+		Where("status != ?", constants2.CentralRequestStatusAccepted.String()) // dinosaur in accepted state do not have a cluster_id assigned to them
 
 	if len(clusterIDs) > 0 {
 		query = query.Where("cluster_id in (?)", clusterIDs)

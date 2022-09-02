@@ -22,9 +22,6 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
-
-	// TODO(ROX-10709)  "github.com/bxcodec/faker/v3"
-	. "github.com/onsi/gomega"
 )
 
 const (
@@ -114,7 +111,7 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 			CloudProvider:  dinosaurCloudProvider,
 			Name:           "dummy-dinosaur",
 			OrganisationID: orgID,
-			Status:         constants2.DinosaurRequestStatusAccepted.String(),
+			Status:         constants2.CentralRequestStatusAccepted.String(),
 			InstanceType:   types.STANDARD.String(),
 		},
 		{
@@ -124,7 +121,7 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 			CloudProvider:  dinosaurCloudProvider,
 			Name:           "dummy-dinosaur-2",
 			OrganisationID: orgID,
-			Status:         constants2.DinosaurRequestStatusAccepted.String(),
+			Status:         constants2.CentralRequestStatusAccepted.String(),
 			InstanceType:   types.STANDARD.String(),
 		},
 	}
@@ -328,7 +325,7 @@ func TestDinosaurGet(t *testing.T) {
 	Expect(dinosaur.Region).To(Equal(mocks.MockCluster.Region().ID()))
 	Expect(dinosaur.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(dinosaur.Name).To(Equal(mockDinosaurName))
-	Expect(dinosaur.Status).To(Equal(constants2.DinosaurRequestStatusAccepted.String()))
+	Expect(dinosaur.Status).To(Equal(constants2.CentralRequestStatusAccepted.String()))
 	// When dinosaur is in 'Accepted' state it means that it still has not been
 	// allocated to a cluster, which means that fleetshard-sync has not reported
 	// yet any status, so the version attribute (actual version) at this point
@@ -467,7 +464,7 @@ func TestDinosaur_Delete(t *testing.T) {
 		CloudProvider:                 "test",
 		Name:                          "test-dinosaur",
 		OrganisationID:                orgID,
-		Status:                        constants.DinosaurRequestStatusReady.String(),
+		Status:                        constants.CentralRequestStatusReady.String(),
 		ClusterID:                     cluster.ClusterID,
 		ActualCentralVersion:          "2.6.0",
 		DesiredCentralVersion:         "2.6.0",
@@ -558,7 +555,7 @@ func TestDinosaurList_Success(t *testing.T) {
 	Expect(listItem.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(seedDinosaur.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockDinosaurName))
-	Expect(listItem.Status).To(Equal(constants2.DinosaurRequestStatusAccepted.String()))
+	Expect(listItem.Status).To(Equal(constants2.CentralRequestStatusAccepted.String()))
 
 	// new account setup to prove that users can list dinosaurs instances created by a member of their org
 	account = h.NewRandAccount()
@@ -587,7 +584,7 @@ func TestDinosaurList_Success(t *testing.T) {
 	Expect(listItem.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(seedDinosaur.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockDinosaurName))
-	Expect(listItem.Status).To(Equal(constants2.DinosaurRequestStatusAccepted.String()))
+	Expect(listItem.Status).To(Equal(constants2.CentralRequestStatusAccepted.String()))
 
 	// new account setup to prove that users can only list their own (the one they created and the one created by a member of their org) dinosaur instances
 	// this value is taken from config/quota-management-list-configuration.yaml

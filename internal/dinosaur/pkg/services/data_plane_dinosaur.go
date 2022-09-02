@@ -116,20 +116,20 @@ func (d *dataPlaneDinosaurService) setDinosaurClusterReady(dinosaur *dbapi.Centr
 	logger.Logger.Infof("routes for dinosaur %s are created", dinosaur.ID)
 
 	// only send metrics data if the current dinosaur request is in "provisioning" status as this is the only case we want to report
-	shouldSendMetric, err := d.checkDinosaurRequestCurrentStatus(dinosaur, constants2.DinosaurRequestStatusProvisioning)
+	shouldSendMetric, err := d.checkDinosaurRequestCurrentStatus(dinosaur, constants2.CentralRequestStatusProvisioning)
 	if err != nil {
 		return err
 	}
 
-	err = d.dinosaurService.Updates(dinosaur, map[string]interface{}{"failed_reason": "", "status": constants2.DinosaurRequestStatusReady.String()})
+	err = d.dinosaurService.Updates(dinosaur, map[string]interface{}{"failed_reason": "", "status": constants2.CentralRequestStatusReady.String()})
 	if err != nil {
-		return serviceError.NewWithCause(err.Code, err, "failed to update status %s for dinosaur cluster %s", constants2.DinosaurRequestStatusReady, dinosaur.ID)
+		return serviceError.NewWithCause(err.Code, err, "failed to update status %s for dinosaur cluster %s", constants2.CentralRequestStatusReady, dinosaur.ID)
 	}
 	if shouldSendMetric {
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusReady, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusReady, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		metrics.UpdateDinosaurCreationDurationMetric(metrics.JobTypeDinosaurCreate, time.Since(dinosaur.CreatedAt))
-		metrics.IncreaseDinosaurSuccessOperationsCountMetric(constants2.DinosaurOperationCreate)
-		metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.DinosaurOperationCreate)
+		metrics.IncreaseDinosaurSuccessOperationsCountMetric(constants2.CentralOperationCreate)
+		metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.CentralOperationCreate)
 	}
 	return nil
 }
@@ -200,25 +200,25 @@ func (d *dataPlaneDinosaurService) setDinosaurRequestVersionFields(dinosaur *dba
 
 func (d *dataPlaneDinosaurService) setDinosaurClusterFailed(dinosaur *dbapi.CentralRequest, errMessage string) *serviceError.ServiceError {
 	// if dinosaur was already reported as failed we don't do anything
-	if dinosaur.Status == string(constants2.DinosaurRequestStatusFailed) {
+	if dinosaur.Status == string(constants2.CentralRequestStatusFailed) {
 		return nil
 	}
 
 	// only send metrics data if the current dinosaur request is in "provisioning" status as this is the only case we want to report
-	shouldSendMetric, err := d.checkDinosaurRequestCurrentStatus(dinosaur, constants2.DinosaurRequestStatusProvisioning)
+	shouldSendMetric, err := d.checkDinosaurRequestCurrentStatus(dinosaur, constants2.CentralRequestStatusProvisioning)
 	if err != nil {
 		return err
 	}
 
-	dinosaur.Status = string(constants2.DinosaurRequestStatusFailed)
+	dinosaur.Status = string(constants2.CentralRequestStatusFailed)
 	dinosaur.FailedReason = fmt.Sprintf("Dinosaur reported as failed: '%s'", errMessage)
 	err = d.dinosaurService.Update(dinosaur)
 	if err != nil {
-		return serviceError.NewWithCause(err.Code, err, "failed to update dinosaur cluster to %s status for dinosaur cluster %s", constants2.DinosaurRequestStatusFailed, dinosaur.ID)
+		return serviceError.NewWithCause(err.Code, err, "failed to update dinosaur cluster to %s status for dinosaur cluster %s", constants2.CentralRequestStatusFailed, dinosaur.ID)
 	}
 	if shouldSendMetric {
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusFailed, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
-		metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.DinosaurOperationCreate)
+		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusFailed, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+		metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.CentralOperationCreate)
 	}
 	logger.Logger.Errorf("Dinosaur status for Dinosaur ID '%s' in ClusterID '%s' reported as failed by Fleet Shard Operator: '%s'", dinosaur.ID, dinosaur.ClusterID, errMessage)
 
@@ -227,17 +227,17 @@ func (d *dataPlaneDinosaurService) setDinosaurClusterFailed(dinosaur *dbapi.Cent
 
 func (d *dataPlaneDinosaurService) setDinosaurClusterDeleting(dinosaur *dbapi.CentralRequest) *serviceError.ServiceError {
 	// If the Dinosaur cluster is deleted from the data plane cluster, we will make it as "deleting" in db and the reconcilier will ensure it is cleaned up properly
-	if ok, updateErr := d.dinosaurService.UpdateStatus(dinosaur.ID, constants2.DinosaurRequestStatusDeleting); ok {
+	if ok, updateErr := d.dinosaurService.UpdateStatus(dinosaur.ID, constants2.CentralRequestStatusDeleting); ok {
 		if updateErr != nil {
-			return serviceError.NewWithCause(updateErr.Code, updateErr, "failed to update status %s for dinosaur cluster %s", constants2.DinosaurRequestStatusDeleting, dinosaur.ID)
+			return serviceError.NewWithCause(updateErr.Code, updateErr, "failed to update status %s for dinosaur cluster %s", constants2.CentralRequestStatusDeleting, dinosaur.ID)
 		}
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusDeleting, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusDeleting, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 	}
 	return nil
 }
 
 func (d *dataPlaneDinosaurService) reassignDinosaurCluster(dinosaur *dbapi.CentralRequest) *serviceError.ServiceError {
-	if dinosaur.Status == constants2.DinosaurRequestStatusProvisioning.String() {
+	if dinosaur.Status == constants2.CentralRequestStatusProvisioning.String() {
 		// If a Dinosaur cluster is rejected by the fleetshard-operator, it should be assigned to another OSD cluster (via some scheduler service in the future).
 		// But now we only have one OSD cluster, so we need to change the placementId field so that the fleetshard-operator will try it again
 		// In the future, we may consider adding a new table to track the placement history for dinosaur clusters if there are multiple OSD clusters and the value here can be the key of that table
@@ -245,7 +245,7 @@ func (d *dataPlaneDinosaurService) reassignDinosaurCluster(dinosaur *dbapi.Centr
 		if err := d.dinosaurService.Update(dinosaur); err != nil {
 			return err
 		}
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 	} else {
 		logger.Logger.Infof("dinosaur cluster %s is rejected and current status is %s", dinosaur.ID, dinosaur.Status)
 	}
@@ -278,7 +278,7 @@ func getStatus(status *dbapi.DataPlaneCentralStatus) dinosaurStatus {
 	}
 	return statusInstalling
 }
-func (d *dataPlaneDinosaurService) checkDinosaurRequestCurrentStatus(dinosaur *dbapi.CentralRequest, status constants2.DinosaurStatus) (bool, *serviceError.ServiceError) {
+func (d *dataPlaneDinosaurService) checkDinosaurRequestCurrentStatus(dinosaur *dbapi.CentralRequest, status constants2.CentralStatus) (bool, *serviceError.ServiceError) {
 	matchStatus := false
 	if currentInstance, err := d.dinosaurService.GetByID(dinosaur.ID); err != nil {
 		return matchStatus, err

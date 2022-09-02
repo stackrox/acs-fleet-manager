@@ -138,7 +138,7 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, false, false)
 
 	managedCentral := simpleManagedCentral
-	managedCentral.RequestStatus = centralConstants.DinosaurRequestStatusReady.String()
+	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
 
 	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)
 	require.NoError(t, err)
@@ -170,7 +170,7 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, false, false)
 
 	managedCentral := simpleManagedCentral
-	managedCentral.RequestStatus = centralConstants.DinosaurRequestStatusProvisioning.String()
+	managedCentral.RequestStatus = centralConstants.CentralRequestStatusProvisioning.String()
 
 	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)
 	require.NoError(t, err)

@@ -51,7 +51,7 @@ func (k *PreparingDinosaurManager) Reconcile() []error {
 	var encounteredErrors []error
 
 	// handle preparing dinosaurs
-	preparingDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.DinosaurRequestStatusPreparing)
+	preparingDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusPreparing)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list preparing dinosaurs"))
 	} else {
@@ -60,7 +60,7 @@ func (k *PreparingDinosaurManager) Reconcile() []error {
 
 	for _, dinosaur := range preparingDinosaurs {
 		glog.V(10).Infof("preparing dinosaur id = %s", dinosaur.ID)
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusPreparing, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusPreparing, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		if err := k.reconcilePreparingDinosaur(dinosaur); err != nil {
 			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile preparing dinosaur %s", dinosaur.ID))
 			continue
@@ -84,26 +84,26 @@ func (k *PreparingDinosaurManager) handleDinosaurRequestCreationError(dinosaurRe
 		// retry the dinosaur creation request only if the failure is caused by server errors
 		// and the time elapsed since its db record was created is still within the threshold.
 		durationSinceCreation := time.Since(dinosaurRequest.CreatedAt)
-		if durationSinceCreation > constants2.DinosaurMaxDurationWithProvisioningErrs {
-			metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.DinosaurOperationCreate)
-			dinosaurRequest.Status = string(constants2.DinosaurRequestStatusFailed)
+		if durationSinceCreation > constants2.CentralMaxDurationWithProvisioningErrs {
+			metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.CentralOperationCreate)
+			dinosaurRequest.Status = string(constants2.CentralRequestStatusFailed)
 			dinosaurRequest.FailedReason = err.Reason
 			updateErr := k.dinosaurService.Update(dinosaurRequest)
 			if updateErr != nil {
 				return errors.Wrapf(updateErr, "Failed to update dinosaur %s in failed state. Dinosaur failed reason %s", dinosaurRequest.ID, dinosaurRequest.FailedReason)
 			}
-			metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusFailed, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
+			metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusFailed, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
 			return errors.Wrapf(err, "Dinosaur %s is in server error failed state. Maximum attempts has been reached", dinosaurRequest.ID)
 		}
 	} else if err.IsClientErrorClass() {
-		metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.DinosaurOperationCreate)
-		dinosaurRequest.Status = string(constants2.DinosaurRequestStatusFailed)
+		metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.CentralOperationCreate)
+		dinosaurRequest.Status = string(constants2.CentralRequestStatusFailed)
 		dinosaurRequest.FailedReason = err.Reason
 		updateErr := k.dinosaurService.Update(dinosaurRequest)
 		if updateErr != nil {
 			return errors.Wrapf(err, "Failed to update dinosaur %s in failed state", dinosaurRequest.ID)
 		}
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusFailed, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
+		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusFailed, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
 		return errors.Wrapf(err, "error creating dinosaur %s", dinosaurRequest.ID)
 	}
 
