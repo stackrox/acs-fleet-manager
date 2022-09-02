@@ -4,9 +4,12 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"time"
+
+	appsv1 "k8s.io/api/apps/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -180,6 +183,21 @@ var _ = Describe("Central", func() {
 				return centralStatus(createdCentral, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.DinosaurRequestStatusReady.String()))
 		})
+
+		It("should spin up an egress proxy with two healthy replicas", func() {
+			Eventually(func() error {
+				var egressProxyDeployment appsv1.Deployment
+				key := ctrlClient.ObjectKey{Namespace: namespaceName, Name: "egress-proxy"}
+				if err := k8sClient.Get(context.TODO(), key, &egressProxyDeployment); err != nil {
+					return err
+				}
+				if egressProxyDeployment.Status.ReadyReplicas < 2 {
+					return errors.New("less than 2 ready replicas for egress-proxy available")
+				}
+				return nil
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+		})
+
 		// TODO(ROX-11368): Add test to eventually reach ready state
 		// TODO(ROX-11368): create test to check that Central and Scanner are healthy
 		// TODO(ROX-11368): Create test to check Central is correctly exposed
@@ -200,6 +218,14 @@ var _ = Describe("Central", func() {
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: centralName}, central)
 				return apiErrors.IsNotFound(err)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
+		})
+
+		It("should delete the egress proxy", func() {
+			Eventually(func() error {
+				var egressProxyDeployment appsv1.Deployment
+				key := ctrlClient.ObjectKey{Namespace: namespaceName, Name: "egress-proxy"}
+				return k8sClient.Get(context.TODO(), key, &egressProxyDeployment)
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Satisfy(apiErrors.IsNotFound))
 		})
 
 		It("should remove central namespace", func() {
