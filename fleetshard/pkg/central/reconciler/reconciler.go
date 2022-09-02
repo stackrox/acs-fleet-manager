@@ -385,6 +385,7 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 		if apiErrors.IsNotFound(err) {
 			return true, nil
 		}
+
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
 	if err := r.client.Delete(ctx, central); err != nil {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -144,8 +145,10 @@ func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Re
 		return nil, fmt.Errorf("adding authentication information to request: %w", err)
 	}
 
+	fleetshardmetrics.MetricsInstance().IncrementFleetManagerRequests()
 	resp, err := c.client.Do(r)
 	if err != nil {
+		fleetshardmetrics.MetricsInstance().IncrementFleetManagerRequestErrors()
 		return nil, fmt.Errorf("executing HTTP request: %w", err)
 	}
 	return resp, nil
@@ -174,6 +177,7 @@ func (c *Client) unmarshalResponse(resp *http.Response, v interface{}) error {
 
 	// Unmarshal error
 	if into.Kind == "Error" || into.Kind == "error" {
+		fleetshardmetrics.MetricsInstance().IncrementFleetManagerRequestErrors()
 		apiError := compat.Error{}
 		err = json.Unmarshal(data, &apiError)
 		if err != nil {

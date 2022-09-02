@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/runtime"
 	"golang.org/x/sys/unix"
@@ -45,11 +46,22 @@ func main() {
 		}
 	}()
 
+	metricServer := fleetshardmetrics.NewMetricsServer(config.MetricsAddress)
+	go func() {
+		if err := metricServer.ListenAndServe(); err != nil {
+			glog.Errorf("serving metrics server: %v", err)
+		}
+	}()
+
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, unix.SIGTERM)
 
 	sig := <-sigs
 	runtime.Stop()
+	if err := metricServer.Close(); err != nil {
+		glog.Errorf("closing metric server: %v", err)
+	}
+
 	glog.Infof("Caught %s signal", sig)
 	glog.Info("fleetshard application has been stopped")
 }
