@@ -31,10 +31,11 @@ function ensure_bitwarden_session_exists () {
 
 case $ENVIRONMENT in
   stage)
+    # TODO: Fetch OCM token and log in as appropriate user as part of script.
     EXPECT_OCM_ID="29ygxk0eRzRrhgQN96RdOYKt28e"
     ACTUAL_OCM_ID=$(ocm whoami | jq -r '.id')
     if [[ "${EXPECT_OCM_ID}" != "${ACTUAL_OCM_ID}" ]]; then
-      echo "Must be logged into rhacs-managed-service account in OCM to get cluster ID"
+      echo "Must be logged into rhacs-managed-service-stage account in OCM to get cluster ID"
       exit 1
     fi
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
@@ -57,8 +58,30 @@ case $ENVIRONMENT in
     ;;
 
   prod)
-    echo "TODO: Handle environment 'prod'"
-    exit 2
+    # TODO: Fetch OCM token and log in as appropriate user as part of script.
+    EXPECT_OCM_ID="2BBslbGSQs5PS2HCfJKqOPcCN4r"
+    ACTUAL_OCM_ID=$(ocm whoami | jq -r '.id')
+    if [[ "${EXPECT_OCM_ID}" != "${ACTUAL_OCM_ID}" ]]; then
+      echo "Must be logged into rhacs-managed-service-prod account in OCM to get cluster ID"
+      exit 1
+    fi
+    CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
+
+    FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
+
+    ensure_bitwarden_session_exists
+    FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
+    FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b)
+    LOGGING_AWS_ACCESS_KEY_ID=$(bw get item "84e2d673-27dd-4e87-bb16-aee800da4d73" | jq '.fields[] | select(.name | contains("AccessKeyID")) | .value' --raw-output)
+    LOGGING_AWS_SECRET_ACCESS_KEY=$(bw get item "84e2d673-27dd-4e87-bb16-aee800da4d73" | jq '.fields[] | select(.name | contains("SecretAccessKey")) | .value' --raw-output)
+    OBSERVABILITY_GITHUB_ACCESS_TOKEN=$(bw get password eb7aecd3-b553-4999-b201-aebe01445822)
+    OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID="observatorium-rhacs-metrics-staging"
+    OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET=$(
+        bw get item 510c8ed9-ba9f-46d9-b906-ae6100cf72f5 | \
+        jq --arg OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID "${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
+            '.fields[] | select(.name | contains($OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID)) | .value' --raw-output
+    )
+    PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name | contains("Integration Key")) | .value' --raw-output)
     ;;
 
   *)
