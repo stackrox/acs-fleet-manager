@@ -9,6 +9,7 @@ import (
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/e2e/dns"
 	"github.com/stackrox/acs-fleet-manager/e2e/envtokenauth"
