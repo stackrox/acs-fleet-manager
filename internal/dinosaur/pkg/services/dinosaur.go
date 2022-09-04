@@ -842,9 +842,9 @@ func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralR
 func (k *dinosaurService) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError) {
 	// There is no value in augmenting auth config for central requests beyond
 	// 'Preparing'.
-	status := []dinosaurConstants.DinosaurStatus{
-		dinosaurConstants.DinosaurRequestStatusAccepted,
-		dinosaurConstants.DinosaurRequestStatusPreparing,
+	status := []dinosaurConstants.CentralStatus{
+		dinosaurConstants.CentralRequestStatusAccepted,
+		dinosaurConstants.CentralRequestStatusPreparing,
 	}
 
 	dbConn := k.connectionFactory.New()
