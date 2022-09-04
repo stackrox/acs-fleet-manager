@@ -12,7 +12,7 @@ import (
 	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/ternary"
+	"github.com/stackrox/rox/pkg/urlfmt"
 	core "k8s.io/api/core/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -157,9 +157,20 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 	return request
 }
 
-func authProviderName(central private.ManagedCentral) string {
-	return ternary.String(strings.Contains(central.Spec.Auth.Issuer, "stage"),
-		"Red Hat SSO (Stage)", "Red Hat SSO")
+// authProviderName deduces auth provider name from issuer URL.
+func authProviderName(central private.ManagedCentral) (name string) {
+	switch {
+	case strings.Contains(central.Spec.Auth.Issuer, "sso.stage.redhat"):
+		name = "Red Hat SSO (stage)"
+	case strings.Contains(central.Spec.Auth.Issuer, "sso.redhat"):
+		name = "Red Hat SSO"
+	default:
+		name = urlfmt.GetServerFromURL(central.Spec.Auth.Issuer)
+	}
+	if name == "" {
+		name = "SSO"
+	}
+	return
 }
 
 // TODO: ROX-11644: doesn't work when fleetshard-sync deployed outside of Central's cluster
