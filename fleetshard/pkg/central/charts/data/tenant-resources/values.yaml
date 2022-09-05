@@ -1,2 +1,7 @@
+
+egressProxy:
+  image: ubuntu/squid:5.2-22.04_beta
+  replicas: 2
+
 labels: {}
 annotations: {}
