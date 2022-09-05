@@ -1,5 +1,5 @@
 #!/bin/bash
-set -exo pipefail
+set -eo pipefail
 
 # Requires: `jq`
 # Requires: BitWarden CLI `bw`
