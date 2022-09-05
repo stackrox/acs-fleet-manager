@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -199,7 +198,7 @@ var _ = Describe("Central", func() {
 					return err
 				}
 				if egressProxyDeployment.Status.ReadyReplicas < 2 {
-					return errors.New("less than 2 ready replicas for egress-proxy available")
+					return fmt.Errorf("egress proxy only has %d/%d ready replicas (and %d unavailable ones), expected 2", egressProxyDeployment.Status.ReadyReplicas, egressProxyDeployment.Status.Replicas, egressProxyDeployment.Status.UnavailableReplicas)
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
