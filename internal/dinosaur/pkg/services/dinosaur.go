@@ -849,7 +849,7 @@ func (k *dinosaurService) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralReque
 
 	dbConn := k.connectionFactory.New().
 		Where("status IN (?)", status).
-		Where("idp_client_id == ''")
+		Where("client_id == ''")
 
 	var results []*dbapi.CentralRequest
 	if err := dbConn.Find(&results).Error; err != nil {
