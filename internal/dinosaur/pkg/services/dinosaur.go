@@ -847,14 +847,13 @@ func (k *dinosaurService) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralReque
 		dinosaurConstants.CentralRequestStatusPreparing,
 	}
 
-	dbConn := k.connectionFactory.New()
-	var results []*dbapi.CentralRequest
-	if err := dbConn.
+	dbConn := k.connectionFactory.New().
 		Where("status IN (?)", status).
-		Where("idp_client_id == ''").
-		Scan(&results).
-		Error; err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list dinosaur requests")
+		Where("idp_client_id == ''")
+
+	var results []*dbapi.CentralRequest
+	if err := dbConn.Find(&results).Error; err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list Central requests")
 	}
 	return results, nil
 }
