@@ -901,7 +901,7 @@ objects:
           - name: fleet-manager-credentials
             secret:
               # secretName is a vault-secret provider name in the app-interface
-              secretName: fleet-manager # pragma: allowlist secret
+              secretName: fleet-manager-credentials # pragma: allowlist secret
           - name: rhsso-client-secret
             secret:
               # secretName is a vault-secret provider name in the app-interface
