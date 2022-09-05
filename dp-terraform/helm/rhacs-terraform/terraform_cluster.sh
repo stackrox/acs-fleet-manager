@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -exo pipefail
 
 # Requires: `jq`
 # Requires: BitWarden CLI `bw`
@@ -51,6 +51,7 @@ case $ENVIRONMENT in
     LOGGING_AWS_SECRET_ACCESS_KEY=$(bw get item "84e2d673-27dd-4e87-bb16-aee800da4d73" | jq '.fields[] | select(.name | contains("SecretAccessKey")) | .value' --raw-output)
     # Note: the GitHub Access Token as of 2022-09-02 is the same between stage and prod.
     OBSERVABILITY_GITHUB_ACCESS_TOKEN=$(bw get password eb7aecd3-b553-4999-b201-aebe01445822)
+    OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID="observatorium-rhacs-metrics-staging"
     OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET=$(
         bw get item 510c8ed9-ba9f-46d9-b906-ae6100cf72f5 | \
@@ -81,6 +82,7 @@ case $ENVIRONMENT in
     LOGGING_AWS_SECRET_ACCESS_KEY=$(bw get item "f7711943-c355-47cc-a0ee-af0400f8dfe7" | jq '.fields[] | select(.name | contains("SecretAccessKey")) | .value' --raw-output)
     # Note: the GitHub Access Token as of 2022-09-02 is the same between stage and prod.
     OBSERVABILITY_GITHUB_ACCESS_TOKEN=$(bw get password eb7aecd3-b553-4999-b201-aebe01445822)
+    OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
     OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID="observatorium-rhacs-metrics"
     OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET=$(
         bw get item 510c8ed9-ba9f-46d9-b906-ae6100cf72f5 | \
@@ -120,7 +122,7 @@ helm upgrade rhacs-terraform ./ \
   --set observability.enabled=true \
   --set observability.github.accessToken="${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" \
   --set observability.github.repository=https://api.github.com/repos/stackrox/rhacs-observability-resources/contents \
-  --set observability.gateway=https://observatorium-mst.api.stage.openshift.com \
+  --set observability.observatorium.gateway="${OBSERVABILITY_OBSERVATORIUM_GATEWAY}" \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${PAGERDUTY_SERVICE_KEY}"
