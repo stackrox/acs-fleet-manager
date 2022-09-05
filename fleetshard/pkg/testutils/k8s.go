@@ -78,7 +78,6 @@ func NewFakeClientBuilder(t *testing.T, objects ...ctrlClient.Object) *fake.Clie
 // NewFakeClientWithTracker returns a new fake client and a ReconcileTracker to mock k8s responses
 func NewFakeClientWithTracker(t *testing.T) (ctrlClient.WithWatch, *ReconcileTracker) {
 	scheme := NewScheme(t)
-
 	tracker := NewReconcileTracker(scheme)
 	client := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -90,8 +89,6 @@ func NewFakeClientWithTracker(t *testing.T) (ctrlClient.WithWatch, *ReconcileTra
 // NewScheme returns a new scheme instance used for fleetshard testing
 func NewScheme(t *testing.T) *runtime.Scheme {
 	scheme := runtime.NewScheme()
-
-	require.NoError(t, coreV1.AddToScheme(scheme))
 	require.NoError(t, platform.AddToScheme(scheme))
 	require.NoError(t, clientgoscheme.AddToScheme(scheme))
 	require.NoError(t, openshiftRouteV1.Install(scheme))
