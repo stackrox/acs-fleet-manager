@@ -126,10 +126,9 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:         pointer.Int32(0),
-		client:         fakeClient,
-		central:        private.ManagedCentral{},
-		resourcesChart: resourcesChart,
+		status:  pointer.Int32(0),
+		client:  fakeClient,
+		central: private.ManagedCentral{},
 	}
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
