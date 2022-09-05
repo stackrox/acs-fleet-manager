@@ -35,8 +35,8 @@ spec:
       containers:
       - name: egress-proxy
         image: {{ .Values.egressProxy.image }}
-        containerPorts:
-        - port: 3128
+        ports:
+        - containerPort: 3128
           protocol: TCP
           name: egress-proxy
         volumeMounts:
@@ -90,5 +90,6 @@ spec:
     - podSelector:
         matchLabels:
           app: scanner
-    port: 3128
-    protocol: TCP
+    ports:
+    - port: 3128
+      protocol: TCP
