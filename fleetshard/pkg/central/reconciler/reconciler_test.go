@@ -5,10 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	v1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
-
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
@@ -119,10 +115,9 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:         pointer.Int32(0),
-		client:         fakeClient,
-		central:        private.ManagedCentral{},
-		resourcesChart: resourcesChart,
+		status:  pointer.Int32(0),
+		client:  fakeClient,
+		central: private.ManagedCentral{},
 	}
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -294,49 +289,6 @@ func TestReportRoutesStatuses(t *testing.T) {
 	}
 	actual := status.Routes
 	assert.ElementsMatch(t, expected, actual)
-}
-
-func TestEgressProxyIsDeployed(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, true, false)
-
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-
-	expectedObjs := []client.Object{
-		&v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "egress-proxy-config",
-			},
-		},
-		&v1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "egress-proxy",
-			},
-		},
-		&appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "egress-proxy",
-			},
-		},
-		&networkingv1.NetworkPolicy{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: simpleManagedCentral.Metadata.Namespace,
-				Name:      "egress-proxy",
-			},
-		},
-	}
-
-	for _, expectedObj := range expectedObjs {
-		actualObj := expectedObj.DeepCopyObject().(client.Object)
-		if !assert.NoError(t, fakeClient.Get(context.TODO(), client.ObjectKeyFromObject(expectedObj), actualObj)) {
-			continue
-		}
-		assert.Equal(t, k8s.ManagedByFleetshardValue, actualObj.GetLabels()[k8s.ManagedByLabelKey])
-	}
 }
 
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
