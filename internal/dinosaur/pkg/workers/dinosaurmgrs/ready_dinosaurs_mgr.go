@@ -49,7 +49,7 @@ func (k *ReadyDinosaurManager) Reconcile() []error {
 
 	var encounteredErrors []error
 
-	readyDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.DinosaurRequestStatusReady)
+	readyDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusReady)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list ready dinosaurs"))
 	} else {

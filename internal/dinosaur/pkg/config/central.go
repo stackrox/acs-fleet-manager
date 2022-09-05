@@ -24,11 +24,13 @@ type CentralConfig struct {
 	// TODO(ROX-11289): drop MaxCapacity
 	MaxCapacity MaxCapacityConfig `json:"max_capacity_config"`
 
-	CentralLifespan       *CentralLifespanConfig `json:"central_lifespan"`
-	Quota                 *CentralQuotaConfig    `json:"central_quota"`
-	RhSsoClientSecret     string                 `json:"rhsso_client_secret"`
-	RhSsoClientSecretFile string                 `json:"rhsso_client_secret_file"`
-	RhSsoIssuer           string                 `json:"rhsso_issuer"`
+	CentralLifespan *CentralLifespanConfig `json:"central_lifespan"`
+	Quota           *CentralQuotaConfig    `json:"central_quota"`
+
+	RhSsoClientID         string `json:"rhsso_client_id"`
+	RhSsoClientSecret     string `json:"rhsso_client_secret"`
+	RhSsoClientSecretFile string `json:"rhsso_client_secret_file"`
+	RhSsoIssuer           string `json:"rhsso_issuer"`
 }
 
 // NewCentralConfig ...
@@ -54,8 +56,9 @@ func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.CentralDomainName, "central-domain-name", c.CentralDomainName, "The domain name to use for Central instances")
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
 	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of central evaluator instances")
-	fs.StringVar(&c.RhSsoClientSecretFile, "rhsso-client-secret-file", c.RhSsoClientSecretFile, "File containing OIDC client secret of sso.redhat.com client")
-	fs.StringVar(&c.RhSsoIssuer, "rhsso-issuer", c.RhSsoIssuer, "Issuer identifier for sso.redhat.com. Should be equal to value returned in ID Token issuer('iss') field")
+	fs.StringVar(&c.RhSsoClientID, "rhsso-client-id", c.RhSsoClientID, "RHSSO client ID to pass to Central's auth config")
+	fs.StringVar(&c.RhSsoClientSecretFile, "rhsso-client-secret-file", c.RhSsoClientSecretFile, "File containing RHSSO client secret to pass to Central's auth config")
+	fs.StringVar(&c.RhSsoIssuer, "rhsso-issuer", c.RhSsoIssuer, "Issuer identifier for sso.redhat.com. Should be equal to value returned in ID Token issuer ('iss') field")
 }
 
 // ReadFiles ...

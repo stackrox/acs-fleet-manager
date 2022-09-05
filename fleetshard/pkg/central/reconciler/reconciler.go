@@ -244,11 +244,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 }
 
 func isRemoteCentralProvisioning(remoteCentral private.ManagedCentral) bool {
-	return remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusProvisioning.String()
+	return remoteCentral.RequestStatus == centralConstants.CentralRequestStatusProvisioning.String()
 }
 
 func isRemoteCentralReady(remoteCentral private.ManagedCentral) bool {
-	return remoteCentral.RequestStatus == centralConstants.DinosaurRequestStatusReady.String()
+	return remoteCentral.RequestStatus == centralConstants.CentralRequestStatusReady.String()
 }
 
 func (r *CentralReconciler) getRoutesStatuses(ctx context.Context, namespace string) ([]private.DataPlaneCentralStatusRoutes, error) {
@@ -385,6 +385,7 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 		if apiErrors.IsNotFound(err) {
 			return true, nil
 		}
+
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
 	if err := r.client.Delete(ctx, central); err != nil {

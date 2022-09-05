@@ -1039,7 +1039,7 @@ func (c *ClusterManager) setDinosaurPerClusterCountMetrics() error {
 		if err != nil {
 			return err
 		}
-		metrics.UpdateDinosaurPerClusterCountMetric(counter.Clusterid, clusterExternalID, counter.Count)
+		metrics.UpdateCentralPerClusterCountMetric(counter.Clusterid, clusterExternalID, counter.Count)
 	}
 
 	return nil

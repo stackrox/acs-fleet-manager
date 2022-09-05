@@ -14,14 +14,14 @@ import (
 )
 
 // we do not add "deleted" status to the list as the dinosaurs are soft deleted once the status is set to "deleted", so no need to count them here.
-var dinosaurMetricsStatuses = []constants2.DinosaurStatus{
-	constants2.DinosaurRequestStatusAccepted,
-	constants2.DinosaurRequestStatusPreparing,
-	constants2.DinosaurRequestStatusProvisioning,
-	constants2.DinosaurRequestStatusReady,
-	constants2.DinosaurRequestStatusDeprovision,
-	constants2.DinosaurRequestStatusDeleting,
-	constants2.DinosaurRequestStatusFailed,
+var dinosaurMetricsStatuses = []constants2.CentralStatus{
+	constants2.CentralRequestStatusAccepted,
+	constants2.CentralRequestStatusPreparing,
+	constants2.CentralRequestStatusProvisioning,
+	constants2.CentralRequestStatusReady,
+	constants2.CentralRequestStatusDeprovision,
+	constants2.CentralRequestStatusDeleting,
+	constants2.CentralRequestStatusFailed,
 }
 
 // DinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
@@ -113,7 +113,7 @@ func (k *DinosaurManager) setDinosaurStatusCountMetric() []error {
 	}
 
 	for _, c := range counters {
-		metrics.UpdateDinosaurRequestsStatusCountMetric(c.Status, c.Count)
+		metrics.UpdateCentralRequestsStatusCountMetric(c.Status, c.Count)
 	}
 
 	return nil

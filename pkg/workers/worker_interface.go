@@ -72,6 +72,6 @@ func (b *BaseWorker) StartWorker(w Worker) {
 func (b *BaseWorker) StopWorker(w Worker) {
 	glog.Infof("Stopping reconciling worker id = %s", b.ID)
 	b.Reconciler.Stop(w)
-	metrics.ResetMetricsForDinosaurManagers()
+	metrics.ResetMetricsForCentralManagers()
 	metrics.SetLeaderWorkerMetric(b.WorkerType, false)
 }
