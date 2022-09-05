@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"sigs.k8s.io/yaml"
+
 	appsv1 "k8s.io/api/apps/v1"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -198,7 +200,8 @@ var _ = Describe("Central", func() {
 					return err
 				}
 				if egressProxyDeployment.Status.ReadyReplicas < 2 {
-					return fmt.Errorf("egress proxy only has %d/%d ready replicas (and %d unavailable ones), expected 2", egressProxyDeployment.Status.ReadyReplicas, egressProxyDeployment.Status.Replicas, egressProxyDeployment.Status.UnavailableReplicas)
+					statusBytes, _ := yaml.Marshal(&egressProxyDeployment.Status)
+					return fmt.Errorf("egress proxy only has %d/%d ready replicas (and %d unavailable ones), expected 2. full status: %s", egressProxyDeployment.Status.ReadyReplicas, egressProxyDeployment.Status.Replicas, egressProxyDeployment.Status.UnavailableReplicas, statusBytes)
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
