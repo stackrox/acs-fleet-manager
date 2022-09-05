@@ -92,6 +92,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrap(err, "converting Scanner DB resources")
 	}
 
+	// Set proxy configuration
+	envVars := getProxyEnvVars(remoteCentralNamespace)
+
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
@@ -125,6 +128,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				Monitoring: &v1alpha1.Monitoring{
 					ExposeEndpoint: &monitoringExposeEndpointEnabled,
 				},
+			},
+			Customize: &v1alpha1.CustomizeSpec{
+				EnvVars: envVars,
 			},
 		},
 	}
