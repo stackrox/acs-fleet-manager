@@ -6,10 +6,11 @@ set -eo pipefail
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
-    echo "Known environments: stage"
+    echo "Known environments: stage prod"
     echo "Cluster typically looks like: acs-{environment}-dp-01"
     echo ""
-    echo "Note: you will need to be logged in (oc login --token=...) to use Helm"
+    echo "Note: you need to be logged into OCM for your environment's administrator"
+    echo "Note: you need to be logged into OC for your cluster's administrator"
     exit 2
 fi
 
@@ -31,10 +32,11 @@ function ensure_bitwarden_session_exists () {
 
 case $ENVIRONMENT in
   stage)
-    EXPECT_OCM_ID="29ygxk0eRzRrhgQN96RdOYKt28e"
+    # TODO: Fetch OCM token and log in as appropriate user as part of script.
+    EXPECT_OCM_ID="2ECw6PIE06TzjScQXe6QxMMt3Sa"
     ACTUAL_OCM_ID=$(ocm whoami | jq -r '.id')
     if [[ "${EXPECT_OCM_ID}" != "${ACTUAL_OCM_ID}" ]]; then
-      echo "Must be logged into rhacs-managed-service account in OCM to get cluster ID"
+      echo "Must be logged into rhacs-managed-service-stage account in OCM to get cluster ID"
       exit 1
     fi
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
@@ -42,24 +44,53 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
 
     ensure_bitwarden_session_exists
+    # Note: the Red Hat SSO client as of 2022-09-02 is the same between stage and prod.
     FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
     FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b)
-    LOGGING_AWS_ACCESS_KEY_ID=$(bw get item "84e2d673-27dd-4e87-bb16-aee800da4d73" | jq '.fields[] | select(.name | contains("AccessKeyID")) | .value' --raw-output)
-    LOGGING_AWS_SECRET_ACCESS_KEY=$(bw get item "84e2d673-27dd-4e87-bb16-aee800da4d73" | jq '.fields[] | select(.name | contains("SecretAccessKey")) | .value' --raw-output)
+    LOGGING_AWS_ACCESS_KEY_ID=$(bw get item "84e2d673-27dd-4e87-bb16-aee800da4d73" | jq '.fields[] | select(.name == "AccessKeyID") | .value' --raw-output)
+    LOGGING_AWS_SECRET_ACCESS_KEY=$(bw get item "84e2d673-27dd-4e87-bb16-aee800da4d73" | jq '.fields[] | select(.name == "SecretAccessKey") | .value' --raw-output)
+    # Note: the GitHub Access Token as of 2022-09-02 is the same between stage and prod.
     OBSERVABILITY_GITHUB_ACCESS_TOKEN=$(bw get password eb7aecd3-b553-4999-b201-aebe01445822)
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID="observatorium-rhacs-metrics-staging"
     OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET=$(
         bw get item 510c8ed9-ba9f-46d9-b906-ae6100cf72f5 | \
         jq --arg OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID "${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
-            '.fields[] | select(.name | contains($OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID)) | .value' --raw-output
+            '.fields[] | select(.name == $OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID) | .value' --raw-output
     )
-    PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name | contains("Integration Key")) | .value' --raw-output)
+    # Note: the PagerDuty Service Key as of 2022-09-02 is the same between stage and prod.
+    PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name == "Integration Key") | .value' --raw-output)
     ;;
 
   prod)
-    echo "TODO: Handle environment 'prod'"
-    exit 2
+    # TODO: Fetch OCM token and log in as appropriate user as part of script.
+    EXPECT_OCM_ID="2BBslbGSQs5PS2HCfJKqOPcCN4r"
+    ACTUAL_OCM_ID=$(ocm whoami | jq -r '.id')
+    if [[ "${EXPECT_OCM_ID}" != "${ACTUAL_OCM_ID}" ]]; then
+      echo "Must be logged into rhacs-managed-service-prod account in OCM to get cluster ID"
+      exit 1
+    fi
+    CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
+
+    FM_ENDPOINT="https://syqugpy2fa29zqc.api.openshift.com/"
+
+    ensure_bitwarden_session_exists
+    # Note: the Red Hat SSO client as of 2022-09-02 is the same between stage and prod.
+    FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
+    FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b)
+    LOGGING_AWS_ACCESS_KEY_ID=$(bw get item "f7711943-c355-47cc-a0ee-af0400f8dfe7" | jq '.fields[] | select(.name == "AccessKeyID") | .value' --raw-output)
+    LOGGING_AWS_SECRET_ACCESS_KEY=$(bw get item "f7711943-c355-47cc-a0ee-af0400f8dfe7" | jq '.fields[] | select(.name == "SecretAccessKey") | .value' --raw-output)
+    # Note: the GitHub Access Token as of 2022-09-02 is the same between stage and prod.
+    OBSERVABILITY_GITHUB_ACCESS_TOKEN=$(bw get password eb7aecd3-b553-4999-b201-aebe01445822)
+    OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
+    OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID="observatorium-rhacs-metrics"
+    OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET=$(
+        bw get item 510c8ed9-ba9f-46d9-b906-ae6100cf72f5 | \
+        jq --arg OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID "${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
+            '.fields[] | select(.name == $OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID) | .value' --raw-output
+    )
+    # Note: the PagerDuty Service Key as of 2022-09-02 is the same between stage and prod.
+    PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name == "Integration Key") | .value' --raw-output)
     ;;
 
   *)
