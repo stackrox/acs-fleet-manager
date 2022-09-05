@@ -85,6 +85,10 @@ func (r *Runtime) Start() error {
 			return 0, err
 		}
 
+		// This map collects all central ids in the current list, it is later used to find and delete all reconcilers of
+		// centrals that are no longer in the GetManagedCentralList
+		startedReconcile := map[string]bool{}
+
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
 		glog.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
@@ -98,8 +102,9 @@ func (r *Runtime) Start() error {
 				status, err := reconciler.Reconcile(context.Background(), central)
 				r.handleReconcileResult(central, status, err)
 			}(reconciler, central)
+			startedReconcile[central.Id] = true
 		}
-
+		r.deleteStaleReconcilers(startedReconcile)
 		return r.config.RuntimePollPeriod, nil
 	}, 10*time.Minute, backoff)
 
@@ -131,6 +136,14 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 	if err != nil {
 		err = errors.Wrapf(err, "updating status for Central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
 		glog.Error(err)
+	}
+}
+
+func (r *Runtime) deleteStaleReconcilers(startedReconcile map[string]bool) {
+	for key := range r.reconcilers {
+		if !startedReconcile[key] {
+			delete(r.reconcilers, key)
+		}
 	}
 }
 
