@@ -73,11 +73,13 @@ func (k *CentralAuthConfigManager) Reconcile() []error {
 		}
 
 		if err := augmentWithAuthConfigF(cr, k.centralConfig); err != nil {
-			errs = append(errs, err)
+			errs = append(errs, errors.Wrap(err, "failed to augment central request with auth config"))
+		}
+
+		if err := k.centralService.Update(cr); err != nil {
+			errs = append(errs, errors.Wrapf(err, "failed to update central request %s", cr.ID))
 		}
 	}
-
-	// TODO(alexr): Call dinosaurService.Update()
 
 	return errs
 }
