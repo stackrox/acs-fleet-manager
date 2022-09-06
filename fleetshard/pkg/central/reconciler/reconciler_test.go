@@ -2,8 +2,14 @@ package reconciler
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"testing"
+	"time"
+
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
+	v1 "k8s.io/api/core/v1"
 
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
@@ -44,6 +50,11 @@ var simpleManagedCentral = private.ManagedCentral{
 		},
 	},
 }
+
+var (
+	//go:embed testdata
+	testdata embed.FS
+)
 
 func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestConditions, conditionType string) (*private.DataPlaneClusterUpdateStatusRequestConditions, bool) {
 	for _, c := range conditions {
@@ -115,9 +126,10 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:  pointer.Int32(0),
-		client:  fakeClient,
-		central: private.ManagedCentral{},
+		status:         pointer.Int32(0),
+		client:         fakeClient,
+		central:        private.ManagedCentral{},
+		resourcesChart: resourcesChart,
 	}
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -289,6 +301,37 @@ func TestReportRoutesStatuses(t *testing.T) {
 	}
 	actual := status.Routes
 	assert.ElementsMatch(t, expected, actual)
+}
+
+func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
+	chrt, err := charts.LoadChart(testdata, "testdata/tenant-resources")
+	require.NoError(t, err)
+
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, false, false)
+	r.resourcesChart = chrt
+
+	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+
+	var dummySvc v1.Service
+	dummySvcKey := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: "dummy"}
+	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
+	assert.NoError(t, err)
+
+	assert.Equal(t, k8s.ManagedByFleetshardValue, dummySvc.GetLabels()[k8s.ManagedByLabelKey])
+
+	deletedCentral := simpleManagedCentral
+	deletedCentral.Metadata.DeletionTimestamp = time.Now().Format(time.RFC3339)
+
+	_, err = r.Reconcile(context.TODO(), deletedCentral)
+	for i := 0; i < 3 && errors.Is(err, ErrDeletionInProgress); i++ {
+		_, err = r.Reconcile(context.TODO(), deletedCentral)
+	}
+	require.NoError(t, err)
+
+	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
+	assert.True(t, k8sErrors.IsNotFound(err))
 }
 
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
