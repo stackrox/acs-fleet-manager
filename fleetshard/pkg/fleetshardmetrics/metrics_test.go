@@ -26,6 +26,18 @@ func TestMetricIncrements(t *testing.T) {
 				m.IncrementFleetManagerRequestErrors()
 			},
 		},
+		{
+			metricName: "total_central_reconcilations",
+			callIncrementFunc: func(m *Metrics) {
+				m.IncrementCentralReconcilations()
+			},
+		},
+		{
+			metricName: "total_central_reconcilation_errors",
+			callIncrementFunc: func(m *Metrics) {
+				m.IncrementCentralReconcilationErrors()
+			},
+		},
 	}
 
 	for _, tc := range tt {
