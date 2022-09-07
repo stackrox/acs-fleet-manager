@@ -22,6 +22,17 @@ const (
 	publicCentralURI = "api/rhacs/v1/centrals"
 )
 
+//go:generate moq -out client_mock.go . FleetManagerClient
+type FleetManagerClient interface {
+	GetManagedCentralList() (*private.ManagedCentralList, error)
+	UpdateStatus(statuses map[string]private.DataPlaneCentralStatus) error
+	CreateCentral(request public.CentralRequestPayload) (*public.CentralRequest, error)
+	GetCentral(id string) (*public.CentralRequest, error)
+	DeleteCentral(id string) error
+}
+
+var _ FleetManagerClient = (*Client)(nil)
+
 // Client represents the REST client for connecting to fleet-manager
 type Client struct {
 	client                http.Client
@@ -32,7 +43,7 @@ type Client struct {
 }
 
 // NewClient creates a new client
-func NewClient(endpoint string, clusterID string, auth Auth) (*Client, error) {
+func NewClient(endpoint string, clusterID string, auth Auth) (FleetManagerClient, error) {
 	if clusterID == "" {
 		return nil, errors.New("cluster id is empty")
 	}

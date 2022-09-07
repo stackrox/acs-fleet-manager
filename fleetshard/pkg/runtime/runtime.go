@@ -34,7 +34,7 @@ var backoff = wait.Backoff{
 // Runtime represents the runtime to reconcile all centrals associated with the given cluster.
 type Runtime struct {
 	config           *config.Config
-	client           *fleetmanager.Client
+	client           fleetmanager.FleetManagerClient
 	reconcilers      reconcilerRegistry // TODO(create-ticket): possible leak. consider reconcilerRegistry cleanup
 	k8sClient        ctrlClient.Client
 	statusResponseCh chan private.DataPlaneCentralStatus
