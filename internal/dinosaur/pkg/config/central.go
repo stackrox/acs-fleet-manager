@@ -42,9 +42,7 @@ func NewCentralConfig() *CentralConfig {
 		CentralDomainName:                "rhacs-dev.com",
 		CentralLifespan:                  NewCentralLifespanConfig(),
 		Quota:                            NewCentralQuotaConfig(),
-		RhSsoClientID:                    "secrets/central.idp-client-id",
-		RhSsoClientSecret:                "secrets/central.idp-client-secret",
-		RhSsoIssuer:                      "secrets/central.idp-issuer",
+		RhSsoClientSecretFile:            "secrets/central.idp-client-secret",
 	}
 }
 

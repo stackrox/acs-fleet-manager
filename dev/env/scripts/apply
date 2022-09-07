@@ -14,7 +14,6 @@ apply_res() {
     short_path=${path/#${GITROOT}/}
     res=$(envsubst <"$path")
     log "Applying resource from '${short_path}'"
-    log "Res: '${res}'"
     echo "$res" | $KUBECTL apply -f -
 }
 
