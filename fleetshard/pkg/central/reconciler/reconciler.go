@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"sync/atomic"
 
-	helmUtil "github.com/stackrox/rox/pkg/helm/util"
-
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -582,9 +580,10 @@ func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (c
 		},
 	}
 	if r.egressProxyImage != "" {
-		override, err := helmUtil.ValuesForKVPair("egressProxy.image", r.egressProxyImage)
-		if err != nil {
-			return nil, fmt.Errorf("setting egress proxy image: %w", err)
+		override := chartutil.Values{
+			"egressProxy": chartutil.Values{
+				"image": r.egressProxyImage,
+			},
 		}
 		vals = chartutil.CoalesceTables(vals, override)
 	}
