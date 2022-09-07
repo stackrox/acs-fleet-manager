@@ -156,10 +156,10 @@ paths:
       - Bearer: []
       summary: Returns a list of Centrals
     post:
-      description: "Creates a new Central that is owned by the user and organisation\
-        \ authenticated for the request.\nEach Central has a single owner organisation\
-        \ and a single owner user. \nThis API allows providing custom resource settings\
-        \ for the new Central instance.\n"
+      description: |
+        Creates a new Central that is owned by the user and organisation authenticated for the request.
+        Each Central has a single owner organisation and a single owner user.
+        This API allows providing custom resource settings for the new Central instance.
       operationId: createCentral
       parameters:
       - description: Perform the action in an asynchronous manner
