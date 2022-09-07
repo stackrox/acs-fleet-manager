@@ -202,6 +202,7 @@ helm upgrade --install rhacs-terraform \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${RHACS_OPERATOR_CATALOG_NAME}" \
   --set acsOperator.startingCSV="${STARTING_CSV}" \
+  --set logging.enabled=false
   --set observability.enabled=false ./dp-terraform/helm/rhacs-terraform
 ```
 
