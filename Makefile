@@ -236,6 +236,7 @@ help:
 	@echo "make deploy/project              deploy the service via templates to an openshift cluster"
 	@echo "make undeploy                    remove the service deployments from an openshift cluster"
 	@echo "make redhatsso/setup             setup sso clientId & clientSecret"
+	@echo "make centralidp/setup            setup Central's RHSSO clientSecret"
 	@echo "make openapi/spec/validate       validate OpenAPI spec using spectral"
 	@echo "$(fake)"
 .PHONY: help
@@ -540,6 +541,7 @@ secrets/touch:
           secrets/db.user \
           secrets/central-tls.crt \
           secrets/central-tls.key \
+          secrets/central.idp-client-secret \
           secrets/image-pull.dockerconfigjson \
           secrets/observability-config-access.token \
           secrets/ocm-service.clientId \
@@ -567,6 +569,11 @@ redhatsso/setup:
 	@echo -n "$(SSO_CLIENT_ID)" > secrets/redhatsso-service.clientId
 	@echo -n "$(SSO_CLIENT_SECRET)" > secrets/redhatsso-service.clientSecret
 .PHONY:redhatsso/setup
+
+# Setup for the Central's IdP integration
+centralidp/setup:
+	@echo -n "$(CENTRAL_IDP_CLIENT_SECRET)" > secrets/central.idp-client-secret
+.PHONY:centralidp/setup
 
 # Setup for the central broker certificate
 centralcert/setup:
@@ -644,6 +651,7 @@ deploy/secrets:
 		-p ROUTE53_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53secretaccesskey' ] && [ -z '${ROUTE53_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.route53secretaccesskey || echo '${ROUTE53_SECRET_ACCESS_KEY}')" \
 		-p SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${SSO_CLIENT_ID}')" \
 		-p SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${SSO_CLIENT_SECRET}')" \
+		-p CENTRAL_IDP_CLIENT_SECRET="$(shell ([ -s './secrets/central.idp-client-secret' ] && [ -z '${CENTRAL_IDP_CLIENT_SECRET}' ]) && cat ./secrets/central.idp-client-secret || echo '${CENTRAL_IDP_CLIENT_SECRET}')" \
 		-p CENTRAL_TLS_CERT="$(shell ([ -s './secrets/central-tls.crt' ] && [ -z '${CENTRAL_TLS_CERT}' ]) && cat ./secrets/central-tls.crt || echo '${CENTRAL_TLS_CERT}')" \
 		-p CENTRAL_TLS_KEY="$(shell ([ -s './secrets/central-tls.key' ] && [ -z '${CENTRAL_TLS_KEY}' ]) && cat ./secrets/central-tls.key || echo '${CENTRAL_TLS_KEY}')" \
 		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
