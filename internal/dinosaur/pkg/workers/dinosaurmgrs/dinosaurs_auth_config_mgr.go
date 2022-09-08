@@ -63,16 +63,15 @@ func (k *CentralAuthConfigManager) Reconcile() []error {
 		// CentralConfig. For 2), we need to request a dynamic client from the
 		// RHSSO API.
 
-		var augmentWithAuthConfigF func(r *dbapi.CentralRequest, centralConfig *config.CentralConfig) error
+		var err error
 		if k.centralConfig.HasStaticAuth() {
 			glog.V(7).Infoln("static config found; no dynamic client will be requested the IdP")
-			augmentWithAuthConfigF = augmentWithStaticAuthConfig
+			err = augmentWithStaticAuthConfig(cr, k.centralConfig)
 		} else {
 			glog.V(7).Infoln("no static config found; attempting to obtain one from the IdP")
-			augmentWithAuthConfigF = augmentWithDynamicAuthConfig
+			err = augmentWithDynamicAuthConfig(cr, k.centralConfig)
 		}
-
-		if err := augmentWithAuthConfigF(cr, k.centralConfig); err != nil {
+		if err != nil {
 			errs = append(errs, errors.Wrap(err, "failed to augment central request with auth config"))
 		}
 
