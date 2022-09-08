@@ -107,7 +107,7 @@ esac
 helm upgrade rhacs-terraform ./ \
   --install \
   --debug \
-  --namespace rhacs \
+  --namespace rhacs-fleetshard \
   --create-namespace \
   --set acsOperator.enabled=true \
   --set acsOperator.source=rhacs-operators \
