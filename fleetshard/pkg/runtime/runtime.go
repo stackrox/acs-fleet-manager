@@ -71,6 +71,12 @@ func (r *Runtime) Start() error {
 
 	routesAvailable := routesAvailable()
 
+	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
+		UseRoutes:         routesAvailable,
+		WantsAuthProvider: r.config.CreateAuthProvider,
+		EgressProxyImage:  r.config.EgressProxyImage,
+	}
+
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		list, err := r.client.GetManagedCentralList()
 		if err != nil {
@@ -83,7 +89,7 @@ func (r *Runtime) Start() error {
 		glog.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
-				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, routesAvailable, r.config.CreateAuthProvider)
+				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]

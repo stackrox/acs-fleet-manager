@@ -26,6 +26,8 @@ fleetshardSync:
   tokenRefresher:
     image: "quay.io/rhoas/mk-token-refresher:latest"
     issuerUrl: "https://sso.redhat.com/auth/realms/redhat-external"
+  egressProxy:
+    image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0"
 
 acsOperator:
   enabled: false

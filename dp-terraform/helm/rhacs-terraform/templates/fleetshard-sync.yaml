@@ -37,6 +37,8 @@ spec:
           value: {{ .Values.fleetshardSync.authType }}
         - name: STATIC_TOKEN
           value: {{ .Values.fleetshardSync.staticToken }}
+        - name: EGRESS_PROXY_IMAGE
+          value: {{ .Values.fleetshardSync.egressProxy.image | quote }}
       {{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret (eq .Values.fleetshardSync.authType "RHSSO") }}
         volumeMounts:
           - mountPath: /run/secrets/rhsso-token

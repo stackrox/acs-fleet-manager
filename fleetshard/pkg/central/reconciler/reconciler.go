@@ -39,6 +39,13 @@ const (
 	helmReleaseName = "tenant-resources"
 )
 
+// CentralReconcilerOptions are the static options for creating a reconciler.
+type CentralReconcilerOptions struct {
+	UseRoutes         bool
+	WantsAuthProvider bool
+	EgressProxyImage  string
+}
+
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
@@ -50,6 +57,7 @@ type CentralReconciler struct {
 	wantsAuthProvider bool
 	hasAuthProvider   bool
 	routeService      *k8s.RouteService
+	egressProxyImage  string
 
 	resourcesChart *chart.Chart
 }
@@ -566,11 +574,21 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 }
 
 func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (chartutil.Values, error) {
-	return chartutil.Values{
+	vals := chartutil.Values{
 		"labels": map[string]interface{}{
 			k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
 		},
-	}, nil
+	}
+	if r.egressProxyImage != "" {
+		override := chartutil.Values{
+			"egressProxy": chartutil.Values{
+				"image": r.egressProxyImage,
+			},
+		}
+		vals = chartutil.CoalesceTables(vals, override)
+	}
+
+	return vals, nil
 }
 
 var (
@@ -578,14 +596,15 @@ var (
 )
 
 // NewCentralReconciler ...
-func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, useRoutes, wantsAuthProvider bool) *CentralReconciler {
+func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, opts CentralReconcilerOptions) *CentralReconciler {
 	return &CentralReconciler{
 		client:            k8sClient,
 		central:           central,
 		status:            pointer.Int32(FreeStatus),
-		useRoutes:         useRoutes,
-		wantsAuthProvider: wantsAuthProvider,
+		useRoutes:         opts.UseRoutes,
+		wantsAuthProvider: opts.WantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
+		egressProxyImage:  opts.EgressProxyImage,
 
 		resourcesChart: resourcesChart,
 	}
