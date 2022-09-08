@@ -65,11 +65,11 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 				from.Owner,
 			},
 			Auth: private.ManagedCentralAllOfSpecAuth{
-				ClientSecret: c.centralConfig.RhSsoClientSecret, // pragma: allowlist secret
-				ClientId:     c.centralConfig.RhSsoClientID,
+				ClientSecret: c.centralConfig.CentralIdPClientSecret, // pragma: allowlist secret
+				ClientId:     c.centralConfig.CentralIdPClientID,
 				OwnerOrgId:   from.OrganisationID,
 				OwnerUserId:  from.OwnerUserID,
-				Issuer:       c.centralConfig.RhSsoIssuer,
+				Issuer:       c.centralConfig.CentralIdPIssuer,
 			},
 			UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
 				Host: from.GetUIHost(),

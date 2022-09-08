@@ -27,10 +27,11 @@ type CentralConfig struct {
 	CentralLifespan *CentralLifespanConfig `json:"central_lifespan"`
 	Quota           *CentralQuotaConfig    `json:"central_quota"`
 
-	RhSsoClientID         string `json:"rhsso_client_id"`
-	RhSsoClientSecret     string `json:"rhsso_client_secret"`
-	RhSsoClientSecretFile string `json:"rhsso_client_secret_file"`
-	RhSsoIssuer           string `json:"rhsso_issuer"`
+	// Central's IdP static configuration (optional).
+	CentralIdPClientID         string `json:"central_idp_client_id"`
+	CentralIdPClientSecret     string `json:"central_idp_client_secret"`
+	CentralIdPClientSecretFile string `json:"central_idp_client_secret_file"`
+	CentralIdPIssuer           string `json:"central_idp_issuer"`
 }
 
 // NewCentralConfig ...
@@ -42,8 +43,8 @@ func NewCentralConfig() *CentralConfig {
 		CentralDomainName:                "rhacs-dev.com",
 		CentralLifespan:                  NewCentralLifespanConfig(),
 		Quota:                            NewCentralQuotaConfig(),
-		RhSsoClientSecretFile:            "secrets/central.idp-client-secret", //pragma: allowlist secret
-		RhSsoIssuer:                      "https://sso.redhat.com/auth/realms/redhat-external",
+		CentralIdPClientSecretFile:       "secrets/central.idp-client-secret", //pragma: allowlist secret
+		CentralIdPIssuer:                 "https://sso.redhat.com/auth/realms/redhat-external",
 	}
 }
 
@@ -57,9 +58,10 @@ func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.CentralDomainName, "central-domain-name", c.CentralDomainName, "The domain name to use for Central instances")
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
 	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of central evaluator instances")
-	fs.StringVar(&c.RhSsoClientID, "rhsso-client-id", c.RhSsoClientID, "RHSSO client ID to pass to Central's auth config")
-	fs.StringVar(&c.RhSsoClientSecretFile, "rhsso-client-secret-file", c.RhSsoClientSecretFile, "File containing RHSSO client secret to pass to Central's auth config")
-	fs.StringVar(&c.RhSsoIssuer, "rhsso-issuer", c.RhSsoIssuer, "Issuer identifier for sso.redhat.com. Should be equal to value returned in ID Token issuer ('iss') field")
+
+	fs.StringVar(&c.CentralIdPClientID, "central-idp-client-id", c.CentralIdPClientID, "OIDC client_id to pass to Central's auth config")
+	fs.StringVar(&c.CentralIdPClientSecretFile, "central-idp-client-secret-file", c.CentralIdPClientSecretFile, "File containing OIDC client_secret to pass to Central's auth config")
+	fs.StringVar(&c.CentralIdPIssuer, "central-idp-issuer", c.CentralIdPIssuer, "OIDC issuer URL to pass to Central's auth config")
 }
 
 // ReadFiles ...
@@ -72,14 +74,14 @@ func (c *CentralConfig) ReadFiles() error {
 	if err != nil {
 		return fmt.Errorf("reading TLS key file: %w", err)
 	}
-	err = shared.ReadFileValueString(c.RhSsoClientSecretFile, &c.RhSsoClientSecret)
+	err = shared.ReadFileValueString(c.CentralIdPClientSecretFile, &c.CentralIdPClientSecret)
 	if err != nil {
-		return fmt.Errorf("reading Red Hat SSO client secret file: %w", err)
+		return fmt.Errorf("reading Central's IdP client secret file: %w", err)
 	}
-	if c.RhSsoClientSecret != "" {
-		glog.Info("Central Red Hat OIDC client secret is configured.")
+	if c.CentralIdPClientSecret != "" {
+		glog.Info("Central's IdP client secret is configured")
 	} else {
-		glog.Infof("Central Red Hat OIDC client secret from secret file %q is missing.", c.RhSsoClientSecretFile)
+		glog.Infof("Central's IdP client secret from file %q is missing", c.CentralIdPClientSecretFile)
 	}
 	// TODO(ROX-11289): drop MaxCapacity
 	// MaxCapacity is deprecated and will not be used.

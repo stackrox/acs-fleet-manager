@@ -592,6 +592,7 @@ objects:
     metadata:
       name: fake-fleet-manager-secret
     data:
+      central.idp-client-secret: badger
       ocm-service.clientId: badger
       ocm-service.clientSecret: badger
       ocm-service.token: badger
@@ -902,10 +903,6 @@ objects:
             secret:
               # secretName is a vault-secret provider name in the app-interface
               secretName: fleet-manager-credentials # pragma: allowlist secret
-          - name: rhsso-client-secret
-            secret:
-              # secretName is a vault-secret provider name in the app-interface
-              secretName: fleet-manager-central-rhsso-client-secret # pragma: allowlist secret
           - name: tls
             secret:
               secretName: fleet-manager-tls # pragma: allowlist secret
@@ -995,8 +992,6 @@ objects:
               mountPath: /secrets/fleet-manager-credentials
             - name: tls
               mountPath: /secrets/tls
-            - name: rhsso-client-secret
-              mountPath: /secrets/rhsso-client-secret
             - name: service
               mountPath: /secrets/service
             - name: dataplane-certificate
@@ -1064,7 +1059,7 @@ objects:
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
             - --aws-route53-access-key-file=/secrets/fleet-manager-credentials/aws.route53accesskey
             - --aws-route53-secret-access-key-file=/secrets/fleet-manager-credentials/aws.route53secretaccesskey
-            - --rhsso-client-secret-file=/secrets/rhsso-client-secret/clientSecret
+            - --central-idp-client-secret-file=/secrets/service/central.idp-client-secret
             - --observatorium-debug=${ENABLE_OBSERVATORIUM_DEBUG}
             - --observatorium-ignore-ssl=${OBSERVATORIUM_INSECURE}
             - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}

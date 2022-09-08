@@ -45,7 +45,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"dataplane-cluster-scaling-type":      "auto", // need to set this to 'auto' for integration environment as some tests rely on this
 		"central-operator-addon-id":           "managed-central-qe",
 		"fleetshard-addon-id":                 "fleetshard-operator-qe",
-		"rhsso-client-id":                     "rhacs-ms-dev",
+		"central-idp-client-id":               "rhacs-ms-dev",
 	}
 }
 

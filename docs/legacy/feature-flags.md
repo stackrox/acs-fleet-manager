@@ -34,10 +34,18 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **enable-central-external-certificate**: Enables custom Central TLS certificate.
     - `central-tls-cert-file` [Required]: The path to the file containing the Central TLS certificate (default: `'secrets/central-tls.crt'`).
     - `central-tls-key-file` [Required]: The path to the file containing the Central TLS private key (default: `'secrets/central-tls.key'`).
-- **enable-evaluator-instance**: Enable the creation of one central evaluator instances per user  
-- **rhsso-client-id**: RHSSO client ID to pass to Central's auth config to set up RHSSO IdP
-- **rhsso-client-secret-file**: File containing RHSSO client secret to pass to Central's auth config to set up RHSSO IdP
-- **rhsso-issuer**: RHSSO issuer to pass to Central's auth config to set up RHSSO IdP
+- **enable-evaluator-instance**: Enable the creation of one central evaluator instances per user
+
+- **central-idp-***: A collection of flags describing _static_ auth config for Central.
+  If set, every Central will have the **same** IdP config which is likely not what you
+  want for production. If not set, the IdP API will be queried for dynamic configuration.
+    - **central-idp-client-id**: OIDC client_id to pass to Central's auth config to set
+      up its IdP integration.
+    - **central-idp-client-secret-file**: File containing OIDC client_secret to pass to
+      Central's auth config to set up its IdP integration.
+    - **central-idp-issuer**: OIDC issuer URL to pass to Central's auth config to set up
+      its IdP integration.
+
 - **quota-type**: Sets the quota service to be used for access control when requesting Central instances (options: `ams` or `quota-management-list`, default: `quota-management-list`).
     > For more information on the quota service implementation, see the [quota service architecture](./architecture/quota-service-implementation) architecture documentation.
     - If this is set to `quota-management-list`, quotas will be managed via the quota management list configuration.
