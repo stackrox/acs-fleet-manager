@@ -43,6 +43,7 @@ func NewCentralConfig() *CentralConfig {
 		CentralLifespan:                  NewCentralLifespanConfig(),
 		Quota:                            NewCentralQuotaConfig(),
 		RhSsoClientSecretFile:            "secrets/central.idp-client-secret",
+		RhSsoIssuer:                      "https://sso.redhat.com/auth/realms/redhat-external",
 	}
 }
 
