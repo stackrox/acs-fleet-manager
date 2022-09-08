@@ -65,7 +65,7 @@ type DinosaurService interface {
 	// HasAvailableCapacityInRegion checks if there is capacity in the clusters for a given region
 	HasAvailableCapacityInRegion(dinosaurRequest *dbapi.CentralRequest) (bool, *errors.ServiceError)
 	// AcceptCentralRequest transitions CentralRequest to 'Preparing'.
-	AcceptCentralRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
+	AcceptCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError
 	// PrepareDinosaurRequest transitions CentralRequest to 'Provisioning'.
 	PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	// Get method will retrieve the dinosaurRequest instance that the give ctx has access to from the database.
@@ -278,33 +278,33 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 // be fully prepared yet.
 func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	// Set namespace.
-	namespace, formatErr := FormatNamespace(dinosaurRequest.ID)
+	namespace, formatErr := FormatNamespace(centralRequest.ID)
 	if formatErr != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, formatErr, "invalid id format")
 	}
-	dinosaurRequest.Namespace = namespace
+	centralRequest.Namespace = namespace
 
 	// Set host.
 	if k.dinosaurConfig.EnableCentralExternalCertificate {
 		// If we enable DinosaurTLS, the host should use the external domain name rather than the cluster domain
-		dinosaurRequest.Host = k.dinosaurConfig.CentralDomainName
+		centralRequest.Host = k.dinosaurConfig.CentralDomainName
 	} else {
-		clusterDNS, err := k.clusterService.GetClusterDNS(dinosaurRequest.ClusterID)
+		clusterDNS, err := k.clusterService.GetClusterDNS(centralRequest.ClusterID)
 		if err != nil {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
 		}
-		dinosaurRequest.Host = clusterDNS
+		centralRequest.Host = clusterDNS
 	}
 
 	// Update the fields of the CentralRequest record in the database.
 	updatedDinosaurRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
-			ID: dinosaurRequest.ID,
+			ID: centralRequest.ID,
 		},
-		Host:        dinosaurRequest.Host,
+		Host:        centralRequest.Host,
 		PlacementID: api.NewID(),
 		Status:      dinosaurConstants.CentralRequestStatusPreparing.String(),
-		Namespace:   dinosaurRequest.Namespace,
+		Namespace:   centralRequest.Namespace,
 	}
 	if err := k.Update(updatedDinosaurRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update dinosaur request")
@@ -336,7 +336,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		},
 		Status:      dinosaurConstants.CentralRequestStatusProvisioning.String(),
 	}
-	if err := k.Update(updatedDinosaurRequest); err != nil {
+	if err := k.Update(updatedCentralRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update dinosaur request")
 	}
 
@@ -852,7 +852,7 @@ func (k *dinosaurService) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralReque
 		Where("client_id = ''")
 
 	var results []*dbapi.CentralRequest
-	if err := dbConn.Find(&results).Error; err != nil {
+	if err := dbQuery.Find(&results).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list Central requests")
 	}
 	return results, nil
