@@ -138,13 +138,13 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 	// This map collects all central ids in the current list, it is later used to find and delete all reconcilers of
 	// centrals that are no longer in the GetManagedCentralList
-	centralIds := map[string]bool{}
+	centralIds := map[string]struct{}{}
 	for _, central := range list.Items {
-		centralIds[central.Id] = true
+		centralIds[central.Id] = struct{}{}
 	}
 
 	for key := range r.reconcilers {
-		if !centralIds[key] {
+		if _, hasKey := centralIds[key]; !hasKey {
 			delete(r.reconcilers, key)
 		}
 	}
