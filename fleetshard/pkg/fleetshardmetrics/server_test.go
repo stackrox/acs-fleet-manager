@@ -32,6 +32,8 @@ func TestMetricsServerServesCustomMetrics(t *testing.T) {
 		"total_fleet_manager_request_errors",
 		"total_central_reconcilations",
 		"total_central_reconcilation_errors",
+		"active_central_reconcilations",
+		"total_centrals",
 	}
 
 	for _, key := range expectedKeys {

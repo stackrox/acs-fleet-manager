@@ -95,12 +95,15 @@ func (r *Runtime) Start() error {
 
 			reconciler := r.reconcilers[central.Id]
 			go func(reconciler *centralReconciler.CentralReconciler, central private.ManagedCentral) {
+				fleetshardmetrics.MetricsInstance().IncActiveCentralReconcilations()
+				defer fleetshardmetrics.MetricsInstance().DecActiveCentralReconcilations()
 				glog.Infof("Start reconcile central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
 				status, err := reconciler.Reconcile(context.Background(), central)
-				fleetshardmetrics.MetricsInstance().IncrementCentralReconcilations()
+				fleetshardmetrics.MetricsInstance().IncCentralReconcilations()
 				r.handleReconcileResult(central, status, err)
 			}(reconciler, central)
 		}
+		fleetshardmetrics.MetricsInstance().SetTotalCentrals(float64(len(r.reconcilers)))
 
 		r.deleteStaleReconcilers(list)
 		return r.config.RuntimePollPeriod, nil
@@ -119,7 +122,7 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 		if centralReconciler.IsSkippable(err) {
 			glog.Infof("Skip sending the status for central %s/%s: %v", central.Metadata.Namespace, central.Metadata.Name, err)
 		} else {
-			fleetshardmetrics.MetricsInstance().IncrementCentralReconcilationErrors()
+			fleetshardmetrics.MetricsInstance().IncCentralReconcilationErrors()
 			glog.Errorf("Unexpected error occurred %s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err.Error())
 		}
 		return
