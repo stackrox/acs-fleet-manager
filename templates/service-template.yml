@@ -19,6 +19,10 @@ parameters:
   description: Which ACS Service Fleet Manager environment to use for this deployment
   value: production
 
+- name: CENTRAL_RHSSO_CLIENT_ID
+  displayName: Central Red Hat SSO client id
+  description: Which OIDC client id to use to connect to Red Hat SSO from Central
+
 - name: CENTRAL_IDP_ISSUER
   displayName: Central's IdP issuer
   description: OIDC issuer URL to pass to Central's auth config
