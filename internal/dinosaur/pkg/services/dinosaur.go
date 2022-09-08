@@ -847,7 +847,7 @@ func (k *dinosaurService) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralReque
 		dinosaurConstants.CentralRequestStatusPreparing,
 	}
 
-	dbConn := k.connectionFactory.New().
+	dbQuery := k.connectionFactory.New().
 		Where("status IN (?)", status).
 		Where("client_id = ''")
 
