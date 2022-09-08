@@ -7,7 +7,7 @@ require (
 	github.com/Nerzal/gocloak/v11 v11.2.0
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware/v2 v2.0.1
-	github.com/aws/aws-sdk-go v1.44.86
+	github.com/aws/aws-sdk-go v1.44.93
 	github.com/blang/semver/v4 v4.0.0
 	github.com/bxcodec/faker/v3 v3.8.0
 	github.com/caarlos0/env/v6 v6.10.0
@@ -52,6 +52,7 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yaacov/tree-search-language v0.0.0-20190923184055-1c2dad2e354b
 	github.com/zgalor/weberr v0.7.0
+	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	golang.org/x/oauth2 v0.0.0-20220718184931-c8730f7fcb92
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 	gopkg.in/resty.v1 v1.12.0
@@ -64,6 +65,7 @@ require (
 	k8s.io/client-go v0.24.2
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 	sigs.k8s.io/controller-runtime v0.12.3
+	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
@@ -138,7 +140,6 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
-	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
@@ -156,7 +157,6 @@ require (
 	k8s.io/kube-openapi v0.0.0-20220413171646-5e7f5fdc6da6 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
 replace (
