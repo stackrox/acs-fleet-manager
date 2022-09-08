@@ -840,22 +840,25 @@ func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralR
 // ListCentralsWithoutAuthConfig returns all _relevant_ central requests with
 // no auth config.
 func (k *dinosaurService) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError) {
-	// There is no value in augmenting auth config for central requests beyond
-	// 'Preparing'.
-	status := []dinosaurConstants.CentralStatus{
-		dinosaurConstants.CentralRequestStatusAccepted,
-		dinosaurConstants.CentralRequestStatusPreparing,
-	}
-
 	dbQuery := k.connectionFactory.New().
-		Where("status IN (?)", status).
 		Where("client_id = ''")
 
 	var results []*dbapi.CentralRequest
 	if err := dbQuery.Find(&results).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list Central requests")
 	}
-	return results, nil
+
+	// Central requests beyond 'Preparing' should have already been augmented.
+	filteredResults := make([]*dbapi.CentralRequest, 0, len(results))
+	for _, r := range results {
+		if dinosaurConstants.CentralStatus(r.Status).CompareTo(dinosaurConstants.CentralRequestStatusPreparing) <= 0 {
+			filteredResults = append(filteredResults, r)
+		} else {
+			glog.Warningf("Central request %s in status %q lacks auth config which should have been set up earlier", r.ID, r.Status)
+		}
+	}
+
+	return filteredResults, nil
 }
 
 func buildDinosaurClusterCNAMESRecordBatch(routes []dbapi.DataPlaneCentralRoute, action string) *route53.ChangeBatch {
