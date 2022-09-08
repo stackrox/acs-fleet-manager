@@ -276,7 +276,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 // require blocking operations (deducing namespace or instance hostname). Upon
 // success, CentralRequest is transitioned to 'Preparing' status and might not
 // be fully prepared yet.
-func (k *dinosaurService) AcceptCentralRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
+func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	// Set namespace.
 	namespace, formatErr := FormatNamespace(dinosaurRequest.ID)
 	if formatErr != nil {
