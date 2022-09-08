@@ -1068,6 +1068,7 @@ objects:
             - --aws-route53-access-key-file=/secrets/fleet-manager-credentials/aws.route53accesskey
             - --aws-route53-secret-access-key-file=/secrets/fleet-manager-credentials/aws.route53secretaccesskey
             - --central-idp-client-secret-file=/secrets/fleet-manager-credentials/central.idp-client-secret
+            - --central-idp-client-id=${CENTRAL_RHSSO_CLIENT_ID}
             - --observatorium-debug=${ENABLE_OBSERVATORIUM_DEBUG}
             - --observatorium-ignore-ssl=${OBSERVATORIUM_INSECURE}
             - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}
