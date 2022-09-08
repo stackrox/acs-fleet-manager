@@ -10,8 +10,9 @@ import (
 	"golang.org/x/net/http/httpproxy"
 )
 
+const testNS = `acsms-01`
+
 func TestProxyConfiguration(t *testing.T) {
-	const testNS = `acsms-01`
 	ei := envisolator.NewEnvIsolator(t)
 	defer ei.RestoreAll()
 
@@ -60,5 +61,13 @@ func TestProxyConfiguration(t *testing.T) {
 			continue
 		}
 		assert.Equal(t, expectedProxyURL, proxyURL.String())
+	}
+}
+
+func TestProxyConfiguration_IsDeterministic(t *testing.T) {
+	envVars := getProxyEnvVars(testNS)
+	for i := 0; i < 5; i++ {
+		otherEnvVars := getProxyEnvVars(testNS)
+		assert.Equal(t, envVars, otherEnvVars)
 	}
 }
