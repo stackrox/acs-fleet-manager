@@ -19,4 +19,3 @@ jobs:
         with:
           go-version: "1.17"
       - uses: pre-commit/action@v3.0.0
-        with:

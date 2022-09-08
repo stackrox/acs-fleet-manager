@@ -87,7 +87,7 @@ The service metadata overview can be found in two places:
 
 ### Resource Capacity and Growth
 
-The dev team expects that ACS Fleet Manager CPU, memory, and disk usage will grow proportionally to the number of users 
+The dev team expects that ACS Fleet Manager CPU, memory, and disk usage will grow proportionally to the number of users
 for both OSD cluster and AWS RDS instance.
 The number of running ACS Fleet Manager replicas can be configured via the `REPLICAS` environment variable in the [saas.yml](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/acs-fleet-manager/cicd/saas.yaml) file on app-interface.
 The AWS RDS instance can be scaled with ACS Fleet Manager RDS resource configuration on app-interface
@@ -106,14 +106,14 @@ Factors which affect CPU and memory usage:
 ### Data Continuity and Disaster Recovery
 
 - AWS RDS:
-  - ACS Fleet manager uses only AWS RDS (PostgreSQL) for persisting critical data. 
+  - ACS Fleet manager uses only AWS RDS (PostgreSQL) for persisting critical data.
   - The AWS RDS instances are managed by the AppSRE team.
-  - Both ACS Fleet Manager RDS resources are defined in app-interface repository ([prod](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/terraform/resources/acs-fleet-manager/production/rds-pg14.yml) 
+  - Both ACS Fleet Manager RDS resources are defined in app-interface repository ([prod](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/terraform/resources/acs-fleet-manager/production/rds-pg14.yml)
     and [stage](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/terraform/resources/acs-fleet-manager/staging/rds-pg14.yml)).
   - In case of a database disaster, AppSRE would need to recreate that database and restore the latest backup.
     Also, it is possible to trigger restoring from the backup manually.
     Follow [appSRE instructions](https://gitlab.cee.redhat.com/service/app-interface#restoring-rds-databases-from-backups) for restoring RDS from the backup.
-    Furthermore, ACS Fleet Manager deployments automatically check and apply schema migrations on startup. 
+    Furthermore, ACS Fleet Manager deployments automatically check and apply schema migrations on startup.
     So, if migrations were lost in the disaster, deployment will automatically update an out-of-date schema.
 - Local filesystem:
   - Local filesystems on pods do not have any business-critical data.
@@ -131,8 +131,8 @@ Consequences of data loss may include but are not limited to:
 - Ongoing ACS instance provisioning requests might be lost.
 - Ongoing ACS instance deleting requests might be lost.
 
-ACS Fleet Manager does not retain or report any personally identifying information (PII) or critical financial records. 
-Losing data in ACS Fleet Manager due to a disaster only noticeably affects the displayed users of ACS instances on https://console.redhat.com. 
+ACS Fleet Manager does not retain or report any personally identifying information (PII) or critical financial records.
+Losing data in ACS Fleet Manager due to a disaster only noticeably affects the displayed users of ACS instances on https://console.redhat.com.
 The ACS instances itself are hosted on separate cluster and should persist regardless ACS Fleet Manager AWS RDS lost data.
 Requesting a new ACS Instance after data loss should not have any issue.
 
