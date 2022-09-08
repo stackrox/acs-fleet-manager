@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gogo/protobuf/proto"
@@ -17,6 +18,8 @@ import (
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/httputil"
 )
+
+const couldNotParseReason = "could not parse a reason for request to fail"
 
 // reusing transport allows us to benefit from connection pooling.
 var insecureTransport *http.Transport
@@ -88,8 +91,9 @@ func (c *Client) SendRequestToCentral(ctx context.Context, requestMessage proto.
 	defer utils.IgnoreError(resp.Body.Close)
 
 	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to execute request: %s %s",
-			method, path)
+		reason := extractCentralError(resp)
+		return acsErrors.NewErrorFromHTTPStatusCode(resp.StatusCode, "failed to execute request: %s %s with reason %q",
+			method, path, reason)
 	}
 
 	// Do not try to unmarshal the response body if no response message is set.
@@ -101,6 +105,21 @@ func (c *Client) SendRequestToCentral(ctx context.Context, requestMessage proto.
 		return errors.Wrap(err, "decoding response body")
 	}
 	return nil
+}
+
+func extractCentralError(resp *http.Response) string {
+	var data map[string]string
+	if resp == nil || resp.Body == nil {
+		return couldNotParseReason
+	}
+	err := json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		return couldNotParseReason
+	}
+	if val, ok := data["error"]; ok {
+		return val
+	}
+	return couldNotParseReason
 }
 
 func (c *Client) createRequest(ctx context.Context, requestMessage proto.Message, method, path string) (*http.Request, error) {
