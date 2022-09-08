@@ -330,7 +330,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 	}
 
 	// Update the fields of the CentralRequest record in the database.
-	updatedDinosaurRequest := &dbapi.CentralRequest{
+	updatedCentralRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
 		},
