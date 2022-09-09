@@ -100,6 +100,7 @@ func (r *Runtime) Start() error {
 			}(reconciler, central)
 		}
 
+		r.deleteStaleReconcilers(list)
 		return r.config.RuntimePollPeriod, nil
 	}, 10*time.Minute, backoff)
 
@@ -131,6 +132,21 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 	if err != nil {
 		err = errors.Wrapf(err, "updating status for Central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
 		glog.Error(err)
+	}
+}
+
+func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
+	// This map collects all central ids in the current list, it is later used to find and delete all reconcilers of
+	// centrals that are no longer in the GetManagedCentralList
+	centralIds := map[string]struct{}{}
+	for _, central := range list.Items {
+		centralIds[central.Id] = struct{}{}
+	}
+
+	for key := range r.reconcilers {
+		if _, hasKey := centralIds[key]; !hasKey {
+			delete(r.reconcilers, key)
+		}
 	}
 }
 
