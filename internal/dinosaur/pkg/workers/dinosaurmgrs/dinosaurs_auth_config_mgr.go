@@ -87,16 +87,6 @@ func (k *CentralAuthConfigManager) Reconcile() []error {
 // augmentWithStaticAuthConfig augments provided CentralRequest with static auth
 // config information, i.e., the same for all Centrals.
 func augmentWithStaticAuthConfig(r *dbapi.CentralRequest, centralConfig *config.CentralConfig) error {
-	// TODO(alexr): Ideally this belongs in a config validation routine.
-	if centralConfig.CentralIDPClientSecret == "" {
-		glog.Warningf("no client_secret specified for static client_id %q;"+
-			" auth configuration is either incorrect or insecure", centralConfig.CentralIDPClientID)
-	}
-	if centralConfig.CentralIDPIssuer == "" {
-		glog.Errorf("no issuer specified for static client_id %q;"+
-			" auth configuration will likely not work properly", centralConfig.CentralIDPClientID)
-	}
-
 	r.AuthConfig.ClientID = centralConfig.CentralIDPClientID
 	r.AuthConfig.ClientSecret = centralConfig.CentralIDPClientSecret //pragma: allowlist secret
 	r.AuthConfig.Issuer = centralConfig.CentralIDPIssuer

@@ -83,6 +83,19 @@ func (c *CentralConfig) ReadFiles() error {
 	} else {
 		glog.Infof("Central's IdP client secret from file %q is missing", c.CentralIDPClientSecretFile)
 	}
+
+	// Check that all parts of static auth config are present.
+	if c.HasStaticAuth() {
+		if c.CentralIDPClientSecret == "" {
+			glog.Warningf("no client_secret specified for static client_id %q;"+
+				" auth configuration is either incorrect or insecure", c.CentralIDPClientID)
+		}
+		if c.CentralIDPIssuer == "" {
+			glog.Errorf("no issuer specified for static client_id %q;"+
+				" auth configuration will likely not work properly", c.CentralIDPClientID)
+		}
+	}
+
 	// TODO(ROX-11289): drop MaxCapacity
 	// MaxCapacity is deprecated and will not be used.
 	// Temporarily set MaxCapacity manually in order to simplify app start.
