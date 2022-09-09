@@ -28,10 +28,10 @@ type CentralConfig struct {
 	Quota           *CentralQuotaConfig    `json:"central_quota"`
 
 	// Central's IdP static configuration (optional).
-	CentralIdPClientID         string `json:"central_idp_client_id"`
-	CentralIdPClientSecret     string `json:"central_idp_client_secret"`
-	CentralIdPClientSecretFile string `json:"central_idp_client_secret_file"`
-	CentralIdPIssuer           string `json:"central_idp_issuer"`
+	CentralIDPClientID         string `json:"central_idp_client_id"`
+	CentralIDPClientSecret     string `json:"central_idp_client_secret"`
+	CentralIDPClientSecretFile string `json:"central_idp_client_secret_file"`
+	CentralIDPIssuer           string `json:"central_idp_issuer"`
 }
 
 // NewCentralConfig ...
@@ -43,8 +43,8 @@ func NewCentralConfig() *CentralConfig {
 		CentralDomainName:                "rhacs-dev.com",
 		CentralLifespan:                  NewCentralLifespanConfig(),
 		Quota:                            NewCentralQuotaConfig(),
-		CentralIdPClientSecretFile:       "secrets/central.idp-client-secret", //pragma: allowlist secret
-		CentralIdPIssuer:                 "https://sso.redhat.com/auth/realms/redhat-external",
+		CentralIDPClientSecretFile:       "secrets/central.idp-client-secret", //pragma: allowlist secret
+		CentralIDPIssuer:                 "https://sso.redhat.com/auth/realms/redhat-external",
 	}
 }
 
@@ -59,9 +59,9 @@ func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
 	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of central evaluator instances")
 
-	fs.StringVar(&c.CentralIdPClientID, "central-idp-client-id", c.CentralIdPClientID, "OIDC client_id to pass to Central's auth config")
-	fs.StringVar(&c.CentralIdPClientSecretFile, "central-idp-client-secret-file", c.CentralIdPClientSecretFile, "File containing OIDC client_secret to pass to Central's auth config")
-	fs.StringVar(&c.CentralIdPIssuer, "central-idp-issuer", c.CentralIdPIssuer, "OIDC issuer URL to pass to Central's auth config")
+	fs.StringVar(&c.CentralIDPClientID, "central-idp-client-id", c.CentralIDPClientID, "OIDC client_id to pass to Central's auth config")
+	fs.StringVar(&c.CentralIDPClientSecretFile, "central-idp-client-secret-file", c.CentralIDPClientSecretFile, "File containing OIDC client_secret to pass to Central's auth config")
+	fs.StringVar(&c.CentralIDPIssuer, "central-idp-issuer", c.CentralIDPIssuer, "OIDC issuer URL to pass to Central's auth config")
 }
 
 // ReadFiles ...
@@ -74,14 +74,14 @@ func (c *CentralConfig) ReadFiles() error {
 	if err != nil {
 		return fmt.Errorf("reading TLS key file: %w", err)
 	}
-	err = shared.ReadFileValueString(c.CentralIdPClientSecretFile, &c.CentralIdPClientSecret)
+	err = shared.ReadFileValueString(c.CentralIDPClientSecretFile, &c.CentralIDPClientSecret)
 	if err != nil {
 		return fmt.Errorf("reading Central's IdP client secret file: %w", err)
 	}
-	if c.CentralIdPClientSecret != "" {
+	if c.CentralIDPClientSecret != "" {
 		glog.Info("Central's IdP client secret is configured")
 	} else {
-		glog.Infof("Central's IdP client secret from file %q is missing", c.CentralIdPClientSecretFile)
+		glog.Infof("Central's IdP client secret from file %q is missing", c.CentralIDPClientSecretFile)
 	}
 	// TODO(ROX-11289): drop MaxCapacity
 	// MaxCapacity is deprecated and will not be used.
