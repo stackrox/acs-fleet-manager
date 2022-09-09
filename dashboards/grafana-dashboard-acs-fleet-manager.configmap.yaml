@@ -36,7 +36,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 413,
-      "iteration": 1661826283395,
+      "iteration": 1662669303081,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -55,7 +55,7 @@ data:
                 "axisPlacement": "auto",
                 "barAlignment": 0,
                 "drawStyle": "line",
-                "fillOpacity": 0,
+                "fillOpacity": 10,
                 "gradientMode": "none",
                 "hideFrom": {
                   "legend": false,
@@ -63,7 +63,10 @@ data:
                   "viz": false
                 },
                 "lineInterpolation": "linear",
-                "lineWidth": 1,
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "lineWidth": 3,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
@@ -120,7 +123,7 @@ data:
                 "uid": "aQ7y3WBnk"
               },
               "editorMode": "code",
-              "expr": "sum(rate(envoy_cluster_upstream_rq_total{namespace=\"$namespace\",service=\"fleet-manager-envoy-metrics\",envoy_cluster_name=\"backend\"}[10m]))",
+              "expr": "sum(rate(envoy_cluster_upstream_rq_total{namespace=\"$namespace\",service=\"fleet-manager-envoy-metrics\",envoy_cluster_name=\"backend\"}[$__rate_interval]))",
               "legendFormat": "Inbound",
               "range": true,
               "refId": "A"
@@ -152,7 +155,7 @@ data:
                   "viz": false
                 },
                 "lineInterpolation": "linear",
-                "lineWidth": 1,
+                "lineWidth": 3,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
@@ -211,7 +214,7 @@ data:
                 "uid": "aQ7y3WBnk"
               },
               "editorMode": "code",
-              "expr": "sum(rate(api_inbound_request_count{namespace=\"$namespace\",service=\"fleet-manager-metrics\"}[10m]))",
+              "expr": "sum(rate(api_inbound_request_count{namespace=\"$namespace\",service=\"fleet-manager-metrics\"}[$__rate_interval]))",
               "hide": false,
               "key": "Q-e861f316-23b5-46b9-a59c-9bd227ca560e-0",
               "legendFormat": "Inbound",
@@ -224,7 +227,7 @@ data:
                 "uid": "aQ7y3WBnk"
               },
               "editorMode": "code",
-              "expr": "sum(rate(api_outbound_request_count{namespace=\"$namespace\",service=\"fleet-manager-metrics\"}[10m]))",
+              "expr": "sum(rate(api_outbound_request_count{namespace=\"$namespace\",service=\"fleet-manager-metrics\"}[$__rate_interval]))",
               "hide": false,
               "legendFormat": "Outbound",
               "range": true,
@@ -249,7 +252,7 @@ data:
                 "axisPlacement": "auto",
                 "barAlignment": 0,
                 "drawStyle": "line",
-                "fillOpacity": 0,
+                "fillOpacity": 10,
                 "gradientMode": "none",
                 "hideFrom": {
                   "legend": false,
@@ -257,7 +260,7 @@ data:
                   "viz": false
                 },
                 "lineInterpolation": "linear",
-                "lineWidth": 1,
+                "lineWidth": 3,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
@@ -314,7 +317,7 @@ data:
                 "uid": "aQ7y3WBnk"
               },
               "editorMode": "code",
-              "expr": "sum(rate(api_inbound_request_count{namespace=\"$namespace\",service=\"fleet-manager-metrics\"}[10m])) by (code)",
+              "expr": "sum(rate(api_inbound_request_count{namespace=\"$namespace\",service=\"fleet-manager-metrics\"}[$__rate_interval])) by (code)",
               "legendFormat": "Inbound {{code}}",
               "range": true,
               "refId": "A"
@@ -325,7 +328,7 @@ data:
                 "uid": "aQ7y3WBnk"
               },
               "editorMode": "code",
-              "expr": "sum(rate(api_outbound_request_count{namespace=\"$namespace\",service=\"fleet-manager-metrics\"}[10m])) by (code)",
+              "expr": "sum(rate(api_outbound_request_count{namespace=\"$namespace\",service=\"fleet-manager-metrics\"}[$__rate_interval])) by (code)",
               "hide": false,
               "legendFormat": "Outbound {{code}}",
               "range": true,
@@ -516,7 +519,10 @@ data:
           "type": "timeseries"
         },
         {
-          "datasource": "$datasource",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -658,6 +664,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager",
       "uid": "D1C839d82",
-      "version": 2,
+      "version": 3,
       "weekStart": ""
     }
