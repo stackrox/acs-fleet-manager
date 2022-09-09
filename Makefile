@@ -236,7 +236,7 @@ help:
 	@echo "make deploy/project              deploy the service via templates to an openshift cluster"
 	@echo "make undeploy                    remove the service deployments from an openshift cluster"
 	@echo "make redhatsso/setup             setup sso clientId & clientSecret"
-	@echo "make centralidp/setup            setup Central's RHSSO clientSecret"
+	@echo "make centralidp/setup            setup Central's static auth config (client_secret)"
 	@echo "make openapi/spec/validate       validate OpenAPI spec using spectral"
 	@echo "$(fake)"
 .PHONY: help
