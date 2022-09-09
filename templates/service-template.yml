@@ -19,6 +19,10 @@ parameters:
   description: Which ACS Service Fleet Manager environment to use for this deployment
   value: production
 
+- name: CENTRAL_RHSSO_ISSUER
+  displayName: Central Red Hat SSO issuer
+  description: Which issuer to use to get tokens from Red Hat SSO in Central
+
 - name: IMAGE_REGISTRY
   displayName: Image Registry
   required: true
@@ -1084,6 +1088,7 @@ objects:
             - --enable-db-debug=${ENABLE_DB_DEBUG}
             - --redhat-sso-client-id-file=/secrets/service/redhatsso-service.clientId
             - --redhat-sso-client-secret-file=/secrets/service/redhatsso-service.clientSecret
+            - --central-idp-issuer=${CENTRAL_RHSSO_ISSUER}
             - --ocm-client-id-file=/secrets/service/ocm-service.clientId
             - --ocm-client-secret-file=/secrets/service/ocm-service.clientSecret
             - --sso-base-url=${SSO_BASE_URL}
