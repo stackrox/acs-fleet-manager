@@ -334,7 +334,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
 		},
-		Status:      dinosaurConstants.CentralRequestStatusProvisioning.String(),
+		Status: dinosaurConstants.CentralRequestStatusProvisioning.String(),
 	}
 	if err := k.Update(updatedCentralRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update dinosaur request")

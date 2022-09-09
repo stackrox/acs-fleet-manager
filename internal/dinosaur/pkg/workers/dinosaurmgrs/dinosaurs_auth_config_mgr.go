@@ -19,6 +19,7 @@ type CentralAuthConfigManager struct {
 
 var _ workers.Worker = &CentralAuthConfigManager{}
 
+// NewCentralAuthConfigManager creates an instance of this worker.
 func NewCentralAuthConfigManager(centralService services.DinosaurService, centralConfig *config.CentralConfig) *CentralAuthConfigManager {
 	return &CentralAuthConfigManager{
 		BaseWorker: workers.BaseWorker{
@@ -87,18 +88,18 @@ func (k *CentralAuthConfigManager) Reconcile() []error {
 // config information, i.e., the same for all Centrals.
 func augmentWithStaticAuthConfig(r *dbapi.CentralRequest, centralConfig *config.CentralConfig) error {
 	// TODO(alexr): Ideally this belongs in a config validation routine.
-	if centralConfig.RhSsoClientSecret == "" {
-		glog.Warningf("no client_secret specified for static client_id %q;" +
-			" auth configuration is either incorrect or insecure", centralConfig.RhSsoClientID)
+	if centralConfig.CentralIDPClientSecret == "" {
+		glog.Warningf("no client_secret specified for static client_id %q;"+
+			" auth configuration is either incorrect or insecure", centralConfig.CentralIDPClientID)
 	}
-	if centralConfig.RhSsoIssuer == "" {
-		glog.Errorf("no issuer specified for static client_id %q;" +
-			" auth configuration will likely not work properly", centralConfig.RhSsoClientID)
+	if centralConfig.CentralIDPIssuer == "" {
+		glog.Errorf("no issuer specified for static client_id %q;"+
+			" auth configuration will likely not work properly", centralConfig.CentralIDPClientID)
 	}
 
-	r.AuthConfig.ClientID = centralConfig.RhSsoClientID
-	r.AuthConfig.ClientSecret = centralConfig.RhSsoClientSecret
-	r.AuthConfig.Issuer = centralConfig.RhSsoIssuer
+	r.AuthConfig.ClientID = centralConfig.CentralIDPClientID
+	r.AuthConfig.ClientSecret = centralConfig.CentralIDPClientSecret //pragma: allowlist secret
+	r.AuthConfig.Issuer = centralConfig.CentralIDPIssuer
 
 	return nil
 }

@@ -96,5 +96,5 @@ func (c *CentralConfig) HasStaticAuth() bool {
 	// We don't look at other integral parts of the auth config like
 	// RhSsoIssuer or RhSsoClientSecret. Failure to provide a working auth
 	// configuration should not mask an intent to use static configuration.
-	return c.RhSsoClientID != ""
+	return c.CentralIDPClientID != ""
 }

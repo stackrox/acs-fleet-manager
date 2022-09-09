@@ -128,7 +128,7 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Cent
 
 	glog.Infof("Central instance with id %s is assigned to cluster with id %s", dinosaur.ID, dinosaur.ClusterID)
 
-	if err = k.dinosaurService.AcceptCentralRequest(dinosaur); err != nil {
+	if err := k.dinosaurService.AcceptCentralRequest(dinosaur); err != nil {
 		return errors.Wrapf(err, "failed to accept Central %s with cluster details", dinosaur.ID)
 	}
 	return nil
