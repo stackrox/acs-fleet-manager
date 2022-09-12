@@ -972,7 +972,6 @@ objects:
             command:
             - /usr/local/bin/fleet-manager
             - migrate
-            - rollback-all
             - --db-host-file=/secrets/rds/db.host
             - --db-port-file=/secrets/rds/db.port
             - --db-user-file=/secrets/rds/db.user
