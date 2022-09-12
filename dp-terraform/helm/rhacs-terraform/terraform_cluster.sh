@@ -42,7 +42,7 @@ case $ENVIRONMENT in
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
 
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
-
+    OPERATOR_CSV="rhacs-operator.v3.71.0"
     ensure_bitwarden_session_exists
     # Note: the Red Hat SSO client as of 2022-09-02 is the same between stage and prod.
     FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
@@ -108,7 +108,7 @@ helm upgrade rhacs-terraform ./ \
   --set acsOperator.enabled=true \
   --set acsOperator.source=redhat-operators \
   --set acsOperator.sourceNamespace=openshift-marketplace \
-  --set acsOperator.startingCSV=rhacs-operator.v3.71.0 \
+  --set acsOperator.startingCSV=${OPERATOR_CSV} \
   --set fleetshardSync.authType="RHSSO" \
   --set fleetshardSync.clusterId=${CLUSTER_ID} \
   --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
@@ -122,6 +122,34 @@ helm upgrade rhacs-terraform ./ \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${PAGERDUTY_SERVICE_KEY}"
+
+echo "Waiting for unapproved rhacs Operator InstallPlans..."
+for i in $(seq 1 6); do
+  unapprovedInstallPlans=$(oc get installplan -n rhacs -o json | jq '.items[] | select(.spec.approved == true) | select(.spec.clusterServiceVersionNames[] | contains("'$OPERATOR_CSV'")) | [.]')
+  if [ ! -z  "$unapprovedInstallPlans" ]
+  then
+    break
+  fi
+  sleep 10
+done
+
+if [ -z "$unapprovedInstallPlans" ]
+then
+    echo "No unapproved rhacs Operator InstallPlan found"
+else
+    numPlans=$(echo $unapprovedInstallPlans | jq 'length')
+    if [ $numPlans -eq "1" ]
+    then
+        echo "Auto approving InstallPlans for target operator version: $OPERATOR_CSV"
+        namespace=$(echo $unapprovedInstallPlans | jq -r '.[0].metadata.namespace')
+        name=$(echo $unapprovedInstallPlans | jq -r '.[0].metadata.name')
+        echo "Apply patch to InstallPlan: $namespace $name"
+        oc patch installplan -n $namespace $name -p '{"spec":{"approved": true}}' --type merge
+    else
+        echo "Not exaclty one InstallPlan found for target operator version: $OPERATOR_CSV"
+        echo "Please approve manually"
+    fi
+fi
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs
