@@ -125,7 +125,7 @@ helm upgrade rhacs-terraform ./ \
 
 echo "Waiting for unapproved rhacs Operator InstallPlans..."
 for i in $(seq 1 6); do
-  unapprovedInstallPlans=$(oc get installplan -n rhacs -o json | jq '.items[] | select(.spec.approved == true) | select(.spec.clusterServiceVersionNames[] | contains("'$OPERATOR_CSV'")) | [.]')
+  unapprovedInstallPlans=$(oc get installplan -n rhacs -o json | jq '.items[] | select(.spec.approved == false) | select(.spec.clusterServiceVersionNames[] | contains("'$OPERATOR_CSV'")) | [.]')
   if [ ! -z  "$unapprovedInstallPlans" ]
   then
     break
