@@ -99,10 +99,6 @@ case $ENVIRONMENT in
     ;;
 esac
 
-# To use ACS Operator from the OpenShift Marketplace:
-#   --set acsOperator.source=redhat-operators
-#   --set acsOperator.sourceNamespace=openshift-marketplace
-
 # helm template ... to debug changes
 helm upgrade rhacs-terraform ./ \
   --install \
@@ -110,7 +106,8 @@ helm upgrade rhacs-terraform ./ \
   --namespace rhacs \
   --create-namespace \
   --set acsOperator.enabled=true \
-  --set acsOperator.source=rhacs-operators \
+  --set acsOperator.source=redhat-operators \
+  --set acsOperator.sourceNamespace=openshift-marketplace \
   --set acsOperator.startingCSV=rhacs-operator.v3.71.0 \
   --set fleetshardSync.authType="RHSSO" \
   --set fleetshardSync.clusterId=${CLUSTER_ID} \
