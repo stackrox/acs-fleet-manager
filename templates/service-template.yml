@@ -19,6 +19,10 @@ parameters:
   description: Which ACS Service Fleet Manager environment to use for this deployment
   value: production
 
+- name: CENTRAL_IDP_ISSUER
+  displayName: Central's IdP issuer
+  description: OIDC issuer URL to pass to Central's auth config
+
 - name: IMAGE_REGISTRY
   displayName: Image Registry
   required: true
@@ -1083,6 +1087,7 @@ objects:
             - --enable-db-debug=${ENABLE_DB_DEBUG}
             - --redhat-sso-client-id-file=/secrets/service/redhatsso-service.clientId
             - --redhat-sso-client-secret-file=/secrets/service/redhatsso-service.clientSecret
+            - --central-idp-issuer=${CENTRAL_IDP_ISSUER}
             - --ocm-client-id-file=/secrets/service/ocm-service.clientId
             - --ocm-client-secret-file=/secrets/service/ocm-service.clientSecret
             - --sso-base-url=${SSO_BASE_URL}
