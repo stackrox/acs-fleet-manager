@@ -20,8 +20,8 @@ parameters:
   value: production
 
 - name: CENTRAL_IDP_CLIENT_ID
-  displayName: Central Red Hat SSO client id
-  description: Which OIDC client id to use to connect to Red Hat SSO from Central
+  displayName: Central's IdP client ID
+  description: OIDC client ID to pass to Central's auth config
 
 - name: CENTRAL_IDP_ISSUER
   displayName: Central's IdP issuer
