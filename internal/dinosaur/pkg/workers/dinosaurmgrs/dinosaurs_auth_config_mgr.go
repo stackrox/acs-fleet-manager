@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	CentralAuthConfigManagerWorkerType = "central_auth_config"
+	centralAuthConfigManagerWorkerType = "central_auth_config"
 )
 
 // CentralAuthConfigManager updates CentralRequests with auth configuration.
@@ -28,7 +28,7 @@ func NewCentralAuthConfigManager(centralService services.DinosaurService, centra
 	return &CentralAuthConfigManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
-			WorkerType: CentralAuthConfigManagerWorkerType,
+			WorkerType: centralAuthConfigManagerWorkerType,
 			Reconciler: workers.Reconciler{},
 		},
 		centralService: centralService,
