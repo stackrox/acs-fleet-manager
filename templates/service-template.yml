@@ -19,6 +19,10 @@ parameters:
   description: Which ACS Service Fleet Manager environment to use for this deployment
   value: production
 
+- name: CENTRAL_IDP_CLIENT_ID
+  displayName: Central's IdP client ID
+  description: OIDC client ID to pass to Central's auth config
+
 - name: CENTRAL_IDP_ISSUER
   displayName: Central's IdP issuer
   description: OIDC issuer URL to pass to Central's auth config
@@ -1064,6 +1068,7 @@ objects:
             - --aws-route53-access-key-file=/secrets/fleet-manager-credentials/aws.route53accesskey
             - --aws-route53-secret-access-key-file=/secrets/fleet-manager-credentials/aws.route53secretaccesskey
             - --central-idp-client-secret-file=/secrets/fleet-manager-credentials/central.idp-client-secret
+            - --central-idp-client-id=${CENTRAL_IDP_CLIENT_ID}
             - --observatorium-debug=${ENABLE_OBSERVATORIUM_DEBUG}
             - --observatorium-ignore-ssl=${OBSERVATORIUM_INSECURE}
             - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}

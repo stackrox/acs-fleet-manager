@@ -701,12 +701,14 @@ deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
 deploy/service: CENTRAL_OPERATOR_OPERATOR_ADDON_ID ?= "managed-central-qe"
 deploy/service: FLEETSHARD_ADDON_ID ?= "fleetshard-operator-qe"
 deploy/service: CENTRAL_IDP_ISSUER ?= "https://sso.stage.redhat.com/auth/realms/redhat-external"
+deploy/service: CENTRAL_IDP_CLIENT_ID ?= "rhacs-ms-dev"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q fleet-manager; do echo 'waiting for fleet-manager route to be created'; sleep 1; done"
 	@oc process -f ./templates/service-template.yml \
 		-p ENVIRONMENT="$(FLEET_MANAGER_ENV)" \
 		-p CENTRAL_IDP_ISSUER="$(CENTRAL_IDP_ISSUER)" \
+		-p CENTRAL_IDP_CLIENT_ID="$(CENTRAL_IDP_CLIENT_ID)" \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
 		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
 		-p IMAGE_TAG=$(IMAGE_TAG) \
