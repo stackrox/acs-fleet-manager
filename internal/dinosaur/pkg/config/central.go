@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
@@ -87,11 +88,11 @@ func (c *CentralConfig) ReadFiles() error {
 	// Check that all parts of static auth config are present.
 	if c.HasStaticAuth() {
 		if c.CentralIDPClientSecret == "" {
-			glog.Warningf("no client_secret specified for static client_id %q;"+
+			return errors.Errorf("no client_secret specified for static client_id %q;"+
 				" auth configuration is either incorrect or insecure", c.CentralIDPClientID)
 		}
 		if c.CentralIDPIssuer == "" {
-			glog.Errorf("no issuer specified for static client_id %q;"+
+			return errors.Errorf("no issuer specified for static client_id %q;"+
 				" auth configuration will likely not work properly", c.CentralIDPClientID)
 		}
 	}
