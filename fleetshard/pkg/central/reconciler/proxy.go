@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -33,6 +34,7 @@ func getProxyEnvVars(namespace string) []corev1.EnvVar {
 			)
 		}
 	}
+	sort.Strings(noProxyTargets) // ensure deterministic output
 	noProxyStr := strings.Join(noProxyTargets, ",")
 	for _, envVarName := range []string{"no_proxy", "NO_PROXY"} {
 		envVars = append(envVars, corev1.EnvVar{
