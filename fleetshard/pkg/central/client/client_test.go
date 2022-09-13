@@ -1,9 +1,9 @@
 package client
 
 import (
-	"bytes"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,7 +12,7 @@ import (
 func TestExtractCentralError(t *testing.T) {
 	// 1. Error in returned response
 	json := `{"error":"error-message"}`
-	r := ioutil.NopCloser(bytes.NewReader([]byte(json)))
+	r := ioutil.NopCloser(strings.NewReader(json))
 	response := &http.Response{
 		StatusCode: http.StatusBadRequest,
 		Body:       r,
@@ -29,7 +29,7 @@ func TestExtractCentralError(t *testing.T) {
 
 	// 3. Incorrect JSON results in general reason
 	json = `{"error":"error-message`
-	r = ioutil.NopCloser(bytes.NewReader([]byte(json)))
+	r = ioutil.NopCloser(strings.NewReader(json))
 	response = &http.Response{
 		StatusCode: http.StatusBadRequest,
 		Body:       r,
@@ -39,7 +39,7 @@ func TestExtractCentralError(t *testing.T) {
 
 	// 4. No error in response
 	json = `{"id":"error-message"}`
-	r = ioutil.NopCloser(bytes.NewReader([]byte(json)))
+	r = ioutil.NopCloser(strings.NewReader(json))
 	response = &http.Response{
 		StatusCode: http.StatusBadRequest,
 		Body:       r,

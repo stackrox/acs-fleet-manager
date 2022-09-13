@@ -107,17 +107,20 @@ func (c *Client) SendRequestToCentral(ctx context.Context, requestMessage proto.
 	return nil
 }
 
+type centralErrorResponse struct {
+	Error string `json:"error,omitempty"`
+}
+
 func extractCentralError(resp *http.Response) string {
-	var data map[string]string
+	var data centralErrorResponse
 	if resp == nil || resp.Body == nil {
 		return couldNotParseReason
 	}
-	err := json.NewDecoder(resp.Body).Decode(&data)
-	if err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return couldNotParseReason
 	}
-	if val, ok := data["error"]; ok {
-		return val
+	if data.Error != "" {
+		return data.Error
 	}
 	return couldNotParseReason
 }
