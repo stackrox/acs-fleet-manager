@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 func redactRequest(request *http.Request) *http.Request {

@@ -9,7 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/constants"
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 
 	"strings"
 	"sync"

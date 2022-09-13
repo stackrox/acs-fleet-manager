@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 type contextKey int

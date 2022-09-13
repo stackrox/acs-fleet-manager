@@ -13,7 +13,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"

@@ -9,7 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 

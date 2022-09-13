@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // TransactionMiddleware creates a new HTTP middleware that begins a database transaction

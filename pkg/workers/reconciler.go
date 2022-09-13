@@ -7,7 +7,7 @@ import (
 
 	"github.com/goava/di"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
 	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"

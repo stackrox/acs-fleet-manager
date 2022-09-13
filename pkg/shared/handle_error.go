@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // HandleError handles a service error by returning an appropriate HTTP response with error reason

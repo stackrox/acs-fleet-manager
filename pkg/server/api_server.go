@@ -27,7 +27,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // APIServerReadyCondition ...

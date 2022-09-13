@@ -9,7 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"

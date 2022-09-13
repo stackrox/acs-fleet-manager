@@ -12,7 +12,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 
