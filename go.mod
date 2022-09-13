@@ -18,6 +18,7 @@ require (
 	github.com/go-gormigrate/gormigrate/v2 v2.0.2
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/goava/di v1.11.1
+	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/golang/glog v1.0.0
@@ -53,6 +54,8 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yaacov/tree-search-language v0.0.0-20190923184055-1c2dad2e354b
 	github.com/zgalor/weberr v0.7.0
+	go.uber.org/atomic v1.10.0
+	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	golang.org/x/oauth2 v0.0.0-20220718184931-c8730f7fcb92
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
@@ -61,6 +64,7 @@ require (
 	gorm.io/driver/postgres v1.4.4
 	gorm.io/gorm v1.23.8
 	helm.sh/helm/v3 v3.9.4
+	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.24.4
 	k8s.io/apimachinery v0.24.4
 	k8s.io/client-go v0.24.2
@@ -138,9 +142,7 @@ require (
 	github.com/stackrox/scanner v0.0.0-20220426001230-9ab6777c9581 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
-	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171 // indirect
 	golang.org/x/text v0.3.7 // indirect
