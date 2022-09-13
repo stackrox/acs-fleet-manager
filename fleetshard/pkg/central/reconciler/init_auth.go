@@ -30,6 +30,9 @@ var (
 			return &storage.Group{
 				Props: &storage.GroupProperties{
 					AuthProviderId: providerId,
+					Traits: &storage.Traits{
+						MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
+					},
 				},
 				RoleName: "None",
 			}
@@ -40,6 +43,9 @@ var (
 					AuthProviderId: providerId,
 					Key:            "userid",
 					Value:          auth.OwnerUserId,
+					Traits: &storage.Traits{
+						MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
+					},
 				},
 				RoleName: "Admin",
 			}
@@ -50,6 +56,9 @@ var (
 					AuthProviderId: providerId,
 					Key:            "groups",
 					Value:          "org_admin",
+					Traits: &storage.Traits{
+						MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
+					},
 				},
 				RoleName: "Admin",
 			}
@@ -152,6 +161,9 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 				AttributeKey:   "orgid",
 				AttributeValue: central.Spec.Auth.OwnerOrgId,
 			},
+		},
+		Traits: &storage.Traits{
+			MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
 		},
 	}
 	return request
