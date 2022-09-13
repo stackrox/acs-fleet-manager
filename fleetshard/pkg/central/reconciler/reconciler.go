@@ -194,7 +194,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	if !centralExists {
-		central.Annotations = map[string]string{revisionAnnotationKey: "1"}
+		if central.GetAnnotations() == nil {
+			central.Annotations = map[string]string{}
+		}
+		central.GetAnnotations()[revisionAnnotationKey] = "1"
 
 		glog.Infof("Creating central %s/%s", central.GetNamespace(), central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
