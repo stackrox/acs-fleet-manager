@@ -38,6 +38,8 @@ spec:
         command:
         - "squid"
         - "-N"
+        - "-f"
+        - "/etc/squid/squid.conf"
         ports:
         - containerPort: 3128
           protocol: TCP
