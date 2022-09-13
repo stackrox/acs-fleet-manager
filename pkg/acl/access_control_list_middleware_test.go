@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"

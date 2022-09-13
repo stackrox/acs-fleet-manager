@@ -12,7 +12,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 
 	serviceErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )

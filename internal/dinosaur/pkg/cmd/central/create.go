@@ -3,7 +3,7 @@ package central
 import (
 	"encoding/json"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"

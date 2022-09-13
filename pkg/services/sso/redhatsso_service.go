@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"

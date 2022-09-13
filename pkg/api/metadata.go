@@ -24,7 +24,7 @@ import (
 	"net/http"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // ServeHTTP sends API documentation response.

@@ -10,7 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
 	"gorm.io/gorm"

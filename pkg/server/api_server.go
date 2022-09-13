@@ -22,7 +22,7 @@ import (
 	_ "github.com/golang-jwt/jwt/v4"
 
 	sentryhttp "github.com/getsentry/sentry-go/http"
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	gorillahandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 

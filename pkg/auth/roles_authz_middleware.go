@@ -6,7 +6,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"

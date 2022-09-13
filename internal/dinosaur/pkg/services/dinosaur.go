@@ -16,7 +16,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"

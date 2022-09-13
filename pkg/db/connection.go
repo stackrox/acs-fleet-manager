@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	mocket "github.com/selvatico/go-mocket"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

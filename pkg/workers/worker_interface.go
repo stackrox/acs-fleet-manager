@@ -3,7 +3,7 @@ package workers
 import (
 	"sync"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 

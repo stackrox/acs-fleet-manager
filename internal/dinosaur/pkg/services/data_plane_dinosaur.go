@@ -8,7 +8,7 @@ import (
 
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"

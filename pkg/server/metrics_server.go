@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 
 	"github.com/gorilla/mux"

@@ -6,9 +6,9 @@ import (
 
 	"github.com/stackrox/rox/pkg/stringutils"
 
-	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"

@@ -16,7 +16,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // DeletingDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests.

@@ -21,7 +21,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 
 	"github.com/goava/di"
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	gm "github.com/onsi/gomega"
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"

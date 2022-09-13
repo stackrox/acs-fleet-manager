@@ -1,9 +1,9 @@
 package k8s
 
 import (
-	"github.com/golang/glog"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"

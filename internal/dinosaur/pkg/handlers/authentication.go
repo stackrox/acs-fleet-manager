@@ -3,7 +3,7 @@ package handlers
 import (
 	"fmt"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 	pkgErrors "github.com/pkg/errors"

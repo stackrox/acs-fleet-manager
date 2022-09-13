@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // NewJSONLogFormatter ...

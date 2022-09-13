@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"

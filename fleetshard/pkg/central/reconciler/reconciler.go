@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"sync/atomic"
 
-	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
@@ -17,6 +16,7 @@ import (
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -457,7 +457,7 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 		out.SetGroupVersionKind(obj.GroupVersionKind())
 		err := r.client.Get(ctx, key, &out)
 		if err == nil {
-			glog.V(10).Infof("Updating object %s/%s", obj.GetNamespace(), obj.GetName())
+			glog.Infof("Updating object %s/%s", obj.GetNamespace(), obj.GetName())
 			obj.SetResourceVersion(out.GetResourceVersion())
 			err := r.client.Update(ctx, obj)
 			if err != nil {
@@ -470,7 +470,7 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 			return fmt.Errorf("failed to retrieve object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
 		}
 		err = r.client.Create(ctx, obj)
-		glog.V(10).Infof("Creating object %s/%s", obj.GetNamespace(), obj.GetName())
+		glog.Infof("Creating object %s/%s", obj.GetNamespace(), obj.GetName())
 		if err != nil && !apiErrors.IsAlreadyExists(err) {
 			return fmt.Errorf("failed to create object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
 		}

@@ -11,7 +11,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // ProvisioningDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests

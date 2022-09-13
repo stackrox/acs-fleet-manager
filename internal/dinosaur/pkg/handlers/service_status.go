@@ -8,7 +8,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )

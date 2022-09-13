@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 
 	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"

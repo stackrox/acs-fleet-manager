@@ -9,7 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
 
 	"github.com/goava/di"
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	adminprivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"

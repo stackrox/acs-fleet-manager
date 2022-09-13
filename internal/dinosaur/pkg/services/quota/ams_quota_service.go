@@ -3,7 +3,7 @@ package quota
 import (
 	"fmt"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"

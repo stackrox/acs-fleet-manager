@@ -14,7 +14,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )

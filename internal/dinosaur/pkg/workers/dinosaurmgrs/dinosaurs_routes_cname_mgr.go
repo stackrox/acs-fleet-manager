@@ -1,7 +1,7 @@
 package dinosaurmgrs
 
 import (
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"

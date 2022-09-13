@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // Server ...

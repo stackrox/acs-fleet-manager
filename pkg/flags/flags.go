@@ -4,7 +4,7 @@ package flags
 import (
 	"fmt"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/spf13/pflag"
 )
 

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 
 	"github.com/pkg/errors"
 	pAPI "github.com/prometheus/client_golang/api"

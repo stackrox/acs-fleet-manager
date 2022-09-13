@@ -10,7 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 
 	health "github.com/docker/go-healthcheck"
-	"github.com/golang/glog"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/gorilla/mux"
 )
 
