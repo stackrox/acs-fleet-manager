@@ -8,8 +8,8 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/pkg/errors"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 type stackTracer interface {

@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/getsentry/sentry-go"
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // SendNotFound sends a 404 response with some details about the non existing resource.

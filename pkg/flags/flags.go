@@ -4,8 +4,8 @@ package flags
 import (
 	"fmt"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/spf13/pflag"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // MustGetDefinedString attempts to get a non-empty string flag from the provided flag set or panic
