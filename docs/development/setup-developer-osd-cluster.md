@@ -26,7 +26,10 @@ Export name for your cluster. Prefix it with your initials or something similar 
 export OSD_CLUSTER_NAME="<your cluster name>"
 ```
 
-For staging OSD cluster, you should login to staging platform. You should use `rhacs-managed-service-dev` account. The `ocm` command is aware of differences and defining `--url staging` all what is required in order to login to staging platform.
+For staging OSD cluster, you should login to staging platform. You should use `rhacs-managed-service-dev` account. To retrieve token required to login via `ocm` command,
+you have to go to: https://console.redhat.com/openshift/token/show# - login there as `rhacs-managed-service-dev`. You can find login credentials in BitWarden.
+
+The `ocm` command is aware of differences and defining `--url staging` is all what is required in order to login to staging platform.
 ```
 ocm login --url staging --token="<your token from OpenShift console UI - console.redhat.com>
 ```
@@ -54,7 +57,7 @@ ocm create cluster \
   --region "${AWS_REGION}" \
   --multi-az \
   --compute-machine-type "m5a.xlarge" \
-  --version "4.10.20" \
+  --version "4.11.2" \
   "${OSD_CLUSTER_NAME}"
 ```
 
@@ -75,6 +78,7 @@ If you need password for UI login, be sure to store it somewhere.
 ```
 export OSD_ADMIN_USER="osd-admin"
 export OSD_ADMIN_PASS=$(date | md5)
+echo $OSD_ADMIN_PASS > ./tmp-osd-admin-pass.txt
 
 echo "{\"htpasswd\":{\"password\":\"${OSD_ADMIN_PASS}\",\"username\":\"${OSD_ADMIN_USER}\"},\"login\":true,\"mapping_method\":\"add\",\"name\":\"osd-htpasswd\",\"type\":\"HTPasswdIdentityProvider\"}" > ./tmp-osd-htpasswd-body.txt
 ocm post "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/identity_providers" --body ./tmp-osd-htpasswd-body.txt
@@ -94,7 +98,7 @@ If login step fails, it can be the case that previously created auth provider an
 
 4. Export defaults
 ```
-export RHACS_OPERATOR_CATALOG_VERSION="3.70.1"
+export RHACS_OPERATOR_CATALOG_VERSION="3.71.0"
 export RHACS_OPERATOR_CATALOG_NAME="redhat-operators"
 ```
 
@@ -161,7 +165,7 @@ You should be able to see `rhacs-operators` pod running.
 export STATIC_TOKEN=$(bw get item "64173bbc-d9fb-4d4a-b397-aec20171b025" | jq '.fields[] | select(.name | contains("JWT")) | .value' --raw-output)
 
 export FLEET_MANAGER_IMAGE=quay.io/app-sre/acs-fleet-manager:main
-export STARTING_CSV="rhacs-operator.v3.70.1"
+export STARTING_CSV="rhacs-operator.v${RHACS_OPERATOR_CATALOG_VERSION}"
 ```
 
 9. Prepare namespace
@@ -183,7 +187,6 @@ GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal
 11. (Optional local fleet synchronizer build) Get Fleet Manager image name
 ```
 export FLEET_MANAGER_IMAGE=$(oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/${NAMESPACE}/fleet-manager:${IMAGE_TAG}
-export STARTING_CSV="rhacs-operator.v${RHACS_OPERATOR_CATALOG_VERSION}"
 ```
 
 12. Terraform cluster
