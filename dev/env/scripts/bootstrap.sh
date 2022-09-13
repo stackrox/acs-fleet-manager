@@ -92,8 +92,10 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
             # operatorhubio catalog is ready, which is why an additional delay has been added.
             echo "Waiting for CatalogSource to include rhacs-operator..."
             while true; do
-                $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get packagemanifests.packages.operators.coreos.com -o json |
-                    jq -r '.items[].metadata.name' | grep -q '^rhacs-operator$' && break
+                if $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get packagemanifests.packages.operators.coreos.com -o json |
+                    jq -cer '.items[] | select(.metadata.labels.catalog == "stackrox-operator-test-index" and .metadata.name == "rhacs-operator") | isempty(.) | not' >/dev/null; then
+                    break
+                fi
                 sleep 1
             done
 
