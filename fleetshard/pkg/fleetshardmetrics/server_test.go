@@ -30,6 +30,10 @@ func TestMetricsServerServesCustomMetrics(t *testing.T) {
 	expectedKeys := []string{
 		"total_fleet_manager_requests",
 		"total_fleet_manager_request_errors",
+		"total_central_reconcilations",
+		"total_central_reconcilation_errors",
+		"active_central_reconcilations",
+		"total_centrals",
 	}
 
 	for _, key := range expectedKeys {
