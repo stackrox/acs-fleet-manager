@@ -1,8 +1,4 @@
-export OPENSHIFT_MARKETPLACE_DEFAULT="true"
-export KUBECTL_DEFAULT="oc"
-export OPERATOR_SOURCE_DEFAULT="marketplace"
-export INSTALL_OLM_DEFAULT="false"
-export ENABLE_FM_PORT_FORWARDING_DEFAULT="true"
+export SPAWN_LOGGER_DEFAULT="true"
 export FLEET_MANAGER_RESOURCES_DEFAULT='{"requests":{"cpu":"400m","memory":"1000Mi"},"limits":{"cpu":"400m","memory":"1000Mi"}}'
 export FLEETSHARD_SYNC_RESOURCES_DEFAULT='{"requests":{"cpu":"400m","memory":"1000Mi"},"limits":{"cpu":"400m","memory":"1000Mi"}}'
 export DB_RESOURCES_DEFAULT='{"requests":{"cpu":"400m","memory":"1000Mi"},"limits":{"cpu":"400m","memory":"1000Mi"}}'
