@@ -35,6 +35,11 @@ spec:
       containers:
       - name: egress-proxy
         image: {{ .Values.egressProxy.image }}
+        command:
+        - "squid"
+        - "-N"
+        - "-f"
+        - "/etc/squid/squid.conf"
         ports:
         - containerPort: 3128
           protocol: TCP
