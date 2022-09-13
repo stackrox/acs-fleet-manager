@@ -22,7 +22,8 @@ type CentralRequest struct {
 	Owner          string `json:"owner" gorm:"index"` // TODO: ocm owner?
 	OwnerAccountID string `json:"owner_account_id"`
 	OwnerUserID    string `json:"owner_user_id"`
-	// The DNS host (domain) of the Central service
+	// Instance-independent part of the Central's hostname. For example, this
+	// can be `rhacs-dev.com`, `acs-stage.rhcloud.com`, etc.
 	Host           string `json:"host"`
 	OrganisationID string `json:"organisation_id" gorm:"index"`
 	FailedReason   string `json:"failed_reason"`
@@ -51,6 +52,9 @@ type CentralRequest struct {
 	RoutesCreationID string `json:"routes_creation_id"`
 	// DeletionTimestamp stores the timestamp of the DELETE api call for the resource
 	DeletionTimestamp *time.Time `json:"deletionTimestamp"`
+
+	// All we need to integrate Central with an IdP.
+	AuthConfig
 }
 
 // CentralList ...
@@ -58,6 +62,13 @@ type CentralList []*CentralRequest
 
 // CentralIndex ...
 type CentralIndex map[string]*CentralRequest
+
+// AuthConfig keeps all we need to set up IdP for a Central instance.
+type AuthConfig struct {
+	ClientID     string `json:"idp_client_id"`
+	ClientSecret string `json:"idp_client_secret"`
+	Issuer       string `json:"idp_issuer"`
+}
 
 // Index ...
 func (l CentralList) Index() CentralIndex {

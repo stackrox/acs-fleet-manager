@@ -29,8 +29,17 @@ import (
 )
 
 var (
-	dinosaurDeletionStatuses  = []string{dinosaurConstants.CentralRequestStatusDeleting.String(), dinosaurConstants.CentralRequestStatusDeprovision.String()}
-	dinosaurManagedCRStatuses = []string{dinosaurConstants.CentralRequestStatusProvisioning.String(), dinosaurConstants.CentralRequestStatusDeprovision.String(), dinosaurConstants.CentralRequestStatusReady.String(), dinosaurConstants.CentralRequestStatusFailed.String()}
+	dinosaurDeletionStatuses = []string{
+		dinosaurConstants.CentralRequestStatusDeleting.String(),
+		dinosaurConstants.CentralRequestStatusDeprovision.String(),
+	}
+
+	dinosaurManagedCRStatuses = []string{
+		dinosaurConstants.CentralRequestStatusProvisioning.String(),
+		dinosaurConstants.CentralRequestStatusDeprovision.String(),
+		dinosaurConstants.CentralRequestStatusReady.String(),
+		dinosaurConstants.CentralRequestStatusFailed.String(),
+	}
 )
 
 // DinosaurRoutesAction ...
@@ -55,9 +64,9 @@ type DinosaurService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
 	// HasAvailableCapacityInRegion checks if there is capacity in the clusters for a given region
 	HasAvailableCapacityInRegion(dinosaurRequest *dbapi.CentralRequest) (bool, *errors.ServiceError)
-	// PrepareDinosaurRequest sets any required information (i.e. dinosaur host, sso client id and secret)
-	// to the Dinosaur Request record in the database. The dinosaur request will also be updated with an updated_at
-	// timestamp and the corresponding cluster identifier.
+	// AcceptCentralRequest transitions CentralRequest to 'Preparing'.
+	AcceptCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError
+	// PrepareDinosaurRequest transitions CentralRequest to 'Provisioning'.
 	PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	// Get method will retrieve the dinosaurRequest instance that the give ctx has access to from the database.
 	// This should be used when you want to make sure the result is filtered based on the request context.
@@ -93,6 +102,7 @@ type DinosaurService interface {
 	CountByStatus(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error)
 	CountByRegionAndInstanceType() ([]DinosaurRegionCount, error)
 	ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
+	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	ListComponentVersions() ([]DinosaurComponentVersions, error)
 }
@@ -250,7 +260,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	dinosaurRequest.Status = dinosaurConstants.CentralRequestStatusAccepted.String()
 	dinosaurRequest.SubscriptionID = subscriptionID
 	glog.Infof("Central request %s has been assigned the subscription %s.", dinosaurRequest.ID, subscriptionID)
-	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
+	// Persist the QuotaType to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a dinosaur A is created, at the time of creation the quota-type was ams. At some point in the future
 	// the API is restarted this time changing the --quota-type flag to quota-management-list, when dinosaur A is deleted at this point,
 	// we want to use the correct quota to perform the deletion.
@@ -262,37 +272,71 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	return nil
 }
 
-// PrepareDinosaurRequest ...
-func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
-	namespace, formatErr := FormatNamespace(dinosaurRequest.ID)
+// AcceptCentralRequest sets any information about Central that does not
+// require blocking operations (deducing namespace or instance hostname). Upon
+// success, CentralRequest is transitioned to 'Preparing' status and might not
+// be fully prepared yet.
+func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError {
+	// Set namespace.
+	namespace, formatErr := FormatNamespace(centralRequest.ID)
 	if formatErr != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, formatErr, "invalid id format")
 	}
-	dinosaurRequest.Namespace = namespace
+	centralRequest.Namespace = namespace
 
+	// Set host.
 	if k.dinosaurConfig.EnableCentralExternalCertificate {
 		// If we enable DinosaurTLS, the host should use the external domain name rather than the cluster domain
-		dinosaurRequest.Host = k.dinosaurConfig.CentralDomainName
+		centralRequest.Host = k.dinosaurConfig.CentralDomainName
 	} else {
-		clusterDNS, err := k.clusterService.GetClusterDNS(dinosaurRequest.ClusterID)
+		clusterDNS, err := k.clusterService.GetClusterDNS(centralRequest.ClusterID)
 		if err != nil {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
 		}
-		dinosaurRequest.Host = clusterDNS
+		centralRequest.Host = clusterDNS
 	}
 
-	// Update the Dinosaur Request record in the database
-	// Only updates the fields below
+	// Update the fields of the CentralRequest record in the database.
 	updatedDinosaurRequest := &dbapi.CentralRequest{
+		Meta: api.Meta{
+			ID: centralRequest.ID,
+		},
+		Host:        centralRequest.Host,
+		PlacementID: api.NewID(),
+		Status:      dinosaurConstants.CentralRequestStatusPreparing.String(),
+		Namespace:   centralRequest.Namespace,
+	}
+	if err := k.Update(updatedDinosaurRequest); err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update dinosaur request")
+	}
+
+	return nil
+}
+
+// PrepareDinosaurRequest ensures that any required information (e.g.,
+// CentralRequest's host, RHSSO auth config, etc) has been set. Upon success,
+// the request is transitioned to 'Provisioning' status.
+func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
+	// Check if the request is ready to be transitioned to provisioning.
+
+	// Check IdP config is ready.
+	//
+	// TODO(alexr): Shall this go into "preparing_dinosaurs_mgr.go"? Ideally,
+	//     all CentralRequest updating logic is in one place, either in this
+	//     service or workers.
+	if dinosaurRequest.AuthConfig.ClientID == "" {
+		// We can't provision this request, skip
+		return nil
+	}
+
+	// Update the fields of the CentralRequest record in the database.
+	updatedCentralRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
 		},
-		Host:        dinosaurRequest.Host,
-		PlacementID: api.NewID(),
-		Status:      dinosaurConstants.CentralRequestStatusProvisioning.String(),
-		Namespace:   dinosaurRequest.Namespace,
+		Status: dinosaurConstants.CentralRequestStatusProvisioning.String(),
 	}
-	if err := k.Update(updatedDinosaurRequest); err != nil {
+	if err := k.Update(updatedCentralRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update dinosaur request")
 	}
 
@@ -791,6 +835,30 @@ func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralR
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list dinosaur requests")
 	}
 	return results, nil
+}
+
+// ListCentralsWithoutAuthConfig returns all _relevant_ central requests with
+// no auth config.
+func (k *dinosaurService) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError) {
+	dbQuery := k.connectionFactory.New().
+		Where("client_id = ''")
+
+	var results []*dbapi.CentralRequest
+	if err := dbQuery.Find(&results).Error; err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list Central requests")
+	}
+
+	// Central requests beyond 'Preparing' should have already been augmented.
+	filteredResults := make([]*dbapi.CentralRequest, 0, len(results))
+	for _, r := range results {
+		if dinosaurConstants.CentralStatus(r.Status).CompareTo(dinosaurConstants.CentralRequestStatusPreparing) <= 0 {
+			filteredResults = append(filteredResults, r)
+		} else {
+			glog.Warningf("Central request %s in status %q lacks auth config which should have been set up earlier", r.ID, r.Status)
+		}
+	}
+
+	return filteredResults, nil
 }
 
 func buildDinosaurClusterCNAMESRecordBatch(routes []dbapi.DataPlaneCentralRoute, action string) *route53.ChangeBatch {

@@ -6,7 +6,7 @@ package services
 import (
 	"context"
 	"github.com/aws/aws-sdk-go/service/route53"
-	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
@@ -25,13 +25,16 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //
 // 		// make and configure a mocked DinosaurService
 // 		mockedDinosaurService := &DinosaurServiceMock{
+// 			AcceptCentralRequestFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+// 				panic("mock out the AcceptCentralRequest method")
+// 			},
 // 			ChangeDinosaurCNAMErecordsFunc: func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
 // 				panic("mock out the ChangeDinosaurCNAMErecords method")
 // 			},
 // 			CountByRegionAndInstanceTypeFunc: func() ([]DinosaurRegionCount, error) {
 // 				panic("mock out the CountByRegionAndInstanceType method")
 // 			},
-// 			CountByStatusFunc: func(status []constants2.CentralStatus) ([]DinosaurStatusCount, error) {
+// 			CountByStatusFunc: func(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error) {
 // 				panic("mock out the CountByStatus method")
 // 			},
 // 			DeleteFunc: func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
@@ -67,8 +70,11 @@ var _ DinosaurService = &DinosaurServiceMock{}
 // 			ListByClusterIDFunc: func(clusterID string) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 // 				panic("mock out the ListByClusterID method")
 // 			},
-// 			ListByStatusFunc: func(status ...constants2.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
+// 			ListByStatusFunc: func(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 // 				panic("mock out the ListByStatus method")
+// 			},
+// 			ListCentralsWithoutAuthConfigFunc: func() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
+// 				panic("mock out the ListCentralsWithoutAuthConfig method")
 // 			},
 // 			ListComponentVersionsFunc: func() ([]DinosaurComponentVersions, error) {
 // 				panic("mock out the ListComponentVersions method")
@@ -88,7 +94,7 @@ var _ DinosaurService = &DinosaurServiceMock{}
 // 			UpdateFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 // 				panic("mock out the Update method")
 // 			},
-// 			UpdateStatusFunc: func(id string, status constants2.CentralStatus) (bool, *serviceError.ServiceError) {
+// 			UpdateStatusFunc: func(id string, status dinosaurConstants.CentralStatus) (bool, *serviceError.ServiceError) {
 // 				panic("mock out the UpdateStatus method")
 // 			},
 // 			UpdatesFunc: func(dinosaurRequest *dbapi.CentralRequest, values map[string]interface{}) *serviceError.ServiceError {
@@ -104,6 +110,9 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //
 // 	}
 type DinosaurServiceMock struct {
+	// AcceptCentralRequestFunc mocks the AcceptCentralRequest method.
+	AcceptCentralRequestFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
+
 	// ChangeDinosaurCNAMErecordsFunc mocks the ChangeDinosaurCNAMErecords method.
 	ChangeDinosaurCNAMErecordsFunc func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
 
@@ -111,7 +120,7 @@ type DinosaurServiceMock struct {
 	CountByRegionAndInstanceTypeFunc func() ([]DinosaurRegionCount, error)
 
 	// CountByStatusFunc mocks the CountByStatus method.
-	CountByStatusFunc func(status []constants2.CentralStatus) ([]DinosaurStatusCount, error)
+	CountByStatusFunc func(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error)
 
 	// DeleteFunc mocks the Delete method.
 	DeleteFunc func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
@@ -147,7 +156,10 @@ type DinosaurServiceMock struct {
 	ListByClusterIDFunc func(clusterID string) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
 
 	// ListByStatusFunc mocks the ListByStatus method.
-	ListByStatusFunc func(status ...constants2.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
+	ListByStatusFunc func(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
+
+	// ListCentralsWithoutAuthConfigFunc mocks the ListCentralsWithoutAuthConfig method.
+	ListCentralsWithoutAuthConfigFunc func() ([]*dbapi.CentralRequest, *serviceError.ServiceError)
 
 	// ListComponentVersionsFunc mocks the ListComponentVersions method.
 	ListComponentVersionsFunc func() ([]DinosaurComponentVersions, error)
@@ -168,7 +180,7 @@ type DinosaurServiceMock struct {
 	UpdateFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
-	UpdateStatusFunc func(id string, status constants2.CentralStatus) (bool, *serviceError.ServiceError)
+	UpdateStatusFunc func(id string, status dinosaurConstants.CentralStatus) (bool, *serviceError.ServiceError)
 
 	// UpdatesFunc mocks the Updates method.
 	UpdatesFunc func(dinosaurRequest *dbapi.CentralRequest, values map[string]interface{}) *serviceError.ServiceError
@@ -178,6 +190,11 @@ type DinosaurServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// AcceptCentralRequest holds details about calls to the AcceptCentralRequest method.
+		AcceptCentralRequest []struct {
+			// DinosaurRequest is the dinosaurRequest argument value.
+			DinosaurRequest *dbapi.CentralRequest
+		}
 		// ChangeDinosaurCNAMErecords holds details about calls to the ChangeDinosaurCNAMErecords method.
 		ChangeDinosaurCNAMErecords []struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
@@ -191,7 +208,7 @@ type DinosaurServiceMock struct {
 		// CountByStatus holds details about calls to the CountByStatus method.
 		CountByStatus []struct {
 			// Status is the status argument value.
-			Status []constants2.CentralStatus
+			Status []dinosaurConstants.CentralStatus
 		}
 		// Delete holds details about calls to the Delete method.
 		Delete []struct {
@@ -253,7 +270,10 @@ type DinosaurServiceMock struct {
 		// ListByStatus holds details about calls to the ListByStatus method.
 		ListByStatus []struct {
 			// Status is the status argument value.
-			Status []constants2.CentralStatus
+			Status []dinosaurConstants.CentralStatus
+		}
+		// ListCentralsWithoutAuthConfig holds details about calls to the ListCentralsWithoutAuthConfig method.
+		ListCentralsWithoutAuthConfig []struct {
 		}
 		// ListComponentVersions holds details about calls to the ListComponentVersions method.
 		ListComponentVersions []struct {
@@ -288,7 +308,7 @@ type DinosaurServiceMock struct {
 			// ID is the id argument value.
 			ID string
 			// Status is the status argument value.
-			Status constants2.CentralStatus
+			Status dinosaurConstants.CentralStatus
 		}
 		// Updates holds details about calls to the Updates method.
 		Updates []struct {
@@ -305,6 +325,7 @@ type DinosaurServiceMock struct {
 			DinosaurRequest *dbapi.CentralRequest
 		}
 	}
+	lockAcceptCentralRequest              sync.RWMutex
 	lockChangeDinosaurCNAMErecords        sync.RWMutex
 	lockCountByRegionAndInstanceType      sync.RWMutex
 	lockCountByStatus                     sync.RWMutex
@@ -320,6 +341,7 @@ type DinosaurServiceMock struct {
 	lockList                              sync.RWMutex
 	lockListByClusterID                   sync.RWMutex
 	lockListByStatus                      sync.RWMutex
+	lockListCentralsWithoutAuthConfig     sync.RWMutex
 	lockListComponentVersions             sync.RWMutex
 	lockListDinosaursWithRoutesNotCreated sync.RWMutex
 	lockPrepareDinosaurRequest            sync.RWMutex
@@ -329,6 +351,37 @@ type DinosaurServiceMock struct {
 	lockUpdateStatus                      sync.RWMutex
 	lockUpdates                           sync.RWMutex
 	lockVerifyAndUpdateDinosaurAdmin      sync.RWMutex
+}
+
+// AcceptCentralRequest calls AcceptCentralRequestFunc.
+func (mock *DinosaurServiceMock) AcceptCentralRequest(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+	if mock.AcceptCentralRequestFunc == nil {
+		panic("DinosaurServiceMock.AcceptCentralRequestFunc: method is nil but DinosaurService.AcceptCentralRequest was just called")
+	}
+	callInfo := struct {
+		DinosaurRequest *dbapi.CentralRequest
+	}{
+		DinosaurRequest: dinosaurRequest,
+	}
+	mock.lockAcceptCentralRequest.Lock()
+	mock.calls.AcceptCentralRequest = append(mock.calls.AcceptCentralRequest, callInfo)
+	mock.lockAcceptCentralRequest.Unlock()
+	return mock.AcceptCentralRequestFunc(dinosaurRequest)
+}
+
+// AcceptCentralRequestCalls gets all the calls that were made to AcceptCentralRequest.
+// Check the length with:
+//     len(mockedDinosaurService.AcceptCentralRequestCalls())
+func (mock *DinosaurServiceMock) AcceptCentralRequestCalls() []struct {
+	DinosaurRequest *dbapi.CentralRequest
+} {
+	var calls []struct {
+		DinosaurRequest *dbapi.CentralRequest
+	}
+	mock.lockAcceptCentralRequest.RLock()
+	calls = mock.calls.AcceptCentralRequest
+	mock.lockAcceptCentralRequest.RUnlock()
+	return calls
 }
 
 // ChangeDinosaurCNAMErecords calls ChangeDinosaurCNAMErecordsFunc.
@@ -393,12 +446,12 @@ func (mock *DinosaurServiceMock) CountByRegionAndInstanceTypeCalls() []struct {
 }
 
 // CountByStatus calls CountByStatusFunc.
-func (mock *DinosaurServiceMock) CountByStatus(status []constants2.CentralStatus) ([]DinosaurStatusCount, error) {
+func (mock *DinosaurServiceMock) CountByStatus(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error) {
 	if mock.CountByStatusFunc == nil {
 		panic("DinosaurServiceMock.CountByStatusFunc: method is nil but DinosaurService.CountByStatus was just called")
 	}
 	callInfo := struct {
-		Status []constants2.CentralStatus
+		Status []dinosaurConstants.CentralStatus
 	}{
 		Status: status,
 	}
@@ -412,10 +465,10 @@ func (mock *DinosaurServiceMock) CountByStatus(status []constants2.CentralStatus
 // Check the length with:
 //     len(mockedDinosaurService.CountByStatusCalls())
 func (mock *DinosaurServiceMock) CountByStatusCalls() []struct {
-	Status []constants2.CentralStatus
+	Status []dinosaurConstants.CentralStatus
 } {
 	var calls []struct {
-		Status []constants2.CentralStatus
+		Status []dinosaurConstants.CentralStatus
 	}
 	mock.lockCountByStatus.RLock()
 	calls = mock.calls.CountByStatus
@@ -768,12 +821,12 @@ func (mock *DinosaurServiceMock) ListByClusterIDCalls() []struct {
 }
 
 // ListByStatus calls ListByStatusFunc.
-func (mock *DinosaurServiceMock) ListByStatus(status ...constants2.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
+func (mock *DinosaurServiceMock) ListByStatus(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 	if mock.ListByStatusFunc == nil {
 		panic("DinosaurServiceMock.ListByStatusFunc: method is nil but DinosaurService.ListByStatus was just called")
 	}
 	callInfo := struct {
-		Status []constants2.CentralStatus
+		Status []dinosaurConstants.CentralStatus
 	}{
 		Status: status,
 	}
@@ -787,14 +840,40 @@ func (mock *DinosaurServiceMock) ListByStatus(status ...constants2.CentralStatus
 // Check the length with:
 //     len(mockedDinosaurService.ListByStatusCalls())
 func (mock *DinosaurServiceMock) ListByStatusCalls() []struct {
-	Status []constants2.CentralStatus
+	Status []dinosaurConstants.CentralStatus
 } {
 	var calls []struct {
-		Status []constants2.CentralStatus
+		Status []dinosaurConstants.CentralStatus
 	}
 	mock.lockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
 	mock.lockListByStatus.RUnlock()
+	return calls
+}
+
+// ListCentralsWithoutAuthConfig calls ListCentralsWithoutAuthConfigFunc.
+func (mock *DinosaurServiceMock) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
+	if mock.ListCentralsWithoutAuthConfigFunc == nil {
+		panic("DinosaurServiceMock.ListCentralsWithoutAuthConfigFunc: method is nil but DinosaurService.ListCentralsWithoutAuthConfig was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockListCentralsWithoutAuthConfig.Lock()
+	mock.calls.ListCentralsWithoutAuthConfig = append(mock.calls.ListCentralsWithoutAuthConfig, callInfo)
+	mock.lockListCentralsWithoutAuthConfig.Unlock()
+	return mock.ListCentralsWithoutAuthConfigFunc()
+}
+
+// ListCentralsWithoutAuthConfigCalls gets all the calls that were made to ListCentralsWithoutAuthConfig.
+// Check the length with:
+//     len(mockedDinosaurService.ListCentralsWithoutAuthConfigCalls())
+func (mock *DinosaurServiceMock) ListCentralsWithoutAuthConfigCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockListCentralsWithoutAuthConfig.RLock()
+	calls = mock.calls.ListCentralsWithoutAuthConfig
+	mock.lockListCentralsWithoutAuthConfig.RUnlock()
 	return calls
 }
 
@@ -979,13 +1058,13 @@ func (mock *DinosaurServiceMock) UpdateCalls() []struct {
 }
 
 // UpdateStatus calls UpdateStatusFunc.
-func (mock *DinosaurServiceMock) UpdateStatus(id string, status constants2.CentralStatus) (bool, *serviceError.ServiceError) {
+func (mock *DinosaurServiceMock) UpdateStatus(id string, status dinosaurConstants.CentralStatus) (bool, *serviceError.ServiceError) {
 	if mock.UpdateStatusFunc == nil {
 		panic("DinosaurServiceMock.UpdateStatusFunc: method is nil but DinosaurService.UpdateStatus was just called")
 	}
 	callInfo := struct {
 		ID     string
-		Status constants2.CentralStatus
+		Status dinosaurConstants.CentralStatus
 	}{
 		ID:     id,
 		Status: status,
@@ -1001,11 +1080,11 @@ func (mock *DinosaurServiceMock) UpdateStatus(id string, status constants2.Centr
 //     len(mockedDinosaurService.UpdateStatusCalls())
 func (mock *DinosaurServiceMock) UpdateStatusCalls() []struct {
 	ID     string
-	Status constants2.CentralStatus
+	Status dinosaurConstants.CentralStatus
 } {
 	var calls []struct {
 		ID     string
-		Status constants2.CentralStatus
+		Status dinosaurConstants.CentralStatus
 	}
 	mock.lockUpdateStatus.RLock()
 	calls = mock.calls.UpdateStatus

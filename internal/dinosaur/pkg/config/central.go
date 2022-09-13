@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
@@ -83,9 +84,31 @@ func (c *CentralConfig) ReadFiles() error {
 	} else {
 		glog.Infof("Central's IdP client secret from file %q is missing", c.CentralIDPClientSecretFile)
 	}
+
+	// Check that all parts of static auth config are present.
+	if c.HasStaticAuth() {
+		if c.CentralIDPClientSecret == "" {
+			return errors.Errorf("no client_secret specified for static client_id %q;"+
+				" auth configuration is either incorrect or insecure", c.CentralIDPClientID)
+		}
+		if c.CentralIDPIssuer == "" {
+			return errors.Errorf("no issuer specified for static client_id %q;"+
+				" auth configuration will likely not work properly", c.CentralIDPClientID)
+		}
+	}
+
 	// TODO(ROX-11289): drop MaxCapacity
 	// MaxCapacity is deprecated and will not be used.
 	// Temporarily set MaxCapacity manually in order to simplify app start.
 	c.MaxCapacity = MaxCapacityConfig{1000}
 	return nil
+}
+
+// HasStaticAuth returns true if the static auth config for Centrals has been
+// specified and false otherwise.
+func (c *CentralConfig) HasStaticAuth() bool {
+	// We don't look at other integral parts of the auth config like
+	// RhSsoIssuer or RhSsoClientSecret. Failure to provide a working auth
+	// configuration should not mask an intent to use static configuration.
+	return c.CentralIDPClientID != ""
 }
