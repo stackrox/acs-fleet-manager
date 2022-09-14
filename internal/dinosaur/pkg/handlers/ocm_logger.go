@@ -19,7 +19,7 @@ type LoggerBuilder struct {
 	logger       *log.Logger
 }
 
-// GoLogger is a logger that uses the Go `log` package.
+// Logger is a logger that uses the Go `log` package.
 type Logger struct {
 	debugEnabled bool
 	infoEnabled  bool

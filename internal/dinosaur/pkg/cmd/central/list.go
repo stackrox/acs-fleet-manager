@@ -15,8 +15,8 @@ import (
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 
 	"github.com/golang-jwt/jwt/v4"
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/spf13/cobra"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // FlagPage ...

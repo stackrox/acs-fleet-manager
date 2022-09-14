@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/getsentry/sentry-go"
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // Initialize ...

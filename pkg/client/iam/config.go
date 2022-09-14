@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/pkg/errors"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 
 	"github.com/spf13/pflag"

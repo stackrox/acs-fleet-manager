@@ -1,8 +1,8 @@
 package metrics
 
 import (
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 
 	"github.com/prometheus/client_golang/prometheus"
 	pModel "github.com/prometheus/common/model"

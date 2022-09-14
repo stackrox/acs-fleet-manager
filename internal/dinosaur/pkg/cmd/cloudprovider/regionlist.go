@@ -3,7 +3,6 @@ package cloudprovider
 import (
 	"encoding/json"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -11,6 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // NewRegionsListCommand creates a new command for listing regions.

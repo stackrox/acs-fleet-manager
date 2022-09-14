@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 func main() {

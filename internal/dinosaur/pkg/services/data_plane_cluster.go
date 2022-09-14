@@ -14,9 +14,9 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // DataPlaneClusterService ...

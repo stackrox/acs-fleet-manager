@@ -3,13 +3,13 @@ package cloudprovider
 import (
 	"encoding/json"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // NewProviderListCommand a new command for listing providers.

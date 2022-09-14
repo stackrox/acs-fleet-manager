@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/pkg/errors"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // APIObservatoriumService ...

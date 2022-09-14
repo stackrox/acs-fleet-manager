@@ -5,11 +5,11 @@ import (
 	"os"
 	"os/signal"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/runtime"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"golang.org/x/sys/unix"
 )
 

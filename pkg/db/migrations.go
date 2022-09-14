@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/pkg/errors"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"gorm.io/gorm"
 )
 

@@ -10,8 +10,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 
 	health "github.com/docker/go-healthcheck"
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/gorilla/mux"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 var (

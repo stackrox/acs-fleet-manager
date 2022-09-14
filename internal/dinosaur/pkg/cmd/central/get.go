@@ -3,11 +3,11 @@ package central
 import (
 	"encoding/json"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // NewGetCommand gets a new command for getting centrals.

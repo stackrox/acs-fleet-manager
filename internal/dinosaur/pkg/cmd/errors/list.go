@@ -10,8 +10,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/spf13/cobra"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 
 	svcErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )

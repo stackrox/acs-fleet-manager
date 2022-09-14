@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	mocket "github.com/selvatico/go-mocket"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 

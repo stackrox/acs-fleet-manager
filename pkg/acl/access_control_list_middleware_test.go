@@ -9,9 +9,9 @@ import (
 	"os"
 	"testing"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"

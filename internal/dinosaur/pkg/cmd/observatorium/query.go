@@ -13,8 +13,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 
 	"github.com/golang-jwt/jwt/v4"
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/spf13/cobra"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // NewRunMetricsQueryCommand ...

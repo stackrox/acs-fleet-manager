@@ -1,11 +1,11 @@
 package dinosaurmgrs
 
 import (
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 

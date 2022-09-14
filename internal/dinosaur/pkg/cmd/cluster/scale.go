@@ -3,12 +3,12 @@ package cluster
 import (
 	"encoding/json"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 // NewScaleCommand creates a new command for scaling Compute nodes in a OSD cluster
