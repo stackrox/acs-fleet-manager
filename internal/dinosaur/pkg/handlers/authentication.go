@@ -3,24 +3,21 @@ package handlers
 import (
 	"fmt"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
-	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 	pkgErrors "github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/routes"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	log "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 )
 
 // NewAuthenticationBuilder ...
 func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, IAMConfig *iam.IAMConfig) (*authentication.HandlerBuilder, error) {
 
-	authnLogger, err := sdk.NewGlogLoggerBuilder().
-		InfoV(glog.Level(1)).
-		DebugV(glog.Level(5)).
+	authnLogger, err := NewLoggerBuilder().
+		Debug(log.DebuggingGloballyEnabled()).
 		Build()
-
 	if err != nil {
 		return nil, pkgErrors.Wrap(err, "unable to create authentication logger")
 	}
