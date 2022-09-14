@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 staged_go_files=$(git diff --cached --name-only | grep ".go$")
 [ -z "$staged_go_files" ] && exit 0
@@ -17,11 +17,10 @@ staged_go_files=$(git diff --cached --name-only | grep ".go$" | awk -F/ '{print 
 go_vet_results=""
 for file in $staged_go_files
 do
-    # shellcheck disable=SC3024
     go_vet_results+=$(go vet ./"${file}"/... 2>&1 >/dev/null)
 done
 
-go_vet_results=$(echo "${go_vet_results}" | sed "s/# command-line-arguments//g")
+go_vet_results=${go_vet_results//# command-line-arguments/}
 
 if [ -n "$go_vet_results" ]; then
     echo >&2 "Standard checks failed. Please fix the following issues before continuing: ${go_vet_results}"
