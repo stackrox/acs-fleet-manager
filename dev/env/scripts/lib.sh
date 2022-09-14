@@ -86,7 +86,7 @@ init() {
         source "$env_file"
     done
 
-    if [[ -z "${CENTRAL_IDP_CLIENT_SECRET}" ]]; then
+    if [[ -z "${CENTRAL_IDP_CLIENT_SECRET:-}" ]]; then
       die "Error: CENTRAL_IDP_CLIENT_SECRET not set. Please make sure that it is initialized properly."
     done
 
