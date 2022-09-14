@@ -86,6 +86,10 @@ init() {
         source "$env_file"
     done
 
+    if [[ -z "${CENTRAL_IDP_CLIENT_SECRET}" ]]; then
+      die "Error: CENTRAL_IDP_CLIENT_SECRET not set. Please make sure that it is initialized properly."
+    done
+
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
     export ACSMS_NAMESPACE="${ACSMS_NAMESPACE:-$ACSMS_NAMESPACE_DEFAULT}"
     export CLUSTER_ID=${CLUSTER_ID:-$CLUSTER_ID_DEFAULT}
