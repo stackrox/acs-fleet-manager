@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -64,7 +65,7 @@ var _ = BeforeSuite(func() {
 	k8sClient = k8s.CreateClientOrDie()
 	routeService = k8s.NewRouteService(k8sClient)
 	var err error
-	routesEnabled, err = k8s.IsRoutesResourceEnabled()
+	routesEnabled, err = k8s.IsRoutesResourceEnabled(context.TODO(), k8sClient)
 	Expect(err).ToNot(HaveOccurred())
 
 	var accessKey, secretKey string

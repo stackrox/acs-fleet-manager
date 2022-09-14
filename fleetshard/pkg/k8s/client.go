@@ -1,26 +1,18 @@
 package k8s
 
 import (
-	"fmt"
-
+	"context"
 	"github.com/golang/glog"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-var routesGVK = schema.GroupVersionResource{
-	Group:    "route.openshift.io",
-	Version:  "v1",
-	Resource: "routes",
-}
 
 // CreateClientOrDie creates a new kubernetes client or dies
 func CreateClientOrDie() ctrlClient.Client {
@@ -46,30 +38,16 @@ func CreateClientOrDie() ctrlClient.Client {
 	return k8sClient
 }
 
-func newClientGoClientSet() (client kubernetes.Interface, err error) {
-	config, err := ctrl.GetConfig()
-	if err != nil {
-		return client, fmt.Errorf("retrieving Kubernetes config: %w", err)
+// IsRoutesResourceEnabled checks if routes resource are available on the cluster.
+func IsRoutesResourceEnabled(ctx context.Context, client ctrlClient.Client) (bool, error) {
+	err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: "default", Name: "does-not-exist"}, &openshiftRouteV1.Route{
+		ObjectMeta: metav1.ObjectMeta{},
+	})
+	if apiErrors.IsNotFound(err) {
+		return true, nil
 	}
-
-	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return client, fmt.Errorf("creating Clientset for Kubernetes config: %w", err)
+		return false, nil
 	}
-
-	return clientSet, nil
-}
-
-// IsRoutesResourceEnabled ...
-func IsRoutesResourceEnabled() (bool, error) {
-	clientSet, err := newClientGoClientSet()
-	if err != nil {
-		return false, fmt.Errorf("creating Kubernetes Clientset: %w", err)
-	}
-
-	enabled, err := discovery.IsResourceEnabled(clientSet.Discovery(), routesGVK)
-	if err != nil {
-		return enabled, fmt.Errorf("checking availability of resource type %s: %w", routesGVK.String(), err)
-	}
-	return enabled, nil
+	return true, nil
 }
