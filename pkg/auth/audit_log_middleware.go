@@ -6,7 +6,8 @@ import (
 	"net/http"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/server/logging"
+	"github.com/stackrox/acs-fleet-manager/pkg/logging"
+	srvLogging "github.com/stackrox/acs-fleet-manager/pkg/server/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
@@ -37,6 +38,7 @@ func NewAuditLogMiddleware() AuditLogMiddleware {
 
 // AuditLog ...
 func (a *auditLogMiddleware) AuditLog(code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
+	logger := logging.LoggerForModule()
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			ctx := request.Context()
@@ -55,7 +57,7 @@ func (a *auditLogMiddleware) AuditLog(code errors.ServiceErrorCode) func(handler
 				Body:       request.Body,
 				RemoteAddr: request.RemoteAddr,
 			}
-			logWriter := logging.NewLoggingWriter(writer, request, logging.NewJSONLogFormatter())
+			logWriter := srvLogging.NewLoggingWriter(writer, request, logger, srvLogging.NewJSONLogFormatter())
 			err = logWriter.LogObject(info, nil)
 			if err != nil {
 				shared.HandleError(request, writer, serviceErr)
@@ -71,7 +73,7 @@ func (a *auditLogMiddleware) AuditLog(code errors.ServiceErrorCode) func(handler
 			err = logWriter.LogObject(info, nil)
 			if err != nil {
 				// response is already returned, just log the error if there is any
-				logWriter.Log(fmt.Sprintf("failed to log object %v", info), err)
+				logWriter.Info(fmt.Sprintf("failed to log object %v", info), err)
 				return
 			}
 		})

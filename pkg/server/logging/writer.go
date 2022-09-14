@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pkg/errors"
 	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
@@ -30,17 +29,18 @@ NEXT_HEADER:
 }
 
 // NewLoggingWriter ...
-func NewLoggingWriter(w http.ResponseWriter, r *http.Request, f LogFormatter) *loggingWriter {
+func NewLoggingWriter(w http.ResponseWriter, r *http.Request, logger *logger.Logger, f LogFormatter) *loggingWriter {
 	r = redactRequest(r)
-	return &loggingWriter{ResponseWriter: w, request: r, formatter: f}
+	return &loggingWriter{ResponseWriter: w, request: r, Logger: logger, formatter: f}
 }
 
 type loggingWriter struct {
 	http.ResponseWriter
 	request        *http.Request
-	formatter      LogFormatter
 	responseStatus int
 	responseBody   []byte
+	*logger.Logger
+	formatter LogFormatter
 }
 
 // Flush ...
@@ -64,24 +64,13 @@ func (writer *loggingWriter) WriteHeader(status int) {
 	writer.ResponseWriter.WriteHeader(status)
 }
 
-// Log ...
-func (writer *loggingWriter) Log(log string, err error) {
-	ulog := logger.NewUHCLogger(writer.request.Context())
-	switch err {
-	case nil:
-		ulog.Infof(log)
-	default:
-		ulog.Error(errors.Wrap(err, "Unable to format request/response for log."))
-	}
-}
-
 // LogObject ...
 func (writer *loggingWriter) LogObject(o interface{}, err error) error {
 	log, merr := writer.formatter.FormatObject(o)
 	if merr != nil {
 		return fmt.Errorf("formatting object: %w", merr)
 	}
-	writer.Log(log, err)
+	writer.Logger.Infof("%s: %v", log, err)
 	return nil
 }
 
@@ -90,25 +79,26 @@ func (writer *loggingWriter) GetResponseStatusCode() int {
 	return writer.responseStatus
 }
 
-func (writer *loggingWriter) prepareRequestLog() (string, error) {
-	s, err := writer.formatter.FormatRequestLog(writer.request)
-	if err != nil {
-		return "", fmt.Errorf("formatting request: %w", err)
-	}
-	return s, nil
+func (writer *loggingWriter) prepareReRequestLog(request *http.Request) {
+	// TODO(mclasmei)
 }
 
-func (writer *loggingWriter) prepareResponseLog(elapsed string) (string, error) {
-	info := &ResponseInfo{
-		Header:  writer.ResponseWriter.Header(),
-		Body:    writer.responseBody,
-		Status:  writer.responseStatus,
-		Elapsed: elapsed,
-	}
+func (writer *loggingWriter) prepareResponseLog(elapsed string) {
+	writer.Logger.SugaredLogger = writer.Logger.SugaredLogger.With(
+		"status", writer.responseStatus,
+		"elapsed", elapsed,
+	)
 
-	s, err := writer.formatter.FormatResponseLog(info)
-	if err != nil {
-		return s, fmt.Errorf("formatting request: %w", err)
-	}
-	return s, nil
+	// info := &ResponseInfo{
+	// 	Header:  writer.ResponseWriter.Header(),
+	// 	Body:    writer.responseBody,
+	// 	Status:  writer.responseStatus,
+	// 	Elapsed: elapsed,
+	// }
+
+	// s, err := writer.formatter.FormatResponseLog(info)
+	// if err != nil {
+	// 	return s, fmt.Errorf("formatting request: %w", err)
+	// }
+	// return s, nil
 }

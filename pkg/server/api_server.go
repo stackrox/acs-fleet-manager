@@ -65,6 +65,8 @@ func NewAPIServer(options ServerOptions) *APIServer {
 		readyConditions: options.ReadyConditions,
 	}
 
+	logr := logger.LoggerForModule()
+
 	// mainRouter is top level "/"
 	mainRouter := mux.NewRouter()
 	mainRouter.NotFoundHandler = http.HandlerFunc(api.SendNotFound)
@@ -88,7 +90,7 @@ func NewAPIServer(options ServerOptions) *APIServer {
 	mainRouter.Use(logger.OperationIDMiddleware)
 
 	// Request logging middleware logs pertinent information about the request and response
-	mainRouter.Use(logging.RequestLoggingMiddleware)
+	mainRouter.Use(logging.RequestLoggingMiddlewareWithLogger(logr))
 
 	for _, loader := range options.RouteLoaders {
 		check(loader.AddRoutes(mainRouter), "error adding routes", options.SentryConfig.Timeout)
