@@ -32,6 +32,7 @@ var migrations = []*gormigrate.Migration{
 	addOwnerUserIDToCentralRequest(),
 	addResourcesToCentralRequest(),
 	addAuthConfigToCentralRequest(),
+	addCentralAuthLease(),
 }
 
 // New ...
