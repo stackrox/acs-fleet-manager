@@ -271,6 +271,11 @@ func GetGlobalLogLevel() zapcore.Level {
 	return config.Level.Level()
 }
 
+// DebuggingGloballyEnabled returns true iff the globally configured log level is DEBUG.
+func DebuggingGloballyEnabled() bool {
+	return config.Level.Level() == zapcore.DebugLevel
+}
+
 // LoggerForModule returns a logger for the current module.
 func LoggerForModule() *Logger {
 	return currentModule(3).Logger()
