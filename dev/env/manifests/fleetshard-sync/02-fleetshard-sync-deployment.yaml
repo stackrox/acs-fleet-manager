@@ -47,7 +47,8 @@ spec:
                   optional: false
             - name: RUNTIME_POLL_PERIOD
               value: 10s
-
+            - name: LOGENCODING
+              value: "$LOGENCODING"
           image: "${FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent
           name: fleetshard-sync

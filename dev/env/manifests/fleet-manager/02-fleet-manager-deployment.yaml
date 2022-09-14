@@ -81,6 +81,9 @@ spec:
               name: secrets
             - mountPath: /config
               name: config
+          env:
+            - name: LOGENCODING
+              value: "$LOGENCODING"
       restartPolicy: Always
       volumes:
         - name: secrets
