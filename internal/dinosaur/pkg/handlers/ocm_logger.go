@@ -28,9 +28,9 @@ type Logger struct {
 	logger       *log.Logger
 }
 
-// NewLoggerBuilder creates a builder that knows how to build a logger that uses the Go `log`
+// NewLoggerBuilder creates a builder that knows how to build a logger that uses the internal logging
 // package. By default these loggers will have enabled the information, warning and error levels
-func NewLoggerBuilder() *LoggerBuilder {
+func NewLoggerBuilder(logger *log.Logger) *LoggerBuilder {
 	// Allocate the object:
 	builder := new(LoggerBuilder)
 
@@ -39,6 +39,7 @@ func NewLoggerBuilder() *LoggerBuilder {
 	builder.infoEnabled = true
 	builder.warnEnabled = true
 	builder.errorEnabled = true
+	builder.logger = logger
 
 	return builder
 }
