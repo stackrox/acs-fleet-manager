@@ -310,6 +310,9 @@ func Fatalln(args ...interface{}) { rootLogger.Fatal(args...) }
 // Info implements logging.Logger interface.
 func Info(args ...interface{}) { rootLogger.Info(args...) }
 
+// Infoln implements logging.Logger interface.
+func Infoln(args ...interface{}) { rootLogger.Info(args...) }
+
 // Infof implements logging.Logger interface.
 func Infof(format string, args ...interface{}) { rootLogger.Infof(format, args...) }
 
@@ -334,8 +337,14 @@ func Println(args ...interface{}) { rootLogger.Info(args...) }
 // Warn implements logging.Logger interface.
 func Warn(args ...interface{}) { rootLogger.Warn(args...) }
 
+// Warning implements logging.Logger interface.
+func Warning(args ...interface{}) { rootLogger.Warn(args...) }
+
 // Warnf implements logging.Logger interface.
 func Warnf(format string, args ...interface{}) { rootLogger.Warnf(format, args...) }
+
+// Warningf implements logging.Logger interface.
+func Warningf(format string, args ...interface{}) { rootLogger.Warnf(format, args...) }
 
 // LabelForLevel takes a zapcore.Level and returns its name. If the level has no associated name, a zero-valued
 // string is returned, and the bool return value will be false.
