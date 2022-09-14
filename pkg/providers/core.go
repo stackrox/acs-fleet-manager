@@ -67,7 +67,7 @@ func ServiceProviders() di.Option {
 		di.Provide(func(config *ocm.OCMConfig) ocm.ClusterManagementClient {
 			conn, _, err := ocm.NewOCMConnection(config, config.BaseURL)
 			if err != nil {
-				logger.Logger.Error(err)
+				logger.Error(err)
 			}
 			return ocm.NewClient(conn)
 		}),
@@ -75,7 +75,7 @@ func ServiceProviders() di.Option {
 		di.Provide(func(config *ocm.OCMConfig) ocm.AMSClient {
 			conn, _, err := ocm.NewOCMConnection(config, config.AmsURL)
 			if err != nil {
-				logger.Logger.Error(err)
+				logger.Error(err)
 			}
 			return ocm.NewClient(conn)
 		}),

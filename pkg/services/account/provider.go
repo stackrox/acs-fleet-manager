@@ -28,7 +28,7 @@ func NewAccount(ocmConfig *ocm.OCMConfig) AccountService {
 	}
 	connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsURL)
 	if err != nil {
-		logger.Logger.Error(err)
+		logger.Error(err)
 	}
 	return NewAccountService(connection)
 }

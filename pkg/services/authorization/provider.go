@@ -28,7 +28,7 @@ func NewAuthorization(ocmConfig *ocm.OCMConfig) Authorization {
 	}
 	connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsURL)
 	if err != nil {
-		logger.Logger.Error(err)
+		logger.Error(err)
 	}
 	return NewOCMAuthorization(connection)
 }

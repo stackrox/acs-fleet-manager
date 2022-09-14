@@ -115,7 +115,7 @@ func (d *dataPlaneDinosaurService) setDinosaurClusterReady(dinosaur *dbapi.Centr
 		logger.Logger.V(10).Infof("routes for central %s are not created", dinosaur.ID)
 		return nil
 	}
-	logger.Logger.Infof("routes for central %s are created", dinosaur.ID)
+	logger.Infof("routes for central %s are created", dinosaur.ID)
 
 	// only send metrics data if the current dinosaur request is in "provisioning" status as this is the only case we want to report
 	shouldSendMetric, err := d.checkDinosaurRequestCurrentStatus(dinosaur, constants2.CentralRequestStatusProvisioning)
@@ -140,14 +140,14 @@ func (d *dataPlaneDinosaurService) setDinosaurRequestVersionFields(dinosaur *dba
 	needsUpdate := false
 	prevActualDinosaurVersion := status.CentralVersion
 	if status.CentralVersion != "" && status.CentralVersion != dinosaur.ActualCentralVersion {
-		logger.Logger.Infof("Updating Central version for Central ID '%s' from '%s' to '%s'", dinosaur.ID, prevActualDinosaurVersion, status.CentralVersion)
+		logger.Infof("Updating Central version for Central ID '%s' from '%s' to '%s'", dinosaur.ID, prevActualDinosaurVersion, status.CentralVersion)
 		dinosaur.ActualCentralVersion = status.CentralVersion
 		needsUpdate = true
 	}
 
 	prevActualDinosaurOperatorVersion := status.CentralOperatorVersion
 	if status.CentralOperatorVersion != "" && status.CentralOperatorVersion != dinosaur.ActualCentralOperatorVersion {
-		logger.Logger.Infof("Updating Central operator version for Central ID '%s' from '%s' to '%s'", dinosaur.ID, prevActualDinosaurOperatorVersion, status.CentralOperatorVersion)
+		logger.Infof("Updating Central operator version for Central ID '%s' from '%s' to '%s'", dinosaur.ID, prevActualDinosaurOperatorVersion, status.CentralOperatorVersion)
 		dinosaur.ActualCentralOperatorVersion = status.CentralOperatorVersion
 		needsUpdate = true
 	}
@@ -159,12 +159,12 @@ func (d *dataPlaneDinosaurService) setDinosaurRequestVersionFields(dinosaur *dba
 		prevDinosaurOperatorUpgrading := dinosaur.CentralOperatorUpgrading
 		dinosaurOperatorUpdatingReasonIsSet := readyCondition.Reason == dinosaurOperatorUpdating
 		if dinosaurOperatorUpdatingReasonIsSet && !prevDinosaurOperatorUpgrading {
-			logger.Logger.Infof("Central operator version for Central ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurOperatorUpgrading, dinosaurOperatorUpdatingReasonIsSet)
+			logger.Infof("Central operator version for Central ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurOperatorUpgrading, dinosaurOperatorUpdatingReasonIsSet)
 			dinosaur.CentralOperatorUpgrading = true
 			needsUpdate = true
 		}
 		if !dinosaurOperatorUpdatingReasonIsSet && prevDinosaurOperatorUpgrading {
-			logger.Logger.Infof("Central operator version for Central ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurOperatorUpgrading, dinosaurOperatorUpdatingReasonIsSet)
+			logger.Infof("Central operator version for Central ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurOperatorUpgrading, dinosaurOperatorUpdatingReasonIsSet)
 			dinosaur.CentralOperatorUpgrading = false
 			needsUpdate = true
 		}
@@ -172,12 +172,12 @@ func (d *dataPlaneDinosaurService) setDinosaurRequestVersionFields(dinosaur *dba
 		prevDinosaurUpgrading := dinosaur.CentralUpgrading
 		dinosaurUpdatingReasonIsSet := readyCondition.Reason == dinosaurUpdating
 		if dinosaurUpdatingReasonIsSet && !prevDinosaurUpgrading {
-			logger.Logger.Infof("Central version for Central ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurUpgrading, dinosaurUpdatingReasonIsSet)
+			logger.Infof("Central version for Central ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurUpgrading, dinosaurUpdatingReasonIsSet)
 			dinosaur.CentralUpgrading = true
 			needsUpdate = true
 		}
 		if !dinosaurUpdatingReasonIsSet && prevDinosaurUpgrading {
-			logger.Logger.Infof("Central version for Central ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurUpgrading, dinosaurUpdatingReasonIsSet)
+			logger.Infof("Central version for Central ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurUpgrading, dinosaurUpdatingReasonIsSet)
 			dinosaur.CentralUpgrading = false
 			needsUpdate = true
 		}
@@ -222,7 +222,7 @@ func (d *dataPlaneDinosaurService) setDinosaurClusterFailed(dinosaur *dbapi.Cent
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusFailed, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		metrics.IncreaseCentralTotalOperationsCountMetric(constants2.CentralOperationCreate)
 	}
-	logger.Logger.Errorf("Central status for Central ID '%s' in ClusterID '%s' reported as failed by Fleet Shard Operator: '%s'", dinosaur.ID, dinosaur.ClusterID, errMessage)
+	logger.Errorf("Central status for Central ID '%s' in ClusterID '%s' reported as failed by Fleet Shard Operator: '%s'", dinosaur.ID, dinosaur.ClusterID, errMessage)
 
 	return nil
 }
@@ -249,7 +249,7 @@ func (d *dataPlaneDinosaurService) reassignDinosaurCluster(dinosaur *dbapi.Centr
 		}
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 	} else {
-		logger.Logger.Infof("central cluster %s is rejected and current status is %s", dinosaur.ID, dinosaur.Status)
+		logger.Infof("central cluster %s is rejected and current status is %s", dinosaur.ID, dinosaur.Status)
 	}
 
 	return nil
@@ -295,7 +295,7 @@ func (d *dataPlaneDinosaurService) persistDinosaurRoutes(dinosaur *dbapi.Central
 		logger.Logger.V(10).Infof("skip persisting routes for Central %s as they are already stored", dinosaur.ID)
 		return nil
 	}
-	logger.Logger.Infof("store routes information for central %s", dinosaur.ID)
+	logger.Infof("store routes information for central %s", dinosaur.ID)
 	clusterDNS, err := d.clusterService.GetClusterDNS(cluster.ClusterID)
 	if err != nil {
 		return serviceError.NewWithCause(err.Code, err, "failed to get DNS entry for cluster %s", cluster.ClusterID)

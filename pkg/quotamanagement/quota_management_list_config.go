@@ -41,7 +41,7 @@ func (c *QuotaManagementListConfig) ReadFiles() error {
 	err := readQuotaManagementListConfigFile(c.QuotaListConfigFile, &c.QuotaList)
 
 	if errors.Is(err, fs.ErrNotExist) {
-		logger.Logger.Warningf("Configuration file for quota-management-list not found: '%s'", c.QuotaListConfigFile)
+		logger.Warningf("Configuration file for quota-management-list not found: '%s'", c.QuotaListConfigFile)
 		return nil
 	}
 

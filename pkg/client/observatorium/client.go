@@ -176,7 +176,7 @@ func (c *Client) Query(queryTemplate string, label string) Metric {
 	values, warnings, err := c.send(queryString)
 
 	if len(warnings) > 0 {
-		logger.Logger.Warningf("Prometheus client got warnings %s", all(warnings, "and"))
+		logger.Warningf("Prometheus client got warnings %s", all(warnings, "and"))
 	}
 	if err != nil {
 		return Metric{Err: err}
@@ -184,7 +184,7 @@ func (c *Client) Query(queryTemplate string, label string) Metric {
 
 	v, ok := values.(pModel.Vector)
 	if !ok {
-		logger.Logger.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)
+		logger.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)
 		return Metric{Err: errors.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)}
 	}
 	return Metric{Vector: v}
@@ -196,7 +196,7 @@ func (c *Client) QueryRange(queryTemplate string, label string, bounds pV1.Range
 	queryString := fmt.Sprintf(queryTemplate, label)
 	values, warnings, err := c.sendRange(queryString, bounds)
 	if len(warnings) > 0 {
-		logger.Logger.Warningf("Prometheus client got warnings %s", all(warnings, "and"))
+		logger.Warningf("Prometheus client got warnings %s", all(warnings, "and"))
 	}
 	if err != nil {
 		return Metric{Err: err}
@@ -204,7 +204,7 @@ func (c *Client) QueryRange(queryTemplate string, label string, bounds pV1.Range
 
 	m, ok := values.(pModel.Matrix)
 	if !ok {
-		logger.Logger.Errorf("Prometheus client got data of type %T, but expected model.Matrix", values)
+		logger.Errorf("Prometheus client got data of type %T, but expected model.Matrix", values)
 		return Metric{Err: errors.Errorf("Prometheus client got data of type %T, but expected model.Matrix", values)}
 
 	}

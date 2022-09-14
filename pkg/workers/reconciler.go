@@ -84,7 +84,7 @@ func (r *Reconciler) runReconcile(worker Worker) {
 	}
 	metrics.UpdateReconcilerDurationMetric(worker.GetWorkerType(), time.Since(start))
 	for _, e := range errors {
-		logger.Logger.Error(e)
+		logger.Error(e)
 	}
 }
 

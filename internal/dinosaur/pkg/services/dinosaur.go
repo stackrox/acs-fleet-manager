@@ -233,7 +233,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create central request")
 	} else if !hasCapacity {
 		errorMsg := fmt.Sprintf("Cluster capacity(%d) exhausted in %s region", int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(dinosaurRequest.Region)), dinosaurRequest.Region)
-		logger.Logger.Warningf(errorMsg)
+		logger.Warningf(errorMsg)
 		return errors.TooManyDinosaurInstancesReached(errorMsg)
 	}
 
@@ -247,7 +247,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	cluster, e := k.clusterPlacementStrategy.FindCluster(dinosaurRequest)
 	if e != nil || cluster == nil {
 		msg := fmt.Sprintf("No available cluster found for '%s' central instance in region: '%s'", dinosaurRequest.InstanceType, dinosaurRequest.Region)
-		logger.Logger.Errorf(msg)
+		logger.Errorf(msg)
 		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", dinosaurRequest.Region, dinosaurRequest.InstanceType))
 	}
 	dinosaurRequest.ClusterID = cluster.ClusterID

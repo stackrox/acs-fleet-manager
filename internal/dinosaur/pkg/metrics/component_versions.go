@@ -86,6 +86,6 @@ func (m *versionsMetrics) Collect(ch chan<- prometheus.Metric) {
 			}
 		}
 	} else {
-		logger.Logger.Errorf("failed to get component versions due to err: %v", err)
+		logger.Errorf("failed to get component versions due to err: %v", err)
 	}
 }

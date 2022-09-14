@@ -436,13 +436,13 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 // reconcileClusterInstanceType checks whether a cluster has an instance type, if not, set to the instance type provided in the manual cluster configuration
 // If the cluster does not exist, assume the cluster supports both instance types
 func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error {
-	logger.Logger.Infof("reconciling cluster = %s instance type", cluster.ClusterID)
+	logger.Infof("reconciling cluster = %s instance type", cluster.ClusterID)
 	supportedInstanceType := api.AllInstanceTypeSupport.String()
 	manualScalingEnabled := c.DataplaneClusterConfig.IsDataPlaneManualScalingEnabled()
 	if manualScalingEnabled {
 		supportedType, found := c.DataplaneClusterConfig.ClusterConfig.GetClusterSupportedInstanceType(cluster.ClusterID)
 		if !found && cluster.SupportedInstanceType != "" {
-			logger.Logger.Infof("cluster instance type already set for cluster = %s", cluster.ClusterID)
+			logger.Infof("cluster instance type already set for cluster = %s", cluster.ClusterID)
 			return nil
 		} else if found {
 			supportedInstanceType = supportedType
@@ -450,7 +450,7 @@ func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error
 	}
 
 	if cluster.SupportedInstanceType != "" && !manualScalingEnabled {
-		logger.Logger.Infof("cluster instance type already set for cluster = %s and scaling type is not manual", cluster.ClusterID)
+		logger.Infof("cluster instance type already set for cluster = %s and scaling type is not manual", cluster.ClusterID)
 		return nil
 	}
 
@@ -462,7 +462,7 @@ func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error
 		}
 	}
 
-	logger.Logger.Infof("supported instance type for cluster = %s successful updated", cluster.ClusterID)
+	logger.Infof("supported instance type for cluster = %s successful updated", cluster.ClusterID)
 	return nil
 }
 

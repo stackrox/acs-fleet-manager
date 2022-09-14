@@ -85,7 +85,7 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Cent
 	}
 
 	if cluster == nil {
-		logger.Logger.Warningf("No available cluster found for Central instance with id %s", dinosaur.ID)
+		logger.Warningf("No available cluster found for Central instance with id %s", dinosaur.ID)
 		return nil
 	}
 
