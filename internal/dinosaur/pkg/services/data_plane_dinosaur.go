@@ -71,7 +71,7 @@ func (d *dataPlaneDinosaurService) UpdateDataPlaneDinosaurService(ctx context.Co
 			continue
 		}
 		if dinosaur.ClusterID != clusterID {
-			log.Warningf("clusterId for central cluster %s does not match clusterId. central clusterId = %s :: clusterId = %s", dinosaur.ID, dinosaur.ClusterID, clusterID)
+			log.Warnf("clusterId for central cluster %s does not match clusterId. central clusterId = %s :: clusterId = %s", dinosaur.ID, dinosaur.ClusterID, clusterID)
 			continue
 		}
 		var e *serviceError.ServiceError
@@ -112,7 +112,7 @@ func (d *dataPlaneDinosaurService) UpdateDataPlaneDinosaurService(ctx context.Co
 
 func (d *dataPlaneDinosaurService) setDinosaurClusterReady(dinosaur *dbapi.CentralRequest) *serviceError.ServiceError {
 	if !dinosaur.RoutesCreated {
-		logger.Logger.V(10).Infof("routes for central %s are not created", dinosaur.ID)
+		logger.Infof("routes for central %s are not created", dinosaur.ID)
 		return nil
 	}
 	logger.Infof("routes for central %s are created", dinosaur.ID)
@@ -292,7 +292,7 @@ func (d *dataPlaneDinosaurService) checkDinosaurRequestCurrentStatus(dinosaur *d
 
 func (d *dataPlaneDinosaurService) persistDinosaurRoutes(dinosaur *dbapi.CentralRequest, dinosaurStatus *dbapi.DataPlaneCentralStatus, cluster *api.Cluster) *serviceError.ServiceError {
 	if dinosaur.Routes != nil {
-		logger.Logger.V(10).Infof("skip persisting routes for Central %s as they are already stored", dinosaur.ID)
+		logger.Infof("skip persisting routes for Central %s as they are already stored", dinosaur.ID)
 		return nil
 	}
 	logger.Infof("store routes information for central %s", dinosaur.ID)

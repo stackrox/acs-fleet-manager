@@ -25,7 +25,7 @@ func (f *jsonLogFormatter) FormatRequestLog(r *http.Request) (string, error) {
 		RequestURI: r.RequestURI,
 		RemoteAddr: r.RemoteAddr,
 	}
-	if glog.V(10) {
+	if glog.DebuggingGloballyEnabled() {
 		jsonlog.Header = r.Header
 		jsonlog.Body = r.Body
 	}
@@ -40,7 +40,7 @@ func (f *jsonLogFormatter) FormatRequestLog(r *http.Request) (string, error) {
 // FormatResponseLog ...
 func (f *jsonLogFormatter) FormatResponseLog(info *ResponseInfo) (string, error) {
 	jsonlog := jsonResponseLog{Header: nil, Status: info.Status, Elapsed: info.Elapsed}
-	if glog.V(10) {
+	if glog.DebuggingGloballyEnabled() {
 		jsonlog.Body = string(info.Body[:])
 	}
 	log, err := json.Marshal(jsonlog)
