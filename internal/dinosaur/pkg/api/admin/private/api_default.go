@@ -28,7 +28,7 @@ type DefaultApiService service
 
 /*
 CreateCentral Creates a Central request
-Creates a new Central that is owned by the user and organisation authenticated for the request. Each Central has a single owner organisation and a single owner user.  This API allows providing custom resource settings for the new Central instance.
+Creates a new Central that is owned by the user and organisation authenticated for the request. Each Central has a single owner organisation and a single owner user. This API allows providing custom resource settings for the new Central instance.
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param async Perform the action in an asynchronous manner
  * @param centralRequestPayload Central data
