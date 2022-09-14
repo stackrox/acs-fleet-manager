@@ -1,12 +1,12 @@
 package dinosaurmgrs
 
 import (
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
@@ -57,7 +57,7 @@ func (k *ReadyDinosaurManager) Reconcile() []error {
 	}
 
 	for _, dinosaur := range readyDinosaurs {
-		glog.V(10).Infof("ready central id = %s", dinosaur.ID)
+		glog.Infof("ready central id = %s", dinosaur.ID)
 		// TODO implement reconciliation logic for ready dinosaurs
 	}
 

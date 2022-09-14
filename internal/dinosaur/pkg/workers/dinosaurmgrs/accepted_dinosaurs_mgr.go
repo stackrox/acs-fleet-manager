@@ -67,7 +67,7 @@ func (k *AcceptedDinosaurManager) Reconcile() []error {
 	}
 
 	for _, dinosaur := range acceptedDinosaurs {
-		glog.V(10).Infof("accepted central id = %s", dinosaur.ID)
+		glog.Infof("accepted central id = %s", dinosaur.ID)
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusAccepted, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		if err := k.reconcileAcceptedDinosaur(dinosaur); err != nil {
 			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile accepted central %s", dinosaur.ID))
@@ -101,7 +101,7 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Cent
 		// until the max retry duration is reached before updating its status to 'failed'.
 		durationSinceCreation := time.Since(dinosaur.CreatedAt)
 		if durationSinceCreation < constants2.AcceptedCentralMaxRetryDuration {
-			glog.V(10).Infof("No available central operator version found for Central '%s' in Cluster ID '%s'", dinosaur.ID, dinosaur.ClusterID)
+			glog.Infof("No available central operator version found for Central '%s' in Cluster ID '%s'", dinosaur.ID, dinosaur.ClusterID)
 			return nil
 		}
 		dinosaur.Status = constants2.CentralRequestStatusFailed.String()

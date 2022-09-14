@@ -83,7 +83,7 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	}
 
 	for _, deprovisioningDinosaur := range deprovisioningDinosaurs {
-		glog.V(10).Infof("deprovision central id = %s", deprovisioningDinosaur.ID)
+		glog.Infof("deprovision central id = %s", deprovisioningDinosaur.ID)
 		// TODO check if a deprovisioningDinosaur can be deleted and add it to deletingDinosaurs array
 		// deletingDinosaurs = append(deletingDinosaurs, deprovisioningDinosaur)
 		if deprovisioningDinosaur.Host == "" {
@@ -94,7 +94,7 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	glog.Infof("An additional of centrals count = %d which are marked for removal before being provisioned will also be deleted", len(deletingDinosaurs)-originalTotalDinosaurInDeleting)
 
 	for _, dinosaur := range deletingDinosaurs {
-		glog.V(10).Infof("deleting central id = %s", dinosaur.ID)
+		glog.Infof("deleting central id = %s", dinosaur.ID)
 		if err := k.reconcileDeletingDinosaurs(dinosaur); err != nil {
 			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile deleting central request %s", dinosaur.ID))
 			continue
@@ -116,12 +116,12 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 
 	switch dinosaur.ClientOrigin {
 	case dbapi.AuthConfigStaticClientOrigin:
-		glog.V(7).Infof("central %s uses static client; no dynamic client will be attempted to be deleted",
+		glog.Infof("central %s uses static client; no dynamic client will be attempted to be deleted",
 			dinosaur.ID)
 	case dbapi.AuthConfigDynamicClientOrigin:
 		if resp, err := k.dynamicAPI.DeleteAcsClient(context.Background(), dinosaur.ClientID); err != nil {
 			if resp.StatusCode == http.StatusNotFound {
-				glog.V(7).Infof("dynamic client %s could not be found; will continue as if the client "+
+				glog.Infof("dynamic client %s could not be found; will continue as if the client "+
 					"has been deleted", dinosaur.ClientID)
 			} else {
 				return errors.Wrapf(err, "failed to delete dynamic OIDC client id %s for central %s",

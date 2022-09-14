@@ -62,5 +62,5 @@ func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
 	if err != nil {
 		glog.Fatalf("Failed to format central request: %s", err.Error())
 	}
-	glog.V(10).Infof("%s", indentedCentralRequest)
+	glog.Infof("%s", indentedCentralRequest)
 }

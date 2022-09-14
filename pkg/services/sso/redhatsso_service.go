@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
@@ -21,7 +21,7 @@ type redhatssoService struct {
 
 // RegisterAcsFleetshardOperatorServiceAccount ...
 func (r *redhatssoService) RegisterAcsFleetshardOperatorServiceAccount(agentClusterID string) (*api.ServiceAccount, *errors.ServiceError) {
-	glog.V(5).Infof("Registering agent service account with cluster: %s", agentClusterID)
+	glog.Infof("Registering agent service account with cluster: %s", agentClusterID)
 
 	ctx := context.Background()
 	description := fmt.Sprintf("service account for agent on cluster %s", agentClusterID)
@@ -35,13 +35,13 @@ func (r *redhatssoService) RegisterAcsFleetshardOperatorServiceAccount(agentClus
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to create agent service account")
 	}
 
-	glog.V(5).Infof("Agent service account registered with cluster: %s", agentClusterID)
+	glog.Infof("Agent service account registered with cluster: %s", agentClusterID)
 	return convertServiceAccountDataToAPIServiceAccount(&svcData), nil
 }
 
 // DeRegisterAcsFleetshardOperatorServiceAccount ...
 func (r *redhatssoService) DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterID string) *errors.ServiceError {
-	glog.V(5).Infof("Deregistering ACS fleetshard operator service account with cluster: %s", agentClusterID)
+	glog.Infof("Deregistering ACS fleetshard operator service account with cluster: %s", agentClusterID)
 
 	ctx := context.Background()
 	_, resp, err := r.serviceAccountsAPI.GetServiceAccount(ctx, agentClusterID).Execute()
@@ -50,7 +50,7 @@ func (r *redhatssoService) DeRegisterAcsFleetshardOperatorServiceAccount(agentCl
 	}
 	if resp.StatusCode == http.StatusNotFound {
 		// if the account to be deleted does not exist, we simply exit with no errors
-		glog.V(5).Infof("ACS fleetshard operator service account not found")
+		glog.Infof("ACS fleetshard operator service account not found")
 		return nil
 	}
 
@@ -59,7 +59,7 @@ func (r *redhatssoService) DeRegisterAcsFleetshardOperatorServiceAccount(agentCl
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterID)
 	}
 
-	glog.V(5).Infof("ACS fleetshard operator service account deregistered with cluster: %s", agentClusterID)
+	glog.Infof("ACS fleetshard operator service account deregistered with cluster: %s", agentClusterID)
 	return nil
 }
 

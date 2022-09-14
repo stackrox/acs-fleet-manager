@@ -38,5 +38,5 @@ func runGet(env *environments.Env, cmd *cobra.Command, _ []string) {
 	if marshalErr != nil {
 		glog.Fatalf("Failed to format central request: %s", marshalErr.Error())
 	}
-	glog.V(10).Infof("%s", indentedCentralRequest)
+	glog.Infof("%s", indentedCentralRequest)
 }

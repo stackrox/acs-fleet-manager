@@ -53,7 +53,7 @@ func NewLeaderElectionManager(workers []Worker, connectionFactory *db.Connection
 
 // Start ...
 func (s *LeaderElectionManager) Start() {
-	glog.V(1).Infoln("Starting LeaderElectionManager")
+	glog.Infoln("Starting LeaderElectionManager")
 
 	s.tearDown = make(chan struct{})
 	waitWorkersStart := make(chan struct{})
@@ -70,7 +70,7 @@ func (s *LeaderElectionManager) Start() {
 				ticker.Stop()
 				for _, worker := range s.workers {
 					if worker.IsRunning() {
-						glog.V(1).Infoln(fmt.Sprintf("Stopping running worker %T [%s]", worker, worker.GetID()))
+						glog.Infoln(fmt.Sprintf("Stopping running worker %T [%s]", worker, worker.GetID()))
 						worker.Stop()
 						s.workerGrp.Done()
 					}
@@ -104,11 +104,11 @@ func (s *LeaderElectionManager) startWorkers() {
 	for _, worker := range s.workers {
 		isLeader := s.isWorkerLeader(worker)
 		if isLeader && !worker.IsRunning() {
-			glog.V(1).Infoln(fmt.Sprintf("Running as the leader and starting worker %T [%s]", worker, worker.GetID()))
+			glog.Infoln(fmt.Sprintf("Running as the leader and starting worker %T [%s]", worker, worker.GetID()))
 			worker.Start()
 			s.workerGrp.Add(1) // a new worker is added to the group
 		} else if !isLeader && worker.IsRunning() {
-			glog.V(1).Infoln(fmt.Sprintf("No longer the leader and stopping worker %T [%s]", worker, worker.GetID()))
+			glog.Infoln(fmt.Sprintf("No longer the leader and stopping worker %T [%s]", worker, worker.GetID()))
 			worker.Stop()
 			s.workerGrp.Done() // a worker is removed from the group
 		}
@@ -124,12 +124,12 @@ func (s *LeaderElectionManager) isWorkerLeader(worker Worker) bool {
 	if err != nil {
 		// we don't know whether we're the leader or not, set metric to false for now
 		// metrics.UpdateLeaderStatusMetric(false)
-		glog.V(5).Infof("failed to acquire leader lease: %s", err)
+		glog.Infof("failed to acquire leader lease: %s", err)
 		return false
 	}
 
 	if !leaderLeaseAcquisition.acquired {
-		glog.V(5).Infof("not currently leader, skipping reconcile %T [%s]", worker, worker.GetID())
+		glog.Infof("not currently leader, skipping reconcile %T [%s]", worker, worker.GetID())
 		return false
 	}
 
@@ -179,7 +179,7 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerID string, workerType s
 		  continue the reconcile
 		*/
 		if len(leaseList) == 0 && isExpired(lease) {
-			glog.V(1).Infof("failed to acquire lock on leader lease for update, skipping")
+			glog.Infof("failed to acquire lock on leader lease for update, skipping")
 			leaderTx.Rollback()
 			return &leaderLeaseAcquisition{
 				acquired:     false,

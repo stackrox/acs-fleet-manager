@@ -155,7 +155,7 @@ func (ic *IAMConfig) ReadFiles() error {
 	err = shared.ReadYamlFile(ic.ServiceAccounttLimitCheckSkipOrgIDListFile, &ic.ServiceAccounttLimitCheckSkipOrgIDList)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			glog.V(10).Infof("Specified service account limits skip org IDs  file %q does not exist. Proceeding as if no service account org ID skip list was provided", ic.ServiceAccounttLimitCheckSkipOrgIDListFile)
+			glog.Infof("Specified service account limits skip org IDs  file %q does not exist. Proceeding as if no service account org ID skip list was provided", ic.ServiceAccounttLimitCheckSkipOrgIDListFile)
 		} else {
 			return fmt.Errorf("reading the service account limits check skip org ID yaml file %q: %w", ic.ServiceAccounttLimitCheckSkipOrgIDListFile, err)
 		}
@@ -177,7 +177,7 @@ func (ic *IAMConfig) ReadFiles() error {
 		err = readAdditionalIssuersFile(ic.AdditionalSSOIssuers.File, ic.AdditionalSSOIssuers)
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
-				glog.V(10).Infof("Specified additional SSO issuers file %q does not exist. "+
+				glog.Infof("Specified additional SSO issuers file %q does not exist. "+
 					"Proceeding as if no additional SSO issuers list was provided", ic.AdditionalSSOIssuers.File)
 			} else {
 				return err

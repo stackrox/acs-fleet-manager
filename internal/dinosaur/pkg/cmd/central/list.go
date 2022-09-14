@@ -86,5 +86,5 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 		glog.Fatalf("Failed to format central request list: %s", err.Error())
 	}
 
-	glog.V(10).Infof("%s", output)
+	glog.Infof("%s", output)
 }

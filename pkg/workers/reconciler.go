@@ -50,23 +50,23 @@ func (r *Reconciler) Start(worker Worker) {
 	ticker := time.NewTicker(RepeatInterval)
 	go func() {
 		// starts reconcile immediately and then on every repeat interval
-		glog.V(1).Infoln(fmt.Sprintf("Initial reconciliation loop for %T [%s]", worker, worker.GetID()))
+		glog.Infoln(fmt.Sprintf("Initial reconciliation loop for %T [%s]", worker, worker.GetID()))
 		r.runReconcile(worker)
 		for {
 			select {
 			case wg := <-r.wakeup: // we were asked to wake up...
-				glog.V(1).Infoln(fmt.Sprintf("Wakeup triggered reconciliation loop for %T [%s]", worker, worker.GetID()))
+				glog.Infoln(fmt.Sprintf("Wakeup triggered reconciliation loop for %T [%s]", worker, worker.GetID()))
 				r.runReconcile(worker)
 				if wg != nil {
 					wg.Done()
 				}
 			case <-ticker.C: // time out
-				glog.V(1).Infoln(fmt.Sprintf("Timeout triggered reconciliation loop for %T [%s]", worker, worker.GetID()))
+				glog.Infoln(fmt.Sprintf("Timeout triggered reconciliation loop for %T [%s]", worker, worker.GetID()))
 				r.runReconcile(worker)
 			case <-*worker.GetStopChan():
 				ticker.Stop()
 				defer worker.GetSyncGroup().Done()
-				glog.V(1).Infoln(fmt.Sprintf("Stopping reconciliation loop for %T [%s]", worker, worker.GetID()))
+				glog.Infoln(fmt.Sprintf("Stopping reconciliation loop for %T [%s]", worker, worker.GetID()))
 				return
 			}
 		}

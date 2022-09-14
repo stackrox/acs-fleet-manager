@@ -69,7 +69,7 @@ func runScaleUp(env *environments.Env, cmd *cobra.Command, _ []string) {
 	if indentedCluster, err := json.Marshal(cluster); err != nil {
 		glog.Fatalf("Unable to marshal cluster: %s", err.Error())
 	} else {
-		glog.V(10).Infof("%s", string(indentedCluster))
+		glog.Infof("%s", string(indentedCluster))
 	}
 }
 
@@ -88,6 +88,6 @@ func runScaleDown(env *environments.Env, cmd *cobra.Command, _ []string) {
 	if indentedCluster, err := json.Marshal(cluster); err != nil {
 		glog.Fatalf("Unable to marshal cluster: %s", err.Error())
 	} else {
-		glog.V(10).Infof("%s", string(indentedCluster))
+		glog.Infof("%s", string(indentedCluster))
 	}
 }

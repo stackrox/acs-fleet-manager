@@ -20,8 +20,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
 	authv1 "github.com/openshift/api/authorization/v1"
@@ -204,7 +204,7 @@ func (c *ClusterManager) processDeprovisioningClusters() []error {
 
 	for i := range deprovisioningClusters {
 		cluster := deprovisioningClusters[i]
-		glog.V(10).Infof("deprovision cluster ClusterID = %s", cluster.ClusterID)
+		glog.Infof("deprovision cluster ClusterID = %s", cluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterDeprovisioning)
 		if err := c.reconcileDeprovisioningCluster(&cluster); err != nil {
 			errs = append(errs, errors.Wrapf(err, "failed to reconcile deprovisioning cluster %s", cluster.ID))
@@ -223,7 +223,7 @@ func (c *ClusterManager) processCleanupClusters() []error {
 	glog.Infof("cleanup clusters count = %d", len(cleanupClusters))
 
 	for _, cluster := range cleanupClusters {
-		glog.V(10).Infof("cleanup cluster ClusterID = %s", cluster.ClusterID)
+		glog.Infof("cleanup cluster ClusterID = %s", cluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterCleanup)
 		if err := c.reconcileCleanupCluster(cluster); err != nil {
 			errs = append(errs, errors.Wrapf(err, "failed to reconcile cleanup cluster %s", cluster.ID))
@@ -243,7 +243,7 @@ func (c *ClusterManager) processAcceptedClusters() []error {
 
 	for i := range acceptedClusters {
 		cluster := acceptedClusters[i]
-		glog.V(10).Infof("accepted cluster ClusterID = %s", cluster.ClusterID)
+		glog.Infof("accepted cluster ClusterID = %s", cluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterAccepted)
 		if err := c.reconcileAcceptedCluster(&cluster); err != nil {
 			errs = append(errs, errors.Wrapf(err, "failed to reconcile accepted cluster %s", cluster.ID))
@@ -265,7 +265,7 @@ func (c *ClusterManager) processProvisioningClusters() []error {
 	// process each local pending cluster and compare to the underlying ocm cluster
 	for i := range provisioningClusters {
 		provisioningCluster := provisioningClusters[i]
-		glog.V(10).Infof("provisioning cluster ClusterID = %s", provisioningCluster.ClusterID)
+		glog.Infof("provisioning cluster ClusterID = %s", provisioningCluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisioningCluster, api.ClusterProvisioning)
 		_, err := c.reconcileClusterStatus(&provisioningCluster)
 		if err != nil {
@@ -290,7 +290,7 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
-		glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
+		glog.Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterProvisioned)
 		err := c.reconcileProvisionedCluster(provisionedCluster)
 		if err != nil {
@@ -313,7 +313,7 @@ func (c *ClusterManager) processReadyClusters() []error {
 	glog.Infof("ready clusters count = %d", len(readyClusters))
 
 	for _, readyCluster := range readyClusters {
-		glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
+		glog.Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
 		emptyClusterReconciled := false
 		var recErr error
 		if c.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
@@ -468,13 +468,13 @@ func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error
 
 // reconcileEmptyCluster checks wether a cluster is empty and mark it for deletion
 func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error) {
-	glog.V(10).Infof("check if cluster is empty, ClusterID = %s", cluster.ClusterID)
+	glog.Infof("check if cluster is empty, ClusterID = %s", cluster.ClusterID)
 	clusterFromDb, err := c.ClusterService.FindNonEmptyClusterByID(cluster.ClusterID)
 	if err != nil {
 		return false, err
 	}
 	if clusterFromDb != nil {
-		glog.V(10).Infof("cluster is not empty, ClusterID = %s", cluster.ClusterID)
+		glog.Infof("cluster is not empty, ClusterID = %s", cluster.ClusterID)
 		return false, nil
 	}
 
@@ -489,7 +489,7 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 
 	siblingClusterCount := clustersByRegionAndCloudProvider[0]
 	if siblingClusterCount.Count <= 1 { // sibling cluster not found
-		glog.V(10).Infof("no valid sibling found for cluster ClusterID = %s", cluster.ClusterID)
+		glog.Infof("no valid sibling found for cluster ClusterID = %s", cluster.ClusterID)
 		return false, nil
 	}
 
@@ -594,7 +594,7 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 	// }
 
 	if dinosaurOperatorIsReady && fleetshardOperatorIsReady {
-		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForFleetShardOperator, provisionedCluster.ClusterID)
+		glog.Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForFleetShardOperator, provisionedCluster.ClusterID)
 		if err := c.ClusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForFleetShardOperator); err != nil {
 			return errors.Wrapf(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
 		}
@@ -610,7 +610,7 @@ func (c *ClusterManager) reconcileDinosaurOperator(provisionedCluster api.Cluste
 	if err != nil {
 		return false, err
 	}
-	glog.V(5).Infof("ready status of central operator installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
+	glog.Infof("ready status of central operator installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
 	return ready, nil
 }
 

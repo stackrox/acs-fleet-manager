@@ -8,9 +8,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 )
 
 type serviceStatusHandler struct {
@@ -41,7 +41,7 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if accessControlListConfig.EnableDenyList {
 				userIsDenied := accessControlListConfig.DenyList.IsUserDenied(username)
 				if userIsDenied {
-					glog.V(5).Infof("User %s is denied to access the service. Setting central maximum capacity to 'true'", username)
+					glog.Infof("User %s is denied to access the service. Setting central maximum capacity to 'true'", username)
 					return presenters.PresentServiceStatus(true, false), nil
 				}
 			}

@@ -77,7 +77,7 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 	// TODO: restore when cluster transition to ready is implemented
 	/*
 		if !d.clusterCanProcessStatusReports(cluster) {
-			glog.V(10).Infof("Cluster with ID '%s' is in '%s' state. Ignoring status report...", clusterID, cluster.Status)
+			glog.Infof("Cluster with ID '%s' is in '%s' state. Ignoring status report...", clusterID, cluster.Status)
 			return nil
 		}*/
 
@@ -93,7 +93,7 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 			}
 			metrics.UpdateClusterStatusSinceCreatedMetric(*cluster, api.ClusterWaitingForFleetShardOperator)
 		}
-		glog.V(10).Infof("Fleet Shard Operator not ready for Cluster ID '%s", clusterID)
+		glog.Infof("Fleet Shard Operator not ready for Cluster ID '%s", clusterID)
 		return nil
 	}
 

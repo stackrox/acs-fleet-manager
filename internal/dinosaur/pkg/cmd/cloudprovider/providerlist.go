@@ -54,5 +54,5 @@ func runProviderList(
 		glog.Fatalf("Failed to format cloud provider list: %s", err.Error())
 	}
 
-	glog.V(10).Infof("%s", output)
+	glog.Infof("%s", output)
 }

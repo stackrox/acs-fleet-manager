@@ -67,6 +67,6 @@ func runGetMetricsByInstantQuery(env *environments.Env, cmd *cobra.Command, _arg
 		glog.Fatalf("Failed to format metrics list: %s", err.Error())
 	}
 
-	glog.V(10).Infof("%s %s", dinosaurID, output)
+	glog.Infof("%s %s", dinosaurID, output)
 
 }

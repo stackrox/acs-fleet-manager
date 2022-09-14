@@ -72,6 +72,6 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 		glog.Fatalf("Failed to format  cloud provider region list: %s", err.Error())
 	}
 
-	glog.V(10).Infof("%s", output)
+	glog.Infof("%s", output)
 
 }

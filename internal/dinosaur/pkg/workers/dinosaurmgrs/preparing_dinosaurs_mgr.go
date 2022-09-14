@@ -59,7 +59,7 @@ func (k *PreparingDinosaurManager) Reconcile() []error {
 	}
 
 	for _, dinosaur := range preparingDinosaurs {
-		glog.V(10).Infof("preparing central id = %s", dinosaur.ID)
+		glog.Infof("preparing central id = %s", dinosaur.ID)
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusPreparing, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		if err := k.reconcilePreparingDinosaur(dinosaur); err != nil {
 			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile preparing central %s", dinosaur.ID))

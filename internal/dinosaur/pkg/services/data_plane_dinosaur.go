@@ -8,12 +8,12 @@ import (
 
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 
-	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
+	glog "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	logger "github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
@@ -95,7 +95,7 @@ func (d *dataPlaneDinosaurService) UpdateDataPlaneDinosaurService(ctx context.Co
 		case statusUnknown:
 			log.Infof("central cluster %s status is unknown", ks.CentralClusterID)
 		default:
-			log.V(5).Infof("central cluster %s is still installing", ks.CentralClusterID)
+			log.Infof("central cluster %s is still installing", ks.CentralClusterID)
 		}
 		if e != nil {
 			log.Error(errors.Wrapf(e, "Error updating central %s status", ks.CentralClusterID))

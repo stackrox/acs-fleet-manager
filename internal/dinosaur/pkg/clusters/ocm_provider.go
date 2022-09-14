@@ -131,13 +131,13 @@ func (o *OCMProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources t
 	}
 
 	if !syncSetFound {
-		glog.V(10).Infof("SyncSet for cluster %s not found. Creating it...", clusterSpec.InternalID)
+		glog.Infof("SyncSet for cluster %s not found. Creating it...", clusterSpec.InternalID)
 		_, syncsetErr := o.createSyncSet(clusterSpec.InternalID, resources)
 		if syncsetErr != nil {
 			return nil, errors.Wrapf(syncsetErr, "failed to create syncset for cluster %s", clusterSpec.InternalID)
 		}
 	} else {
-		glog.V(10).Infof("SyncSet for cluster %s already created", clusterSpec.InternalID)
+		glog.Infof("SyncSet for cluster %s already created", clusterSpec.InternalID)
 		_, syncsetErr := o.updateSyncSet(clusterSpec.InternalID, resources, existingSyncset)
 		if syncsetErr != nil {
 			return nil, errors.Wrapf(syncsetErr, "failed to update syncset for cluster %s", clusterSpec.InternalID)
@@ -251,7 +251,7 @@ func (o *OCMProvider) installAddonWithParams(clusterSpec *types.ClusterSpec, add
 	}
 
 	if addonInstallation != nil && addonInstallation.ID() == "" {
-		glog.V(5).Infof("No existing %s addon found, create a new one", addonID)
+		glog.Infof("No existing %s addon found, create a new one", addonID)
 		addonInstallation, addonErr = o.ocmClient.CreateAddonWithParams(clusterSpec.InternalID, addonID, params)
 		if addonErr != nil {
 			return false, errors.Wrapf(addonErr, "failed to create addon %s for cluster %s", addonID, clusterSpec.InternalID)
@@ -373,14 +373,14 @@ func (o *OCMProvider) updateSyncSet(clusterID string, resourceSet types.Resource
 		return nil, errors.WithStack(sysnsetBuilderErr)
 	}
 	if syncsetResourcesChanged(existingSyncset, syncset) {
-		glog.V(5).Infof("SyncSet for cluster %s is changed, will update", clusterID)
+		glog.Infof("SyncSet for cluster %s is changed, will update", clusterID)
 		updatedSyncSet, err := o.ocmClient.UpdateSyncSet(clusterID, resourceSet.Name, syncset)
 		if err != nil {
 			return updatedSyncSet, fmt.Errorf("updating SyncSet %q for cluster %q: %w", resourceSet.Name, clusterID, err)
 		}
 		return updatedSyncSet, nil
 	}
-	glog.V(10).Infof("SyncSet for cluster %s is not changed, no update needed", clusterID)
+	glog.Infof("SyncSet for cluster %s is not changed, no update needed", clusterID)
 	return syncset, nil
 }
 

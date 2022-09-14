@@ -43,6 +43,6 @@ func runDelete(env *environments.Env, cmd *cobra.Command, _ []string) {
 	if err := centralService.RegisterDinosaurDeprovisionJob(ctx, id); err != nil {
 		glog.Fatalf("Unable to register the deprovisioning request: %s", err.Error())
 	} else {
-		glog.V(10).Infof("Deprovisioning request accepted for central cluster with id %s", id)
+		glog.Infof("Deprovisioning request accepted for central cluster with id %s", id)
 	}
 }

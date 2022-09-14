@@ -66,7 +66,7 @@ func (o *fleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
 	}
-	glog.V(5).Infof("Provision addon %s for cluster %s", fleetshardAddonID, cluster.ClusterID)
+	glog.Infof("Provision addon %s for cluster %s", fleetshardAddonID, cluster.ClusterID)
 	spec := &types.ClusterSpec{
 		InternalID:     cluster.ClusterID,
 		ExternalID:     cluster.ExternalID,
@@ -92,7 +92,7 @@ func (o *fleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *erro
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
 	}
 
-	glog.V(5).Infof("Reconcile parameters for addon %s on cluster %s", fleetshardAddonID, cluster.ClusterID)
+	glog.Infof("Reconcile parameters for addon %s on cluster %s", fleetshardAddonID, cluster.ClusterID)
 	spec := &types.ClusterSpec{
 		InternalID:     cluster.ClusterID,
 		ExternalID:     cluster.ExternalID,
@@ -102,10 +102,10 @@ func (o *fleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *erro
 	if updated, err := p.InstallFleetshard(spec, params); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update parameters for addon %s for cluster %s", fleetshardAddonID, cluster.ClusterID)
 	} else if updated {
-		glog.V(5).Infof("Addon parameters for addon %s on cluster %s are updated", fleetshardAddonID, cluster.ClusterID)
+		glog.Infof("Addon parameters for addon %s on cluster %s are updated", fleetshardAddonID, cluster.ClusterID)
 		return nil
 	} else {
-		glog.V(5).Infof("Addon parameters for addon %s on cluster %s are not updated", fleetshardAddonID, cluster.ClusterID)
+		glog.Infof("Addon parameters for addon %s on cluster %s are not updated", fleetshardAddonID, cluster.ClusterID)
 		return nil
 	}
 }
@@ -120,7 +120,7 @@ func (o *fleetshardOperatorAddon) getAddonParams(cluster api.Cluster) ([]types.P
 }
 
 func (o *fleetshardOperatorAddon) provisionServiceAccount(clusterID string) (*api.ServiceAccount, *errors.ServiceError) {
-	glog.V(5).Infof("Provisioning service account for cluster %s", clusterID)
+	glog.Infof("Provisioning service account for cluster %s", clusterID)
 	return o.IAMService.RegisterAcsFleetshardOperatorServiceAccount(clusterID)
 }
 
@@ -161,6 +161,6 @@ func (o *fleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAc
 
 // RemoveServiceAccount ...
 func (o *fleetshardOperatorAddon) RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError {
-	glog.V(5).Infof("Removing fleetshard-operator service account for cluster %s", cluster.ClusterID)
+	glog.Infof("Removing fleetshard-operator service account for cluster %s", cluster.ClusterID)
 	return o.IAMService.DeRegisterAcsFleetshardOperatorServiceAccount(cluster.ClusterID)
 }

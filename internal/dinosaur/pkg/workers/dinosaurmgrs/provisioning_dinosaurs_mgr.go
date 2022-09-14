@@ -60,7 +60,7 @@ func (k *ProvisioningDinosaurManager) Reconcile() []error {
 		glog.Infof("provisioning centrals count = %d", len(provisioningDinosaurs))
 	}
 	for _, dinosaur := range provisioningDinosaurs {
-		glog.V(10).Infof("provisioning central id = %s", dinosaur.ID)
+		glog.Infof("provisioning central id = %s", dinosaur.ID)
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		// TODO implement additional reconcilation logic for provisioning dinosaurs
 	}
