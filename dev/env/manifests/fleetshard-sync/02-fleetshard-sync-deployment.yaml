@@ -49,6 +49,8 @@ spec:
               value: 10s
             - name: LOGENCODING
               value: "$LOGENCODING"
+            - name: LOGLEVEL
+              value: "$LOGLEVEL"
           image: "${FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent
           name: fleetshard-sync

@@ -84,6 +84,8 @@ spec:
           env:
             - name: LOGENCODING
               value: "$LOGENCODING"
+            - name: LOGLEVEL
+              value: "$LOGLEVEL"
       restartPolicy: Always
       volumes:
         - name: secrets
