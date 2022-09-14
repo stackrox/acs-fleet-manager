@@ -59,6 +59,7 @@ cmd/fleet-manager/fleet-manager
 /secrets/sentry.*
 /secrets/redhatsso-service.*
 /secrets/keycloak-service.crt
+/secrets/central.idp*
 
 # cluster details (used for testing)
 /internal/dinosaur/test/integration/test_cluster.json
