@@ -5,13 +5,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strconv"
-	"sync/atomic"
-
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"strconv"
+	"sync/atomic"
 
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -459,6 +458,13 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 		err = r.client.Create(ctx, obj)
 		if err != nil && !apiErrors.IsAlreadyExists(err) {
 			return fmt.Errorf("failed to create object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
+		}
+
+		if apiErrors.IsAlreadyExists(err) {
+			err := r.client.Update(ctx, obj)
+			if err != nil {
+				return fmt.Errorf("failed to update object %s/%s of type %v: %w", key.Namespace, key.Namespace, obj.GroupVersionKind(), err)
+			}
 		}
 	}
 	return nil
