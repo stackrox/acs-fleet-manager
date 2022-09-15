@@ -1,6 +1,6 @@
 package translation
 
-// TODO(create-ticket): import instead of copy
+// TODO(addon): import instead of copy
 
 import (
 	"fmt"

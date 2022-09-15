@@ -66,8 +66,8 @@ type CentralReconciler struct {
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
 // It tries to create a namespace for the Central and applies necessary updates to the resource.
-// TODO(create-ticket): Check correct Central gets reconciled
-// TODO(create-ticket): Should an initial ManagedCentral be added on reconciler creation?
+// TODO(sbaumer): Check correct Central gets reconciled
+// TODO(sbaumer): Should an initial ManagedCentral be added on reconciler creation?
 func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	// Only allow to start reconcile function once
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
@@ -205,7 +205,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 		glog.Infof("Central %s/%s created", central.GetNamespace(), central.GetName())
 	} else {
-		// TODO(create-ticket): implement update logic
 		glog.Infof("Update central %s/%s", central.GetNamespace(), central.GetName())
 		existingCentral.Spec = central.Spec
 
@@ -255,7 +254,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		r.hasAuthProvider = true
 	}
 
-	// TODO(create-ticket): When should we create failed conditions for the reconciler?
 	status := readyStatus()
 	// Do not report routes statuses if:
 	// 1. Routes are not used on the cluster

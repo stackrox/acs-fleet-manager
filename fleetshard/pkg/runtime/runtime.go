@@ -37,7 +37,7 @@ type Runtime struct {
 	config           *config.Config
 	client           *fleetmanager.Client
 	clusterID        string
-	reconcilers      reconcilerRegistry // TODO(create-ticket): possible leak. consider reconcilerRegistry cleanup
+	reconcilers      reconcilerRegistry
 	k8sClient        ctrlClient.Client
 	statusResponseCh chan private.DataPlaneCentralStatus
 }

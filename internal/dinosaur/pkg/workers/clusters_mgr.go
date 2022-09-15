@@ -402,13 +402,13 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 		return errors.WithMessagef(err, "failed to reconcile instance type ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
-	// TODO(create-ticket): Install necessary OSD cluster resources.
+	// TODO: Install necessary OSD cluster resources.
 	//// resources update if needed
 	// if err := c.reconcileClusterResources(cluster); err != nil {
 	//	return errors.WithMessagef(err, "failed to reconcile ready cluster resources %s ", cluster.ClusterID)
 	//}
 
-	// TODO(create-ticket): Register what is necessary for SSO authn/authz.
+	// TODO: Register what is necessary for SSO authn/authz.
 	// err = c.reconcileClusterIdentityProvider(cluster)
 	// if err != nil {
 	//	return errors.WithMessagef(err, "failed to reconcile identity provider of ready cluster %s: %s", cluster.ClusterID, err.Error())
@@ -419,7 +419,7 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 		return errors.WithMessagef(err, "failed to reconcile cluster dns of ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
-	// TODO(create-ticket): Install the ACS Operator and Fleetshard Operator (Add-Ons)
+	// TODO: Install the ACS Operator and Fleetshard Operator (Add-Ons)
 	// if c.FleetshardOperatorAddon != nil {
 	//	if err := c.FleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
 	//		if err.IsBadRequest() {
@@ -501,7 +501,7 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 }
 
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
-	// TODO(create-ticket): Register what is necessary for SSO authn/authz.
+	// TODO: Register what is necessary for SSO authn/authz.
 	// if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
 	//	return err
 	//}
@@ -510,7 +510,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 		return err
 	}
 
-	// TODO(create-ticket): Install necessary OSD cluster resources.
+	// TODO: Install necessary OSD cluster resources.
 	//// SyncSet creation step
 	// syncSetErr := c.reconcileClusterResources(cluster) //OSD cluster itself
 	// if syncSetErr != nil {
@@ -523,7 +523,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	// installed. The logic to set the status of the cluster should probably done
 	// independently of the installation of the addon, and it should use the
 	// result of the addon/s reconciliation to set the status of the cluster
-	// TODO(create-ticket): Install the ACS Operator and Fleetshard Operator (Add-Ons)
+	// TODO: Install the ACS Operator and Fleetshard Operator (Add-Ons)
 	addOnErr := c.reconcileAddonOperator(cluster)
 	if addOnErr != nil {
 		return errors.WithMessagef(addOnErr, "failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
@@ -578,7 +578,7 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 }
 
 func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) error {
-	// TODO(create-ticket): Activate dinosaur reconcilation and FleetshardOperatorAddon.Provision
+	// TODO: Activate dinosaur reconcilation and FleetshardOperatorAddon.Provision
 	// as soon as this components are available
 	dinosaurOperatorIsReady := true
 	// dinosaurOperatorIsReady, err := c.reconcileDinosaurOperator(provisionedCluster)

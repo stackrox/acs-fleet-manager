@@ -74,7 +74,7 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 		return errors.BadRequest("Cluster agent with ID '%s' not found", clusterID)
 	}
 
-	// TODO(create-ticket): restore when cluster transition to ready is implemented
+	// TODO: restore when cluster transition to ready is implemented
 	/*
 		if !d.clusterCanProcessStatusReports(cluster) {
 			glog.V(10).Infof("Cluster with ID '%s' is in '%s' state. Ignoring status report...", clusterID, cluster.Status)

@@ -51,7 +51,7 @@ func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
 }
 
 func TestTermsRequired_CreateDinosaurTermsRequired(t *testing.T) {
-	// TODO(create-ticket): Add back this test
+	// TODO: Add back this test
 	skipNotFullyImplementedYet(t)
 	env := termsRequiredSetup(true, t)
 	defer env.teardown()
@@ -78,7 +78,7 @@ func TestTermsRequired_CreateDinosaurTermsRequired(t *testing.T) {
 }
 
 func TestTermsRequired_CreateDinosaur_TermsNotRequired(t *testing.T) {
-	// TODO(create-ticket): Add back this test
+	// TODO: Add back this test
 	skipNotFullyImplementedYet(t)
 	env := termsRequiredSetup(false, t)
 	defer env.teardown()

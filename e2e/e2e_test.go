@@ -108,8 +108,6 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusProvisioning.String()))
 		})
 
-		// TODO(create-ticket): fails because the namespace is not centralName anymore but `formatNamespace(dinosaurRequest.ID)`
-		// and that is not accessible from a value `*public.CentralRequest`
 		It("should create central namespace", func() {
 			Eventually(func() error {
 				ns := &corev1.Namespace{}
@@ -124,7 +122,6 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
-		// TODO(create-ticket): create test to check that Central and Scanner are healthy
 		It("should create central routes", func() {
 			if !routesEnabled {
 				Skip(skipRouteMsg)
