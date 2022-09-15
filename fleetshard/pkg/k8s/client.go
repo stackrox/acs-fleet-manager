@@ -6,13 +6,18 @@ import (
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+var routesGVK = schema.GroupVersionResource{
+	Group:    "route.openshift.io",
+	Version:  "v1",
+	Resource: "routes",
+}
 
 // CreateClientOrDie creates a new kubernetes client or dies
 func CreateClientOrDie() ctrlClient.Client {
@@ -40,12 +45,7 @@ func CreateClientOrDie() ctrlClient.Client {
 
 // IsRoutesResourceEnabled checks if routes resource are available on the cluster.
 func IsRoutesResourceEnabled(ctx context.Context, client ctrlClient.Client) (bool, error) {
-	err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: "default", Name: "does-not-exist"}, &openshiftRouteV1.Route{
-		ObjectMeta: metav1.ObjectMeta{},
-	})
-	if apiErrors.IsNotFound(err) {
-		return true, nil
-	}
+	_, err := client.RESTMapper().ResourceFor(routesGVK)
 	if err != nil {
 		return false, nil
 	}
