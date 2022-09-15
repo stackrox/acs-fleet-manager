@@ -42,7 +42,7 @@ ocm list quota | grep -E "QUOTA|osd"
 
 Create cluster with `ocm` command
 ```
-# Get AWS Keyes from BitWarden
+# Get AWS Keys from BitWarden
 export AWS_REGION="us-east-1"
 export AWS_ACCOUNT_ID=$(bw get item "23a0e6d6-7b7d-44c8-b8d0-aecc00e1fa0a" | jq '.fields[] | select(.name | contains("AccountID")) | .value' --raw-output)
 export AWS_ACCESS_KEY_ID=$(bw get item "23a0e6d6-7b7d-44c8-b8d0-aecc00e1fa0a" | jq '.fields[] | select(.name | contains("AccessKeyID")) | .value' --raw-output)
@@ -108,6 +108,7 @@ Execute the following command in separate terminal (new shell).
 ```
 oc port-forward -n openshift-marketplace svc/redhat-operators 50051:50051
 ```
+If port-forward step fails with `Unable to connect to the server: x509: certificate signed by unknown authority`, wait few seconds and try again.
 
 ```
 grpcurl -plaintext -d '{"name":"rhacs-operator"}' localhost:50051 api.Registry/GetPackage | jq '.channels[0].csvName'
@@ -201,6 +202,7 @@ helm upgrade --install rhacs-terraform \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${RHACS_OPERATOR_CATALOG_NAME}" \
   --set acsOperator.startingCSV="${STARTING_CSV}" \
+  --set logging.enabled=false
   --set observability.enabled=false ./dp-terraform/helm/rhacs-terraform
 ```
 
