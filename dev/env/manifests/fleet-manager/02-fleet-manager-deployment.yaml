@@ -34,7 +34,7 @@ spec:
         - command:
             - sh
             - "-c"
-            - "cd /; $FLEET_MANAGER_COMMAND || { sleep 120; false; }"
+            - "cd /; /usr/local/bin/fleet-manager serve --force-leader --api-server-bindaddress=0.0.0.0:8000 --health-check-server-bindaddress=0.0.0.0:8083 --kubeconfig=/secrets/kubeconfig --enable-central-external-certificate=$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE --central-domain-name='$CENTRAL_DOMAIN_NAME' || { sleep 120; false; }"
           image: "$FLEET_MANAGER_IMAGE"
           imagePullPolicy: IfNotPresent
           name: fleet-manager
