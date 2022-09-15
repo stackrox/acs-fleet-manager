@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 
@@ -39,6 +41,7 @@ type options struct {
 	ServerConfig   *server.ServerConfig
 	OCMConfig      *ocm.OCMConfig
 	ProviderConfig *config.ProviderConfig
+	IAMConfig      *iam.IAMConfig
 
 	AMSClient                ocm.AMSClient
 	Dinosaur                 services.DinosaurService
@@ -90,7 +93,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
 	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(
-		append(s.IAM.GetConfig().AdditionalSSOIssuers.URIs, s.ServerConfig.TokenIssuerURL), errors.ErrorUnauthenticated)
+		append(s.IAMConfig.AdditionalSSOIssuers.GetURIs(), s.ServerConfig.TokenIssuerURL), errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMSClient, errors.ErrorTermsNotAccepted)
 
 	// base path.
@@ -154,8 +157,8 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		Name(logger.NewLogEvent("get-federate-metrics", "get federate metrics by id").ToString()).
 		Methods(http.MethodGet)
 	apiV1MetricsFederateRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
-		append(s.IAM.GetConfig().AdditionalSSOIssuers.URIs, s.ServerConfig.TokenIssuerURL,
-			s.IAM.GetConfig().RedhatSSORealm.ValidIssuerURI), errors.ErrorUnauthenticated))
+		append(s.IAMConfig.AdditionalSSOIssuers.GetURIs(), s.ServerConfig.TokenIssuerURL,
+			s.IAMConfig.RedhatSSORealm.ValidIssuerURI), errors.ErrorUnauthenticated))
 	apiV1MetricsFederateRouter.Use(requireOrgID)
 	apiV1MetricsFederateRouter.Use(authorizeMiddleware)
 
@@ -207,13 +210,13 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		Methods(http.MethodGet)
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	auth.UseFleetShardAuthorizationMiddleware(apiV1DataPlaneRequestsRouter,
-		s.IAM.GetConfig().RedhatSSORealm.ValidIssuerURI, s.FleetShardAuthZConfig)
+		s.IAMConfig.RedhatSSORealm.ValidIssuerURI, s.FleetShardAuthZConfig)
 
 	adminCentralHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
-		[]string{s.IAM.GetConfig().InternalSSORealm.ValidIssuerURI}, errors.ErrorNotFound))
+		[]string{s.IAMConfig.InternalSSORealm.ValidIssuerURI}, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewRolesAuhzMiddleware(s.AdminRoleAuthZConfig).RequireRolesForMethods(errors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
 	adminCentralsRouter := adminRouter.PathPrefix("/centrals").Subrouter()

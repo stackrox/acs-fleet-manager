@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
@@ -31,6 +33,7 @@ type redhatSSOMock struct {
 	server               *httptest.Server
 	authTokens           []string
 	serviceAccounts      map[string]serviceaccountsclient.ServiceAccountData
+	dynamicClients       map[string]api.AcsClientResponseData
 	sessionAuthToken     string
 	serviceAccountsLimit int
 	initialClientID      string
@@ -66,6 +69,7 @@ func WithServiceAccountLimit(limit int) MockServerOption {
 func NewMockServer(options ...MockServerOption) RedhatSSOMock {
 	mockServer := &redhatSSOMock{
 		serviceAccounts:      make(map[string]serviceaccountsclient.ServiceAccountData),
+		dynamicClients:       make(map[string]api.AcsClientResponseData),
 		serviceAccountsLimit: Unlimited,
 	}
 
@@ -143,10 +147,12 @@ func (mockServer *redhatSSOMock) init() {
 
 	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/service_accounts/v1", mockServer.createServiceAccountHandler).Methods("POST")
 	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/service_accounts/v1", mockServer.getServiceAccountsHandler).Methods("GET")
-	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/service_accounts/v1/{clientId}", mockServer.getServiceAccountHandler).Methods("GET")
-	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/service_accounts/v1/{clientId}", mockServer.deleteServiceAccountHandler).Methods("DELETE")
-	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/service_accounts/v1/{clientId}", mockServer.updateServiceAccountHandler).Methods("PATCH")
-	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/service_accounts/v1/{clientId}/resetSecret", mockServer.regenerateSecretHandler).Methods("POST")
+	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/service_accounts/v1/{id}", mockServer.getServiceAccountHandler).Methods("GET")
+	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/service_accounts/v1/{id}", mockServer.deleteServiceAccountHandler).Methods("DELETE")
+	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/service_accounts/v1/{id}", mockServer.updateServiceAccountHandler).Methods("PATCH")
+	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/service_accounts/v1/{id}/resetSecret", mockServer.regenerateSecretHandler).Methods("POST")
+	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/beta/acs/v1", mockServer.createDynamicClientHandler).Methods("POST")
+	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/beta/acs/v1/{clientId}", mockServer.deleteDynamicClientHandler).Methods("DELETE")
 
 	mockServer.server = httptest.NewUnstartedServer(r)
 
@@ -174,9 +180,9 @@ func (mockServer *redhatSSOMock) getTokenHandler(w http.ResponseWriter, r *http.
 func (mockServer *redhatSSOMock) deleteServiceAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	if clientID, ok := vars["clientId"]; ok {
-		if _, ok := mockServer.serviceAccounts[clientID]; ok {
-			delete(mockServer.serviceAccounts, clientID)
+	if id, ok := vars["id"]; ok {
+		if _, ok := mockServer.serviceAccounts[id]; ok {
+			delete(mockServer.serviceAccounts, id)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 		}
@@ -206,8 +212,8 @@ func (mockServer *redhatSSOMock) updateServiceAccountHandler(w http.ResponseWrit
 		}
 	}
 
-	if clientID, ok := vars["clientId"]; ok {
-		if serviceAccount, ok := mockServer.serviceAccounts[clientID]; ok {
+	if id, ok := vars["id"]; ok {
+		if serviceAccount, ok := mockServer.serviceAccounts[id]; ok {
 			updateField(serviceAccount.Name, update.Name)
 			updateField(serviceAccount.Description, update.Description)
 
@@ -228,8 +234,8 @@ func (mockServer *redhatSSOMock) updateServiceAccountHandler(w http.ResponseWrit
 func (mockServer *redhatSSOMock) getServiceAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	if clientID, ok := vars["clientId"]; ok {
-		if serviceAccount, ok := mockServer.serviceAccounts[clientID]; ok {
+	if id, ok := vars["id"]; ok {
+		if serviceAccount, ok := mockServer.serviceAccounts[id]; ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			data, _ := json.Marshal(serviceAccount)
@@ -291,7 +297,7 @@ func (mockServer *redhatSSOMock) createServiceAccountHandler(w http.ResponseWrit
 		Description: serviceAccountCreateRequestData.Description,
 	}
 
-	mockServer.serviceAccounts[clientID] = serviceAccountData
+	mockServer.serviceAccounts[id] = serviceAccountData
 
 	data, _ := json.Marshal(serviceAccountData)
 	w.Header().Set("Content-Type", "application/json")
@@ -302,8 +308,8 @@ func (mockServer *redhatSSOMock) createServiceAccountHandler(w http.ResponseWrit
 func (mockServer *redhatSSOMock) regenerateSecretHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	if clientID, ok := vars["clientId"]; ok {
-		if serviceAccount, ok := mockServer.serviceAccounts[clientID]; ok {
+	if id, ok := vars["id"]; ok {
+		if serviceAccount, ok := mockServer.serviceAccounts[id]; ok {
 			*serviceAccount.Secret = uuid.New().String()
 			data, err := json.Marshal(serviceAccount)
 			if err != nil {
@@ -316,6 +322,55 @@ func (mockServer *redhatSSOMock) regenerateSecretHandler(w http.ResponseWriter, 
 		}
 	}
 	w.WriteHeader(http.StatusNotFound)
+}
+
+func (mockServer *redhatSSOMock) deleteDynamicClientHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	if clientID, ok := vars["clientId"]; ok {
+		if _, ok := mockServer.dynamicClients[clientID]; ok {
+			delete(mockServer.dynamicClients, clientID)
+			w.WriteHeader(http.StatusOK)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+		}
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+	}
+}
+
+func (mockServer *redhatSSOMock) createDynamicClientHandler(w http.ResponseWriter, r *http.Request) {
+	requestData, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	if err != nil {
+		// Ignoring real body (json)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var acsClientRequestData api.AcsClientRequestData
+	err = json.Unmarshal(requestData, &acsClientRequestData)
+	if err != nil {
+		// Ignoring real body (json)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	clientID := uuid.New().String()
+	secret := uuid.New().String()
+
+	acsClientResponseData := api.AcsClientResponseData{
+		ClientId: clientID,
+		Secret:   secret, // pragma: allowlist secret
+		Name:     acsClientRequestData.Name,
+	}
+
+	mockServer.dynamicClients[clientID] = acsClientResponseData
+
+	data, _ := json.Marshal(acsClientResponseData)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(data)
 }
 
 // generateAuthToken ...

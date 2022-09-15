@@ -5,7 +5,6 @@ package sso
 
 import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"sync"
 )
@@ -23,12 +22,6 @@ var _ IAMService = &IAMServiceMock{}
 // 			DeRegisterAcsFleetshardOperatorServiceAccountFunc: func(agentClusterID string) *errors.ServiceError {
 // 				panic("mock out the DeRegisterAcsFleetshardOperatorServiceAccount method")
 // 			},
-// 			GetConfigFunc: func() *iam.IAMConfig {
-// 				panic("mock out the GetConfig method")
-// 			},
-// 			GetRealmConfigFunc: func() *iam.IAMRealmConfig {
-// 				panic("mock out the GetRealmConfig method")
-// 			},
 // 			RegisterAcsFleetshardOperatorServiceAccountFunc: func(agentClusterID string) (*api.ServiceAccount, *errors.ServiceError) {
 // 				panic("mock out the RegisterAcsFleetshardOperatorServiceAccount method")
 // 			},
@@ -42,12 +35,6 @@ type IAMServiceMock struct {
 	// DeRegisterAcsFleetshardOperatorServiceAccountFunc mocks the DeRegisterAcsFleetshardOperatorServiceAccount method.
 	DeRegisterAcsFleetshardOperatorServiceAccountFunc func(agentClusterID string) *errors.ServiceError
 
-	// GetConfigFunc mocks the GetConfig method.
-	GetConfigFunc func() *iam.IAMConfig
-
-	// GetRealmConfigFunc mocks the GetRealmConfig method.
-	GetRealmConfigFunc func() *iam.IAMRealmConfig
-
 	// RegisterAcsFleetshardOperatorServiceAccountFunc mocks the RegisterAcsFleetshardOperatorServiceAccount method.
 	RegisterAcsFleetshardOperatorServiceAccountFunc func(agentClusterID string) (*api.ServiceAccount, *errors.ServiceError)
 
@@ -58,12 +45,6 @@ type IAMServiceMock struct {
 			// AgentClusterID is the agentClusterID argument value.
 			AgentClusterID string
 		}
-		// GetConfig holds details about calls to the GetConfig method.
-		GetConfig []struct {
-		}
-		// GetRealmConfig holds details about calls to the GetRealmConfig method.
-		GetRealmConfig []struct {
-		}
 		// RegisterAcsFleetshardOperatorServiceAccount holds details about calls to the RegisterAcsFleetshardOperatorServiceAccount method.
 		RegisterAcsFleetshardOperatorServiceAccount []struct {
 			// AgentClusterID is the agentClusterID argument value.
@@ -71,8 +52,6 @@ type IAMServiceMock struct {
 		}
 	}
 	lockDeRegisterAcsFleetshardOperatorServiceAccount sync.RWMutex
-	lockGetConfig                                     sync.RWMutex
-	lockGetRealmConfig                                sync.RWMutex
 	lockRegisterAcsFleetshardOperatorServiceAccount   sync.RWMutex
 }
 
@@ -104,58 +83,6 @@ func (mock *IAMServiceMock) DeRegisterAcsFleetshardOperatorServiceAccountCalls()
 	mock.lockDeRegisterAcsFleetshardOperatorServiceAccount.RLock()
 	calls = mock.calls.DeRegisterAcsFleetshardOperatorServiceAccount
 	mock.lockDeRegisterAcsFleetshardOperatorServiceAccount.RUnlock()
-	return calls
-}
-
-// GetConfig calls GetConfigFunc.
-func (mock *IAMServiceMock) GetConfig() *iam.IAMConfig {
-	if mock.GetConfigFunc == nil {
-		panic("IAMServiceMock.GetConfigFunc: method is nil but IAMService.GetConfig was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockGetConfig.Lock()
-	mock.calls.GetConfig = append(mock.calls.GetConfig, callInfo)
-	mock.lockGetConfig.Unlock()
-	return mock.GetConfigFunc()
-}
-
-// GetConfigCalls gets all the calls that were made to GetConfig.
-// Check the length with:
-//     len(mockedIAMService.GetConfigCalls())
-func (mock *IAMServiceMock) GetConfigCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockGetConfig.RLock()
-	calls = mock.calls.GetConfig
-	mock.lockGetConfig.RUnlock()
-	return calls
-}
-
-// GetRealmConfig calls GetRealmConfigFunc.
-func (mock *IAMServiceMock) GetRealmConfig() *iam.IAMRealmConfig {
-	if mock.GetRealmConfigFunc == nil {
-		panic("IAMServiceMock.GetRealmConfigFunc: method is nil but IAMService.GetRealmConfig was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockGetRealmConfig.Lock()
-	mock.calls.GetRealmConfig = append(mock.calls.GetRealmConfig, callInfo)
-	mock.lockGetRealmConfig.Unlock()
-	return mock.GetRealmConfigFunc()
-}
-
-// GetRealmConfigCalls gets all the calls that were made to GetRealmConfig.
-// Check the length with:
-//     len(mockedIAMService.GetRealmConfigCalls())
-func (mock *IAMServiceMock) GetRealmConfigCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockGetRealmConfig.RLock()
-	calls = mock.calls.GetRealmConfig
-	mock.lockGetRealmConfig.RUnlock()
 	return calls
 }
 
