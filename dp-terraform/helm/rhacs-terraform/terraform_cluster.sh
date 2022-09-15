@@ -99,6 +99,9 @@ case $ENVIRONMENT in
     ;;
 esac
 
+GIT_COMMIT_HASH=$(git rev-parse HEAD)
+GIT_DESCRIBE=$(git describe --tag)
+
 # helm template ... to debug changes
 helm upgrade rhacs-terraform ./ \
   --install \
@@ -110,6 +113,8 @@ helm upgrade rhacs-terraform ./ \
   --set acsOperator.sourceNamespace=openshift-marketplace \
   --set acsOperator.startingCSV=rhacs-operator.v3.71.0 \
   --set fleetshardSync.authType="RHSSO" \
+  --set fleetshardSync.gitCommitSHA="${GIT_COMMIT_HASH}" \
+  --set fleetshardSync.gitDescribe="${GIT_DESCRIBE}" \
   --set fleetshardSync.clusterId=${CLUSTER_ID} \
   --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
   --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID}" \
