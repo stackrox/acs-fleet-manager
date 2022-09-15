@@ -99,6 +99,17 @@ case $ENVIRONMENT in
     ;;
 esac
 
+
+## Uncomment this section if you want to deploy an upstream version of the operator.
+## Update the global pull secret within the dataplane cluster to include the read-only credentials for quay.io/rhacs-eng
+#QUAY_READ_ONLY_USERNAME=$(bw get username "66de0e1f-52fd-470b-ad9b-ae0701339dda")
+#QUAY_READ_ONLY_PASSWORD=$(bw get password "66de0e1f-52fd-470b-ad9b-ae0701339dda")
+#quay_basic_auth=$(echo "${QUAY_READ_ONLY_USERNAME}:${QUAY_READ_ONLY_PASSWORD}")
+#oc get secret/pull-secret -n openshift-config --template='{{index .data ".dockerconfigjson" | base64decode}}' > ./tmp-pull-secret.json
+#oc registry login --registry="quay.io/rhacs-eng" --auth-basic="${quay_basic_auth}" --to=./tmp-pull-secret.json --skip-check
+#oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=./tmp-pull-secret.json
+#rm ./tmp-pull-secret.json
+
 GIT_COMMIT_SHA=$(git rev-parse HEAD)
 GIT_DESCRIBE_TAG=$(git describe --tag)
 
@@ -111,7 +122,7 @@ helm upgrade rhacs-terraform ./ \
   --set acsOperator.enabled=true \
   --set acsOperator.source=redhat-operators \
   --set acsOperator.sourceNamespace=openshift-marketplace \
-  --set acsOperator.startingCSV=rhacs-operator.v3.71.0 \
+  --set acsOperator.version=v3.71.0 \
   --set fleetshardSync.authType="RHSSO" \
   --set fleetshardSync.gitCommitSHA="${GIT_COMMIT_SHA}" \
   --set fleetshardSync.gitDescribeTag="${GIT_DESCRIBE_TAG}" \
@@ -127,6 +138,11 @@ helm upgrade rhacs-terraform ./ \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${PAGERDUTY_SERVICE_KEY}"
+  # In case you want to deploy an upstream version of the operator, you can uncomment the lines below
+  #--set acsOperator.upstream.use=true \
+  #--set acsOperator.source=rhacs-operators \
+  # Make sure to set the version of the operator also to a unrelease version, i.e. "v3.72.0-35-gf72be438ec"
+
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs

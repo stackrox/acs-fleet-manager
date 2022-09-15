@@ -16,5 +16,19 @@ spec:
   name: rhacs-operator
   source: {{ .Values.acsOperator.source }}
   sourceNamespace: {{ .Values.acsOperator.sourceNamespace }}
-  startingCSV: {{ .Values.acsOperator.startingCSV }}
+  startingCSV: rhacs-operator.{{ .Values.acsOperator.version }}
+---
+{{- if .Values.acsOperator.upstream.use }}
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: {{ .Values.acsOperator.source }}
+  namespace: openshift-marketplace
+spec:
+  displayName: 'RHACS Development'
+  publisher: 'Red Hat ACS'
+  sourceType: grpc
+  image: quay.io/rhacs-eng/stackrox-operator-index:{{ .Values.acsOperator.version }}
+---
+{{- end }}
 {{- end }}
