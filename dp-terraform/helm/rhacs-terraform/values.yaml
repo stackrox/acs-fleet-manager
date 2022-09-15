@@ -6,7 +6,7 @@ fleetshardSync:
   image: "quay.io/app-sre/acs-fleet-manager:main"
   # Sets the commit hash and git describe to identify the deployed version of fleetshard sync
   gitCommitSHA: ""
-  gitDescribe: ""
+  gitDescribeTag: ""
   # Can be either OCM, RHSSO, STATIC_TOKEN. When choosing RHSSO, make sure the clientId/secret is set. By default, uses OCM.
   authType: "OCM"
   # OCM refresh token, only required in combination with authType=OCM.

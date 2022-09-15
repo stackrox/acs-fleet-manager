@@ -7,7 +7,7 @@ metadata:
     app: fleetshard-sync
     managed-service.rhacs.redhat.com/update-trigger: {{ now }}
     managed-service.rhacs.redhat.com/git-commit-sha: {{ .Values.fleetshardSync.gitCommitSHA }}
-    managed-service.rhacs.redhat.com/git-describe: {{ .Values.fleetshardSync.gitDescribe }}
+    managed-service.rhacs.redhat.com/git-describe-tag: {{ .Values.fleetshardSync.gitDescribeTag }}
 spec:
   replicas: 1
   selector:
