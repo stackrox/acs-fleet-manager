@@ -29,6 +29,7 @@ const (
 //go:generate moq -out client_moq.go . SSOClient
 type SSOClient interface {
 	GetToken() (string, error)
+	GetAcsAPIToken() (string, error)
 	GetConfig() *iam.IAMConfig
 	GetRealmConfig() *iam.IAMRealmConfig
 	GetServiceAccounts(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error)
@@ -102,8 +103,16 @@ func (c *rhSSOClient) getCachedToken(tokenKey string) (string, error) {
 	return "", errors.Errorf("failed to retrieve cached token")
 }
 
+func (c *rhSSOClient) GetAcsAPIToken() (string, error) {
+	return c.getToken([]string{"api.iam.acs"})
+}
+
 // GetToken ...
 func (c *rhSSOClient) GetToken() (string, error) {
+	return c.getToken([]string{})
+}
+
+func (c *rhSSOClient) getToken(additionalScopes []string) (string, error) {
 	cachedTokenKey := fmt.Sprintf("%s%s", c.realmConfig.Realm, c.realmConfig.ClientID)
 	cachedToken, _ := c.getCachedToken(cachedTokenKey)
 
@@ -116,6 +125,9 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	parameters.Set("grant_type", "client_credentials")
 	parameters.Set("client_id", c.realmConfig.ClientID)
 	parameters.Set("client_secret", c.realmConfig.ClientSecret)
+	if len(additionalScopes) != 0 {
+		parameters.Set("scope", strings.Join(additionalScopes, " "))
+	}
 	req, err := http.NewRequest("POST", c.realmConfig.TokenEndpointURI, strings.NewReader(parameters.Encode()))
 	if err != nil {
 		return "", fmt.Errorf("getting token: %w", err)
