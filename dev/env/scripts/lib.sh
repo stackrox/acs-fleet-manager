@@ -88,7 +88,7 @@ init() {
 
     if [[ -z "${CENTRAL_IDP_CLIENT_SECRET:-}" ]]; then
       die "Error: CENTRAL_IDP_CLIENT_SECRET not set. Please make sure that it is initialized properly."
-    done
+    fi
 
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
     export ACSMS_NAMESPACE="${ACSMS_NAMESPACE:-$ACSMS_NAMESPACE_DEFAULT}"
