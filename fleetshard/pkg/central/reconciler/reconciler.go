@@ -37,6 +37,8 @@ const (
 	revisionAnnotationKey = "rhacs.redhat.com/revision"
 
 	helmReleaseName = "tenant-resources"
+
+	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -105,9 +107,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      remoteCentralName,
-			Namespace: remoteCentralNamespace,
-			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
+			Name:        remoteCentralName,
+			Namespace:   remoteCentralNamespace,
+			Labels:      map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
+			Annotations: map[string]string{managedServicesAnnotation: "true"},
 		},
 		Spec: v1alpha1.CentralSpec{
 			Central: &v1alpha1.CentralComponentSpec{
@@ -191,7 +194,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	if !centralExists {
-		central.Annotations = map[string]string{revisionAnnotationKey: "1"}
+		if central.GetAnnotations() == nil {
+			central.Annotations = map[string]string{}
+		}
+		central.GetAnnotations()[revisionAnnotationKey] = "1"
 
 		glog.Infof("Creating central %s/%s", central.GetNamespace(), central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
