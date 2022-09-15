@@ -17,19 +17,19 @@ Additionally, you will also require `quay.io` credentials.
 
 All commands should be executed in root directory of `stackrox/acs-fleet-manager` project.
 
-### Create OSD Cluster
+### Create development OSD Cluster
 
-1. Create OSD Cluster with `ocm`
+1. Create development OSD Cluster with `ocm`
 
 Export name for your cluster. Prefix it with your initials or something similar to avoid name collisions. i.e. `mt-osd-1307`
 ```
 export OSD_CLUSTER_NAME="<your cluster name>"
 ```
 
-For staging OSD cluster, you should login to staging platform. You should use `rhacs-managed-service-dev` account. To retrieve token required to login via `ocm` command,
-you have to go to: https://console.redhat.com/openshift/token/show# - login there as `rhacs-managed-service-dev`. You can find login credentials in BitWarden.
+To create development OSD cluster in OCM staging platform, you should login to staging platform. You should use `rhacs-managed-service-dev` account. To retrieve token required to login via `ocm` command,
+you have to go to: https://console.redhat.com/openshift/token/show# - login there as `rhacs-managed-service-dev`. You can find `rhacs-managed-service-dev` login credentials in BitWarden.
 
-The `ocm` command is aware of differences and defining `--url staging` is all what is required in order to login to staging platform.
+The `ocm` command is aware of differences and defining `--url staging` is all what is required in order to login to OCM staging platform.
 ```
 ocm login --url staging --token="<your token from OpenShift console UI - console.redhat.com>
 ```
@@ -332,7 +332,7 @@ After that, you can open the following URL in your browser: https://stage.foo.re
 
 **Note:** Since staging External RedHat SSO is used for authentication, you may have to create your personal account.
 
-### Extend OSD cluster lifetime to 7 days
+### Extend development OSD cluster lifetime to 7 days
 
 By default, staging cluster will be up for 2 days. You can extend it to 7 days. To do that, execute the following command for MacOS:
 ```
