@@ -5,6 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: fleetshard-sync
+    managed-service.rhacs.redhat.com/update-trigger: {{ now }}
 spec:
   replicas: 1
   selector:
