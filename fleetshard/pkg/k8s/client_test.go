@@ -1,7 +1,6 @@
 package k8s
 
 import (
-	"context"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,14 +23,14 @@ func TestIsRoutesResourceEnabled(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).
 		WithRESTMapper(mapper).
 		Build()
-	enabled, err := IsRoutesResourceEnabled(context.TODO(), fakeClient)
+	enabled, err := IsRoutesResourceEnabled(fakeClient)
 	require.NoError(t, err)
 	assert.True(t, enabled)
 }
 
 func TestIsRoutesResourceEnabledShouldReturnFalse(t *testing.T) {
 	fakeClient := fake.NewClientBuilder().Build()
-	enabled, err := IsRoutesResourceEnabled(context.TODO(), fakeClient)
+	enabled, err := IsRoutesResourceEnabled(fakeClient)
 	require.NoError(t, err)
 	assert.False(t, enabled)
 }

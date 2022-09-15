@@ -1,7 +1,6 @@
 package k8s
 
 import (
-	"context"
 	"github.com/golang/glog"
 	openshiftOperatorV1 "github.com/openshift/api/operator/v1"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -44,7 +43,7 @@ func CreateClientOrDie() ctrlClient.Client {
 }
 
 // IsRoutesResourceEnabled checks if routes resource are available on the cluster.
-func IsRoutesResourceEnabled(ctx context.Context, client ctrlClient.Client) (bool, error) {
+func IsRoutesResourceEnabled(client ctrlClient.Client) (bool, error) {
 	_, err := client.RESTMapper().ResourceFor(routesGVK)
 	if err != nil {
 		return false, nil

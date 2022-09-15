@@ -172,7 +172,7 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 }
 
 func (r *Runtime) routesAvailable() bool {
-	available, err := k8s.IsRoutesResourceEnabled(context.Background(), r.k8sClient)
+	available, err := k8s.IsRoutesResourceEnabled(r.k8sClient)
 	if err != nil {
 		glog.Errorf("Skip checking OpenShift routes availability due to an error: %v", err)
 		return true // make an optimistic assumption that routes can be created despite the error
