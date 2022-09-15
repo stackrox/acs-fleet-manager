@@ -72,7 +72,7 @@ case $ENVIRONMENT in
     fi
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
 
-    FM_ENDPOINT="https://syqugpy2fa29zqc.api.openshift.com"
+    FM_ENDPOINT="https://api.openshift.com"
 
     ensure_bitwarden_session_exists
     # Note: the Red Hat SSO client as of 2022-09-02 is the same between stage and prod.
