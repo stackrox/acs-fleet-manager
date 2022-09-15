@@ -4,10 +4,10 @@ set -eo pipefail
 
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
-ROUTER_RBAC_YAML="https://raw.githubusercontent.com/openshift/router/master/deploy/router_rbac.yaml"
-ROUTER_CRD_YAML="https://raw.githubusercontent.com/openshift/api/master/route/v1/route.crd.yaml"
-ROUTER_DEPLOYMENT_YAML="https://raw.githubusercontent.com/openshift/router/master/deploy/router.yaml"
-APPS_OPENSHIFT_CRD_YAML="$SCRIPT_DIR/../dev/env/manifests/openshift-router/01-apps-openshift-dummy.crd.yaml"
+ROUTER_RBAC_YAML="https://raw.githubusercontent.com/openshift/router/release-4.11/deploy/router_rbac.yaml"
+ROUTER_CRD_YAML="https://raw.githubusercontent.com/openshift/router/release-4.11/deploy/route_crd.yaml"
+ROUTER_DEPLOYMENT_YAML="https://raw.githubusercontent.com/openshift/router/release-4.11/deploy/router.yaml"
+APPS_OPENSHIFT_CRD_YAML="$SCRIPT_DIR/../dev/env/manifests/openshift-router/00-apps-openshift-dummy.crd.yaml"
 HOSTCTL_PROFILE="acs"
 KUBECTL=${KUBECTL:-kubectl}
 
