@@ -34,7 +34,7 @@ const (
 	FreeStatus int32 = iota
 	BlockedStatus
 
-	revisionAnnotationKey = "managed-service.rhacs.redhat.com/revision"
+	revisionAnnotationKey = "rhacs.redhat.com/revision"
 
 	helmReleaseName = "tenant-resources"
 
