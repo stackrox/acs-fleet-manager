@@ -25,7 +25,7 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //
 // 		// make and configure a mocked DinosaurService
 // 		mockedDinosaurService := &DinosaurServiceMock{
-// 			AcceptCentralRequestFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+// 			AcceptCentralRequestFunc: func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 // 				panic("mock out the AcceptCentralRequest method")
 // 			},
 // 			ChangeDinosaurCNAMErecordsFunc: func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
@@ -111,7 +111,7 @@ var _ DinosaurService = &DinosaurServiceMock{}
 // 	}
 type DinosaurServiceMock struct {
 	// AcceptCentralRequestFunc mocks the AcceptCentralRequest method.
-	AcceptCentralRequestFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
+	AcceptCentralRequestFunc func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// ChangeDinosaurCNAMErecordsFunc mocks the ChangeDinosaurCNAMErecords method.
 	ChangeDinosaurCNAMErecordsFunc func(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
@@ -192,8 +192,8 @@ type DinosaurServiceMock struct {
 	calls struct {
 		// AcceptCentralRequest holds details about calls to the AcceptCentralRequest method.
 		AcceptCentralRequest []struct {
-			// DinosaurRequest is the dinosaurRequest argument value.
-			DinosaurRequest *dbapi.CentralRequest
+			// CentralRequest is the centralRequest argument value.
+			CentralRequest *dbapi.CentralRequest
 		}
 		// ChangeDinosaurCNAMErecords holds details about calls to the ChangeDinosaurCNAMErecords method.
 		ChangeDinosaurCNAMErecords []struct {
@@ -354,29 +354,29 @@ type DinosaurServiceMock struct {
 }
 
 // AcceptCentralRequest calls AcceptCentralRequestFunc.
-func (mock *DinosaurServiceMock) AcceptCentralRequest(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+func (mock *DinosaurServiceMock) AcceptCentralRequest(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 	if mock.AcceptCentralRequestFunc == nil {
 		panic("DinosaurServiceMock.AcceptCentralRequestFunc: method is nil but DinosaurService.AcceptCentralRequest was just called")
 	}
 	callInfo := struct {
-		DinosaurRequest *dbapi.CentralRequest
+		CentralRequest *dbapi.CentralRequest
 	}{
-		DinosaurRequest: dinosaurRequest,
+		CentralRequest: centralRequest,
 	}
 	mock.lockAcceptCentralRequest.Lock()
 	mock.calls.AcceptCentralRequest = append(mock.calls.AcceptCentralRequest, callInfo)
 	mock.lockAcceptCentralRequest.Unlock()
-	return mock.AcceptCentralRequestFunc(dinosaurRequest)
+	return mock.AcceptCentralRequestFunc(centralRequest)
 }
 
 // AcceptCentralRequestCalls gets all the calls that were made to AcceptCentralRequest.
 // Check the length with:
 //     len(mockedDinosaurService.AcceptCentralRequestCalls())
 func (mock *DinosaurServiceMock) AcceptCentralRequestCalls() []struct {
-	DinosaurRequest *dbapi.CentralRequest
+	CentralRequest *dbapi.CentralRequest
 } {
 	var calls []struct {
-		DinosaurRequest *dbapi.CentralRequest
+		CentralRequest *dbapi.CentralRequest
 	}
 	mock.lockAcceptCentralRequest.RLock()
 	calls = mock.calls.AcceptCentralRequest
