@@ -25,7 +25,7 @@ var _ SSOClient = &SSOClientMock{}
 // 			DeleteServiceAccountFunc: func(accessToken string, clientID string) error {
 // 				panic("mock out the DeleteServiceAccount method")
 // 			},
-// 			GetAcsApiTokenFunc: func() (string, error) {
+// 			GetAcsAPITokenFunc: func() (string, error) {
 // 				panic("mock out the GetAcsAPIToken method")
 // 			},
 // 			GetConfigFunc: func() *iam.IAMConfig {
@@ -62,8 +62,8 @@ type SSOClientMock struct {
 	// DeleteServiceAccountFunc mocks the DeleteServiceAccount method.
 	DeleteServiceAccountFunc func(accessToken string, clientID string) error
 
-	// GetAcsApiTokenFunc mocks the GetAcsAPIToken method.
-	GetAcsApiTokenFunc func() (string, error)
+	// GetAcsAPITokenFunc mocks the GetAcsAPIToken method.
+	GetAcsAPITokenFunc func() (string, error)
 
 	// GetConfigFunc mocks the GetConfig method.
 	GetConfigFunc func() *iam.IAMConfig
@@ -105,7 +105,7 @@ type SSOClientMock struct {
 			ClientID string
 		}
 		// GetAcsAPIToken holds details about calls to the GetAcsAPIToken method.
-		GetAcsApiToken []struct {
+		GetAcsAPIToken []struct {
 		}
 		// GetConfig holds details about calls to the GetConfig method.
 		GetConfig []struct {
@@ -153,7 +153,7 @@ type SSOClientMock struct {
 	}
 	lockCreateServiceAccount   sync.RWMutex
 	lockDeleteServiceAccount   sync.RWMutex
-	lockGetAcsApiToken         sync.RWMutex
+	lockGetAcsAPIToken         sync.RWMutex
 	lockGetConfig              sync.RWMutex
 	lockGetRealmConfig         sync.RWMutex
 	lockGetServiceAccount      sync.RWMutex
@@ -237,29 +237,29 @@ func (mock *SSOClientMock) DeleteServiceAccountCalls() []struct {
 	return calls
 }
 
-// GetAcsAPIToken calls GetAcsApiTokenFunc.
+// GetAcsAPIToken calls GetAcsAPITokenFunc.
 func (mock *SSOClientMock) GetAcsAPIToken() (string, error) {
-	if mock.GetAcsApiTokenFunc == nil {
-		panic("SSOClientMock.GetAcsApiTokenFunc: method is nil but SSOClient.GetAcsAPIToken was just called")
+	if mock.GetAcsAPITokenFunc == nil {
+		panic("SSOClientMock.GetAcsAPITokenFunc: method is nil but SSOClient.GetAcsAPIToken was just called")
 	}
 	callInfo := struct {
 	}{}
-	mock.lockGetAcsApiToken.Lock()
-	mock.calls.GetAcsApiToken = append(mock.calls.GetAcsApiToken, callInfo)
-	mock.lockGetAcsApiToken.Unlock()
-	return mock.GetAcsApiTokenFunc()
+	mock.lockGetAcsAPIToken.Lock()
+	mock.calls.GetAcsAPIToken = append(mock.calls.GetAcsAPIToken, callInfo)
+	mock.lockGetAcsAPIToken.Unlock()
+	return mock.GetAcsAPITokenFunc()
 }
 
-// GetAcsApiTokenCalls gets all the calls that were made to GetAcsAPIToken.
+// GetAcsAPITokenCalls gets all the calls that were made to GetAcsAPIToken.
 // Check the length with:
-//     len(mockedSSOClient.GetAcsApiTokenCalls())
-func (mock *SSOClientMock) GetAcsApiTokenCalls() []struct {
+//     len(mockedSSOClient.GetAcsAPITokenCalls())
+func (mock *SSOClientMock) GetAcsAPITokenCalls() []struct {
 } {
 	var calls []struct {
 	}
-	mock.lockGetAcsApiToken.RLock()
-	calls = mock.calls.GetAcsApiToken
-	mock.lockGetAcsApiToken.RUnlock()
+	mock.lockGetAcsAPIToken.RLock()
+	calls = mock.calls.GetAcsAPIToken
+	mock.lockGetAcsAPIToken.RUnlock()
 	return calls
 }
 
