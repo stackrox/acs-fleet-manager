@@ -139,7 +139,7 @@ helm upgrade rhacs-terraform ./ \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${PAGERDUTY_SERVICE_KEY}"
   # In case you want to deploy an upstream version of the operator, you can uncomment the lines below
-  #--set acsOperator.upstream.use=true \
+  #--set acsOperator.upstream=true \
   #--set acsOperator.source=rhacs-operators \
   # Make sure to set the version of the operator also to a unrelease version, i.e. "v3.72.0-35-gf72be438ec"
 

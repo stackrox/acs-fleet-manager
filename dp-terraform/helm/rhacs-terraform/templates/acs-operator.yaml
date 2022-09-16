@@ -18,7 +18,7 @@ spec:
   sourceNamespace: {{ .Values.acsOperator.sourceNamespace }}
   startingCSV: rhacs-operator.{{ .Values.acsOperator.version }}
 ---
-{{- if .Values.acsOperator.upstream.use }}
+{{- if .Values.acsOperator.upstream }}
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:

@@ -38,8 +38,7 @@ acsOperator:
   sourceNamespace: openshift-marketplace
   version: v3.70.0
   # This setting specifies whether to use a upstream operator to test unreleased versions of ACS.
-  upstream:
-    use: false
+  upstream: false
 
 # See available parameters in charts/observability/values.yaml
 # - enabled flag is used to completely enable/disable observability sub-chart
