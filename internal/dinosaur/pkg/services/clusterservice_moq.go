@@ -98,6 +98,9 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			UpdateFunc: func(cluster api.Cluster) *serviceError.ServiceError {
 // 				panic("mock out the Update method")
 // 			},
+// 			UpdateMultiClusterSkipSchedulingFunc: func(clusterIds []string, skipScheduling bool) *serviceError.ServiceError {
+// 				panic("mock out the UpdateMultiClusterSkipScheduling method")
+// 			},
 // 			UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *serviceError.ServiceError {
 // 				panic("mock out the UpdateMultiClusterStatus method")
 // 			},
@@ -188,6 +191,9 @@ type ClusterServiceMock struct {
 
 	// UpdateFunc mocks the Update method.
 	UpdateFunc func(cluster api.Cluster) *serviceError.ServiceError
+
+	// UpdateMultiClusterSkipSchedulingFunc mocks the UpdateMultiClusterSkipScheduling method.
+	UpdateMultiClusterSkipSchedulingFunc func(clusterIds []string, skipScheduling bool) *serviceError.ServiceError
 
 	// UpdateMultiClusterStatusFunc mocks the UpdateMultiClusterStatus method.
 	UpdateMultiClusterStatusFunc func(clusterIds []string, status api.ClusterStatus) *serviceError.ServiceError
@@ -345,6 +351,13 @@ type ClusterServiceMock struct {
 			// Cluster is the cluster argument value.
 			Cluster api.Cluster
 		}
+		// UpdateMultiClusterSkipScheduling holds details about calls to the UpdateMultiClusterSkipScheduling method.
+		UpdateMultiClusterSkipScheduling []struct {
+			// ClusterIds is the clusterIds argument value.
+			ClusterIds []string
+			// SkipScheduling is the skipScheduling argument value.
+			SkipScheduling bool
+		}
 		// UpdateMultiClusterStatus holds details about calls to the UpdateMultiClusterStatus method.
 		UpdateMultiClusterStatus []struct {
 			// ClusterIds is the clusterIds argument value.
@@ -386,6 +399,7 @@ type ClusterServiceMock struct {
 	lockScaleUpComputeNodes                 sync.RWMutex
 	lockSetComputeNodes                     sync.RWMutex
 	lockUpdate                              sync.RWMutex
+	lockUpdateMultiClusterSkipScheduling    sync.RWMutex
 	lockUpdateMultiClusterStatus            sync.RWMutex
 	lockUpdateStatus                        sync.RWMutex
 }
@@ -1228,6 +1242,41 @@ func (mock *ClusterServiceMock) UpdateCalls() []struct {
 	mock.lockUpdate.RLock()
 	calls = mock.calls.Update
 	mock.lockUpdate.RUnlock()
+	return calls
+}
+
+// UpdateMultiClusterSkipScheduling calls UpdateMultiClusterSkipSchedulingFunc.
+func (mock *ClusterServiceMock) UpdateMultiClusterSkipScheduling(clusterIds []string, skipScheduling bool) *serviceError.ServiceError {
+	if mock.UpdateMultiClusterSkipSchedulingFunc == nil {
+		panic("ClusterServiceMock.UpdateMultiClusterSkipSchedulingFunc: method is nil but ClusterService.UpdateMultiClusterSkipScheduling was just called")
+	}
+	callInfo := struct {
+		ClusterIds     []string
+		SkipScheduling bool
+	}{
+		ClusterIds:     clusterIds,
+		SkipScheduling: skipScheduling,
+	}
+	mock.lockUpdateMultiClusterSkipScheduling.Lock()
+	mock.calls.UpdateMultiClusterSkipScheduling = append(mock.calls.UpdateMultiClusterSkipScheduling, callInfo)
+	mock.lockUpdateMultiClusterSkipScheduling.Unlock()
+	return mock.UpdateMultiClusterSkipSchedulingFunc(clusterIds, skipScheduling)
+}
+
+// UpdateMultiClusterSkipSchedulingCalls gets all the calls that were made to UpdateMultiClusterSkipScheduling.
+// Check the length with:
+//     len(mockedClusterService.UpdateMultiClusterSkipSchedulingCalls())
+func (mock *ClusterServiceMock) UpdateMultiClusterSkipSchedulingCalls() []struct {
+	ClusterIds     []string
+	SkipScheduling bool
+} {
+	var calls []struct {
+		ClusterIds     []string
+		SkipScheduling bool
+	}
+	mock.lockUpdateMultiClusterSkipScheduling.RLock()
+	calls = mock.calls.UpdateMultiClusterSkipScheduling
+	mock.lockUpdateMultiClusterSkipScheduling.RUnlock()
 	return calls
 }
 

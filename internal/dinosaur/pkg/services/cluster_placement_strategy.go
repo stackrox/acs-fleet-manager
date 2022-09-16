@@ -44,5 +44,12 @@ func (d FirstDBClusterPlacementStrategy) FindCluster(dinosaur *dbapi.CentralRequ
 	if len(clusters) == 0 {
 		return nil, errors.New("no cluster was found")
 	}
-	return clusters[0], nil
+
+	for _, cluster := range clusters {
+		if cluster.Status == api.ClusterReady && !cluster.SkipScheduling {
+			return cluster, nil
+		}
+	}
+
+	return nil, errors.New("no schedulable cluster found")
 }
