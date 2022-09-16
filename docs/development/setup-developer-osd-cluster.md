@@ -80,17 +80,22 @@ export OSD_ADMIN_USER="osd-admin"
 export OSD_ADMIN_PASS=$(date | md5)
 echo $OSD_ADMIN_PASS > ./tmp-osd-admin-pass.txt
 
-echo "{\"htpasswd\":{\"password\":\"${OSD_ADMIN_PASS}\",\"username\":\"${OSD_ADMIN_USER}\"},\"login\":true,\"mapping_method\":\"add\",\"name\":\"osd-htpasswd\",\"type\":\"HTPasswdIdentityProvider\"}" > ./tmp-osd-htpasswd-body.txt
-ocm post "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/identity_providers" --body ./tmp-osd-htpasswd-body.txt
+ocm create idp \
+  --cluster "${CLUSTER_ID}" \
+  --type htpasswd \
+  --name HTPasswd \
+  --username "${OSD_ADMIN_USER}" \
+  --password "${OSD_ADMIN_PASS}"
 
-echo "{\"id\":\"${OSD_ADMIN_USER}\"}" > ./tmp-osd-cluster-admins-body.txt
-ocm post "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/groups/cluster-admins/users" --body ./tmp-osd-cluster-admins-body.txt
+ocm create user \
+  --group cluster-admins \
+  --cluster "${CLUSTER_ID}" \
+  "${OSD_ADMIN_USER}"
 ```
 
-3. Login to OSD cluster with `oc` command
+3. Login to OSD cluster with `ocm` command. This will automatically set the correct context for the `oc` command.
 ```
-export CLUSTER_API_URL=$(ocm get "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}" | jq '.api.url' --raw-output)
-oc login "${CLUSTER_API_URL}" --username=${OSD_ADMIN_USER} --password=${OSD_ADMIN_PASS}
+ocm cluster login "${CLUSTER_ID}"
 ```
 If login step fails, it can be the case that previously created auth provider and user are not applied yet on the cluster. You can wait few seconds and try again.
 
@@ -166,7 +171,6 @@ You should be able to see `rhacs-operators` pod running.
 export STATIC_TOKEN=$(bw get item "64173bbc-d9fb-4d4a-b397-aec20171b025" | jq '.fields[] | select(.name | contains("JWT")) | .value' --raw-output)
 
 export FLEET_MANAGER_IMAGE=quay.io/app-sre/acs-fleet-manager:main
-export STARTING_CSV="rhacs-operator.v${RHACS_OPERATOR_CATALOG_VERSION}"
 ```
 
 9. Prepare namespace
@@ -201,8 +205,8 @@ helm upgrade --install rhacs-terraform \
   --set fleetshardSync.clusterId="${CLUSTER_ID}" \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${RHACS_OPERATOR_CATALOG_NAME}" \
-  --set acsOperator.startingCSV="${STARTING_CSV}" \
-  --set logging.enabled=false
+  --set logging.enabled=false \
+  --set acsOperator.version="v${RHACS_OPERATOR_CATALOG_VERSION}" \
   --set observability.enabled=false ./dp-terraform/helm/rhacs-terraform
 ```
 
