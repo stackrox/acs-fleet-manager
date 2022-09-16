@@ -10,10 +10,9 @@ Additionally, you will require access to our BitWarden vault.
 
 ## Creating the IdPs
 
-For each OSD cluster, you can create IdPs that will allow login to the OpenShift Console and map your user to a specific
-group within the cluster, providing i.e. administrative rights.
+For each OSD cluster, you can create IdPs that will allow login to the OpenShift Console and map your user to a specific group within the cluster, providing i.e. administrative rights.
 
-Based on the environment (staging or prod), the following choices exist for IdPs:
+Based on the environment (stage or prod), the following IdPs will be created:
 - stage:
   - OIDC IdP using auth.redhat.com as backend.
   - HTPasswd using username password.
@@ -34,11 +33,11 @@ The script will handle the following (again, split by environments):
   2. Create the OIDC IdP for the cluster.
   3. Create the user <-> group mapping for cluster-admins.
   4. Create the HTPasswd IdP for the cluster.
-  5. Create the `acsms-admin` user and map it to cluster-admins group.
+  5. Create the `acsms-stage-admin` user and map it to cluster-admins group.
 - prod:
   1. Fetch required credentials from BitWarden.
   2. Create the HTPasswd IdP for the cluster.
-  3. Create the `acsms-admin` user and map it to cluster-admins group.
+  3. Create the `acsms-prod-admin` user and map it to cluster-admins group.
 
 Afterwards, you should see the list of users and their group mapping within the console.openshift.com and when
 logging in the OSD cluster you should see the option to login via `HTPasswd / OIDC` (based on your environment).
@@ -58,7 +57,7 @@ Additionally, you will have to clear the users within the OSD cluster.
 You can do so by running the following:
 ```shell
 # Login to the cluster. This will automatically set the correct context for oc.
-ocm cluster login <cluster name>
+ocm cluster login <cluster name> --username "acsms-(stage|prod)-admin"
 
 # List the identities that have been created. An identity will be created the first time
 # a user logins via an IdP
