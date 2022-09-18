@@ -104,15 +104,15 @@ func (c *rhSSOClient) getCachedToken(tokenKey string) (string, error) {
 }
 
 func (c *rhSSOClient) GetAcsAPIToken() (string, error) {
-	return c.getToken([]string{"api.iam.acs"})
+	return c.getToken("api.iam.acs")
 }
 
 // GetToken ...
 func (c *rhSSOClient) GetToken() (string, error) {
-	return c.getToken([]string{})
+	return c.getToken()
 }
 
-func (c *rhSSOClient) getToken(additionalScopes []string) (string, error) {
+func (c *rhSSOClient) getToken(additionalScopes ...string) (string, error) {
 	cachedTokenKey := fmt.Sprintf("%s%s", c.realmConfig.Realm, c.realmConfig.ClientID)
 	cachedToken, _ := c.getCachedToken(cachedTokenKey)
 
