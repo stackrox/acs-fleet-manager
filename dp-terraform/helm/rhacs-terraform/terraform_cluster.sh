@@ -101,6 +101,20 @@ esac
 
 GIT_COMMIT_SHA=$(git rev-parse HEAD)
 GIT_DESCRIBE_TAG=$(git describe --tag)
+OPERATOR_USE_UPSTREAM=false
+OPERATOR_SOURCE="redhat-operators"
+
+## Uncomment this section if you want to deploy an upstream version of the operator.
+## Update the global pull secret within the dataplane cluster to include the read-only credentials for quay.io/rhacs-eng
+#QUAY_READ_ONLY_USERNAME=$(bw get username "66de0e1f-52fd-470b-ad9b-ae0701339dda")
+#QUAY_READ_ONLY_PASSWORD=$(bw get password "66de0e1f-52fd-470b-ad9b-ae0701339dda")
+#quay_basic_auth="${QUAY_READ_ONLY_USERNAME}:${QUAY_READ_ONLY_PASSWORD}"
+#oc get secret/pull-secret -n openshift-config --template='{{index .data ".dockerconfigjson" | base64decode}}' > ./tmp-pull-secret.json
+#oc registry login --registry="quay.io/rhacs-eng" --auth-basic="${quay_basic_auth}" --to=./tmp-pull-secret.json --skip-check
+#oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=./tmp-pull-secret.json
+#rm ./tmp-pull-secret.json
+#OPERATOR_USE_UPSTREAM=true
+#OPERATOR_SOURCE="rhacs-operators"
 
 # helm template ... to debug changes
 helm upgrade rhacs-terraform ./ \
@@ -109,9 +123,10 @@ helm upgrade rhacs-terraform ./ \
   --namespace rhacs \
   --create-namespace \
   --set acsOperator.enabled=true \
-  --set acsOperator.source=redhat-operators \
+  --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
-  --set acsOperator.startingCSV=rhacs-operator.v3.71.0 \
+  --set acsOperator.version=v3.71.0 \
+  --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
   --set fleetshardSync.authType="RHSSO" \
   --set fleetshardSync.gitCommitSHA="${GIT_COMMIT_SHA}" \
   --set fleetshardSync.gitDescribeTag="${GIT_DESCRIBE_TAG}" \
