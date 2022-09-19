@@ -244,10 +244,6 @@ help:
 all: openapi/generate binary
 .PHONY: all
 
-.PHONY: pre-commit
-pre-commit:
-	pre-commit run --show-diff-on-failure --color=always --all-files
-
 # Set git hook path to .githooks/
 .PHONY: setup/git/hooks
 setup/git/hooks:
