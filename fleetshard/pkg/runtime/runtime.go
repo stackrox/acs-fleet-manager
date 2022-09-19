@@ -119,9 +119,7 @@ func (r *Runtime) Start() error {
 
 func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error) {
 	if err != nil {
-		if centralReconciler.IsSkippable(err) {
-			glog.Infof("Skip sending the status for central %s/%s: %v", central.Metadata.Namespace, central.Metadata.Name, err)
-		} else {
+		if !centralReconciler.IsSkippable(err) {
 			fleetshardmetrics.MetricsInstance().IncCentralReconcilationErrors()
 			glog.Errorf("Unexpected error occurred %s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err.Error())
 		}

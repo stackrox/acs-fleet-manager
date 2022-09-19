@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
@@ -23,7 +22,6 @@ type Client struct {
 }
 
 func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Response, error) {
-	glog.Infof("Send request to %s", url)
 	r, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("building HTTP request: %w", err)

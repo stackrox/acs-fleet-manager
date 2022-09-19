@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
@@ -136,7 +135,6 @@ func (c *Client) DeleteCentral(id string) error {
 }
 
 func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Response, error) {
-	glog.Infof("Send request to %s", url)
 	r, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("creating HTTP request: %w", err)
