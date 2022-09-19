@@ -3,8 +3,9 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/log"
 	"time"
+
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/log"
 
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
