@@ -3,13 +3,13 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/log"
 	"time"
 
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
@@ -67,8 +67,8 @@ func (r *Runtime) Stop() {
 
 // Start starts the fleetshard runtime and schedules
 func (r *Runtime) Start() error {
-	glog.Infof("fleetshard runtime started")
-	glog.Infof("Auth provider initialisation enabled: %v", r.config.CreateAuthProvider)
+	log.Infof("fleetshard runtime started")
+	log.Infof("Auth provider initialisation enabled: %v", r.config.CreateAuthProvider)
 
 	routesAvailable := routesAvailable()
 
@@ -82,12 +82,12 @@ func (r *Runtime) Start() error {
 		list, err := r.client.GetManagedCentralList()
 		if err != nil {
 			err = errors.Wrapf(err, "retrieving list of managed centrals")
-			glog.Error(err)
+			log.Error(err)
 			return 0, err
 		}
 
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
-		glog.Infof("Received %d centrals", len(list.Items))
+		log.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, reconcilerOpts)
@@ -97,7 +97,7 @@ func (r *Runtime) Start() error {
 			go func(reconciler *centralReconciler.CentralReconciler, central private.ManagedCentral) {
 				fleetshardmetrics.MetricsInstance().IncActiveCentralReconcilations()
 				defer fleetshardmetrics.MetricsInstance().DecActiveCentralReconcilations()
-				glog.Infof("Start reconcile central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
+				log.Infof("Start reconcile central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
 				status, err := reconciler.Reconcile(context.Background(), central)
 				fleetshardmetrics.MetricsInstance().IncCentralReconcilations()
 				r.handleReconcileResult(central, status, err)
@@ -120,15 +120,15 @@ func (r *Runtime) Start() error {
 func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error) {
 	if err != nil {
 		if centralReconciler.IsSkippable(err) {
-			glog.V(10).Infof("Skip sending the status for central %s/%s: %v", central.Metadata.Namespace, central.Metadata.Name, err)
+			log.Debugf("Skip sending the status for central %s/%s: %v", central.Metadata.Namespace, central.Metadata.Name, err)
 		} else {
 			fleetshardmetrics.MetricsInstance().IncCentralReconcilationErrors()
-			glog.Errorf("Unexpected error occurred %s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err.Error())
+			log.Errorf("Unexpected error occurred %s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err.Error())
 		}
 		return
 	}
 	if status == nil {
-		glog.Infof("No status update for Central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
+		log.Infof("No status update for Central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
 		return
 	}
 
@@ -137,7 +137,7 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 	})
 	if err != nil {
 		err = errors.Wrapf(err, "updating status for Central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
-		glog.Error(err)
+		log.Error(err)
 	}
 }
 
@@ -159,12 +159,12 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 func routesAvailable() bool {
 	available, err := k8s.IsRoutesResourceEnabled()
 	if err != nil {
-		glog.Errorf("Skip checking OpenShift routes availability due to an error: %v", err)
+		log.Errorf("Skip checking OpenShift routes availability due to an error: %v", err)
 		return true // make an optimistic assumption that routes can be created despite the error
 	}
-	glog.Infof("OpenShift Routes available: %t", available)
+	log.Infof("OpenShift Routes available: %t", available)
 	if !available {
-		glog.Warning("Most likely the application is running on a plain Kubernetes cluster. " +
+		log.Warning("Most likely the application is running on a plain Kubernetes cluster. " +
 			"Such setup is unsupported and can be used for development only!")
 		return false
 	}
