@@ -59,7 +59,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.3.9
 	gorm.io/gorm v1.23.8
-	helm.sh/helm/v3 v3.9.2
+	helm.sh/helm/v3 v3.9.4
 	k8s.io/api v0.24.4
 	k8s.io/apimachinery v0.24.4
 	k8s.io/client-go v0.24.2
@@ -81,7 +81,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/emicklei/go-restful v2.15.0+incompatible // indirect
+	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
@@ -154,7 +154,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.24.2 // indirect
 	k8s.io/component-base v0.24.2 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20220413171646-5e7f5fdc6da6 // indirect
+	k8s.io/kube-openapi v0.0.0-20220627174259-011e075b9cb8 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 )
