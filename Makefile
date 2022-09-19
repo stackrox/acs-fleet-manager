@@ -269,7 +269,7 @@ endif
 
 # Verifies that source passes standard checks.
 # Also verifies that the OpenAPI spec is correct.
-verify: check-gopath openapi/validate
+verify: check-gopath openapi/validate pre-commit
 	$(GO) vet \
 		./cmd/... \
 		./pkg/... \
