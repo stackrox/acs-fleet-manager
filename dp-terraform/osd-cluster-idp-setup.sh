@@ -48,18 +48,33 @@ case $ENVIRONMENT in
 
     # Create the IdP for the cluster.
     ocm create idp --name=OpenID \
-      --cluster=${CLUSTER_ID} \
+      --cluster="${CLUSTER_ID}" \
       --type=openid \
-      --client-id=${OSD_OIDC_CLIENT_ID} \
-      --client-secret=${OSD_OIDC_CLIENT_SECRET} \
+      --client-id="${OSD_OIDC_CLIENT_ID}" \
+      --client-secret="${OSD_OIDC_CLIENT_SECRET}" \
       --issuer-url=https://auth.redhat.com/auth/realms/EmployeeIDP \
-      --email-claims=email --name-claims=preferred_username --username-attributes=preferred_username
+      --email-claims=email --name-claims=preferred_username --username-claims=preferred_username
 
     # Create the users that should have access to the cluster with cluster administrative rights.
     # Ignore errors as the sometimes users already exist.
     ocm create user --cluster=${CLUSTER_NAME} \
       --group=cluster-admins \
       ${OSD_OIDC_USER_LIST} || true
+
+    # Create the HTPasswd Idp for the cluster.
+    ADMIN_USERNAME=$(bw get username "9bfb2c0e-0519-478e-b7df-aea700ff9072")
+    ADMIN_PASSWORD=$(bw get password "9bfb2c0e-0519-478e-b7df-aea700ff9072")
+
+    ocm create idp --name=HTPasswd \
+      --cluster="${CLUSTER_ID}" \
+      --type=htpasswd \
+      --username="${ADMIN_USERNAME}" \
+      --password="${ADMIN_PASSWORD}"
+
+    # Create the acsms-admin user. Ignore errors, if it already exists.
+    ocm create user --cluster="${CLUSTER_NAME}" \
+      --group=cluster-admins \
+      "${ADMIN_USERNAME}" || true
 
     ;;
 
@@ -79,16 +94,20 @@ case $ENVIRONMENT in
 
     ensure_bitwarden_session_exists
 
-    ADMIN_USERNAME=$(bw get username "9bfb2c0e-0519-478e-b7df-aea700ff9072")
-    ADMIN_PASSWORD=$(bw get password "9bfb2c0e-0519-478e-b7df-aea700ff9072")
+    ADMIN_USERNAME=$(bw get username "05431ae5-4b45-4956-a509-aef4009848d9")
+    ADMIN_PASSWORD=$(bw get password "05431ae5-4b45-4956-a509-aef4009848d9")
 
     # Create the IdP for the cluster.
     ocm create idp --name=HTPasswd \
-      --cluster=${CLUSTER_ID} \
+      --cluster="${CLUSTER_ID}" \
       --type=htpasswd \
-      --username=${ADMIN_USERNAME} \
-      --password=${ADMIN_PASSWORD}
+      --username="${ADMIN_USERNAME}" \
+      --password="${ADMIN_PASSWORD}"
 
+    # Create the acsms-admin user. Ignore errors, if it already exists.
+    ocm create user --cluster="${CLUSTER_NAME}" \
+      --group=cluster-admins \
+      "${ADMIN_USERNAME}" || true
     ;;
 
   *)
