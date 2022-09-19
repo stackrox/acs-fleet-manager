@@ -244,6 +244,10 @@ help:
 all: openapi/generate binary
 .PHONY: all
 
+.PHONY: pre-commit
+pre-commit:
+	pre-commit run --show-diff-on-failure --color=always --all-files
+
 # Set git hook path to .githooks/
 .PHONY: setup/git/hooks
 setup/git/hooks:
@@ -265,7 +269,7 @@ endif
 
 # Verifies that source passes standard checks.
 # Also verifies that the OpenAPI spec is correct.
-verify: check-gopath openapi/validate
+verify: check-gopath openapi/validate pre-commit
 	$(GO) vet \
 		./cmd/... \
 		./pkg/... \
