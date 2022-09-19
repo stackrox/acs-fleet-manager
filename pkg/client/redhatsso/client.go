@@ -113,7 +113,8 @@ func (c *rhSSOClient) GetToken() (string, error) {
 }
 
 func (c *rhSSOClient) getToken(additionalScopes ...string) (string, error) {
-	cachedTokenKey := fmt.Sprintf("%s%s", c.realmConfig.Realm, c.realmConfig.ClientID)
+	scopeValue := strings.Join(additionalScopes, " ")
+	cachedTokenKey := fmt.Sprintf("%s%s%s", c.realmConfig.Realm, c.realmConfig.ClientID, scopeValue)
 	cachedToken, _ := c.getCachedToken(cachedTokenKey)
 
 	if cachedToken != "" && !shared.IsJWTTokenExpired(cachedToken) {
@@ -126,7 +127,7 @@ func (c *rhSSOClient) getToken(additionalScopes ...string) (string, error) {
 	parameters.Set("client_id", c.realmConfig.ClientID)
 	parameters.Set("client_secret", c.realmConfig.ClientSecret)
 	if len(additionalScopes) != 0 {
-		parameters.Set("scope", strings.Join(additionalScopes, " "))
+		parameters.Set("scope", scopeValue)
 	}
 	req, err := http.NewRequest("POST", c.realmConfig.TokenEndpointURI, strings.NewReader(parameters.Encode()))
 	if err != nil {
