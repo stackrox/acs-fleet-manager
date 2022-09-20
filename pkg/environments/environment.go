@@ -135,24 +135,8 @@ func (env *Env) CreateServices() error {
 		return fmt.Errorf("modifying configuration: %w", err)
 	}
 	glog.Info("Active defaults for new Central tenants:")
-	prettyPrintedDefaults, err := defaults.PrettyPrintDefaults(&defaults.Central, "CentralDefaults")
-	if err != nil {
-		glog.Errorf("Failed to pretty-print Central defaults: %v", err)
-		glog.Errorf("Central defaults: %+v", defaults.Central)
-	} else {
-		for _, line := range prettyPrintedDefaults {
-			glog.Info("  " + line)
-		}
-	}
-	prettyPrintedDefaults, err = defaults.PrettyPrintDefaults(&defaults.Scanner, "ScannerDefaults")
-	if err != nil {
-		glog.Errorf("Failed to pretty-print Scanner defaults: %v", err)
-		glog.Errorf("Scanner defaults: %+v", defaults.Scanner)
-	} else {
-		for _, line := range prettyPrintedDefaults {
-			glog.Info("  " + line)
-		}
-	}
+	tryPrettyPrintDefaults(defaults.Central, "CentralDefaults")
+	tryPrettyPrintDefaults(defaults.Scanner, "ScannerDefaults")
 
 	type injections struct {
 		di.Inject
@@ -294,4 +278,16 @@ func setConfigDefaults(flags *pflag.FlagSet, defaults map[string]string) error {
 		}
 	}
 	return nil
+}
+
+func tryPrettyPrintDefaults(obj interface{}, label string) {
+	prettyPrintedDefaults, err := defaults.PrettyPrintDefaults(obj, label)
+	if err != nil {
+		glog.Errorf("Failed to pretty-print %s: %v", label, err)
+		glog.Errorf("%s: %+v", label, obj)
+	} else {
+		for _, line := range prettyPrintedDefaults {
+			glog.Info("  " + line)
+		}
+	}
 }
