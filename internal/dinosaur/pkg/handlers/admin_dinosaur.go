@@ -166,7 +166,6 @@ func (h adminDinosaurHandler) DbDelete(w http.ResponseWriter, r *http.Request) {
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-
 			err := h.service.DbDelete(ctx, id)
 			return nil, err
 		},

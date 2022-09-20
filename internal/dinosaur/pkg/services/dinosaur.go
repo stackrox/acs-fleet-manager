@@ -897,7 +897,7 @@ func buildResourceRecordChange(recordName string, clusterIngress string, action 
 }
 
 // DbDelete deletes a Central request from the database.
-// This is an administrative escape hatch for manual recovering from an inconsistent state.
+// This is an administrative escape hatch for manually recovering from an inconsistent control-/data-plane state.
 func (k *dinosaurService) DbDelete(ctx context.Context, id string) *errors.ServiceError {
 	if id == "" {
 		return errors.Validation("id is undefined")
@@ -907,15 +907,11 @@ func (k *dinosaurService) DbDelete(ctx context.Context, id string) *errors.Servi
 		return errors.Unauthorized("administrator access only")
 	}
 
-	dbConn := k.connectionFactory.New().Where("id = ?", id)
 	var centralRequest dbapi.CentralRequest
-	if err := dbConn.First(&centralRequest).Error; err != nil {
-		return services.HandleGetError("CentralResource", "id", id, err)
-	}
-
-	dbConn = k.connectionFactory.New()
+	centralRequest.ID = id
+	dbConn := k.connectionFactory.New()
 	if err := dbConn.Delete(&centralRequest).Error; err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to delete central request with id %s", centralRequest.ID)
+		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to delete central request with id %q", centralRequest.ID)
 	}
 
 	glog.Infof("Successfully force-deleted CentralRequest %q in database. Make sure any other resources belonging to this Central tenant are manually deleted.", centralRequest.ID)
