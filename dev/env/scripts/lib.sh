@@ -240,13 +240,13 @@ wait_for_default_service_account() {
 assemble_kubeconfig() {
     kubeconf=$($KUBECTL config view --minify=true --raw=true 2>/dev/null)
     CONTEXT_NAME=$(echo "$kubeconf" | yq e .current-context -)
-    CONTEXT="$(echo "$kubeconf" | yq e ".contexts[] | select(.name == \"${CONTEXT_NAME}\")" -j - | jq -c)"
+    CONTEXT="$(echo "$kubeconf" | yq e ".contexts[] | select(.name == \"${CONTEXT_NAME}\")" -o=json - | jq -c)"
     USER_NAME=$(echo "$CONTEXT" | jq -r .context.user -)
     CLUSTER_NAME=$(echo "$CONTEXT" | jq -r .context.cluster -)
-    CLUSTER=$(echo "$kubeconf" | yq e ".clusters[] | select(.name == \"${CLUSTER_NAME}\")" -j - | jq -c)
+    CLUSTER=$(echo "$kubeconf" | yq e ".clusters[] | select(.name == \"${CLUSTER_NAME}\")" -o=json - | jq -c)
     NEW_CONTEXT_NAME="$CLUSTER_NAME"
     CONTEXT=$(echo "$CONTEXT" | jq ".name = \"$NEW_CONTEXT_NAME\"" -c -)
-    KUBEUSER="$(echo "$kubeconf" | yq e ".users[] | select(.name == \"${USER_NAME}\")" -j - | jq -c)"
+    KUBEUSER="$(echo "$kubeconf" | yq e ".users[] | select(.name == \"${USER_NAME}\")" -o=json - | jq -c)"
 
     if [[ "$KUBECONF_CLUSTER_SERVER_OVERRIDE" == "true" ]]; then
         local server
