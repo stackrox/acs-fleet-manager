@@ -1,28 +1,45 @@
 package defaults
 
 import (
+	"fmt"
+
+	"github.com/caarlos0/env/v6"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
+// CentralDefaults ...
+type CentralDefaults struct {
+	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"250Mi"`
+	CPURequest    resource.Quantity `env:"CPU_REQUEST" envDefault:"250m"`
+	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT" envDefault:"4Gi"`
+	CPULimit      resource.Quantity `env:"CPU_LIMIT" envDefault:"1000m"`
+}
+
 var (
-	// CentralRequestMemory ...
-	CentralRequestMemory = resource.MustParse("250Mi")
-	// CentralRequestCPU ...
-	CentralRequestCPU = resource.MustParse("250m")
-	// CentralLimitMemory ...
-	CentralLimitMemory = resource.MustParse("4Gi")
-	// CentralLimitCPU ...
-	CentralLimitCPU = resource.MustParse("1000m")
+	// Central ...
+	Central CentralDefaults
 	// CentralResources ...
+	CentralResources corev1.ResourceRequirements
+)
+
+func init() {
+	defaults := CentralDefaults{}
+	opts := env.Options{
+		Prefix: "CENTRAL_",
+	}
+	if err := env.ParseWithFuncs(&defaults, CustomParsers, opts); err != nil {
+		panic(fmt.Sprintf("Unable to parse Central Defaults configuration from environment: %v", err))
+	}
+	Central = defaults
 	CentralResources = corev1.ResourceRequirements{
 		Requests: map[corev1.ResourceName]resource.Quantity{
-			corev1.ResourceCPU:    CentralRequestCPU,
-			corev1.ResourceMemory: CentralRequestMemory,
+			corev1.ResourceCPU:    Central.CPURequest,
+			corev1.ResourceMemory: Central.MemoryRequest,
 		},
 		Limits: map[corev1.ResourceName]resource.Quantity{
-			corev1.ResourceCPU:    CentralLimitCPU,
-			corev1.ResourceMemory: CentralLimitMemory,
+			corev1.ResourceCPU:    Central.CPULimit,
+			corev1.ResourceMemory: Central.MemoryLimit,
 		},
 	}
-)
+}
