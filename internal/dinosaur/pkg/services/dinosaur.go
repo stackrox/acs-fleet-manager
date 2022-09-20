@@ -851,10 +851,12 @@ func (k *dinosaurService) ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralR
 }
 
 // ListCentralsWithoutAuthConfig returns all _relevant_ central requests with
-// no auth config.
+// no auth config. For central requests without host set, we cannot compute
+// redirect_uri and hence cannot set up auth config.
 func (k *dinosaurService) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError) {
 	dbQuery := k.connectionFactory.New().
-		Where("client_id = ''")
+		Where("client_id = ''").
+		Where("host != ''")
 
 	var results []*dbapi.CentralRequest
 	if err := dbQuery.Find(&results).Error; err != nil {
