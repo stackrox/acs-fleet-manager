@@ -1,9 +1,7 @@
 package defaults
 
 import (
-	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/caarlos0/env/v6"
 	corev1 "k8s.io/api/core/v1"
@@ -74,14 +72,4 @@ func init() {
 			corev1.ResourceMemory: Scanner.Db.MemoryLimit,
 		},
 	}
-}
-
-// PettyPrintScannerDefaults ...
-func PettyPrintScannerDefaults() []string {
-	bytes, err := json.MarshalIndent(Scanner, "", "  ")
-	if err != nil {
-		return nil
-	}
-
-	return append([]string{"ScannerDefaults:"}, strings.Split(string(bytes), "\n")...)
 }

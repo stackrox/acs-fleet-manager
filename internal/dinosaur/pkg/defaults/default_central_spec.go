@@ -1,9 +1,7 @@
 package defaults
 
 import (
-	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/caarlos0/env/v6"
 	corev1 "k8s.io/api/core/v1"
@@ -44,14 +42,4 @@ func init() {
 			corev1.ResourceMemory: Central.MemoryLimit,
 		},
 	}
-}
-
-// PettyPrintCentralDefaults ...
-func PettyPrintCentralDefaults() []string {
-	bytes, err := json.MarshalIndent(Central, "", "  ")
-	if err != nil {
-		return nil
-	}
-
-	return append([]string{"CentralDefaults:"}, strings.Split(string(bytes), "\n")...)
 }

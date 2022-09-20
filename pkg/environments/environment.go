@@ -135,11 +135,23 @@ func (env *Env) CreateServices() error {
 		return fmt.Errorf("modifying configuration: %w", err)
 	}
 	glog.Info("Active defaults for new Central tenants:")
-	for _, line := range defaults.PettyPrintCentralDefaults() {
-		glog.Info("  " + line)
+	prettyPrintedDefaults, err := defaults.PrettyPrintDefaults(&defaults.Central, "CentralDefaults")
+	if err != nil {
+		glog.Errorf("Failed to pretty-print Central defaults: %v", err)
+		glog.Errorf("Central defaults: %+v", defaults.Central)
+	} else {
+		for _, line := range prettyPrintedDefaults {
+			glog.Info("  " + line)
+		}
 	}
-	for _, line := range defaults.PettyPrintScannerDefaults() {
-		glog.Info("  " + line)
+	prettyPrintedDefaults, err = defaults.PrettyPrintDefaults(&defaults.Scanner, "ScannerDefaults")
+	if err != nil {
+		glog.Errorf("Failed to pretty-print Scanner defaults: %v", err)
+		glog.Errorf("Scanner defaults: %+v", defaults.Scanner)
+	} else {
+		for _, line := range prettyPrintedDefaults {
+			glog.Info("  " + line)
+		}
 	}
 
 	type injections struct {
