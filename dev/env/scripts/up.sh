@@ -19,7 +19,7 @@ Installing RHACS Operator: ${INSTALL_OPERATOR}
 
 EOF
 
-KUBE_CONFIG=$(assemble_kubeconfig | yq e . -j - | jq -c . -)
+KUBE_CONFIG=$(assemble_kubeconfig | yq e . -o=json - | jq -c . -)
 export KUBE_CONFIG
 
 if [[ "$FLEET_MANAGER_IMAGE" =~ ^[0-9a-z.-]+$ ]]; then
