@@ -37,6 +37,9 @@ var _ DinosaurService = &DinosaurServiceMock{}
 // 			CountByStatusFunc: func(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error) {
 // 				panic("mock out the CountByStatus method")
 // 			},
+// 			DbDeleteFunc: func(ctx context.Context, id string) *serviceError.ServiceError {
+// 				panic("mock out the DbDelete method")
+// 			},
 // 			DeleteFunc: func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 // 				panic("mock out the Delete method")
 // 			},
@@ -121,6 +124,9 @@ type DinosaurServiceMock struct {
 
 	// CountByStatusFunc mocks the CountByStatus method.
 	CountByStatusFunc func(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error)
+
+	// DbDeleteFunc mocks the DbDelete method.
+	DbDeleteFunc func(ctx context.Context, id string) *serviceError.ServiceError
 
 	// DeleteFunc mocks the Delete method.
 	DeleteFunc func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
@@ -209,6 +215,13 @@ type DinosaurServiceMock struct {
 		CountByStatus []struct {
 			// Status is the status argument value.
 			Status []dinosaurConstants.CentralStatus
+		}
+		// DbDelete holds details about calls to the DbDelete method.
+		DbDelete []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
 		}
 		// Delete holds details about calls to the Delete method.
 		Delete []struct {
@@ -329,6 +342,7 @@ type DinosaurServiceMock struct {
 	lockChangeDinosaurCNAMErecords        sync.RWMutex
 	lockCountByRegionAndInstanceType      sync.RWMutex
 	lockCountByStatus                     sync.RWMutex
+	lockDbDelete                          sync.RWMutex
 	lockDelete                            sync.RWMutex
 	lockDeprovisionDinosaurForUsers       sync.RWMutex
 	lockDeprovisionExpiredDinosaurs       sync.RWMutex
@@ -473,6 +487,41 @@ func (mock *DinosaurServiceMock) CountByStatusCalls() []struct {
 	mock.lockCountByStatus.RLock()
 	calls = mock.calls.CountByStatus
 	mock.lockCountByStatus.RUnlock()
+	return calls
+}
+
+// DbDelete calls DbDeleteFunc.
+func (mock *DinosaurServiceMock) DbDelete(ctx context.Context, id string) *serviceError.ServiceError {
+	if mock.DbDeleteFunc == nil {
+		panic("DinosaurServiceMock.DbDeleteFunc: method is nil but DinosaurService.DbDelete was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		ID  string
+	}{
+		Ctx: ctx,
+		ID:  id,
+	}
+	mock.lockDbDelete.Lock()
+	mock.calls.DbDelete = append(mock.calls.DbDelete, callInfo)
+	mock.lockDbDelete.Unlock()
+	return mock.DbDeleteFunc(ctx, id)
+}
+
+// DbDeleteCalls gets all the calls that were made to DbDelete.
+// Check the length with:
+//     len(mockedDinosaurService.DbDeleteCalls())
+func (mock *DinosaurServiceMock) DbDeleteCalls() []struct {
+	Ctx context.Context
+	ID  string
+} {
+	var calls []struct {
+		Ctx context.Context
+		ID  string
+	}
+	mock.lockDbDelete.RLock()
+	calls = mock.calls.DbDelete
+	mock.lockDbDelete.RUnlock()
 	return calls
 }
 

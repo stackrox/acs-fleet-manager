@@ -160,6 +160,21 @@ func (h adminDinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
 }
 
+// DbDelete ...
+func (h adminDinosaurHandler) DbDelete(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			ctx := r.Context()
+
+			err := h.service.DbDelete(ctx, id)
+			return nil, err
+		},
+	}
+
+	handlers.HandleDelete(w, r, cfg, http.StatusOK)
+}
+
 func updateResourcesList(to *corev1.ResourceList, from map[string]string) error {
 	newResourceList := to.DeepCopy()
 	for name, qty := range from {

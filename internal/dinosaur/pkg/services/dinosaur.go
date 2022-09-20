@@ -77,6 +77,7 @@ type DinosaurService interface {
 	// Delete cleans up all dependencies for a Dinosaur request and soft deletes the Dinosaur Request record from the database.
 	// The Dinosaur Request in the database will be updated with a deleted_at timestamp.
 	Delete(*dbapi.CentralRequest) *errors.ServiceError
+	DbDelete(ctx context.Context, id string) *errors.ServiceError
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError)
 	ListByClusterID(clusterID string) ([]*dbapi.CentralRequest, *errors.ServiceError)
 	RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
@@ -893,4 +894,31 @@ func buildResourceRecordChange(recordName string, clusterIngress string, action 
 	}
 
 	return resourceRecordChange
+}
+
+// DbDelete deletes a Central request from the database.
+// This is an administrative escape hatch for manual recovering from an inconsistent state.
+func (k *dinosaurService) DbDelete(ctx context.Context, id string) *errors.ServiceError {
+	if id == "" {
+		return errors.Validation("id is undefined")
+	}
+
+	if !auth.GetIsAdminFromContext(ctx) {
+		return errors.Unauthorized("administrator access only")
+	}
+
+	dbConn := k.connectionFactory.New().Where("id = ?", id)
+	var centralRequest dbapi.CentralRequest
+	if err := dbConn.First(&centralRequest).Error; err != nil {
+		return services.HandleGetError("CentralResource", "id", id, err)
+	}
+
+	dbConn = k.connectionFactory.New()
+	if err := dbConn.Delete(&centralRequest).Error; err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to delete central request with id %s", centralRequest.ID)
+	}
+
+	glog.Infof("Successfully force-deleted CentralRequest %q in database. Make sure any other resources belonging to this Central tenant are manually deleted.", centralRequest.ID)
+
+	return nil
 }
