@@ -29,7 +29,6 @@ const (
 //go:generate moq -out client_moq.go . SSOClient
 type SSOClient interface {
 	GetToken() (string, error)
-	GetAcsAPIToken() (string, error)
 	GetConfig() *iam.IAMConfig
 	GetRealmConfig() *iam.IAMRealmConfig
 	GetServiceAccounts(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error)
@@ -101,10 +100,6 @@ func (c *rhSSOClient) getCachedToken(tokenKey string) (string, error) {
 		return ct, nil
 	}
 	return "", errors.Errorf("failed to retrieve cached token")
-}
-
-func (c *rhSSOClient) GetAcsAPIToken() (string, error) {
-	return c.getToken("api.iam.acs")
 }
 
 // GetToken ...
