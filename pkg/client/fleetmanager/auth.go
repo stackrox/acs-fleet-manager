@@ -19,7 +19,7 @@ type Auth interface {
 
 type authFactory interface {
 	GetName() string
-	CreateAuth(o Option) (Auth, error)
+	CreateAuth(o option) (Auth, error)
 }
 
 var authFactoryRegistry map[string]authFactory
@@ -34,7 +34,7 @@ func init() {
 
 // NewAuth will return Auth that can be used to add authentication of a specific AuthType to be added to HTTP requests.
 func NewAuth(t string, opts ...AuthOption) (Auth, error) {
-	authOption := &Option{}
+	authOption := &option{}
 	for _, opt := range opts {
 		opt(authOption)
 	}
@@ -51,11 +51,11 @@ func NewAuth(t string, opts ...AuthOption) (Auth, error) {
 	return auth, nil
 }
 
-// Option for the different Auth types.
-type Option struct {
-	sso    RhSsoOption
-	ocm    OCMOption
-	static StaticOption
+// option for the different Auth types.
+type option struct {
+	Sso    RhSsoOption
+	Ocm    OCMOption
+	Static StaticOption
 }
 
 // RhSsoOption for the RH SSO Auth type.
@@ -74,26 +74,32 @@ type StaticOption struct {
 }
 
 // AuthOption to configure the different Auth types.
-type AuthOption func(*Option)
+type AuthOption func(*option)
 
 // WithRhSSOOption will set the options for OCM auth.
 func WithRhSSOOption(sso RhSsoOption) AuthOption {
-	return func(o *Option) {
-		o.sso = sso
+	return func(o *option) {
+		if sso.TokenFile != "" {
+			o.Sso.TokenFile = sso.TokenFile
+		}
 	}
 }
 
 // WithOCMOption will set the options for OCM auth.
 func WithOCMOption(ocm OCMOption) AuthOption {
-	return func(o *Option) {
-		o.ocm = ocm
+	return func(o *option) {
+		if ocm.RefreshToken != "" {
+			o.Ocm.RefreshToken = ocm.RefreshToken
+		}
 	}
 }
 
 // WithStaticOption will set the options for static auth.
 func WithStaticOption(static StaticOption) AuthOption {
-	return func(o *Option) {
-		o.static = static
+	return func(o *option) {
+		if static.StaticToken != "" {
+			o.Static.StaticToken = static.StaticToken
+		}
 	}
 }
 
@@ -103,10 +109,10 @@ func WithStaticOption(static StaticOption) AuthOption {
 //   - STATIC_TOKEN for the static token.
 //   - RHSSO_TOKEN_FILE for the path to the file containing the RH SSO access token.
 func WithOptionFromEnv() AuthOption {
-	return func(o *Option) {
-		optFromEnv := &Option{}
+	return func(o *option) {
+		optFromEnv := &option{}
 		utils.Must(env.Parse(optFromEnv))
-		setValuesIfEmpty(o, optFromEnv)
+		overrideValues(o, optFromEnv)
 	}
 }
 
@@ -124,14 +130,14 @@ func getAllAuthTypes() []string {
 	return authTypes
 }
 
-func setValuesIfEmpty(orig *Option, updated *Option) {
-	if updated.sso.TokenFile != "" {
-		orig.sso.TokenFile = updated.sso.TokenFile
+func overrideValues(orig *option, updated *option) {
+	if updated.Sso.TokenFile != "" {
+		orig.Sso.TokenFile = updated.Sso.TokenFile
 	}
-	if updated.ocm.RefreshToken != "" {
-		orig.ocm.RefreshToken = updated.ocm.RefreshToken
+	if updated.Ocm.RefreshToken != "" {
+		orig.Ocm.RefreshToken = updated.Ocm.RefreshToken
 	}
-	if updated.static.StaticToken != "" {
-		orig.static.StaticToken = updated.static.StaticToken
+	if updated.Static.StaticToken != "" {
+		orig.Static.StaticToken = updated.Static.StaticToken
 	}
 }

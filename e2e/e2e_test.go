@@ -85,16 +85,17 @@ var _ = Describe("Central", func() {
 
 		centralName := newCentralName()
 		request := public.CentralRequestPayload{
-			Name:          centralName,
-			MultiAz:       true,
 			CloudProvider: dpCloudProvider,
+			MultiAz:       true,
+			Name:          centralName,
 			Region:        dpRegion,
 		}
 
 		var createdCentral *public.CentralRequest
 		var namespaceName string
 		It("created a central", func() {
-			*createdCentral, _, err = client.PublicAPI().CreateCentral(context.Background(), true, request)
+			resp, _, err := client.PublicAPI().CreateCentral(context.Background(), true, request)
+			createdCentral = &resp
 			Expect(err).To(BeNil())
 			namespaceName, err = services.FormatNamespace(createdCentral.Id)
 			Expect(err).To(BeNil())
@@ -103,7 +104,7 @@ var _ = Describe("Central", func() {
 
 		It("should transition central's state to provisioning", func() {
 			Eventually(func() string {
-				return getCentral(createdCentral.Id, client).Status
+				return centralStatus(createdCentral.Id, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusProvisioning.String()))
 		})
 
@@ -196,7 +197,7 @@ var _ = Describe("Central", func() {
 
 		It("should transition central's state to ready", func() {
 			Eventually(func() string {
-				return getCentral(createdCentral.Id, client).Status
+				return centralStatus(createdCentral.Id, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
 		})
 
@@ -223,9 +224,7 @@ var _ = Describe("Central", func() {
 			_, err = client.PublicAPI().DeleteCentralById(context.TODO(), createdCentral.Id, true)
 			Expect(err).To(Succeed())
 			Eventually(func() string {
-				deprovisioningCentral, _, err := client.PublicAPI().GetCentralById(context.TODO(), createdCentral.Id)
-				Expect(err).To(BeNil())
-				return deprovisioningCentral.Status
+				return centralStatus(createdCentral.Id, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusDeprovision.String()))
 		})
 
@@ -320,7 +319,8 @@ var _ = Describe("Central", func() {
 		var createdCentral *private.CentralRequest
 		var namespaceName string
 		It("should create central with custom resource configuration", func() {
-			*createdCentral, _, err = adminAPI.CreateCentral(context.TODO(), true, request)
+			resp, _, err := adminAPI.CreateCentral(context.TODO(), true, request)
+			createdCentral = &resp
 			Expect(err).To(BeNil())
 			centralID = createdCentral.Id
 			namespaceName, err = services.FormatNamespace(centralID)
@@ -393,7 +393,7 @@ var _ = Describe("Central", func() {
 
 		It("should transition central's state to ready", func() {
 			Eventually(func() string {
-				return getCentral(createdCentral.Id, client).Status
+				return centralStatus(createdCentral.Id, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
 		})
 
@@ -401,9 +401,7 @@ var _ = Describe("Central", func() {
 			_, err = client.PublicAPI().DeleteCentralById(context.TODO(), createdCentral.Id, true)
 			Expect(err).To(Succeed())
 			Eventually(func() string {
-				deprovisioningCentral, _, err := client.PublicAPI().GetCentralById(context.TODO(), createdCentral.Id)
-				Expect(err).To(BeNil())
-				return deprovisioningCentral.Status
+				return centralStatus(createdCentral.Id, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusDeprovision.String()))
 		})
 
@@ -521,4 +519,8 @@ func getCentral(id string, client *fleetmanager.Client) *public.CentralRequest {
 	central, _, err := client.PublicAPI().GetCentralById(context.Background(), id)
 	Expect(err).To(BeNil())
 	return &central
+}
+
+func centralStatus(id string, client *fleetmanager.Client) string {
+	return getCentral(id, client).Status
 }

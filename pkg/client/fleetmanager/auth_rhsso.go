@@ -30,8 +30,8 @@ func (f *rhSSOAuthFactory) GetName() string {
 }
 
 // CreateAuth ...
-func (f *rhSSOAuthFactory) CreateAuth(o Option) (Auth, error) {
-	tokenFilePath := o.sso.TokenFile
+func (f *rhSSOAuthFactory) CreateAuth(o option) (Auth, error) {
+	tokenFilePath := o.Sso.TokenFile
 	if _, err := shared.ReadFile(tokenFilePath); err != nil {
 		return nil, fmt.Errorf("reading token file: %w", err)
 	}

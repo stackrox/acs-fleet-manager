@@ -28,8 +28,8 @@ func (f *staticTokenAuthFactory) GetName() string {
 }
 
 // CreateAuth ...
-func (f *staticTokenAuthFactory) CreateAuth(o Option) (Auth, error) {
-	staticToken := o.static.StaticToken
+func (f *staticTokenAuthFactory) CreateAuth(o option) (Auth, error) {
+	staticToken := o.Static.StaticToken
 	if staticToken == "" {
 		return nil, errors.New("no static token set")
 	}
