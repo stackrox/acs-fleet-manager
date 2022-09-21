@@ -129,7 +129,7 @@ helm upgrade rhacs-terraform ./ \
   --set acsOperator.sourceNamespace=openshift-marketplace \
   --set acsOperator.version=v3.71.0 \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
-  --set fleetshardSync.authType="RHSSO" \g
+  --set fleetshardSync.authType="RHSSO" \
   --set fleetshardSync.gitCommitSHA="${GIT_COMMIT_SHA}" \
   --set fleetshardSync.gitDescribeTag="${GIT_DESCRIBE_TAG}" \
   --set fleetshardSync.clusterId="${CLUSTER_ID}" \

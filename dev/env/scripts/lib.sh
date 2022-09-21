@@ -260,8 +260,8 @@ assemble_kubeconfig() {
     if [[ "$KUBECONF_CLUSTER_SERVER_OVERRIDE" == "true" ]]; then
         local server
         $KUBECTL delete pod alpine >/dev/null 2>&1 || true
-        # shellcheck disable=SC2086
-        server=$($KUBECTL run --rm -it alpine --quiet --image=alpine --restart=Never -- sh -c echo $KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT | tr -d '\r')
+        # shellcheck disable=SC2086,SC2016
+        server=$($KUBECTL run --rm -it alpine --quiet --image=alpine --restart=Never -- sh -c 'echo $KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT' | tr -d '\r')
         CLUSTER=$(echo "$CLUSTER" | jq ".cluster.server = \"https://${server}\"" -)
         $KUBECTL delete pod alpine >/dev/null 2>&1 || true
     fi
