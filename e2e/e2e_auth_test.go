@@ -6,14 +6,10 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
-	"github.com/stackrox/rox/pkg/retry"
 )
 
 const (
@@ -128,31 +124,16 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 				Skip("RHSSO_CLIENT_ID / RHSSO_CLIENT_SECRET not set, cannot initialize auth type")
 			}
 
-			// Create a temporary file where the token will be stored.
-			f, err := os.CreateTemp("", "token")
-			Expect(err).ToNot(HaveOccurred())
-
-			// Obtain a token from RH SSO using the client ID / secret + client_credentials grant. Write the token to
-			// the temporary file.
-			token, err := obtainRHSSOToken(clientID, clientSecret)
-			Expect(err).ToNot(HaveOccurred())
-			_, err = f.WriteString(token)
-			Expect(err).ToNot(HaveOccurred())
+			rhSSOOpt := authOption.Sso
+			rhSSOOpt.ClientID = clientID
+			rhSSOOpt.ClientSecret = clientSecret
 
 			// Create the auth type for RH SSO.
-			auth, err := fleetmanager.NewRHSSOAuth(fleetmanager.RHSSOOption{TokenFile: f.Name()})
+			auth, err := fleetmanager.NewRHSSOAuth(rhSSOOpt)
 			Expect(err).ToNot(HaveOccurred())
 			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())
 			client = fmClient
-
-			DeferCleanup(func() {
-				// Close and delete the temporarily created file.
-				err = f.Close()
-				Expect(err).ToNot(HaveOccurred())
-				err = os.Remove(f.Name())
-				Expect(err).ToNot(HaveOccurred())
-			})
 		})
 
 		DescribeTable("AuthN/Z tests",
@@ -166,39 +147,3 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 		)
 	})
 })
-
-// Helpers.
-
-// obtainRHSSOToken will create a redhatsso.SSOClient and retrieve an access token for the specified client ID / secret
-// using the client_credentials grant.
-func obtainRHSSOToken(clientID, clientSecret string) (string, error) {
-	client := redhatsso.NewSSOClient(&iam.IAMConfig{}, &iam.IAMRealmConfig{
-		BaseURL:          "https://sso.redhat.com",
-		Realm:            "redhat-external",
-		ClientID:         clientID,
-		ClientSecret:     clientSecret, // pragma: allowlist secret
-		TokenEndpointURI: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
-		JwksEndpointURI:  "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
-		APIEndpointURI:   "/auth/realms/redhat-external",
-	})
-
-	var accessToken string
-	err := retry.WithRetry(
-		func() error {
-			var getTokenErr, retryableErr error
-			accessToken, getTokenErr = client.GetToken()
-			// Make every error retryable, irrespective of whether the code is transient or not (this is only for test
-			// purposes). Ideally, the client itself should handle retries.
-			// If we do not check for non-nil errors, MakeRetryable would panic.
-			if getTokenErr != nil {
-				retryableErr = retry.MakeRetryable(getTokenErr)
-			}
-			return retryableErr
-		},
-		retry.Tries(3),
-		retry.BetweenAttempts(func(previousAttemptNumber int) {
-			time.Sleep(10 * time.Second)
-		}),
-	)
-	return accessToken, err
-}
