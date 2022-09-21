@@ -136,6 +136,10 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			f, err := os.CreateTemp("", "token")
 			Expect(err).ToNot(HaveOccurred())
 
+			// Set the RHSSO_TOKEN_FILE environment variable, pointing to the temporary file.
+			err = os.Setenv("RHSSO_TOKEN_FILE", f.Name())
+			Expect(err).ToNot(HaveOccurred())
+
 			// Obtain a token from RH SSO using the client ID / secret + client_credentials grant. Write the token to
 			// the temporary file.
 			token, err := obtainRHSSOToken(clientID, clientSecret)
@@ -151,6 +155,10 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			client = fmClient
 
 			DeferCleanup(func() {
+				// Unset the environment variable.
+				err := os.Unsetenv("RHSSO_TOKEN_FILE")
+				Expect(err).ToNot(HaveOccurred())
+
 				// Close and delete the temporarily created file.
 				err = f.Close()
 				Expect(err).ToNot(HaveOccurred())
