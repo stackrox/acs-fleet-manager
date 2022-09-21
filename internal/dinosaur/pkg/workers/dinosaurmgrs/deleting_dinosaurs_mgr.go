@@ -104,7 +104,7 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 		return errors.Wrapf(err, "failed to delete subscription id %s for central %s", dinosaur.SubscriptionID, dinosaur.ID)
 	}
 
-	if err := k.dinosaurService.Delete(dinosaur); err != nil {
+	if err := k.dinosaurService.Delete(dinosaur, false); err != nil {
 		return errors.Wrapf(err, "failed to delete central %s", dinosaur.ID)
 	}
 	return nil

@@ -160,13 +160,19 @@ func (h adminDinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
 }
 
-// DbDelete ...
+// DbDelete implements the endpoint for force-deleting Central tenants in the database in emergency situations requiring manual recovery
+// from an inconsistent state.
 func (h adminDinosaurHandler) DbDelete(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-			err := h.service.DbDelete(ctx, id)
+			centralRequest, err := h.service.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+
+			err = h.service.Delete(centralRequest, true)
 			return nil, err
 		},
 	}
