@@ -32,7 +32,10 @@ type Option struct {
 
 // RHSSOOption for the RH SSO Auth type.
 type RHSSOOption struct {
-	TokenFile string `env:"RHSSO_TOKEN_FILE" envDefault:"/run/secrets/rhsso-token/token"`
+	ClientID     string `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
+	ClientSecret string `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"` //pragma: allowlist secret
+	Realm        string `env:"RHSSO_REALM" envDefault:"redhat-external"`
+	Endpoint     string `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
 }
 
 // OCMOption for the OCM Auth type.

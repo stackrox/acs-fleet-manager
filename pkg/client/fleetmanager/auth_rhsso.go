@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
+
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 const (
@@ -19,35 +21,38 @@ var (
 )
 
 type rhSSOAuth struct {
-	tokenFilePath string
+	client redhatsso.SSOClient
 }
 
 type rhSSOAuthFactory struct{}
 
-// GetName ...
+// GetName gets the name of the factory.
 func (f *rhSSOAuthFactory) GetName() string {
 	return rhSSOAuthName
 }
 
 // CreateAuth ...
 func (f *rhSSOAuthFactory) CreateAuth(o Option) (Auth, error) {
-	tokenFilePath := o.Sso.TokenFile
-	if _, err := shared.ReadFile(tokenFilePath); err != nil {
-		return nil, fmt.Errorf("reading token file: %w", err)
-	}
+	client := redhatsso.NewSSOClient(&iam.IAMConfig{}, &iam.IAMRealmConfig{
+		BaseURL:          o.Sso.Endpoint,
+		Realm:            o.Sso.Realm,
+		ClientID:         o.Sso.ClientID,
+		ClientSecret:     o.Sso.ClientSecret, //pragma: allowlist secret
+		TokenEndpointURI: fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", o.Sso.Endpoint, o.Sso.Realm),
+		JwksEndpointURI:  fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/certs", o.Sso.Endpoint, o.Sso.Realm),
+		APIEndpointURI:   fmt.Sprintf("/auth/realms/%s", o.Sso.Realm),
+	})
 	return &rhSSOAuth{
-		tokenFilePath: tokenFilePath,
+		client: client,
 	}, nil
 }
 
-// AddAuth ...
+// AddAuth add auth token to the request retrieved from Red Hat SSO.
 func (r *rhSSOAuth) AddAuth(req *http.Request) error {
-	// The file is populated by the token-refresher, which will ensure the token is not expired.
-	token, err := shared.ReadFile(r.tokenFilePath)
+	token, err := r.client.GetToken()
 	if err != nil {
-		return errors.Wrapf(err, "reading token file %q within rhsso auth", r.tokenFilePath)
+		return errors.Wrap(err, "getting token from RH SSO")
 	}
-
 	setBearer(req, token)
 	return nil
 }
