@@ -23,12 +23,12 @@ func (c *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return resp, errors.Wrap(err, "round trip error")
 	}
+	return resp, nil
 }
 
 // newAuthTransport creates a http.RoundTripper that wraps http.DefaultTransport and injects
 // the authorization header from Auth into any request.
 func newAuthTransport(auth Auth) *authTransport {
-	g
 	return &authTransport{
 		transport: http.DefaultTransport,
 		auth:      auth,
