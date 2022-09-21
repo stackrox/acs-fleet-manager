@@ -42,56 +42,14 @@ spec:
           value: {{ .Values.fleetshardSync.staticToken }}
         - name: EGRESS_PROXY_IMAGE
           value: {{ .Values.fleetshardSync.egressProxy.image | quote }}
+        - name: RHSSO_SERVICE_ACCOUNT_CLIENT_ID
+          value: {{ .Values.fleetshardSync.redHatSSO.clientId }}
+        - name: RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET
+          value: {{ .Values.fleetshardSync.redhatSSO.clientSecret }}
+        - name: RHSSO_REALM
+          value: {{ .Values.fleetshardSync.redhatSSO.realm }}
+        - name: RHSSO_ENDPOINT
+          value: {{ .Values.fleetshardSync.redhatSSO.endpoint }}
         ports:
         - name: monitoring
           containerPort: 8080
-      {{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret (eq .Values.fleetshardSync.authType "RHSSO") }}
-        volumeMounts:
-          - mountPath: /run/secrets/rhsso-token
-            name: rhsso-token
-            readOnly: true
-      - name: token-refresher
-        image: {{ .Values.fleetshardSync.tokenRefresher.image }}
-        imagePullPolicy: Always
-        env:
-          - name: CLIENT_ID
-            valueFrom:
-              secretKeyRef:
-                name: fleetshard-sync-rhsso-creds
-                key: clientId
-          - name: CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: fleetshard-sync-rhsso-creds
-                key: clientSecret
-          - name: ISSUER_URL
-            value: {{ .Values.fleetshardSync.tokenRefresher.issuerUrl }}
-        command:
-          - /bin/token-refresher
-          - --oidc.client-id=$(CLIENT_ID)
-          - --oidc.client-secret=$(CLIENT_SECRET)
-          - --oidc.issuer-url=$(ISSUER_URL)
-          - --margin=1m
-          - --file=/rhsso-token/token
-        volumeMounts:
-          - mountPath: /rhsso-token
-            name: rhsso-token
-      volumes:
-        - name: rhsso-token
-          emptyDir: {}
-      {{- end }}
----
-{{- if and .Values.fleetshardSync.redHatSSO.clientId .Values.fleetshardSync.redHatSSO.clientSecret }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: fleetshard-sync-rhsso-creds
-  namespace: {{ .Release.Namespace }}
-  labels:
-    app: fleetshard-sync
-type: Opaque
-data:
-  clientId: {{ .Values.fleetshardSync.redHatSSO.clientId | b64enc | quote }}
-  clientSecret: {{ .Values.fleetshardSync.redHatSSO.clientSecret | b64enc | quote }}
----
-{{- end }}

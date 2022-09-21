@@ -27,7 +27,7 @@ type ocmAuth struct {
 
 type ocmAuthFactory struct{}
 
-// GetName ...
+// GetName gets the name of the factory.
 func (f *ocmAuthFactory) GetName() string {
 	return ocmAuthName
 }
@@ -64,7 +64,7 @@ func (f *ocmAuthFactory) CreateAuth(o Option) (Auth, error) {
 	}, nil
 }
 
-// AddAuth ...
+// AddAuth add auth token to the request retrieved from OCM.
 func (o *ocmAuth) AddAuth(req *http.Request) error {
 	// This will only do an external request iff the current access token of the connection has an expiration time
 	// lower than 1 minute.
