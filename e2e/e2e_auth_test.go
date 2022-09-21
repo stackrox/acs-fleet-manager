@@ -1,9 +1,8 @@
 package e2e
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -11,11 +10,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
 	"github.com/stackrox/rox/pkg/retry"
@@ -56,7 +51,7 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 	skipOnProd := env == "production"
 	skipOnNonProd := env != "production"
 
-	var client *authTestClientFleetManager
+	var client *fleetmanager.Client
 
 	// Needs to be an inline function to allow access to client - passing as arg does not work.
 	var testCase = func(group string, fail bool, code int, skip bool) {
@@ -67,11 +62,11 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 		var err error
 		switch group {
 		case publicAPI:
-			_, err = client.ListCentrals()
+			_, _, err = client.PublicAPI().GetCentrals(context.Background(), nil)
 		case internalAPI:
-			_, err = client.GetManagedCentralList()
+			_, _, err = client.PrivateAPI().GetCentrals(context.Background(), clusterID)
 		case adminAPI:
-			_, err = client.ListAdminAPI()
+			_, _, err = client.AdminAPI().GetCentrals(context.Background(), nil)
 		default:
 			Fail(fmt.Sprintf("Unexpected API Group: %q", group))
 		}
@@ -86,11 +81,11 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 
 	Describe("OCM auth type", func() {
 		BeforeEach(func() {
-			auth, err := fleetmanager.NewAuth(ocmAuthType)
+			auth, err := fleetmanager.NewAuth(ocmAuthType, fleetmanager.WithOptionFromEnv())
 			Expect(err).ToNot(HaveOccurred())
-			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, clusterID, auth)
+			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())
-			client = newAuthTestClient(fmClient, auth, fleetManagerEndpoint)
+			client = fmClient
 		})
 
 		DescribeTable("AuthN/Z tests",
@@ -108,11 +103,11 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 
 	Describe("Static token auth type", func() {
 		BeforeEach(func() {
-			auth, err := fleetmanager.NewAuth(staticTokenAuthType)
+			auth, err := fleetmanager.NewAuth(staticTokenAuthType, fleetmanager.WithOptionFromEnv())
 			Expect(err).ToNot(HaveOccurred())
-			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, clusterID, auth)
+			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())
-			client = newAuthTestClient(fmClient, auth, fleetManagerEndpoint)
+			client = fmClient
 		})
 
 		DescribeTable("AuthN/Z tests",
@@ -141,10 +136,6 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			f, err := os.CreateTemp("", "token")
 			Expect(err).ToNot(HaveOccurred())
 
-			// Set the RHSSO_TOKEN_FILE environment variable, pointing to the temporary file.
-			err = os.Setenv("RHSSO_TOKEN_FILE", f.Name())
-			Expect(err).ToNot(HaveOccurred())
-
 			// Obtain a token from RH SSO using the client ID / secret + client_credentials grant. Write the token to
 			// the temporary file.
 			token, err := obtainRHSSOToken(clientID, clientSecret)
@@ -153,17 +144,13 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Create the auth type for RH SSO.
-			auth, err := fleetmanager.NewAuth(rhSSOAuthType)
+			auth, err := fleetmanager.NewAuth(rhSSOAuthType, fleetmanager.WithOptionFromEnv())
 			Expect(err).ToNot(HaveOccurred())
-			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, clusterID, auth)
+			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())
-			client = newAuthTestClient(fmClient, auth, fleetManagerEndpoint)
+			client = fmClient
 
 			DeferCleanup(func() {
-				// Unset the environment variable.
-				err := os.Unsetenv("RHSSO_TOKEN_FILE")
-				Expect(err).ToNot(HaveOccurred())
-
 				// Close and delete the temporarily created file.
 				err = f.Close()
 				Expect(err).ToNot(HaveOccurred())
@@ -185,81 +172,6 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 })
 
 // Helpers.
-
-// authTestClientFleetManager embeds the fleetmanager.Client and adds additional method for admin API (which shouldn't
-// be a part of the fleetmanager.Client as it is only used within tests).
-type authTestClientFleetManager struct {
-	*fleetmanager.Client
-	auth     fleetmanager.Auth
-	h        http.Client
-	endpoint string
-}
-
-func newAuthTestClient(c *fleetmanager.Client, auth fleetmanager.Auth, endpoint string) *authTestClientFleetManager {
-	return &authTestClientFleetManager{c, auth, http.Client{}, endpoint}
-}
-
-func (a *authTestClientFleetManager) ListAdminAPI() (*private.CentralList, error) {
-	dinosaurList := &private.CentralList{}
-	if err := a.doRequestAndUnmarshal(fmt.Sprintf("%s/%s", a.endpoint, "admin/dinosaurs"), dinosaurList); err != nil {
-		return nil, err
-	}
-	return dinosaurList, nil
-}
-
-func (a *authTestClientFleetManager) ListCentrals() (*public.CentralRequestList, error) {
-	centralList := &public.CentralRequestList{}
-	if err := a.doRequestAndUnmarshal(fmt.Sprintf("%s/%s", a.endpoint, "api/rhacs/v1/centrals"), centralList); err != nil {
-		return nil, err
-	}
-	return centralList, nil
-}
-
-// Code is copied from fleetshard/pkg/fleetmanager/client.go for testing purposes.
-func (a *authTestClientFleetManager) doRequestAndUnmarshal(url string, v interface{}) error {
-	req, err := http.NewRequest(
-		http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-
-	if err := a.auth.AddAuth(req); err != nil {
-		return err
-	}
-
-	resp, err := a.h.Do(req)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = resp.Body.Close() }()
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	if len(data) == 0 {
-		return nil
-	}
-
-	kind := struct {
-		Kind string `json:"kind"`
-	}{}
-	err = json.Unmarshal(data, &kind)
-	if err != nil {
-		return err
-	}
-
-	// Unmarshal error
-	if kind.Kind == "Error" || kind.Kind == "error" {
-		apiError := compat.Error{}
-		err = json.Unmarshal(data, &apiError)
-		if err != nil {
-			return err
-		}
-		return errors.Errorf("API error (HTTP status %d) occured %s: %s", resp.StatusCode, apiError.Code, apiError.Reason)
-	}
-
-	return json.Unmarshal(data, v)
-}
 
 // obtainRHSSOToken will create a redhatsso.SSOClient and retrieve an access token for the specified client ID / secret
 // using the client_credentials grant.

@@ -14,13 +14,12 @@ import (
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/e2e/dns"
-	"github.com/stackrox/acs-fleet-manager/e2e/envtokenauth"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -52,8 +51,7 @@ const (
 // TODO(ROX-11465): Use correct OCM_TOKEN for different clients (console.redhat.com, fleetshard)
 var _ = Describe("Central", func() {
 	var client *fleetmanager.Client
-	var adminClient *Client
-
+	var adminAPI *private.DefaultApiService
 	BeforeEach(func() {
 		authType := "OCM"
 		if val := os.Getenv("AUTH_TYPE"); val != "" {
@@ -67,14 +65,17 @@ var _ = Describe("Central", func() {
 		}
 		GinkgoWriter.Printf("FLEET_MANAGER_ENDPOINT=%q\n", fleetManagerEndpoint)
 
-		auth, err := fleetmanager.NewAuth(authType)
+		auth, err := fleetmanager.NewAuth(authType, fleetmanager.WithOptionFromEnv())
 		Expect(err).ToNot(HaveOccurred())
-		client, err = fleetmanager.NewClient(fleetManagerEndpoint, "cluster-id", auth)
+		client, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
 		Expect(err).ToNot(HaveOccurred())
 
-		adminAuth, err := envtokenauth.CreateAuth("STATIC_TOKEN_ADMIN")
+		adminStaticToken := os.Getenv("STATIC_TOKEN_ADMIN")
+		adminAuth, err := fleetmanager.NewAuth("STATIC_TOKEN", fleetmanager.WithStaticOption(fleetmanager.StaticOption{StaticToken: adminStaticToken}))
 		Expect(err).ToNot(HaveOccurred())
-		adminClient, err = NewAdminClient(fleetManagerEndpoint, adminAuth)
+		adminClient, err := fleetmanager.NewClient(fleetManagerEndpoint, adminAuth)
+		adminAPI = adminClient.AdminAPI()
+
 		Expect(err).ToNot(HaveOccurred())
 
 	})
@@ -93,7 +94,7 @@ var _ = Describe("Central", func() {
 		var createdCentral *public.CentralRequest
 		var namespaceName string
 		It("created a central", func() {
-			createdCentral, err = client.CreateCentral(request)
+			*createdCentral, _, err = client.PublicAPI().CreateCentral(context.Background(), true, request)
 			Expect(err).To(BeNil())
 			namespaceName, err = services.FormatNamespace(createdCentral.Id)
 			Expect(err).To(BeNil())
@@ -102,7 +103,7 @@ var _ = Describe("Central", func() {
 
 		It("should transition central's state to provisioning", func() {
 			Eventually(func() string {
-				return centralStatus(createdCentral, client)
+				return getCentral(createdCentral.Id, client).Status
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusProvisioning.String()))
 		})
 
@@ -128,7 +129,7 @@ var _ = Describe("Central", func() {
 				Skip(skipRouteMsg)
 			}
 
-			central := getCentral(createdCentral, client)
+			central := getCentral(createdCentral.Id, client)
 
 			var reencryptRoute *openshiftRouteV1.Route
 			Eventually(func() error {
@@ -166,7 +167,7 @@ var _ = Describe("Central", func() {
 				Skip(skipDNSMsg)
 			}
 
-			central := getCentral(createdCentral, client)
+			central := getCentral(createdCentral.Id, client)
 			var reencryptIngress *openshiftRouteV1.RouteIngress
 			Eventually(func() error {
 				reencryptIngress, err = routeService.FindReencryptIngress(context.Background(), namespaceName)
@@ -195,7 +196,7 @@ var _ = Describe("Central", func() {
 
 		It("should transition central's state to ready", func() {
 			Eventually(func() string {
-				return centralStatus(createdCentral, client)
+				return getCentral(createdCentral.Id, client).Status
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
 		})
 
@@ -219,10 +220,10 @@ var _ = Describe("Central", func() {
 		// TODO(ROX-11368): Create test to check Central is correctly exposed
 
 		It("should transition central to deprovisioning state", func() {
-			err = client.DeleteCentral(createdCentral.Id)
+			_, err = client.PublicAPI().DeleteCentralById(context.TODO(), createdCentral.Id, true)
 			Expect(err).To(Succeed())
 			Eventually(func() string {
-				deprovisioningCentral, err := client.GetCentral(createdCentral.Id)
+				deprovisioningCentral, _, err := client.PublicAPI().GetCentralById(context.TODO(), createdCentral.Id)
 				Expect(err).To(BeNil())
 				return deprovisioningCentral.Status
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusDeprovision.String()))
@@ -231,7 +232,7 @@ var _ = Describe("Central", func() {
 		It("should delete central CR", func() {
 			Eventually(func() bool {
 				central := &v1alpha1.Central{}
-				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: centralName}, central)
+				err := k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: centralName, Namespace: centralName}, central)
 				return apiErrors.IsNotFound(err)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
 		})
@@ -257,7 +258,7 @@ var _ = Describe("Central", func() {
 				Skip(skipDNSMsg)
 			}
 
-			central := getCentral(createdCentral, client)
+			central := getCentral(createdCentral.Id, client)
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
 
 			Eventually(dnsRecordsLoader.LoadDNSRecords).
@@ -272,7 +273,7 @@ var _ = Describe("Central", func() {
 		var centralID string
 		centralName := newCentralName()
 
-		centralResources := public.ResourceRequirements{
+		centralResources := private.ResourceRequirements{
 			Requests: map[string]string{
 				corev1.ResourceCPU.String():    "501m",
 				corev1.ResourceMemory.String(): "201M",
@@ -282,10 +283,10 @@ var _ = Describe("Central", func() {
 				corev1.ResourceMemory.String(): "202M",
 			},
 		}
-		centralSpec := public.CentralSpec{
+		centralSpec := private.CentralSpec{
 			Resources: centralResources,
 		}
-		scannerResources := public.ResourceRequirements{
+		scannerResources := private.ResourceRequirements{
 			Requests: map[string]string{
 				corev1.ResourceCPU.String():    "301m",
 				corev1.ResourceMemory.String(): "151M",
@@ -295,19 +296,19 @@ var _ = Describe("Central", func() {
 				corev1.ResourceMemory.String(): "152M",
 			},
 		}
-		scannerScaling := public.ScannerSpecAnalyzerScaling{
+		scannerScaling := private.ScannerSpecAnalyzerScaling{
 			AutoScaling: "Enabled",
 			Replicas:    1,
 			MinReplicas: 1,
 			MaxReplicas: 2,
 		}
-		scannerSpec := public.ScannerSpec{
-			Analyzer: public.ScannerSpecAnalyzer{
+		scannerSpec := private.ScannerSpec{
+			Analyzer: private.ScannerSpecAnalyzer{
 				Resources: scannerResources,
 				Scaling:   scannerScaling,
 			},
 		}
-		request := public.CentralRequestPayload{
+		request := private.CentralRequestPayload{
 			Name:          centralName,
 			MultiAz:       true,
 			CloudProvider: dpCloudProvider,
@@ -316,10 +317,10 @@ var _ = Describe("Central", func() {
 			Scanner:       scannerSpec,
 		}
 
-		var createdCentral *public.CentralRequest
+		var createdCentral *private.CentralRequest
 		var namespaceName string
 		It("should create central with custom resource configuration", func() {
-			createdCentral, err = adminClient.CreateCentral(request)
+			*createdCentral, _, err = adminAPI.CreateCentral(context.TODO(), true, request)
 			Expect(err).To(BeNil())
 			centralID = createdCentral.Id
 			namespaceName, err = services.FormatNamespace(centralID)
@@ -330,25 +331,25 @@ var _ = Describe("Central", func() {
 		central := &v1alpha1.Central{}
 		It("should create central in its namespace on a managed cluster", func() {
 			Eventually(func() error {
-				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: namespaceName}, central)
+				return k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: centralName, Namespace: namespaceName}, central)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
 		It("central resources match configured settings", func() {
 			coreV1Resources := central.Spec.Central.DeploymentSpec.Resources
-			expectedResources, err := converters.ConvertPublicResourceRequirementsToCoreV1(&centralResources)
+			expectedResources, err := converters.ConvertAdminPrivateRequirementsToCoreV1(&centralResources)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(*coreV1Resources).To(Equal(expectedResources))
 		})
 
 		It("scanner analyzer resources match configured settings", func() {
 			coreV1Resources := central.Spec.Scanner.Analyzer.DeploymentSpec.Resources
-			expectedResources, err := converters.ConvertPublicResourceRequirementsToCoreV1(&scannerResources)
+			expectedResources, err := converters.ConvertAdminPrivateRequirementsToCoreV1(&scannerResources)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(*coreV1Resources).To(Equal(expectedResources))
 
 			scaling := central.Spec.Scanner.Analyzer.Scaling
-			expectedScaling, err := converters.ConvertPublicScalingToV1(&scannerScaling)
+			expectedScaling, err := converters.ConvertAdminPrivateScalingToV1(&scannerScaling)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(*scaling).To(Equal(expectedScaling))
 		})
@@ -377,7 +378,7 @@ var _ = Describe("Central", func() {
 				},
 			}
 
-			_, err = adminClient.UpdateCentral(centralID, updateReq)
+			_, _, err = adminAPI.UpdateCentralById(context.TODO(), centralID, updateReq)
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(func() corev1.ResourceRequirements {
 				central := &v1alpha1.Central{}
@@ -392,15 +393,15 @@ var _ = Describe("Central", func() {
 
 		It("should transition central's state to ready", func() {
 			Eventually(func() string {
-				return centralStatus(createdCentral, client)
+				return getCentral(createdCentral.Id, client).Status
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
 		})
 
 		It("should transition central to deprovisioning state", func() {
-			err = client.DeleteCentral(createdCentral.Id)
+			_, err = client.PublicAPI().DeleteCentralById(context.TODO(), createdCentral.Id, true)
 			Expect(err).To(Succeed())
 			Eventually(func() string {
-				deprovisioningCentral, err := client.GetCentral(createdCentral.Id)
+				deprovisioningCentral, _, err := client.PublicAPI().GetCentralById(context.TODO(), createdCentral.Id)
 				Expect(err).To(BeNil())
 				return deprovisioningCentral.Status
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusDeprovision.String()))
@@ -427,7 +428,7 @@ var _ = Describe("Central", func() {
 				Skip(skipDNSMsg)
 			}
 
-			central := getCentral(createdCentral, client)
+			central := getCentral(createdCentral.Id, client)
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
 
 			Eventually(dnsRecordsLoader.LoadDNSRecords).
@@ -515,13 +516,9 @@ var _ = Describe("Central", func() {
 	})
 })
 
-func getCentral(createdCentral *public.CentralRequest, client *fleetmanager.Client) *public.CentralRequest {
-	Expect(createdCentral).NotTo(BeNil())
-	central, err := client.GetCentral(createdCentral.Id)
+func getCentral(id string, client *fleetmanager.Client) *public.CentralRequest {
+	Expect(id).NotTo(BeEmpty())
+	central, _, err := client.PublicAPI().GetCentralById(context.Background(), id)
 	Expect(err).To(BeNil())
-	return central
-}
-
-func centralStatus(createdCentral *public.CentralRequest, client *fleetmanager.Client) string {
-	return getCentral(createdCentral, client).Status
+	return &central
 }
