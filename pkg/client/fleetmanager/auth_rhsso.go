@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
@@ -31,12 +30,8 @@ func (f *rhSSOAuthFactory) GetName() string {
 }
 
 // CreateAuth ...
-func (f *rhSSOAuthFactory) CreateAuth() (Auth, error) {
-	cfg, err := config.GetConfig()
-	if err != nil {
-		return nil, fmt.Errorf("creating the config singleton: %w", err)
-	}
-	tokenFilePath := cfg.RHSSOTokenFilePath
+func (f *rhSSOAuthFactory) CreateAuth(o Option) (Auth, error) {
+	tokenFilePath := o.sso.TokenFile
 	if _, err := shared.ReadFile(tokenFilePath); err != nil {
 		return nil, fmt.Errorf("reading token file: %w", err)
 	}
