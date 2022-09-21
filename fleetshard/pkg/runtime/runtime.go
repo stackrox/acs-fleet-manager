@@ -13,8 +13,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,6 +37,7 @@ var backoff = wait.Backoff{
 type Runtime struct {
 	config           *config.Config
 	client           *fleetmanager.Client
+	clusterID        string
 	reconcilers      reconcilerRegistry // TODO(create-ticket): possible leak. consider reconcilerRegistry cleanup
 	k8sClient        ctrlClient.Client
 	statusResponseCh chan private.DataPlaneCentralStatus
@@ -44,12 +45,13 @@ type Runtime struct {
 
 // NewRuntime creates a new runtime
 func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
-	auth, err := fleetmanager.NewAuth(config.AuthType)
+	auth, err := fleetmanager.NewAuth(config.AuthType, fleetmanager.WithOptionFromEnv())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager authentication")
 	}
-	client, err := fleetmanager.NewClient(config.FleetManagerEndpoint, config.ClusterID,
-		auth)
+	client, err := fleetmanager.NewClient(config.FleetManagerEndpoint, auth, fleetmanager.WithUserAgent(
+		fmt.Sprintf("fleetshard-synchronizer/%s", config.ClusterID)),
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager client")
 	}
@@ -58,6 +60,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		config:      config,
 		k8sClient:   k8sClient,
 		client:      client,
+		clusterID:   config.ClusterID,
 		reconcilers: make(reconcilerRegistry),
 	}, nil
 }
@@ -80,7 +83,7 @@ func (r *Runtime) Start() error {
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
-		list, err := r.client.GetManagedCentralList()
+		list, _, err := r.client.PrivateAPI().GetCentrals(ctx, r.clusterID)
 		if err != nil {
 			err = errors.Wrapf(err, "retrieving list of managed centrals")
 			log.Error(err)
@@ -106,7 +109,7 @@ func (r *Runtime) Start() error {
 		}
 		fleetshardmetrics.MetricsInstance().SetTotalCentrals(float64(len(r.reconcilers)))
 
-		r.deleteStaleReconcilers(list)
+		r.deleteStaleReconcilers(&list)
 		return r.config.RuntimePollPeriod, nil
 	}, 10*time.Minute, backoff)
 
@@ -132,8 +135,7 @@ func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *
 		log.Infof("No status update for Central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
 		return
 	}
-
-	err = r.client.UpdateStatus(map[string]private.DataPlaneCentralStatus{
+	_, err = r.client.PrivateAPI().UpdateCentralClusterStatus(context.TODO(), r.clusterID, map[string]private.DataPlaneCentralStatus{
 		central.Id: *status,
 	})
 	if err != nil {

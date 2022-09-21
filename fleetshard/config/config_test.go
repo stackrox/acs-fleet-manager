@@ -20,8 +20,6 @@ func TestSingleton_Success(t *testing.T) {
 	assert.Equal(t, cfg.ClusterID, "some-value")
 	assert.Equal(t, cfg.RuntimePollPeriod, 5*time.Second)
 	assert.Equal(t, cfg.AuthType, "OCM")
-	assert.Equal(t, cfg.RHSSOTokenFilePath, "/run/secrets/rhsso-token/token")
-	assert.Empty(t, cfg.OCMRefreshToken)
 }
 
 func TestSingleton_Failure(t *testing.T) {
