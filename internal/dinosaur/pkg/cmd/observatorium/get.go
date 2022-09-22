@@ -12,14 +12,14 @@ import (
 func NewRunGetStateCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-state",
-		Short: "Fetch dinosaur state metric from Prometheus",
+		Short: "Fetch central state metric from Prometheus",
 		Run: func(cmd *cobra.Command, args []string) {
 			runGethResourceStateMetrics(env, cmd, args)
 		},
 	}
 
-	cmd.Flags().String(FlagName, "", "Dinosaur name")
-	cmd.Flags().String(FlagNameSpace, "", "Dinosaur namepace")
+	cmd.Flags().String(FlagName, "", "Central name")
+	cmd.Flags().String(FlagNameSpace, "", "Central namepace")
 
 	return cmd
 }
@@ -37,9 +37,9 @@ func runGethResourceStateMetrics(env *environments.Env, cmd *cobra.Command, _arg
 		return
 	}
 	if len(dinosaurState.State) > 0 {
-		glog.Infof("dinosaur state is %s ", dinosaurState.State)
+		glog.Infof("central state is %s ", dinosaurState.State)
 	} else {
-		glog.Infof("dinosaur state not found for paramerters %s %s ", name, namespace)
+		glog.Infof("central state not found for paramerters %s %s ", name, namespace)
 	}
 
 }

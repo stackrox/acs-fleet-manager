@@ -118,7 +118,7 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 		if err != nil {
 			return fmt.Errorf("updating central operator versions: %w", err)
 		}
-		glog.Infof("Updating Dinosaur operator available versions for cluster ID '%s'. From versions '%v' to versions '%v'\n",
+		glog.Infof("Updating Central operator available versions for cluster ID '%s'. From versions '%v' to versions '%v'\n",
 			cluster.ClusterID, prevAvailableDinosaurOperatorVersions, status.AvailableDinosaurOperatorVersions)
 		svcErr := d.ClusterService.Update(*cluster)
 		if svcErr != nil {

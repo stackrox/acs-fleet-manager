@@ -27,8 +27,8 @@ const (
 	statusRejected           dinosaurStatus = "rejected"
 	statusDeleted            dinosaurStatus = "deleted"
 	statusUnknown            dinosaurStatus = "unknown"
-	dinosaurOperatorUpdating string         = "DinosaurOperatorUpdating"
-	dinosaurUpdating         string         = "DinosaurUpdating"
+	dinosaurOperatorUpdating string         = "CentralOperatorUpdating"
+	dinosaurUpdating         string         = "CentralUpdating"
 )
 
 // DataPlaneDinosaurService ...
@@ -65,11 +65,11 @@ func (d *dataPlaneDinosaurService) UpdateDataPlaneDinosaurService(ctx context.Co
 	for _, ks := range status {
 		dinosaur, getErr := d.dinosaurService.GetByID(ks.CentralClusterID)
 		if getErr != nil {
-			glog.Error(errors.Wrapf(getErr, "failed to get dinosaur cluster by id %s", ks.CentralClusterID))
+			glog.Error(errors.Wrapf(getErr, "failed to get central cluster by id %s", ks.CentralClusterID))
 			continue
 		}
 		if dinosaur.ClusterID != clusterID {
-			log.Warningf("clusterId for dinosaur cluster %s does not match clusterId. dinosaur clusterId = %s :: clusterId = %s", dinosaur.ID, dinosaur.ClusterID, clusterID)
+			log.Warningf("clusterId for central cluster %s does not match clusterId. central clusterId = %s :: clusterId = %s", dinosaur.ID, dinosaur.ClusterID, clusterID)
 			continue
 		}
 		var e *serviceError.ServiceError
@@ -91,17 +91,17 @@ func (d *dataPlaneDinosaurService) UpdateDataPlaneDinosaurService(ctx context.Co
 		case statusRejected:
 			e = d.reassignDinosaurCluster(dinosaur)
 		case statusUnknown:
-			log.Infof("dinosaur cluster %s status is unknown", ks.CentralClusterID)
+			log.Infof("central cluster %s status is unknown", ks.CentralClusterID)
 		default:
-			log.V(5).Infof("dinosaur cluster %s is still installing", ks.CentralClusterID)
+			log.V(5).Infof("central cluster %s is still installing", ks.CentralClusterID)
 		}
 		if e != nil {
-			log.Error(errors.Wrapf(e, "Error updating dinosaur %s status", ks.CentralClusterID))
+			log.Error(errors.Wrapf(e, "Error updating central %s status", ks.CentralClusterID))
 		}
 
 		e = d.setDinosaurRequestVersionFields(dinosaur, ks)
 		if e != nil {
-			log.Error(errors.Wrapf(e, "Error updating dinosaur '%s' version fields", ks.CentralClusterID))
+			log.Error(errors.Wrapf(e, "Error updating central '%s' version fields", ks.CentralClusterID))
 		}
 	}
 
@@ -110,10 +110,10 @@ func (d *dataPlaneDinosaurService) UpdateDataPlaneDinosaurService(ctx context.Co
 
 func (d *dataPlaneDinosaurService) setDinosaurClusterReady(dinosaur *dbapi.CentralRequest) *serviceError.ServiceError {
 	if !dinosaur.RoutesCreated {
-		logger.Logger.V(10).Infof("routes for dinosaur %s are not created", dinosaur.ID)
+		logger.Logger.V(10).Infof("routes for central %s are not created", dinosaur.ID)
 		return nil
 	}
-	logger.Logger.Infof("routes for dinosaur %s are created", dinosaur.ID)
+	logger.Logger.Infof("routes for central %s are created", dinosaur.ID)
 
 	// only send metrics data if the current dinosaur request is in "provisioning" status as this is the only case we want to report
 	shouldSendMetric, err := d.checkDinosaurRequestCurrentStatus(dinosaur, constants2.CentralRequestStatusProvisioning)
@@ -123,7 +123,7 @@ func (d *dataPlaneDinosaurService) setDinosaurClusterReady(dinosaur *dbapi.Centr
 
 	err = d.dinosaurService.Updates(dinosaur, map[string]interface{}{"failed_reason": "", "status": constants2.CentralRequestStatusReady.String()})
 	if err != nil {
-		return serviceError.NewWithCause(err.Code, err, "failed to update status %s for dinosaur cluster %s", constants2.CentralRequestStatusReady, dinosaur.ID)
+		return serviceError.NewWithCause(err.Code, err, "failed to update status %s for central cluster %s", constants2.CentralRequestStatusReady, dinosaur.ID)
 	}
 	if shouldSendMetric {
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusReady, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
@@ -138,14 +138,14 @@ func (d *dataPlaneDinosaurService) setDinosaurRequestVersionFields(dinosaur *dba
 	needsUpdate := false
 	prevActualDinosaurVersion := status.CentralVersion
 	if status.CentralVersion != "" && status.CentralVersion != dinosaur.ActualCentralVersion {
-		logger.Logger.Infof("Updating Dinosaur version for Dinosaur ID '%s' from '%s' to '%s'", dinosaur.ID, prevActualDinosaurVersion, status.CentralVersion)
+		logger.Logger.Infof("Updating Central version for Central ID '%s' from '%s' to '%s'", dinosaur.ID, prevActualDinosaurVersion, status.CentralVersion)
 		dinosaur.ActualCentralVersion = status.CentralVersion
 		needsUpdate = true
 	}
 
 	prevActualDinosaurOperatorVersion := status.CentralOperatorVersion
 	if status.CentralOperatorVersion != "" && status.CentralOperatorVersion != dinosaur.ActualCentralOperatorVersion {
-		logger.Logger.Infof("Updating Dinosaur operator version for Dinosaur ID '%s' from '%s' to '%s'", dinosaur.ID, prevActualDinosaurOperatorVersion, status.CentralOperatorVersion)
+		logger.Logger.Infof("Updating Central operator version for Central ID '%s' from '%s' to '%s'", dinosaur.ID, prevActualDinosaurOperatorVersion, status.CentralOperatorVersion)
 		dinosaur.ActualCentralOperatorVersion = status.CentralOperatorVersion
 		needsUpdate = true
 	}
@@ -157,12 +157,12 @@ func (d *dataPlaneDinosaurService) setDinosaurRequestVersionFields(dinosaur *dba
 		prevDinosaurOperatorUpgrading := dinosaur.CentralOperatorUpgrading
 		dinosaurOperatorUpdatingReasonIsSet := readyCondition.Reason == dinosaurOperatorUpdating
 		if dinosaurOperatorUpdatingReasonIsSet && !prevDinosaurOperatorUpgrading {
-			logger.Logger.Infof("Dinosaur operator version for Dinosaur ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurOperatorUpgrading, dinosaurOperatorUpdatingReasonIsSet)
+			logger.Logger.Infof("Central operator version for Central ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurOperatorUpgrading, dinosaurOperatorUpdatingReasonIsSet)
 			dinosaur.CentralOperatorUpgrading = true
 			needsUpdate = true
 		}
 		if !dinosaurOperatorUpdatingReasonIsSet && prevDinosaurOperatorUpgrading {
-			logger.Logger.Infof("Dinosaur operator version for Dinosaur ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurOperatorUpgrading, dinosaurOperatorUpdatingReasonIsSet)
+			logger.Logger.Infof("Central operator version for Central ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurOperatorUpgrading, dinosaurOperatorUpdatingReasonIsSet)
 			dinosaur.CentralOperatorUpgrading = false
 			needsUpdate = true
 		}
@@ -170,12 +170,12 @@ func (d *dataPlaneDinosaurService) setDinosaurRequestVersionFields(dinosaur *dba
 		prevDinosaurUpgrading := dinosaur.CentralUpgrading
 		dinosaurUpdatingReasonIsSet := readyCondition.Reason == dinosaurUpdating
 		if dinosaurUpdatingReasonIsSet && !prevDinosaurUpgrading {
-			logger.Logger.Infof("Dinosaur version for Dinosaur ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurUpgrading, dinosaurUpdatingReasonIsSet)
+			logger.Logger.Infof("Central version for Central ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurUpgrading, dinosaurUpdatingReasonIsSet)
 			dinosaur.CentralUpgrading = true
 			needsUpdate = true
 		}
 		if !dinosaurUpdatingReasonIsSet && prevDinosaurUpgrading {
-			logger.Logger.Infof("Dinosaur version for Dinosaur ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurUpgrading, dinosaurUpdatingReasonIsSet)
+			logger.Logger.Infof("Central version for Central ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurUpgrading, dinosaurUpdatingReasonIsSet)
 			dinosaur.CentralUpgrading = false
 			needsUpdate = true
 		}
@@ -191,7 +191,7 @@ func (d *dataPlaneDinosaurService) setDinosaurRequestVersionFields(dinosaur *dba
 		}
 
 		if err := d.dinosaurService.Updates(dinosaur, versionFields); err != nil {
-			return serviceError.NewWithCause(err.Code, err, "failed to update actual version fields for dinosaur cluster %s", dinosaur.ID)
+			return serviceError.NewWithCause(err.Code, err, "failed to update actual version fields for central cluster %s", dinosaur.ID)
 		}
 	}
 
@@ -211,16 +211,16 @@ func (d *dataPlaneDinosaurService) setDinosaurClusterFailed(dinosaur *dbapi.Cent
 	}
 
 	dinosaur.Status = string(constants2.CentralRequestStatusFailed)
-	dinosaur.FailedReason = fmt.Sprintf("Dinosaur reported as failed: '%s'", errMessage)
+	dinosaur.FailedReason = fmt.Sprintf("Central reported as failed: '%s'", errMessage)
 	err = d.dinosaurService.Update(dinosaur)
 	if err != nil {
-		return serviceError.NewWithCause(err.Code, err, "failed to update dinosaur cluster to %s status for dinosaur cluster %s", constants2.CentralRequestStatusFailed, dinosaur.ID)
+		return serviceError.NewWithCause(err.Code, err, "failed to update central cluster to %s status for central cluster %s", constants2.CentralRequestStatusFailed, dinosaur.ID)
 	}
 	if shouldSendMetric {
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusFailed, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		metrics.IncreaseCentralTotalOperationsCountMetric(constants2.CentralOperationCreate)
 	}
-	logger.Logger.Errorf("Dinosaur status for Dinosaur ID '%s' in ClusterID '%s' reported as failed by Fleet Shard Operator: '%s'", dinosaur.ID, dinosaur.ClusterID, errMessage)
+	logger.Logger.Errorf("Central status for Central ID '%s' in ClusterID '%s' reported as failed by Fleet Shard Operator: '%s'", dinosaur.ID, dinosaur.ClusterID, errMessage)
 
 	return nil
 }
@@ -229,7 +229,7 @@ func (d *dataPlaneDinosaurService) setDinosaurClusterDeleting(dinosaur *dbapi.Ce
 	// If the Dinosaur cluster is deleted from the data plane cluster, we will make it as "deleting" in db and the reconcilier will ensure it is cleaned up properly
 	if ok, updateErr := d.dinosaurService.UpdateStatus(dinosaur.ID, constants2.CentralRequestStatusDeleting); ok {
 		if updateErr != nil {
-			return serviceError.NewWithCause(updateErr.Code, updateErr, "failed to update status %s for dinosaur cluster %s", constants2.CentralRequestStatusDeleting, dinosaur.ID)
+			return serviceError.NewWithCause(updateErr.Code, updateErr, "failed to update status %s for central cluster %s", constants2.CentralRequestStatusDeleting, dinosaur.ID)
 		}
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusDeleting, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 	}
@@ -247,7 +247,7 @@ func (d *dataPlaneDinosaurService) reassignDinosaurCluster(dinosaur *dbapi.Centr
 		}
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 	} else {
-		logger.Logger.Infof("dinosaur cluster %s is rejected and current status is %s", dinosaur.ID, dinosaur.Status)
+		logger.Logger.Infof("central cluster %s is rejected and current status is %s", dinosaur.ID, dinosaur.Status)
 	}
 
 	return nil
@@ -290,10 +290,10 @@ func (d *dataPlaneDinosaurService) checkDinosaurRequestCurrentStatus(dinosaur *d
 
 func (d *dataPlaneDinosaurService) persistDinosaurRoutes(dinosaur *dbapi.CentralRequest, dinosaurStatus *dbapi.DataPlaneCentralStatus, cluster *api.Cluster) *serviceError.ServiceError {
 	if dinosaur.Routes != nil {
-		logger.Logger.V(10).Infof("skip persisting routes for Dinosaur %s as they are already stored", dinosaur.ID)
+		logger.Logger.V(10).Infof("skip persisting routes for Central %s as they are already stored", dinosaur.ID)
 		return nil
 	}
-	logger.Logger.Infof("store routes information for dinosaur %s", dinosaur.ID)
+	logger.Logger.Infof("store routes information for central %s", dinosaur.ID)
 	clusterDNS, err := d.clusterService.GetClusterDNS(cluster.ClusterID)
 	if err != nil {
 		return serviceError.NewWithCause(err.Code, err, "failed to get DNS entry for cluster %s", cluster.ClusterID)
@@ -306,11 +306,11 @@ func (d *dataPlaneDinosaurService) persistDinosaurRoutes(dinosaur *dbapi.Central
 	}
 
 	if err := dinosaur.SetRoutes(routesInRequest); err != nil {
-		return serviceError.NewWithCause(serviceError.ErrorGeneral, err, "failed to set routes for dinosaur %s", dinosaur.ID)
+		return serviceError.NewWithCause(serviceError.ErrorGeneral, err, "failed to set routes for central %s", dinosaur.ID)
 	}
 
 	if err := d.dinosaurService.Update(dinosaur); err != nil {
-		return serviceError.NewWithCause(err.Code, err, "failed to update routes for dinosaur cluster %s", dinosaur.ID)
+		return serviceError.NewWithCause(err.Code, err, "failed to update routes for central cluster %s", dinosaur.ID)
 	}
 	return nil
 }

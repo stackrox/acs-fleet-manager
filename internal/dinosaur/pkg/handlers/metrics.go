@@ -39,7 +39,7 @@ func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) 
 	if dinosaurID == "" {
 		shared.HandleError(r, w, &errors.ServiceError{
 			Code:     errors.ErrorBadRequest,
-			Reason:   "missing path parameter: dinosaur id",
+			Reason:   "missing path parameter: central id",
 			HTTPCode: http.StatusBadRequest,
 		})
 		return

@@ -702,7 +702,7 @@ func (c clusterService) InstallDinosaurOperator(cluster *api.Cluster) (bool, *ap
 	}
 	ready, err := p.InstallDinosaurOperator(buildClusterSpec(cluster))
 	if err != nil {
-		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install dinosaur for cluster %s", cluster.ClusterID)
+		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install central for cluster %s", cluster.ClusterID)
 	}
 	return ready, nil
 }

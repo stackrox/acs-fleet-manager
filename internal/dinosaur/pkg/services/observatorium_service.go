@@ -35,7 +35,7 @@ type ObservatoriumService interface {
 func (obs observatoriumService) GetDinosaurState(name string, namespaceName string) (observatorium.DinosaurState, error) {
 	state, err := obs.observatorium.Service.GetDinosaurState(name, namespaceName)
 	if err != nil {
-		return state, fmt.Errorf("getting dinosaur state for %q in namespace %q: %w", name, namespaceName, err)
+		return state, fmt.Errorf("getting central state for %q in namespace %q: %w", name, namespaceName, err)
 	}
 	return state, nil
 }

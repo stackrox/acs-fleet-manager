@@ -46,7 +46,7 @@ func (k *ProvisioningDinosaurManager) Stop() {
 
 // Reconcile ...
 func (k *ProvisioningDinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling dinosaurs")
+	glog.Infoln("reconciling centrals")
 	var encounteredErrors []error
 
 	// handle provisioning dinosaurs state
@@ -55,12 +55,12 @@ func (k *ProvisioningDinosaurManager) Reconcile() []error {
 	// We only need to update the metrics here.
 	provisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusProvisioning)
 	if serviceErr != nil {
-		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list provisioning dinosaurs"))
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list provisioning centrals"))
 	} else {
-		glog.Infof("provisioning dinosaurs count = %d", len(provisioningDinosaurs))
+		glog.Infof("provisioning centrals count = %d", len(provisioningDinosaurs))
 	}
 	for _, dinosaur := range provisioningDinosaurs {
-		glog.V(10).Infof("provisioning dinosaur id = %s", dinosaur.ID)
+		glog.V(10).Infof("provisioning central id = %s", dinosaur.ID)
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		// TODO implement additional reconcilation logic for provisioning dinosaurs
 	}

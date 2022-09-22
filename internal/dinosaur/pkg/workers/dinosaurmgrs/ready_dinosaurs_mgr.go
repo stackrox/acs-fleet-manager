@@ -45,19 +45,19 @@ func (k *ReadyDinosaurManager) Stop() {
 
 // Reconcile ...
 func (k *ReadyDinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling ready dinosaurs")
+	glog.Infoln("reconciling ready centrals")
 
 	var encounteredErrors []error
 
 	readyDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusReady)
 	if serviceErr != nil {
-		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list ready dinosaurs"))
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list ready centrals"))
 	} else {
-		glog.Infof("ready dinosaurs count = %d", len(readyDinosaurs))
+		glog.Infof("ready centrals count = %d", len(readyDinosaurs))
 	}
 
 	for _, dinosaur := range readyDinosaurs {
-		glog.V(10).Infof("ready dinosaur id = %s", dinosaur.ID)
+		glog.V(10).Infof("ready central id = %s", dinosaur.ID)
 		// TODO implement reconciliation logic for ready dinosaurs
 	}
 
