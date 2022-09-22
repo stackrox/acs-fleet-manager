@@ -3,6 +3,7 @@ package fleetmanager
 import (
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/caarlos0/env/v6"
@@ -13,7 +14,7 @@ import (
 
 // Auth will handle adding authentication information to HTTP requests.
 type Auth interface {
-	// AddAuth will add authentication information to the request, i.e. in the form of the Authorization header.
+	// AddAuth will add authentication information to the request, e.g. in the form of the Authorization header.
 	AddAuth(req *http.Request) error
 }
 
@@ -34,16 +35,17 @@ func init() {
 
 // NewAuth will return Auth that can be used to add authentication of a specific AuthType to be added to HTTP requests.
 func NewAuth(t string, opts ...AuthOption) (Auth, error) {
-	authOption := &option{}
-	for _, opt := range opts {
-		opt(authOption)
-	}
-
 	factory, exists := authFactoryRegistry[t]
 	if !exists {
 		return nil, errors.Errorf("invalid auth type found: %q, must be one of [%s]",
 			t, strings.Join(getAllAuthTypes(), ","))
 	}
+
+	authOption := &option{}
+	for _, opt := range opts {
+		opt(authOption)
+	}
+
 	auth, err := factory.CreateAuth(*authOption)
 	if err != nil {
 		return auth, fmt.Errorf("creating Auth: %w", err)
@@ -116,17 +118,13 @@ func WithOptionFromEnv() AuthOption {
 	}
 }
 
-// setBearer is a helper to set a bearer token as authorization header on the http.Request.
-func setBearer(req *http.Request, token string) {
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-}
-
 // getAllAuthTypes is a helper used within logging to list the possible values for auth types.
 func getAllAuthTypes() []string {
 	authTypes := make([]string, 0, len(authFactoryRegistry))
 	for authType := range authFactoryRegistry {
 		authTypes = append(authTypes, authType)
 	}
+	sort.Strings(authTypes)
 	return authTypes
 }
 

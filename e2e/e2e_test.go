@@ -453,8 +453,9 @@ var _ = Describe("Central", func() {
 		var namespaceName string
 
 		It("created a central", func() {
-			createdCentral, err = client.CreateCentral(request)
+			resp, _, err := client.PublicAPI().CreateCentral(context.TODO(), true, request)
 			Expect(err).To(BeNil())
+			createdCentral = &resp
 			namespaceName, err = services.FormatNamespace(createdCentral.Id)
 			Expect(err).To(BeNil())
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
@@ -462,17 +463,16 @@ var _ = Describe("Central", func() {
 
 		It("should transition central's state to ready", func() {
 			Eventually(func() string {
-				return centralStatus(createdCentral, client)
+				return centralStatus(createdCentral.Id, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
-			central = getCentral(createdCentral, client)
+			central = getCentral(createdCentral.Id, client)
 		})
 
 		It("should be deletable in the control-plane database", func() {
-			err = adminClient.DbDeleteCentral(createdCentral.Id)
+			_, err = adminAPI.DeleteDbCentralById(context.TODO(), createdCentral.Id)
 			Expect(err).To(Succeed())
-			err = adminClient.DbDeleteCentral(createdCentral.Id)
 			Expect(err).To(HaveOccurred())
-			central, err := client.GetCentral(createdCentral.Id)
+			central, _, err := client.PublicAPI().GetCentralById(context.TODO(), createdCentral.Id)
 			Expect(err).To(HaveOccurred())
 			Expect(central).To(BeNil())
 		})

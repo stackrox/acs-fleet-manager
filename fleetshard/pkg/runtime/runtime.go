@@ -45,7 +45,10 @@ type Runtime struct {
 
 // NewRuntime creates a new runtime
 func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
-	auth, err := fleetmanager.NewAuth(config.AuthType, fleetmanager.WithOptionFromEnv())
+	auth, err := fleetmanager.NewAuth(config.AuthType,
+		fleetmanager.WithOCMOption(fleetmanager.OCMOption{RefreshToken: config.OCMRefreshToken}),
+		fleetmanager.WithRhSSOOption(fleetmanager.RhSsoOption{TokenFile: config.RHSSOTokenFilePath}),
+		fleetmanager.WithStaticOption(fleetmanager.StaticOption{StaticToken: config.StaticToken}))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager authentication")
 	}

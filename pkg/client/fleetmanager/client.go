@@ -19,11 +19,7 @@ func (c *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err := c.auth.AddAuth(req); err != nil {
 		return nil, errors.Wrapf(err, "setting auth on req %+v", req)
 	}
-	resp, err := c.transport.RoundTrip(req)
-	if err != nil {
-		return resp, errors.Wrap(err, "round trip error")
-	}
-	return resp, nil
+	return c.transport.RoundTrip(req)
 }
 
 // newAuthTransport creates a http.RoundTripper that wraps http.DefaultTransport and injects

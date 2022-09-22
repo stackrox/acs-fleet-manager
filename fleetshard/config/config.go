@@ -15,6 +15,9 @@ type Config struct {
 	ClusterID            string        `env:"CLUSTER_ID"`
 	RuntimePollPeriod    time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
 	AuthType             string        `env:"AUTH_TYPE" envDefault:"OCM"`
+	RHSSOTokenFilePath   string        `env:"RHSSO_TOKEN_FILE" envDefault:"/run/secrets/rhsso-token/token"`
+	OCMRefreshToken      string        `env:"OCM_TOKEN"`
+	StaticToken          string        `env:"STATIC_TOKEN"`
 	CreateAuthProvider   bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
 	MetricsAddress       string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
 	EgressProxyImage     string        `env:"EGRESS_PROXY_IMAGE"`
