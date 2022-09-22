@@ -47,7 +47,10 @@ type Runtime struct {
 func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
 	auth, err := fleetmanager.NewAuth(config.AuthType, fleetmanager.Option{
 		Sso: fleetmanager.RHSSOOption{
-			TokenFile: config.RHSSOTokenFilePath,
+			ClientID:     config.RHSSOClientID,
+			ClientSecret: config.RHSSOClientSecret, //pragma: allowlist secret
+			Realm:        config.RHSSORealm,
+			Endpoint:     config.RHSSOEndpoint,
 		},
 		Ocm: fleetmanager.OCMOption{
 			RefreshToken: config.OCMRefreshToken,

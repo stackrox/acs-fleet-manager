@@ -1,13 +1,13 @@
 package fleetmanager
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso"
-
 	"github.com/pkg/errors"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 const (
@@ -21,7 +21,7 @@ var (
 )
 
 type rhSSOAuth struct {
-	client redhatsso.SSOClient
+	tokenSource oauth2.TokenSource
 }
 
 type rhSSOAuthFactory struct{}
@@ -31,28 +31,25 @@ func (f *rhSSOAuthFactory) GetName() string {
 	return rhSSOAuthName
 }
 
-// CreateAuth ...
+// CreateAuth creates an Auth using RH SSO.
 func (f *rhSSOAuthFactory) CreateAuth(o Option) (Auth, error) {
-	client := redhatsso.NewSSOClient(&iam.IAMConfig{}, &iam.IAMRealmConfig{
-		BaseURL:          o.Sso.Endpoint,
-		Realm:            o.Sso.Realm,
-		ClientID:         o.Sso.ClientID,
-		ClientSecret:     o.Sso.ClientSecret, //pragma: allowlist secret
-		TokenEndpointURI: fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", o.Sso.Endpoint, o.Sso.Realm),
-		JwksEndpointURI:  fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/certs", o.Sso.Endpoint, o.Sso.Realm),
-		APIEndpointURI:   fmt.Sprintf("/auth/realms/%s", o.Sso.Realm),
-	})
+	cfg := clientcredentials.Config{
+		ClientID:     o.Sso.ClientID,
+		ClientSecret: o.Sso.ClientSecret, //pragma: allowlist secret
+		TokenURL:     fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", o.Sso.Endpoint, o.Sso.Realm),
+		Scopes:       []string{"openid"},
+	}
 	return &rhSSOAuth{
-		client: client,
+		tokenSource: cfg.TokenSource(context.Background()),
 	}, nil
 }
 
 // AddAuth add auth token to the request retrieved from Red Hat SSO.
 func (r *rhSSOAuth) AddAuth(req *http.Request) error {
-	token, err := r.client.GetToken()
+	token, err := r.tokenSource.Token()
 	if err != nil {
-		return errors.Wrap(err, "getting token from RH SSO")
+		return errors.Wrap(err, "retrieving token from token source")
 	}
-	setBearer(req, token)
+	setBearer(req, token.AccessToken)
 	return nil
 }
