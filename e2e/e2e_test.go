@@ -354,7 +354,7 @@ var _ = Describe("Central", func() {
 							v1.ResourceMemory.String(): "199M",
 						},
 						Limits: map[string]string{
-							v1.ResourceCPU.String(): "499m",
+							v1.ResourceCPU.String(): "505m",
 						},
 					},
 				},
@@ -365,7 +365,7 @@ var _ = Describe("Central", func() {
 					v1.ResourceMemory: resource.MustParse("199M"),
 				},
 				Limits: v1.ResourceList{
-					v1.ResourceCPU:    resource.MustParse("499m"),
+					v1.ResourceCPU:    resource.MustParse("505m"),
 					v1.ResourceMemory: resource.MustParse("202M"),
 				},
 			}
