@@ -24,7 +24,7 @@ func NewRegionsListCommand(env *environments.Env) *cobra.Command {
 		},
 	}
 	cmd.Flags().String(FlagID, "aws", "Cloud provider id")
-	cmd.Flags().String(FlagInstanceType, "", "Dinosaur instance type to filter the regions by")
+	cmd.Flags().String(FlagInstanceType, "", "Central instance type to filter the regions by")
 	return cmd
 }
 

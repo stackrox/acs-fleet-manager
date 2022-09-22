@@ -108,7 +108,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	env.MustResolveAll(&ocmConfig, &serverConfig, &iamConfig)
 
-	db.DinosaurAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set dinosaurs lease as expired so that a new leader is elected for each of the leases
+	db.CentralAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set dinosaurs lease as expired so that a new leader is elected for each of the leases
 
 	// Create a new helper
 	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, serverConfig.TokenIssuerURL)

@@ -9,7 +9,7 @@ import (
 	"github.com/onsi/gomega"
 	mocket "github.com/selvatico/go-mocket"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/centrals/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -22,7 +22,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 	}
 
 	type args struct {
-		instanceType types.DinosaurInstanceType
+		instanceType types.CentralInstanceType
 	}
 
 	tests := []struct {
@@ -161,7 +161,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 	}
 
 	type args struct {
-		instanceType types.DinosaurInstanceType
+		instanceType types.CentralInstanceType
 	}
 
 	tests := []struct {

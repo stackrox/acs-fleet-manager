@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/centrals/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
 	"github.com/onsi/gomega"
@@ -22,7 +22,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 		dinosaurID           string
 		reserve              bool
 		owner                string
-		dinosaurInstanceType types.DinosaurInstanceType
+		dinosaurInstanceType types.CentralInstanceType
 		hasStandardQuota     bool
 		hasEvalQuota         bool
 	}
@@ -559,7 +559,7 @@ func Test_Delete_Quota(t *testing.T) {
 func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 	type args struct {
 		dinosaurRequest      *dbapi.CentralRequest
-		dinosaurInstanceType types.DinosaurInstanceType
+		dinosaurInstanceType types.CentralInstanceType
 	}
 
 	tests := []struct {

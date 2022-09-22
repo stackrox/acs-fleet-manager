@@ -11,53 +11,53 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
-// ReadyDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
-type ReadyDinosaurManager struct {
+// ReadyCentralManager represents a dinosaur manager that periodically reconciles dinosaur requests
+type ReadyCentralManager struct {
 	workers.BaseWorker
-	dinosaurService services.DinosaurService
-	iamService      sso.IAMService
-	iamConfig       *iam.IAMConfig
+	centralService services.CentralService
+	iamService     sso.IAMService
+	iamConfig      *iam.IAMConfig
 }
 
-// NewReadyDinosaurManager creates a new dinosaur manager
-func NewReadyDinosaurManager(dinosaurService services.DinosaurService, iamService sso.IAMService, iamConfig *iam.IAMConfig) *ReadyDinosaurManager {
-	return &ReadyDinosaurManager{
+// NewReadyCentralManager creates a new dinosaur manager
+func NewReadyCentralManager(centralService services.CentralService, iamService sso.IAMService, iamConfig *iam.IAMConfig) *ReadyCentralManager {
+	return &ReadyCentralManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "ready_dinosaur",
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService: dinosaurService,
-		iamService:      iamService,
-		iamConfig:       iamConfig,
+		centralService: centralService,
+		iamService:     iamService,
+		iamConfig:      iamConfig,
 	}
 }
 
 // Start initializes the dinosaur manager to reconcile dinosaur requests
-func (k *ReadyDinosaurManager) Start() {
+func (k *ReadyCentralManager) Start() {
 	k.StartWorker(k)
 }
 
 // Stop causes the process for reconciling dinosaur requests to stop.
-func (k *ReadyDinosaurManager) Stop() {
+func (k *ReadyCentralManager) Stop() {
 	k.StopWorker(k)
 }
 
 // Reconcile ...
-func (k *ReadyDinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling ready dinosaurs")
+func (k *ReadyCentralManager) Reconcile() []error {
+	glog.Infoln("reconciling ready centrals")
 
 	var encounteredErrors []error
 
-	readyDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusReady)
+	readyCentrals, serviceErr := k.centralService.ListByStatus(constants2.CentralRequestStatusReady)
 	if serviceErr != nil {
-		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list ready dinosaurs"))
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list ready centrals"))
 	} else {
-		glog.Infof("ready dinosaurs count = %d", len(readyDinosaurs))
+		glog.Infof("ready dinosaurs count = %d", len(readyCentrals))
 	}
 
-	for _, dinosaur := range readyDinosaurs {
-		glog.V(10).Infof("ready dinosaur id = %s", dinosaur.ID)
+	for _, central := range readyCentrals {
+		glog.V(10).Infof("ready central id = %s", central.ID)
 		// TODO implement reconciliation logic for ready dinosaurs
 	}
 

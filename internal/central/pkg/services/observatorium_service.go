@@ -12,11 +12,11 @@ var _ ObservatoriumService = &observatoriumService{}
 
 type observatoriumService struct {
 	observatorium   *observatorium.Client
-	dinosaurService DinosaurService
+	dinosaurService CentralService
 }
 
 // NewObservatoriumService ...
-func NewObservatoriumService(observatorium *observatorium.Client, dinosaurService DinosaurService) ObservatoriumService {
+func NewObservatoriumService(observatorium *observatorium.Client, dinosaurService CentralService) ObservatoriumService {
 	return &observatoriumService{
 		observatorium:   observatorium,
 		dinosaurService: dinosaurService,

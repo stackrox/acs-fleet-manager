@@ -12,14 +12,14 @@ import (
 func NewRunGetStateCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-state",
-		Short: "Fetch dinosaur state metric from Prometheus",
+		Short: "Fetch central state metric from Prometheus",
 		Run: func(cmd *cobra.Command, args []string) {
 			runGethResourceStateMetrics(env, cmd, args)
 		},
 	}
 
-	cmd.Flags().String(FlagName, "", "Dinosaur name")
-	cmd.Flags().String(FlagNameSpace, "", "Dinosaur namepace")
+	cmd.Flags().String(FlagName, "", "Central name")
+	cmd.Flags().String(FlagNameSpace, "", "Central namespace")
 
 	return cmd
 }
@@ -31,15 +31,15 @@ func runGethResourceStateMetrics(env *environments.Env, cmd *cobra.Command, _arg
 	var observatoriumService services.ObservatoriumService
 	env.MustResolveAll(&observatoriumService)
 
-	dinosaurState, err := observatoriumService.GetDinosaurState(name, namespace)
+	centralState, err := observatoriumService.GetDinosaurState(name, namespace)
 	if err != nil {
 		glog.Error("An error occurred while attempting to fetch Observatorium data from Prometheus", err.Error())
 		return
 	}
-	if len(dinosaurState.State) > 0 {
-		glog.Infof("dinosaur state is %s ", dinosaurState.State)
+	if len(centralState.State) > 0 {
+		glog.Infof("central state is %s ", centralState.State)
 	} else {
-		glog.Infof("dinosaur state not found for paramerters %s %s ", name, namespace)
+		glog.Infof("central state not found for parameters %s %s ", name, namespace)
 	}
 
 }

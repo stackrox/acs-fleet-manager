@@ -13,8 +13,8 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/centrals/types"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/central/test"
 	"github.com/stackrox/acs-fleet-manager/internal/central/test/common"
@@ -28,14 +28,14 @@ import (
 )
 
 const (
-	mockDinosaurName = "test-dinosaur1"
-	testMultiAZ      = true
+	mockCentralName = "test-central1"
+	testMultiAZ     = true
 	// TODO(ROX-10709) invalidDinosaurName = "Test_Cluster9"
 	// TODO(ROX-10709) longDinosaurName    = "thisisaninvaliddinosaurclusternamethatexceedsthenamesizelimit"
 )
 
-// TestDinosaurCreate_Success validates the happy path of the dinosaur post endpoint:
-func TestDinosaurCreate_Success(t *testing.T) {
+// TestCentralCreate_Success validates the happy path of the dinosaur post endpoint:
+func TestCentralCreate_Success(t *testing.T) {
 	skipNotFullyImplementedYet(t)
 
 	// create a mock ocm api server, keep all endpoints as defaults
@@ -45,8 +45,8 @@ func TestDinosaurCreate_Success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 1)})
+	h, client, teardown := test.NewCentralHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockCentralClusterName, 1)})
 	})
 	defer teardown()
 
@@ -63,22 +63,22 @@ func TestDinosaurCreate_Success(t *testing.T) {
 	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockDinosaurName,
+		Name:          mockCentralName,
 		MultiAz:       testMultiAZ,
 	}
 
-	dinosaur, resp, err := common.WaitForDinosaurCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	central, resp, err := common.WaitForCentralCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
 
-	// dinosaur successfully registered with database
+	// central successfully registered with database
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
-	Expect(dinosaur.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-	Expect(dinosaur.Kind).To(Equal(presenters.KindDinosaur))
-	Expect(dinosaur.Href).To(Equal(fmt.Sprintf("/api/rhacs/v1/centrals/%s", dinosaur.Id)))
-	// TODO(ROX-10709) Expect(dinosaur.InstanceType).To(Equal(types.STANDARD.String()))
+	Expect(central.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
+	Expect(central.Kind).To(Equal(presenters.KindCentral))
+	Expect(central.Href).To(Equal(fmt.Sprintf("/api/rhacs/v1/centrals/%s", central.Id)))
+	// TODO(ROX-10709) Expect(central.InstanceType).To(Equal(types.STANDARD.String()))
 }
 
-func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
+func TestCentralCreate_TooManyCentrals(t *testing.T) {
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -86,8 +86,8 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, tearDown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 1)})
+	h, client, tearDown := test.NewCentralHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockCentralClusterName, 1)})
 	})
 	defer tearDown()
 
@@ -100,18 +100,18 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	dinosaurCloudProvider := "dummy"
+	centralCloudProvider := "dummy"
 	// this value is taken from config/quota-management-list-configuration.yaml
 	orgID := "13640203"
 
-	// create dummy dinosaurs
+	// create dummy centrals
 	db := test.TestServices.DBFactory.New()
-	dinosaurs := []*dbapi.CentralRequest{
+	centrals := []*dbapi.CentralRequest{
 		{
 			MultiAZ:        false,
 			Owner:          "dummyuser1",
 			Region:         mocks.MockCluster.Region().ID(),
-			CloudProvider:  dinosaurCloudProvider,
+			CloudProvider:  centralCloudProvider,
 			Name:           "dummy-dinosaur",
 			OrganisationID: orgID,
 			Status:         constants2.CentralRequestStatusAccepted.String(),
@@ -121,7 +121,7 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 			MultiAZ:        false,
 			Owner:          "dummyuser2",
 			Region:         mocks.MockCluster.Region().ID(),
-			CloudProvider:  dinosaurCloudProvider,
+			CloudProvider:  centralCloudProvider,
 			Name:           "dummy-dinosaur-2",
 			OrganisationID: orgID,
 			Status:         constants2.CentralRequestStatusAccepted.String(),
@@ -129,7 +129,7 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 		},
 	}
 
-	if err := db.Create(&dinosaurs).Error; err != nil {
+	if err := db.Create(&centrals).Error; err != nil {
 		Expect(err).NotTo(HaveOccurred())
 		return
 	}
@@ -137,7 +137,7 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockDinosaurName,
+		Name:          mockCentralName,
 		MultiAz:       testMultiAZ,
 	}
 
@@ -157,7 +157,7 @@ func TestDinosaurPost_Validations(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewDinosaurHelper(t, ocmServer)
+	h, client, teardown := test.NewCentralHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
@@ -174,7 +174,7 @@ func TestDinosaurPost_Validations(t *testing.T) {
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				Region:        "us-east-3",
-				Name:          mockDinosaurName,
+				Name:          mockCentralName,
 			},
 			wantCode: http.StatusBadRequest,
 		},
@@ -184,7 +184,7 @@ func TestDinosaurPost_Validations(t *testing.T) {
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				CloudProvider: "azure",
 				Region:        mocks.MockCluster.Region().ID(),
-				Name:          mockDinosaurName,
+				Name:          mockCentralName,
 			},
 			wantCode: http.StatusBadRequest,
 		},
@@ -194,7 +194,7 @@ func TestDinosaurPost_Validations(t *testing.T) {
 				MultiAz:       false,
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				Region:        mocks.MockCluster.Region().ID(),
-				Name:          mockDinosaurName,
+				Name:          mockCentralName,
 			},
 			wantCode: http.StatusBadRequest,
 		},
@@ -246,8 +246,8 @@ func TestDinosaurPost_NameUniquenessValidations(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 3)})
+	h, client, tearDown := test.NewCentralHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockCentralClusterName, 3)})
 	})
 	defer tearDown()
 
@@ -268,7 +268,7 @@ func TestDinosaurPost_NameUniquenessValidations(t *testing.T) {
 	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockDinosaurName,
+		Name:          mockCentralName,
 		MultiAz:       testMultiAZ,
 	}
 
@@ -299,8 +299,8 @@ func TestDinosaurGet(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(acl *quotamanagement.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 1)})
+	h, client, teardown := test.NewCentralHelperWithHooks(t, ocmServer, func(acl *quotamanagement.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockCentralClusterName, 1)})
 	})
 	defer teardown()
 
@@ -309,7 +309,7 @@ func TestDinosaurGet(t *testing.T) {
 	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockDinosaurName,
+		Name:          mockCentralName,
 		MultiAz:       testMultiAZ,
 	}
 
@@ -323,11 +323,11 @@ func TestDinosaurGet(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get dinosaur request:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(dinosaur.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-	Expect(dinosaur.Kind).To(Equal(presenters.KindDinosaur))
+	Expect(dinosaur.Kind).To(Equal(presenters.KindCentral))
 	Expect(dinosaur.Href).To(Equal(fmt.Sprintf("/api/dinosaurs_mgmt/v1/dinosaurs/%s", dinosaur.Id)))
 	Expect(dinosaur.Region).To(Equal(mocks.MockCluster.Region().ID()))
 	Expect(dinosaur.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
-	Expect(dinosaur.Name).To(Equal(mockDinosaurName))
+	Expect(dinosaur.Name).To(Equal(mockCentralName))
 	Expect(dinosaur.Status).To(Equal(constants2.CentralRequestStatusAccepted.String()))
 	// When dinosaur is in 'Accepted' state it means that it still has not been
 	// allocated to a cluster, which means that fleetshard-sync has not reported
@@ -382,7 +382,7 @@ func TestDinosaur_Delete(t *testing.T) {
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := test.NewDinosaurHelper(t, ocmServer)
+	h, _, tearDown := test.NewCentralHelper(t, ocmServer)
 	defer tearDown()
 
 	userAccount := h.NewAccount(owner, "test-user", "test@gmail.com", orgID)
@@ -501,8 +501,8 @@ func TestDinosaurList_Success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(acl *quotamanagement.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 1)})
+	h, client, teardown := test.NewCentralHelperWithHooks(t, ocmServer, func(acl *quotamanagement.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockCentralClusterName, 1)})
 	})
 	defer teardown()
 
@@ -526,7 +526,7 @@ func TestDinosaurList_Success(t *testing.T) {
 	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockDinosaurName,
+		Name:          mockCentralName,
 		MultiAz:       testMultiAZ,
 	}
 
@@ -550,14 +550,14 @@ func TestDinosaurList_Success(t *testing.T) {
 	// check whether the seedDinosaur properties are the same as those from the dinosaur request list item
 	Expect(seedDinosaur.Id).To(Equal(listItem.Id))
 	Expect(seedDinosaur.Kind).To(Equal(listItem.Kind))
-	Expect(listItem.Kind).To(Equal(presenters.KindDinosaur))
+	Expect(listItem.Kind).To(Equal(presenters.KindCentral))
 	Expect(seedDinosaur.Href).To(Equal(listItem.Href))
 	Expect(seedDinosaur.Region).To(Equal(listItem.Region))
 	Expect(listItem.Region).To(Equal(mocks.MockCluster.Region().ID()))
 	Expect(seedDinosaur.CloudProvider).To(Equal(listItem.CloudProvider))
 	Expect(listItem.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(seedDinosaur.Name).To(Equal(listItem.Name))
-	Expect(listItem.Name).To(Equal(mockDinosaurName))
+	Expect(listItem.Name).To(Equal(mockCentralName))
 	Expect(listItem.Status).To(Equal(constants2.CentralRequestStatusAccepted.String()))
 
 	// new account setup to prove that users can list dinosaurs instances created by a member of their org
@@ -579,14 +579,14 @@ func TestDinosaurList_Success(t *testing.T) {
 	// check whether the seedDinosaur properties are the same as those from the dinosaur request list item
 	Expect(seedDinosaur.Id).To(Equal(listItem.Id))
 	Expect(seedDinosaur.Kind).To(Equal(listItem.Kind))
-	Expect(listItem.Kind).To(Equal(presenters.KindDinosaur))
+	Expect(listItem.Kind).To(Equal(presenters.KindCentral))
 	Expect(seedDinosaur.Href).To(Equal(listItem.Href))
 	Expect(seedDinosaur.Region).To(Equal(listItem.Region))
 	Expect(listItem.Region).To(Equal(mocks.MockCluster.Region().ID()))
 	Expect(seedDinosaur.CloudProvider).To(Equal(listItem.CloudProvider))
 	Expect(listItem.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(seedDinosaur.Name).To(Equal(listItem.Name))
-	Expect(listItem.Name).To(Equal(mockDinosaurName))
+	Expect(listItem.Name).To(Equal(mockCentralName))
 	Expect(listItem.Status).To(Equal(constants2.CentralRequestStatusAccepted.String()))
 
 	// new account setup to prove that users can only list their own (the one they created and the one created by a member of their org) dinosaur instances

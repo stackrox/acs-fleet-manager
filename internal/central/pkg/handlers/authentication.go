@@ -40,9 +40,9 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, IAMConfig *iam.
 			KeysURL(IAMConfig.InternalSSORealm.JwksEndpointURI). // internal sso (auth.redhat.com) JWK Cert URL
 			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
 			Service(errors.ErrorCodePrefix).
-			Public(fmt.Sprintf("^%s/%s/?$", routes.APIEndpoint, routes.DinosaursFleetManagementAPIPrefix)).
-			Public(fmt.Sprintf("^%s/%s/%s/?$", routes.APIEndpoint, routes.DinosaursFleetManagementAPIPrefix, routes.Version)).
-			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", routes.APIEndpoint, routes.DinosaursFleetManagementAPIPrefix, routes.Version)).
-			Public(fmt.Sprintf("^%s/%s/%s/errors/?[0-9]*", routes.APIEndpoint, routes.DinosaursFleetManagementAPIPrefix, routes.Version)),
+			Public(fmt.Sprintf("^%s/%s/?$", routes.APIEndpoint, routes.CentralsFleetManagementAPIPrefix)).
+			Public(fmt.Sprintf("^%s/%s/%s/?$", routes.APIEndpoint, routes.CentralsFleetManagementAPIPrefix, routes.Version)).
+			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", routes.APIEndpoint, routes.CentralsFleetManagementAPIPrefix, routes.Version)).
+			Public(fmt.Sprintf("^%s/%s/%s/errors/?[0-9]*", routes.APIEndpoint, routes.CentralsFleetManagementAPIPrefix, routes.Version)),
 		nil
 }

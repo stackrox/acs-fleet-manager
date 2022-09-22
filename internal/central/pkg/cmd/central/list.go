@@ -46,7 +46,7 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
 	page := flags.MustGetString(FlagPage, cmd.Flags())
 	size := flags.MustGetString(FlagSize, cmd.Flags())
-	var centralService services.DinosaurService
+	var centralService services.CentralService
 	env.MustResolveAll(&centralService)
 
 	// create jwt with claims and set it in the context

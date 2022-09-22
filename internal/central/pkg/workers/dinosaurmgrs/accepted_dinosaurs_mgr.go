@@ -19,24 +19,24 @@ import (
 	"github.com/golang/glog"
 )
 
-// AcceptedDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
-type AcceptedDinosaurManager struct {
+// AcceptedCentralManager represents a dinosaur manager that periodically reconciles dinosaur requests
+type AcceptedCentralManager struct {
 	workers.BaseWorker
-	dinosaurService        services.DinosaurService
+	centralService         services.CentralService
 	quotaServiceFactory    services.QuotaServiceFactory
 	clusterPlmtStrategy    services.ClusterPlacementStrategy
 	dataPlaneClusterConfig *config.DataplaneClusterConfig
 }
 
-// NewAcceptedDinosaurManager creates a new dinosaur manager
-func NewAcceptedDinosaurManager(dinosaurService services.DinosaurService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, dataPlaneClusterConfig *config.DataplaneClusterConfig) *AcceptedDinosaurManager {
-	return &AcceptedDinosaurManager{
+// NewAcceptedCentralManager creates a new dinosaur manager
+func NewAcceptedCentralManager(centralService services.CentralService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, dataPlaneClusterConfig *config.DataplaneClusterConfig) *AcceptedCentralManager {
+	return &AcceptedCentralManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "accepted_dinosaur",
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService:        dinosaurService,
+		centralService:         centralService,
 		quotaServiceFactory:    quotaServiceFactory,
 		clusterPlmtStrategy:    clusterPlmtStrategy,
 		dataPlaneClusterConfig: dataPlaneClusterConfig,
@@ -44,33 +44,33 @@ func NewAcceptedDinosaurManager(dinosaurService services.DinosaurService, quotaS
 }
 
 // Start initializes the dinosaur manager to reconcile dinosaur requests
-func (k *AcceptedDinosaurManager) Start() {
+func (k *AcceptedCentralManager) Start() {
 	k.StartWorker(k)
 }
 
 // Stop causes the process for reconciling dinosaur requests to stop.
-func (k *AcceptedDinosaurManager) Stop() {
+func (k *AcceptedCentralManager) Stop() {
 	k.StopWorker(k)
 }
 
 // Reconcile ...
-func (k *AcceptedDinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling accepted dinosaurs")
+func (k *AcceptedCentralManager) Reconcile() []error {
+	glog.Infoln("reconciling accepted centrals")
 	var encounteredErrors []error
 
-	// handle accepted dinosaurs
-	acceptedDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusAccepted)
+	// handle accepted centrals
+	acceptedCentrals, serviceErr := k.centralService.ListByStatus(constants2.CentralRequestStatusAccepted)
 	if serviceErr != nil {
-		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list accepted dinosaurs"))
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list accepted centrals"))
 	} else {
-		glog.Infof("accepted dinosaurs count = %d", len(acceptedDinosaurs))
+		glog.Infof("accepted centrals count = %d", len(acceptedCentrals))
 	}
 
-	for _, dinosaur := range acceptedDinosaurs {
-		glog.V(10).Infof("accepted dinosaur id = %s", dinosaur.ID)
-		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusAccepted, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
-		if err := k.reconcileAcceptedDinosaur(dinosaur); err != nil {
-			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile accepted dinosaur %s", dinosaur.ID))
+	for _, central := range acceptedCentrals {
+		glog.V(10).Infof("accepted central id = %s", central.ID)
+		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusAccepted, central.ID, central.ClusterID, time.Since(central.CreatedAt))
+		if err := k.reconcileAcceptedCentral(central); err != nil {
+			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile accepted central %s", central.ID))
 			continue
 		}
 	}
@@ -78,20 +78,20 @@ func (k *AcceptedDinosaurManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.CentralRequest) error {
-	cluster, err := k.clusterPlmtStrategy.FindCluster(dinosaur)
+func (k *AcceptedCentralManager) reconcileAcceptedCentral(central *dbapi.CentralRequest) error {
+	cluster, err := k.clusterPlmtStrategy.FindCluster(central)
 	if err != nil {
-		return errors.Wrapf(err, "failed to find cluster for dinosaur request %s", dinosaur.ID)
+		return errors.Wrapf(err, "failed to find cluster for central request %s", central.ID)
 	}
 
 	if cluster == nil {
-		logger.Logger.Warningf("No available cluster found for Dinosaur instance with id %s", dinosaur.ID)
+		logger.Logger.Warningf("No available cluster found for Dinosaur instance with id %s", central.ID)
 		return nil
 	}
 
-	dinosaur.ClusterID = cluster.ClusterID
+	central.ClusterID = cluster.ClusterID
 
-	// Set desired dinosaur operator version
+	// Set desired central operator version
 	var selectedDinosaurOperatorVersion *api.CentralOperatorVersion
 
 	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
@@ -99,37 +99,37 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Cent
 		// Dinosaur Operator version may not be available at the start (i.e. during upgrade of Dinosaur operator).
 		// We need to allow the reconciler to retry getting and setting of the desired Dinosaur Operator version for a Dinosaur request
 		// until the max retry duration is reached before updating its status to 'failed'.
-		durationSinceCreation := time.Since(dinosaur.CreatedAt)
+		durationSinceCreation := time.Since(central.CreatedAt)
 		if durationSinceCreation < constants2.AcceptedCentralMaxRetryDuration {
-			glog.V(10).Infof("No available dinosaur operator version found for Dinosaur '%s' in Cluster ID '%s'", dinosaur.ID, dinosaur.ClusterID)
+			glog.V(10).Infof("No available central operator version found for central '%s' in Cluster ID '%s'", central.ID, central.ClusterID)
 			return nil
 		}
-		dinosaur.Status = constants2.CentralRequestStatusFailed.String()
+		central.Status = constants2.CentralRequestStatusFailed.String()
 		if err != nil {
-			err = errors.Wrapf(err, "failed to get desired dinosaur operator version %s", dinosaur.ID)
+			err = errors.Wrapf(err, "failed to get desired central operator version %s", central.ID)
 		} else {
-			err = errors.Errorf("failed to get desired dinosaur operator version %s", dinosaur.ID)
+			err = errors.Errorf("failed to get desired central operator version %s", central.ID)
 		}
-		dinosaur.FailedReason = err.Error()
-		if err2 := k.dinosaurService.Update(dinosaur); err2 != nil {
-			return errors.Wrapf(err2, "failed to update failed dinosaur %s", dinosaur.ID)
+		central.FailedReason = err.Error()
+		if err2 := k.centralService.Update(central); err2 != nil {
+			return errors.Wrapf(err2, "failed to update failed central %s", central.ID)
 		}
 		return err
 	}
 
 	selectedDinosaurOperatorVersion = &readyDinosaurOperatorVersions[len(readyDinosaurOperatorVersions)-1]
-	dinosaur.DesiredCentralOperatorVersion = selectedDinosaurOperatorVersion.Version
+	central.DesiredCentralOperatorVersion = selectedDinosaurOperatorVersion.Version
 
 	// Set desired Dinosaur version
 	if len(selectedDinosaurOperatorVersion.CentralVersions) == 0 {
-		return fmt.Errorf("failed to get Dinosaur version %s", dinosaur.ID)
+		return fmt.Errorf("failed to get Dinosaur version %s", central.ID)
 	}
-	dinosaur.DesiredCentralVersion = selectedDinosaurOperatorVersion.CentralVersions[len(selectedDinosaurOperatorVersion.CentralVersions)-1].Version
+	central.DesiredCentralVersion = selectedDinosaurOperatorVersion.CentralVersions[len(selectedDinosaurOperatorVersion.CentralVersions)-1].Version
 
-	glog.Infof("Central instance with id %s is assigned to cluster with id %s", dinosaur.ID, dinosaur.ClusterID)
+	glog.Infof("Central instance with id %s is assigned to cluster with id %s", central.ID, central.ClusterID)
 
-	if err := k.dinosaurService.AcceptCentralRequest(dinosaur); err != nil {
-		return errors.Wrapf(err, "failed to accept Central %s with cluster details", dinosaur.ID)
+	if err := k.centralService.AcceptCentralRequest(central); err != nil {
+		return errors.Wrapf(err, "failed to accept Central %s with cluster details", central.ID)
 	}
 	return nil
 }

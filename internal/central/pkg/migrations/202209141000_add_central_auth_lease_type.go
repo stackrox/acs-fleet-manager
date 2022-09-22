@@ -23,7 +23,7 @@ func addCentralAuthLease() *gormigrate.Migration {
 		Migrate: func(tx *gorm.DB) error {
 			// Set an initial already expired lease for central_auth_config.
 			err := tx.Create(&api.LeaderLease{
-				Expires:   &db.DinosaurAdditionalLeasesExpireTime,
+				Expires:   &db.CentralAdditionalLeasesExpireTime,
 				LeaseType: centralAuthLeaseType,
 				Leader:    api.NewID(),
 			}).Error

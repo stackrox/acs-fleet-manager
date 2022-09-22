@@ -43,7 +43,7 @@ type Services struct {
 	ClusterService        services.ClusterService
 	OCMClient             ocm.ClusterManagementClient
 	OCMConfig             *ocm.OCMConfig
-	DinosaurService       services.DinosaurService
+	CentralService        services.CentralService
 	ObservatoriumClient   *observatorium.Client
 	ClusterManager        *workers.ClusterManager
 	ServerConfig          *server.ServerConfig
@@ -52,17 +52,17 @@ type Services struct {
 // TestServices ...
 var TestServices Services
 
-// NewDinosaurHelper Register a test
+// NewCentralHelper Register a test
 // This should be run before every integration test
-func NewDinosaurHelper(t *testing.T, server *httptest.Server) (*test.Helper, *public.APIClient, func()) {
-	return NewDinosaurHelperWithHooks(t, server, nil)
+func NewCentralHelper(t *testing.T, server *httptest.Server) (*test.Helper, *public.APIClient, func()) {
+	return NewCentralHelperWithHooks(t, server, nil)
 }
 
-// NewDinosaurHelperWithHooks ...
-func NewDinosaurHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
+// NewCentralHelperWithHooks ...
+func NewCentralHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
 	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, central.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
-		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, dinosaurConfig *config.CentralConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, fleetshardConfig *config.FleetshardConfig) {
-			dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral = true
+		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, centralConfig *config.CentralConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, fleetshardConfig *config.FleetshardConfig) {
+			centralConfig.CentralLifespan.EnableDeletionOfExpiredCentral = true
 			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters

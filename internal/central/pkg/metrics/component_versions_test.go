@@ -9,7 +9,7 @@ import (
 
 func TestVersionsMetrics_Collect(t *testing.T) {
 	type fields struct {
-		dinosaurService services.DinosaurService
+		dinosaurService services.CentralService
 	}
 
 	type args struct {
@@ -25,8 +25,8 @@ func TestVersionsMetrics_Collect(t *testing.T) {
 		{
 			name: "will generate metrics",
 			fields: fields{dinosaurService: &services.DinosaurServiceMock{
-				ListComponentVersionsFunc: func() ([]services.DinosaurComponentVersions, error) {
-					return []services.DinosaurComponentVersions{
+				ListComponentVersionsFunc: func() ([]services.CentralComponentVersions, error) {
+					return []services.CentralComponentVersions{
 						{
 							ID:                             "1",
 							ClusterID:                      "cluster1",

@@ -40,16 +40,16 @@ type options struct {
 	OCMConfig      *ocm.OCMConfig
 	ProviderConfig *config.ProviderConfig
 
-	AMSClient                ocm.AMSClient
-	Dinosaur                 services.DinosaurService
-	CloudProviders           services.CloudProvidersService
-	Observatorium            services.ObservatoriumService
-	IAM                      sso.IAMService
-	DataPlaneCluster         services.DataPlaneClusterService
-	DataPlaneDinosaurService services.DataPlaneDinosaurService
-	AccountService           account.AccountService
-	AuthService              authorization.Authorization
-	DB                       *db.ConnectionFactory
+	AMSClient               ocm.AMSClient
+	Central                 services.CentralService
+	CloudProviders          services.CloudProvidersService
+	Observatorium           services.ObservatoriumService
+	IAM                     sso.IAMService
+	DataPlaneCluster        services.DataPlaneClusterService
+	DataPlaneCentralService services.DataPlaneDinosaurService
+	AccountService          account.AccountService
+	AuthService             authorization.Authorization
+	DB                      *db.ConnectionFactory
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
@@ -66,7 +66,7 @@ func NewRouteLoader(s options) environments.RouteLoader {
 
 // AddRoutes ...
 func (s *options) AddRoutes(mainRouter *mux.Router) error {
-	basePath := fmt.Sprintf("%s/%s", routes.APIEndpoint, routes.DinosaursFleetManagementAPIPrefix)
+	basePath := fmt.Sprintf("%s/%s", routes.APIEndpoint, routes.CentralsFleetManagementAPIPrefix)
 	err := s.buildAPIBaseRouter(mainRouter, basePath, "fleet-manager.yaml")
 	if err != nil {
 		return err
@@ -81,11 +81,11 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}
 
-	dinosaurHandler := handlers.NewDinosaurHandler(s.Dinosaur, s.ProviderConfig, s.AuthService)
+	centralHandler := handlers.NewCentralHandler(s.Central, s.ProviderConfig, s.AuthService)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
-	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Dinosaur, s.AccessControlListConfig)
+	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Central, s.AccessControlListConfig)
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
@@ -119,26 +119,26 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		ID:   "centrals",
 		Kind: "CentralList",
 	})
-	apiV1DinosaursRouter := apiV1Router.PathPrefix("/centrals").Subrouter()
-	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Get).
+	apiV1CentralsRouter := apiV1Router.PathPrefix("/centrals").Subrouter()
+	apiV1CentralsRouter.HandleFunc("/{id}", centralHandler.Get).
 		Name(logger.NewLogEvent("get-central", "get a central instance").ToString()).
 		Methods(http.MethodGet)
-	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Delete).
+	apiV1CentralsRouter.HandleFunc("/{id}", centralHandler.Delete).
 		Name(logger.NewLogEvent("delete-central", "delete a central instance").ToString()).
 		Methods(http.MethodDelete)
-	apiV1DinosaursRouter.HandleFunc("", dinosaurHandler.List).
+	apiV1CentralsRouter.HandleFunc("", centralHandler.List).
 		Name(logger.NewLogEvent("list-central", "list all central").ToString()).
 		Methods(http.MethodGet)
-	apiV1DinosaursRouter.Use(requireIssuer)
-	apiV1DinosaursRouter.Use(requireOrgID)
-	apiV1DinosaursRouter.Use(authorizeMiddleware)
+	apiV1CentralsRouter.Use(requireIssuer)
+	apiV1CentralsRouter.Use(requireOrgID)
+	apiV1CentralsRouter.Use(authorizeMiddleware)
 
-	apiV1DinosaursCreateRouter := apiV1DinosaursRouter.NewRoute().Subrouter()
-	apiV1DinosaursCreateRouter.HandleFunc("", dinosaurHandler.Create).Methods(http.MethodPost)
-	apiV1DinosaursCreateRouter.Use(requireTermsAcceptance)
+	apiV1CentralsCreateRouter := apiV1CentralsRouter.NewRoute().Subrouter()
+	apiV1CentralsCreateRouter.HandleFunc("", centralHandler.Create).Methods(http.MethodPost)
+	apiV1CentralsCreateRouter.Use(requireTermsAcceptance)
 
-	//  /dinosaurs/{id}/metrics
-	apiV1MetricsRouter := apiV1DinosaursRouter.PathPrefix("/{id}/metrics").Subrouter()
+	//  /centrals/{id}/metrics
+	apiV1MetricsRouter := apiV1CentralsRouter.PathPrefix("/{id}/metrics").Subrouter()
 	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).
 		Name(logger.NewLogEvent("get-metrics", "list metrics by range").ToString()).
 		Methods(http.MethodGet)
@@ -191,7 +191,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	// /agent-clusters/{id}
 	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
-	dataPlaneDinosaurHandler := handlers.NewDataPlaneDinosaurHandler(s.DataPlaneDinosaurService, s.Dinosaur, s.ManagedCentralPresenter)
+	dataPlaneCentralHandler := handlers.NewDataPlaneCentralHandler(s.DataPlaneCentralService, s.Central, s.ManagedCentralPresenter)
 	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).
 		Name(logger.NewLogEvent("get-dataplane-cluster-config", "get dataplane cluster config by id").ToString()).
@@ -199,17 +199,17 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).
 		Name(logger.NewLogEvent("update-dataplane-cluster-status", "update dataplane cluster status by id").ToString()).
 		Methods(http.MethodPut)
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/centrals/status", dataPlaneDinosaurHandler.UpdateDinosaurStatuses).
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/centrals/status", dataPlaneCentralHandler.UpdateCentralStatuses).
 		Name(logger.NewLogEvent("update-dataplane-centrals-status", "update dataplane centrals status by id").ToString()).
 		Methods(http.MethodPut)
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/centrals", dataPlaneDinosaurHandler.GetAll).
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/centrals", dataPlaneCentralHandler.GetAll).
 		Name(logger.NewLogEvent("list-dataplane-centrals", "list all dataplane centrals").ToString()).
 		Methods(http.MethodGet)
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	auth.UseFleetShardAuthorizationMiddleware(apiV1DataPlaneRequestsRouter,
 		s.IAM.GetConfig().RedhatSSORealm.ValidIssuerURI, s.FleetShardAuthZConfig)
 
-	adminDinosaurHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
+	adminCentralHandler := handlers.NewAdminCentralHandler(s.Central, s.AccountService, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 
 	// TODO(ROX-11683): For now using RH SSO issuer for the admin API, but needs to be re-visited within this ticket.
@@ -217,23 +217,23 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		[]string{s.IAM.GetConfig().InternalSSORealm.ValidIssuerURI}, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewRolesAuhzMiddleware(s.AdminRoleAuthZConfig).RequireRolesForMethods(errors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
-	adminDinosaursRouter := adminRouter.PathPrefix("/dinosaurs").Subrouter()
+	adminCentralsRouter := adminRouter.PathPrefix("/centrals").Subrouter()
 
-	adminDinosaursRouter.HandleFunc("", adminDinosaurHandler.List).
-		Name(logger.NewLogEvent("admin-list-dinosaurs", "[admin] list all dinosaurs").ToString()).
+	adminCentralsRouter.HandleFunc("", adminCentralHandler.List).
+		Name(logger.NewLogEvent("admin-list-centrals", "[admin] list all centrals").ToString()).
 		Methods(http.MethodGet)
-	adminDinosaursRouter.HandleFunc("/{id}", adminDinosaurHandler.Get).
-		Name(logger.NewLogEvent("admin-get-dinosaur", "[admin] get dinosaur by id").ToString()).
+	adminCentralsRouter.HandleFunc("/{id}", adminCentralHandler.Get).
+		Name(logger.NewLogEvent("admin-get-central", "[admin] get central by id").ToString()).
 		Methods(http.MethodGet)
-	adminDinosaursRouter.HandleFunc("/{id}", adminDinosaurHandler.Delete).
-		Name(logger.NewLogEvent("admin-delete-dinosaur", "[admin] delete dinosaur by id").ToString()).
+	adminCentralsRouter.HandleFunc("/{id}", adminCentralHandler.Delete).
+		Name(logger.NewLogEvent("admin-delete-central", "[admin] delete central by id").ToString()).
 		Methods(http.MethodDelete)
-	adminDinosaursRouter.HandleFunc("/{id}", adminDinosaurHandler.Update).
-		Name(logger.NewLogEvent("admin-update-dinosaur", "[admin] update dinosaur by id").ToString()).
+	adminCentralsRouter.HandleFunc("/{id}", adminCentralHandler.Update).
+		Name(logger.NewLogEvent("admin-update-central", "[admin] update central by id").ToString()).
 		Methods(http.MethodPatch)
 
-	adminCreateRouter := adminDinosaursRouter.NewRoute().Subrouter()
-	adminCreateRouter.HandleFunc("", adminDinosaurHandler.Create).Methods(http.MethodPost)
+	adminCreateRouter := adminCentralsRouter.NewRoute().Subrouter()
+	adminCreateRouter.HandleFunc("", adminCentralHandler.Create).Methods(http.MethodPost)
 
 	return nil
 }

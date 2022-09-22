@@ -14,14 +14,14 @@ import (
 )
 
 type serviceStatusHandler struct {
-	dinosaurService   services.DinosaurService
+	centralService    services.CentralService
 	accessControlList *acl.AccessControlListConfig
 }
 
 // NewServiceStatusHandler ...
-func NewServiceStatusHandler(service services.DinosaurService, accessControlList *acl.AccessControlListConfig) *serviceStatusHandler {
+func NewServiceStatusHandler(service services.CentralService, accessControlList *acl.AccessControlListConfig) *serviceStatusHandler {
 	return &serviceStatusHandler{
-		dinosaurService:   service,
+		centralService:    service,
 		accessControlList: accessControlList,
 	}
 }
@@ -41,13 +41,13 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if accessControlListConfig.EnableDenyList {
 				userIsDenied := accessControlListConfig.DenyList.IsUserDenied(username)
 				if userIsDenied {
-					glog.V(5).Infof("User %s is denied to access the service. Setting dinosaur maximum capacity to 'true'", username)
+					glog.V(5).Infof("User %s is denied to access the service. Setting central maximum capacity to 'true'", username)
 					return presenters.PresentServiceStatus(true, false), nil
 				}
 			}
 
-			hasAvailableDinosaurCapacity, capacityErr := h.dinosaurService.HasAvailableCapacity()
-			return presenters.PresentServiceStatus(false, !hasAvailableDinosaurCapacity), capacityErr
+			hasAvailableCentralCapacity, capacityErr := h.centralService.HasAvailableCapacity()
+			return presenters.PresentServiceStatus(false, !hasAvailableCentralCapacity), capacityErr
 		},
 	}
 	handlers.HandleGet(w, r, cfg)

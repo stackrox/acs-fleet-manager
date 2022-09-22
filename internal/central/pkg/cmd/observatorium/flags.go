@@ -2,12 +2,12 @@ package observatorium
 
 // FlagID ...
 const (
-	// FlagID is a flag representing a Dinosaur ID
+	// FlagID is a flag representing a Central ID
 	FlagID = "id"
-	// FlagName is a flag representing a Dinosaur name
+	// FlagName is a flag representing a Central name
 	FlagName = "name"
-	// FlagNamespace is a flag representing a Dinosaur namespace
+	// FlagNameSpace is a flag representing a Central namespace
 	FlagNameSpace = "namespace"
-	// FlagOwner is a flag representing a Dinosaur owner name
+	// FlagOwner is a flag representing a Central owner name
 	FlagOwner = "owner"
 )

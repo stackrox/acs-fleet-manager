@@ -9,78 +9,78 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
-// DinosaurRoutesCNAMEManager ...
-type DinosaurRoutesCNAMEManager struct {
+// CentralRoutesCNAMEManager ...
+type CentralRoutesCNAMEManager struct {
 	workers.BaseWorker
-	dinosaurService services.DinosaurService
-	dinosaurConfig  *config.CentralConfig
+	centralService services.CentralService
+	centralConfig  *config.CentralConfig
 }
 
-var _ workers.Worker = &DinosaurRoutesCNAMEManager{}
+var _ workers.Worker = &CentralRoutesCNAMEManager{}
 
-// NewDinosaurCNAMEManager ...
-func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConfig *config.CentralConfig) *DinosaurRoutesCNAMEManager {
-	return &DinosaurRoutesCNAMEManager{
+// NewCentralCNAMEManager ...
+func NewCentralCNAMEManager(centralService services.CentralService, centralConfig *config.CentralConfig) *CentralRoutesCNAMEManager {
+	return &CentralRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "dinosaur_dns",
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService: dinosaurService,
-		dinosaurConfig:  kafkfConfig,
+		centralService: centralService,
+		centralConfig:  centralConfig,
 	}
 }
 
 // Start ...
-func (k *DinosaurRoutesCNAMEManager) Start() {
+func (k *CentralRoutesCNAMEManager) Start() {
 	k.StartWorker(k)
 }
 
 // Stop ...
-func (k *DinosaurRoutesCNAMEManager) Stop() {
+func (k *CentralRoutesCNAMEManager) Stop() {
 	k.StopWorker(k)
 }
 
 // Reconcile ...
-func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
-	glog.Infoln("reconciling DNS for dinosaurs")
+func (k *CentralRoutesCNAMEManager) Reconcile() []error {
+	glog.Infoln("reconciling DNS for centrals")
 	var errs []error
 
-	dinosaurs, listErr := k.dinosaurService.ListDinosaursWithRoutesNotCreated()
+	centrals, listErr := k.centralService.ListCentralsWithRoutesNotCreated()
 	if listErr != nil {
-		errs = append(errs, errors.Wrap(listErr, "failed to list dinosaurs whose routes are not created"))
+		errs = append(errs, errors.Wrap(listErr, "failed to list centrals whose routes are not created"))
 	} else {
-		glog.Infof("dinosaurs need routes created count = %d", len(dinosaurs))
+		glog.Infof("centrals need routes created count = %d", len(centrals))
 	}
 
-	for _, dinosaur := range dinosaurs {
-		if k.dinosaurConfig.EnableCentralExternalCertificate {
-			if dinosaur.RoutesCreationID == "" {
-				glog.Infof("creating CNAME records for dinosaur %s", dinosaur.ID)
+	for _, central := range centrals {
+		if k.centralConfig.EnableCentralExternalCertificate {
+			if central.RoutesCreationID == "" {
+				glog.Infof("creating CNAME records for central %s", central.ID)
 
-				changeOutput, err := k.dinosaurService.ChangeDinosaurCNAMErecords(dinosaur, services.DinosaurRoutesActionCreate)
+				changeOutput, err := k.centralService.ChangeCentralCNAMERecords(central, services.CentralRoutesActionCreate)
 
 				if err != nil {
 					errs = append(errs, err)
 					continue
 				}
 
-				dinosaur.RoutesCreationID = *changeOutput.ChangeInfo.Id
-				dinosaur.RoutesCreated = *changeOutput.ChangeInfo.Status == "INSYNC"
+				central.RoutesCreationID = *changeOutput.ChangeInfo.Id
+				central.RoutesCreated = *changeOutput.ChangeInfo.Status == "INSYNC"
 			} else {
-				recordStatus, err := k.dinosaurService.GetCNAMERecordStatus(dinosaur)
+				recordStatus, err := k.centralService.GetCNAMERecordStatus(central)
 				if err != nil {
 					errs = append(errs, err)
 					continue
 				}
-				dinosaur.RoutesCreated = *recordStatus.Status == "INSYNC"
+				central.RoutesCreated = *recordStatus.Status == "INSYNC"
 			}
 		} else {
-			glog.Infof("external certificate is disabled, skip CNAME creation for Dinosaur %s", dinosaur.ID)
-			dinosaur.RoutesCreated = true
+			glog.Infof("external certificate is disabled, skip CNAME creation for Central %s", central.ID)
+			central.RoutesCreated = true
 		}
 
-		if err := k.dinosaurService.Update(dinosaur); err != nil {
+		if err := k.centralService.Update(central); err != nil {
 			errs = append(errs, err)
 			continue
 		}

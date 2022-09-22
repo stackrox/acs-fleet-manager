@@ -14,54 +14,54 @@ import (
 	"github.com/golang/glog"
 )
 
-// ProvisioningDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
-type ProvisioningDinosaurManager struct {
+// ProvisioningCentralManager represents a central manager that periodically reconciles dinosaur requests
+type ProvisioningCentralManager struct {
 	workers.BaseWorker
-	dinosaurService      services.DinosaurService
+	centralService       services.CentralService
 	observatoriumService services.ObservatoriumService
 }
 
-// NewProvisioningDinosaurManager creates a new dinosaur manager
-func NewProvisioningDinosaurManager(dinosaurService services.DinosaurService, observatoriumService services.ObservatoriumService) *ProvisioningDinosaurManager {
-	return &ProvisioningDinosaurManager{
+// NewProvisioningCentralManager creates a new dinosaur manager
+func NewProvisioningCentralManager(centralService services.CentralService, observatoriumService services.ObservatoriumService) *ProvisioningCentralManager {
+	return &ProvisioningCentralManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "provisioning_dinosaur",
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService:      dinosaurService,
+		centralService:       centralService,
 		observatoriumService: observatoriumService,
 	}
 }
 
-// Start initializes the dinosaur manager to reconcile dinosaur requests
-func (k *ProvisioningDinosaurManager) Start() {
+// Start initializes the dinosaur manager to reconcile central requests
+func (k *ProvisioningCentralManager) Start() {
 	k.StartWorker(k)
 }
 
-// Stop causes the process for reconciling dinosaur requests to stop.
-func (k *ProvisioningDinosaurManager) Stop() {
+// Stop causes the process for reconciling central requests to stop.
+func (k *ProvisioningCentralManager) Stop() {
 	k.StopWorker(k)
 }
 
 // Reconcile ...
-func (k *ProvisioningDinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling dinosaurs")
+func (k *ProvisioningCentralManager) Reconcile() []error {
+	glog.Infoln("reconciling centrals")
 	var encounteredErrors []error
 
-	// handle provisioning dinosaurs state
-	// Dinosaurs in a "provisioning" state means that it is ready to be sent to the Fleetshard Operator for Dinosaur creation in the data plane cluster.
-	// The update of the Dinosaur request status from 'provisioning' to another state will be handled by the Fleetshard Operator.
+	// handle provisioning centrals state
+	// Dinosaurs in a "provisioning" state means that it is ready to be sent to the Fleetshard Operator for central creation in the data plane cluster.
+	// The update of the central request status from 'provisioning' to another state will be handled by the Fleetshard Operator.
 	// We only need to update the metrics here.
-	provisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusProvisioning)
+	provisioningCentrals, serviceErr := k.centralService.ListByStatus(constants2.CentralRequestStatusProvisioning)
 	if serviceErr != nil {
-		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list provisioning dinosaurs"))
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list provisioning centrals"))
 	} else {
-		glog.Infof("provisioning dinosaurs count = %d", len(provisioningDinosaurs))
+		glog.Infof("provisioning centrals count = %d", len(provisioningCentrals))
 	}
-	for _, dinosaur := range provisioningDinosaurs {
-		glog.V(10).Infof("provisioning dinosaur id = %s", dinosaur.ID)
-		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+	for _, central := range provisioningCentrals {
+		glog.V(10).Infof("provisioning central id = %s", central.ID)
+		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusProvisioning, central.ID, central.ClusterID, time.Since(central.CreatedAt))
 		// TODO implement additional reconcilation logic for provisioning dinosaurs
 	}
 

@@ -19,7 +19,7 @@ type LeaderLease struct {
 	Expires   *time.Time
 }
 
-var dinosaurLeaseTypes = []string{"accepted_dinosaur", "preparing_dinosaur", "provisioning_dinosaur", "deleting_dinosaur", "ready_dinosaur", "dinosaur_dns", "general_dinosaur_worker"}
+var centralLeaseTypes = []string{"accepted_dinosaur", "preparing_dinosaur", "provisioning_dinosaur", "deleting_dinosaur", "ready_dinosaur", "dinosaur_dns", "general_dinosaur_worker"}
 var clusterLeaseTypes = []string{"cluster"}
 
 // addLeaderLease adds the LeaderLease data type and adds some leader lease values
@@ -41,8 +41,8 @@ func addLeaderLease() *gormigrate.Migration {
 				}
 			}
 
-			for _, leaderLeaseType := range dinosaurLeaseTypes {
-				if err := tx.Create(&api.LeaderLease{Expires: &db.DinosaurAdditionalLeasesExpireTime, LeaseType: leaderLeaseType, Leader: api.NewID()}).Error; err != nil {
+			for _, leaderLeaseType := range centralLeaseTypes {
+				if err := tx.Create(&api.LeaderLease{Expires: &db.CentralAdditionalLeasesExpireTime, LeaseType: leaderLeaseType, Leader: api.NewID()}).Error; err != nil {
 					return err
 				}
 			}

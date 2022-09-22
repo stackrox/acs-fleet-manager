@@ -211,8 +211,8 @@ func (o *OCMProvider) GetComputeNodes(clusterSpec *types.ClusterSpec) (*types.Co
 	}, nil
 }
 
-// InstallDinosaurOperator ...
-func (o *OCMProvider) InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error) {
+// InstallCentralOperator ...
+func (o *OCMProvider) InstallCentralOperator(clusterSpec *types.ClusterSpec) (bool, error) {
 	return o.installAddon(clusterSpec, o.ocmConfig.CentralOperatorAddonID)
 }
 

@@ -20,11 +20,11 @@ import (
 // PreparingDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type PreparingDinosaurManager struct {
 	workers.BaseWorker
-	dinosaurService services.DinosaurService
+	dinosaurService services.CentralService
 }
 
 // NewPreparingDinosaurManager creates a new dinosaur manager
-func NewPreparingDinosaurManager(dinosaurService services.DinosaurService) *PreparingDinosaurManager {
+func NewPreparingDinosaurManager(dinosaurService services.CentralService) *PreparingDinosaurManager {
 	return &PreparingDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
@@ -72,7 +72,7 @@ func (k *PreparingDinosaurManager) Reconcile() []error {
 }
 
 func (k *PreparingDinosaurManager) reconcilePreparingDinosaur(dinosaur *dbapi.CentralRequest) error {
-	if err := k.dinosaurService.PrepareDinosaurRequest(dinosaur); err != nil {
+	if err := k.dinosaurService.PrepareCentralRequest(dinosaur); err != nil {
 		return k.handleDinosaurRequestCreationError(dinosaur, err)
 	}
 

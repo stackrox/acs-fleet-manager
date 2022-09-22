@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/centrals/types"
 
 	"github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
@@ -17,11 +17,11 @@ import (
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 )
 
-func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
+func Test_Validation_validateCentralClusterNameIsUnique(t *testing.T) {
 	type args struct {
-		dinosaurService services.DinosaurService
-		name            string
-		context         context.Context
+		centralService services.CentralService
+		name           string
+		context        context.Context
 	}
 
 	tests := []struct {
@@ -30,9 +30,9 @@ func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
 		want *errors.ServiceError
 	}{
 		{
-			name: "throw an error when the DinosaurService call throws an error",
+			name: "throw an error when the CentralService call throws an error",
 			arg: args{
-				dinosaurService: &services.DinosaurServiceMock{
+				centralService: &services.DinosaurServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 4}, errors.GeneralError("count failed from database")
 					},
@@ -45,7 +45,7 @@ func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
 		{
 			name: "throw an error when name is already used",
 			arg: args{
-				dinosaurService: &services.DinosaurServiceMock{
+				centralService: &services.DinosaurServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 1}, nil
 					},
@@ -55,14 +55,14 @@ func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
 			},
 			want: &errors.ServiceError{
 				HTTPCode: http.StatusConflict,
-				Reason:   "Dinosaur cluster name is already used",
+				Reason:   "Central cluster name is already used",
 				Code:     36,
 			},
 		},
 		{
 			name: "does not throw an error when name is unique",
 			arg: args{
-				dinosaurService: &services.DinosaurServiceMock{
+				centralService: &services.DinosaurServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 0}, nil
 					},
@@ -77,46 +77,46 @@ func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			validateFn := ValidateDinosaurClusterNameIsUnique(tt.arg.context, &tt.arg.name, tt.arg.dinosaurService)
+			validateFn := ValidateCentralClusterNameIsUnique(tt.arg.context, &tt.arg.name, tt.arg.centralService)
 			err := validateFn()
 			gomega.Expect(tt.want).To(gomega.Equal(err))
 		})
 	}
 }
 
-func Test_Validations_validateDinosaurClusterNames(t *testing.T) {
+func Test_Validations_validateCentralClusterNames(t *testing.T) {
 	tests := []struct {
 		description string
 		name        string
 		expectError bool
 	}{
 		{
-			description: "valid dinosaur cluster name",
-			name:        "test-dinosaur1",
+			description: "valid central cluster name",
+			name:        "test-central1",
 			expectError: false,
 		},
 		{
-			description: "valid dinosaur cluster name with multiple '-'",
+			description: "valid central cluster name with multiple '-'",
 			name:        "test-my-cluster",
 			expectError: false,
 		},
 		{
-			description: "invalid dinosaur cluster name begins with number",
+			description: "invalid central cluster name begins with number",
 			name:        "1test-cluster",
 			expectError: true,
 		},
 		{
-			description: "invalid dinosaur cluster name with invalid characters",
+			description: "invalid central cluster name with invalid characters",
 			name:        "test-c%*_2",
 			expectError: true,
 		},
 		{
-			description: "invalid dinosaur cluster name with upper-case letters",
+			description: "invalid central cluster name with upper-case letters",
 			name:        "Test-cluster",
 			expectError: true,
 		},
 		{
-			description: "invalid dinosaur cluster name with spaces",
+			description: "invalid central cluster name with spaces",
 			name:        "test cluster",
 			expectError: true,
 		},
@@ -125,7 +125,7 @@ func Test_Validations_validateDinosaurClusterNames(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			validateFn := ValidDinosaurClusterName(&tt.name, "name")
+			validateFn := ValidCentralClusterName(&tt.name, "name")
 			err := validateFn()
 			if tt.expectError {
 				gomega.Expect(err).Should(gomega.HaveOccurred())
@@ -149,15 +149,15 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		},
 	}
 	type args struct {
-		dinosaurRequest dbapi.CentralRequest
-		ProviderConfig  *config.ProviderConfig
-		dinosaurService services.DinosaurService
+		centralRequest dbapi.CentralRequest
+		ProviderConfig *config.ProviderConfig
+		centralService services.CentralService
 	}
 
 	type result struct {
-		wantErr         bool
-		reason          string
-		dinosaurRequest public.CentralRequest
+		wantErr        bool
+		reason         string
+		centralRequest public.CentralRequest
 	}
 
 	tests := []struct {
@@ -168,12 +168,12 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
-				dinosaurService: &services.DinosaurServiceMock{
-					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
+				centralService: &services.DinosaurServiceMock{
+					DetectInstanceTypeFunc: func(centralRequest *dbapi.CentralRequest) (types.CentralInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
 				},
-				dinosaurRequest: dbapi.CentralRequest{},
+				centralRequest: dbapi.CentralRequest{},
 				ProviderConfig: &config.ProviderConfig{
 					ProvidersConfig: config.ProviderConfiguration{
 						SupportedProviders: config.ProviderList{
@@ -194,7 +194,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			},
 			want: result{
 				wantErr: false,
-				dinosaurRequest: public.CentralRequest{
+				centralRequest: public.CentralRequest{
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
@@ -203,12 +203,12 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "do not throw an error when cloud provider and region matches",
 			arg: args{
-				dinosaurService: &services.DinosaurServiceMock{
-					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
+				centralService: &services.DinosaurServiceMock{
+					DetectInstanceTypeFunc: func(centralRequest *dbapi.CentralRequest) (types.CentralInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
 				},
-				dinosaurRequest: dbapi.CentralRequest{
+				centralRequest: dbapi.CentralRequest{
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
@@ -239,7 +239,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			},
 			want: result{
 				wantErr: false,
-				dinosaurRequest: public.CentralRequest{
+				centralRequest: public.CentralRequest{
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
@@ -248,12 +248,12 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "throws an error when cloud provider and region do not match",
 			arg: args{
-				dinosaurService: &services.DinosaurServiceMock{
-					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
+				centralService: &services.DinosaurServiceMock{
+					DetectInstanceTypeFunc: func(centralRequest *dbapi.CentralRequest) (types.CentralInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
 				},
-				dinosaurRequest: dbapi.CentralRequest{
+				centralRequest: dbapi.CentralRequest{
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
@@ -281,12 +281,12 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "throws an error when instance type is not supported",
 			arg: args{
-				dinosaurService: &services.DinosaurServiceMock{
-					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
+				centralService: &services.DinosaurServiceMock{
+					DetectInstanceTypeFunc: func(centralRequest *dbapi.CentralRequest) (types.CentralInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
 				},
-				dinosaurRequest: dbapi.CentralRequest{
+				centralRequest: dbapi.CentralRequest{
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
@@ -316,7 +316,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			validateFn := ValidateCloudProvider(&tt.arg.dinosaurService, &tt.arg.dinosaurRequest, tt.arg.ProviderConfig, "creating-dinosaur")
+			validateFn := ValidateCloudProvider(&tt.arg.centralService, &tt.arg.centralRequest, tt.arg.ProviderConfig, "creating-central")
 			err := validateFn()
 			if !tt.want.wantErr && err != nil {
 				t.Errorf("validatedCloudProvider() expected not to throw error but threw %v", err)
@@ -328,8 +328,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			gomega.Expect(tt.want.wantErr).To(gomega.Equal(err != nil))
 
 			if !tt.want.wantErr {
-				gomega.Expect(tt.arg.dinosaurRequest.CloudProvider).To(gomega.Equal(tt.want.dinosaurRequest.CloudProvider))
-				gomega.Expect(tt.arg.dinosaurRequest.Region).To(gomega.Equal(tt.want.dinosaurRequest.Region))
+				gomega.Expect(tt.arg.centralRequest.CloudProvider).To(gomega.Equal(tt.want.centralRequest.CloudProvider))
+				gomega.Expect(tt.arg.centralRequest.Region).To(gomega.Equal(tt.want.centralRequest.Region))
 			}
 
 		})

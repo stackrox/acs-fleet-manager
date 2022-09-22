@@ -42,8 +42,8 @@ const fieldManager = "fleet-manager"
 // this is used to decide whether a new apply request should be taken into account or not
 const lastAppliedConfigurationAnnotation = "fleet-manager/last-applied-resource-configuration"
 
-// dinosaurSREOpenIDPSecretName is the secret name holding the clientSecret content
-const dinosaurSREOpenIDPSecretName = "dinosaur-sre-idp-secret" // pragma: allowlist secret
+// centralSREOpenIDPSecretName is the secret name holding the clientSecret content
+const centralSREOpenIDPSecretName = "dinosaur-sre-idp-secret" // pragma: allowlist secret
 
 var ctx = context.Background()
 
@@ -75,35 +75,35 @@ func (s *StandaloneProvider) Delete(spec *types.ClusterSpec) (bool, error) {
 	return true, nil
 }
 
-// InstallDinosaurOperator ...
-func (s *StandaloneProvider) InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error) {
+// InstallCentralOperator ...
+func (s *StandaloneProvider) InstallCentralOperator(clusterSpec *types.ClusterSpec) (bool, error) {
 	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
 		Resources: []interface{}{
-			s.buildDinosaurOperatorNamespace(),
-			s.buildDinosaurOperatorCatalogSource(),
-			s.buildDinosaurOperatorOperatorGroup(),
-			s.buildDinosaurOperatorSubscription(),
+			s.buildCentralOperatorNamespace(),
+			s.buildCentralOperatorCatalogSource(),
+			s.buildCentralOperatorOperatorGroup(),
+			s.buildCentralOperatorSubscription(),
 		},
 	})
 
 	return true, err
 }
 
-func (s *StandaloneProvider) buildDinosaurOperatorNamespace() *v1.Namespace {
-	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
+func (s *StandaloneProvider) buildCentralOperatorNamespace() *v1.Namespace {
+	centralOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
 	return &v1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: v1.SchemeGroupVersion.String(),
 			Kind:       "Namespace",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: dinosaurOperatorOLMConfig.Namespace,
+			Name: centralOperatorOLMConfig.Namespace,
 		},
 	}
 }
 
-func (s *StandaloneProvider) buildDinosaurOperatorCatalogSource() *operatorsv1alpha1.CatalogSource {
-	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
+func (s *StandaloneProvider) buildCentralOperatorCatalogSource() *operatorsv1alpha1.CatalogSource {
+	centralOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
 	return &operatorsv1alpha1.CatalogSource{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
@@ -111,17 +111,17 @@ func (s *StandaloneProvider) buildDinosaurOperatorCatalogSource() *operatorsv1al
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      centralOperatorCatalogSourceName,
-			Namespace: dinosaurOperatorOLMConfig.CatalogSourceNamespace,
+			Namespace: centralOperatorOLMConfig.CatalogSourceNamespace,
 		},
 		Spec: operatorsv1alpha1.CatalogSourceSpec{
 			SourceType: operatorsv1alpha1.SourceTypeGrpc,
-			Image:      dinosaurOperatorOLMConfig.IndexImage,
+			Image:      centralOperatorOLMConfig.IndexImage,
 		},
 	}
 }
 
-func (s *StandaloneProvider) buildDinosaurOperatorOperatorGroup() *operatorsv1alpha2.OperatorGroup {
-	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
+func (s *StandaloneProvider) buildCentralOperatorOperatorGroup() *operatorsv1alpha2.OperatorGroup {
+	centralOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
 	return &operatorsv1alpha2.OperatorGroup{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: operatorsv1alpha2.SchemeGroupVersion.String(),
@@ -129,15 +129,15 @@ func (s *StandaloneProvider) buildDinosaurOperatorOperatorGroup() *operatorsv1al
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      centralOperatorOperatorGroupName,
-			Namespace: dinosaurOperatorOLMConfig.Namespace,
+			Namespace: centralOperatorOLMConfig.Namespace,
 		},
 		// Spec.TargetNamespaces intentionally not set, which means "select all namespaces"
 		Spec: operatorsv1alpha2.OperatorGroupSpec{},
 	}
 }
 
-func (s *StandaloneProvider) buildDinosaurOperatorSubscription() *operatorsv1alpha1.Subscription {
-	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
+func (s *StandaloneProvider) buildCentralOperatorSubscription() *operatorsv1alpha1.Subscription {
+	centralOperatorOLMConfig := s.dataplaneClusterConfig.CentralOperatorOLMConfig
 	return &operatorsv1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
@@ -145,14 +145,14 @@ func (s *StandaloneProvider) buildDinosaurOperatorSubscription() *operatorsv1alp
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      centralOperatorSubscriptionName,
-			Namespace: dinosaurOperatorOLMConfig.Namespace,
+			Namespace: centralOperatorOLMConfig.Namespace,
 		},
 		Spec: &operatorsv1alpha1.SubscriptionSpec{
 			CatalogSource:          centralOperatorCatalogSourceName,
-			Channel:                dinosaurOperatorOLMConfig.SubscriptionChannel,
-			CatalogSourceNamespace: dinosaurOperatorOLMConfig.CatalogSourceNamespace,
+			Channel:                centralOperatorOLMConfig.SubscriptionChannel,
+			CatalogSourceNamespace: centralOperatorOLMConfig.CatalogSourceNamespace,
 			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
-			Package:                dinosaurOperatorOLMConfig.Package,
+			Package:                centralOperatorOLMConfig.Package,
 		},
 	}
 }
@@ -293,7 +293,7 @@ func (s *StandaloneProvider) buildOpenIDPClientSecret(identityProvider types.Ide
 			Kind:       "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dinosaurSREOpenIDPSecretName,
+			Name:      centralSREOpenIDPSecretName,
 			Namespace: "openshift-config",
 		},
 		Type: v1.SecretTypeOpaque,
@@ -324,7 +324,7 @@ func (s *StandaloneProvider) buildIdentityProviderResource(identityProvider type
 						"clientID": identityProvider.OpenID.ClientID,
 						"issuer":   identityProvider.OpenID.Issuer,
 						"clientSecret": map[string]string{
-							"name": dinosaurSREOpenIDPSecretName,
+							"name": centralSREOpenIDPSecretName,
 						},
 						"claims": map[string][]string{
 							"email":             {"email"},

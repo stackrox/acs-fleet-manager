@@ -7,17 +7,17 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 )
 
-// ConvertDinosaurRequest from payload to DinosaurRequest
-func ConvertDinosaurRequest(dinosaurRequestPayload public.CentralRequestPayload, dbDinosaurrequest ...*dbapi.CentralRequest) *dbapi.CentralRequest {
+// ConvertCentralRequest from payload to CentralRequest
+func ConvertCentralRequest(centralRequestPayload public.CentralRequestPayload, dbCentralRequest ...*dbapi.CentralRequest) *dbapi.CentralRequest {
 	// TODO implement converter
-	var dinosaur = &dbapi.CentralRequest{}
+	var central = &dbapi.CentralRequest{}
 
-	dinosaur.Region = dinosaurRequestPayload.Region
-	dinosaur.Name = dinosaurRequestPayload.Name
-	dinosaur.CloudProvider = dinosaurRequestPayload.CloudProvider
-	dinosaur.MultiAZ = dinosaurRequestPayload.MultiAz
+	central.Region = centralRequestPayload.Region
+	central.Name = centralRequestPayload.Name
+	central.CloudProvider = centralRequestPayload.CloudProvider
+	central.MultiAZ = centralRequestPayload.MultiAz
 
-	return dinosaur
+	return central
 }
 
 // PresentCentralRequest - create CentralRequest in an appropriate format ready to be returned by the API

@@ -492,7 +492,7 @@ func (mock *ProviderMock) GetComputeNodesCalls() []struct {
 }
 
 // InstallDinosaurOperator calls InstallDinosaurOperatorFunc.
-func (mock *ProviderMock) InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error) {
+func (mock *ProviderMock) InstallCentralOperator(clusterSpec *types.ClusterSpec) (bool, error) {
 	if mock.InstallDinosaurOperatorFunc == nil {
 		panic("ProviderMock.InstallDinosaurOperatorFunc: method is nil but Provider.InstallDinosaurOperator was just called")
 	}

@@ -12,23 +12,23 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
-type dataPlaneDinosaurHandler struct {
-	service         services.DataPlaneDinosaurService
-	dinosaurService services.DinosaurService
-	presenter       *presenters.ManagedCentralPresenter
+type dataPlaneCentralHandler struct {
+	service        services.DataPlaneDinosaurService
+	centralService services.CentralService
+	presenter      *presenters.ManagedCentralPresenter
 }
 
-// NewDataPlaneDinosaurHandler ...
-func NewDataPlaneDinosaurHandler(service services.DataPlaneDinosaurService, dinosaurService services.DinosaurService, presenter *presenters.ManagedCentralPresenter) *dataPlaneDinosaurHandler {
-	return &dataPlaneDinosaurHandler{
-		service:         service,
-		dinosaurService: dinosaurService,
-		presenter:       presenter,
+// NewDataPlaneCentralHandler ...
+func NewDataPlaneCentralHandler(service services.DataPlaneDinosaurService, centralService services.CentralService, presenter *presenters.ManagedCentralPresenter) *dataPlaneCentralHandler {
+	return &dataPlaneCentralHandler{
+		service:        service,
+		centralService: centralService,
+		presenter:      presenter,
 	}
 }
 
-// UpdateDinosaurStatuses ...
-func (h *dataPlaneDinosaurHandler) UpdateDinosaurStatuses(w http.ResponseWriter, r *http.Request) {
+// UpdateCentralStatuses ...
+func (h *dataPlaneCentralHandler) UpdateCentralStatuses(w http.ResponseWriter, r *http.Request) {
 	clusterID := mux.Vars(r)["id"]
 	var data = map[string]private.DataPlaneCentralStatus{}
 
@@ -37,8 +37,8 @@ func (h *dataPlaneDinosaurHandler) UpdateDinosaurStatuses(w http.ResponseWriter,
 		Validate:    []handlers.Validate{},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			dataPlaneDinosaurStatus := presenters.ConvertDataPlaneDinosaurStatus(data)
-			err := h.service.UpdateDataPlaneDinosaurService(ctx, clusterID, dataPlaneDinosaurStatus)
+			dataPlaneCentralStatus := presenters.ConvertDataPlaneCentralStatus(data)
+			err := h.service.UpdateDataPlaneDinosaurService(ctx, clusterID, dataPlaneCentralStatus)
 			return nil, err
 		},
 	}
@@ -47,28 +47,28 @@ func (h *dataPlaneDinosaurHandler) UpdateDinosaurStatuses(w http.ResponseWriter,
 }
 
 // GetAll ...
-func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+func (h *dataPlaneCentralHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	clusterID := mux.Vars(r)["id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
 			handlers.ValidateLength(&clusterID, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			centralRequests, err := h.dinosaurService.ListByClusterID(clusterID)
+			centralRequests, err := h.centralService.ListByClusterID(clusterID)
 			if err != nil {
 				return nil, err
 			}
 
-			managedDinosaurList := private.ManagedCentralList{
+			managedCentralList := private.ManagedCentralList{
 				Kind:  "ManagedCentralList",
 				Items: []private.ManagedCentral{},
 			}
 
 			for i := range centralRequests {
 				converted := h.presenter.PresentManagedCentral(centralRequests[i])
-				managedDinosaurList.Items = append(managedDinosaurList.Items, converted)
+				managedCentralList.Items = append(managedCentralList.Items, converted)
 			}
-			return managedDinosaurList, nil
+			return managedCentralList, nil
 		},
 	}
 

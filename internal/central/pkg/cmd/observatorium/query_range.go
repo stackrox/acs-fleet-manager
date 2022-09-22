@@ -21,12 +21,12 @@ import (
 func NewRunMetricsQueryRangeCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query_range",
-		Short: "Get metrics with timeseries query range by dinosaur id from Observatorium",
+		Short: "Get metrics with timeseries query range by central id from Observatorium",
 		Run: func(cmd *cobra.Command, args []string) {
 			runGetMetricsByRangeQuery(env, cmd, args)
 		},
 	}
-	cmd.Flags().String(FlagID, "", "Dinosaur id")
+	cmd.Flags().String(FlagID, "", "Central id")
 	cmd.Flags().String(FlagOwner, "", "Username")
 
 	return cmd
@@ -37,7 +37,7 @@ func runGetMetricsByRangeQuery(env *environments.Env, cmd *cobra.Command, _args 
 	var observatoriumService services.ObservatoriumService
 	env.MustResolveAll(&observatoriumService)
 
-	dinosaurMetrics := &observatorium.DinosaurMetrics{}
+	centralMetrics := &observatorium.DinosaurMetrics{}
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"username": owner,
@@ -47,16 +47,16 @@ func runGetMetricsByRangeQuery(env *environments.Env, cmd *cobra.Command, _args 
 	params.ResultType = observatorium.RangeQuery
 	params.FillDefaults()
 
-	dinosaurID, err := observatoriumService.GetMetricsByDinosaurID(ctx, dinosaurMetrics, id, params)
+	centralID, err := observatoriumService.GetMetricsByDinosaurID(ctx, centralMetrics, id, params)
 	if err != nil {
 		glog.Error("An error occurred while attempting to get metrics data ", err.Error())
 		return
 	}
 	metricsList := public.MetricsRangeQueryList{
 		Kind: "MetricsRangeQueryList",
-		Id:   dinosaurID,
+		Id:   centralID,
 	}
-	metrics, err := presenters.PresentMetricsByRangeQuery(dinosaurMetrics)
+	metrics, err := presenters.PresentMetricsByRangeQuery(centralMetrics)
 	if err != nil {
 		glog.Error("An error occurred while attempting to present metrics data ", err.Error())
 		return
@@ -67,6 +67,6 @@ func runGetMetricsByRangeQuery(env *environments.Env, cmd *cobra.Command, _args 
 		glog.Fatalf("Failed to format metrics list: %s", err.Error())
 	}
 
-	glog.V(10).Infof("%s %s", dinosaurID, output)
+	glog.V(10).Infof("%s %s", centralID, output)
 
 }

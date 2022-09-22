@@ -3,7 +3,7 @@ package workers
 import (
 	"fmt"
 
-	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/central/constants"
+	centralConstants "github.com/stackrox/acs-fleet-manager/internal/central/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
@@ -36,26 +36,26 @@ import (
 
 // TODO change these constants to match your own
 const (
-	observabilityNamespace           = "managed-application-services-observability"
-	observabilityCatalogSourceImage  = "quay.io/rhoas/observability-operator-index:v3.0.8"
-	observabilityOperatorGroupName   = "observability-operator-group-name"
-	observabilityCatalogSourceName   = "observability-operator-manifests"
-	observabilitySubscriptionName    = "observability-operator"
-	observatoriumSSOSecretName       = "observatorium-configuration-red-hat-sso" // pragma: allowlist secret
-	observatoriumAuthType            = "redhat"
-	syncsetName                      = "ext-managedservice-cluster-mgr"
-	imagePullSecretName              = "rhoas-image-pull-secret" // pragma: allowlist secret
-	dinosaurOperatorAddonNamespace   = constants.CentralOperatorNamespace
-	dinosaurOperatorQEAddonNamespace = "redhat-managed-dinosaur-operator-qe"
-	fleetshardAddonNamespace         = constants.FleetShardOperatorNamespace
-	fleetshardQEAddonNamespace       = "redhat-fleetshard-operator-qe"
-	openIDIdentityProviderName       = "Dinosaur_SRE"
-	mkReadOnlyGroupName              = "mk-readonly-access"
-	mkSREGroupName                   = "dinosaur-sre"
-	mkReadOnlyRoleBindingName        = "mk-dedicated-readers"
-	mkSRERoleBindingName             = "dinosaur-sre-cluster-admin"
-	dedicatedReadersRoleBindingName  = "dedicated-readers"
-	clusterAdminRoleName             = "cluster-admin"
+	observabilityNamespace          = "managed-application-services-observability"
+	observabilityCatalogSourceImage = "quay.io/rhoas/observability-operator-index:v3.0.8"
+	observabilityOperatorGroupName  = "observability-operator-group-name"
+	observabilityCatalogSourceName  = "observability-operator-manifests"
+	observabilitySubscriptionName   = "observability-operator"
+	observatoriumSSOSecretName      = "observatorium-configuration-red-hat-sso" // pragma: allowlist secret
+	observatoriumAuthType           = "redhat"
+	syncsetName                     = "ext-managedservice-cluster-mgr"
+	imagePullSecretName             = "rhoas-image-pull-secret" // pragma: allowlist secret
+	centralOperatorAddonNamespace   = constants.CentralOperatorNamespace
+	centralOperatorQEAddonNamespace = "redhat-managed-dinosaur-operator-qe"
+	fleetshardAddonNamespace        = constants.FleetShardOperatorNamespace
+	fleetshardQEAddonNamespace      = "redhat-fleetshard-operator-qe"
+	openIDIdentityProviderName      = "Dinosaur_SRE"
+	mkReadOnlyGroupName             = "mk-readonly-access"
+	mkSREGroupName                  = "dinosaur-sre"
+	mkReadOnlyRoleBindingName       = "mk-dedicated-readers"
+	mkSRERoleBindingName            = "dinosaur-sre-cluster-admin"
+	dedicatedReadersRoleBindingName = "dedicated-readers"
+	clusterAdminRoleName            = "cluster-admin"
 )
 
 var clusterMetricsStatuses = []api.ClusterStatus{
@@ -184,8 +184,8 @@ func (c *ClusterManager) processMetrics() []error {
 		return []error{errors.Wrapf(err, "failed to set cluster status count metrics")}
 	}
 
-	if err := c.setDinosaurPerClusterCountMetrics(); err != nil {
-		return []error{errors.Wrapf(err, "failed to set dinosaur per cluster count metrics")}
+	if err := c.setCentralPerClusterCountMetrics(); err != nil {
+		return []error{errors.Wrapf(err, "failed to set central per cluster count metrics")}
 	}
 
 	c.setClusterStatusMaxCapacityMetrics()
@@ -571,7 +571,7 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 	}
 	if updatedCluster.Status == api.ClusterFailed {
 		metrics.UpdateClusterStatusSinceCreatedMetric(*cluster, api.ClusterFailed)
-		metrics.IncreaseClusterTotalOperationsCountMetric(dinosaurConstants.ClusterOperationCreate)
+		metrics.IncreaseClusterTotalOperationsCountMetric(centralConstants.ClusterOperationCreate)
 	}
 	return updatedCluster, nil
 }
@@ -579,8 +579,8 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) error {
 	// TODO(create-ticket): Activate dinosaur reconcilation and FleetshardOperatorAddon.Provision
 	// as soon as this components are available
-	dinosaurOperatorIsReady := true
-	// dinosaurOperatorIsReady, err := c.reconcileDinosaurOperator(provisionedCluster)
+	centralOperatorIsReady := true
+	// centralOperatorIsReady, err := c.reconcileCentralOperator(provisionedCluster)
 	// if err != nil {
 	// 	return err
 	// }
@@ -592,7 +592,7 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 	// 	return errs
 	// }
 
-	if dinosaurOperatorIsReady && fleetshardOperatorIsReady {
+	if centralOperatorIsReady && fleetshardOperatorIsReady {
 		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForFleetShardOperator, provisionedCluster.ClusterID)
 		if err := c.ClusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForFleetShardOperator); err != nil {
 			return errors.Wrapf(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
@@ -603,13 +603,13 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 	return nil
 }
 
-// reconcileDinosaurOperator installs the Dinosaur operator on a provisioned clusters
-func (c *ClusterManager) reconcileDinosaurOperator(provisionedCluster api.Cluster) (bool, error) {
+// reconcileCentralOperator installs the central operator on a provisioned clusters
+func (c *ClusterManager) reconcileCentralOperator(provisionedCluster api.Cluster) (bool, error) {
 	ready, err := c.ClusterService.InstallDinosaurOperator(&provisionedCluster)
 	if err != nil {
 		return false, err
 	}
-	glog.V(5).Infof("ready status of dinosaur operator installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
+	glog.V(5).Infof("ready status of central operator installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
 	return ready, nil
 }
 
@@ -696,15 +696,15 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		return nil
 	}
 
-	dinosaurInstanceCount, err := c.ClusterService.FindDinosaurInstanceCount(excessClusterIds)
+	centralInstanceCount, err := c.ClusterService.FindDinosaurInstanceCount(excessClusterIds)
 	if err != nil {
-		return []error{errors.Wrapf(err, "Failed to find dinosaur count a cluster: %s", excessClusterIds)}
+		return []error{errors.Wrapf(err, "Failed to find central count a cluster: %s", excessClusterIds)}
 	}
 
 	var idsOfClustersToDeprovision []string
-	for _, c := range dinosaurInstanceCount {
+	for _, c := range centralInstanceCount {
 		if c.Count > 0 {
-			glog.Infof("Excess cluster %s is not going to be deleted because it has %d dinosaur.", c.Clusterid, c.Count)
+			glog.Infof("Excess cluster %s is not going to be deleted because it has %d central.", c.Clusterid, c.Count)
 		} else {
 			glog.Infof("Excess cluster is going to be deleted %s", c.Clusterid)
 			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, c.Clusterid)
@@ -791,16 +791,16 @@ func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 		// c.buildObservabilitySubscriptionResource(),
 	}
 
-	managedDinosaurOperatorNamespace := dinosaurOperatorAddonNamespace
+	managedCentralOperatorNamespace := centralOperatorAddonNamespace
 	if c.OCMConfig.CentralOperatorAddonID == "managed-central-qe" {
-		managedDinosaurOperatorNamespace = dinosaurOperatorQEAddonNamespace
+		managedCentralOperatorNamespace = centralOperatorQEAddonNamespace
 	}
 	fleetshardNS := fleetshardAddonNamespace
 	if c.OCMConfig.FleetshardAddonID == "fleetshard-operator-qe" {
 		fleetshardNS = fleetshardQEAddonNamespace
 	}
 
-	if s := c.buildImagePullSecret(managedDinosaurOperatorNamespace); s != nil {
+	if s := c.buildImagePullSecret(managedCentralOperatorNamespace); s != nil {
 		r = append(r, s)
 	}
 	if s := c.buildImagePullSecret(fleetshardNS); s != nil {
@@ -1029,7 +1029,7 @@ func (c *ClusterManager) setClusterStatusCountMetrics() error {
 	return nil
 }
 
-func (c *ClusterManager) setDinosaurPerClusterCountMetrics() error {
+func (c *ClusterManager) setCentralPerClusterCountMetrics() error {
 	counters, err := c.ClusterService.FindDinosaurInstanceCount([]string{})
 	if err != nil {
 		return err

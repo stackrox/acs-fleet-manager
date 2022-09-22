@@ -52,12 +52,12 @@ func buildDinosaurRequest(modifyFn func(dinosaurRequest *dbapi.CentralRequest)) 
 // This test should act as a "golden" test to describe the general testing approach taken in the service, for people
 // onboarding into development of the service.
 func Test_dinosaurService_Get(t *testing.T) {
-	// fields are the variables on the struct that we're testing, in this case dinosaurService
+	// fields are the variables on the struct that we're testing, in this case centralService
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
 	// args are the variables that will be provided to the function we're testing, in this case it's just the id we
-	// pass to dinosaurService.PrepareDinosaurRequest
+	// pass to centralService.PrepareCentralRequest
 	type args struct {
 		ctx context.Context
 		id  string
@@ -138,7 +138,7 @@ func Test_dinosaurService_Get(t *testing.T) {
 					NewMock().
 					WithQuery(`SELECT * FROM "central_requests" WHERE id = $1 AND owner = $2`).
 					WithArgs(testID, testUser).
-					WithReply(converters.ConvertDinosaurRequest(buildDinosaurRequest(nil)))
+					WithReply(converters.ConvertCentralRequest(buildDinosaurRequest(nil)))
 			},
 		},
 	}
@@ -152,11 +152,11 @@ func Test_dinosaurService_Get(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
-			// we're testing the dinosaurService struct, so use the 'fields' to create one
-			k := &dinosaurService{
+			// we're testing the centralService struct, so use the 'fields' to create one
+			k := &centralService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
-			// we're testing the dinosaurService.Get function so use the 'args' to provide arguments to the function
+			// we're testing the centralService.Get function so use the 'args' to provide arguments to the function
 			got, err := k.Get(tt.args.ctx, tt.args.id)
 			// in our test case we used 'wantErr' to define if we expect and error to be returned from the function or
 			// not, now we test that expectation

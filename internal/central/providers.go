@@ -67,7 +67,7 @@ func ConfigProviders() di.Option {
 func ServiceProviders() di.Option {
 	return di.Options(
 		di.Provide(services.NewClusterService),
-		di.Provide(services.NewDinosaurService, di.As(new(services.DinosaurService))),
+		di.Provide(services.NewCentralService, di.As(new(services.CentralService))),
 		di.Provide(services.NewCloudProvidersService),
 		di.Provide(services.NewObservatoriumService),
 		di.Provide(services.NewFleetshardOperatorAddon),
@@ -79,13 +79,13 @@ func ServiceProviders() di.Option {
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(quota.NewDefaultQuotaServiceFactory),
 		di.Provide(workers.NewClusterManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewAcceptedDinosaurManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewCentralManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewAcceptedCentralManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewPreparingDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewDeletingDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewProvisioningDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewReadyDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewDinosaurCNAMEManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewDeletingCentralManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewProvisioningCentralManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewReadyCentralManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewCentralCNAMEManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewCentralAuthConfigManager, di.As(new(workers.Worker))),
 		di.Provide(presenters.NewManagedCentralPresenter),
 	)

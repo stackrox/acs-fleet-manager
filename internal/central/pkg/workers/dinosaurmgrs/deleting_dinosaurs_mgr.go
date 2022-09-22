@@ -14,79 +14,79 @@ import (
 	"github.com/golang/glog"
 )
 
-// DeletingDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
-type DeletingDinosaurManager struct {
+// DeletingCentralManager represents a dinosaur manager that periodically reconciles dinosaur requests
+type DeletingCentralManager struct {
 	workers.BaseWorker
-	dinosaurService     services.DinosaurService
+	centralService      services.CentralService
 	iamConfig           *iam.IAMConfig
 	quotaServiceFactory services.QuotaServiceFactory
 }
 
-// NewDeletingDinosaurManager creates a new dinosaur manager
-func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, iamConfig *iam.IAMConfig, quotaServiceFactory services.QuotaServiceFactory) *DeletingDinosaurManager {
-	return &DeletingDinosaurManager{
+// NewDeletingCentralManager creates a new dinosaur manager
+func NewDeletingCentralManager(centralService services.CentralService, iamConfig *iam.IAMConfig, quotaServiceFactory services.QuotaServiceFactory) *DeletingCentralManager {
+	return &DeletingCentralManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "deleting_dinosaur",
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService:     dinosaurService,
+		centralService:      centralService,
 		iamConfig:           iamConfig,
 		quotaServiceFactory: quotaServiceFactory,
 	}
 }
 
-// Start initializes the dinosaur manager to reconcile dinosaur requests
-func (k *DeletingDinosaurManager) Start() {
+// Start initializes the central manager to reconcile central requests
+func (k *DeletingCentralManager) Start() {
 	k.StartWorker(k)
 }
 
-// Stop causes the process for reconciling dinosaur requests to stop.
-func (k *DeletingDinosaurManager) Stop() {
+// Stop causes the process for reconciling central requests to stop.
+func (k *DeletingCentralManager) Stop() {
 	k.StopWorker(k)
 }
 
 // Reconcile ...
-func (k *DeletingDinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling deleting dinosaurs")
+func (k *DeletingCentralManager) Reconcile() []error {
+	glog.Infoln("reconciling deleting centrals")
 	var encounteredErrors []error
 
-	// handle deleting dinosaur requests
-	// Dinosaurs in a "deleting" state have been removed, along with all their resources (i.e. ManagedDinosaur, Dinosaur CRs),
+	// handle deleting central requests
+	// centrals in a "deleting" state have been removed, along with all their resources (i.e. ManagedCentral, central CRs),
 	// from the data plane cluster by the Fleetshard operator. This reconcile phase ensures that any other
-	// dependencies (i.e. SSO clients, CNAME records) are cleaned up for these Dinosaurs and their records soft deleted from the database.
+	// dependencies (i.e. SSO clients, CNAME records) are cleaned up for these centrals and their records soft deleted from the database.
 
-	deletingDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusDeleting)
-	originalTotalDinosaurInDeleting := len(deletingDinosaurs)
+	deletingCentrals, serviceErr := k.centralService.ListByStatus(constants2.CentralRequestStatusDeleting)
+	originalTotalCentralInDeleting := len(deletingCentrals)
 	if serviceErr != nil {
-		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list deleting dinosaur requests"))
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list deleting central requests"))
 	} else {
-		glog.Infof("%s dinosaurs count = %d", constants2.CentralRequestStatusDeleting.String(), originalTotalDinosaurInDeleting)
+		glog.Infof("%s centrals count = %d", constants2.CentralRequestStatusDeleting.String(), originalTotalCentralInDeleting)
 	}
 
 	// We also want to remove Dinosaurs that are set to deprovisioning but have not been provisioned on a data plane cluster
-	deprovisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusDeprovision)
+	deprovisioningCentrals, serviceErr := k.centralService.ListByStatus(constants2.CentralRequestStatusDeprovision)
 	if serviceErr != nil {
-		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list dinosaur deprovisioning requests"))
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list central deprovisioning requests"))
 	} else {
-		glog.Infof("%s dinosaurs count = %d", constants2.CentralRequestStatusDeprovision.String(), len(deprovisioningDinosaurs))
+		glog.Infof("%s centrals count = %d", constants2.CentralRequestStatusDeprovision.String(), len(deprovisioningCentrals))
 	}
 
-	for _, deprovisioningDinosaur := range deprovisioningDinosaurs {
-		glog.V(10).Infof("deprovision dinosaur id = %s", deprovisioningDinosaur.ID)
-		// TODO check if a deprovisioningDinosaur can be deleted and add it to deletingDinosaurs array
-		// deletingDinosaurs = append(deletingDinosaurs, deprovisioningDinosaur)
-		if deprovisioningDinosaur.Host == "" {
-			deletingDinosaurs = append(deletingDinosaurs, deprovisioningDinosaur)
+	for _, deprovisioningCentral := range deprovisioningCentrals {
+		glog.V(10).Infof("deprovision central id = %s", deprovisioningCentral.ID)
+		// TODO check if a deprovisioningCentral can be deleted and add it to deletingCentrals array
+		// deletingCentrals = append(deletingCentrals, deprovisioningCentral)
+		if deprovisioningCentral.Host == "" {
+			deletingCentrals = append(deletingCentrals, deprovisioningCentral)
 		}
 	}
 
-	glog.Infof("An additional of dinosaurs count = %d which are marked for removal before being provisioned will also be deleted", len(deletingDinosaurs)-originalTotalDinosaurInDeleting)
+	glog.Infof("An additional of centrals count = %d which are marked for removal before being provisioned will also be deleted", len(deletingCentrals)-originalTotalCentralInDeleting)
 
-	for _, dinosaur := range deletingDinosaurs {
-		glog.V(10).Infof("deleting dinosaur id = %s", dinosaur.ID)
-		if err := k.reconcileDeletingDinosaurs(dinosaur); err != nil {
-			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile deleting dinosaur request %s", dinosaur.ID))
+	for _, central := range deletingCentrals {
+		glog.V(10).Infof("deleting central id = %s", central.ID)
+		if err := k.reconcileDeletingCentrals(central); err != nil {
+			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile deleting central request %s", central.ID))
 			continue
 		}
 	}
@@ -94,18 +94,18 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.CentralRequest) error {
-	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(dinosaur.QuotaType))
+func (k *DeletingCentralManager) reconcileDeletingCentrals(central *dbapi.CentralRequest) error {
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(central.QuotaType))
 	if factoryErr != nil {
 		return factoryErr
 	}
-	err := quotaService.DeleteQuota(dinosaur.SubscriptionID)
+	err := quotaService.DeleteQuota(central.SubscriptionID)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete subscription id %s for dinosaur %s", dinosaur.SubscriptionID, dinosaur.ID)
+		return errors.Wrapf(err, "failed to delete subscription id %s for central %s", central.SubscriptionID, central.ID)
 	}
 
-	if err := k.dinosaurService.Delete(dinosaur); err != nil {
-		return errors.Wrapf(err, "failed to delete dinosaur %s", dinosaur.ID)
+	if err := k.centralService.Delete(central); err != nil {
+		return errors.Wrapf(err, "failed to delete central %s", central.ID)
 	}
 	return nil
 }

@@ -5,14 +5,14 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
-	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/centrals/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"gopkg.in/yaml.v2"
 )
 
 // InstanceType ...
-type InstanceType types.DinosaurInstanceType
+type InstanceType types.CentralInstanceType
 
 // InstanceTypeMap ...
 type InstanceTypeMap map[string]InstanceTypeConfig

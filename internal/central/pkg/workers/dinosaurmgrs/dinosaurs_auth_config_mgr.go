@@ -17,14 +17,14 @@ const (
 // CentralAuthConfigManager updates CentralRequests with auth configuration.
 type CentralAuthConfigManager struct {
 	workers.BaseWorker
-	centralService services.DinosaurService
+	centralService services.CentralService
 	centralConfig  *config.CentralConfig
 }
 
 var _ workers.Worker = (*CentralAuthConfigManager)(nil)
 
 // NewCentralAuthConfigManager creates an instance of this worker.
-func NewCentralAuthConfigManager(centralService services.DinosaurService, centralConfig *config.CentralConfig) *CentralAuthConfigManager {
+func NewCentralAuthConfigManager(centralService services.CentralService, centralConfig *config.CentralConfig) *CentralAuthConfigManager {
 	return &CentralAuthConfigManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),

@@ -5,8 +5,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 )
 
-// ConvertDataPlaneDinosaurStatus ...
-func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneCentralStatus) []*dbapi.DataPlaneCentralStatus {
+// ConvertDataPlaneCentralStatus ...
+func ConvertDataPlaneCentralStatus(status map[string]private.DataPlaneCentralStatus) []*dbapi.DataPlaneCentralStatus {
 	res := make([]*dbapi.DataPlaneCentralStatus, 0, len(status))
 
 	for k, v := range status {

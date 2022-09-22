@@ -42,7 +42,7 @@ func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
 	clusterID := flags.MustGetDefinedString(FlagClusterID, cmd.Flags())
 	orgID := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 
-	var centralService services.DinosaurService
+	var centralService services.CentralService
 	env.MustResolveAll(&centralService)
 
 	centralRequest := &dbapi.CentralRequest{
@@ -55,7 +55,7 @@ func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
 		OrganisationID: orgID,
 	}
 
-	if err := centralService.RegisterDinosaurJob(centralRequest); err != nil {
+	if err := centralService.RegisterCentralJob(centralRequest); err != nil {
 		glog.Fatalf("Unable to create central request: %s", err.Error())
 	}
 	indentedCentralRequest, err := json.MarshalIndent(centralRequest, "", "    ")

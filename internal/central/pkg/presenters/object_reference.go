@@ -10,18 +10,17 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 )
 
-// KindDinosaur ...
+// KindCentral ...
 const (
-	// KindDinosaur is a string identifier for the type api.DinosaurRequest
-	KindDinosaur = "CentralRequest"
-	// CloudRegion is a string identifier for the type api.CloudRegion
+	// KindCentral is a string identifier for the type api.CentralRequest
+	KindCentral = "CentralRequest"
+	// KindCloudRegion is a string identifier for the type api.CloudRegion
 	KindCloudRegion = "CloudRegion"
 	// KindCloudProvider is a string identifier for the type api.CloudProvider
 	KindCloudProvider = "CloudProvider"
 	// KindError is a string identifier for the type api.ServiceError
 	KindError = "Error"
 
-	// TODO change base path to correspond to your service
 	BasePath = "/api/rhacs/v1"
 )
 
@@ -33,7 +32,7 @@ func PresentReference(id, obj interface{}) compat.ObjectReference {
 func objectKind(i interface{}) string {
 	switch i.(type) {
 	case dbapi.CentralRequest, *dbapi.CentralRequest:
-		return KindDinosaur
+		return KindCentral
 	case api.CloudRegion, *api.CloudRegion:
 		return KindCloudRegion
 	case api.CloudProvider, *api.CloudProvider:
@@ -48,7 +47,7 @@ func objectKind(i interface{}) string {
 func objectPath(id string, obj interface{}) string {
 	switch obj.(type) {
 	case dbapi.CentralRequest, *dbapi.CentralRequest:
-		return fmt.Sprintf("%s/dinosaurs/%s", BasePath, id) // TODO change /dinosaurs to match your rest resource
+		return fmt.Sprintf("%s/centrals/%s", BasePath, id)
 	case errors.ServiceError, *errors.ServiceError:
 		return fmt.Sprintf("%s/errors/%s", BasePath, id)
 	default:

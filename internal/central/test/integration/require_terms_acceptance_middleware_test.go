@@ -16,7 +16,7 @@ import (
 )
 
 // This tests file ensures that the terms acceptance endpoint is working
-const mockDinosaurClusterName = "my-cluster"
+const mockCentralClusterName = "my-cluster"
 
 type TestEnv struct {
 	helper   *coreTest.Helper
@@ -35,8 +35,8 @@ func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, tearDown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(serverConfig *server.ServerConfig, c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 2)})
+	h, client, tearDown := test.NewCentralHelperWithHooks(t, ocmServer, func(serverConfig *server.ServerConfig, c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockCentralClusterName, 2)})
 		serverConfig.EnableTermsAcceptance = true
 	})
 
@@ -50,7 +50,7 @@ func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
 	}
 }
 
-func TestTermsRequired_CreateDinosaurTermsRequired(t *testing.T) {
+func TestTermsRequired_CreateCentralTermsRequired(t *testing.T) {
 	// TODO(create-ticket): Add back this test
 	skipNotFullyImplementedYet(t)
 	env := termsRequiredSetup(true, t)
@@ -67,7 +67,7 @@ func TestTermsRequired_CreateDinosaurTermsRequired(t *testing.T) {
 	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockDinosaurName,
+		Name:          mockCentralName,
 		MultiAz:       testMultiAZ,
 	}
 
@@ -94,7 +94,7 @@ func TestTermsRequired_CreateDinosaur_TermsNotRequired(t *testing.T) {
 	k := public.CentralRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockDinosaurName,
+		Name:          mockCentralName,
 		MultiAz:       testMultiAZ,
 	}
 

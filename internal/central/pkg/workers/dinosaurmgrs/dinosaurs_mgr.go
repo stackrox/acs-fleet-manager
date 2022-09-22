@@ -13,8 +13,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
-// we do not add "deleted" status to the list as the dinosaurs are soft deleted once the status is set to "deleted", so no need to count them here.
-var dinosaurMetricsStatuses = []constants2.CentralStatus{
+// we do not add "deleted" status to the list as the centrals are soft deleted once the status is set to "deleted", so no need to count them here.
+var centralMetricsStatuses = []constants2.CentralStatus{
 	constants2.CentralRequestStatusAccepted,
 	constants2.CentralRequestStatusPreparing,
 	constants2.CentralRequestStatusProvisioning,
@@ -24,46 +24,46 @@ var dinosaurMetricsStatuses = []constants2.CentralStatus{
 	constants2.CentralRequestStatusFailed,
 }
 
-// DinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
-type DinosaurManager struct {
+// CentralManager represents a central manager that periodically reconciles central requests
+type CentralManager struct {
 	workers.BaseWorker
-	dinosaurService         services.DinosaurService
+	centralService          services.CentralService
 	accessControlListConfig *acl.AccessControlListConfig
-	dinosaurConfig          *config.CentralConfig
+	centralConfig           *config.CentralConfig
 }
 
-// NewDinosaurManager creates a new dinosaur manager
-func NewDinosaurManager(dinosaurService services.DinosaurService, accessControlList *acl.AccessControlListConfig, dinosaur *config.CentralConfig) *DinosaurManager {
-	return &DinosaurManager{
+// NewCentralManager creates a new central manager
+func NewCentralManager(centralService services.CentralService, accessControlList *acl.AccessControlListConfig, central *config.CentralConfig) *CentralManager {
+	return &CentralManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "general_dinosaur_worker",
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService:         dinosaurService,
+		centralService:          centralService,
 		accessControlListConfig: accessControlList,
-		dinosaurConfig:          dinosaur,
+		centralConfig:           central,
 	}
 }
 
-// Start initializes the dinosaur manager to reconcile dinosaur requests
-func (k *DinosaurManager) Start() {
+// Start initializes the central manager to reconcile central requests
+func (k *CentralManager) Start() {
 	k.StartWorker(k)
 }
 
-// Stop causes the process for reconciling dinosaur requests to stop.
-func (k *DinosaurManager) Stop() {
+// Stop causes the process for reconciling central requests to stop.
+func (k *CentralManager) Stop() {
 	k.StopWorker(k)
 }
 
 // Reconcile ...
-func (k *DinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling dinosaurs")
+func (k *CentralManager) Reconcile() []error {
+	glog.Infoln("reconciling centrals")
 	var encounteredErrors []error
 
 	// record the metrics at the beginning of the reconcile loop as some of the states like "accepted"
 	// will likely gone after one loop. Record them at the beginning should give us more accurate metrics
-	statusErrors := k.setDinosaurStatusCountMetric()
+	statusErrors := k.setCentralStatusCountMetric()
 	if len(statusErrors) > 0 {
 		encounteredErrors = append(encounteredErrors, statusErrors...)
 	}
@@ -73,24 +73,24 @@ func (k *DinosaurManager) Reconcile() []error {
 		encounteredErrors = append(encounteredErrors, statusErrors...)
 	}
 
-	// delete dinosaurs of denied owners
+	// delete centrals of denied owners
 	accessControlListConfig := k.accessControlListConfig
 	if accessControlListConfig.EnableDenyList {
-		glog.Infoln("reconciling denied dinosaur owners")
-		dinosaurDeprovisioningForDeniedOwnersErr := k.reconcileDeniedDinosaurOwners(accessControlListConfig.DenyList)
-		if dinosaurDeprovisioningForDeniedOwnersErr != nil {
-			wrappedError := errors.Wrapf(dinosaurDeprovisioningForDeniedOwnersErr, "Failed to deprovision dinosaur for denied owners %s", accessControlListConfig.DenyList)
+		glog.Infoln("reconciling denied central owners")
+		centralDeprovisioningForDeniedOwnersErr := k.reconcileDeniedCentralOwners(accessControlListConfig.DenyList)
+		if centralDeprovisioningForDeniedOwnersErr != nil {
+			wrappedError := errors.Wrapf(centralDeprovisioningForDeniedOwnersErr, "Failed to deprovision central for denied owners %s", accessControlListConfig.DenyList)
 			encounteredErrors = append(encounteredErrors, wrappedError)
 		}
 	}
 
-	// cleaning up expired dinosaurs
-	dinosaurConfig := k.dinosaurConfig
-	if dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral {
-		glog.Infoln("deprovisioning expired dinosaurs")
-		expiredDinosaursError := k.dinosaurService.DeprovisionExpiredDinosaurs(dinosaurConfig.CentralLifespan.CentralLifespanInHours)
-		if expiredDinosaursError != nil {
-			wrappedError := errors.Wrap(expiredDinosaursError, "failed to deprovision expired Dinosaur instances")
+	// cleaning up expired centrals
+	centralConfig := k.centralConfig
+	if centralConfig.CentralLifespan.EnableDeletionOfExpiredCentral {
+		glog.Infoln("deprovisioning expired centrals")
+		expiredCentralsError := k.centralService.DeprovisionExpiredCentrals(centralConfig.CentralLifespan.CentralLifespanInHours)
+		if expiredCentralsError != nil {
+			wrappedError := errors.Wrap(expiredCentralsError, "failed to deprovision expired Central instances")
 			encounteredErrors = append(encounteredErrors, wrappedError)
 		}
 	}
@@ -98,18 +98,18 @@ func (k *DinosaurManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *DinosaurManager) reconcileDeniedDinosaurOwners(deniedUsers acl.DeniedUsers) *serviceErr.ServiceError {
+func (k *CentralManager) reconcileDeniedCentralOwners(deniedUsers acl.DeniedUsers) *serviceErr.ServiceError {
 	if len(deniedUsers) < 1 {
 		return nil
 	}
 
-	return k.dinosaurService.DeprovisionDinosaurForUsers(deniedUsers)
+	return k.centralService.DeprovisionCentralForUsers(deniedUsers)
 }
 
-func (k *DinosaurManager) setDinosaurStatusCountMetric() []error {
-	counters, err := k.dinosaurService.CountByStatus(dinosaurMetricsStatuses)
+func (k *CentralManager) setCentralStatusCountMetric() []error {
+	counters, err := k.centralService.CountByStatus(centralMetricsStatuses)
 	if err != nil {
-		return []error{errors.Wrap(err, "failed to count Dinosaurs by status")}
+		return []error{errors.Wrap(err, "failed to count centrals by status")}
 	}
 
 	for _, c := range counters {
@@ -119,10 +119,10 @@ func (k *DinosaurManager) setDinosaurStatusCountMetric() []error {
 	return nil
 }
 
-func (k *DinosaurManager) setClusterStatusCapacityUsedMetric() []error {
-	regions, err := k.dinosaurService.CountByRegionAndInstanceType()
+func (k *CentralManager) setClusterStatusCapacityUsedMetric() []error {
+	regions, err := k.centralService.CountByRegionAndInstanceType()
 	if err != nil {
-		return []error{errors.Wrap(err, "failed to count Dinosaurs by region")}
+		return []error{errors.Wrap(err, "failed to count centrals by region")}
 	}
 
 	for _, region := range regions {

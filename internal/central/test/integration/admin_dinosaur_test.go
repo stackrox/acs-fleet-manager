@@ -17,14 +17,14 @@ import (
 	// TODO(ROX-9821) restore when admin API is properly implemented . "github.com/onsi/gomega"
 )
 
-func TestAdminDinosaur_Get(t *testing.T) {
+func TestAdminCentral_Get(t *testing.T) {
 	skipNotFullyImplementedYet(t)
 
-	sampleDinosaurID := api.NewID()
-	desiredDinosaurOperatorVersion := "test"
+	sampleCentralID := api.NewID()
+	desiredCentralOperatorVersion := "test"
 	type args struct {
-		ctx        func(h *coreTest.Helper) context.Context
-		dinosaurID string
+		ctx       func(h *coreTest.Helper) context.Context
+		centralID string
 	}
 	tests := []struct {
 		name           string
@@ -39,7 +39,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{})
 				},
-				dinosaurID: sampleDinosaurID,
+				centralID: sampleCentralID,
 			},
 			verifyResponse: func(result adminprivate.Dinosaur, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
@@ -52,7 +52,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{"notallowedrole"})
 				},
-				dinosaurID: sampleDinosaurID,
+				centralID: sampleCentralID,
 			},
 			verifyResponse: func(result adminprivate.Dinosaur, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
@@ -65,13 +65,13 @@ func TestAdminDinosaur_Get(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.FleetManagerAdminReadRole})
 				},
-				dinosaurID: sampleDinosaurID,
+				centralID: sampleCentralID,
 			},
 			verifyResponse: func(result adminprivate.Dinosaur, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleDinosaurID))
-				Expect(result.DesiredDinosaurOperatorVersion).To(Equal(desiredDinosaurOperatorVersion))
+				Expect(result.Id).To(Equal(sampleCentralID))
+				Expect(result.DesiredDinosaurOperatorVersion).To(Equal(desiredCentralOperatorVersion))
 				Expect(result.AccountNumber).ToNot(BeEmpty())
 				Expect(result.Namespace).ToNot(BeEmpty())
 			},
@@ -82,13 +82,13 @@ func TestAdminDinosaur_Get(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.FleetManagerAdminWriteRole})
 				},
-				dinosaurID: sampleDinosaurID,
+				centralID: sampleCentralID,
 			},
 			verifyResponse: func(result adminprivate.Dinosaur, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleDinosaurID))
-				Expect(result.DesiredDinosaurOperatorVersion).To(Equal(desiredDinosaurOperatorVersion))
+				Expect(result.Id).To(Equal(sampleCentralID))
+				Expect(result.DesiredDinosaurOperatorVersion).To(Equal(desiredCentralOperatorVersion))
 				Expect(result.ClusterId).ShouldNot(BeNil())
 				Expect(result.Namespace).ToNot(BeEmpty())
 			},
@@ -99,13 +99,13 @@ func TestAdminDinosaur_Get(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.FleetManagerAdminFullRole})
 				},
-				dinosaurID: sampleDinosaurID,
+				centralID: sampleCentralID,
 			},
 			verifyResponse: func(result adminprivate.Dinosaur, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleDinosaurID))
-				Expect(result.DesiredDinosaurOperatorVersion).To(Equal(desiredDinosaurOperatorVersion))
+				Expect(result.Id).To(Equal(sampleCentralID))
+				Expect(result.DesiredDinosaurOperatorVersion).To(Equal(desiredCentralOperatorVersion))
 				Expect(result.ClusterId).ShouldNot(BeNil())
 				Expect(result.Namespace).ToNot(BeEmpty())
 			},
@@ -116,7 +116,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.FleetManagerAdminReadRole})
 				},
-				dinosaurID: "unexistingdinosaurID",
+				centralID: "unexistingdinosaurID",
 			},
 			verifyResponse: func(result adminprivate.Dinosaur, resp *http.Response, err error) {
 				Expect(err).To(HaveOccurred())
@@ -138,7 +138,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 					ctx := context.WithValue(context.Background(), adminprivate.ContextAccessToken, token)
 					return ctx
 				},
-				dinosaurID: sampleDinosaurID,
+				centralID: sampleCentralID,
 			},
 			verifyResponse: func(result adminprivate.Dinosaur, resp *http.Response, err error) {
 				Expect(err).To(HaveOccurred())
@@ -157,7 +157,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := test.NewDinosaurHelper(t, ocmServer)
+	h, _, tearDown := test.NewCentralHelper(t, ocmServer)
 	defer tearDown()
 	db := test.TestServices.DBFactory.New()
 	dinosaur := &dbapi.CentralRequest{
@@ -167,11 +167,11 @@ func TestAdminDinosaur_Get(t *testing.T) {
 		CloudProvider:                 "test",
 		Name:                          "test-dinosaur",
 		OrganisationID:                "13640203",
-		DesiredCentralOperatorVersion: desiredDinosaurOperatorVersion,
+		DesiredCentralOperatorVersion: desiredCentralOperatorVersion,
 		Status:                        constants.CentralRequestStatusReady.String(),
-		Namespace:                     fmt.Sprintf("dinosaur-%s", sampleDinosaurID),
+		Namespace:                     fmt.Sprintf("dinosaur-%s", sampleCentralID),
 	}
-	dinosaur.ID = sampleDinosaurID
+	dinosaur.ID = sampleCentralID
 
 	if err := db.Create(dinosaur).Error; err != nil {
 		t.Errorf("failed to create Dinosaur db record due to error: %v", err)
@@ -181,7 +181,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := tt.args.ctx(h)
 			client := test.NewAdminPrivateAPIClient(h)
-			result, resp, err := client.DefaultApi.GetCentralById(ctx, tt.args.dinosaurID)
+			result, resp, err := client.DefaultApi.GetCentralById(ctx, tt.args.centralID)
 			tt.verifyResponse(result, resp, err)
 		})
 	}

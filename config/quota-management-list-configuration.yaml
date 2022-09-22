@@ -1,6 +1,6 @@
 ---
 # A list of registered users given by their usernames irrespective whether they are under an organisation or not.
-# If a user is not in this or in the `registered_users_per_organisation` list, only EVAL dinosaur instances will be allowed.
+# If a user is not in this or in the `registered_users_per_organisation` list, only EVAL central instances will be allowed.
 # For now, this only supports RH service account.
 # In the future it may support service accounts outside RH.
 # The structure of registered service accounts is:
@@ -16,9 +16,9 @@ registered_service_accounts:
     max_allowed_instances: 1
 
 # A list of registered users per organisation (see structure below). The list current contains known organisations - add yours if it is missing.
-# If a user is not in this or in the `registered_service_accounts` list, only EVAL dinosaur instances will be allowed.
+# If a user is not in this or in the `registered_service_accounts` list, only EVAL central instances will be allowed.
 # - "id": is the organisation id
-# - "any_user": "any_user": Controls whether to allow all users to create standard dinosaur instances with this organisation if "registered_users" list is empty.
+# - "any_user": "any_user": Controls whether to allow all users to create standard central instances with this organisation if "registered_users" list is empty.
 # - max_allowed_instances: is the maximum number of instances this orgnisation. Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
 # - "registered_users": A list of registered users for this organisation. If empty, no one is registered unless "any_user" is set to true.
 #      - username: is the account of the user. The username must be unique within the organisation and across organisations.
@@ -33,7 +33,7 @@ registered_users_per_organisation:
     any_user: true
     max_allowed_instances: 1
     registered_users: []
-    # The Dinosaur Instances team
+    # The central Instances team
   - id: 13639843
     any_user: true
     max_allowed_instances: 1

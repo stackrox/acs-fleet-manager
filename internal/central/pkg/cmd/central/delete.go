@@ -31,7 +31,7 @@ func NewDeleteCommand(env *environments.Env) *cobra.Command {
 func runDelete(env *environments.Env, cmd *cobra.Command, _ []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
-	var centralService services.DinosaurService
+	var centralService services.CentralService
 	env.MustResolveAll(&centralService)
 
 	// create jwt with claims and set it in the context
@@ -40,7 +40,7 @@ func runDelete(env *environments.Env, cmd *cobra.Command, _ []string) {
 	})
 	ctx := auth.SetTokenInContext(context.TODO(), jwt)
 
-	if err := centralService.RegisterDinosaurDeprovisionJob(ctx, id); err != nil {
+	if err := centralService.RegisterCentralDeprovisionJob(ctx, id); err != nil {
 		glog.Fatalf("Unable to register the deprovisioning request: %s", err.Error())
 	} else {
 		glog.V(10).Infof("Deprovisioning request accepted for central cluster with id %s", id)

@@ -27,7 +27,7 @@ func NewGetCommand(env *environments.Env) *cobra.Command {
 
 func runGet(env *environments.Env, cmd *cobra.Command, _ []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
-	var centralService services.DinosaurService
+	var centralService services.CentralService
 	env.MustResolveAll(&centralService)
 
 	centralRequest, err := centralService.GetByID(id)

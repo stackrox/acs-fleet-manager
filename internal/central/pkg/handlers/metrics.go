@@ -35,22 +35,22 @@ func NewMetricsHandler(service services.ObservatoriumService) *metricsHandler {
 
 // FederateMetrics ...
 func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) {
-	dinosaurID := strings.TrimSpace(mux.Vars(r)["id"])
-	if dinosaurID == "" {
+	centralID := strings.TrimSpace(mux.Vars(r)["id"])
+	if centralID == "" {
 		shared.HandleError(r, w, &errors.ServiceError{
 			Code:     errors.ErrorBadRequest,
-			Reason:   "missing path parameter: dinosaur id",
+			Reason:   "missing path parameter: central id",
 			HTTPCode: http.StatusBadRequest,
 		})
 		return
 	}
 
-	dinosaurMetrics := &observatorium.DinosaurMetrics{}
+	centralMetrics := &observatorium.DinosaurMetrics{}
 	params := observatorium.MetricsReqParams{
 		ResultType: observatorium.Query,
 	}
 
-	_, err := h.service.GetMetricsByDinosaurID(r.Context(), dinosaurMetrics, dinosaurID, params)
+	_, err := h.service.GetMetricsByDinosaurID(r.Context(), centralMetrics, centralID, params)
 	if err != nil {
 		if err.Code == errors.ErrorNotFound {
 			shared.HandleError(r, w, err)
@@ -67,7 +67,7 @@ func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Define metric collector
-	collector := metrics.NewFederatedUserMetricsCollector(dinosaurMetrics)
+	collector := metrics.NewFederatedUserMetricsCollector(centralMetrics)
 	registry := prometheus.NewPedanticRegistry()
 	registry.MustRegister(collector)
 
@@ -91,16 +91,16 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 			ctx := r.Context()
 			params.ResultType = observatorium.RangeQuery
 			extractMetricsQueryParams(r, &params)
-			dinosaurMetrics := &observatorium.DinosaurMetrics{}
-			foundDinosaurID, err := h.service.GetMetricsByDinosaurID(ctx, dinosaurMetrics, id, params)
+			centralMetrics := &observatorium.DinosaurMetrics{}
+			foundCentralID, err := h.service.GetMetricsByDinosaurID(ctx, centralMetrics, id, params)
 			if err != nil {
 				return nil, err
 			}
 			metricList := public.MetricsRangeQueryList{
 				Kind: "MetricsRangeQueryList",
-				Id:   foundDinosaurID,
+				Id:   foundCentralID,
 			}
-			metricsResult, err := presenters.PresentMetricsByRangeQuery(dinosaurMetrics)
+			metricsResult, err := presenters.PresentMetricsByRangeQuery(centralMetrics)
 			if err != nil {
 				return nil, err
 			}
@@ -121,16 +121,16 @@ func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.
 			ctx := r.Context()
 			params.ResultType = observatorium.Query
 			extractMetricsQueryParams(r, &params)
-			dinosaurMetrics := &observatorium.DinosaurMetrics{}
-			foundDinosaurID, err := h.service.GetMetricsByDinosaurID(ctx, dinosaurMetrics, id, params)
+			centralMetrics := &observatorium.DinosaurMetrics{}
+			foundCentralID, err := h.service.GetMetricsByDinosaurID(ctx, centralMetrics, id, params)
 			if err != nil {
 				return nil, err
 			}
 			metricList := public.MetricsInstantQueryList{
 				Kind: "MetricsInstantQueryList",
-				Id:   foundDinosaurID,
+				Id:   foundCentralID,
 			}
-			metricsResult, err := presenters.PresentMetricsByInstantQuery(dinosaurMetrics)
+			metricsResult, err := presenters.PresentMetricsByInstantQuery(centralMetrics)
 			if err != nil {
 				return nil, err
 			}

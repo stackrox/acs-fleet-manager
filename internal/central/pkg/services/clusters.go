@@ -700,7 +700,7 @@ func (c clusterService) InstallDinosaurOperator(cluster *api.Cluster) (bool, *ap
 	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
-	ready, err := p.InstallDinosaurOperator(buildClusterSpec(cluster))
+	ready, err := p.InstallCentralOperator(buildClusterSpec(cluster))
 	if err != nil {
 		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install dinosaur for cluster %s", cluster.ClusterID)
 	}

@@ -6,7 +6,7 @@ import (
 	"github.com/golang/glog"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/centrals/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
@@ -31,7 +31,7 @@ var supportedAMSBillingModels = map[string]struct{}{
 }
 
 // CheckIfQuotaIsDefinedForInstanceType ...
-func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.CentralInstanceType) (bool, *errors.ServiceError) {
 	orgID, err := q.amsClient.GetOrganisationIDFromExternalID(dinosaur.OrganisationID)
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", dinosaur.OrganisationID))
@@ -86,7 +86,7 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 // RelatedResource with "cost" 0 are considered. Only
 // "standard" and "marketplace" billing models are considered. If both are
 // detected "standard" is returned.
-func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(externalID string, instanceType types.DinosaurInstanceType) (string, error) {
+func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(externalID string, instanceType types.CentralInstanceType) (string, error) {
 	orgID, err := q.amsClient.GetOrganisationIDFromExternalID(externalID)
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", externalID))
@@ -114,7 +114,7 @@ func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(extern
 }
 
 // ReserveQuota ...
-func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
+func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.CentralInstanceType) (string, *errors.ServiceError) {
 	dinosaurID := dinosaur.ID
 
 	rr := newBaseQuotaReservedResourceResourceBuilder()

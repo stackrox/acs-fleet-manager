@@ -38,7 +38,7 @@ type DataplaneClusterConfig struct {
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
 	Kubeconfig                            string         `json:"kubeconfig"`
 	RawKubernetesConfig                   *clientcmdapi.Config
-	CentralOperatorOLMConfig              OperatorInstallationConfig `json:"dinosaur_operator_olm_config"`
+	CentralOperatorOLMConfig              OperatorInstallationConfig `json:"central_operator_olm_config"`
 	FleetshardOperatorOLMConfig           OperatorInstallationConfig `json:"fleetshard_operator_olm_config"`
 }
 
@@ -186,8 +186,8 @@ func (conf *ClusterConfig) GetCapacityForRegion(region string) int {
 	return capacity
 }
 
-// IsNumberOfDinosaurWithinClusterLimit ...
-func (conf *ClusterConfig) IsNumberOfDinosaurWithinClusterLimit(clusterID string, count int) bool {
+// IsNumberOfCentralWithinClusterLimit ...
+func (conf *ClusterConfig) IsNumberOfCentralWithinClusterLimit(clusterID string, count int) bool {
 	if _, exist := conf.clusterConfigMap[clusterID]; exist {
 		limit := conf.clusterConfigMap[clusterID].CentralInstanceLimit
 		return limit == -1 || count <= limit
@@ -429,8 +429,8 @@ func readOnlyUserListFile(file string, val *userv1.OptionalNames) error {
 	return nil
 }
 
-// Read the dinosaur-sre users from the file into the dinosaur-sre user list config
-func readDinosaurSREUserFile(file string, val *userv1.OptionalNames) error {
+// Read the central-sre users from the file into the central-sre user list config
+func readCentralSREUserFile(file string, val *userv1.OptionalNames) error {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
 		return fmt.Errorf("reading SRE user list file: %w", err)

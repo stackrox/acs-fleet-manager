@@ -203,7 +203,7 @@ func TestStandaloneProvider_buildOpenIDPClientSecret(t *testing.T) {
 					Kind:       "Secret",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      dinosaurSREOpenIDPSecretName,
+					Name:      centralSREOpenIDPSecretName,
 					Namespace: "openshift-config",
 				},
 				Type: v1.SecretTypeOpaque,
@@ -227,7 +227,7 @@ func TestStandaloneProvider_buildOpenIDPClientSecret(t *testing.T) {
 					Kind:       "Secret",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      dinosaurSREOpenIDPSecretName,
+					Name:      centralSREOpenIDPSecretName,
 					Namespace: "openshift-config",
 				},
 				Type: v1.SecretTypeOpaque,
@@ -287,7 +287,7 @@ func TestStandaloneProvider_buildIdentityProviderResource(t *testing.T) {
 								"clientID": "some-client-id",
 								"issuer":   "some-issuer",
 								"clientSecret": map[string]string{
-									"name": dinosaurSREOpenIDPSecretName,
+									"name": centralSREOpenIDPSecretName,
 								},
 								"claims": map[string][]string{
 									"email":             {"email"},
@@ -329,7 +329,7 @@ func TestStandaloneProvider_buildIdentityProviderResource(t *testing.T) {
 								"clientID": "some-client-id-1",
 								"issuer":   "some-issuer-1",
 								"clientSecret": map[string]string{
-									"name": dinosaurSREOpenIDPSecretName,
+									"name": centralSREOpenIDPSecretName,
 								},
 								"claims": map[string][]string{
 									"email":             {"email"},
@@ -411,7 +411,7 @@ func TestStandaloneProvider_buildDinosaurOperatorNamespace(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
-			namespace := provider.buildDinosaurOperatorNamespace()
+			namespace := provider.buildCentralOperatorNamespace()
 			Expect(namespace).To(Equal(test.want))
 		})
 	}
@@ -488,7 +488,7 @@ func TestStandaloneProvider_buildDinosaurOperatorCatalogSource(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
-			catalogSource := provider.buildDinosaurOperatorCatalogSource()
+			catalogSource := provider.buildCentralOperatorCatalogSource()
 			Expect(catalogSource).To(Equal(test.want))
 		})
 	}
@@ -559,7 +559,7 @@ func TestStandaloneProvider_buildDinosaurOperatorOperatorGroup(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
-			operatorGroup := provider.buildDinosaurOperatorOperatorGroup()
+			operatorGroup := provider.buildCentralOperatorOperatorGroup()
 			Expect(operatorGroup).To(Equal(test.want))
 		})
 	}
@@ -646,7 +646,7 @@ func TestStandaloneProvider_buildDinosaurOperatorSubscription(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
-			subscription := provider.buildDinosaurOperatorSubscription()
+			subscription := provider.buildCentralOperatorSubscription()
 			Expect(subscription).To(Equal(test.want))
 		})
 	}

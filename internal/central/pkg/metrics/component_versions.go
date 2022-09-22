@@ -9,20 +9,20 @@ import (
 )
 
 type versionsMetrics struct {
-	dinosaurService         services.DinosaurService
+	dinosaurService         services.CentralService
 	dinosaurOperatorVersion *prometheus.GaugeVec
 	dinosaurVersion         *prometheus.GaugeVec
 }
 
 // RegisterVersionMetrics need to invoked when the server is started and dinosaurService is initialised
-func RegisterVersionMetrics(dinosaurService services.DinosaurService) {
+func RegisterVersionMetrics(dinosaurService services.CentralService) {
 	m := newVersionMetrics(dinosaurService)
 	// for tests. This function will be called multiple times when run integration tests because `prometheus` is singleton
 	prometheus.Unregister(m)
 	prometheus.MustRegister(m)
 }
 
-func newVersionMetrics(dinosaurService services.DinosaurService) *versionsMetrics {
+func newVersionMetrics(dinosaurService services.CentralService) *versionsMetrics {
 	return &versionsMetrics{
 		dinosaurService: dinosaurService,
 		dinosaurOperatorVersion: prometheus.NewGaugeVec(prometheus.GaugeOpts{

@@ -22,15 +22,15 @@ import (
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 )
 
-type adminDinosaurHandler struct {
-	service        services.DinosaurService
+type adminCentralHandler struct {
+	service        services.CentralService
 	accountService account.AccountService
 	providerConfig *config.ProviderConfig
 }
 
-// NewAdminDinosaurHandler ...
-func NewAdminDinosaurHandler(service services.DinosaurService, accountService account.AccountService, providerConfig *config.ProviderConfig) *adminDinosaurHandler {
-	return &adminDinosaurHandler{
+// NewAdminCentralHandler ...
+func NewAdminCentralHandler(service services.CentralService, accountService account.AccountService, providerConfig *config.ProviderConfig) *adminCentralHandler {
+	return &adminCentralHandler{
 		service:        service,
 		accountService: accountService,
 		providerConfig: providerConfig,
@@ -38,8 +38,8 @@ func NewAdminDinosaurHandler(service services.DinosaurService, accountService ac
 }
 
 // Create ...
-func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
-	dinosaurRequest := public.CentralRequestPayload{
+func (h adminCentralHandler) Create(w http.ResponseWriter, r *http.Request) {
+	centralRequest := public.CentralRequestPayload{
 		Central: public.CentralSpec{
 			Resources: converters.ConvertCoreV1ResourceRequirementsToPublic(&defaults.CentralResources),
 		},
@@ -54,28 +54,28 @@ func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	ctx := r.Context()
-	convDinosaur := dbapi.CentralRequest{}
+	convCentral := dbapi.CentralRequest{}
 
 	cfg := &handlers.HandlerConfig{
-		MarshalInto: &dinosaurRequest,
+		MarshalInto: &centralRequest,
 		Validate: []handlers.Validate{
 			handlers.ValidateAsyncEnabled(r, "creating central requests"),
-			handlers.ValidateLength(&dinosaurRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxDinosaurNameLength),
-			ValidDinosaurClusterName(&dinosaurRequest.Name, "name"),
-			ValidateDinosaurClusterNameIsUnique(r.Context(), &dinosaurRequest.Name, h.service),
-			ValidateDinosaurClaims(ctx, &dinosaurRequest, &convDinosaur),
-			ValidateCloudProvider(&h.service, &convDinosaur, h.providerConfig, "creating central requests"),
-			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating central requests"),
-			ValidateCentralSpec(ctx, &dinosaurRequest, &convDinosaur),
-			ValidateScannerSpec(ctx, &dinosaurRequest, &convDinosaur),
+			handlers.ValidateLength(&centralRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxCentralNameLength),
+			ValidCentralClusterName(&centralRequest.Name, "name"),
+			ValidateCentralClusterNameIsUnique(r.Context(), &centralRequest.Name, h.service),
+			ValidateCentralClaims(ctx, &centralRequest, &convCentral),
+			ValidateCloudProvider(&h.service, &convCentral, h.providerConfig, "creating central requests"),
+			handlers.ValidateMultiAZEnabled(&centralRequest.MultiAz, "creating central requests"),
+			ValidateCentralSpec(ctx, &centralRequest, &convCentral),
+			ValidateScannerSpec(ctx, &centralRequest, &convCentral),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			svcErr := h.service.RegisterDinosaurJob(&convDinosaur)
+			svcErr := h.service.RegisterCentralJob(&convCentral)
 			if svcErr != nil {
 				return nil, svcErr
 			}
 			// TODO(mclasmeier): Do we need PresentDinosaurRequestAdminEndpoint?
-			return presenters.PresentCentralRequest(&convDinosaur), nil
+			return presenters.PresentCentralRequest(&convCentral), nil
 		},
 	}
 
@@ -84,23 +84,23 @@ func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get ...
-func (h adminDinosaurHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) Get(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-			dinosaurRequest, err := h.service.Get(ctx, id)
+			centralRequest, err := h.service.Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentDinosaurRequestAdminEndpoint(dinosaurRequest, h.accountService)
+			return presenters.PresentDinosaurRequestAdminEndpoint(centralRequest, h.accountService)
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
 }
 
 // List ...
-func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -108,34 +108,34 @@ func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 			listArgs := coreServices.NewListArguments(r.URL.Query())
 
 			if err := listArgs.Validate(); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list dinosaur requests: %s", err.Error())
+				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list central requests: %s", err.Error())
 			}
 
-			dinosaurRequests, paging, err := h.service.List(ctx, listArgs)
+			centralRequests, paging, err := h.service.List(ctx, listArgs)
 			if err != nil {
 				return nil, err
 			}
 
-			dinosaurRequestList := private.CentralList{
-				Kind:  "DinosaurList",
+			centralRequestList := private.CentralList{
+				Kind:  "CentralList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
 				Total: int32(paging.Total),
 				Items: []private.Central{},
 			}
 
-			for _, dinosaurRequest := range dinosaurRequests {
-				converted, err := presenters.PresentDinosaurRequestAdminEndpoint(dinosaurRequest, h.accountService)
+			for _, centralRequest := range centralRequests {
+				converted, err := presenters.PresentDinosaurRequestAdminEndpoint(centralRequest, h.accountService)
 				if err != nil {
 					return nil, err
 				}
 
 				if converted != nil {
-					dinosaurRequestList.Items = append(dinosaurRequestList.Items, *converted)
+					centralRequestList.Items = append(centralRequestList.Items, *converted)
 				}
 			}
 
-			return dinosaurRequestList, nil
+			return centralRequestList, nil
 		},
 	}
 
@@ -143,16 +143,16 @@ func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 // Delete ...
-func (h adminDinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateAsyncEnabled(r, "deleting dinosaur requests"),
+			handlers.ValidateAsyncEnabled(r, "deleting central requests"),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
 
-			err := h.service.RegisterDinosaurDeprovisionJob(ctx, id)
+			err := h.service.RegisterCentralDeprovisionJob(ctx, id)
 			return nil, err
 		},
 	}
@@ -293,30 +293,30 @@ func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.
 }
 
 // Update a Central instance.
-func (h adminDinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (h adminCentralHandler) Update(w http.ResponseWriter, r *http.Request) {
 
-	var dinosaurUpdateReq private.CentralUpdateRequest
+	var centralUpdateRequest private.CentralUpdateRequest
 	cfg := &handlers.HandlerConfig{
-		MarshalInto: &dinosaurUpdateReq,
+		MarshalInto: &centralUpdateRequest,
 		Validate:    []handlers.Validate{},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-			dinosaurRequest, svcErr := h.service.Get(ctx, id)
+			centralRequest, svcErr := h.service.Get(ctx, id)
 			if svcErr != nil {
 				return nil, svcErr
 			}
 
-			err := updateCentralRequest(dinosaurRequest, &dinosaurUpdateReq)
+			err := updateCentralRequest(centralRequest, &centralUpdateRequest)
 			if err != nil {
 				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Updating CentralRequest: %s", err.Error())
 			}
 
-			svcErr = h.service.VerifyAndUpdateDinosaurAdmin(ctx, dinosaurRequest)
+			svcErr = h.service.VerifyAndUpdateCentralAdmin(ctx, centralRequest)
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			return presenters.PresentDinosaurRequestAdminEndpoint(dinosaurRequest, h.accountService)
+			return presenters.PresentDinosaurRequestAdminEndpoint(centralRequest, h.accountService)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
