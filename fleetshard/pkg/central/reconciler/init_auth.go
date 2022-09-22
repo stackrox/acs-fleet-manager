@@ -10,7 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/private"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/urlfmt"
 	core "k8s.io/api/core/v1"

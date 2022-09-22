@@ -8,7 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	. "github.com/onsi/gomega"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 )
 
 // RecordsLoader loads DNS records from Route53

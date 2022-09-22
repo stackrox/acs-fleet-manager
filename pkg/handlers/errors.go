@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/central/compat"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 
 	"github.com/gorilla/mux"

@@ -9,7 +9,7 @@ import (
 
 	"github.com/goava/di"
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/defaults"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/defaults"
 
 	sentryGo "github.com/getsentry/sentry-go"
 	"github.com/golang/glog"

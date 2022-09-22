@@ -9,9 +9,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetmanager"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/central/compat"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/admin/private"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/api/public"
 )
 
 // Client represents the REST client for connecting to fleet-manager

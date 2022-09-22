@@ -5,7 +5,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
+	"github.com/stackrox/acs-fleet-manager/internal/central"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
@@ -23,7 +23,7 @@ func main() {
 	}
 
 	env, err := environments.New(environments.GetEnvironmentStrFromEnv(),
-		dinosaur.ConfigProviders(),
+		central.ConfigProviders(),
 	)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)

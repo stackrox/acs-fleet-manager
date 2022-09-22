@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/golang/glog"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
+	"github.com/stackrox/acs-fleet-manager/internal/central"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 
@@ -31,7 +31,7 @@ var serverConfig *server.ServerConfig
 func TestMain(m *testing.M) {
 	var err error
 	env, err = environments.New(environments.GetEnvironmentStrFromEnv(),
-		dinosaur.ConfigProviders(),
+		central.ConfigProviders(),
 	)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)

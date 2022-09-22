@@ -8,7 +8,7 @@ repos:
       require_serial: true
       pass_filenames: true
       stages: [push, manual]
-      files: '(openapi/.*|pkg/workers/worker_interface.go|pkg/client/ocm/id.go|pkg/client/aws/client.go|pkg/client/ocm/client.go|pkg/client/iam/client.go|pkg/services/authorization/authorization.go|pkg/services/sso/iam_service.go|pkg/client/redhatsso/client.go|pkg/auth/auth_agent_service.go|internal/dinosaur/pkg/services/observatorium_service.go|internal/dinosaur/pkg/services/cluster_placement_strategy.go|internal/dinosaur/pkg/services/cloud_providers.go|internal/dinosaur/pkg/services/clusters.go|internal/dinosaur/pkg/services/quota.go|internal/dinosaur/pkg/services/fleetshard_operator_addon.go|internal/dinosaur/pkg/services/quota_service_factory.go|internal/dinosaur/pkg/clusters/cluster_builder.go|internal/dinosaur/pkg/clusters/provider.go|internal/dinosaur/pkg/services/dinosaur.go)'
+      files: '(openapi/.*|pkg/workers/worker_interface.go|pkg/client/ocm/id.go|pkg/client/aws/client.go|pkg/client/ocm/client.go|pkg/client/iam/client.go|pkg/services/authorization/authorization.go|pkg/services/sso/iam_service.go|pkg/client/redhatsso/client.go|pkg/auth/auth_agent_service.go|internal/central/pkg/services/observatorium_service.go|internal/central/pkg/services/cluster_placement_strategy.go|internal/central/pkg/services/cloud_providers.go|internal/central/pkg/services/clusters.go|internal/central/pkg/services/quota.go|internal/central/pkg/services/fleetshard_operator_addon.go|internal/central/pkg/services/quota_service_factory.go|internal/central/pkg/clusters/cluster_builder.go|internal/central/pkg/clusters/provider.go|internal/central/pkg/services/dinosaur.go)'
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.2.0
     hooks:
@@ -24,5 +24,5 @@ repos:
       - id: trailing-whitespace
         args: ["--markdown-linebreak-ext=md"]
       - id: end-of-file-fixer
-        exclude: '^(?:secrets/db.*|internal/dinosaur/pkg/api/(admin|private|public)/.*)$' # Matches either secrets/db.* files or the generated files under internal/dinosaur/pkg/api/(admin|private|public)
+        exclude: '^(?:secrets/db.*|internal/central/pkg/api/(admin|private|public)/.*)$' # Matches either secrets/db.* files or the generated files under internal/central/pkg/api/(admin|private|public)
       - id: check-json
