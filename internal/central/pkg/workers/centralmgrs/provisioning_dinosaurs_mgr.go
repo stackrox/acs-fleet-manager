@@ -1,4 +1,4 @@
-package dinosaurmgrs
+package centralmgrs
 
 import (
 	"time"
@@ -14,14 +14,14 @@ import (
 	"github.com/golang/glog"
 )
 
-// ProvisioningCentralManager represents a central manager that periodically reconciles dinosaur requests
+// ProvisioningCentralManager represents a central manager that periodically reconciles central requests
 type ProvisioningCentralManager struct {
 	workers.BaseWorker
 	centralService       services.CentralService
 	observatoriumService services.ObservatoriumService
 }
 
-// NewProvisioningCentralManager creates a new dinosaur manager
+// NewProvisioningCentralManager creates a new central manager
 func NewProvisioningCentralManager(centralService services.CentralService, observatoriumService services.ObservatoriumService) *ProvisioningCentralManager {
 	return &ProvisioningCentralManager{
 		BaseWorker: workers.BaseWorker{
@@ -34,7 +34,7 @@ func NewProvisioningCentralManager(centralService services.CentralService, obser
 	}
 }
 
-// Start initializes the dinosaur manager to reconcile central requests
+// Start initializes the central manager to reconcile central requests
 func (k *ProvisioningCentralManager) Start() {
 	k.StartWorker(k)
 }
@@ -50,7 +50,7 @@ func (k *ProvisioningCentralManager) Reconcile() []error {
 	var encounteredErrors []error
 
 	// handle provisioning centrals state
-	// Dinosaurs in a "provisioning" state means that it is ready to be sent to the Fleetshard Operator for central creation in the data plane cluster.
+	// centrals in a "provisioning" state means that it is ready to be sent to the Fleetshard Operator for central creation in the data plane cluster.
 	// The update of the central request status from 'provisioning' to another state will be handled by the Fleetshard Operator.
 	// We only need to update the metrics here.
 	provisioningCentrals, serviceErr := k.centralService.ListByStatus(constants2.CentralRequestStatusProvisioning)
@@ -62,7 +62,7 @@ func (k *ProvisioningCentralManager) Reconcile() []error {
 	for _, central := range provisioningCentrals {
 		glog.V(10).Infof("provisioning central id = %s", central.ID)
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusProvisioning, central.ID, central.ClusterID, time.Since(central.CreatedAt))
-		// TODO implement additional reconcilation logic for provisioning dinosaurs
+		// TODO implement additional reconcilation logic for provisioning centrals
 	}
 
 	return encounteredErrors

@@ -24,18 +24,18 @@ func TestVersionsMetrics_Collect(t *testing.T) {
 	}{
 		{
 			name: "will generate metrics",
-			fields: fields{dinosaurService: &services.DinosaurServiceMock{
+			fields: fields{dinosaurService: &services.CentralServiceMock{
 				ListComponentVersionsFunc: func() ([]services.CentralComponentVersions, error) {
 					return []services.CentralComponentVersions{
 						{
-							ID:                             "1",
-							ClusterID:                      "cluster1",
-							DesiredDinosaurOperatorVersion: "1.0.1",
-							ActualDinosaurOperatorVersion:  "1.0.0",
-							DinosaurOperatorUpgrading:      true,
-							DesiredDinosaurVersion:         "1.0.1",
-							ActualDinosaurVersion:          "1.0.0",
-							DinosaurUpgrading:              false,
+							ID:                            "1",
+							ClusterID:                     "cluster1",
+							DesiredCentralOperatorVersion: "1.0.1",
+							ActualCentralOperatorVersion:  "1.0.0",
+							CentralOperatorUpgrading:      true,
+							DesiredCentralVersion:         "1.0.1",
+							ActualCentralVersion:          "1.0.0",
+							CentralUpgrading:              false,
 						},
 					}, nil
 				},

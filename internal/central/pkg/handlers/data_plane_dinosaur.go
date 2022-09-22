@@ -13,13 +13,13 @@ import (
 )
 
 type dataPlaneCentralHandler struct {
-	service        services.DataPlaneDinosaurService
+	service        services.DataPlaneCentralService
 	centralService services.CentralService
 	presenter      *presenters.ManagedCentralPresenter
 }
 
 // NewDataPlaneCentralHandler ...
-func NewDataPlaneCentralHandler(service services.DataPlaneDinosaurService, centralService services.CentralService, presenter *presenters.ManagedCentralPresenter) *dataPlaneCentralHandler {
+func NewDataPlaneCentralHandler(service services.DataPlaneCentralService, centralService services.CentralService, presenter *presenters.ManagedCentralPresenter) *dataPlaneCentralHandler {
 	return &dataPlaneCentralHandler{
 		service:        service,
 		centralService: centralService,
@@ -38,7 +38,7 @@ func (h *dataPlaneCentralHandler) UpdateCentralStatuses(w http.ResponseWriter, r
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			dataPlaneCentralStatus := presenters.ConvertDataPlaneCentralStatus(data)
-			err := h.service.UpdateDataPlaneDinosaurService(ctx, clusterID, dataPlaneCentralStatus)
+			err := h.service.UpdateDataPlaneCentralService(ctx, clusterID, dataPlaneCentralStatus)
 			return nil, err
 		},
 	}

@@ -109,17 +109,17 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 }
 
 func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) error {
-	prevAvailableDinosaurOperatorVersions, err := cluster.GetAvailableCentralOperatorVersions()
+	prevAvailableCentralOperatorVersions, err := cluster.GetAvailableCentralOperatorVersions()
 	if err != nil {
 		return fmt.Errorf("retrieving central operator versions: %w", err)
 	}
-	if len(status.AvailableDinosaurOperatorVersions) > 0 && !reflect.DeepEqual(prevAvailableDinosaurOperatorVersions, status.AvailableDinosaurOperatorVersions) {
+	if len(status.AvailableDinosaurOperatorVersions) > 0 && !reflect.DeepEqual(prevAvailableCentralOperatorVersions, status.AvailableDinosaurOperatorVersions) {
 		err := cluster.SetAvailableCentralOperatorVersions(status.AvailableDinosaurOperatorVersions)
 		if err != nil {
 			return fmt.Errorf("updating central operator versions: %w", err)
 		}
-		glog.Infof("Updating Dinosaur operator available versions for cluster ID '%s'. From versions '%v' to versions '%v'\n",
-			cluster.ClusterID, prevAvailableDinosaurOperatorVersions, status.AvailableDinosaurOperatorVersions)
+		glog.Infof("Updating Central operator available versions for cluster ID '%s'. From versions '%v' to versions '%v'\n",
+			cluster.ClusterID, prevAvailableCentralOperatorVersions, status.AvailableDinosaurOperatorVersions)
 		svcErr := d.ClusterService.Update(*cluster)
 		if svcErr != nil {
 			return fmt.Errorf("updating cluster: %w", svcErr)

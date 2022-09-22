@@ -31,7 +31,7 @@ func runGethResourceStateMetrics(env *environments.Env, cmd *cobra.Command, _arg
 	var observatoriumService services.ObservatoriumService
 	env.MustResolveAll(&observatoriumService)
 
-	centralState, err := observatoriumService.GetDinosaurState(name, namespace)
+	centralState, err := observatoriumService.GetCentralState(name, namespace)
 	if err != nil {
 		glog.Error("An error occurred while attempting to fetch Observatorium data from Prometheus", err.Error())
 		return

@@ -1,4 +1,4 @@
-package dinosaurmgrs
+package centralmgrs
 
 import (
 	"github.com/google/uuid"
@@ -14,7 +14,7 @@ import (
 	"github.com/golang/glog"
 )
 
-// DeletingCentralManager represents a dinosaur manager that periodically reconciles dinosaur requests
+// DeletingCentralManager represents a central manager that periodically reconciles central requests
 type DeletingCentralManager struct {
 	workers.BaseWorker
 	centralService      services.CentralService
@@ -22,7 +22,7 @@ type DeletingCentralManager struct {
 	quotaServiceFactory services.QuotaServiceFactory
 }
 
-// NewDeletingCentralManager creates a new dinosaur manager
+// NewDeletingCentralManager creates a new central manager
 func NewDeletingCentralManager(centralService services.CentralService, iamConfig *iam.IAMConfig, quotaServiceFactory services.QuotaServiceFactory) *DeletingCentralManager {
 	return &DeletingCentralManager{
 		BaseWorker: workers.BaseWorker{
@@ -64,7 +64,7 @@ func (k *DeletingCentralManager) Reconcile() []error {
 		glog.Infof("%s centrals count = %d", constants2.CentralRequestStatusDeleting.String(), originalTotalCentralInDeleting)
 	}
 
-	// We also want to remove Dinosaurs that are set to deprovisioning but have not been provisioned on a data plane cluster
+	// We also want to remove centrals that are set to deprovisioning but have not been provisioned on a data plane cluster
 	deprovisioningCentrals, serviceErr := k.centralService.ListByStatus(constants2.CentralRequestStatusDeprovision)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list central deprovisioning requests"))

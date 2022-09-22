@@ -135,8 +135,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 			Namespace:                      "mk-1",
 			Status:                         constants2.DinosaurRequestStatusDeprovision.String(),
 			Host:                           dinosaurHost,
-			DesiredDinosaurVersion:         "2.7.0",
-			DesiredDinosaurOperatorVersion: "dinosaur-operator.v0.23.0-0",
+			DesiredCentralVersion:         "2.7.0",
+			DesiredCentralOperatorVersion: "dinosaur-operator.v0.23.0-0",
 			InstanceType:                   types.STANDARD.String(),
 		},
 		{
@@ -146,8 +146,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 			Namespace:                      "mk-2",
 			Status:                         constants2.DinosaurRequestStatusProvisioning.String(),
 			Host:                           dinosaurHost,
-			DesiredDinosaurVersion:         "2.6.0",
-			DesiredDinosaurOperatorVersion: "dinosaur-operator.v0.23.0-0",
+			DesiredCentralVersion:         "2.6.0",
+			DesiredCentralOperatorVersion: "dinosaur-operator.v0.23.0-0",
 			InstanceType:                   types.STANDARD.String(),
 		},
 		{
@@ -157,8 +157,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 			Namespace:                      "mk-3",
 			Status:                         constants2.DinosaurRequestStatusPreparing.String(),
 			Host:                           dinosaurHost,
-			DesiredDinosaurVersion:         "2.7.1",
-			DesiredDinosaurOperatorVersion: "dinosaur-operator.v0.23.0-0",
+			DesiredCentralVersion:         "2.7.1",
+			DesiredCentralOperatorVersion: "dinosaur-operator.v0.23.0-0",
 			InstanceType:                   types.EVAL.String(),
 		},
 		{
@@ -168,8 +168,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 			Namespace:                      "mk-4",
 			Status:                         constants2.DinosaurRequestStatusReady.String(),
 			Host:                           dinosaurHost,
-			DesiredDinosaurVersion:         "2.7.2",
-			DesiredDinosaurOperatorVersion: "dinosaur-operator.v0.23.0-0",
+			DesiredCentralVersion:         "2.7.2",
+			DesiredCentralOperatorVersion: "dinosaur-operator.v0.23.0-0",
 			InstanceType:                   types.STANDARD.String(),
 		},
 		{
@@ -179,8 +179,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 			Name:                           mockDinosaurName4,
 			Status:                         constants2.DinosaurRequestStatusFailed.String(),
 			Host:                           dinosaurHost,
-			DesiredDinosaurVersion:         "2.7.2",
-			DesiredDinosaurOperatorVersion: "dinosaur-operator.v0.23.0-0",
+			DesiredCentralVersion:         "2.7.2",
+			DesiredCentralOperatorVersion: "dinosaur-operator.v0.23.0-0",
 			InstanceType:                   types.STANDARD.String(),
 		},
 	}
@@ -201,7 +201,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 		Name:                   mockDinosaurName4,
 		Namespace:              "mk",
 		Status:                 constants2.DinosaurRequestStatusFailed.String(),
-		DesiredDinosaurVersion: "2.7.2",
+		DesiredCentralVersion: "2.7.2",
 		InstanceType:           types.EVAL.String(),
 	}
 
@@ -223,7 +223,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 				Expect(mk.Metadata.Annotations.MasId).To(Equal(k.ID))
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.DinosaurRequestStatusDeprovision.String()))
-				Expect(mk.Spec.Versions.Dinosaur).To(Equal(k.DesiredDinosaurVersion))
+				Expect(mk.Spec.Versions.Dinosaur).To(Equal(k.DesiredCentralVersion))
 				Expect(mk.Spec.Endpoint.Tls).To(BeNil())
 			} else {
 				t.Error("failed matching manageddinosaur id with dinosaurrequest id")
@@ -308,10 +308,10 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 
 		// Test version related reported fields
 		Expect(c.Status).To(Equal(constants2.DinosaurRequestStatusReady.String()))
-		Expect(c.ActualDinosaurVersion).To(Equal(sentUpdate.Versions.Dinosaur))
-		Expect(c.ActualDinosaurOperatorVersion).To(Equal(sentUpdate.Versions.DinosaurOperator))
-		Expect(c.DinosaurOperatorUpgrading).To(Equal(sentReadyCondition == "DinosaurOperatorUpdating"))
-		Expect(c.DinosaurUpgrading).To(Equal(sentReadyCondition == "DinosaurUpdating"))
+		Expect(c.ActualCentralVersion).To(Equal(sentUpdate.Versions.Dinosaur))
+		Expect(c.ActualCentralOperatorVersion).To(Equal(sentUpdate.Versions.DinosaurOperator))
+		Expect(c.CentralOperatorUpgrading).To(Equal(sentReadyCondition == "DinosaurOperatorUpdating"))
+		Expect(c.CentralUpgrading).To(Equal(sentReadyCondition == "DinosaurUpdating"))
 
 		// TODO test when dinosaur is being upgraded when fleet shard operator side
 		// appropriately reports it
@@ -350,7 +350,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 
 		// Make sure that the dinosaur stays in ready state and status of dinosaur operator upgrade is false.
 		Expect(c.Status).To(Equal(constants2.DinosaurRequestStatusReady.String()))
-		Expect(c.DinosaurOperatorUpgrading).To(BeFalse())
+		Expect(c.CentralOperatorUpgrading).To(BeFalse())
 	}
 }
 

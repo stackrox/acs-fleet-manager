@@ -605,7 +605,7 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 
 // reconcileCentralOperator installs the central operator on a provisioned clusters
 func (c *ClusterManager) reconcileCentralOperator(provisionedCluster api.Cluster) (bool, error) {
-	ready, err := c.ClusterService.InstallDinosaurOperator(&provisionedCluster)
+	ready, err := c.ClusterService.InstallCentralOperator(&provisionedCluster)
 	if err != nil {
 		return false, err
 	}
@@ -696,7 +696,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		return nil
 	}
 
-	centralInstanceCount, err := c.ClusterService.FindDinosaurInstanceCount(excessClusterIds)
+	centralInstanceCount, err := c.ClusterService.FindCentralInstanceCount(excessClusterIds)
 	if err != nil {
 		return []error{errors.Wrapf(err, "Failed to find central count a cluster: %s", excessClusterIds)}
 	}
@@ -783,7 +783,7 @@ func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 		// c.buildReadOnlyGroupResource(),
 		// c.buildDedicatedReaderClusterRoleBindingResource(),
 		// c.buildSREGroupResource(),
-		// c.buildDinosaurSREClusterRoleBindingResource(),
+		// c.buildCentralSREClusterRoleBindingResource(),
 		// c.buildObservabilityNamespaceResource(),
 		// c.buildObservatoriumSSOSecretResource(),
 		// c.buildObservabilityCatalogSourceResource(),
@@ -982,7 +982,7 @@ func (c *ClusterManager) buildSREGroupResource() *userv1.Group {
 }
 
 // buildClusterAdminClusterRoleBindingResource creates a cluster role binding, associates it with the dinosaur-sre group, and attaches the cluster-admin role.
-func (c *ClusterManager) buildDinosaurSREClusterRoleBindingResource() *authv1.ClusterRoleBinding {
+func (c *ClusterManager) buildCentralSREClusterRoleBindingResource() *authv1.ClusterRoleBinding {
 	return &authv1.ClusterRoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "rbac.authorization.k8s.io/v1",
@@ -1030,7 +1030,7 @@ func (c *ClusterManager) setClusterStatusCountMetrics() error {
 }
 
 func (c *ClusterManager) setCentralPerClusterCountMetrics() error {
-	counters, err := c.ClusterService.FindDinosaurInstanceCount([]string{})
+	counters, err := c.ClusterService.FindCentralInstanceCount([]string{})
 	if err != nil {
 		return err
 	}

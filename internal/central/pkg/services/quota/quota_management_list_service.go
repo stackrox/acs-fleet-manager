@@ -18,9 +18,9 @@ type QuotaManagementListService struct {
 }
 
 // CheckIfQuotaIsDefinedForInstanceType ...
-func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.CentralInstanceType) (bool, *errors.ServiceError) {
-	username := dinosaur.Owner
-	orgID := dinosaur.OrganisationID
+func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(central *dbapi.CentralRequest, instanceType types.CentralInstanceType) (bool, *errors.ServiceError) {
+	username := central.Owner
+	orgID := central.OrganisationID
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetByID(orgID)
 	userIsRegistered := false
 	if orgFound && org.IsUserRegistered(username) {
@@ -41,13 +41,13 @@ func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(dinosau
 }
 
 // ReserveQuota ...
-func (q QuotaManagementListService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.CentralInstanceType) (string, *errors.ServiceError) {
+func (q QuotaManagementListService) ReserveQuota(central *dbapi.CentralRequest, instanceType types.CentralInstanceType) (string, *errors.ServiceError) {
 	if !q.quotaManagementList.EnableInstanceLimitControl {
 		return "", nil
 	}
 
-	username := dinosaur.Owner
-	orgID := dinosaur.OrganisationID
+	username := central.Owner
+	orgID := central.OrganisationID
 	var quotaManagementListItem quotamanagement.QuotaManagementListItem
 	message := fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, quotamanagement.GetDefaultMaxAllowedInstances())
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetByID(orgID)

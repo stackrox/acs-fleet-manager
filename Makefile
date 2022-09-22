@@ -338,12 +338,12 @@ test/prepare:
 #   make test/integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
-test/integration/dinosaur: test/prepare gotestsum
+test/integration/central: test/prepare gotestsum
 	$(GOTESTSUM) --junitfile data/results/fleet-manager-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
 				./internal/central/test/integration/...
-.PHONY: test/integration/dinosaur
+.PHONY: test/integration/central
 
-test/integration: test/integration/dinosaur
+test/integration: test/integration/central
 .PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM

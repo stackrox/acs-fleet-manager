@@ -32,7 +32,7 @@ func Test_Validation_validateCentralClusterNameIsUnique(t *testing.T) {
 		{
 			name: "throw an error when the CentralService call throws an error",
 			arg: args{
-				centralService: &services.DinosaurServiceMock{
+				centralService: &services.CentralServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 4}, errors.GeneralError("count failed from database")
 					},
@@ -45,7 +45,7 @@ func Test_Validation_validateCentralClusterNameIsUnique(t *testing.T) {
 		{
 			name: "throw an error when name is already used",
 			arg: args{
-				centralService: &services.DinosaurServiceMock{
+				centralService: &services.CentralServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 1}, nil
 					},
@@ -62,7 +62,7 @@ func Test_Validation_validateCentralClusterNameIsUnique(t *testing.T) {
 		{
 			name: "does not throw an error when name is unique",
 			arg: args{
-				centralService: &services.DinosaurServiceMock{
+				centralService: &services.CentralServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 0}, nil
 					},
@@ -168,7 +168,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
-				centralService: &services.DinosaurServiceMock{
+				centralService: &services.CentralServiceMock{
 					DetectInstanceTypeFunc: func(centralRequest *dbapi.CentralRequest) (types.CentralInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
@@ -203,7 +203,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "do not throw an error when cloud provider and region matches",
 			arg: args{
-				centralService: &services.DinosaurServiceMock{
+				centralService: &services.CentralServiceMock{
 					DetectInstanceTypeFunc: func(centralRequest *dbapi.CentralRequest) (types.CentralInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
@@ -248,7 +248,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "throws an error when cloud provider and region do not match",
 			arg: args{
-				centralService: &services.DinosaurServiceMock{
+				centralService: &services.CentralServiceMock{
 					DetectInstanceTypeFunc: func(centralRequest *dbapi.CentralRequest) (types.CentralInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
@@ -281,7 +281,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "throws an error when instance type is not supported",
 			arg: args{
-				centralService: &services.DinosaurServiceMock{
+				centralService: &services.CentralServiceMock{
 					DetectInstanceTypeFunc: func(centralRequest *dbapi.CentralRequest) (types.CentralInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},

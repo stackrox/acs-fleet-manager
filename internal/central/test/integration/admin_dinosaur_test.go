@@ -71,7 +71,7 @@ func TestAdminCentral_Get(t *testing.T) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleCentralID))
-				Expect(result.DesiredDinosaurOperatorVersion).To(Equal(desiredCentralOperatorVersion))
+				Expect(result.DesiredCentralOperatorVersion).To(Equal(desiredCentralOperatorVersion))
 				Expect(result.AccountNumber).ToNot(BeEmpty())
 				Expect(result.Namespace).ToNot(BeEmpty())
 			},
@@ -88,7 +88,7 @@ func TestAdminCentral_Get(t *testing.T) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleCentralID))
-				Expect(result.DesiredDinosaurOperatorVersion).To(Equal(desiredCentralOperatorVersion))
+				Expect(result.DesiredCentralOperatorVersion).To(Equal(desiredCentralOperatorVersion))
 				Expect(result.ClusterId).ShouldNot(BeNil())
 				Expect(result.Namespace).ToNot(BeEmpty())
 			},
@@ -105,7 +105,7 @@ func TestAdminCentral_Get(t *testing.T) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleCentralID))
-				Expect(result.DesiredDinosaurOperatorVersion).To(Equal(desiredCentralOperatorVersion))
+				Expect(result.DesiredCentralOperatorVersion).To(Equal(desiredCentralOperatorVersion))
 				Expect(result.ClusterId).ShouldNot(BeNil())
 				Expect(result.Namespace).ToNot(BeEmpty())
 			},

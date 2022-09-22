@@ -1213,12 +1213,12 @@ func Test_clusterService_FindDinosaurInstanceCount(t *testing.T) {
 	type args struct {
 		clusterID []string
 	}
-	var testRes []ResDinosaurInstanceCount
+	var testRes []ResCentralInstanceCount
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
-		want    []ResDinosaurInstanceCount
+		want    []ResCentralInstanceCount
 		wantErr bool
 		setupFn func()
 	}{
@@ -1230,7 +1230,7 @@ func Test_clusterService_FindDinosaurInstanceCount(t *testing.T) {
 			args: args{
 				[]string{"test01", "test02"},
 			},
-			want: []ResDinosaurInstanceCount{
+			want: []ResCentralInstanceCount{
 				{
 					Clusterid: "test01",
 					Count:     2,
@@ -1274,14 +1274,14 @@ func Test_clusterService_FindDinosaurInstanceCount(t *testing.T) {
 			c := clusterService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
-			got, err := c.FindDinosaurInstanceCount(tt.args.clusterID)
+			got, err := c.FindCentralInstanceCount(tt.args.clusterID)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("FindDinosaurInstanceCount() error = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("FindCentralInstanceCount() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
 			for i, res := range got {
 				if !reflect.DeepEqual(res, tt.want[i]) {
-					t.Errorf("FindDinosaurInstanceCount() got = %v, want %v", res, tt.want[i])
+					t.Errorf("FindCentralInstanceCount() got = %v, want %v", res, tt.want[i])
 				}
 			}
 		})
@@ -2067,7 +2067,7 @@ func TestClusterService_InstallDinosaurOperator(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-						return &clusters.ProviderMock{InstallDinosaurOperatorFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
+						return &clusters.ProviderMock{InstallCentralOperatorFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
 							return true, nil
 						}}, nil
 					},
@@ -2087,7 +2087,7 @@ func TestClusterService_InstallDinosaurOperator(t *testing.T) {
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							InstallDinosaurOperatorFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
+							InstallCentralOperatorFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
 								return false, errors.Errorf("failed to install addon")
 							}}, nil
 					},
@@ -2111,13 +2111,13 @@ func TestClusterService_InstallDinosaurOperator(t *testing.T) {
 				providerFactory:   tt.fields.clusterProviderFactory,
 			}
 
-			got, err := c.InstallDinosaurOperator(tt.args.cluster)
+			got, err := c.InstallCentralOperator(tt.args.cluster)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("InstallDinosaurOperator() error = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("InstallCentralOperator() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("InstallDinosaurOperator want %v, but got %v", tt.want, got)
+				t.Errorf("InstallCentralOperator want %v, but got %v", tt.want, got)
 			}
 		})
 	}

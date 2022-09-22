@@ -56,31 +56,31 @@ func (m *versionsMetrics) Collect(ch chan<- prometheus.Metric) {
 	if versions, err := m.dinosaurService.ListComponentVersions(); err == nil {
 		for _, v := range versions {
 			// actual dinosaur operator version
-			actualDinosaurOperatorMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "actual", v.ActualDinosaurOperatorVersion)
+			actualDinosaurOperatorMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "actual", v.ActualCentralOperatorVersion)
 			actualDinosaurOperatorMetric.Set(float64(time.Now().Unix()))
 			ch <- actualDinosaurOperatorMetric
 			// desired metric
-			desiredDinosaurOperatorMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "desired", v.DesiredDinosaurOperatorVersion)
+			desiredDinosaurOperatorMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "desired", v.DesiredCentralOperatorVersion)
 			desiredDinosaurOperatorMetric.Set(float64(time.Now().Unix()))
 			ch <- desiredDinosaurOperatorMetric
 
-			if v.DinosaurOperatorUpgrading {
-				dinosaurOperatorUpgradingMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "upgrade", v.DesiredDinosaurOperatorVersion)
+			if v.CentralOperatorUpgrading {
+				dinosaurOperatorUpgradingMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "upgrade", v.DesiredCentralOperatorVersion)
 				dinosaurOperatorUpgradingMetric.Set(float64(time.Now().Unix()))
 				ch <- dinosaurOperatorUpgradingMetric
 			}
 
 			// actual dinosaur version
-			actualDinosaurMetric := m.dinosaurVersion.WithLabelValues(v.ClusterID, v.ID, "actual", v.ActualDinosaurVersion)
+			actualDinosaurMetric := m.dinosaurVersion.WithLabelValues(v.ClusterID, v.ID, "actual", v.ActualCentralVersion)
 			actualDinosaurMetric.Set(float64(time.Now().Unix()))
 			ch <- actualDinosaurMetric
 			// desired dinosaur version
-			desiredDinosaurMetric := m.dinosaurVersion.WithLabelValues(v.ClusterID, v.ID, "desired", v.DesiredDinosaurVersion)
+			desiredDinosaurMetric := m.dinosaurVersion.WithLabelValues(v.ClusterID, v.ID, "desired", v.DesiredCentralVersion)
 			desiredDinosaurMetric.Set(float64(time.Now().Unix()))
 			ch <- desiredDinosaurMetric
 
-			if v.DinosaurUpgrading {
-				dinosaurUpgradingMetric := m.dinosaurVersion.WithLabelValues(v.ClusterID, v.ID, "upgrade", v.DesiredDinosaurVersion)
+			if v.CentralUpgrading {
+				dinosaurUpgradingMetric := m.dinosaurVersion.WithLabelValues(v.ClusterID, v.ID, "upgrade", v.DesiredCentralVersion)
 				dinosaurUpgradingMetric.Set(float64(time.Now().Unix()))
 				ch <- dinosaurUpgradingMetric
 			}

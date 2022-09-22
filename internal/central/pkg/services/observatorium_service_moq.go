@@ -20,11 +20,11 @@ var _ ObservatoriumService = &ObservatoriumServiceMock{}
 //
 // 		// make and configure a mocked ObservatoriumService
 // 		mockedObservatoriumService := &ObservatoriumServiceMock{
-// 			GetDinosaurStateFunc: func(name string, namespaceName string) (observatorium.DinosaurState, error) {
-// 				panic("mock out the GetDinosaurState method")
+// 			GetCentralStateFunc: func(name string, namespaceName string) (observatorium.DinosaurState, error) {
+// 				panic("mock out the GetCentralState method")
 // 			},
-// 			GetMetricsByDinosaurIDFunc: func(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError) {
-// 				panic("mock out the GetMetricsByDinosaurID method")
+// 			GetMetricsByCentralIDFunc: func(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError) {
+// 				panic("mock out the GetMetricsByCentralID method")
 // 			},
 // 		}
 //
@@ -33,23 +33,23 @@ var _ ObservatoriumService = &ObservatoriumServiceMock{}
 //
 // 	}
 type ObservatoriumServiceMock struct {
-	// GetDinosaurStateFunc mocks the GetDinosaurState method.
-	GetDinosaurStateFunc func(name string, namespaceName string) (observatorium.DinosaurState, error)
+	// GetCentralStateFunc mocks the GetCentralState method.
+	GetCentralStateFunc func(name string, namespaceName string) (observatorium.DinosaurState, error)
 
-	// GetMetricsByDinosaurIDFunc mocks the GetMetricsByDinosaurID method.
-	GetMetricsByDinosaurIDFunc func(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError)
+	// GetMetricsByCentralIDFunc mocks the GetMetricsByCentralID method.
+	GetMetricsByCentralIDFunc func(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// GetDinosaurState holds details about calls to the GetDinosaurState method.
-		GetDinosaurState []struct {
+		// GetCentralState holds details about calls to the GetCentralState method.
+		GetCentralState []struct {
 			// Name is the name argument value.
 			Name string
 			// NamespaceName is the namespaceName argument value.
 			NamespaceName string
 		}
-		// GetMetricsByDinosaurID holds details about calls to the GetMetricsByDinosaurID method.
-		GetMetricsByDinosaurID []struct {
+		// GetMetricsByCentralID holds details about calls to the GetMetricsByCentralID method.
+		GetMetricsByCentralID []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// CsMetrics is the csMetrics argument value.
@@ -60,14 +60,14 @@ type ObservatoriumServiceMock struct {
 			Query observatorium.MetricsReqParams
 		}
 	}
-	lockGetDinosaurState       sync.RWMutex
-	lockGetMetricsByDinosaurID sync.RWMutex
+	lockGetCentralState       sync.RWMutex
+	lockGetMetricsByCentralID sync.RWMutex
 }
 
-// GetDinosaurState calls GetDinosaurStateFunc.
-func (mock *ObservatoriumServiceMock) GetDinosaurState(name string, namespaceName string) (observatorium.DinosaurState, error) {
-	if mock.GetDinosaurStateFunc == nil {
-		panic("ObservatoriumServiceMock.GetDinosaurStateFunc: method is nil but ObservatoriumService.GetDinosaurState was just called")
+// GetCentralState calls GetCentralStateFunc.
+func (mock *ObservatoriumServiceMock) GetCentralState(name string, namespaceName string) (observatorium.DinosaurState, error) {
+	if mock.GetCentralStateFunc == nil {
+		panic("ObservatoriumServiceMock.GetCentralStateFunc: method is nil but ObservatoriumService.GetCentralState was just called")
 	}
 	callInfo := struct {
 		Name          string
@@ -76,16 +76,16 @@ func (mock *ObservatoriumServiceMock) GetDinosaurState(name string, namespaceNam
 		Name:          name,
 		NamespaceName: namespaceName,
 	}
-	mock.lockGetDinosaurState.Lock()
-	mock.calls.GetDinosaurState = append(mock.calls.GetDinosaurState, callInfo)
-	mock.lockGetDinosaurState.Unlock()
-	return mock.GetDinosaurStateFunc(name, namespaceName)
+	mock.lockGetCentralState.Lock()
+	mock.calls.GetCentralState = append(mock.calls.GetCentralState, callInfo)
+	mock.lockGetCentralState.Unlock()
+	return mock.GetCentralStateFunc(name, namespaceName)
 }
 
-// GetDinosaurStateCalls gets all the calls that were made to GetDinosaurState.
+// GetCentralStateCalls gets all the calls that were made to GetCentralState.
 // Check the length with:
-//     len(mockedObservatoriumService.GetDinosaurStateCalls())
-func (mock *ObservatoriumServiceMock) GetDinosaurStateCalls() []struct {
+//     len(mockedObservatoriumService.GetCentralStateCalls())
+func (mock *ObservatoriumServiceMock) GetCentralStateCalls() []struct {
 	Name          string
 	NamespaceName string
 } {
@@ -93,16 +93,16 @@ func (mock *ObservatoriumServiceMock) GetDinosaurStateCalls() []struct {
 		Name          string
 		NamespaceName string
 	}
-	mock.lockGetDinosaurState.RLock()
-	calls = mock.calls.GetDinosaurState
-	mock.lockGetDinosaurState.RUnlock()
+	mock.lockGetCentralState.RLock()
+	calls = mock.calls.GetCentralState
+	mock.lockGetCentralState.RUnlock()
 	return calls
 }
 
-// GetMetricsByDinosaurID calls GetMetricsByDinosaurIDFunc.
-func (mock *ObservatoriumServiceMock) GetMetricsByDinosaurID(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError) {
-	if mock.GetMetricsByDinosaurIDFunc == nil {
-		panic("ObservatoriumServiceMock.GetMetricsByDinosaurIDFunc: method is nil but ObservatoriumService.GetMetricsByDinosaurID was just called")
+// GetMetricsByCentralID calls GetMetricsByCentralIDFunc.
+func (mock *ObservatoriumServiceMock) GetMetricsByCentralID(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError) {
+	if mock.GetMetricsByCentralIDFunc == nil {
+		panic("ObservatoriumServiceMock.GetMetricsByCentralIDFunc: method is nil but ObservatoriumService.GetMetricsByCentralID was just called")
 	}
 	callInfo := struct {
 		Ctx       context.Context
@@ -115,16 +115,16 @@ func (mock *ObservatoriumServiceMock) GetMetricsByDinosaurID(ctx context.Context
 		ID:        id,
 		Query:     query,
 	}
-	mock.lockGetMetricsByDinosaurID.Lock()
-	mock.calls.GetMetricsByDinosaurID = append(mock.calls.GetMetricsByDinosaurID, callInfo)
-	mock.lockGetMetricsByDinosaurID.Unlock()
-	return mock.GetMetricsByDinosaurIDFunc(ctx, csMetrics, id, query)
+	mock.lockGetMetricsByCentralID.Lock()
+	mock.calls.GetMetricsByCentralID = append(mock.calls.GetMetricsByCentralID, callInfo)
+	mock.lockGetMetricsByCentralID.Unlock()
+	return mock.GetMetricsByCentralIDFunc(ctx, csMetrics, id, query)
 }
 
-// GetMetricsByDinosaurIDCalls gets all the calls that were made to GetMetricsByDinosaurID.
+// GetMetricsByCentralIDCalls gets all the calls that were made to GetMetricsByCentralID.
 // Check the length with:
-//     len(mockedObservatoriumService.GetMetricsByDinosaurIDCalls())
-func (mock *ObservatoriumServiceMock) GetMetricsByDinosaurIDCalls() []struct {
+//     len(mockedObservatoriumService.GetMetricsByCentralIDCalls())
+func (mock *ObservatoriumServiceMock) GetMetricsByCentralIDCalls() []struct {
 	Ctx       context.Context
 	CsMetrics *observatorium.DinosaurMetrics
 	ID        string
@@ -136,8 +136,8 @@ func (mock *ObservatoriumServiceMock) GetMetricsByDinosaurIDCalls() []struct {
 		ID        string
 		Query     observatorium.MetricsReqParams
 	}
-	mock.lockGetMetricsByDinosaurID.RLock()
-	calls = mock.calls.GetMetricsByDinosaurID
-	mock.lockGetMetricsByDinosaurID.RUnlock()
+	mock.lockGetMetricsByCentralID.RLock()
+	calls = mock.calls.GetMetricsByCentralID
+	mock.lockGetMetricsByCentralID.RUnlock()
 	return calls
 }

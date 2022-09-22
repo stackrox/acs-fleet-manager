@@ -39,7 +39,7 @@ type Provider interface {
 	GetCloudProviders() (*types.CloudProviderInfoList, error)
 	// GetCloudProviderRegions Get the regions information for the given cloud provider from the cluster provider
 	GetCloudProviderRegions(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error)
-	// Install the dinosaur operator in a given cluster
+	// Install the central operator in a given cluster
 	InstallCentralOperator(clusterSpec *types.ClusterSpec) (bool, error)
 	// Install the cluster logging operator for a given cluster
 	InstallFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error)

@@ -46,14 +46,14 @@ type ClusterService interface {
 	// DeleteByClusterID will delete the cluster from the database
 	DeleteByClusterID(clusterID string) *apiErrors.ServiceError
 	// FindNonEmptyClusterByID returns a cluster if it present and it is not empty.
-	// Cluster emptiness is determined by checking whether the cluster contains Dinosaurs that have been provisioned, are being provisioned on it, or are being deprovisioned from it i.e dinosaur that are not in failure state.
+	// Cluster emptiness is determined by checking whether the cluster contains Centrals that have been provisioned, are being provisioned on it, or are being deprovisioned from it i.e centrals that are not in failure state.
 	FindNonEmptyClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
 	// ListAllClusterIds returns all the valid cluster ids in array
 	ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError)
 	// FindAllClusters return all the valid clusters in array
 	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError)
-	// FindDinosaurInstanceCount returns the dinosaur instance counts associated with the list of clusters. If the list is empty, it will list all clusterIds that have Dinosaur instances assigned.
-	FindDinosaurInstanceCount(clusterIDs []string) ([]ResDinosaurInstanceCount, *apiErrors.ServiceError)
+	// FindCentralInstanceCount returns the central instance counts associated with the list of clusters. If the list is empty, it will list all clusterIds that have central instances assigned.
+	FindCentralInstanceCount(clusterIDs []string) ([]ResCentralInstanceCount, *apiErrors.ServiceError)
 	// UpdateMultiClusterStatus updates a list of clusters' status to a status
 	UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
 	// CountByStatus returns the count of clusters for each given status in the database
@@ -63,10 +63,10 @@ type ClusterService interface {
 	Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
 	ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
-	// Install the dinosaur operator in a given cluster
-	InstallDinosaurOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
-	CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error)
-	IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error)
+	// InstallCentralOperator install the central operator in a given cluster
+	InstallCentralOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
+	CheckCentralOperatorVersionReady(cluster *api.Cluster, centralOperatorVersion string) (bool, error)
+	IsCentralVersionAvailableInCluster(cluster *api.Cluster, centralOperatorVersion string, centralVersion string) (bool, error)
 }
 
 type clusterService struct {
@@ -473,8 +473,8 @@ func (c clusterService) ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceEr
 	return res, nil
 }
 
-// ResDinosaurInstanceCount ...
-type ResDinosaurInstanceCount struct {
+// ResCentralInstanceCount ...
+type ResCentralInstanceCount struct {
 	Clusterid string
 	Count     int
 }
@@ -491,18 +491,18 @@ func (c clusterService) GetExternalID(clusterID string) (string, *apiErrors.Serv
 	return cluster.ExternalID, nil
 }
 
-// FindDinosaurInstanceCount ...
-func (c clusterService) FindDinosaurInstanceCount(clusterIDs []string) ([]ResDinosaurInstanceCount, *apiErrors.ServiceError) {
-	var res []ResDinosaurInstanceCount
+// FindCentralInstanceCount ...
+func (c clusterService) FindCentralInstanceCount(clusterIDs []string) ([]ResCentralInstanceCount, *apiErrors.ServiceError) {
+	var res []ResCentralInstanceCount
 	query := c.connectionFactory.New().
 		Model(&dbapi.CentralRequest{}).
 		Select("cluster_id as Clusterid, count(1) as Count").
-		Where("status != ?", constants2.CentralRequestStatusAccepted.String()) // dinosaur in accepted state do not have a cluster_id assigned to them
+		Where("status != ?", constants2.CentralRequestStatusAccepted.String()) // central in accepted state do not have a cluster_id assigned to them
 
 	if len(clusterIDs) > 0 {
 		query = query.Where("cluster_id in (?)", clusterIDs)
 	} else {
-		query = query.Where("cluster_id != ''") // make sure that we only include dinosaur having a cluster_id
+		query = query.Where("cluster_id != ''") // make sure that we only include central having a cluster_id
 	}
 
 	query = query.Group("cluster_id").Order("cluster_id asc").Scan(&res)
@@ -510,7 +510,7 @@ func (c clusterService) FindDinosaurInstanceCount(clusterIDs []string) ([]ResDin
 	if err := query.Error; err != nil {
 		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to query by cluster info")
 	}
-	// the query above won't return a count for a clusterId if that cluster doesn't have any Dinosaurs,
+	// the query above won't return a count for a clusterId if that cluster doesn't have any centrals,
 	// to keep things consistent and less confusing, we will identity these ids and set their count to 0
 	if len(clusterIDs) > 0 {
 		countersMap := map[string]int{}
@@ -519,7 +519,7 @@ func (c clusterService) FindDinosaurInstanceCount(clusterIDs []string) ([]ResDin
 		}
 		for _, clusterID := range clusterIDs {
 			if _, ok := countersMap[clusterID]; !ok {
-				res = append(res, ResDinosaurInstanceCount{Clusterid: clusterID, Count: 0})
+				res = append(res, ResCentralInstanceCount{Clusterid: clusterID, Count: 0})
 			}
 		}
 	}
@@ -694,15 +694,15 @@ func (c clusterService) ApplyResources(cluster *api.Cluster, resources types.Res
 	return nil
 }
 
-// InstallDinosaurOperator ...
-func (c clusterService) InstallDinosaurOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+// InstallCentralOperator ...
+func (c clusterService) InstallCentralOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
 	ready, err := p.InstallCentralOperator(buildClusterSpec(cluster))
 	if err != nil {
-		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install dinosaur for cluster %s", cluster.ClusterID)
+		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install central for cluster %s", cluster.ClusterID)
 	}
 	return ready, nil
 }
@@ -716,31 +716,31 @@ func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
 	}
 }
 
-// CheckDinosaurOperatorVersionReady ...
-func (c clusterService) CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error) {
-	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
+// CheckCentralOperatorVersionReady ...
+func (c clusterService) CheckCentralOperatorVersionReady(cluster *api.Cluster, centralOperatorVersion string) (bool, error) {
+	readyCentralOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
 	if err != nil {
 		return false, fmt.Errorf("retrieving ready central operator versions: %w", err)
 	}
-	for _, version := range readyDinosaurOperatorVersions {
-		if version.Version == dinosaurOperatorVersion {
+	for _, version := range readyCentralOperatorVersions {
+		if version.Version == centralOperatorVersion {
 			return true, nil
 		}
 	}
 	return false, nil
 }
 
-// IsDinosaurVersionAvailableInCluster ...
-func (c clusterService) IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error) {
-	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
+// IsCentralVersionAvailableInCluster ...
+func (c clusterService) IsCentralVersionAvailableInCluster(cluster *api.Cluster, centralOperatorVersion string, centralVersion string) (bool, error) {
+	readyCentralOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
 	if err != nil {
 		return false, fmt.Errorf("retrieving ready central operator versions: %w", err)
 	}
-	for _, version := range readyDinosaurOperatorVersions {
-		if version.Version == dinosaurOperatorVersion {
+	for _, version := range readyCentralOperatorVersions {
+		if version.Version == centralOperatorVersion {
 			kVvalid := false
 			for _, kversion := range version.CentralVersions {
-				if kversion.Version == dinosaurVersion {
+				if kversion.Version == centralVersion {
 					kVvalid = true
 					break
 				}

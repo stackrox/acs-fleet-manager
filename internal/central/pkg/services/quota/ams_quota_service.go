@@ -31,10 +31,10 @@ var supportedAMSBillingModels = map[string]struct{}{
 }
 
 // CheckIfQuotaIsDefinedForInstanceType ...
-func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.CentralInstanceType) (bool, *errors.ServiceError) {
-	orgID, err := q.amsClient.GetOrganisationIDFromExternalID(dinosaur.OrganisationID)
+func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(central *dbapi.CentralRequest, instanceType types.CentralInstanceType) (bool, *errors.ServiceError) {
+	orgID, err := q.amsClient.GetOrganisationIDFromExternalID(central.OrganisationID)
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", dinosaur.OrganisationID))
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", central.OrganisationID))
 	}
 
 	hasQuota, err := q.hasConfiguredQuotaCost(orgID, instanceType.GetQuotaType())
@@ -80,13 +80,13 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 	return false, nil
 }
 
-// getAvailableBillingModelFromDinosaurInstanceType gets the billing model of a
-// dinosaur instance type by looking at the resource name and product of the
+// getAvailableBillingModelFromCentralInstanceType gets the billing model of a
+// central instance type by looking at the resource name and product of the
 // instanceType. Only QuotaCosts that have available quota, or that contain a
 // RelatedResource with "cost" 0 are considered. Only
 // "standard" and "marketplace" billing models are considered. If both are
 // detected "standard" is returned.
-func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(externalID string, instanceType types.CentralInstanceType) (string, error) {
+func (q amsQuotaService) getAvailableBillingModelFromCentralInstanceType(externalID string, instanceType types.CentralInstanceType) (string, error) {
 	orgID, err := q.amsClient.GetOrganisationIDFromExternalID(externalID)
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", externalID))
@@ -114,12 +114,12 @@ func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(extern
 }
 
 // ReserveQuota ...
-func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.CentralInstanceType) (string, *errors.ServiceError) {
-	dinosaurID := dinosaur.ID
+func (q amsQuotaService) ReserveQuota(central *dbapi.CentralRequest, instanceType types.CentralInstanceType) (string, *errors.ServiceError) {
+	centralID := central.ID
 
 	rr := newBaseQuotaReservedResourceResourceBuilder()
 
-	bm, err := q.getAvailableBillingModelFromDinosaurInstanceType(dinosaur.OrganisationID, instanceType)
+	bm, err := q.getAvailableBillingModelFromCentralInstanceType(central.OrganisationID, instanceType)
 	if err != nil {
 		svcErr := errors.ToServiceError(err)
 		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
@@ -128,15 +128,15 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 		return "", errors.InsufficientQuotaError("Error getting billing model: No available billing model found")
 	}
 	rr.BillingModel(amsv1.BillingModel(bm))
-	glog.Infof("Billing model of Central request %s with quota type %s has been set to %s.", dinosaur.ID, instanceType.GetQuotaType(), bm)
+	glog.Infof("Billing model of Central request %s with quota type %s has been set to %s.", central.ID, instanceType.GetQuotaType(), bm)
 
 	cb, err := amsv1.NewClusterAuthorizationRequest().
-		AccountUsername(dinosaur.Owner).
-		CloudProviderID(dinosaur.CloudProvider).
+		AccountUsername(central.Owner).
+		CloudProviderID(central.CloudProvider).
 		ProductID(instanceType.GetQuotaType().GetProduct()).
 		Managed(true).
-		ClusterID(dinosaurID).
-		ExternalClusterID(dinosaurID).
+		ClusterID(centralID).
+		ExternalClusterID(centralID).
 		Disconnected(false).
 		BYOC(false).
 		AvailabilityZone("multi").

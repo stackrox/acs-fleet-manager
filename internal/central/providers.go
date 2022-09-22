@@ -18,7 +18,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/services/quota"
 	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/workers"
-	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/workers/dinosaurmgrs"
+	"github.com/stackrox/acs-fleet-manager/internal/central/pkg/workers/centralmgrs"
 	observatoriumClient "github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	environments2 "github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/providers"
@@ -73,20 +73,20 @@ func ServiceProviders() di.Option {
 		di.Provide(services.NewFleetshardOperatorAddon),
 		di.Provide(services.NewClusterPlacementStrategy),
 		di.Provide(services.NewDataPlaneClusterService, di.As(new(services.DataPlaneClusterService))),
-		di.Provide(services.NewDataPlaneDinosaurService, di.As(new(services.DataPlaneDinosaurService))),
+		di.Provide(services.NewDataPlaneCentralService, di.As(new(services.DataPlaneCentralService))),
 		di.Provide(handlers.NewAuthenticationBuilder),
 		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(quota.NewDefaultQuotaServiceFactory),
 		di.Provide(workers.NewClusterManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewCentralManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewAcceptedCentralManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewPreparingDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewDeletingCentralManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewProvisioningCentralManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewReadyCentralManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewCentralCNAMEManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewCentralAuthConfigManager, di.As(new(workers.Worker))),
+		di.Provide(centralmgrs.NewCentralManager, di.As(new(workers.Worker))),
+		di.Provide(centralmgrs.NewAcceptedCentralManager, di.As(new(workers.Worker))),
+		di.Provide(centralmgrs.NewPreparingCentralManager, di.As(new(workers.Worker))),
+		di.Provide(centralmgrs.NewDeletingCentralManager, di.As(new(workers.Worker))),
+		di.Provide(centralmgrs.NewProvisioningCentralManager, di.As(new(workers.Worker))),
+		di.Provide(centralmgrs.NewReadyCentralManager, di.As(new(workers.Worker))),
+		di.Provide(centralmgrs.NewCentralCNAMEManager, di.As(new(workers.Worker))),
+		di.Provide(centralmgrs.NewCentralAuthConfigManager, di.As(new(workers.Worker))),
 		di.Provide(presenters.NewManagedCentralPresenter),
 	)
 }

@@ -1,4 +1,4 @@
-package dinosaurmgrs
+package centralmgrs
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ import (
 	"github.com/golang/glog"
 )
 
-// AcceptedCentralManager represents a dinosaur manager that periodically reconciles dinosaur requests
+// AcceptedCentralManager represents a central manager that periodically reconciles central requests
 type AcceptedCentralManager struct {
 	workers.BaseWorker
 	centralService         services.CentralService
@@ -28,7 +28,7 @@ type AcceptedCentralManager struct {
 	dataPlaneClusterConfig *config.DataplaneClusterConfig
 }
 
-// NewAcceptedCentralManager creates a new dinosaur manager
+// NewAcceptedCentralManager creates a new central manager
 func NewAcceptedCentralManager(centralService services.CentralService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, dataPlaneClusterConfig *config.DataplaneClusterConfig) *AcceptedCentralManager {
 	return &AcceptedCentralManager{
 		BaseWorker: workers.BaseWorker{
@@ -43,12 +43,12 @@ func NewAcceptedCentralManager(centralService services.CentralService, quotaServ
 	}
 }
 
-// Start initializes the dinosaur manager to reconcile dinosaur requests
+// Start initializes the central manager to reconcile central requests
 func (k *AcceptedCentralManager) Start() {
 	k.StartWorker(k)
 }
 
-// Stop causes the process for reconciling dinosaur requests to stop.
+// Stop causes the process for reconciling central requests to stop.
 func (k *AcceptedCentralManager) Stop() {
 	k.StopWorker(k)
 }
@@ -85,19 +85,19 @@ func (k *AcceptedCentralManager) reconcileAcceptedCentral(central *dbapi.Central
 	}
 
 	if cluster == nil {
-		logger.Logger.Warningf("No available cluster found for Dinosaur instance with id %s", central.ID)
+		logger.Logger.Warningf("No available cluster found for Central instance with id %s", central.ID)
 		return nil
 	}
 
 	central.ClusterID = cluster.ClusterID
 
 	// Set desired central operator version
-	var selectedDinosaurOperatorVersion *api.CentralOperatorVersion
+	var selectedCentralOperatorVersion *api.CentralOperatorVersion
 
-	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
-	if err != nil || len(readyDinosaurOperatorVersions) == 0 {
-		// Dinosaur Operator version may not be available at the start (i.e. during upgrade of Dinosaur operator).
-		// We need to allow the reconciler to retry getting and setting of the desired Dinosaur Operator version for a Dinosaur request
+	readyCentralOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
+	if err != nil || len(readyCentralOperatorVersions) == 0 {
+		// Central Operator version may not be available at the start (i.e. during upgrade of Central operator).
+		// We need to allow the reconciler to retry getting and setting of the desired Central Operator version for a Central request
 		// until the max retry duration is reached before updating its status to 'failed'.
 		durationSinceCreation := time.Since(central.CreatedAt)
 		if durationSinceCreation < constants2.AcceptedCentralMaxRetryDuration {
@@ -117,14 +117,14 @@ func (k *AcceptedCentralManager) reconcileAcceptedCentral(central *dbapi.Central
 		return err
 	}
 
-	selectedDinosaurOperatorVersion = &readyDinosaurOperatorVersions[len(readyDinosaurOperatorVersions)-1]
-	central.DesiredCentralOperatorVersion = selectedDinosaurOperatorVersion.Version
+	selectedCentralOperatorVersion = &readyCentralOperatorVersions[len(readyCentralOperatorVersions)-1]
+	central.DesiredCentralOperatorVersion = selectedCentralOperatorVersion.Version
 
-	// Set desired Dinosaur version
-	if len(selectedDinosaurOperatorVersion.CentralVersions) == 0 {
-		return fmt.Errorf("failed to get Dinosaur version %s", central.ID)
+	// Set desired Central version
+	if len(selectedCentralOperatorVersion.CentralVersions) == 0 {
+		return fmt.Errorf("failed to get Central version %s", central.ID)
 	}
-	central.DesiredCentralVersion = selectedDinosaurOperatorVersion.CentralVersions[len(selectedDinosaurOperatorVersion.CentralVersions)-1].Version
+	central.DesiredCentralVersion = selectedCentralOperatorVersion.CentralVersions[len(selectedCentralOperatorVersion.CentralVersions)-1].Version
 
 	glog.Infof("Central instance with id %s is assigned to cluster with id %s", central.ID, central.ClusterID)
 

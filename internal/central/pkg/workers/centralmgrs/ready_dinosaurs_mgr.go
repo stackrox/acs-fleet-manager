@@ -1,4 +1,4 @@
-package dinosaurmgrs
+package centralmgrs
 
 import (
 	"github.com/golang/glog"
@@ -11,7 +11,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
-// ReadyCentralManager represents a dinosaur manager that periodically reconciles dinosaur requests
+// ReadyCentralManager represents a central manager that periodically reconciles central requests
 type ReadyCentralManager struct {
 	workers.BaseWorker
 	centralService services.CentralService
@@ -19,7 +19,7 @@ type ReadyCentralManager struct {
 	iamConfig      *iam.IAMConfig
 }
 
-// NewReadyCentralManager creates a new dinosaur manager
+// NewReadyCentralManager creates a new central manager
 func NewReadyCentralManager(centralService services.CentralService, iamService sso.IAMService, iamConfig *iam.IAMConfig) *ReadyCentralManager {
 	return &ReadyCentralManager{
 		BaseWorker: workers.BaseWorker{
@@ -33,12 +33,12 @@ func NewReadyCentralManager(centralService services.CentralService, iamService s
 	}
 }
 
-// Start initializes the dinosaur manager to reconcile dinosaur requests
+// Start initializes the central manager to reconcile central requests
 func (k *ReadyCentralManager) Start() {
 	k.StartWorker(k)
 }
 
-// Stop causes the process for reconciling dinosaur requests to stop.
+// Stop causes the process for reconciling central requests to stop.
 func (k *ReadyCentralManager) Stop() {
 	k.StopWorker(k)
 }
@@ -53,12 +53,12 @@ func (k *ReadyCentralManager) Reconcile() []error {
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list ready centrals"))
 	} else {
-		glog.Infof("ready dinosaurs count = %d", len(readyCentrals))
+		glog.Infof("ready centrals count = %d", len(readyCentrals))
 	}
 
 	for _, central := range readyCentrals {
 		glog.V(10).Infof("ready central id = %s", central.ID)
-		// TODO implement reconciliation logic for ready dinosaurs
+		// TODO implement reconciliation logic for ready centrals
 	}
 
 	return encounteredErrors

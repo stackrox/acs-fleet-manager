@@ -1,4 +1,4 @@
-package dinosaurmgrs
+package centralmgrs
 
 import (
 	"github.com/golang/glog"

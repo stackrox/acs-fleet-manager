@@ -46,8 +46,8 @@ var _ Provider = &ProviderMock{}
 // 			GetComputeNodesFunc: func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
 // 				panic("mock out the GetComputeNodes method")
 // 			},
-// 			InstallDinosaurOperatorFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
-// 				panic("mock out the InstallDinosaurOperator method")
+// 			InstallCentralOperatorFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
+// 				panic("mock out the InstallCentralOperator method")
 // 			},
 // 			InstallFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
 // 				panic("mock out the InstallFleetshard method")
@@ -95,8 +95,8 @@ type ProviderMock struct {
 	// GetComputeNodesFunc mocks the GetComputeNodes method.
 	GetComputeNodesFunc func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error)
 
-	// InstallDinosaurOperatorFunc mocks the InstallDinosaurOperator method.
-	InstallDinosaurOperatorFunc func(clusterSpec *types.ClusterSpec) (bool, error)
+	// InstallCentralOperatorFunc mocks the InstallCentralOperator method.
+	InstallCentralOperatorFunc func(clusterSpec *types.ClusterSpec) (bool, error)
 
 	// InstallFleetshardFunc mocks the InstallFleetshard method.
 	InstallFleetshardFunc func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error)
@@ -159,8 +159,8 @@ type ProviderMock struct {
 			// Spec is the spec argument value.
 			Spec *types.ClusterSpec
 		}
-		// InstallDinosaurOperator holds details about calls to the InstallDinosaurOperator method.
-		InstallDinosaurOperator []struct {
+		// InstallCentralOperator holds details about calls to the InstallCentralOperator method.
+		InstallCentralOperator []struct {
 			// ClusterSpec is the clusterSpec argument value.
 			ClusterSpec *types.ClusterSpec
 		}
@@ -202,7 +202,7 @@ type ProviderMock struct {
 	lockGetCloudProviders       sync.RWMutex
 	lockGetClusterDNS           sync.RWMutex
 	lockGetComputeNodes         sync.RWMutex
-	lockInstallDinosaurOperator sync.RWMutex
+	lockInstallCentralOperator  sync.RWMutex
 	lockInstallFleetshard       sync.RWMutex
 	lockScaleDown               sync.RWMutex
 	lockScaleUp                 sync.RWMutex
@@ -491,34 +491,34 @@ func (mock *ProviderMock) GetComputeNodesCalls() []struct {
 	return calls
 }
 
-// InstallDinosaurOperator calls InstallDinosaurOperatorFunc.
+// InstallCentralOperator calls InstallCentralOperatorFunc.
 func (mock *ProviderMock) InstallCentralOperator(clusterSpec *types.ClusterSpec) (bool, error) {
-	if mock.InstallDinosaurOperatorFunc == nil {
-		panic("ProviderMock.InstallDinosaurOperatorFunc: method is nil but Provider.InstallDinosaurOperator was just called")
+	if mock.InstallCentralOperatorFunc == nil {
+		panic("ProviderMock.InstallCentralOperatorFunc: method is nil but Provider.InstallCentralOperator was just called")
 	}
 	callInfo := struct {
 		ClusterSpec *types.ClusterSpec
 	}{
 		ClusterSpec: clusterSpec,
 	}
-	mock.lockInstallDinosaurOperator.Lock()
-	mock.calls.InstallDinosaurOperator = append(mock.calls.InstallDinosaurOperator, callInfo)
-	mock.lockInstallDinosaurOperator.Unlock()
-	return mock.InstallDinosaurOperatorFunc(clusterSpec)
+	mock.lockInstallCentralOperator.Lock()
+	mock.calls.InstallCentralOperator = append(mock.calls.InstallCentralOperator, callInfo)
+	mock.lockInstallCentralOperator.Unlock()
+	return mock.InstallCentralOperatorFunc(clusterSpec)
 }
 
-// InstallDinosaurOperatorCalls gets all the calls that were made to InstallDinosaurOperator.
+// InstallCentralOperatorCalls gets all the calls that were made to InstallCentralOperator.
 // Check the length with:
-//     len(mockedProvider.InstallDinosaurOperatorCalls())
-func (mock *ProviderMock) InstallDinosaurOperatorCalls() []struct {
+//     len(mockedProvider.InstallCentralOperatorCalls())
+func (mock *ProviderMock) InstallCentralOperatorCalls() []struct {
 	ClusterSpec *types.ClusterSpec
 } {
 	var calls []struct {
 		ClusterSpec *types.ClusterSpec
 	}
-	mock.lockInstallDinosaurOperator.RLock()
-	calls = mock.calls.InstallDinosaurOperator
-	mock.lockInstallDinosaurOperator.RUnlock()
+	mock.lockInstallCentralOperator.RLock()
+	calls = mock.calls.InstallCentralOperator
+	mock.lockInstallCentralOperator.RUnlock()
 	return calls
 }
 

@@ -59,16 +59,16 @@ type CNameRecordStatus struct {
 
 // CentralService ...
 //
-//go:generate moq -out dinosaurservice_moq.go . DinosaurService
+//go:generate moq -out centralservice_moq.go . CentralService
 type CentralService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
 	// HasAvailableCapacityInRegion checks if there is capacity in the clusters for a given region
-	HasAvailableCapacityInRegion(dinosaurRequest *dbapi.CentralRequest) (bool, *errors.ServiceError)
+	HasAvailableCapacityInRegion(centralRequest *dbapi.CentralRequest) (bool, *errors.ServiceError)
 	// AcceptCentralRequest transitions CentralRequest to 'Preparing'.
 	AcceptCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError
 	// PrepareCentralRequest transitions CentralRequest to 'Provisioning'.
 	PrepareCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError
-	// Get method will retrieve the dinosaurRequest instance that the give ctx has access to from the database.
+	// Get method will retrieve the centralRequest instance that the give ctx has access to from the database.
 	// This should be used when you want to make sure the result is filtered based on the request context.
 	Get(ctx context.Context, id string) (*dbapi.CentralRequest, *errors.ServiceError)
 	// GetByID method will retrieve the CentralRequest instance from the database without checking any permissions.
@@ -807,14 +807,14 @@ func (k *centralService) CountByStatus(status []centralConstants.CentralStatus) 
 
 // CentralComponentVersions ...
 type CentralComponentVersions struct {
-	ID                             string
-	ClusterID                      string
-	DesiredDinosaurOperatorVersion string
-	ActualDinosaurOperatorVersion  string
-	DinosaurOperatorUpgrading      bool
-	DesiredDinosaurVersion         string
-	ActualDinosaurVersion          string
-	DinosaurUpgrading              bool
+	ID                            string
+	ClusterID                     string
+	DesiredCentralOperatorVersion string
+	ActualCentralOperatorVersion  string
+	CentralOperatorUpgrading      bool
+	DesiredCentralVersion         string
+	ActualCentralVersion          string
+	CentralUpgrading              bool
 }
 
 // ListComponentVersions ...

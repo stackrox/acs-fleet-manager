@@ -19,7 +19,7 @@ var _ ClusterPlacementStrategy = &ClusterPlacementStrategyMock{}
 //
 // 		// make and configure a mocked ClusterPlacementStrategy
 // 		mockedClusterPlacementStrategy := &ClusterPlacementStrategyMock{
-// 			FindClusterFunc: func(dinosaur *dbapi.CentralRequest) (*api.Cluster, error) {
+// 			FindClusterFunc: func(central *dbapi.CentralRequest) (*api.Cluster, error) {
 // 				panic("mock out the FindCluster method")
 // 			},
 // 		}
@@ -30,43 +30,43 @@ var _ ClusterPlacementStrategy = &ClusterPlacementStrategyMock{}
 // 	}
 type ClusterPlacementStrategyMock struct {
 	// FindClusterFunc mocks the FindCluster method.
-	FindClusterFunc func(dinosaur *dbapi.CentralRequest) (*api.Cluster, error)
+	FindClusterFunc func(central *dbapi.CentralRequest) (*api.Cluster, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// FindCluster holds details about calls to the FindCluster method.
 		FindCluster []struct {
-			// Dinosaur is the dinosaur argument value.
-			Dinosaur *dbapi.CentralRequest
+			// Central is the central argument value.
+			Central *dbapi.CentralRequest
 		}
 	}
 	lockFindCluster sync.RWMutex
 }
 
 // FindCluster calls FindClusterFunc.
-func (mock *ClusterPlacementStrategyMock) FindCluster(dinosaur *dbapi.CentralRequest) (*api.Cluster, error) {
+func (mock *ClusterPlacementStrategyMock) FindCluster(central *dbapi.CentralRequest) (*api.Cluster, error) {
 	if mock.FindClusterFunc == nil {
 		panic("ClusterPlacementStrategyMock.FindClusterFunc: method is nil but ClusterPlacementStrategy.FindCluster was just called")
 	}
 	callInfo := struct {
-		Dinosaur *dbapi.CentralRequest
+		Central *dbapi.CentralRequest
 	}{
-		Dinosaur: dinosaur,
+		Central: central,
 	}
 	mock.lockFindCluster.Lock()
 	mock.calls.FindCluster = append(mock.calls.FindCluster, callInfo)
 	mock.lockFindCluster.Unlock()
-	return mock.FindClusterFunc(dinosaur)
+	return mock.FindClusterFunc(central)
 }
 
 // FindClusterCalls gets all the calls that were made to FindCluster.
 // Check the length with:
 //     len(mockedClusterPlacementStrategy.FindClusterCalls())
 func (mock *ClusterPlacementStrategyMock) FindClusterCalls() []struct {
-	Dinosaur *dbapi.CentralRequest
+	Central *dbapi.CentralRequest
 } {
 	var calls []struct {
-		Dinosaur *dbapi.CentralRequest
+		Central *dbapi.CentralRequest
 	}
 	mock.lockFindCluster.RLock()
 	calls = mock.calls.FindCluster

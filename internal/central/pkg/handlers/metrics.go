@@ -50,7 +50,7 @@ func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) 
 		ResultType: observatorium.Query,
 	}
 
-	_, err := h.service.GetMetricsByDinosaurID(r.Context(), centralMetrics, centralID, params)
+	_, err := h.service.GetMetricsByCentralID(r.Context(), centralMetrics, centralID, params)
 	if err != nil {
 		if err.Code == errors.ErrorNotFound {
 			shared.HandleError(r, w, err)
@@ -92,7 +92,7 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 			params.ResultType = observatorium.RangeQuery
 			extractMetricsQueryParams(r, &params)
 			centralMetrics := &observatorium.DinosaurMetrics{}
-			foundCentralID, err := h.service.GetMetricsByDinosaurID(ctx, centralMetrics, id, params)
+			foundCentralID, err := h.service.GetMetricsByCentralID(ctx, centralMetrics, id, params)
 			if err != nil {
 				return nil, err
 			}
@@ -122,7 +122,7 @@ func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.
 			params.ResultType = observatorium.Query
 			extractMetricsQueryParams(r, &params)
 			centralMetrics := &observatorium.DinosaurMetrics{}
-			foundCentralID, err := h.service.GetMetricsByDinosaurID(ctx, centralMetrics, id, params)
+			foundCentralID, err := h.service.GetMetricsByCentralID(ctx, centralMetrics, id, params)
 			if err != nil {
 				return nil, err
 			}

@@ -47,7 +47,7 @@ func runGetMetricsByRangeQuery(env *environments.Env, cmd *cobra.Command, _args 
 	params.ResultType = observatorium.RangeQuery
 	params.FillDefaults()
 
-	centralID, err := observatoriumService.GetMetricsByDinosaurID(ctx, centralMetrics, id, params)
+	centralID, err := observatoriumService.GetMetricsByCentralID(ctx, centralMetrics, id, params)
 	if err != nil {
 		glog.Error("An error occurred while attempting to get metrics data ", err.Error())
 		return
