@@ -3,6 +3,7 @@ run:
     - internal/dinosaur/pkg/api/public
     - internal/dinosaur/pkg/api/private
     - internal/dinosaur/pkg/api/admin/private
+    - pkg/client/redhatsso/api
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 10m
 

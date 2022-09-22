@@ -383,7 +383,7 @@ openapi/validate: openapi-generator
 .PHONY: openapi/validate
 
 # generate the openapi schema and generated package
-openapi/generate: openapi/generate/public openapi/generate/private openapi/generate/admin
+openapi/generate: openapi/generate/public openapi/generate/private openapi/generate/admin openapi/generate/rhsso
 .PHONY: openapi/generate
 
 openapi/generate/public: go-bindata openapi-generator
@@ -412,6 +412,13 @@ openapi/generate/admin: go-bindata openapi-generator
 	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private-admin.yaml -g go -o internal/dinosaur/pkg/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/dinosaur/pkg/api/admin/private
 .PHONY: openapi/generate/admin
+
+openapi/generate/rhsso: go-bindata openapi-generator
+	rm -rf pkg/client/redhatsso/api
+	$(OPENAPI_GENERATOR) validate -i openapi/rh-sso-dynamic-client.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/rh-sso-dynamic-client.yaml -g go -o pkg/client/redhatsso/api --package-name api -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w pkg/client/redhatsso/api
+.PHONY: openapi/generate/rhsso
 
 # clean up code and dependencies
 code/fix:
