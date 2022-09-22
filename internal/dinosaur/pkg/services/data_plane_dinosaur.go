@@ -27,8 +27,8 @@ const (
 	statusRejected           dinosaurStatus = "rejected"
 	statusDeleted            dinosaurStatus = "deleted"
 	statusUnknown            dinosaurStatus = "unknown"
-	dinosaurOperatorUpdating string         = "CentralOperatorUpdating"
-	dinosaurUpdating         string         = "CentralUpdating"
+	dinosaurOperatorUpdating string         = "DinosaurOperatorUpdating"
+	dinosaurUpdating         string         = "DinosaurUpdating"
 )
 
 // DataPlaneDinosaurService ...
