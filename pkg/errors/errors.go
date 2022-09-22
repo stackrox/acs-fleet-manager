@@ -79,9 +79,9 @@ const (
 	ErrorFailedToParseSearch       ServiceErrorCode = 23
 	ErrorFailedToParseSearchReason string           = "Failed to parse search query"
 
-	// TooManyRequests occurs when a the dinosaur instances capacity gets filled up
-	ErrorTooManyDinosaurInstancesReached       ServiceErrorCode = 24
-	ErrorTooManyDinosaurInstancesReachedReason string           = "The maximum number of allowed dinosaur instances has been reached"
+	// ErrorTooManyCentralInstancesReached occurs when a the central instances capacity gets filled up
+	ErrorTooManyCentralInstancesReached       ServiceErrorCode = 24
+	ErrorTooManyCentralInstancesReachedReason string           = "The maximum number of allowed central instances has been reached"
 
 	// Gone occurs when a record is accessed that has been deleted
 	ErrorGone       ServiceErrorCode = 25
@@ -93,19 +93,19 @@ const (
 
 	// Failed to create sso client - an internal error incurred when calling iam server
 	ErrorFailedToCreateSSOClient       ServiceErrorCode = 106
-	ErrorFailedToCreateSSOClientReason string           = "Failed to create dinosaur client in the mas sso"
+	ErrorFailedToCreateSSOClientReason string           = "Failed to create central client in the mas sso"
 
 	// Failed to get sso client secret  - an internal error incurred when calling iam server
 	ErrorFailedToGetSSOClientSecret       ServiceErrorCode = 107
-	ErrorFailedToGetSSOClientSecretReason string           = "Failed to get dinosaur client secret from the mas sso"
+	ErrorFailedToGetSSOClientSecretReason string           = "Failed to get central client secret from the mas sso"
 
 	// Failed to get sso client - an internal error incurred when calling iam server
 	ErrorFailedToGetSSOClient       ServiceErrorCode = 108
-	ErrorFailedToGetSSOClientReason string           = "Failed to get dinosaur client from the mas sso"
+	ErrorFailedToGetSSOClientReason string           = "Failed to get central client from the mas sso"
 
 	// Failed to delete sso client - an internal error incurred when calling iam server
 	ErrorFailedToDeleteSSOClient       ServiceErrorCode = 109
-	ErrorFailedToDeleteSSOClientReason string           = "Failed to delete dinosaur client from the mas sso"
+	ErrorFailedToDeleteSSOClientReason string           = "Failed to delete central client from the mas sso"
 
 	// Failed to create service account, after validating user's request, but failed at the server end
 	// it is an internal server error
@@ -141,9 +141,9 @@ const (
 	ErrorRegionNotSupported       ServiceErrorCode = 31
 	ErrorRegionNotSupportedReason string           = "Region not supported"
 
-	// Invalid dinosaur cluster name
-	ErrorMalformedDinosaurClusterName       ServiceErrorCode = 32
-	ErrorMalformedDinosaurClusterNameReason string           = "Dinosaur cluster name is invalid"
+	// ErrorMalformedCentralClusterName central cluster name
+	ErrorMalformedCentralClusterName       ServiceErrorCode = 32
+	ErrorMalformedCentralClusterNameReason string           = "Central cluster name is invalid"
 
 	// Minimum field length validation
 	ErrorMinimumFieldLength       ServiceErrorCode = 33
@@ -155,11 +155,11 @@ const (
 
 	// Only MultiAZ is supported
 	ErrorOnlyMultiAZSupported       ServiceErrorCode = 35
-	ErrorOnlyMultiAZSupportedReason string           = "Only multiAZ Dinosaurs are supported, use multi_az=true"
+	ErrorOnlyMultiAZSupportedReason string           = "Only multiAZ Centrals are supported, use multi_az=true"
 
-	// Dinosaur cluster name must be unique
-	ErrorDuplicateDinosaurClusterName       ServiceErrorCode = 36
-	ErrorDuplicateDinosaurClusterNameReason string           = "Dinosaur cluster name is already used"
+	// ErrorDuplicateCentralClusterName cluster name must be unique
+	ErrorDuplicateCentralClusterName       ServiceErrorCode = 36
+	ErrorDuplicateCentralClusterNameReason string           = "Central cluster name is already used"
 
 	// A generic field validation error when validating API requests input
 	ErrorFieldValidationError       ServiceErrorCode = 37
@@ -229,7 +229,7 @@ func Errors() ServiceErrors {
 	return ServiceErrors{
 		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden, nil},
 		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorTooManyDinosaurInstancesReached, ErrorTooManyDinosaurInstancesReachedReason, http.StatusForbidden, nil},
+		ServiceError{ErrorTooManyCentralInstancesReached, ErrorTooManyCentralInstancesReachedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorTooManyRequests, ErrorTooManyRequestsReason, http.StatusTooManyRequests, nil},
 		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict, nil},
 		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound, nil},
@@ -255,11 +255,11 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorInstanceTypeNotSupported, ErrorInstanceTypeNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMalformedDinosaurClusterName, ErrorMalformedDinosaurClusterNameReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorMalformedCentralClusterName, ErrorMalformedCentralClusterNameReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorDuplicateDinosaurClusterName, ErrorDuplicateDinosaurClusterNameReason, http.StatusConflict, nil},
+		ServiceError{ErrorDuplicateCentralClusterName, ErrorDuplicateCentralClusterNameReason, http.StatusConflict, nil},
 		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusForbidden, nil},
@@ -548,9 +548,9 @@ func MaximumAllowedInstanceReached(reason string, values ...interface{}) *Servic
 	return New(ErrorMaxAllowedInstanceReached, reason, values...)
 }
 
-// TooManyDinosaurInstancesReached ...
-func TooManyDinosaurInstancesReached(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorTooManyDinosaurInstancesReached, reason, values...)
+// TooManyCentralInstancesReached ...
+func TooManyCentralInstancesReached(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorTooManyCentralInstancesReached, reason, values...)
 }
 
 // NotImplemented ...
@@ -654,9 +654,9 @@ func ProviderNotSupported(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorProviderNotSupported, reason, values...)
 }
 
-// MalformedDinosaurClusterName ...
-func MalformedDinosaurClusterName(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorMalformedDinosaurClusterName, reason, values...)
+// MalformedCentralClusterName ...
+func MalformedCentralClusterName(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorMalformedCentralClusterName, reason, values...)
 }
 
 // InstancePlanNotSupported ...
@@ -679,9 +679,9 @@ func MalformedServiceAccountID(reason string, values ...interface{}) *ServiceErr
 	return New(ErrorMalformedServiceAccountID, reason, values...)
 }
 
-// DuplicateDinosaurClusterName ...
-func DuplicateDinosaurClusterName() *ServiceError {
-	return New(ErrorDuplicateDinosaurClusterName, ErrorDuplicateDinosaurClusterNameReason)
+// DuplicateCentralClusterName ...
+func DuplicateCentralClusterName() *ServiceError {
+	return New(ErrorDuplicateCentralClusterName, ErrorDuplicateCentralClusterNameReason)
 }
 
 // MinimumFieldLengthNotReached ...

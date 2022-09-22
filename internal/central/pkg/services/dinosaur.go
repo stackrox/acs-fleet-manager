@@ -210,7 +210,7 @@ func (k *centralService) reserveQuota(centralRequest *dbapi.CentralRequest) (sub
 		}
 
 		if count > 0 {
-			return "", errors.TooManyDinosaurInstancesReached("only one eval instance is allowed")
+			return "", errors.TooManyCentralInstancesReached("only one eval instance is allowed")
 		}
 	}
 
@@ -234,7 +234,7 @@ func (k *centralService) RegisterCentralJob(centralRequest *dbapi.CentralRequest
 	} else if !hasCapacity {
 		errorMsg := fmt.Sprintf("Cluster capacity(%d) exhausted in %s region", int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(centralRequest.Region)), centralRequest.Region)
 		logger.Logger.Warningf(errorMsg)
-		return errors.TooManyDinosaurInstancesReached(errorMsg)
+		return errors.TooManyCentralInstancesReached(errorMsg)
 	}
 
 	instanceType, err := k.DetectInstanceType(centralRequest)
@@ -248,7 +248,7 @@ func (k *centralService) RegisterCentralJob(centralRequest *dbapi.CentralRequest
 	if e != nil || cluster == nil {
 		msg := fmt.Sprintf("No available cluster found for '%s' central instance in region: '%s'", centralRequest.InstanceType, centralRequest.Region)
 		logger.Logger.Errorf(msg)
-		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", centralRequest.Region, centralRequest.InstanceType))
+		return errors.TooManyCentralInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", centralRequest.Region, centralRequest.InstanceType))
 	}
 	centralRequest.ClusterID = cluster.ClusterID
 	subscriptionID, err := k.reserveQuota(centralRequest)

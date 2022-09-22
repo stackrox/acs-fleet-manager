@@ -6,26 +6,26 @@ type Parameter struct {
 	Value string
 }
 
-// DinosaurQuotaType ...
-type DinosaurQuotaType string
+// CentralQuotaType ...
+type CentralQuotaType string
 
 // EvalQuota ...
 const (
-	EvalQuota     DinosaurQuotaType = "eval"
-	StandardQuota DinosaurQuotaType = "standard"
+	EvalQuota     CentralQuotaType = "eval"
+	StandardQuota CentralQuotaType = "standard"
 )
 
-// DinosaurProduct ...
-type DinosaurProduct string
+// CentralProduct ...
+type CentralProduct string
 
 // RHACSProduct
 const (
-	RHACSProduct      DinosaurProduct = "RHACS"      // this is the standard product type
-	RHACSTrialProduct DinosaurProduct = "RHACSTrial" // this is trial product type which does not have any cost
+	RHACSProduct      CentralProduct = "RHACS"      // this is the standard product type
+	RHACSTrialProduct CentralProduct = "RHACSTrial" // this is trial product type which does not have any cost
 )
 
 // GetProduct ...
-func (t DinosaurQuotaType) GetProduct() string {
+func (t CentralQuotaType) GetProduct() string {
 	if t == StandardQuota {
 		return string(RHACSProduct)
 	}
@@ -34,11 +34,11 @@ func (t DinosaurQuotaType) GetProduct() string {
 }
 
 // GetResourceName ...
-func (t DinosaurQuotaType) GetResourceName() string {
+func (t CentralQuotaType) GetResourceName() string {
 	return "rhacs"
 }
 
 // Equals ...
-func (t DinosaurQuotaType) Equals(t1 DinosaurQuotaType) bool {
+func (t CentralQuotaType) Equals(t1 CentralQuotaType) bool {
 	return t1.GetProduct() == t.GetProduct() && t1.GetResourceName() == t.GetResourceName()
 }

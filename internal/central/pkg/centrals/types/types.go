@@ -17,7 +17,7 @@ func (t CentralInstanceType) String() string {
 }
 
 // GetQuotaType ...
-func (t CentralInstanceType) GetQuotaType() ocm.DinosaurQuotaType {
+func (t CentralInstanceType) GetQuotaType() ocm.CentralQuotaType {
 	if t == STANDARD {
 		return ocm.StandardQuota
 	}

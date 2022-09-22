@@ -13,7 +13,7 @@ func NewMigrateCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "Run fleet-manager data migrations",
-		Long:  "Run Dinosaur Service Fleet Manager data migrations",
+		Long:  "Run Central Service Fleet Manager data migrations",
 		Run: func(cmd *cobra.Command, args []string) {
 			env.MustInvoke(func(migrations []*db.Migration) {
 				glog.Infoln("Migration starting")

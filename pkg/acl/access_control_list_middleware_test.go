@@ -80,7 +80,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, err := http.NewRequest("GET", "/api/dinosaurs_mgmt/dinosaurs", nil) // TODO change here to call your fleet manager endpoint
+			req, err := http.NewRequest("GET", "/api/rhacs/centrals", nil) // TODO change here to call your fleet manager endpoint
 			Expect(err).NotTo(HaveOccurred())
 
 			rr := httptest.NewRecorder()

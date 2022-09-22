@@ -33,7 +33,7 @@ var (
 func ValidCentralClusterName(value *string, field string) handlers.Validate {
 	return func() *errors.ServiceError {
 		if !ValidCentralClusterNameRegexp.MatchString(*value) {
-			return errors.MalformedDinosaurClusterName("%s does not match %s", field, ValidCentralClusterNameRegexp.String())
+			return errors.MalformedCentralClusterName("%s does not match %s", field, ValidCentralClusterNameRegexp.String())
 		}
 		return nil
 	}
@@ -49,7 +49,7 @@ func ValidateCentralClusterNameIsUnique(context context.Context, name *string, c
 		}
 
 		if pageMeta.Total > 0 {
-			return errors.DuplicateDinosaurClusterName()
+			return errors.DuplicateCentralClusterName()
 		}
 
 		return nil
