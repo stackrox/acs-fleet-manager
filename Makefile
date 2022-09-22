@@ -325,7 +325,7 @@ test: gotestsum
 
 # Precompile everything required for development/test.
 test/prepare:
-	$(GO) test -i ./internal/dinosaur/test/integration/...
+	$(GO) test -i ./internal/central/test/integration/...
 .PHONY: test/prepare
 
 # Runs the integration tests.
@@ -340,7 +340,7 @@ test/prepare:
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
 test/integration/dinosaur: test/prepare gotestsum
 	$(GOTESTSUM) --junitfile data/results/fleet-manager-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
-				./internal/dinosaur/test/integration/...
+				./internal/central/test/integration/...
 .PHONY: test/integration/dinosaur
 
 test/integration: test/integration/dinosaur
@@ -387,30 +387,30 @@ openapi/generate: openapi/generate/public openapi/generate/private openapi/gener
 .PHONY: openapi/generate
 
 openapi/generate/public: go-bindata openapi-generator
-	rm -rf internal/dinosaur/pkg/api/public
+	rm -rf internal/central/pkg/api/public
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager.yaml -g go -o internal/dinosaur/pkg/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/dinosaur/pkg/api/public
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager.yaml -g go -o internal/central/pkg/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/central/pkg/api/public
 
 	mkdir -p .generate/openapi
 	cp ./openapi/fleet-manager.yaml .generate/openapi
-	$(GOBINDATA) -o ./internal/dinosaur/pkg/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
-	$(GOFMT) -w internal/dinosaur/pkg/generated
+	$(GOBINDATA) -o ./internal/central/pkg/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
+	$(GOFMT) -w internal/central/pkg/generated
 	rm -rf .generate/openapi
 .PHONY: openapi/generate/public
 
 openapi/generate/private: go-bindata openapi-generator
-	rm -rf internal/dinosaur/pkg/api/private
+	rm -rf internal/central/pkg/api/private
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private.yaml -g go -o internal/dinosaur/pkg/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/dinosaur/pkg/api/private
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private.yaml -g go -o internal/central/pkg/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/central/pkg/api/private
 .PHONY: openapi/generate/private
 
 openapi/generate/admin: go-bindata openapi-generator
-	rm -rf internal/dinosaur/pkg/api/admin/private
+	rm -rf internal/central/pkg/api/admin/private
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private-admin.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private-admin.yaml -g go -o internal/dinosaur/pkg/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/dinosaur/pkg/api/admin/private
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private-admin.yaml -g go -o internal/central/pkg/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/central/pkg/api/admin/private
 .PHONY: openapi/generate/admin
 
 # clean up code and dependencies
