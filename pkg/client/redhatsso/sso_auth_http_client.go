@@ -1,0 +1,25 @@
+package redhatsso
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
+)
+
+// NewSsoAuthHTTPClient returns http client which uses 2-legged OAuth2 flow to automatically get and refresh
+// access token.
+func NewSsoAuthHTTPClient(scopes []string, realmConfig *iam.IAMRealmConfig) *http.Client {
+	cfg := clientcredentials.Config{
+		ClientID:     realmConfig.ClientID,
+		ClientSecret: realmConfig.ClientSecret,
+		TokenURL:     fmt.Sprintf("%s%s", realmConfig.BaseURL, realmConfig.TokenEndpointURI),
+		Scopes:       scopes,
+		AuthStyle:    oauth2.AuthStyleInParams,
+	}
+	ctx := context.Background()
+	return oauth2.NewClient(ctx, cfg.TokenSource(ctx))
+}

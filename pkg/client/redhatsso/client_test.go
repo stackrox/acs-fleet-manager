@@ -7,316 +7,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 
 	. "github.com/onsi/gomega"
-	"github.com/patrickmn/go-cache"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
 )
-
-const (
-	accountName        = "serviceAccount"
-	accountDescription = "fake service account"
-)
-
-func CreateServiceAccountForTests(accessToken string, server mocks.RedhatSSOMock, accountName string, accountDescription string) serviceaccountsclient.ServiceAccountData {
-	c := &rhSSOClient{
-		realmConfig: &iam.IAMRealmConfig{
-			ClientID:         "",
-			ClientSecret:     "",
-			Realm:            "redhat-external",
-			APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-			TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
-		},
-		configuration: &serviceaccountsclient.Configuration{
-			DefaultHeader: map[string]string{
-				"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-				"Content-Type":  "application/json",
-			},
-			UserAgent: "OpenAPI-Generator/1.0.0/go",
-			Debug:     false,
-			Servers: serviceaccountsclient.ServerConfigurations{
-				{
-					URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-				},
-			},
-		},
-	}
-	serviceAccount, _ := c.CreateServiceAccount(accessToken, accountName, accountDescription)
-	return serviceAccount
-}
-
-func TestNewSSOClient(t *testing.T) {
-	type args struct {
-		config      *iam.IAMConfig
-		realmConfig *iam.IAMRealmConfig
-	}
-	tests := []struct {
-		name string
-		args args
-		want SSOClient
-	}{
-		{
-			name: "should successfully return a new sso client",
-			args: args{
-				config: &iam.IAMConfig{
-					BaseURL: "base_url",
-				},
-				realmConfig: &iam.IAMRealmConfig{
-					ClientID:     "Client_Id",
-					ClientSecret: "ClientSecret", // pragma: allowlist secret
-				},
-			},
-			want: &rhSSOClient{
-				config: &iam.IAMConfig{
-					BaseURL: "base_url",
-				},
-				realmConfig: &iam.IAMRealmConfig{
-					ClientID:     "Client_Id",
-					ClientSecret: "ClientSecret", // pragma: allowlist secret
-				},
-			},
-		},
-	}
-	g := NewWithT(t)
-	for _, testcase := range tests {
-		tt := testcase
-		t.Run(tt.name, func(t *testing.T) {
-			ssoClient := NewSSOClient(tt.args.config, tt.args.realmConfig)
-			g.Expect(ssoClient.GetConfig()).To(Equal(tt.want.GetConfig()))
-			g.Expect(ssoClient.GetRealmConfig()).To(Equal(tt.want.GetRealmConfig()))
-		})
-	}
-}
-
-func Test_rhSSOClient_getConfiguration(t *testing.T) {
-	type fields struct {
-		config        *iam.IAMConfig
-		realmConfig   *iam.IAMRealmConfig
-		configuration *serviceaccountsclient.Configuration
-		cache         *cache.Cache
-	}
-	type args struct {
-		accessToken string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   *serviceaccountsclient.Configuration
-	}{
-		{
-			name: "should return the clients configuration",
-			fields: fields{
-				config:        &iam.IAMConfig{},
-				realmConfig:   &iam.IAMRealmConfig{},
-				configuration: nil,
-				cache:         cache.New(tokenLifeDuration, cacheCleanupInterval),
-			},
-			args: args{
-				accessToken: "accessToken",
-			},
-			want: &serviceaccountsclient.Configuration{
-				DefaultHeader: map[string]string{
-					"Authorization": fmt.Sprintf("Bearer %s", "accessToken"),
-					"Content-Type":  "application/json",
-				},
-				UserAgent: "OpenAPI-Generator/1.0.0/go",
-				Debug:     false,
-				Servers: serviceaccountsclient.ServerConfigurations{
-					{
-						URL: "",
-					},
-				},
-			},
-		},
-	}
-	g := NewWithT(t)
-
-	for _, testcase := range tests {
-		tt := testcase
-		t.Run(tt.name, func(t *testing.T) {
-			c := &rhSSOClient{
-				config:        tt.fields.config,
-				realmConfig:   tt.fields.realmConfig,
-				configuration: tt.fields.configuration,
-				cache:         tt.fields.cache,
-			}
-			g.Expect(c.getConfiguration(tt.args.accessToken)).To(Equal(tt.want))
-		})
-	}
-}
-
-func Test_rhSSOClient_getCachedToken(t *testing.T) {
-	type fields struct {
-		config        *iam.IAMConfig
-		realmConfig   *iam.IAMRealmConfig
-		configuration *serviceaccountsclient.Configuration
-		cache         *cache.Cache
-	}
-	type args struct {
-		tokenKey string
-	}
-	server := mocks.NewMockServer()
-	server.Start()
-	defer server.Stop()
-	accessToken := server.GenerateNewAuthToken()
-
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    string
-		wantErr bool
-		setupFn func(f *fields)
-	}{
-		{
-			name: "should return the token key if it is cached",
-			fields: fields{
-				config:        &iam.IAMConfig{},
-				realmConfig:   &iam.IAMRealmConfig{},
-				configuration: &serviceaccountsclient.Configuration{},
-				cache:         cache.New(tokenLifeDuration, cacheCleanupInterval),
-			},
-			args: args{
-				tokenKey: accessToken,
-			},
-			want:    accessToken,
-			wantErr: false,
-			setupFn: func(f *fields) {
-				f.cache.Set(accessToken, accessToken, cacheCleanupInterval)
-			},
-		},
-		{
-			name: "should return an empty string and a error if token key is not cached",
-			fields: fields{
-				config:        &iam.IAMConfig{},
-				realmConfig:   &iam.IAMRealmConfig{},
-				configuration: &serviceaccountsclient.Configuration{},
-				cache:         cache.New(tokenLifeDuration, cacheCleanupInterval),
-			},
-			args: args{
-				tokenKey: "uncached-token-key",
-			},
-			want:    "",
-			wantErr: true,
-			setupFn: func(f *fields) {
-				f.cache.Set(accessToken, server.GenerateNewAuthToken(), cacheCleanupInterval)
-			},
-		},
-	}
-	g := NewWithT(t)
-	for _, testcase := range tests {
-		tt := testcase
-
-		if tt.setupFn != nil {
-			tt.setupFn(&tt.fields)
-		}
-		t.Run(tt.name, func(t *testing.T) {
-			c := &rhSSOClient{
-				config:        tt.fields.config,
-				realmConfig:   tt.fields.realmConfig,
-				configuration: tt.fields.configuration,
-				cache:         tt.fields.cache,
-			}
-			got, err := c.getCachedToken(tt.args.tokenKey)
-			g.Expect(err != nil).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
-		})
-	}
-}
-
-func Test_rhSSOClient_GetToken(t *testing.T) {
-	type fields struct {
-		config        *iam.IAMConfig
-		realmConfig   *iam.IAMRealmConfig
-		configuration *serviceaccountsclient.Configuration
-		cache         *cache.Cache
-	}
-	server := mocks.NewMockServer()
-	server.Start()
-	defer server.Stop()
-	accessToken := server.GenerateNewAuthToken()
-	serviceAccount := CreateServiceAccountForTests(accessToken, server, accountName, accountDescription)
-	server.SetBearerToken(*serviceAccount.Secret)
-
-	tests := []struct {
-		name    string
-		fields  fields
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "should successfully return a clients token",
-			fields: fields{
-				config: &iam.IAMConfig{
-					SsoBaseURL: server.BaseURL(),
-				},
-				realmConfig: &iam.IAMRealmConfig{
-					ClientID:         *serviceAccount.ClientId,
-					ClientSecret:     *serviceAccount.Secret,
-					Realm:            "redhat-external",
-					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
-				},
-				configuration: &serviceaccountsclient.Configuration{
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
-			},
-			want:    *serviceAccount.Secret,
-			wantErr: false,
-		},
-		{
-			name: "should return an error when it fails to retrieve the token key",
-			fields: fields{
-				config: &iam.IAMConfig{
-					SsoBaseURL: server.BaseURL(),
-				},
-				realmConfig: &iam.IAMRealmConfig{
-					ClientID:         "",
-					ClientSecret:     "",
-					Realm:            "redhat-external",
-					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
-				},
-				configuration: &serviceaccountsclient.Configuration{
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
-			},
-			want:    "",
-			wantErr: true,
-		},
-	}
-	g := NewWithT(t)
-	for _, testcase := range tests {
-		tt := testcase
-
-		t.Run(tt.name, func(t *testing.T) {
-			c := &rhSSOClient{
-				config:        tt.fields.config,
-				realmConfig:   tt.fields.realmConfig,
-				configuration: tt.fields.configuration,
-				cache:         tt.fields.cache,
-			}
-			got, err := c.GetToken()
-			g.Expect(err != nil).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
-		})
-
-	}
-}
 
 func Test_rhSSOClient_GetConfig(t *testing.T) {
 	type fields struct {
@@ -380,20 +73,17 @@ func Test_rhSSOClient_GetRealmConfig(t *testing.T) {
 
 func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 	type fields struct {
-		config        *iam.IAMConfig
-		realmConfig   *iam.IAMRealmConfig
-		configuration *serviceaccountsclient.Configuration
-		cache         *cache.Cache
+		config      *iam.IAMConfig
+		realmConfig *iam.IAMRealmConfig
 	}
 	type args struct {
-		accessToken string
-		first       int
-		max         int
+		first int
+		max   int
 	}
 	server := mocks.NewMockServer()
 	server.Start()
 	defer server.Stop()
-	accessToken := server.GenerateNewAuthToken()
+	serviceAccount := server.GetInitialServiceAccount()
 
 	tests := []struct {
 		name    string
@@ -408,29 +98,18 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
 					Realm:            "redhat-external",
+					ClientID:         *serviceAccount.ClientId,
+					ClientSecret:     *serviceAccount.Secret,
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL())},
-				configuration: &serviceaccountsclient.Configuration{
-					DefaultHeader: map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-						"Content-Type":  "application/json",
-					},
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			args: args{
-				accessToken: accessToken,
-				first:       0,
-				max:         5,
+				first: 0,
+				max:   5,
 			},
-			want:    []serviceaccountsclient.ServiceAccountData{},
+			want: []serviceaccountsclient.ServiceAccountData{
+				server.GetInitialServiceAccount(),
+			},
 			wantErr: false,
 		},
 		{
@@ -444,25 +123,10 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 					Realm:            "redhat-external",
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL())},
-				configuration: &serviceaccountsclient.Configuration{
-					DefaultHeader: map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-						"Content-Type":  "application/json",
-					},
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: "",
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			args: args{
-				accessToken: accessToken,
-				first:       0,
-				max:         5,
+				first: 0,
+				max:   5,
 			},
 			want:    nil,
 			wantErr: true,
@@ -473,13 +137,8 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			c := &rhSSOClient{
-				config:        tt.fields.config,
-				realmConfig:   tt.fields.realmConfig,
-				configuration: tt.fields.configuration,
-				cache:         tt.fields.cache,
-			}
-			got, err := c.GetServiceAccounts(tt.args.accessToken, tt.args.first, tt.args.max)
+			c := NewSSOClient(tt.fields.config, tt.fields.realmConfig)
+			got, err := c.GetServiceAccounts(tt.args.first, tt.args.max)
 			g.Expect(err != nil).To(Equal(tt.wantErr))
 			g.Expect(got).To(Equal(tt.want))
 		})
@@ -488,21 +147,17 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 
 func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 	type fields struct {
-		config        *iam.IAMConfig
-		realmConfig   *iam.IAMRealmConfig
-		configuration *serviceaccountsclient.Configuration
-		cache         *cache.Cache
+		config      *iam.IAMConfig
+		realmConfig *iam.IAMRealmConfig
 	}
 	type args struct {
-		accessToken string
-		clientID    string
+		clientID string
 	}
 
 	server := mocks.NewMockServer()
 	server.Start()
 	defer server.Stop()
-	accessToken := server.GenerateNewAuthToken()
-	serviceAccount := CreateServiceAccountForTests(accessToken, server, accountName, accountDescription)
+	serviceAccount := server.GetInitialServiceAccount()
 
 	tests := []struct {
 		name    string
@@ -523,20 +178,9 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
-				configuration: &serviceaccountsclient.Configuration{
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			args: args{
-				accessToken: accessToken,
-				clientID:    *serviceAccount.ClientId,
+				clientID: *serviceAccount.ClientId,
 			},
 			want:    &serviceAccount,
 			found:   true,
@@ -553,20 +197,9 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
-				configuration: &serviceaccountsclient.Configuration{
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			args: args{
-				accessToken: accessToken,
-				clientID:    "wrong_clientId",
+				clientID: "wrong_clientId",
 			},
 			want:    nil,
 			found:   false,
@@ -578,13 +211,8 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			c := &rhSSOClient{
-				config:        tt.fields.config,
-				realmConfig:   tt.fields.realmConfig,
-				configuration: tt.fields.configuration,
-				cache:         tt.fields.cache,
-			}
-			got, httpStatus, err := c.GetServiceAccount(tt.args.accessToken, tt.args.clientID)
+			c := NewSSOClient(tt.fields.config, tt.fields.realmConfig)
+			got, httpStatus, err := c.GetServiceAccount(tt.args.clientID)
 			g.Expect(err != nil).To(Equal(tt.wantErr))
 			g.Expect(got).To(Equal(tt.want))
 			g.Expect(httpStatus).To(Equal(tt.found))
@@ -594,20 +222,17 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 
 func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 	type fields struct {
-		config        *iam.IAMConfig
-		realmConfig   *iam.IAMRealmConfig
-		configuration *serviceaccountsclient.Configuration
-		cache         *cache.Cache
+		config      *iam.IAMConfig
+		realmConfig *iam.IAMRealmConfig
 	}
 	type args struct {
-		accessToken string
 		name        string
 		description string
 	}
 	server := mocks.NewMockServer()
 	server.Start()
 	defer server.Stop()
-	accessToken := server.GenerateNewAuthToken()
+	serviceAccount := server.GetInitialServiceAccount()
 	accountName := "serviceAccount"
 	accountDescription := "fake service account"
 
@@ -624,22 +249,13 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
 					Realm:            "redhat-external",
+					ClientID:         *serviceAccount.ClientId,
+					ClientSecret:     *serviceAccount.Secret,
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
-				configuration: &serviceaccountsclient.Configuration{
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			args: args{
-				accessToken: accessToken,
 				name:        "serviceAccount",
 				description: "fake service account",
 			},
@@ -650,27 +266,18 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should fail to create the service account if wrong access token is given",
+			name: "should fail to create the service account if wrong client credentials are given",
 			fields: fields{
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
 					Realm:            "redhat-external",
+					ClientID:         "random client id",
+					ClientSecret:     "random client secret",
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
-				configuration: &serviceaccountsclient.Configuration{
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			args: args{
-				accessToken: "wrong_access_token",
 				name:        "serviceAccount",
 				description: "fake service account",
 			},
@@ -686,13 +293,8 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			c := &rhSSOClient{
-				config:        tt.fields.config,
-				realmConfig:   tt.fields.realmConfig,
-				configuration: tt.fields.configuration,
-				cache:         tt.fields.cache,
-			}
-			got, err := c.CreateServiceAccount(tt.args.accessToken, tt.args.name, tt.args.description)
+			c := NewSSOClient(tt.fields.config, tt.fields.realmConfig)
+			got, err := c.CreateServiceAccount(tt.args.name, tt.args.description)
 			g.Expect(err != nil).To(Equal(tt.wantErr))
 			g.Expect(got.Name).To(Equal(tt.want.Name))
 			g.Expect(got.Description).To(Equal(tt.want.Description))
@@ -702,21 +304,17 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 
 func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 	type fields struct {
-		config        *iam.IAMConfig
-		realmConfig   *iam.IAMRealmConfig
-		configuration *serviceaccountsclient.Configuration
-		cache         *cache.Cache
+		config      *iam.IAMConfig
+		realmConfig *iam.IAMRealmConfig
 	}
 	type args struct {
-		accessToken string
-		clientID    string
+		clientID string
 	}
 
 	server := mocks.NewMockServer()
 	server.Start()
 	defer server.Stop()
-	accessToken := server.GenerateNewAuthToken()
-	serviceAccount := CreateServiceAccountForTests(accessToken, server, accountName, accountDescription)
+	serviceAccount := server.GetInitialServiceAccount()
 
 	tests := []struct {
 		name    string
@@ -735,20 +333,9 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
-				configuration: &serviceaccountsclient.Configuration{
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			args: args{
-				accessToken: accessToken,
-				clientID:    *serviceAccount.ClientId,
+				clientID: *serviceAccount.ClientId,
 			},
 			wantErr: false,
 		},
@@ -763,20 +350,9 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
-				configuration: &serviceaccountsclient.Configuration{
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			args: args{
-				accessToken: accessToken,
-				clientID:    "",
+				clientID: "",
 			},
 			wantErr: true,
 		},
@@ -786,26 +362,18 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			c := &rhSSOClient{
-				config:        tt.fields.config,
-				realmConfig:   tt.fields.realmConfig,
-				configuration: tt.fields.configuration,
-				cache:         tt.fields.cache,
-			}
-			g.Expect(c.DeleteServiceAccount(tt.args.accessToken, tt.args.clientID) != nil).To(Equal(tt.wantErr))
+			c := NewSSOClient(tt.fields.config, tt.fields.realmConfig)
+			g.Expect(c.DeleteServiceAccount(tt.args.clientID) != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
 
 func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 	type fields struct {
-		config        *iam.IAMConfig
-		realmConfig   *iam.IAMRealmConfig
-		configuration *serviceaccountsclient.Configuration
-		cache         *cache.Cache
+		config      *iam.IAMConfig
+		realmConfig *iam.IAMRealmConfig
 	}
 	type args struct {
-		accessToken string
 		clientID    string
 		name        string
 		description string
@@ -814,8 +382,7 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 	server := mocks.NewMockServer()
 	server.Start()
 	defer server.Stop()
-	accessToken := server.GenerateNewAuthToken()
-	serviceAccount := CreateServiceAccountForTests(accessToken, server, accountName, accountDescription)
+	serviceAccount := server.GetInitialServiceAccount()
 
 	name := "new name"
 	description := "new description"
@@ -838,19 +405,8 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
-				configuration: &serviceaccountsclient.Configuration{
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			args: args{
-				accessToken: accessToken,
 				clientID:    *serviceAccount.ClientId,
 				name:        "new name",
 				description: "new description",
@@ -877,19 +433,8 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
-				configuration: &serviceaccountsclient.Configuration{
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			args: args{
-				accessToken: accessToken,
 				clientID:    "",
 				name:        "new name",
 				description: "new description",
@@ -903,13 +448,8 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			c := &rhSSOClient{
-				config:        tt.fields.config,
-				realmConfig:   tt.fields.realmConfig,
-				configuration: tt.fields.configuration,
-				cache:         tt.fields.cache,
-			}
-			got, err := c.UpdateServiceAccount(tt.args.accessToken, tt.args.clientID, tt.args.name, tt.args.description)
+			c := NewSSOClient(tt.fields.config, tt.fields.realmConfig)
+			got, err := c.UpdateServiceAccount(tt.args.clientID, tt.args.name, tt.args.description)
 			g.Expect(err != nil).To(Equal(tt.wantErr))
 			g.Expect(got).To(Equal(tt.want))
 		})
@@ -918,21 +458,17 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 
 func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 	type fields struct {
-		config        *iam.IAMConfig
-		realmConfig   *iam.IAMRealmConfig
-		configuration *serviceaccountsclient.Configuration
-		cache         *cache.Cache
+		config      *iam.IAMConfig
+		realmConfig *iam.IAMRealmConfig
 	}
 	type args struct {
-		accessToken string
-		id          string
+		id string
 	}
 
 	server := mocks.NewMockServer()
 	server.Start()
 	defer server.Stop()
-	accessToken := server.GenerateNewAuthToken()
-	serviceAccount := CreateServiceAccountForTests(accessToken, server, accountName, accountDescription)
+	serviceAccount := server.GetInitialServiceAccount()
 
 	tests := []struct {
 		name    string
@@ -952,23 +488,12 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
-				configuration: &serviceaccountsclient.Configuration{
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			args: args{
-				accessToken: accessToken,
-				id:          *serviceAccount.ClientId,
+				id: *serviceAccount.ClientId,
 			},
 			want: serviceaccountsclient.ServiceAccountData{
-				Secret: &accessToken,
+				Secret: serviceAccount.Secret,
 			},
 			wantErr: false,
 		},
@@ -983,23 +508,12 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
-				configuration: &serviceaccountsclient.Configuration{
-					UserAgent: "OpenAPI-Generator/1.0.0/go",
-					Debug:     false,
-					Servers: serviceaccountsclient.ServerConfigurations{
-						{
-							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
-						},
-					},
-				},
-				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			args: args{
-				accessToken: accessToken,
-				id:          "",
+				id: "",
 			},
 			want: serviceaccountsclient.ServiceAccountData{
-				Secret: &accessToken,
+				Secret: serviceAccount.Secret,
 			},
 			wantErr: true,
 		},
@@ -1009,13 +523,8 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			c := &rhSSOClient{
-				config:        tt.fields.config,
-				realmConfig:   tt.fields.realmConfig,
-				configuration: tt.fields.configuration,
-				cache:         tt.fields.cache,
-			}
-			got, err := c.RegenerateClientSecret(tt.args.accessToken, tt.args.id)
+			c := NewSSOClient(tt.fields.config, tt.fields.realmConfig)
+			got, err := c.RegenerateClientSecret(tt.args.id)
 			g.Expect(err != nil).To(Equal(tt.wantErr))
 			g.Expect(got).To(Not(Equal(tt.want)))
 		})

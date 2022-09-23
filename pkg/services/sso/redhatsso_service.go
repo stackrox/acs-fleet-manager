@@ -31,17 +31,8 @@ func (r *redhatssoService) GetRealmConfig() *iam.IAMRealmConfig {
 
 // RegisterAcsFleetshardOperatorServiceAccount ...
 func (r *redhatssoService) RegisterAcsFleetshardOperatorServiceAccount(agentClusterID string) (*api.ServiceAccount, *errors.ServiceError) {
-	accessToken, err := r.getToken()
-	if err != nil {
-		return nil, err
-	}
-
-	return r.registerAgentServiceAccount(accessToken, agentClusterID)
-}
-
-func (r *redhatssoService) registerAgentServiceAccount(accessToken string, agentClusterID string) (*api.ServiceAccount, *errors.ServiceError) {
 	glog.V(5).Infof("Registering agent service account with cluster: %s", agentClusterID)
-	svcData, err := r.client.CreateServiceAccount(accessToken, agentClusterID, fmt.Sprintf("service account for agent on cluster %s", agentClusterID))
+	svcData, err := r.client.CreateServiceAccount(agentClusterID, fmt.Sprintf("service account for agent on cluster %s", agentClusterID))
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to create agent service account")
 	}
@@ -53,12 +44,8 @@ func (r *redhatssoService) registerAgentServiceAccount(accessToken string, agent
 // DeRegisterAcsFleetshardOperatorServiceAccount ...
 func (r *redhatssoService) DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterID string) *errors.ServiceError {
 	glog.V(5).Infof("Deregistering ACS fleetshard operator service account with cluster: %s", agentClusterID)
-	accessToken, tokenErr := r.getToken()
-	if tokenErr != nil {
-		return tokenErr
-	}
 
-	_, found, err := r.client.GetServiceAccount(accessToken, agentClusterID)
+	_, found, err := r.client.GetServiceAccount(agentClusterID)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterID)
 	}
@@ -68,21 +55,13 @@ func (r *redhatssoService) DeRegisterAcsFleetshardOperatorServiceAccount(agentCl
 		return nil
 	}
 
-	err = r.client.DeleteServiceAccount(accessToken, agentClusterID)
+	err = r.client.DeleteServiceAccount(agentClusterID)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterID)
 	}
 
 	glog.V(5).Infof("ACS fleetshard operator service account deregistered with cluster: %s", agentClusterID)
 	return nil
-}
-
-func (r *redhatssoService) getToken() (string, *errors.ServiceError) {
-	accessToken, err := r.client.GetToken()
-	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, err, "error getting access token")
-	}
-	return accessToken, nil
 }
 
 // // utility functions

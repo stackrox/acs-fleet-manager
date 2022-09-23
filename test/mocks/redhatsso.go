@@ -22,18 +22,18 @@ type RedhatSSOMock interface {
 	Start()
 	Stop()
 	BaseURL() string
-	GenerateNewAuthToken() string
-	SetBearerToken(token string) string
+	GetInitialServiceAccount() serviceaccountsclient.ServiceAccountData
 	DeleteAllServiceAccounts()
 	ServiceAccountsLimit() int
 }
 
 type redhatSSOMock struct {
-	server               *httptest.Server
-	authTokens           []string
-	serviceAccounts      map[string]serviceaccountsclient.ServiceAccountData
-	sessionAuthToken     string
-	serviceAccountsLimit int
+	server                *httptest.Server
+	authTokens            []string
+	serviceAccounts       map[string]serviceaccountsclient.ServiceAccountData
+	sessionAuthToken      string
+	initialServiceAccount serviceaccountsclient.ServiceAccountData
+	serviceAccountsLimit  int
 }
 
 type getTokenResponseMock struct {
@@ -75,6 +75,10 @@ func NewMockServer(options ...MockServerOption) RedhatSSOMock {
 // ServiceAccountsLimit ...
 func (mockServer *redhatSSOMock) ServiceAccountsLimit() int {
 	return mockServer.serviceAccountsLimit
+}
+
+func (mockServer *redhatSSOMock) GetInitialServiceAccount() serviceaccountsclient.ServiceAccountData {
+	return mockServer.initialServiceAccount
 }
 
 // DeleteAllServiceAccounts ...
@@ -146,6 +150,21 @@ func (mockServer *redhatSSOMock) init() {
 	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/service_accounts/v1/{clientId}/resetSecret", mockServer.regenerateSecretHandler).Methods("POST")
 
 	mockServer.server = httptest.NewUnstartedServer(r)
+
+	id := "service account id"
+	clientID := "clientId"
+	secret := "secret"
+	name := "initialServiceAccount"
+	description := "initial service account description"
+	mockServer.initialServiceAccount = serviceaccountsclient.ServiceAccountData{
+		Id:          &id,
+		ClientId:    &clientID,
+		Secret:      &secret,
+		Name:        &name,
+		Description: &description,
+	}
+	mockServer.serviceAccounts[clientID] = mockServer.initialServiceAccount
+	mockServer.generateAuthToken()
 }
 
 func (mockServer *redhatSSOMock) getTokenHandler(w http.ResponseWriter, r *http.Request) {
@@ -311,16 +330,12 @@ func (mockServer *redhatSSOMock) regenerateSecretHandler(w http.ResponseWriter, 
 	w.WriteHeader(http.StatusNotFound)
 }
 
-// GenerateNewAuthToken ...
-func (mockServer *redhatSSOMock) GenerateNewAuthToken() string {
+// generateAuthToken ...
+func (mockServer *redhatSSOMock) generateAuthToken() string {
 	token := uuid.New().String()
 	mockServer.authTokens = append(mockServer.authTokens, token)
-	return token
-}
-
-// SetBearerToken ...
-func (mockServer *redhatSSOMock) SetBearerToken(token string) string {
-	mockServer.authTokens = append(mockServer.authTokens, token)
-	mockServer.sessionAuthToken = token
+	if mockServer.sessionAuthToken == "" {
+		mockServer.sessionAuthToken = token
+	}
 	return token
 }
