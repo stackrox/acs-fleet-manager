@@ -48,7 +48,7 @@ func (k *DeletingDinosaurManager) Stop() {
 
 // Reconcile ...
 func (k *DeletingDinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling deleting dinosaurs")
+	glog.Infoln("reconciling deleting centrals")
 	var encounteredErrors []error
 
 	// handle deleting dinosaur requests
@@ -59,21 +59,21 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	deletingDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusDeleting)
 	originalTotalDinosaurInDeleting := len(deletingDinosaurs)
 	if serviceErr != nil {
-		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list deleting dinosaur requests"))
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list deleting central requests"))
 	} else {
-		glog.Infof("%s dinosaurs count = %d", constants2.CentralRequestStatusDeleting.String(), originalTotalDinosaurInDeleting)
+		glog.Infof("%s centrals count = %d", constants2.CentralRequestStatusDeleting.String(), originalTotalDinosaurInDeleting)
 	}
 
 	// We also want to remove Dinosaurs that are set to deprovisioning but have not been provisioned on a data plane cluster
 	deprovisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusDeprovision)
 	if serviceErr != nil {
-		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list dinosaur deprovisioning requests"))
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list central deprovisioning requests"))
 	} else {
-		glog.Infof("%s dinosaurs count = %d", constants2.CentralRequestStatusDeprovision.String(), len(deprovisioningDinosaurs))
+		glog.Infof("%s centrals count = %d", constants2.CentralRequestStatusDeprovision.String(), len(deprovisioningDinosaurs))
 	}
 
 	for _, deprovisioningDinosaur := range deprovisioningDinosaurs {
-		glog.V(10).Infof("deprovision dinosaur id = %s", deprovisioningDinosaur.ID)
+		glog.V(10).Infof("deprovision central id = %s", deprovisioningDinosaur.ID)
 		// TODO check if a deprovisioningDinosaur can be deleted and add it to deletingDinosaurs array
 		// deletingDinosaurs = append(deletingDinosaurs, deprovisioningDinosaur)
 		if deprovisioningDinosaur.Host == "" {
@@ -81,12 +81,12 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 		}
 	}
 
-	glog.Infof("An additional of dinosaurs count = %d which are marked for removal before being provisioned will also be deleted", len(deletingDinosaurs)-originalTotalDinosaurInDeleting)
+	glog.Infof("An additional of centrals count = %d which are marked for removal before being provisioned will also be deleted", len(deletingDinosaurs)-originalTotalDinosaurInDeleting)
 
 	for _, dinosaur := range deletingDinosaurs {
-		glog.V(10).Infof("deleting dinosaur id = %s", dinosaur.ID)
+		glog.V(10).Infof("deleting central id = %s", dinosaur.ID)
 		if err := k.reconcileDeletingDinosaurs(dinosaur); err != nil {
-			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile deleting dinosaur request %s", dinosaur.ID))
+			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile deleting central request %s", dinosaur.ID))
 			continue
 		}
 	}
@@ -101,11 +101,11 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 	}
 	err := quotaService.DeleteQuota(dinosaur.SubscriptionID)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete subscription id %s for dinosaur %s", dinosaur.SubscriptionID, dinosaur.ID)
+		return errors.Wrapf(err, "failed to delete subscription id %s for central %s", dinosaur.SubscriptionID, dinosaur.ID)
 	}
 
 	if err := k.dinosaurService.Delete(dinosaur); err != nil {
-		return errors.Wrapf(err, "failed to delete dinosaur %s", dinosaur.ID)
+		return errors.Wrapf(err, "failed to delete central %s", dinosaur.ID)
 	}
 	return nil
 }

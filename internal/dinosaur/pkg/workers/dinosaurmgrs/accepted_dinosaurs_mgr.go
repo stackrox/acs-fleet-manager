@@ -55,22 +55,22 @@ func (k *AcceptedDinosaurManager) Stop() {
 
 // Reconcile ...
 func (k *AcceptedDinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling accepted dinosaurs")
+	glog.Infoln("reconciling accepted centrals")
 	var encounteredErrors []error
 
 	// handle accepted dinosaurs
 	acceptedDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusAccepted)
 	if serviceErr != nil {
-		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list accepted dinosaurs"))
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list accepted centrals"))
 	} else {
-		glog.Infof("accepted dinosaurs count = %d", len(acceptedDinosaurs))
+		glog.Infof("accepted centrals count = %d", len(acceptedDinosaurs))
 	}
 
 	for _, dinosaur := range acceptedDinosaurs {
-		glog.V(10).Infof("accepted dinosaur id = %s", dinosaur.ID)
+		glog.V(10).Infof("accepted central id = %s", dinosaur.ID)
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusAccepted, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		if err := k.reconcileAcceptedDinosaur(dinosaur); err != nil {
-			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile accepted dinosaur %s", dinosaur.ID))
+			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile accepted central %s", dinosaur.ID))
 			continue
 		}
 	}
@@ -81,11 +81,11 @@ func (k *AcceptedDinosaurManager) Reconcile() []error {
 func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.CentralRequest) error {
 	cluster, err := k.clusterPlmtStrategy.FindCluster(dinosaur)
 	if err != nil {
-		return errors.Wrapf(err, "failed to find cluster for dinosaur request %s", dinosaur.ID)
+		return errors.Wrapf(err, "failed to find cluster for central request %s", dinosaur.ID)
 	}
 
 	if cluster == nil {
-		logger.Logger.Warningf("No available cluster found for Dinosaur instance with id %s", dinosaur.ID)
+		logger.Logger.Warningf("No available cluster found for Central instance with id %s", dinosaur.ID)
 		return nil
 	}
 
@@ -101,18 +101,18 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Cent
 		// until the max retry duration is reached before updating its status to 'failed'.
 		durationSinceCreation := time.Since(dinosaur.CreatedAt)
 		if durationSinceCreation < constants2.AcceptedCentralMaxRetryDuration {
-			glog.V(10).Infof("No available dinosaur operator version found for Dinosaur '%s' in Cluster ID '%s'", dinosaur.ID, dinosaur.ClusterID)
+			glog.V(10).Infof("No available central operator version found for Central '%s' in Cluster ID '%s'", dinosaur.ID, dinosaur.ClusterID)
 			return nil
 		}
 		dinosaur.Status = constants2.CentralRequestStatusFailed.String()
 		if err != nil {
-			err = errors.Wrapf(err, "failed to get desired dinosaur operator version %s", dinosaur.ID)
+			err = errors.Wrapf(err, "failed to get desired central operator version %s", dinosaur.ID)
 		} else {
-			err = errors.Errorf("failed to get desired dinosaur operator version %s", dinosaur.ID)
+			err = errors.Errorf("failed to get desired central operator version %s", dinosaur.ID)
 		}
 		dinosaur.FailedReason = err.Error()
 		if err2 := k.dinosaurService.Update(dinosaur); err2 != nil {
-			return errors.Wrapf(err2, "failed to update failed dinosaur %s", dinosaur.ID)
+			return errors.Wrapf(err2, "failed to update failed central %s", dinosaur.ID)
 		}
 		return err
 	}
@@ -122,7 +122,7 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Cent
 
 	// Set desired Dinosaur version
 	if len(selectedDinosaurOperatorVersion.CentralVersions) == 0 {
-		return fmt.Errorf("failed to get Dinosaur version %s", dinosaur.ID)
+		return fmt.Errorf("failed to get Central version %s", dinosaur.ID)
 	}
 	dinosaur.DesiredCentralVersion = selectedDinosaurOperatorVersion.CentralVersions[len(selectedDinosaurOperatorVersion.CentralVersions)-1].Version
 

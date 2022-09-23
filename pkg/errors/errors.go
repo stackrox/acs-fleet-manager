@@ -81,7 +81,7 @@ const (
 
 	// TooManyRequests occurs when a the dinosaur instances capacity gets filled up
 	ErrorTooManyDinosaurInstancesReached       ServiceErrorCode = 24
-	ErrorTooManyDinosaurInstancesReachedReason string           = "The maximum number of allowed dinosaur instances has been reached"
+	ErrorTooManyDinosaurInstancesReachedReason string           = "The maximum number of allowed central instances has been reached"
 
 	// Gone occurs when a record is accessed that has been deleted
 	ErrorGone       ServiceErrorCode = 25
@@ -93,19 +93,19 @@ const (
 
 	// Failed to create sso client - an internal error incurred when calling iam server
 	ErrorFailedToCreateSSOClient       ServiceErrorCode = 106
-	ErrorFailedToCreateSSOClientReason string           = "Failed to create dinosaur client in the mas sso"
+	ErrorFailedToCreateSSOClientReason string           = "Failed to create central client in the mas sso"
 
 	// Failed to get sso client secret  - an internal error incurred when calling iam server
 	ErrorFailedToGetSSOClientSecret       ServiceErrorCode = 107
-	ErrorFailedToGetSSOClientSecretReason string           = "Failed to get dinosaur client secret from the mas sso"
+	ErrorFailedToGetSSOClientSecretReason string           = "Failed to get central client secret from the mas sso"
 
 	// Failed to get sso client - an internal error incurred when calling iam server
 	ErrorFailedToGetSSOClient       ServiceErrorCode = 108
-	ErrorFailedToGetSSOClientReason string           = "Failed to get dinosaur client from the mas sso"
+	ErrorFailedToGetSSOClientReason string           = "Failed to get central client from the mas sso"
 
 	// Failed to delete sso client - an internal error incurred when calling iam server
 	ErrorFailedToDeleteSSOClient       ServiceErrorCode = 109
-	ErrorFailedToDeleteSSOClientReason string           = "Failed to delete dinosaur client from the mas sso"
+	ErrorFailedToDeleteSSOClientReason string           = "Failed to delete central client from the mas sso"
 
 	// Failed to create service account, after validating user's request, but failed at the server end
 	// it is an internal server error
@@ -143,7 +143,7 @@ const (
 
 	// Invalid dinosaur cluster name
 	ErrorMalformedDinosaurClusterName       ServiceErrorCode = 32
-	ErrorMalformedDinosaurClusterNameReason string           = "Dinosaur cluster name is invalid"
+	ErrorMalformedDinosaurClusterNameReason string           = "Central cluster name is invalid"
 
 	// Minimum field length validation
 	ErrorMinimumFieldLength       ServiceErrorCode = 33
@@ -155,11 +155,11 @@ const (
 
 	// Only MultiAZ is supported
 	ErrorOnlyMultiAZSupported       ServiceErrorCode = 35
-	ErrorOnlyMultiAZSupportedReason string           = "Only multiAZ Dinosaurs are supported, use multi_az=true"
+	ErrorOnlyMultiAZSupportedReason string           = "Only multiAZ Centrals are supported, use multi_az=true"
 
 	// Dinosaur cluster name must be unique
 	ErrorDuplicateDinosaurClusterName       ServiceErrorCode = 36
-	ErrorDuplicateDinosaurClusterNameReason string           = "Dinosaur cluster name is already used"
+	ErrorDuplicateDinosaurClusterNameReason string           = "Central cluster name is already used"
 
 	// A generic field validation error when validating API requests input
 	ErrorFieldValidationError       ServiceErrorCode = 37

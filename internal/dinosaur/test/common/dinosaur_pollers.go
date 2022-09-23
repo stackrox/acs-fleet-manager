@@ -26,9 +26,9 @@ func WaitForNumberOfDinosaurToBeGivenCount(ctx context.Context, db *db.Connectio
 		IntervalAndTimeout(defaultPollInterval, defaultDinosaurPollTimeout).
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentCount == -1 {
-				return fmt.Sprintf("Waiting for dinosaurs count to become %d", count)
+				return fmt.Sprintf("Waiting for centrals count to become %d", count)
 			}
-			return fmt.Sprintf("Waiting for dinosaurs count to become %d (current %d)", count, currentCount)
+			return fmt.Sprintf("Waiting for centrals count to become %d (current %d)", count, currentCount)
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			list, _, err := client.DefaultApi.GetCentrals(ctx, nil)
@@ -41,7 +41,7 @@ func WaitForNumberOfDinosaurToBeGivenCount(ctx context.Context, db *db.Connectio
 		Build().Poll()
 
 	if err != nil {
-		return fmt.Errorf("waiting for number of dinosaurs: %w", err)
+		return fmt.Errorf("waiting for number of centrals: %w", err)
 	}
 	return nil
 }
@@ -54,21 +54,21 @@ func WaitForDinosaurCreateToBeAccepted(ctx context.Context, db *db.ConnectionFac
 		IntervalAndTimeout(defaultPollInterval, defaultDinosaurPollTimeout).
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentStatus == "" {
-				return "Waiting for dinosaur creation to be accepted"
+				return "Waiting for central creation to be accepted"
 			}
-			return fmt.Sprintf("Waiting for dinosaur creation to be accepted (current status %s)", currentStatus)
+			return fmt.Sprintf("Waiting for central creation to be accepted (current status %s)", currentStatus)
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			dinosaur, resp, err = client.DefaultApi.CreateCentral(ctx, true, k)
 			if err != nil {
-				return true, fmt.Errorf("waiting for dinosaur creation to be accepted: %w", err)
+				return true, fmt.Errorf("waiting for central creation to be accepted: %w", err)
 			}
 			return resp.StatusCode == http.StatusAccepted, nil
 		}).
 		Build().Poll()
 
 	if err != nil {
-		return dinosaur, resp, fmt.Errorf("waiting for dinosaur creation to be accepted: %w", err)
+		return dinosaur, resp, fmt.Errorf("waiting for central creation to be accepted: %w", err)
 	}
 	return dinosaur, resp, nil
 
@@ -84,14 +84,14 @@ func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory,
 		IntervalAndTimeout(1*time.Second, defaultDinosaurReadyTimeout).
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentStatus == "" {
-				return fmt.Sprintf("Waiting for dinosaur '%s' to reach status '%s'", dinosaurID, status.String())
+				return fmt.Sprintf("Waiting for central '%s' to reach status '%s'", dinosaurID, status.String())
 			}
-			return fmt.Sprintf("Waiting for dinosaur '%s' to reach status '%s' (current status %s)", dinosaurID, status.String(), currentStatus)
+			return fmt.Sprintf("Waiting for central '%s' to reach status '%s' (current status %s)", dinosaurID, status.String(), currentStatus)
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			dinosaur, _, err = client.DefaultApi.GetCentralById(ctx, dinosaurID)
 			if err != nil {
-				return true, fmt.Errorf("waiting for dinosaur to reach status: %w", err)
+				return true, fmt.Errorf("waiting for central to reach status: %w", err)
 			}
 
 			switch dinosaur.Status {
@@ -100,7 +100,7 @@ func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory,
 			case constants2.CentralRequestStatusDeprovision.String():
 				fallthrough
 			case constants2.CentralRequestStatusDeleting.String():
-				return false, errors.Errorf("Waiting for dinosaur '%s' to reach status '%s', but status '%s' has been reached instead", dinosaurID, status.String(), dinosaur.Status)
+				return false, errors.Errorf("Waiting for central '%s' to reach status '%s', but status '%s' has been reached instead", dinosaurID, status.String(), dinosaur.Status)
 			}
 
 			currentStatus = dinosaur.Status
@@ -109,7 +109,7 @@ func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory,
 		Build().Poll()
 
 	if err != nil {
-		return dinosaur, fmt.Errorf("waiting for dinosaur to reach status: %w", err)
+		return dinosaur, fmt.Errorf("waiting for central to reach status: %w", err)
 	}
 	return dinosaur, nil
 }
@@ -118,7 +118,7 @@ func WaitForDinosaurToReachStatus(ctx context.Context, db *db.ConnectionFactory,
 func WaitForDinosaurToBeDeleted(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, dinosaurID string) error {
 	err := NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, defaultDinosaurReadyTimeout).
-		RetryLogMessagef("Waiting for dinosaur '%s' to be deleted", dinosaurID).
+		RetryLogMessagef("Waiting for central '%s' to be deleted", dinosaurID).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			if _, _, err := client.DefaultApi.GetCentralById(ctx, dinosaurID); err != nil {
 				if err.Error() == "404 Not Found" {
@@ -132,7 +132,7 @@ func WaitForDinosaurToBeDeleted(ctx context.Context, db *db.ConnectionFactory, c
 		Build().Poll()
 
 	if err != nil {
-		return fmt.Errorf("waiting for dinosaur to be deleted: %w", err)
+		return fmt.Errorf("waiting for central to be deleted: %w", err)
 	}
 	return nil
 }
@@ -143,17 +143,17 @@ func WaitForDinosaurClusterIDToBeAssigned(dbFactory *db.ConnectionFactory, dinos
 
 	dinosaurErr := NewPollerBuilder(dbFactory).
 		IntervalAndTimeout(defaultPollInterval, defaultDinosaurClusterAssignmentTimeout).
-		RetryLogMessagef("Waiting for dinosaur named '%s' to have a ClusterID", dinosaurRequestName).
+		RetryLogMessagef("Waiting for central named '%s' to have a ClusterID", dinosaurRequestName).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			if err := dbFactory.New().Where("name = ?", dinosaurRequestName).First(dinosaurFound).Error; err != nil {
 				return false, err
 			}
-			glog.Infof("got dinosaur instance %v", dinosaurFound)
+			glog.Infof("got central instance %v", dinosaurFound)
 			return dinosaurFound.ClusterID != "", nil
 		}).Build().Poll()
 
 	if dinosaurErr != nil {
-		return dinosaurFound, fmt.Errorf("waiting for dinosaur cluster ID to be assigned: %w", dinosaurErr)
+		return dinosaurFound, fmt.Errorf("waiting for central cluster ID to be assigned: %w", dinosaurErr)
 	}
 	return dinosaurFound, nil
 }

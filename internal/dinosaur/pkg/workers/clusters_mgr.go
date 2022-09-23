@@ -185,7 +185,7 @@ func (c *ClusterManager) processMetrics() []error {
 	}
 
 	if err := c.setDinosaurPerClusterCountMetrics(); err != nil {
-		return []error{errors.Wrapf(err, "failed to set dinosaur per cluster count metrics")}
+		return []error{errors.Wrapf(err, "failed to set central per cluster count metrics")}
 	}
 
 	c.setClusterStatusMaxCapacityMetrics()
@@ -609,7 +609,7 @@ func (c *ClusterManager) reconcileDinosaurOperator(provisionedCluster api.Cluste
 	if err != nil {
 		return false, err
 	}
-	glog.V(5).Infof("ready status of dinosaur operator installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
+	glog.V(5).Infof("ready status of central operator installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
 	return ready, nil
 }
 
@@ -698,13 +698,13 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 
 	dinosaurInstanceCount, err := c.ClusterService.FindDinosaurInstanceCount(excessClusterIds)
 	if err != nil {
-		return []error{errors.Wrapf(err, "Failed to find dinosaur count a cluster: %s", excessClusterIds)}
+		return []error{errors.Wrapf(err, "Failed to find central count a cluster: %s", excessClusterIds)}
 	}
 
 	var idsOfClustersToDeprovision []string
 	for _, c := range dinosaurInstanceCount {
 		if c.Count > 0 {
-			glog.Infof("Excess cluster %s is not going to be deleted because it has %d dinosaur.", c.Clusterid, c.Count)
+			glog.Infof("Excess cluster %s is not going to be deleted because it has %d central.", c.Clusterid, c.Count)
 		} else {
 			glog.Infof("Excess cluster is going to be deleted %s", c.Clusterid)
 			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, c.Clusterid)

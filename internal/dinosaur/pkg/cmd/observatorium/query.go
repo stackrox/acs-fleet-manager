@@ -21,12 +21,12 @@ import (
 func NewRunMetricsQueryCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query",
-		Short: "Get metrics with query instant by dinosaur id from Observatorium",
+		Short: "Get metrics with query instant by central id from Observatorium",
 		Run: func(cmd *cobra.Command, args []string) {
 			runGetMetricsByInstantQuery(env, cmd, args)
 		},
 	}
-	cmd.Flags().String(FlagID, "", "Dinosaur id")
+	cmd.Flags().String(FlagID, "", "Central id")
 	cmd.Flags().String(FlagOwner, "", "Username")
 
 	return cmd

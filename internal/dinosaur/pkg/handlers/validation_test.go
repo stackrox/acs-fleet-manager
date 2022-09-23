@@ -55,7 +55,7 @@ func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
 			},
 			want: &errors.ServiceError{
 				HTTPCode: http.StatusConflict,
-				Reason:   "Dinosaur cluster name is already used",
+				Reason:   "Central cluster name is already used",
 				Code:     36,
 			},
 		},

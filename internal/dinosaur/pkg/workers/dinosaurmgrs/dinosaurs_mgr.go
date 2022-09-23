@@ -58,7 +58,7 @@ func (k *DinosaurManager) Stop() {
 
 // Reconcile ...
 func (k *DinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling dinosaurs")
+	glog.Infoln("reconciling centrals")
 	var encounteredErrors []error
 
 	// record the metrics at the beginning of the reconcile loop as some of the states like "accepted"
@@ -76,10 +76,10 @@ func (k *DinosaurManager) Reconcile() []error {
 	// delete dinosaurs of denied owners
 	accessControlListConfig := k.accessControlListConfig
 	if accessControlListConfig.EnableDenyList {
-		glog.Infoln("reconciling denied dinosaur owners")
+		glog.Infoln("reconciling denied central owners")
 		dinosaurDeprovisioningForDeniedOwnersErr := k.reconcileDeniedDinosaurOwners(accessControlListConfig.DenyList)
 		if dinosaurDeprovisioningForDeniedOwnersErr != nil {
-			wrappedError := errors.Wrapf(dinosaurDeprovisioningForDeniedOwnersErr, "Failed to deprovision dinosaur for denied owners %s", accessControlListConfig.DenyList)
+			wrappedError := errors.Wrapf(dinosaurDeprovisioningForDeniedOwnersErr, "Failed to deprovision central for denied owners %s", accessControlListConfig.DenyList)
 			encounteredErrors = append(encounteredErrors, wrappedError)
 		}
 	}
@@ -87,10 +87,10 @@ func (k *DinosaurManager) Reconcile() []error {
 	// cleaning up expired dinosaurs
 	dinosaurConfig := k.dinosaurConfig
 	if dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral {
-		glog.Infoln("deprovisioning expired dinosaurs")
+		glog.Infoln("deprovisioning expired centrals")
 		expiredDinosaursError := k.dinosaurService.DeprovisionExpiredDinosaurs(dinosaurConfig.CentralLifespan.CentralLifespanInHours)
 		if expiredDinosaursError != nil {
-			wrappedError := errors.Wrap(expiredDinosaursError, "failed to deprovision expired Dinosaur instances")
+			wrappedError := errors.Wrap(expiredDinosaursError, "failed to deprovision expired Central instances")
 			encounteredErrors = append(encounteredErrors, wrappedError)
 		}
 	}
@@ -109,7 +109,7 @@ func (k *DinosaurManager) reconcileDeniedDinosaurOwners(deniedUsers acl.DeniedUs
 func (k *DinosaurManager) setDinosaurStatusCountMetric() []error {
 	counters, err := k.dinosaurService.CountByStatus(dinosaurMetricsStatuses)
 	if err != nil {
-		return []error{errors.Wrap(err, "failed to count Dinosaurs by status")}
+		return []error{errors.Wrap(err, "failed to count Centrals by status")}
 	}
 
 	for _, c := range counters {
@@ -122,7 +122,7 @@ func (k *DinosaurManager) setDinosaurStatusCountMetric() []error {
 func (k *DinosaurManager) setClusterStatusCapacityUsedMetric() []error {
 	regions, err := k.dinosaurService.CountByRegionAndInstanceType()
 	if err != nil {
-		return []error{errors.Wrap(err, "failed to count Dinosaurs by region")}
+		return []error{errors.Wrap(err, "failed to count Centrals by region")}
 	}
 
 	for _, region := range regions {

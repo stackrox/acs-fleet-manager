@@ -108,7 +108,7 @@ func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 			listArgs := coreServices.NewListArguments(r.URL.Query())
 
 			if err := listArgs.Validate(); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list dinosaur requests: %s", err.Error())
+				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list central requests: %s", err.Error())
 			}
 
 			dinosaurRequests, paging, err := h.service.List(ctx, listArgs)
@@ -117,7 +117,7 @@ func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			dinosaurRequestList := private.CentralList{
-				Kind:  "DinosaurList",
+				Kind:  "CentralList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
 				Total: int32(paging.Total),
@@ -146,7 +146,7 @@ func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h adminDinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateAsyncEnabled(r, "deleting dinosaur requests"),
+			handlers.ValidateAsyncEnabled(r, "deleting central requests"),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]

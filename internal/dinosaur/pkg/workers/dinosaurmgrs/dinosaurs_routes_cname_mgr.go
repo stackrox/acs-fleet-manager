@@ -43,20 +43,20 @@ func (k *DinosaurRoutesCNAMEManager) Stop() {
 
 // Reconcile ...
 func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
-	glog.Infoln("reconciling DNS for dinosaurs")
+	glog.Infoln("reconciling DNS for centrals")
 	var errs []error
 
 	dinosaurs, listErr := k.dinosaurService.ListDinosaursWithRoutesNotCreated()
 	if listErr != nil {
-		errs = append(errs, errors.Wrap(listErr, "failed to list dinosaurs whose routes are not created"))
+		errs = append(errs, errors.Wrap(listErr, "failed to list centrals whose routes are not created"))
 	} else {
-		glog.Infof("dinosaurs need routes created count = %d", len(dinosaurs))
+		glog.Infof("centrals need routes created count = %d", len(dinosaurs))
 	}
 
 	for _, dinosaur := range dinosaurs {
 		if k.dinosaurConfig.EnableCentralExternalCertificate {
 			if dinosaur.RoutesCreationID == "" {
-				glog.Infof("creating CNAME records for dinosaur %s", dinosaur.ID)
+				glog.Infof("creating CNAME records for central %s", dinosaur.ID)
 
 				changeOutput, err := k.dinosaurService.ChangeDinosaurCNAMErecords(dinosaur, services.DinosaurRoutesActionCreate)
 
@@ -76,7 +76,7 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 				dinosaur.RoutesCreated = *recordStatus.Status == "INSYNC"
 			}
 		} else {
-			glog.Infof("external certificate is disabled, skip CNAME creation for Dinosaur %s", dinosaur.ID)
+			glog.Infof("external certificate is disabled, skip CNAME creation for Central %s", dinosaur.ID)
 			dinosaur.RoutesCreated = true
 		}
 
