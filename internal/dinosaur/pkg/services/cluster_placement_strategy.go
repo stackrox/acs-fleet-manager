@@ -45,16 +45,18 @@ type FirstReadyPlacementStrategy struct {
 
 // FindCluster ...
 func (d FirstReadyPlacementStrategy) FindCluster(dinosaur *dbapi.CentralRequest) (*api.Cluster, error) {
-	clusters, err := d.clusterService.FindAllClusters(FindClusterCriteria{SkipScheduling: false, Status: api.ClusterReady})
+	clusters, err := d.clusterService.FindAllClusters(FindClusterCriteria{Status: api.ClusterReady})
 	if err != nil {
 		return nil, err
 	}
 
-	if len(clusters) == 0 {
-		return nil, errors.New("no schedulable cluster found")
+	for _, c := range clusters {
+		if !c.SkipScheduling {
+			return c, nil
+		}
 	}
 
-	return clusters[0], nil
+	return nil, errors.New("no schedulable cluster found")
 }
 
 var _ ClusterPlacementStrategy = TargetClusterPlacementStrategy{}
