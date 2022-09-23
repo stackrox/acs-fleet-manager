@@ -22,10 +22,12 @@ function ensure_bitwarden_session_exists () {
   if [[ -z "$BW_SESSION" ]]; then
     if bw login --check; then
       # We don't have a session key but we are logged in, so unlock and store the session.
-      export BW_SESSION=$(bw unlock --raw)
+      BW_SESSION=$(bw unlock --raw)
+      export BW_SESSION
     else
       # We don't have a session key and are not logged in, so log in and store the session.
-      export BW_SESSION=$(bw login --raw)
+      BW_SESSION=$(bw login --raw)
+      export BW_SESSION
     fi
   fi
 }
@@ -57,9 +59,9 @@ case $ENVIRONMENT in
 
     # Create the users that should have access to the cluster with cluster administrative rights.
     # Ignore errors as the sometimes users already exist.
-    ocm create user --cluster=${CLUSTER_NAME} \
+    ocm create user --cluster="${CLUSTER_NAME}" \
       --group=cluster-admins \
-      ${OSD_OIDC_USER_LIST} || true
+      "${OSD_OIDC_USER_LIST}" || true
 
     # Create the HTPasswd Idp for the cluster.
     ADMIN_USERNAME=$(bw get username "9bfb2c0e-0519-478e-b7df-aea700ff9072")

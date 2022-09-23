@@ -29,7 +29,7 @@
 # the built images can be pushed to quay.io.
 
 # The version should be a 7-char hash from git. This is what the deployment process in app-interface expects.
-VERSION=`git rev-parse --short=7 HEAD`
+VERSION=$(git rev-parse --short=7 HEAD)
 
 # Set image repository to default value if it is not passed via env
 IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/acs-fleet-manager}"
@@ -67,11 +67,11 @@ fi
 mkdir -p "${DOCKER_CONFIG}"
 
 BRANCH="main"
-if [[ ! -z "$GITHUB_REF" ]]; then
-  BRANCH="$(echo $GITHUB_REF | awk -F/ '{print $NF}')"
+if [[ -n "$GITHUB_REF" ]]; then
+  BRANCH="$(echo "$GITHUB_REF" | awk -F/ '{print $NF}')"
   echo "GITHUB_REF is defined. Set image tag to $BRANCH."
-elif [[ ! -z "$GIT_BRANCH" ]]; then
-  BRANCH="$(echo $GIT_BRANCH | awk -F/ '{print $NF}')"
+elif [[ -n "$GIT_BRANCH" ]]; then
+  BRANCH="$(echo "$GIT_BRANCH" | awk -F/ '{print $NF}')"
   echo "GIT_BRANCH is defined. Set image tag to $BRANCH."
 else
   echo "No git branch env var found. Set image tag to $BRANCH."

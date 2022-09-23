@@ -2,6 +2,7 @@
 
 die() {
     {
+        # shellcheck disable=SC2059
         printf "$*"
         echo
     } >&2
@@ -9,6 +10,7 @@ die() {
 }
 
 log() {
+    # shellcheck disable=SC2059
     printf "$*"
     echo
 }
@@ -168,7 +170,7 @@ wait_for_container_to_appear() {
     local seconds="${4:-120}" # Default to 120 seconds waiting time.
 
     log "Waiting for container ${container_name} within pod ${pod_selector} in namespace ${namespace} to appear..."
-    for i in $(seq "$seconds"); do
+    for _ in $(seq "$seconds"); do
         local status
         status=$($KUBECTL -n "$namespace" get pod -l "$pod_selector" -o jsonpath="{.items[0].status.initContainerStatuses[?(@.name == '${container_name}')]} {.items[0].status.containerStatuses[?(@.name == '${container_name}')]}" 2>/dev/null || true)
         local state=""
@@ -222,7 +224,7 @@ wait_for_resource_to_appear() {
 
     log "Waiting for ${kind}/${name} to be created in namespace ${namespace}"
 
-    for i in $(seq "$seconds"); do
+    for _ in $(seq "$seconds"); do
         if $KUBECTL -n "$namespace" get "$kind" "$name" 2>/dev/null >&2; then
             log "Resource ${kind}/${namespace} in namespace ${namespace} appeared"
             return 0
@@ -258,6 +260,7 @@ assemble_kubeconfig() {
     if [[ "$KUBECONF_CLUSTER_SERVER_OVERRIDE" == "true" ]]; then
         local server
         $KUBECTL delete pod alpine >/dev/null 2>&1 || true
+        # shellcheck disable=SC2086,SC2016
         server=$($KUBECTL run --rm -it alpine --quiet --image=alpine --restart=Never -- sh -c 'echo $KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT' | tr -d '\r')
         CLUSTER=$(echo "$CLUSTER" | jq ".cluster.server = \"https://${server}\"" -)
         $KUBECTL delete pod alpine >/dev/null 2>&1 || true

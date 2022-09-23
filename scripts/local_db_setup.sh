@@ -13,8 +13,8 @@ docker network create fleet-manager-network || true
 docker run \
   --name=fleet-manager-db \
   --net fleet-manager-network \
-  -e POSTGRES_PASSWORD=$(cat secrets/db.password) \
-  -e POSTGRES_USER=$(cat secrets/db.user) \
-  -e POSTGRES_DB=$(cat secrets/db.name) \
-  -p $(cat secrets/db.port):5432 \
+  -e POSTGRES_PASSWORD="$(cat secrets/db.password)" \
+  -e POSTGRES_USER="$(cat secrets/db.user)" \
+  -e POSTGRES_DB="$(cat secrets/db.name)" \
+  -p "$(cat secrets/db.port)":5432 \
   -d postgres:13

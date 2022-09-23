@@ -22,10 +22,12 @@ function ensure_bitwarden_session_exists () {
   if [[ -z "$BW_SESSION" ]]; then
     if bw login --check; then
       # We don't have a session key but we are logged in, so unlock and store the session.
-      export BW_SESSION=$(bw unlock --raw)
+      BW_SESSION=$(bw unlock --raw)
+      export BW_SESSION
     else
       # We don't have a session key and are not logged in, so log in and store the session.
-      export BW_SESSION=$(bw login --raw)
+      BW_SESSION=$(bw login --raw)
+      export BW_SESSION
     fi
   fi
 }
@@ -130,8 +132,8 @@ helm upgrade rhacs-terraform ./ \
   --set fleetshardSync.authType="RHSSO" \
   --set fleetshardSync.gitCommitSHA="${GIT_COMMIT_SHA}" \
   --set fleetshardSync.gitDescribeTag="${GIT_DESCRIBE_TAG}" \
-  --set fleetshardSync.clusterId=${CLUSTER_ID} \
-  --set fleetshardSync.fleetManagerEndpoint=${FM_ENDPOINT} \
+  --set fleetshardSync.clusterId="${CLUSTER_ID}" \
+  --set fleetshardSync.fleetManagerEndpoint="${FM_ENDPOINT}" \
   --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID}" \
   --set fleetshardSync.redHatSSO.clientSecret="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET}" \
   --set logging.aws.accessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \

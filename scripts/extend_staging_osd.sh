@@ -10,7 +10,7 @@
 set -e
 
 docker pull quay.io/app-sre/mk-ci-tools:latest
-docker run -u $(id -u) \
+docker run -u "$(id -u)" \
     -e OCM_CLIENT_ID="$OCM_CLIENT_ID" \
     -e OCM_CLIENT_SECRET="$OCM_CLIENT_SECRET" \
 	  quay.io/app-sre/mk-ci-tools:latest extend_cluster_lifetime.sh "$OSD_STAGE_CLUSTER_ID"
