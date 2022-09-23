@@ -128,3 +128,17 @@ func (c *Client) UpdateCentral(id string, updateReq private.CentralUpdateRequest
 	}
 	return result, nil
 }
+
+// DbDeleteCentral deletes the Central denoted by the provided ID within fleet-manager's database.
+func (c *Client) DbDeleteCentral(id string) error {
+	resp, err := c.newRequest(http.MethodDelete, fmt.Sprintf("%s/dinosaurs/db/%s", c.adminAPIEndpoint, id), nil)
+	if err != nil {
+		return err
+	}
+
+	err = c.unmarshalResponse(resp, nil)
+	if err != nil {
+		return errors.Wrapf(err, "deleting central %q in database", id)
+	}
+	return nil
+}
