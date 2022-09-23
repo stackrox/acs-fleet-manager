@@ -68,9 +68,13 @@ There is a list of SLO [documents](https://gitlab.cee.redhat.com/service/app-int
 
 ### Grafana dashboards
 
-There are two ACS Grafana dashboards hosted on the appSRE Grafana instance:
+#### Stage:
 - General service [overview dashboard](https://grafana.stage.devshift.net/d/D1C839d82/acs-fleet-manager?orgId=1).
 - [SLO/SLI service dashboard](https://grafana.stage.devshift.net/d/T2kek3H9a/acs-fleet-manager-slos?orgId=1).
+
+#### Production:
+- General service [overview dashboard](https://grafana.app-sre.devshift.net/d/D1C839d82/acs-fleet-manager?search=open).
+- [SLO/SLI service dashboard](https://grafana.app-sre.devshift.net/d/T2kek3H9a/acs-fleet-manager-slos?orgId=1).
 
 
 ### Alerts
