@@ -21,14 +21,16 @@ import (
 type dinosaurStatus string
 
 const (
-	statusInstalling         dinosaurStatus = "installing"
-	statusReady              dinosaurStatus = "ready"
-	statusError              dinosaurStatus = "error"
-	statusRejected           dinosaurStatus = "rejected"
-	statusDeleted            dinosaurStatus = "deleted"
-	statusUnknown            dinosaurStatus = "unknown"
-	dinosaurOperatorUpdating string         = "DinosaurOperatorUpdating"
-	dinosaurUpdating         string         = "DinosaurUpdating"
+	statusInstalling dinosaurStatus = "installing"
+	statusReady      dinosaurStatus = "ready"
+	statusError      dinosaurStatus = "error"
+	statusRejected   dinosaurStatus = "rejected"
+	statusDeleted    dinosaurStatus = "deleted"
+	statusUnknown    dinosaurStatus = "unknown"
+
+	// TODO: Renaming these dinosaurs will require a DB migration step
+	dinosaurOperatorUpdating string = "DinosaurOperatorUpdating"
+	dinosaurUpdating         string = "DinosaurUpdating"
 )
 
 // DataPlaneDinosaurService ...
