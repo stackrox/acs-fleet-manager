@@ -27,7 +27,7 @@ func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneCluster
 			targetClusterID: dataplaneClusterConfig.DataPlaneClusterTarget,
 			clusterService:  clusterService}
 	} else {
-		clusterSelection = DefaultClusterPlacementStrategy{
+		clusterSelection = FirstReadyPlacementStrategy{
 			clusterService: clusterService,
 		}
 	}
@@ -36,27 +36,25 @@ func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneCluster
 }
 
 // TODO(create-ticket): Revisit placement strategy before going live.
-var _ ClusterPlacementStrategy = (*DefaultClusterPlacementStrategy)(nil)
+var _ ClusterPlacementStrategy = (*FirstReadyPlacementStrategy)(nil)
 
-// DefaultClusterPlacementStrategy ...
-type DefaultClusterPlacementStrategy struct {
+// FirstReadyPlacementStrategy ...
+type FirstReadyPlacementStrategy struct {
 	clusterService ClusterService
 }
 
 // FindCluster ...
-func (d DefaultClusterPlacementStrategy) FindCluster(dinosaur *dbapi.CentralRequest) (*api.Cluster, error) {
-	clusters, err := findAllClusters(d.clusterService)
+func (d FirstReadyPlacementStrategy) FindCluster(dinosaur *dbapi.CentralRequest) (*api.Cluster, error) {
+	clusters, err := d.clusterService.FindAllClusters(FindClusterCriteria{SkipScheduling: false, Status: api.ClusterReady})
 	if err != nil {
 		return nil, err
 	}
 
-	for _, cluster := range clusters {
-		if cluster.Status == api.ClusterReady && !cluster.SkipScheduling {
-			return cluster, nil
-		}
+	if len(clusters) == 0 {
+		return nil, errors.New("no schedulable cluster found")
 	}
 
-	return nil, errors.New("no schedulable cluster found")
+	return clusters[0], nil
 }
 
 var _ ClusterPlacementStrategy = TargetClusterPlacementStrategy{}
@@ -69,28 +67,14 @@ type TargetClusterPlacementStrategy struct {
 
 // FindCluster returns the target cluster of the placement strategy if found in the cluster list
 func (f TargetClusterPlacementStrategy) FindCluster(central *dbapi.CentralRequest) (*api.Cluster, error) {
-	clusters, err := findAllClusters(f.clusterService)
+	cluster, err := f.clusterService.FindClusterByID(f.targetClusterID)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, cluster := range clusters {
-		if cluster.ID == f.targetClusterID {
-			return cluster, nil
-		}
+	if cluster != nil {
+		return cluster, nil
 	}
 
-	return nil, fmt.Errorf("target cluster: %v not found in cluster list", f.targetClusterID)
-}
-
-func findAllClusters(c ClusterService) ([]*api.Cluster, error) {
-	clusters, err := c.FindAllClusters(FindClusterCriteria{})
-	if err != nil {
-		return nil, err
-	}
-	if len(clusters) == 0 {
-		return nil, errors.New("no cluster was found")
-	}
-
-	return clusters, nil
+	return nil, fmt.Errorf("target cluster %v not found in cluster list", f.targetClusterID)
 }

@@ -23,7 +23,7 @@ func TestPlacementStrategyType(t *testing.T) {
 			dataPlaneConfig: &config.DataplaneClusterConfig{
 				DataPlaneClusterTarget: "",
 			},
-			expectedType: DefaultClusterPlacementStrategy{},
+			expectedType: FirstReadyPlacementStrategy{},
 		},
 		{
 			description: "TargetClusterPlacementStrategy",

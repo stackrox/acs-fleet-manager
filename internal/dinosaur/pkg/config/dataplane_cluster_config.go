@@ -318,7 +318,7 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.Namespace, "fleetshard-operator-namespace", c.FleetshardOperatorOLMConfig.Namespace, "fleetshard operator namespace")
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.Package, "fleetshard-operator-package", c.FleetshardOperatorOLMConfig.Package, "fleetshard operator package")
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.SubscriptionChannel, "fleetshard-operator-sub-channel", c.FleetshardOperatorOLMConfig.SubscriptionChannel, "fleetshard operator subscription channel")
-	fs.StringVar(&c.DataPlaneClusterTarget, "dataplane-cluster-target", "", "set placement of centrals to cluster with this id")
+	fs.StringVar(&c.DataPlaneClusterTarget, "dataplane-cluster-target", "", "specify cluster by ID on which new centrals should be created")
 }
 
 // ReadFiles ...

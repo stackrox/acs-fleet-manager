@@ -262,6 +262,7 @@ type FindClusterCriteria struct {
 	MultiAZ               bool
 	Status                api.ClusterStatus
 	SupportedInstanceType string
+	SkipScheduling        bool
 }
 
 // FindCluster ...
@@ -271,10 +272,11 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 	var cluster api.Cluster
 
 	clusterDetails := &api.Cluster{
-		CloudProvider: criteria.Provider,
-		Region:        criteria.Region,
-		MultiAZ:       criteria.MultiAZ,
-		Status:        criteria.Status,
+		CloudProvider:  criteria.Provider,
+		Region:         criteria.Region,
+		MultiAZ:        criteria.MultiAZ,
+		Status:         criteria.Status,
+		SkipScheduling: criteria.SkipScheduling,
 	}
 
 	// filter by supported instance type
