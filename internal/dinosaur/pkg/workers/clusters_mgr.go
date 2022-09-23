@@ -673,6 +673,8 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		newCluster.ProviderType = manualCluster.ProviderType
 		newCluster.ClusterDNS = manualCluster.ClusterDNS
 		newCluster.SupportedInstanceType = manualCluster.SupportedInstanceType
+		newCluster.SkipScheduling = false
+
 		if err := cluster.SetAvailableCentralOperatorVersions(manualCluster.AvailableCentralOperatorVersions); err != nil {
 			return []error{errors.Wrapf(err, "Failed to update operator versions for manual cluster %s with config file", manualCluster.ClusterID)}
 		}
