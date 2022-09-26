@@ -37,7 +37,7 @@ var _ DinosaurService = &DinosaurServiceMock{}
 // 			CountByStatusFunc: func(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error) {
 // 				panic("mock out the CountByStatus method")
 // 			},
-// 			DeleteFunc: func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+// 			DeleteFunc: func(centralRequest *dbapi.CentralRequest, force bool) *serviceError.ServiceError {
 // 				panic("mock out the Delete method")
 // 			},
 // 			DeprovisionDinosaurForUsersFunc: func(users []string) *serviceError.ServiceError {
@@ -123,7 +123,7 @@ type DinosaurServiceMock struct {
 	CountByStatusFunc func(status []dinosaurConstants.CentralStatus) ([]DinosaurStatusCount, error)
 
 	// DeleteFunc mocks the Delete method.
-	DeleteFunc func(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
+	DeleteFunc func(centralRequest *dbapi.CentralRequest, force bool) *serviceError.ServiceError
 
 	// DeprovisionDinosaurForUsersFunc mocks the DeprovisionDinosaurForUsers method.
 	DeprovisionDinosaurForUsersFunc func(users []string) *serviceError.ServiceError
@@ -214,6 +214,8 @@ type DinosaurServiceMock struct {
 		Delete []struct {
 			// CentralRequest is the centralRequest argument value.
 			CentralRequest *dbapi.CentralRequest
+			// Force is the force argument value.
+			Force bool
 		}
 		// DeprovisionDinosaurForUsers holds details about calls to the DeprovisionDinosaurForUsers method.
 		DeprovisionDinosaurForUsers []struct {
@@ -477,19 +479,21 @@ func (mock *DinosaurServiceMock) CountByStatusCalls() []struct {
 }
 
 // Delete calls DeleteFunc.
-func (mock *DinosaurServiceMock) Delete(centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+func (mock *DinosaurServiceMock) Delete(centralRequest *dbapi.CentralRequest, force bool) *serviceError.ServiceError {
 	if mock.DeleteFunc == nil {
 		panic("DinosaurServiceMock.DeleteFunc: method is nil but DinosaurService.Delete was just called")
 	}
 	callInfo := struct {
 		CentralRequest *dbapi.CentralRequest
+		Force          bool
 	}{
 		CentralRequest: centralRequest,
+		Force:          force,
 	}
 	mock.lockDelete.Lock()
 	mock.calls.Delete = append(mock.calls.Delete, callInfo)
 	mock.lockDelete.Unlock()
-	return mock.DeleteFunc(centralRequest)
+	return mock.DeleteFunc(centralRequest, force)
 }
 
 // DeleteCalls gets all the calls that were made to Delete.
@@ -497,9 +501,11 @@ func (mock *DinosaurServiceMock) Delete(centralRequest *dbapi.CentralRequest) *s
 //     len(mockedDinosaurService.DeleteCalls())
 func (mock *DinosaurServiceMock) DeleteCalls() []struct {
 	CentralRequest *dbapi.CentralRequest
+	Force          bool
 } {
 	var calls []struct {
 		CentralRequest *dbapi.CentralRequest
+		Force          bool
 	}
 	mock.lockDelete.RLock()
 	calls = mock.calls.Delete

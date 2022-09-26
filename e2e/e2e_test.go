@@ -9,10 +9,6 @@ import (
 	"os"
 	"time"
 
-	"sigs.k8s.io/yaml"
-
-	appsv1 "k8s.io/api/apps/v1"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -25,10 +21,13 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	v1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 func newCentralName() string {
@@ -110,7 +109,7 @@ var _ = Describe("Central", func() {
 		// and that is not accessible from a value `*public.CentralRequest`
 		It("should create central namespace", func() {
 			Eventually(func() error {
-				ns := &v1.Namespace{}
+				ns := &corev1.Namespace{}
 				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
@@ -239,7 +238,7 @@ var _ = Describe("Central", func() {
 
 		It("should remove central namespace", func() {
 			Eventually(func() bool {
-				ns := &v1.Namespace{}
+				ns := &corev1.Namespace{}
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
 				return apiErrors.IsNotFound(err)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
@@ -267,12 +266,12 @@ var _ = Describe("Central", func() {
 
 		centralResources := public.ResourceRequirements{
 			Requests: map[string]string{
-				v1.ResourceCPU.String():    "501m",
-				v1.ResourceMemory.String(): "201M",
+				corev1.ResourceCPU.String():    "501m",
+				corev1.ResourceMemory.String(): "201M",
 			},
 			Limits: map[string]string{
-				v1.ResourceCPU.String():    "502m",
-				v1.ResourceMemory.String(): "202M",
+				corev1.ResourceCPU.String():    "502m",
+				corev1.ResourceMemory.String(): "202M",
 			},
 		}
 		centralSpec := public.CentralSpec{
@@ -280,12 +279,12 @@ var _ = Describe("Central", func() {
 		}
 		scannerResources := public.ResourceRequirements{
 			Requests: map[string]string{
-				v1.ResourceCPU.String():    "301m",
-				v1.ResourceMemory.String(): "151M",
+				corev1.ResourceCPU.String():    "301m",
+				corev1.ResourceMemory.String(): "151M",
 			},
 			Limits: map[string]string{
-				v1.ResourceCPU.String():    "302m",
-				v1.ResourceMemory.String(): "152M",
+				corev1.ResourceCPU.String():    "302m",
+				corev1.ResourceMemory.String(): "152M",
 			},
 		}
 		scannerScaling := public.ScannerSpecAnalyzerScaling{
@@ -351,33 +350,33 @@ var _ = Describe("Central", func() {
 				Central: private.CentralSpec{
 					Resources: private.ResourceRequirements{
 						Requests: map[string]string{
-							v1.ResourceMemory.String(): "199M",
+							corev1.ResourceMemory.String(): "199M",
 						},
 						Limits: map[string]string{
-							v1.ResourceCPU.String(): "505m",
+							corev1.ResourceCPU.String(): "505m",
 						},
 					},
 				},
 			}
-			newCentralResources := v1.ResourceRequirements{
-				Requests: v1.ResourceList{
-					v1.ResourceCPU:    resource.MustParse("501m"),
-					v1.ResourceMemory: resource.MustParse("199M"),
+			newCentralResources := corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("501m"),
+					corev1.ResourceMemory: resource.MustParse("199M"),
 				},
-				Limits: v1.ResourceList{
-					v1.ResourceCPU:    resource.MustParse("505m"),
-					v1.ResourceMemory: resource.MustParse("202M"),
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("505m"),
+					corev1.ResourceMemory: resource.MustParse("202M"),
 				},
 			}
 
 			_, err = adminClient.UpdateCentral(centralID, updateReq)
 			Expect(err).ToNot(HaveOccurred())
-			Eventually(func() v1.ResourceRequirements {
+			Eventually(func() corev1.ResourceRequirements {
 				central := &v1alpha1.Central{}
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: namespaceName}, central)
 				Expect(err).ToNot(HaveOccurred())
 				if central.Spec.Central == nil || central.Spec.Central.Resources == nil {
-					return v1.ResourceRequirements{}
+					return corev1.ResourceRequirements{}
 				}
 				return *central.Spec.Central.Resources
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(newCentralResources))
@@ -409,7 +408,7 @@ var _ = Describe("Central", func() {
 
 		It("should remove central namespace", func() {
 			Eventually(func() bool {
-				ns := &v1.Namespace{}
+				ns := &corev1.Namespace{}
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
 				return apiErrors.IsNotFound(err)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
@@ -429,6 +428,82 @@ var _ = Describe("Central", func() {
 				Should(BeEmpty(), "Started at %s", time.Now())
 		})
 
+	})
+
+	Describe("should be deployed and can be force-deleted", func() {
+		var err error
+
+		centralName := newCentralName()
+		request := public.CentralRequestPayload{
+			Name:          centralName,
+			MultiAz:       true,
+			CloudProvider: dpCloudProvider,
+			Region:        dpRegion,
+		}
+
+		var createdCentral *public.CentralRequest
+		var central *public.CentralRequest
+		var namespaceName string
+
+		It("created a central", func() {
+			createdCentral, err = client.CreateCentral(request)
+			Expect(err).To(BeNil())
+			namespaceName, err = services.FormatNamespace(createdCentral.Id)
+			Expect(err).To(BeNil())
+			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
+		})
+
+		It("should transition central's state to ready", func() {
+			Eventually(func() string {
+				return centralStatus(createdCentral, client)
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
+			central = getCentral(createdCentral, client)
+		})
+
+		It("should be deletable in the control-plane database", func() {
+			err = adminClient.DbDeleteCentral(createdCentral.Id)
+			Expect(err).To(Succeed())
+			err = adminClient.DbDeleteCentral(createdCentral.Id)
+			Expect(err).To(HaveOccurred())
+			central, err := client.GetCentral(createdCentral.Id)
+			Expect(err).To(HaveOccurred())
+			Expect(central).To(BeNil())
+		})
+
+		// Cleaning up on data-plane side because we have skipped the regular deletion workflow taking care of this.
+		It("can be cleaned up manually", func() {
+			// (1) Delete the Central CR.
+			centralRef := &v1alpha1.Central{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      centralName,
+					Namespace: namespaceName,
+				},
+			}
+			err = k8sClient.Delete(context.Background(), centralRef)
+			Expect(err).ToNot(HaveOccurred())
+
+			// (2) Delete the namespace and everything in it.
+			namespace := &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: namespaceName,
+				},
+			}
+			err = k8sClient.Delete(context.Background(), namespace)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("should delete external DNS entries", func() {
+			if !dnsEnabled {
+				Skip(skipDNSMsg)
+			}
+
+			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
+
+			Eventually(dnsRecordsLoader.LoadDNSRecords).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(BeEmpty(), "Started at %s", time.Now())
+		})
 	})
 })
 

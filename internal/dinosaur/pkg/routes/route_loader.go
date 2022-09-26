@@ -219,6 +219,11 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
 	adminDinosaursRouter := adminRouter.PathPrefix("/dinosaurs").Subrouter()
 
+	adminDbCentralsRouter := adminDinosaursRouter.PathPrefix("/db").Subrouter()
+	adminDbCentralsRouter.HandleFunc("/{id}", adminDinosaurHandler.DbDelete).
+		Name(logger.NewLogEvent("admin-db-delete-central", "[admin] delete central by id").ToString()).
+		Methods(http.MethodDelete)
+
 	adminDinosaursRouter.HandleFunc("", adminDinosaurHandler.List).
 		Name(logger.NewLogEvent("admin-list-dinosaurs", "[admin] list all dinosaurs").ToString()).
 		Methods(http.MethodGet)

@@ -76,7 +76,7 @@ type DinosaurService interface {
 	GetByID(id string) (*dbapi.CentralRequest, *errors.ServiceError)
 	// Delete cleans up all dependencies for a Dinosaur request and soft deletes the Dinosaur Request record from the database.
 	// The Dinosaur Request in the database will be updated with a deleted_at timestamp.
-	Delete(*dbapi.CentralRequest) *errors.ServiceError
+	Delete(centralRequest *dbapi.CentralRequest, force bool) *errors.ServiceError
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError)
 	ListByClusterID(clusterID string) ([]*dbapi.CentralRequest, *errors.ServiceError)
 	RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
@@ -517,30 +517,43 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *e
 	return nil
 }
 
-// Delete ...
-func (k *dinosaurService) Delete(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
+// Delete a CentralRequest from the database.
+// The implementation uses soft-deletion (via GORM).
+// If the force flag is true, then any errors prior to the final deletion of the CentralRequest will be logged as warnings
+// but do not interrupt the deletion flow.
+func (k *dinosaurService) Delete(centralRequest *dbapi.CentralRequest, force bool) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
 	// if the we don't have the clusterID we can only delete the row from the database
-	if dinosaurRequest.ClusterID != "" {
-		routes, err := dinosaurRequest.GetRoutes()
+	if centralRequest.ClusterID != "" {
+		routes, err := centralRequest.GetRoutes()
 		if err != nil {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
 		}
 		// Only delete the routes when they are set
 		if routes != nil && k.dinosaurConfig.EnableCentralExternalCertificate {
-			_, err := k.ChangeDinosaurCNAMErecords(dinosaurRequest, DinosaurRoutesActionDelete)
+			_, err := k.ChangeDinosaurCNAMErecords(centralRequest, DinosaurRoutesActionDelete)
 			if err != nil {
-				return err
+				if force {
+					glog.Warningf("Failed to delete CNAME records for Central tenant %q: %v", centralRequest.ID, err)
+					glog.Warning("Continuing with deletion of Central tenant because force-deletion is specified")
+				} else {
+					return err
+				}
 			}
+			glog.Infof("Successfully deleted CNAME records for Central tenant %q", centralRequest.ID)
 		}
 	}
 
 	// soft delete the dinosaur request
-	if err := dbConn.Delete(dinosaurRequest).Error; err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to delete central request with id %s", dinosaurRequest.ID)
+	if err := dbConn.Delete(centralRequest).Error; err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to delete central request with id %s", centralRequest.ID)
 	}
 
+	glog.Infof("Successfully deleted Central tenant %q in the database.", centralRequest.ID)
+	if force {
+		glog.Infof("Make sure any other resources belonging to the Central tenant %q are manually deleted.", centralRequest.ID)
+	}
 	metrics.IncreaseCentralTotalOperationsCountMetric(dinosaurConstants.CentralOperationDelete)
 	metrics.IncreaseCentralSuccessOperationsCountMetric(dinosaurConstants.CentralOperationDelete)
 
