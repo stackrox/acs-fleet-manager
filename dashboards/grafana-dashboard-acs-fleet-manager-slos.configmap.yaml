@@ -36,7 +36,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 417,
-      "iteration": 1658129930624,
+      "iteration": 1664185624659,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -96,7 +96,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -169,7 +169,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -236,7 +236,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -302,7 +302,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -369,7 +369,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -435,7 +435,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -505,7 +505,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -946,7 +946,7 @@ data:
             "showUnfilled": true,
             "text": {}
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -975,9 +975,9 @@ data:
         "list": [
           {
             "current": {
-              "selected": false,
-              "text": "app-sre-stage-01-prometheus",
-              "value": "app-sre-stage-01-prometheus"
+              "selected": true,
+              "text": "app-sre-prod-04-prometheus",
+              "value": "app-sre-prod-04-prometheus"
             },
             "hide": 0,
             "includeAll": false,
@@ -988,15 +988,15 @@ data:
             "query": "prometheus",
             "queryValue": "",
             "refresh": 1,
-            "regex": "app-sre-stage-01-prometheus|app-sre-prod-01-prometheus",
+            "regex": "app-sre-stage-01-prometheus|app-sre-prod-04-prometheus",
             "skipUrlSync": false,
             "type": "datasource"
           },
           {
             "current": {
               "selected": true,
-              "text": "acs-fleet-manager-stage",
-              "value": "acs-fleet-manager-stage"
+              "text": "acs-fleet-manager-production",
+              "value": "acs-fleet-manager-production"
             },
             "hide": 0,
             "includeAll": false,
@@ -1005,12 +1005,17 @@ data:
             "name": "namespace",
             "options": [
               {
-                "selected": true,
+                "selected": false,
                 "text": "acs-fleet-manager-stage",
                 "value": "acs-fleet-manager-stage"
+              },
+              {
+                "selected": true,
+                "text": "acs-fleet-manager-production",
+                "value": "acs-fleet-manager-production"
               }
             ],
-            "query": "acs-fleet-manager-stage",
+            "query": "acs-fleet-manager-stage,acs-fleet-manager-production",
             "queryValue": "",
             "skipUrlSync": false,
             "type": "custom"
@@ -1049,6 +1054,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager SLOs",
       "uid": "T2kek3H9a",
-      "version": 20,
+      "version": 21,
       "weekStart": ""
     }

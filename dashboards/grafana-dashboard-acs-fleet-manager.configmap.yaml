@@ -36,7 +36,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 413,
-      "iteration": 1662669303081,
+      "iteration": 1664186027385,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -561,8 +561,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -616,9 +615,9 @@ data:
         "list": [
           {
             "current": {
-              "selected": false,
-              "text": "app-sre-stage-01-prometheus",
-              "value": "app-sre-stage-01-prometheus"
+              "selected": true,
+              "text": "app-sre-prod-04-prometheus",
+              "value": "app-sre-prod-04-prometheus"
             },
             "hide": 0,
             "includeAll": false,
@@ -627,16 +626,17 @@ data:
             "name": "datasource",
             "options": [],
             "query": "prometheus",
+            "queryValue": "",
             "refresh": 1,
-            "regex": "app-sre-stage-01-prometheus|app-sre-prod-01-prometheus",
+            "regex": "app-sre-stage-01-prometheus|app-sre-prod-04-prometheus",
             "skipUrlSync": false,
             "type": "datasource"
           },
           {
             "current": {
-              "selected": false,
-              "text": "acs-fleet-manager-stage",
-              "value": "acs-fleet-manager-stage"
+              "selected": true,
+              "text": "acs-fleet-manager-production",
+              "value": "acs-fleet-manager-production"
             },
             "hide": 0,
             "includeAll": false,
@@ -645,12 +645,17 @@ data:
             "name": "namespace",
             "options": [
               {
-                "selected": true,
+                "selected": false,
                 "text": "acs-fleet-manager-stage",
                 "value": "acs-fleet-manager-stage"
+              },
+              {
+                "selected": true,
+                "text": "acs-fleet-manager-production",
+                "value": "acs-fleet-manager-production"
               }
             ],
-            "query": "acs-fleet-manager-stage",
+            "query": "acs-fleet-manager-stage,acs-fleet-manager-production",
             "skipUrlSync": false,
             "type": "custom"
           }
@@ -664,6 +669,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager",
       "uid": "D1C839d82",
-      "version": 3,
+      "version": 4,
       "weekStart": ""
     }
