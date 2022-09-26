@@ -36,7 +36,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 417,
-      "iteration": 1658129930624,
+      "iteration": 1664184046561,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -96,7 +96,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -169,7 +169,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -236,7 +236,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -302,7 +302,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -369,7 +369,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -435,7 +435,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -505,7 +505,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -843,8 +843,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -916,8 +915,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               },
@@ -988,13 +986,13 @@ data:
             "query": "prometheus",
             "queryValue": "",
             "refresh": 1,
-            "regex": "app-sre-stage-01-prometheus|app-sre-prod-01-prometheus",
+            "regex": "app-sre-stage-01-prometheus|app-sre-prod-04-prometheus",
             "skipUrlSync": false,
             "type": "datasource"
           },
           {
             "current": {
-              "selected": true,
+              "selected": false,
               "text": "acs-fleet-manager-stage",
               "value": "acs-fleet-manager-stage"
             },
@@ -1008,9 +1006,14 @@ data:
                 "selected": true,
                 "text": "acs-fleet-manager-stage",
                 "value": "acs-fleet-manager-stage"
+              },
+              {
+                "selected": false,
+                "text": "acs-fleet-manager-production",
+                "value": "acs-fleet-manager-production"
               }
             ],
-            "query": "acs-fleet-manager-stage",
+            "query": "acs-fleet-manager-stage,acs-fleet-manager-production",
             "queryValue": "",
             "skipUrlSync": false,
             "type": "custom"
@@ -1049,6 +1052,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager SLOs",
       "uid": "T2kek3H9a",
-      "version": 20,
+      "version": 21,
       "weekStart": ""
     }
