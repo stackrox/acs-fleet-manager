@@ -976,8 +976,8 @@ data:
           {
             "current": {
               "selected": true,
-              "text": "app-sre-stage-01-prometheus",
-              "value": "app-sre-stage-01-prometheus"
+              "text": "app-sre-prod-04-prometheus",
+              "value": "app-sre-prod-04-prometheus"
             },
             "hide": 0,
             "includeAll": false,
@@ -995,8 +995,8 @@ data:
           {
             "current": {
               "selected": true,
-              "text": "acs-fleet-manager-stage",
-              "value": "acs-fleet-manager-stage"
+              "text": "acs-fleet-manager-production",
+              "value": "acs-fleet-manager-production"
             },
             "hide": 0,
             "includeAll": false,
@@ -1005,12 +1005,12 @@ data:
             "name": "namespace",
             "options": [
               {
-                "selected": true,
+                "selected": false,
                 "text": "acs-fleet-manager-stage",
                 "value": "acs-fleet-manager-stage"
               },
               {
-                "selected": false,
+                "selected": true,
                 "text": "acs-fleet-manager-production",
                 "value": "acs-fleet-manager-production"
               }
