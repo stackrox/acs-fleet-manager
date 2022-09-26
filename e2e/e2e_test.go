@@ -442,25 +442,22 @@ var _ = Describe("Central", func() {
 		}
 
 		var createdCentral *public.CentralRequest
+		var central *public.CentralRequest
 		var namespaceName string
+
 		It("created a central", func() {
 			createdCentral, err = client.CreateCentral(request)
-			GinkgoWriter.Printf("createdCentral = %+v\n", *createdCentral)
 			Expect(err).To(BeNil())
 			namespaceName, err = services.FormatNamespace(createdCentral.Id)
 			Expect(err).To(BeNil())
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
-
-			Eventually(func() error {
-				_, err := client.GetCentral(createdCentral.Id)
-				return err
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeNil())
 		})
 
 		It("should transition central's state to ready", func() {
 			Eventually(func() string {
 				return centralStatus(createdCentral, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
+			central = getCentral(createdCentral, client)
 		})
 
 		It("should be deletable in the control-plane database", func() {
@@ -469,8 +466,8 @@ var _ = Describe("Central", func() {
 			err = adminClient.DbDeleteCentral(createdCentral.Id)
 			Expect(err).To(HaveOccurred())
 			central, err := client.GetCentral(createdCentral.Id)
-			Expect(central).To(BeNil())
 			Expect(err).To(HaveOccurred())
+			Expect(central).To(BeNil())
 		})
 
 		// Cleaning up on data-plane side because we have skipped the regular deletion workflow taking care of this.
@@ -482,7 +479,6 @@ var _ = Describe("Central", func() {
 					Namespace: namespaceName,
 				},
 			}
-			GinkgoWriter.Printf("centralRef = %+v\n", *centralRef)
 			err = k8sClient.Delete(context.Background(), centralRef)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -501,7 +497,6 @@ var _ = Describe("Central", func() {
 				Skip(skipDNSMsg)
 			}
 
-			central := getCentral(createdCentral, client)
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
 
 			Eventually(dnsRecordsLoader.LoadDNSRecords).
