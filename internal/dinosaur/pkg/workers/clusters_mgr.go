@@ -375,15 +375,16 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) er
 
 func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
 	glog.Infof("Removing Dataplane cluster %s fleetshard service account", cluster.ClusterID)
-	serviceAcountRemovalErr := c.FleetshardOperatorAddon.RemoveServiceAccount(cluster)
-	if serviceAcountRemovalErr != nil {
-		return errors.Wrapf(serviceAcountRemovalErr, "Failed to removed Dataplance cluster %s fleetshard service account", cluster.ClusterID)
-	}
+	// TODO(addon): reactivate this, if required for cluster terraforming by fleet-manager
+	// serviceAcountRemovalErr := c.FleetshardOperatorAddon.RemoveServiceAccount(cluster)
+	// if serviceAcountRemovalErr != nil {
+	// 	return errors.Wrapf(serviceAcountRemovalErr, "Failed to removed Dataplance cluster %s fleetshard service account", cluster.ClusterID)
+	// }
 
 	glog.Infof("Soft deleting the Dataplane cluster %s from the database", cluster.ClusterID)
 	deleteError := c.ClusterService.DeleteByClusterID(cluster.ClusterID)
 	if deleteError != nil {
-		return errors.Wrapf(deleteError, "Failed to soft delete Dataplance cluster %s from the database", cluster.ClusterID)
+		return errors.Wrapf(deleteError, "Failed to soft delete Dataplane cluster %s from the database", cluster.ClusterID)
 	}
 	return nil
 }
@@ -672,6 +673,8 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		newCluster.ProviderType = manualCluster.ProviderType
 		newCluster.ClusterDNS = manualCluster.ClusterDNS
 		newCluster.SupportedInstanceType = manualCluster.SupportedInstanceType
+		newCluster.SkipScheduling = false
+
 		if err := cluster.SetAvailableCentralOperatorVersions(manualCluster.AvailableCentralOperatorVersions); err != nil {
 			return []error{errors.Wrapf(err, "Failed to update operator versions for manual cluster %s with config file", manualCluster.ClusterID)}
 		}
@@ -702,15 +705,23 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	}
 
 	var idsOfClustersToDeprovision []string
+	var idsOfClusterToSkipScheduling []string
 	for _, c := range dinosaurInstanceCount {
 		if c.Count > 0 {
-			glog.Infof("Excess cluster %s is not going to be deleted because it has %d central.", c.Clusterid, c.Count)
+			glog.Infof("Excess cluster %s is not going to be deleted because it has %d centrals.", c.Clusterid, c.Count)
+			idsOfClusterToSkipScheduling = append(idsOfClusterToSkipScheduling, c.Clusterid)
 		} else {
 			glog.Infof("Excess cluster is going to be deleted %s", c.Clusterid)
 			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, c.Clusterid)
 		}
 	}
 
+	if len(idsOfClusterToSkipScheduling) != 0 {
+		if err := c.ClusterService.UpdateMultiClusterSkipScheduling(idsOfClusterToSkipScheduling, true); err != nil {
+			return []error{errors.Wrapf(err, "setting skip_scheduling for clusters: %v", idsOfClusterToSkipScheduling)}
+		}
+	}
+	glog.Infof("Set skip_scheduling to true for clusters: %v", idsOfClusterToSkipScheduling)
 	if len(idsOfClustersToDeprovision) == 0 {
 		return nil
 	}

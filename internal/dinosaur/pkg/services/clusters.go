@@ -56,6 +56,8 @@ type ClusterService interface {
 	FindDinosaurInstanceCount(clusterIDs []string) ([]ResDinosaurInstanceCount, *apiErrors.ServiceError)
 	// UpdateMultiClusterStatus updates a list of clusters' status to a status
 	UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
+	// UpdateMultiClusterSkipScheduling updates the SkipScheduling field of a list of clusters
+	UpdateMultiClusterSkipScheduling(clusterIds []string, skipScheduling bool) *apiErrors.ServiceError
 	// CountByStatus returns the count of clusters for each given status in the database
 	CountByStatus([]api.ClusterStatus) ([]ClusterStatusCount, *apiErrors.ServiceError)
 	CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
@@ -588,6 +590,22 @@ func (c clusterService) UpdateMultiClusterStatus(clusterIds []string, status api
 			metrics.IncreaseClusterTotalOperationsCountMetric(constants2.ClusterOperationCreate)
 			metrics.IncreaseClusterSuccessOperationsCountMetric(constants2.ClusterOperationCreate)
 		}
+	}
+
+	return nil
+}
+
+func (c clusterService) UpdateMultiClusterSkipScheduling(clusterIds []string, skipScheduling bool) *apiErrors.ServiceError {
+	if len(clusterIds) == 0 {
+		return apiErrors.Validation("ids is empty")
+	}
+
+	dbConn := c.connectionFactory.New().
+		Model(&api.Cluster{}).
+		Where("cluster_id in (?)", clusterIds)
+
+	if err := dbConn.Update("skip_scheduling", skipScheduling).Error; err != nil {
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update skip_scheduling: %s", clusterIds)
 	}
 
 	return nil

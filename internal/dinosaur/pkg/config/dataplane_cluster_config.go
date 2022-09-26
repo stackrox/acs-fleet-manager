@@ -30,6 +30,7 @@ type DataplaneClusterConfig struct {
 	// 'none' to disabled scaling all together, useful in testing
 	DataPlaneClusterScalingType string `json:"dataplane_cluster_scaling_type"`
 	DataPlaneClusterConfigFile  string `json:"dataplane_cluster_config_file"`
+	DataPlaneClusterTarget      string `json:"dataplane_cluster_target"`
 	ReadOnlyUserList            userv1.OptionalNames
 	ReadOnlyUserListFile        string
 	// TODO ROX-11294 adjust or drop sre user list
@@ -317,6 +318,7 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.Namespace, "fleetshard-operator-namespace", c.FleetshardOperatorOLMConfig.Namespace, "fleetshard operator namespace")
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.Package, "fleetshard-operator-package", c.FleetshardOperatorOLMConfig.Package, "fleetshard operator package")
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.SubscriptionChannel, "fleetshard-operator-sub-channel", c.FleetshardOperatorOLMConfig.SubscriptionChannel, "fleetshard operator subscription channel")
+	fs.StringVar(&c.DataPlaneClusterTarget, "dataplane-cluster-target", "", "specify cluster by ID on which new centrals should be created")
 }
 
 // ReadFiles ...
