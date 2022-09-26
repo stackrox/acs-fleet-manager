@@ -36,7 +36,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 417,
-      "iteration": 1664184046561,
+      "iteration": 1664185624659,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -843,7 +843,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -915,7 +916,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   }
                 ]
               },
@@ -944,7 +946,7 @@ data:
             "showUnfilled": true,
             "text": {}
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -973,7 +975,7 @@ data:
         "list": [
           {
             "current": {
-              "selected": false,
+              "selected": true,
               "text": "app-sre-stage-01-prometheus",
               "value": "app-sre-stage-01-prometheus"
             },
@@ -992,7 +994,7 @@ data:
           },
           {
             "current": {
-              "selected": false,
+              "selected": true,
               "text": "acs-fleet-manager-stage",
               "value": "acs-fleet-manager-stage"
             },

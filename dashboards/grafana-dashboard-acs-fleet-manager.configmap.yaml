@@ -36,7 +36,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 413,
-      "iteration": 1664183383763,
+      "iteration": 1664186027385,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -561,8 +561,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -617,8 +616,8 @@ data:
           {
             "current": {
               "selected": true,
-              "text": "app-sre-prod-04-prometheus",
-              "value": "app-sre-prod-04-prometheus"
+              "text": "app-sre-stage-01-prometheus",
+              "value": "app-sre-stage-01-prometheus"
             },
             "hide": 0,
             "includeAll": false,
@@ -636,8 +635,8 @@ data:
           {
             "current": {
               "selected": true,
-              "text": "acs-fleet-manager-production",
-              "value": "acs-fleet-manager-production"
+              "text": "acs-fleet-manager-stage",
+              "value": "acs-fleet-manager-stage"
             },
             "hide": 0,
             "includeAll": false,
@@ -646,18 +645,17 @@ data:
             "name": "namespace",
             "options": [
               {
-                "selected": false,
+                "selected": true,
                 "text": "acs-fleet-manager-stage",
                 "value": "acs-fleet-manager-stage"
               },
               {
-                "selected": true,
+                "selected": false,
                 "text": "acs-fleet-manager-production",
                 "value": "acs-fleet-manager-production"
               }
             ],
             "query": "acs-fleet-manager-stage,acs-fleet-manager-production",
-            "queryValue": "",
             "skipUrlSync": false,
             "type": "custom"
           }
