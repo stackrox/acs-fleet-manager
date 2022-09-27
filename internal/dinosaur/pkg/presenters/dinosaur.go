@@ -7,6 +7,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 )
 
+const (
+	sensorDataPort = 443 // The port for connecting sensor to the data URL.
+)
+
 // ConvertDinosaurRequest from payload to DinosaurRequest
 func ConvertDinosaurRequest(dinosaurRequestPayload public.CentralRequestPayload, dbDinosaurrequest ...*dbapi.CentralRequest) *dbapi.CentralRequest {
 	// TODO implement converter
@@ -33,7 +37,7 @@ func PresentCentralRequest(request *dbapi.CentralRequest) public.CentralRequest 
 		Owner:          request.Owner,
 		Name:           request.Name,
 		CentralUIURL:   fmt.Sprintf("https://%s", request.GetUIHost()),
-		CentralDataURL: fmt.Sprintf("https://%s", request.GetDataHost()),
+		CentralDataURL: fmt.Sprintf("%s:%d", request.GetDataHost(), sensorDataPort),
 		CreatedAt:      request.CreatedAt,
 		UpdatedAt:      request.UpdatedAt,
 		FailedReason:   request.FailedReason,
