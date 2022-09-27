@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"time"
@@ -153,10 +154,10 @@ var _ = Describe("Central", func() {
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
-			centralDataURL, err := url.Parse(central.CentralDataURL)
+			centralDataHost, centralDataPort, err := net.SplitHostPort(central.CentralDataURL)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(centralDataURL.Scheme).To(Equal("https"))
-			Expect(passthroughRoute.Spec.Host).To(Equal(centralDataURL.Host))
+			Expect(passthroughRoute.Spec.Host).To(Equal(centralDataHost))
+			Expect(centralDataPort).To(Equal("443"))
 			Expect(passthroughRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationPassthrough))
 		})
 

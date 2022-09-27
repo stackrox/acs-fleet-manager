@@ -2,6 +2,7 @@ package dns
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"sort"
 	"strings"
@@ -95,11 +96,11 @@ func removeLastChar(s string) string {
 func getCentralDomainNamesSorted(central *public.CentralRequest) []string {
 	uiURL, err := url.Parse(central.CentralUIURL)
 	Expect(err).ToNot(HaveOccurred())
-	dataURL, err := url.Parse(central.CentralDataURL)
+	dataHost, _, err := net.SplitHostPort(central.CentralDataURL)
 	Expect(err).ToNot(HaveOccurred())
 
 	centralUIDomain := uiURL.Host + "."
-	centralDataDomain := dataURL.Host + "."
+	centralDataDomain := dataHost + "."
 	domains := []string{centralUIDomain, centralDataDomain}
 	sort.Strings(domains)
 	return domains
