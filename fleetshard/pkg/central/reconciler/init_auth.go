@@ -30,9 +30,6 @@ var (
 			return &storage.Group{
 				Props: &storage.GroupProperties{
 					AuthProviderId: providerId,
-					Traits: &storage.Traits{
-						MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
-					},
 				},
 				RoleName: "None",
 			}
