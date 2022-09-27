@@ -470,11 +470,12 @@ var _ = Describe("Central", func() {
 
 		It("should be deletable in the control-plane database", func() {
 			_, err = adminAPI.DeleteDbCentralById(context.TODO(), createdCentral.Id)
-			Expect(err).To(Succeed())
+			Expect(err).ToNot(HaveOccurred())
+			_, err = adminAPI.DeleteDbCentralById(context.TODO(), createdCentral.Id)
 			Expect(err).To(HaveOccurred())
 			central, _, err := client.PublicAPI().GetCentralById(context.TODO(), createdCentral.Id)
 			Expect(err).To(HaveOccurred())
-			Expect(central).To(BeNil())
+			Expect(central.Id).To(BeEmpty())
 		})
 
 		// Cleaning up on data-plane side because we have skipped the regular deletion workflow taking care of this.
