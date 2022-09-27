@@ -487,7 +487,7 @@ var _ = Describe("Central", func() {
 					Namespace: namespaceName,
 				},
 			}
-			err = k8sClient.Delete(context.Background(), centralRef)
+			err = k8sClient.Delete(context.TODO(), centralRef)
 			Expect(err).ToNot(HaveOccurred())
 
 			// (2) Delete the namespace and everything in it.
@@ -496,7 +496,7 @@ var _ = Describe("Central", func() {
 					Name: namespaceName,
 				},
 			}
-			err = k8sClient.Delete(context.Background(), namespace)
+			err = k8sClient.Delete(context.TODO(), namespace)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -517,8 +517,9 @@ var _ = Describe("Central", func() {
 
 func getCentral(id string, client *fleetmanager.Client) *public.CentralRequest {
 	Expect(id).NotTo(BeEmpty())
-	central, _, err := client.PublicAPI().GetCentralById(context.Background(), id)
+	central, _, err := client.PublicAPI().GetCentralById(context.TODO(), id)
 	Expect(err).To(BeNil())
+	Expect(central).ToNot(BeNil())
 	return &central
 }
 
