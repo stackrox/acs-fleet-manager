@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 fleetshardSync:
-  image: "quay.io/app-sre/acs-fleet-manager:main"
+  image: "quay.io/app-sre/acs-fleet-manager:59142fe"
   # Sets the commit hash and git describe to identify the deployed version of fleetshard sync
   gitCommitSHA: ""
   gitDescribeTag: ""
