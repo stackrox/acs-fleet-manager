@@ -162,6 +162,7 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 		Traits: &storage.Traits{
 			MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
 		},
+		Active: true,
 	}
 	return request
 }
