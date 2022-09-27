@@ -46,6 +46,8 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
 
     ensure_bitwarden_session_exists
+
+    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:59142fe"
     # Note: the Red Hat SSO client as of 2022-09-02 is the same between stage and prod.
     FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
     FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b)
@@ -77,6 +79,7 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://api.openshift.com"
 
     ensure_bitwarden_session_exists
+    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:59142fe"
     # Note: the Red Hat SSO client as of 2022-09-02 is the same between stage and prod.
     FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
     FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b)
@@ -127,8 +130,9 @@ helm upgrade rhacs-terraform ./ \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
-  --set acsOperator.version=v3.71.0 \
+  --set acsOperator.version=v3.72.0 \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
+  --set fleetshardSync.image="${FLEETSHARD_SYNC_IMAGE}" \
   --set fleetshardSync.authType="RHSSO" \
   --set fleetshardSync.gitCommitSHA="${GIT_COMMIT_SHA}" \
   --set fleetshardSync.gitDescribeTag="${GIT_DESCRIBE_TAG}" \
