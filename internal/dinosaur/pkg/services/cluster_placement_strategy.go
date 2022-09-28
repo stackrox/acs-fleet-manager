@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -51,7 +52,7 @@ func (d FirstReadyPlacementStrategy) FindCluster(dinosaur *dbapi.CentralRequest)
 	}
 
 	for _, c := range clusters {
-		if !c.SkipScheduling {
+		if !c.SkipScheduling && supportsInstanceType(c, dinosaur.InstanceType) {
 			return c, nil
 		}
 	}
@@ -74,9 +75,17 @@ func (f TargetClusterPlacementStrategy) FindCluster(central *dbapi.CentralReques
 		return nil, err
 	}
 
+	if !supportsInstanceType(cluster, central.InstanceType) {
+		return nil, fmt.Errorf("target cluster %s, does not support instance type %s", f.targetClusterID, central.InstanceType)
+	}
+
 	if cluster != nil {
 		return cluster, nil
 	}
 
 	return nil, fmt.Errorf("target cluster %v not found in cluster list", f.targetClusterID)
+}
+
+func supportsInstanceType(c *api.Cluster, instanceType string) bool {
+	return strings.Contains(c.SupportedInstanceType, instanceType)
 }
