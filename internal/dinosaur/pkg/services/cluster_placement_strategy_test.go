@@ -54,7 +54,6 @@ func TestPlacementStrategyType(t *testing.T) {
 }
 
 func TestFirstClusterPlacementStrategy(t *testing.T) {
-
 	tt := []struct {
 		description           string
 		newClusterServiceMock func() ClusterService
@@ -88,9 +87,66 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 			expectedError:   errors.New("no schedulable cluster found"),
 			expectedCluster: nil,
 		},
-		// should return error if no clusters with SkipScheduling true was found
-		// should return error if no cluster supporting central instancetype was found
-		// should return first ready cluster
+		{
+			description: "should return error if no clusters with SkipScheduling false was found",
+			newClusterServiceMock: func() ClusterService {
+				return &ClusterServiceMock{
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceErrors.ServiceError) {
+						return []*api.Cluster{
+							buildCluster(func(cluster *api.Cluster) {
+								cluster.SkipScheduling = true
+							}),
+							buildCluster(func(cluster *api.Cluster) {
+								cluster.SkipScheduling = true
+							}),
+						}, nil
+					},
+				}
+			},
+			central:         buildDinosaurRequest(func(dinosaurRequest *dbapi.CentralRequest) {}),
+			expectedError:   errors.New("no schedulable cluster found"),
+			expectedCluster: nil,
+		},
+		{
+			description: "should return error if no cluster supporting central instancetype was found",
+			newClusterServiceMock: func() ClusterService {
+				return &ClusterServiceMock{
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceErrors.ServiceError) {
+						return []*api.Cluster{
+							buildCluster(func(cluster *api.Cluster) {}),
+							buildCluster(func(cluster *api.Cluster) {}),
+						}, nil
+					},
+				}
+			},
+			central: buildDinosaurRequest(func(centralRequest *dbapi.CentralRequest) {
+				centralRequest.InstanceType = "standard"
+			}),
+			expectedError:   errors.New("no schedulable cluster found"),
+			expectedCluster: nil,
+		},
+		{
+			description: "should return first schedulable cluster",
+			newClusterServiceMock: func() ClusterService {
+				return &ClusterServiceMock{
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceErrors.ServiceError) {
+						return []*api.Cluster{
+							buildCluster(func(cluster *api.Cluster) {}),
+							buildCluster(func(cluster *api.Cluster) {
+								cluster.SupportedInstanceType = "standard,eval"
+							}),
+						}, nil
+					},
+				}
+			},
+			central: buildDinosaurRequest(func(centralRequest *dbapi.CentralRequest) {
+				centralRequest.InstanceType = "standard"
+			}),
+			expectedError: nil,
+			expectedCluster: buildCluster(func(cluster *api.Cluster) {
+				cluster.SupportedInstanceType = "standard,eval"
+			}),
+		},
 	}
 
 	for _, tc := range tt {
@@ -98,7 +154,14 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 			strategy := FirstReadyPlacementStrategy{clusterService: tc.newClusterServiceMock()}
 			cluster, err := strategy.FindCluster(tc.central)
 			require.Equal(t, err, tc.expectedError)
-			require.Equal(t, tc.expectedCluster, cluster)
+			if tc.expectedError != nil {
+				require.Nil(t, cluster)
+			}
+
+			if cluster != nil {
+				require.Equal(t, *tc.expectedCluster, *cluster)
+			}
+
 		})
 
 	}

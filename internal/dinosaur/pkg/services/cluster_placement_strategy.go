@@ -87,5 +87,12 @@ func (f TargetClusterPlacementStrategy) FindCluster(central *dbapi.CentralReques
 }
 
 func supportsInstanceType(c *api.Cluster, instanceType string) bool {
-	return strings.Contains(c.SupportedInstanceType, instanceType)
+	supportedTypes := strings.Split(c.SupportedInstanceType, ",")
+	for _, t := range supportedTypes {
+		if t == instanceType {
+			return true
+		}
+	}
+
+	return false
 }
