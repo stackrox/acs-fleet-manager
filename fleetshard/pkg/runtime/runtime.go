@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/log"
-
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
@@ -122,7 +120,7 @@ func (r *Runtime) Start() error {
 func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error) {
 	if err != nil {
 		if centralReconciler.IsSkippable(err) {
-			log.Debugf("Skip sending the status for central %s/%s: %v", central.Metadata.Namespace, central.Metadata.Name, err)
+			glog.V(10).Infof("Skip sending the status for central %s/%s: %v", central.Metadata.Namespace, central.Metadata.Name, err)
 		} else {
 			fleetshardmetrics.MetricsInstance().IncCentralReconcilationErrors()
 			glog.Errorf("Unexpected error occurred %s/%s: %s", central.Metadata.Namespace, central.Metadata.Name, err.Error())
