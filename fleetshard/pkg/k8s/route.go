@@ -55,7 +55,7 @@ func (s *RouteService) FindPassthroughIngress(ctx context.Context, namespace str
 	return s.findFirstAdmittedIngress(ctx, namespace, centralPassthroughRouteName)
 }
 
-// FindFirstAdmittedIngress returns first admitted ingress or error if not found
+// findFirstAdmittedIngress returns first admitted ingress or error if not found
 func (s *RouteService) findFirstAdmittedIngress(ctx context.Context, namespace string, routeName string) (*openshiftRouteV1.RouteIngress, error) {
 	route, err := s.findRoute(ctx, namespace, routeName)
 	if err != nil {

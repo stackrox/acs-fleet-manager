@@ -167,7 +167,14 @@ var _ = Describe("Central", func() {
 			}
 
 			central := getCentral(createdCentral, client)
-			reencryptIngress, err := routeService.FindReencryptIngress(context.Background(), namespaceName)
+			var reencryptIngress *openshiftRouteV1.RouteIngress
+			Eventually(func() error {
+				reencryptIngress, err = routeService.FindReencryptIngress(context.Background(), namespaceName)
+				if err != nil {
+					return fmt.Errorf("failed finding reencrypt ingress: %v", err)
+				}
+				return nil
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 			Expect(err).ToNot(HaveOccurred())
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
 
