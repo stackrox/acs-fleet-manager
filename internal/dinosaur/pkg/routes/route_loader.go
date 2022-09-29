@@ -226,13 +226,13 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		Name(logger.NewLogEvent("admin-list-centrals", "[admin] list all centrals").ToString()).
 		Methods(http.MethodGet)
 	adminCentralsRouter.HandleFunc("/{id}", adminCentralHandler.Get).
-		Name(logger.NewLogEvent("admin-get-central", "[admin] get dinosaur by id").ToString()).
+		Name(logger.NewLogEvent("admin-get-central", "[admin] get central by id").ToString()).
 		Methods(http.MethodGet)
 	adminCentralsRouter.HandleFunc("/{id}", adminCentralHandler.Delete).
-		Name(logger.NewLogEvent("admin-delete-central", "[admin] delete dinosaur by id").ToString()).
+		Name(logger.NewLogEvent("admin-delete-central", "[admin] delete central by id").ToString()).
 		Methods(http.MethodDelete)
 	adminCentralsRouter.HandleFunc("/{id}", adminCentralHandler.Update).
-		Name(logger.NewLogEvent("admin-update-central", "[admin] update dinosaur by id").ToString()).
+		Name(logger.NewLogEvent("admin-update-central", "[admin] update central by id").ToString()).
 		Methods(http.MethodPatch)
 
 	adminCreateRouter := adminCentralsRouter.NewRoute().Subrouter()
