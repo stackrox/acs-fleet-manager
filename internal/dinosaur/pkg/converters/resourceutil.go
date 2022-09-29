@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	admin "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
+	adminPrivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -14,6 +15,20 @@ import (
 
 // ConvertPublicScalingToV1 converts public API Scanner Scaling configuration into v1alpha1 Scanner Scaling configuration.
 func ConvertPublicScalingToV1(scaling *public.ScannerSpecAnalyzerScaling) (v1alpha1.ScannerAnalyzerScaling, error) {
+	if scaling == nil {
+		return v1alpha1.ScannerAnalyzerScaling{}, nil
+	}
+	autoScaling := scaling.AutoScaling
+	return v1alpha1.ScannerAnalyzerScaling{
+		AutoScaling: (*v1alpha1.AutoScalingPolicy)(&autoScaling), // TODO(create-ticket): validate.
+		Replicas:    &scaling.Replicas,
+		MinReplicas: &scaling.MinReplicas,
+		MaxReplicas: &scaling.MaxReplicas,
+	}, nil
+}
+
+// ConvertAdminPrivateScalingToV1 converts admin API Scanner Scaling configuration into v1alpha1 Scanner Scaling configuration.
+func ConvertAdminPrivateScalingToV1(scaling *adminPrivate.ScannerSpecAnalyzerScaling) (v1alpha1.ScannerAnalyzerScaling, error) {
 	if scaling == nil {
 		return v1alpha1.ScannerAnalyzerScaling{}, nil
 	}
@@ -113,6 +128,24 @@ func ConvertPublicResourceRequirementsToCoreV1(res *public.ResourceRequirements)
 
 // ConvertPrivateResourceRequirementsToCoreV1 converts private API ResourceRequirements into corev1 ResourceRequirements.
 func ConvertPrivateResourceRequirementsToCoreV1(res *private.ResourceRequirements) (corev1.ResourceRequirements, error) {
+	requests, err := apiResourcesToCoreV1(res.Requests)
+	if err != nil {
+		return corev1.ResourceRequirements{}, err
+	}
+
+	limits, err := apiResourcesToCoreV1(res.Limits)
+	if err != nil {
+		return corev1.ResourceRequirements{}, err
+	}
+
+	return corev1.ResourceRequirements{
+		Limits:   limits,
+		Requests: requests,
+	}, nil
+}
+
+// ConvertAdminPrivateRequirementsToCoreV1 converts admin API ResourceRequirements into corev1 ResourceRequirements.
+func ConvertAdminPrivateRequirementsToCoreV1(res *adminPrivate.ResourceRequirements) (corev1.ResourceRequirements, error) {
 	requests, err := apiResourcesToCoreV1(res.Requests)
 	if err != nil {
 		return corev1.ResourceRequirements{}, err

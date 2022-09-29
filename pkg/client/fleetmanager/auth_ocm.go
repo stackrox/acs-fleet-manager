@@ -7,7 +7,6 @@ import (
 
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 )
 
 const (
@@ -34,12 +33,8 @@ func (f *ocmAuthFactory) GetName() string {
 }
 
 // CreateAuth ...
-func (f *ocmAuthFactory) CreateAuth() (Auth, error) {
-	cfg, err := config.GetConfig()
-	if err != nil {
-		return nil, fmt.Errorf("creating the config singleton: %w", err)
-	}
-	initialToken := cfg.OCMRefreshToken
+func (f *ocmAuthFactory) CreateAuth(o Option) (Auth, error) {
+	initialToken := o.Ocm.RefreshToken
 	if initialToken == "" {
 		return nil, errors.New("empty ocm token")
 	}

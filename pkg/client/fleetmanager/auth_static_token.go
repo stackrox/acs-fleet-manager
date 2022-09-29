@@ -1,11 +1,9 @@
 package fleetmanager
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 )
 
 const (
@@ -30,12 +28,8 @@ func (f *staticTokenAuthFactory) GetName() string {
 }
 
 // CreateAuth ...
-func (f *staticTokenAuthFactory) CreateAuth() (Auth, error) {
-	cfg, err := config.GetConfig()
-	if err != nil {
-		return nil, fmt.Errorf("creating the config singleton: %w", err)
-	}
-	staticToken := cfg.StaticToken
+func (f *staticTokenAuthFactory) CreateAuth(o Option) (Auth, error) {
+	staticToken := o.Static.StaticToken
 	if staticToken == "" {
 		return nil, errors.New("no static token set")
 	}

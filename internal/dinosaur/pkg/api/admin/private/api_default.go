@@ -299,7 +299,7 @@ func (a *DefaultApiService) DeleteDbCentralById(ctx _context.Context, id string)
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/admin/db/centrals/{id}"
+	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/admin/centrals/db/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)

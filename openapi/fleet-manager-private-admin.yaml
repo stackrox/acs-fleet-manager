@@ -259,7 +259,7 @@ paths:
             application/json:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
-  '/api/rhacs/v1/admin/db/centrals/{id}':
+  '/api/rhacs/v1/admin/centrals/db/{id}':
     delete:
       summary: Delete a Central directly in the Database by ID
       parameters:
