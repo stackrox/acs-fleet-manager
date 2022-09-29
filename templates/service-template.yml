@@ -1093,8 +1093,8 @@ objects:
             - --redhat-sso-client-id-file=/secrets/service/redhatsso-service.clientId
             - --redhat-sso-client-secret-file=/secrets/service/redhatsso-service.clientSecret
             - --central-idp-issuer=${CENTRAL_IDP_ISSUER}
-            - --ocm-client-id-file=/secrets/service/ocm-service.clientId
-            - --ocm-client-secret-file=/secrets/service/ocm-service.clientSecret
+            - --ocm-client-id-file=/secrets/fleet-manager-credentials/ocm-service.clientId
+            - --ocm-client-secret-file=/secrets/fleet-manager-credentials/ocm-service.clientSecret
             - --sso-base-url=${SSO_BASE_URL}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
             - --sso-debug=${SSO_DEBUG}
