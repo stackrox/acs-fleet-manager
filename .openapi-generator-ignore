@@ -37,3 +37,8 @@ internal/dinosaur/pkg/api/admin/private/docs/**.md
 internal/dinosaur/pkg/api/admin/private/**all_of.go
 internal/dinosaur/pkg/api/admin/private/go.mod
 internal/dinosaur/pkg/api/admin/private/go.sum
+pkg/client/redhatsso/api/README.md
+pkg/client/redhatsso/api/docs/**.md
+pkg/client/redhatsso/api/**all_of.go
+pkg/client/redhatsso/api/go.mod
+pkg/client/redhatsso/api/go.sum

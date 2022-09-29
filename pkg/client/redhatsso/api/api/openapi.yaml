@@ -1,0 +1,266 @@
+openapi: 3.0.1
+info:
+  contact:
+    email: it-user-team-list@redhat.com
+  description: This is the API documentation for sso.redhat.com
+  title: sso.redhat.com API documentation
+  version: 5.0.19-SNAPSHOT
+servers:
+- description: Production server
+  url: https://sso.redhat.com/auth/realms/redhat-external
+- description: Stage server
+  url: https://sso.stage.redhat.com/auth/realms/redhat-external
+- description: Local development
+  url: http://localhost:8081/auth/realms/redhat-external
+security:
+- authFlow: []
+- serviceAccounts: []
+- bearerAuth: []
+tags:
+- description: Relevant component to the sso.r.c API for managed ACS
+  name: acs_tenants
+paths:
+  /apis/beta/acs/v1:
+    post:
+      description: Create an ACS Tenant Client. Created ACS Tenant Clients are associated
+        with the account passed along with this request.
+      operationId: createAcsClient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcsClientRequestData'
+        description: '''name'', ''redirect_uris'', and ''account_id'' belonging to
+          the ACS Tenant'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcsClientResponseData'
+          description: OK
+        "400":
+          content:
+            application/json:
+              examples:
+                Bad Request Example:
+                  $ref: '#/components/examples/400FieldValidationError'
+              schema:
+                $ref: '#/components/schemas/ValidationExceptionData'
+          description: All fields did not pass validation.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              examples:
+                acs tenant threshold exceeded:
+                  $ref: '#/components/examples/403AcsTenantThresholdExceeded'
+              schema:
+                $ref: '#/components/schemas/RedHatErrorRepresentation'
+          description: Exceeded account level threshold limits for creating ACS Tenant
+            Clients.
+        "405":
+          content:
+            application/json:
+              examples:
+                acs api disabled:
+                  $ref: '#/components/examples/405AcsApiDisabled'
+              schema:
+                $ref: '#/components/schemas/RedHatErrorRepresentation'
+          description: Not allowed, API Currently Disabled
+      security:
+      - serviceAccounts:
+        - api.iam.acs
+      summary: Create ACS Tenant Client
+      tags:
+      - acs_tenants
+  /apis/beta/acs/v1/{id}:
+    delete:
+      description: Delete ACS Tenant Client by id. Throws not found exception if the
+        client is not found
+      operationId: deleteAcsClient
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json: {}
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              examples:
+                client not found:
+                  $ref: '#/components/examples/404AcsTenantNotFound'
+              schema:
+                $ref: '#/components/schemas/RedHatErrorRepresentation'
+          description: Not Found
+        "405":
+          content:
+            application/json:
+              examples:
+                acs api disabled:
+                  $ref: '#/components/examples/405AcsApiDisabled'
+              schema:
+                $ref: '#/components/schemas/RedHatErrorRepresentation'
+          description: Not allowed, API Currently Disabled
+      security:
+      - serviceAccounts:
+        - api.iam.acs
+      summary: Delete ACS Tenant Client
+      tags:
+      - acs_tenants
+components:
+  examples:
+    "400FieldValidationError":
+      value:
+        error: invalid_field
+        error_description: Request failed field validation
+        fields:
+          name: description of constraint which failed
+    "403AcsTenantThresholdExceeded":
+      value:
+        error: acs_tenant_limit_exceeded
+        error_description: Cannot create more than 25 tenants per account.
+    "404AcsTenantNotFound":
+      value:
+        error: acs_tenant_not_found
+        error_description: ACS Client 1234 not found.
+    "405AcsApiDisabled":
+      value:
+        error: acs_disabled
+        error_description: ACS API is currently disabled.
+  responses:
+    "401":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized
+    "403":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Forbidden
+    "500":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal Server Error
+  schemas:
+    Error:
+      properties:
+        error:
+          description: The cause of the Error.
+          type: string
+      required:
+      - error
+      type: object
+    AcsClientResponseData:
+      example:
+        clientId: clientId
+        name: name
+        secret: secret
+      properties:
+        clientId:
+          type: string
+        secret:
+          type: string
+        name:
+          type: string
+      type: object
+    ValidationExceptionData:
+      properties:
+        fields:
+          additionalProperties:
+            type: string
+          type: object
+        error:
+          example: invalid_field
+          type: string
+        error_description:
+          type: string
+      type: object
+    RedHatErrorRepresentation:
+      properties:
+        error:
+          enum:
+          - service_account_limit_exceeded
+          - service_account_not_found
+          - service_account_user_not_found
+          - service_account_access_invalid
+          - acs_tenant_limit_exceeded
+          - acs_tenant_not_found
+          - acs_access_invalid
+          - acs_invalid_redirect_uri
+          - acs_invalid_client
+          - acs_disabled
+          type: string
+        error_description:
+          type: string
+      type: object
+    AcsClientRequestData:
+      example:
+        name: name
+        redirectUris:
+        - redirectUris
+        - redirectUris
+        orgId: orgId
+      properties:
+        name:
+          maxLength: 50
+          minLength: 1
+          type: string
+        redirectUris:
+          items:
+            type: string
+          type: array
+          uniqueItems: true
+        orgId:
+          type: string
+      required:
+      - orgId
+      - redirectUris
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+    authFlow:
+      flows:
+        authorizationCode:
+          authorizationUrl: /auth/realms/redhat-external/protocol/openid-connect/auth
+          scopes:
+            openid: Treat as an OIDC request
+            api.iam.service_accounts: Grants access to the service accounts api
+          tokenUrl: /auth/realms/redhat-external/protocol/openid-connect/token
+      type: oauth2
+    serviceAccounts:
+      flows:
+        clientCredentials:
+          scopes:
+            openid: Treat as an OIDC request
+            api.iam.acs: Grants access to the advanced cluster security api
+          tokenUrl: /auth/realms/redhat-external/protocol/openid-connect/token
+      type: oauth2
