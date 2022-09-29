@@ -43,5 +43,5 @@ token=$(rhoas authtoken)
 ```
 3. Execute arbitrary API calls:
 ```bash
-curl -H "Authorization: Bearer ${token}" http://fleet-manager:8000/api/rhacs/v1/admin/dinosaurs
+curl -H "Authorization: Bearer ${token}" http://fleet-manager:8000/api/rhacs/v1/admin/centrals
 ```
