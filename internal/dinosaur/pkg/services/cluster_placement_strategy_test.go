@@ -70,7 +70,7 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 					},
 				}
 			},
-			central:         buildDinosaurRequest(func(dinosaurRequest *dbapi.CentralRequest) {}),
+			central:         buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {}),
 			expectedError:   serviceErrors.New(apiErrors.ErrorGeneral, "error in FindAllClusters"),
 			expectedCluster: nil,
 		},
@@ -83,7 +83,7 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 					},
 				}
 			},
-			central:         buildDinosaurRequest(func(dinosaurRequest *dbapi.CentralRequest) {}),
+			central:         buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {}),
 			expectedError:   errors.New("no schedulable cluster found"),
 			expectedCluster: nil,
 		},
@@ -103,7 +103,7 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 					},
 				}
 			},
-			central:         buildDinosaurRequest(func(dinosaurRequest *dbapi.CentralRequest) {}),
+			central:         buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {}),
 			expectedError:   errors.New("no schedulable cluster found"),
 			expectedCluster: nil,
 		},
@@ -119,7 +119,7 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 					},
 				}
 			},
-			central: buildDinosaurRequest(func(centralRequest *dbapi.CentralRequest) {
+			central: buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {
 				centralRequest.InstanceType = "standard"
 			}),
 			expectedError:   errors.New("no schedulable cluster found"),
@@ -139,7 +139,7 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 					},
 				}
 			},
-			central: buildDinosaurRequest(func(centralRequest *dbapi.CentralRequest) {
+			central: buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {
 				centralRequest.InstanceType = "standard"
 			}),
 			expectedError: nil,

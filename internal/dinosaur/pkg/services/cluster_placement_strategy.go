@@ -15,7 +15,7 @@ import (
 //go:generate moq -out cluster_placement_strategy_moq.go . ClusterPlacementStrategy
 type ClusterPlacementStrategy interface {
 	// FindCluster finds and returns a Cluster depends on the specific impl.
-	FindCluster(dinosaur *dbapi.CentralRequest) (*api.Cluster, error)
+	FindCluster(central *dbapi.CentralRequest) (*api.Cluster, error)
 }
 
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the
@@ -45,14 +45,14 @@ type FirstReadyPlacementStrategy struct {
 }
 
 // FindCluster ...
-func (d FirstReadyPlacementStrategy) FindCluster(dinosaur *dbapi.CentralRequest) (*api.Cluster, error) {
+func (d FirstReadyPlacementStrategy) FindCluster(central *dbapi.CentralRequest) (*api.Cluster, error) {
 	clusters, err := d.clusterService.FindAllClusters(FindClusterCriteria{Status: api.ClusterReady})
 	if err != nil {
 		return nil, err
 	}
 
 	for _, c := range clusters {
-		if !c.SkipScheduling && supportsInstanceType(c, dinosaur.InstanceType) {
+		if !c.SkipScheduling && supportsInstanceType(c, central.InstanceType) {
 			return c, nil
 		}
 	}
