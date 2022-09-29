@@ -65,13 +65,13 @@ var _ = Describe("Central", func() {
 		}
 		GinkgoWriter.Printf("FLEET_MANAGER_ENDPOINT=%q\n", fleetManagerEndpoint)
 
-		auth, err := fleetmanager.NewAuth(authType, fleetmanager.WithOptionFromEnv())
+		auth, err := fleetmanager.NewAuth(authType, fleetmanager.OptionFromEnv())
 		Expect(err).ToNot(HaveOccurred())
 		client, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
 		Expect(err).ToNot(HaveOccurred())
 
 		adminStaticToken := os.Getenv("STATIC_TOKEN_ADMIN")
-		adminAuth, err := fleetmanager.NewAuth("STATIC_TOKEN", fleetmanager.WithStaticOption(fleetmanager.StaticOption{StaticToken: adminStaticToken}))
+		adminAuth, err := fleetmanager.NewStaticAuth(fleetmanager.StaticOption{StaticToken: adminStaticToken})
 		Expect(err).ToNot(HaveOccurred())
 		adminClient, err := fleetmanager.NewClient(fleetManagerEndpoint, adminAuth)
 		adminAPI = adminClient.AdminAPI()

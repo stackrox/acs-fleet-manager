@@ -20,48 +20,18 @@ type Auth interface {
 
 type authFactory interface {
 	GetName() string
-	CreateAuth(o option) (Auth, error)
+	CreateAuth(o Option) (Auth, error)
 }
 
-var authFactoryRegistry map[string]authFactory
-
-func init() {
-	authFactoryRegistry = map[string]authFactory{
-		ocmFactory.GetName():         ocmFactory,
-		rhSSOFactory.GetName():       rhSSOFactory,
-		staticTokenFactory.GetName(): staticTokenFactory,
-	}
-}
-
-// NewAuth will return Auth that can be used to add authentication of a specific AuthType to be added to HTTP requests.
-func NewAuth(t string, opts ...AuthOption) (Auth, error) {
-	factory, exists := authFactoryRegistry[t]
-	if !exists {
-		return nil, errors.Errorf("invalid auth type found: %q, must be one of [%s]",
-			t, strings.Join(getAllAuthTypes(), ","))
-	}
-
-	authOption := &option{}
-	for _, opt := range opts {
-		opt(authOption)
-	}
-
-	auth, err := factory.CreateAuth(*authOption)
-	if err != nil {
-		return auth, fmt.Errorf("creating Auth: %w", err)
-	}
-	return auth, nil
-}
-
-// option for the different Auth types.
-type option struct {
-	Sso    RhSsoOption
+// Option for the different Auth types.
+type Option struct {
+	Sso    RHSSOOption
 	Ocm    OCMOption
 	Static StaticOption
 }
 
-// RhSsoOption for the RH SSO Auth type.
-type RhSsoOption struct {
+// RHSSOOption for the RH SSO Auth type.
+type RHSSOOption struct {
 	TokenFile string `env:"RHSSO_TOKEN_FILE" envDefault:"/run/secrets/rhsso-token/token"`
 }
 
@@ -75,47 +45,56 @@ type StaticOption struct {
 	StaticToken string `env:"STATIC_TOKEN"`
 }
 
-// AuthOption to configure the different Auth types.
-type AuthOption func(*option)
+var authFactoryRegistry map[string]authFactory
 
-// WithRhSSOOption will set the options for OCM auth.
-func WithRhSSOOption(sso RhSsoOption) AuthOption {
-	return func(o *option) {
-		if sso.TokenFile != "" {
-			o.Sso.TokenFile = sso.TokenFile
-		}
+func init() {
+	authFactoryRegistry = map[string]authFactory{
+		ocmFactory.GetName():         ocmFactory,
+		rhSSOFactory.GetName():       rhSSOFactory,
+		staticTokenFactory.GetName(): staticTokenFactory,
 	}
 }
 
-// WithOCMOption will set the options for OCM auth.
-func WithOCMOption(ocm OCMOption) AuthOption {
-	return func(o *option) {
-		if ocm.RefreshToken != "" {
-			o.Ocm.RefreshToken = ocm.RefreshToken
-		}
-	}
+// NewAuth will return Auth that can be used to add authentication of a specific AuthType to be added to HTTP requests.
+func NewAuth(t string, opt Option) (Auth, error) {
+	return newAuth(t, opt)
 }
 
-// WithStaticOption will set the options for static auth.
-func WithStaticOption(static StaticOption) AuthOption {
-	return func(o *option) {
-		if static.StaticToken != "" {
-			o.Static.StaticToken = static.StaticToken
-		}
+func newAuth(t string, opt Option) (Auth, error) {
+	factory, exists := authFactoryRegistry[t]
+	if !exists {
+		return nil, errors.Errorf("invalid auth type found: %q, must be one of [%s]",
+			t, strings.Join(getAllAuthTypes(), ","))
 	}
+
+	auth, err := factory.CreateAuth(opt)
+	if err != nil {
+		return auth, fmt.Errorf("creating Auth: %w", err)
+	}
+	return auth, nil
 }
 
-// WithOptionFromEnv will override the option values using environment variables.
-// Currently, the following are supported:
-//   - OCM_TOKEN for the OCM refresh token.
-//   - STATIC_TOKEN for the static token.
-//   - RHSSO_TOKEN_FILE for the path to the file containing the RH SSO access token.
-func WithOptionFromEnv() AuthOption {
-	return func(o *option) {
-		optFromEnv := &option{}
-		utils.Must(env.Parse(optFromEnv))
-		overrideValues(o, optFromEnv)
-	}
+// NewRHSSOAuth will return Auth that uses RH SSO to provide authentication for HTTP requests.
+func NewRHSSOAuth(opt RHSSOOption) (Auth, error) {
+	return newAuth(rhSSOFactory.GetName(), Option{Sso: opt})
+}
+
+// NewOCMAuth will return Auth that uses OCM to provide authentication for HTTP requests.
+func NewOCMAuth(opt OCMOption) (Auth, error) {
+	return newAuth(ocmFactory.GetName(), Option{Ocm: opt})
+}
+
+// NewStaticAuth will return Auth that uses a static token to provide authentication for HTTP requests.
+func NewStaticAuth(opt StaticOption) (Auth, error) {
+	return newAuth(staticTokenFactory.GetName(), Option{Static: opt})
+}
+
+// OptionFromEnv creates an Option struct with populated values from environment variables.
+// See the Option struct tags for the corresponding environment variables supported.
+func OptionFromEnv() Option {
+	optFromEnv := Option{}
+	utils.Must(env.Parse(&optFromEnv))
+	return optFromEnv
 }
 
 // getAllAuthTypes is a helper used within logging to list the possible values for auth types.
@@ -126,16 +105,4 @@ func getAllAuthTypes() []string {
 	}
 	sort.Strings(authTypes)
 	return authTypes
-}
-
-func overrideValues(orig *option, updated *option) {
-	if updated.Sso.TokenFile != "" {
-		orig.Sso.TokenFile = updated.Sso.TokenFile
-	}
-	if updated.Ocm.RefreshToken != "" {
-		orig.Ocm.RefreshToken = updated.Ocm.RefreshToken
-	}
-	if updated.Static.StaticToken != "" {
-		orig.Static.StaticToken = updated.Static.StaticToken
-	}
 }

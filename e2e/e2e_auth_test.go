@@ -17,12 +17,6 @@ import (
 )
 
 const (
-	ocmAuthType         = "OCM"
-	rhSSOAuthType       = "RHSSO"
-	staticTokenAuthType = "STATIC_TOKEN"
-)
-
-const (
 	internalAPI = "internal"
 	publicAPI   = "public"
 	adminAPI    = "admin"
@@ -50,6 +44,8 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 
 	skipOnProd := env == "production"
 	skipOnNonProd := env != "production"
+
+	authOption := fleetmanager.OptionFromEnv()
 
 	var client *fleetmanager.Client
 
@@ -81,7 +77,7 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 
 	Describe("OCM auth type", func() {
 		BeforeEach(func() {
-			auth, err := fleetmanager.NewAuth(ocmAuthType, fleetmanager.WithOptionFromEnv())
+			auth, err := fleetmanager.NewOCMAuth(authOption.Ocm)
 			Expect(err).ToNot(HaveOccurred())
 			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())
@@ -103,7 +99,7 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 
 	Describe("Static token auth type", func() {
 		BeforeEach(func() {
-			auth, err := fleetmanager.NewAuth(staticTokenAuthType, fleetmanager.WithOptionFromEnv())
+			auth, err := fleetmanager.NewStaticAuth(authOption.Static)
 			Expect(err).ToNot(HaveOccurred())
 			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())
@@ -136,10 +132,6 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			f, err := os.CreateTemp("", "token")
 			Expect(err).ToNot(HaveOccurred())
 
-			// Set the RHSSO_TOKEN_FILE environment variable, pointing to the temporary file.
-			err = os.Setenv("RHSSO_TOKEN_FILE", f.Name())
-			Expect(err).ToNot(HaveOccurred())
-
 			// Obtain a token from RH SSO using the client ID / secret + client_credentials grant. Write the token to
 			// the temporary file.
 			token, err := obtainRHSSOToken(clientID, clientSecret)
@@ -148,17 +140,13 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Create the auth type for RH SSO.
-			auth, err := fleetmanager.NewAuth(rhSSOAuthType, fleetmanager.WithOptionFromEnv())
+			auth, err := fleetmanager.NewRHSSOAuth(fleetmanager.RHSSOOption{TokenFile: f.Name()})
 			Expect(err).ToNot(HaveOccurred())
 			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())
 			client = fmClient
 
 			DeferCleanup(func() {
-				// Unset the environment variable.
-				err := os.Unsetenv("RHSSO_TOKEN_FILE")
-				Expect(err).ToNot(HaveOccurred())
-
 				// Close and delete the temporarily created file.
 				err = f.Close()
 				Expect(err).ToNot(HaveOccurred())

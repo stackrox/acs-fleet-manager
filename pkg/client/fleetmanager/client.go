@@ -10,6 +10,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 )
 
+var _ http.RoundTripper = (*authTransport)(nil)
+
 type authTransport struct {
 	transport http.RoundTripper
 	auth      Auth

@@ -33,7 +33,7 @@ func (f *ocmAuthFactory) GetName() string {
 }
 
 // CreateAuth ...
-func (f *ocmAuthFactory) CreateAuth(o option) (Auth, error) {
+func (f *ocmAuthFactory) CreateAuth(o Option) (Auth, error) {
 	initialToken := o.Ocm.RefreshToken
 	if initialToken == "" {
 		return nil, errors.New("empty ocm token")
