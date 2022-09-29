@@ -6,6 +6,7 @@ import (
 
 	pkgerrors "github.com/pkg/errors"
 
+	"github.com/golang/glog"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
@@ -105,7 +106,6 @@ func NewOCMConnection(ocmConfig *OCMConfig, BaseURL string) (*sdkClient.Connecti
 	return connection, func() {
 		_ = connection.Close()
 	}, nil
-
 }
 
 // NewClient ...
@@ -127,7 +127,6 @@ func (c *client) Close() {
 
 // CreateCluster ...
 func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error) {
-
 	clusterResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, err := clusterResource.Add().Body(cluster).Send()
 	if err != nil {
@@ -167,7 +166,10 @@ func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.Subscriptio
 
 // GetOrganisationIDFromExternalID ...
 func (c *client) GetOrganisationIDFromExternalID(externalID string) (string, error) {
-	res, err := c.connection.AccountsMgmt().V1().Organizations().List().Search(fmt.Sprintf("external_id='%s'", externalID)).Send()
+	request := c.connection.AccountsMgmt().V1().Organizations().List().Search(fmt.Sprintf("external_id='%s'", externalID))
+	// TODO (stehessel/2022-10-05) Remove log statement to avoid log spam
+	glog.Infof("Get organization ID from external ID with request: %+v", request)
+	res, err := request.Send()
 	if err != nil {
 		return "", fmt.Errorf("retrieving organizations: %w", err)
 	}
@@ -353,7 +355,6 @@ func (c *client) GetClusterDNS(clusterID string) (string, error) {
 
 // CreateSyncSet ...
 func (c client) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, syncsetErr := clustersResource.Cluster(clusterID).
 		ExternalConfiguration().
@@ -370,7 +371,6 @@ func (c client) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset)
 
 // UpdateSyncSet ...
 func (c client) UpdateSyncSet(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, syncsetErr := clustersResource.Cluster(clusterID).
 		ExternalConfiguration().
@@ -389,7 +389,6 @@ func (c client) UpdateSyncSet(clusterID string, syncSetID string, syncset *clust
 
 // CreateIdentityProvider ...
 func (c client) CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
-
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, identityProviderErr := clustersResource.Cluster(clusterID).
 		IdentityProviders().
