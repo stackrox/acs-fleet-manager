@@ -126,7 +126,7 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 
 			rhSSOOpt := authOption.Sso
 			rhSSOOpt.ClientID = clientID
-			rhSSOOpt.ClientSecret = clientSecret
+			rhSSOOpt.ClientSecret = clientSecret //pragma: allowlist secret
 
 			// Create the auth type for RH SSO.
 			auth, err := fleetmanager.NewRHSSOAuth(rhSSOOpt)
