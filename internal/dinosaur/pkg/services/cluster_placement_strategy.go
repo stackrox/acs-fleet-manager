@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -14,7 +15,7 @@ import (
 //go:generate moq -out cluster_placement_strategy_moq.go . ClusterPlacementStrategy
 type ClusterPlacementStrategy interface {
 	// FindCluster finds and returns a Cluster depends on the specific impl.
-	FindCluster(dinosaur *dbapi.CentralRequest) (*api.Cluster, error)
+	FindCluster(central *dbapi.CentralRequest) (*api.Cluster, error)
 }
 
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the
@@ -44,14 +45,14 @@ type FirstReadyPlacementStrategy struct {
 }
 
 // FindCluster ...
-func (d FirstReadyPlacementStrategy) FindCluster(dinosaur *dbapi.CentralRequest) (*api.Cluster, error) {
+func (d FirstReadyPlacementStrategy) FindCluster(central *dbapi.CentralRequest) (*api.Cluster, error) {
 	clusters, err := d.clusterService.FindAllClusters(FindClusterCriteria{Status: api.ClusterReady})
 	if err != nil {
 		return nil, err
 	}
 
 	for _, c := range clusters {
-		if !c.SkipScheduling {
+		if !c.SkipScheduling && supportsInstanceType(c, central.InstanceType) {
 			return c, nil
 		}
 	}
@@ -74,9 +75,24 @@ func (f TargetClusterPlacementStrategy) FindCluster(central *dbapi.CentralReques
 		return nil, err
 	}
 
+	if !supportsInstanceType(cluster, central.InstanceType) {
+		return nil, fmt.Errorf("target cluster %s, does not support instance type %s", f.targetClusterID, central.InstanceType)
+	}
+
 	if cluster != nil {
 		return cluster, nil
 	}
 
 	return nil, fmt.Errorf("target cluster %v not found in cluster list", f.targetClusterID)
+}
+
+func supportsInstanceType(c *api.Cluster, instanceType string) bool {
+	supportedTypes := strings.Split(c.SupportedInstanceType, ",")
+	for _, t := range supportedTypes {
+		if t == instanceType {
+			return true
+		}
+	}
+
+	return false
 }

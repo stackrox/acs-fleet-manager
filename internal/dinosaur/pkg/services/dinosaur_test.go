@@ -21,32 +21,32 @@ const (
 )
 
 var (
-	testDinosaurRequestRegion   = "us-east-1"
-	testDinosaurRequestProvider = "aws"
-	testDinosaurRequestName     = "test-cluster"
-	testClusterID               = "test-cluster-id"
-	testID                      = "test"
-	testUser                    = "test-user"
+	testCentralRequestRegion   = "us-east-1"
+	testCentralRequestProvider = "aws"
+	testCentralRequestName     = "test-cluster"
+	testClusterID              = "test-cluster-id"
+	testID                     = "test"
+	testUser                   = "test-user"
 )
 
-// build a test dinosaur request
-func buildDinosaurRequest(modifyFn func(dinosaurRequest *dbapi.CentralRequest)) *dbapi.CentralRequest {
-	dinosaurRequest := &dbapi.CentralRequest{
+// build a test central request
+func buildCentralRequest(modifyFn func(centralRequest *dbapi.CentralRequest)) *dbapi.CentralRequest {
+	centralRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID:        testID,
 			DeletedAt: gorm.DeletedAt{Valid: true},
 		},
-		Region:        testDinosaurRequestRegion,
+		Region:        testCentralRequestRegion,
 		ClusterID:     testClusterID,
-		CloudProvider: testDinosaurRequestProvider,
-		Name:          testDinosaurRequestName,
+		CloudProvider: testCentralRequestProvider,
+		Name:          testCentralRequestName,
 		MultiAZ:       false,
 		Owner:         testUser,
 	}
 	if modifyFn != nil {
-		modifyFn(dinosaurRequest)
+		modifyFn(centralRequest)
 	}
-	return dinosaurRequest
+	return centralRequest
 }
 
 // This test should act as a "golden" test to describe the general testing approach taken in the service, for people
@@ -132,13 +132,13 @@ func Test_dinosaurService_Get(t *testing.T) {
 				ctx: authenticatedCtx,
 				id:  testID,
 			},
-			want: buildDinosaurRequest(nil),
+			want: buildCentralRequest(nil),
 			setupFn: func() {
 				mocket.Catcher.Reset().
 					NewMock().
 					WithQuery(`SELECT * FROM "central_requests" WHERE id = $1 AND owner = $2`).
 					WithArgs(testID, testUser).
-					WithReply(converters.ConvertDinosaurRequest(buildDinosaurRequest(nil)))
+					WithReply(converters.ConvertDinosaurRequest(buildCentralRequest(nil)))
 			},
 		},
 	}
