@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	. "github.com/onsi/ginkgo/v2"
-	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"k8s.io/client-go/rest"
@@ -57,9 +56,7 @@ func TestE2E(t *testing.T) {
 		t.Skip("Skip e2e tests. Set RUN_E2E=true env variable to enable e2e tests.")
 	}
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "RHACS ManagedServices Suite", types.ReporterConfig{
-		SlowSpecThreshold: 5 * time.Minute,
-	})
+	RunSpecs(t, "RHACS ManagedServices Suite")
 }
 
 // TODO: Deploy fleet-manager, fleetshard-sync and database into a cluster
