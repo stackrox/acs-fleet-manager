@@ -201,7 +201,7 @@ endif
 
 ifndef TEST_TIMEOUT
 	ifeq ($(OCM_ENV), integration)
-		TEST_TIMEOUT=15m
+		TEST_TIMEOUT=30m
 	else
 		TEST_TIMEOUT=5h
 	endif
