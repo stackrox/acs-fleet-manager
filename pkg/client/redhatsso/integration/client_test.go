@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	. "github.com/onsi/gomega"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
@@ -11,13 +13,13 @@ import (
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
 )
 
-func getClient(baseURL string, serviceAccount serviceaccountsclient.ServiceAccountData) redhatsso.SSOClient {
+func getClient(baseURL, clientID, clientSecret string) redhatsso.SSOClient {
 	config := iam.IAMConfig{
 		SsoBaseURL: baseURL,
 		RedhatSSORealm: &iam.IAMRealmConfig{
 			Realm:            "redhat-external",
-			ClientID:         *serviceAccount.ClientId,
-			ClientSecret:     *serviceAccount.Secret,
+			ClientID:         clientID,
+			ClientSecret:     clientSecret, // pragma: allowlist secret - dummy value
 			APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", baseURL),
 			TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", baseURL),
 		},
@@ -34,8 +36,8 @@ func Test_SSOClient_GetServiceAccounts(t *testing.T) {
 
 	defer server.Stop()
 
-	initialServiceAccount := server.GetInitialServiceAccount()
-	client := getClient(server.BaseURL(), initialServiceAccount)
+	clientID, clientSecret := server.GetInitialClientCredentials()
+	client := getClient(server.BaseURL(), clientID, clientSecret)
 
 	// create 20 service accounts
 	for i := 0; i < 20; i++ {
@@ -44,7 +46,7 @@ func Test_SSOClient_GetServiceAccounts(t *testing.T) {
 	}
 	accounts, err := client.GetServiceAccounts(0, 100)
 	Expect(err).ToNot(HaveOccurred())
-	Expect(accounts).To(HaveLen(21))
+	Expect(accounts).To(HaveLen(20))
 }
 
 func Test_SSOClient_GetServiceAccount(t *testing.T) {
@@ -55,22 +57,22 @@ func Test_SSOClient_GetServiceAccount(t *testing.T) {
 
 	defer server.Stop()
 
-	initialServiceAccount := server.GetInitialServiceAccount()
-	client := getClient(server.BaseURL(), initialServiceAccount)
+	clientID, clientSecret := server.GetInitialClientCredentials()
+	client := getClient(server.BaseURL(), clientID, clientSecret)
 
 	var serviceAccountList []serviceaccountsclient.ServiceAccountData
 	// create 20 service accounts
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 3; i++ {
 		serviceAccount, err := client.CreateServiceAccount(fmt.Sprintf("test_%d", i), fmt.Sprintf("test account %d", i))
 		Expect(err).ToNot(HaveOccurred())
 		serviceAccountList = append(serviceAccountList, serviceAccount)
 	}
 
-	serviceAccount, found, err := client.GetServiceAccount(serviceAccountList[5].GetClientId())
+	serviceAccount, found, err := client.GetServiceAccount(serviceAccountList[1].GetClientId())
 	Expect(err).ToNot(HaveOccurred())
 	Expect(found).To(BeTrue())
 	Expect(serviceAccount).ToNot(BeNil())
-	Expect(serviceAccount.GetSecret()).To(Equal(serviceAccountList[5].GetSecret()))
+	Expect(serviceAccount.GetSecret()).To(Equal(serviceAccountList[1].GetSecret()))
 }
 
 func Test_SSOClient_RegenerateSecret(t *testing.T) {
@@ -81,28 +83,23 @@ func Test_SSOClient_RegenerateSecret(t *testing.T) {
 
 	defer server.Stop()
 
-	initialServiceAccount := server.GetInitialServiceAccount()
-	client := getClient(server.BaseURL(), initialServiceAccount)
+	clientID, clientSecret := server.GetInitialClientCredentials()
+	client := getClient(server.BaseURL(), clientID, clientSecret)
 
-	var serviceAccountList []serviceaccountsclient.ServiceAccountData
-	// create 20 service accounts
-	for i := 0; i < 20; i++ {
-		serviceAccount, err := client.CreateServiceAccount(fmt.Sprintf("test_%d", i), fmt.Sprintf("test account %d", i))
-		Expect(err).ToNot(HaveOccurred())
-		serviceAccountList = append(serviceAccountList, serviceAccount)
-	}
+	createdServiceAccount, err := client.CreateServiceAccount("accountName", "accountDescription")
+	Expect(err).ToNot(HaveOccurred())
 
-	serviceAccount, found, err := client.GetServiceAccount(serviceAccountList[5].GetClientId())
+	foundServiceAccount, found, err := client.GetServiceAccount(createdServiceAccount.GetClientId())
 	Expect(err).ToNot(HaveOccurred())
 	Expect(found).To(BeTrue())
-	Expect(serviceAccount).ToNot(BeNil())
-	Expect(serviceAccount.GetSecret()).To(Equal(serviceAccountList[5].GetSecret()))
+	Expect(foundServiceAccount).ToNot(BeNil())
+	Expect(foundServiceAccount.GetSecret()).To(Equal(createdServiceAccount.GetSecret()))
 
-	updatedServiceAccount, err := client.RegenerateClientSecret(serviceAccount.GetClientId())
+	updatedServiceAccount, err := client.RegenerateClientSecret(foundServiceAccount.GetClientId())
 	Expect(err).ToNot(HaveOccurred())
 	Expect(updatedServiceAccount).ToNot(BeNil())
-	Expect(updatedServiceAccount.Id).To(Equal(serviceAccount.Id))
-	Expect(updatedServiceAccount.Secret).ToNot(Equal(serviceAccount.Secret))
+	Expect(updatedServiceAccount.Id).To(Equal(foundServiceAccount.Id))
+	Expect(updatedServiceAccount.Secret).ToNot(Equal(foundServiceAccount.Secret))
 }
 
 func Test_SSOClient_CreateServiceAccount(t *testing.T) {
@@ -113,11 +110,11 @@ func Test_SSOClient_CreateServiceAccount(t *testing.T) {
 
 	defer server.Stop()
 
-	initialServiceAccount := server.GetInitialServiceAccount()
-	client := getClient(server.BaseURL(), initialServiceAccount)
+	clientID, clientSecret := server.GetInitialClientCredentials()
+	client := getClient(server.BaseURL(), clientID, clientSecret)
 
 	serviceAccount, err := client.CreateServiceAccount("test_1", "test account 1")
-	Expect(err).ToNot(HaveOccurred())
+	require.NoError(t, err)
 	Expect(*serviceAccount.Name).To(Equal("test_1"))
 	Expect(*serviceAccount.Description).To(Equal("test account 1"))
 }
@@ -130,8 +127,8 @@ func Test_SSOClient_DeleteServiceAccount(t *testing.T) {
 
 	defer server.Stop()
 
-	initialServiceAccount := server.GetInitialServiceAccount()
-	client := getClient(server.BaseURL(), initialServiceAccount)
+	clientID, clientSecret := server.GetInitialClientCredentials()
+	client := getClient(server.BaseURL(), clientID, clientSecret)
 
 	// create 20 service accounts
 	for i := 0; i < 20; i++ {
@@ -140,12 +137,12 @@ func Test_SSOClient_DeleteServiceAccount(t *testing.T) {
 	}
 	accounts, err := client.GetServiceAccounts(0, 100)
 	Expect(err).ToNot(HaveOccurred())
-	Expect(accounts).To(HaveLen(21))
+	Expect(accounts).To(HaveLen(20))
 	err = client.DeleteServiceAccount(accounts[5].GetClientId())
 	Expect(err).ToNot(HaveOccurred())
 	accounts, err = client.GetServiceAccounts(0, 100)
 	Expect(err).ToNot(HaveOccurred())
-	Expect(accounts).To(HaveLen(20))
+	Expect(accounts).To(HaveLen(19))
 }
 
 func Test_SSOClient_UpdateServiceAccount(t *testing.T) {
@@ -156,8 +153,8 @@ func Test_SSOClient_UpdateServiceAccount(t *testing.T) {
 
 	defer server.Stop()
 
-	initialServiceAccount := server.GetInitialServiceAccount()
-	client := getClient(server.BaseURL(), initialServiceAccount)
+	clientID, clientSecret := server.GetInitialClientCredentials()
+	client := getClient(server.BaseURL(), clientID, clientSecret)
 
 	// create 20 service accounts
 	for i := 0; i < 20; i++ {
@@ -166,7 +163,7 @@ func Test_SSOClient_UpdateServiceAccount(t *testing.T) {
 	}
 	accounts, err := client.GetServiceAccounts(0, 100)
 	Expect(err).ToNot(HaveOccurred())
-	Expect(accounts).To(HaveLen(21))
+	Expect(accounts).To(HaveLen(20))
 
 	updatedName := "newName"
 	updatedDescription := "newName Description"

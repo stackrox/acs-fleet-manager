@@ -11,6 +11,23 @@ import (
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
 )
 
+const (
+	accountName        = "serviceAccount"
+	accountDescription = "fake service account"
+)
+
+func CreateServiceAccountForTests(server mocks.RedhatSSOMock, accountName, accountDescription, clientID, clientSecret string) serviceaccountsclient.ServiceAccountData {
+	c := NewSSOClient(&iam.IAMConfig{}, &iam.IAMRealmConfig{
+		ClientID:         clientID,
+		ClientSecret:     clientSecret, // pragma: allowlist secret - dummy value
+		Realm:            "redhat-external",
+		APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+		TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+	})
+	serviceAccount, _ := c.CreateServiceAccount(accountName, accountDescription)
+	return serviceAccount
+}
+
 func Test_rhSSOClient_GetConfig(t *testing.T) {
 	type fields struct {
 		config *iam.IAMConfig
@@ -83,7 +100,7 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 	server := mocks.NewMockServer()
 	server.Start()
 	defer server.Stop()
-	serviceAccount := server.GetInitialServiceAccount()
+	clientID, clientSecret := server.GetInitialClientCredentials()
 
 	tests := []struct {
 		name    string
@@ -98,8 +115,8 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
 					Realm:            "redhat-external",
-					ClientID:         *serviceAccount.ClientId,
-					ClientSecret:     *serviceAccount.Secret,
+					ClientID:         clientID,
+					ClientSecret:     clientSecret,
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL())},
 			},
@@ -107,9 +124,7 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 				first: 0,
 				max:   5,
 			},
-			want: []serviceaccountsclient.ServiceAccountData{
-				server.GetInitialServiceAccount(),
-			},
+			want:    []serviceaccountsclient.ServiceAccountData{},
 			wantErr: false,
 		},
 		{
@@ -157,7 +172,8 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 	server := mocks.NewMockServer()
 	server.Start()
 	defer server.Stop()
-	serviceAccount := server.GetInitialServiceAccount()
+	clientID, clientSecret := server.GetInitialClientCredentials()
+	serviceAccount := CreateServiceAccountForTests(server, accountName, accountDescription, clientID, clientSecret)
 
 	tests := []struct {
 		name    string
@@ -172,8 +188,8 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 			fields: fields{
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
-					ClientID:         *serviceAccount.ClientId,
-					ClientSecret:     *serviceAccount.Secret,
+					ClientID:         clientID,
+					ClientSecret:     clientSecret,
 					Realm:            "redhat-external",
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
@@ -191,8 +207,8 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 			fields: fields{
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
-					ClientID:         *serviceAccount.ClientId,
-					ClientSecret:     *serviceAccount.Secret,
+					ClientID:         clientID,
+					ClientSecret:     clientSecret,
 					Realm:            "redhat-external",
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
@@ -232,7 +248,7 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 	server := mocks.NewMockServer()
 	server.Start()
 	defer server.Stop()
-	serviceAccount := server.GetInitialServiceAccount()
+	clientID, clientSecret := server.GetInitialClientCredentials()
 	accountName := "serviceAccount"
 	accountDescription := "fake service account"
 
@@ -249,8 +265,8 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
 					Realm:            "redhat-external",
-					ClientID:         *serviceAccount.ClientId,
-					ClientSecret:     *serviceAccount.Secret,
+					ClientID:         clientID,
+					ClientSecret:     clientSecret,
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
@@ -314,7 +330,8 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 	server := mocks.NewMockServer()
 	server.Start()
 	defer server.Stop()
-	serviceAccount := server.GetInitialServiceAccount()
+	clientID, clientSecret := server.GetInitialClientCredentials()
+	serviceAccount := CreateServiceAccountForTests(server, accountName, accountDescription, clientID, clientSecret)
 
 	tests := []struct {
 		name    string
@@ -327,8 +344,8 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 			fields: fields{
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
-					ClientID:         *serviceAccount.ClientId,
-					ClientSecret:     *serviceAccount.Secret,
+					ClientID:         clientID,
+					ClientSecret:     clientSecret,
 					Realm:            "redhat-external",
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
@@ -344,8 +361,8 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 			fields: fields{
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
-					ClientID:         *serviceAccount.ClientId,
-					ClientSecret:     *serviceAccount.Secret,
+					ClientID:         clientID,
+					ClientSecret:     clientSecret,
 					Realm:            "redhat-external",
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
@@ -382,7 +399,8 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 	server := mocks.NewMockServer()
 	server.Start()
 	defer server.Stop()
-	serviceAccount := server.GetInitialServiceAccount()
+	clientID, clientSecret := server.GetInitialClientCredentials()
+	serviceAccount := CreateServiceAccountForTests(server, accountName, accountDescription, clientID, clientSecret)
 
 	name := "new name"
 	description := "new description"
@@ -399,8 +417,8 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 			fields: fields{
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
-					ClientID:         *serviceAccount.ClientId,
-					ClientSecret:     *serviceAccount.Secret,
+					ClientID:         clientID,
+					ClientSecret:     clientSecret,
 					Realm:            "redhat-external",
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
@@ -427,8 +445,8 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 			fields: fields{
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
-					ClientID:         *serviceAccount.ClientId,
-					ClientSecret:     *serviceAccount.Secret,
+					ClientID:         clientID,
+					ClientSecret:     clientSecret,
 					Realm:            "redhat-external",
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
@@ -468,7 +486,8 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 	server := mocks.NewMockServer()
 	server.Start()
 	defer server.Stop()
-	serviceAccount := server.GetInitialServiceAccount()
+	clientID, clientSecret := server.GetInitialClientCredentials()
+	serviceAccount := CreateServiceAccountForTests(server, accountName, accountDescription, clientID, clientSecret)
 
 	tests := []struct {
 		name    string
@@ -482,8 +501,8 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 			fields: fields{
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
-					ClientID:         *serviceAccount.ClientId,
-					ClientSecret:     *serviceAccount.Secret,
+					ClientID:         clientID,
+					ClientSecret:     clientSecret,
 					Realm:            "redhat-external",
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
@@ -502,8 +521,8 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 			fields: fields{
 				config: &iam.IAMConfig{},
 				realmConfig: &iam.IAMRealmConfig{
-					ClientID:         *serviceAccount.ClientId,
-					ClientSecret:     *serviceAccount.Secret,
+					ClientID:         clientID,
+					ClientSecret:     clientSecret,
 					Realm:            "redhat-external",
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),

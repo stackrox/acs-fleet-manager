@@ -22,18 +22,23 @@ type RedhatSSOMock interface {
 	Start()
 	Stop()
 	BaseURL() string
-	GetInitialServiceAccount() serviceaccountsclient.ServiceAccountData
+	GetInitialClientCredentials() (string, string)
 	DeleteAllServiceAccounts()
 	ServiceAccountsLimit() int
 }
 
 type redhatSSOMock struct {
-	server                *httptest.Server
-	authTokens            []string
-	serviceAccounts       map[string]serviceaccountsclient.ServiceAccountData
-	sessionAuthToken      string
-	initialServiceAccount serviceaccountsclient.ServiceAccountData
-	serviceAccountsLimit  int
+	server               *httptest.Server
+	authTokens           []string
+	serviceAccounts      map[string]serviceaccountsclient.ServiceAccountData
+	sessionAuthToken     string
+	serviceAccountsLimit int
+	initialClientID      string
+	initialClientSecret  string
+}
+
+func (mockServer *redhatSSOMock) GetInitialClientCredentials() (string, string) {
+	return mockServer.initialClientID, mockServer.initialClientSecret
 }
 
 type getTokenResponseMock struct {
@@ -77,10 +82,6 @@ func (mockServer *redhatSSOMock) ServiceAccountsLimit() int {
 	return mockServer.serviceAccountsLimit
 }
 
-func (mockServer *redhatSSOMock) GetInitialServiceAccount() serviceaccountsclient.ServiceAccountData {
-	return mockServer.initialServiceAccount
-}
-
 // DeleteAllServiceAccounts ...
 func (mockServer *redhatSSOMock) DeleteAllServiceAccounts() {
 	mockServer.serviceAccounts = make(map[string]serviceaccountsclient.ServiceAccountData)
@@ -122,11 +123,9 @@ func (mockServer *redhatSSOMock) serviceAccountAuthMiddleware(next http.Handler)
 		clientID := request.FormValue("client_id")
 		clientSecret := request.FormValue("client_secret")
 
-		if serviceAccount, ok := mockServer.serviceAccounts[clientID]; ok {
-			if *serviceAccount.Secret == clientSecret { // pragma: allowlist secret
-				next.ServeHTTP(writer, request)
-				return
-			}
+		if clientID == mockServer.initialClientID && mockServer.initialClientSecret == clientSecret {
+			next.ServeHTTP(writer, request)
+			return
 		}
 
 		http.Error(writer, "{\"error\":\"unauthorized_client\",\"error_description\":\"Invalid client secret\"}", http.StatusUnauthorized)
@@ -151,19 +150,8 @@ func (mockServer *redhatSSOMock) init() {
 
 	mockServer.server = httptest.NewUnstartedServer(r)
 
-	id := "service account id"
-	clientID := "clientId"
-	secret := "secret"
-	name := "initialServiceAccount"
-	description := "initial service account description"
-	mockServer.initialServiceAccount = serviceaccountsclient.ServiceAccountData{
-		Id:          &id,
-		ClientId:    &clientID,
-		Secret:      &secret,
-		Name:        &name,
-		Description: &description,
-	}
-	mockServer.serviceAccounts[clientID] = mockServer.initialServiceAccount
+	mockServer.initialClientID = "clientId"
+	mockServer.initialClientSecret = "secret"
 	mockServer.generateAuthToken()
 }
 

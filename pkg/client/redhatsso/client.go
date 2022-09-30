@@ -26,7 +26,7 @@ type SSOClient interface {
 
 // NewSSOClient ...
 func NewSSOClient(config *iam.IAMConfig, realmConfig *iam.IAMRealmConfig) SSOClient {
-	httpClient := NewSsoAuthHTTPClient([]string{}, realmConfig)
+	httpClient := NewSSOAuthHTTPClient(realmConfig, "api.iam.service_accounts")
 	return &rhSSOClient{
 		config:      config,
 		realmConfig: realmConfig,
