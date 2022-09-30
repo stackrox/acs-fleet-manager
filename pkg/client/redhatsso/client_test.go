@@ -116,7 +116,7 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 				realmConfig: &iam.IAMRealmConfig{
 					Realm:            "redhat-external",
 					ClientID:         clientID,
-					ClientSecret:     clientSecret,
+					ClientSecret:     clientSecret, // pragma: allowlist secret
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL())},
 			},
@@ -288,7 +288,7 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 				realmConfig: &iam.IAMRealmConfig{
 					Realm:            "redhat-external",
 					ClientID:         "random client id",
-					ClientSecret:     "random client secret",
+					ClientSecret:     "random client secret", // pragma: allowlist secret
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
@@ -512,7 +512,7 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 				id: *serviceAccount.ClientId,
 			},
 			want: serviceaccountsclient.ServiceAccountData{
-				Secret: serviceAccount.Secret,
+				Secret: serviceAccount.Secret, // pragma: allowlist secret
 			},
 			wantErr: false,
 		},

@@ -2,7 +2,6 @@ package redhatsso
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
@@ -15,8 +14,8 @@ import (
 func NewSSOAuthHTTPClient(realmConfig *iam.IAMRealmConfig, scopes ...string) *http.Client {
 	cfg := clientcredentials.Config{
 		ClientID:     realmConfig.ClientID,
-		ClientSecret: realmConfig.ClientSecret,
-		TokenURL:     fmt.Sprintf("%s%s", realmConfig.BaseURL, realmConfig.TokenEndpointURI),
+		ClientSecret: realmConfig.ClientSecret, // pragma: allowlist secret
+		TokenURL:     realmConfig.TokenEndpointURI,
 		Scopes:       scopes,
 		AuthStyle:    oauth2.AuthStyleInParams,
 	}

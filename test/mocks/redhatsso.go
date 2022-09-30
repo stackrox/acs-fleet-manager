@@ -151,7 +151,7 @@ func (mockServer *redhatSSOMock) init() {
 	mockServer.server = httptest.NewUnstartedServer(r)
 
 	mockServer.initialClientID = "clientId"
-	mockServer.initialClientSecret = "secret"
+	mockServer.initialClientSecret = "secret" // pragma: allowlist secret
 	mockServer.generateAuthToken()
 }
 
