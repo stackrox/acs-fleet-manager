@@ -305,7 +305,7 @@ func getRouteStatus(ingress *openshiftRouteV1.RouteIngress) private.DataPlaneCen
 	}
 }
 
-func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) (bool, error) {
+func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) (bool, error) {
 	globalDeleted := true
 	if r.useRoutes {
 		reencryptRouteDeleted, err := r.ensureReencryptRouteDeleted(ctx, central.GetNamespace())
@@ -452,21 +452,22 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 		out.SetGroupVersionKind(obj.GroupVersionKind())
 		err := r.client.Get(ctx, key, &out)
 		if err == nil {
+			glog.Infof("Updating object %s/%s", obj.GetNamespace(), obj.GetName())
+			obj.SetResourceVersion(out.GetResourceVersion())
+			err := r.client.Update(ctx, obj)
+			if err != nil {
+				return fmt.Errorf("failed to update object %s/%s of type %v: %w", key.Namespace, key.Namespace, obj.GroupVersionKind(), err)
+			}
+
 			continue
 		}
 		if !apiErrors.IsNotFound(err) {
 			return fmt.Errorf("failed to retrieve object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
 		}
 		err = r.client.Create(ctx, obj)
+		glog.Infof("Creating object %s/%s", obj.GetNamespace(), obj.GetName())
 		if err != nil && !apiErrors.IsAlreadyExists(err) {
 			return fmt.Errorf("failed to create object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
-		}
-
-		if apiErrors.IsAlreadyExists(err) {
-			err := r.client.Update(ctx, obj)
-			if err != nil {
-				return fmt.Errorf("failed to update object %s/%s of type %v: %w", key.Namespace, key.Namespace, obj.GroupVersionKind(), err)
-			}
 		}
 	}
 	return nil
