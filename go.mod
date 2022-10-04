@@ -11,6 +11,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/bxcodec/faker/v3 v3.8.0
 	github.com/caarlos0/env/v6 v6.10.0
+	github.com/coreos/go-oidc/v3 v3.2.0
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/ghodss/yaml v1.0.0
@@ -150,6 +151,7 @@ require (
 	google.golang.org/grpc v1.48.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.24.2 // indirect
 	k8s.io/component-base v0.24.2 // indirect

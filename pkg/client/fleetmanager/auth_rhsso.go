@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/coreos/go-oidc/v3/oidc"
+
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
@@ -22,6 +24,7 @@ var (
 
 type rhSSOAuth struct {
 	tokenSource oauth2.TokenSource
+	test        oauth2.TokenSource
 }
 
 type rhSSOAuthFactory struct{}
@@ -33,10 +36,16 @@ func (f *rhSSOAuthFactory) GetName() string {
 
 // CreateAuth creates an Auth using RH SSO.
 func (f *rhSSOAuthFactory) CreateAuth(o Option) (Auth, error) {
+	issuer := fmt.Sprintf("%s/auth/realms/%s", o.Sso.Endpoint, o.Sso.Realm)
+	provider, err := oidc.NewProvider(context.Background(), issuer)
+	if err != nil {
+		return nil, errors.Wrapf(err, "retrieving open-id configuration from %q", issuer)
+	}
+
 	cfg := clientcredentials.Config{
 		ClientID:     o.Sso.ClientID,
 		ClientSecret: o.Sso.ClientSecret, //pragma: allowlist secret
-		TokenURL:     fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", o.Sso.Endpoint, o.Sso.Realm),
+		TokenURL:     provider.Endpoint().TokenURL,
 		Scopes:       []string{"openid"},
 	}
 	return &rhSSOAuth{
