@@ -12,8 +12,6 @@ jobs:
   pre-commit:
     name: "Run pre-commit hooks"
     runs-on: ubuntu-latest
-    env:
-      MARCINS_TEST: ${{ secrets.MARCINS_TEST }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v3
@@ -23,5 +21,7 @@ jobs:
       - uses: pre-commit/action@v3.0.0
       - uses: pre-commit/action@v3.0.0
         name: Verify generated files are up-to-date
+        env:
+          MARCINS_TEST: ${{ secrets.MARCINS_TEST }}
         with:
-          extra_args: --hook-stage=manual --all-files ${{ env.MARCINS_TEST }}
+          extra_args: --hook-stage=manual --all-files "$MARCINS_TEST" "${{ secrets.MARCINS_TEST }}"
