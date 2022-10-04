@@ -33,7 +33,6 @@ type Logger struct {
 func NewLoggerBuilder(logger *log.Logger) *LoggerBuilder {
 	// Allocate the object:
 	builder := new(LoggerBuilder)
-
 	// Set default values:
 	builder.debugEnabled = false
 	builder.infoEnabled = true

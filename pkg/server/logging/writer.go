@@ -78,27 +78,3 @@ func (writer *loggingWriter) LogObject(o interface{}, err error) error {
 func (writer *loggingWriter) GetResponseStatusCode() int {
 	return writer.responseStatus
 }
-
-func (writer *loggingWriter) prepareReRequestLog(request *http.Request) {
-	// TODO(mclasmei)
-}
-
-func (writer *loggingWriter) prepareResponseLog(elapsed string) {
-	writer.Logger.SugaredLogger = writer.Logger.SugaredLogger.With(
-		"status", writer.responseStatus,
-		"elapsed", elapsed,
-	)
-
-	// info := &ResponseInfo{
-	// 	Header:  writer.ResponseWriter.Header(),
-	// 	Body:    writer.responseBody,
-	// 	Status:  writer.responseStatus,
-	// 	Elapsed: elapsed,
-	// }
-
-	// s, err := writer.formatter.FormatResponseLog(info)
-	// if err != nil {
-	// 	return s, fmt.Errorf("formatting request: %w", err)
-	// }
-	// return s, nil
-}

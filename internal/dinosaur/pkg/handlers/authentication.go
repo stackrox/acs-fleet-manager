@@ -14,8 +14,9 @@ import (
 
 // NewAuthenticationBuilder ...
 func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, IAMConfig *iam.IAMConfig) (*authentication.HandlerBuilder, error) {
+	module := log.ModuleForName("handlers")
 
-	authnLogger, err := NewLoggerBuilder(log.CurrentModule().Logger()).
+	authnLogger, err := NewLoggerBuilder(log.CreateLogger(module, 1)).
 		Debug(log.DebuggingGloballyEnabled()).
 		Build()
 	if err != nil {
