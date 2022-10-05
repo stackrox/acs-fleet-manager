@@ -22,7 +22,7 @@ type staticTokenAuth struct {
 
 type staticTokenAuthFactory struct{}
 
-// GetName ...
+// GetName gets the name of the factory.
 func (f *staticTokenAuthFactory) GetName() string {
 	return staticTokenAuthName
 }
@@ -38,7 +38,7 @@ func (f *staticTokenAuthFactory) CreateAuth(o Option) (Auth, error) {
 	}, nil
 }
 
-// AddAuth ...
+// AddAuth add auth token to the request using a static token.
 func (s *staticTokenAuth) AddAuth(req *http.Request) error {
 	setBearer(req, s.token)
 	return nil

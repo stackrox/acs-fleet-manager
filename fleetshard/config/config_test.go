@@ -20,7 +20,8 @@ func TestSingleton_Success(t *testing.T) {
 	assert.Equal(t, cfg.ClusterID, "some-value")
 	assert.Equal(t, cfg.RuntimePollPeriod, 5*time.Second)
 	assert.Equal(t, cfg.AuthType, "OCM")
-	assert.Equal(t, cfg.RHSSOTokenFilePath, "/run/secrets/rhsso-token/token")
+	assert.Equal(t, cfg.RHSSORealm, "redhat-external")
+	assert.Equal(t, cfg.RHSSOEndpoint, "https://sso.redhat.com")
 	assert.Empty(t, cfg.OCMRefreshToken)
 }
 

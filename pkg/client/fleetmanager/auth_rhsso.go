@@ -1,11 +1,15 @@
 package fleetmanager
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/coreos/go-oidc/v3/oidc"
+
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/shared"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 const (
@@ -19,35 +23,42 @@ var (
 )
 
 type rhSSOAuth struct {
-	tokenFilePath string
+	tokenSource oauth2.TokenSource
+	test        oauth2.TokenSource
 }
 
 type rhSSOAuthFactory struct{}
 
-// GetName ...
+// GetName gets the name of the factory.
 func (f *rhSSOAuthFactory) GetName() string {
 	return rhSSOAuthName
 }
 
-// CreateAuth ...
+// CreateAuth creates an Auth using RH SSO.
 func (f *rhSSOAuthFactory) CreateAuth(o Option) (Auth, error) {
-	tokenFilePath := o.Sso.TokenFile
-	if _, err := shared.ReadFile(tokenFilePath); err != nil {
-		return nil, fmt.Errorf("reading token file: %w", err)
+	issuer := fmt.Sprintf("%s/auth/realms/%s", o.Sso.Endpoint, o.Sso.Realm)
+	provider, err := oidc.NewProvider(context.Background(), issuer)
+	if err != nil {
+		return nil, errors.Wrapf(err, "retrieving open-id configuration from %q", issuer)
+	}
+
+	cfg := clientcredentials.Config{
+		ClientID:     o.Sso.ClientID,
+		ClientSecret: o.Sso.ClientSecret, //pragma: allowlist secret
+		TokenURL:     provider.Endpoint().TokenURL,
+		Scopes:       []string{"openid"},
 	}
 	return &rhSSOAuth{
-		tokenFilePath: tokenFilePath,
+		tokenSource: cfg.TokenSource(context.Background()),
 	}, nil
 }
 
-// AddAuth ...
+// AddAuth add auth token to the request retrieved from Red Hat SSO.
 func (r *rhSSOAuth) AddAuth(req *http.Request) error {
-	// The file is populated by the token-refresher, which will ensure the token is not expired.
-	token, err := shared.ReadFile(r.tokenFilePath)
+	token, err := r.tokenSource.Token()
 	if err != nil {
-		return errors.Wrapf(err, "reading token file %q within rhsso auth", r.tokenFilePath)
+		return errors.Wrap(err, "retrieving token from token source")
 	}
-
-	setBearer(req, token)
+	setBearer(req, token.AccessToken)
 	return nil
 }
