@@ -45,11 +45,11 @@ spec:
         - name: RHSSO_SERVICE_ACCOUNT_CLIENT_ID
           value: {{ .Values.fleetshardSync.redHatSSO.clientId }}
         - name: RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET
-          value: {{ .Values.fleetshardSync.redhatSSO.clientSecret }}
+          value: {{ .Values.fleetshardSync.redHatSSO.clientSecret }}
         - name: RHSSO_REALM
-          value: {{ .Values.fleetshardSync.redhatSSO.realm }}
+          value: {{ .Values.fleetshardSync.redHatSSO.realm }}
         - name: RHSSO_ENDPOINT
-          value: {{ .Values.fleetshardSync.redhatSSO.endpoint }}
+          value: {{ .Values.fleetshardSync.redHatSSO.endpoint }}
         ports:
         - name: monitoring
           containerPort: 8080
