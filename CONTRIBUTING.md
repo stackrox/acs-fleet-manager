@@ -3,8 +3,10 @@
 ## New contributors
 
  - Follow the [getting started guide](https://github.com/stackrox/acs-fleet-manager#getting-started) to setup your environment
- - Opening a PR follow the [PR template](https://github.com/stackrox/acs-fleet-manager/blob/main/.github/pull_request_template.md)
- - A pull-request must be approved by at least **one** engineer
+ - Pull-Requests:
+   - check the [PR template](https://github.com/stackrox/acs-fleet-manager/blob/main/.github/pull_request_template.md) checkboxes
+   - must be approved by at least **one** engineer
+   - title contains ticket number: `ROX-12345: My PR title`
 
 ## Specialities
 
