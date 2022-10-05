@@ -119,6 +119,7 @@ func augmentWithStaticAuthConfig(r *dbapi.CentralRequest, centralConfig *config.
 	r.AuthConfig.ClientID = centralConfig.CentralIDPClientID
 	r.AuthConfig.ClientSecret = centralConfig.CentralIDPClientSecret //pragma: allowlist secret
 	r.AuthConfig.Issuer = centralConfig.CentralIDPIssuer
+	r.AuthConfig.UsesStaticClient = centralConfig.HasStaticAuth()
 
 	return nil
 }

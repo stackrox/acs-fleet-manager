@@ -65,9 +65,10 @@ type CentralIndex map[string]*CentralRequest
 
 // AuthConfig keeps all we need to set up IdP for a Central instance.
 type AuthConfig struct {
-	ClientID     string `json:"idp_client_id"`
-	ClientSecret string `json:"idp_client_secret"`
-	Issuer       string `json:"idp_issuer"`
+	ClientID         string `json:"idp_client_id"`
+	ClientSecret     string `json:"idp_client_secret"`
+	Issuer           string `json:"idp_issuer"`
+	UsesStaticClient bool   `json:"uses_static_client"`
 }
 
 // Index ...
