@@ -7,6 +7,7 @@
 - [ ] Added test description under `Test manual`
 - [ ] Documentation added if necessary
 - [ ] CI and all relevant tests are passing
+- [ ] Add the ticket number to the PR title if available, i.e. `ROX-12345: ...`
 - [ ] Discussed security and business related topics privately. Will move any security and business related topics that arise to private communication channel.
 
 ## Test manual
