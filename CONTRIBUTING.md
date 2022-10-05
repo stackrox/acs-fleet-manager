@@ -1,48 +1,19 @@
 # Contributing
 
-## Templates update
+## New contributors
 
-Every team using the template has shared responsibility and code access to this repository.
-The template will be collectively contributed and versioned.
+ - Follow the [getting started guide](https://github.com/stackrox/acs-fleet-manager#getting-started) to setup your environment
+ - Opening a PR follow the [PR template](https://github.com/stackrox/acs-fleet-manager/blob/main/.github/pull_request_template.md)
+ - A pull-request must be approved by at least **one** engineer
 
-When a bug fix or a feature change is done on the Go template, a pull request on the Java version
-(preferred) or an issue will be opened to make sure we keep both versions at the same feature and
-maturity level.
+## Specialities
 
-There is an agreement from each fleet-manager team to update their fleet-manager code on the newest
-template regularly. Code updates to/from the template onto/from a specific service are expected to be
-done manually since the two repositories are different. You are free to choose/rely on whichever
-automation tool you have at your disposal e.g the combination of [git patch](https://git-scm.com/docs/git-format-patch)
-and [git apply](https://git-scm.com/docs/git-apply) etc. Code fix is done on a roll forward fashion.
+### Dinosaurs
 
-### Notifying others about updates
-
-#### From service specific code to template
-
-In case of updates that are coming from a service specific fleet manager to the template, open an issue
-in [ffm project](https://github.com/bf2fc6cc711aee1a0c2a/ffm-project/issues) stating if it is a bug
-fix/enhancement/ version updates etc.  It is advisable to open PR once there is concensus on the adoption of
-the enhancement. To speed up the decision time, you can start a [zulip thread](https://bf2.zulipchat.com/) or
-[google group thread](https://groups.google.com/g/factorized-fleet-manager) engaging the interested parties
-asking if they would like to adopt the proposal. Additionally, it is okay to open a draft PR, to drive the conversation
-and enrich the understanding of the proposal.
-
-#### From template to specific fleet managers
-
-Once a fix / enhancement has landed to the template, an email should be sent to [factorised fleet manager google group](https://groups.google.com/g/factorized-fleet-manager). Likewise, the notification has to be sent to [zulip chat](https://bf2.zulipchat.com/).
-
->NOTE: A preferred approach/ process is to update the templates and service specific fleet managers regularly.
-This will make the rather "manual" update process less painful to work with by avoiding huge drifts which are likely to
-cause a painful big-bang update.
-
-## Definition of Done
-* Changes have been verified by one additional reviewer
-* An equivalent Github Pull Request or an issue has been opened on the Quarkus based template  
-* PR has been merged and announcement sent
+The `dinosaur` is a placeholder for the service name. It originated from the [fleet-manager template](https://github.com/bf2fc6cc711aee1a0c2a/ffm-fleet-manager-go-template).
+Long-term all `dinosaur` occurrences will be replaced with our product name.
 
 ## Project Source
-Fork fleet-manager to your own Github repository: https://github.com/stackrox/acs-fleet-manager/fork
-
 Project source is to be found under `$GOPATH/src` by a distinct directory path.
 ```plain
 $GOPATH
@@ -76,15 +47,6 @@ $GOPATH
           /workers  -- background workers for async reconciliation logic
 
 ```
-
-## Set up Git Hooks
-Run the following command to set up git hooks for the project. pre-commit is used under the hood, see [https://pre-commit.com](https://pre-commit.com/) for more information.
-
-```
-make setup/git/hooks
-```
-
-Currently the only activated pre-commit plugin is `detect-secrets`.
 
 ## Debugging
 ### VS Code
@@ -121,6 +83,7 @@ Once the schema is valid, the remaining step is to generate the openapi modules 
 ```sh
 make openapi/generate
 ```
+
 
 ## Adding a new endpoint
 See the [adding-a-new-endpoint](./docs/adding-a-new-endpoint.md) documentation.
