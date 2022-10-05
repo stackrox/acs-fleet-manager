@@ -4,13 +4,14 @@
 ## Checklist (Definition of Done)
 <!-- Please strikethrough options not relevant using two tildes ~~Text~~. Do not delete non relevant options -->
 - [ ] Unit and integration tests added
+- [ ] Added test description under `Test manual`
 - [ ] Documentation added if necessary
 - [ ] CI and all relevant tests are passing
 - [ ] Discussed security and business related topics privately. Will move any security and business related topics that arise to private communication channel.
 
 ## Test manual
 
-TODO: Add manual testing efforts
+**TODO:** Add manual testing efforts
 
 ```
 # To run tests locally run:
