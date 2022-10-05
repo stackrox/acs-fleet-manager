@@ -4,6 +4,8 @@ set -eo pipefail
 # Requires: `jq`
 # Requires: BitWarden CLI `bw`
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
     echo "Known environments: stage prod"
@@ -42,6 +44,10 @@ case $ENVIRONMENT in
       exit 1
     fi
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
+    if [[ -z "${CLUSTER_ID}" ]]; then
+      echo "CLUSTER_ID is empty. Make sure ${CLUSTER_NAME} points to an existing cluster."
+      exit 1
+    fi
 
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
 
@@ -75,6 +81,10 @@ case $ENVIRONMENT in
       exit 1
     fi
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
+    if [[ -z "${CLUSTER_ID}" ]]; then
+      echo "CLUSTER_ID is empty. Make sure ${CLUSTER_NAME} points to an existing cluster."
+      exit 1
+    fi
 
     FM_ENDPOINT="https://api.openshift.com"
 
@@ -122,7 +132,7 @@ OPERATOR_SOURCE="redhat-operators"
 #OPERATOR_SOURCE="rhacs-operators"
 
 # helm template ... to debug changes
-helm upgrade rhacs-terraform ./ \
+helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --install \
   --debug \
   --namespace rhacs \
