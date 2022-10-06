@@ -38,16 +38,6 @@ case $ENVIRONMENT in
   stage)
     # TODO: Fetch OCM token and log in as appropriate user as part of script.
     EXPECT_OCM_ID="2ECw6PIE06TzjScQXe6QxMMt3Sa"
-    ACTUAL_OCM_ID=$(ocm whoami | jq -r '.id')
-    if [[ "${EXPECT_OCM_ID}" != "${ACTUAL_OCM_ID}" ]]; then
-      echo "Must be logged into rhacs-managed-service-stage account in OCM to get cluster ID"
-      exit 1
-    fi
-    CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
-    if [[ -z "${CLUSTER_ID}" ]]; then
-      echo "CLUSTER_ID is empty. Make sure ${CLUSTER_NAME} points to an existing cluster."
-      exit 1
-    fi
 
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
 
@@ -75,16 +65,6 @@ case $ENVIRONMENT in
   prod)
     # TODO: Fetch OCM token and log in as appropriate user as part of script.
     EXPECT_OCM_ID="2BBslbGSQs5PS2HCfJKqOPcCN4r"
-    ACTUAL_OCM_ID=$(ocm whoami | jq -r '.id')
-    if [[ "${EXPECT_OCM_ID}" != "${ACTUAL_OCM_ID}" ]]; then
-      echo "Must be logged into rhacs-managed-service-prod account in OCM to get cluster ID"
-      exit 1
-    fi
-    CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
-    if [[ -z "${CLUSTER_ID}" ]]; then
-      echo "CLUSTER_ID is empty. Make sure ${CLUSTER_NAME} points to an existing cluster."
-      exit 1
-    fi
 
     FM_ENDPOINT="https://api.openshift.com"
 
@@ -118,6 +98,17 @@ GIT_COMMIT_SHA=$(git rev-parse HEAD)
 GIT_DESCRIBE_TAG=$(git describe --tag)
 OPERATOR_USE_UPSTREAM=false
 OPERATOR_SOURCE="redhat-operators"
+
+ACTUAL_OCM_ID=$(ocm whoami | jq -r '.id')
+if [[ "${EXPECT_OCM_ID}" != "${ACTUAL_OCM_ID}" ]]; then
+  echo "Must be logged into rhacs-managed-service-prod account in OCM to get cluster ID"
+  exit 1
+fi
+CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
+if [[ -z "${CLUSTER_ID}" ]]; then
+  echo "CLUSTER_ID is empty. Make sure ${CLUSTER_NAME} points to an existing cluster."
+  exit 1
+fi
 
 ## Uncomment this section if you want to deploy an upstream version of the operator.
 ## Update the global pull secret within the dataplane cluster to include the read-only credentials for quay.io/rhacs-eng
