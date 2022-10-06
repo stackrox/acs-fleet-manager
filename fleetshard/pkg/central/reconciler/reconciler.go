@@ -57,6 +57,7 @@ type CentralReconciler struct {
 	useRoutes         bool
 	wantsAuthProvider bool
 	hasAuthProvider   bool
+	hasChartResources bool
 	routeService      *k8s.RouteService
 	egressProxyImage  string
 
@@ -432,6 +433,12 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 }
 
 func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	if r.hasChartResources {
+		// Helm chart resources are embedded in the binary and therefore can't be changed unless a new version
+		// of fleetshard-sync was deployed. If they were already installed during the current execution, do nothing.
+		return nil
+	}
+
 	vals, err := r.chartValues(remoteCentral)
 	if err != nil {
 		return fmt.Errorf("obtaining values for resources chart: %w", err)
@@ -468,6 +475,8 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 			return fmt.Errorf("failed to create object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
 		}
 	}
+
+	r.hasChartResources = true
 	return nil
 }
 
