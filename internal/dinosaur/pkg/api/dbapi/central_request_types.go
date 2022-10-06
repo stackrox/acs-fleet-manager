@@ -9,6 +9,13 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	// AuthConfigStaticClientOrigin represents a RH SSO OIDC client that is the shared, static one.
+	AuthConfigStaticClientOrigin = "shared_static_rhsso"
+	// AuthConfigDynamicClientOrigin represents RH SSO OIDC clients that are created dynamically.
+	AuthConfigDynamicClientOrigin = "dedicated_dynamic_rhsso"
+)
+
 // CentralRequest ...
 type CentralRequest struct {
 	api.Meta
@@ -65,10 +72,10 @@ type CentralIndex map[string]*CentralRequest
 
 // AuthConfig keeps all we need to set up IdP for a Central instance.
 type AuthConfig struct {
-	ClientID         string `json:"idp_client_id"`
-	ClientSecret     string `json:"idp_client_secret"`
-	Issuer           string `json:"idp_issuer"`
-	UsesStaticClient bool   `json:"uses_static_client"`
+	ClientID     string `json:"idp_client_id"`
+	ClientSecret string `json:"idp_client_secret"`
+	Issuer       string `json:"idp_issuer"`
+	ClientOrigin string `json:"client_origin"`
 }
 
 // Index ...

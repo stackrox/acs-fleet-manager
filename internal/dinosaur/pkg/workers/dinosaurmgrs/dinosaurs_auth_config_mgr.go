@@ -17,6 +17,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
+	"github.com/stackrox/rox/pkg/ternary"
 )
 
 const (
@@ -119,7 +120,8 @@ func augmentWithStaticAuthConfig(r *dbapi.CentralRequest, centralConfig *config.
 	r.AuthConfig.ClientID = centralConfig.CentralIDPClientID
 	r.AuthConfig.ClientSecret = centralConfig.CentralIDPClientSecret //pragma: allowlist secret
 	r.AuthConfig.Issuer = centralConfig.CentralIDPIssuer
-	r.AuthConfig.UsesStaticClient = centralConfig.HasStaticAuth()
+	r.AuthConfig.ClientOrigin = ternary.String(centralConfig.HasStaticAuth(),
+		dbapi.AuthConfigStaticClientOrigin, dbapi.AuthConfigDynamicClientOrigin)
 
 	return nil
 }

@@ -1,47 +1,49 @@
 package dinosaurmgrs
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	dynamicClientAPI "github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
 
 	"github.com/golang/glog"
 )
 
-// DeletingDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
+// DeletingDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests.
 type DeletingDinosaurManager struct {
 	workers.BaseWorker
-	centralService      services.DinosaurService
+	dinosaurService     services.DinosaurService
 	iamConfig           *iam.IAMConfig
 	quotaServiceFactory services.QuotaServiceFactory
-	dynamicAPI          dynamicclients.Client
-	centralConfig       *config.CentralConfig
+	dynamicAPI          *dynamicClientAPI.AcsTenantsApiService
 }
 
-// NewDeletingDinosaurManager creates a new dinosaur manager
-func NewDeletingDinosaurManager(centralService services.DinosaurService, iamConfig *iam.IAMConfig, quotaServiceFactory services.QuotaServiceFactory,
-	centralConfig *config.CentralConfig) *DeletingDinosaurManager {
+// NewDeletingDinosaurManager creates a new dinosaur manager.
+func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, iamConfig *iam.IAMConfig,
+	quotaServiceFactory services.QuotaServiceFactory) *DeletingDinosaurManager {
 	return &DeletingDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "deleting_dinosaur",
 			Reconciler: workers.Reconciler{},
 		},
-		centralService:      centralService,
+		dinosaurService:     dinosaurService,
 		iamConfig:           iamConfig,
+		dynamicAPI:          dynamicclients.NewDynamicClientsAPI(iamConfig.RedhatSSORealm),
 		quotaServiceFactory: quotaServiceFactory,
-		dynamicAPI:          dynamicclients.NewDynamicClientsClient(iamConfig.RedhatSSORealm),
-		centralConfig:       centralConfig,
 	}
 }
 
-// Start initializes the dinosaur manager to reconcile dinosaur requests
+// Start initializes the dinosaur manager to reconcile dinosaur requests.
 func (k *DeletingDinosaurManager) Start() {
 	k.StartWorker(k)
 }
@@ -51,7 +53,10 @@ func (k *DeletingDinosaurManager) Stop() {
 	k.StopWorker(k)
 }
 
-// Reconcile ...
+// Reconcile reconciles deleting dionosaur requests.
+// It handles:
+//   - freeing up any associated quota with the central
+//   - any dynamically created OIDC client within sso.redhat.com
 func (k *DeletingDinosaurManager) Reconcile() []error {
 	glog.Infoln("reconciling deleting centrals")
 	var encounteredErrors []error
@@ -60,20 +65,20 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	// Dinosaurs in a "deleting" state have been removed, along with all their resources (i.e. ManagedDinosaur, Dinosaur CRs),
 	// from the data plane cluster by the Fleetshard operator. This reconcile phase ensures that any other
 	// dependencies (i.e. SSO clients, CNAME records) are cleaned up for these Dinosaurs and their records soft deleted from the database.
-	deletingDinosaurs, serviceErr := k.centralService.ListByStatus(constants.CentralRequestStatusDeleting)
+	deletingDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants.CentralRequestStatusDeleting)
 	originalTotalDinosaurInDeleting := len(deletingDinosaurs)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list deleting central requests"))
 	} else {
-		glog.Infof("%s centrals count = %d", constants2.CentralRequestStatusDeleting.String(), originalTotalDinosaurInDeleting)
+		glog.Infof("%s centrals count = %d", constants.CentralRequestStatusDeleting.String(), originalTotalDinosaurInDeleting)
 	}
 
 	// We also want to remove Dinosaurs that are set to deprovisioning but have not been provisioned on a data plane cluster
-	deprovisioningDinosaurs, serviceErr := k.centralService.ListByStatus(constants.CentralRequestStatusDeprovision)
+	deprovisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants.CentralRequestStatusDeprovision)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list central deprovisioning requests"))
 	} else {
-		glog.Infof("%s centrals count = %d", constants2.CentralRequestStatusDeprovision.String(), len(deprovisioningDinosaurs))
+		glog.Infof("%s centrals count = %d", constants.CentralRequestStatusDeprovision.String(), len(deprovisioningDinosaurs))
 	}
 
 	for _, deprovisioningDinosaur := range deprovisioningDinosaurs {
@@ -98,27 +103,28 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(central *dbapi.CentralRequest) error {
-	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(central.QuotaType))
+func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.CentralRequest) error {
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(dinosaur.QuotaType))
 	if factoryErr != nil {
 		return factoryErr
 	}
-	err := quotaService.DeleteQuota(central.SubscriptionID)
+	err := quotaService.DeleteQuota(dinosaur.SubscriptionID)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete subscription id %s for central %s", central.SubscriptionID, central.ID)
+		return errors.Wrapf(err, "failed to delete subscription id %s for central %s", dinosaur.SubscriptionID, dinosaur.ID)
 	}
 
-	if k.centralConfig.HasStaticAuth() {
-		glog.V(7).Infoln("static config found; no dynamic client will be deleted")
+	if dinosaur.ClientOrigin == dbapi.AuthConfigStaticClientOrigin {
+		glog.V(7).Infof("central %s uses static client; no dynamic client will be attempted to be deleted",
+			dinosaur.ID)
 	} else {
-		if err := k.dynamicAPI.DeleteDynamicClient(central.ClientID); err != nil {
+		if _, err := k.dynamicAPI.DeleteAcsClient(context.Background(), dinosaur.ClientID); err != nil {
 			return errors.Wrapf(err, "failed to delete dynamic OIDC client id %s for central %s",
-				central.ClientID, central.ID)
+				dinosaur.ClientID, dinosaur.ID)
 		}
 	}
 
-	if err := k.centralService.Delete(central, false); err != nil {
-		return errors.Wrapf(err, "failed to delete central %s", central.ID)
+	if err := k.dinosaurService.Delete(dinosaur, false); err != nil {
+		return errors.Wrapf(err, "failed to delete central %s", dinosaur.ID)
 	}
 	return nil
 }

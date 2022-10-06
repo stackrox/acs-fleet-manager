@@ -12,10 +12,10 @@ import (
 
 func addUsesStaticClientToCentralRequest() *gormigrate.Migration {
 	type AuthConfig struct {
-		ClientID         string `json:"idp_client_id"`
-		ClientSecret     string `json:"idp_client_secret"`
-		Issuer           string `json:"idp_issuer"`
-		UsesStaticClient bool   `json:"uses_static_client" gorm:"default:true"` // Currently only static clients
+		ClientID     string `json:"idp_client_id"`
+		ClientSecret string `json:"idp_client_secret"`
+		Issuer       string `json:"idp_issuer"`
+		ClientOrigin string `json:"client_origin" gorm:"default:shared_static_rhsso"` // Currently only static clients
 		// have been used to provision centrals, hence we set it to true by default when no value previously existed.
 	}
 
@@ -57,13 +57,13 @@ func addUsesStaticClientToCentralRequest() *gormigrate.Migration {
 		ID: "202205101700",
 		Migrate: func(tx *gorm.DB) error {
 			if err := tx.AutoMigrate(&CentralRequest{}); err != nil {
-				return fmt.Errorf("adding new colum UsesStaticClient in migration 202205101700: %w", err)
+				return fmt.Errorf("adding new colum ClientOrigin in migration 202205101700: %w", err)
 			}
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.Migrator().DropColumn(&CentralRequest{}, "UsesStaticClient"); err != nil {
-				return fmt.Errorf("rolling back new column UsesStaticClient in migration 202205101700: %w", err)
+			if err := tx.Migrator().DropColumn(&CentralRequest{}, "ClientOrigin"); err != nil {
+				return fmt.Errorf("rolling back new column ClientOrigin in migration 202205101700: %w", err)
 			}
 			return nil
 		},
