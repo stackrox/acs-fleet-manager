@@ -375,7 +375,7 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) er
 
 func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
 	glog.Infof("Removing Dataplane cluster %s fleetshard service account", cluster.ClusterID)
-	// TODO(addon): reactivate this, if required for cluster terraforming by fleet-manager
+	// TODO(ROX-11551): reactivate this, if required for cluster terraforming by fleet-manager
 	// serviceAcountRemovalErr := c.FleetshardOperatorAddon.RemoveServiceAccount(cluster)
 	// if serviceAcountRemovalErr != nil {
 	// 	return errors.Wrapf(serviceAcountRemovalErr, "Failed to removed Dataplance cluster %s fleetshard service account", cluster.ClusterID)

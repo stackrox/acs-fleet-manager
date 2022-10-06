@@ -76,7 +76,7 @@ func translate(t v1alpha1.Terraform) (chartutil.Values, error) {
 	if t.Spec.Observability != nil {
 		observability := translation.NewValuesBuilder()
 		observability.SetBool("enabled", &t.Spec.Observability.Enabled)
-		// TODO(addon): validate fields that should be mandatory if obs is enabled
+		// TODO(ROX-11551): validate fields that should be mandatory if obs is enabled
 		if t.Spec.Observability.Github != nil {
 			github := translation.NewValuesBuilder()
 			github.SetString("accessToken", &t.Spec.Observability.Github.AccessToken)

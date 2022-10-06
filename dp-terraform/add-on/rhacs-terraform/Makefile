@@ -27,7 +27,7 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # IMAGE_REPO is the repository (server and namespace) into which the operator images will get pushed.
-# TODO(addon) ask admin to create project in quay.io/rhacs-eng
+# TODO(ROX-11551) ask admin to create project in quay.io/rhacs-eng
 IMAGE_REPO ?= quay.io/jrodrig
 
 # IMAGE_TAG_BASE defines the docker.io namespace and part of the image name for remote images.
