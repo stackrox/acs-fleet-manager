@@ -10,13 +10,13 @@ import (
 	"gorm.io/gorm"
 )
 
-func addUsesStaticClientToCentralRequest() *gormigrate.Migration {
+func addClientOriginToCentralRequest() *gormigrate.Migration {
 	type AuthConfig struct {
 		ClientID     string `json:"idp_client_id"`
 		ClientSecret string `json:"idp_client_secret"`
 		Issuer       string `json:"idp_issuer"`
 		ClientOrigin string `json:"client_origin" gorm:"default:shared_static_rhsso"` // Currently only static clients
-		// have been used to provision centrals, hence we set it to true by default when no value previously existed.
+		// have been used to provision centrals, hence we set it to shared_static_rhsso by default when no value previously existed.
 	}
 
 	type CentralRequest struct {
