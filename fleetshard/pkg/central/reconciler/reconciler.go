@@ -450,7 +450,7 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 		out.SetGroupVersionKind(obj.GroupVersionKind())
 		err := r.client.Get(ctx, key, &out)
 		if err == nil {
-			glog.Infof("Updating object %s/%s", obj.GetNamespace(), obj.GetName())
+			glog.V(10).Infof("Updating object %s/%s", obj.GetNamespace(), obj.GetName())
 			obj.SetResourceVersion(out.GetResourceVersion())
 			err := r.client.Update(ctx, obj)
 			if err != nil {
@@ -463,7 +463,7 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 			return fmt.Errorf("failed to retrieve object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
 		}
 		err = r.client.Create(ctx, obj)
-		glog.Infof("Creating object %s/%s", obj.GetNamespace(), obj.GetName())
+		glog.V(10).Infof("Creating object %s/%s", obj.GetNamespace(), obj.GetName())
 		if err != nil && !apiErrors.IsAlreadyExists(err) {
 			return fmt.Errorf("failed to create object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
 		}
