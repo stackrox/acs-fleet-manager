@@ -14,10 +14,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const (
-	token = "token"
-)
-
 func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing.T) {
 	type fields struct {
 		kcClient redhatsso.SSOClient
@@ -42,10 +38,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 			name: "test registering serviceaccount for agent operator first time",
 			fields: fields{
 				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return token, nil
-					},
-					CreateServiceAccountFunc: func(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
+					CreateServiceAccountFunc: func(name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
 						return serviceaccountsclient.ServiceAccountData{
 							Id:          &fakeID,
 							ClientId:    &fakeClientID,
@@ -78,10 +71,7 @@ func TestRedhatSSOService_RegisterAcsFleetshardOperatorServiceAccount(t *testing
 			name: "test registering serviceaccount for agent operator second time",
 			fields: fields{
 				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return token, nil
-					},
-					CreateServiceAccountFunc: func(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
+					CreateServiceAccountFunc: func(name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
 						return serviceaccountsclient.ServiceAccountData{
 							Id:          &fakeID,
 							ClientId:    &fakeClientID,
@@ -140,33 +130,13 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 		wantErr bool
 	}{
 		{
-			name: "should receive an error when retrieving the token fails",
-			fields: fields{
-				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return "", fmt.Errorf("some errors")
-					},
-					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
-						return fmt.Errorf("some error")
-					},
-				},
-			},
-			args: args{
-				clusterID: "test-cluster-id",
-			},
-			wantErr: true,
-		},
-		{
 			name: "should receive an error when service account deletion fails",
 			fields: fields{
 				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return token, nil
-					},
-					GetServiceAccountFunc: func(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+					GetServiceAccountFunc: func(clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
 						return nil, true, nil
 					},
-					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
+					DeleteServiceAccountFunc: func(clientId string) error {
 						return fmt.Errorf("some error")
 					},
 				},
@@ -180,13 +150,10 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 			name: "should delete the service account",
 			fields: fields{
 				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return token, nil
-					},
-					GetServiceAccountFunc: func(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+					GetServiceAccountFunc: func(clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
 						return nil, true, nil
 					},
-					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
+					DeleteServiceAccountFunc: func(clientId string) error {
 						return nil
 					},
 				},
@@ -200,13 +167,10 @@ func TestRedhatSSOService_DeRegisterAcsFleetshardOperatorServiceAccount(t *testi
 			name: "should not call delete if client doesn't exist",
 			fields: fields{
 				kcClient: &redhatsso.SSOClientMock{
-					GetTokenFunc: func() (string, error) {
-						return token, nil
-					},
-					GetServiceAccountFunc: func(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+					GetServiceAccountFunc: func(clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
 						return nil, false, nil
 					},
-					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
+					DeleteServiceAccountFunc: func(clientId string) error {
 						return fmt.Errorf("this should not be called")
 					},
 				},

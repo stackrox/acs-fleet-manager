@@ -22,8 +22,7 @@ type RedhatSSOMock interface {
 	Start()
 	Stop()
 	BaseURL() string
-	GenerateNewAuthToken() string
-	SetBearerToken(token string) string
+	GetInitialClientCredentials() (string, string)
 	DeleteAllServiceAccounts()
 	ServiceAccountsLimit() int
 }
@@ -34,6 +33,12 @@ type redhatSSOMock struct {
 	serviceAccounts      map[string]serviceaccountsclient.ServiceAccountData
 	sessionAuthToken     string
 	serviceAccountsLimit int
+	initialClientID      string
+	initialClientSecret  string
+}
+
+func (mockServer *redhatSSOMock) GetInitialClientCredentials() (string, string) {
+	return mockServer.initialClientID, mockServer.initialClientSecret
 }
 
 type getTokenResponseMock struct {
@@ -118,11 +123,9 @@ func (mockServer *redhatSSOMock) serviceAccountAuthMiddleware(next http.Handler)
 		clientID := request.FormValue("client_id")
 		clientSecret := request.FormValue("client_secret")
 
-		if serviceAccount, ok := mockServer.serviceAccounts[clientID]; ok {
-			if *serviceAccount.Secret == clientSecret { // pragma: allowlist secret
-				next.ServeHTTP(writer, request)
-				return
-			}
+		if clientID == mockServer.initialClientID && mockServer.initialClientSecret == clientSecret {
+			next.ServeHTTP(writer, request)
+			return
 		}
 
 		http.Error(writer, "{\"error\":\"unauthorized_client\",\"error_description\":\"Invalid client secret\"}", http.StatusUnauthorized)
@@ -146,6 +149,10 @@ func (mockServer *redhatSSOMock) init() {
 	bearerTokenAuthRouter.HandleFunc("/auth/realms/redhat-external/apis/service_accounts/v1/{clientId}/resetSecret", mockServer.regenerateSecretHandler).Methods("POST")
 
 	mockServer.server = httptest.NewUnstartedServer(r)
+
+	mockServer.initialClientID = "clientId"
+	mockServer.initialClientSecret = "secret" // pragma: allowlist secret
+	mockServer.generateAuthToken()
 }
 
 func (mockServer *redhatSSOMock) getTokenHandler(w http.ResponseWriter, r *http.Request) {
@@ -311,16 +318,12 @@ func (mockServer *redhatSSOMock) regenerateSecretHandler(w http.ResponseWriter, 
 	w.WriteHeader(http.StatusNotFound)
 }
 
-// GenerateNewAuthToken ...
-func (mockServer *redhatSSOMock) GenerateNewAuthToken() string {
+// generateAuthToken ...
+func (mockServer *redhatSSOMock) generateAuthToken() string {
 	token := uuid.New().String()
 	mockServer.authTokens = append(mockServer.authTokens, token)
-	return token
-}
-
-// SetBearerToken ...
-func (mockServer *redhatSSOMock) SetBearerToken(token string) string {
-	mockServer.authTokens = append(mockServer.authTokens, token)
-	mockServer.sessionAuthToken = token
+	if mockServer.sessionAuthToken == "" {
+		mockServer.sessionAuthToken = token
+	}
 	return token
 }
