@@ -356,6 +356,8 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 	dummySvc.SetAnnotations(map[string]string{"dummy-annotation": "test"})
 	err = fakeClient.Update(context.TODO(), &dummySvc)
 	assert.NoError(t, err)
+
+	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
 	assert.Equal(t, "test", dummySvc.GetAnnotations()["dummy-annotation"])
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
