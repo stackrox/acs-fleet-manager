@@ -366,7 +366,7 @@ parameters:
 
 - name: IMAGE_PULL_POLICY
   displayName: image pull policy
-  description: image pull polilcy
+  description: image pull policy
   value: "IfNotPresent"
 
 - name: TOKEN_ISSUER_URL
@@ -383,6 +383,76 @@ parameters:
   displayName: SupportedProviders configuration file
   description: SupportedProviders configuration file, that it's passed to the fleet manager executable in the flag --providers-config-file
   value: /config/provider-configuration.yaml
+
+- name: CENTRAL_CPU_REQUEST
+  displayName: Default CPU request for central deployments for newly created tenants
+  description: Default CPU request for central deployments for newly created tenants
+  value: "100m"
+
+- name: CENTRAL_MEMORY_REQUEST
+  displayName: Default memory request for central deployments for newly created tenants
+  description: Default memory request for central deployments for newly created tenants
+  value: "5G"
+
+- name: CENTRAL_CPU_LIMIT
+  displayName: Default CPU limit for central deployments for newly created tenants
+  description: Default CPU request for central deployments for newly created tenants
+  value: "250m"
+
+- name: CENTRAL_MEMORY_LIMIT
+  displayName: Default memory limit for central deployments for newly created tenants
+  description: Default memory limit for central deployments for newly created tenants
+  value: "10G"
+
+- name: SCANNER_ANALYZER_CPU_REQUEST
+  displayName: Default CPU request for scanner deployments for newly created tenants
+  description: Default CPU request for scanner deployments for newly created tenants
+  value: "250m"
+
+- name: SCANNER_ANALYZER_MEMORY_REQUEST
+  displayName: Default memory request for scanner deployments for newly created tenants
+  description: Default memory request for scanner deployments for newly created tenants
+  value: "700M"
+
+- name: SCANNER_ANALYZER_CPU_LIMIT
+  displayName: Default CPU limit for scanner deployments for newly created tenants
+  description: Default CPU limit for scanner deployments for newly created tenants
+  value: "500m"
+
+- name: SCANNER_ANALYZER_MEMORY_LIMIT
+  displayName: Default memory limit for scanner deployments for newly created tenants
+  description: Default memory limit for scanner deployments for newly created tenants
+  value: "1500M"
+
+- name: SCANNER_DB_CPU_REQUEST
+  displayName: Default CPU request for scanner-db deployments for newly created tenants
+  description: Default CPU request for scanner-db deployments for newly created tenants
+  value: "250m"
+
+- name: SCANNER_DB_MEMORY_REQUEST
+  displayName: Default memory request for scanner-db deployments for newly created tenants
+  description: Default memory request for scanner-db deployments for newly created tenants
+  value: "1G"
+
+- name: SCANNER_DB_CPU_LIMIT
+  displayName: Default CPU request for scanner-db deployments for newly created tenants
+  description: Default CPU request for scanner-db deployments for newly created tenants
+  value: "500m"
+
+- name: SCANNER_DB_MEMORY_LIMIT
+  displayName: Default memory limit for scanner-db deployments for newly created tenants
+  description: Default memory limit for scanner-db deployments for newly created tenants
+  value: "2G"
+
+- name: SCANNER_ANALYZER_AUTOSCALING
+  displayName: Default autoscaling configuration for scanner deployments for newly created tenants
+  description: Default autoscaling configuration for scanner deployments for newly created tenants, can be "Enabled" or "Disabled"
+  value: "Enabled"
+
+- name: SCANNER_ANALYZER_REPLICAS
+  displayName: Default number of scanner replicas for newly created tenants
+  description: Default number of scanner replicas for newly created tenants
+  value: "2"
 
 objects:
   - kind: ConfigMap
@@ -1050,6 +1120,38 @@ objects:
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
+
+              - name: CENTRAL_CPU_REQUEST
+                value: "${CENTRAL_CPU_REQUEST}"
+              - name: CENTRAL_MEMORY_REQUEST
+                value: ${CENTRAL_MEMORY_REQUEST}""
+              - name: CENTRAL_CPU_LIMIT
+                value: "${CENTRAL_CPU_LIMIT}"
+              - name: CENTRAL_MEMORY_LIMIT
+                value: "${CENTRAL_MEMORY_LIMIT}"
+
+              - name: SCANNER_ANALYZER_CPU_REQUEST
+                value: "${SCANNER_ANALYZER_CPU_REQUEST}"
+              - name: SCANNER_ANALYZER_MEMORY_REQUEST
+                value: "${SCANNER_ANALYZER_MEMORY_REQUEST}"
+              - name: SCANNER_ANALYZER_CPU_LIMIT
+                value: "${SCANNER_ANALYZER_CPU_LIMIT}"
+              - name: SCANNER_ANALYZER_MEMORY_LIMIT
+                value: "${SCANNER_ANALYZER_MEMORY_LIMIT}"
+
+              - name: SCANNER_DB_CPU_REQUEST
+                value: "${SCANNER_DB_CPU_REQUEST}"
+              - name: SCANNER_DB_MEMORY_REQUEST
+                value: "${SCANNER_DB_MEMORY_REQUEST}"
+              - name: SCANNER_DB_CPU_LIMIT
+                value: "${SCANNER_DB_CPU_LIMIT}"
+              - name: SCANNER_DB_MEMORY_LIMIT
+                value: "${SCANNER_DB_MEMORY_LIMIT}"
+
+              - name: SCANNER_ANALYZER_AUTOSCALING
+                value: "${SCANNER_ANALYZER_AUTOSCALING}"
+              - name: SCANNER_ANALYZER_REPLICAS
+                value: "${SCANNER_ANALYZER_REPLICAS}"
             command:
             - /usr/local/bin/fleet-manager
             - serve
