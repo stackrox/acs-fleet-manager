@@ -118,10 +118,14 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 		glog.V(7).Infof("central %s uses static client; no dynamic client will be attempted to be deleted",
 			dinosaur.ID)
 	} else {
-		if resp, err := k.dynamicAPI.DeleteAcsClient(context.Background(), dinosaur.ClientID); err != nil &&
-			resp.StatusCode != http.StatusNotFound {
-			return errors.Wrapf(err, "failed to delete dynamic OIDC client id %s for central %s",
-				dinosaur.ClientID, dinosaur.ID)
+		if resp, err := k.dynamicAPI.DeleteAcsClient(context.Background(), dinosaur.ClientID); err != nil {
+			if resp.StatusCode == http.StatusNotFound {
+				glog.V(7).Infof("dynamic client %s could not be found; will continue as if the client "+
+					"has been deleted", dinosaur.ClientID)
+			} else {
+				return errors.Wrapf(err, "failed to delete dynamic OIDC client id %s for central %s",
+					dinosaur.ClientID, dinosaur.ID)
+			}
 		}
 	}
 
