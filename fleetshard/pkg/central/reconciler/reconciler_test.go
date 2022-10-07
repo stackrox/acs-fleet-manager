@@ -356,17 +356,8 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 	dummySvc.SetAnnotations(map[string]string{"dummy-annotation": "test"})
 	err = fakeClient.Update(context.TODO(), &dummySvc)
 	assert.NoError(t, err)
-
-	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
-	assert.NoError(t, err)
-
-	// check that the chart resource was not modified after Reconcile, because chart
-	// resources are normally not updated once installed
 	assert.Equal(t, "test", dummySvc.GetAnnotations()["dummy-annotation"])
 
-	r.hasChartResources = false // force the update of chart resources
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
 	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
