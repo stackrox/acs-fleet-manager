@@ -2,6 +2,7 @@ package dinosaurmgrs
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -117,7 +118,8 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 		glog.V(7).Infof("central %s uses static client; no dynamic client will be attempted to be deleted",
 			dinosaur.ID)
 	} else {
-		if _, err := k.dynamicAPI.DeleteAcsClient(context.Background(), dinosaur.ClientID); err != nil {
+		if resp, err := k.dynamicAPI.DeleteAcsClient(context.Background(), dinosaur.ClientID); err != nil &&
+			resp.StatusCode != http.StatusNotFound {
 			return errors.Wrapf(err, "failed to delete dynamic OIDC client id %s for central %s",
 				dinosaur.ClientID, dinosaur.ID)
 		}
