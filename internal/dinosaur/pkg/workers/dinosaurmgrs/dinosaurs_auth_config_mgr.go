@@ -23,6 +23,8 @@ const (
 	centralAuthConfigManagerWorkerType = "central_auth_config"
 	oidcProviderCallbackPath           = "/sso/providers/oidc/callback"
 	dynamicClientsNameMaxLength        = 50
+
+	configurationErrorPrefix = "Dynamic auth config augmentation is not configured properly"
 )
 
 // CentralAuthConfigManager updates CentralRequests with auth configuration.
@@ -37,8 +39,14 @@ type CentralAuthConfigManager struct {
 var _ workers.Worker = (*CentralAuthConfigManager)(nil)
 
 // NewCentralAuthConfigManager creates an instance of this worker.
-func NewCentralAuthConfigManager(centralService services.DinosaurService, iamConfig *iam.IAMConfig, centralConfig *config.CentralConfig) *CentralAuthConfigManager {
-	dynamicClientsAPI := dynamicclients.NewDynamicClientsAPI(iamConfig.RedhatSSORealm)
+func NewCentralAuthConfigManager(centralService services.DinosaurService, iamConfig *iam.IAMConfig, centralConfig *config.CentralConfig) (*CentralAuthConfigManager, error) {
+	realmConfig := iamConfig.RedhatSSORealm
+
+	if err := validateAugmentationIsConfigured(realmConfig, centralConfig); err != nil {
+		return nil, errors.Wrapf(err, "failed to create %s worker", centralAuthConfigManagerWorkerType)
+	}
+
+	dynamicClientsAPI := dynamicclients.NewDynamicClientsAPI(realmConfig)
 	return &CentralAuthConfigManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
@@ -47,9 +55,34 @@ func NewCentralAuthConfigManager(centralService services.DinosaurService, iamCon
 		},
 		centralService:          centralService,
 		centralConfig:           centralConfig,
-		realmConfig:             iamConfig.RedhatSSORealm,
+		realmConfig:             realmConfig,
 		dynamicClientsAPIClient: dynamicClientsAPI,
+	}, nil
+}
+
+func validateAugmentationIsConfigured(realmConfig *iam.IAMRealmConfig, centralConfig *config.CentralConfig) error {
+	if centralConfig.HasStaticAuth() {
+		return nil
 	}
+	return validateDynamicAugmentationIsConfigured(realmConfig)
+}
+
+func validateDynamicAugmentationIsConfigured(realmConfig *iam.IAMRealmConfig) error {
+	validatedFields := map[string]string{
+		"clientId":         realmConfig.ClientID,
+		"clientSecret":     realmConfig.ClientSecret, // pragma: allowlist secret
+		"baseURL":          realmConfig.BaseURL,
+		"realm":            realmConfig.Realm,
+		"tokenEndpointURI": realmConfig.TokenEndpointURI,
+		"validIssuerURI":   realmConfig.ValidIssuerURI,
+		"apiEndpointURI":   realmConfig.APIEndpointURI,
+	}
+	for fieldName, fieldValue := range validatedFields {
+		if fieldValue == "" {
+			return fmt.Errorf("%s: %s is empty", configurationErrorPrefix, fieldName)
+		}
+	}
+	return nil
 }
 
 // Start uses base's Start()
