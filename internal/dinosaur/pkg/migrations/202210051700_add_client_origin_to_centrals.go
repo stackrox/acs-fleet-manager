@@ -54,9 +54,9 @@ func addClientOriginToCentralRequest() *gormigrate.Migration {
 	}
 
 	return &gormigrate.Migration{
-		ID: "202205101700",
+		ID: "202210051700",
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.AutoMigrate(&CentralRequest{}); err != nil {
+			if err := tx.Migrator().AddColumn(&CentralRequest{}, "ClientOrigin"); err != nil {
 				return fmt.Errorf("adding new colum ClientOrigin in migration 202205101700: %w", err)
 			}
 			return nil

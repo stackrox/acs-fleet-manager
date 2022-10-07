@@ -114,10 +114,11 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 		return errors.Wrapf(err, "failed to delete subscription id %s for central %s", dinosaur.SubscriptionID, dinosaur.ID)
 	}
 
-	if dinosaur.ClientOrigin == dbapi.AuthConfigStaticClientOrigin {
+	switch dinosaur.ClientOrigin {
+	case dbapi.AuthConfigStaticClientOrigin:
 		glog.V(7).Infof("central %s uses static client; no dynamic client will be attempted to be deleted",
 			dinosaur.ID)
-	} else {
+	case dbapi.AuthConfigDynamicClientOrigin:
 		if resp, err := k.dynamicAPI.DeleteAcsClient(context.Background(), dinosaur.ClientID); err != nil {
 			if resp.StatusCode == http.StatusNotFound {
 				glog.V(7).Infof("dynamic client %s could not be found; will continue as if the client "+
@@ -127,6 +128,9 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 					dinosaur.ClientID, dinosaur.ID)
 			}
 		}
+	default:
+		return errors.Errorf("invalid client origin %q found for client %s",
+			dinosaur.ClientOrigin, dinosaur.ClusterID)
 	}
 
 	if err := k.dinosaurService.Delete(dinosaur, false); err != nil {
