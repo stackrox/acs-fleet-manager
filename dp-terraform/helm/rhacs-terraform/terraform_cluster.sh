@@ -64,7 +64,7 @@ case $ENVIRONMENT in
     )
     # Note: the PagerDuty Service Key as of 2022-09-02 is the same between stage and prod.
     PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name == "Integration Key") | .value' --raw-output)
-    DEAD_MANS_SWITCH_URL=$(bw get item "1906e300-5897-4b7d-b395-af2700d7eac2")
+    DEAD_MANS_SWITCH_URL=$(bw get password "1906e300-5897-4b7d-b395-af2700d7eac2")
     ;;
 
   prod)
@@ -97,7 +97,7 @@ case $ENVIRONMENT in
     )
     # Note: the PagerDuty Service Key as of 2022-09-02 is the same between stage and prod.
     PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name == "Integration Key") | .value' --raw-output)
-    DEAD_MANS_SWITCH_URL=$(bw get item "c8b26dbc-c9f0-4bc4-8c8e-af2700d795b2")
+    DEAD_MANS_SWITCH_URL=$(bw get password "c8b26dbc-c9f0-4bc4-8c8e-af2700d795b2")
     ;;
 
   *)
