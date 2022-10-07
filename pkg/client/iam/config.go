@@ -40,6 +40,13 @@ type AdditionalSSOIssuers struct {
 	Enabled  bool
 }
 
+// GetURIs returns copy of URIs to protect config from modifications.
+func (a *AdditionalSSOIssuers) GetURIs() []string {
+	uris := make([]string, 0, len(a.URIs))
+	copy(uris, a.URIs)
+	return uris
+}
+
 // IAMRealmConfig ...
 type IAMRealmConfig struct {
 	BaseURL          string `json:"base_url"`
