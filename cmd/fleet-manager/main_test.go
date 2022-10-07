@@ -3,6 +3,8 @@ package main
 import (
 	"testing"
 
+	"github.com/spf13/pflag"
+
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
@@ -16,6 +18,8 @@ func TestInjections(t *testing.T) {
 	env, err := environments.New(environments.DevelopmentEnv,
 		dinosaur.ConfigProviders(),
 	)
+	Expect(err).To(BeNil())
+	err = env.AddFlags(&pflag.FlagSet{})
 	Expect(err).To(BeNil())
 	err = env.CreateServices()
 	Expect(err).To(BeNil())
