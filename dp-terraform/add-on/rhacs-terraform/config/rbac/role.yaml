@@ -6,7 +6,7 @@ rules:
 ##
 ## Base operator rules
 ##
-# // TODO(create-ticket): Replace with least privileges permissions
+# // TODO(ROX-11551): Replace with least privileges permissions
 - apiGroups:
   - '*'
   resources:

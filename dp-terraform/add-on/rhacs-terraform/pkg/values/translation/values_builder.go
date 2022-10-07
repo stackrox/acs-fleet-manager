@@ -1,6 +1,6 @@
 package translation
 
-// TODO(create-ticket): import instead of copy
+// TODO(ROX-11551): import instead of copy
 
 import (
 	"fmt"

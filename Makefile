@@ -487,7 +487,6 @@ docker/login/internal:
 .PHONY: docker/login/internal
 
 # Build the binary and image
-# TODO(create-ticket): Revisit decision to use a combined-image-approach, where the image contains both the fleet-manager and the fleetshard-sync.
 image/build: GOOS=linux
 image/build: GOARCH=amd64
 image/build: fleet-manager fleetshard-sync
@@ -799,5 +798,3 @@ tag:
 setup-dev-env:
 	./scripts/setup-dev-env.sh
 .PHONY: setup-dev-env
-
-# TODO CRC Deployment stuff

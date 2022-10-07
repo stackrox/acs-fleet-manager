@@ -85,7 +85,6 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 				Central:         from.DesiredCentralVersion,
 				CentralOperator: from.DesiredCentralOperatorVersion,
 			},
-			// TODO(create-ticket): add additional CAs to public create/get centrals api and internal models
 			Central: private.ManagedCentralAllOfSpecCentral{
 				Resources: private.ResourceRequirements{
 					Requests: map[string]string{
@@ -118,7 +117,6 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 					},
 				},
 				Db: private.ManagedCentralAllOfSpecScannerDb{
-					// TODO:(create-ticket): add DB configuration values to ManagedCentral Scanner
 					Host: "dbhost.rhacs-psql-instance",
 					Resources: private.ResourceRequirements{
 						Requests: map[string]string{

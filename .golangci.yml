@@ -50,7 +50,7 @@ linters-settings:
       - name: error-strings
       - name: error-naming
       - name: exported
-        arguments: ["disableStutteringCheck"] #TODO(ROX-11892) enable revive naming checks
+        arguments: ["disableStutteringCheck"]
       - name: if-return
       - name: increment-decrement
       - name: var-naming

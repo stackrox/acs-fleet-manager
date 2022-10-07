@@ -20,7 +20,7 @@ func ConvertPublicScalingToV1(scaling *public.ScannerSpecAnalyzerScaling) (v1alp
 	}
 	autoScaling := scaling.AutoScaling
 	return v1alpha1.ScannerAnalyzerScaling{
-		AutoScaling: (*v1alpha1.AutoScalingPolicy)(&autoScaling), // TODO(create-ticket): validate.
+		AutoScaling: (*v1alpha1.AutoScalingPolicy)(&autoScaling), // TODO: validate.
 		Replicas:    &scaling.Replicas,
 		MinReplicas: &scaling.MinReplicas,
 		MaxReplicas: &scaling.MaxReplicas,
@@ -48,7 +48,7 @@ func ConvertPrivateScalingToV1(scaling *private.ManagedCentralAllOfSpecScannerAn
 	}
 	autoScaling := scaling.AutoScaling
 	return v1alpha1.ScannerAnalyzerScaling{
-		AutoScaling: (*v1alpha1.AutoScalingPolicy)(&autoScaling), // TODO(create-ticket): validate.
+		AutoScaling: (*v1alpha1.AutoScalingPolicy)(&autoScaling), // TODO: validate.
 		Replicas:    &scaling.Replicas,
 		MinReplicas: &scaling.MinReplicas,
 		MaxReplicas: &scaling.MaxReplicas,

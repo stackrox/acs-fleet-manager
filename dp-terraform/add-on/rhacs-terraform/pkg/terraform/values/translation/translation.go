@@ -44,7 +44,6 @@ func (t Translator) Translate(ctx context.Context, u *unstructured.Unstructured)
 	return values, nil
 }
 
-
 // translate translates a Terraform CR into helm values.
 // For non-required fields, this should only set values for fields that are not set to a zero value.
 func translate(t v1alpha1.Terraform) (chartutil.Values, error) {
@@ -77,7 +76,7 @@ func translate(t v1alpha1.Terraform) (chartutil.Values, error) {
 	if t.Spec.Observability != nil {
 		observability := translation.NewValuesBuilder()
 		observability.SetBool("enabled", &t.Spec.Observability.Enabled)
-		// TODO(create-ticket): validate fields that should be mandatory if obs is enabled
+		// TODO(ROX-11551): validate fields that should be mandatory if obs is enabled
 		if t.Spec.Observability.Github != nil {
 			github := translation.NewValuesBuilder()
 			github.SetString("accessToken", &t.Spec.Observability.Github.AccessToken)
