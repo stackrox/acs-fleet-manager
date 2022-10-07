@@ -1,38 +1,54 @@
 package dinosaurmgrs
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/stackrox/rox/pkg/stringutils"
+
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
 const (
 	centralAuthConfigManagerWorkerType = "central_auth_config"
+	oidcProviderCallbackPath           = "/sso/providers/oidc/callback"
+	dynamicClientsNameMaxLength        = 50
 )
 
 // CentralAuthConfigManager updates CentralRequests with auth configuration.
 type CentralAuthConfigManager struct {
 	workers.BaseWorker
-	centralService services.DinosaurService
-	centralConfig  *config.CentralConfig
+	centralService          services.DinosaurService
+	centralConfig           *config.CentralConfig
+	realmConfig             *iam.IAMRealmConfig
+	dynamicClientsAPIClient *api.AcsTenantsApiService
 }
 
 var _ workers.Worker = (*CentralAuthConfigManager)(nil)
 
 // NewCentralAuthConfigManager creates an instance of this worker.
-func NewCentralAuthConfigManager(centralService services.DinosaurService, centralConfig *config.CentralConfig) *CentralAuthConfigManager {
+func NewCentralAuthConfigManager(centralService services.DinosaurService, iamConfig *iam.IAMConfig, centralConfig *config.CentralConfig) *CentralAuthConfigManager {
+	dynamicClientsAPI := dynamicclients.NewDynamicClientsAPI(iamConfig.RedhatSSORealm)
 	return &CentralAuthConfigManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: centralAuthConfigManagerWorkerType,
 			Reconciler: workers.Reconciler{},
 		},
-		centralService: centralService,
-		centralConfig:  centralConfig,
+		centralService:          centralService,
+		centralConfig:           centralConfig,
+		realmConfig:             iamConfig.RedhatSSORealm,
+		dynamicClientsAPIClient: dynamicClientsAPI,
 	}
 }
 
@@ -84,7 +100,7 @@ func (k *CentralAuthConfigManager) reconcileCentralRequest(cr *dbapi.CentralRequ
 		err = augmentWithStaticAuthConfig(cr, k.centralConfig)
 	} else {
 		glog.V(7).Infoln("no static config found; attempting to obtain one from the IdP")
-		err = augmentWithDynamicAuthConfig(cr, k.centralConfig)
+		err = augmentWithDynamicAuthConfig(cr, k.realmConfig, k.dynamicClientsAPIClient)
 	}
 	if err != nil {
 		return errors.Wrap(err, "failed to augment central request with auth config")
@@ -109,8 +125,24 @@ func augmentWithStaticAuthConfig(r *dbapi.CentralRequest, centralConfig *config.
 
 // augmentWithDynamicAuthConfig performs all necessary rituals to obtain auth
 // configuration via RHSSO API.
-func augmentWithDynamicAuthConfig(_ *dbapi.CentralRequest, _ *config.CentralConfig) error {
-	// TODO(alexr): Talk to RHSSO dynamic client API.
+func augmentWithDynamicAuthConfig(r *dbapi.CentralRequest, realmConfig *iam.IAMRealmConfig, apiClient *api.AcsTenantsApiService) error {
+	// There is a limit on name length of the dynamic client. To avoid unnecessary errors,
+	// we truncate name here.
+	name := stringutils.Truncate(fmt.Sprintf("acsms-%s", r.Name), dynamicClientsNameMaxLength)
+	orgID := r.OrganisationID
+	redirectURIs := []string{fmt.Sprintf("https://%s%s", r.GetUIHost(), oidcProviderCallbackPath)}
 
-	return errors.New("dynamic auth config is currently not supported")
+	dynamicClientData, _, err := apiClient.CreateAcsClient(context.Background(), api.AcsClientRequestData{
+		Name:         name,
+		OrgId:        orgID,
+		RedirectUris: redirectURIs,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to create RHSSO dynamic client for %s", r.ID)
+	}
+
+	r.AuthConfig.ClientID = dynamicClientData.ClientId
+	r.AuthConfig.ClientSecret = dynamicClientData.Secret // pragma: allowlist secret
+	r.AuthConfig.Issuer = realmConfig.ValidIssuerURI
+	return nil
 }
