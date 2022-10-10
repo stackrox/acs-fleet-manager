@@ -1,6 +1,5 @@
 export SPAWN_LOGGER_DEFAULT="true"
 export DUMP_LOGS_DEFAULT="true"
-export AUTH_TYPE_DEFAULT="STATIC_TOKEN"
 export FINAL_TEAR_DOWN_DEFAULT="true"
 export GOTESTSUM="/usr/local/bin/gotestsum"
 export ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=true

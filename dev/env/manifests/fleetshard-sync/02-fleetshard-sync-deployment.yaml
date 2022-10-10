@@ -29,17 +29,17 @@ spec:
               value: http://fleet-manager:8000
             - name: AUTH_TYPE
               value: "$AUTH_TYPE"
-            - name: STATIC_TOKEN
+            - name: RHSSO_SERVICE_ACCOUNT_CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: fleet-manager
-                  key: "fleet-static-token"
+                  name: fleetshard-sync
+                  key: "rhsso-service-account-client-id"
                   optional: false
-            - name: OCM_TOKEN
+            - name: RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: fleet-manager
-                  key: "ocm-service.token"
+                  name: fleetshard-sync
+                  key: "rhsso-service-account-client-secret"
                   optional: false
             - name: RUNTIME_POLL_PERIOD
               value: 10s
@@ -57,7 +57,7 @@ spec:
       volumes:
         - name: secrets
           secret:
-            secretName: fleet-manager # pragma: allowlist secret
+            secretName: fleetshard-sync # pragma: allowlist secret
             optional: false
         - name: config
           configMap:

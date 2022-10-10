@@ -117,17 +117,11 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 
 	Describe("RH SSO auth type", func() {
 		BeforeEach(func() {
-			// Read the client ID / secret from environment variables. If not set, skip the tests.
-			clientID := os.Getenv("RHSSO_CLIENT_ID")
-			clientSecret := os.Getenv("RHSSO_CLIENT_SECRET")
-			if clientID == "" || clientSecret == "" {
-				Skip("RHSSO_CLIENT_ID / RHSSO_CLIENT_SECRET not set, cannot initialize auth type")
-			}
-
 			rhSSOOpt := authOption.Sso
-			rhSSOOpt.ClientID = clientID
-			rhSSOOpt.ClientSecret = clientSecret //pragma: allowlist secret
-
+			// Skip the tests if client ID / secret read from environment variables not set.
+			if rhSSOOpt.ClientID == "" || rhSSOOpt.ClientSecret == "" {
+				Skip("RHSSO_SERVICE_ACCOUNT_CLIENT_ID / RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET not set, cannot initialize auth type")
+			}
 			// Create the auth type for RH SSO.
 			auth, err := fleetmanager.NewRHSSOAuth(rhSSOOpt)
 			Expect(err).ToNot(HaveOccurred())
