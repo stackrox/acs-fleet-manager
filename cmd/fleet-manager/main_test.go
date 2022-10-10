@@ -1,15 +1,18 @@
 package main
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
 
-	"github.com/spf13/pflag"
+	"github.com/golang/glog"
+	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/pkg/server"
+	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-	"github.com/stackrox/acs-fleet-manager/pkg/server"
-	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
 func TestInjections(t *testing.T) {
@@ -18,10 +21,18 @@ func TestInjections(t *testing.T) {
 	env, err := environments.New(environments.DevelopmentEnv,
 		dinosaur.ConfigProviders(),
 	)
+
+	// Puts non-empty central IdP client secret value so config validation does not fail.
+	file := createMockSecretFile()
+	defer os.Remove(file.Name())
+
+	// Run env.CreateServices() via command to make use of --central-idp-client-secret-file flag.
+	command := createServicesCommand(env)
 	Expect(err).To(BeNil())
-	err = env.AddFlags(&pflag.FlagSet{})
+	err = env.AddFlags(command.Flags())
 	Expect(err).To(BeNil())
-	err = env.CreateServices()
+	command.SetArgs([]string{"--central-idp-client-secret-file", file.Name()})
+	err = command.Execute()
 	Expect(err).To(BeNil())
 
 	var bootList []environments.BootService
@@ -40,4 +51,27 @@ func TestInjections(t *testing.T) {
 	var workerList []workers.Worker
 	env.MustResolve(&workerList)
 	Expect(workerList).To(HaveLen(9))
+}
+
+func createMockSecretFile() *os.File {
+	file, err := ioutil.TempFile("", "idp-client-secret-")
+	Expect(err).To(BeNil())
+	_, err = file.Write([]byte("mock-secret"))
+	Expect(err).To(BeNil())
+	return file
+}
+
+func createServicesCommand(env *environments.Env) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "createServices",
+		Short: "Create Services",
+		Long:  "Create Service",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := env.CreateServices()
+			if err != nil {
+				glog.Fatalf("Unable to initialize environment: %s", err.Error())
+			}
+		},
+	}
+	return cmd
 }
