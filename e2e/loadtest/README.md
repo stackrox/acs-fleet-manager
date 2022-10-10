@@ -9,7 +9,7 @@ See locust doc for details: https://docs.locust.io/en/stable/quickstart.html
 
 ## Run load test with locust
 
-1. Insert `INSERT_TOKEN` environment variable in `docker-compose,yml` file.
+1. Insert `INSERT_TOKEN` environment variable in `docker-compose.yml` file.
 2. Start a master node and 10 workers using the following command:
 ```docker-compose up --scale worker=10```
 3. Open Locust UI in browser http://localhost:8089/
