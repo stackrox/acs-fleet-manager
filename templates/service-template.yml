@@ -444,16 +444,6 @@ parameters:
   description: Default memory limit for scanner-db deployments for newly created tenants
   value: "2G"
 
-- name: SCANNER_ANALYZER_AUTOSCALING
-  displayName: Default autoscaling configuration for scanner deployments for newly created tenants
-  description: Default autoscaling configuration for scanner deployments for newly created tenants, can be "Enabled" or "Disabled"
-  value: "Enabled"
-
-- name: SCANNER_ANALYZER_REPLICAS
-  displayName: Default number of scanner replicas for newly created tenants
-  description: Default number of scanner replicas for newly created tenants
-  value: "2"
-
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -1147,11 +1137,6 @@ objects:
                 value: "${SCANNER_DB_CPU_LIMIT}"
               - name: SCANNER_DB_MEMORY_LIMIT
                 value: "${SCANNER_DB_MEMORY_LIMIT}"
-
-              - name: SCANNER_ANALYZER_AUTOSCALING
-                value: "${SCANNER_ANALYZER_AUTOSCALING}"
-              - name: SCANNER_ANALYZER_REPLICAS
-                value: "${SCANNER_ANALYZER_REPLICAS}"
             command:
             - /usr/local/bin/fleet-manager
             - serve
