@@ -1,5 +1,5 @@
 # Locust based load testing
-Currently, it is an effortless setup for load testing. 
+Currently, it is an effortless setup for load testing.
 The purpose was to see if Fleet Manager has any suspicious resource consumption spikes.
 Only one endpoint was stressed. The endpoint has a DB interaction under the hood.
 
