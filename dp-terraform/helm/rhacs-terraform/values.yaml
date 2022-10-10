@@ -50,6 +50,8 @@ observability:
     metricsSecret: ""
   pagerduty:
     key: ""
+  deadMansSwitch:
+    url: ""
 
 # See available parameters in charts/logging/values.yaml
 # - enabled flag is used to completely enable/disable logging sub-chart

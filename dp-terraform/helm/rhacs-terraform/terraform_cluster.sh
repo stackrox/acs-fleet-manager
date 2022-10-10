@@ -60,6 +60,7 @@ case $ENVIRONMENT in
     )
     # Note: the PagerDuty Service Key as of 2022-09-02 is the same between stage and prod.
     PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name == "Integration Key") | .value' --raw-output)
+    DEAD_MANS_SWITCH_URL=$(bw get password "1906e300-5897-4b7d-b395-af2700d7eac2")
     ;;
 
   prod)
@@ -86,6 +87,7 @@ case $ENVIRONMENT in
     )
     # Note: the PagerDuty Service Key as of 2022-09-02 is the same between stage and prod.
     PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name == "Integration Key") | .value' --raw-output)
+    DEAD_MANS_SWITCH_URL=$(bw get password "c8b26dbc-c9f0-4bc4-8c8e-af2700d795b2")
     ;;
 
   *)
@@ -148,7 +150,8 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --set observability.observatorium.gateway="${OBSERVABILITY_OBSERVATORIUM_GATEWAY}" \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
-  --set observability.pagerduty.key="${PAGERDUTY_SERVICE_KEY}"
+  --set observability.pagerduty.key="${PAGERDUTY_SERVICE_KEY}" \
+  --set observability.deadMansSwitch.url="${DEAD_MANS_SWITCH_URL}"
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs

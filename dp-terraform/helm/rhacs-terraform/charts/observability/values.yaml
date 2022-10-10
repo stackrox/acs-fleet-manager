@@ -27,3 +27,7 @@ observatorium:
 pagerduty:
   # PagerDuty integration key, which is generated within a Ruleset.
   key: ""
+
+deadMansSwitch:
+  # Webhook URL of the dead man's switch provider.
+  url: ""
