@@ -396,7 +396,7 @@ parameters:
 
 - name: CENTRAL_CPU_LIMIT
   displayName: Default CPU limit for central deployments for newly created tenants
-  description: Default CPU request for central deployments for newly created tenants
+  description: Default CPU limit for central deployments for newly created tenants
   value: "250m"
 
 - name: CENTRAL_MEMORY_LIMIT
@@ -435,8 +435,8 @@ parameters:
   value: "1G"
 
 - name: SCANNER_DB_CPU_LIMIT
-  displayName: Default CPU request for scanner-db deployments for newly created tenants
-  description: Default CPU request for scanner-db deployments for newly created tenants
+  displayName: Default CPU limit for scanner-db deployments for newly created tenants
+  description: Default CPU limit for scanner-db deployments for newly created tenants
   value: "500m"
 
 - name: SCANNER_DB_MEMORY_LIMIT
