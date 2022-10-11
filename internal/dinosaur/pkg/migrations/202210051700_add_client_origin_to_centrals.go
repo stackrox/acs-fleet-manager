@@ -66,7 +66,7 @@ func addClientOriginToCentralRequest() *gormigrate.Migration {
 			// gormigrate option, meaning this will be on a best-effort basis, but the risk of not doing it within a
 			// transaction is minor.
 			err := tx.Model(&CentralRequest{}).
-				Where("client_origin IS NULL").
+				Where("client_origin IS NULL"). // Theoretically, all entries should be NULL already.
 				Update("client_origin", "shared_static_sso").Error
 
 			if err != nil {
