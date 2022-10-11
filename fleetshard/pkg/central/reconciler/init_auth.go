@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/glog"
 	appsv1 "k8s.io/api/apps/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/pkg/errors"
 	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	pkgErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/urlfmt"
 	core "k8s.io/api/core/v1"
@@ -128,12 +130,18 @@ func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 	}
 
 	// Initiate sso.redhat.com auth provider groups.
+	var errs pkgErrors.ErrorList
 	for _, groupCreator := range groupCreators {
 		group := groupCreator(authProviderResp.GetId(), central.Spec.Auth)
 		err = centralClient.SendGroupRequest(ctx, group)
 		if err != nil {
-			return errors.Wrap(err, "sending group request to central")
+			glog.Errorf("Request to Central failed: %v", err)
+			errs = append(errs, err)
 		}
+	}
+
+	if errs != nil {
+		return errors.Wrap(errs, "sending group request(s) to central")
 	}
 	return nil
 }
