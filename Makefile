@@ -26,6 +26,7 @@ version:=$(shell date +%s)
 
 # Default namespace for local deployments
 NAMESPACE ?= fleet-manager-${USER}
+IMAGE_REGISTRY ?= default-route-openshift-image-registry.apps-crc.testing
 
 # The name of the image repository needs to start with the name of an existing
 # namespace because when the image is pushed to the internal registry of a
@@ -40,7 +41,7 @@ image_repository:=$(NAMESPACE)/fleet-manager
 # when it is accessed from outside the cluster and when it is acessed from
 # inside the cluster. We need the external name to push the image, and the
 # internal name to pull it.
-external_image_registry:=default-route-openshift-image-registry.apps-crc.testing
+external_image_registry:= $(IMAGE_REGISTRY)
 internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 
 # Test image name that will be used for PR checks
@@ -489,13 +490,18 @@ docker/login/internal:
 # Build the binary and image
 image/build: GOOS=linux
 image/build: GOARCH=amd64
+image/build: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build: fleet-manager fleetshard-sync
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) .
 .PHONY: image/build
 
 # Build and push the image
+image/push: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/push: image/build
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push "$(external_image_registry)/$(image_repository):$(image_tag)"
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
+	@echo
+	@echo "Image was pushed as $(IMAGE_REF). You might want to"
+	@echo "export FLEET_MANAGER_IMAGE=$(IMAGE_REF)"
 .PHONY: image/push
 
 # build binary and image for OpenShift deployment
