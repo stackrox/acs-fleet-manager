@@ -797,6 +797,16 @@ undeploy/openshift-router:
 	./scripts/openshift-router.sh undeploy
 .PHONY: undeploy/openshift-router
 
+# Deploys fleet* components with the database on the k8s cluster in use
+deploy/fleet:
+	./dev/env/scripts/up.sh
+.PHONY: deploy/fleet
+
+# Un-deploys fleet* components with the database on the k8s cluster in use
+undeploy/fleet:
+	./dev/env/scripts/down.sh
+.PHONY: undeploy/fleet
+
 tag:
 	@echo "$(image_tag)"
 .PHONY: tag
