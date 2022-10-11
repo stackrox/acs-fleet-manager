@@ -161,12 +161,6 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 		},
 		// TODO: for testing purposes only; remove once host is correctly specified in fleet-manager
 		ExtraUiEndpoints: []string{"localhost:8443"},
-		RequiredAttributes: []*storage.AuthProvider_RequiredAttribute{
-			{
-				AttributeKey:   "orgid",
-				AttributeValue: central.Spec.Auth.OwnerOrgId,
-			},
-		},
 		Traits: &storage.Traits{
 			MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
 		},
