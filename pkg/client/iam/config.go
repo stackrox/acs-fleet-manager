@@ -166,6 +166,8 @@ func (ic *IAMConfig) ReadFiles() error {
 	if err := ic.RedhatSSORealm.validateConfiguration(); err != nil {
 		return fmt.Errorf("validating external RH SSO realm config: %w", err)
 	}
+	// Internal SSO realm will not be configured with client credentials at the moment.
+	// It will only serve as a configuration of the endpoints + realm.
 	if err := ic.InternalSSORealm.validateConfiguration(); err != nil {
 		return fmt.Errorf("validating internal RH SSO realm config: %w", err)
 	}

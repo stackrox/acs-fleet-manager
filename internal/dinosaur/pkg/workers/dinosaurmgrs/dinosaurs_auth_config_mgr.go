@@ -23,8 +23,6 @@ const (
 	centralAuthConfigManagerWorkerType = "central_auth_config"
 	oidcProviderCallbackPath           = "/sso/providers/oidc/callback"
 	dynamicClientsNameMaxLength        = 50
-
-	configurationErrorPrefix = "Dynamic auth config augmentation is not configured properly"
 )
 
 // CentralAuthConfigManager updates CentralRequests with auth configuration.
@@ -43,8 +41,8 @@ var _ workers.Worker = (*CentralAuthConfigManager)(nil)
 func NewCentralAuthConfigManager(centralService services.DinosaurService, iamConfig *iam.IAMConfig, centralConfig *config.CentralConfig) (*CentralAuthConfigManager, error) {
 	realmConfig := iamConfig.RedhatSSORealm
 
-	if err := validateAugmentationIsConfigured(realmConfig, centralConfig); err != nil {
-		return nil, errors.Wrapf(err, "failed to create %s worker", centralAuthConfigManagerWorkerType)
+	if !centralConfig.HasStaticAuth() && !realmConfig.IsConfigured() {
+		return nil, errors.Errorf("failed to create %s worker: neither static nor dynamic auth configuration was provided", centralAuthConfigManagerWorkerType)
 	}
 
 	dynamicClientsAPI := dynamicclients.NewDynamicClientsAPI(realmConfig)
@@ -59,13 +57,6 @@ func NewCentralAuthConfigManager(centralService services.DinosaurService, iamCon
 		realmConfig:             realmConfig,
 		dynamicClientsAPIClient: dynamicClientsAPI,
 	}, nil
-}
-
-func validateAugmentationIsConfigured(realmConfig *iam.IAMRealmConfig, centralConfig *config.CentralConfig) error {
-	if !centralConfig.HasStaticAuth() && !realmConfig.IsConfigured() {
-		return errors.New("neither static nor dynamic auth configuration was provided")
-	}
-	return nil
 }
 
 // Start uses base's Start()
