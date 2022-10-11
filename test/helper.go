@@ -144,6 +144,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	}
 	defer os.Remove(file.Name())
 	centralConfig.CentralIDPClientSecretFile = file.Name()
+	centralConfig.CentralIDPClientID = "mock-client-id"
 
 	// the configuration hook might set config options that influence which config files are loaded,
 	// by env.LoadConfig()
