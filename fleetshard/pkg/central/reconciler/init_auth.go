@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
+
 	"github.com/golang/glog"
 	appsv1 "k8s.io/api/apps/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -165,6 +167,14 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 			MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
 		},
 		Active: true,
+	}
+	if central.Spec.Auth.ClientOrigin == dbapi.AuthConfigStaticClientOrigin {
+		request.RequiredAttributes = []*storage.AuthProvider_RequiredAttribute{
+			{
+				AttributeKey:   "orgid",
+				AttributeValue: central.Spec.Auth.OwnerOrgId,
+			},
+		}
 	}
 	return request
 }
