@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/testutils"
+
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
@@ -23,7 +25,7 @@ func TestInjections(t *testing.T) {
 	)
 
 	// Puts non-empty central IdP client secret value so config validation does not fail.
-	file := createMockSecretFile()
+	file := testutils.CreateNonEmptyFile(t)
 	defer os.Remove(file.Name())
 
 	// Run env.CreateServices() via command to make use of --central-idp-client-secret-file flag.

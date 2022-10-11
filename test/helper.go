@@ -5,11 +5,12 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/testutils"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 
@@ -134,14 +135,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
 	serverConfig.JwksURL = jwkURL
 
-	file, err := ioutil.TempFile("", "idp-client-secret-")
-	if err != nil {
-		t.Fatalf("failed to create central-idp-client-secret file %s", err.Error())
-	}
-	_, err = file.Write([]byte("mock-secret"))
-	if err != nil {
-		t.Fatalf("failed to write to central-idp-client-secret file %s", err.Error())
-	}
+	file := testutils.CreateNonEmptyFile(t)
 	defer os.Remove(file.Name())
 	centralConfig.CentralIDPClientSecretFile = file.Name()
 	centralConfig.CentralIDPClientID = "mock-client-id"

@@ -39,6 +39,7 @@ type CentralAuthConfigManager struct {
 var _ workers.Worker = (*CentralAuthConfigManager)(nil)
 
 // NewCentralAuthConfigManager creates an instance of this worker.
+// In case this function fails, fleet-manager will fail on the startup.
 func NewCentralAuthConfigManager(centralService services.DinosaurService, iamConfig *iam.IAMConfig, centralConfig *config.CentralConfig) (*CentralAuthConfigManager, error) {
 	realmConfig := iamConfig.RedhatSSORealm
 
