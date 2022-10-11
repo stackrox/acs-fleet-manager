@@ -34,6 +34,7 @@ var migrations = []*gormigrate.Migration{
 	addAuthConfigToCentralRequest(),
 	addCentralAuthLease(),
 	addSkipSchedulingToClusters(),
+	addClientOriginToCentralRequest(),
 }
 
 // New ...
