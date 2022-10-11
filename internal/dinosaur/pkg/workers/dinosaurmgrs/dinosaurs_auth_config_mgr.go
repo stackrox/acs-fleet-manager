@@ -62,26 +62,8 @@ func NewCentralAuthConfigManager(centralService services.DinosaurService, iamCon
 }
 
 func validateAugmentationIsConfigured(realmConfig *iam.IAMRealmConfig, centralConfig *config.CentralConfig) error {
-	if centralConfig.HasStaticAuth() {
-		return nil
-	}
-	return validateDynamicAugmentationIsConfigured(realmConfig)
-}
-
-func validateDynamicAugmentationIsConfigured(realmConfig *iam.IAMRealmConfig) error {
-	validatedFields := map[string]string{
-		"clientId":         realmConfig.ClientID,
-		"clientSecret":     realmConfig.ClientSecret, // pragma: allowlist secret
-		"baseURL":          realmConfig.BaseURL,
-		"realm":            realmConfig.Realm,
-		"tokenEndpointURI": realmConfig.TokenEndpointURI,
-		"validIssuerURI":   realmConfig.ValidIssuerURI,
-		"apiEndpointURI":   realmConfig.APIEndpointURI,
-	}
-	for fieldName, fieldValue := range validatedFields {
-		if fieldValue == "" {
-			return fmt.Errorf("%s: %s is empty", configurationErrorPrefix, fieldName)
-		}
+	if !centralConfig.HasStaticAuth() && !realmConfig.IsConfigured() {
+		return errors.New("neither static nor dynamic auth configuration was provided")
 	}
 	return nil
 }

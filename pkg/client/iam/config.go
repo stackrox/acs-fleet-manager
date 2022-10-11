@@ -69,6 +69,35 @@ func (c *IAMRealmConfig) setDefaultURIs(baseURL string) {
 	c.TokenEndpointURI = baseURL + "/auth/realms/" + c.Realm + "/protocol/openid-connect/token"
 }
 
+// IsConfigured is set to true in case client credentials are properly set.
+func (c *IAMRealmConfig) IsConfigured() bool {
+	return c.ClientID != ""
+}
+
+func (c *IAMRealmConfig) validateConfiguration() error {
+	if !c.IsConfigured() {
+		return nil
+	}
+	validatedFields := map[string]string{
+		"clientId":         c.ClientID,
+		"clientSecret":     c.ClientSecret, // pragma: allowlist secret
+		"baseURL":          c.BaseURL,
+		"realm":            c.Realm,
+		"tokenEndpointURI": c.TokenEndpointURI,
+		"validIssuerURI":   c.ValidIssuerURI,
+		"apiEndpointURI":   c.APIEndpointURI,
+	}
+	for fieldName, fieldValue := range validatedFields {
+		if fieldValue == "" {
+			return fmt.Errorf("%s is empty", fieldName)
+		}
+	}
+	if c.GrantType != "client_credentials" {
+		return fmt.Errorf("grant type %q is not supported", c.GrantType)
+	}
+	return nil
+}
+
 // NewIAMConfig ...
 func NewIAMConfig() *IAMConfig {
 	kc := &IAMConfig{
@@ -134,6 +163,12 @@ func (ic *IAMConfig) ReadFiles() error {
 
 	ic.RedhatSSORealm.setDefaultURIs(ic.SsoBaseURL)
 	ic.InternalSSORealm.setDefaultURIs(ic.InternalSsoBaseURL)
+	if err := ic.RedhatSSORealm.validateConfiguration(); err != nil {
+		return fmt.Errorf("validating external RH SSO realm config: %w", err)
+	}
+	if err := ic.InternalSSORealm.validateConfiguration(); err != nil {
+		return fmt.Errorf("validating internal RH SSO realm config: %w", err)
+	}
 	// Read the additional issuers file. This will add additional SSO issuer URIs which shall be used as valid issuers
 	// for tokens, i.e. sso.stage.redhat.com.
 	if ic.AdditionalSSOIssuers.Enabled {
