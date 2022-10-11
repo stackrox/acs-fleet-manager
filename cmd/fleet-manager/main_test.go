@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -53,14 +52,6 @@ func TestInjections(t *testing.T) {
 	var workerList []workers.Worker
 	env.MustResolve(&workerList)
 	Expect(workerList).To(HaveLen(9))
-}
-
-func createMockSecretFile() *os.File {
-	file, err := ioutil.TempFile("", "idp-client-secret-")
-	Expect(err).To(BeNil())
-	_, err = file.Write([]byte("mock-secret"))
-	Expect(err).To(BeNil())
-	return file
 }
 
 func createServicesCommand(env *environments.Env) *cobra.Command {
