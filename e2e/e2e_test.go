@@ -48,24 +48,18 @@ const (
 	skipDNSMsg     = "external DNS is not enabled for this test run"
 )
 
-// TODO(ROX-11465): Use correct OCM_TOKEN for different clients (console.redhat.com, fleetshard)
 var _ = Describe("Central", func() {
 	var client *fleetmanager.Client
 	var adminAPI *private.DefaultApiService
 	BeforeEach(func() {
-		authType := "OCM"
-		if val := os.Getenv("AUTH_TYPE"); val != "" {
-			authType = val
-		}
-		GinkgoWriter.Printf("AUTH_TYPE=%q\n", authType)
-
 		fleetManagerEndpoint := "http://localhost:8000"
 		if fmEndpointEnv := os.Getenv("FLEET_MANAGER_ENDPOINT"); fmEndpointEnv != "" {
 			fleetManagerEndpoint = fmEndpointEnv
 		}
 		GinkgoWriter.Printf("FLEET_MANAGER_ENDPOINT=%q\n", fleetManagerEndpoint)
 
-		auth, err := fleetmanager.NewAuth(authType, fleetmanager.OptionFromEnv())
+		option := fleetmanager.OptionFromEnv()
+		auth, err := fleetmanager.NewStaticAuth(fleetmanager.StaticOption{StaticToken: option.Static.StaticToken})
 		Expect(err).ToNot(HaveOccurred())
 		client, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
 		Expect(err).ToNot(HaveOccurred())
