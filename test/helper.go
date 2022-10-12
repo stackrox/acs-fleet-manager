@@ -10,6 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/testutils"
+
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
@@ -105,8 +109,9 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	var ocmConfig *ocm.OCMConfig
 	var serverConfig *server.ServerConfig
 	var iamConfig *iam.IAMConfig
+	var centralConfig *config.CentralConfig
 
-	env.MustResolveAll(&ocmConfig, &serverConfig, &iamConfig)
+	env.MustResolveAll(&ocmConfig, &serverConfig, &iamConfig, &centralConfig)
 
 	db.DinosaurAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set dinosaurs lease as expired so that a new leader is elected for each of the leases
 
@@ -129,6 +134,11 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
 	serverConfig.JwksURL = jwkURL
+
+	file := testutils.CreateNonEmptyFile(t)
+	defer os.Remove(file.Name())
+	centralConfig.CentralIDPClientSecretFile = file.Name()
+	centralConfig.CentralIDPClientID = "mock-client-id"
 
 	// the configuration hook might set config options that influence which config files are loaded,
 	// by env.LoadConfig()

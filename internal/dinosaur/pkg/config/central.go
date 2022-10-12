@@ -108,7 +108,7 @@ func (c *CentralConfig) ReadFiles() error {
 // specified and false otherwise.
 func (c *CentralConfig) HasStaticAuth() bool {
 	// We don't look at other integral parts of the auth config like
-	// RhSsoIssuer or RhSsoClientSecret. Failure to provide a working auth
+	// CentralIDPIssuer or CentralIDPClientSecret. Failure to provide a working auth
 	// configuration should not mask an intent to use static configuration.
 	return c.CentralIDPClientID != ""
 }

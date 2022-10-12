@@ -38,8 +38,15 @@ type CentralAuthConfigManager struct {
 var _ workers.Worker = (*CentralAuthConfigManager)(nil)
 
 // NewCentralAuthConfigManager creates an instance of this worker.
-func NewCentralAuthConfigManager(centralService services.DinosaurService, iamConfig *iam.IAMConfig, centralConfig *config.CentralConfig) *CentralAuthConfigManager {
-	dynamicClientsAPI := dynamicclients.NewDynamicClientsAPI(iamConfig.RedhatSSORealm)
+// In case this function fails, fleet-manager will fail on the startup.
+func NewCentralAuthConfigManager(centralService services.DinosaurService, iamConfig *iam.IAMConfig, centralConfig *config.CentralConfig) (*CentralAuthConfigManager, error) {
+	realmConfig := iamConfig.RedhatSSORealm
+
+	if !centralConfig.HasStaticAuth() && !realmConfig.IsConfigured() {
+		return nil, errors.Errorf("failed to create %s worker: neither static nor dynamic auth configuration was provided", centralAuthConfigManagerWorkerType)
+	}
+
+	dynamicClientsAPI := dynamicclients.NewDynamicClientsAPI(realmConfig)
 	return &CentralAuthConfigManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
@@ -48,9 +55,9 @@ func NewCentralAuthConfigManager(centralService services.DinosaurService, iamCon
 		},
 		centralService:          centralService,
 		centralConfig:           centralConfig,
-		realmConfig:             iamConfig.RedhatSSORealm,
+		realmConfig:             realmConfig,
 		dynamicClientsAPIClient: dynamicClientsAPI,
-	}
+	}, nil
 }
 
 // Start uses base's Start()
