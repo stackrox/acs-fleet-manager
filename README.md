@@ -39,14 +39,14 @@ ACS fleet-manager repository for the ACS managed service.
 
 #### Getting started
 
-To run fleet-manager in different ways (i.e. with docker) please refer to [running-fleet-manager.md](./docs/development/running-fleet-manager.md).
+To run fleet-manager in different ways (i.e. on a test cluster) please refer to [running-fleet-manager.md](./docs/development/running-fleet-manager.md).
 
 ```bash
 # Export the kubeconfig path the central instance should be deployed to
 $ export KUBECONFIG=/your/kubeconfig
 
 # Sets up database, starts fleet-manager
-$ make setup-dev-env
+$ make deploy/apps
 
 # Start fleetshard-sync
 $ OCM_TOKEN=$(ocm token --refresh) CLUSTER_ID=1234567890abcdef1234567890abcdef ./fleetshard-sync
@@ -57,21 +57,6 @@ $ ./scripts/create-central.sh
 # To interact with the API use
 $ ./scripts/fmcurl
 ```
-
-##### Prepare a cluster for the local environment
-You can run ACS Fleet Manager on a local k8s cluster (colima, rancher, minikube).
-This requires some preparations on a cluster:
-
-1. Install ACS Operator
-   The process is described in [operator documentation](https://github.com/stackrox/stackrox/tree/master/operator)
-2. Deploy OpenShift Router
-   ```
-   make deploy/openshift-router
-   ```
-   Use `make undeploy/openshift-router` to undeploy the OpenShift router from a cluster.
-   Refer to the router [repo](https://github.com/openshift/router) for more information.
-3. For accessing the hostnames exposed by routes locally read the documentation [here](docs/development/test-locally-route-hosts.md)
-
 
 #### Common make targets
 
@@ -91,6 +76,9 @@ $ make run/docs
 # Generate code such as openapi
 $ make generate
 
+# Deploy changes to the test cluster [2]
+$ make deploy/apps
+
 # Testing related targets
 $ make test
 $ make test/e2e
@@ -102,7 +90,8 @@ $ make db/setup
 $ make db/migrate
 ```
 
-[1] [git-hooks.md](./docs/development/git-hooks.md)
+* [1] [git-hooks.md](./docs/development/git-hooks.md)
+* [2] [setup-test-environment.md](./docs/development/setup-test-environment.md)
 
 #### Background
 
