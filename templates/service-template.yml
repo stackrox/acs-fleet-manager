@@ -895,13 +895,15 @@ objects:
           affinity:
             podAntiAffinity:
               preferredDuringSchedulingIgnoredDuringExecution:
-              - labelSelector:
-                  matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                    - fleet-manager
-                topologyKey: "kubernetes.io/hostname"
+              - podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                      - fleet-manager
+                  topologyKey: "kubernetes.io/hostname"
+                weight: 100
           serviceAccount: fleet-manager
           serviceAccountName: fleet-manager
           volumes:
