@@ -895,15 +895,13 @@ objects:
           affinity:
             podAntiAffinity:
               preferredDuringSchedulingIgnoredDuringExecution:
-              - podAffinityTerm:
-                  labelSelector:
-                    matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                      - fleet-manager
-                  topologyKey: failure-domain.beta.kubernetes.io/zone
-                weight: 100
+                labelSelector:
+                  matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                    - fleet-manager
+                topologyKey: "kubernetes.io/hostname"
           serviceAccount: fleet-manager
           serviceAccountName: fleet-manager
           volumes:
