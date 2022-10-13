@@ -80,7 +80,9 @@ init() {
 
     export CLUSTER_TYPE="${CLUSTER_TYPE:-$CLUSTER_TYPE_DEFAULT}"
     if [[ -z "$CLUSTER_TYPE" ]]; then
-        die "Error: CLUSTER_TYPE not set and could not be figured out. Please make sure that it is initialized properly."
+        echo "Error: CLUSTER_TYPE env variable not set. Please make sure that it is initialized properly."
+        echo "Valid cluster types: [openshift-ci, infra-openshift, minikube, rancher-desktop, colima]"
+        exit 1
     fi
 
     for env_file in "${GITROOT}/dev/env/defaults/cluster-type-${CLUSTER_TYPE}/"*; do

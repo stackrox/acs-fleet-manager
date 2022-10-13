@@ -756,8 +756,6 @@ deploy/service: deploy/envoy deploy/route
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 
-
-
 # remove service deployments from an OpenShift cluster
 undeploy: IMAGE_REGISTRY ?= $(internal_image_registry)
 undeploy: IMAGE_REPOSITORY ?= $(image_repository)
@@ -792,6 +790,10 @@ deploy/openshift-router:
 	./scripts/openshift-router.sh deploy
 .PHONY: deploy/openshift-router
 
+deploy/development:
+	./dev/env/scripts/up.sh
+.PHONY: deploy/development
+
 # Un-deploys OpenShift ingress router from a k8s cluster
 undeploy/openshift-router:
 	./scripts/openshift-router.sh undeploy
@@ -800,7 +802,3 @@ undeploy/openshift-router:
 tag:
 	@echo "$(image_tag)"
 .PHONY: tag
-
-setup-dev-env:
-	./scripts/setup-dev-env.sh
-.PHONY: setup-dev-env

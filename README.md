@@ -46,10 +46,7 @@ To run fleet-manager in different ways (i.e. with docker) please refer to [runni
 $ export KUBECONFIG=/your/kubeconfig
 
 # Sets up database, starts fleet-manager
-$ make setup-dev-env
-
-# Start fleetshard-sync
-$ OCM_TOKEN=$(ocm token --refresh) CLUSTER_ID=1234567890abcdef1234567890abcdef ./fleetshard-sync
+$ make deploy/development
 
 # To create a central instance
 $ ./scripts/create-central.sh

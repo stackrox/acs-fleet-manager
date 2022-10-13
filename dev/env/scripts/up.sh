@@ -59,6 +59,10 @@ else
     fi
 fi
 
+if ! kubectl get ns acsms; then
+  kubectl create namespace "$ACSMS_NAMESPACE"
+fi
+
 # Apply cluster type specific manifests, if any.
 if [[ -d "${MANIFESTS_DIR}/cluster-type-${CLUSTER_TYPE}" ]]; then
     apply "${MANIFESTS_DIR}/cluster-type-${CLUSTER_TYPE}"
