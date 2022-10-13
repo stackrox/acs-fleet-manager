@@ -5,9 +5,6 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: fleetshard-sync
-    managed-service.rhacs.redhat.com/update-trigger: {{ now | date "20060102150405" | quote }}
-    managed-service.rhacs.redhat.com/git-commit-sha: {{ .Values.fleetshardSync.gitCommitSHA }}
-    managed-service.rhacs.redhat.com/git-describe-tag: {{ .Values.fleetshardSync.gitDescribeTag }}
 spec:
   replicas: 1
   selector:
