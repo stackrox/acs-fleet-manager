@@ -795,14 +795,19 @@ undeploy/openshift-router:
 
 # Deploys fleet* components with the database on the k8s cluster in use
 # Intended for a local / infra cluster deployment and dev testing
-deploy/apps:
+deploy/dev:
 	./dev/env/scripts/up.sh
-.PHONY: deploy/apps
+.PHONY: deploy/dev
 
 # Un-deploys fleet* components with the database on the k8s cluster in use
-undeploy/apps:
+undeploy/dev:
 	./dev/env/scripts/down.sh
-.PHONY: undeploy/apps
+.PHONY: undeploy/dev
+
+# Sets up dev environment by installing the necessary components such as stackrox-operator, openshift-router and other
+prepare/dev:
+	./dev/env/scripts/bootstrap.sh
+.PHONY: prepare/dev
 
 tag:
 	@echo "$(image_tag)"

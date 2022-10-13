@@ -34,8 +34,12 @@ ACS fleet-manager repository for the ACS managed service.
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 * [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-- A running kubernetes cluster
-- Setting up configurations described [here](./docs/development/populating-configuration.md#interacting-with-the-fleet-manager-api)
+* [A running kubernetes cluster](./docs/development/setup-test-environment.md#prepare-the-environment)
+* Setting up configurations described [here](./docs/development/populating-configuration.md#interacting-with-the-fleet-manager-api)
+
+#### Supported cluster types:
+* Local: Minikube, Colima, Rancher Desktop, CRC
+* Remote: Infra OpenShift 4.x, OpenShift CI
 
 #### Getting started
 
@@ -45,8 +49,11 @@ To run fleet-manager in different ways (i.e. on a test cluster) please refer to 
 # Export the kubeconfig path the central instance should be deployed to
 $ export KUBECONFIG=/your/kubeconfig
 
+# Bootstrap the environment
+$ make prepare/dev
+
 # Sets up database, starts fleet-manager
-$ make deploy/apps
+$ make deploy/dev
 
 # Start fleetshard-sync
 $ OCM_TOKEN=$(ocm token --refresh) CLUSTER_ID=1234567890abcdef1234567890abcdef ./fleetshard-sync
@@ -60,7 +67,7 @@ $ ./scripts/fmcurl
 
 #### Common make targets
 
-```
+```shell
 # Install git-hooks, for more information see git-hooks.md [1]
 $ make setup/git/hooks
 
@@ -76,8 +83,10 @@ $ make run/docs
 # Generate code such as openapi
 $ make generate
 
+# Prepare dev environment for deployment
+$ make prepare/dev
 # Deploy changes to the test cluster [2]
-$ make deploy/apps
+$ make deploy/dev
 
 # Testing related targets
 $ make test

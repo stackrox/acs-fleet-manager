@@ -11,16 +11,6 @@ types of cluster. The following components are set up:
 
 The RHACS operator can be installed from OpenShift marketplace or Quay. Images for Fleet Manager & Fleetshard Sync can either be pulled from Quay or built directly from the source.
 
-##### Supported cluster types:
-* Local
-    * Minikube
-    * Colima
-    * Rancher Desktop
-    * CRC
-* Remote
-    * Infra OpenShift 4.x
-    * OpenShift CI
-
 ##### Required tools
 * standard Unix environment with Bash
 * `docker` CLI (or replacement)
@@ -82,16 +72,6 @@ The scripts can be configured using environment variables, the most important op
    * `STATIC_TOKEN`
    * `STATIC_TOKEN_ADMIN`
 
-## Build and deploy
-The following command is used for building the Managed Services components image and deploying it on the cluster
-```shell
-$ dev/env/scripts/up.sh
-```
-Alternatively, you may also use corresponding `make` targets:
-```shell
-make deploy/apps # points to up.sh
-```
-
 ## E2E tests
 
 ### Full lifecycle
@@ -99,19 +79,19 @@ The primary way for executing the e2e test suite is by calling
 ```shell
 $ ./.openshift-ci/test/e2e.sh
 ```
-This will trigger the FULL test lifecycle including the cluster bootstrap, building the image, deploying it and running E2E tests.
+This will trigger the FULL test lifecycle including the cluster bootstrap, building the image (unless `FLEET_MANAGER_IMAGE` points to a specific image tag), deploying it and running E2E tests.
 
 ### Controlling the execution
 In certain situations it is also useful to be able to execute the respective building blocks manually:
 ##### Prepare the cluster
 Prepare the cluster by installing the necessary components, such as stackrox-operator and openshift-router
 ```shell
-$ dev/env/scripts/bootstrap.sh
+$ make prepare/dev # points to bootstrap.sh
 ```
 ##### Build and deploy
 The following command is used for building the Managed Services components image and deploying it on the cluster
 ```shell
-$ make deploy/apps # points to up.sh
+$ make deploy/dev # points to up.sh
 ```
 ##### Execute tests
 Then, after fleet-manager's leader election is complete (check its logs), you can run the e2e test
@@ -124,7 +104,7 @@ The env var `WAIT_TIMEOUT` can be used to adjust the timeout of each individual 
 ##### Cleanup
 To clean up the environment run
 ```shell
-$ make undeploy/apps # points to down.sh
+$ make undeploy/dev # points to down.sh
 ```
 
 ### DNS tests
