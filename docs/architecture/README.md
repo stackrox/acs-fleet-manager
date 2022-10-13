@@ -2,9 +2,9 @@
 
 
 #### Table of Contents:
-- [Overview](#overview)
+- [Service Description](#service-description)
 - [Technology stack overview](#technology-stack-overview)
-- [ACS Fleet Manager Interactions Overview](#acs-fleet-manager-interactions-overview)
+- [Service Diagram](#service-diagram)
 - [Deployment flow](#deployment-flow)
 - [SLO documents](#slo-documents)
 - [Grafana dashboards](#grafana-dashboards)
@@ -16,7 +16,7 @@
 - [Runbook](#runbook)
 
 
-### Overview
+### Service Description
 
 ACS Fleet Manager allows [Red Hat Cloud Console](https://console.redhat.com/) users to request and manage [ACS Central & Scanner instances](https://github.com/stackrox/stackrox).
 
@@ -29,18 +29,44 @@ ACS Fleet Manager allows [Red Hat Cloud Console](https://console.redhat.com/) us
 - It uses [PostgreSQL](https://www.postgresql.org/) for persisting data
   - Both stage and production environments run on [AWS RDS](https://aws.amazon.com/rds/?trk=4bfa3aee-a8ec-4199-b4d6-a92630a09e06&sc_channel=ps&s_kwcid=AL!4422!3!548987291221!e!!g!!amazon%20relational%20database&ef_id=EAIaIQobChMIjYmG49rr-QIVzIxoCR1o2gJ7EAAYASABEgKoKfD_BwE:G:s&s_kwcid=AL!4422!3!548987291221!e!!g!!amazon%20relational%20database)
   - [Gorm](https://gorm.io/index.html) ORM is used and [Gormigrate](https://github.com/go-gormigrate/gormigrate) for migrations
-- The service provides a REST API
-  - The API is implemented according to the [OpenAPI specification](https://gitlab.cee.redhat.com/service/web-rca/-/blob/main/openapi/openapi.yaml)
-  - List of [public APIs](https://github.com/stackrox/acs-fleet-manager/blob/main/openapi/fleet-manager.yaml)
-  - List of [private APIs](https://github.com/stackrox/acs-fleet-manager/blob/main/openapi/fleet-manager-private.yaml)
-  - List of [admin APIs](https://github.com/stackrox/acs-fleet-manager/blob/main/openapi/fleet-manager-private-admin.yaml)
 - The service uses Red Hat SSO for [authentication](https://github.com/stackrox/acs-fleet-manager/blob/main/docs/auth/jwt-claims.md)
 - The service metrics gathered by appSRE [Prometheus](https://prometheus.io/)
 
 
-### ACS Fleet Manager Interactions Overview
+### Routes
+
+The service provides a REST API. It is implemented according to the [OpenAPI specification](https://gitlab.cee.redhat.com/service/web-rca/-/blob/main/openapi/openapi.yaml).
+
+See [visual API description](https://api.openshift.com/?urls.primaryName=rhacs%20service%20fleet%20manager%20service).
+
+API definition lists:
+  - List of [public APIs](https://github.com/stackrox/acs-fleet-manager/blob/main/openapi/fleet-manager.yaml)
+  - List of [private APIs](https://github.com/stackrox/acs-fleet-manager/blob/main/openapi/fleet-manager-private.yaml)
+  - List of [admin APIs](https://github.com/stackrox/acs-fleet-manager/blob/main/openapi/fleet-manager-private-admin.yaml)
+
+
+### Dependencies
+
+- The service is hosted on AppSRE OSD
+- It uses AWS RDS for persistence
+- RH SSO is used for authentication
+
+
+### Service Diagram
 
 See [miro ACSMS dashboard](https://miro.com/app/board/uXjVOh7XtrE=/)
+
+
+### Application Success Criteria
+
+The service provides [Red Hat Cloud Console](https://console.redhat.com/) users a way to create and operate [ACS Central & Scanner instances](https://github.com/stackrox/stackrox).
+
+
+### State
+
+The service relies on AWS RDS. It persists user requests and desired state for reconciliation loop.
+The RDS instance is provisioned via app-interface.
+
 
 ### Deployment flow
 
@@ -140,6 +166,11 @@ Requesting a new ACS Instance after data loss should not have any issue.
 ### Load testing
 
 See app-interface: [ACS Fleet Manager load testing](https://gitlab.cee.redhat.com/service/app-interface/-/tree/master/docs/acs-fleet-manager/load-testing)
+
+
+### Capacity
+
+The current resource usage is available in [Grafana dashboard](https://grafana.app-sre.devshift.net/d/D1C839d82/acs-fleet-manager?orgId=1).
 
 
 ### Runbook
