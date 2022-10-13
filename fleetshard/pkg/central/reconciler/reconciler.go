@@ -8,23 +8,22 @@ import (
 	"strconv"
 	"sync/atomic"
 
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -58,6 +57,7 @@ type CentralReconciler struct {
 	useRoutes         bool
 	wantsAuthProvider bool
 	hasAuthProvider   bool
+	Resources         bool
 	routeService      *k8s.RouteService
 	egressProxyImage  string
 
@@ -304,7 +304,7 @@ func getRouteStatus(ingress *openshiftRouteV1.RouteIngress) private.DataPlaneCen
 	}
 }
 
-func (r CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) (bool, error) {
+func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) (bool, error) {
 	globalDeleted := true
 	if r.useRoutes {
 		reencryptRouteDeleted, err := r.ensureReencryptRouteDeleted(ctx, central.GetNamespace())
@@ -451,16 +451,25 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 		out.SetGroupVersionKind(obj.GroupVersionKind())
 		err := r.client.Get(ctx, key, &out)
 		if err == nil {
+			glog.V(10).Infof("Updating object %s/%s", obj.GetNamespace(), obj.GetName())
+			obj.SetResourceVersion(out.GetResourceVersion())
+			err := r.client.Update(ctx, obj)
+			if err != nil {
+				return fmt.Errorf("failed to update object %s/%s of type %v: %w", key.Namespace, key.Namespace, obj.GroupVersionKind(), err)
+			}
+
 			continue
 		}
 		if !apiErrors.IsNotFound(err) {
 			return fmt.Errorf("failed to retrieve object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
 		}
 		err = r.client.Create(ctx, obj)
+		glog.V(10).Infof("Creating object %s/%s", obj.GetNamespace(), obj.GetName())
 		if err != nil && !apiErrors.IsAlreadyExists(err) {
 			return fmt.Errorf("failed to create object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
 		}
 	}
+
 	return nil
 }
 

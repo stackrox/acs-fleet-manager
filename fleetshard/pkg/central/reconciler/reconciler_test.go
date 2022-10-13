@@ -337,6 +337,40 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 	assert.True(t, k8sErrors.IsNotFound(err))
 }
 
+func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
+	chart, err := charts.LoadChart(testdata, "testdata/tenant-resources")
+	require.NoError(t, err)
+
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{})
+	r.resourcesChart = chart
+
+	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+
+	var dummySvc v1.Service
+	dummySvcKey := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: "dummy"}
+	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
+	assert.NoError(t, err)
+
+	dummySvc.SetAnnotations(map[string]string{"dummy-annotation": "test"})
+	err = fakeClient.Update(context.TODO(), &dummySvc)
+	assert.NoError(t, err)
+
+	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
+	assert.NoError(t, err)
+	assert.Equal(t, "test", dummySvc.GetAnnotations()["dummy-annotation"])
+
+	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
+	assert.NoError(t, err)
+
+	// verify that the chart resource was updated, by checking that the manually added annotation
+	// is no longer present
+	assert.Equal(t, "", dummySvc.GetAnnotations()["dummy-annotation"])
+}
+
 func TestEgressProxyIsDeployed(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{})
