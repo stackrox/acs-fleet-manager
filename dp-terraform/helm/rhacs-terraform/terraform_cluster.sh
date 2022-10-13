@@ -96,8 +96,6 @@ case $ENVIRONMENT in
     ;;
 esac
 
-GIT_COMMIT_SHA=$(git rev-parse HEAD)
-GIT_DESCRIBE_TAG=$(git describe --tag)
 OPERATOR_USE_UPSTREAM=false
 OPERATOR_SOURCE="redhat-operators"
 
@@ -137,8 +135,6 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
   --set fleetshardSync.image="${FLEETSHARD_SYNC_IMAGE}" \
   --set fleetshardSync.authType="RHSSO" \
-  --set fleetshardSync.gitCommitSHA="${GIT_COMMIT_SHA}" \
-  --set fleetshardSync.gitDescribeTag="${GIT_DESCRIBE_TAG}" \
   --set fleetshardSync.clusterId="${CLUSTER_ID}" \
   --set fleetshardSync.fleetManagerEndpoint="${FM_ENDPOINT}" \
   --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID}" \
