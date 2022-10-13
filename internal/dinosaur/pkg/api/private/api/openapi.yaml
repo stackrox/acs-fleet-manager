@@ -201,8 +201,10 @@ components:
           auth:
             clientSecret: ""
             clientId: client-id
+            clientOrigin: shared_static_rhsso
             ownerUserId: f:ac4bcdb5-1fb1-41c5-9323-349698b9b757:username
             orgId: "13442309"
+            issuer: https://sso.stage.redhat.com/auth/realms/redhat-external
           endpoint:
             host: example-central--rfpsqbvq-em-u-u-z--ymjcwac.example.central.com
             tls:
@@ -428,6 +430,8 @@ components:
         clientSecret:
           type: string
         clientId:
+          type: string
+        clientOrigin:
           type: string
         ownerUserId:
           type: string

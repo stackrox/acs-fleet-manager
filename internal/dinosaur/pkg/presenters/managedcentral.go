@@ -67,6 +67,7 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 			Auth: private.ManagedCentralAllOfSpecAuth{
 				ClientId:     from.AuthConfig.ClientID,
 				ClientSecret: from.AuthConfig.ClientSecret, // pragma: allowlist secret
+				ClientOrigin: from.AuthConfig.ClientOrigin,
 				OwnerOrgId:   from.OrganisationID,
 				OwnerUserId:  from.OwnerUserID,
 				Issuer:       from.AuthConfig.Issuer,
