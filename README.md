@@ -34,6 +34,7 @@ ACS fleet-manager repository for the ACS managed service.
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 * [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+* [colima](https://github.com/abiosoft/colima)
 - A running kubernetes cluster
 - Setting up configurations described [here](./docs/development/populating-configuration.md#interacting-with-the-fleet-manager-api)
 
