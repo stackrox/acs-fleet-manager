@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -75,18 +74,13 @@ func (c *CentralConfig) ReadFiles() error {
 	if err != nil {
 		return fmt.Errorf("reading TLS key file: %w", err)
 	}
-	err = shared.ReadFileValueString(c.CentralIDPClientSecretFile, &c.CentralIDPClientSecret)
-	if err != nil {
-		return fmt.Errorf("reading Central's IdP client secret file: %w", err)
-	}
-	if c.CentralIDPClientSecret != "" {
-		glog.Info("Central's IdP client secret is configured")
-	} else {
-		glog.Infof("Central's IdP client secret from file %q is missing", c.CentralIDPClientSecretFile)
-	}
 
-	// Check that all parts of static auth config are present.
+	// Initialise and check that all parts of static auth config are present.
 	if c.HasStaticAuth() {
+		err = shared.ReadFileValueString(c.CentralIDPClientSecretFile, &c.CentralIDPClientSecret)
+		if err != nil {
+			return fmt.Errorf("reading Central's IdP client secret file: %w", err)
+		}
 		if c.CentralIDPClientSecret == "" {
 			return errors.Errorf("no client_secret specified for static client_id %q;"+
 				" auth configuration is either incorrect or insecure", c.CentralIDPClientID)
