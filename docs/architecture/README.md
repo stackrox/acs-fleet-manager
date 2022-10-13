@@ -139,7 +139,7 @@ Requesting a new ACS Instance after data loss should not have any issue.
 
 ### Load testing
 
-See: app-interface: [ACS Fleet Manager load testing](https://gitlab.cee.redhat.com/service/app-interface/-/tree/master/docs/acs-fleet-manager/load-testing)
+See app-interface: [ACS Fleet Manager load testing](https://gitlab.cee.redhat.com/service/app-interface/-/tree/master/docs/acs-fleet-manager/load-testing)
 
 
 ### Runbook
