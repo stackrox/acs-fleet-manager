@@ -79,7 +79,7 @@ case $ENVIRONMENT in
     LOGGING_AWS_SECRET_ACCESS_KEY=$(bw get item "f7711943-c355-47cc-a0ee-af0400f8dfe7" | jq '.fields[] | select(.name == "SecretAccessKey") | .value' --raw-output)
     # Note: the GitHub Access Token as of 2022-09-02 is the same between stage and prod.
     OBSERVABILITY_GITHUB_ACCESS_TOKEN=$(bw get password eb7aecd3-b553-4999-b201-aebe01445822)
-    OBSERVABILITY_GITHUB_TAG="237418b6e0ac47499948fd00fb7bbcab63e535e6"
+    OBSERVABILITY_GITHUB_TAG="237418b6e0ac47499948fd00fb7bbcab63e535e6"  # pragma: allowlist secret
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
     OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID="observatorium-rhacs-metrics"
     OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET=$(
