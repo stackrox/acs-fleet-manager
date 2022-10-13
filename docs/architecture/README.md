@@ -137,6 +137,11 @@ The ACS instances itself are hosted on separate cluster and should persist regar
 Requesting a new ACS Instance after data loss should not have any issue.
 
 
+### Load testing
+
+See app-interface: [ACS Fleet Manager load testing](https://gitlab.cee.redhat.com/service/app-interface/-/tree/master/docs/acs-fleet-manager/load-testing)
+
+
 ### Runbook
 
 Follow ACS Fleet Manager [Standard operating procedure (SOP) on app-interface](https://gitlab.cee.redhat.com/service/app-interface/-/tree/master/docs/acs-fleet-manager/sop)
