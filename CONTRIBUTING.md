@@ -23,14 +23,14 @@ Project source is to be found under `$GOPATH/src` by a distinct directory path.
 /cmd
   /fleet-manager  -- Main CLI entrypoint
 /internal   -- service specific implementations
-   /dinosaur
+   /dinosaur -- should be renamed to central
        providers.go -- dinosaurs service injection setup
       /test  -- integration test folder
       /internal
-        /services -- dinosaurs services
-        /workers  -- dinosaurs workers
+        /services -- central services
+        /workers  -- central workers
         /api      -- generated data transfer objects for the API and database entities
-        /migrations -- dinosaurs database migrations
+        /migrations -- database migrations
         /presenters -- DTO converters and presenters
         /routes  -- routes setup
         /environments -- environment setup
