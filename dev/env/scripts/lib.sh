@@ -321,7 +321,21 @@ docker_logged_in() {
 }
 
 load_external_config() {
-    local chamber="${CHAMBER:-$CHAMBER_DEFAULT}"
+    local chamber
+    local use_aws_vault="${USE_AWS_VAULT:-$USE_AWS_VAULT_DEFAULT}"
+    if [ "$use_aws_vault" = true ]; then
+      local profile="${AWS_VAULT_PROFILE:-$AWS_VAULT_PROFILE_DEFAULT}"
+      local profile_exists
+      profile_exists=$(aws-vault list --profiles | grep "${profile}" || true)
+      if [[ ! $profile_exists ]]; then
+        log "Creating AWS Vault profile '$profile'"
+        aws-vault add "$profile"
+      fi
+      chamber="aws-vault exec ${profile} -- chamber"
+    else
+      chamber="chamber"
+    fi
+
     eval "$($chamber env fleet-manager)"
     eval "$($chamber env fleetshard-sync)"
 }

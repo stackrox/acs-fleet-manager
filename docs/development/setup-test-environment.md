@@ -18,8 +18,6 @@ The RHACS operator can be installed from OpenShift marketplace or Quay. Images f
 * operator-sdk (if deploying to clusters not having access to OpenShift Marketplace, like Minikube)
 * `yq` & `jq`
 * `kubectl` or `oc`
-* [chamber](https://github.com/segmentio/chamber#installing)
-* [aws CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
 ## Scripts
 
@@ -43,30 +41,12 @@ The scripts can be configured using environment variables, the most important op
 
 ## Prepare the environment
 1. Install the [necessary tools](#Required tools)
-2. Login to the AWS using CLI:
-    ```shell
-    $ aws configure
-    AWS Access Key ID [None]: <dev key id>
-    AWS Secret Access Key [None]: <dev access key>
-    Default region name [None]: us-east-1
-    Default output format [None]:
-    ```
-3. Verify that configuration can be loaded from the Parameter Store
-    ```shell
-    $ chamber list fleet-manager
-    Key                             Version         LastModified            User
-    ...
-
-    $ chamber list fleetshard-sync
-    Key                             Version         LastModified            User
-    ...
-    ```
-4. Set up a test cluster using [one of the supported](#Cluster setup) types
-5. Ensure the `kubectl` context is pointing to the desired cluster:
+2. Set up a test cluster using [one of the supported](#Cluster setup) types
+3. Ensure the `kubectl` context is pointing to the desired cluster:
     ```shell
     kubectl use-context <cluster>
     ```  
-6. Set the required environment variables:
+4. Set the required environment variables:
    * `QUAY_USER`
    * `QUAY_TOKEN`
    * `STATIC_TOKEN`
@@ -161,14 +141,3 @@ crc config set cpus 7
 ```
 
 There's currently no automated way to upload the fleet-manager image to CRC. Set the `FLEET_MANAGER_IMAGE` environment variable to an available Image in quay or build locally and load it into CRC registry manually.
-
-# Troubleshooting
-
-### Error: Failed to list store contents: MissingRegion: could not find region configuration
-This error happens when there's no default AWS region. Run `aws configure` and enter the region properly, or add it manually to the `~/.aws/config`:
-```text
-[default]
-region = us-east-1
-```
-### Error: Failed to list store contents: NoCredentialProviders: no valid providers in chain. Deprecated.
-This error happens when aws CLI is not properly configured. Run `aws configure` and point it to the correct account

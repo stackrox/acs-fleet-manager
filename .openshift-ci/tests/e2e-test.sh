@@ -6,14 +6,14 @@ export GITROOT
 source "${GITROOT}/dev/env/scripts/lib.sh"
 init
 
-bootstrap.sh
+make prepare/dev
 
 if [[ "$CLUSTER_TYPE" != "openshift-ci" ]]; then
     log "Cleaning up left-over resource (if any)"
-    down.sh 2>/dev/null
+    make undeploy/dev 2>/dev/null
 fi
 
-up.sh
+make deploy/dev
 
 log "Environment up and running"
 log "Waiting for fleet-manager to complete leader election..."

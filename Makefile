@@ -135,6 +135,12 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
 	}
 endif
 
+${LOCAL_BIN_PATH}/chamber:
+	GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/segmentio/chamber/v2@v2.10.12
+
+${LOCAL_BIN_PATH}/aws-vault:
+	GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/99designs/aws-vault/v6@v6.6.0
+
 OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
 NPM ?= "$(shell which npm)"
 openapi-generator:
@@ -810,7 +816,7 @@ undeploy/openshift-router:
 
 # Deploys fleet* components with the database on the k8s cluster in use
 # Intended for a local / infra cluster deployment and dev testing
-deploy/dev:
+deploy/dev: ${LOCAL_BIN_PATH}/chamber ${LOCAL_BIN_PATH}/aws-vault
 	./dev/env/scripts/up.sh
 .PHONY: deploy/dev
 
