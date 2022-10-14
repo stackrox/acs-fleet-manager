@@ -78,7 +78,8 @@ $ minikube start --memory=6G \
 and that the `docker` CLI is in `PATH` (if not, export `DOCKER=...` accordingly). Furthermore, prepare your environment by setting:
 * `QUAY_USER`
 * `QUAY_TOKEN`
-* `STATIC_TOKEN` for `AUTH_TYPE=STATIC_TOKEN` or `OCM_TOKEN` for `AUTH_TYPE=OCM`
+* `STATIC_TOKEN`
+* `STATIC_TOKEN_ADMIN`
 
 The primary way for executing the e2e test suite is by calling
 ```
@@ -108,7 +109,8 @@ $ colima start -c 4 -d 60 -m 16 -k
 and that the `colima` CLI is in `PATH` (if not, export `DOCKER=/path/to/bin/colima nerdctl -- -n k8s.io` accordingly). Furthermore, prepare your environment by setting:
 * `QUAY_USER`
 * `QUAY_TOKEN`
-* `STATIC_TOKEN` for `AUTH_TYPE=STATIC_TOKEN` or `OCM_TOKEN` for `AUTH_TYPE=OCM`
+* `STATIC_TOKEN`
+* `STATIC_TOKEN_ADMIN`
 
 ### CRC
 
@@ -124,4 +126,5 @@ There's currently no automated way to upload the fleet-manager image to CRC. Set
 Furthermore, prepare your environment by setting:
 * `QUAY_USER`
 * `QUAY_TOKEN`
-* `STATIC_TOKEN` for `AUTH_TYPE=STATIC_TOKEN` or `OCM_TOKEN` for `AUTH_TYPE=OCM`
+* `STATIC_TOKEN`
+* `STATIC_TOKEN_ADMIN`

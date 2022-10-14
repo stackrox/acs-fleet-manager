@@ -88,6 +88,11 @@ init() {
         source "$env_file"
     done
 
+    ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-ENABLE_EXTERNAL_CONFIG_DEFAULT}"
+    if [[ "$ENABLE_EXTERNAL_CONFIG" == "true" ]]; then
+        load_external_config
+    fi
+
     if [[ -z "${CENTRAL_IDP_CLIENT_SECRET:-}" ]]; then
         die "Error: CENTRAL_IDP_CLIENT_SECRET not set. Please make sure that it is initialized properly."
     fi
@@ -307,4 +312,10 @@ docker_logged_in() {
     else
         return 1
     fi
+}
+
+load_external_config() {
+  local chamber="${CHAMBER:-$CHAMBER_DEFAULT}"
+  eval "$($chamber env fleet-manager)"
+  eval "$($chamber env fleetshard-sync)"
 }

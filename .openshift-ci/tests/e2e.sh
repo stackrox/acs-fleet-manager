@@ -61,7 +61,7 @@ if [[ "$RUN_AUTH_E2E" == "true" ]]; then
         die "Error: OCM_OFFLINE_TOKEN not set, which is required for execution of Auth E2E tests"
     fi
 
-    # Ensure we set the OCM refresh token once more, in case AUTH_TYPE!=OCM.
+    # Ensure we set the OCM refresh token
     ocm login --token "${OCM_OFFLINE_TOKEN}"
     OCM_TOKEN=$(ocm token --refresh)
     export OCM_TOKEN
@@ -69,22 +69,13 @@ if [[ "$RUN_AUTH_E2E" == "true" ]]; then
     # The RH SSO secrets are correctly set up within vault, the tests will be skipped if they are empty.
 fi
 
-case "$AUTH_TYPE" in
-OCM)
+if [[ -z "$STATIC_TOKEN" ]]; then
+    die "Error: No static token found in the environment.\nPlease set the environment variable STATIC_TOKEN to a valid static token."
+fi
 
-    log "Logging in with client credentials + Refreshing OCM Service Token"
-    ocm login --token "${OCM_OFFLINE_TOKEN}"
-    OCM_TOKEN=$(ocm token --refresh)
-    export OCM_TOKEN
-    ;;
-
-STATIC_TOKEN)
-    if [[ -z "$STATIC_TOKEN" ]]; then
-        die "Error: No static token found in the environment.\nPlease set the environment variable STATIC_TOKEN to a valid static token."
-    fi
-    log "Found static token in the environment"
-    ;;
-esac
+if [[ -z "$STATIC_TOKEN_ADMIN" ]]; then
+    die "Error: No static admin token found in the environment.\nPlease set the environment variable STATIC_TOKEN_ADMIN to a valid static token."
+fi
 
 log
 
