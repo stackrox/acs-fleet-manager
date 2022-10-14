@@ -88,6 +88,7 @@ init() {
         source "$env_file"
     done
 
+    export AWS_REGION="${AWS_REGION:-$AWS_REGION_DEFAULT}"
     ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-ENABLE_EXTERNAL_CONFIG_DEFAULT}"
     if [[ "$ENABLE_EXTERNAL_CONFIG" == "true" ]]; then
         load_external_config
@@ -325,9 +326,9 @@ load_external_config() {
     local use_aws_vault="${USE_AWS_VAULT:-$USE_AWS_VAULT_DEFAULT}"
     if [ "$use_aws_vault" = true ]; then
       local profile="${AWS_VAULT_PROFILE:-$AWS_VAULT_PROFILE_DEFAULT}"
-      local profile_exists
-      profile_exists=$(aws-vault list --profiles | grep "${profile}" || true)
-      if [[ ! $profile_exists ]]; then
+      local credentials_exist
+      credentials_exist=$(aws-vault list --credentials | grep "${profile}" || true)
+      if [[ ! $credentials_exist ]]; then
         log "Creating AWS Vault profile '$profile'"
         aws-vault add "$profile"
       fi
