@@ -548,10 +548,13 @@ func (c client) DeleteCluster(clusterID string) (int, error) {
 
 // ClusterAuthorization ...
 func (c client) ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error) {
+	glog.V(10).Infof("Sending request to OCM '%v'", *cb)
+
 	r, err := c.connection.AccountsMgmt().V1().
 		ClusterAuthorizations().
 		Post().Request(cb).Send()
 	if err != nil && r.Status() != http.StatusTooManyRequests {
+		glog.Warningf("OCM client responded with '%v: %v' for request '%v'", r.Status(), err, *cb)
 		return nil, errors.NewErrorFromHTTPStatusCode(r.Status(), "OCM client failed to create cluster authorization")
 	}
 	resp, _ := r.GetResponse()
