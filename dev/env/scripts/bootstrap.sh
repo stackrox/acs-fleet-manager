@@ -1,10 +1,19 @@
 #!/usr/bin/env bash
+set -xeo pipefail
 
 GITROOT="$(git rev-parse --show-toplevel)"
 export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 init
+
+if [[ -z "$QUAY_USER" ]]; then
+  die "QUAY_USER not set"
+fi
+
+if [[ -z "$QUAY_TOKEN" ]]; then
+  die "QUAY_TOKEN not set"
+fi
 
 cat <<EOF
 ** Preparing ACS MS Test Environment **

@@ -46,6 +46,9 @@ To run fleet-manager in different ways (i.e. with docker) please refer to [runni
 # Export the kubeconfig path the central instance should be deployed to
 $ export KUBECONFIG=/your/kubeconfig
 
+# Bootstrap the cluster
+$ make deploy/development-bootstrap
+
 # Sets up database, starts fleet-manager
 $ make deploy/development
 

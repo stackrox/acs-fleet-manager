@@ -794,6 +794,10 @@ deploy/development:
 	./dev/env/scripts/up.sh
 .PHONY: deploy/development
 
+deploy/development-bootstrap:
+	./dev/env/scripts/bootstrap.sh
+.PHONY: deploy/development-bootstrap
+
 # Un-deploys OpenShift ingress router from a k8s cluster
 undeploy/openshift-router:
 	./scripts/openshift-router.sh undeploy
