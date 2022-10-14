@@ -21,7 +21,7 @@ spec:
       containers:
       - name: fleetshard-sync
         image: {{ .Values.fleetshardSync.image | quote }}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         command:
         - /usr/local/bin/fleetshard-sync
         env:
