@@ -86,7 +86,7 @@ func (r *Runtime) Start() error {
 	glog.Info("fleetshard runtime started")
 	glog.Infof("Auth provider initialisation enabled: %v", r.config.CreateAuthProvider)
 
-	routesAvailable := routesAvailable()
+	routesAvailable := r.routesAvailable()
 
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
 		UseRoutes:         routesAvailable,
@@ -171,8 +171,8 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 	}
 }
 
-func routesAvailable() bool {
-	available, err := k8s.IsRoutesResourceEnabled()
+func (r *Runtime) routesAvailable() bool {
+	available, err := k8s.IsRoutesResourceEnabled(r.k8sClient)
 	if err != nil {
 		glog.Errorf("Skip checking OpenShift routes availability due to an error: %v", err)
 		return true // make an optimistic assumption that routes can be created despite the error
