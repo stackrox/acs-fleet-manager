@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+GITROOT="$(git rev-parse --show-toplevel)"
+export GITROOT
+# shellcheck source=/dev/null
+source "${GITROOT}/dev/env/scripts/lib.sh"
+init
+
+log "Resetting state of control-plane and data-plane..."
+
+port-forwarding start db 5432 5432
+sleep 1
+psql -h localhost -U fleet_manager -d rhacsms -c 'DELETE FROM central_requests;'
+sleep 1
+
+delete_tenant_namespaces
+
+log "Resetting complete."

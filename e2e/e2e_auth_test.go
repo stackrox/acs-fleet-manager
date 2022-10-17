@@ -21,9 +21,8 @@ const (
 var _ = Describe("AuthN/Z Fleet* components", func() {
 
 	BeforeEach(func() {
-		if env := getEnvDefault("RUN_AUTH_E2E", "false"); env == "false" {
-			Skip("The RUN_AUTH_E2E variable was not set, skipping the tests. If you want to run the auth tests, " +
-				"set RUN_AUTH_E2E=true")
+		if !runningAuthTests {
+			Skip("Skipping auth test")
 		}
 	})
 

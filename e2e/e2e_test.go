@@ -51,13 +51,9 @@ const (
 var _ = Describe("Central", func() {
 	var client *fleetmanager.Client
 	var adminAPI *private.DefaultApiService
-	BeforeEach(func() {
-		fleetManagerEndpoint := "http://localhost:8000"
-		if fmEndpointEnv := os.Getenv("FLEET_MANAGER_ENDPOINT"); fmEndpointEnv != "" {
-			fleetManagerEndpoint = fmEndpointEnv
-		}
-		GinkgoWriter.Printf("FLEET_MANAGER_ENDPOINT=%q\n", fleetManagerEndpoint)
+	var centralName string
 
+	BeforeEach(func() {
 		option := fleetmanager.OptionFromEnv()
 		auth, err := fleetmanager.NewStaticAuth(fleetmanager.StaticOption{StaticToken: option.Static.StaticToken})
 		Expect(err).ToNot(HaveOccurred())
@@ -69,28 +65,28 @@ var _ = Describe("Central", func() {
 		Expect(err).ToNot(HaveOccurred())
 		adminClient, err := fleetmanager.NewClient(fleetManagerEndpoint, adminAuth)
 		adminAPI = adminClient.AdminAPI()
-
 		Expect(err).ToNot(HaveOccurred())
-
 	})
 
 	Describe("should be created and deployed to k8s", func() {
 		var err error
-
-		centralName := newCentralName()
-		request := public.CentralRequestPayload{
-			CloudProvider: dpCloudProvider,
-			MultiAz:       true,
-			Name:          centralName,
-			Region:        dpRegion,
-		}
-
 		var createdCentral *public.CentralRequest
 		var namespaceName string
+
 		It("created a central", func() {
+			centralName = newCentralName()
+			GinkgoWriter.Printf("Central name: %s\n", centralName)
+
+			request := public.CentralRequestPayload{
+				CloudProvider: dpCloudProvider,
+				MultiAz:       true,
+				Name:          centralName,
+				Region:        dpRegion,
+			}
 			resp, _, err := client.PublicAPI().CreateCentral(context.Background(), true, request)
 			createdCentral = &resp
 			Expect(err).To(BeNil())
+			GinkgoWriter.Printf("Central ID: %s\n", createdCentral.Id)
 			namespaceName, err = services.FormatNamespace(createdCentral.Id)
 			Expect(err).To(BeNil())
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
@@ -261,7 +257,6 @@ var _ = Describe("Central", func() {
 	Describe("should be created and deployed to k8s with admin API", func() {
 		var err error
 		var centralID string
-		centralName := newCentralName()
 
 		centralResources := private.ResourceRequirements{
 			Requests: map[string]string{
@@ -298,22 +293,24 @@ var _ = Describe("Central", func() {
 				Scaling:   scannerScaling,
 			},
 		}
-		request := private.CentralRequestPayload{
-			Name:          centralName,
-			MultiAz:       true,
-			CloudProvider: dpCloudProvider,
-			Region:        dpRegion,
-			Central:       centralSpec,
-			Scanner:       scannerSpec,
-		}
 
 		var createdCentral *private.CentralRequest
 		var namespaceName string
 		It("should create central with custom resource configuration", func() {
+			centralName = newCentralName()
+			request := private.CentralRequestPayload{
+				Name:          centralName,
+				MultiAz:       true,
+				CloudProvider: dpCloudProvider,
+				Region:        dpRegion,
+				Central:       centralSpec,
+				Scanner:       scannerSpec,
+			}
 			resp, _, err := adminAPI.CreateCentral(context.TODO(), true, request)
 			createdCentral = &resp
 			Expect(err).To(BeNil())
 			centralID = createdCentral.Id
+			GinkgoWriter.Printf("Central ID: %s\n", centralID)
 			namespaceName, err = services.FormatNamespace(centralID)
 			Expect(err).To(BeNil())
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
@@ -430,23 +427,24 @@ var _ = Describe("Central", func() {
 
 	Describe("should be deployed and can be force-deleted", func() {
 		var err error
-
-		centralName := newCentralName()
-		request := public.CentralRequestPayload{
-			Name:          centralName,
-			MultiAz:       true,
-			CloudProvider: dpCloudProvider,
-			Region:        dpRegion,
-		}
-
 		var createdCentral *public.CentralRequest
 		var central *public.CentralRequest
 		var namespaceName string
 
 		It("created a central", func() {
+			centralName = newCentralName()
+			GinkgoWriter.Printf("Central name: %s\n", centralName)
+			request := public.CentralRequestPayload{
+				Name:          centralName,
+				MultiAz:       true,
+				CloudProvider: dpCloudProvider,
+				Region:        dpRegion,
+			}
+
 			resp, _, err := client.PublicAPI().CreateCentral(context.TODO(), true, request)
 			Expect(err).To(BeNil())
 			createdCentral = &resp
+			GinkgoWriter.Printf("Central ID: %s\n", createdCentral.Id)
 			namespaceName, err = services.FormatNamespace(createdCentral.Id)
 			Expect(err).To(BeNil())
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))

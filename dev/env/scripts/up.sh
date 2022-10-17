@@ -8,12 +8,21 @@ export GITROOT
 source "${GITROOT}/dev/env/scripts/lib.sh"
 init
 
+if [[ "$IGNORE_REPOSITORY_DIRTINESS" = "true" ]]; then
+    fleet_manager_image_info="${FLEET_MANAGER_IMAGE} (ignoring repository dirtiness)"
+else
+    fleet_manager_image_info="${FLEET_MANAGER_IMAGE}"
+fi
+
 cat <<EOF
 
 ** Bringing up ACS MS **
 
-Image: ${FLEET_MANAGER_IMAGE}
+Image: ${fleet_manager_image_info}
+Cluster Name: ${CLUSTER_NAME}
+Cluster Type: ${CLUSTER_TYPE}
 Namespace: ${ACSMS_NAMESPACE}
+
 Inheriting ImagePullSecrets for Quay.io: ${INHERIT_IMAGEPULLSECRETS}
 Installing RHACS Operator: ${INSTALL_OPERATOR}
 
@@ -42,6 +51,8 @@ if [[ ! ("$CLUSTER_TYPE" == "openshift-ci" || "$CLUSTER_TYPE" == "infra-openshif
             else
                 die "Cannot find image '${FLEET_MANAGER_IMAGE}' and don't know how to build it"
             fi
+        else
+            log "Image ${FLEET_MANAGER_IMAGE} found, skipping building of a new image."
         fi
     else
         log "Trying to pull image '${FLEET_MANAGER_IMAGE}'..."
