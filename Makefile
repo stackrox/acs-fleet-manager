@@ -139,6 +139,7 @@ endif
 # This goal is intended for installing the tools required for running (and sourcing) the dev scripts (dev/env/scripts)
 # This way scripts may be called outside of makefile
 script-tools: $(CHAMBER_BIN) $(AWS_VAULT_BIN)
+	@echo "+ $@"
 .PHONY: script-tools
 
 CHAMBER_BIN := $(GOBIN)/chamber
