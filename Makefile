@@ -1,6 +1,7 @@
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 DOCS_DIR := $(PROJECT_PATH)/docs
+TOOLS_DIR := $(PROJECT_PATH)/tools
 
 .DEFAULT_GOAL := help
 SHELL = bash
@@ -135,11 +136,15 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
 	}
 endif
 
-${LOCAL_BIN_PATH}/chamber:
-	GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/segmentio/chamber/v2@v2.10.12
+CHAMBER_BIN := $(GOBIN)/chamber
+$(CHAMBER_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
+	@echo "+ $@"
+	@cd $(TOOLS_DIR) && $(GO) install github.com/segmentio/chamber/v2
 
-${LOCAL_BIN_PATH}/aws-vault:
-	GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/99designs/aws-vault/v6@v6.6.0
+AWS_VAULT_BIN := $(GOBIN)/aws-vault
+$(AWS_VAULT_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
+	@echo "+ $@"
+	@cd $(TOOLS_DIR) && $(GO) install github.com/99designs/aws-vault/v6
 
 OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
 NPM ?= "$(shell which npm)"
@@ -816,7 +821,7 @@ undeploy/openshift-router:
 
 # Deploys fleet* components with the database on the k8s cluster in use
 # Intended for a local / infra cluster deployment and dev testing
-deploy/dev: ${LOCAL_BIN_PATH}/chamber ${LOCAL_BIN_PATH}/aws-vault
+deploy/dev: $(CHAMBER_BIN) $(AWS_VAULT_BIN)
 	./dev/env/scripts/up.sh
 .PHONY: deploy/dev
 
