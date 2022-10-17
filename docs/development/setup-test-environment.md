@@ -86,7 +86,7 @@ In certain situations it is also useful to be able to execute the respective bui
 ##### Prepare the cluster
 Prepare the cluster by installing the necessary components, such as stackrox-operator and openshift-router
 ```shell
-$ make prepare/dev # points to bootstrap.sh
+$ make deploy/bootstrap # points to bootstrap.sh
 ```
 ##### Build and deploy
 The following command is used for building the Managed Services components image and deploying it on the cluster

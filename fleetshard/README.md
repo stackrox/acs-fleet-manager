@@ -19,7 +19,7 @@ Execute all commands from git root directory.
 
 1. Bring up the environment
    ```shell
-   make prepare/dev deploy/dev
+   make deploy/bootstrap deploy/dev
    ```
 1. Create a central instance:
     ```
