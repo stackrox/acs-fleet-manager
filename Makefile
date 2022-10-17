@@ -805,9 +805,9 @@ undeploy/dev:
 .PHONY: undeploy/dev
 
 # Sets up dev environment by installing the necessary components such as stackrox-operator, openshift-router and other
-prepare/dev:
+deploy/bootstrap:
 	./dev/env/scripts/bootstrap.sh
-.PHONY: prepare/dev
+.PHONY: deploy/bootstrap
 
 tag:
 	@echo "$(image_tag)"
