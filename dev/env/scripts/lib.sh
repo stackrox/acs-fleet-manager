@@ -59,6 +59,8 @@ init() {
     GITROOT_DEFAULT=$(git rev-parse --show-toplevel)
     export GITROOT=${GITROOT:-$GITROOT_DEFAULT}
     set -eu -o pipefail
+    # Ensure that the necessary tools are installed
+    make -s -C "$GITROOT" script-tools
 
     # For reading the defaults we need access to the
     if [[ -z "${CLUSTER_NAME:-}" ]]; then

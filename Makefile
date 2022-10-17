@@ -136,8 +136,10 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
 	}
 endif
 
-tools: $(CHAMBER_BIN) $(AWS_VAULT_BIN)
-.PHONY: tools
+# This goal is intended for installing the tools required for running (and sourcing) the dev scripts (dev/env/scripts)
+# This way scripts may be called outside of makefile
+script-tools: $(CHAMBER_BIN) $(AWS_VAULT_BIN)
+.PHONY: script-tools
 
 CHAMBER_BIN := $(GOBIN)/chamber
 $(CHAMBER_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
@@ -824,7 +826,7 @@ undeploy/openshift-router:
 
 # Deploys fleet* components with the database on the k8s cluster in use
 # Intended for a local / infra cluster deployment and dev testing
-deploy/dev: $(CHAMBER_BIN) $(AWS_VAULT_BIN)
+deploy/dev:
 	./dev/env/scripts/up.sh
 .PHONY: deploy/dev
 
