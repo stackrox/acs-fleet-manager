@@ -367,10 +367,6 @@ test/e2e: gotestsum
 		 ./e2e/...
 .PHONY: test/e2e
 
-test/e2e/cleanup:
-	./e2e/cleanup.sh
-.PHONY: test/e2e/cleanup
-
 # generate files
 generate: moq openapi/generate
 	$(GO) generate ./...
@@ -797,10 +793,22 @@ undeploy/openshift-router:
 	./scripts/openshift-router.sh undeploy
 .PHONY: undeploy/openshift-router
 
+# Deploys fleet* components with the database on the k8s cluster in use
+# Intended for a local / infra cluster deployment and dev testing
+deploy/dev:
+	./dev/env/scripts/up.sh
+.PHONY: deploy/dev
+
+# Un-deploys fleet* components with the database on the k8s cluster in use
+undeploy/dev:
+	./dev/env/scripts/down.sh
+.PHONY: undeploy/dev
+
+# Sets up dev environment by installing the necessary components such as stackrox-operator, openshift-router and other
+deploy/bootstrap:
+	./dev/env/scripts/bootstrap.sh
+.PHONY: deploy/bootstrap
+
 tag:
 	@echo "$(image_tag)"
 .PHONY: tag
-
-setup-dev-env:
-	./scripts/setup-dev-env.sh
-.PHONY: setup-dev-env

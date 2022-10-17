@@ -17,21 +17,16 @@ $ make -C operator install run
 
 Execute all commands from git root directory.
 
-1. Start fleet manager:
-    ```
-    $ ./scripts/setup-dev-env.sh
-    ```
-
-1. Build and run fleetshard-sync:
-    ```
-    $ make fleetshard/build
-    $ OCM_TOKEN=$(ocm token --refresh) CLUSTER_ID=1234567890abcdef1234567890abcdef ./fleetshard-sync
-    ```
-
+1. Bring up the environment
+   ```shell
+   make deploy/bootstrap deploy/dev
+   ```
 1. Create a central instance:
     ```
     $ ./scripts/create-central.sh
     ```
+
+Also refer to [this guide](../docs/development/setup-test-environment.md) for more information
 
 ## Authentication types
 

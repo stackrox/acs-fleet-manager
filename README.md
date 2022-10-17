@@ -34,19 +34,32 @@ ACS fleet-manager repository for the ACS managed service.
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 * [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-- A running kubernetes cluster
-- Setting up configurations described [here](./docs/development/populating-configuration.md#interacting-with-the-fleet-manager-api)
+* A running kubernetes cluster
+
+  Supported cluster types:
+    * Local: Minikube, Colima, Rancher Desktop, CRC
+    * Remote: Infra OpenShift 4.x, OpenShift CI
+
+  Guide: [setup-test-environment.md](./docs/development/setup-test-environment.md#prepare-the-environment)
+* Setting up configurations described [here](./docs/development/populating-configuration.md#interacting-with-the-fleet-manager-api)
+
+#### Supported cluster types:
+* Local: Minikube, Colima, Rancher Desktop, CRC
+* Remote: Infra OpenShift 4.x, OpenShift CI
 
 #### Getting started
 
-To run fleet-manager in different ways (i.e. with docker) please refer to [running-fleet-manager.md](./docs/development/running-fleet-manager.md).
+To run fleet-manager in different ways (i.e. on a test cluster) please refer to [running-fleet-manager.md](./docs/development/running-fleet-manager.md).
 
 ```bash
 # Export the kubeconfig path the central instance should be deployed to
 $ export KUBECONFIG=/your/kubeconfig
 
+# Bootstrap the environment
+$ make deploy/bootstrap
+
 # Sets up database, starts fleet-manager
-$ make setup-dev-env
+$ make deploy/dev
 
 # Start fleetshard-sync
 $ OCM_TOKEN=$(ocm token --refresh) CLUSTER_ID=1234567890abcdef1234567890abcdef ./fleetshard-sync
@@ -58,24 +71,9 @@ $ ./scripts/create-central.sh
 $ ./scripts/fmcurl
 ```
 
-##### Prepare a cluster for the local environment
-You can run ACS Fleet Manager on a local k8s cluster (colima, rancher, minikube).
-This requires some preparations on a cluster:
-
-1. Install ACS Operator
-   The process is described in [operator documentation](https://github.com/stackrox/stackrox/tree/master/operator)
-2. Deploy OpenShift Router
-   ```
-   make deploy/openshift-router
-   ```
-   Use `make undeploy/openshift-router` to undeploy the OpenShift router from a cluster.
-   Refer to the router [repo](https://github.com/openshift/router) for more information.
-3. For accessing the hostnames exposed by routes locally read the documentation [here](docs/development/test-locally-route-hosts.md)
-
-
 #### Common make targets
 
-```
+```shell
 # Install git-hooks, for more information see git-hooks.md [1]
 $ make setup/git/hooks
 
@@ -91,6 +89,11 @@ $ make run/docs
 # Generate code such as openapi
 $ make generate
 
+# Prepare dev environment for deployment
+$ make deploy/bootstrap
+# Deploy changes to the test cluster [2]
+$ make deploy/dev
+
 # Testing related targets
 $ make test
 $ make test/e2e
@@ -102,7 +105,8 @@ $ make db/setup
 $ make db/migrate
 ```
 
-[1] [git-hooks.md](./docs/development/git-hooks.md)
+* [1] [git-hooks.md](./docs/development/git-hooks.md)
+* [2] [setup-test-environment.md](./docs/development/setup-test-environment.md)
 
 #### Background
 
