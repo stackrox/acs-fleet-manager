@@ -56,7 +56,7 @@ To run fleet-manager in different ways (i.e. on a test cluster) please refer to 
 $ export KUBECONFIG=/your/kubeconfig
 
 # Bootstrap the environment
-$ make prepare/dev
+$ make deploy/bootstrap
 
 # Sets up database, starts fleet-manager
 $ make deploy/dev
@@ -90,7 +90,7 @@ $ make run/docs
 $ make generate
 
 # Prepare dev environment for deployment
-$ make prepare/dev
+$ make deploy/bootstrap
 # Deploy changes to the test cluster [2]
 $ make deploy/dev
 
