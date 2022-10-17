@@ -41,12 +41,12 @@ The scripts can be configured using environment variables, the most important op
 
 ## Prepare the environment
 1. Install the [necessary tools](#Required tools)
-2. Set up a test cluster using [one of the supported](#Cluster setup) types
-3. Ensure the `kubectl` context is pointing to the desired cluster:
+1. Set up a test cluster using [one of the supported](#Cluster setup) types
+1. Ensure the `kubectl` context is pointing to the desired cluster:
     ```shell
     kubectl use-context <cluster>
     ```  
-4. Set the required environment variables:
+1. Set the required environment variables:
    * `QUAY_USER`
    * `QUAY_TOKEN`
    * `STATIC_TOKEN`

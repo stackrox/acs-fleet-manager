@@ -91,6 +91,9 @@ init() {
     done
 
     export AWS_REGION="${AWS_REGION:-$AWS_REGION_DEFAULT}"
+    export USE_AWS_VAULT="${USE_AWS_VAULT:-$USE_AWS_VAULT_DEFAULT}"
+    export AWS_VAULT_PROFILE="${AWS_VAULT_PROFILE:-$AWS_VAULT_PROFILE_DEFAULT}"
+
     ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-ENABLE_EXTERNAL_CONFIG_DEFAULT}"
     if [[ "$ENABLE_EXTERNAL_CONFIG" == "true" ]]; then
         load_external_config
@@ -325,16 +328,12 @@ docker_logged_in() {
 
 load_external_config() {
     local chamber
-    local use_aws_vault="${USE_AWS_VAULT:-$USE_AWS_VAULT_DEFAULT}"
-    if [ "$use_aws_vault" = true ]; then
-      local profile="${AWS_VAULT_PROFILE:-$AWS_VAULT_PROFILE_DEFAULT}"
-      local credentials_exist
-      credentials_exist=$(aws-vault list --credentials | grep "^${profile}$" || true)
-      if [[ ! $credentials_exist ]]; then
-        log "Creating AWS Vault profile '$profile'"
-        aws-vault add "$profile"
+    if [[ "$USE_AWS_VAULT" = true ]]; then
+      if [[ -z $(aws-vault list --credentials | grep "^${AWS_VAULT_PROFILE}$" || true) ]]; then
+        log "Creating AWS Vault profile '$AWS_VAULT_PROFILE'"
+        aws-vault add "$AWS_VAULT_PROFILE"
       fi
-      chamber="aws-vault exec ${profile} -- chamber"
+      chamber="aws-vault exec ${AWS_VAULT_PROFILE} -- chamber"
     else
       chamber="chamber"
     fi
