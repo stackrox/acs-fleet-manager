@@ -32,6 +32,7 @@ function ensure_bitwarden_session_exists () {
       export BW_SESSION
     fi
   fi
+  bw sync -f
 }
 
 case $ENVIRONMENT in
