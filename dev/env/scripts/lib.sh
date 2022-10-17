@@ -329,7 +329,7 @@ docker_logged_in() {
 load_external_config() {
     local chamber
     if [[ "$USE_AWS_VAULT" = true ]]; then
-      if [[ -z $(aws-vault list --credentials | grep "^${AWS_VAULT_PROFILE}$" || true) ]]; then
+      if ! aws-vault list --credentials | grep -q "^${AWS_VAULT_PROFILE}$"; then
         log "Creating AWS Vault profile '$AWS_VAULT_PROFILE'"
         aws-vault add "$AWS_VAULT_PROFILE"
       fi
