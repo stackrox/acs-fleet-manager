@@ -329,7 +329,7 @@ load_external_config() {
     if [ "$use_aws_vault" = true ]; then
       local profile="${AWS_VAULT_PROFILE:-$AWS_VAULT_PROFILE_DEFAULT}"
       local credentials_exist
-      credentials_exist=$(aws-vault list --credentials | grep "${profile}" || true)
+      credentials_exist=$(aws-vault list --credentials | grep "^${profile}$" || true)
       if [[ ! $credentials_exist ]]; then
         log "Creating AWS Vault profile '$profile'"
         aws-vault add "$profile"
