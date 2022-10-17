@@ -136,6 +136,9 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
 	}
 endif
 
+tools: $(CHAMBER_BIN) $(AWS_VAULT_BIN)
+.PHONY: tools
+
 CHAMBER_BIN := $(GOBIN)/chamber
 $(CHAMBER_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@echo "+ $@"
