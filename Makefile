@@ -24,6 +24,8 @@ endif
 endif
 image_tag = $(TAG)
 
+GINKGO_FLAGS ?= -v
+
 # The version needs to be different for each deployment because otherwise the
 # cluster will not pull the new image from the internal registry:
 version:=$(shell date +%s)
