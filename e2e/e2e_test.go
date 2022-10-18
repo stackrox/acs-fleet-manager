@@ -351,8 +351,8 @@ var _ = Describe("Central", func() {
 			Expect(err).To(BeNil())
 			createdCentral = &resp
 			notes = []string{
-				fmt.Sprintf("Central name: %s\n", createdCentral.Name),
-				fmt.Sprintf("Central ID: %s\n", createdCentral.Id),
+				fmt.Sprintf("Central name: %s", createdCentral.Name),
+				fmt.Sprintf("Central ID: %s", createdCentral.Id),
 			}
 			centralID = createdCentral.Id
 			namespaceName, err = services.FormatNamespace(centralID)
@@ -515,8 +515,8 @@ var _ = Describe("Central", func() {
 			Expect(err).To(BeNil())
 			createdCentral = &resp
 			notes = []string{
-				fmt.Sprintf("Central name: %s\n", createdCentral.Name),
-				fmt.Sprintf("Central ID: %s\n", createdCentral.Id),
+				fmt.Sprintf("Central name: %s", createdCentral.Name),
+				fmt.Sprintf("Central ID: %s", createdCentral.Id),
 			}
 			namespaceName, err = services.FormatNamespace(createdCentral.Id)
 			Expect(err).To(BeNil())
