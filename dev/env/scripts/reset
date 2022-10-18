@@ -8,6 +8,7 @@ init
 
 log "Resetting state of control-plane and data-plane..."
 
+port-forwarding start fleet-manager 8000 8000
 port-forwarding start db 5432 5432
 sleep 1
 psql -h localhost -U fleet_manager -d rhacsms -c 'DELETE FROM central_requests;'

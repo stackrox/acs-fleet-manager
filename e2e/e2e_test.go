@@ -51,7 +51,7 @@ const (
 var _ = Describe("Central", func() {
 	var client *fleetmanager.Client
 	var adminAPI *private.DefaultApiService
-	var centralName string
+	var notes []string
 
 	BeforeEach(func() {
 		option := fleetmanager.OptionFromEnv()
@@ -66,6 +66,9 @@ var _ = Describe("Central", func() {
 		adminClient, err := fleetmanager.NewClient(fleetManagerEndpoint, adminAuth)
 		adminAPI = adminClient.AdminAPI()
 		Expect(err).ToNot(HaveOccurred())
+
+		GinkgoWriter.Printf("Current time: %s\n", time.Now().String())
+		printNotes(notes)
 	})
 
 	Describe("should be created and deployed to k8s", func() {
@@ -74,9 +77,7 @@ var _ = Describe("Central", func() {
 		var namespaceName string
 
 		It("created a central", func() {
-			centralName = newCentralName()
-			GinkgoWriter.Printf("Central name: %s\n", centralName)
-
+			centralName := newCentralName()
 			request := public.CentralRequestPayload{
 				CloudProvider: dpCloudProvider,
 				MultiAz:       true,
@@ -84,21 +85,31 @@ var _ = Describe("Central", func() {
 				Region:        dpRegion,
 			}
 			resp, _, err := client.PublicAPI().CreateCentral(context.Background(), true, request)
-			createdCentral = &resp
 			Expect(err).To(BeNil())
-			GinkgoWriter.Printf("Central ID: %s\n", createdCentral.Id)
+			createdCentral = &resp
+			notes = []string{
+				fmt.Sprintf("Central name: %s", createdCentral.Name),
+				fmt.Sprintf("Central ID: %s", createdCentral.Id),
+			}
+			printNotes(notes)
 			namespaceName, err = services.FormatNamespace(createdCentral.Id)
 			Expect(err).To(BeNil())
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
 		})
 
 		It("should transition central's state to provisioning", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() string {
 				return centralStatus(createdCentral.Id, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusProvisioning.String()))
 		})
 
 		It("should create central namespace", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() error {
 				ns := &corev1.Namespace{}
 				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
@@ -106,13 +117,19 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should create central in its namespace on a managed cluster", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() error {
 				central := &v1alpha1.Central{}
-				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: namespaceName}, central)
+				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: createdCentral.Name, Namespace: namespaceName}, central)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
 		It("should create central routes", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			if !routesEnabled {
 				Skip(skipRouteMsg)
 			}
@@ -151,6 +168,9 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should create AWS Route53 records", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			if !dnsEnabled {
 				Skip(skipDNSMsg)
 			}
@@ -183,12 +203,18 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should transition central's state to ready", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() string {
 				return centralStatus(createdCentral.Id, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
 		})
 
 		It("should spin up an egress proxy with two healthy replicas", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() error {
 				var egressProxyDeployment appsv1.Deployment
 				key := ctrlClient.ObjectKey{Namespace: namespaceName, Name: "egress-proxy"}
@@ -208,6 +234,9 @@ var _ = Describe("Central", func() {
 		// TODO(ROX-11368): Create test to check Central is correctly exposed
 
 		It("should transition central to deprovisioning state", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			_, err = client.PublicAPI().DeleteCentralById(context.TODO(), createdCentral.Id, true)
 			Expect(err).To(Succeed())
 			Eventually(func() string {
@@ -216,14 +245,20 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should delete central CR", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() bool {
 				central := &v1alpha1.Central{}
-				err := k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: centralName, Namespace: centralName}, central)
+				err := k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: createdCentral.Name, Namespace: namespaceName}, central)
 				return apiErrors.IsNotFound(err)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
 		})
 
 		It("should delete the egress proxy", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() error {
 				var egressProxyDeployment appsv1.Deployment
 				key := ctrlClient.ObjectKey{Namespace: namespaceName, Name: "egress-proxy"}
@@ -232,6 +267,9 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should remove central namespace", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() bool {
 				ns := &corev1.Namespace{}
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
@@ -240,6 +278,9 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should delete external DNS entries", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			if !dnsEnabled {
 				Skip(skipDNSMsg)
 			}
@@ -257,6 +298,8 @@ var _ = Describe("Central", func() {
 	Describe("should be created and deployed to k8s with admin API", func() {
 		var err error
 		var centralID string
+		var createdCentral *private.CentralRequest
+		var namespaceName string
 
 		centralResources := private.ResourceRequirements{
 			Requests: map[string]string{
@@ -294,10 +337,8 @@ var _ = Describe("Central", func() {
 			},
 		}
 
-		var createdCentral *private.CentralRequest
-		var namespaceName string
 		It("should create central with custom resource configuration", func() {
-			centralName = newCentralName()
+			centralName := newCentralName()
 			request := private.CentralRequestPayload{
 				Name:          centralName,
 				MultiAz:       true,
@@ -307,10 +348,13 @@ var _ = Describe("Central", func() {
 				Scanner:       scannerSpec,
 			}
 			resp, _, err := adminAPI.CreateCentral(context.TODO(), true, request)
-			createdCentral = &resp
 			Expect(err).To(BeNil())
+			createdCentral = &resp
+			notes = []string{
+				fmt.Sprintf("Central name: %s\n", createdCentral.Name),
+				fmt.Sprintf("Central ID: %s\n", createdCentral.Id),
+			}
 			centralID = createdCentral.Id
-			GinkgoWriter.Printf("Central ID: %s\n", centralID)
 			namespaceName, err = services.FormatNamespace(centralID)
 			Expect(err).To(BeNil())
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
@@ -318,12 +362,18 @@ var _ = Describe("Central", func() {
 
 		central := &v1alpha1.Central{}
 		It("should create central in its namespace on a managed cluster", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() error {
-				return k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: centralName, Namespace: namespaceName}, central)
+				return k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: createdCentral.Name, Namespace: namespaceName}, central)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
 		It("central resources match configured settings", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			coreV1Resources := central.Spec.Central.DeploymentSpec.Resources
 			expectedResources, err := converters.ConvertAdminPrivateRequirementsToCoreV1(&centralResources)
 			Expect(err).ToNot(HaveOccurred())
@@ -331,6 +381,9 @@ var _ = Describe("Central", func() {
 		})
 
 		It("scanner analyzer resources match configured settings", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			coreV1Resources := central.Spec.Scanner.Analyzer.DeploymentSpec.Resources
 			expectedResources, err := converters.ConvertAdminPrivateRequirementsToCoreV1(&scannerResources)
 			Expect(err).ToNot(HaveOccurred())
@@ -343,6 +396,9 @@ var _ = Describe("Central", func() {
 		})
 
 		It("resources should be updatable", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			updateReq := private.CentralUpdateRequest{
 				Central: private.CentralSpec{
 					Resources: private.ResourceRequirements{
@@ -370,7 +426,7 @@ var _ = Describe("Central", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(func() corev1.ResourceRequirements {
 				central := &v1alpha1.Central{}
-				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: namespaceName}, central)
+				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: createdCentral.Name, Namespace: namespaceName}, central)
 				Expect(err).ToNot(HaveOccurred())
 				if central.Spec.Central == nil || central.Spec.Central.Resources == nil {
 					return corev1.ResourceRequirements{}
@@ -380,12 +436,18 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should transition central's state to ready", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() string {
 				return centralStatus(createdCentral.Id, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
 		})
 
 		It("should transition central to deprovisioning state", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			_, err = client.PublicAPI().DeleteCentralById(context.TODO(), createdCentral.Id, true)
 			Expect(err).To(Succeed())
 			Eventually(func() string {
@@ -394,14 +456,20 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should delete central CR", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() bool {
 				central := &v1alpha1.Central{}
-				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: centralName, Namespace: centralName}, central)
+				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: createdCentral.Name, Namespace: namespaceName}, central)
 				return apiErrors.IsNotFound(err)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
 		})
 
 		It("should remove central namespace", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() bool {
 				ns := &corev1.Namespace{}
 				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
@@ -410,6 +478,9 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should delete external DNS entries", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			if !dnsEnabled {
 				Skip(skipDNSMsg)
 			}
@@ -432,8 +503,7 @@ var _ = Describe("Central", func() {
 		var namespaceName string
 
 		It("created a central", func() {
-			centralName = newCentralName()
-			GinkgoWriter.Printf("Central name: %s\n", centralName)
+			centralName := newCentralName()
 			request := public.CentralRequestPayload{
 				Name:          centralName,
 				MultiAz:       true,
@@ -444,13 +514,19 @@ var _ = Describe("Central", func() {
 			resp, _, err := client.PublicAPI().CreateCentral(context.TODO(), true, request)
 			Expect(err).To(BeNil())
 			createdCentral = &resp
-			GinkgoWriter.Printf("Central ID: %s\n", createdCentral.Id)
+			notes = []string{
+				fmt.Sprintf("Central name: %s\n", createdCentral.Name),
+				fmt.Sprintf("Central ID: %s\n", createdCentral.Id),
+			}
 			namespaceName, err = services.FormatNamespace(createdCentral.Id)
 			Expect(err).To(BeNil())
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
 		})
 
 		It("should transition central's state to ready", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			Eventually(func() string {
 				return centralStatus(createdCentral.Id, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
@@ -458,6 +534,9 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should be deletable in the control-plane database", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			_, err = adminAPI.DeleteDbCentralById(context.TODO(), createdCentral.Id)
 			Expect(err).ToNot(HaveOccurred())
 			_, err = adminAPI.DeleteDbCentralById(context.TODO(), createdCentral.Id)
@@ -469,10 +548,13 @@ var _ = Describe("Central", func() {
 
 		// Cleaning up on data-plane side because we have skipped the regular deletion workflow taking care of this.
 		It("can be cleaned up manually", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			// (1) Delete the Central CR.
 			centralRef := &v1alpha1.Central{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      centralName,
+					Name:      createdCentral.Name,
 					Namespace: namespaceName,
 				},
 			}
@@ -490,6 +572,9 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should delete external DNS entries", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
 			if !dnsEnabled {
 				Skip(skipDNSMsg)
 			}
@@ -514,4 +599,10 @@ func getCentral(id string, client *fleetmanager.Client) *public.CentralRequest {
 
 func centralStatus(id string, client *fleetmanager.Client) string {
 	return getCentral(id, client).Status
+}
+
+func printNotes(notes []string) {
+	for _, note := range notes {
+		GinkgoWriter.Println(note)
+	}
 }
