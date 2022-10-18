@@ -57,8 +57,8 @@ fi
 
 if [[ "$INSTALL_OPERATOR" == "true" ]]; then
     if [[ "$INSTALL_OLM" == "true" ]]; then
-        if ! command -v operator-sdk > /dev/null 2>&1; then
-          die "Error: Unable to install OLM, operator-sdk executable is not found"
+        if ! command -v operator-sdk >/dev/null 2>&1; then
+            die "Error: Unable to install OLM, operator-sdk executable is not found"
         fi
         # Setup OLM
         if { operator-sdk olm status 2>&1 || true; } | grep -q "no existing installation found"; then
@@ -125,7 +125,7 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
             apply "${MANIFESTS_DIR}"/rhacs-operator/marketplace/*.yaml
         fi
 
-        wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "app=rhacs-operator" "manager"
+        wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "app=rhacs-operator" "manager" 500
     fi
 else
     # We will be running without RHACS operator, but at least install our CRDs.
