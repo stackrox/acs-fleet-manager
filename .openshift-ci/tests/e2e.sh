@@ -28,7 +28,7 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export QUAY_TOKEN="${IMAGE_PUSH_PASSWORD:-}"
     export CLUSTER_TYPE="openshift-ci"
     export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
-    export GINKGO_FLAGS="--no-color"
+    export GINKGO_FLAGS="--no-color -v"
     # When running in OpenShift CI, ensure we also run the auth E2E tests.
     RUN_AUTH_E2E_DEFAULT="true"
 fi
