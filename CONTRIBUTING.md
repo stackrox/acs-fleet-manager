@@ -1,92 +1,53 @@
 # Contributing
 
-## Templates update
+## New contributors
 
-Every team using the template has shared responsibility and code access to this repository.
-The template will be collectively contributed and versioned.
+ - Follow the [getting started guide](https://github.com/stackrox/acs-fleet-manager#getting-started) to setup your environment
+ - Pull-Requests:
+   - check the [PR template](https://github.com/stackrox/acs-fleet-manager/blob/main/.github/pull_request_template.md) checkboxes
+   - must be approved by at least **one** engineer
+   - title contains ticket number: `ROX-12345: My PR title`
 
-When a bug fix or a feature change is done on the Go template, a pull request on the Java version
-(preferred) or an issue will be opened to make sure we keep both versions at the same feature and
-maturity level.
+## Specialities
 
-There is an agreement from each fleet-manager team to update their fleet-manager code on the newest
-template regularly. Code updates to/from the template onto/from a specific service are expected to be
-done manually since the two repositories are different. You are free to choose/rely on whichever
-automation tool you have at your disposal e.g the combination of [git patch](https://git-scm.com/docs/git-format-patch)
-and [git apply](https://git-scm.com/docs/git-apply) etc. Code fix is done on a roll forward fashion.
+### Dinosaurs
 
-### Notifying others about updates
+The `dinosaur` is a placeholder for the service name. It originated from the [fleet-manager template](https://github.com/bf2fc6cc711aee1a0c2a/ffm-fleet-manager-go-template).
+Long-term all `dinosaur` occurrences will be replaced with our product name.
 
-#### From service specific code to template
-
-In case of updates that are coming from a service specific fleet manager to the template, open an issue
-in [ffm project](https://github.com/bf2fc6cc711aee1a0c2a/ffm-project/issues) stating if it is a bug
-fix/enhancement/ version updates etc.  It is advisable to open PR once there is concensus on the adoption of
-the enhancement. To speed up the decision time, you can start a [zulip thread](https://bf2.zulipchat.com/) or
-[google group thread](https://groups.google.com/g/factorized-fleet-manager) engaging the interested parties
-asking if they would like to adopt the proposal. Additionally, it is okay to open a draft PR, to drive the conversation
-and enrich the understanding of the proposal.
-
-#### From template to specific fleet managers
-
-Once a fix / enhancement has landed to the template, an email should be sent to [factorised fleet manager google group](https://groups.google.com/g/factorized-fleet-manager). Likewise, the notification has to be sent to [zulip chat](https://bf2.zulipchat.com/).
-
->NOTE: A preferred approach/ process is to update the templates and service specific fleet managers regularly.
-This will make the rather "manual" update process less painful to work with by avoiding huge drifts which are likely to
-cause a painful big-bang update.
-
-## Definition of Done
-* Changes have been verified by one additional reviewer
-* An equivalent Github Pull Request or an issue has been opened on the Quarkus based template  
-* PR has been merged and announcement sent
-
-## Project Source
-Fork fleet-manager to your own Github repository: https://github.com/stackrox/acs-fleet-manager/fork
+### Go package structure
 
 Project source is to be found under `$GOPATH/src` by a distinct directory path.
 ```plain
-$GOPATH
-  /bin
-  /pkg
-  /src
-    /github.com/bf2fc6cc711aee1a0c2a/
-      /fleet-manager -- our git root
-        /cmd
-          /fleet-manager  -- Main CLI entrypoint
-        /internal   -- service specific implementations
-           /dinosaur
-               providers.go -- dinosaurs service injection setup
-              /test  -- integration test folder
-              /internal
-                /services -- dinosaurs services
-                /workers  -- dinosaurs workers
-                /api      -- generated data transfer objects for the API and database entities
-                /migrations -- dinosaurs database migrations
-                /presenters -- DTO converters and presenters
-                /routes  -- routes setup
-                /environments -- environment setup
-                /handlers -- api endpoint handlers
-        /pkg
-          /api      -- type definitions and models (Note. openapi folder is generated - see below)
-          /config   -- configuration handling
-          /db  		 -- database schema and migrations
-          /handlers -- web handlers/controllers
-          /services -- interfaces for CRUD and business logic
-            /syncsetresources -- resource definitions to be created via syncset
-          /workers  -- background workers for async reconciliation logic
+/fleet-manager -- our git root
+/cmd
+  /fleet-manager  -- Main CLI entrypoint
+/internal   -- service specific implementations
+   /dinosaur -- should be renamed to central
+       providers.go -- dinosaurs service injection setup
+      /test  -- integration test folder
+      /internal
+        /services -- central services
+        /workers  -- central workers
+        /api      -- generated data transfer objects for the API and database entities
+        /migrations -- database migrations
+        /presenters -- DTO converters and presenters
+        /routes  -- routes setup
+        /environments -- environment setup
+        /handlers -- api endpoint handlers
+/pkg
+  /api      -- type definitions and models (Note. openapi folder is generated - see below)
+  /config   -- configuration handling
+  /db  		 -- database schema and migrations
+  /handlers -- web handlers/controllers
+  /services -- interfaces for CRUD and business logic
+    /syncsetresources -- resource definitions to be created via syncset
+  /workers  -- background workers for async reconciliation logic
 
 ```
-
-## Set up Git Hooks
-Run the following command to set up git hooks for the project. pre-commit is used under the hood, see [https://pre-commit.com](https://pre-commit.com/) for more information.
-
-```
-make setup/git/hooks
-```
-
-Currently the only activated pre-commit plugin is `detect-secrets`.
 
 ## Debugging
+
 ### VS Code
 Set the following configuration in your **Launch.json** file.
 ```json
@@ -107,7 +68,9 @@ Set the following configuration in your **Launch.json** file.
     ]
 }
 ```
+
 ## Modifying the API definition
+
 The services' OpenAPI specification is located in `openapi/fleet-manager.yaml`. It can be modified using Apicurio Studio, Swagger or manually.
 
 Once you've made your changes, the second step is to validate it:
@@ -123,13 +86,7 @@ make openapi/generate
 ```
 
 ## Adding a new endpoint
-See the [adding-a-new-endpoint](./docs/adding-a-new-endpoint.md) documentation.
-
-## Adding New Serve Command Flags
-See the [Adding Flags to Fleet Manager](./docs/adding-new-flags.md) documentation for more information.
-
-## Testing
-See the [automated testing](./docs/automated-testing.md) documentation.
+See the [adding-a-new-endpoint](./docs/development/adding-a-new-endpoint.md) documentation.
 
 ## Logging Standards & Best Practices
   * Log only actionable information, which will be read by a human or a machine for auditing or debugging purposes
@@ -141,34 +98,18 @@ See the [automated testing](./docs/automated-testing.md) documentation.
   * If a similar log message will be used in more than one place, consider adding a new standardized interface to `UHCLogger`
     * *Logging interface shall be updated to define a new `Log` struct to support standardization of more domain specific log messages*
 
-### Levels
-#### Info
-Log to this level any non-error based information that might be useful to someone browsing logs for a specific reason. This may or may not include request / response logging, debug information, script output, etc.
-
-#### Warn
-Log to this level any error based information that might want to be brought to someone's attention to take action on, but does not seriously impede or affect use of the application (ie. it is recoverable). This may or may not include deprecation notices, retry operations, etc.
-
-#### Error
-Log to this level any error that is fatal to the given transaction and affects expected user operation. This may or may not include failed connections, missing expected data, or other unrecoverable outcomes.
-Error handling should be implemented by following these best practices as laid out in [this guide](docs/error-handing.md).
-
-#### Fatal
-Log to this level any error that is fatal to the service and requires the service to be immediately shutdown in order to prevent data loss or other unrecoverable states. This should be limited to scripts and fail-fast scenarios in service startup *only* and *never* because of a user operation in an otherwise healthy servce.
-
 ### Verbosity
-Verbosity effects the way in which `Info` logs are written. The best way to see how verbosity works is here: https://play.golang.org/p/iXJiX289VzO
+On a scale from 1 -> 10, logging items at `V(10)` would be considered something akin to `TRACE` level logging,
+whereas `V(1)` would be information you might want to log all of the time.
 
-On a scale from 1 -> 10, logging items at `V(10)` would be considered something akin to `TRACE` level logging, whereas `V(1)` would be information you might want to log all of the time.
-
-As a rule of thumb, we use verbosity settings in the following ways. Consider we have:
-
+We use verbosity settings in the following ways:
 ```go
 glog.V(1).Info("foo")
 glog.V(5).Info("bar")
 glog.V(10).Info("biz")
 ```
 * `--v=1`
-  * This is production level logging. No unecessary spam and no sensitive information.
+  * This is production level logging. No unnecessary spam and no sensitive information.
   * This means that given the verbosity setting and the above code, we would see `foo` logged.
 * `--v=5`
   * This is stage / test level logging. Useful debugging information, but not spammy. No sensitive information.
@@ -199,15 +140,6 @@ func check(err error, msg string) {
 }
 ```
 
-## Running linter
-
-`golangci-lint` is used to run a static code analysis. This is enabled on per MR check and it will fail, if any new changes don't conform to the rules specified by the linter.
-
-To manually run the check, execute this command from the root of this repository
-
-```sh
-make lint
-```
 ## Writing Docs
 
-Please see the [README](./docs/README.md) in `docs` directory.
+Please see the [docs](./docs) directory.
