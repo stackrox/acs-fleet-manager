@@ -10,7 +10,6 @@ log "Resetting state of control-plane and data-plane..."
 
 port-forwarding start fleet-manager 8000 8000
 port-forwarding start db 5432 5432
-sleep 1
 $KUBECTL -n acsms exec -it deploy/db -- psql -h localhost -U "$DATABASE_USER" -p "$DATABASE_PORT" -d "$DATABASE_NAME" -c "DELETE FROM central_requests;"
 sleep 1
 
