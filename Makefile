@@ -13,12 +13,18 @@ binary:=fleet-manager
 # Otherwise image tag is generated based on git tags.
 ifeq ($(TAG),)
 ifeq (,$(wildcard CI_TAG))
+ifeq ($(IGNORE_REPOSITORY_DIRTINESS),true)
+TAG=$(shell git describe --tags --abbrev=10 --long)
+else
 TAG=$(shell git describe --tags --abbrev=10 --dirty --long)
+endif
 else
 TAG=$(shell cat CI_TAG)
 endif
 endif
 image_tag = $(TAG)
+
+GINKGO_FLAGS ?= -v
 
 # The version needs to be different for each deployment because otherwise the
 # cluster will not pull the new image from the internal registry:
@@ -353,7 +359,7 @@ test/cluster/cleanup:
 	./scripts/cleanup_test_cluster.sh
 .PHONY: test/cluster/cleanup
 
-test/e2e: gotestsum
+test/e2e:
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	RUN_E2E=true \
 	ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=$(ENABLE_CENTRAL_EXTERNAL_CERTIFICATE) \
@@ -364,8 +370,17 @@ test/e2e: gotestsum
 		--race --trace \
 		--json-report=e2e-report.json \
 		--timeout=$(TEST_TIMEOUT) \
+		--slow-spec-threshold=5m \
 		 ./e2e/...
 .PHONY: test/e2e
+
+test/e2e/reset:
+	@./dev/env/scripts/reset
+.PHONY: test/e2e/reset
+
+test/e2e/cleanup:
+	@./dev/env/scripts/down.sh
+.PHONY: test/e2e/cleanup
 
 # generate files
 generate: moq openapi/generate

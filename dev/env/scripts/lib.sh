@@ -153,9 +153,15 @@ init() {
     export SKIP_TESTS=${SKIP_TESTS:-$SKIP_TESTS_DEFAULT}
     export ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=${ENABLE_CENTRAL_EXTERNAL_CERTIFICATE:-$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE_DEFAULT}
     export CENTRAL_DOMAIN_NAME=${CENTRAL_DOMAIN_NAME:-$CENTRAL_DOMAIN_NAME_DEFAULT}
-    export FLEET_MANAGER_IMAGE="${FLEET_MANAGER_IMAGE:-$FLEET_MANAGER_IMAGE_DEFAULT}"
+    export FLEET_MANAGER_IMAGE=${FLEET_MANAGER_IMAGE:-$FLEET_MANAGER_IMAGE_DEFAULT}
+    export IGNORE_REPOSITORY_DIRTINESS=${IGNORE_REPOSITORY_DIRTINESS:-$IGNORE_REPOSITORY_DIRTINESS_DEFAULT}
 
-    if [[ "$ROUTE53_ACCESS_KEY" == "" || "$ROUTE53_SECRET_ACCESS_KEY" == "" ]]; then
+    if [[ "$FLEET_MANAGER_IMAGE" == "" ]]; then
+        tag=$(make -s -C "$GITROOT" tag)
+        FLEET_MANAGER_IMAGE="fleet-manager:${tag}"
+    fi
+
+    if [[ "$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE" != "false" && ("$ROUTE53_ACCESS_KEY" == "" || "$ROUTE53_SECRET_ACCESS_KEY" == "") ]]; then
         log "setting ENABLE_CENTRAL_EXTERNAL_CERTIFICATE to false since no Route53 credentials were provided"
         ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=false
     fi
@@ -315,7 +321,31 @@ docker_logged_in() {
 }
 
 load_external_config() {
-  local chamber="${CHAMBER:-$CHAMBER_DEFAULT}"
-  eval "$($chamber env fleet-manager)"
-  eval "$($chamber env fleetshard-sync)"
+    local chamber="${CHAMBER:-$CHAMBER_DEFAULT}"
+    eval "$($chamber env fleet-manager)"
+    eval "$($chamber env fleetshard-sync)"
+}
+
+delete_tenant_namespaces() {
+    central_namespaces=$($KUBECTL get namespace -o jsonpath='{range .items[?(@.status.phase == "Active")]}{.metadata.name}{"\n"}{end}' | grep '^rhacs-.*$' || true)
+    if [[ ! "$central_namespaces" ]]; then
+        log "No left-over RHACS tenant namespaces to be deleted."
+        return
+    fi
+    for namespace in $central_namespaces; do
+        $KUBECTL delete -n "$namespace" centrals.platform.stackrox.io --all || true
+        $KUBECTL delete namespace "$namespace" &
+    done
+    log "Waiting for leftover RHACS namespaces to be deleted... "
+    while true; do
+        central_namespaces=$($KUBECTL get namespace -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | grep '^rhacs-.*$' || true)
+        if [[ "$central_namespaces" ]]; then
+            central_namespaces_short=$(echo "$central_namespaces" | tr '\n' " ")
+            log "Waiting for RHACS tenant namespaces to be deleted: $central_namespaces_short ..."
+        else
+            break
+        fi
+        sleep 1
+    done
+    log "All RHACS tenant namespaces deleted."
 }

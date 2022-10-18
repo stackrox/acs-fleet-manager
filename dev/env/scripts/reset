@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+GITROOT="$(git rev-parse --show-toplevel)"
+export GITROOT
+# shellcheck source=/dev/null
+source "${GITROOT}/dev/env/scripts/lib.sh"
+init
+
+log "Resetting state of control-plane and data-plane..."
+
+port-forwarding start fleet-manager 8000 8000
+port-forwarding start db 5432 5432
+$KUBECTL -n acsms exec -it deploy/db -- psql -h localhost -U "$DATABASE_USER" -p "$DATABASE_PORT" -d "$DATABASE_NAME" -c "DELETE FROM central_requests;"
+sleep 1
+
+delete_tenant_namespaces
+
+log "Resetting complete."

@@ -18,15 +18,18 @@ import (
 )
 
 var (
-	cfg             *rest.Config
-	k8sClient       client.Client
-	routeService    *k8s.RouteService
-	dnsEnabled      bool
-	routesEnabled   bool
-	route53Client   *route53.Route53
-	waitTimeout     = getWaitTimeout()
-	dpCloudProvider = getEnvDefault("DP_CLOUD_PROVIDER", "standalone")
-	dpRegion        = getEnvDefault("DP_REGION", "standalone")
+	cfg                  *rest.Config
+	k8sClient            client.Client
+	routeService         *k8s.RouteService
+	dnsEnabled           bool
+	routesEnabled        bool
+	route53Client        *route53.Route53
+	waitTimeout          = getWaitTimeout()
+	dpCloudProvider      = getEnvDefault("DP_CLOUD_PROVIDER", "standalone")
+	dpRegion             = getEnvDefault("DP_REGION", "standalone")
+	authType             = "OCM"
+	fleetManagerEndpoint = "http://localhost:8000"
+	runningAuthTests     bool
 )
 
 const defaultTimeout = 5 * time.Minute
@@ -79,6 +82,23 @@ var _ = BeforeSuite(func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		route53Client = route53.New(sess)
+	}
+
+	if val := os.Getenv("AUTH_TYPE"); val != "" {
+		authType = val
+	}
+	GinkgoWriter.Printf("AUTH_TYPE: %q\n", authType)
+
+	if val := os.Getenv("FLEET_MANAGER_ENDPOINT"); val != "" {
+		fleetManagerEndpoint = val
+	}
+	GinkgoWriter.Printf("FLEET_MANAGER_ENDPOINT: %q\n", fleetManagerEndpoint)
+
+	if val := getEnvDefault("RUN_AUTH_E2E", "false"); val == "true" {
+		runningAuthTests = true
+		GinkgoWriter.Printf("Executing auth tests")
+	} else {
+		GinkgoWriter.Printf("Skipping auth tests. If you want to run the auth tests, set RUN_AUTH_E2E=true")
 	}
 })
 
