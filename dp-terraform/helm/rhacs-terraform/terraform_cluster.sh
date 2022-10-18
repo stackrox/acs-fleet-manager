@@ -10,9 +10,6 @@ if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
     echo "Known environments: stage prod"
     echo "Cluster typically looks like: acs-{environment}-dp-01"
-    echo ""
-    echo "Note: you need to be logged into OCM for your environment's administrator"
-    echo "Note: you need to be logged into OC for your cluster's administrator"
     exit 2
 fi
 
@@ -29,9 +26,6 @@ load_external_config observability OBSERVABILITY_
 
 case $ENVIRONMENT in
   stage)
-    # TODO: Fetch OCM token and log in as appropriate user as part of script.
-    EXPECT_OCM_ID="2ECw6PIE06TzjScQXe6QxMMt3Sa"
-
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
 
     FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:f6ad53e"
@@ -41,9 +35,6 @@ case $ENVIRONMENT in
     ;;
 
   prod)
-    # TODO: Fetch OCM token and log in as appropriate user as part of script.
-    EXPECT_OCM_ID="2BBslbGSQs5PS2HCfJKqOPcCN4r"
-
     FM_ENDPOINT="https://api.openshift.com"
 
     FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:6da74ac"
@@ -58,19 +49,40 @@ case $ENVIRONMENT in
     ;;
 esac
 
+function assert_environment() {
+  local EXPECTED_ENVIRONMENT="$1"
+  if [[ $EXPECTED_ENVIRONMENT != "$ENVIRONMENT" ]]; then
+    echo "Cluster ${CLUSTER_NAME} is expected to be in environment ${EXPECTED_ENVIRONMENT}, not ${ENVIRONMENT}" >&2
+    exit 2
+  fi
+}
+
+# The following values can be retrieved from the Red Hat Hybrid Cloud Console.
+# - Cluster ID the first piece of information on the "Details" pane of the Overview tab of the given cluster.
+# - The URL infix is the part of the Control Plane API endpoint between cluster name and "openshiftapps.com",
+#   in the "Cluster ingress" pane of the Networking tab for the given cluster.
+case $CLUSTER_NAME in
+acs-stage-dp-01)
+  assert_environment stage
+  CLUSTER_ID="d3ccd7a0-9b33-41e3-9024-6677f42259ed"
+  CLUSTER_URL_INFIX="blbk.p1"
+  ;;
+acs-prod-dp-01)
+  assert_environment prod
+  CLUSTER_ID="05bbca64-8687-494a-8ac1-0eddc91efdd6"
+  CLUSTER_URL_INFIX="pnz3.p1"
+  ;;
+*)
+  echo "Unknown cluster ${CLUSTER_NAME}. Please define it in the $0 script if this is a new cluster." >&2
+  exit 2
+  ;;
+esac
+
+load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
+oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="https://api.${CLUSTER_NAME}.${CLUSTER_URL_INFIX}.openshiftapps.com:6443"
+
 OPERATOR_USE_UPSTREAM=false
 OPERATOR_SOURCE="redhat-operators"
-
-ACTUAL_OCM_ID=$(ocm whoami | jq -r '.id')
-if [[ "${EXPECT_OCM_ID}" != "${ACTUAL_OCM_ID}" ]]; then
-  echo "Must be logged into rhacs-managed-service-prod account in OCM to get cluster ID"
-  exit 1
-fi
-CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
-if [[ -z "${CLUSTER_ID}" ]]; then
-  echo "CLUSTER_ID is empty. Make sure ${CLUSTER_NAME} points to an existing cluster."
-  exit 1
-fi
 
 ## Uncomment this section if you want to deploy an upstream version of the operator.
 ## Update the global pull secret within the dataplane cluster to include the read-only credentials for quay.io/rhacs-eng
