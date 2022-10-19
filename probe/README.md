@@ -1,6 +1,6 @@
 # External probe
 
-The probe service enables blackbox monitoring for fleet manaer. During each
+The probe service enables blackbox monitoring for fleet manager. During each
 probe run, it attempts to
 
 1. create a Central instance and ensure it is in `ready` state.
