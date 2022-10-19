@@ -44,13 +44,7 @@ const (
 	defaultDestination = "stderr"
 
 	// Our project prefix. For all subpackages of this, we strip this prefix.
-	projectPrefix = "github.com/stackrox/rox"
-
-	// LoggingPath is the common log file so we can export it.
-	LoggingPath = "/var/log/stackrox/log.txt"
-
-	// PersistentLoggingPath is the additional logs on persistent storage for migration related logs.
-	PersistentLoggingPath = "/var/lib/stackrox/migration_log/log.txt"
+	projectPrefix = "github.com/stackrox/acs-fleet-manager"
 
 	// defaultLevel is the default log level.
 	defaultLevel = zapcore.InfoLevel
@@ -71,8 +65,6 @@ const (
 	InfoLevel = zapcore.InfoLevel
 	// DebugLevel log level
 	DebugLevel = zapcore.DebugLevel
-
-	persistentLogEnvVar = "PERSISTENT_LOG"
 )
 
 var (
@@ -186,14 +178,6 @@ func init() {
 	}
 
 	config.Level = zap.NewAtomicLevelAt(logLevel)
-
-	// To the alert reader: While we could theoretically create a zapcore.Core instance and use
-	// the logFile to create a MultiSyncWriter, we stick with using the config-based approach
-	// such that we can easily propagate changes to log levels.
-	addOutput(&config, LoggingPath)
-	if strings.ToLower(os.Getenv(persistentLogEnvVar)) == "true" {
-		addOutput(&config, PersistentLoggingPath)
-	}
 
 	if buildinfo.ReleaseBuild {
 		config.DisableStacktrace = true
@@ -390,15 +374,6 @@ func SortedLevels() []zapcore.Level {
 // Skip allows to specify how much layers of nested calls we will skip during logging.
 func CreateLogger(module *Module, skip int) *Logger {
 	lc := config
-	return createLoggerWithConfig(&lc, module, skip)
-}
-
-// CreatePersistentLogger creates (but does not register) a new logger instance logging
-// also to persistent location.
-// Skip allows to specify how much layers of nested calls we will skip during logging.
-func CreatePersistentLogger(module *Module, skip int) *Logger {
-	lc := config
-	addOutput(&lc, PersistentLoggingPath)
 	return createLoggerWithConfig(&lc, module, skip)
 }
 
