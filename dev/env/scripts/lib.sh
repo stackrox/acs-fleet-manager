@@ -59,8 +59,6 @@ init() {
     GITROOT_DEFAULT=$(git rev-parse --show-toplevel)
     export GITROOT=${GITROOT:-$GITROOT_DEFAULT}
     set -eu -o pipefail
-    # Ensure that the necessary tools are installed
-    make -s -C "$GITROOT" script-tools
 
     # For reading the defaults we need access to the
     if [[ -z "${CLUSTER_NAME:-}" ]]; then
@@ -78,6 +76,9 @@ init() {
 
     if ! which bootstrap.sh >/dev/null 2>&1; then
         export PATH="$GITROOT/dev/env/scripts:${PATH}"
+    fi
+    if ! grep -q "$GITROOT/bin" <<< "$PATH"; then
+        export PATH="$GITROOT/bin:$PATH"
     fi
 
     export CLUSTER_TYPE="${CLUSTER_TYPE:-$CLUSTER_TYPE_DEFAULT}"
@@ -327,19 +328,23 @@ docker_logged_in() {
 }
 
 load_external_config() {
+    ensure_tool_installed "chamber"
     local chamber
     if [[ "$USE_AWS_VAULT" = true ]]; then
+      ensure_tool_installed "aws-vault"
       if ! aws-vault list --credentials | grep -q "^${AWS_VAULT_PROFILE}$"; then
         log "Creating AWS Vault profile '$AWS_VAULT_PROFILE'"
         aws-vault add "$AWS_VAULT_PROFILE"
       fi
       chamber="aws-vault exec ${AWS_VAULT_PROFILE} -- chamber"
-    else
-      chamber="chamber"
     fi
 
     eval "$($chamber env fleet-manager)"
     eval "$($chamber env fleetshard-sync)"
+}
+
+ensure_tool_installed() {
+    make -s -C "$GITROOT" "$GITROOT/bin/$1"
 }
 
 delete_tenant_namespaces() {

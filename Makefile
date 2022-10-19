@@ -136,21 +136,13 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
 	}
 endif
 
-# This goal is intended for installing the tools required for running (and sourcing) the dev scripts (dev/env/scripts)
-# This way scripts may be called outside of makefile
-script-tools: $(CHAMBER_BIN) $(AWS_VAULT_BIN)
-	@echo "+ $@"
-.PHONY: script-tools
-
-CHAMBER_BIN := $(GOBIN)/chamber
+CHAMBER_BIN := $(LOCAL_BIN_PATH)/chamber
 $(CHAMBER_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
-	@echo "+ $@"
-	@cd $(TOOLS_DIR) && $(GO) install github.com/segmentio/chamber/v2
+	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/segmentio/chamber/v2
 
-AWS_VAULT_BIN := $(GOBIN)/aws-vault
+AWS_VAULT_BIN := $(LOCAL_BIN_PATH)/aws-vault
 $(AWS_VAULT_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
-	@echo "+ $@"
-	@cd $(TOOLS_DIR) && $(GO) install github.com/99designs/aws-vault/v6
+	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/99designs/aws-vault/v6
 
 OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
 NPM ?= "$(shell which npm)"
