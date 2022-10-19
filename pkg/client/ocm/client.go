@@ -167,8 +167,6 @@ func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.Subscriptio
 // GetOrganisationIDFromExternalID ...
 func (c *client) GetOrganisationIDFromExternalID(externalID string) (string, error) {
 	request := c.connection.AccountsMgmt().V1().Organizations().List().Search(fmt.Sprintf("external_id='%s'", externalID))
-	// TODO (stehessel/2022-10-05) Remove log statement to avoid log spam
-	glog.Infof("Get organization ID from external ID with request: %+v", request)
 	res, err := request.Send()
 	if err != nil {
 		return "", fmt.Errorf("retrieving organizations: %w", err)
