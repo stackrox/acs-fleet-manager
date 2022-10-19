@@ -1,10 +1,13 @@
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 
 # Requires: `jq`
 # Requires: BitWarden CLI `bw`
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/../../../scripts/lib/external_config.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
@@ -19,20 +22,14 @@ fi
 ENVIRONMENT=$1
 CLUSTER_NAME=$2
 
-function ensure_bitwarden_session_exists () {
-  # Check if we need to get a new BitWarden CLI Session Key.
-  if [[ -z "$BW_SESSION" ]]; then
-    if bw login --check; then
-      # We don't have a session key but we are logged in, so unlock and store the session.
-      BW_SESSION=$(bw unlock --raw)
-      export BW_SESSION
-    else
-      # We don't have a session key and are not logged in, so log in and store the session.
-      BW_SESSION=$(bw login --raw)
-      export BW_SESSION
-    fi
-  fi
-  bw sync -f
+export AWS_PROFILE="$ENVIRONMENT"
+
+
+# Loads config from the external storage to the environment and applying a prefix to a variable name (if exists).
+load_external_config() {
+    local service="$1"
+    local prefix="${2:-}"
+    eval "$(run_chamber env "$service" | sed -E "s/(^export )(.*)/\1${prefix}\2/")"
 }
 
 case $ENVIRONMENT in
@@ -42,27 +39,19 @@ case $ENVIRONMENT in
 
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
 
-    ensure_bitwarden_session_exists
+    init_chamber
 
+    # Fleetshard sync configuration
+    load_external_config fleetshard-sync FLEETSHARD_SYNC_
     FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:f6ad53e"
-    # Note: the Red Hat SSO client as of 2022-09-02 is the same between stage and prod.
-    FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
-    FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b)
-    LOGGING_AWS_ACCESS_KEY_ID=$(bw get item "84e2d673-27dd-4e87-bb16-aee800da4d73" | jq '.fields[] | select(.name == "AccessKeyID") | .value' --raw-output)
-    LOGGING_AWS_SECRET_ACCESS_KEY=$(bw get item "84e2d673-27dd-4e87-bb16-aee800da4d73" | jq '.fields[] | select(.name == "SecretAccessKey") | .value' --raw-output)
-    # Note: the GitHub Access Token as of 2022-09-02 is the same between stage and prod.
-    OBSERVABILITY_GITHUB_ACCESS_TOKEN=$(bw get password eb7aecd3-b553-4999-b201-aebe01445822)
+
+    # Logging configuration
+    load_external_config logging LOGGING_
+
+    # Observability configuration
+    load_external_config observability OBSERVABILITY_
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
-    OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID="observatorium-rhacs-metrics-staging"
-    OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET=$(
-        bw get item 510c8ed9-ba9f-46d9-b906-ae6100cf72f5 | \
-        jq --arg OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID "${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
-            '.fields[] | select(.name == $OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID) | .value' --raw-output
-    )
-    # Note: the PagerDuty Service Key as of 2022-09-02 is the same between stage and prod.
-    PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name == "Integration Key") | .value' --raw-output)
-    DEAD_MANS_SWITCH_URL=$(bw get password "1906e300-5897-4b7d-b395-af2700d7eac2")
     ;;
 
   prod)
@@ -74,8 +63,8 @@ case $ENVIRONMENT in
     ensure_bitwarden_session_exists
     FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:6da74ac"
     # Note: the Red Hat SSO client as of 2022-09-02 is the same between stage and prod.
-    FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
-    FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b)
+    FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
+    FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b)
     LOGGING_AWS_ACCESS_KEY_ID=$(bw get item "f7711943-c355-47cc-a0ee-af0400f8dfe7" | jq '.fields[] | select(.name == "AccessKeyID") | .value' --raw-output)
     LOGGING_AWS_SECRET_ACCESS_KEY=$(bw get item "f7711943-c355-47cc-a0ee-af0400f8dfe7" | jq '.fields[] | select(.name == "SecretAccessKey") | .value' --raw-output)
     # Note: the GitHub Access Token as of 2022-09-02 is the same between stage and prod.
@@ -89,8 +78,8 @@ case $ENVIRONMENT in
             '.fields[] | select(.name == $OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID) | .value' --raw-output
     )
     # Note: the PagerDuty Service Key as of 2022-09-02 is the same between stage and prod.
-    PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name == "Integration Key") | .value' --raw-output)
-    DEAD_MANS_SWITCH_URL=$(bw get password "c8b26dbc-c9f0-4bc4-8c8e-af2700d795b2")
+    OBSERVABILITY_PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name == "Integration Key") | .value' --raw-output)
+    OBSERVABILITY_DEAD_MANS_SWITCH_URL=$(bw get password "c8b26dbc-c9f0-4bc4-8c8e-af2700d795b2")
     ;;
 
   *)
@@ -140,8 +129,8 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --set fleetshardSync.authType="RHSSO" \
   --set fleetshardSync.clusterId="${CLUSTER_ID}" \
   --set fleetshardSync.fleetManagerEndpoint="${FM_ENDPOINT}" \
-  --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID}" \
-  --set fleetshardSync.redHatSSO.clientSecret="${FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET}" \
+  --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_ID}" \
+  --set fleetshardSync.redHatSSO.clientSecret="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET}" \
   --set logging.aws.accessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \
   --set logging.aws.secretAccessKey="${LOGGING_AWS_SECRET_ACCESS_KEY}" \
   --set observability.github.accessToken="${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" \
@@ -150,8 +139,8 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --set observability.observatorium.gateway="${OBSERVABILITY_OBSERVATORIUM_GATEWAY}" \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
-  --set observability.pagerduty.key="${PAGERDUTY_SERVICE_KEY}" \
-  --set observability.deadMansSwitch.url="${DEAD_MANS_SWITCH_URL}"
+  --set observability.pagerduty.key="${OBSERVABILITY_PAGERDUTY_SERVICE_KEY}" \
+  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}"
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs
