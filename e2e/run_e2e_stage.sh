@@ -9,7 +9,8 @@
 # By default AWS provider on `us-east-1` region is used because stage Data Plane is configured that way.
 #
 
-echo "ACS fleet manager base url: ${ACS_FLEET_MANAGER_ENDPOINT}"
+# print go version
+go version
 
 make \
   CLUSTER_ID="${DATA_PLANE_CLUSTER_ID}" \
