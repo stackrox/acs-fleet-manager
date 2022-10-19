@@ -31,6 +31,7 @@ Inheriting ImagePullSecrets for Quay.io: ${INHERIT_IMAGEPULLSECRETS}
 Installing RHACS Operator: ${INSTALL_OPERATOR}
 Enable External Config: ${ENABLE_EXTERNAL_CONFIG}
 Use AWS Vault: ${USE_AWS_VAULT}
+Debugging Mode: ${DEBUG_PODS}
 
 EOF
 
@@ -45,12 +46,12 @@ fi
 
 if [[ ! ("$CLUSTER_TYPE" == "openshift-ci" || "$CLUSTER_TYPE" == "infra-openshift") ]]; then
     # We are deploying locally. Locally we support Quay images and freshly built images.
-    if [[ "$FLEET_MANAGER_IMAGE" =~ ^fleet-manager:.* ]]; then
+    if [[ "$FLEET_MANAGER_IMAGE" =~ ^fleet-manager.*:.* ]]; then
         # Local image reference, which cannot be pulled.
         image_available=$(if $DOCKER image inspect "${FLEET_MANAGER_IMAGE}" >/dev/null 2>&1; then echo "true"; else echo "false"; fi)
         if [[ "$image_available" != "true" || "$FLEET_MANAGER_IMAGE" =~ dirty$ ]]; then
             # Attempt to build this image.
-            if [[ "$FLEET_MANAGER_IMAGE" == "fleet-manager:$(make -s -C "${GITROOT}" tag)" ]]; then
+            if [[ "$FLEET_MANAGER_IMAGE" == "$(make -s -C "${GITROOT}" full-image-tag)" ]]; then
                 # Looks like we can build this tag from the current state of the repository.
                 log "Rebuilding image..."
                 make -C "${GITROOT}" image/build/local
