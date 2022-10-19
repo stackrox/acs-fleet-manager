@@ -27,7 +27,6 @@ import (
 	"math"
 	"os"
 	"runtime"
-	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -219,7 +218,7 @@ func init() {
 		}
 	}
 
-	rootLogger = CreateLogger(ModuleForName("root logger"), 3)
+	rootLogger = CreateLogger(ModuleForName("root logger"), 1)
 }
 
 func addOutput(config *zap.Config, path string) {
@@ -305,7 +304,6 @@ func Infoln(args ...interface{}) { rootLogger.Info(args...) }
 
 // Infof implements logging.Logger interface.
 func Infof(format string, args ...interface{}) {
-	debug.PrintStack()
 	rootLogger.Infof(format, args...)
 }
 

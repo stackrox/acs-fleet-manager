@@ -23,6 +23,8 @@ spec:
           - "-c"
           - "$FLEETSHARD_SYNC_CONTAINER_COMMAND"
           env:
+            - name: STATIC_TOKEN
+              value: "$STATIC_TOKEN"
             - name: KUBECONFIG
               value: "/secrets/kubeconfig"
             - name: CLUSTER_ID
