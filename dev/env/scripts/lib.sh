@@ -77,7 +77,7 @@ init() {
     if ! which bootstrap.sh >/dev/null 2>&1; then
         export PATH="$GITROOT/dev/env/scripts:${PATH}"
     fi
-    if ! grep -q "$GITROOT/bin" <<< "$PATH"; then
+    if ! [[ ":$PATH:" == *":$GITROOT/bin:"* ]]; then
         export PATH="$GITROOT/bin:$PATH"
     fi
 
@@ -331,12 +331,14 @@ load_external_config() {
     ensure_tool_installed "chamber"
     local chamber
     if [[ "$USE_AWS_VAULT" = true ]]; then
-      ensure_tool_installed "aws-vault"
-      if ! aws-vault list --credentials | grep -q "^${AWS_VAULT_PROFILE}$"; then
-        log "Creating AWS Vault profile '$AWS_VAULT_PROFILE'"
-        aws-vault add "$AWS_VAULT_PROFILE"
-      fi
-      chamber="aws-vault exec ${AWS_VAULT_PROFILE} -- chamber"
+        ensure_tool_installed "aws-vault"
+        if ! aws-vault list --credentials | grep -q "^${AWS_VAULT_PROFILE}$"; then
+            log "Creating AWS Vault profile '$AWS_VAULT_PROFILE'"
+            aws-vault add "$AWS_VAULT_PROFILE"
+        fi
+        chamber="aws-vault exec ${AWS_VAULT_PROFILE} -- chamber"
+    else
+        chamber="chamber"
     fi
 
     eval "$($chamber env fleet-manager)"
