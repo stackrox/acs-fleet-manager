@@ -500,7 +500,6 @@ docker/login/internal:
 
 # Build the binary and image
 image/build: GOOS=linux
-image/build: GOARCH=amd64
 image/build: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build: fleet-manager fleetshard-sync
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) .
@@ -523,7 +522,6 @@ image/build/internal: binary
 
 # build binary and image and tag image for local deployment
 image/build/local: GOOS=linux
-image/build/local: GOARCH=amd64
 image/build/local: IMAGE_TAG ?= $(image_tag)
 image/build/local: image/build
 	$(DOCKER) image tag "$(external_image_registry)/$(image_repository):$(IMAGE_TAG)" "fleet-manager:$(IMAGE_TAG)"
