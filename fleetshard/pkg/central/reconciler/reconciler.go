@@ -5,8 +5,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/rds"
 	"strconv"
 	"sync/atomic"
+	"time"
 
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -40,6 +44,11 @@ const (
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 
 	centralDbSecretName = "central-db-password"
+	AWSRegion           = "us-east-1"
+	DBEngine            = "aurora-postgresql"
+	DBEngineVersion     = "13.7"
+	DBInstanceClass     = "db.serverless"
+	DBUser              = "rhacs-master"
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -107,6 +116,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// Set proxy configuration
 	envVars := getProxyEnvVars(remoteCentralNamespace)
 
+	dbConnectionString, dbPassword, err := r.waitForDBProvisioning(remoteCentralNamespace)
+	if err != nil {
+		return nil, errors.Wrap(err, "provisioning RDS DB")
+	}
+
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        remoteCentralName,
@@ -128,7 +142,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 					Resources: &centralResources,
 				},
 				DB: &v1alpha1.CentralDBSpec{
-					ConnectionStringOverride: pointer.StringPtr("host=vlad-test-db-cluster.cluster-cet7557iyjby.us-east-1.rds.amazonaws.com port=5432 user=rhacs_master dbname=postgres sslmode=require"),
+					ConnectionStringOverride: pointer.StringPtr(dbConnectionString),
 					PasswordSecret: &v1alpha1.LocalSecretReference{
 						Name: centralDbSecretName,
 					},
@@ -187,7 +201,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
-	dbPassword := []byte("random_pass_1234!")
 	if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace, dbPassword); err != nil {
 		return nil, errors.Wrap(err, "unable to ensure that DB secret exists")
 	}
@@ -457,6 +470,114 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 	}
 
 	return nil
+}
+
+func (r *CentralReconciler) waitForDBProvisioning(remoteCentralNamespace string) (string, []byte, error) {
+	cfg := &aws.Config{
+		Region: aws.String(AWSRegion),
+	}
+
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		return "", nil, fmt.Errorf("unable to create session, %v", err)
+	}
+
+	startTime := time.Now()
+	clusterId := remoteCentralNamespace + "-db-cluster"
+	instanceId := remoteCentralNamespace + "-db-instance"
+	dbPassword := "not_random_pass_1234!" // TODO: generate password
+
+	rdsClient := rds.New(sess)
+
+	dbInstanceQuery := &rds.DescribeDBInstancesInput{
+		DBInstanceIdentifier: aws.String(instanceId),
+	}
+	_, err = rdsClient.DescribeDBInstances(dbInstanceQuery)
+	if err != nil {
+		glog.Infof("Provisioning RDS database instance.")
+		_, err = rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterId, dbPassword))
+		if err != nil {
+			return "", nil, fmt.Errorf("creating DB cluster: %v", err)
+		}
+
+		_, err = rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterId, instanceId))
+		if err != nil {
+			// TODO: delete cluster
+			return "", nil, fmt.Errorf("creating DB instance: %v", err)
+		}
+	}
+
+	for {
+		result, err := rdsClient.DescribeDBInstances(dbInstanceQuery)
+		if err != nil {
+			return "", nil, fmt.Errorf("retrieving DB instance state: %v", err)
+		}
+
+		if len(result.DBInstances) != 1 {
+			return "", nil, fmt.Errorf("unexpected number of DB instances: %v", err)
+		}
+
+		dbInstanceStatus := *result.DBInstances[0].DBInstanceStatus
+		if dbInstanceStatus == "available" {
+			dbClusterQuery := &rds.DescribeDBClustersInput{
+				DBClusterIdentifier: aws.String(clusterId),
+			}
+
+			clusterResult, err := rdsClient.DescribeDBClusters(dbClusterQuery)
+			if err != nil {
+				return "", nil, fmt.Errorf("retrieving DB cluster description: %v", err)
+			}
+
+			glog.Infof("Time to create database: %s\n", time.Since(startTime))
+
+			connectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=require",
+				*clusterResult.DBClusters[0].Endpoint, 5432, DBUser, "postgres")
+
+			return connectionString, []byte(dbPassword), nil
+		} else {
+			glog.Infof("Instance status: %s\n", dbInstanceStatus)
+			time.Sleep(30 * time.Second)
+		}
+	}
+}
+
+func newCreateCentralDBClusterInput(clusterId string, dbPassword string) *rds.CreateDBClusterInput {
+	return &rds.CreateDBClusterInput{
+		DBClusterIdentifier: aws.String(clusterId),
+		Engine:              aws.String(DBEngine),
+		EngineVersion:       aws.String(DBEngineVersion),
+		MasterUsername:      aws.String("rhacs_master"),
+		MasterUserPassword:  aws.String(dbPassword), // TODO: generate random password
+		// TODO: the security group needs to be created during the data plane terraforming, and made known to
+		// fleet-manager via a configuration parameter. I created this one in the AWS Console.
+		VpcSecurityGroupIds: aws.StringSlice([]string{"sg-04dcc23a03646041c"}),
+		ServerlessV2ScalingConfiguration: &rds.ServerlessV2ScalingConfiguration{
+			MinCapacity: aws.Float64(0.5),
+			MaxCapacity: aws.Float64(16),
+		},
+		BackupRetentionPeriod: aws.Int64(30),
+
+		// TODO: The following are some extra parameters to consider
+		// AvailabilityZones: // TODO: should we have multiple AZs?
+		// DeletionProtection: // TODO: see if this useful
+		// EnableCloudwatchLogsExports // TODO: should probably be enabled
+		// Port // TODO: default is 5432, any reason to change?
+		// StorageEncrypted // TODO: enable encryption?
+		// VpcSecurityGroupIds // TODO: this might be useful to restrict communication
+		// Tags // TODO: e.g. could add a tag that allows us to identify the associated Central
+		// PreferredBackupWindow
+		// PreferredMaintenanceWindow
+	}
+}
+
+func newCreateCentralDBInstanceInput(clusterId, instanceId string) *rds.CreateDBInstanceInput {
+	return &rds.CreateDBInstanceInput{
+		DBInstanceClass:      aws.String(DBInstanceClass),
+		DBClusterIdentifier:  aws.String(clusterId),
+		DBInstanceIdentifier: aws.String(instanceId),
+		Engine:               aws.String(DBEngine),
+		PubliclyAccessible:   aws.Bool(true), // TODO: should be false
+	}
 }
 
 func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
