@@ -77,9 +77,6 @@ init() {
     if ! which bootstrap.sh >/dev/null 2>&1; then
         export PATH="$GITROOT/dev/env/scripts:${PATH}"
     fi
-    if ! [[ ":$PATH:" == *":$GITROOT/bin:"* ]]; then
-        export PATH="$GITROOT/bin:$PATH"
-    fi
 
     export CLUSTER_TYPE="${CLUSTER_TYPE:-$CLUSTER_TYPE_DEFAULT}"
     if [[ -z "$CLUSTER_TYPE" ]]; then
@@ -91,17 +88,11 @@ init() {
         source "$env_file"
     done
 
-    export AWS_REGION="${AWS_REGION:-$AWS_REGION_DEFAULT}"
-    export USE_AWS_VAULT="${USE_AWS_VAULT:-$USE_AWS_VAULT_DEFAULT}"
-    export AWS_VAULT_PROFILE="${AWS_VAULT_PROFILE:-$AWS_VAULT_PROFILE_DEFAULT}"
-
     export ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-$ENABLE_EXTERNAL_CONFIG_DEFAULT}"
+    export USE_AWS_VAULT="${USE_AWS_VAULT:-$USE_AWS_VAULT_DEFAULT}"
     if [[ "$ENABLE_EXTERNAL_CONFIG" == "true" ]]; then
-        load_external_config
-    fi
-
-    if [[ -z "${CENTRAL_IDP_CLIENT_SECRET:-}" ]]; then
-        die "Error: CENTRAL_IDP_CLIENT_SECRET not set. Please make sure that it is initialized properly."
+        # shellcheck source=/dev/null
+        source "${GITROOT}/scripts/external_config.sh"
     fi
 
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
@@ -325,28 +316,6 @@ docker_logged_in() {
     else
         return 1
     fi
-}
-
-load_external_config() {
-    ensure_tool_installed "chamber"
-    local chamber
-    if [[ "$USE_AWS_VAULT" = true ]]; then
-        ensure_tool_installed "aws-vault"
-        if ! aws-vault list --credentials | grep -q "^${AWS_VAULT_PROFILE}$"; then
-            log "Creating AWS Vault profile '$AWS_VAULT_PROFILE'"
-            aws-vault add "$AWS_VAULT_PROFILE"
-        fi
-        chamber="aws-vault exec ${AWS_VAULT_PROFILE} -- chamber"
-    else
-        chamber="chamber"
-    fi
-
-    eval "$($chamber env fleet-manager)"
-    eval "$($chamber env fleetshard-sync)"
-}
-
-ensure_tool_installed() {
-    make -s -C "$GITROOT" "$GITROOT/bin/$1"
 }
 
 delete_tenant_namespaces() {

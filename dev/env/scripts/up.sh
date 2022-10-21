@@ -7,6 +7,7 @@ export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 init
+init_chamber
 
 if [[ "$IGNORE_REPOSITORY_DIRTINESS" = "true" ]]; then
     fleet_manager_image_info="${FLEET_MANAGER_IMAGE} (ignoring repository dirtiness)"
@@ -83,14 +84,14 @@ log "Database is ready."
 
 # Deploy MS components.
 log "Deploying fleet-manager"
-apply "${MANIFESTS_DIR}/fleet-manager"
+run_chamber exec "fleet-manager" -- apply "${MANIFESTS_DIR}/fleet-manager"
 wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleet-manager" "fleet-manager"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
     $KUBECTL -n "$ACSMS_NAMESPACE" logs -l application=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
 fi
 
 log "Deploying fleetshard-sync"
-apply "${MANIFESTS_DIR}/fleetshard-sync"
+run_chamber exec "fleetshard-sync" -- apply "${MANIFESTS_DIR}/fleetshard-sync"
 wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
     $KUBECTL -n "$ACSMS_NAMESPACE" logs -l application=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
