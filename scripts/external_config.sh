@@ -18,6 +18,9 @@ init_chamber() {
     if [[ "$USE_AWS_VAULT" = true ]]; then
         ensure_tool_installed aws-vault
         ensure_aws_profile_exists
+    elif [[ -z "${AWS_SESSION_TOKEN:-}" ]] || [[ -z "${AWS_ACCESS_KEY_ID:-}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
+        die "Error: Unable to resolve one of the following environment variables: AWS_SESSION_TOKEN, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY.
+            Please set them or use aws-vault by setting USE_AWS_VAULT=true."
     fi
 }
 
