@@ -5,13 +5,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strconv"
+	"sync/atomic"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
-	"strconv"
-	"sync/atomic"
-	"time"
-
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
@@ -48,7 +47,7 @@ const (
 	DBEngine            = "aurora-postgresql"
 	DBEngineVersion     = "13.7"
 	DBInstanceClass     = "db.serverless"
-	DBUser              = "rhacs-master"
+	DBUser              = "rhacs_master"
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -116,9 +115,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// Set proxy configuration
 	envVars := getProxyEnvVars(remoteCentralNamespace)
 
-	dbConnectionString, dbPassword, err := r.waitForDBProvisioning(remoteCentralNamespace)
+	dbConnectionString, dbPassword, err := r.startDBProvisioning(remoteCentralNamespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "provisioning RDS DB")
+	}
+	if dbConnectionString == "" {
+		glog.Info("Waiting for RDS database to be available...")
+		return installingStatus(), nil
 	}
 
 	central := &v1alpha1.Central{
@@ -472,7 +475,7 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 	return nil
 }
 
-func (r *CentralReconciler) waitForDBProvisioning(remoteCentralNamespace string) (string, []byte, error) {
+func (r *CentralReconciler) startDBProvisioning(remoteCentralNamespace string) (string, []byte, error) {
 	cfg := &aws.Config{
 		Region: aws.String(AWSRegion),
 	}
@@ -482,7 +485,6 @@ func (r *CentralReconciler) waitForDBProvisioning(remoteCentralNamespace string)
 		return "", nil, fmt.Errorf("unable to create session, %v", err)
 	}
 
-	startTime := time.Now()
 	clusterId := remoteCentralNamespace + "-db-cluster"
 	instanceId := remoteCentralNamespace + "-db-instance"
 	dbPassword := "not_random_pass_1234!" // TODO: generate password
@@ -507,38 +509,33 @@ func (r *CentralReconciler) waitForDBProvisioning(remoteCentralNamespace string)
 		}
 	}
 
-	for {
-		result, err := rdsClient.DescribeDBInstances(dbInstanceQuery)
-		if err != nil {
-			return "", nil, fmt.Errorf("retrieving DB instance state: %v", err)
-		}
-
-		if len(result.DBInstances) != 1 {
-			return "", nil, fmt.Errorf("unexpected number of DB instances: %v", err)
-		}
-
-		dbInstanceStatus := *result.DBInstances[0].DBInstanceStatus
-		if dbInstanceStatus == "available" {
-			dbClusterQuery := &rds.DescribeDBClustersInput{
-				DBClusterIdentifier: aws.String(clusterId),
-			}
-
-			clusterResult, err := rdsClient.DescribeDBClusters(dbClusterQuery)
-			if err != nil {
-				return "", nil, fmt.Errorf("retrieving DB cluster description: %v", err)
-			}
-
-			glog.Infof("Time to create database: %s\n", time.Since(startTime))
-
-			connectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=require",
-				*clusterResult.DBClusters[0].Endpoint, 5432, DBUser, "postgres")
-
-			return connectionString, []byte(dbPassword), nil
-		} else {
-			glog.Infof("Instance status: %s\n", dbInstanceStatus)
-			time.Sleep(30 * time.Second)
-		}
+	result, err := rdsClient.DescribeDBInstances(dbInstanceQuery)
+	if err != nil {
+		return "", nil, fmt.Errorf("retrieving DB instance state: %v", err)
 	}
+
+	if len(result.DBInstances) != 1 {
+		return "", nil, fmt.Errorf("unexpected number of DB instances: %v", err)
+	}
+
+	dbInstanceStatus := *result.DBInstances[0].DBInstanceStatus
+	if dbInstanceStatus == "available" {
+		dbClusterQuery := &rds.DescribeDBClustersInput{
+			DBClusterIdentifier: aws.String(clusterId),
+		}
+
+		clusterResult, err := rdsClient.DescribeDBClusters(dbClusterQuery)
+		if err != nil {
+			return "", nil, fmt.Errorf("retrieving DB cluster description: %v", err)
+		}
+
+		connectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=require",
+			*clusterResult.DBClusters[0].Endpoint, 5432, DBUser, "postgres")
+
+		return connectionString, []byte(dbPassword), nil
+	}
+
+	return "", nil, nil
 }
 
 func newCreateCentralDBClusterInput(clusterId string, dbPassword string) *rds.CreateDBClusterInput {
@@ -546,7 +543,7 @@ func newCreateCentralDBClusterInput(clusterId string, dbPassword string) *rds.Cr
 		DBClusterIdentifier: aws.String(clusterId),
 		Engine:              aws.String(DBEngine),
 		EngineVersion:       aws.String(DBEngineVersion),
-		MasterUsername:      aws.String("rhacs_master"),
+		MasterUsername:      aws.String(DBUser),
 		MasterUserPassword:  aws.String(dbPassword), // TODO: generate random password
 		// TODO: the security group needs to be created during the data plane terraforming, and made known to
 		// fleet-manager via a configuration parameter. I created this one in the AWS Console.
