@@ -38,6 +38,8 @@ const (
 	helmReleaseName = "tenant-resources"
 
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
+
+	centralDbSecretName = "central-db-password"
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -125,6 +127,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				DeploymentSpec: v1alpha1.DeploymentSpec{
 					Resources: &centralResources,
 				},
+				DB: &v1alpha1.CentralDBSpec{
+					ConnectionStringOverride: pointer.StringPtr("host=vlad-test-db-cluster.cluster-cet7557iyjby.us-east-1.rds.amazonaws.com port=5432 user=rhacs_master dbname=postgres sslmode=require"),
+					PasswordSecret: &v1alpha1.LocalSecretReference{
+						Name: centralDbSecretName,
+					},
+				},
 			},
 			Scanner: &v1alpha1.ScannerComponentSpec{
 				Analyzer: &v1alpha1.ScannerAnalyzerComponent{
@@ -177,6 +185,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	if err := r.ensureNamespaceExists(remoteCentralNamespace); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
+	}
+
+	dbPassword := []byte("random_pass_1234!")
+	if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace, dbPassword); err != nil {
+		return nil, errors.Wrap(err, "unable to ensure that DB secret exists")
 	}
 
 	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
@@ -420,6 +433,36 @@ func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name str
 	}
 	glog.Infof("Central namespace %s is marked for deletion", name)
 	return false, nil
+}
+
+func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, remoteCentralNamespace string, password []byte) error {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: centralDbSecretName,
+		},
+	}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			secret = &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      centralDbSecretName,
+					Namespace: remoteCentralNamespace,
+				},
+				Data: map[string][]byte{"password": password},
+			}
+
+			err = r.client.Create(ctx, secret)
+			if err != nil {
+				return fmt.Errorf("creating Central DB secret: %v", err)
+			}
+			return nil
+		}
+
+		return fmt.Errorf("getting Central DB secret: %v", err)
+	}
+
+	return nil
 }
 
 func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
