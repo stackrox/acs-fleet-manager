@@ -16,6 +16,11 @@ init_chamber() {
         export PATH="$GITROOT/bin:$PATH"
     fi
     ensure_tool_installed chamber
+
+    if [[ "$ENABLE_EXTERNAL_CONFIG" != "true" ]]; then
+        return
+    fi
+
     if [[ "$USE_AWS_VAULT" = true ]]; then
         ensure_tool_installed aws-vault
         ensure_aws_profile_exists
