@@ -2,8 +2,6 @@ package defaults
 
 import (
 	"fmt"
-
-	"github.com/caarlos0/env/v6"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -11,9 +9,9 @@ import (
 // AnalyzerDefaults ...
 type AnalyzerDefaults struct {
 	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"100Mi"`
-	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"250m"`
+	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"10m"`
 	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500Mi"`
-	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"2000m"`
+	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"1000m"`
 	AutoScaling   string            `env:"AUTOSCALING"    envDefault:"Enabled"`
 	MinReplicas   int32             `env:"MIN_REPLICAS"   envDefault:"1"`
 	Replicas      int32             `env:"REPLICAS"       envDefault:"1"`
@@ -23,9 +21,9 @@ type AnalyzerDefaults struct {
 // DbDefaults ...
 type DbDefaults struct {
 	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"100Mi"`
-	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"250m"`
+	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"10m"`
 	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500Mi"`
-	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"2000m"`
+	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"1000m"`
 }
 
 // ScannerDefaults ...
