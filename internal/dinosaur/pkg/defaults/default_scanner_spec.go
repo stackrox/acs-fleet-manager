@@ -11,7 +11,7 @@ type AnalyzerDefaults struct {
 	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"100Mi"`
 	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"10m"`
 	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500Mi"`
-	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"1000m"`
+	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"250m"`
 	AutoScaling   string            `env:"AUTOSCALING"    envDefault:"Enabled"`
 	MinReplicas   int32             `env:"MIN_REPLICAS"   envDefault:"1"`
 	Replicas      int32             `env:"REPLICAS"       envDefault:"1"`
@@ -20,10 +20,10 @@ type AnalyzerDefaults struct {
 
 // DbDefaults ...
 type DbDefaults struct {
-	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"100Mi"`
+	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"500Mi"`
 	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"10m"`
 	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500Mi"`
-	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"1000m"`
+	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"250m"`
 }
 
 // ScannerDefaults ...
