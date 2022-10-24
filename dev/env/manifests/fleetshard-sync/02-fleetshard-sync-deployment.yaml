@@ -29,6 +29,8 @@ spec:
               value: http://fleet-manager:8000
             - name: AUTH_TYPE
               value: "$AUTH_TYPE"
+            - name: "STATIC_TOKEN"
+              value: "$STATIC_TOKEN"
             - name: RHSSO_SERVICE_ACCOUNT_CLIENT_ID
               valueFrom:
                 secretKeyRef:
