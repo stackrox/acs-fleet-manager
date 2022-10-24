@@ -90,10 +90,7 @@ init() {
 
     export ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-$ENABLE_EXTERNAL_CONFIG_DEFAULT}"
     export USE_AWS_VAULT="${USE_AWS_VAULT:-$USE_AWS_VAULT_DEFAULT}"
-    if [[ "$ENABLE_EXTERNAL_CONFIG" == "true" ]]; then
-        # shellcheck source=/dev/null
-        source "${GITROOT}/scripts/external_config.sh"
-    fi
+    source "${GITROOT}/scripts/external_config.sh"
 
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
     export ACSMS_NAMESPACE="${ACSMS_NAMESPACE:-$ACSMS_NAMESPACE_DEFAULT}"
