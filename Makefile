@@ -435,7 +435,7 @@ openapi/generate/rhsso: go-bindata openapi-generator
 
 # fail if formatting is required
 code/check:
-	@if ! [ -z $$($(GOFMT) -l `find . -type f -name '*.go' -not -path "./vendor/*"`) ]; then \
+	@if ! [ -z "$$(find . -path './vendor' -prune -o -type f -name '*.go' -print0 | xargs -0 $(GOFMT) -l)" ]; then \
 		echo "Please run 'make code/fix'."; \
 		false; \
 	fi
