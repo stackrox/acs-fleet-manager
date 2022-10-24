@@ -292,6 +292,19 @@ is_local_cluster() {
     fi
 }
 
+is_openshift_cluster() {
+    local openshift_cluster_types="openshift,openshift-ci,crc,infra-openshift"
+    local cluster_type="$1"
+    if [[ -z "$cluster_type" ]]; then
+        return 1
+    fi
+    if [[ ",${openshift_cluster_types}," == *",${cluster_type},"* ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 _docker_images=""
 
 docker_pull() {

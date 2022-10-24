@@ -3,6 +3,16 @@ export KUBECTL_DEFAULT="oc"
 export OPERATOR_SOURCE_DEFAULT="marketplace"
 export INSTALL_OLM_DEFAULT="false"
 export ENABLE_FM_PORT_FORWARDING_DEFAULT="true"
-CLUSTER_DNS_DEFAULT=$(try_kubectl get -n "openshift-ingress-operator" ingresscontrollers default -o=jsonpath='{.status.domain}' --ignore-not-found)
+# This makes sure that the "ingresscontroller" kind, which only exists on OpenShift by default, is only queried
+# when CLUSTER_DNS is not set.
+# This allows for dry-run experiments like
+#
+#   CLUSTER_DNS=foo.bar CLUSTER_TYPE=openshift-ci OPENSHIFT_CI=true bash -c "source dev/env/scripts/lib.sh; init; dump_env"
+#
+# for debugging defaulting logic in an OpenShift CI setting without actually running on OpenShift CI.
+CLUSTER_DNS_DEFAULT=""
+if [[ -z "${CLUSTER_DNS:-}" ]]; then
+    CLUSTER_DNS_DEFAULT=$(try_kubectl get -n "openshift-ingress-operator" ingresscontrollers default -o=jsonpath='{.status.domain}' --ignore-not-found)
+fi
 export CLUSTER_DNS_DEFAULT
 export INSTALL_OPENSHIFT_ROUTER_DEFAULT="false"
