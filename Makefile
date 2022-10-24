@@ -226,6 +226,7 @@ help:
 	@echo "make run/docs                    run swagger and host the api spec"
 	@echo "make test                        run unit tests"
 	@echo "make test/integration            run integration tests"
+	@echo "make code/check                  fail if formatting is required"
 	@echo "make code/fix                    format files"
 	@echo "make generate                    generate go and openapi modules"
 	@echo "make openapi/generate            generate openapi modules"
@@ -431,6 +432,14 @@ openapi/generate/rhsso: go-bindata openapi-generator
 	$(OPENAPI_GENERATOR) generate -i openapi/rh-sso-dynamic-client.yaml -g go -o pkg/client/redhatsso/api --package-name api -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w pkg/client/redhatsso/api
 .PHONY: openapi/generate/rhsso
+
+# fail if formatting is required
+code/check:
+	@if ! [ -z $$($(GOFMT) -l `find . -type f -name '*.go' -not -path "./vendor/*"`) ]; then \
+		echo "Please run 'make code/fix'."; \
+		false; \
+	fi
+.PHONY: code/check
 
 # clean up code and dependencies
 code/fix:

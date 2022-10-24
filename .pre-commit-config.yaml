@@ -35,8 +35,8 @@ repos:
         exclude: '^(?:internal/dinosaur/pkg/api/.*|pkg/client/redhatsso/api/.*)$'
   - repo: local
     hooks:
-      - id: code/fix
-        name: make code/fix
-        entry: make code/fix
+      - id: code/check
+        name: make code/check
+        entry: make code/check
         language: system
         pass_filenames: false
