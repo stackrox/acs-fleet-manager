@@ -1,8 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 GITROOT="${GITROOT:-"$(git rev-parse --show-toplevel)"}"
 USE_AWS_VAULT="${USE_AWS_VAULT:-true}"
 ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-true}"
+
+# shellcheck source=/dev/null
+source "$GITROOT/scripts/lib/log.sh"
 
 export AWS_REGION="${AWS_REGION:-"us-east-1"}"
 export AWS_PROFILE=${AWS_PROFILE:-"dev"}
@@ -25,9 +28,8 @@ init_chamber() {
         ensure_tool_installed aws-vault
         ensure_aws_profile_exists
     elif [[ -z "${AWS_SESSION_TOKEN:-}" ]] || [[ -z "${AWS_ACCESS_KEY_ID:-}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
-        echo "Error: Unable to resolve one of the following environment variables: AWS_SESSION_TOKEN, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY.
-            Please set them or use aws-vault by setting USE_AWS_VAULT=true." >&2
-        exit 1
+        die "Error: Unable to resolve one of the following environment variables: AWS_SESSION_TOKEN, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY.
+            Please set them or use aws-vault by setting USE_AWS_VAULT=true."
     fi
 }
 

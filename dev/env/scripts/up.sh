@@ -6,6 +6,8 @@ GITROOT="$(git rev-parse --show-toplevel)"
 export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
+source "${GITROOT}/scripts/lib/external_config.sh"
+
 init
 init_chamber
 
@@ -26,6 +28,8 @@ Namespace: ${ACSMS_NAMESPACE}
 
 Inheriting ImagePullSecrets for Quay.io: ${INHERIT_IMAGEPULLSECRETS}
 Installing RHACS Operator: ${INSTALL_OPERATOR}
+Enable External Config: ${ENABLE_EXTERNAL_CONFIG}
+Use AWS Vault: ${USE_AWS_VAULT}
 
 EOF
 

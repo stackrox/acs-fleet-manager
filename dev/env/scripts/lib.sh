@@ -1,19 +1,9 @@
 # shellcheck shell=bash
 
-die() {
-    {
-        # shellcheck disable=SC2059
-        printf "$*"
-        echo
-    } >&2
-    exit 1
-}
+GITROOT_DEFAULT=$(git rev-parse --show-toplevel)
+export GITROOT=${GITROOT:-$GITROOT_DEFAULT}
 
-log() {
-    # shellcheck disable=SC2059
-    printf "$*"
-    echo
-}
+source "$GITROOT/scripts/lib/log.sh"
 
 try_kubectl() {
     local kubectl
@@ -56,8 +46,6 @@ dump_env() {
 }
 
 init() {
-    GITROOT_DEFAULT=$(git rev-parse --show-toplevel)
-    export GITROOT=${GITROOT:-$GITROOT_DEFAULT}
     set -eu -o pipefail
 
     # For reading the defaults we need access to the
@@ -90,7 +78,6 @@ init() {
 
     export ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-$ENABLE_EXTERNAL_CONFIG_DEFAULT}"
     export USE_AWS_VAULT="${USE_AWS_VAULT:-$USE_AWS_VAULT_DEFAULT}"
-    source "${GITROOT}/scripts/external_config.sh"
 
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
     export ACSMS_NAMESPACE="${ACSMS_NAMESPACE:-$ACSMS_NAMESPACE_DEFAULT}"
