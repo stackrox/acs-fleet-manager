@@ -2,6 +2,8 @@ package defaults
 
 import (
 	"fmt"
+
+	"github.com/caarlos0/env/v6"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
