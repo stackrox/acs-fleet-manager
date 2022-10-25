@@ -68,7 +68,7 @@ type CentralReconciler struct {
 // It tries to create a namespace for the Central and applies necessary updates to the resource.
 func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	if remoteCentral.Id != r.centralId {
-		return nil, errors.Wrapf(ErrCentralDoesNotMatch, "Received central with id %q but expected %q", remoteCentral.Id, r.central.Id)
+		return nil, errors.Wrapf(ErrCentralDoesNotMatch, "Received central with id %q but expected %q", remoteCentral.Id, r.centralId)
 	}
 
 	// Only allow to start reconcile function once
