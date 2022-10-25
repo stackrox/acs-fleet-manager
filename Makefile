@@ -531,22 +531,26 @@ docker/login/internal:
 image/build: GOOS=linux
 image/build: IMAGE_REF ?= "$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build: fleet-manager fleetshard-sync
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f . Dockerfile.hybrid
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.hybrid .
 .PHONY: image/build
 
 # Build the image using by specifying a specific image target within the Dockerfile.
 # IMAGE_REF needs to be set.
 # IMAGE_TARGET (standard or debug) is automatically set.
 image/build/multi-target: GOOS=linux
+image/build/multi-target: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build/multi-target:
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build --target $(IMAGE_TARGET) -t $(IMAGE_REF) .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
+	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
+	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
 .PHONY: image/build/multi-target
 
 # build binary and image and tag image for local deployment
 image/build/local: GOOS=linux
 image/build/local: GOARCH=amd64
 image/build/local: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
-image/build/local: image/build/multi-target
+image/build/local: image/build
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"

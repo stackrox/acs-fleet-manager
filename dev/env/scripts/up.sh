@@ -53,8 +53,20 @@ if [[ ! ("$CLUSTER_TYPE" == "openshift-ci" || "$CLUSTER_TYPE" == "infra-openshif
             # Attempt to build this image.
             if [[ "$FLEET_MANAGER_IMAGE" == "$(make -s -C "${GITROOT}" full-image-tag)" ]]; then
                 # Looks like we can build this tag from the current state of the repository.
-                log "Rebuilding image..."
-                make -C "${GITROOT}" image/build/local
+                if [[ "$DEBUG_PODS" == "true" ]]; then
+                    log "Building image with debugging support..."
+                    make -C "${GITROOT}" image/build/multi-target
+                else
+                    # We *could* also use image/build/multi-target, because that
+                    # target also supports building of standard (i.e. non-debug) images.
+                    # But until there is a reliable and portable caching mechanism for dockerized
+                    # Go projects, this would be regression in terms of build performance.
+                    # Hence we don't use the image/build/multi-target target here, but the
+                    # older `image/build/local` target, which uses a hybrid building
+                    # approach and is much faster.
+                    log "Building standard image..."
+                    make -C "${GITROOT}" image/build/local
+                fi
             else
                 die "Cannot find image '${FLEET_MANAGER_IMAGE}' and don't know how to build it"
             fi
