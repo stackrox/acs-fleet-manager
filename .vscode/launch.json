@@ -2,6 +2,24 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug fleet-manager",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/fleet-manager/main.go",
+            "args": [
+                "serve"
+            ]
+        },
+        {
+            "name": "Debug fleetshard-sync",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/fleetshard/main.go",
+            "args": []
+        },
+        {
             "name": "Attach to Fleet-Manager Pod",
             "type": "cloudcode.kubernetes",
             "request": "attach",
