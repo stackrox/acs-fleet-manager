@@ -117,7 +117,8 @@ var _ = Describe("Central", func() {
 		})
 
 		It("tenant namespace is labelled as a tenant naemspace", func() {
-			Expect(ns.Labels["rhacscs/type"]).To(Equal("tenant"))
+			_, tenantLabelFound := ns.Labels["rhacs.redhat.com/tenant"]
+			Expect(tenantLabelFound).To(BeTrue())
 		})
 
 		It("should create central in its namespace on a managed cluster", func() {

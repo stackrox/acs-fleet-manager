@@ -385,7 +385,7 @@ func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error)
 
 func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace) error {
 	namespace.Labels = make(map[string]string)
-	namespace.Labels["rhacscs/type"] = "tenant"
+	namespace.Labels["rhacs.redhat.com/tenant"] = ""
 	err := r.client.Create(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("creating namespace %q: %w", namespace.ObjectMeta.Name, err)
