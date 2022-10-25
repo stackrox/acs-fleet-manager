@@ -10,7 +10,7 @@ import (
 type AnalyzerDefaults struct {
 	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"100Mi"`
 	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"10m"`
-	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500Mi"`
+	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500M"`
 	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"250m"`
 	AutoScaling   string            `env:"AUTOSCALING"    envDefault:"Enabled"`
 	MinReplicas   int32             `env:"MIN_REPLICAS"   envDefault:"1"`
