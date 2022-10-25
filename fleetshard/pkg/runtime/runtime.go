@@ -78,7 +78,31 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 }
 
 // Stop stops the runtime
-func (r *Runtime) Stop() {
+func (r *Runtime) Stop(ctx context.Context) error {
+	glog.Infof("Gracefully shutting down %d reconcilers", len(r.reconcilers))
+
+	wg := concurrency.NewWaitGroup(0)
+	for key, reconciler := range r.reconcilers {
+		centralId := key // avoid variable overrides due to concurrent function calls
+
+		// Remove reconciler from registry to prevent new reconciler executions
+		delete(r.reconcilers, centralId)
+
+		wg.Add(1)
+		go func(r *centralReconciler.CentralReconciler, centralId string) {
+			_ = <-r.Done()
+			glog.V(10).Infof("Reconciler for central %q stopped.", centralId)
+			wg.Done()
+		}(reconciler, centralId)
+	}
+
+	select {
+	case <-wg.Done():
+		return nil
+	case <-ctx.Done():
+		//TODO(sbaumer): add error message with unstopped reconcilers?
+		return errors.Wrapf(ctx.Err(), "stopping reconiler failed")
+	}
 }
 
 // Start starts the fleetshard runtime and schedules

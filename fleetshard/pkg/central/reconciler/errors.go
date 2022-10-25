@@ -9,6 +9,8 @@ var (
 	ErrCentralNotChanged = errors.New("central not changed")
 	// ErrDeletionInProgress returned when central resources are currently deleting
 	ErrDeletionInProgress = errors.New("deletion in progress")
+	// ErrStopped is returned when the reconciler tried to be started but was already stopped.
+	ErrStopped = errors.New("reconciler is stopped")
 )
 
 // IsSkippable indicates that the reconciliation was skipped and the status should NOT be reported.

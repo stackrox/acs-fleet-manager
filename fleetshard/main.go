@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -57,7 +59,14 @@ func main() {
 	signal.Notify(sigs, os.Interrupt, unix.SIGTERM)
 
 	sig := <-sigs
-	runtime.Stop()
+
+	ctx, cancelFn := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancelFn()
+	err = runtime.Stop(ctx)
+	if err != nil {
+		glog.Error("Error shutting down", err)
+	}
+
 	if err := metricServer.Close(); err != nil {
 		glog.Errorf("closing metric server: %v", err)
 	}

@@ -60,8 +60,15 @@ type CentralReconciler struct {
 	Resources         bool
 	routeService      *k8s.RouteService
 	egressProxyImage  string
+	stopped           *int32
+	doneCh            chan struct{}
 
 	resourcesChart *chart.Chart
+}
+
+// Done returns a signal after the reconciler finished, but before the status
+func (r *CentralReconciler) Done() chan struct{} {
+	return r.doneCh
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -73,7 +80,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
 		return nil, ErrBusy
 	}
-	defer atomic.StoreInt32(r.status, FreeStatus)
+
+	defer func() {
+		r.doneCh <- struct{}{} // TODO(sbaumer): This should be not blocking
+		atomic.StoreInt32(r.status, FreeStatus)
+	}()
 
 	changed, err := r.centralChanged(remoteCentral)
 	if err != nil {
