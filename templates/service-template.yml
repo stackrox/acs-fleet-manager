@@ -385,64 +385,64 @@ parameters:
   value: /config/provider-configuration.yaml
 
 - name: CENTRAL_CPU_REQUEST
-  displayName: Default CPU request for central deployments for newly created tenants
+  displayName: Default Central CPU request
   description: Default CPU request for central deployments for newly created tenants
-  value: "100m"
+  value: "50m"
 
 - name: CENTRAL_MEMORY_REQUEST
-  displayName: Default memory request for central deployments for newly created tenants
+  displayName: Default Central memory request
   description: Default memory request for central deployments for newly created tenants
-  value: "5G"
+  value: "250Mi"
 
 - name: CENTRAL_CPU_LIMIT
-  displayName: Default CPU limit for central deployments for newly created tenants
+  displayName: Default Central CPU limit
   description: Default CPU limit for central deployments for newly created tenants
   value: "250m"
 
 - name: CENTRAL_MEMORY_LIMIT
-  displayName: Default memory limit for central deployments for newly created tenants
+  displayName: Default Central memory limit
   description: Default memory limit for central deployments for newly created tenants
-  value: "10G"
+  value: "4G"
 
 - name: SCANNER_ANALYZER_CPU_REQUEST
-  displayName: Default CPU request for scanner deployments for newly created tenants
+  displayName: Default Scanner CPU request
   description: Default CPU request for scanner deployments for newly created tenants
-  value: "250m"
+  value: "5m"
 
 - name: SCANNER_ANALYZER_MEMORY_REQUEST
-  displayName: Default memory request for scanner deployments for newly created tenants
+  displayName: Default Scanner memory request
   description: Default memory request for scanner deployments for newly created tenants
-  value: "700M"
+  value: "100M"
 
 - name: SCANNER_ANALYZER_CPU_LIMIT
-  displayName: Default CPU limit for scanner deployments for newly created tenants
+  displayName: Default Scanner CPU limit
   description: Default CPU limit for scanner deployments for newly created tenants
-  value: "500m"
-
-- name: SCANNER_ANALYZER_MEMORY_LIMIT
-  displayName: Default memory limit for scanner deployments for newly created tenants
-  description: Default memory limit for scanner deployments for newly created tenants
-  value: "1500M"
-
-- name: SCANNER_DB_CPU_REQUEST
-  displayName: Default CPU request for scanner-db deployments for newly created tenants
-  description: Default CPU request for scanner-db deployments for newly created tenants
   value: "250m"
 
+- name: SCANNER_ANALYZER_MEMORY_LIMIT
+  displayName: Default Scanner memory limit
+  description: Default memory limit for scanner deployments for newly created tenants
+  value: "2500M"
+
+- name: SCANNER_DB_CPU_REQUEST
+  displayName: Default Scanner DB CPU request
+  description: Default CPU request for scanner-db deployments for newly created tenants
+  value: "10m"
+
 - name: SCANNER_DB_MEMORY_REQUEST
-  displayName: Default memory request for scanner-db deployments for newly created tenants
+  displayName: Default Scanner DB memory request
   description: Default memory request for scanner-db deployments for newly created tenants
-  value: "1G"
+  value: "500M"
 
 - name: SCANNER_DB_CPU_LIMIT
-  displayName: Default CPU limit for scanner-db deployments for newly created tenants
+  displayName: Default Scanner DB CPU limit
   description: Default CPU limit for scanner-db deployments for newly created tenants
-  value: "500m"
+  value: "250m"
 
 - name: SCANNER_DB_MEMORY_LIMIT
-  displayName: Default memory limit for scanner-db deployments for newly created tenants
+  displayName: Default Scanner DB memory limit
   description: Default memory limit for scanner-db deployments for newly created tenants
-  value: "2G"
+  value: "2500M"
 
 objects:
   - kind: ConfigMap
