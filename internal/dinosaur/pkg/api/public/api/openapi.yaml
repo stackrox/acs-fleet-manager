@@ -608,6 +608,37 @@ paths:
       security:
       - Bearer: []
       summary: Returns the list of supported regions of the supported cloud provider
+  /api/rhacs/v1/cloud_accounts:
+    get:
+      operationId: getCloudAccounts
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudAccountsList'
+          description: Returned list of supported cloud provider regions
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns the list of cloud accounts which belong to user's organization
   /api/rhacs/v1/centrals/{id}/metrics/query_range:
     get:
       operationId: getMetricsByRangeQuery
@@ -905,6 +936,11 @@ components:
           topic: __consumer_offsets
         timestamp: 1611670230000
         value: 84154
+    CloudAccountsList:
+      value:
+        cloudAccounts:
+        - cloudAccountId: cloudAccountId
+          cloudProviderId: cloudProviderId
     "400DeletionExample":
       value:
         id: "103"
@@ -1456,6 +1492,25 @@ components:
           type: number
       required:
       - value
+      type: object
+    CloudAccountsList:
+      example:
+        cloudAccounts:
+        - ""
+        - ""
+      properties:
+        cloudAccounts:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/CloudAccount'
+          type: array
+      type: object
+    CloudAccount:
+      properties:
+        cloudAccountId:
+          type: string
+        cloudProviderId:
+          type: string
       type: object
     Error_allOf:
       properties:

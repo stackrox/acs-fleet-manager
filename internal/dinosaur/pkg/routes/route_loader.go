@@ -89,6 +89,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
 	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Dinosaur, s.AccessControlListConfig)
+	cloudAccountsHandler := handlers.NewCloudAccountsHandler(s.AMSClient)
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
@@ -173,6 +174,11 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		Methods(http.MethodGet)
 	apiV1CloudProvidersRouter.HandleFunc("/{id}/regions", cloudProvidersHandler.ListCloudProviderRegions).
 		Name(logger.NewLogEvent("list-regions", "list cloud provider regions").ToString()).
+		Methods(http.MethodGet)
+
+	apiV1CloudAccountsRouter := apiV1Router.PathPrefix("/cloud_accounts").Subrouter()
+	apiV1CloudAccountsRouter.HandleFunc("", cloudAccountsHandler.Get).
+		Name(logger.NewLogEvent("get-cloud-accounts", "list all cloud accounts belonging to user org").ToString()).
 		Methods(http.MethodGet)
 
 	v1Metadata := api.VersionMetadata{

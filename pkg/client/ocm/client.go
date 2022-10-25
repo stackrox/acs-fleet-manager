@@ -56,6 +56,7 @@ type Client interface {
 	GetOrganisationIDFromExternalID(externalID string) (string, error)
 	Connection() *sdkClient.Connection
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
+	GetCustomerCloudAccounts(externalID string) ([]*amsv1.CloudAccount, error)
 }
 
 var _ Client = &client{}
@@ -595,6 +596,29 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 				res = append(res, qc)
 			}
 		}
+		return true
+	})
+
+	return res, nil
+}
+
+func (c *client) GetCustomerCloudAccounts(externalID string) ([]*amsv1.CloudAccount, error) {
+	var res []*amsv1.CloudAccount
+	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
+	organizationID, err := c.GetOrganisationIDFromExternalID(externalID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting cloud accounts: failed to get organization with external id %q", externalID)
+	}
+
+	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
+
+	quotaCostList, err := quotaCostClient.List().Parameter("fetchCloudAccounts", true).Send()
+	if err != nil {
+		return nil, fmt.Errorf("error getting cloud accounts: %w", err)
+	}
+
+	quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {
+		res = append(res, qc.CloudAccounts()...)
 		return true
 	})
 
