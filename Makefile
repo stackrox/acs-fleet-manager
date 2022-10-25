@@ -279,7 +279,8 @@ verify: check-gopath openapi/validate
 		./pkg/... \
 		./internal/... \
 		./test/... \
-		./fleetshard/...
+		./fleetshard/... \
+		./probe/...
 .PHONY: verify
 
 # Runs linter against go files and .y(a)ml files in the templates directory
@@ -291,7 +292,8 @@ lint: golangci-lint specinstall
 		./pkg/... \
 		./internal/... \
 		./test/... \
-		./fleetshard/...
+		./fleetshard/... \
+		./probe/...
 
 	spectral lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
 .PHONY: lint
@@ -307,7 +309,11 @@ fleetshard-sync:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
 .PHONY: fleetshard-sync
 
-binary: fleet-manager fleetshard-sync
+probe:
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o probe/bin/probe ./probe
+.PHONY: probe
+
+binary: fleet-manager fleetshard-sync probe
 .PHONY: binary
 
 # Install
@@ -316,7 +322,7 @@ install: verify lint
 .PHONY: install
 
 clean:
-	rm -f fleet-manager fleetshard-sync
+	rm -f fleet-manager fleetshard-sync probe
 .PHONY: clean
 
 # Runs the unit tests.
