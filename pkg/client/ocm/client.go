@@ -11,7 +11,8 @@ import (
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/pkg/errors"
+	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
 // TermsSitecode ...
@@ -131,7 +132,7 @@ func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1
 	clusterResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, err := clusterResource.Add().Body(cluster).Send()
 	if err != nil {
-		return &clustersmgmtv1.Cluster{}, errors.New(errors.ErrorGeneral, err.Error())
+		return &clustersmgmtv1.Cluster{}, serviceErrors.New(serviceErrors.ErrorGeneral, err.Error())
 	}
 	createdCluster := response.Body()
 
@@ -176,7 +177,7 @@ func (c *client) GetOrganisationIDFromExternalID(externalID string) (string, err
 	items := res.Items()
 	if items.Len() < 1 {
 		// should never happen...
-		return "", errors.New(errors.ErrorGeneral, "organisation with external_id '%s' can't be found", externalID)
+		return "", serviceErrors.New(serviceErrors.ErrorGeneral, "organisation with external_id '%s' can't be found", externalID)
 	}
 
 	return items.Get(0).ID(), nil
@@ -329,7 +330,7 @@ func (c client) UpdateAddonParameters(clusterID string, addonInstallationID stri
 // GetClusterDNS ...
 func (c *client) GetClusterDNS(clusterID string) (string, error) {
 	if clusterID == "" {
-		return "", errors.Validation("clusterID cannot be empty")
+		return "", serviceErrors.Validation("clusterID cannot be empty")
 	}
 	ingresses, err := c.GetClusterIngresses(clusterID)
 	if err != nil {
@@ -346,7 +347,7 @@ func (c *client) GetClusterDNS(clusterID string) (string, error) {
 	})
 
 	if clusterDNS == "" {
-		return "", errors.NotFound("Cluster %s: DNS is empty", clusterID)
+		return "", serviceErrors.NotFound("Cluster %s: DNS is empty", clusterID)
 	}
 
 	return clusterDNS, nil
@@ -363,7 +364,7 @@ func (c client) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset)
 		Send()
 	var err error
 	if syncsetErr != nil {
-		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to create syncset: %s", syncsetErr)
+		err = serviceErrors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to create syncset: %s", syncsetErr)
 	}
 	return response.Body(), err
 }
@@ -381,7 +382,7 @@ func (c client) UpdateSyncSet(clusterID string, syncSetID string, syncset *clust
 
 	var err error
 	if syncsetErr != nil {
-		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to update syncset '%s': %s", syncSetID, syncsetErr)
+		err = serviceErrors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to update syncset '%s': %s", syncSetID, syncsetErr)
 	}
 	return response.Body(), err
 }
@@ -396,7 +397,7 @@ func (c client) CreateIdentityProvider(clusterID string, identityProvider *clust
 		Send()
 	var err error
 	if identityProviderErr != nil {
-		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to create identity provider: %s", identityProviderErr)
+		err = serviceErrors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to create identity provider: %s", identityProviderErr)
 	}
 	return response.Body(), err
 }
@@ -410,7 +411,7 @@ func (c client) GetIdentityProviderList(clusterID string) (*clustersmgmtv1.Ident
 		Send()
 
 	if getIDPErr != nil {
-		return nil, errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to get list of identity providers, err: %s", getIDPErr.Error())
+		return nil, serviceErrors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to get list of identity providers, err: %s", getIDPErr.Error())
 	}
 	return response.Items(), nil
 }
@@ -427,7 +428,7 @@ func (c client) GetSyncSet(clusterID string, syncSetID string) (*clustersmgmtv1.
 
 	var err error
 	if syncsetErr != nil {
-		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to get syncset '%s': %s", syncSetID, syncsetErr)
+		err = serviceErrors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to get syncset '%s': %s", syncSetID, syncsetErr)
 	}
 	return response.Body(), err
 }
@@ -540,7 +541,7 @@ func (c client) DeleteCluster(clusterID string) (int, error) {
 
 	var err error
 	if deleteClusterError != nil {
-		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "OCM client failed to delete cluster '%s': %s", clusterID, deleteClusterError)
+		err = serviceErrors.NewErrorFromHTTPStatusCode(response.Status(), "OCM client failed to delete cluster '%s': %s", clusterID, deleteClusterError)
 	}
 	return response.Status(), err
 }
@@ -554,7 +555,7 @@ func (c client) ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*am
 		Post().Request(cb).Send()
 	if err != nil && r.Status() != http.StatusTooManyRequests {
 		glog.Warningf("OCM client responded with '%v: %v' for request '%v'", r.Status(), err, *cb)
-		return nil, errors.NewErrorFromHTTPStatusCode(r.Status(), "OCM client failed to create cluster authorization")
+		return nil, serviceErrors.NewErrorFromHTTPStatusCode(r.Status(), "OCM client failed to create cluster authorization")
 	}
 	resp, _ := r.GetResponse()
 	return resp, nil
@@ -607,7 +608,7 @@ func (c *client) GetCustomerCloudAccounts(externalID string) ([]*amsv1.CloudAcco
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	organizationID, err := c.GetOrganisationIDFromExternalID(externalID)
 	if err != nil {
-		return nil, fmt.Errorf("error getting cloud accounts: failed to get organization with external id %q", externalID)
+		return nil, errors.Wrapf(err, "error getting cloud accounts: failed to get organization with external id %q", externalID)
 	}
 
 	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
