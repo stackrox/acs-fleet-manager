@@ -20,7 +20,7 @@ type AnalyzerDefaults struct {
 
 // DbDefaults ...
 type DbDefaults struct {
-	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"500Mi"`
+	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"500M"`
 	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"10m"`
 	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500Mi"`
 	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"250m"`
