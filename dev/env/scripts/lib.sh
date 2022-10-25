@@ -3,6 +3,7 @@
 GITROOT_DEFAULT=$(git rev-parse --show-toplevel)
 export GITROOT=${GITROOT:-$GITROOT_DEFAULT}
 
+# shellcheck source=/dev/null
 source "$GITROOT/scripts/lib/log.sh"
 
 try_kubectl() {
