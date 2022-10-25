@@ -116,7 +116,7 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
-		It("tenant namespace is labelled as a tenant naemspace", func() {
+		It("tenant namespace is labelled as a tenant namespace", func() {
 			_, tenantLabelFound := ns.Labels["rhacs.redhat.com/tenant"]
 			Expect(tenantLabelFound).To(BeTrue())
 		})
