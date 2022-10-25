@@ -6,6 +6,7 @@ GITROOT="$(git rev-parse --show-toplevel)"
 export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
+# shellcheck source=/dev/null
 source "${GITROOT}/scripts/lib/external_config.sh"
 
 init
