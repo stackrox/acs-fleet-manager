@@ -10,6 +10,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 )
 
+const rhacsMarketplaceQuotaID = "cluster|rhinfra|rhacs|marketplace"
+
 type cloudAccountsHandler struct {
 	client ocm.AMSClient
 }
@@ -35,7 +37,7 @@ func (h *cloudAccountsHandler) Get(w http.ResponseWriter, r *http.Request) {
 				return nil, errors.NewWithCause(errors.ErrorForbidden, err, "cannot make request without orgID claim")
 			}
 
-			cloudAccounts, err := h.client.GetCustomerCloudAccounts(orgID)
+			cloudAccounts, err := h.client.GetCustomerCloudAccounts(orgID, rhacsMarketplaceQuotaID)
 			if err != nil {
 				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to fetch cloud accounts from AMS")
 			}
