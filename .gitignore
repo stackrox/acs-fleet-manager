@@ -38,7 +38,8 @@ cmd/fleet-manager/fleet-manager
 /templates/*-template.json
 
 # Ignore editor config
-.vscode
+.vscode/*
+!.vscode/launch.json
 
 # Ignore IntelliJ config
 .idea/

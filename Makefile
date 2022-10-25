@@ -31,6 +31,16 @@ GINKGO_FLAGS ?= -v
 # cluster will not pull the new image from the internal registry:
 version:=$(shell date +%s)
 
+ifeq ($(DEBUG_IMAGE),true)
+IMAGE_NAME = fleet-manager-dbg
+IMAGE_TARGET = debug
+else
+IMAGE_NAME = fleet-manager
+IMAGE_TARGET = standard
+endif
+
+SHORT_IMAGE_REF = "$(IMAGE_NAME):$(image_tag)"
+
 # Default namespace for local deployments
 NAMESPACE ?= fleet-manager-${USER}
 IMAGE_REGISTRY ?= default-route-openshift-image-registry.apps-crc.testing
@@ -41,7 +51,7 @@ IMAGE_REGISTRY ?= default-route-openshift-image-registry.apps-crc.testing
 # corresponding image stream inside that namespace. If the namespace doesn't
 # exist the push fails. This doesn't apply when the image is pushed to a public
 # repository, like `docker.io` or `quay.io`.
-image_repository:=$(NAMESPACE)/fleet-manager
+image_repository:=$(NAMESPACE)/$(IMAGE_NAME)
 
 # In the development environment we are pushing the image directly to the image
 # registry inside the development cluster. That registry has a different name
@@ -52,7 +62,7 @@ external_image_registry:= $(IMAGE_REGISTRY)
 internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 
 # Test image name that will be used for PR checks
-test_image:=test/fleet-manager
+test_image:=test/$(IMAGE_NAME)
 
 DOCKER ?= docker
 DOCKER_CONFIG ?= "${PWD}/.docker"
@@ -240,9 +250,10 @@ help:
 	@echo "make generate                    generate go and openapi modules"
 	@echo "make openapi/generate            generate openapi modules"
 	@echo "make openapi/validate            validate openapi schema"
-	@echo "make image/build                 build docker image"
-	@echo "make image/build/local           build docker image and retag in simplified form"
-	@echo "make image/push                  push docker image"
+	@echo "make image/build                 build image (hybrid fast build, respecting IGNORE_REPOSITORY_DIRTINESS)"
+	@echo "make image/build/local           build image (hybrid fast build, respecting IGNORE_REPOSITORY_DIRTINESS) for local development"
+	@echo "make image/build/multi-target    build image (containerized, respecting DEBUG_IMAGE and IGNORE_REPOSITORY_DIRTINESS) for local deployment"
+	@echo "make image/push                  push image"
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make secrets/touch               touch all required secret files"
 	@echo "make centralcert/setup           setup the central TLS certificate used for Managed Central Service"
@@ -516,12 +527,35 @@ docker/login/internal:
 	$(DOCKER) login -u kubeadmin --password-stdin <<< $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
 .PHONY: docker/login/internal
 
-# Build the binary and image
+# Build the image in a hybrid fashion, i.e. building binaries directly on the host leveraging
+# Go's cross-compilation capabilities and then copying these binaries into a new Docker image.
 image/build: GOOS=linux
-image/build: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
+image/build: IMAGE_REF ?= "$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build: fleet-manager fleetshard-sync
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.hybrid .
 .PHONY: image/build
+
+# Build the image using by specifying a specific image target within the Dockerfile.
+# IMAGE_REF needs to be set.
+# IMAGE_TARGET (standard or debug) is automatically set.
+image/build/multi-target: GOOS=linux
+image/build/multi-target: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
+image/build/multi-target:
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build --target $(IMAGE_TARGET) -t $(IMAGE_REF) .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
+	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
+	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
+.PHONY: image/build/multi-target
+
+# build binary and image and tag image for local deployment
+image/build/local: GOOS=linux
+image/build/local: GOARCH=amd64
+image/build/local: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
+image/build/local: image/build
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
+	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
+	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
+.PHONY: image/build/local
 
 # Build and push the image
 image/push: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
@@ -531,19 +565,6 @@ image/push: image/build
 	@echo "Image was pushed as $(IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(IMAGE_REF)"
 .PHONY: image/push
-
-# build binary and image for OpenShift deployment
-image/build/internal: IMAGE_TAG ?= $(image_tag)
-image/build/internal: binary
-	$(DOCKER) build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
-.PHONY: image/build/internal
-
-# build binary and image and tag image for local deployment
-image/build/local: GOOS=linux
-image/build/local: IMAGE_TAG ?= $(image_tag)
-image/build/local: image/build
-	$(DOCKER) image tag "$(external_image_registry)/$(image_repository):$(IMAGE_TAG)" "fleet-manager:$(IMAGE_TAG)"
-.PHONY: image/build/local
 
 # push the image to the OpenShift internal registry
 image/push/internal: IMAGE_TAG ?= $(image_tag)
@@ -843,3 +864,8 @@ deploy/bootstrap:
 tag:
 	@echo "$(image_tag)"
 .PHONY: tag
+
+
+full-image-tag:
+	@echo "$(IMAGE_NAME):$(image_tag)"
+.PHONY: full-image-tag

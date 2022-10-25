@@ -138,10 +138,21 @@ init() {
     export CENTRAL_DOMAIN_NAME=${CENTRAL_DOMAIN_NAME:-$CENTRAL_DOMAIN_NAME_DEFAULT}
     export FLEET_MANAGER_IMAGE=${FLEET_MANAGER_IMAGE:-$FLEET_MANAGER_IMAGE_DEFAULT}
     export IGNORE_REPOSITORY_DIRTINESS=${IGNORE_REPOSITORY_DIRTINESS:-$IGNORE_REPOSITORY_DIRTINESS_DEFAULT}
+    export DEBUG_PODS=${DEBUG_PODS:-$DEBUG_PODS_DEFAULT}
+
+    local fleet_manager_command="/usr/local/bin/fleet-manager serve --force-leader --api-server-bindaddress=0.0.0.0:8000 --health-check-server-bindaddress=0.0.0.0:8083 --kubeconfig=/secrets/kubeconfig --enable-central-external-certificate=$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE --central-domain-name='$CENTRAL_DOMAIN_NAME'"
+    FLEET_MANAGER_CONTAINER_COMMAND_DEFAULT="${fleet_manager_command} || { sleep 120; false; }"
+    FLEETSHARD_SYNC_CONTAINER_COMMAND_DEFAULT="/usr/local/bin/fleetshard-sync"
+    if [[ "$DEBUG_PODS" == "true" ]]; then
+        FLEET_MANAGER_CONTAINER_COMMAND_DEFAULT="/usr/local/bin/dlv --listen=:40000 --headless=true --api-version=2 --continue --accept-multiclient exec -- ${fleet_manager_command}"
+        FLEETSHARD_SYNC_CONTAINER_COMMAND_DEFAULT="/usr/local/bin/dlv --listen=:40000 --headless=true --api-version=2 --continue --accept-multiclient exec /usr/local/bin/fleetshard-sync"
+        export DEBUG_IMAGE="true" # Propagate to the Makefile
+    fi
+    export FLEET_MANAGER_CONTAINER_COMMAND=${FLEET_MANAGER_CONTAINER_COMMAND:-$FLEET_MANAGER_CONTAINER_COMMAND_DEFAULT}
+    export FLEETSHARD_SYNC_CONTAINER_COMMAND=${FLEETSHARD_SYNC_CONTAINER_COMMAND:-$FLEETSHARD_SYNC_CONTAINER_COMMAND_DEFAULT}
 
     if [[ "$FLEET_MANAGER_IMAGE" == "" ]]; then
-        tag=$(make -s -C "$GITROOT" tag)
-        FLEET_MANAGER_IMAGE="fleet-manager:${tag}"
+        FLEET_MANAGER_IMAGE=$(make -s -C "$GITROOT" full-image-tag)
     fi
 
     if [[ "$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE" != "false" && ("$ROUTE53_ACCESS_KEY" == "" || "$ROUTE53_SECRET_ACCESS_KEY" == "") ]]; then
