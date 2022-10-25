@@ -9,3 +9,6 @@ if grep -q "runtime: docker" <(colima status 2>&1); then
 else
   export DOCKER_DEFAULT="colima nerdctl -- -n k8s.io" # When nerdctl and docker can be used
 fi
+
+export ENABLE_EXTERNAL_CONFIG_DEFAULT="true"
+export USE_AWS_VAULT_DEFAULT="true"

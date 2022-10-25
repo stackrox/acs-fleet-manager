@@ -1,19 +1,10 @@
 # shellcheck shell=bash
 
-die() {
-    {
-        # shellcheck disable=SC2059
-        printf "$*"
-        echo
-    } >&2
-    exit 1
-}
+GITROOT_DEFAULT=$(git rev-parse --show-toplevel)
+export GITROOT=${GITROOT:-$GITROOT_DEFAULT}
 
-log() {
-    # shellcheck disable=SC2059
-    printf "$*"
-    echo
-}
+# shellcheck source=/dev/null
+source "$GITROOT/scripts/lib/log.sh"
 
 try_kubectl() {
     local kubectl
@@ -56,8 +47,6 @@ dump_env() {
 }
 
 init() {
-    GITROOT_DEFAULT=$(git rev-parse --show-toplevel)
-    export GITROOT=${GITROOT:-$GITROOT_DEFAULT}
     set -eu -o pipefail
 
     # For reading the defaults we need access to the
@@ -88,14 +77,8 @@ init() {
         source "$env_file"
     done
 
-    ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-ENABLE_EXTERNAL_CONFIG_DEFAULT}"
-    if [[ "$ENABLE_EXTERNAL_CONFIG" == "true" ]]; then
-        load_external_config
-    fi
-
-    if [[ -z "${CENTRAL_IDP_CLIENT_SECRET:-}" ]]; then
-        die "Error: CENTRAL_IDP_CLIENT_SECRET not set. Please make sure that it is initialized properly."
-    fi
+    export ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-$ENABLE_EXTERNAL_CONFIG_DEFAULT}"
+    export USE_AWS_VAULT="${USE_AWS_VAULT:-$USE_AWS_VAULT_DEFAULT}"
 
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
     export ACSMS_NAMESPACE="${ACSMS_NAMESPACE:-$ACSMS_NAMESPACE_DEFAULT}"
@@ -318,12 +301,6 @@ docker_logged_in() {
     else
         return 1
     fi
-}
-
-load_external_config() {
-    local chamber="${CHAMBER:-$CHAMBER_DEFAULT}"
-    eval "$($chamber env fleet-manager)"
-    eval "$($chamber env fleetshard-sync)"
 }
 
 delete_tenant_namespaces() {

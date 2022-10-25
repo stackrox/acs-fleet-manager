@@ -1,6 +1,7 @@
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 DOCS_DIR := $(PROJECT_PATH)/docs
+TOOLS_DIR := $(PROJECT_PATH)/tools
 
 .DEFAULT_GOAL := help
 SHELL = bash
@@ -134,6 +135,14 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
 	rm -rf $$GOBINDATA_TMP_DIR ;\
 	}
 endif
+
+CHAMBER_BIN := $(LOCAL_BIN_PATH)/chamber
+$(CHAMBER_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
+	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/segmentio/chamber/v2
+
+AWS_VAULT_BIN := $(LOCAL_BIN_PATH)/aws-vault
+$(AWS_VAULT_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
+	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/99designs/aws-vault/v6
 
 OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
 NPM ?= "$(shell which npm)"
