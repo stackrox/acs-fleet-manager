@@ -106,14 +106,18 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusProvisioning.String()))
 		})
 
+		ns := &corev1.Namespace{}
 		It("should create central namespace", func() {
 			if createdCentral == nil {
 				Fail("central not created")
 			}
 			Eventually(func() error {
-				ns := &corev1.Namespace{}
 				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+		})
+
+		It("tenant namespace is labelled as a tenant naemspace", func() {
+			Expect(ns.Labels["rhacscs/type"]).To(Equal("tenant"))
 		})
 
 		It("should create central in its namespace on a managed cluster", func() {
