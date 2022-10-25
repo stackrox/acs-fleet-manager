@@ -51,7 +51,7 @@ type CentralReconcilerOptions struct {
 // in its Reconcile function.
 type CentralReconciler struct {
 	client            ctrlClient.Client
-	central           private.ManagedCentral
+	centralId         string
 	status            *int32
 	lastCentralHash   [16]byte
 	useRoutes         bool
@@ -66,9 +66,11 @@ type CentralReconciler struct {
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
 // It tries to create a namespace for the Central and applies necessary updates to the resource.
-// TODO(sbaumer): Check correct Central gets reconciled
-// TODO(sbaumer): Should an initial ManagedCentral be added on reconciler creation?
 func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
+	if remoteCentral.Id != r.centralId {
+		return nil, errors.Wrapf(ErrCentralDoesNotMatch, "Received central with id %q but expected %q", remoteCentral.Id, r.central.Id)
+	}
+
 	// Only allow to start reconcile function once
 	if !atomic.CompareAndSwapInt32(r.status, FreeStatus, BlockedStatus) {
 		return nil, ErrBusy
@@ -612,7 +614,7 @@ var (
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, opts CentralReconcilerOptions) *CentralReconciler {
 	return &CentralReconciler{
 		client:            k8sClient,
-		central:           central,
+		centralId:         central.Id,
 		status:            pointer.Int32(FreeStatus),
 		useRoutes:         opts.UseRoutes,
 		wantsAuthProvider: opts.WantsAuthProvider,
