@@ -10,8 +10,8 @@ import (
 
 // AnalyzerDefaults ...
 type AnalyzerDefaults struct {
-	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"100Mi"`
-	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"10m"`
+	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"100M"`
+	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"5m"`
 	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500M"`
 	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"250m"`
 	AutoScaling   string            `env:"AUTOSCALING"    envDefault:"Enabled"`
@@ -24,7 +24,7 @@ type AnalyzerDefaults struct {
 type DbDefaults struct {
 	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"500M"`
 	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"10m"`
-	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500Mi"`
+	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500M"`
 	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"250m"`
 }
 
