@@ -94,6 +94,7 @@ func handleErrors(ctx context.Context, runResult chan error, runFunc func()) err
 
 	select {
 	case <-sigs:
+		glog.Error("Received SIGINT signal, shutting down ...")
 		return errInterruptSignal
 	case err := <-runResult:
 		if err != nil {
