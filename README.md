@@ -34,6 +34,9 @@ ACS fleet-manager repository for the ACS managed service.
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 * [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+* IDE with [EditorConfig](https://editorconfig.org/) support enabled:
+  - there is a [plugin for GoLand](https://www.jetbrains.com/help/go/configuring-code-style.html#editorconfig)
+  - there is an [extension for VSCode](https://marketplace.visualstudio.com/items?itemName=EditorConfig.EditorConfig)
 * A running kubernetes cluster
 
   Supported cluster types:
