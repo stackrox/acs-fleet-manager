@@ -4,15 +4,14 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"time"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/runtime"
 )
 
+// errInterruptSignal corresponds to a received SIGINT signal.
 var errInterruptSignal error = errors.New("received interrupt signal")
 
 // Command builds the root CLI command.
@@ -36,20 +35,24 @@ func startCommand() *cobra.Command {
 		Short:        "Start a continuous loop of probe runs.",
 		Args:         cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := config.GetConfig()
+			runtime, err := runtime.New()
 			if err != nil {
-				return errors.Wrap(err, "failed to load configuration")
+				return errors.Wrap(err, "failed to create runtime")
 			}
+			defer runtime.Stop()
 
-			for {
-				if err := executeProbe(config); err != nil {
-					if errors.Is(err, errInterruptSignal) {
-						return err
-					}
-					glog.Errorf("%+v", err)
+			go func() {
+				if err := runtime.Start(); err != nil {
+					glog.Fatal(err)
 				}
-				time.Sleep(config.RuntimeRunWaitPeriod)
-			}
+			}()
+
+			sigs := make(chan os.Signal, 1)
+			signal.Notify(sigs, os.Interrupt)
+			defer signal.Stop(sigs)
+
+			<-sigs
+			return errInterruptSignal
 		},
 	}
 	return c
@@ -62,46 +65,33 @@ func runCommand() *cobra.Command {
 		Short:        "Run a single probe run.",
 		Args:         cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := config.GetConfig()
+			runtime, err := runtime.New()
 			if err != nil {
-				return errors.Wrap(err, "failed to load configuration")
+				return errors.Wrap(err, "failed to create runtime")
 			}
-			return executeProbe(config)
+			defer runtime.Stop()
+
+			ctxTimeout, cancel := context.WithTimeout(context.Background(), runtime.Config.RuntimeRunTimeout)
+			defer cancel()
+
+			runResult := make(chan error, 1)
+			go func() {
+				runResult <- runtime.RunSingle(ctxTimeout)
+			}()
+
+			sigs := make(chan os.Signal, 1)
+			signal.Notify(sigs, os.Interrupt)
+			defer signal.Stop(sigs)
+
+			select {
+			case <-sigs:
+				return errInterruptSignal
+			case err := <-runResult:
+				return errors.Wrap(err, "probe run failed")
+			case <-ctxTimeout.Done():
+				return errors.Wrap(ctxTimeout.Err(), "probe run failed")
+			}
 		},
 	}
 	return c
-}
-
-func executeProbe(config *config.Config) error {
-	ctx, cancel := context.WithTimeout(context.Background(), config.RuntimeRunTimeout)
-	defer cancel()
-
-	runtime, err := runtime.New(config)
-	if err != nil {
-		return errors.Wrap(err, "failed to initialize probe")
-	}
-	defer func() {
-		runtime.Stop()
-	}()
-
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt)
-	defer signal.Stop(sigs)
-
-	runResult := make(chan error, 1)
-	go func() {
-		runResult <- runtime.RunSingle(ctx)
-	}()
-
-	select {
-	case <-sigs:
-		return errInterruptSignal
-	case err := <-runResult:
-		if err != nil {
-			return errors.Wrap(err, "probe run failed")
-		}
-		return nil
-	case <-ctx.Done():
-		return errors.Wrap(ctx.Err(), "probe run failed")
-	}
 }

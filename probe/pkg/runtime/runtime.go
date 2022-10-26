@@ -2,34 +2,60 @@ package runtime
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
+	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
+	"github.com/stackrox/rox/pkg/concurrency"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
+
+var backoff = wait.Backoff{
+	Duration: 1 * time.Second,
+	Factor:   1.5,
+	Jitter:   0.1,
+	Steps:    15,
+	Cap:      10 * time.Minute,
+}
 
 // Runtime performs a probe run against fleet manager.
 type Runtime struct {
-	config *config.Config
+	Config *config.Config
 }
 
 // New creates a new runtime.
-func New(config *config.Config) (*Runtime, error) {
+func New() (*Runtime, error) {
+	config, err := config.GetConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to load configuration")
+	}
+
 	return &Runtime{
-		config: config,
+		Config: config,
 	}, nil
+}
+
+// Start a continuous loop of probe runs.
+func (r *Runtime) Start() error {
+	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
+		if err := r.RunSingle(ctx); err != nil {
+			return 0, errors.Wrap(err, "failed to execute single probe run")
+		}
+		return r.Config.RuntimeRunWaitPeriod, nil
+	}, r.Config.RuntimeRunTimeout, backoff)
+
+	return errors.Wrap(ticker.Start(), "failed to start ticker")
 }
 
 // RunSingle executes a single probe run.
 func (r *Runtime) RunSingle(ctx context.Context) error {
-	// Dummy run
-	fmt.Println("start run")
-	time.Sleep(5 * time.Second)
-	fmt.Println("end run")
-	return nil
+	return errors.Wrap(probe.Execute(ctx), "failed to execute the probe")
 }
 
-// Stop the probe run.
+// Stop the probe.
 func (r *Runtime) Stop() error {
+	glog.Info("runtime has been stopped")
 	return nil
 }
