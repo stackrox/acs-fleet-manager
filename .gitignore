@@ -90,6 +90,6 @@ vendor
 
 #reports dir
 reports/
-.envrc
+.env.local
 e2e-report.json
 cover.profile

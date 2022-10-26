@@ -1,17 +1,38 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -o pipefail
+set -eo pipefail
 
-resource=${1}
+fleet_manager_api_base=${FLEET_MANAGER_API_BASE:-"http://localhost:8000/api"}
 
-if [[ -z "${resource}" ]]; then
-    echo "Usage: $0 <URI> [ <curl flag> ... ]" >&2
+program=$(basename "$0")
+if [[ $# == 0 ]]; then
+    echo "Usage: $program <URI> [ <curl flag> ... ]" >&2
+    echo "  URI will be prefixed with '${fleet_manager_api_base}' automatically." >&2
+    echo "  Example: fmcurl rhacs/v1/centrals"
     exit 1
 fi
 
+resource=$1
 shift
+
+# TOKEN is the preferred way of injecting a token.
+# OCM_TOKEN is still supported for backwards compatibility.
+TOKEN=${TOKEN:-${OCM_TOKEN:-}}
 
 # Normalize
 resource=$(echo "$resource" | sed -e 's/^\///;')
-
-curl -LH "Authorization: Bearer ${OCM_TOKEN}" "http://localhost:8000/api/${resource}" "$@" | jq .
+url="${fleet_manager_api_base}/${resource}"
+if [[ $# -gt 0 ]]; then
+    echo "Requesting ${url} with parameters" "$@" >&2
+else
+    echo "Requesting ${url}" >&2
+fi
+if response=$(curl -s --show-error -w '%{stderr}HTTP Code: %{http_code}\n' -L -H "Authorization: Bearer ${TOKEN}" "$url" "$@"); then
+    kind=$(echo "$response" | jq -r .kind)
+    echo "$response" | jq . -
+    if [[ $kind == "Error" ]]; then
+        exit 1
+    fi
+else
+    exit 1
+fi
