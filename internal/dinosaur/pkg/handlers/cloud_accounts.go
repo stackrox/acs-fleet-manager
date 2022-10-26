@@ -37,7 +37,7 @@ func (h *cloudAccountsHandler) Get(w http.ResponseWriter, r *http.Request) {
 				return nil, errors.NewWithCause(errors.ErrorForbidden, err, "cannot make request without orgID claim")
 			}
 
-			cloudAccounts, err := h.client.GetCustomerCloudAccounts(orgID, rhacsMarketplaceQuotaID)
+			cloudAccounts, err := h.client.GetCustomerCloudAccounts(orgID, []string{rhacsMarketplaceQuotaID})
 			if err != nil {
 				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to fetch cloud accounts from AMS")
 			}
