@@ -11,8 +11,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/runtime"
 )
 
-// errInterruptSignal corresponds to a received SIGINT signal.
-var errInterruptSignal error = errors.New("received interrupt signal")
+var (
+	// errInterruptSignal corresponds to a received SIGINT signal.
+	errInterruptSignal = errors.New("received interrupt signal")
+)
 
 // Command builds the root CLI command.
 func Command() *cobra.Command {
@@ -41,18 +43,15 @@ func startCommand() *cobra.Command {
 			}
 			defer runtime.Stop()
 
-			go func() {
-				if err := runtime.Start(); err != nil {
+			ctx := context.Background()
+			runResult := make(chan error, 1)
+
+			runFunc := func() {
+				if err := runtime.Start(runResult); err != nil {
 					glog.Fatal(err)
 				}
-			}()
-
-			sigs := make(chan os.Signal, 1)
-			signal.Notify(sigs, os.Interrupt)
-			defer signal.Stop(sigs)
-
-			<-sigs
-			return errInterruptSignal
+			}
+			return handleErrors(ctx, runResult, runFunc)
 		},
 	}
 	return c
@@ -73,25 +72,35 @@ func runCommand() *cobra.Command {
 
 			ctxTimeout, cancel := context.WithTimeout(context.Background(), runtime.Config.RuntimeRunTimeout)
 			defer cancel()
-
 			runResult := make(chan error, 1)
-			go func() {
-				runResult <- runtime.RunSingle(ctxTimeout)
-			}()
 
-			sigs := make(chan os.Signal, 1)
-			signal.Notify(sigs, os.Interrupt)
-			defer signal.Stop(sigs)
-
-			select {
-			case <-sigs:
-				return errInterruptSignal
-			case err := <-runResult:
-				return errors.Wrap(err, "probe run failed")
-			case <-ctxTimeout.Done():
-				return errors.Wrap(ctxTimeout.Err(), "probe run failed")
+			runFunc := func() {
+				select {
+				case runResult <- runtime.RunSingle(ctxTimeout):
+				case <-ctxTimeout.Done():
+				}
 			}
+			return handleErrors(ctxTimeout, runResult, runFunc)
 		},
 	}
 	return c
+}
+
+func handleErrors(ctx context.Context, runResult chan error, runFunc func()) error {
+	go runFunc()
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt)
+
+	select {
+	case <-sigs:
+		return errInterruptSignal
+	case err := <-runResult:
+		if err != nil {
+			return errors.Wrap(err, "probe run failed")
+		}
+		return nil
+	case <-ctx.Done():
+		return errors.Wrap(ctx.Err(), "probe run failed")
+	}
 }

@@ -27,6 +27,8 @@ type Runtime struct {
 
 // New creates a new runtime.
 func New() (*Runtime, error) {
+	glog.Infof("probe service has been started")
+
 	config, err := config.GetConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load configuration")
@@ -38,9 +40,12 @@ func New() (*Runtime, error) {
 }
 
 // Start a continuous loop of probe runs.
-func (r *Runtime) Start() error {
+func (r *Runtime) Start(runResult chan error) error {
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		if err := r.RunSingle(ctx); err != nil {
+			if errors.Is(err, concurrency.ErrNonRecoverable) {
+				runResult <- err
+			}
 			return 0, errors.Wrap(err, "failed to execute single probe run")
 		}
 		return r.Config.RuntimeRunWaitPeriod, nil
@@ -56,6 +61,6 @@ func (r *Runtime) RunSingle(ctx context.Context) error {
 
 // Stop the probe.
 func (r *Runtime) Stop() error {
-	glog.Info("runtime has been stopped")
+	glog.Info("probe service has been stopped")
 	return nil
 }

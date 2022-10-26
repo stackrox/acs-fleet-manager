@@ -18,11 +18,6 @@ func main() {
 		glog.Info("Unable to set logtostderr to true.")
 	}
 
-	glog.Infof("probe service has been started")
-	defer func() {
-		glog.Info("probe service has been stopped")
-	}()
-
 	cmd := cli.Command()
 	if err := cmd.Execute(); err != nil {
 		glog.Fatal(err)
