@@ -4,7 +4,7 @@ import (
 	"flag"
 
 	"github.com/golang/glog"
-	"github.com/stackrox/acs-fleet-manager/probe/cmd"
+	"github.com/stackrox/acs-fleet-manager/probe/internal/cli"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 		glog.Info("probe service has been stopped")
 	}()
 
-	cmd := cmd.Command()
+	cmd := cli.Command()
 	if err := cmd.Execute(); err != nil {
 		glog.Fatal(err)
 	}

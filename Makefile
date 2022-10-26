@@ -310,7 +310,7 @@ fleetshard-sync:
 .PHONY: fleetshard-sync
 
 probe:
-	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o probe/bin/probe ./probe
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o probe/bin/probe ./probe/cmd/probe
 .PHONY: probe
 
 binary: fleet-manager fleetshard-sync probe
