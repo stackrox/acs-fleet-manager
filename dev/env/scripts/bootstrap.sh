@@ -92,24 +92,32 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
             # operatorhubio catalog is ready, which is why an additional delay has been added.
             echo "Waiting for CatalogSource to include rhacs-operator..."
             while true; do
-                $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get packagemanifests.packages.operators.coreos.com -o json |
-                    jq -r '.items[].metadata.name' | grep -q '^rhacs-operator$' && break
+                if $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get packagemanifests.packages.operators.coreos.com -o json |
+                    jq -cer '.items[] | select(.metadata.labels.catalog == "stackrox-operator-test-index" and .metadata.name == "rhacs-operator") | isempty(.) | not' >/dev/null; then
+                    break
+                fi
                 sleep 1
             done
 
-            # It seems that before creating the subscription (part of the next apply call) all catalog sources need to be healthy,
-            # otherwise the subscription will end up in the following state:
-            # Conditions:
-            #   Message:               all available catalogsources are healthy
-            #   Reason:                AllCatalogSourcesHealthy
-            #   Status:                False
-            #   Type:                  CatalogSourcesUnhealthy
-            #   Message:               error using catalog operatorhubio-catalog (in namespace olm): failed to list bundles: rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing dial tcp 10.43.96.123:50051: i/o timeout"
-            #   Status:                True
-            #   Type:                  ResolutionFailed
-            #
-            # Therefore we wait for the operatorhubio-catalog/registry-server container to become ready.
-            wait_for_container_to_become_ready "olm" "olm.catalogSource=operatorhubio-catalog" "registry-server"
+            if [[ "$INSTALL_OLM" == "true" ]]; then
+                # It seems that before creating the subscription (part of the next apply call) all catalog sources need to be healthy.
+                #
+                # Installing OLM implies fetching the index from the "operatorhubio" catalog source, which might take some time.
+                # If we proceed with creating the subscription for the RHACS Operator immediately and the "operatorhubio" catalog source
+                # is not ready get, the subscription can end up in the following state:
+                #
+                # Conditions:
+                #   Message:               all available catalogsources are healthy
+                #   Reason:                AllCatalogSourcesHealthy
+                #   Status:                False
+                #   Type:                  CatalogSourcesUnhealthy
+                #   Message:               error using catalog operatorhubio-catalog (in namespace olm): failed to list bundles: rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing dial tcp 10.43.96.123:50051: i/o timeout"
+                #   Status:                True
+                #   Type:                  ResolutionFailed
+                #
+                # Therefore we wait for the operatorhubio-catalog/registry-server container to become ready.
+                wait_for_container_to_become_ready "olm" "olm.catalogSource=operatorhubio-catalog" "registry-server"
+            fi
 
             # This creates the subscription.
             apply "${MANIFESTS_DIR}"/rhacs-operator/quay/*.yaml
