@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
-	"github.com/stackrox/rox/pkg/concurrency"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -27,8 +26,6 @@ type Runtime struct {
 
 // New creates a new runtime.
 func New() (*Runtime, error) {
-	glog.Infof("probe service has been started")
-
 	config, err := config.GetConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load configuration")
@@ -40,27 +37,43 @@ func New() (*Runtime, error) {
 }
 
 // Start a continuous loop of probe runs.
-func (r *Runtime) Start(runResult chan error) error {
-	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
-		if err := r.RunSingle(ctx); err != nil {
-			if errors.Is(err, concurrency.ErrNonRecoverable) {
-				runResult <- err
-			}
-			return 0, errors.Wrap(err, "failed to execute single probe run")
-		}
-		return r.Config.RuntimeRunWaitPeriod, nil
-	}, r.Config.RuntimeRunTimeout, backoff)
+func (r *Runtime) Start(ctx context.Context) error {
+	ticker := time.NewTicker(r.Config.RuntimeRunWaitPeriod)
+	defer ticker.Stop()
 
-	return errors.Wrap(ticker.Start(), "failed to start ticker")
+	for {
+		select {
+		case <-ctx.Done():
+			return errors.Wrap(ctx.Err(), "probe context cancelled")
+		case <-ticker.C:
+			err := r.RunSingle(ctx)
+			if errors.Is(err, probe.ErrNotRecoverable) {
+				return errors.Wrap(err, "probe run failed")
+			}
+		}
+	}
 }
 
 // RunSingle executes a single probe run.
 func (r *Runtime) RunSingle(ctx context.Context) error {
-	return errors.Wrap(probe.Execute(ctx), "failed to execute the probe")
+	ctxTimeout, cancel := context.WithTimeout(ctx, r.Config.RuntimeRunTimeout)
+	defer cancel()
+	defer r.CleanUp()
+
+	err := probe.Execute(ctxTimeout)
+	if ctxErr := ctxTimeout.Err(); ctxErr != nil {
+		ctxErr = errors.Wrap(ctxErr, "probe context cancelled")
+		glog.Warning(ctxErr)
+		return ctxErr
+	}
+	if err != nil {
+		return errors.Wrap(err, "probe run failed")
+	}
+	return nil
 }
 
-// Stop the probe.
-func (r *Runtime) Stop() error {
-	glog.Info("probe service has been stopped")
+// CleanUp remaining probe resources.
+func (r *Runtime) CleanUp() error {
+	glog.Info("probe resources have been cleaned up")
 	return nil
 }

@@ -18,7 +18,11 @@ func main() {
 		glog.Info("Unable to set logtostderr to true.")
 	}
 
-	cmd := cli.Command()
+	c, err := cli.New()
+	if err != nil {
+		glog.Fatal(err)
+	}
+	cmd := c.Command()
 	if err := cmd.Execute(); err != nil {
 		glog.Fatal(err)
 	}
