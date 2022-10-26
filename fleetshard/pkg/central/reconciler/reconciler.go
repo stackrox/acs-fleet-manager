@@ -383,15 +383,21 @@ func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error)
 	return namespace, nil
 }
 
+func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace) error {
+	namespace.Labels = make(map[string]string)
+	namespace.Labels["rhacs.redhat.com/tenant"] = ""
+	err := r.client.Create(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("creating namespace %q: %w", namespace.ObjectMeta.Name, err)
+	}
+	return nil
+}
+
 func (r *CentralReconciler) ensureNamespaceExists(name string) error {
 	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			err = r.client.Create(context.Background(), namespace)
-			if err != nil {
-				return fmt.Errorf("creating namespace %q: %w", name, err)
-			}
-			return nil
+			return r.createTenantNamespace(context.Background(), namespace)
 		}
 		return fmt.Errorf("getting namespace %s: %w", name, err)
 	}
