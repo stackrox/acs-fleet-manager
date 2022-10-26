@@ -21,6 +21,7 @@ type CLI struct {
 	runtime *runtime.Runtime
 }
 
+// New creates a CLI.
 func New() (*CLI, error) {
 	runtime, err := runtime.New()
 	if err != nil {
