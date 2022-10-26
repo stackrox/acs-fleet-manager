@@ -1114,7 +1114,7 @@ objects:
               - name: CENTRAL_CPU_REQUEST
                 value: "${CENTRAL_CPU_REQUEST}"
               - name: CENTRAL_MEMORY_REQUEST
-                value: ${CENTRAL_MEMORY_REQUEST}""
+                value: "${CENTRAL_MEMORY_REQUEST}"
               - name: CENTRAL_CPU_LIMIT
                 value: "${CENTRAL_CPU_LIMIT}"
               - name: CENTRAL_MEMORY_LIMIT
