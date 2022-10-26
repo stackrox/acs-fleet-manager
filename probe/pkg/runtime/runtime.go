@@ -36,20 +36,18 @@ func New() (*Runtime, error) {
 	}, nil
 }
 
-// Start a continuous loop of probe runs.
-func (r *Runtime) Start(ctx context.Context) error {
+// RunLoop a continuous loop of probe runs.
+func (r *Runtime) RunLoop(ctx context.Context) error {
 	ticker := time.NewTicker(r.Config.RuntimeRunWaitPeriod)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return errors.Wrap(ctx.Err(), "probe context cancelled")
+			return errors.Wrap(ctx.Err(), "probe context invalid")
 		case <-ticker.C:
 			err := r.RunSingle(ctx)
-			if errors.Is(err, probe.ErrNotRecoverable) {
-				return errors.Wrap(err, "probe run failed")
-			}
+			glog.Warning(err)
 		}
 	}
 }
@@ -60,13 +58,7 @@ func (r *Runtime) RunSingle(ctx context.Context) error {
 	defer cancel()
 	defer r.CleanUp()
 
-	err := probe.Execute(ctxTimeout)
-	if ctxErr := ctxTimeout.Err(); ctxErr != nil {
-		ctxErr = errors.Wrap(ctxErr, "probe context cancelled")
-		glog.Warning(ctxErr)
-		return ctxErr
-	}
-	if err != nil {
+	if err := probe.Execute(ctxTimeout); err != nil {
 		return errors.Wrap(err, "probe run failed")
 	}
 	return nil

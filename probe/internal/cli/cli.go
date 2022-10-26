@@ -51,7 +51,7 @@ func (cli *CLI) startCommand() *cobra.Command {
 		Short:        "Start a continuous loop of probe runs.",
 		Args:         cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return cli.handleInterrupt(cli.runtime.Start)
+			return cli.handleInterrupt(cli.runtime.RunLoop)
 		},
 	}
 	return c
