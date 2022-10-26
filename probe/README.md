@@ -35,6 +35,6 @@ make probe
 # Start the probe service and run a single probe
 ./probe/bin/probe run
 
-# or run a endless loop of probes
+# or run an endless loop of probes
 ./probe/bin/probe start
 ```
