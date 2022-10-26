@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/runtime"
-	"github.com/stackrox/rox/pkg/errox"
 )
 
 var errInterruptSignal error = errors.New("received interrupt signal")
@@ -35,10 +34,8 @@ func startCommand() *cobra.Command {
 		SilenceUsage: true,
 		Use:          "start",
 		Short:        "Start a continuous loop of probe runs.",
+		Args:         cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				return errox.InvalidArgs.New("expected no arguments; please check usage")
-			}
 			config, err := config.GetConfig()
 			if err != nil {
 				return errors.Wrap(err, "failed to load configuration")
@@ -63,10 +60,8 @@ func runCommand() *cobra.Command {
 		SilenceUsage: true,
 		Use:          "run",
 		Short:        "Run a single probe run.",
+		Args:         cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				return errox.InvalidArgs.New("expected no arguments; please check usage")
-			}
 			config, err := config.GetConfig()
 			if err != nil {
 				return errors.Wrap(err, "failed to load configuration")

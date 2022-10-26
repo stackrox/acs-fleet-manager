@@ -25,6 +25,6 @@ func main() {
 
 	cmd := cmd.Command()
 	if err := cmd.Execute(); err != nil {
-		panic(err)
+		glog.Fatalf("%s", err.Error())
 	}
 }
