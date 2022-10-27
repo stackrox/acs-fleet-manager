@@ -27,7 +27,7 @@ func New() (*CLI, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create runtime")
 	}
-	return &CLI{runtime}, nil
+	return &CLI{runtime: runtime}, nil
 }
 
 // Command builds the root CLI command.
@@ -82,5 +82,9 @@ func (cli *CLI) handleInterrupt(runFunc func(context.Context) error) error {
 		cancel()
 	}()
 
-	return runFunc(ctx)
+	err := runFunc(ctx)
+	if errors.Is(err, context.Canceled) {
+		return errInterruptSignal
+	}
+	return err
 }

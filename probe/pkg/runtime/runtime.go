@@ -8,16 +8,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
-	"k8s.io/apimachinery/pkg/util/wait"
+	"github.com/stackrox/rox/pkg/utils"
 )
-
-var backoff = wait.Backoff{
-	Duration: 1 * time.Second,
-	Factor:   1.5,
-	Jitter:   0.1,
-	Steps:    15,
-	Cap:      10 * time.Minute,
-}
 
 // Runtime performs a probe run against fleet manager.
 type Runtime struct {
@@ -46,8 +38,9 @@ func (r *Runtime) RunLoop(ctx context.Context) error {
 		case <-ctx.Done():
 			return errors.Wrap(ctx.Err(), "probe context invalid")
 		case <-ticker.C:
-			err := r.RunSingle(ctx)
-			glog.Warning(err)
+			if err := r.RunSingle(ctx); err != nil {
+				glog.Warning(err)
+			}
 		}
 	}
 }
@@ -56,7 +49,7 @@ func (r *Runtime) RunLoop(ctx context.Context) error {
 func (r *Runtime) RunSingle(ctx context.Context) error {
 	ctxTimeout, cancel := context.WithTimeout(ctx, r.Config.RuntimeRunTimeout)
 	defer cancel()
-	defer r.CleanUp()
+	defer utils.Should(r.CleanUp())
 
 	if err := probe.Execute(ctxTimeout); err != nil {
 		return errors.Wrap(err, "probe run failed")
