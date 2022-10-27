@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# shellcheck source=/dev/null
+# shellcheck source=scripts/lib/external_config.sh
 source "$SCRIPT_DIR/../../../scripts/lib/external_config.sh"
 
 if [[ $# -ne 2 ]]; then
@@ -29,7 +29,7 @@ export AWS_PROFILE="$ENVIRONMENT"
 load_external_config() {
     local service="$1"
     local prefix="${2:-}"
-    eval "$(run_chamber env "$service" | sed -E "s/(^export )(.*)/\1${prefix}\2/")"
+    eval "$(run_chamber env "$service" | sed -E "s/(^export +)(.*)/\1${prefix}\2/")"
 }
 
 case $ENVIRONMENT in
