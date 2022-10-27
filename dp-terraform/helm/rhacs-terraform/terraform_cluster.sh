@@ -1,9 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Requires: `jq`
-# Requires: BitWarden CLI `bw`
-
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # shellcheck source=scripts/lib/external_config.sh
@@ -24,13 +21,18 @@ CLUSTER_NAME=$2
 
 export AWS_PROFILE="$ENVIRONMENT"
 
-
 # Loads config from the external storage to the environment and applying a prefix to a variable name (if exists).
 load_external_config() {
     local service="$1"
     local prefix="${2:-}"
     eval "$(run_chamber env "$service" | sed -E "s/(^export +)(.*)/\1${prefix}\2/")"
 }
+
+init_chamber
+
+load_external_config fleetshard-sync FLEETSHARD_SYNC_
+load_external_config logging LOGGING_
+load_external_config observability OBSERVABILITY_
 
 case $ENVIRONMENT in
   stage)
@@ -39,17 +41,8 @@ case $ENVIRONMENT in
 
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
 
-    init_chamber
-
-    # Fleetshard sync configuration
-    load_external_config fleetshard-sync FLEETSHARD_SYNC_
     FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:f6ad53e"
 
-    # Logging configuration
-    load_external_config logging LOGGING_
-
-    # Observability configuration
-    load_external_config observability OBSERVABILITY_
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     ;;
@@ -60,26 +53,10 @@ case $ENVIRONMENT in
 
     FM_ENDPOINT="https://api.openshift.com"
 
-    ensure_bitwarden_session_exists
     FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:6da74ac"
-    # Note: the Red Hat SSO client as of 2022-09-02 is the same between stage and prod.
-    FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
-    FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b)
-    LOGGING_AWS_ACCESS_KEY_ID=$(bw get item "f7711943-c355-47cc-a0ee-af0400f8dfe7" | jq '.fields[] | select(.name == "AccessKeyID") | .value' --raw-output)
-    LOGGING_AWS_SECRET_ACCESS_KEY=$(bw get item "f7711943-c355-47cc-a0ee-af0400f8dfe7" | jq '.fields[] | select(.name == "SecretAccessKey") | .value' --raw-output)
-    # Note: the GitHub Access Token as of 2022-09-02 is the same between stage and prod.
-    OBSERVABILITY_GITHUB_ACCESS_TOKEN=$(bw get password eb7aecd3-b553-4999-b201-aebe01445822)
+
     OBSERVABILITY_GITHUB_TAG="237418b6e0ac47499948fd00fb7bbcab63e535e6"  # pragma: allowlist secret
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
-    OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID="observatorium-rhacs-metrics"
-    OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET=$(
-        bw get item 510c8ed9-ba9f-46d9-b906-ae6100cf72f5 | \
-        jq --arg OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID "${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
-            '.fields[] | select(.name == $OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID) | .value' --raw-output
-    )
-    # Note: the PagerDuty Service Key as of 2022-09-02 is the same between stage and prod.
-    OBSERVABILITY_PAGERDUTY_SERVICE_KEY=$(bw get item "3615347e-1dde-46b5-b2e3-af0300a049fa" | jq '.fields[] | select(.name == "Integration Key") | .value' --raw-output)
-    OBSERVABILITY_DEAD_MANS_SWITCH_URL=$(bw get password "c8b26dbc-c9f0-4bc4-8c8e-af2700d795b2")
     ;;
 
   *)
