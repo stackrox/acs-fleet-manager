@@ -49,7 +49,7 @@ func (r *Runtime) RunLoop(ctx context.Context) error {
 func (r *Runtime) RunSingle(ctx context.Context) error {
 	ctxTimeout, cancel := context.WithTimeout(ctx, r.Config.RuntimeRunTimeout)
 	defer cancel()
-	defer utils.Should(r.CleanUp())
+	defer r.CleanUp()
 
 	if err := probe.Execute(ctxTimeout); err != nil {
 		return errors.Wrap(err, "probe run failed")
