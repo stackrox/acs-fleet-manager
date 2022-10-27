@@ -3,7 +3,7 @@ package internal
 import (
 	"testing"
 
-	"github.com/stackrox/rox/pkg/logging"
+	"github.com/stackrox/acs-fleet-manager/pkg/logging"
 	"gotest.tools/assert"
 )
 
