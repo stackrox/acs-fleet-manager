@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
-	"github.com/stackrox/rox/pkg/utils"
 )
 
 // Runtime performs a probe run against fleet manager.
