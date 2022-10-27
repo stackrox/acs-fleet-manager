@@ -44,7 +44,7 @@ case $ENVIRONMENT in
 
     ensure_bitwarden_session_exists
 
-    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:f6ad53e"
+    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:c8331e8"
     # Note: the Red Hat SSO client as of 2022-09-02 is the same between stage and prod.
     FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_ID=$(bw get username 028ce1a9-f751-4056-9c72-aea70052728b)
     FLEETSHARD_SYNC_RED_HAT_SSO_CLIENT_SECRET=$(bw get password 028ce1a9-f751-4056-9c72-aea70052728b)
