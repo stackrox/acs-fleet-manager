@@ -2,11 +2,9 @@
 
 ## Pre-reqs
 
-1. `jq` installed.
-2. `bw` - BitWarden CLI installed.
-3. `ocm` installed.
+1. `ocm` installed.
 
-Additionally, you will require access to our BitWarden vault.
+Additionally, you will require access to the environment specific AWS account.
 
 ## Creating the IdPs
 
@@ -29,13 +27,13 @@ Afterwards, you can call the script and adjust the parameters based on your need
 
 The script will handle the following (again, split by environments):
 - stage:
-  1. Fetch required credentials from BitWarden.
+  1. Fetch required credentials from AWS Parameter Store. The first time it runs, it will ask for AWS credentials.
   2. Create the OIDC IdP for the cluster.
   3. Create the user <-> group mapping for cluster-admins.
   4. Create the HTPasswd IdP for the cluster.
   5. Create the `acsms-stage-admin` user and map it to cluster-admins group.
 - prod:
-  1. Fetch required credentials from BitWarden.
+  1. Fetch required credentials from AWS Parameter Store. The first time it runs, it will ask for AWS credentials.
   2. Create the HTPasswd IdP for the cluster.
   3. Create the `acsms-prod-admin` user and map it to cluster-admins group.
 
