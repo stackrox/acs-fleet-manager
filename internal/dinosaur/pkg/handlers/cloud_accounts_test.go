@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 
 	"github.com/google/uuid"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -44,16 +44,15 @@ func TestGetSuccess(t *testing.T) {
 	authenticatedCtx := auth.SetTokenInContext(context.TODO(), jwt)
 	r := &http.Request{}
 	r = r.WithContext(authenticatedCtx)
-	w := httptest.NewRecorder()
 
-	handler.Get(w, r)
+	res, err := handler.actionFunc(r)()
+	assert.Nil(t, err)
+	cloudAccountsList, ok := res.(public.CloudAccountsList)
+	assert.True(t, ok)
 
-	var data public.CloudAccountsList
-	err = json.NewDecoder(w.Body).Decode(&data)
-	assert.NoError(t, err)
-	assert.Len(t, data.CloudAccounts, 1)
-	assert.Equal(t, data.CloudAccounts[0].CloudAccountId, testCloudAccount.CloudAccountID())
-	assert.Equal(t, data.CloudAccounts[0].CloudProviderId, testCloudAccount.CloudProviderID())
+	assert.Len(t, cloudAccountsList.CloudAccounts, 1)
+	assert.Equal(t, cloudAccountsList.CloudAccounts[0].CloudAccountId, testCloudAccount.CloudAccountID())
+	assert.Equal(t, cloudAccountsList.CloudAccounts[0].CloudProviderId, testCloudAccount.CloudProviderID())
 }
 
 func TestGetNoOrgId(t *testing.T) {
@@ -81,14 +80,8 @@ func TestGetNoOrgId(t *testing.T) {
 	authenticatedCtx := auth.SetTokenInContext(context.TODO(), jwt)
 	r := &http.Request{}
 	r = r.WithContext(authenticatedCtx)
-	w := httptest.NewRecorder()
 
-	handler.Get(w, r)
-
-	var data map[string]interface{}
-	err = json.NewDecoder(w.Body).Decode(&data)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusForbidden, w.Result().StatusCode)
+	_, serviceErr := handler.actionFunc(r)()
+	assert.Equal(t, serviceErr.Code, errors.ErrorForbidden)
 	assert.Equal(t, 0, timesClientCalled)
-	assert.Equal(t, "Error", data["kind"])
 }

@@ -26,23 +26,27 @@ func NewCloudAccountsHandler(client ocm.AMSClient) *cloudAccountsHandler {
 // Get ...
 func (h *cloudAccountsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
-		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			ctx := r.Context()
-			claims, err := auth.GetClaimsFromContext(ctx)
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
-			}
-			orgID, err := claims.GetOrgID()
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorForbidden, err, "cannot make request without orgID claim")
-			}
-
-			cloudAccounts, err := h.client.GetCustomerCloudAccounts(orgID, []string{rhacsMarketplaceQuotaID})
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to fetch cloud accounts from AMS")
-			}
-			return presenters.PresentCloudAccounts(cloudAccounts), nil
-		},
+		Action: h.actionFunc(r),
 	}
 	handlers.HandleGet(w, r, cfg)
+}
+
+func (h *cloudAccountsHandler) actionFunc(r *http.Request) func() (i interface{}, serviceError *errors.ServiceError) {
+	return func() (i interface{}, serviceError *errors.ServiceError) {
+		ctx := r.Context()
+		claims, err := auth.GetClaimsFromContext(ctx)
+		if err != nil {
+			return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
+		}
+		orgID, err := claims.GetOrgID()
+		if err != nil {
+			return nil, errors.NewWithCause(errors.ErrorForbidden, err, "cannot make request without orgID claim")
+		}
+
+		cloudAccounts, err := h.client.GetCustomerCloudAccounts(orgID, []string{rhacsMarketplaceQuotaID})
+		if err != nil {
+			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to fetch cloud accounts from AMS")
+		}
+		return presenters.PresentCloudAccounts(cloudAccounts), nil
+	}
 }
