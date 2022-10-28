@@ -80,3 +80,10 @@ run_chamber() {
         chamber "${args[@]}"
     fi
 }
+
+# Loads config from the external storage to the environment and applying a prefix to a variable name (if exists).
+load_external_config() {
+    local service="$1"
+    local prefix="${2:-}"
+    eval "$(run_chamber env "$service" | sed -E "s/(^export +)(.*)/\1${prefix}\2/")"
+}
