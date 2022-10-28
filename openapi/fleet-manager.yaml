@@ -420,6 +420,37 @@ paths:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/size"
         - $ref: "#/components/parameters/instance_type"
+  /api/rhacs/v1/cloud_accounts:
+    get:
+      summary: Returns the list of cloud accounts which belong to user's organization
+      operationId: getCloudAccounts
+      security:
+        - Bearer: [ ]
+      responses:
+        "200":
+          description: Returned list of supported cloud provider regions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudAccountsList"
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "#/components/examples/401Example"
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "#/components/examples/500Example"
   #
   # These are the user-facing related endpoints
   #
@@ -906,6 +937,21 @@ components:
           format: double
       required:
         - value
+    CloudAccountsList:
+      type: object
+      properties:
+        cloudAccounts:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/CloudAccount"
+    CloudAccount:
+      type: object
+      properties:
+        cloudAccountId:
+          type: string
+        cloudProviderId:
+          type: string
 
   parameters:
     id:
@@ -1174,6 +1220,11 @@ components:
           topic: __consumer_offsets
         timestamp: 1611670230000
         value: 84154
+    CloudAccountsList:
+      value:
+        cloudAccounts:
+          - cloudAccountId: "cloudAccountId"
+            cloudProviderId: "cloudProviderId"
     400DeletionExample:
       value:
         id: "103"

@@ -71,6 +71,9 @@ var _ Client = &ClientMock{}
 // 			GetClusterStatusFunc: func(id string) (*clustersmgmtv1.ClusterStatus, error) {
 // 				panic("mock out the GetClusterStatus method")
 // 			},
+// 			GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*amsv1.CloudAccount, error) {
+// 				panic("mock out the GetCustomerCloudAccounts method")
+// 			},
 // 			GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
 // 				panic("mock out the GetExistingClusterMetrics method")
 // 			},
@@ -164,6 +167,9 @@ type ClientMock struct {
 
 	// GetClusterStatusFunc mocks the GetClusterStatus method.
 	GetClusterStatusFunc func(id string) (*clustersmgmtv1.ClusterStatus, error)
+
+	// GetCustomerCloudAccountsFunc mocks the GetCustomerCloudAccounts method.
+	GetCustomerCloudAccountsFunc func(externalID string, quotaIDs []string) ([]*amsv1.CloudAccount, error)
 
 	// GetExistingClusterMetricsFunc mocks the GetExistingClusterMetrics method.
 	GetExistingClusterMetricsFunc func(clusterID string) (*amsv1.SubscriptionMetrics, error)
@@ -298,6 +304,13 @@ type ClientMock struct {
 			// ID is the id argument value.
 			ID string
 		}
+		// GetCustomerCloudAccounts holds details about calls to the GetCustomerCloudAccounts method.
+		GetCustomerCloudAccounts []struct {
+			// ExternalID is the externalID argument value.
+			ExternalID string
+			// QuotaIDs is the quotaIDs argument value.
+			QuotaIDs []string
+		}
 		// GetExistingClusterMetrics holds details about calls to the GetExistingClusterMetrics method.
 		GetExistingClusterMetrics []struct {
 			// ClusterID is the clusterID argument value.
@@ -396,6 +409,7 @@ type ClientMock struct {
 	lockGetClusterDNS                   sync.RWMutex
 	lockGetClusterIngresses             sync.RWMutex
 	lockGetClusterStatus                sync.RWMutex
+	lockGetCustomerCloudAccounts        sync.RWMutex
 	lockGetExistingClusterMetrics       sync.RWMutex
 	lockGetIdentityProviderList         sync.RWMutex
 	lockGetOrganisationIDFromExternalID sync.RWMutex
@@ -952,6 +966,41 @@ func (mock *ClientMock) GetClusterStatusCalls() []struct {
 	mock.lockGetClusterStatus.RLock()
 	calls = mock.calls.GetClusterStatus
 	mock.lockGetClusterStatus.RUnlock()
+	return calls
+}
+
+// GetCustomerCloudAccounts calls GetCustomerCloudAccountsFunc.
+func (mock *ClientMock) GetCustomerCloudAccounts(externalID string, quotaIDs []string) ([]*amsv1.CloudAccount, error) {
+	if mock.GetCustomerCloudAccountsFunc == nil {
+		panic("ClientMock.GetCustomerCloudAccountsFunc: method is nil but Client.GetCustomerCloudAccounts was just called")
+	}
+	callInfo := struct {
+		ExternalID string
+		QuotaIDs   []string
+	}{
+		ExternalID: externalID,
+		QuotaIDs:   quotaIDs,
+	}
+	mock.lockGetCustomerCloudAccounts.Lock()
+	mock.calls.GetCustomerCloudAccounts = append(mock.calls.GetCustomerCloudAccounts, callInfo)
+	mock.lockGetCustomerCloudAccounts.Unlock()
+	return mock.GetCustomerCloudAccountsFunc(externalID, quotaIDs)
+}
+
+// GetCustomerCloudAccountsCalls gets all the calls that were made to GetCustomerCloudAccounts.
+// Check the length with:
+//     len(mockedClient.GetCustomerCloudAccountsCalls())
+func (mock *ClientMock) GetCustomerCloudAccountsCalls() []struct {
+	ExternalID string
+	QuotaIDs   []string
+} {
+	var calls []struct {
+		ExternalID string
+		QuotaIDs   []string
+	}
+	mock.lockGetCustomerCloudAccounts.RLock()
+	calls = mock.calls.GetCustomerCloudAccounts
+	mock.lockGetCustomerCloudAccounts.RUnlock()
 	return calls
 }
 
