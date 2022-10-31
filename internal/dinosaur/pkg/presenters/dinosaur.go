@@ -32,6 +32,7 @@ func PresentCentralRequest(request *dbapi.CentralRequest) public.CentralRequest 
 		Href:           fmt.Sprintf("/api/rhacs/v1/centrals/%s", request.ID),
 		Status:         request.Status,
 		CloudProvider:  request.CloudProvider,
+		CloudAccountId: request.CloudAccountID,
 		MultiAz:        request.MultiAZ,
 		Region:         request.Region,
 		Owner:          request.Owner,

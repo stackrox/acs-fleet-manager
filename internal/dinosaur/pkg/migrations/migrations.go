@@ -36,6 +36,7 @@ var migrations = []*gormigrate.Migration{
 	addSkipSchedulingToClusters(),
 	addClientOriginToCentralRequest(),
 	changeCentralClientOrigin(),
+	addCloudAccountIDToCentralRequest(),
 }
 
 // New ...

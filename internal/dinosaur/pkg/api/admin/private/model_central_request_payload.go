@@ -14,6 +14,8 @@ package private
 type CentralRequestPayload struct {
 	// The cloud provider where the Central component will be created in
 	CloudProvider string `json:"cloud_provider,omitempty"`
+	// The cloud account ID that is linked to the ACS instance
+	CloudAccountId string `json:"cloud_account_id,omitempty"`
 	// Set this to true to configure the Central component to be multiAZ
 	MultiAz bool `json:"multi_az,omitempty"`
 	// The name of the Central component. It must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character, and can not be longer than 32 characters.

@@ -134,6 +134,7 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 	cb, err := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(dinosaur.Owner).
 		CloudProviderID(dinosaur.CloudProvider).
+		CloudAccountID(dinosaur.CloudAccountID).
 		ProductID(instanceType.GetQuotaType().GetProduct()).
 		Managed(true).
 		ClusterID(dinosaurID).
