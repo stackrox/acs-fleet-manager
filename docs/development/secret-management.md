@@ -36,11 +36,15 @@ Without the alias you have to load the session token manually or always add `aws
 
 ### Write secret
 ```shell
-chamber write <service> <KEY> <VALUE>
+chamber write <service> <KEY> -
+<value>
+^D # end-of-stdin
 ```
 for example:
 ```shell
-chamber write fleetshard-sync RHSSO_SERVICE_ACCOUNT_CLIENT_ID changeme
+chamber write fleetshard-sync RHSSO_SERVICE_ACCOUNT_CLIENT_ID -
+changeme
+^D
 ```
 
 ### Print environment
