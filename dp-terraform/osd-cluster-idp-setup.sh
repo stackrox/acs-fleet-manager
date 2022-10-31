@@ -10,7 +10,12 @@ if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
     echo "Known environments: stage prod"
     echo "Cluster typically looks like: acs-{environment}-dp-01"
-    echo "Description: This script will create an identity provider for the OSD cluster, based on the environment it will be OIDC provider using auth.redhat.com (for stage) or HTPasswd provider (for prod)"
+    echo "Description: This script will create an identity provider for the OSD cluster, based on the environment it will be:"
+    echo "- stage: OIDC provider using auth.redhat.com and HTPasswd provider"
+    echo "- prod: HTPasswd provider"
+    echo "It will also create and configure a ServiceAccount for the data plane continuous deployment."
+    echo "See additional documentation in docs/development/setup-osd-cluster-idp.md"
+    echo
     echo "Note: you need to be logged into OCM for your environment's administrator"
     echo "Note: you need access to BitWarden"
     exit 2
@@ -112,3 +117,62 @@ case $ENVIRONMENT in
     exit 2
     ;;
 esac
+
+CLUSTER_URL="$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns api.url)"
+
+# Use a temporary KUBECONFIG to avoid storing credentials in and changing current context in user's day-to-day kubeconfig.
+KUBECONFIG="$(mktemp)"
+export KUBECONFIG
+trap 'rm -f "${KUBECONFIG}"' EXIT
+
+echo "Logging into cluster ${CLUSTER_NAME} as ${ADMIN_USERNAME}..."
+oc login "${CLUSTER_URL}" --username="${ADMIN_USERNAME}" --password="${ADMIN_PASSWORD}"
+
+ROBOT_NS="acscs-dataplane-cd"
+ROBOT_SA="acscs-cd-robot"
+ROBOT_TOKEN_SECRET="robot-token"
+
+echo "Provisioning robot account and configuring its permissions..."
+# We use `apply` rather than `create` for idempotence.
+oc apply -f - <<END
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${ROBOT_NS}
+END
+oc apply -f - <<END
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${ROBOT_SA}
+  namespace: ${ROBOT_NS}
+END
+oc adm policy -n "${ROBOT_NS}" --rolebinding-name="acscs-cd-robot-admin" add-cluster-role-to-user cluster-admin -z "${ROBOT_SA}"
+oc apply -n "${ROBOT_NS}" -f - <<END
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${ROBOT_TOKEN_SECRET}
+  annotations:
+    kubernetes.io/service-account.name: "${ROBOT_SA}"
+type: kubernetes.io/service-account-token
+END
+
+echo "Polling for token to be provisioned."
+attempt=0
+while true
+do
+  attempt=$((attempt+1))
+  ROBOT_TOKEN="$(oc get secret "${ROBOT_TOKEN_SECRET}" -n "$ROBOT_NS" -o json | jq -r 'if (has("data") and (.data|has("token"))) then (.data.token|@base64d) else "" end')"
+  if [[ -n $ROBOT_TOKEN ]]; then
+    echo "Retrieved robot token:"
+    echo "$ROBOT_TOKEN"
+    echo "Please store it in the secret storage as NAME_TBD"
+    break
+  fi
+  if [[ $attempt -gt 30 ]]; then
+    echo "Timed out waiting for a token to be provisioned in the ${ROBOT_TOKEN_SECRET} secret."
+    exit 1
+  fi
+  sleep 1
+done
