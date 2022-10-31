@@ -167,7 +167,7 @@ do
   if [[ -n $ROBOT_TOKEN ]]; then
     echo "Retrieved robot token:"
     echo "$ROBOT_TOKEN"
-    echo "Please store it in the secret storage as NAME_TBD"
+    # TODO(porridge): automate storing this in parameter store in a way suitable for terraform script.
     break
   fi
   if [[ $attempt -gt 30 ]]; then
