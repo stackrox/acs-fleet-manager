@@ -35,14 +35,18 @@ case $ENVIRONMENT in
     init_chamber
     load_external_config "cluster-$CLUSTER_NAME"
 
-    # Create the IdP for the cluster.
-    ocm create idp --name=OpenID \
-      --cluster="${CLUSTER_ID}" \
-      --type=openid \
-      --client-id="${OSD_OIDC_CLIENT_ID}" \
-      --client-secret="${OSD_OIDC_CLIENT_SECRET}" \
-      --issuer-url=https://auth.redhat.com/auth/realms/EmployeeIDP \
-      --email-claims=email --name-claims=preferred_username --username-claims=preferred_username
+    if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qxF OpenID; then
+      echo "Creating an OpenID IdP for the cluster."
+      ocm create idp --name=OpenID \
+        --cluster="${CLUSTER_ID}" \
+        --type=openid \
+        --client-id="${OSD_OIDC_CLIENT_ID}" \
+        --client-secret="${OSD_OIDC_CLIENT_SECRET}" \
+        --issuer-url=https://auth.redhat.com/auth/realms/EmployeeIDP \
+        --email-claims=email --name-claims=preferred_username --username-claims=preferred_username
+    else
+      echo "Skipping creation an OpenID IdP for the cluster, already exists."
+    fi
 
     # Create the users that should have access to the cluster with cluster administrative rights.
     # Ignore errors as the sometimes users already exist.
@@ -50,11 +54,16 @@ case $ENVIRONMENT in
       --group=cluster-admins \
       "${OSD_OIDC_USER_LIST}" || true
 
-    ocm create idp --name=HTPasswd \
-      --cluster="${CLUSTER_ID}" \
-      --type=htpasswd \
-      --username="${ADMIN_USERNAME}" \
-      --password="${ADMIN_PASSWORD}"
+    if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qxF HTPasswd; then
+      echo "Creating an HTPasswd IdP for the cluster."
+      ocm create idp --name=HTPasswd \
+        --cluster="${CLUSTER_ID}" \
+        --type=htpasswd \
+        --username="${ADMIN_USERNAME}" \
+        --password="${ADMIN_PASSWORD}"
+    else
+      echo "Skipping creation an HTPasswd IdP for the cluster, already exists."
+    fi
 
     # Create the acsms-admin user. Ignore errors, if it already exists.
     ocm create user --cluster="${CLUSTER_NAME}" \
@@ -81,12 +90,16 @@ case $ENVIRONMENT in
     init_chamber
     load_external_config "cluster-$CLUSTER_NAME"
 
-    # Create the IdP for the cluster.
-    ocm create idp --name=HTPasswd \
-      --cluster="${CLUSTER_ID}" \
-      --type=htpasswd \
-      --username="${ADMIN_USERNAME}" \
-      --password="${ADMIN_PASSWORD}"
+    if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qxF HTPasswd; then
+      echo "Creating an HTPasswd IdP for the cluster."
+      ocm create idp --name=HTPasswd \
+        --cluster="${CLUSTER_ID}" \
+        --type=htpasswd \
+        --username="${ADMIN_USERNAME}" \
+        --password="${ADMIN_PASSWORD}"
+    else
+      echo "Skipping creation an HTPasswd IdP for the cluster, already exists."
+    fi
 
     # Create the acsms-admin user. Ignore errors, if it already exists.
     ocm create user --cluster="${CLUSTER_NAME}" \
