@@ -555,7 +555,6 @@ image/build/multi-target:
 
 # build binary and image and tag image for local deployment
 image/build/local: GOOS=linux
-image/build/local: GOARCH=amd64
 image/build/local: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build/local: image/build
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
