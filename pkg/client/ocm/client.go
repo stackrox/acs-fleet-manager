@@ -12,7 +12,6 @@ import (
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"github.com/pkg/errors"
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
@@ -58,7 +57,7 @@ type Client interface {
 	GetOrganisationIDFromExternalID(externalID string) (string, error)
 	Connection() *sdkClient.Connection
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
-	GetCustomerCloudAccounts(externalID string, quotaIDs []string) ([]*amsv1.CloudAccount, error)
+	GetCustomerCloudAccounts(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error)
 }
 
 var _ Client = &client{}
@@ -604,14 +603,9 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 	return res, nil
 }
 
-func (c *client) GetCustomerCloudAccounts(externalID string, quotaIDs []string) ([]*amsv1.CloudAccount, error) {
+func (c *client) GetCustomerCloudAccounts(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error) {
 	var res []*amsv1.CloudAccount
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
-	organizationID, err := c.GetOrganisationIDFromExternalID(externalID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error getting cloud accounts: failed to get organization with external id %q", externalID)
-	}
-
 	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
 
 	quotaCostList, err := quotaCostClient.List().Parameter("fetchCloudAccounts", true).Send()

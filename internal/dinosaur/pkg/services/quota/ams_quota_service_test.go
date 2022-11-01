@@ -11,7 +11,9 @@ import (
 	"github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
+
+	"github.com/pkg/errors"
 )
 
 func Test_AMSCheckQuota(t *testing.T) {
@@ -63,6 +65,9 @@ func Test_AMSCheckQuota(t *testing.T) {
 						}
 						return []*v1.QuotaCost{qcb}, nil
 					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return []*v1.CloudAccount{}, nil
+					},
 				},
 			},
 			wantErr: false,
@@ -101,6 +106,9 @@ func Test_AMSCheckQuota(t *testing.T) {
 						}
 						return []*v1.QuotaCost{qcb}, nil
 					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return []*v1.CloudAccount{}, nil
+					},
 				},
 			},
 			wantErr: true,
@@ -126,6 +134,9 @@ func Test_AMSCheckQuota(t *testing.T) {
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						return []*v1.QuotaCost{}, nil
+					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return []*v1.CloudAccount{}, nil
 					},
 				},
 			},
@@ -159,6 +170,9 @@ func Test_AMSCheckQuota(t *testing.T) {
 							panic("unexpected error")
 						}
 						return []*v1.QuotaCost{qcb}, nil
+					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return []*v1.CloudAccount{}, nil
 					},
 				},
 			},
@@ -195,8 +209,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 		ocmClient ocm.Client
 	}
 	type args struct {
-		dinosaurID string
-		owner      string
+		dinosaurID     string
+		owner          string
+		cloudAccountID string
 	}
 	tests := []struct {
 		name             string
@@ -211,6 +226,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				"",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -232,6 +248,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 						}
 						return []*v1.QuotaCost{qcb}, nil
 					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return []*v1.CloudAccount{}, nil
+					},
 				},
 			},
 			wantBillingModel: string(v1.BillingModelMarketplace),
@@ -243,6 +262,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				"",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -269,6 +289,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 						}
 						return []*v1.QuotaCost{qcb1, qcb2}, nil
 					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return []*v1.CloudAccount{}, nil
+					},
 				},
 			},
 			wantBillingModel: string(v1.BillingModelStandard),
@@ -280,6 +303,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				"",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -306,6 +330,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 						}
 						return []*v1.QuotaCost{qcb2, qcb1}, nil
 					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return []*v1.CloudAccount{}, nil
+					},
 				},
 			},
 			wantBillingModel: string(v1.BillingModelMarketplace),
@@ -317,6 +344,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				"",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -338,6 +366,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 						}
 						return []*v1.QuotaCost{qcb1}, nil
 					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return []*v1.CloudAccount{}, nil
+					},
 				},
 			},
 			wantBillingModel: string(v1.BillingModelMarketplace),
@@ -349,6 +380,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				"",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -375,6 +407,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 						}
 						return []*v1.QuotaCost{qcb2, qcb1}, nil
 					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return []*v1.CloudAccount{}, nil
+					},
 				},
 			},
 			wantErr: true,
@@ -384,6 +419,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				"",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -400,6 +436,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						return []*v1.QuotaCost{}, nil
 					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return []*v1.CloudAccount{}, nil
+					},
 				},
 			},
 			wantErr: true,
@@ -409,6 +448,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				"",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -435,6 +475,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 						}
 						return []*v1.QuotaCost{qcb1, qcb2}, nil
 					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return []*v1.CloudAccount{}, nil
+					},
 				},
 			},
 			wantErr: true,
@@ -444,6 +487,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				"",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -462,9 +506,168 @@ func Test_AMSReserveQuota(t *testing.T) {
 						}
 						return []*v1.QuotaCost{qcb}, nil
 					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return []*v1.CloudAccount{}, nil
+					},
 				},
 			},
 			wantErr: true,
+		},
+		{
+			name: "failed to get cloud accounts",
+			args: args{
+				"12231",
+				"testUser",
+				"",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID("1234")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
+						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+						return []*v1.QuotaCost{qcb1}, nil
+					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						return nil, errors.New("unsuccessful cloud accounts test call")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "cloud account id in request is empty while cloud_accounts response is not",
+			args: args{
+				"12231",
+				"testUser",
+				"",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID("1234")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
+						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+						return []*v1.QuotaCost{qcb1}, nil
+					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						cloudAccount, _ := v1.NewCloudAccount().
+							CloudAccountID("cloudAccountID").
+							CloudProviderID("cloudProviderID").
+							Build()
+						return []*v1.CloudAccount{
+							cloudAccount,
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "cloud account id in request does not match cloud_accounts response",
+			args: args{
+				"12231",
+				"testUser",
+				"different cloudAccountID",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID("1234")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
+						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+						return []*v1.QuotaCost{qcb1}, nil
+					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						cloudAccount, _ := v1.NewCloudAccount().
+							CloudAccountID("cloudAccountID").
+							CloudProviderID("cloudProviderID").
+							Build()
+						return []*v1.CloudAccount{
+							cloudAccount,
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "cloud account matches cloud_accounts response",
+			args: args{
+				"12231",
+				"testUser",
+				"cloudAccountID",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID("1234")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
+						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+						return []*v1.QuotaCost{qcb1}, nil
+					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						cloudAccount, _ := v1.NewCloudAccount().
+							CloudAccountID("cloudAccountID").
+							CloudProviderID("cloudProviderID").
+							Build()
+						return []*v1.CloudAccount{
+							cloudAccount,
+						}, nil
+					},
+				},
+			},
+			wantBillingModel: string(v1.BillingModelMarketplace),
+			want:             "1234",
+			wantErr:          false,
 		},
 	}
 
@@ -477,7 +680,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 				Meta: api.Meta{
 					ID: tt.args.dinosaurID,
 				},
-				Owner: tt.args.owner,
+				Owner:          tt.args.owner,
+				CloudAccountID: tt.args.cloudAccountID,
+				CloudProvider:  "cloudProviderID",
 			}
 			subID, err := quotaService.ReserveQuota(dinosaur, types.STANDARD)
 			gomega.Expect(subID).To(gomega.Equal(tt.want))
@@ -536,7 +741,7 @@ func Test_Delete_Quota(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					DeleteSubscriptionFunc: func(id string) (int, error) {
-						return 0, errors.GeneralError("failed to delete subscription")
+						return 0, serviceErrors.GeneralError("failed to delete subscription")
 					},
 				},
 			},

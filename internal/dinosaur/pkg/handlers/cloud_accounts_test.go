@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 
 	"github.com/google/uuid"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -13,6 +13,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -27,6 +29,9 @@ func TestGetSuccess(t *testing.T) {
 		Build()
 	assert.NoError(t, err)
 	c := ocm.ClientMock{
+		GetOrganisationIDFromExternalIDFunc: func(externalID string) (string, error) {
+			return "external-id", nil
+		},
 		GetCustomerCloudAccountsFunc: func(externalID string, quotaID []string) ([]*v1.CloudAccount, error) {
 			return []*v1.CloudAccount{
 				testCloudAccount,
@@ -58,6 +63,10 @@ func TestGetSuccess(t *testing.T) {
 func TestGetNoOrgId(t *testing.T) {
 	timesClientCalled := 0
 	c := ocm.ClientMock{
+		GetOrganisationIDFromExternalIDFunc: func(externalID string) (string, error) {
+			timesClientCalled++
+			return "external-id", nil
+		},
 		GetCustomerCloudAccountsFunc: func(externalID string, quotaID []string) ([]*v1.CloudAccount, error) {
 			timesClientCalled++
 			return []*v1.CloudAccount{}, nil
@@ -82,6 +91,34 @@ func TestGetNoOrgId(t *testing.T) {
 	r = r.WithContext(authenticatedCtx)
 
 	_, serviceErr := handler.actionFunc(r)()
-	assert.Equal(t, serviceErr.Code, errors.ErrorForbidden)
+	assert.Equal(t, serviceErr.Code, serviceErrors.ErrorForbidden)
+	assert.Equal(t, 0, timesClientCalled)
+}
+
+func TestGetCannotGetOrganizationID(t *testing.T) {
+	timesClientCalled := 0
+	c := ocm.ClientMock{
+		GetOrganisationIDFromExternalIDFunc: func(externalID string) (string, error) {
+			return "", errors.New("test failure")
+		},
+		GetCustomerCloudAccountsFunc: func(externalID string, quotaID []string) ([]*v1.CloudAccount, error) {
+			timesClientCalled++
+			return []*v1.CloudAccount{}, nil
+		},
+	}
+	handler := NewCloudAccountsHandler(&c)
+
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
+	assert.NoError(t, err)
+	account, err := authHelper.NewAccount("username", "test-user", "", "org-id-0")
+	assert.NoError(t, err)
+	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	assert.NoError(t, err)
+	authenticatedCtx := auth.SetTokenInContext(context.TODO(), jwt)
+	r := &http.Request{}
+	r = r.WithContext(authenticatedCtx)
+
+	_, serviceErr := handler.actionFunc(r)()
+	assert.Equal(t, serviceErr.Code, serviceErrors.ErrorGeneral)
 	assert.Equal(t, 0, timesClientCalled)
 }

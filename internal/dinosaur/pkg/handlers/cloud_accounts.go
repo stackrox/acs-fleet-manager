@@ -3,14 +3,14 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services/quota"
+
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 )
-
-const rhacsMarketplaceQuotaID = "cluster|rhinfra|rhacs|marketplace"
 
 type cloudAccountsHandler struct {
 	client ocm.AMSClient
@@ -42,8 +42,12 @@ func (h *cloudAccountsHandler) actionFunc(r *http.Request) func() (i interface{}
 		if err != nil {
 			return nil, errors.NewWithCause(errors.ErrorForbidden, err, "cannot make request without orgID claim")
 		}
+		organizationID, err := h.client.GetOrganisationIDFromExternalID(orgID)
+		if err != nil {
+			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "error getting cloud accounts: failed to get organization with external id %q", orgID)
+		}
 
-		cloudAccounts, err := h.client.GetCustomerCloudAccounts(orgID, []string{rhacsMarketplaceQuotaID})
+		cloudAccounts, err := h.client.GetCustomerCloudAccounts(organizationID, []string{quota.RHACSMarketplaceQuotaID})
 		if err != nil {
 			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to fetch cloud accounts from AMS")
 		}
