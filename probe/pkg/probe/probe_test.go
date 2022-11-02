@@ -3,7 +3,7 @@ package probe
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -32,7 +32,7 @@ var testConfig = &config.Config{
 
 func makeHTTPResponse(statusCode int) *http.Response {
 	response := &http.Response{
-		Body:       ioutil.NopCloser(bytes.NewBufferString(`{}`)),
+		Body:       io.NopCloser(bytes.NewBufferString(`{}`)),
 		Header:     http.Header{},
 		StatusCode: statusCode,
 	}
@@ -49,7 +49,6 @@ func TestCreateCentral(t *testing.T) {
 	tt := []struct {
 		testName     string
 		wantErr      bool
-		errContains  string
 		mockFMClient *fleetmanager.PublicClientMock
 	}{
 		{
@@ -73,9 +72,8 @@ func TestCreateCentral(t *testing.T) {
 			},
 		},
 		{
-			testName:    "create central fails on internal server error",
-			wantErr:     true,
-			errContains: "creation of central instance failed",
+			testName: "create central fails on internal server error",
+			wantErr:  true,
 			mockFMClient: &fleetmanager.PublicClientMock{
 				CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
 					central := public.CentralRequest{}
@@ -85,9 +83,8 @@ func TestCreateCentral(t *testing.T) {
 			},
 		},
 		{
-			testName:    "central not ready on internal server error",
-			wantErr:     true,
-			errContains: "central instance id-42 did not reach ready state",
+			testName: "central not ready on internal server error",
+			wantErr:  true,
 			mockFMClient: &fleetmanager.PublicClientMock{
 				CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
 					central := public.CentralRequest{
@@ -117,7 +114,7 @@ func TestCreateCentral(t *testing.T) {
 			central, err := probe.createCentral(ctx)
 
 			if tc.wantErr {
-				assert.ErrorContains(t, err, tc.errContains, "expected an error during probe run")
+				assert.Error(t, err, "expected an error during probe run")
 			} else {
 				require.NoError(t, err, "failed to create central")
 				assert.Equal(t, constants.CentralRequestStatusReady.String(), central.Status, "central not ready")
@@ -130,7 +127,6 @@ func TestVerifyCentral(t *testing.T) {
 	tt := []struct {
 		testName       string
 		wantErr        bool
-		errContains    string
 		central        *public.CentralRequest
 		mockFMClient   *fleetmanager.PublicClientMock
 		mockHTTPClient *http.Client
@@ -156,18 +152,16 @@ func TestVerifyCentral(t *testing.T) {
 			}),
 		},
 		{
-			testName:    "verify central fails if not standard instance",
-			wantErr:     true,
-			errContains: "central has wrong instance type: expected standard, got eval",
+			testName: "verify central fails if not standard instance",
+			wantErr:  true,
 			central: &public.CentralRequest{
 				Status:       constants.CentralRequestStatusReady.String(),
 				InstanceType: types.EVAL.String(),
 			},
 		},
 		{
-			testName:    "verify central fails if central UI not reachable",
-			wantErr:     true,
-			errContains: "could not reach central UI URL of instance id-42",
+			testName: "verify central fails if central UI not reachable",
+			wantErr:  true,
 			central: &public.CentralRequest{
 				Id:           "id-42",
 				Name:         "probe-pod-42",
@@ -199,7 +193,7 @@ func TestVerifyCentral(t *testing.T) {
 			err = probe.verifyCentral(ctx, tc.central)
 
 			if tc.wantErr {
-				assert.ErrorContains(t, err, tc.errContains, "expected an error during probe run")
+				assert.Error(t, err, "expected an error during probe run")
 			} else {
 				assert.NoError(t, err, "failed to verify central")
 			}
@@ -213,7 +207,6 @@ func TestDeleteCentral(t *testing.T) {
 	tt := []struct {
 		testName     string
 		wantErr      bool
-		errContains  string
 		mockFMClient *fleetmanager.PublicClientMock
 	}{
 		{
@@ -242,9 +235,8 @@ func TestDeleteCentral(t *testing.T) {
 			},
 		},
 		{
-			testName:    "delete central fails on internal server error",
-			wantErr:     true,
-			errContains: "deletion of central instance id-42 failed",
+			testName: "delete central fails on internal server error",
+			wantErr:  true,
 			mockFMClient: &fleetmanager.PublicClientMock{
 				DeleteCentralByIdFunc: func(ctx context.Context, id string, async bool) (*http.Response, error) {
 					err := errors.Errorf("%d", http.StatusInternalServerError)
@@ -253,9 +245,8 @@ func TestDeleteCentral(t *testing.T) {
 			},
 		},
 		{
-			testName:    "central not deprovision on internal server error",
-			wantErr:     true,
-			errContains: "central instance id-42 did not reach deprovision state",
+			testName: "central not deprovision on internal server error",
+			wantErr:  true,
 			mockFMClient: &fleetmanager.PublicClientMock{
 				DeleteCentralByIdFunc: func(ctx context.Context, id string, async bool) (*http.Response, error) {
 					return nil, nil
@@ -268,9 +259,8 @@ func TestDeleteCentral(t *testing.T) {
 			},
 		},
 		{
-			testName:    "central not deleted if no 404 response",
-			wantErr:     true,
-			errContains: "central instance id-42 could not be deleted",
+			testName: "central not deleted if no 404 response",
+			wantErr:  true,
 			mockFMClient: &fleetmanager.PublicClientMock{
 				DeleteCentralByIdFunc: func(ctx context.Context, id string, async bool) (*http.Response, error) {
 					return nil, nil
@@ -312,7 +302,7 @@ func TestDeleteCentral(t *testing.T) {
 			err = probe.deleteCentral(ctx, central)
 
 			if tc.wantErr {
-				assert.ErrorContains(t, err, tc.errContains, "expected an error during probe run")
+				assert.Error(t, err, "expected an error during probe run")
 			} else {
 				assert.NoError(t, err, "failed to delete central")
 			}
@@ -326,7 +316,6 @@ func TestCleanUp(t *testing.T) {
 	tt := []struct {
 		testName     string
 		wantErr      bool
-		errContains  string
 		mockFMClient *fleetmanager.PublicClientMock
 	}{
 		{
@@ -374,9 +363,8 @@ func TestCleanUp(t *testing.T) {
 			},
 		},
 		{
-			testName:    "clean up fails on internal server error",
-			wantErr:     true,
-			errContains: "could not list central",
+			testName: "clean up fails on internal server error",
+			wantErr:  true,
 			mockFMClient: &fleetmanager.PublicClientMock{
 				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
 					centralList := public.CentralRequestList{}
@@ -399,7 +387,7 @@ func TestCleanUp(t *testing.T) {
 			require.True(t, cleanupDone.IsDone())
 
 			if tc.wantErr {
-				assert.ErrorContains(t, err, tc.errContains, "expected an error during probe run")
+				assert.Error(t, err, "expected an error during probe run")
 			} else {
 				assert.NoError(t, err, "failed to delete central")
 			}
