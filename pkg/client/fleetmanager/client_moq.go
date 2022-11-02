@@ -10,16 +10,16 @@ import (
 	"sync"
 )
 
-// Ensure, that ClientMock does implement Client.
+// Ensure, that PublicClientMock does implement PublicClient.
 // If this is not the case, regenerate this file with moq.
-var _ Client = &ClientMock{}
+var _ PublicClient = &PublicClientMock{}
 
-// ClientMock is a mock implementation of Client.
+// PublicClientMock is a mock implementation of PublicClient.
 //
-// 	func TestSomethingThatUsesClient(t *testing.T) {
+// 	func TestSomethingThatUsesPublicClient(t *testing.T) {
 //
-// 		// make and configure a mocked Client
-// 		mockedClient := &ClientMock{
+// 		// make and configure a mocked PublicClient
+// 		mockedPublicClient := &PublicClientMock{
 // 			CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
 // 				panic("mock out the CreateCentral method")
 // 			},
@@ -34,11 +34,11 @@ var _ Client = &ClientMock{}
 // 			},
 // 		}
 //
-// 		// use mockedClient in code that requires Client
+// 		// use mockedPublicClient in code that requires PublicClient
 // 		// and then make assertions.
 //
 // 	}
-type ClientMock struct {
+type PublicClientMock struct {
 	// CreateCentralFunc mocks the CreateCentral method.
 	CreateCentralFunc func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error)
 
@@ -93,9 +93,9 @@ type ClientMock struct {
 }
 
 // CreateCentral calls CreateCentralFunc.
-func (mock *ClientMock) CreateCentral(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
+func (mock *PublicClientMock) CreateCentral(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
 	if mock.CreateCentralFunc == nil {
-		panic("ClientMock.CreateCentralFunc: method is nil but Client.CreateCentral was just called")
+		panic("PublicClientMock.CreateCentralFunc: method is nil but PublicClient.CreateCentral was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -114,8 +114,8 @@ func (mock *ClientMock) CreateCentral(ctx context.Context, async bool, request p
 
 // CreateCentralCalls gets all the calls that were made to CreateCentral.
 // Check the length with:
-//     len(mockedClient.CreateCentralCalls())
-func (mock *ClientMock) CreateCentralCalls() []struct {
+//     len(mockedPublicClient.CreateCentralCalls())
+func (mock *PublicClientMock) CreateCentralCalls() []struct {
 	Ctx     context.Context
 	Async   bool
 	Request public.CentralRequestPayload
@@ -132,9 +132,9 @@ func (mock *ClientMock) CreateCentralCalls() []struct {
 }
 
 // DeleteCentralById calls DeleteCentralByIdFunc.
-func (mock *ClientMock) DeleteCentralById(ctx context.Context, id string, async bool) (*http.Response, error) {
+func (mock *PublicClientMock) DeleteCentralById(ctx context.Context, id string, async bool) (*http.Response, error) {
 	if mock.DeleteCentralByIdFunc == nil {
-		panic("ClientMock.DeleteCentralByIdFunc: method is nil but Client.DeleteCentralById was just called")
+		panic("PublicClientMock.DeleteCentralByIdFunc: method is nil but PublicClient.DeleteCentralById was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -153,8 +153,8 @@ func (mock *ClientMock) DeleteCentralById(ctx context.Context, id string, async 
 
 // DeleteCentralByIdCalls gets all the calls that were made to DeleteCentralById.
 // Check the length with:
-//     len(mockedClient.DeleteCentralByIdCalls())
-func (mock *ClientMock) DeleteCentralByIdCalls() []struct {
+//     len(mockedPublicClient.DeleteCentralByIdCalls())
+func (mock *PublicClientMock) DeleteCentralByIdCalls() []struct {
 	Ctx   context.Context
 	ID    string
 	Async bool
@@ -171,9 +171,9 @@ func (mock *ClientMock) DeleteCentralByIdCalls() []struct {
 }
 
 // GetCentralById calls GetCentralByIdFunc.
-func (mock *ClientMock) GetCentralById(ctx context.Context, id string) (public.CentralRequest, *http.Response, error) {
+func (mock *PublicClientMock) GetCentralById(ctx context.Context, id string) (public.CentralRequest, *http.Response, error) {
 	if mock.GetCentralByIdFunc == nil {
-		panic("ClientMock.GetCentralByIdFunc: method is nil but Client.GetCentralById was just called")
+		panic("PublicClientMock.GetCentralByIdFunc: method is nil but PublicClient.GetCentralById was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
@@ -190,8 +190,8 @@ func (mock *ClientMock) GetCentralById(ctx context.Context, id string) (public.C
 
 // GetCentralByIdCalls gets all the calls that were made to GetCentralById.
 // Check the length with:
-//     len(mockedClient.GetCentralByIdCalls())
-func (mock *ClientMock) GetCentralByIdCalls() []struct {
+//     len(mockedPublicClient.GetCentralByIdCalls())
+func (mock *PublicClientMock) GetCentralByIdCalls() []struct {
 	Ctx context.Context
 	ID  string
 } {
@@ -206,9 +206,9 @@ func (mock *ClientMock) GetCentralByIdCalls() []struct {
 }
 
 // GetCentrals calls GetCentralsFunc.
-func (mock *ClientMock) GetCentrals(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
+func (mock *PublicClientMock) GetCentrals(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
 	if mock.GetCentralsFunc == nil {
-		panic("ClientMock.GetCentralsFunc: method is nil but Client.GetCentrals was just called")
+		panic("PublicClientMock.GetCentralsFunc: method is nil but PublicClient.GetCentrals was just called")
 	}
 	callInfo := struct {
 		Ctx               context.Context
@@ -225,8 +225,8 @@ func (mock *ClientMock) GetCentrals(ctx context.Context, localVarOptionals *publ
 
 // GetCentralsCalls gets all the calls that were made to GetCentrals.
 // Check the length with:
-//     len(mockedClient.GetCentralsCalls())
-func (mock *ClientMock) GetCentralsCalls() []struct {
+//     len(mockedPublicClient.GetCentralsCalls())
+func (mock *PublicClientMock) GetCentralsCalls() []struct {
 	Ctx               context.Context
 	LocalVarOptionals *public.GetCentralsOpts
 } {
