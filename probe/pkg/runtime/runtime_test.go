@@ -2,13 +2,11 @@ package runtime
 
 import (
 	"context"
-	"net/http"
 	"testing"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
+	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,32 +24,19 @@ var testConfig = &config.Config{
 
 func TestRunSingle(t *testing.T) {
 	tt := []struct {
-		testName     string
-		mockFMClient *fleetmanager.PublicClientMock
+		testName  string
+		mockProbe *probe.ProbeMock
 	}{
 		{
 			testName: "centrals are cleaned up on time out",
-			mockFMClient: &fleetmanager.PublicClientMock{
-				CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
+			mockProbe: &probe.ProbeMock{
+				CleanUpFunc: func(ctx context.Context, done concurrency.Signal) error {
+					done.Signal()
+					return nil
+				},
+				ExecuteFunc: func(ctx context.Context) error {
 					concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeRunTimeout)
-					return public.CentralRequest{}, nil, ctx.Err()
-				},
-				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
-					centralItems := []public.CentralRequest{
-						{
-							Id:    "id-42",
-							Name:  "probe-pod-42",
-							Owner: "service-account-client",
-						},
-					}
-					centralList := public.CentralRequestList{Items: centralItems}
-					return centralList, nil, nil
-				},
-				DeleteCentralByIdFunc: func(ctx context.Context, id string, async bool) (*http.Response, error) {
-					return nil, nil
-				},
-				GetCentralByIdFunc: func(ctx context.Context, id string) (public.CentralRequest, *http.Response, error) {
-					return public.CentralRequest{}, nil, nil
+					return ctx.Err()
 				},
 			},
 		},
@@ -59,7 +44,7 @@ func TestRunSingle(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
-			runtime, err := New(testConfig, tc.mockFMClient, nil)
+			runtime, err := New(testConfig, tc.mockProbe)
 			require.NoError(t, err, "failed to create runtime")
 			ctx, cancel := context.WithTimeout(context.TODO(), testConfig.ProbeRunTimeout)
 			defer cancel()
@@ -68,9 +53,7 @@ func TestRunSingle(t *testing.T) {
 
 			assert.ErrorContains(t, err, "probe run failed", "expected an error during probe run")
 			assert.ErrorContains(t, err, "context deadline exceeded", "expected timeout error")
-			assert.Equal(t, 1, len(tc.mockFMClient.GetCentralsCalls()), 1, "must retrieve central list for clean up")
-			require.Equal(t, 1, len(tc.mockFMClient.DeleteCentralByIdCalls()), 1, "must delete central for clean up")
-			assert.Equal(t, "id-42", tc.mockFMClient.DeleteCentralByIdCalls()[0].ID, "deleted central ID did not match")
+			assert.Equal(t, 1, len(tc.mockProbe.CleanUpCalls()), "must clean up centrals")
 		})
 	}
 }

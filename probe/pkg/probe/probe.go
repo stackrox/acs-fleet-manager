@@ -21,16 +21,26 @@ import (
 	"github.com/stackrox/rox/pkg/httputil"
 )
 
-// Probe executes a probe run against fleet manager.
-type Probe struct {
+// Probe is a wrapper interface for the core probe logic.
+//
+//go:generate moq -out probe_moq.go . Probe
+type Probe interface {
+	Execute(ctx context.Context) error
+	CleanUp(ctx context.Context, done concurrency.Signal) error
+}
+
+var _ Probe = (*ProbeImpl)(nil)
+
+// ProbeImpl executes a probe run against fleet manager.
+type ProbeImpl struct {
 	config             *config.Config
 	fleetManagerClient fleetmanager.PublicClient
 	httpClient         *http.Client
 }
 
 // New creates a new probe.
-func New(config *config.Config, fleetManagerClient fleetmanager.PublicClient, httpClient *http.Client) (*Probe, error) {
-	return &Probe{
+func New(config *config.Config, fleetManagerClient fleetmanager.PublicClient, httpClient *http.Client) (*ProbeImpl, error) {
+	return &ProbeImpl{
 		config:             config,
 		fleetManagerClient: fleetManagerClient,
 		httpClient:         httpClient,
@@ -41,7 +51,7 @@ func recordElapsedTime(start time.Time) {
 	glog.Infof("elapsed time: %v", time.Since(start))
 }
 
-func (p *Probe) newCentralName() (string, error) {
+func (p *ProbeImpl) newCentralName() (string, error) {
 	rnd := make([]byte, 8)
 	if _, err := rand.Read(rnd); err != nil {
 		return "", errors.Wrapf(err, "reading random bytes for unique central name")
@@ -51,7 +61,7 @@ func (p *Probe) newCentralName() (string, error) {
 }
 
 // Execute the probe of the fleet manager API.
-func (p *Probe) Execute(ctx context.Context) error {
+func (p *ProbeImpl) Execute(ctx context.Context) error {
 	glog.Info("probe run has been started")
 	defer glog.Info("probe run has ended")
 	defer recordElapsedTime(time.Now())
@@ -69,7 +79,7 @@ func (p *Probe) Execute(ctx context.Context) error {
 }
 
 // CleanUp remaining probe resources.
-func (p *Probe) CleanUp(ctx context.Context, done concurrency.Signal) error {
+func (p *ProbeImpl) CleanUp(ctx context.Context, done concurrency.Signal) error {
 	defer done.Signal()
 
 	centralList, _, err := p.fleetManagerClient.GetCentrals(ctx, nil)
@@ -92,7 +102,7 @@ func (p *Probe) CleanUp(ctx context.Context, done concurrency.Signal) error {
 }
 
 // Create a Central and verify that it transitioned to 'ready' state.
-func (p *Probe) createCentral(ctx context.Context) (*public.CentralRequest, error) {
+func (p *ProbeImpl) createCentral(ctx context.Context) (*public.CentralRequest, error) {
 	centralName, err := p.newCentralName()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create central name")
@@ -118,7 +128,7 @@ func (p *Probe) createCentral(ctx context.Context) (*public.CentralRequest, erro
 
 // Verify that the Central instance has the expected properties and that the
 // Central UI is reachable.
-func (p *Probe) verifyCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
+func (p *ProbeImpl) verifyCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
 	if centralRequest.InstanceType != types.STANDARD.String() {
 		return errors.Errorf("central has wrong instance type: expected %s, got %s", types.STANDARD.String(), centralRequest.InstanceType)
 	}
@@ -130,7 +140,7 @@ func (p *Probe) verifyCentral(ctx context.Context, centralRequest *public.Centra
 }
 
 // Delete the Central instance and verify that it transitioned to 'deprovision' state.
-func (p *Probe) deleteCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
+func (p *ProbeImpl) deleteCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
 	_, err := p.fleetManagerClient.DeleteCentralById(ctx, centralRequest.Id, true)
 	glog.Infof("deletion of central instance %s requested", centralRequest.Id)
 	if err != nil {
@@ -149,7 +159,7 @@ func (p *Probe) deleteCentral(ctx context.Context, centralRequest *public.Centra
 	return nil
 }
 
-func (p *Probe) ensureCentralState(ctx context.Context, centralRequest *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
+func (p *ProbeImpl) ensureCentralState(ctx context.Context, centralRequest *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
 	ticker := time.NewTicker(p.config.ProbePollPeriod)
 	defer ticker.Stop()
 
@@ -172,7 +182,7 @@ func (p *Probe) ensureCentralState(ctx context.Context, centralRequest *public.C
 	}
 }
 
-func (p *Probe) ensureCentralDeleted(ctx context.Context, centralRequest *public.CentralRequest) error {
+func (p *ProbeImpl) ensureCentralDeleted(ctx context.Context, centralRequest *public.CentralRequest) error {
 	ticker := time.NewTicker(p.config.ProbePollPeriod)
 	defer ticker.Stop()
 
@@ -193,7 +203,7 @@ func (p *Probe) ensureCentralDeleted(ctx context.Context, centralRequest *public
 	}
 }
 
-func (p *Probe) pingURL(ctx context.Context, url string) error {
+func (p *ProbeImpl) pingURL(ctx context.Context, url string) error {
 	request, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
 	if err != nil {
 		return errors.Wrap(err, "failed to create request for central UI")

@@ -2,14 +2,12 @@ package cli
 
 import (
 	"context"
-	"net/http"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
+	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/runtime"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stretchr/testify/assert"
@@ -17,27 +15,29 @@ import (
 )
 
 var testConfig = &config.Config{
-	ProbeRunTimeout: 10 * time.Millisecond,
-	ProbeName:       "pod",
-	ProbeNamePrefix: "probe",
-	RHSSOClientID:   "client",
+	ProbeCleanUpTimeout: 100 * time.Millisecond,
+	ProbeRunTimeout:     100 * time.Millisecond,
+	ProbeName:           "pod",
+	ProbeNamePrefix:     "probe",
+	RHSSOClientID:       "client",
 }
 
 func TestCLIInterrupt(t *testing.T) {
-	fleetManagerClient := &fleetmanager.PublicClientMock{
-		CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
+	mockProbe := &probe.ProbeMock{
+		CleanUpFunc: func(ctx context.Context, done concurrency.Signal) error {
+			done.Signal()
+			return nil
+		},
+		ExecuteFunc: func(ctx context.Context) error {
 			process, err := os.FindProcess(os.Getpid())
 			require.NoError(t, err, "could not find current process ID")
 			process.Signal(os.Interrupt)
 
-			concurrency.Wait(ctx)
-			return public.CentralRequest{}, nil, ctx.Err()
-		},
-		GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
-			return public.CentralRequestList{}, nil, nil
+			concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeRunTimeout)
+			return ctx.Err()
 		},
 	}
-	runtime, err := runtime.New(testConfig, fleetManagerClient, nil)
+	runtime, err := runtime.New(testConfig, mockProbe)
 	require.NoError(t, err, "failed to create runtime")
 	cli := &CLI{runtime: runtime}
 	cmd := cli.Command()
@@ -46,4 +46,5 @@ func TestCLIInterrupt(t *testing.T) {
 	err = cmd.Execute()
 
 	assert.ErrorIs(t, err, errInterruptSignal, "did not receive interrupt signal")
+	assert.Equal(t, 1, len(mockProbe.CleanUpCalls()), "must clean up centrals")
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/httpclient"
+	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/runtime"
 )
 
@@ -39,7 +40,12 @@ func New() (*CLI, error) {
 
 	httpClient := httpclient.New(config)
 
-	runtime, err := runtime.New(config, fleetManagerClient, httpClient)
+	probe, err := probe.New(config, fleetManagerClient, httpClient)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create probe")
+	}
+
+	runtime, err := runtime.New(config, probe)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create runtime")
 	}

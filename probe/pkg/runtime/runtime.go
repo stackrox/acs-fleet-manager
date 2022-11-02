@@ -3,12 +3,10 @@ package runtime
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
 	"github.com/stackrox/rox/pkg/concurrency"
@@ -17,16 +15,11 @@ import (
 // Runtime orchestrates probe runs against fleet manager.
 type Runtime struct {
 	Config *config.Config
-	probe  *probe.Probe
+	probe  probe.Probe
 }
 
 // New creates a new runtime.
-func New(config *config.Config, fleetManagerClient fleetmanager.PublicClient, httpClient *http.Client) (*Runtime, error) {
-	probe, err := probe.New(config, fleetManagerClient, httpClient)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create probe")
-	}
-
+func New(config *config.Config, probe probe.Probe) (*Runtime, error) {
 	return &Runtime{
 		Config: config,
 		probe:  probe,
@@ -65,6 +58,7 @@ func (r *Runtime) RunSingle(ctx context.Context) error {
 		}()
 		select {
 		case <-cleanupCtx.Done():
+			glog.Error(cleanupCtx.Err())
 		case <-cleanupDone.Done():
 		}
 	}()
