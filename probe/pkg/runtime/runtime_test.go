@@ -69,7 +69,7 @@ func TestRunSingle(t *testing.T) {
 			assert.ErrorContains(t, err, "probe run failed", "expected an error during probe run")
 			assert.ErrorContains(t, err, "context deadline exceeded", "expected timeout error")
 			assert.Equal(t, 1, len(tc.mockFMClient.GetCentralsCalls()), 1, "must retrieve central list for clean up")
-			assert.Equal(t, 1, len(tc.mockFMClient.DeleteCentralByIdCalls()), 1, "must delete central for clean up")
+			require.Equal(t, 1, len(tc.mockFMClient.DeleteCentralByIdCalls()), 1, "must delete central for clean up")
 			assert.Equal(t, "id-42", tc.mockFMClient.DeleteCentralByIdCalls()[0].ID, "deleted central ID did not match")
 		})
 	}

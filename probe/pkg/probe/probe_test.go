@@ -113,8 +113,8 @@ func TestCreateCentral(t *testing.T) {
 			if tc.wantErr {
 				assert.ErrorContains(t, err, tc.errContains, "expected an error during probe run")
 			} else {
+				require.NoError(t, err, "failed to create central")
 				assert.Equal(t, constants.CentralRequestStatusReady.String(), central.Status, "central not ready")
-				assert.NoError(t, err, "failed to create central")
 			}
 		})
 	}
