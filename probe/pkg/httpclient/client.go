@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
@@ -11,5 +12,8 @@ import (
 func New(config *config.Config) *http.Client {
 	retryClient := retryablehttp.NewClient()
 	retryClient.HTTPClient.Timeout = config.ProbeHttpRequestTimeout
+	retryClient.RetryMax = 4
+	retryClient.RetryWaitMax = 30 * time.Second
+	retryClient.RetryWaitMin = 1 * time.Second
 	return retryClient.StandardClient()
 }
