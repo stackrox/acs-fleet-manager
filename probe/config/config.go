@@ -18,7 +18,7 @@ type Config struct {
 	RHSSOClientSecret       string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
 	RHSSOEndpoint           string        `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
 	RHSSORealm              string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
-	ProbeHttpRequestTimeout time.Duration `env:"PROBE_HTTP_REQUEST_TIMEOUT" envDefault:"5s"`
+	ProbeHTTPRequestTimeout time.Duration `env:"PROBE_HTTP_REQUEST_TIMEOUT" envDefault:"5s"`
 	RuntimePollPeriod       time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
 	RuntimePollTimeout      time.Duration `env:"RUNTIME_POLL_TIMEOUT" envDefault:"5m"`
 	RuntimeRunTimeout       time.Duration `env:"RUNTIME_RUN_TIMEOUT" envDefault:"15m"`

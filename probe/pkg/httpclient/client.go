@@ -11,7 +11,7 @@ import (
 // New creates a http.Client with pre-configured retry and timeout.
 func New(config *config.Config) *http.Client {
 	retryClient := retryablehttp.NewClient()
-	retryClient.HTTPClient.Timeout = config.ProbeHttpRequestTimeout
+	retryClient.HTTPClient.Timeout = config.ProbeHTTPRequestTimeout
 	retryClient.RetryMax = 4
 	retryClient.RetryWaitMax = 30 * time.Second
 	retryClient.RetryWaitMin = 1 * time.Second
