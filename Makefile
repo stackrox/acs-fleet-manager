@@ -116,6 +116,14 @@ GINKGO_BIN := $(LOCAL_BIN_PATH)/ginkgo
 $(GINKGO_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/onsi/ginkgo/v2/ginkgo
 
+VENV_DIR := $(LOCAL_BIN_PATH)/venv
+$(VENV_DIR):
+	@set -e; \
+	python3 -m venv $(VENV_DIR); \
+	. $(VENV_DIR)/bin/activate; \
+	pip install --upgrade pip; \
+	pip install -r $(TOOLS_DIR)/requirements.txt
+
 OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
 NPM ?= "$(shell which npm)"
 openapi-generator:
