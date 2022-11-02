@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
-	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
