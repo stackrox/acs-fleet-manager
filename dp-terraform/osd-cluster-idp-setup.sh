@@ -130,7 +130,7 @@ oc login "${CLUSTER_URL}" --username="${ADMIN_USERNAME}" --password="${ADMIN_PAS
 
 ROBOT_NS="acscs-dataplane-cd"
 ROBOT_SA="acscs-cd-robot"
-ROBOT_TOKEN_SECRET="robot-token"
+ROBOT_TOKEN_RESOURCE="robot-token"
 
 echo "Provisioning robot account and configuring its permissions..."
 # We use `apply` rather than `create` for idempotence.
@@ -152,7 +152,7 @@ oc apply -n "${ROBOT_NS}" -f - <<END
 apiVersion: v1
 kind: Secret
 metadata:
-  name: ${ROBOT_TOKEN_SECRET}
+  name: ${ROBOT_TOKEN_RESOURCE}
   annotations:
     kubernetes.io/service-account.name: "${ROBOT_SA}"
 type: kubernetes.io/service-account-token
@@ -163,7 +163,7 @@ attempt=0
 while true
 do
   attempt=$((attempt+1))
-  ROBOT_TOKEN="$(oc get secret "${ROBOT_TOKEN_SECRET}" -n "$ROBOT_NS" -o json | jq -r 'if (has("data") and (.data|has("token"))) then (.data.token|@base64d) else "" end')"
+  ROBOT_TOKEN="$(oc get secret "${ROBOT_TOKEN_RESOURCE}" -n "$ROBOT_NS" -o json | jq -r 'if (has("data") and (.data|has("token"))) then (.data.token|@base64d) else "" end')"
   if [[ -n $ROBOT_TOKEN ]]; then
     echo "Retrieved robot token:"
     echo "$ROBOT_TOKEN"
@@ -171,7 +171,7 @@ do
     break
   fi
   if [[ $attempt -gt 30 ]]; then
-    echo "Timed out waiting for a token to be provisioned in the ${ROBOT_TOKEN_SECRET} secret."
+    echo "Timed out waiting for a token to be provisioned in the ${ROBOT_TOKEN_RESOURCE} secret."
     exit 1
   fi
   sleep 1
