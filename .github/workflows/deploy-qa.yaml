@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - yury/test-qa-deploy
 
 jobs:
   oidc-smoke-test:
