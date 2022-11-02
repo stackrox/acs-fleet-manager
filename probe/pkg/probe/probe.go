@@ -74,7 +74,7 @@ func (p *Probe) CleanUp(ctx context.Context, done concurrency.Signal) error {
 
 	centralList, _, err := p.fleetManagerClient.GetCentrals(ctx, nil)
 	if err != nil {
-		return errors.Wrap(err, "could not retrieve central list")
+		return errors.Wrap(err, "could not list centrals")
 	}
 
 	for i := range centralList.Items {
@@ -87,7 +87,7 @@ func (p *Probe) CleanUp(ctx context.Context, done concurrency.Signal) error {
 			}
 		}
 	}
-	glog.Info("finished clean up of probe resources")
+	glog.Info("finished clean up attempt of probe resources")
 	return nil
 }
 
@@ -109,47 +109,47 @@ func (p *Probe) createCentral(ctx context.Context) (*public.CentralRequest, erro
 		return nil, errors.Wrap(err, "creation of central instance failed")
 	}
 
-	currentCentral, err := p.ensureCentralState(ctx, &central, constants.CentralRequestStatusReady.String())
+	centralResp, err := p.ensureCentralState(ctx, &central, constants.CentralRequestStatusReady.String())
 	if err != nil {
 		return nil, errors.Wrapf(err, "central instance %s did not reach ready state", central.Id)
 	}
-	return currentCentral, nil
+	return centralResp, nil
 }
 
 // Verify that the Central instance has the expected properties and that the
 // Central UI is reachable.
-func (p *Probe) verifyCentral(ctx context.Context, central *public.CentralRequest) error {
-	if central.InstanceType != types.STANDARD.String() {
-		return errors.Errorf("central has wrong instance type: expected %s, got %s", types.STANDARD.String(), central.InstanceType)
+func (p *Probe) verifyCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
+	if centralRequest.InstanceType != types.STANDARD.String() {
+		return errors.Errorf("central has wrong instance type: expected %s, got %s", types.STANDARD.String(), centralRequest.InstanceType)
 	}
 
-	if err := p.pingURL(ctx, central.CentralUIURL); err != nil {
-		return errors.Wrapf(err, "could not reach central UI URL of instance %s", central.Id)
+	if err := p.pingURL(ctx, centralRequest.CentralUIURL); err != nil {
+		return errors.Wrapf(err, "could not reach central UI URL of instance %s", centralRequest.Id)
 	}
 	return nil
 }
 
 // Delete the Central instance and verify that it transitioned to 'deprovision' state.
-func (p *Probe) deleteCentral(ctx context.Context, central *public.CentralRequest) error {
-	_, err := p.fleetManagerClient.DeleteCentralById(ctx, central.Id, true)
-	glog.Infof("deletion of central instance %s requested", central.Id)
+func (p *Probe) deleteCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
+	_, err := p.fleetManagerClient.DeleteCentralById(ctx, centralRequest.Id, true)
+	glog.Infof("deletion of central instance %s requested", centralRequest.Id)
 	if err != nil {
-		return errors.Wrapf(err, "deletion of central instance %s failed", central.Id)
+		return errors.Wrapf(err, "deletion of central instance %s failed", centralRequest.Id)
 	}
 
-	_, err = p.ensureCentralState(ctx, central, constants.CentralRequestStatusDeprovision.String())
+	_, err = p.ensureCentralState(ctx, centralRequest, constants.CentralRequestStatusDeprovision.String())
 	if err != nil {
-		return errors.Wrapf(err, "central instance %s did not reach deprovision state", central.Id)
+		return errors.Wrapf(err, "central instance %s did not reach deprovision state", centralRequest.Id)
 	}
 
-	err = p.ensureCentralDeleted(ctx, central)
+	err = p.ensureCentralDeleted(ctx, centralRequest)
 	if err != nil {
-		return errors.Wrapf(err, "central instance %s could not be deleted", central.Id)
+		return errors.Wrapf(err, "central instance %s could not be deleted", centralRequest.Id)
 	}
 	return nil
 }
 
-func (p *Probe) ensureCentralState(ctx context.Context, central *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
+func (p *Probe) ensureCentralState(ctx context.Context, centralRequest *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
 	ticker := time.NewTicker(p.config.ProbePollPeriod)
 	defer ticker.Stop()
 
@@ -158,21 +158,21 @@ func (p *Probe) ensureCentralState(ctx context.Context, central *public.CentralR
 		case <-ctx.Done():
 			return nil, errors.Wrap(ctx.Err(), "ensure central state timed out")
 		case <-ticker.C:
-			currentCentral, _, err := p.fleetManagerClient.GetCentralById(ctx, central.Id)
+			centralResp, _, err := p.fleetManagerClient.GetCentralById(ctx, centralRequest.Id)
 			if err != nil {
-				glog.Warningf("central instance %s not reachable: %s", central.Id, err.Error())
+				glog.Warningf("central instance %s not reachable: %s", centralRequest.Id, err.Error())
 				continue
 			}
 
-			if currentCentral.Status == targetState {
-				glog.Infof("central instance %s is in `%s` state", currentCentral.Id, targetState)
-				return &currentCentral, nil
+			if centralResp.Status == targetState {
+				glog.Infof("central instance %s is in %q state", centralResp.Id, targetState)
+				return &centralResp, nil
 			}
 		}
 	}
 }
 
-func (p *Probe) ensureCentralDeleted(ctx context.Context, central *public.CentralRequest) error {
+func (p *Probe) ensureCentralDeleted(ctx context.Context, centralRequest *public.CentralRequest) error {
 	ticker := time.NewTicker(p.config.ProbePollPeriod)
 	defer ticker.Stop()
 
@@ -181,13 +181,13 @@ func (p *Probe) ensureCentralDeleted(ctx context.Context, central *public.Centra
 		case <-ctx.Done():
 			return errors.Wrap(ctx.Err(), "ensure central deleted timed out")
 		case <-ticker.C:
-			_, response, err := p.fleetManagerClient.GetCentralById(ctx, central.Id)
+			_, response, err := p.fleetManagerClient.GetCentralById(ctx, centralRequest.Id)
 			if err != nil {
 				if response != nil && response.StatusCode == http.StatusNotFound {
-					glog.Infof("central instance %s has been deleted", central.Id)
+					glog.Infof("central instance %s has been deleted", centralRequest.Id)
 					return nil
 				}
-				glog.Warningf("central instance %s not reachable: %s", central.Id, err.Error())
+				glog.Warningf("central instance %s not reachable: %s", centralRequest.Id, err.Error())
 			}
 		}
 	}
@@ -198,6 +198,7 @@ func (p *Probe) pingURL(ctx context.Context, url string) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create request for central UI")
 	}
+	// `httpClient` retries failed requests if they are retryable via `hashicorp/go-retryablehttp`.
 	response, err := p.httpClient.Do(request)
 	if err != nil {
 		return errors.Wrapf(err, "central UI not reachable")

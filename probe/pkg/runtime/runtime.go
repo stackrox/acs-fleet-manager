@@ -52,21 +52,24 @@ func (r *Runtime) RunLoop(ctx context.Context) error {
 
 // RunSingle executes a single probe run.
 func (r *Runtime) RunSingle(ctx context.Context) error {
-	ctxTimeout, cancel := context.WithTimeout(ctx, r.Config.ProbeRunTimeout)
+	probeRunCtx, cancel := context.WithTimeout(ctx, r.Config.ProbeRunTimeout)
 	defer cancel()
 	defer func() {
-		ctxCleanup, cancel := context.WithTimeout(context.Background(), r.Config.ProbeCleanUpTimeout)
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), r.Config.ProbeCleanUpTimeout)
 		defer cancel()
 		cleanupDone := concurrency.NewSignal()
 		go func() {
-			if err := r.probe.CleanUp(ctxCleanup, cleanupDone); err != nil {
+			if err := r.probe.CleanUp(cleanupCtx, cleanupDone); err != nil {
 				glog.Error(err)
 			}
 		}()
-		cleanupDone.Wait()
+		select {
+		case <-cleanupCtx.Done():
+		case <-cleanupDone.Done():
+		}
 	}()
 
-	if err := r.probe.Execute(ctxTimeout); err != nil {
+	if err := r.probe.Execute(probeRunCtx); err != nil {
 		return errors.Wrap(err, "probe run failed")
 	}
 	return nil

@@ -370,7 +370,7 @@ func TestCleanUp(t *testing.T) {
 		{
 			testName:    "clean up fails on internal server error",
 			wantErr:     true,
-			errContains: "could not retrieve central list",
+			errContains: "could not list central",
 			mockFMClient: &fleetmanager.PublicClientMock{
 				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
 					centralList := public.CentralRequestList{}
