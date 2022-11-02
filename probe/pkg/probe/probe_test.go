@@ -14,8 +14,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
-	"github.com/stackrox/acs-fleet-manager/probe/pkg/httpclient"
 	"github.com/stackrox/rox/pkg/concurrency"
+	"github.com/stackrox/rox/pkg/httputil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,6 +37,12 @@ func makeHTTPResponse(statusCode int) *http.Response {
 		StatusCode: statusCode,
 	}
 	return response
+}
+
+func newHTTPClientMock(fn httputil.RoundTripperFunc) *http.Client {
+	return &http.Client{
+		Transport: httputil.RoundTripperFunc(fn),
+	}
 }
 
 func TestCreateCentral(t *testing.T) {
@@ -145,8 +151,8 @@ func TestVerifyCentral(t *testing.T) {
 					return central, nil, nil
 				},
 			},
-			mockHTTPClient: httpclient.NewMockClient(func(req *http.Request) *http.Response {
-				return makeHTTPResponse(http.StatusOK)
+			mockHTTPClient: newHTTPClientMock(func(req *http.Request) (*http.Response, error) {
+				return makeHTTPResponse(http.StatusOK), nil
 			}),
 		},
 		{
@@ -177,8 +183,8 @@ func TestVerifyCentral(t *testing.T) {
 					return central, nil, nil
 				},
 			},
-			mockHTTPClient: httpclient.NewMockClient(func(req *http.Request) *http.Response {
-				return makeHTTPResponse(http.StatusNotFound)
+			mockHTTPClient: newHTTPClientMock(func(req *http.Request) (*http.Response, error) {
+				return makeHTTPResponse(http.StatusNotFound), nil
 			}),
 		},
 	}
