@@ -15,8 +15,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
-	"github.com/stackrox/acs-fleet-manager/probe/pkg/fleetmanager"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stackrox/rox/pkg/httputil"
 )
@@ -24,12 +24,12 @@ import (
 // Probe executes a probe run against fleet manager.
 type Probe struct {
 	config             *config.Config
-	fleetManagerClient fleetmanager.Client
+	fleetManagerClient fleetmanager.PublicClient
 	httpClient         *http.Client
 }
 
 // New creates a new probe.
-func New(config *config.Config, fleetManagerClient fleetmanager.Client, httpClient *http.Client) (*Probe, error) {
+func New(config *config.Config, fleetManagerClient fleetmanager.PublicClient, httpClient *http.Client) (*Probe, error) {
 	return &Probe{
 		config:             config,
 		fleetManagerClient: fleetManagerClient,

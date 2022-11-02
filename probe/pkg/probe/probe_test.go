@@ -12,8 +12,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
-	"github.com/stackrox/acs-fleet-manager/probe/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/httpclient"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stretchr/testify/assert"
@@ -44,12 +44,12 @@ func TestCreateCentral(t *testing.T) {
 		testName     string
 		wantErr      bool
 		errContains  string
-		mockFMClient *fleetmanager.ClientMock
+		mockFMClient *fleetmanager.PublicClientMock
 	}{
 		{
 			testName: "create central happy path",
 			wantErr:  false,
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
 					central := public.CentralRequest{
 						Status:       constants.CentralRequestStatusAccepted.String(),
@@ -70,7 +70,7 @@ func TestCreateCentral(t *testing.T) {
 			testName:    "create central fails on internal server error",
 			wantErr:     true,
 			errContains: "creation of central instance failed",
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
 					central := public.CentralRequest{}
 					err := errors.Errorf("%d", http.StatusInternalServerError)
@@ -82,7 +82,7 @@ func TestCreateCentral(t *testing.T) {
 			testName:    "central not ready on internal server error",
 			wantErr:     true,
 			errContains: "central instance id-42 did not reach ready state",
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
 					central := public.CentralRequest{
 						Id:           "id-42",
@@ -126,7 +126,7 @@ func TestVerifyCentral(t *testing.T) {
 		wantErr        bool
 		errContains    string
 		central        *public.CentralRequest
-		mockFMClient   *fleetmanager.ClientMock
+		mockFMClient   *fleetmanager.PublicClientMock
 		mockHTTPClient *http.Client
 	}{
 		{
@@ -136,7 +136,7 @@ func TestVerifyCentral(t *testing.T) {
 				Status:       constants.CentralRequestStatusReady.String(),
 				InstanceType: types.STANDARD.String(),
 			},
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				GetCentralByIdFunc: func(ctx context.Context, id string) (public.CentralRequest, *http.Response, error) {
 					central := public.CentralRequest{
 						Status:       constants.CentralRequestStatusReady.String(),
@@ -168,7 +168,7 @@ func TestVerifyCentral(t *testing.T) {
 				Status:       constants.CentralRequestStatusReady.String(),
 				InstanceType: types.STANDARD.String(),
 			},
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				GetCentralByIdFunc: func(ctx context.Context, id string) (public.CentralRequest, *http.Response, error) {
 					central := public.CentralRequest{
 						Status:       constants.CentralRequestStatusReady.String(),
@@ -208,12 +208,12 @@ func TestDeleteCentral(t *testing.T) {
 		testName     string
 		wantErr      bool
 		errContains  string
-		mockFMClient *fleetmanager.ClientMock
+		mockFMClient *fleetmanager.PublicClientMock
 	}{
 		{
 			testName: "delete central happy path",
 			wantErr:  false,
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				DeleteCentralByIdFunc: func(ctx context.Context, id string, async bool) (*http.Response, error) {
 					return nil, nil
 				},
@@ -239,7 +239,7 @@ func TestDeleteCentral(t *testing.T) {
 			testName:    "delete central fails on internal server error",
 			wantErr:     true,
 			errContains: "deletion of central instance id-42 failed",
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				DeleteCentralByIdFunc: func(ctx context.Context, id string, async bool) (*http.Response, error) {
 					err := errors.Errorf("%d", http.StatusInternalServerError)
 					return nil, err
@@ -250,7 +250,7 @@ func TestDeleteCentral(t *testing.T) {
 			testName:    "central not deprovision on internal server error",
 			wantErr:     true,
 			errContains: "central instance id-42 did not reach deprovision state",
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				DeleteCentralByIdFunc: func(ctx context.Context, id string, async bool) (*http.Response, error) {
 					return nil, nil
 				},
@@ -265,7 +265,7 @@ func TestDeleteCentral(t *testing.T) {
 			testName:    "central not deleted if no 404 response",
 			wantErr:     true,
 			errContains: "central instance id-42 could not be deleted",
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				DeleteCentralByIdFunc: func(ctx context.Context, id string, async bool) (*http.Response, error) {
 					return nil, nil
 				},
@@ -321,12 +321,12 @@ func TestCleanUp(t *testing.T) {
 		testName     string
 		wantErr      bool
 		errContains  string
-		mockFMClient *fleetmanager.ClientMock
+		mockFMClient *fleetmanager.PublicClientMock
 	}{
 		{
 			testName: "clean up happy path",
 			wantErr:  false,
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
 					centralItems := []public.CentralRequest{
 						{
@@ -361,7 +361,7 @@ func TestCleanUp(t *testing.T) {
 		{
 			testName: "nothing to clean up",
 			wantErr:  false,
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
 					return public.CentralRequestList{}, nil, nil
 				},
@@ -371,7 +371,7 @@ func TestCleanUp(t *testing.T) {
 			testName:    "clean up fails on internal server error",
 			wantErr:     true,
 			errContains: "could not retrieve central list",
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
 					centralList := public.CentralRequestList{}
 					err := errors.Errorf("%d", http.StatusInternalServerError)

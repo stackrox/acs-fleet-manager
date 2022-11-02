@@ -8,8 +8,8 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
-	"github.com/stackrox/acs-fleet-manager/probe/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
 	"github.com/stackrox/rox/pkg/concurrency"
 )
@@ -21,7 +21,7 @@ type Runtime struct {
 }
 
 // New creates a new runtime.
-func New(config *config.Config, fleetManagerClient fleetmanager.Client, httpClient *http.Client) (*Runtime, error) {
+func New(config *config.Config, fleetManagerClient fleetmanager.PublicClient, httpClient *http.Client) (*Runtime, error) {
 	probe, err := probe.New(config, fleetManagerClient, httpClient)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create probe")

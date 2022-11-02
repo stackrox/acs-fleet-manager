@@ -8,7 +8,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
-	"github.com/stackrox/acs-fleet-manager/probe/pkg/fleetmanager"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,11 +27,11 @@ var testConfig = &config.Config{
 func TestRunSingle(t *testing.T) {
 	tt := []struct {
 		testName     string
-		mockFMClient *fleetmanager.ClientMock
+		mockFMClient *fleetmanager.PublicClientMock
 	}{
 		{
 			testName: "centrals are cleaned up on time out",
-			mockFMClient: &fleetmanager.ClientMock{
+			mockFMClient: &fleetmanager.PublicClientMock{
 				CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
 					concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeRunTimeout)
 					return public.CentralRequest{}, nil, ctx.Err()

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
-	"github.com/stackrox/acs-fleet-manager/probe/pkg/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/runtime"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +24,7 @@ var testConfig = &config.Config{
 }
 
 func TestCLIInterrupt(t *testing.T) {
-	fleetManagerClient := &fleetmanager.ClientMock{
+	fleetManagerClient := &fleetmanager.PublicClientMock{
 		CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
 			process, err := os.FindProcess(os.Getpid())
 			require.NoError(t, err, "could not find current process ID")
