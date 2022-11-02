@@ -40,7 +40,7 @@ case $ENVIRONMENT in
     init_chamber
     load_external_config "cluster-$CLUSTER_NAME"
 
-    if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qxF OpenID; then
+    if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qE '^OpenID *$'; then
       echo "Creating an OpenID IdP for the cluster."
       ocm create idp --name=OpenID \
         --cluster="${CLUSTER_ID}" \
@@ -59,7 +59,7 @@ case $ENVIRONMENT in
       --group=cluster-admins \
       "${OSD_OIDC_USER_LIST}" || true
 
-    if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qxF HTPasswd; then
+    if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qE '^HTPasswd *$'; then
       echo "Creating an HTPasswd IdP for the cluster."
       ocm create idp --name=HTPasswd \
         --cluster="${CLUSTER_ID}" \
@@ -95,7 +95,7 @@ case $ENVIRONMENT in
     init_chamber
     load_external_config "cluster-$CLUSTER_NAME"
 
-    if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qxF HTPasswd; then
+    if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qE '^HTPasswd *$'; then
       echo "Creating an HTPasswd IdP for the cluster."
       ocm create idp --name=HTPasswd \
         --cluster="${CLUSTER_ID}" \
