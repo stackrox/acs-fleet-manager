@@ -21,13 +21,6 @@ CLUSTER_NAME=$2
 
 export AWS_PROFILE="$ENVIRONMENT"
 
-# Loads config from the external storage to the environment and applying a prefix to a variable name (if exists).
-load_external_config() {
-    local service="$1"
-    local prefix="${2:-}"
-    eval "$(run_chamber env "$service" | sed -E "s/(^export +)(.*)/\1${prefix}\2/")"
-}
-
 init_chamber
 
 load_external_config fleetshard-sync FLEETSHARD_SYNC_

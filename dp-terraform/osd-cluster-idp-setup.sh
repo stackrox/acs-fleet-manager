@@ -1,8 +1,10 @@
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 
-# Requires: `jq`
-# Requires: BitWarden CLI `bw`
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# shellcheck source=scripts/lib/external_config.sh
+source "$SCRIPT_DIR/../scripts/lib/external_config.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
@@ -17,20 +19,7 @@ fi
 ENVIRONMENT=$1
 CLUSTER_NAME=$2
 
-function ensure_bitwarden_session_exists () {
-  # Check if we need to get a new BitWarden CLI Session Key.
-  if [[ -z "$BW_SESSION" ]]; then
-    if bw login --check; then
-      # We don't have a session key but we are logged in, so unlock and store the session.
-      BW_SESSION=$(bw unlock --raw)
-      export BW_SESSION
-    else
-      # We don't have a session key and are not logged in, so log in and store the session.
-      BW_SESSION=$(bw login --raw)
-      export BW_SESSION
-    fi
-  fi
-}
+export AWS_PROFILE="$ENVIRONMENT"
 
 case $ENVIRONMENT in
   stage)
@@ -42,11 +31,9 @@ case $ENVIRONMENT in
     fi
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
 
-    ensure_bitwarden_session_exists
-
-    OSD_OIDC_CLIENT_ID=$(bw get username "2c4a5634-1679-4a79-93b2-af0e00f6c345")
-    OSD_OIDC_CLIENT_SECRET=$(bw get password "2c4a5634-1679-4a79-93b2-af0e00f6c345")
-    OSD_OIDC_USER_LIST=$(bw get item "2c4a5634-1679-4a79-93b2-af0e00f6c345" | jq '.fields[] | select(.name == "ALLOWED_USERS") | .value' --raw-output)
+    # Load configuration
+    init_chamber
+    load_external_config "cluster-$CLUSTER_NAME"
 
     # Create the IdP for the cluster.
     ocm create idp --name=OpenID \
@@ -62,10 +49,6 @@ case $ENVIRONMENT in
     ocm create user --cluster="${CLUSTER_NAME}" \
       --group=cluster-admins \
       "${OSD_OIDC_USER_LIST}" || true
-
-    # Create the HTPasswd Idp for the cluster.
-    ADMIN_USERNAME=$(bw get username "9bfb2c0e-0519-478e-b7df-aea700ff9072")
-    ADMIN_PASSWORD=$(bw get password "9bfb2c0e-0519-478e-b7df-aea700ff9072")
 
     ocm create idp --name=HTPasswd \
       --cluster="${CLUSTER_ID}" \
@@ -94,10 +77,9 @@ case $ENVIRONMENT in
     fi
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
 
-    ensure_bitwarden_session_exists
-
-    ADMIN_USERNAME=$(bw get username "05431ae5-4b45-4956-a509-aef4009848d9")
-    ADMIN_PASSWORD=$(bw get password "05431ae5-4b45-4956-a509-aef4009848d9")
+    # Load configuration
+    init_chamber
+    load_external_config "cluster-$CLUSTER_NAME"
 
     # Create the IdP for the cluster.
     ocm create idp --name=HTPasswd \
