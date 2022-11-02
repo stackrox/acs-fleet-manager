@@ -11,18 +11,18 @@ import (
 
 // Config contains this application's runtime configuration.
 type Config struct {
-	DataCloudProvider    string        `env:"DATA_PLANE_CLOUD_PROVIDER" envDefault:"aws"`
-	DataPlaneRegion      string        `env:"DATA_PLANE_REGION" envDefault:"us-east-1"`
-	FleetManagerEndpoint string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
-	RHSSOClientID        string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
-	RHSSOClientSecret    string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
-	RHSSOEndpoint        string        `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
-	RHSSORealm           string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
-	ProbePingTimeout     time.Duration `env:"PROBE_PING_TIMEOUT" envDefault:"5s"`
-	RuntimePollPeriod    time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
-	RuntimePollTimeout   time.Duration `env:"RUNTIME_POLL_TIMEOUT" envDefault:"5m"`
-	RuntimeRunTimeout    time.Duration `env:"RUNTIME_RUN_TIMEOUT" envDefault:"15m"`
-	RuntimeRunWaitPeriod time.Duration `env:"RUNTIME_RUN_WAIT_PERIOD" envDefault:"30s"`
+	DataCloudProvider       string        `env:"DATA_PLANE_CLOUD_PROVIDER" envDefault:"aws"`
+	DataPlaneRegion         string        `env:"DATA_PLANE_REGION" envDefault:"us-east-1"`
+	FleetManagerEndpoint    string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
+	RHSSOClientID           string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
+	RHSSOClientSecret       string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
+	RHSSOEndpoint           string        `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
+	RHSSORealm              string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
+	ProbeHttpRequestTimeout time.Duration `env:"PROBE_HTTP_REQUEST_TIMEOUT" envDefault:"5s"`
+	RuntimePollPeriod       time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
+	RuntimePollTimeout      time.Duration `env:"RUNTIME_POLL_TIMEOUT" envDefault:"5m"`
+	RuntimeRunTimeout       time.Duration `env:"RUNTIME_RUN_TIMEOUT" envDefault:"15m"`
+	RuntimeRunWaitPeriod    time.Duration `env:"RUNTIME_RUN_WAIT_PERIOD" envDefault:"30s"`
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.
