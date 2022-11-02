@@ -44,7 +44,7 @@ func (r *Runtime) RunLoop(ctx context.Context) error {
 }
 
 // RunSingle executes a single probe run.
-func (r *Runtime) RunSingle(ctx context.Context) error {
+func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
 	probeRunCtx, cancel := context.WithTimeout(ctx, r.Config.ProbeRunTimeout)
 	defer cancel()
 	defer func() {
@@ -58,7 +58,7 @@ func (r *Runtime) RunSingle(ctx context.Context) error {
 		}()
 		select {
 		case <-cleanupCtx.Done():
-			glog.Error(cleanupCtx.Err())
+			errReturn = cleanupCtx.Err()
 		case <-cleanupDone.Done():
 		}
 	}()

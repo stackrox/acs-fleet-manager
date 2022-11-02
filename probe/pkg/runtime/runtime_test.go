@@ -28,7 +28,7 @@ func TestRunSingle(t *testing.T) {
 		mockProbe *probe.ProbeMock
 	}{
 		{
-			testName: "centrals are cleaned up on time out",
+			testName: "deadline exceeded on time out in Execute",
 			mockProbe: &probe.ProbeMock{
 				CleanUpFunc: func(ctx context.Context, done concurrency.Signal) error {
 					done.Signal()
@@ -37,6 +37,19 @@ func TestRunSingle(t *testing.T) {
 				ExecuteFunc: func(ctx context.Context) error {
 					concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeRunTimeout)
 					return ctx.Err()
+				},
+			},
+		},
+		{
+			testName: "deadline exceeded on out in CleanUp",
+			mockProbe: &probe.ProbeMock{
+				CleanUpFunc: func(ctx context.Context, done concurrency.Signal) error {
+					defer done.Signal()
+					concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeRunTimeout)
+					return ctx.Err()
+				},
+				ExecuteFunc: func(ctx context.Context) error {
+					return nil
 				},
 			},
 		},
@@ -51,8 +64,7 @@ func TestRunSingle(t *testing.T) {
 
 			err = runtime.RunSingle(ctx)
 
-			assert.ErrorContains(t, err, "probe run failed", "expected an error during probe run")
-			assert.ErrorContains(t, err, "context deadline exceeded", "expected timeout error")
+			assert.ErrorIs(t, err, context.DeadlineExceeded)
 			assert.Equal(t, 1, len(tc.mockProbe.CleanUpCalls()), "must clean up centrals")
 		})
 	}
