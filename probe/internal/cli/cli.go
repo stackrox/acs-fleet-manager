@@ -3,6 +3,7 @@ package cli
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/fleetmanager"
-	"github.com/stackrox/acs-fleet-manager/probe/pkg/httpclient"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/runtime"
 )
@@ -38,7 +38,7 @@ func New() (*CLI, error) {
 		return nil, errors.Wrap(err, "failed to create fleet manager client")
 	}
 
-	httpClient := httpclient.New(config)
+	httpClient := &http.Client{Timeout: config.ProbeHTTPRequestTimeout}
 
 	probe, err := probe.New(config, fleetManagerClient, httpClient)
 	if err != nil {

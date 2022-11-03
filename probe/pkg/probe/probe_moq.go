@@ -5,7 +5,6 @@ package probe
 
 import (
 	"context"
-	"github.com/stackrox/rox/pkg/concurrency"
 	"sync"
 )
 
@@ -19,7 +18,7 @@ var _ Probe = &ProbeMock{}
 //
 // 		// make and configure a mocked Probe
 // 		mockedProbe := &ProbeMock{
-// 			CleanUpFunc: func(ctx context.Context, done concurrency.Signal) error {
+// 			CleanUpFunc: func(ctx context.Context) error {
 // 				panic("mock out the CleanUp method")
 // 			},
 // 			ExecuteFunc: func(ctx context.Context) error {
@@ -33,7 +32,7 @@ var _ Probe = &ProbeMock{}
 // 	}
 type ProbeMock struct {
 	// CleanUpFunc mocks the CleanUp method.
-	CleanUpFunc func(ctx context.Context, done concurrency.Signal) error
+	CleanUpFunc func(ctx context.Context) error
 
 	// ExecuteFunc mocks the Execute method.
 	ExecuteFunc func(ctx context.Context) error
@@ -44,8 +43,6 @@ type ProbeMock struct {
 		CleanUp []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// Done is the done argument value.
-			Done concurrency.Signal
 		}
 		// Execute holds details about calls to the Execute method.
 		Execute []struct {
@@ -58,33 +55,29 @@ type ProbeMock struct {
 }
 
 // CleanUp calls CleanUpFunc.
-func (mock *ProbeMock) CleanUp(ctx context.Context, done concurrency.Signal) error {
+func (mock *ProbeMock) CleanUp(ctx context.Context) error {
 	if mock.CleanUpFunc == nil {
 		panic("ProbeMock.CleanUpFunc: method is nil but Probe.CleanUp was just called")
 	}
 	callInfo := struct {
-		Ctx  context.Context
-		Done concurrency.Signal
+		Ctx context.Context
 	}{
-		Ctx:  ctx,
-		Done: done,
+		Ctx: ctx,
 	}
 	mock.lockCleanUp.Lock()
 	mock.calls.CleanUp = append(mock.calls.CleanUp, callInfo)
 	mock.lockCleanUp.Unlock()
-	return mock.CleanUpFunc(ctx, done)
+	return mock.CleanUpFunc(ctx)
 }
 
 // CleanUpCalls gets all the calls that were made to CleanUp.
 // Check the length with:
 //     len(mockedProbe.CleanUpCalls())
 func (mock *ProbeMock) CleanUpCalls() []struct {
-	Ctx  context.Context
-	Done concurrency.Signal
+	Ctx context.Context
 } {
 	var calls []struct {
-		Ctx  context.Context
-		Done concurrency.Signal
+		Ctx context.Context
 	}
 	mock.lockCleanUp.RLock()
 	calls = mock.calls.CleanUp

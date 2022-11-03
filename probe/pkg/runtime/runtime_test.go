@@ -30,8 +30,7 @@ func TestRunSingle(t *testing.T) {
 		{
 			testName: "deadline exceeded on time out in Execute",
 			mockProbe: &probe.ProbeMock{
-				CleanUpFunc: func(ctx context.Context, done concurrency.Signal) error {
-					done.Signal()
+				CleanUpFunc: func(ctx context.Context) error {
 					return nil
 				},
 				ExecuteFunc: func(ctx context.Context) error {
@@ -43,8 +42,7 @@ func TestRunSingle(t *testing.T) {
 		{
 			testName: "deadline exceeded on out in CleanUp",
 			mockProbe: &probe.ProbeMock{
-				CleanUpFunc: func(ctx context.Context, done concurrency.Signal) error {
-					defer done.Signal()
+				CleanUpFunc: func(ctx context.Context) error {
 					concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeRunTimeout)
 					return ctx.Err()
 				},

@@ -17,7 +17,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
-	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stackrox/rox/pkg/httputil"
 )
 
@@ -26,7 +25,7 @@ import (
 //go:generate moq -out probe_moq.go . Probe
 type Probe interface {
 	Execute(ctx context.Context) error
-	CleanUp(ctx context.Context, done concurrency.Signal) error
+	CleanUp(ctx context.Context) error
 }
 
 var _ Probe = (*ProbeImpl)(nil)
@@ -79,26 +78,41 @@ func (p *ProbeImpl) Execute(ctx context.Context) error {
 }
 
 // CleanUp remaining probe resources.
-func (p *ProbeImpl) CleanUp(ctx context.Context, done concurrency.Signal) error {
-	defer done.Signal()
+func (p *ProbeImpl) CleanUp(ctx context.Context) error {
+	ticker := time.NewTicker(p.config.ProbePollPeriod)
+	defer ticker.Stop()
 
-	centralList, _, err := p.fleetManagerClient.GetCentrals(ctx, nil)
-	if err != nil {
-		return errors.Wrap(err, "could not list centrals")
-	}
+	for {
+		select {
+		case <-ctx.Done():
+			return errors.Wrap(ctx.Err(), "cleanup centrals timed out")
+		case <-ticker.C:
+			centralList, _, err := p.fleetManagerClient.GetCentrals(ctx, nil)
+			if err != nil {
+				glog.Warningf("could not list centrals: %s", err)
+				continue
+			}
 
-	for i := range centralList.Items {
-		central := centralList.Items[i]
-		if central.Owner == fmt.Sprintf("service-account-%s", p.config.RHSSOClientID) &&
-			strings.HasPrefix(central.Name, fmt.Sprintf("%s-%s", p.config.ProbeNamePrefix, p.config.ProbeName)) {
+			serviceAccountName := fmt.Sprintf("service-account-%s", p.config.RHSSOClientID)
+			namePrefix := fmt.Sprintf("%s-%s", p.config.ProbeNamePrefix, p.config.ProbeName)
+			success := true
+			for _, central := range centralList.Items {
+				central := central
+				if central.Owner != serviceAccountName || !strings.HasPrefix(central.Name, namePrefix) {
+					continue
+				}
+				if err := p.deleteCentral(ctx, &central); err != nil {
+					glog.Warningf("failed to clean up central instance %s: %s", central.Id, err)
+					success = false
+				}
+			}
 
-			if err := p.deleteCentral(ctx, &central); err != nil {
-				glog.Errorf("failed to clean up central instance %s: %s", central.Id, err.Error())
+			if success {
+				glog.Info("finished clean up attempt of probe resources")
+				return nil
 			}
 		}
 	}
-	glog.Info("finished clean up attempt of probe resources")
-	return nil
 }
 
 // Create a Central and verify that it transitioned to 'ready' state.
@@ -130,7 +144,7 @@ func (p *ProbeImpl) createCentral(ctx context.Context) (*public.CentralRequest, 
 // Central UI is reachable.
 func (p *ProbeImpl) verifyCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
 	if centralRequest.InstanceType != types.STANDARD.String() {
-		return errors.Errorf("central has wrong instance type: expected %s, got %s", types.STANDARD.String(), centralRequest.InstanceType)
+		return errors.Errorf("central has wrong instance type: expected %s, got %s", types.STANDARD, centralRequest.InstanceType)
 	}
 
 	if err := p.pingURL(ctx, centralRequest.CentralUIURL); err != nil {
@@ -204,18 +218,30 @@ func (p *ProbeImpl) ensureCentralDeleted(ctx context.Context, centralRequest *pu
 }
 
 func (p *ProbeImpl) pingURL(ctx context.Context, url string) error {
-	request, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
-	if err != nil {
-		return errors.Wrap(err, "failed to create request for central UI")
+	ticker := time.NewTicker(p.config.ProbePollPeriod)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return errors.Wrap(ctx.Err(), "ping central UI timed out")
+		case <-ticker.C:
+			request, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
+			if err != nil {
+				glog.Warningf("failed to create request for central UI: %s", err)
+				continue
+			}
+			response, err := p.httpClient.Do(request)
+			if err != nil {
+				glog.Warningf("central UI not reachable: %s", err)
+				continue
+			}
+			response.Body.Close()
+			if !httputil.Is2xxStatusCode(response.StatusCode) {
+				glog.Warningf("central UI ping did not succeed: %s", response.Status)
+				continue
+			}
+			return nil
+		}
 	}
-	// `httpClient` retries failed requests if they are retryable via `hashicorp/go-retryablehttp`.
-	response, err := p.httpClient.Do(request)
-	if err != nil {
-		return errors.Wrapf(err, "central UI not reachable")
-	}
-	defer response.Body.Close()
-	if !httputil.Is2xxStatusCode(response.StatusCode) {
-		return errors.Errorf("central UI ping did not succeed: %s", response.Status)
-	}
-	return nil
 }

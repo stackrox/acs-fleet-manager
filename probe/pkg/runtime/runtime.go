@@ -52,7 +52,8 @@ func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
 		defer cancel()
 		cleanupDone := concurrency.NewSignal()
 		go func() {
-			if err := r.probe.CleanUp(cleanupCtx, cleanupDone); err != nil {
+			defer cleanupDone.Signal()
+			if err := r.probe.CleanUp(cleanupCtx); err != nil {
 				glog.Error(err)
 			}
 		}()

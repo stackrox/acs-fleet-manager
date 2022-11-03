@@ -24,8 +24,7 @@ var testConfig = &config.Config{
 
 func TestCLIInterrupt(t *testing.T) {
 	mockProbe := &probe.ProbeMock{
-		CleanUpFunc: func(ctx context.Context, done concurrency.Signal) error {
-			done.Signal()
+		CleanUpFunc: func(ctx context.Context) error {
 			return nil
 		},
 		ExecuteFunc: func(ctx context.Context) error {

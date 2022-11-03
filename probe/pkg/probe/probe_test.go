@@ -14,7 +14,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
-	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stackrox/rox/pkg/httputil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -314,19 +313,22 @@ func TestCleanUp(t *testing.T) {
 	numGetCentralByIDCalls := make(map[string]int)
 
 	tt := []struct {
-		testName     string
-		wantErr      bool
-		mockFMClient *fleetmanager.PublicClientMock
+		testName        string
+		wantErr         bool
+		numDeleteCalled int
+		mockFMClient    *fleetmanager.PublicClientMock
 	}{
 		{
-			testName: "clean up happy path",
-			wantErr:  false,
+			testName:        "clean up happy path",
+			wantErr:         false,
+			numDeleteCalled: 1,
 			mockFMClient: &fleetmanager.PublicClientMock{
 				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
 					centralItems := []public.CentralRequest{
 						{
 							Id:   "id-42",
 							Name: "probe-pod-42",
+							Owner: "service-account-client",
 						},
 					}
 					centralList := public.CentralRequestList{Items: centralItems}
@@ -342,6 +344,7 @@ func TestCleanUp(t *testing.T) {
 						return public.CentralRequest{
 							Id:     "id-42",
 							Name:   "probe-pod-42",
+							Owner: "service-account-client",
 							Status: constants.CentralRequestStatusDeprovision.String(),
 						}, nil, nil
 					}
@@ -358,7 +361,20 @@ func TestCleanUp(t *testing.T) {
 			wantErr:  false,
 			mockFMClient: &fleetmanager.PublicClientMock{
 				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
-					return public.CentralRequestList{}, nil, nil
+					centralItems := []public.CentralRequest{
+						{
+							Id:   "id-42",
+							Name: "probe-pod-42",
+							Owner: "service-account-wrong-owner",
+						},
+						{
+							Id:   "id-42",
+							Name: "wrong-name-42",
+							Owner: "service-account-wrong-owner",
+						},
+					}
+					centralList := public.CentralRequestList{Items: centralItems}
+					return centralList, nil, nil
 				},
 			},
 		},
@@ -382,14 +398,13 @@ func TestCleanUp(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.TODO(), testConfig.ProbeRunTimeout)
 			defer cancel()
 
-			cleanupDone := concurrency.NewSignal()
-			err = probe.CleanUp(ctx, cleanupDone)
-			require.True(t, cleanupDone.IsDone())
+			err = probe.CleanUp(ctx)
 
 			if tc.wantErr {
 				assert.Error(t, err, "expected an error during probe run")
 			} else {
 				assert.NoError(t, err, "failed to delete central")
+				assert.Equal(t, tc.numDeleteCalled, len(tc.mockFMClient.DeleteCentralByIdCalls()))
 			}
 		})
 	}
