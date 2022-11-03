@@ -38,12 +38,12 @@ type ProbeImpl struct {
 }
 
 // New creates a new probe.
-func New(config *config.Config, fleetManagerClient fleetmanager.PublicClient, httpClient *http.Client) (*ProbeImpl, error) {
+func New(config *config.Config, fleetManagerClient fleetmanager.PublicClient, httpClient *http.Client) *ProbeImpl {
 	return &ProbeImpl{
 		config:             config,
 		fleetManagerClient: fleetManagerClient,
 		httpClient:         httpClient,
-	}, nil
+	}
 }
 
 func recordElapsedTime(start time.Time) {
