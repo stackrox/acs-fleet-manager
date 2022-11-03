@@ -21,10 +21,10 @@ type PublicClient interface {
 	GetCentrals(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error)
 }
 
-// Compile-time check that the interface is implemented by the fleet-manager OpenAPI client.
-var _ PublicClient = (*public.DefaultApiService)(nil)
-
-var _ http.RoundTripper = (*authTransport)(nil)
+var (
+	_ http.RoundTripper = (*authTransport)(nil)
+	_ PublicClient      = (*public.DefaultApiService)(nil)
+)
 
 type authTransport struct {
 	transport http.RoundTripper
