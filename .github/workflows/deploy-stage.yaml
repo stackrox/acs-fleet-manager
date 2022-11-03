@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  oidc-smoke-test:
-    name: "Verify GitHub Authentication"
+  deploy:
+    name: "Re-terraform stage clusters"
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -29,10 +29,10 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
-      - name: List Parameter Store services
+      - name: Run terraforming THE on stage cluster
         env:
           USE_AWS_VAULT: false
         run: |
-          source ./scripts/lib/external_config.sh
-          init_chamber
-          run_chamber list-services
+          set -euo pipefail
+          cd dp-terraform/helm/rhacs-terraform
+          ./terraform_cluster.sh stage acs-stage-dp-01
