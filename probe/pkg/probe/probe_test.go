@@ -105,8 +105,7 @@ func TestCreateCentral(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
-			probe, err := New(testConfig, tc.mockFMClient, nil)
-			require.NoError(t, err, "failed to create probe")
+			probe := New(testConfig, tc.mockFMClient, nil)
 			ctx, cancel := context.WithTimeout(context.TODO(), testConfig.ProbeRunTimeout)
 			defer cancel()
 
@@ -184,12 +183,11 @@ func TestVerifyCentral(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
-			probe, err := New(testConfig, tc.mockFMClient, tc.mockHTTPClient)
-			require.NoError(t, err, "failed to create probe")
+			probe := New(testConfig, tc.mockFMClient, tc.mockHTTPClient)
 			ctx, cancel := context.WithTimeout(context.TODO(), testConfig.ProbeRunTimeout)
 			defer cancel()
 
-			err = probe.verifyCentral(ctx, tc.central)
+			err := probe.verifyCentral(ctx, tc.central)
 
 			if tc.wantErr {
 				assert.Error(t, err, "expected an error during probe run")
@@ -287,8 +285,7 @@ func TestDeleteCentral(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
-			probe, err := New(testConfig, tc.mockFMClient, nil)
-			require.NoError(t, err, "failed to create probe")
+			probe := New(testConfig, tc.mockFMClient, nil)
 			ctx, cancel := context.WithTimeout(context.TODO(), testConfig.ProbeRunTimeout)
 			defer cancel()
 
@@ -298,7 +295,7 @@ func TestDeleteCentral(t *testing.T) {
 				Status:       constants.CentralRequestStatusReady.String(),
 				InstanceType: types.STANDARD.String(),
 			}
-			err = probe.deleteCentral(ctx, central)
+			err := probe.deleteCentral(ctx, central)
 
 			if tc.wantErr {
 				assert.Error(t, err, "expected an error during probe run")
@@ -393,12 +390,11 @@ func TestCleanUp(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
-			probe, err := New(testConfig, tc.mockFMClient, nil)
-			require.NoError(t, err, "failed to create probe")
+			probe := New(testConfig, tc.mockFMClient, nil)
 			ctx, cancel := context.WithTimeout(context.TODO(), testConfig.ProbeRunTimeout)
 			defer cancel()
 
-			err = probe.CleanUp(ctx)
+			err := probe.CleanUp(ctx)
 
 			if tc.wantErr {
 				assert.Error(t, err, "expected an error during probe run")

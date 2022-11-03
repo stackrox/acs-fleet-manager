@@ -40,10 +40,7 @@ func New() (*CLI, error) {
 
 	httpClient := &http.Client{Timeout: config.ProbeHTTPRequestTimeout}
 
-	probe, err := probe.New(config, fleetManagerClient, httpClient)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create probe")
-	}
+	probe := probe.New(config, fleetManagerClient, httpClient)
 
 	runtime, err := runtime.New(config, probe)
 	if err != nil {
