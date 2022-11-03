@@ -40,7 +40,7 @@ const (
 
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 
-	centralDbSecretName = "central-db-password"
+	centralDbSecretName = "central-db-password" // pragma: allowlist secret
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
