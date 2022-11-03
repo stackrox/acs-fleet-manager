@@ -1,4 +1,4 @@
-name: Deploy QA Environment
+name: Deploy Stage Environment
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    environment: QA
+    environment: stage
     steps:
       - name: Cancel Previous Runs
         uses: n1hility/cancel-previous-runs@v2
