@@ -42,6 +42,8 @@ logging in the OSD cluster you should see the option to login via `HTPasswd / OI
 
 **Note: The sync from console.openshift.com and your OSD cluster may take some time for your IdP to show up when trying to log in.**
 
+The script also creates a robot service account and related resources, for use by continuous deployment.
+
 ## Cleanup
 
 For the cleanup, there's currently no script offered.
