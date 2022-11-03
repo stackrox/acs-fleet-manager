@@ -18,6 +18,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/pkg/renderer"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	corev1 "k8s.io/api/core/v1"
@@ -40,11 +41,6 @@ const (
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 
 	centralDbSecretName = "central-db-password"
-	AWSRegion           = "us-east-1"
-	DBEngine            = "aurora-postgresql"
-	DBEngineVersion     = "13.7"
-	DBInstanceClass     = "db.serverless"
-	DBUser              = "rhacs_master"
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -112,15 +108,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// Set proxy configuration
 	envVars := getProxyEnvVars(remoteCentralNamespace)
 
-	dbConnectionString, dbPassword, err := r.provisionRDSDatabase(remoteCentralNamespace)
-	if err != nil {
-		return nil, errors.Wrap(err, "provisioning RDS DB")
-	}
-	if dbConnectionString == "" {
-		glog.Info("Waiting for RDS database to be available...")
-		return installingStatus(), nil
-	}
-
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        remoteCentralName,
@@ -140,12 +127,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				},
 				DeploymentSpec: v1alpha1.DeploymentSpec{
 					Resources: &centralResources,
-				},
-				DB: &v1alpha1.CentralDBSpec{
-					ConnectionStringOverride: pointer.StringPtr(dbConnectionString),
-					PasswordSecret: &v1alpha1.LocalSecretReference{
-						Name: centralDbSecretName,
-					},
 				},
 			},
 			Scanner: &v1alpha1.ScannerComponentSpec{
@@ -201,12 +182,24 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
-	if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace, dbPassword); err != nil {
+	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
+		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
+	}
+
+	if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace); err != nil {
 		return nil, errors.Wrap(err, "unable to ensure that DB secret exists")
 	}
 
-	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
+	dbConnectionString, err := ensureDBProvisioned(ctx, r.client, remoteCentralNamespace)
+	if err != nil {
+		return nil, errors.Wrap(err, "provisioning RDS DB")
+	}
+
+	central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
+		ConnectionStringOverride: pointer.StringPtr(dbConnectionString),
+		PasswordSecret: &v1alpha1.LocalSecretReference{
+			Name: centralDbSecretName,
+		},
 	}
 
 	centralExists := true
@@ -351,6 +344,18 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && centralDeleted
 
+	dbDeleted, err := ensureDBDeprovisioned(central.GetNamespace())
+	if err != nil {
+		return false, err
+	}
+	globalDeleted = globalDeleted && dbDeleted
+
+	secretDeleted, err := r.ensureCentralDBSecretDeleted(ctx, central.GetNamespace())
+	if err != nil {
+		return false, err
+	}
+	globalDeleted = globalDeleted && secretDeleted
+
 	chartResourcesDeleted, err := r.ensureChartResourcesDeleted(ctx, remoteCentral)
 	if err != nil {
 		return false, err
@@ -445,6 +450,55 @@ func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name str
 		return false, errors.Wrapf(err, "delete central namespace %s", name)
 	}
 	glog.Infof("Central namespace %s is marked for deletion", name)
+	return false, nil
+}
+
+func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, remoteCentralNamespace string) error {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: centralDbSecretName,
+		},
+	}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			secret = &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      centralDbSecretName,
+					Namespace: remoteCentralNamespace,
+				},
+				Data: map[string][]byte{"password": []byte(renderer.CreatePassword())},
+			}
+
+			err = r.client.Create(ctx, secret)
+			if err != nil {
+				return fmt.Errorf("creating Central DB secret: %v", err)
+			}
+			return nil
+		}
+
+		return fmt.Errorf("getting Central DB secret: %v", err)
+	}
+
+	return nil
+}
+
+func (r *CentralReconciler) ensureCentralDBSecretDeleted(ctx context.Context, remoteCentralNamespace string) (bool, error) {
+	secret := &corev1.Secret{}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return true, nil
+		}
+
+		return false, fmt.Errorf("deleting Central DB secret: %v", err)
+	}
+
+	if err := r.client.Delete(ctx, secret); err != nil {
+		return false, fmt.Errorf("deleting central DB secret %s/%s", remoteCentralNamespace, centralDbSecretName)
+	}
+
+	glog.Infof("Central DB secret %s/%s is marked for deletion", remoteCentralNamespace, centralDbSecretName)
 	return false, nil
 }
 
