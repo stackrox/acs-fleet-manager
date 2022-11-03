@@ -224,21 +224,21 @@ func (p *ProbeImpl) pingURL(ctx context.Context, url string) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return errors.Wrap(ctx.Err(), "ping central UI timed out")
+			return errors.Wrap(ctx.Err(), "ping timed out")
 		case <-ticker.C:
 			request, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
 			if err != nil {
-				glog.Warningf("failed to create request for central UI: %s", err)
+				glog.Warningf("failed to create request: %s", err)
 				continue
 			}
 			response, err := p.httpClient.Do(request)
 			if err != nil {
-				glog.Warningf("central UI not reachable: %s", err)
+				glog.Warningf("URL not reachable: %s", err)
 				continue
 			}
 			response.Body.Close()
 			if !httputil.Is2xxStatusCode(response.StatusCode) {
-				glog.Warningf("central UI ping did not succeed: %s", response.Status)
+				glog.Warningf("URL ping did not succeed: %s", response.Status)
 				continue
 			}
 			return nil

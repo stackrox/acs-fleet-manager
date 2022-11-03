@@ -14,6 +14,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
+	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stackrox/rox/pkg/httputil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,6 +49,7 @@ func TestCreateCentral(t *testing.T) {
 	tt := []struct {
 		testName     string
 		wantErr      bool
+		errType      *error
 		mockFMClient *fleetmanager.PublicClientMock
 	}{
 		{
@@ -84,6 +86,7 @@ func TestCreateCentral(t *testing.T) {
 		{
 			testName: "central not ready on internal server error",
 			wantErr:  true,
+			errType:  &context.DeadlineExceeded,
 			mockFMClient: &fleetmanager.PublicClientMock{
 				CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
 					central := public.CentralRequest{
@@ -101,6 +104,17 @@ func TestCreateCentral(t *testing.T) {
 				},
 			},
 		},
+		{
+			testName: "timeout on context deadline exceeded",
+			wantErr:  true,
+			errType:  &context.DeadlineExceeded,
+			mockFMClient: &fleetmanager.PublicClientMock{
+				CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
+					concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeRunTimeout)
+					return public.CentralRequest{}, nil, ctx.Err()
+				},
+			},
+		},
 	}
 
 	for _, tc := range tt {
@@ -113,6 +127,9 @@ func TestCreateCentral(t *testing.T) {
 
 			if tc.wantErr {
 				assert.Error(t, err, "expected an error during probe run")
+				if tc.errType != nil {
+					assert.ErrorIs(t, err, *tc.errType)
+				}
 			} else {
 				require.NoError(t, err, "failed to create central")
 				assert.Equal(t, constants.CentralRequestStatusReady.String(), central.Status, "central not ready")
@@ -125,8 +142,8 @@ func TestVerifyCentral(t *testing.T) {
 	tt := []struct {
 		testName       string
 		wantErr        bool
+		errType        *error
 		central        *public.CentralRequest
-		mockFMClient   *fleetmanager.PublicClientMock
 		mockHTTPClient *http.Client
 	}{
 		{
@@ -135,15 +152,6 @@ func TestVerifyCentral(t *testing.T) {
 			central: &public.CentralRequest{
 				Status:       constants.CentralRequestStatusReady.String(),
 				InstanceType: types.STANDARD.String(),
-			},
-			mockFMClient: &fleetmanager.PublicClientMock{
-				GetCentralByIdFunc: func(ctx context.Context, id string) (public.CentralRequest, *http.Response, error) {
-					central := public.CentralRequest{
-						Status:       constants.CentralRequestStatusReady.String(),
-						InstanceType: types.STANDARD.String(),
-					}
-					return central, nil, nil
-				},
 			},
 			mockHTTPClient: newHTTPClientMock(func(req *http.Request) (*http.Response, error) {
 				return makeHTTPResponse(http.StatusOK), nil
@@ -160,20 +168,12 @@ func TestVerifyCentral(t *testing.T) {
 		{
 			testName: "verify central fails if central UI not reachable",
 			wantErr:  true,
+			errType:  &context.DeadlineExceeded,
 			central: &public.CentralRequest{
 				Id:           "id-42",
 				Name:         "probe-pod-42",
 				Status:       constants.CentralRequestStatusReady.String(),
 				InstanceType: types.STANDARD.String(),
-			},
-			mockFMClient: &fleetmanager.PublicClientMock{
-				GetCentralByIdFunc: func(ctx context.Context, id string) (public.CentralRequest, *http.Response, error) {
-					central := public.CentralRequest{
-						Status:       constants.CentralRequestStatusReady.String(),
-						InstanceType: types.STANDARD.String(),
-					}
-					return central, nil, nil
-				},
 			},
 			mockHTTPClient: newHTTPClientMock(func(req *http.Request) (*http.Response, error) {
 				return makeHTTPResponse(http.StatusNotFound), nil
@@ -183,7 +183,7 @@ func TestVerifyCentral(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
-			probe := New(testConfig, tc.mockFMClient, tc.mockHTTPClient)
+			probe := New(testConfig, nil, tc.mockHTTPClient)
 			ctx, cancel := context.WithTimeout(context.TODO(), testConfig.ProbeRunTimeout)
 			defer cancel()
 
@@ -191,6 +191,9 @@ func TestVerifyCentral(t *testing.T) {
 
 			if tc.wantErr {
 				assert.Error(t, err, "expected an error during probe run")
+				if tc.errType != nil {
+					assert.ErrorIs(t, err, *tc.errType)
+				}
 			} else {
 				assert.NoError(t, err, "failed to verify central")
 			}
@@ -204,6 +207,7 @@ func TestDeleteCentral(t *testing.T) {
 	tt := []struct {
 		testName     string
 		wantErr      bool
+		errType      *error
 		mockFMClient *fleetmanager.PublicClientMock
 	}{
 		{
@@ -244,6 +248,7 @@ func TestDeleteCentral(t *testing.T) {
 		{
 			testName: "central not deprovision on internal server error",
 			wantErr:  true,
+			errType:  &context.DeadlineExceeded,
 			mockFMClient: &fleetmanager.PublicClientMock{
 				DeleteCentralByIdFunc: func(ctx context.Context, id string, async bool) (*http.Response, error) {
 					return nil, nil
@@ -258,6 +263,7 @@ func TestDeleteCentral(t *testing.T) {
 		{
 			testName: "central not deleted if no 404 response",
 			wantErr:  true,
+			errType:  &context.DeadlineExceeded,
 			mockFMClient: &fleetmanager.PublicClientMock{
 				DeleteCentralByIdFunc: func(ctx context.Context, id string, async bool) (*http.Response, error) {
 					return nil, nil
@@ -281,6 +287,17 @@ func TestDeleteCentral(t *testing.T) {
 				},
 			},
 		},
+		{
+			testName: "timeout on context deadline exceeded",
+			wantErr:  true,
+			errType:  &context.DeadlineExceeded,
+			mockFMClient: &fleetmanager.PublicClientMock{
+				DeleteCentralByIdFunc: func(ctx context.Context, id string, async bool) (*http.Response, error) {
+					concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeRunTimeout)
+					return nil, ctx.Err()
+				},
+			},
+		},
 	}
 
 	for _, tc := range tt {
@@ -299,6 +316,9 @@ func TestDeleteCentral(t *testing.T) {
 
 			if tc.wantErr {
 				assert.Error(t, err, "expected an error during probe run")
+				if tc.errType != nil {
+					assert.ErrorIs(t, err, *tc.errType)
+				}
 			} else {
 				assert.NoError(t, err, "failed to delete central")
 			}
@@ -312,6 +332,7 @@ func TestCleanUp(t *testing.T) {
 	tt := []struct {
 		testName        string
 		wantErr         bool
+		errType         *error
 		numDeleteCalled int
 		mockFMClient    *fleetmanager.PublicClientMock
 	}{
@@ -323,8 +344,8 @@ func TestCleanUp(t *testing.T) {
 				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
 					centralItems := []public.CentralRequest{
 						{
-							Id:   "id-42",
-							Name: "probe-pod-42",
+							Id:    "id-42",
+							Name:  "probe-pod-42",
 							Owner: "service-account-client",
 						},
 					}
@@ -341,7 +362,7 @@ func TestCleanUp(t *testing.T) {
 						return public.CentralRequest{
 							Id:     "id-42",
 							Name:   "probe-pod-42",
-							Owner: "service-account-client",
+							Owner:  "service-account-client",
 							Status: constants.CentralRequestStatusDeprovision.String(),
 						}, nil, nil
 					}
@@ -360,13 +381,13 @@ func TestCleanUp(t *testing.T) {
 				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
 					centralItems := []public.CentralRequest{
 						{
-							Id:   "id-42",
-							Name: "probe-pod-42",
+							Id:    "id-42",
+							Name:  "probe-pod-42",
 							Owner: "service-account-wrong-owner",
 						},
 						{
-							Id:   "id-42",
-							Name: "wrong-name-42",
+							Id:    "id-42",
+							Name:  "wrong-name-42",
 							Owner: "service-account-wrong-owner",
 						},
 					}
@@ -378,11 +399,23 @@ func TestCleanUp(t *testing.T) {
 		{
 			testName: "clean up fails on internal server error",
 			wantErr:  true,
+			errType:  &context.DeadlineExceeded,
 			mockFMClient: &fleetmanager.PublicClientMock{
 				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
 					centralList := public.CentralRequestList{}
 					err := errors.Errorf("%d", http.StatusInternalServerError)
 					return centralList, nil, err
+				},
+			},
+		},
+		{
+			testName: "timeout on context deadline exceeded",
+			wantErr:  true,
+			errType:  &context.DeadlineExceeded,
+			mockFMClient: &fleetmanager.PublicClientMock{
+				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
+					concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeCleanUpTimeout)
+					return public.CentralRequestList{}, nil, ctx.Err()
 				},
 			},
 		},
@@ -398,6 +431,9 @@ func TestCleanUp(t *testing.T) {
 
 			if tc.wantErr {
 				assert.Error(t, err, "expected an error during probe run")
+				if tc.errType != nil {
+					assert.ErrorIs(t, err, *tc.errType)
+				}
 			} else {
 				assert.NoError(t, err, "failed to delete central")
 				assert.Equal(t, tc.numDeleteCalled, len(tc.mockFMClient.DeleteCentralByIdCalls()))
