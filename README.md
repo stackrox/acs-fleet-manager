@@ -30,7 +30,7 @@ ACS fleet-manager repository for the ACS managed service.
 
 #### Prerequisites
 
-* [Golang 1.17+](https://golang.org/dl/)
+* [Golang 1.18+](https://golang.org/dl/)
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 * [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)

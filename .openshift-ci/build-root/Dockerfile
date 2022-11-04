@@ -36,7 +36,7 @@ RUN rm -f /etc/yum.repos.d/* && { \
 
 RUN dnf update -y && dnf -y install make which git gettext jq gcc
 
-ARG GO_VERSION=1.17.12
+ARG GO_VERSION=1.18.8
 RUN curl -L --retry 10 --silent --show-error --fail -o /tmp/go.linux-amd64.tar.gz \
     "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" && \
     tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz && \
