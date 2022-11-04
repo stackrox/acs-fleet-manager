@@ -51,12 +51,9 @@ func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), r.Config.ProbeCleanUpTimeout)
 		defer cancel()
 		cleanupDone := concurrency.NewSignal()
-		go func() {
-			defer cleanupDone.Signal()
-			if err := r.probe.CleanUp(cleanupCtx); err != nil {
-				glog.Error(err)
-			}
-		}()
+
+		go r.scheduleCleanup(cleanupCtx, &cleanupDone)
+
 		select {
 		case <-cleanupCtx.Done():
 			errReturn = cleanupCtx.Err()
@@ -68,4 +65,11 @@ func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
 		return errors.Wrap(err, "probe run failed")
 	}
 	return nil
+}
+
+func (r *Runtime) scheduleCleanup(ctx context.Context, cleanupDone *concurrency.Signal) {
+	defer cleanupDone.Signal()
+	if err := r.probe.CleanUp(ctx); err != nil {
+		glog.Error(err)
+	}
 }
