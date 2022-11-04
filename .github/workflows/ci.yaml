@@ -1,5 +1,5 @@
 # This runs checks to verify if code is properly formatted and that tests (unit and integration against a mocked environment) are passing.
-name: Verify & Test
+name: Lint & Test
 
 on:
   push:
