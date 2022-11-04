@@ -41,6 +41,8 @@ const (
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 
 	centralDbSecretName = "central-db-password" // pragma: allowlist secret
+
+	enableManagedDatabase bool = false // TODO: should be a feature flag
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -186,20 +188,22 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
 	}
 
-	if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace); err != nil {
-		return nil, errors.Wrap(err, "unable to ensure that DB secret exists")
-	}
+	if enableManagedDatabase {
+		if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace); err != nil {
+			return nil, errors.Wrap(err, "unable to ensure that DB secret exists")
+		}
 
-	dbConnectionString, err := ensureDBProvisioned(ctx, r.client, remoteCentralNamespace)
-	if err != nil {
-		return nil, errors.Wrap(err, "provisioning RDS DB")
-	}
+		dbConnectionString, err := ensureDBProvisioned(ctx, r.client, remoteCentralNamespace)
+		if err != nil {
+			return nil, errors.Wrap(err, "provisioning RDS DB")
+		}
 
-	central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
-		ConnectionStringOverride: pointer.StringPtr(dbConnectionString),
-		PasswordSecret: &v1alpha1.LocalSecretReference{
-			Name: centralDbSecretName,
-		},
+		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
+			ConnectionStringOverride: pointer.StringPtr(dbConnectionString),
+			PasswordSecret: &v1alpha1.LocalSecretReference{
+				Name: centralDbSecretName,
+			},
+		}
 	}
 
 	centralExists := true
@@ -344,17 +348,19 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && centralDeleted
 
-	dbDeleted, err := ensureDBDeprovisioned(central.GetNamespace())
-	if err != nil {
-		return false, err
-	}
-	globalDeleted = globalDeleted && dbDeleted
+	if enableManagedDatabase {
+		dbDeleted, err := ensureDBDeprovisioned(central.GetNamespace())
+		if err != nil {
+			return false, err
+		}
+		globalDeleted = globalDeleted && dbDeleted
 
-	secretDeleted, err := r.ensureCentralDBSecretDeleted(ctx, central.GetNamespace())
-	if err != nil {
-		return false, err
+		secretDeleted, err := r.ensureCentralDBSecretDeleted(ctx, central.GetNamespace())
+		if err != nil {
+			return false, err
+		}
+		globalDeleted = globalDeleted && secretDeleted
 	}
-	globalDeleted = globalDeleted && secretDeleted
 
 	chartResourcesDeleted, err := r.ensureChartResourcesDeleted(ctx, remoteCentral)
 	if err != nil {
