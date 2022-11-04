@@ -240,7 +240,7 @@ func retryUntilSucceeded(ctx context.Context, fn func(context.Context) error, in
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return errors.Wrap(ctx.Err(), "retry failed")
 		case <-ticker.C:
 			err := fn(ctx)
 			if err != nil {
@@ -259,7 +259,7 @@ func retryUntilSucceededWithResponse(ctx context.Context, fn func(context.Contex
 	for {
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, errors.Wrap(ctx.Err(), "retry failed")
 		case <-ticker.C:
 			centralResp, err := fn(ctx)
 			if err != nil {
