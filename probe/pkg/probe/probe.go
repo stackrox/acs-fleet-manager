@@ -88,7 +88,9 @@ func (p *ProbeImpl) CleanUp(ctx context.Context) error {
 func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
 	centralList, _, err := p.fleetManagerClient.GetCentrals(ctx, nil)
 	if err != nil {
-		return errors.Wrap(err, "could not list centrals")
+		err = errors.Wrap(err, "could not list centrals")
+		glog.Error(err)
+		return err
 	}
 
 	serviceAccountName := fmt.Sprintf("service-account-%s", p.config.RHSSOClientID)
@@ -171,64 +173,88 @@ func (p *ProbeImpl) deleteCentral(ctx context.Context, centralRequest *public.Ce
 }
 
 func (p *ProbeImpl) ensureCentralState(ctx context.Context, centralRequest *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
-	ensureFunc := func(context.Context) (*public.CentralRequest, error) {
-		centralResp, _, err := p.fleetManagerClient.GetCentralById(ctx, centralRequest.Id)
-		if err != nil {
-			return nil, errors.Wrapf(err, "central instance %s not reachable", centralRequest.Id)
-		}
-
-		if centralResp.Status == targetState {
-			glog.Infof("central instance %s is in %q state", centralResp.Id, targetState)
-			return &centralResp, nil
-		}
-		return nil, errors.Errorf("central instance %s not in target state %q", centralRequest.Id, targetState)
+	funcWrapper := func(funcCtx context.Context) (*public.CentralRequest, error) {
+		return p.ensureStateFunc(funcCtx, centralRequest, targetState)
 	}
-
-	centralResp, err := retryUntilSucceededWithResponse(ctx, ensureFunc, p.config.ProbePollPeriod)
+	centralResp, err := retryUntilSucceededWithResponse(ctx, funcWrapper, p.config.ProbePollPeriod)
 	if err != nil {
 		return nil, errors.Wrap(err, "ensure central state failed")
 	}
 	return centralResp, nil
 }
 
-func (p *ProbeImpl) ensureCentralDeleted(ctx context.Context, centralRequest *public.CentralRequest) error {
-	ensureFunc := func(context.Context) error {
-		_, response, err := p.fleetManagerClient.GetCentralById(ctx, centralRequest.Id)
-		if err != nil {
-			if response != nil && response.StatusCode == http.StatusNotFound {
-				glog.Infof("central instance %s has been deleted", centralRequest.Id)
-				return nil
-			}
-			return errors.Wrapf(err, "central instance %s not reachable", centralRequest.Id)
-		}
-		return errors.Errorf("central instance %s not deleted", centralRequest.Id)
+func (p *ProbeImpl) ensureStateFunc(ctx context.Context, centralRequest *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
+	centralResp, _, err := p.fleetManagerClient.GetCentralById(ctx, centralRequest.Id)
+	if err != nil {
+		err = errors.Wrapf(err, "central instance %s not reachable", centralRequest.Id)
+		glog.Error(err)
+		return nil, err
 	}
 
-	if err := retryUntilSucceeded(ctx, ensureFunc, p.config.ProbePollPeriod); err != nil {
+	if centralResp.Status == targetState {
+		glog.Infof("central instance %s is in %q state", centralResp.Id, targetState)
+		return &centralResp, nil
+	}
+	err = errors.Errorf("central instance %s not in target state %q", centralRequest.Id, targetState)
+	glog.Warning(err)
+	return nil, err
+}
+
+func (p *ProbeImpl) ensureCentralDeleted(ctx context.Context, centralRequest *public.CentralRequest) error {
+	funcWrapper := func(funcCtx context.Context) error {
+		return p.ensureDeletedFunc(funcCtx, centralRequest)
+	}
+
+	if err := retryUntilSucceeded(ctx, funcWrapper, p.config.ProbePollPeriod); err != nil {
 		return errors.Wrap(err, "ensure central deleted failed")
 	}
 	return nil
 }
 
-func (p *ProbeImpl) pingURL(ctx context.Context, url string) error {
-	pingFunc := func(context.Context) error {
-		request, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
-		if err != nil {
-			return errors.Wrap(err, "failed to create request")
+func (p *ProbeImpl) ensureDeletedFunc(ctx context.Context, centralRequest *public.CentralRequest) error {
+	_, response, err := p.fleetManagerClient.GetCentralById(ctx, centralRequest.Id)
+	if err != nil {
+		if response != nil && response.StatusCode == http.StatusNotFound {
+			glog.Infof("central instance %s has been deleted", centralRequest.Id)
+			return nil
 		}
-		response, err := p.httpClient.Do(request)
-		if err != nil {
-			return errors.Wrap(err, "URL not reachable")
-		}
-		defer response.Body.Close()
-		if !httputil.Is2xxStatusCode(response.StatusCode) {
-			return errors.Errorf("URL ping did not succeed: %s", response.Status)
-		}
-		return nil
+		err = errors.Wrapf(err, "central instance %s not reachable", centralRequest.Id)
+		glog.Error(err)
+		return err
 	}
+	err = errors.Errorf("central instance %s not deleted", centralRequest.Id)
+	glog.Warning(err)
+	return err
+}
 
-	if err := retryUntilSucceeded(ctx, pingFunc, p.config.ProbePollPeriod); err != nil {
+func (p *ProbeImpl) pingURL(ctx context.Context, url string) error {
+	funcWrapper := func(funcCtx context.Context) error {
+		return p.pingFunc(funcCtx, url)
+	}
+	if err := retryUntilSucceeded(ctx, funcWrapper, p.config.ProbePollPeriod); err != nil {
 		return errors.Wrap(err, "URL ping failed")
+	}
+	return nil
+}
+
+func (p *ProbeImpl) pingFunc(ctx context.Context, url string) error {
+	request, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
+	if err != nil {
+		err = errors.Wrap(err, "failed to create request")
+		glog.Error(err)
+		return err
+	}
+	response, err := p.httpClient.Do(request)
+	if err != nil {
+		err = errors.Wrap(err, "URL not reachable")
+		glog.Error(err)
+		return err
+	}
+	defer response.Body.Close()
+	if !httputil.Is2xxStatusCode(response.StatusCode) {
+		err = errors.Errorf("URL ping did not succeed: %s", response.Status)
+		glog.Warning(err)
+		return err
 	}
 	return nil
 }
@@ -242,12 +268,9 @@ func retryUntilSucceeded(ctx context.Context, fn func(context.Context) error, in
 		case <-ctx.Done():
 			return errors.Wrap(ctx.Err(), "retry failed")
 		case <-ticker.C:
-			err := fn(ctx)
-			if err != nil {
-				glog.Warning(err)
-				continue
+			if err := fn(ctx); err == nil {
+				return nil
 			}
-			return nil
 		}
 	}
 }
@@ -261,12 +284,9 @@ func retryUntilSucceededWithResponse(ctx context.Context, fn func(context.Contex
 		case <-ctx.Done():
 			return nil, errors.Wrap(ctx.Err(), "retry failed")
 		case <-ticker.C:
-			centralResp, err := fn(ctx)
-			if err != nil {
-				glog.Warning(err)
-				continue
+			if centralResp, err := fn(ctx); err == nil {
+				return centralResp, nil
 			}
-			return centralResp, nil
 		}
 	}
 }

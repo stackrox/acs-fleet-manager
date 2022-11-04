@@ -105,7 +105,7 @@ func TestCreateCentral(t *testing.T) {
 			},
 		},
 		{
-			testName: "timeout on context deadline exceeded",
+			testName: "create central times out",
 			wantErr:  true,
 			errType:  &context.DeadlineExceeded,
 			mockFMClient: &fleetmanager.PublicClientMock{
@@ -288,7 +288,7 @@ func TestDeleteCentral(t *testing.T) {
 			},
 		},
 		{
-			testName: "timeout on context deadline exceeded",
+			testName: "delete central times out",
 			wantErr:  true,
 			errType:  &context.DeadlineExceeded,
 			mockFMClient: &fleetmanager.PublicClientMock{
@@ -409,7 +409,7 @@ func TestCleanUp(t *testing.T) {
 			},
 		},
 		{
-			testName: "timeout on context deadline exceeded",
+			testName: "clean up central times out",
 			wantErr:  true,
 			errType:  &context.DeadlineExceeded,
 			mockFMClient: &fleetmanager.PublicClientMock{
