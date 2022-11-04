@@ -1,3 +1,4 @@
+// Package types ...
 package types
 
 import "github.com/stackrox/acs-fleet-manager/pkg/client/ocm"

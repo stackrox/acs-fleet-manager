@@ -1,3 +1,4 @@
+// Package shared ...
 package shared
 
 import (

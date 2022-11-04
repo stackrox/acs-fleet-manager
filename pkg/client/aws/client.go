@@ -1,3 +1,4 @@
+// Package aws ...
 package aws
 
 import (

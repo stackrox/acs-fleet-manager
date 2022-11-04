@@ -88,16 +88,6 @@ LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
 # for `go generate` to use project-level bin directory binaries first
 export PATH := ${LOCAL_BIN_PATH}:$(PATH)
 
-GOLANGCI_LINT ?= $(LOCAL_BIN_PATH)/golangci-lint
-golangci-lint:
-ifeq (, $(shell which $(LOCAL_BIN_PATH)/golangci-lint 2> /dev/null))
-	@{ \
-	set -e ;\
-	VERSION="v1.43.0" ;\
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$${VERSION}/install.sh | sh -s -- -b ${LOCAL_BIN_PATH} $${VERSION} ;\
-	}
-endif
-
 LOCAL_GOTESTSUM = $(LOCAL_BIN_PATH)/gotestsum
 GOTESTSUM ?= $(LOCAL_GOTESTSUM)
 gotestsum:
@@ -304,17 +294,10 @@ verify: check-gopath openapi/validate
 .PHONY: verify
 
 # Runs linter against go files and .y(a)ml files in the templates directory
-# Requires golangci-lint to be installed @ $(go env GOPATH)/bin/golangci-lint
+# Requires pre-commit to be installed: See https://pre-commit.com/index.html for installation instructions.
 # and spectral installed via npm
-lint: golangci-lint specinstall
-	$(GOLANGCI_LINT) run \
-		./cmd/... \
-		./pkg/... \
-		./internal/... \
-		./test/... \
-		./fleetshard/... \
-		./probe/...
-
+lint: specinstall
+	pre-commit run golangci-lint --all-files
 	spectral lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
 .PHONY: lint
 

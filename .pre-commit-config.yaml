@@ -16,7 +16,7 @@ repos:
         args: ["--baseline", ".secrets.baseline"]
         exclude: ^pkg/client/redhatsso/api/
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.46.2
+    rev: v1.50.1
     hooks:
       - id: golangci-lint
   - repo: https://github.com/pre-commit/pre-commit-hooks

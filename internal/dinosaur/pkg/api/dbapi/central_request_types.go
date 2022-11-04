@@ -1,3 +1,4 @@
+// Package dbapi ...
 package dbapi
 
 import (

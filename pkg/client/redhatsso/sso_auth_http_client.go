@@ -1,3 +1,4 @@
+// Package redhatsso ...
 package redhatsso
 
 import (

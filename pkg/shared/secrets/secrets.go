@@ -1,3 +1,4 @@
+// Package secrets ...
 package secrets
 
 import (

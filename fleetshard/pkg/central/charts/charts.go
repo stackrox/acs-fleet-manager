@@ -1,3 +1,4 @@
+// Package charts ...
 package charts
 
 import (

@@ -1,3 +1,4 @@
+// Package fleetshardmetrics ...
 package fleetshardmetrics
 
 import (
