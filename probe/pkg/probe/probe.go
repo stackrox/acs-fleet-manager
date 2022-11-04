@@ -79,40 +79,37 @@ func (p *ProbeImpl) Execute(ctx context.Context) error {
 
 // CleanUp remaining probe resources.
 func (p *ProbeImpl) CleanUp(ctx context.Context) error {
-	ticker := time.NewTicker(p.config.ProbePollPeriod)
-	defer ticker.Stop()
+	if err := retryUntilSucceeded(ctx, p.cleanupFunc, p.config.ProbePollPeriod); err != nil {
+		return errors.Wrap(err, "cleanup centrals failed")
+	}
+	return nil
+}
 
-	for {
-		select {
-		case <-ctx.Done():
-			return errors.Wrap(ctx.Err(), "cleanup centrals timed out")
-		case <-ticker.C:
-			centralList, _, err := p.fleetManagerClient.GetCentrals(ctx, nil)
-			if err != nil {
-				glog.Warningf("could not list centrals: %s", err)
-				continue
-			}
+func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
+	centralList, _, err := p.fleetManagerClient.GetCentrals(ctx, nil)
+	if err != nil {
+		return errors.Wrap(err, "could not list centrals")
+	}
 
-			serviceAccountName := fmt.Sprintf("service-account-%s", p.config.RHSSOClientID)
-			namePrefix := fmt.Sprintf("%s-%s", p.config.ProbeNamePrefix, p.config.ProbeName)
-			success := true
-			for _, central := range centralList.Items {
-				central := central
-				if central.Owner != serviceAccountName || !strings.HasPrefix(central.Name, namePrefix) {
-					continue
-				}
-				if err := p.deleteCentral(ctx, &central); err != nil {
-					glog.Warningf("failed to clean up central instance %s: %s", central.Id, err)
-					success = false
-				}
-			}
-
-			if success {
-				glog.Info("finished clean up attempt of probe resources")
-				return nil
-			}
+	serviceAccountName := fmt.Sprintf("service-account-%s", p.config.RHSSOClientID)
+	namePrefix := fmt.Sprintf("%s-%s", p.config.ProbeNamePrefix, p.config.ProbeName)
+	success := true
+	for _, central := range centralList.Items {
+		central := central
+		if central.Owner != serviceAccountName || !strings.HasPrefix(central.Name, namePrefix) {
+			continue
+		}
+		if err := p.deleteCentral(ctx, &central); err != nil {
+			glog.Warningf("failed to clean up central instance %s: %s", central.Id, err)
+			success = false
 		}
 	}
+
+	if success {
+		glog.Info("finished clean up attempt of probe resources")
+		return nil
+	}
+	return errors.New("central clean up not successful")
 }
 
 // Create a Central and verify that it transitioned to 'ready' state.
@@ -174,74 +171,102 @@ func (p *ProbeImpl) deleteCentral(ctx context.Context, centralRequest *public.Ce
 }
 
 func (p *ProbeImpl) ensureCentralState(ctx context.Context, centralRequest *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
-	ticker := time.NewTicker(p.config.ProbePollPeriod)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return nil, errors.Wrap(ctx.Err(), "ensure central state timed out")
-		case <-ticker.C:
-			centralResp, _, err := p.fleetManagerClient.GetCentralById(ctx, centralRequest.Id)
-			if err != nil {
-				glog.Warningf("central instance %s not reachable: %s", centralRequest.Id, err.Error())
-				continue
-			}
-
-			if centralResp.Status == targetState {
-				glog.Infof("central instance %s is in %q state", centralResp.Id, targetState)
-				return &centralResp, nil
-			}
+	ensureFunc := func(context.Context) (*public.CentralRequest, error) {
+		centralResp, _, err := p.fleetManagerClient.GetCentralById(ctx, centralRequest.Id)
+		if err != nil {
+			return nil, errors.Wrapf(err, "central instance %s not reachable", centralRequest.Id)
 		}
+
+		if centralResp.Status == targetState {
+			glog.Infof("central instance %s is in %q state", centralResp.Id, targetState)
+			return &centralResp, nil
+		}
+		return nil, errors.Errorf("central instance %s not in target state %q", centralRequest.Id, targetState)
 	}
+
+	centralResp, err := retryUntilSucceededWithResponse(ctx, ensureFunc, p.config.ProbePollPeriod)
+	if err != nil {
+		return nil, errors.Wrap(err, "ensure central state failed")
+	}
+	return centralResp, nil
 }
 
 func (p *ProbeImpl) ensureCentralDeleted(ctx context.Context, centralRequest *public.CentralRequest) error {
-	ticker := time.NewTicker(p.config.ProbePollPeriod)
+	ensureFunc := func(context.Context) error {
+		_, response, err := p.fleetManagerClient.GetCentralById(ctx, centralRequest.Id)
+		if err != nil {
+			if response != nil && response.StatusCode == http.StatusNotFound {
+				glog.Infof("central instance %s has been deleted", centralRequest.Id)
+				return nil
+			}
+			return errors.Wrapf(err, "central instance %s not reachable", centralRequest.Id)
+		}
+		return errors.Errorf("central instance %s not deleted", centralRequest.Id)
+	}
+
+	if err := retryUntilSucceeded(ctx, ensureFunc, p.config.ProbePollPeriod); err != nil {
+		return errors.Wrap(err, "ensure central deleted failed")
+	}
+	return nil
+}
+
+func (p *ProbeImpl) pingURL(ctx context.Context, url string) error {
+	pingFunc := func(context.Context) error {
+		request, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
+		if err != nil {
+			return errors.Wrap(err, "failed to create request")
+		}
+		response, err := p.httpClient.Do(request)
+		if err != nil {
+			return errors.Wrap(err, "URL not reachable")
+		}
+		defer response.Body.Close()
+		if !httputil.Is2xxStatusCode(response.StatusCode) {
+			return errors.Errorf("URL ping did not succeed: %s", response.Status)
+		}
+		return nil
+	}
+
+	if err := retryUntilSucceeded(ctx, pingFunc, p.config.ProbePollPeriod); err != nil {
+		return errors.Wrap(err, "URL ping failed")
+	}
+	return nil
+}
+
+func retryUntilSucceeded(ctx context.Context, fn func(context.Context) error, interval time.Duration) error {
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return errors.Wrap(ctx.Err(), "ensure central deleted timed out")
+			return ctx.Err()
 		case <-ticker.C:
-			_, response, err := p.fleetManagerClient.GetCentralById(ctx, centralRequest.Id)
+			err := fn(ctx)
 			if err != nil {
-				if response != nil && response.StatusCode == http.StatusNotFound {
-					glog.Infof("central instance %s has been deleted", centralRequest.Id)
-					return nil
-				}
-				glog.Warningf("central instance %s not reachable: %s", centralRequest.Id, err.Error())
+				glog.Warning(err)
+				continue
 			}
+			return nil
 		}
 	}
 }
 
-func (p *ProbeImpl) pingURL(ctx context.Context, url string) error {
-	ticker := time.NewTicker(p.config.ProbePollPeriod)
+func retryUntilSucceededWithResponse(ctx context.Context, fn func(context.Context) (*public.CentralRequest, error), interval time.Duration) (*public.CentralRequest, error) {
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return errors.Wrap(ctx.Err(), "ping timed out")
+			return nil, ctx.Err()
 		case <-ticker.C:
-			request, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
+			centralResp, err := fn(ctx)
 			if err != nil {
-				glog.Warningf("failed to create request: %s", err)
+				glog.Warning(err)
 				continue
 			}
-			response, err := p.httpClient.Do(request)
-			if err != nil {
-				glog.Warningf("URL not reachable: %s", err)
-				continue
-			}
-			response.Body.Close()
-			if !httputil.Is2xxStatusCode(response.StatusCode) {
-				glog.Warningf("URL ping did not succeed: %s", response.Status)
-				continue
-			}
-			return nil
+			return centralResp, nil
 		}
 	}
 }
