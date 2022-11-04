@@ -4,7 +4,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/stackrox/rox/pkg/testutils/envisolator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/http/httpproxy"
@@ -13,11 +12,8 @@ import (
 const testNS = `acsms-01`
 
 func TestProxyConfiguration(t *testing.T) {
-	ei := envisolator.NewEnvIsolator(t)
-	defer ei.RestoreAll()
-
 	for _, envVar := range getProxyEnvVars(testNS) {
-		ei.Setenv(envVar.Name, envVar.Value)
+		t.Setenv(envVar.Name, envVar.Value)
 	}
 
 	proxyFunc := httpproxy.FromEnvironment().ProxyFunc()
