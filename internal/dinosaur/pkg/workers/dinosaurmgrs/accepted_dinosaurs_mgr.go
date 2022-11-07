@@ -1,3 +1,4 @@
+// Package dinosaurmgrs ...
 package dinosaurmgrs
 
 import (

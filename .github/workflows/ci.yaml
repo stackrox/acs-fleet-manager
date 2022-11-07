@@ -1,5 +1,5 @@
 # This runs checks to verify if code is properly formatted and that tests (unit and integration against a mocked environment) are passing.
-name: Lint & Test
+name: Verify & Test
 
 on:
   push:
@@ -57,8 +57,8 @@ env:
   TEST_TIMEOUT: 30m
 
 jobs:
-  lint-test:
-    name: "Lint & Test"
+  verify-test:
+    name: "Verify & Test"
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -100,7 +100,7 @@ jobs:
           echo -n "${{ secrets.POSTGRES_PASSWORD }}" > secrets/db.password
       - name: Run Migration Script
         run: make db/migrate
-      - name: Lint & Test
+      - name: Verify & Test
         run: |
           export GOPATH=$(go env GOPATH)
           export PATH=${PATH}:$GOPATH/bin

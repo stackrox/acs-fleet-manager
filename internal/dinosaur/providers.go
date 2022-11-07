@@ -1,3 +1,4 @@
+// Package dinosaur ...
 package dinosaur
 
 import (

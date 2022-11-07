@@ -1,3 +1,4 @@
+// Package authorization ...
 package authorization
 
 import (

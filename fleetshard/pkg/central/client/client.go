@@ -1,3 +1,4 @@
+// Package client ...
 package client
 
 import (

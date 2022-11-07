@@ -1,3 +1,4 @@
+// Package migrations ...
 package migrations
 
 // Migrations should NEVER use types from other packages. Types can change

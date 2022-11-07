@@ -1,3 +1,4 @@
+// Package metrics ...
 package metrics
 
 import (

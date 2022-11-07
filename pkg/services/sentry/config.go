@@ -1,3 +1,4 @@
+// Package sentry ...
 package sentry
 
 import (

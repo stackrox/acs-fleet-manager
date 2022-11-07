@@ -1,3 +1,4 @@
+// Package observatorium ...
 package observatorium
 
 import (

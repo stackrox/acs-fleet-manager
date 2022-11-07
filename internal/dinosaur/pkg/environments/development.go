@@ -1,3 +1,4 @@
+// Package environments ...
 package environments
 
 import "github.com/stackrox/acs-fleet-manager/pkg/environments"

@@ -1,3 +1,4 @@
+// Package constants ...
 package constants
 
 import (

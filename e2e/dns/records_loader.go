@@ -1,3 +1,4 @@
+// Package dns ...
 package dns
 
 import (

@@ -1,3 +1,4 @@
+// Package arrays ...
 package arrays
 
 // FindFirst Finds the first element into the passed in values where the predicate is true

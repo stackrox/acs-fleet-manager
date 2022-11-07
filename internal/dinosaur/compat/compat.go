@@ -1,3 +1,4 @@
+// Package compat ...
 package compat
 
 import (

@@ -1,3 +1,4 @@
+// Package migrate ...
 package migrate
 
 import (
