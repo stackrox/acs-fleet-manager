@@ -1,6 +1,7 @@
 package fleetmanager
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 
@@ -10,7 +11,20 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 )
 
-var _ http.RoundTripper = (*authTransport)(nil)
+// PublicClient is a wrapper interface for the fleetmanager client public API.
+//
+//go:generate moq -out client_moq.go . PublicClient
+type PublicClient interface {
+	CreateCentral(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error)
+	DeleteCentralById(ctx context.Context, id string, async bool) (*http.Response, error)
+	GetCentralById(ctx context.Context, id string) (public.CentralRequest, *http.Response, error)
+	GetCentrals(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error)
+}
+
+var (
+	_ http.RoundTripper = (*authTransport)(nil)
+	_ PublicClient      = (*public.DefaultApiService)(nil)
+)
 
 type authTransport struct {
 	transport http.RoundTripper
