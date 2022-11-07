@@ -39,7 +39,7 @@ case $ENVIRONMENT in
 
     FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:6da74ac"
 
-    OBSERVABILITY_GITHUB_TAG="237418b6e0ac47499948fd00fb7bbcab63e535e6"  # pragma: allowlist secret
+    OBSERVABILITY_GITHUB_TAG="401d9a5ef49c48bbac3b7a516f8a1509e568d298"  # pragma: allowlist secret
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
     ;;
 
