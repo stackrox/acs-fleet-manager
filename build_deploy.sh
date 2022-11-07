@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 #
 # Copyright (c) 2018 Red Hat, Inc.
 #
@@ -36,20 +36,6 @@ IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/acs-fleet-manager}"
 
 # Set the directory for docker configuration:
 DOCKER_CONFIG="${PWD}/.docker"
-
-# Set the Go path:
-export GOPATH="${PWD}/.gopath"
-# TODO(porridge): clean up this quick hack needed to get build working on jenkins
-jenkins_go117="/opt/go/1.17.8"
-export PATH="${jenkins_go117}/bin:${PATH}:${GOPATH}/bin"
-LINK="${GOPATH}/src/github.com/stackrox/acs-fleet-manager"
-
-# print go version
-go version
-
-mkdir -p "$(dirname "${LINK}")"
-ln -sf "${PWD}" "${LINK}"
-cd "${LINK}"
 
 # Log in to the image registry:
 if [ -z "${QUAY_USER}" ]; then
