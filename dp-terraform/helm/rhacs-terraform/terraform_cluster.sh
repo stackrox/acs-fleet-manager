@@ -64,13 +64,9 @@ function assert_environment() {
 case $CLUSTER_NAME in
 acs-stage-dp-01)
   assert_environment stage
-  CLUSTER_ID="d3ccd7a0-9b33-41e3-9024-6677f42259ed"
-  CLUSTER_URL_INFIX="blbk.p1"
   ;;
 acs-prod-dp-01)
   assert_environment prod
-  CLUSTER_ID="05bbca64-8687-494a-8ac1-0eddc91efdd6"
-  CLUSTER_URL_INFIX="pnz3.p1"
   ;;
 *)
   echo "Unknown cluster ${CLUSTER_NAME}. Please define it in the $0 script if this is a new cluster." >&2
