@@ -96,10 +96,9 @@ OPERATOR_SOURCE="redhat-operators"
 #OPERATOR_USE_UPSTREAM=true
 #OPERATOR_SOURCE="rhacs-operators"
 
-# helm template ... to debug changes
+# helm template --debug ... to debug changes
 helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --install \
-  --debug \
   --namespace rhacs \
   --create-namespace \
   --set acsOperator.enabled=true \
