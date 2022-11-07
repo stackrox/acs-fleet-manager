@@ -124,7 +124,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/moq 2> /dev/null))
 	MOQ_TMP_DIR=$$(mktemp -d) ;\
 	cd $$MOQ_TMP_DIR ;\
 	$(GO) mod init tmp ;\
-	$(GO) get -d github.com/matryer/moq@v0.2.1 ;\
+	$(GO) get -d github.com/matryer/moq@v0.2.7 ;\
 	mkdir -p ${LOCAL_BIN_PATH} ;\
 	$(GO) build -o ${LOCAL_BIN_PATH}/moq github.com/matryer/moq ;\
 	rm -rf $$MOQ_TMP_DIR ;\

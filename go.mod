@@ -1,6 +1,6 @@
 module github.com/stackrox/acs-fleet-manager
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Masterminds/squirrel v1.5.3
