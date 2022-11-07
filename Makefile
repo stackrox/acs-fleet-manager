@@ -88,53 +88,17 @@ LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
 # for `go generate` to use project-level bin directory binaries first
 export PATH := ${LOCAL_BIN_PATH}:$(PATH)
 
-LOCAL_GOTESTSUM = $(LOCAL_BIN_PATH)/gotestsum
-GOTESTSUM ?= $(LOCAL_GOTESTSUM)
-gotestsum:
-ifeq ($(GOTESTSUM), $(LOCAL_GOTESTSUM))
-ifeq (, $(shell which $(LOCAL_BIN_PATH)/gotestsum 2> /dev/null))
-	@{ \
-	set -e ;\
-	GOTESTSUM_TMP_DIR=$$(mktemp -d) ;\
-	cd $$GOTESTSUM_TMP_DIR ;\
-	$(GO) mod init tmp ;\
-	$(GO) get -d gotest.tools/gotestsum@v1.8.1 ;\
-	mkdir -p ${LOCAL_BIN_PATH} ;\
-	$(GO) build -o ${LOCAL_BIN_PATH}/gotestsum gotest.tools/gotestsum ;\
-	rm -rf $$GOTESTSUM_TMP_DIR ;\
-	}
-endif
-endif
+GOTESTSUM_BIN := $(LOCAL_BIN_PATH)/gotestsum
+$(GOTESTSUM_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
+	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install gotest.tools/gotestsum
 
-MOQ ?= ${LOCAL_BIN_PATH}/moq
-moq:
-ifeq (, $(shell which ${LOCAL_BIN_PATH}/moq 2> /dev/null))
-	@{ \
-	set -e ;\
-	MOQ_TMP_DIR=$$(mktemp -d) ;\
-	cd $$MOQ_TMP_DIR ;\
-	$(GO) mod init tmp ;\
-	$(GO) get -d github.com/matryer/moq@v0.2.7 ;\
-	mkdir -p ${LOCAL_BIN_PATH} ;\
-	$(GO) build -o ${LOCAL_BIN_PATH}/moq github.com/matryer/moq ;\
-	rm -rf $$MOQ_TMP_DIR ;\
-	}
-endif
+MOQ_BIN := $(LOCAL_BIN_PATH)/moq
+$(MOQ_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
+	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/matryer/moq
 
-GOBINDATA ?= ${LOCAL_BIN_PATH}/go-bindata
-go-bindata:
-ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
-	@{ \
-	set -e ;\
-	GOBINDATA_TMP_DIR=$$(mktemp -d) ;\
-	cd $$GOBINDATA_TMP_DIR ;\
-	$(GO) mod init tmp ;\
-	$(GO) get -d github.com/go-bindata/go-bindata/v3/...@v3.1.3 ;\
-	mkdir -p ${LOCAL_BIN_PATH} ;\
-	$(GO) build -o ${LOCAL_BIN_PATH}/go-bindata github.com/go-bindata/go-bindata/v3/go-bindata ;\
-	rm -rf $$GOBINDATA_TMP_DIR ;\
-	}
-endif
+GOBINDATA_BIN := $(LOCAL_BIN_PATH)/go-bindata
+$(GOBINDATA_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
+	cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/go-bindata/go-bindata/...
 
 CHAMBER_BIN := $(LOCAL_BIN_PATH)/chamber
 $(CHAMBER_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
@@ -143,6 +107,10 @@ $(CHAMBER_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 AWS_VAULT_BIN := $(LOCAL_BIN_PATH)/aws-vault
 $(AWS_VAULT_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/99designs/aws-vault/v6
+
+GINKGO_BIN := $(LOCAL_BIN_PATH)/ginkgo
+$(GINKGO_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
+	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/onsi/ginkgo/v2/ginkgo
 
 OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
 NPM ?= "$(shell which npm)"
@@ -335,8 +303,8 @@ clean:
 #
 # Examples:
 #   make test TESTFLAGS="-run TestSomething"
-test: gotestsum
-	OCM_ENV=testing $(GOTESTSUM) --junitfile data/results/unit-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
+test: $(GOTESTSUM_BIN)
+	OCM_ENV=testing $(GOTESTSUM_BIN) --junitfile data/results/unit-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
 		$(shell go list ./... | grep -v /test)
 .PHONY: test
 
@@ -355,8 +323,8 @@ test/prepare:
 #   make test/integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
-test/integration/dinosaur: test/prepare gotestsum
-	$(GOTESTSUM) --junitfile data/results/fleet-manager-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
+test/integration/dinosaur: test/prepare $(GOTESTSUM_BIN)
+	$(GOTESTSUM_BIN) --junitfile data/results/fleet-manager-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
 				./internal/dinosaur/test/integration/...
 .PHONY: test/integration/dinosaur
 
@@ -369,11 +337,12 @@ test/cluster/cleanup:
 	./scripts/cleanup_test_cluster.sh
 .PHONY: test/cluster/cleanup
 
-test/e2e:
+test/e2e: $(GINKGO_BIN)
+	GOBIN=${LOCAL_BIN_PATH} \
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	RUN_E2E=true \
 	ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=$(ENABLE_CENTRAL_EXTERNAL_CERTIFICATE) \
-	go run github.com/onsi/ginkgo/v2/ginkgo -r $(GINKGO_FLAGS) \
+	$(GINKGO_BIN) -r $(GINKGO_FLAGS) \
 		--randomize-suites \
 		--fail-on-pending --keep-going \
 		--cover --coverprofile=cover.profile \
@@ -393,7 +362,7 @@ test/e2e/cleanup:
 .PHONY: test/e2e/cleanup
 
 # generate files
-generate: moq openapi/generate
+generate: $(MOQ_BIN) openapi/generate
 	$(GO) generate ./...
 .PHONY: generate
 
@@ -408,7 +377,7 @@ openapi/validate: openapi-generator
 openapi/generate: openapi/generate/public openapi/generate/private openapi/generate/admin openapi/generate/rhsso
 .PHONY: openapi/generate
 
-openapi/generate/public: go-bindata openapi-generator
+openapi/generate/public: $(GOBINDATA_BIN) openapi-generator
 	rm -rf internal/dinosaur/pkg/api/public
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager.yaml -g go -o internal/dinosaur/pkg/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
@@ -416,26 +385,26 @@ openapi/generate/public: go-bindata openapi-generator
 
 	mkdir -p .generate/openapi
 	cp ./openapi/fleet-manager.yaml .generate/openapi
-	$(GOBINDATA) -o ./internal/dinosaur/pkg/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
+	$(GOBINDATA_BIN) -o ./internal/dinosaur/pkg/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
 	$(GOFMT) -w internal/dinosaur/pkg/generated
 	rm -rf .generate/openapi
 .PHONY: openapi/generate/public
 
-openapi/generate/private: go-bindata openapi-generator
+openapi/generate/private: $(GOBINDATA_BIN) openapi-generator
 	rm -rf internal/dinosaur/pkg/api/private
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private.yaml -g go -o internal/dinosaur/pkg/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/dinosaur/pkg/api/private
 .PHONY: openapi/generate/private
 
-openapi/generate/admin: go-bindata openapi-generator
+openapi/generate/admin: $(GOBINDATA_BIN) openapi-generator
 	rm -rf internal/dinosaur/pkg/api/admin/private
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private-admin.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private-admin.yaml -g go -o internal/dinosaur/pkg/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/dinosaur/pkg/api/admin/private
 .PHONY: openapi/generate/admin
 
-openapi/generate/rhsso: go-bindata openapi-generator
+openapi/generate/rhsso: $(GOBINDATA_BIN) openapi-generator
 	rm -rf pkg/client/redhatsso/api
 	$(OPENAPI_GENERATOR) validate -i openapi/rh-sso-dynamic-client.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/rh-sso-dynamic-client.yaml -g go -o pkg/client/redhatsso/api --package-name api -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
