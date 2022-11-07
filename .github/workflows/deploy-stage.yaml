@@ -29,6 +29,13 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+      - name: List Parameter Store services
+        env:
+          USE_AWS_VAULT: false
+        run: |
+          source ./scripts/lib/external_config.sh
+          init_chamber
+          run_chamber list-services
       - name: Run terraforming on THE stage cluster
         env:
           USE_AWS_VAULT: false
