@@ -508,7 +508,7 @@ db/generate/insert/cluster:
 
 # Login to docker
 docker/login:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
+	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
 .PHONY: docker/login
 
 # Login to the OpenShift internal registry
@@ -547,7 +547,7 @@ image/build/local: image/build
 
 # Build and push the image
 image/push: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
-image/push: image/build
+image/push: image/build/multi-target
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
 	@echo
 	@echo "Image was pushed as $(IMAGE_REF). You might want to"
