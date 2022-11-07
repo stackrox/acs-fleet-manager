@@ -10,6 +10,7 @@ This Changelog should be updated for:
 
 ### Added
 - Data Plane terraforming scripts migration from BitWarden to Parameter Store
+- Update go version to 1.18
 ### Changed
 ### Deprecated
 ### Removed
