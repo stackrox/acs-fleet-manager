@@ -118,7 +118,8 @@ case $ENVIRONMENT in
     ;;
 esac
 
-CLUSTER_URL="$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns api.url)"
+# The ocm command likes to return trailing whitespace, so try and trim it:
+CLUSTER_URL="$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns api.url | awk '{print $1}')"
 
 # Use a temporary KUBECONFIG to avoid storing credentials in and changing current context in user's day-to-day kubeconfig.
 KUBECONFIG="$(mktemp)"
