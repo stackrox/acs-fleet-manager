@@ -167,6 +167,7 @@ do
   if [[ -n $ROBOT_TOKEN ]]; then
     echo "Retrieved robot token:"
     echo "$ROBOT_TOKEN"
+    echo "Please save this as parameter '/cluster-${CLUSTER_NAME}/robot_oc_token' in AWS parameter store at https://us-east-1.console.aws.amazon.com/systems-manager/parameters/?region=us-east-1&tab=Table"
     # TODO(porridge): automate storing this in parameter store in a way suitable for terraform script.
     break
   fi
