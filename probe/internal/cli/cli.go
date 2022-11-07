@@ -3,12 +3,16 @@ package cli
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/probe/config"
+	"github.com/stackrox/acs-fleet-manager/probe/pkg/fleetmanager"
+	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/runtime"
 )
 
@@ -24,7 +28,21 @@ type CLI struct {
 
 // New creates a CLI.
 func New() (*CLI, error) {
-	runtime, err := runtime.New()
+	config, err := config.GetConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to load configuration")
+	}
+
+	fleetManagerClient, err := fleetmanager.New(config)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create fleet manager client")
+	}
+
+	httpClient := &http.Client{Timeout: config.ProbeHTTPRequestTimeout}
+
+	probe := probe.New(config, fleetManagerClient, httpClient)
+
+	runtime, err := runtime.New(config, probe)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create runtime")
 	}

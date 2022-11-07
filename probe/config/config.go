@@ -19,11 +19,13 @@ type Config struct {
 	RHSSOClientSecret       string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
 	RHSSOEndpoint           string        `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
 	RHSSORealm              string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
+	ProbeName               string        `env:"PROBE_NAME" envDefault:"pod"`
+	ProbeNamePrefix         string        `env:"PROBE_NAME_PREFIX" envDefault:"probe"`
+	ProbeCleanUpTimeout     time.Duration `env:"PROBE_CLEANUP_TIMEOUT" envDefault:"15m"`
 	ProbeHTTPRequestTimeout time.Duration `env:"PROBE_HTTP_REQUEST_TIMEOUT" envDefault:"5s"`
-	RuntimePollPeriod       time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
-	RuntimePollTimeout      time.Duration `env:"RUNTIME_POLL_TIMEOUT" envDefault:"5m"`
-	RuntimeRunTimeout       time.Duration `env:"RUNTIME_RUN_TIMEOUT" envDefault:"15m"`
-	RuntimeRunWaitPeriod    time.Duration `env:"RUNTIME_RUN_WAIT_PERIOD" envDefault:"30s"`
+	ProbePollPeriod         time.Duration `env:"PROBE_POLL_PERIOD" envDefault:"5s"`
+	ProbeRunTimeout         time.Duration `env:"PROBE_RUN_TIMEOUT" envDefault:"15m"`
+	ProbeRunWaitPeriod      time.Duration `env:"PROBE_RUN_WAIT_PERIOD" envDefault:"30s"`
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.

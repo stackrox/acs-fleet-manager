@@ -17,7 +17,7 @@ func TestGetConfig_Success(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, cfg.FleetManagerEndpoint, "http://127.0.0.1:8888")
-	assert.Equal(t, cfg.RuntimePollPeriod, 5*time.Second)
+	assert.Equal(t, cfg.ProbePollPeriod, 5*time.Second)
 }
 
 func TestGetConfig_Failure(t *testing.T) {

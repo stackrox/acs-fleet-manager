@@ -11,26 +11,23 @@ import (
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
 )
 
-// Runtime performs a probe run against fleet manager.
+// Runtime orchestrates probe runs against fleet manager.
 type Runtime struct {
 	Config *config.Config
+	probe  probe.Probe
 }
 
 // New creates a new runtime.
-func New() (*Runtime, error) {
-	config, err := config.GetConfig()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to load configuration")
-	}
-
+func New(config *config.Config, probe probe.Probe) (*Runtime, error) {
 	return &Runtime{
 		Config: config,
+		probe:  probe,
 	}, nil
 }
 
 // RunLoop a continuous loop of probe runs.
 func (r *Runtime) RunLoop(ctx context.Context) error {
-	ticker := time.NewTicker(r.Config.RuntimeRunWaitPeriod)
+	ticker := time.NewTicker(r.Config.ProbeRunWaitPeriod)
 	defer ticker.Stop()
 
 	for {
@@ -46,19 +43,28 @@ func (r *Runtime) RunLoop(ctx context.Context) error {
 }
 
 // RunSingle executes a single probe run.
-func (r *Runtime) RunSingle(ctx context.Context) error {
-	ctxTimeout, cancel := context.WithTimeout(ctx, r.Config.RuntimeRunTimeout)
+func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
+	probeRunCtx, cancel := context.WithTimeout(ctx, r.Config.ProbeRunTimeout)
 	defer cancel()
-	defer r.CleanUp()
+	defer func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), r.Config.ProbeCleanUpTimeout)
+		defer cancel()
 
-	if err := probe.Execute(ctxTimeout); err != nil {
+		if err := r.probe.CleanUp(ctx); err != nil {
+			// If clean up failed AND the original probe run failed, wrap the
+			// original error and return it in `SingleRun`.
+			// If ONLY the clean up failed, the context error is wrapped and
+			// returned in `SingleRun`.
+			if errReturn != nil {
+				errReturn = errors.Wrapf(errReturn, "cleanup failed: %s", cleanupCtx.Err())
+			} else {
+				errReturn = errors.Wrap(cleanupCtx.Err(), "cleanup failed")
+			}
+		}
+	}()
+
+	if err := r.probe.Execute(probeRunCtx); err != nil {
 		return errors.Wrap(err, "probe run failed")
 	}
-	return nil
-}
-
-// CleanUp remaining probe resources.
-func (r *Runtime) CleanUp() error {
-	glog.Info("probe resources have been cleaned up")
 	return nil
 }
