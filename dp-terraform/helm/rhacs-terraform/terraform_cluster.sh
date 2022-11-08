@@ -28,7 +28,7 @@ case $ENVIRONMENT in
   stage)
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
 
-    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:f6ad53e"
+    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:3060ea1"
 
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
@@ -37,7 +37,7 @@ case $ENVIRONMENT in
   prod)
     FM_ENDPOINT="https://api.openshift.com"
 
-    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:6da74ac"
+    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:3060ea1"
 
     OBSERVABILITY_GITHUB_TAG="401d9a5ef49c48bbac3b7a516f8a1509e568d298"  # pragma: allowlist secret
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
