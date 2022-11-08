@@ -11,6 +11,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
 )
 
+var (
+	errCleanupFailed = errors.New("cleanup failed")
+)
+
 // Runtime orchestrates probe runs against fleet manager.
 type Runtime struct {
 	Config *config.Config
@@ -50,15 +54,15 @@ func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), r.Config.ProbeCleanUpTimeout)
 		defer cancel()
 
-		if err := r.probe.CleanUp(ctx); err != nil {
+		if err := r.probe.CleanUp(cleanupCtx); err != nil {
 			// If clean up failed AND the original probe run failed, wrap the
 			// original error and return it in `SingleRun`.
 			// If ONLY the clean up failed, the context error is wrapped and
 			// returned in `SingleRun`.
 			if errReturn != nil {
-				errReturn = errors.Wrapf(errReturn, "cleanup failed: %s", cleanupCtx.Err())
+				errReturn = errors.Wrapf(errReturn, "%s: %s", errCleanupFailed, err)
 			} else {
-				errReturn = errors.Wrap(cleanupCtx.Err(), "cleanup failed")
+				errReturn = errors.Wrap(err, errCleanupFailed.Error())
 			}
 		}
 	}()

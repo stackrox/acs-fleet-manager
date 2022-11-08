@@ -43,7 +43,7 @@ func TestRunSingle(t *testing.T) {
 			testName: "deadline exceeded on out in CleanUp",
 			mockProbe: &probe.ProbeMock{
 				CleanUpFunc: func(ctx context.Context) error {
-					concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeRunTimeout)
+					concurrency.WaitWithTimeout(ctx, 2*testConfig.ProbeCleanUpTimeout)
 					return ctx.Err()
 				},
 				ExecuteFunc: func(ctx context.Context) error {
@@ -63,6 +63,44 @@ func TestRunSingle(t *testing.T) {
 			err = runtime.RunSingle(ctx)
 
 			assert.ErrorIs(t, err, context.DeadlineExceeded)
+			assert.Equal(t, 1, len(tc.mockProbe.CleanUpCalls()), "must clean up centrals")
+		})
+	}
+}
+
+func TestCanceledContextStillCleansUp(t *testing.T) {
+	tt := []struct {
+		testName  string
+		mockProbe *probe.ProbeMock
+	}{
+		{
+			testName: "cancel main context before cleanup timeout",
+			mockProbe: &probe.ProbeMock{
+				CleanUpFunc: func(ctx context.Context) error {
+					return ctx.Err()
+				},
+				ExecuteFunc: func(ctx context.Context) error {
+					concurrency.WaitWithTimeout(ctx, 10*time.Millisecond)
+					return ctx.Err()
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			runtime, err := New(testConfig, tc.mockProbe)
+			require.NoError(t, err, "failed to create runtime")
+			ctx, cancel := context.WithTimeout(context.TODO(), testConfig.ProbeRunTimeout)
+			defer cancel()
+
+			go func() {
+				time.Sleep(5 * time.Millisecond)
+				cancel()
+			}()
+			err = runtime.RunSingle(ctx)
+
+			assert.NotContains(t, err.Error(), errCleanupFailed.Error())
 			assert.Equal(t, 1, len(tc.mockProbe.CleanUpCalls()), "must clean up centrals")
 		})
 	}
