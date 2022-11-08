@@ -60,9 +60,9 @@ func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
 			// If ONLY the clean up failed, the context error is wrapped and
 			// returned in `SingleRun`.
 			if errReturn != nil {
-				errReturn = errors.Wrapf(errReturn, "%s: %s", errCleanupFailed, cleanupCtx.Err())
+				errReturn = errors.Wrapf(errReturn, "%s: %s", errCleanupFailed, err)
 			} else {
-				errReturn = errors.Wrap(cleanupCtx.Err(), errCleanupFailed.Error())
+				errReturn = errors.Wrap(err, errCleanupFailed.Error())
 			}
 		}
 	}()
