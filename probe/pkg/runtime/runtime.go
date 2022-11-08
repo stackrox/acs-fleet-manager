@@ -8,6 +8,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
+	"github.com/stackrox/acs-fleet-manager/probe/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/probe"
 )
 
@@ -44,6 +45,17 @@ func (r *Runtime) RunLoop(ctx context.Context) error {
 
 // RunSingle executes a single probe run.
 func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
+	metrics.MetricsInstance().IncStartedRuns()
+	defer func() {
+		if errReturn != nil {
+			metrics.MetricsInstance().IncFailedRuns()
+			metrics.MetricsInstance().SetLastFailureTimestamp()
+			return
+		}
+		metrics.MetricsInstance().IncSuccessfulRuns()
+		metrics.MetricsInstance().SetLastSuccessTimestamp()
+	}()
+
 	probeRunCtx, cancel := context.WithTimeout(ctx, r.Config.ProbeRunTimeout)
 	defer cancel()
 	defer func() {

@@ -17,6 +17,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
+	"github.com/stackrox/acs-fleet-manager/probe/pkg/metrics"
 	"github.com/stackrox/rox/pkg/httputil"
 )
 
@@ -47,7 +48,9 @@ func New(config *config.Config, fleetManagerClient fleetmanager.PublicClient, ht
 }
 
 func recordElapsedTime(start time.Time) {
-	glog.Infof("elapsed time: %v", time.Since(start))
+	elapsedTime := time.Since(start)
+	glog.Infof("elapsed time: %v", elapsedTime)
+	metrics.MetricsInstance().ObserveTotalDuration(elapsedTime)
 }
 
 func (p *ProbeImpl) newCentralName() (string, error) {

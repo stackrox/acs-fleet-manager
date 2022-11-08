@@ -27,12 +27,7 @@ type CLI struct {
 }
 
 // New creates a CLI.
-func New() (*CLI, error) {
-	config, err := config.GetConfig()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to load configuration")
-	}
-
+func New(config *config.Config) (*CLI, error) {
 	fleetManagerClient, err := fleetmanager.New(config)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager client")

@@ -3,9 +3,12 @@ package main
 
 import (
 	"flag"
+	"net/http"
 
 	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/internal/cli"
+	"github.com/stackrox/acs-fleet-manager/probe/pkg/metrics"
 )
 
 func main() {
@@ -16,10 +19,23 @@ func main() {
 
 	// Always log to stderr by default, required for glog.
 	if err := flag.Set("logtostderr", "true"); err != nil {
-		glog.Info("Unable to set logtostderr to true.")
+		glog.Info("unable to set logtostderr to true.")
 	}
 
-	c, err := cli.New()
+	config, err := config.GetConfig()
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	metricsServer, close := metrics.NewMetricsServer(config.MetricsAddress)
+	defer close()
+	go func() {
+		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			glog.Errorf("failed to serve metrics: %v", err)
+		}
+	}()
+
+	c, err := cli.New(config)
 	if err != nil {
 		glog.Fatal(err)
 	}
