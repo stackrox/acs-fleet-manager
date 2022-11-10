@@ -33,6 +33,7 @@ VERSION=$(git rev-parse --short=7 HEAD)
 
 # Set image repository to default value if it is not passed via env
 IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/acs-fleet-manager}"
+PROBE_IMAGE_REPOSITORY="${QUAY_PROBE_IMAGE_REPOSITORY:-rhacs-eng/blackbox-monitoring-probe-service}"
 
 # Set the directory for docker configuration:
 DOCKER_CONFIG="${PWD}/.docker"
@@ -46,6 +47,16 @@ fi
 if [ -z "${QUAY_TOKEN}" ]; then
   echo "The quay.io push token hasn't been provided."
   echo "Make sure to set the QUAY_TOKEN environment variable."
+  exit 1
+fi
+if [ -z "${QUAY_PROBE_USER}" ]; then
+  echo "The probe service quay.io push user name hasn't been provided."
+  echo "Make sure to set the QUAY_PROBE_USER environment variable."
+  exit 1
+fi
+if [ -z "${QUAY_PROBE_TOKEN}" ]; then
+  echo "The probe service quay.io push token hasn't been provided."
+  echo "Make sure to set the QUAY_PROBE_TOKEN environment variable."
   exit 1
 fi
 
@@ -64,7 +75,7 @@ else
 fi
 
 # Push the image:
-echo "Quay.io user and token is set, will push images to $IMAGE_REPOSITORY"
+echo "Quay.io user and token are set, will push images to $IMAGE_REPOSITORY and $PROBE_IMAGE_REPOSITORY."
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
@@ -73,6 +84,7 @@ make \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
   image_repository="${IMAGE_REPOSITORY}" \
+  probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
   docker/login \
   image/push
 
@@ -80,9 +92,12 @@ make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
   QUAY_TOKEN="${QUAY_TOKEN}" \
+  QUAY_PROBE_USER="${QUAY_PROBE_USER}" \
+  QUAY_PROBE_TOKEN="${QUAY_PROBE_TOKEN}" \
   TAG="${BRANCH}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
   image_repository="${IMAGE_REPOSITORY}" \
+  probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
   docker/login \
   image/push
