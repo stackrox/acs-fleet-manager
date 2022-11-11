@@ -57,3 +57,12 @@ logging:
   aws:
     accessKeyId: ""
     secretAccessKey: ""
+
+# See available parameters in charts/probe/values.yaml
+# - enabled flag is used to completely enable/disable logging sub-chart
+probe:
+  enabled: false
+  fleetManagerEndpoint: ""
+  redHatSSO:
+    clientId: ""
+    clientSecret: ""

@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: probe
+  namespace: {{ .Values.namespace | quote }}
+  labels:
+    app: probe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: probe
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: probe
+    spec:
+      containers:
+        - name: probe
+          image: {{ .Values.image | quote }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: FLEET_MANAGER_ENDPOINT
+              value: {{ .Values.fleetManagerEndpoint | quote }}
+            - name: RHSSO_SERVICE_ACCOUNT_CLIENT_ID
+              value: {{ .Values.redHatSSO.clientId | quote  }}
+            - name: RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rhacs-probe-rhsso-client-secret
+                  key: CLIENT_SECRET
+            - name: RHSSO_ENDPOINT
+              value: {{ .Values.redHatSSO.endpoint | quote  }}
+            - name: RHSSO_REALM
+              value: {{ .Values.redHatSSO.realm | quote  }}
+          ports:
+            - name: monitoring
+              containerPort: 7070
