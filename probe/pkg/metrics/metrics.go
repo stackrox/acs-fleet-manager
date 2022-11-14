@@ -22,7 +22,7 @@ var (
 // and provides methods to interact with them.
 type Metrics struct {
 	startedRuns            prometheus.Counter
-	successfulRuns         prometheus.Counter
+	succeededRuns          prometheus.Counter
 	failedRuns             prometheus.Counter
 	lastStartedTimestamp   prometheus.Gauge
 	lastSuccessTimestamp   prometheus.Gauge
@@ -33,7 +33,7 @@ type Metrics struct {
 // Register registers the metrics with the given prometheus.Registerer.
 func (m *Metrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.startedRuns)
-	r.MustRegister(m.successfulRuns)
+	r.MustRegister(m.succeededRuns)
 	r.MustRegister(m.failedRuns)
 	r.MustRegister(m.totalDurationHistogram)
 	r.MustRegister(m.lastStartedTimestamp)
@@ -46,9 +46,9 @@ func (m *Metrics) IncStartedRuns() {
 	m.startedRuns.Inc()
 }
 
-// IncSuccessfulRuns increments the metric counter for successful probe runs.
-func (m *Metrics) IncSuccessfulRuns() {
-	m.successfulRuns.Inc()
+// IncSucceededRuns increments the metric counter for successful probe runs.
+func (m *Metrics) IncSucceededRuns() {
+	m.succeededRuns.Inc()
 }
 
 // IncFailedRuns increments the metric counter for failed probe runs.
@@ -92,10 +92,10 @@ func newMetrics() *Metrics {
 			Name:      "runs_started",
 			Help:      "The number of started probe runs.",
 		}),
-		successfulRuns: prometheus.NewCounter(prometheus.CounterOpts{
+		succeededRuns: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
-			Name:      "runs_success",
+			Name:      "runs_succeeded",
 			Help:      "The number of successful probe runs.",
 		}),
 		failedRuns: prometheus.NewCounter(prometheus.CounterOpts{
@@ -119,7 +119,7 @@ func newMetrics() *Metrics {
 		lastFailureTimestamp: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
-			Name:      "last_failed_timestamp",
+			Name:      "last_failure_timestamp",
 			Help:      "The Unix timestamp of the last failed probe run.",
 		}),
 		totalDurationHistogram: prometheus.NewHistogram(prometheus.HistogramOpts{

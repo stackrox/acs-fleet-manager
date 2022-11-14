@@ -22,9 +22,9 @@ func TestCounterIncrements(t *testing.T) {
 			},
 		},
 		{
-			metricName: "acs_probe_runs_success",
+			metricName: "acs_probe_runs_succeeded",
 			callIncrementFunc: func(m *Metrics) {
-				m.IncSuccessfulRuns()
+				m.IncSucceededRuns()
 			},
 		},
 		{
@@ -71,7 +71,7 @@ func TestTimestampGauges(t *testing.T) {
 			},
 		},
 		{
-			metricName: "acs_probe_last_failed_timestamp",
+			metricName: "acs_probe_last_failure_timestamp",
 			callSetTimestampFunc: func(m *Metrics) {
 				m.SetLastFailureTimestamp()
 			},

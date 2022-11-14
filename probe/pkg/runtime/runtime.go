@@ -72,7 +72,7 @@ func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
 		metrics.MetricsInstance().SetLastFailureTimestamp()
 		return errors.Wrap(err, "probe run failed")
 	}
-	metrics.MetricsInstance().IncSuccessfulRuns()
+	metrics.MetricsInstance().IncSucceededRuns()
 	metrics.MetricsInstance().SetLastSuccessTimestamp()
 	return nil
 }
