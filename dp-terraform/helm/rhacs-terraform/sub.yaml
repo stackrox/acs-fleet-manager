@@ -1,0 +1,13 @@
+# Source: rhacs-terraform/templates/acs-operator.yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: rhacs-operator
+  namespace: rhacs-operator
+spec:
+  channel: latest
+  installPlanApproval: Manual
+  name: rhacs-operator
+  source: rhacs-operator-source
+  sourceNamespace: rhacs-operator 
+  startingCSV: rhacs-operator.v3.72.1

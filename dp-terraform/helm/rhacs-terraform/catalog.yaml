@@ -1,0 +1,10 @@
+# Source: rhacs-terraform/templates/acs-operator.yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: rhacs-operator-source
+spec:
+  displayName: 'RHACS Development'
+  publisher: 'Red Hat ACS'
+  sourceType: grpc
+  image: quay.io/rhacs-eng/stackrox-operator-index:v3.72.1
