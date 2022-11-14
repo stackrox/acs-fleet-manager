@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/internal/cli"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/metrics"
@@ -34,7 +35,7 @@ func main() {
 			}
 		}(metricsServer)
 		go func() {
-			if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			if err := metricsServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				glog.Errorf("failed to serve metrics: %v", err)
 			}
 		}()
