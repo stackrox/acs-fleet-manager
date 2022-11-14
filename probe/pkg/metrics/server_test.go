@@ -47,6 +47,7 @@ func serveMetrics(t *testing.T, customMetrics *Metrics) metricResponse {
 	require.NoError(t, err, "failed creating metrics requests")
 
 	server := newMetricsServer(":8081", customMetrics)
+	defer server.Close()
 	server.Handler.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code, "status code should be OK")
 
