@@ -1,4 +1,4 @@
-// Package metrics ...
+// Package metrics implements Prometheus metrics to instrument probe runs.
 package metrics
 
 import (
