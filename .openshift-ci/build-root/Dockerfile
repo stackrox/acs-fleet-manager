@@ -59,9 +59,11 @@ RUN curl -L --retry 10 --silent --show-error --fail -o /tmp/node-linux-x64.tar.g
     rm /tmp/node-linux-x64.tar.gz
 ENV PATH="/usr/local/lib/nodejs/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
 
-ARG STERN_VERSION="1.11.0"
-RUN curl -L --retry 10 --silent --show-error --fail -o "/usr/local/bin/stern" \
-    "https://github.com/wercker/stern/releases/download/${STERN_VERSION}/stern_linux_amd64" && \
+ARG STERN_VERSION="1.22.0"
+RUN curl -L --retry 10 --silent --show-error --fail -o "/tmp/stern_linux_amd64.tar.gz" \
+    "https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_amd64.tar.gz" && \
+    tar -xf /tmp/stern_linux_amd64.tar.gz stern && \
+    mv stern /usr/local/bin/stern && \
     chmod +x /usr/local/bin/stern
 
 ARG GOTESTSUM_VERSION=1.8.1
