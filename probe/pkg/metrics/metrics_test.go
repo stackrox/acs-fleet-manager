@@ -55,24 +55,24 @@ func TestCounterIncrements(t *testing.T) {
 
 func TestTimestampGauges(t *testing.T) {
 	tt := []struct {
-		metricName       string
+		metricName           string
 		callSetTimestampFunc func(m *Metrics)
 	}{
 		{
 			metricName: "acs_probe_last_started_timestamp",
-			callSetTimestampFunc : func(m *Metrics) {
+			callSetTimestampFunc: func(m *Metrics) {
 				m.SetLastStartedTimestamp()
 			},
 		},
 		{
 			metricName: "acs_probe_last_success_timestamp",
-			callSetTimestampFunc : func(m *Metrics) {
+			callSetTimestampFunc: func(m *Metrics) {
 				m.SetLastSuccessTimestamp()
 			},
 		},
 		{
 			metricName: "acs_probe_last_failed_timestamp",
-			callSetTimestampFunc : func(m *Metrics) {
+			callSetTimestampFunc: func(m *Metrics) {
 				m.SetLastFailureTimestamp()
 			},
 		},
@@ -83,7 +83,7 @@ func TestTimestampGauges(t *testing.T) {
 		t.Run(tc.metricName, func(t *testing.T) {
 			m := newMetrics()
 			lowerBound := time.Now().Unix()
-			tc.callSetTimestampFunc (m)
+			tc.callSetTimestampFunc(m)
 
 			metrics := serveMetrics(t, m)
 			require.Contains(t, metrics, tc.metricName)
@@ -98,7 +98,7 @@ func TestTimestampGauges(t *testing.T) {
 
 func TestHistograms(t *testing.T) {
 	tt := []struct {
-		metricName  string
+		metricName      string
 		callObserveFunc func(m *Metrics)
 	}{
 		{
