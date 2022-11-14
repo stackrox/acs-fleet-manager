@@ -59,6 +59,12 @@ func TestTimestampGauges(t *testing.T) {
 		callSetTimestampFunc func(m *Metrics)
 	}{
 		{
+			metricName: "acs_probe_last_started_timestamp",
+			callSetTimestampFunc : func(m *Metrics) {
+				m.SetLastStartedTimestamp()
+			},
+		},
+		{
 			metricName: "acs_probe_last_success_timestamp",
 			callSetTimestampFunc : func(m *Metrics) {
 				m.SetLastSuccessTimestamp()

@@ -46,6 +46,7 @@ func (r *Runtime) RunLoop(ctx context.Context) error {
 // RunSingle executes a single probe run.
 func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
 	metrics.MetricsInstance().IncStartedRuns()
+	metrics.MetricsInstance().SetLastStartedTimestamp()
 
 	probeRunCtx, cancel := context.WithTimeout(ctx, r.Config.ProbeRunTimeout)
 	defer cancel()

@@ -24,6 +24,7 @@ type Metrics struct {
 	startedRuns            prometheus.Counter
 	successfulRuns         prometheus.Counter
 	failedRuns             prometheus.Counter
+	lastStartedTimestamp   prometheus.Gauge
 	lastSuccessTimestamp   prometheus.Gauge
 	lastFailureTimestamp   prometheus.Gauge
 	totalDurationHistogram prometheus.Histogram
@@ -35,8 +36,9 @@ func (m *Metrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.successfulRuns)
 	r.MustRegister(m.failedRuns)
 	r.MustRegister(m.totalDurationHistogram)
-	r.MustRegister(m.lastFailureTimestamp)
+	r.MustRegister(m.lastStartedTimestamp)
 	r.MustRegister(m.lastSuccessTimestamp)
+	r.MustRegister(m.lastFailureTimestamp)
 }
 
 // IncStartedRuns increments the metric counter for started probe runs.
@@ -52,6 +54,11 @@ func (m *Metrics) IncSuccessfulRuns() {
 // IncFailedRuns increments the metric counter for failed probe runs.
 func (m *Metrics) IncFailedRuns() {
 	m.failedRuns.Inc()
+}
+
+// SetLastStartedTimestamp sets timestamp for the last started probe run.
+func (m *Metrics) SetLastStartedTimestamp() {
+	m.lastStartedTimestamp.SetToCurrentTime()
 }
 
 // SetLastSuccessTimestamp sets timestamp for the last successful probe run.
@@ -96,6 +103,12 @@ func newMetrics() *Metrics {
 			Subsystem: prometheusSubsystem,
 			Name:      "runs_failed",
 			Help:      "The number of failed probe runs.",
+		}),
+		lastStartedTimestamp: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: prometheusNamespace,
+			Subsystem: prometheusSubsystem,
+			Name:      "last_started_timestamp",
+			Help:      "The Unix timestamp of the last started probe run.",
 		}),
 		lastSuccessTimestamp: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: prometheusNamespace,
