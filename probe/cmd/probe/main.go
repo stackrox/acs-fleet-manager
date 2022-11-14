@@ -27,13 +27,18 @@ func main() {
 		glog.Fatal(err)
 	}
 
-	metricsServer, close := metrics.NewMetricsServer(config.MetricsAddress)
-	defer close()
-	go func() {
-		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			glog.Errorf("failed to serve metrics: %v", err)
-		}
-	}()
+	if metricsServer := metrics.NewMetricsServer(config.MetricsAddress); metricsServer != nil {
+		defer func(server *http.Server) {
+			if err := server.Close(); err != nil {
+				glog.Errorf("failed to close metrics server: %v", err)
+			}
+		}(metricsServer)
+		go func() {
+			if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				glog.Errorf("failed to serve metrics: %v", err)
+			}
+		}()
+	}
 
 	c, err := cli.New(config)
 	if err != nil {

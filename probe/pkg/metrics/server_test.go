@@ -14,8 +14,8 @@ import (
 type metricResponse map[string]*io_prometheus_client.MetricFamily
 
 func TestMetricsServerCorrectAddress(t *testing.T) {
-	server, close := NewMetricsServer(":8081")
-	defer close()
+	server := NewMetricsServer(":8081")
+	defer server.Close()
 	assert.Equal(t, ":8081", server.Addr)
 }
 

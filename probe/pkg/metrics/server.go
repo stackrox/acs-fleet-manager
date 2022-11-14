@@ -3,20 +3,13 @@ package metrics
 import (
 	"net/http"
 
-	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // NewMetricsServer returns the metrics server.
-func NewMetricsServer(address string) (*http.Server, func()) {
-	metricsServer := newMetricsServer(address, MetricsInstance())
-	closeFunc := func() {
-		if err := metricsServer.Close(); err != nil {
-			glog.Errorf("failed to close metrics server: %v", err)
-		}
-	}
-	return metricsServer, closeFunc
+func NewMetricsServer(address string) *http.Server {
+	return newMetricsServer(address, MetricsInstance())
 }
 
 func newMetricsServer(address string, customMetrics *Metrics) *http.Server {
