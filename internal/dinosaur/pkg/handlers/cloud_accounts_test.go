@@ -109,11 +109,11 @@ func TestGetCannotGetOrganizationID(t *testing.T) {
 	handler := NewCloudAccountsHandler(&c)
 
 	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	account, err := authHelper.NewAccount("username", "test-user", "", "org-id-0")
 	assert.NoError(t, err)
 	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	authenticatedCtx := auth.SetTokenInContext(context.TODO(), jwt)
 	r := &http.Request{}
 	r = r.WithContext(authenticatedCtx)

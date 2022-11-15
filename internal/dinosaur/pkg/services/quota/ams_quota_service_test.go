@@ -588,7 +588,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "cloud account id in request does not match cloud_accounts response",
+			name: "cloud account id in request does not match ids in cloud_accounts response",
 			args: args{
 				"12231",
 				"testUser",
