@@ -5,7 +5,10 @@ import (
 	"flag"
 
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/internal/cli"
+	"github.com/stackrox/acs-fleet-manager/probe/pkg/metrics"
 )
 
 func main() {
@@ -16,10 +19,22 @@ func main() {
 
 	// Always log to stderr by default, required for glog.
 	if err := flag.Set("logtostderr", "true"); err != nil {
-		glog.Info("Unable to set logtostderr to true.")
+		glog.Info("unable to set logtostderr to true.")
 	}
 
-	c, err := cli.New()
+	config, err := config.GetConfig()
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	if metricsServer := metrics.NewMetricsServer(config.MetricsAddress); metricsServer != nil {
+		defer metrics.CloseMetricsServer(metricsServer)
+		go metrics.ListenAndServe(metricsServer)
+	} else {
+		glog.Fatal(errors.New("unable to start metrics server"))
+	}
+
+	c, err := cli.New(config)
 	if err != nil {
 		glog.Fatal(err)
 	}

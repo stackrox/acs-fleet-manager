@@ -15,6 +15,7 @@ type Config struct {
 	DataCloudProvider       string        `env:"DATA_PLANE_CLOUD_PROVIDER" envDefault:"aws"`
 	DataPlaneRegion         string        `env:"DATA_PLANE_REGION" envDefault:"us-east-1"`
 	FleetManagerEndpoint    string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
+	MetricsAddress          string        `env:"METRICS_ADDRESS" envDefault:":7070"`
 	RHSSOClientID           string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
 	RHSSOClientSecret       string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
 	RHSSOEndpoint           string        `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
