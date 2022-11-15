@@ -89,19 +89,19 @@ func newMetrics() *Metrics {
 		startedRuns: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
-			Name:      "runs_started",
+			Name:      "runs_started_total",
 			Help:      "The number of started probe runs.",
 		}),
 		succeededRuns: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
-			Name:      "runs_succeeded",
+			Name:      "runs_succeeded_total",
 			Help:      "The number of successful probe runs.",
 		}),
 		failedRuns: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
-			Name:      "runs_failed",
+			Name:      "runs_failed_total",
 			Help:      "The number of failed probe runs.",
 		}),
 		lastStartedTimestamp: prometheus.NewGauge(prometheus.GaugeOpts{

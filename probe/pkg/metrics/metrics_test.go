@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,19 +18,19 @@ func TestCounterIncrements(t *testing.T) {
 		callIncrementFunc func(m *Metrics)
 	}{
 		{
-			metricName: "acs_probe_runs_started",
+			metricName: "acs_probe_runs_started_total",
 			callIncrementFunc: func(m *Metrics) {
 				m.IncStartedRuns()
 			},
 		},
 		{
-			metricName: "acs_probe_runs_succeeded",
+			metricName: "acs_probe_runs_succeeded_total",
 			callIncrementFunc: func(m *Metrics) {
 				m.IncSucceededRuns()
 			},
 		},
 		{
-			metricName: "acs_probe_runs_failed",
+			metricName: "acs_probe_runs_failed_total",
 			callIncrementFunc: func(m *Metrics) {
 				m.IncFailedRuns()
 			},
@@ -128,5 +130,18 @@ func TestHistograms(t *testing.T) {
 			assert.Equalf(t, expectedCount, count, "expected metric: %s to have a count of %v", tc.metricName, expectedCount)
 			assert.Equalf(t, expectedSum, sum, "expected metric: %s to have a sum of %v", tc.metricName, expectedSum)
 		})
+	}
+}
+
+func TestMetricsConformity(t *testing.T) {
+	metrics := newMetrics()
+
+	for _, metric := range []prometheus.Collector{
+		metrics.startedRuns, metrics.succeededRuns, metrics.failedRuns, metrics.lastStartedTimestamp,
+		metrics.lastSuccessTimestamp, metrics.lastFailureTimestamp, metrics.totalDurationHistogram,
+	} {
+		problems, err := testutil.CollectAndLint(metric)
+		assert.NoError(t, err)
+		assert.Empty(t, problems)
 	}
 }

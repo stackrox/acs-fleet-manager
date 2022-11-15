@@ -28,9 +28,9 @@ func TestMetricsServerServesCustomMetrics(t *testing.T) {
 	metrics := serveMetrics(t, newMetrics())
 
 	expectedKeys := []string{
-		"acs_probe_runs_started",
-		"acs_probe_runs_succeeded",
-		"acs_probe_runs_failed",
+		"acs_probe_runs_started_total",
+		"acs_probe_runs_succeeded_total",
+		"acs_probe_runs_failed_total",
 		"acs_probe_last_started_timestamp",
 		"acs_probe_last_success_timestamp",
 		"acs_probe_last_failure_timestamp",
