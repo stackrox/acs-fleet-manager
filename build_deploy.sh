@@ -25,6 +25,12 @@
 # QUAY_TOKEN - The token of the robot account used to push images to
 # 'quay.io'.
 #
+# PROBE_QUAY_USER - The name of the robot account used to push images to
+# 'quay.io', for example 'openshift-unified-hybrid-cloud+jenkins'.
+#
+# PROBE_QUAY_TOKEN - The token of the robot account used to push images to
+# 'quay.io'.
+#
 # The machines that run this script need to have access to internet, so that
 # the built images can be pushed to quay.io.
 
@@ -80,13 +86,17 @@ make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
   QUAY_TOKEN="${QUAY_TOKEN}" \
+  QUAY_PROBE_USER="${QUAY_PROBE_USER}" \
+  QUAY_PROBE_TOKEN="${QUAY_PROBE_TOKEN}" \
   TAG="${VERSION}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
   image_repository="${IMAGE_REPOSITORY}" \
   probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
-  docker/login \
-  image/push
+  docker/login/fleet-manager \
+  image/push/fleet-manager \
+  docker/login/probe \
+  image/push/probe
 
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
@@ -99,5 +109,7 @@ make \
   internal_image_registry="quay.io" \
   image_repository="${IMAGE_REPOSITORY}" \
   probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
-  docker/login \
-  image/push
+  docker/login/fleet-manager \
+  image/push/fleet-manager \
+  docker/login/probe \
+  image/push/probe

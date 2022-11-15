@@ -480,10 +480,18 @@ db/generate/insert/cluster:
 .PHONY: db/generate/insert/cluster
 
 # Login to docker
-docker/login:
-	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
-	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_PROBE_USER}" --password-stdin <<< "${QUAY_PROBE_TOKEN}" quay.io
+docker/login: docker/login/fleet-manager
 .PHONY: docker/login
+
+docker/login/fleet-manager:
+	@docker logout quay.io
+	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
+.PHONY: docker/login/fleet-manager
+
+docker/login/probe:
+	@docker logout quay.io
+	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_PROBE_USER}" --password-stdin <<< "${QUAY_PROBE_TOKEN}" quay.io
+.PHONY: docker/login/probe
 
 # Login to the OpenShift internal registry
 docker/login/internal:
@@ -514,7 +522,7 @@ image/build/multi-target/fleet-manager:
 image/build/multi-target/probe: GOOS=linux
 image/build/multi-target/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
 image/build/multi-target/probe:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build --target $(IMAGE_TARGET) -t $(IMAGE_REF) .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build --target $(IMAGE_TARGET) -t $(IMAGE_REF) -f probe/Dockerfile .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(PROBE_SHORT_IMAGE_REF)
 .PHONY: image/build/multi-target/probe
 
@@ -543,7 +551,7 @@ image/push/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository
 image/push/probe: image/build/multi-target/probe
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
 	@echo
-	@echo "Image was pushed as $(IMAGE_REF).
+	@echo "Image was pushed as $(IMAGE_REF)."
 .PHONY: image/push/probe
 
 # push the image to the OpenShift internal registry
