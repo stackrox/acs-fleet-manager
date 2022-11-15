@@ -21,7 +21,7 @@ ENV GOFLAGS=${GOFLAGS}
 
 RUN mkdir /src
 WORKDIR /src
-RUN CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@latest
+RUN CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@v1.9.1
 COPY go.*  ./
 RUN go mod download
 COPY . ./
@@ -32,14 +32,14 @@ RUN GOARGS="-gcflags 'all=-N -l'" make probe
 FROM build as build-standard
 RUN make probe
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.6 as debug
+FROM registry.access.redhat.com/ubi8/ubi-micro:8.7 as debug
 COPY --from=build-debug /go/bin/dlv /src/probe/bin /stackrox/
 COPY --from=build-debug /src /src
 EXPOSE 7070
 ENTRYPOINT [ "/stackrox/dlv" , "--listen=:40000", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/stackrox/probe"]
 CMD ["start"]
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.6 as standard
+FROM registry.access.redhat.com/ubi8/ubi-micro:8.7 as standard
 COPY --from=build-standard /src/probe/bin /stackrox/
 EXPOSE 7070
 ENTRYPOINT ["/stackrox/probe"]
