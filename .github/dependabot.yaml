@@ -17,3 +17,7 @@ updates:
     directory: "/docker"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/probe"
+    schedule:
+      interval: "weekly"
