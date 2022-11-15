@@ -14,12 +14,14 @@ func NewMetricsServer(address string) *http.Server {
 	return newMetricsServer(address, MetricsInstance())
 }
 
+// ListenAndServe listens for incoming requests and serves the metrics.
 func ListenAndServe(server *http.Server) {
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		glog.Errorf("failed to serve metrics: %v", err)
 	}
 }
 
+// CloseMetricsServer closes the metrics server.
 func CloseMetricsServer(server *http.Server) {
 	if err := server.Close(); err != nil {
 		glog.Errorf("failed to close metrics server: %v", err)

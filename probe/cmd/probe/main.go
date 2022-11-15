@@ -3,7 +3,6 @@ package main
 
 import (
 	"flag"
-	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
