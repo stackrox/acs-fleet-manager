@@ -117,7 +117,7 @@ $(GINKGO_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/onsi/ginkgo/v2/ginkgo
 
 OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
-NPM ?= "$(shell which npm)"
+NPM ?= "$(shell which npm 2> /dev/null)"
 openapi-generator:
 ifeq (, $(shell which ${NPM} 2> /dev/null))
 	@echo "npm is not available please install it to be able to install openapi-generator"
@@ -135,7 +135,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/openapi-generator 2> /dev/null))
 endif
 
 SPECTRAL ?= ${LOCAL_BIN_PATH}/spectral
-NPM ?= "$(shell which npm)"
+NPM ?= "$(shell which npm 2> /dev/null)"
 specinstall:
 ifeq (, $(shell which ${NPM} 2> /dev/null))
 	@echo "npm is not available please install it to be able to install spectral"
@@ -342,7 +342,6 @@ test/cluster/cleanup:
 .PHONY: test/cluster/cleanup
 
 test/e2e: $(GINKGO_BIN)
-	GOBIN=${LOCAL_BIN_PATH} \
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	RUN_E2E=true \
 	ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=$(ENABLE_CENTRAL_EXTERNAL_CERTIFICATE) \
@@ -356,6 +355,12 @@ test/e2e: $(GINKGO_BIN)
 		--slow-spec-threshold=5m \
 		 ./e2e/...
 .PHONY: test/e2e
+
+# Deploys the necessary applications to the selected cluster and runs e2e tests inside the container
+# Useful for debugging Openshift CI runs locally
+test/deploy/e2e-dockerized:
+	./.openshift-ci/e2e-runtime/e2e_dockerized.sh
+.PHONY: test/deploy/e2e-dockerized
 
 test/e2e/reset:
 	@./dev/env/scripts/reset
