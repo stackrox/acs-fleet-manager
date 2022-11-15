@@ -5,6 +5,7 @@ import (
 	"flag"
 
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/internal/cli"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/metrics"
@@ -29,6 +30,8 @@ func main() {
 	if metricsServer := metrics.NewMetricsServer(config.MetricsAddress); metricsServer != nil {
 		defer metrics.CloseMetricsServer(metricsServer)
 		go metrics.ListenAndServe(metricsServer)
+	} else {
+		glog.Fatal(errors.New("unable to start metrics server"))
 	}
 
 	c, err := cli.New(config)

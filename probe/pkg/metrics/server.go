@@ -3,10 +3,10 @@ package metrics
 import (
 	"net/http"
 
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/stackrox/rox/pkg/utils"
 )
 
 // NewMetricsServer returns the metrics server.
@@ -17,14 +17,14 @@ func NewMetricsServer(address string) *http.Server {
 // ListenAndServe listens for incoming requests and serves the metrics.
 func ListenAndServe(server *http.Server) {
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		glog.Errorf("failed to serve metrics: %v", err)
+		utils.Should(errors.Wrap(err, "failed to serve metrics"))
 	}
 }
 
 // CloseMetricsServer closes the metrics server.
 func CloseMetricsServer(server *http.Server) {
 	if err := server.Close(); err != nil {
-		glog.Errorf("failed to close metrics server: %v", err)
+		utils.Should(errors.Wrap(err, "failed to close metrics server"))
 	}
 }
 
