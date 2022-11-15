@@ -133,14 +133,8 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 	rr.BillingModel(amsv1.BillingModel(bm))
 	glog.Infof("Billing model of Central request %s with quota type %s has been set to %s.", dinosaur.ID, instanceType.GetQuotaType(), bm)
 
-	if err := q.verifyCloudAccountInAMS(dinosaur, orgID); err != nil {
-		return "", err
-	}
-
-	cb, err := amsv1.NewClusterAuthorizationRequest().
+	requestBuilder := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(dinosaur.Owner).
-		CloudProviderID(dinosaur.CloudProvider).
-		CloudAccountID(dinosaur.CloudAccountID).
 		ProductID(instanceType.GetQuotaType().GetProduct()).
 		Managed(true).
 		ClusterID(dinosaurID).
@@ -149,8 +143,17 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 		BYOC(false).
 		AvailabilityZone("multi").
 		Reserve(true).
-		Resources(&rr).
-		Build()
+		Resources(&rr)
+
+	if bm != string(amsv1.BillingModelStandard) {
+		if err := q.verifyCloudAccountInAMS(dinosaur, orgID); err != nil {
+			return "", err
+		}
+		requestBuilder = requestBuilder.
+			CloudProviderID(dinosaur.CloudProvider).
+			CloudAccountID(dinosaur.CloudAccountID)
+	}
+	cb, err := requestBuilder.Build()
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
 	}
@@ -173,10 +176,10 @@ func (q amsQuotaService) verifyCloudAccountInAMS(dinosaur *dbapi.CentralRequest,
 		return errors.NewWithCause(svcErr.Code, svcErr, "Error getting cloud accounts")
 	}
 
-	if dinosaur.CloudAccountID == "" && len(cloudAccounts) != 0 {
-		return errors.CloudAccountIDNotSetupProperly("Request cloud account is not setup even though organization has cloud accounts")
-	}
-	if dinosaur.CloudAccountID == "" && len(cloudAccounts) == 0 {
+	if dinosaur.CloudAccountID == "" {
+		if len(cloudAccounts) != 0 {
+			return errors.InvalidCloudAccountID("Missing cloud account id in creation request")
+		}
 		return nil
 	}
 	for _, ca := range cloudAccounts {
@@ -184,7 +187,7 @@ func (q amsQuotaService) verifyCloudAccountInAMS(dinosaur *dbapi.CentralRequest,
 			return nil
 		}
 	}
-	return errors.CloudAccountIDNotSetupProperly("Request cloud account does not match organization cloud accounts", dinosaur.CloudAccountID)
+	return errors.InvalidCloudAccountID("Request cloud account does not match organization cloud accounts", dinosaur.CloudAccountID)
 }
 
 // DeleteQuota ...
