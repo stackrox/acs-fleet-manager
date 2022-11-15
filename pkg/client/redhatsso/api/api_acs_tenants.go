@@ -28,10 +28,10 @@ var (
 type AcsTenantsApiService service
 
 /*
-CreateAcsClient Create ACS Tenant Client
-Create an ACS Tenant Client. Created ACS Tenant Clients are associated with the account passed along with this request.
+CreateAcsClient Create ACS managed central client
+Create an ACS managed central client. Created ACS managed central clients are associated with the supplied organization id.
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param acsClientRequestData 'name', 'redirect_uris', and 'account_id' belonging to the ACS Tenant
+ * @param acsClientRequestData The name, redirect URIs and the organization id of the ACS managed central client
 @return AcsClientResponseData
 */
 func (a *AcsTenantsApiService) CreateAcsClient(ctx _context.Context, acsClientRequestData AcsClientRequestData) (AcsClientResponseData, *_nethttp.Response, error) {
@@ -145,12 +145,12 @@ func (a *AcsTenantsApiService) CreateAcsClient(ctx _context.Context, acsClientRe
 }
 
 /*
-DeleteAcsClient Delete ACS Tenant Client
-Delete ACS Tenant Client by id. Throws not found exception if the client is not found
+DeleteAcsClient Delete ACS managed central client
+Delete ACS managed central client by clientId. Throws not found exception if the client is not found
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id
+ * @param clientId
 */
-func (a *AcsTenantsApiService) DeleteAcsClient(ctx _context.Context, id string) (*_nethttp.Response, error) {
+func (a *AcsTenantsApiService) DeleteAcsClient(ctx _context.Context, clientId string) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
@@ -160,8 +160,8 @@ func (a *AcsTenantsApiService) DeleteAcsClient(ctx _context.Context, id string) 
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/apis/beta/acs/v1/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/apis/beta/acs/v1/{clientId}"
+	localVarPath = strings.Replace(localVarPath, "{"+"clientId"+"}", _neturl.QueryEscape(parameterToString(clientId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}

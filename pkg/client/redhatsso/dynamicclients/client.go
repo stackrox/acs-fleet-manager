@@ -9,7 +9,7 @@ import (
 
 // NewDynamicClientsAPI returns new instance of dynamic clients sso.redhat.com API client.
 func NewDynamicClientsAPI(realmConfig *iam.IAMRealmConfig) *api.AcsTenantsApiService {
-	httpClient := redhatsso.NewSSOAuthHTTPClient(realmConfig, "api.iam.acs")
+	httpClient := redhatsso.NewSSOAuthHTTPClient(realmConfig)
 	configuration := &api.Configuration{
 		BasePath:  realmConfig.BaseURL + realmConfig.APIEndpointURI,
 		UserAgent: "RHACS-Fleet-Manager/1.0",

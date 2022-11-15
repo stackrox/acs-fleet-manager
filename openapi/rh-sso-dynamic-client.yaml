@@ -19,18 +19,20 @@ security:
 tags:
   - name: acs_tenants
     description: Relevant component to the sso.r.c API for managed ACS
+  - name: service_accounts
+    description: Relevant component to the sso.r.c service account API
 paths:
   /apis/beta/acs/v1:
     post:
       tags:
         - acs_tenants
-      summary: Create ACS Tenant Client
-      description: Create an ACS Tenant Client. Created ACS Tenant Clients are associated
-        with the account passed along with this request.
+      summary: Create ACS managed central client
+      description: Create an ACS managed central client. Created ACS managed central
+        clients are associated with the supplied organization id.
       operationId: createAcsClient
       requestBody:
-        description: "'name', 'redirect_uris', and 'account_id' belonging to the ACS\
-          \ Tenant"
+        description: "The name, redirect URIs and the organization id of the ACS managed\
+          \ central client"
         content:
           application/json:
             schema:
@@ -51,18 +53,20 @@ paths:
                 $ref: '#/components/schemas/ValidationExceptionData'
               examples:
                 Bad Request Example:
+                  description: Bad Request Example
                   $ref: '#/components/examples/400FieldValidationError'
         "401":
           $ref: '#/components/responses/401'
         "403":
-          description: Exceeded account level threshold limits for creating ACS Tenant
-            Clients.
+          description: Exceeded maximum number of ACS managed central clients per
+            tenant.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RedHatErrorRepresentation'
               examples:
                 acs tenant threshold exceeded:
+                  description: acs tenant threshold exceeded
                   $ref: '#/components/examples/403AcsTenantThresholdExceeded'
         "405":
           description: "Not allowed, API Currently Disabled"
@@ -72,20 +76,21 @@ paths:
                 $ref: '#/components/schemas/RedHatErrorRepresentation'
               examples:
                 acs api disabled:
+                  description: acs api disabled
                   $ref: '#/components/examples/405AcsApiDisabled'
       security:
         - serviceAccounts:
             - api.iam.acs
-  /apis/beta/acs/v1/{id}:
+  /apis/beta/acs/v1/{clientId}:
     delete:
       tags:
         - acs_tenants
-      summary: Delete ACS Tenant Client
-      description: Delete ACS Tenant Client by id. Throws not found exception if the
-        client is not found
+      summary: Delete ACS managed central client
+      description: Delete ACS managed central client by clientId. Throws not found
+        exception if the client is not found
       operationId: deleteAcsClient
       parameters:
-        - name: id
+        - name: clientId
           in: path
           required: true
           schema:
@@ -105,6 +110,7 @@ paths:
                 $ref: '#/components/schemas/RedHatErrorRepresentation'
               examples:
                 client not found:
+                  description: client not found
                   $ref: '#/components/examples/404AcsTenantNotFound'
         "405":
           description: "Not allowed, API Currently Disabled"
@@ -114,6 +120,7 @@ paths:
                 $ref: '#/components/schemas/RedHatErrorRepresentation'
               examples:
                 acs api disabled:
+                  description: acs api disabled
                   $ref: '#/components/examples/405AcsApiDisabled'
       security:
         - serviceAccounts:
@@ -137,6 +144,9 @@ components:
           type: string
         name:
           type: string
+        createdAt:
+          type: integer
+          format: int64
     ValidationExceptionData:
       type: object
       properties:
@@ -165,6 +175,7 @@ components:
             - acs_invalid_redirect_uri
             - acs_invalid_client
             - acs_disabled
+            - general_failure
         error_description:
           type: string
     AcsClientRequestData:
@@ -183,6 +194,7 @@ components:
           items:
             type: string
         orgId:
+          pattern: "\\d{1,10}"
           type: string
   responses:
     "401":
