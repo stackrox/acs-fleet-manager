@@ -129,7 +129,7 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 			}
 		}
 	default:
-		glog.V(7).Infof("invalid client origin %s found for central %s. No deletion will be attempted",
+		glog.V(1).Infof("invalid client origin %s found for central %s. No deletion will be attempted",
 			dinosaur.ClientOrigin, dinosaur.ID)
 	}
 
