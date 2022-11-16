@@ -10,6 +10,7 @@ import (
 
 func TestGetConfig_Success(t *testing.T) {
 	t.Setenv("FLEET_MANAGER_ENDPOINT", "http://127.0.0.1:8888")
+	t.Setenv("AUTH_TYPE", "RHSSO")
 	t.Setenv("RHSSO_SERVICE_ACCOUNT_CLIENT_ID", "dummy")
 	t.Setenv("RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET", "dummy")
 
@@ -21,6 +22,7 @@ func TestGetConfig_Success(t *testing.T) {
 }
 
 func TestGetConfig_Failure(t *testing.T) {
+	t.Setenv("AUTH_TYPE", "RHSSO")
 	t.Setenv("RHSSO_SERVICE_ACCOUNT_CLIENT_ID", "")
 	t.Setenv("RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET", "")
 

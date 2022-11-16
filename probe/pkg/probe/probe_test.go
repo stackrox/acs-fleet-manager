@@ -27,6 +27,7 @@ var testConfig = &config.Config{
 	ProbeRunWaitPeriod:  10 * time.Millisecond,
 	ProbeName:           "probe",
 	RHSSOClientID:       "client",
+	ProbeUsername:       "service-account-client",
 }
 
 func makeHTTPResponse(statusCode int) *http.Response {

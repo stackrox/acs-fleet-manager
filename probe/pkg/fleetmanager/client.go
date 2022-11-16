@@ -9,11 +9,16 @@ import (
 
 // New creates a new fleet manager client.
 func New(config *config.Config) (fleetmanager.PublicClient, error) {
-	auth, err := fleetmanager.NewRHSSOAuth(fleetmanager.RHSSOOption{
-		ClientID:     config.RHSSOClientID,
-		ClientSecret: config.RHSSOClientSecret, // pragma: allowlist secret
-		Realm:        config.RHSSORealm,
-		Endpoint:     config.RHSSOEndpoint,
+	auth, err := fleetmanager.NewAuth(config.AuthType, fleetmanager.Option{
+		Sso: fleetmanager.RHSSOOption{
+			ClientID:     config.RHSSOClientID,
+			ClientSecret: config.RHSSOClientSecret, //pragma: allowlist secret
+			Realm:        config.RHSSORealm,
+			Endpoint:     config.RHSSOEndpoint,
+		},
+		Ocm: fleetmanager.OCMOption{
+			RefreshToken: config.OCMRefreshToken,
+		},
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager authentication")

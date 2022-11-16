@@ -96,11 +96,10 @@ func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
 		return err
 	}
 
-	serviceAccountName := fmt.Sprintf("service-account-%s", p.config.RHSSOClientID)
 	success := true
 	for _, central := range centralList.Items {
 		central := central
-		if central.Owner != serviceAccountName || !strings.HasPrefix(central.Name, p.config.ProbeName) {
+		if central.Owner != p.config.ProbeUsername || !strings.HasPrefix(central.Name, p.config.ProbeName) {
 			continue
 		}
 		if err := p.deleteCentral(ctx, &central); err != nil {

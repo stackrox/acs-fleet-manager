@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -89,7 +90,7 @@ func (cli *CLI) handleInterrupt(runFunc func(context.Context) error) error {
 	defer cancel()
 
 	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-sigs
 		glog.Error("received SIGINT signal, shutting down ...")
