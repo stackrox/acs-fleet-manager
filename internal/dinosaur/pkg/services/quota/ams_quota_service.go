@@ -182,8 +182,8 @@ func (q amsQuotaService) verifyCloudAccountInAMS(dinosaur *dbapi.CentralRequest,
 		}
 		return nil
 	}
-	for _, ca := range cloudAccounts {
-		if ca.CloudAccountID() == dinosaur.CloudAccountID && ca.CloudProviderID() == dinosaur.CloudProvider {
+	for _, cloudAccount := range cloudAccounts {
+		if cloudAccount.CloudAccountID() == dinosaur.CloudAccountID && cloudAccount.CloudProviderID() == dinosaur.CloudProvider {
 			return nil
 		}
 	}

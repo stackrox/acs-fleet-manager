@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 
 	"github.com/google/uuid"
