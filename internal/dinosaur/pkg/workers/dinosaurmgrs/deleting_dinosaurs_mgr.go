@@ -129,8 +129,8 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 			}
 		}
 	default:
-		return errors.Errorf("invalid client origin %q found for client %s",
-			dinosaur.ClientOrigin, dinosaur.ClusterID)
+		glog.V(1).Infof("invalid client origin %s found for central %s. No deletion will be attempted",
+			dinosaur.ClientOrigin, dinosaur.ID)
 	}
 
 	if err := k.dinosaurService.Delete(dinosaur, false); err != nil {
