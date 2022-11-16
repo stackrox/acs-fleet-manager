@@ -19,8 +19,6 @@ security:
 tags:
   - name: acs_tenants
     description: Relevant component to the sso.r.c API for managed ACS
-  - name: service_accounts
-    description: Relevant component to the sso.r.c service account API
 paths:
   /apis/beta/acs/v1:
     post:
