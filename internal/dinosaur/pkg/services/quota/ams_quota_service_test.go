@@ -50,8 +50,8 @@ func Test_AMSCheckQuota(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
-						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
-						return ca, nil
+						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+						return cloudAuthorizationResp, nil
 					},
 					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
@@ -86,11 +86,11 @@ func Test_AMSCheckQuota(t *testing.T) {
 				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						if cb.ProductID() == string(ocm.RHACSProduct) {
-							ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
-							return ca, nil
+							cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+							return cloudAuthorizationResp, nil
 						}
-						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
-						return ca, nil
+						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
+						return cloudAuthorizationResp, nil
 					},
 					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
@@ -124,8 +124,8 @@ func Test_AMSCheckQuota(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
-						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
-						return ca, nil
+						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
+						return cloudAuthorizationResp, nil
 					},
 					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
@@ -440,8 +440,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
-						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
-						return ca, nil
+						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
+						return cloudAuthorizationResp, nil
 					},
 					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
@@ -627,8 +627,8 @@ func mockClusterAuthorizationResponse() *v1.ClusterAuthorizationResponse {
 	sub := v1.SubscriptionBuilder{}
 	sub.ID("1234")
 	sub.Status("Active")
-	ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
-	return ca
+	cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+	return cloudAuthorizationResp
 }
 
 func Test_Delete_Quota(t *testing.T) {
