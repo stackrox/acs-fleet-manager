@@ -1,6 +1,10 @@
 image: "quay.io/rhacs-eng/blackbox-monitoring-probe-service:main"
 namespace: "rhacs-probe"
 fleetManagerEndpoint: ""
+authType: ""
+ocm:
+  username: ""
+  token: ""
 redHatSSO:
   clientId: ""
   clientSecret: ""
