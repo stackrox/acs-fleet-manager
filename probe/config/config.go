@@ -20,7 +20,7 @@ type Config struct {
 	RHSSOClientSecret       string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
 	RHSSOEndpoint           string        `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
 	RHSSORealm              string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
-	ProbeName               string        `env:"PROBE_NAME" envDefault:"probe"`
+	ProbeName               string        `env:"PROBE_NAME" envDefault:"${HOSTNAME}" envExpand:"true"`
 	ProbeCleanUpTimeout     time.Duration `env:"PROBE_CLEANUP_TIMEOUT" envDefault:"15m"`
 	ProbeHTTPRequestTimeout time.Duration `env:"PROBE_HTTP_REQUEST_TIMEOUT" envDefault:"5s"`
 	ProbePollPeriod         time.Duration `env:"PROBE_POLL_PERIOD" envDefault:"5s"`
@@ -30,7 +30,8 @@ type Config struct {
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.
 func GetConfig() (*Config, error) {
-	var c Config
+	// Default value if PROBE_NAME and HOSTNAME are not set.
+	c := Config{ProbeName: "probe"}
 
 	if err := env.Parse(&c); err != nil {
 		return nil, errors.Wrap(err, "unable to parse runtime configuration from environment")

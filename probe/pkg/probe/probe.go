@@ -54,7 +54,7 @@ func recordElapsedTime(start time.Time) {
 }
 
 func (p *ProbeImpl) newCentralName() (string, error) {
-	rnd := make([]byte, 8)
+	rnd := make([]byte, 2)
 	if _, err := rand.Read(rnd); err != nil {
 		return "", errors.Wrapf(err, "reading random bytes for unique central name")
 	}
