@@ -248,7 +248,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			wantErr:          false,
 		},
 		{
-			name: "when both standard and marketplace billing models are available standard is assigned as billing model",
+			name: "when both standard and marketplace billing models are available marketplace is assigned as billing model",
 			args: args{
 				"12231",
 				"testUser",
@@ -276,7 +276,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 					},
 				},
 			},
-			wantBillingModel: string(v1.BillingModelStandard),
+			wantBillingModel: string(v1.BillingModelMarketplace),
 			want:             "1234",
 			wantErr:          false,
 		},

@@ -89,7 +89,7 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 // instanceType. Only QuotaCosts that have available quota, or that contain a
 // RelatedResource with "cost" 0 are considered. Only
 // "standard" and "marketplace" billing models are considered. If both are
-// detected "standard" is returned.
+// detected "marketplace" is returned.
 func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(orgID string, instanceType types.DinosaurInstanceType) (string, error) {
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgID, instanceType.GetQuotaType().GetResourceName(), instanceType.GetQuotaType().GetProduct())
 	if err != nil {
@@ -100,9 +100,9 @@ func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(orgID 
 	for _, qc := range quotaCosts {
 		for _, rr := range qc.RelatedResources() {
 			if qc.Consumed() < qc.Allowed() || rr.Cost() == 0 {
-				if rr.BillingModel() == string(amsv1.BillingModelStandard) {
+				if rr.BillingModel() == string(amsv1.BillingModelMarketplace) {
 					return rr.BillingModel(), nil
-				} else if rr.BillingModel() == string(amsv1.BillingModelMarketplace) {
+				} else if rr.BillingModel() == string(amsv1.BillingModelStandard) {
 					billingModel = rr.BillingModel()
 				}
 			}
