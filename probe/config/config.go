@@ -25,7 +25,7 @@ type Config struct {
 	OCMUsername             string        `env:"OCM_USERNAME"`
 	OCMRefreshToken         string        `env:"OCM_TOKEN"`
 	ProbeName               string        `env:"PROBE_NAME" envDefault:"${HOSTNAME}" envExpand:"true"`
-	ProbeCleanUpTimeout     time.Duration `env:"PROBE_CLEANUP_TIMEOUT" envDefault:"15m"`
+	ProbeCleanUpTimeout     time.Duration `env:"PROBE_CLEANUP_TIMEOUT" envDefault:"5m"`
 	ProbeHTTPRequestTimeout time.Duration `env:"PROBE_HTTP_REQUEST_TIMEOUT" envDefault:"5s"`
 	ProbePollPeriod         time.Duration `env:"PROBE_POLL_PERIOD" envDefault:"5s"`
 	ProbeRunTimeout         time.Duration `env:"PROBE_RUN_TIMEOUT" envDefault:"15m"`

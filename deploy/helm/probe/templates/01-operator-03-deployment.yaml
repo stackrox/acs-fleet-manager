@@ -50,3 +50,4 @@ spec:
           ports:
             - name: monitoring
               containerPort: 7070
+      terminationGracePeriodSeconds: 300
