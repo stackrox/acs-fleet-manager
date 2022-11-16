@@ -18,7 +18,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	"github.com/stackrox/rox/pkg/renderer"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	corev1 "k8s.io/api/core/v1"
@@ -474,7 +473,7 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 					Name:      centralDbSecretName,
 					Namespace: remoteCentralNamespace,
 				},
-				Data: map[string][]byte{"password": []byte(renderer.CreatePassword())},
+				Data: map[string][]byte{"password": []byte("passPlaceholder")},
 			}
 
 			err = r.client.Create(ctx, secret)
