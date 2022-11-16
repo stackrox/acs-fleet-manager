@@ -22,16 +22,16 @@ tags:
 paths:
   /apis/beta/acs/v1:
     post:
-      description: Create an ACS Tenant Client. Created ACS Tenant Clients are associated
-        with the account passed along with this request.
+      description: Create an ACS managed central client. Created ACS managed central
+        clients are associated with the supplied organization id.
       operationId: createAcsClient
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AcsClientRequestData'
-        description: '''name'', ''redirect_uris'', and ''account_id'' belonging to
-          the ACS Tenant'
+        description: The name, redirect URIs and the organization id of the ACS managed
+          central client
         required: true
       responses:
         "201":
@@ -63,8 +63,8 @@ paths:
                   $ref: '#/components/examples/403AcsTenantThresholdExceeded'
               schema:
                 $ref: '#/components/schemas/RedHatErrorRepresentation'
-          description: Exceeded account level threshold limits for creating ACS Tenant
-            Clients.
+          description: Exceeded maximum number of ACS managed central clients per
+            tenant.
         "405":
           content:
             application/json:
@@ -77,18 +77,18 @@ paths:
       security:
       - serviceAccounts:
         - api.iam.acs
-      summary: Create ACS Tenant Client
+      summary: Create ACS managed central client
       tags:
       - acs_tenants
-  /apis/beta/acs/v1/{id}:
+  /apis/beta/acs/v1/{clientId}:
     delete:
-      description: Delete ACS Tenant Client by id. Throws not found exception if the
-        client is not found
+      description: Delete ACS managed central client by clientId. Throws not found
+        exception if the client is not found
       operationId: deleteAcsClient
       parameters:
       - explode: false
         in: path
-        name: id
+        name: clientId
         required: true
         schema:
           type: string
@@ -125,7 +125,7 @@ paths:
       security:
       - serviceAccounts:
         - api.iam.acs
-      summary: Delete ACS Tenant Client
+      summary: Delete ACS managed central client
       tags:
       - acs_tenants
 components:
@@ -178,6 +178,7 @@ components:
       type: object
     AcsClientResponseData:
       example:
+        createdAt: 0
         clientId: clientId
         name: name
         secret: secret
@@ -188,6 +189,9 @@ components:
           type: string
         name:
           type: string
+        createdAt:
+          format: int64
+          type: integer
       type: object
     ValidationExceptionData:
       properties:
@@ -215,6 +219,7 @@ components:
           - acs_invalid_redirect_uri
           - acs_invalid_client
           - acs_disabled
+          - general_failure
           type: string
         error_description:
           type: string
@@ -237,6 +242,7 @@ components:
           type: array
           uniqueItems: true
         orgId:
+          pattern: \d{1,10}
           type: string
       required:
       - orgId

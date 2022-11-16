@@ -13,7 +13,8 @@ package api
 
 // AcsClientResponseData struct for AcsClientResponseData
 type AcsClientResponseData struct {
-	ClientId string `json:"clientId,omitempty"`
-	Secret   string `json:"secret,omitempty"`
-	Name     string `json:"name,omitempty"`
+	ClientId  string `json:"clientId,omitempty"`
+	Secret    string `json:"secret,omitempty"`
+	Name      string `json:"name,omitempty"`
+	CreatedAt int64  `json:"createdAt,omitempty"`
 }
