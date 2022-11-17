@@ -44,7 +44,8 @@ func GetConfig() (*Config, error) {
 	}
 
 	var configErrors errorhelpers.ErrorList
-	if c.AuthType == "RHSSO" {
+	switch c.AuthType {
+	case "RHSSO":
 		if c.RHSSOClientID == "" {
 			configErrors.AddError(errors.New("RHSSO_SERVICE_ACCOUNT_CLIENT_ID unset in the environment"))
 		}
@@ -52,7 +53,7 @@ func GetConfig() (*Config, error) {
 			configErrors.AddError(errors.New("RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET unset in the environment"))
 		}
 		c.ProbeUsername = fmt.Sprintf("service-account-%s", c.RHSSOClientID)
-	} else if c.AuthType == "OCM" {
+	case "OCM":
 		if c.OCMUsername == "" {
 			configErrors.AddError(errors.New("OCM_USERNAME unset in the environment"))
 		}
@@ -60,7 +61,7 @@ func GetConfig() (*Config, error) {
 			configErrors.AddError(errors.New("OCM_TOKEN unset in the environment"))
 		}
 		c.ProbeUsername = c.OCMUsername
-	} else {
+	default:
 		configErrors.AddError(errors.New("AUTH_TYPE not supported"))
 	}
 	if cfgErr := configErrors.ToError(); cfgErr != nil {
