@@ -163,7 +163,7 @@ func (p *ProbeImpl) deleteCentral(ctx context.Context, centralRequest *public.Ce
 
 	err = p.ensureCentralDeleted(ctx, centralRequest)
 	if err != nil {
-		return errors.Wrapf(err, "central instance %s could not be deleted", centralRequest.Id)
+		return errors.Wrapf(err, "central instance %s with status %s could not be deleted", centralRequest.Id, centralRequest.Status)
 	}
 	return nil
 }
