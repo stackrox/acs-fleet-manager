@@ -161,11 +161,6 @@ func (p *ProbeImpl) deleteCentral(ctx context.Context, centralRequest *public.Ce
 		return errors.Wrapf(err, "deletion of central instance %s failed", centralRequest.Id)
 	}
 
-	_, err = p.ensureCentralState(ctx, centralRequest, constants.CentralRequestStatusDeprovision.String())
-	if err != nil {
-		return errors.Wrapf(err, "central instance %s did not reach deprovision state", centralRequest.Id)
-	}
-
 	err = p.ensureCentralDeleted(ctx, centralRequest)
 	if err != nil {
 		return errors.Wrapf(err, "central instance %s could not be deleted", centralRequest.Id)
