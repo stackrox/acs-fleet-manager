@@ -29,5 +29,3 @@ dependencies:
     condition: observability.enabled
   - name: logging
     condition: logging.enabled
-  - name: probe
-    condition: probe.enabled
