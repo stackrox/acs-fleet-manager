@@ -19,11 +19,7 @@ type Config struct {
 	FleetManagerEndpoint    string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
 	MetricsAddress          string        `env:"METRICS_ADDRESS" envDefault:":7070"`
 	RHSSOClientID           string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
-	RHSSOClientSecret       string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
-	RHSSOEndpoint           string        `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
-	RHSSORealm              string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
 	OCMUsername             string        `env:"OCM_USERNAME"`
-	OCMRefreshToken         string        `env:"OCM_TOKEN"`
 	ProbeName               string        `env:"PROBE_NAME" envDefault:"${HOSTNAME}" envExpand:"true"`
 	ProbeCleanUpTimeout     time.Duration `env:"PROBE_CLEANUP_TIMEOUT" envDefault:"5m"`
 	ProbeHTTPRequestTimeout time.Duration `env:"PROBE_HTTP_REQUEST_TIMEOUT" envDefault:"5s"`
@@ -49,16 +45,10 @@ func GetConfig() (*Config, error) {
 		if c.RHSSOClientID == "" {
 			configErrors.AddError(errors.New("RHSSO_SERVICE_ACCOUNT_CLIENT_ID unset in the environment"))
 		}
-		if c.RHSSOClientSecret == "" {
-			configErrors.AddError(errors.New("RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET unset in the environment"))
-		}
 		c.ProbeUsername = fmt.Sprintf("service-account-%s", c.RHSSOClientID)
 	case "OCM":
 		if c.OCMUsername == "" {
 			configErrors.AddError(errors.New("OCM_USERNAME unset in the environment"))
-		}
-		if c.AuthType == "OCM" && c.OCMRefreshToken == "" {
-			configErrors.AddError(errors.New("OCM_TOKEN unset in the environment"))
 		}
 		c.ProbeUsername = c.OCMUsername
 	default:
