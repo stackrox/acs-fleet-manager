@@ -17,6 +17,7 @@ spec:
       labels:
         app: probe
     spec:
+      serviceAccountName: probe
       containers:
         - name: probe
           image: {{ .Values.image | quote }}

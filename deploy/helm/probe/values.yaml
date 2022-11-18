@@ -1,4 +1,5 @@
 image: "quay.io/rhacs-eng/blackbox-monitoring-probe-service:main"
+pullSecret: ""
 namespace: "rhacs-probe"
 fleetManagerEndpoint: ""
 # Must be either 'RHSSO' or 'OCM'.
