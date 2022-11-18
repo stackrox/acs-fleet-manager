@@ -33,13 +33,16 @@ version:=$(shell date +%s)
 
 ifeq ($(DEBUG_IMAGE),true)
 IMAGE_NAME = fleet-manager-dbg
+PROBE_IMAGE_NAME = probe-dbg
 IMAGE_TARGET = debug
 else
 IMAGE_NAME = fleet-manager
+PROBE_IMAGE_NAME = probe
 IMAGE_TARGET = standard
 endif
 
 SHORT_IMAGE_REF = "$(IMAGE_NAME):$(image_tag)"
+PROBE_SHORT_IMAGE_REF = "$(PROBE_IMAGE_NAME):$(image_tag)"
 
 # Default namespace for local deployments
 NAMESPACE ?= fleet-manager-${USER}
@@ -52,6 +55,7 @@ IMAGE_REGISTRY ?= default-route-openshift-image-registry.apps-crc.testing
 # exist the push fails. This doesn't apply when the image is pushed to a public
 # repository, like `docker.io` or `quay.io`.
 image_repository:=$(NAMESPACE)/$(IMAGE_NAME)
+probe_image_repository:=$(NAMESPACE)/$(PROBE_IMAGE_NAME)
 
 # In the development environment we are pushing the image directly to the image
 # registry inside the development cluster. That registry has a different name
@@ -476,9 +480,18 @@ db/generate/insert/cluster:
 .PHONY: db/generate/insert/cluster
 
 # Login to docker
-docker/login:
-	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
+docker/login: docker/login/fleet-manager
 .PHONY: docker/login
+
+docker/login/fleet-manager:
+	@docker logout quay.io
+	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
+.PHONY: docker/login/fleet-manager
+
+docker/login/probe:
+	@docker logout quay.io
+	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_PROBE_USER}" --password-stdin <<< "${QUAY_PROBE_TOKEN}" quay.io
+.PHONY: docker/login/probe
 
 # Login to the OpenShift internal registry
 docker/login/internal:
@@ -494,16 +507,24 @@ image/build: fleet-manager fleetshard-sync
 .PHONY: image/build
 
 # Build the image using by specifying a specific image target within the Dockerfile.
-# IMAGE_REF needs to be set.
-# IMAGE_TARGET (standard or debug) is automatically set.
-image/build/multi-target: GOOS=linux
-image/build/multi-target: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
-image/build/multi-target:
+image/build/multi-target: image/build/multi-target/fleet-manager image/build/multi-target/probe
+.PHONY: image/build/multi-target
+
+image/build/multi-target/fleet-manager: GOOS=linux
+image/build/multi-target/fleet-manager: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
+image/build/multi-target/fleet-manager:
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build --target $(IMAGE_TARGET) -t $(IMAGE_REF) .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
-.PHONY: image/build/multi-target
+.PHONY: image/build/multi-target/fleet-manager
+
+image/build/multi-target/probe: GOOS=linux
+image/build/multi-target/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
+image/build/multi-target/probe:
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build --target $(IMAGE_TARGET) -t $(IMAGE_REF) -f probe/Dockerfile .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(PROBE_SHORT_IMAGE_REF)
+.PHONY: image/build/multi-target/probe
 
 # build binary and image and tag image for local deployment
 image/build/local: GOOS=linux
@@ -515,18 +536,29 @@ image/build/local: image/build
 .PHONY: image/build/local
 
 # Build and push the image
-image/push: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
-image/push: image/build/multi-target
+image/push: image/push/fleet-manager image/push/probe
+.PHONY: image/push
+
+image/push/fleet-manager: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
+image/push/fleet-manager: image/build/multi-target/fleet-manager
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
 	@echo
 	@echo "Image was pushed as $(IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(IMAGE_REF)"
-.PHONY: image/push
+.PHONY: image/push/fleet-manager
+
+image/push/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
+image/push/probe: image/build/multi-target/probe
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
+	@echo
+	@echo "Image was pushed as $(IMAGE_REF)."
+.PHONY: image/push/probe
 
 # push the image to the OpenShift internal registry
 image/push/internal: IMAGE_TAG ?= $(image_tag)
 image/push/internal: docker/login/internal
 	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)"
+	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(probe_image_repository):$(IMAGE_TAG)"
 .PHONY: image/push/internal
 
 # build and push the image to an OpenShift cluster's internal registry
