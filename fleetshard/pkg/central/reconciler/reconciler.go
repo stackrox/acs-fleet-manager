@@ -18,6 +18,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/pkg/random"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	corev1 "k8s.io/api/core/v1"
@@ -465,7 +466,13 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 			Name: centralDbSecretName,
 		},
 	}
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+
+	generatedPassword, err := random.GenerateString(25, random.AlphanumericCharacters)
+	if err != nil {
+		return fmt.Errorf("generating Central DB password: %v", err)
+	}
+
+	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			secret = &corev1.Secret{
@@ -473,7 +480,7 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 					Name:      centralDbSecretName,
 					Namespace: remoteCentralNamespace,
 				},
-				Data: map[string][]byte{"password": []byte("passPlaceholder")},
+				Data: map[string][]byte{"password": []byte(generatedPassword)},
 			}
 
 			err = r.client.Create(ctx, secret)
