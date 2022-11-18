@@ -25,8 +25,7 @@ var testConfig = &config.Config{
 	ProbeCleanUpTimeout: 100 * time.Millisecond,
 	ProbeRunTimeout:     100 * time.Millisecond,
 	ProbeRunWaitPeriod:  10 * time.Millisecond,
-	ProbeName:           "pod",
-	ProbeNamePrefix:     "probe",
+	ProbeName:           "probe",
 	RHSSOClientID:       "client",
 }
 
@@ -91,7 +90,7 @@ func TestCreateCentral(t *testing.T) {
 				CreateCentralFunc: func(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error) {
 					central := public.CentralRequest{
 						Id:           "id-42",
-						Name:         "probe-pod-42",
+						Name:         "probe-42",
 						Status:       constants.CentralRequestStatusAccepted.String(),
 						InstanceType: types.STANDARD.String(),
 					}
@@ -171,7 +170,7 @@ func TestVerifyCentral(t *testing.T) {
 			errType:  &context.DeadlineExceeded,
 			central: &public.CentralRequest{
 				Id:           "id-42",
-				Name:         "probe-pod-42",
+				Name:         "probe-42",
 				Status:       constants.CentralRequestStatusReady.String(),
 				InstanceType: types.STANDARD.String(),
 			},
@@ -223,7 +222,7 @@ func TestDeleteCentral(t *testing.T) {
 					if numGetCentralByIDCalls[name] == 1 {
 						return public.CentralRequest{
 							Id:     "id-42",
-							Name:   "probe-pod-42",
+							Name:   "probe-42",
 							Status: constants.CentralRequestStatusDeprovision.String(),
 						}, nil, nil
 					}
@@ -274,14 +273,14 @@ func TestDeleteCentral(t *testing.T) {
 					if numGetCentralByIDCalls[name] == 1 {
 						return public.CentralRequest{
 							Id:     "id-42",
-							Name:   "probe-pod-42",
+							Name:   "probe-42",
 							Status: constants.CentralRequestStatusDeprovision.String(),
 						}, nil, nil
 					}
 
 					return public.CentralRequest{
 						Id:     "id-42",
-						Name:   "probe-pod-42",
+						Name:   "probe-42",
 						Status: constants.CentralRequestStatusDeleting.String(),
 					}, nil, nil
 				},
@@ -308,7 +307,7 @@ func TestDeleteCentral(t *testing.T) {
 
 			central := &public.CentralRequest{
 				Id:           "id-42",
-				Name:         "probe-pod-42",
+				Name:         "probe-42",
 				Status:       constants.CentralRequestStatusReady.String(),
 				InstanceType: types.STANDARD.String(),
 			}
@@ -345,7 +344,7 @@ func TestCleanUp(t *testing.T) {
 					centralItems := []public.CentralRequest{
 						{
 							Id:    "id-42",
-							Name:  "probe-pod-42",
+							Name:  "probe-42",
 							Owner: "service-account-client",
 						},
 					}
@@ -361,7 +360,7 @@ func TestCleanUp(t *testing.T) {
 					if numGetCentralByIDCalls[name] == 1 {
 						return public.CentralRequest{
 							Id:     "id-42",
-							Name:   "probe-pod-42",
+							Name:   "probe-42",
 							Owner:  "service-account-client",
 							Status: constants.CentralRequestStatusDeprovision.String(),
 						}, nil, nil
@@ -382,7 +381,7 @@ func TestCleanUp(t *testing.T) {
 					centralItems := []public.CentralRequest{
 						{
 							Id:    "id-42",
-							Name:  "probe-pod-42",
+							Name:  "probe-42",
 							Owner: "service-account-wrong-owner",
 						},
 						{

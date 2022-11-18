@@ -54,12 +54,12 @@ func recordElapsedTime(start time.Time) {
 }
 
 func (p *ProbeImpl) newCentralName() (string, error) {
-	rnd := make([]byte, 8)
+	rnd := make([]byte, 2)
 	if _, err := rand.Read(rnd); err != nil {
 		return "", errors.Wrapf(err, "reading random bytes for unique central name")
 	}
 	rndString := hex.EncodeToString(rnd)
-	return fmt.Sprintf("%s-%s-%s", p.config.ProbeNamePrefix, p.config.ProbeName, rndString), nil
+	return fmt.Sprintf("%s-%s", p.config.ProbeName, rndString), nil
 }
 
 // Execute the probe of the fleet manager API.
@@ -97,11 +97,10 @@ func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
 	}
 
 	serviceAccountName := fmt.Sprintf("service-account-%s", p.config.RHSSOClientID)
-	namePrefix := fmt.Sprintf("%s-%s", p.config.ProbeNamePrefix, p.config.ProbeName)
 	success := true
 	for _, central := range centralList.Items {
 		central := central
-		if central.Owner != serviceAccountName || !strings.HasPrefix(central.Name, namePrefix) {
+		if central.Owner != serviceAccountName || !strings.HasPrefix(central.Name, p.config.ProbeName) {
 			continue
 		}
 		if err := p.deleteCentral(ctx, &central); err != nil {

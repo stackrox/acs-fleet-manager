@@ -17,8 +17,7 @@ var testConfig = &config.Config{
 	ProbeCleanUpTimeout: 100 * time.Millisecond,
 	ProbeRunTimeout:     100 * time.Millisecond,
 	ProbeRunWaitPeriod:  10 * time.Millisecond,
-	ProbeName:           "pod",
-	ProbeNamePrefix:     "probe",
+	ProbeName:           "probe",
 	RHSSOClientID:       "client",
 }
 
