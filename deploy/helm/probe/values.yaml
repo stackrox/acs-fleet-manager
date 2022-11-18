@@ -1,9 +1,12 @@
 image: "quay.io/rhacs-eng/blackbox-monitoring-probe-service:main"
 namespace: "rhacs-probe"
 fleetManagerEndpoint: ""
-authType: ""
+# Must be either 'RHSSO' or 'OCM'.
+authType: "RHSSO"
 ocm:
+  # The username of the Red Hat SSO account.
   username: ""
+  # The refresh token obtained from `ocm token --refresh`.
   token: ""
 redHatSSO:
   clientId: ""
