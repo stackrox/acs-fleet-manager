@@ -1,0 +1,8 @@
+image: "quay.io/rhacs-eng/blackbox-monitoring-probe-service:main"
+namespace: "rhacs-probe"
+fleetManagerEndpoint: ""
+redHatSSO:
+  clientId: ""
+  clientSecret: ""
+  endpoint: "https://sso.redhat.com"
+  realm: "redhat-external"
