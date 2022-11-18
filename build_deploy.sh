@@ -25,10 +25,10 @@
 # QUAY_TOKEN - The token of the robot account used to push images to
 # 'quay.io'.
 #
-# PROBE_QUAY_USER - The name of the robot account used to push images to
+# QUAY_PROBE_USER - The name of the robot account used to push images to
 # 'quay.io', for example 'openshift-unified-hybrid-cloud+jenkins'.
 #
-# PROBE_QUAY_TOKEN - The token of the robot account used to push images to
+# QUAY_PROBE_TOKEN - The token of the robot account used to push images to
 # 'quay.io'.
 #
 # The machines that run this script need to have access to internet, so that
