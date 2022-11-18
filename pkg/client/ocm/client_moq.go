@@ -71,7 +71,7 @@ var _ Client = &ClientMock{}
 // 			GetClusterStatusFunc: func(id string) (*clustersmgmtv1.ClusterStatus, error) {
 // 				panic("mock out the GetClusterStatus method")
 // 			},
-// 			GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*amsv1.CloudAccount, error) {
+// 			GetCustomerCloudAccountsFunc: func(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error) {
 // 				panic("mock out the GetCustomerCloudAccounts method")
 // 			},
 // 			GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
@@ -169,7 +169,7 @@ type ClientMock struct {
 	GetClusterStatusFunc func(id string) (*clustersmgmtv1.ClusterStatus, error)
 
 	// GetCustomerCloudAccountsFunc mocks the GetCustomerCloudAccounts method.
-	GetCustomerCloudAccountsFunc func(externalID string, quotaIDs []string) ([]*amsv1.CloudAccount, error)
+	GetCustomerCloudAccountsFunc func(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error)
 
 	// GetExistingClusterMetricsFunc mocks the GetExistingClusterMetrics method.
 	GetExistingClusterMetricsFunc func(clusterID string) (*amsv1.SubscriptionMetrics, error)
@@ -306,8 +306,8 @@ type ClientMock struct {
 		}
 		// GetCustomerCloudAccounts holds details about calls to the GetCustomerCloudAccounts method.
 		GetCustomerCloudAccounts []struct {
-			// ExternalID is the externalID argument value.
-			ExternalID string
+			// OrganizationID is the organizationID argument value.
+			OrganizationID string
 			// QuotaIDs is the quotaIDs argument value.
 			QuotaIDs []string
 		}
@@ -970,33 +970,33 @@ func (mock *ClientMock) GetClusterStatusCalls() []struct {
 }
 
 // GetCustomerCloudAccounts calls GetCustomerCloudAccountsFunc.
-func (mock *ClientMock) GetCustomerCloudAccounts(externalID string, quotaIDs []string) ([]*amsv1.CloudAccount, error) {
+func (mock *ClientMock) GetCustomerCloudAccounts(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error) {
 	if mock.GetCustomerCloudAccountsFunc == nil {
 		panic("ClientMock.GetCustomerCloudAccountsFunc: method is nil but Client.GetCustomerCloudAccounts was just called")
 	}
 	callInfo := struct {
-		ExternalID string
-		QuotaIDs   []string
+		OrganizationID string
+		QuotaIDs       []string
 	}{
-		ExternalID: externalID,
-		QuotaIDs:   quotaIDs,
+		OrganizationID: organizationID,
+		QuotaIDs:       quotaIDs,
 	}
 	mock.lockGetCustomerCloudAccounts.Lock()
 	mock.calls.GetCustomerCloudAccounts = append(mock.calls.GetCustomerCloudAccounts, callInfo)
 	mock.lockGetCustomerCloudAccounts.Unlock()
-	return mock.GetCustomerCloudAccountsFunc(externalID, quotaIDs)
+	return mock.GetCustomerCloudAccountsFunc(organizationID, quotaIDs)
 }
 
 // GetCustomerCloudAccountsCalls gets all the calls that were made to GetCustomerCloudAccounts.
 // Check the length with:
 //     len(mockedClient.GetCustomerCloudAccountsCalls())
 func (mock *ClientMock) GetCustomerCloudAccountsCalls() []struct {
-	ExternalID string
-	QuotaIDs   []string
+	OrganizationID string
+	QuotaIDs       []string
 } {
 	var calls []struct {
-		ExternalID string
-		QuotaIDs   []string
+		OrganizationID string
+		QuotaIDs       []string
 	}
 	mock.lockGetCustomerCloudAccounts.RLock()
 	calls = mock.calls.GetCustomerCloudAccounts

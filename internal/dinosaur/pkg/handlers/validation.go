@@ -106,6 +106,7 @@ func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.
 		dinosaurRequest.Name = dinosaurRequestPayload.Name
 		dinosaurRequest.CloudProvider = dinosaurRequestPayload.CloudProvider
 		dinosaurRequest.MultiAZ = dinosaurRequestPayload.MultiAz
+		dinosaurRequest.CloudAccountID = dinosaurRequestPayload.CloudAccountId
 
 		claims, err := auth.GetClaimsFromContext(ctx)
 		if err != nil {

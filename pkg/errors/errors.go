@@ -137,6 +137,9 @@ const (
 	// Provider not supported
 	ErrorProviderNotSupported       ServiceErrorCode = 30
 	ErrorProviderNotSupportedReason string           = "Provider not supported"
+	// Cloud account ID is not set up properly
+	ErrorInvalidCloudAccountID       ServiceErrorCode = 122
+	ErrorInvalidCloudAccountIDReason string           = "Cloud account ID is not set up properly"
 
 	// Region not supported
 	ErrorRegionNotSupported       ServiceErrorCode = 31
@@ -270,6 +273,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMalformedServiceAccountID, ErrorMalformedServiceAccountIDReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorInvalidCloudAccountID, ErrorInvalidCloudAccountIDReason, http.StatusBadRequest, nil},
 	}
 }
 
@@ -723,4 +727,10 @@ func InsufficientQuotaError(reason string, values ...interface{}) *ServiceError 
 func FailedToCheckQuota(reason string, values ...interface{}) *ServiceError {
 	message := fmt.Sprintf("%s: %s", ErrorFailedToCheckQuotaReason, reason)
 	return New(ErrorFailedToCheckQuota, message, values...)
+}
+
+// InvalidCloudAccountID ...
+func InvalidCloudAccountID(reason string, values ...interface{}) *ServiceError {
+	message := fmt.Sprintf("%s: %s", ErrorInvalidCloudAccountIDReason, reason)
+	return New(ErrorInvalidCloudAccountID, message, values...)
 }

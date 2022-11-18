@@ -23,6 +23,7 @@ type CentralRequest struct {
 	Region         string `json:"region"`
 	ClusterID      string `json:"cluster_id" gorm:"index"`
 	CloudProvider  string `json:"cloud_provider"`
+	CloudAccountID string `json:"cloud_account_id"`
 	MultiAZ        bool   `json:"multi_az"`
 	Name           string `json:"name" gorm:"index"`
 	Status         string `json:"status" gorm:"index"`

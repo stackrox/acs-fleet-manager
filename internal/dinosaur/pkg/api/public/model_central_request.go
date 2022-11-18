@@ -23,7 +23,9 @@ type CentralRequest struct {
 	Status string `json:"status,omitempty"`
 	// Name of Cloud used to deploy. For example AWS
 	CloudProvider string `json:"cloud_provider,omitempty"`
-	MultiAz       bool   `json:"multi_az"`
+	// Cloud Account ID
+	CloudAccountId string `json:"cloud_account_id,omitempty"`
+	MultiAz        bool   `json:"multi_az"`
 	// Values will be regions of specific cloud provider. For example: us-east-1 for AWS
 	Region         string    `json:"region,omitempty"`
 	Owner          string    `json:"owner,omitempty"`

@@ -648,6 +648,9 @@ components:
             cloud_provider:
               description: "Name of Cloud used to deploy. For example AWS"
               type: string
+            cloud_account_id:
+              description: "Cloud Account ID"
+              type: string
             multi_az:
               type: boolean
             region:
@@ -769,6 +772,9 @@ components:
       properties:
         cloud_provider:
           description: The cloud provider where the Central component will be created in
+          type: string
+        cloud_account_id:
+          description: The cloud account ID that is linked to the ACS instance
           type: string
         multi_az:
           description: Set this to true to configure the Central component to be multiAZ
