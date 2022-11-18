@@ -96,11 +96,10 @@ func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
 		return err
 	}
 
-	serviceAccountName := fmt.Sprintf("service-account-%s", p.config.RHSSOClientID)
 	success := true
 	for _, central := range centralList.Items {
 		central := central
-		if central.Owner != serviceAccountName || !strings.HasPrefix(central.Name, p.config.ProbeName) {
+		if central.Owner != p.config.ProbeUsername || !strings.HasPrefix(central.Name, p.config.ProbeName) {
 			continue
 		}
 		if err := p.deleteCentral(ctx, &central); err != nil {
@@ -162,14 +161,9 @@ func (p *ProbeImpl) deleteCentral(ctx context.Context, centralRequest *public.Ce
 		return errors.Wrapf(err, "deletion of central instance %s failed", centralRequest.Id)
 	}
 
-	_, err = p.ensureCentralState(ctx, centralRequest, constants.CentralRequestStatusDeprovision.String())
-	if err != nil {
-		return errors.Wrapf(err, "central instance %s did not reach deprovision state", centralRequest.Id)
-	}
-
 	err = p.ensureCentralDeleted(ctx, centralRequest)
 	if err != nil {
-		return errors.Wrapf(err, "central instance %s could not be deleted", centralRequest.Id)
+		return errors.Wrapf(err, "central instance %s with status %s could not be deleted", centralRequest.Id, centralRequest.Status)
 	}
 	return nil
 }
