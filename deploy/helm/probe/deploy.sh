@@ -60,8 +60,7 @@ helm upgrade rhacs-probe "${SCRIPT_DIR}" \
   --set fleetManagerEndpoint="${FM_ENDPOINT}" \
   --set image="${PROBE_IMAGE}" \
   --set ocm.token="${PROBE_OCM_TOKEN}" \
-  --set ocm.username="${PROBE_OCM_USERNAME}" \
-  --set pullSecret="${PROBE_PULL_SECRET}"
+  --set ocm.username="${PROBE_OCM_USERNAME}"
 
 # To uninstall an existing release:
 # helm uninstall rhacs-probe --namespace rhacs-probe
