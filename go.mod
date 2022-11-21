@@ -54,7 +54,7 @@ require (
 	github.com/yaacov/tree-search-language v0.0.0-20190923184055-1c2dad2e354b
 	github.com/zgalor/weberr v0.7.0
 	golang.org/x/net v0.2.0
-	golang.org/x/oauth2 v0.1.0
+	golang.org/x/oauth2 v0.2.0
 	golang.org/x/sys v0.2.0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
