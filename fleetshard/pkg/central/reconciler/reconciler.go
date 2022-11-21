@@ -41,8 +41,6 @@ const (
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 
 	centralDbSecretName = "central-db-password" // pragma: allowlist secret
-
-	enableManagedDatabase bool = false // TODO: should be a feature flag
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -50,6 +48,7 @@ type CentralReconcilerOptions struct {
 	UseRoutes         bool
 	WantsAuthProvider bool
 	EgressProxyImage  string
+	EnableManagedDB   bool
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -65,6 +64,7 @@ type CentralReconciler struct {
 	Resources         bool
 	routeService      *k8s.RouteService
 	egressProxyImage  string
+	enableManagedDB   bool
 
 	resourcesChart *chart.Chart
 }
@@ -188,7 +188,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
 	}
 
-	if enableManagedDatabase {
+	if r.enableManagedDB {
 		if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace); err != nil {
 			return nil, errors.Wrap(err, "unable to ensure that DB secret exists")
 		}
@@ -349,7 +349,7 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && centralDeleted
 
-	if enableManagedDatabase {
+	if r.enableManagedDB {
 		dbDeleted, err := ensureDBDeprovisioned(central.GetNamespace())
 		if err != nil {
 			return false, err
@@ -717,6 +717,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		wantsAuthProvider: opts.WantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
 		egressProxyImage:  opts.EgressProxyImage,
+		enableManagedDB:   opts.EnableManagedDB,
 
 		resourcesChart: resourcesChart,
 	}

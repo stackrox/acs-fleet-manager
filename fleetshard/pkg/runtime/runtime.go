@@ -93,6 +93,7 @@ func (r *Runtime) Start() error {
 		UseRoutes:         routesAvailable,
 		WantsAuthProvider: r.config.CreateAuthProvider,
 		EgressProxyImage:  r.config.EgressProxyImage,
+		EnableManagedDB:   r.config.EnableManagedDB,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {

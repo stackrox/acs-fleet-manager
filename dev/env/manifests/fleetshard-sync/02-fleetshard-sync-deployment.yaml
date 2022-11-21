@@ -43,6 +43,8 @@ spec:
                   optional: false
             - name: RUNTIME_POLL_PERIOD
               value: 10s
+            - name: ENABLE_MANAGED_DB
+              value: "$ENABLE_MANAGED_DB"
 
           image: "${FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent
