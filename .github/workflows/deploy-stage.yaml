@@ -9,9 +9,6 @@ jobs:
   cancel:
     name: Cancel previous runs
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
     steps:
       - name: Cancel Previous Runs
         uses: n1hility/cancel-previous-runs@v2
@@ -22,6 +19,9 @@ jobs:
     name: Re-terraform stage clusters
     needs: cancel
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     environment: stage
     steps:
       - name: Set up Go 1.18
@@ -47,6 +47,9 @@ jobs:
     name: Deploy blackbox monitoring probe service
     needs: cancel
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     environment: stage
     steps:
       - name: Set up Go 1.18
