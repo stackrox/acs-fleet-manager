@@ -39,30 +39,11 @@ case $ENVIRONMENT in
     ;;
 esac
 
-function assert_environment() {
-  local EXPECTED_ENVIRONMENT="$1"
-  if [[ $EXPECTED_ENVIRONMENT != "$ENVIRONMENT" ]]; then
-    echo "Cluster ${CLUSTER_NAME} is expected to be in environment ${EXPECTED_ENVIRONMENT}, not ${ENVIRONMENT}" >&2
+CLUSTER_ENVIRONMENT="$(echo "${CLUSTER_NAME}" | cut -d- -f 2)"
+if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
+    echo "Cluster ${CLUSTER_NAME} is expected to be in environment ${CLUSTER_ENVIRONMENT}, not ${ENVIRONMENT}" >&2
     exit 2
-  fi
-}
-
-# The following values can be retrieved from the Red Hat Hybrid Cloud Console.
-# - Cluster ID the first piece of information on the "Details" pane of the Overview tab of the given cluster.
-# - The URL infix is the part of the Control Plane API endpoint between cluster name and "openshiftapps.com",
-#   in the "Cluster ingress" pane of the Networking tab for the given cluster.
-case $CLUSTER_NAME in
-acs-stage-dp-01)
-  assert_environment stage
-  ;;
-acs-prod-dp-01)
-  assert_environment prod
-  ;;
-*)
-  echo "Unknown cluster ${CLUSTER_NAME}. Please define it in the $0 script if this is a new cluster." >&2
-  exit 2
-  ;;
-esac
+fi
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="https://api.${CLUSTER_NAME}.${CLUSTER_URL_INFIX}.openshiftapps.com:6443"
