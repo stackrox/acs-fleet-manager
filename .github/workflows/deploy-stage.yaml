@@ -6,18 +6,24 @@ on:
       - main
 
 jobs:
-  deploy:
-    name: "Re-terraform stage clusters"
+  cancel:
+    name: Cancel previous runs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs
+        uses: n1hility/cancel-previous-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  terraform:
+    name: Re-terraform stage clusters
+    needs: cancel
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     environment: stage
     steps:
-      - name: Cancel Previous Runs
-        uses: n1hility/cancel-previous-runs@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Go 1.18
         uses: actions/setup-go@v3
         with:
@@ -30,9 +36,37 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
       - name: Run terraforming on THE stage cluster
+        working-directory: ./dp-terraform/helm/rhacs-terraform
         env:
           USE_AWS_VAULT: false
         run: |
           set -euo pipefail
-          cd dp-terraform/helm/rhacs-terraform
           ./terraform_cluster.sh stage acs-stage-dp-01
+
+  deploy-probe:
+    name: Deploy blackbox monitoring probe service
+    needs: cancel
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: stage
+    steps:
+      - name: Set up Go 1.18
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.18"
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+      - name: Deploy probe
+        working-directory: ./deploy/helm/probe
+        env:
+          USE_AWS_VAULT: false
+        run: |
+          set -euo pipefail
+          ./deploy.sh stage acs-stage-dp-01
