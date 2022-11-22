@@ -81,7 +81,7 @@ func ServiceProviders() di.Option {
 		di.Provide(quota.NewDefaultQuotaServiceFactory),
 		di.Provide(workers.NewClusterManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewDinosaurManager, di.As(new(workers.Worker))),
-		di.Provide(dinosaurmgrs.NewAcceptedDinosaurManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewAcceptedCentralManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewPreparingDinosaurManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewDeletingDinosaurManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewProvisioningDinosaurManager, di.As(new(workers.Worker))),
