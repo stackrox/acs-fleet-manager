@@ -18,6 +18,7 @@ import (
 
 const (
 	dbAvailableStatus = "available"
+	dbDeletingStatus  = "deleting"
 
 	awsRegion        = "us-east-1" // TODO: this should not be hardcoded
 	dbEngine         = "aurora-postgresql"
@@ -63,20 +64,31 @@ func (c *Client) EnsureDBDeprovisioned() (bool, error) {
 	clusterID := c.centralNamespace + dbClusterSuffix
 	instanceID := c.centralNamespace + dbInstanceSuffix
 
-	//TODO: do not skip taking a final DB snapshot
 	if c.instanceExists(instanceID) {
-		//TODO: don't delete if state is "deleting"
-		_, err := c.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
+		status, err := c.instanceStatus(instanceID)
 		if err != nil {
-			return false, fmt.Errorf("deleting DB instance: %v", err)
+			return false, fmt.Errorf("getting DB instance status: %v", err)
+		}
+		if status != dbDeletingStatus {
+			//TODO: do not skip taking a final DB snapshot
+			_, err := c.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
+			if err != nil {
+				return false, fmt.Errorf("deleting DB instance: %v", err)
+			}
 		}
 	}
 
 	if c.clusterExists(clusterID) {
-		//TODO: don't delete if state is "deleting"
-		_, err := c.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
+		status, err := c.clusterStatus(clusterID)
 		if err != nil {
-			return false, fmt.Errorf("deleting DB cluster: %v", err)
+			return false, fmt.Errorf("getting DB cluster status: %v", err)
+		}
+		if status != dbDeletingStatus {
+			//TODO: do not skip taking a final DB snapshot
+			_, err := c.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
+			if err != nil {
+				return false, fmt.Errorf("deleting DB cluster: %v", err)
+			}
 		}
 	}
 
@@ -131,6 +143,33 @@ func (c *Client) instanceExists(instanceID string) bool {
 
 	_, err := c.rdsClient.DescribeDBInstances(dbInstanceQuery)
 	return err == nil
+}
+
+func (c *Client) clusterStatus(clusterID string) (string, error) {
+	dbClusterQuery := &rds.DescribeDBClustersInput{
+		DBClusterIdentifier: aws.String(clusterID),
+	}
+
+	clusterResult, err := c.rdsClient.DescribeDBClusters(dbClusterQuery)
+	if err != nil {
+		return "", fmt.Errorf("getting cluster status: %v", err)
+	}
+
+	return *clusterResult.DBClusters[0].Status, nil
+}
+
+func (c *Client) instanceStatus(instanceID string) (string, error) {
+	dbInstanceQuery := &rds.DescribeDBInstancesInput{
+		DBInstanceIdentifier: aws.String(instanceID),
+		//TODO: add cluster Filter
+	}
+
+	instanceResult, err := c.rdsClient.DescribeDBInstances(dbInstanceQuery)
+	if err != nil {
+		return "", fmt.Errorf("getting instance status: %v", err)
+	}
+
+	return *instanceResult.DBInstances[0].DBInstanceStatus, nil
 }
 
 func (c *Client) waitForInstanceToBeAvailable(instanceID string, clusterID string) (string, error) {
