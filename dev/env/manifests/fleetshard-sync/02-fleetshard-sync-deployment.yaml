@@ -43,8 +43,12 @@ spec:
                   optional: false
             - name: RUNTIME_POLL_PERIOD
               value: 10s
-            - name: ENABLE_MANAGED_DB
-              value: "$ENABLE_MANAGED_DB"
+            - name: MANAGED_DB_ENABLED
+              value: "$MANAGED_DB_ENABLED"
+            - name: MANAGED_DB_SECURITY_GROUP
+              value: "$MANAGED_DB_SECURITY_GROUP"
+            - name: MANAGED_DB_SUBNET_GROUP
+              value: "$MANAGED_DB_SUBNET_GROUP"
 
           image: "${FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent

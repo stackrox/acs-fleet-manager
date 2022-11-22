@@ -35,6 +35,9 @@ func main() {
 	glog.Infof("ClusterID: %s", config.ClusterID)
 	glog.Infof("RuntimePollPeriod: %s", config.RuntimePollPeriod.String())
 	glog.Infof("AuthType: %s", config.AuthType)
+	glog.Infof("ManagedDBEnabled: %t", config.ManagedDBEnabled)
+	glog.Infof("ManagedDBSecurityGroup: %s", config.ManagedDBSecurityGroup)
+	glog.Infof("ManagedDBSubnetGroup: %s", config.ManagedDBSubnetGroup)
 
 	runtime, err := runtime.NewRuntime(config, k8s.CreateClientOrDie())
 	if err != nil {

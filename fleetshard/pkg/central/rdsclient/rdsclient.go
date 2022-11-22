@@ -33,6 +33,8 @@ const (
 type Client struct {
 	centralDbSecretName string
 	centralNamespace    string
+	dbSecurityGroup     string
+	dbSubnetGroup       string
 
 	rdsClient *rds.RDS
 }
@@ -44,12 +46,12 @@ func (c *Client) EnsureDBProvisioned(ctx context.Context, client ctrlClient.Clie
 
 	err := c.ensureDBClusterCreated(ctx, client, clusterID)
 	if err != nil {
-		return "", fmt.Errorf("ensuring DB cluster %s exists", clusterID)
+		return "", fmt.Errorf("ensuring DB cluster %s exists: %v", clusterID, err)
 	}
 
 	err = c.ensureDBInstanceCreated(instanceID, clusterID)
 	if err != nil {
-		return "", fmt.Errorf("ensuring DB instance %s exists in cluster %s", instanceID, clusterID)
+		return "", fmt.Errorf("ensuring DB instance %s exists in cluster %s: %v", instanceID, clusterID, err)
 	}
 
 	return c.waitForInstanceToBeAvailable(instanceID, clusterID)
@@ -89,7 +91,7 @@ func (c *Client) ensureDBClusterCreated(ctx context.Context, client ctrlClient.C
 		if err != nil {
 			return fmt.Errorf("getting password for DB cluster: %v", err)
 		}
-		_, err = c.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, dbPassword))
+		_, err = c.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, dbPassword, c.dbSecurityGroup, c.dbSubnetGroup))
 		if err != nil {
 			return fmt.Errorf("creating DB cluster: %v", err)
 		}
@@ -188,7 +190,7 @@ func (c *Client) getDBPassword(ctx context.Context, client ctrlClient.Client, re
 }
 
 // NewClient initializes a new rdsclient.Client
-func NewClient(centralDbSecretName string, centralNamespace string) (*Client, error) {
+func NewClient(centralDbSecretName, centralNamespace, dbSecurityGroup, dbSubnetGroup string) (*Client, error) {
 	rdsClient, err := newRdsClient()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create RDS client, %v", err)
@@ -198,19 +200,20 @@ func NewClient(centralDbSecretName string, centralNamespace string) (*Client, er
 		centralDbSecretName: centralDbSecretName, // pragma: allowlist secret
 		centralNamespace:    centralNamespace,
 		rdsClient:           rdsClient,
+		dbSecurityGroup:     dbSecurityGroup,
+		dbSubnetGroup:       dbSubnetGroup,
 	}, nil
 }
 
-func newCreateCentralDBClusterInput(clusterID string, dbPassword string) *rds.CreateDBClusterInput {
+func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup string) *rds.CreateDBClusterInput {
 	return &rds.CreateDBClusterInput{
 		DBClusterIdentifier: aws.String(clusterID),
 		Engine:              aws.String(dbEngine),
 		EngineVersion:       aws.String(dbEngineVersion),
 		MasterUsername:      aws.String(dbUser),
 		MasterUserPassword:  aws.String(dbPassword),
-		// TODO: the security group needs to be created during the data plane terraforming, and made known to
-		// fleet-manager via a configuration parameter. I created this one in the AWS Console.
-		VpcSecurityGroupIds: aws.StringSlice([]string{"sg-04dcc23a03646041c"}),
+		VpcSecurityGroupIds: aws.StringSlice([]string{securityGroup}),
+		DBSubnetGroupName:   aws.String(subnetGroup),
 		ServerlessV2ScalingConfiguration: &rds.ServerlessV2ScalingConfiguration{
 			MinCapacity: aws.Float64(0.5),
 			MaxCapacity: aws.Float64(16),
