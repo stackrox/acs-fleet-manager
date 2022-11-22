@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-# This script builds and deploys the  Fleet Manager and Probe services. In order to
+# This script builds and deploys the Fleet Manager and Probe services. In order to
 # work, it needs the following variables defined in the CI/CD configuration of
 # the project:
 #
