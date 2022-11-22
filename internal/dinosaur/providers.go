@@ -74,7 +74,7 @@ func ServiceProviders() di.Option {
 		di.Provide(services.NewFleetshardOperatorAddon),
 		di.Provide(services.NewClusterPlacementStrategy),
 		di.Provide(services.NewDataPlaneClusterService, di.As(new(services.DataPlaneClusterService))),
-		di.Provide(services.NewDataPlaneDinosaurService, di.As(new(services.DataPlaneDinosaurService))),
+		di.Provide(services.NewDataPlaneCentralService, di.As(new(services.DataPlaneCentralService))),
 		di.Provide(handlers.NewAuthenticationBuilder),
 		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
 		di.Provide(routes.NewRouteLoader),

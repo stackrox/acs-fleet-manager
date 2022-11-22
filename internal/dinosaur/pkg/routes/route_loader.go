@@ -50,7 +50,7 @@ type options struct {
 	Observatorium            services.ObservatoriumService
 	IAM                      sso.IAMService
 	DataPlaneCluster         services.DataPlaneClusterService
-	DataPlaneDinosaurService services.DataPlaneDinosaurService
+	DataPlaneDinosaurService services.DataPlaneCentralService
 	AccountService           account.AccountService
 	AuthService              authorization.Authorization
 	DB                       *db.ConnectionFactory
