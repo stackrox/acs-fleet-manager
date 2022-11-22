@@ -26,9 +26,9 @@ init_chamber() {
     case $AWS_AUTH_HELPER in
         aws-saml)
             export AWS_PROFILE="saml"
-            ensure_tool_installed venv
+            ensure_tool_installed tools_venv
             # shellcheck source=/dev/null # The script may not exist
-            source "$GITROOT/bin/venv/bin/activate"
+            source "$GITROOT/bin/tools_venv/bin/activate"
             # ensure a valid kerberos ticket exist
             if ! klist -s >/dev/null 2>&1; then
                 log "Getting a Kerberos ticket"

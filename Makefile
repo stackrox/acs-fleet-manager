@@ -116,7 +116,7 @@ GINKGO_BIN := $(LOCAL_BIN_PATH)/ginkgo
 $(GINKGO_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/onsi/ginkgo/v2/ginkgo
 
-TOOLS_VENV_DIR := $(LOCAL_BIN_PATH)/venv
+TOOLS_VENV_DIR := $(LOCAL_BIN_PATH)/tools_venv
 $(TOOLS_VENV_DIR):
 	@set -e; \
 	python3 -m venv $(TOOLS_VENV_DIR); \
