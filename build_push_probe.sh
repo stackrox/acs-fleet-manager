@@ -15,15 +15,9 @@
 # limitations under the License.
 #
 
-# This script builds and deploys the Fleet Manager and Probe services. In order to
+# This script builds and deploys the Probe services. In order to
 # work, it needs the following variables defined in the CI/CD configuration of
 # the project:
-#
-# QUAY_USER - The name of the robot account used to push images to
-# 'quay.io', for example 'openshift-unified-hybrid-cloud+jenkins'.
-#
-# QUAY_TOKEN - The token of the robot account used to push images to
-# 'quay.io'.
 #
 # QUAY_PROBE_USER - The name of the robot account used to push images to
 # 'quay.io', for example 'openshift-unified-hybrid-cloud+jenkins'.
@@ -38,23 +32,12 @@
 VERSION=$(git rev-parse --short=7 HEAD)
 
 # Set image repository to default value if it is not passed via env
-IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/acs-fleet-manager}"
 PROBE_IMAGE_REPOSITORY="${QUAY_PROBE_IMAGE_REPOSITORY:-rhacs-eng/blackbox-monitoring-probe-service}"
 
 # Set the directory for docker configuration:
 DOCKER_CONFIG="${PWD}/.docker"
 
 # Log in to the image registry:
-if [ -z "${QUAY_USER}" ]; then
-  echo "The quay.io push user name hasn't been provided."
-  echo "Make sure to set the QUAY_USER environment variable."
-  exit 1
-fi
-if [ -z "${QUAY_TOKEN}" ]; then
-  echo "The quay.io push token hasn't been provided."
-  echo "Make sure to set the QUAY_TOKEN environment variable."
-  exit 1
-fi
 if [ -z "${QUAY_PROBE_USER}" ]; then
   echo "The probe service quay.io push user name hasn't been provided."
   echo "Make sure to set the QUAY_PROBE_USER environment variable."
@@ -69,47 +52,26 @@ fi
 # Set up the docker config directory
 mkdir -p "${DOCKER_CONFIG}"
 
-BRANCH="main"
-if [[ -n "$GITHUB_REF" ]]; then
-  BRANCH="$(echo "$GITHUB_REF" | awk -F/ '{print $NF}')"
-  echo "GITHUB_REF is defined. Set image tag to $BRANCH."
-elif [[ -n "$GIT_BRANCH" ]]; then
-  BRANCH="$(echo "$GIT_BRANCH" | awk -F/ '{print $NF}')"
-  echo "GIT_BRANCH is defined. Set image tag to $BRANCH."
-else
-  echo "No git branch env var found. Set image tag to $BRANCH."
-fi
-
 # Push the image:
-echo "Quay.io user and token are set, will push images to $IMAGE_REPOSITORY and $PROBE_IMAGE_REPOSITORY."
+echo "Quay.io user and token are set, will push images to $PROBE_IMAGE_REPOSITORY."
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_USER="${QUAY_USER}" \
-  QUAY_TOKEN="${QUAY_TOKEN}" \
   QUAY_PROBE_USER="${QUAY_PROBE_USER}" \
   QUAY_PROBE_TOKEN="${QUAY_PROBE_TOKEN}" \
   TAG="${VERSION}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="${IMAGE_REPOSITORY}" \
   probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
-  docker/login/fleet-manager \
-  image/push/fleet-manager \
   docker/login/probe \
   image/push/probe
 
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_USER="${QUAY_USER}" \
-  QUAY_TOKEN="${QUAY_TOKEN}" \
   QUAY_PROBE_USER="${QUAY_PROBE_USER}" \
   QUAY_PROBE_TOKEN="${QUAY_PROBE_TOKEN}" \
-  TAG="${BRANCH}" \
+  TAG="main" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="${IMAGE_REPOSITORY}" \
   probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
-  docker/login/fleet-manager \
-  image/push/fleet-manager \
   docker/login/probe \
   image/push/probe
