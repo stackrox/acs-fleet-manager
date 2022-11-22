@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	dbCreatingStatus  = "creating"
 	dbAvailableStatus = "available"
 
 	awsRegion       = "us-east-1" // TODO: this should not be hardcoded
@@ -161,7 +160,6 @@ func waitForInstanceToBeAvailable(rdsClient *rds.RDS, instanceID string, cluster
 
 		dbInstanceStatus := *result.DBInstances[0].DBInstanceStatus
 		if dbInstanceStatus == dbAvailableStatus {
-
 			clusterResult, err := rdsClient.DescribeDBClusters(dbClusterQuery)
 			if err != nil {
 				return "", fmt.Errorf("retrieving DB cluster description: %v", err)
@@ -173,11 +171,7 @@ func waitForInstanceToBeAvailable(rdsClient *rds.RDS, instanceID string, cluster
 			return connectionString, nil
 		}
 
-		// TODO: creating is not the only valid status
-		if dbInstanceStatus != dbCreatingStatus {
-			//TODO: cleanup
-			return "", fmt.Errorf("unexpected instance status: %s", dbInstanceStatus)
-		}
+		glog.Infof("RDS instance status: %s", dbInstanceStatus)
 		time.Sleep(10 * time.Second)
 	}
 }
@@ -215,12 +209,11 @@ func newCreateCentralDBClusterInput(clusterID string, dbPassword string) *rds.Cr
 			MaxCapacity: aws.Float64(16),
 		},
 		BackupRetentionPeriod: aws.Int64(30),
+		StorageEncrypted:      aws.Bool(true),
 
 		// TODO: The following are some extra parameters to consider
-		// AvailabilityZones: // TODO: should we have multiple AZs?
-		// DeletionProtection: // TODO: see if this useful
+		// AvailabilityZones: // TODO: determine the AZ in which the Central is running
 		// EnableCloudwatchLogsExports // TODO: enable
-		// StorageEncrypted // TODO: enable
 		// Tags // TODO: e.g. could add a tag that allows us to identify the associated Central
 		// PreferredBackupWindow
 		// PreferredMaintenanceWindow
