@@ -27,3 +27,5 @@ helm upgrade --install rhacs-probe \
 ```bash
 helm uninstall rhacs-probe --namespace rhacs-probe
 ```
+
+To remove every resource from the cluster, delete the namespace `rhacs-probe`.
