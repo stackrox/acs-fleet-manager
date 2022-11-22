@@ -12,6 +12,7 @@ import (
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/rdsclient"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -193,7 +194,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			return nil, errors.Wrap(err, "unable to ensure that DB secret exists")
 		}
 
-		dbConnectionString, err := ensureDBProvisioned(ctx, r.client, remoteCentralNamespace)
+		dbConnectionString, err := rdsclient.EnsureDBProvisioned(ctx, r.client, remoteCentralNamespace)
 		if err != nil {
 			return nil, errors.Wrap(err, "provisioning RDS DB")
 		}
@@ -350,9 +351,9 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	globalDeleted = globalDeleted && centralDeleted
 
 	if r.enableManagedDB {
-		dbDeleted, err := ensureDBDeprovisioned(central.GetNamespace())
+		dbDeleted, err := rdsclient.EnsureDBDeprovisioned(central.GetNamespace())
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("provisioning DB: %v", err)
 		}
 		globalDeleted = globalDeleted && dbDeleted
 

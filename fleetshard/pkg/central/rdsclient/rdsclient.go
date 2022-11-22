@@ -1,4 +1,5 @@
-package reconciler
+// Package rdsclient provides functionality to provision and deprovision RDS DB instances on AWS
+package rdsclient
 
 import (
 	"context"
@@ -22,9 +23,12 @@ const (
 	dbEngineVersion = "13.7"
 	dbInstanceClass = "db.serverless"
 	dbUser          = "rhacs_master"
+
+	centralDbSecretName = "central-db-password" // pragma: allowlist secret
 )
 
-func ensureDBProvisioned(ctx context.Context, client ctrlClient.Client, remoteCentralNamespace string) (string, error) {
+// EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
+func EnsureDBProvisioned(ctx context.Context, client ctrlClient.Client, remoteCentralNamespace string) (string, error) {
 	rdsClient, err := newRdsClient()
 	if err != nil {
 		return "", fmt.Errorf("unable to create RDS client, %v", err)
@@ -46,7 +50,9 @@ func ensureDBProvisioned(ctx context.Context, client ctrlClient.Client, remoteCe
 	return waitForInstanceToBeAvailable(rdsClient, instanceID, clusterID)
 }
 
-func ensureDBDeprovisioned(remoteCentralNamespace string) (bool, error) {
+// EnsureDBDeprovisioned is a function that initiates the deprovisioning of the RDS database of a Central
+// Unlike EnsureDBProvisioned, this function does not block until the DB is deprovisioned
+func EnsureDBDeprovisioned(remoteCentralNamespace string) (bool, error) {
 	rdsClient, err := newRdsClient()
 	if err != nil {
 		return false, fmt.Errorf("unable to create RDS client, %v", err)
