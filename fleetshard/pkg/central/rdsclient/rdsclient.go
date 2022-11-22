@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
@@ -18,61 +19,60 @@ import (
 const (
 	dbAvailableStatus = "available"
 
-	awsRegion       = "us-east-1" // TODO: this should not be hardcoded
-	dbEngine        = "aurora-postgresql"
-	dbEngineVersion = "13.7"
-	dbInstanceClass = "db.serverless"
-	dbUser          = "rhacs_master"
-
-	centralDbSecretName = "central-db-password" // pragma: allowlist secret
+	awsRegion        = "us-east-1" // TODO: this should not be hardcoded
+	dbEngine         = "aurora-postgresql"
+	dbEngineVersion  = "13.7"
+	dbInstanceClass  = "db.serverless"
+	dbUser           = "rhacs_master"
+	dbInstanceSuffix = "-db-instance"
+	dbClusterSuffix  = "-db-cluster"
 )
 
+// Client is an AWS RDS client tied to one Central instance. It provisions and deprovisions databases
+// for the Central.
+type Client struct {
+	centralDbSecretName string
+	centralNamespace    string
+
+	rdsClient *rds.RDS
+}
+
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
-func EnsureDBProvisioned(ctx context.Context, client ctrlClient.Client, remoteCentralNamespace string) (string, error) {
-	rdsClient, err := newRdsClient()
-	if err != nil {
-		return "", fmt.Errorf("unable to create RDS client, %v", err)
-	}
+func (c *Client) EnsureDBProvisioned(ctx context.Context, client ctrlClient.Client) (string, error) {
+	clusterID := c.centralNamespace + dbClusterSuffix
+	instanceID := c.centralNamespace + dbInstanceSuffix
 
-	clusterID := remoteCentralNamespace + "-db-cluster"
-	instanceID := remoteCentralNamespace + "-db-instance"
-
-	err = ensureDBClusterCreated(ctx, client, rdsClient, clusterID, remoteCentralNamespace)
+	err := c.ensureDBClusterCreated(ctx, client, clusterID)
 	if err != nil {
 		return "", fmt.Errorf("ensuring DB cluster %s exists", clusterID)
 	}
 
-	err = ensureDBInstanceCreated(rdsClient, instanceID, clusterID)
+	err = c.ensureDBInstanceCreated(instanceID, clusterID)
 	if err != nil {
 		return "", fmt.Errorf("ensuring DB instance %s exists in cluster %s", instanceID, clusterID)
 	}
 
-	return waitForInstanceToBeAvailable(rdsClient, instanceID, clusterID)
+	return c.waitForInstanceToBeAvailable(instanceID, clusterID)
 }
 
 // EnsureDBDeprovisioned is a function that initiates the deprovisioning of the RDS database of a Central
 // Unlike EnsureDBProvisioned, this function does not block until the DB is deprovisioned
-func EnsureDBDeprovisioned(remoteCentralNamespace string) (bool, error) {
-	rdsClient, err := newRdsClient()
-	if err != nil {
-		return false, fmt.Errorf("unable to create RDS client, %v", err)
-	}
-
-	clusterID := remoteCentralNamespace + "-db-cluster"
-	instanceID := remoteCentralNamespace + "-db-instance"
+func (c *Client) EnsureDBDeprovisioned() (bool, error) {
+	clusterID := c.centralNamespace + dbClusterSuffix
+	instanceID := c.centralNamespace + dbInstanceSuffix
 
 	//TODO: do not skip taking a final DB snapshot
-	if instanceExists(rdsClient, instanceID) {
+	if c.instanceExists(instanceID) {
 		//TODO: don't delete if state is "deleting"
-		_, err = rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
+		_, err := c.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
 		if err != nil {
 			return false, fmt.Errorf("deleting DB instance: %v", err)
 		}
 	}
 
-	if clusterExists(rdsClient, clusterID) {
+	if c.clusterExists(clusterID) {
 		//TODO: don't delete if state is "deleting"
-		_, err = rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
+		_, err := c.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
 		if err != nil {
 			return false, fmt.Errorf("deleting DB cluster: %v", err)
 		}
@@ -81,28 +81,15 @@ func EnsureDBDeprovisioned(remoteCentralNamespace string) (bool, error) {
 	return true, nil
 }
 
-func newRdsClient() (*rds.RDS, error) {
-	cfg := &aws.Config{
-		Region: aws.String(awsRegion),
-	}
-
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create session, %v", err)
-	}
-
-	return rds.New(sess), nil
-}
-
-func ensureDBClusterCreated(ctx context.Context, client ctrlClient.Client, rdsClient *rds.RDS, clusterID string, remoteCentralNamespace string) error {
-	if !clusterExists(rdsClient, clusterID) {
+func (c *Client) ensureDBClusterCreated(ctx context.Context, client ctrlClient.Client, clusterID string) error {
+	if !c.clusterExists(clusterID) {
 		// cluster does not exist, create it
 		glog.Infof("Provisioning RDS database cluster.")
-		dbPassword, err := getDBPassword(ctx, client, remoteCentralNamespace)
+		dbPassword, err := c.getDBPassword(ctx, client, c.centralNamespace)
 		if err != nil {
 			return fmt.Errorf("getting password for DB cluster: %v", err)
 		}
-		_, err = rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, dbPassword))
+		_, err = c.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, dbPassword))
 		if err != nil {
 			return fmt.Errorf("creating DB cluster: %v", err)
 		}
@@ -111,11 +98,11 @@ func ensureDBClusterCreated(ctx context.Context, client ctrlClient.Client, rdsCl
 	return nil
 }
 
-func ensureDBInstanceCreated(rdsClient *rds.RDS, instanceID string, clusterID string) error {
-	if !instanceExists(rdsClient, instanceID) {
+func (c *Client) ensureDBInstanceCreated(instanceID string, clusterID string) error {
+	if !c.instanceExists(instanceID) {
 		// instance does not exist, create it
 		glog.Infof("Provisioning RDS database instance.")
-		_, err := rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID))
+		_, err := c.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID))
 		if err != nil {
 			// TODO: delete cluster
 			return fmt.Errorf("creating DB instance: %v", err)
@@ -125,26 +112,26 @@ func ensureDBInstanceCreated(rdsClient *rds.RDS, instanceID string, clusterID st
 	return nil
 }
 
-func clusterExists(rdsClient *rds.RDS, clusterID string) bool {
+func (c *Client) clusterExists(clusterID string) bool {
 	dbClusterQuery := &rds.DescribeDBClustersInput{
 		DBClusterIdentifier: aws.String(clusterID),
 	}
 
-	_, err := rdsClient.DescribeDBClusters(dbClusterQuery)
+	_, err := c.rdsClient.DescribeDBClusters(dbClusterQuery)
 	return err == nil
 }
 
-func instanceExists(rdsClient *rds.RDS, instanceID string) bool {
+func (c *Client) instanceExists(instanceID string) bool {
 	dbInstanceQuery := &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(instanceID),
 		//TODO: add cluster Filter
 	}
 
-	_, err := rdsClient.DescribeDBInstances(dbInstanceQuery)
+	_, err := c.rdsClient.DescribeDBInstances(dbInstanceQuery)
 	return err == nil
 }
 
-func waitForInstanceToBeAvailable(rdsClient *rds.RDS, instanceID string, clusterID string) (string, error) {
+func (c *Client) waitForInstanceToBeAvailable(instanceID string, clusterID string) (string, error) {
 	dbInstanceQuery := &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(instanceID),
 		//TODO: add cluster Filter
@@ -155,7 +142,7 @@ func waitForInstanceToBeAvailable(rdsClient *rds.RDS, instanceID string, cluster
 	}
 
 	for {
-		result, err := rdsClient.DescribeDBInstances(dbInstanceQuery)
+		result, err := c.rdsClient.DescribeDBInstances(dbInstanceQuery)
 		if err != nil {
 			return "", fmt.Errorf("retrieving DB instance state: %v", err)
 		}
@@ -166,7 +153,7 @@ func waitForInstanceToBeAvailable(rdsClient *rds.RDS, instanceID string, cluster
 
 		dbInstanceStatus := *result.DBInstances[0].DBInstanceStatus
 		if dbInstanceStatus == dbAvailableStatus {
-			clusterResult, err := rdsClient.DescribeDBClusters(dbClusterQuery)
+			clusterResult, err := c.rdsClient.DescribeDBClusters(dbClusterQuery)
 			if err != nil {
 				return "", fmt.Errorf("retrieving DB cluster description: %v", err)
 			}
@@ -182,13 +169,13 @@ func waitForInstanceToBeAvailable(rdsClient *rds.RDS, instanceID string, cluster
 	}
 }
 
-func getDBPassword(ctx context.Context, client ctrlClient.Client, remoteCentralNamespace string) (string, error) {
+func (c *Client) getDBPassword(ctx context.Context, client ctrlClient.Client, remoteCentralNamespace string) (string, error) {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: centralDbSecretName,
+			Name: c.centralDbSecretName,
 		},
 	}
-	err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: c.centralDbSecretName}, secret)
 	if err != nil {
 		return "", fmt.Errorf("getting Central DB password from secret: %v", err)
 	}
@@ -198,6 +185,20 @@ func getDBPassword(ctx context.Context, client ctrlClient.Client, remoteCentralN
 	}
 
 	return "", fmt.Errorf("central DB secret does not contain password field: %v", err)
+}
+
+// NewClient initializes a new rdsclient.Client
+func NewClient(centralDbSecretName string, centralNamespace string) (*Client, error) {
+	rdsClient, err := newRdsClient()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create RDS client, %v", err)
+	}
+
+	return &Client{
+		centralDbSecretName: centralDbSecretName, // pragma: allowlist secret
+		centralNamespace:    centralNamespace,
+		rdsClient:           rdsClient,
+	}, nil
 }
 
 func newCreateCentralDBClusterInput(clusterID string, dbPassword string) *rds.CreateDBClusterInput {
@@ -248,4 +249,17 @@ func newDeleteCentralDBClusterInput(clusterID string, skipFinalSnapshot bool) *r
 		DBClusterIdentifier: aws.String(clusterID),
 		SkipFinalSnapshot:   aws.Bool(skipFinalSnapshot),
 	}
+}
+
+func newRdsClient() (*rds.RDS, error) {
+	cfg := &aws.Config{
+		Region: aws.String(awsRegion),
+	}
+
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create session, %v", err)
+	}
+
+	return rds.New(sess), nil
 }

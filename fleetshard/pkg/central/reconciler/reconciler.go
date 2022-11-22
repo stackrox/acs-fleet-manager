@@ -194,7 +194,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			return nil, errors.Wrap(err, "unable to ensure that DB secret exists")
 		}
 
-		dbConnectionString, err := rdsclient.EnsureDBProvisioned(ctx, r.client, remoteCentralNamespace)
+		rdsClient, err := rdsclient.NewClient(centralDbSecretName, remoteCentralNamespace)
+		if err != nil {
+			return nil, fmt.Errorf("creating AWS RDS client: %v", err)
+		}
+		dbConnectionString, err := rdsClient.EnsureDBProvisioned(ctx, r.client)
 		if err != nil {
 			return nil, errors.Wrap(err, "provisioning RDS DB")
 		}
@@ -351,7 +355,11 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	globalDeleted = globalDeleted && centralDeleted
 
 	if r.enableManagedDB {
-		dbDeleted, err := rdsclient.EnsureDBDeprovisioned(central.GetNamespace())
+		rdsClient, err := rdsclient.NewClient(centralDbSecretName, central.GetNamespace())
+		if err != nil {
+			return false, fmt.Errorf("creating AWS RDS client: %v", err)
+		}
+		dbDeleted, err := rdsClient.EnsureDBDeprovisioned()
 		if err != nil {
 			return false, fmt.Errorf("provisioning DB: %v", err)
 		}
