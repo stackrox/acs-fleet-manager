@@ -15,9 +15,11 @@
 # limitations under the License.
 #
 
-# This script builds and deploys the Dinosaur Service Fleet Manager. In order to
-# work, it needs the following variables defined in the CI/CD configuration of
-# the project:
+# =====================================================================================================================
+# This script builds and pushes the ACS Fleet Manager service docker image on AppSRE JenkinsCI.
+# You can find CI configuration in app-interface repository:
+# https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/acs-fleet-manager/cicd/jobs.yaml
+# In order to work, it needs the following variables defined in the CI/CD configuration of the project:
 #
 # QUAY_USER - The name of the robot account used to push images to
 # 'quay.io', for example 'openshift-unified-hybrid-cloud+jenkins'.
@@ -25,21 +27,15 @@
 # QUAY_TOKEN - The token of the robot account used to push images to
 # 'quay.io'.
 #
-# QUAY_PROBE_USER - The name of the robot account used to push images to
-# 'quay.io', for example 'openshift-unified-hybrid-cloud+jenkins'.
-#
-# QUAY_PROBE_TOKEN - The token of the robot account used to push images to
-# 'quay.io'.
-#
 # The machines that run this script need to have access to internet, so that
 # the built images can be pushed to quay.io.
+# =====================================================================================================================
 
 # The version should be a 7-char hash from git. This is what the deployment process in app-interface expects.
 VERSION=$(git rev-parse --short=7 HEAD)
 
 # Set image repository to default value if it is not passed via env
 IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/acs-fleet-manager}"
-PROBE_IMAGE_REPOSITORY="${QUAY_PROBE_IMAGE_REPOSITORY:-rhacs-eng/blackbox-monitoring-probe-service}"
 
 # Set the directory for docker configuration:
 DOCKER_CONFIG="${PWD}/.docker"
@@ -53,16 +49,6 @@ fi
 if [ -z "${QUAY_TOKEN}" ]; then
   echo "The quay.io push token hasn't been provided."
   echo "Make sure to set the QUAY_TOKEN environment variable."
-  exit 1
-fi
-if [ -z "${QUAY_PROBE_USER}" ]; then
-  echo "The probe service quay.io push user name hasn't been provided."
-  echo "Make sure to set the QUAY_PROBE_USER environment variable."
-  exit 1
-fi
-if [ -z "${QUAY_PROBE_TOKEN}" ]; then
-  echo "The probe service quay.io push token hasn't been provided."
-  echo "Make sure to set the QUAY_PROBE_TOKEN environment variable."
   exit 1
 fi
 
@@ -81,35 +67,25 @@ else
 fi
 
 # Push the image:
-echo "Quay.io user and token are set, will push images to $IMAGE_REPOSITORY and $PROBE_IMAGE_REPOSITORY."
+echo "Quay.io user and token is set, will push images to $IMAGE_REPOSITORY"
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
   QUAY_TOKEN="${QUAY_TOKEN}" \
-  QUAY_PROBE_USER="${QUAY_PROBE_USER}" \
-  QUAY_PROBE_TOKEN="${QUAY_PROBE_TOKEN}" \
   TAG="${VERSION}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
   image_repository="${IMAGE_REPOSITORY}" \
-  probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
   docker/login/fleet-manager \
-  image/push/fleet-manager \
-  docker/login/probe \
-  image/push/probe
+  image/push/fleet-manager
 
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
   QUAY_TOKEN="${QUAY_TOKEN}" \
-  QUAY_PROBE_USER="${QUAY_PROBE_USER}" \
-  QUAY_PROBE_TOKEN="${QUAY_PROBE_TOKEN}" \
   TAG="${BRANCH}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
   image_repository="${IMAGE_REPOSITORY}" \
-  probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
   docker/login/fleet-manager \
-  image/push/fleet-manager \
-  docker/login/probe \
-  image/push/probe
+  image/push/fleet-manager
