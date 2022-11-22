@@ -859,9 +859,11 @@ full-image-tag:
 	@echo "$(IMAGE_NAME):$(image_tag)"
 .PHONY: full-image-tag
 
-REVISION ?= 1
 release_date="$(shell date '+%Y-%m-%d')"
 release_commit="$(shell git rev-parse --short=7 HEAD)"
+tag_count="$(shell git tag -l $(release_date)* | wc -l)"
+start_rev=1
+rev="$(shell expr $(tag_count) + $(start_rev))"
 release-version:
-	@echo "$(release_date).$(REVISION).$(release_commit)"
+	@echo "$(release_date).$(rev).$(release_commit)"
 .PHONY: release-version
