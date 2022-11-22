@@ -76,8 +76,8 @@ make \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
   image_repository="${IMAGE_REPOSITORY}" \
-  docker/login \
-  image/push
+  docker/login/fleet-manager \
+  image/push/fleet-manager
 
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
