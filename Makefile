@@ -867,3 +867,13 @@ rev="$(shell expr $(tag_count) + $(start_rev))"
 release-version:
 	@echo "$(release_date).$(rev).$(release_commit)"
 .PHONY: release-version
+
+
+create-release-branch:
+	git checkout main
+	git fetch origin
+	git pull origin main
+	git tag $(make release-version)
+	git checkout production
+	git rebase main
+.PHONY: create-release-branch
