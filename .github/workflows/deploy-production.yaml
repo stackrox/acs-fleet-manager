@@ -1,9 +1,9 @@
-name: Deploy Stage Environment
+name: Deploy Production Environment
 
 on:
   push:
     branches:
-      - main
+      - production
 
 jobs:
   cancel:
@@ -16,13 +16,13 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
   terraform:
-    name: Re-terraform stage clusters
+    name: Re-terraform production clusters
     needs: cancel
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-    environment: stage
+    environment: production
     steps:
       - name: Set up Go 1.18
         uses: actions/setup-go@v3
@@ -35,22 +35,22 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
-      - name: Run terraforming on THE stage cluster
+      - name: Run terraforming on THE production cluster
         working-directory: ./dp-terraform/helm/rhacs-terraform
         env:
           USE_AWS_VAULT: false
         run: |
           set -euo pipefail
-          ./terraform_cluster.sh stage acs-stage-dp-01
+          ./terraform_cluster.sh prod acs-prod-dp-01
 
   deploy-probe:
-    name: Deploy blackbox monitoring probe service to stage
+    name: Deploy blackbox monitoring probe service to production
     needs: cancel
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-    environment: stage
+    environment: production
     steps:
       - name: Set up Go 1.18
         uses: actions/setup-go@v3
@@ -69,4 +69,4 @@ jobs:
           USE_AWS_VAULT: false
         run: |
           set -euo pipefail
-          ./deploy.sh stage acs-stage-dp-01
+          ./deploy.sh prod acs-prod-dp-01
