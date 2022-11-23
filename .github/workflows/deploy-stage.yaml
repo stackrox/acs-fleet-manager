@@ -1,4 +1,4 @@
-name: Deploy Stage Environment
+name: Deploy Stage Env
 
 on:
   push:
