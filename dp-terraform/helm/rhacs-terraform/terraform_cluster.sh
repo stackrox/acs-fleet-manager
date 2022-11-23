@@ -37,7 +37,7 @@ case $ENVIRONMENT in
   prod)
     FM_ENDPOINT="https://api.openshift.com"
 
-    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:3060ea1"
+    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:1cf5fce"
 
     OBSERVABILITY_GITHUB_TAG="b864d5f155b5455bba78eb7b82bc4bf4190852c7"  # pragma: allowlist secret
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
