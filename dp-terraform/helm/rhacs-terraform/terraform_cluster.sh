@@ -28,7 +28,7 @@ case $ENVIRONMENT in
   stage)
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
 
-    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:c0f51b5"
+    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:1cf5fce"
 
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
