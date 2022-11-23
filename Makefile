@@ -861,7 +861,7 @@ full-image-tag:
 
 release_date="$(shell date '+%Y-%m-%d')"
 release_commit="$(shell git rev-parse --short=7 HEAD)"
-tag_count="$(shell git tag -l $(release_date)* | wc -l)"
+tag_count="$(shell git tag -l $(release_date)* | wc -l | xargs)" # use xargs to remove unnecessary whitespace
 start_rev=1
 rev="$(shell expr $(tag_count) + $(start_rev))"
 release-version:
