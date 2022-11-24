@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	awscredentials "github.com/aws/aws-sdk-go/aws/credentials"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -38,6 +40,16 @@ type Client struct {
 	dbSubnetGroup       string
 
 	rdsClient *rds.RDS
+}
+
+// AWSCredentials stores the credentials for the AWS RDS API.
+type AWSCredentials struct {
+	// AccessKeyID is the AWS access key identifier.
+	AccessKeyID string
+	// SecretAccessKey is the AWS secret access key.
+	SecretAccessKey string
+	// SessionToken is a token required for temporary security credentials retrieved via STS.
+	SessionToken string
 }
 
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
@@ -229,8 +241,8 @@ func (c *Client) getDBPassword(ctx context.Context, client ctrlClient.Client, re
 }
 
 // NewClient initializes a new rdsclient.Client
-func NewClient(centralDbSecretName, centralNamespace, dbSecurityGroup, dbSubnetGroup string) (*Client, error) {
-	rdsClient, err := newRdsClient()
+func NewClient(centralDbSecretName, centralNamespace, dbSecurityGroup, dbSubnetGroup string, credentials AWSCredentials) (*Client, error) {
+	rdsClient, err := newRdsClient(credentials.AccessKeyID, credentials.SecretAccessKey, credentials.SessionToken)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create RDS client, %v", err)
 	}
@@ -293,9 +305,13 @@ func newDeleteCentralDBClusterInput(clusterID string, skipFinalSnapshot bool) *r
 	}
 }
 
-func newRdsClient() (*rds.RDS, error) {
+func newRdsClient(accessKeyID, secretAccessKey, sessionToken string) (*rds.RDS, error) {
 	cfg := &aws.Config{
 		Region: aws.String(awsRegion),
+		Credentials: awscredentials.NewStaticCredentials(
+			accessKeyID,
+			secretAccessKey,
+			sessionToken),
 	}
 
 	sess, err := session.NewSession(cfg)

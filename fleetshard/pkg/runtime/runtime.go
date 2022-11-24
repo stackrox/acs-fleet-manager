@@ -90,12 +90,15 @@ func (r *Runtime) Start() error {
 	routesAvailable := r.routesAvailable()
 
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
-		UseRoutes:              routesAvailable,
-		WantsAuthProvider:      r.config.CreateAuthProvider,
-		EgressProxyImage:       r.config.EgressProxyImage,
-		ManagedDBEnabled:       r.config.ManagedDBEnabled,
-		ManagedDBSecurityGroup: r.config.ManagedDBSecurityGroup,
-		ManagedDBSubnetGroup:   r.config.ManagedDBSubnetGroup,
+		UseRoutes:                routesAvailable,
+		WantsAuthProvider:        r.config.CreateAuthProvider,
+		EgressProxyImage:         r.config.EgressProxyImage,
+		ManagedDBEnabled:         r.config.ManagedDBEnabled,
+		ManagedDBSecurityGroup:   r.config.ManagedDBSecurityGroup,
+		ManagedDBSubnetGroup:     r.config.ManagedDBSubnetGroup,
+		ManagedDBAccessKeyID:     r.config.ManagedDBAccessKeyID,
+		ManagedDBSecretAccessKey: r.config.ManagedDBSecretAccessKey, // pragma: allowlist secret
+		ManagedDBSessionToken:    r.config.ManagedDBSessionToken,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
