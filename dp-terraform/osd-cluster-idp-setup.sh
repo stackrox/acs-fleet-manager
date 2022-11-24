@@ -29,6 +29,11 @@ if [[ "$AWS_AUTH_HELPER" == "aws-vault" ]]; then
     export AWS_PROFILE="$ENVIRONMENT"
 fi
 
+save_cluster_parameter() {
+    echo "Saving parameter '/cluster-${CLUSTER_NAME}/$1' in AWS parameter store..."
+    run_chamber write "cluster-$CLUSTER_NAME" "$1" "$2" --skip-unchanged
+}
+
 export_cluster_environment() {
     init_chamber
     load_external_config "ocm" OCM_
@@ -38,14 +43,12 @@ export_cluster_environment() {
         echo "Cluster admin user is missing from Parameter Store."
         echo "Enter cluster admin username:"
         read -r ADMIN_USERNAME
-        echo "Saving cluster admin username as parameter '/cluster-${CLUSTER_NAME}/admin_username' in AWS parameter store..."
-        run_chamber write "cluster-$CLUSTER_NAME" "ADMIN_USERNAME" "$ADMIN_USERNAME" --skip-unchanged
+        save_cluster_parameter "ADMIN_USERNAME" "$ADMIN_USERNAME"
     fi
     if [[ -z "${ADMIN_PASSWORD:-}" ]]; then
         echo "Enter cluster admin password:"
         read -r -s ADMIN_PASSWORD
-        echo "Saving cluster admin username as parameter '/cluster-${CLUSTER_NAME}/admin_password' in AWS parameter store..."
-        run_chamber write "cluster-$CLUSTER_NAME" "ADMIN_PASSWORD" "$ADMIN_PASSWORD" --skip-unchanged
+        save_cluster_parameter "ADMIN_PASSWORD" "$ADMIN_PASSWORD"
     fi
 }
 
@@ -178,10 +181,9 @@ metadata:
 type: kubernetes.io/service-account-token
 END
 
-echo "Saving cluster id as parameter '/cluster-${CLUSTER_NAME}/id' in AWS parameter store..."
-run_chamber write "cluster-$CLUSTER_NAME" "ID" "$CLUSTER_ID" --skip-unchanged
-echo "Saving cluster url as parameter '/cluster-${CLUSTER_NAME}/url' in AWS parameter store..."
-run_chamber write "cluster-$CLUSTER_NAME" "URL" "$CLUSTER_URL" --skip-unchanged
+save_cluster_parameter "ID" "$CLUSTER_ID"
+save_cluster_parameter "URL" "$CLUSTER_URL"
+
 
 echo "Polling for token to be provisioned."
 attempt=0
@@ -190,8 +192,7 @@ do
   attempt=$((attempt+1))
   ROBOT_TOKEN="$(oc get secret "${ROBOT_TOKEN_RESOURCE}" -n "$ROBOT_NS" -o json | jq -r 'if (has("data") and (.data|has("token"))) then (.data.token|@base64d) else "" end')"
   if [[ -n $ROBOT_TOKEN ]]; then
-    echo "Saving robot token as parameter '/cluster-${CLUSTER_NAME}/robot_oc_token' in AWS parameter store..."
-    run_chamber write "cluster-$CLUSTER_NAME" "ROBOT_OC_TOKEN" "$ROBOT_TOKEN" --skip-unchanged
+    save_cluster_parameter "ROBOT_OC_TOKEN" "$ROBOT_TOKEN"
     break
   fi
   if [[ $attempt -gt 30 ]]; then
