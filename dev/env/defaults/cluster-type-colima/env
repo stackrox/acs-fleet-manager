@@ -11,4 +11,4 @@ else
 fi
 
 export ENABLE_EXTERNAL_CONFIG_DEFAULT="true"
-export USE_AWS_VAULT_DEFAULT="true"
+export AWS_AUTH_HELPER_DEFAULT="aws-vault"

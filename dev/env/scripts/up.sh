@@ -30,7 +30,7 @@ Namespace: ${ACSMS_NAMESPACE}
 Inheriting ImagePullSecrets for Quay.io: ${INHERIT_IMAGEPULLSECRETS}
 Installing RHACS Operator: ${INSTALL_OPERATOR}
 Enable External Config: ${ENABLE_EXTERNAL_CONFIG}
-Use AWS Vault: ${USE_AWS_VAULT}
+AWS Auth Helper: ${AWS_AUTH_HELPER:-none}
 Debugging Mode: ${DEBUG_PODS}
 
 EOF

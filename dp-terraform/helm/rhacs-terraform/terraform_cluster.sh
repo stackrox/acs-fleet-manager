@@ -16,7 +16,10 @@ fi
 ENVIRONMENT=$1
 CLUSTER_NAME=$2
 
-export AWS_PROFILE="$ENVIRONMENT"
+export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-saml}"
+if [[ "$AWS_AUTH_HELPER" == "aws-vault" ]]; then
+    export AWS_PROFILE="$ENVIRONMENT"
+fi
 
 init_chamber
 

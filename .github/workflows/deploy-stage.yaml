@@ -38,7 +38,7 @@ jobs:
       - name: Run terraforming on THE stage cluster
         working-directory: ./dp-terraform/helm/rhacs-terraform
         env:
-          USE_AWS_VAULT: false
+          AWS_AUTH_HELPER: none # credentials are populated by the above action
         run: |
           set -euo pipefail
           ./terraform_cluster.sh stage acs-stage-dp-01

@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 
 GITROOT="${GITROOT:-"$(git rev-parse --show-toplevel)"}"
-USE_AWS_VAULT="${USE_AWS_VAULT:-true}"
 ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-true}"
 
-# shellcheck source=/dev/null
+# shellcheck source=scripts/lib/log.sh
 source "$GITROOT/scripts/lib/log.sh"
 
 export AWS_REGION="${AWS_REGION:-"us-east-1"}"
-export AWS_PROFILE=${AWS_PROFILE:-"dev"}
 
 ensure_tool_installed() {
     make -s -C "$GITROOT" "$GITROOT/bin/$1"
@@ -24,13 +22,41 @@ init_chamber() {
         return
     fi
 
-    if [[ "$USE_AWS_VAULT" = true ]]; then
-        ensure_tool_installed aws-vault
-        ensure_aws_profile_exists
-    elif [[ -z "${AWS_SESSION_TOKEN:-}" ]] || [[ -z "${AWS_ACCESS_KEY_ID:-}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
-        die "Error: Unable to resolve one of the following environment variables: AWS_SESSION_TOKEN, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY.
-            Please set them or use aws-vault by setting USE_AWS_VAULT=true."
-    fi
+    AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-none}"
+    case $AWS_AUTH_HELPER in
+        aws-saml)
+            export AWS_PROFILE="saml"
+            ensure_tool_installed tools_venv
+            # shellcheck source=/dev/null # The script may not exist
+            source "$GITROOT/bin/tools_venv/bin/activate"
+            # ensure a valid kerberos ticket exist
+            if ! klist -s >/dev/null 2>&1; then
+                log "Getting a Kerberos ticket"
+                kinit
+            fi
+            aws-saml.py # TODO(ROX-12222): Skip if existing token has not yet expired
+        ;;
+        aws-vault)
+            export AWS_PROFILE="${AWS_PROFILE:-dev}"
+            ensure_tool_installed aws-vault
+            ensure_aws_profile_exists
+        ;;
+        none)
+            if [[ -z "${AWS_SESSION_TOKEN:-}" ]] || [[ -z "${AWS_ACCESS_KEY_ID:-}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
+                auth_init_error "Unable to resolve the authentication method"
+            fi
+        ;;
+        *)
+            auth_init_error "Unsupported AWS_AUTH_HELPER=$AWS_AUTH_HELPER"
+        ;;
+    esac
+}
+
+auth_init_error() {
+    die "Error: $1. Choose one of the following options:
+           1) SAML (export AWS_AUTH_HELPER=aws-saml)
+           2) aws-vault (export AWS_AUTH_HELPER=aws-vault)
+           3) Unset AWS_AUTH_HELPER and export AWS_SESSION_TOKEN, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY environment variables"
 }
 
 ensure_aws_profile_exists() {
@@ -74,7 +100,7 @@ run_chamber() {
         # External config disabled. Using 'null' backend for chamber
         args=("-b" "null" "${args[@]}")
     fi
-    if [[ "$USE_AWS_VAULT" = true ]]; then
+    if [[ "$AWS_AUTH_HELPER" == "aws-vault" ]]; then
         aws-vault exec "${AWS_PROFILE}" -- chamber "${args[@]}"
     else
         chamber "${args[@]}"
