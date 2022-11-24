@@ -17,79 +17,79 @@ var _ API = &APIMock{}
 
 // APIMock is a mock implementation of API.
 //
-// 	func TestSomethingThatUsesAPI(t *testing.T) {
+//	func TestSomethingThatUsesAPI(t *testing.T) {
 //
-// 		// make and configure a mocked API
-// 		mockedAPI := &APIMock{
-// 			AlertManagersFunc: func(ctx context.Context) (prom_v1.AlertManagersResult, error) {
-// 				panic("mock out the AlertManagers method")
-// 			},
-// 			AlertsFunc: func(ctx context.Context) (prom_v1.AlertsResult, error) {
-// 				panic("mock out the Alerts method")
-// 			},
-// 			BuildinfoFunc: func(ctx context.Context) (prom_v1.BuildinfoResult, error) {
-// 				panic("mock out the Buildinfo method")
-// 			},
-// 			CleanTombstonesFunc: func(ctx context.Context) error {
-// 				panic("mock out the CleanTombstones method")
-// 			},
-// 			ConfigFunc: func(ctx context.Context) (prom_v1.ConfigResult, error) {
-// 				panic("mock out the Config method")
-// 			},
-// 			DeleteSeriesFunc: func(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) error {
-// 				panic("mock out the DeleteSeries method")
-// 			},
-// 			FlagsFunc: func(ctx context.Context) (prom_v1.FlagsResult, error) {
-// 				panic("mock out the Flags method")
-// 			},
-// 			LabelNamesFunc: func(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]string, prom_v1.Warnings, error) {
-// 				panic("mock out the LabelNames method")
-// 			},
-// 			LabelValuesFunc: func(ctx context.Context, label string, matches []string, startTime time.Time, endTime time.Time) (pModel.LabelValues, prom_v1.Warnings, error) {
-// 				panic("mock out the LabelValues method")
-// 			},
-// 			MetadataFunc: func(ctx context.Context, metric string, limit string) (map[string][]prom_v1.Metadata, error) {
-// 				panic("mock out the Metadata method")
-// 			},
-// 			QueryFunc: func(ctx context.Context, query string, ts time.Time, opts ...prom_v1.Option) (pModel.Value, prom_v1.Warnings, error) {
-// 				panic("mock out the Query method")
-// 			},
-// 			QueryExemplarsFunc: func(ctx context.Context, query string, startTime time.Time, endTime time.Time) ([]prom_v1.ExemplarQueryResult, error) {
-// 				panic("mock out the QueryExemplars method")
-// 			},
-// 			QueryRangeFunc: func(ctx context.Context, query string, r prom_v1.Range, opts ...prom_v1.Option) (pModel.Value, prom_v1.Warnings, error) {
-// 				panic("mock out the QueryRange method")
-// 			},
-// 			RulesFunc: func(ctx context.Context) (prom_v1.RulesResult, error) {
-// 				panic("mock out the Rules method")
-// 			},
-// 			RuntimeinfoFunc: func(ctx context.Context) (prom_v1.RuntimeinfoResult, error) {
-// 				panic("mock out the Runtimeinfo method")
-// 			},
-// 			SeriesFunc: func(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]pModel.LabelSet, prom_v1.Warnings, error) {
-// 				panic("mock out the Series method")
-// 			},
-// 			SnapshotFunc: func(ctx context.Context, skipHead bool) (prom_v1.SnapshotResult, error) {
-// 				panic("mock out the Snapshot method")
-// 			},
-// 			TSDBFunc: func(ctx context.Context) (prom_v1.TSDBResult, error) {
-// 				panic("mock out the TSDB method")
-// 			},
-// 			TargetsFunc: func(ctx context.Context) (prom_v1.TargetsResult, error) {
-// 				panic("mock out the Targets method")
-// 			},
-// 			TargetsMetadataFunc: func(ctx context.Context, matchTarget string, metric string, limit string) ([]prom_v1.MetricMetadata, error) {
-// 				panic("mock out the TargetsMetadata method")
-// 			},
-// 			WalReplayFunc: func(ctx context.Context) (prom_v1.WalReplayStatus, error) {
-// 				panic("mock out the WalReplay method")
-// 			},
-// 		}
+//		// make and configure a mocked API
+//		mockedAPI := &APIMock{
+//			AlertManagersFunc: func(ctx context.Context) (prom_v1.AlertManagersResult, error) {
+//				panic("mock out the AlertManagers method")
+//			},
+//			AlertsFunc: func(ctx context.Context) (prom_v1.AlertsResult, error) {
+//				panic("mock out the Alerts method")
+//			},
+//			BuildinfoFunc: func(ctx context.Context) (prom_v1.BuildinfoResult, error) {
+//				panic("mock out the Buildinfo method")
+//			},
+//			CleanTombstonesFunc: func(ctx context.Context) error {
+//				panic("mock out the CleanTombstones method")
+//			},
+//			ConfigFunc: func(ctx context.Context) (prom_v1.ConfigResult, error) {
+//				panic("mock out the Config method")
+//			},
+//			DeleteSeriesFunc: func(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) error {
+//				panic("mock out the DeleteSeries method")
+//			},
+//			FlagsFunc: func(ctx context.Context) (prom_v1.FlagsResult, error) {
+//				panic("mock out the Flags method")
+//			},
+//			LabelNamesFunc: func(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]string, prom_v1.Warnings, error) {
+//				panic("mock out the LabelNames method")
+//			},
+//			LabelValuesFunc: func(ctx context.Context, label string, matches []string, startTime time.Time, endTime time.Time) (pModel.LabelValues, prom_v1.Warnings, error) {
+//				panic("mock out the LabelValues method")
+//			},
+//			MetadataFunc: func(ctx context.Context, metric string, limit string) (map[string][]prom_v1.Metadata, error) {
+//				panic("mock out the Metadata method")
+//			},
+//			QueryFunc: func(ctx context.Context, query string, ts time.Time, opts ...prom_v1.Option) (pModel.Value, prom_v1.Warnings, error) {
+//				panic("mock out the Query method")
+//			},
+//			QueryExemplarsFunc: func(ctx context.Context, query string, startTime time.Time, endTime time.Time) ([]prom_v1.ExemplarQueryResult, error) {
+//				panic("mock out the QueryExemplars method")
+//			},
+//			QueryRangeFunc: func(ctx context.Context, query string, r prom_v1.Range, opts ...prom_v1.Option) (pModel.Value, prom_v1.Warnings, error) {
+//				panic("mock out the QueryRange method")
+//			},
+//			RulesFunc: func(ctx context.Context) (prom_v1.RulesResult, error) {
+//				panic("mock out the Rules method")
+//			},
+//			RuntimeinfoFunc: func(ctx context.Context) (prom_v1.RuntimeinfoResult, error) {
+//				panic("mock out the Runtimeinfo method")
+//			},
+//			SeriesFunc: func(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]pModel.LabelSet, prom_v1.Warnings, error) {
+//				panic("mock out the Series method")
+//			},
+//			SnapshotFunc: func(ctx context.Context, skipHead bool) (prom_v1.SnapshotResult, error) {
+//				panic("mock out the Snapshot method")
+//			},
+//			TSDBFunc: func(ctx context.Context) (prom_v1.TSDBResult, error) {
+//				panic("mock out the TSDB method")
+//			},
+//			TargetsFunc: func(ctx context.Context) (prom_v1.TargetsResult, error) {
+//				panic("mock out the Targets method")
+//			},
+//			TargetsMetadataFunc: func(ctx context.Context, matchTarget string, metric string, limit string) ([]prom_v1.MetricMetadata, error) {
+//				panic("mock out the TargetsMetadata method")
+//			},
+//			WalReplayFunc: func(ctx context.Context) (prom_v1.WalReplayStatus, error) {
+//				panic("mock out the WalReplay method")
+//			},
+//		}
 //
-// 		// use mockedAPI in code that requires API
-// 		// and then make assertions.
+//		// use mockedAPI in code that requires API
+//		// and then make assertions.
 //
-// 	}
+//	}
 type APIMock struct {
 	// AlertManagersFunc mocks the AlertManagers method.
 	AlertManagersFunc func(ctx context.Context) (prom_v1.AlertManagersResult, error)
@@ -359,7 +359,8 @@ func (mock *APIMock) AlertManagers(ctx context.Context) (prom_v1.AlertManagersRe
 
 // AlertManagersCalls gets all the calls that were made to AlertManagers.
 // Check the length with:
-//     len(mockedAPI.AlertManagersCalls())
+//
+//	len(mockedAPI.AlertManagersCalls())
 func (mock *APIMock) AlertManagersCalls() []struct {
 	Ctx context.Context
 } {
@@ -390,7 +391,8 @@ func (mock *APIMock) Alerts(ctx context.Context) (prom_v1.AlertsResult, error) {
 
 // AlertsCalls gets all the calls that were made to Alerts.
 // Check the length with:
-//     len(mockedAPI.AlertsCalls())
+//
+//	len(mockedAPI.AlertsCalls())
 func (mock *APIMock) AlertsCalls() []struct {
 	Ctx context.Context
 } {
@@ -421,7 +423,8 @@ func (mock *APIMock) Buildinfo(ctx context.Context) (prom_v1.BuildinfoResult, er
 
 // BuildinfoCalls gets all the calls that were made to Buildinfo.
 // Check the length with:
-//     len(mockedAPI.BuildinfoCalls())
+//
+//	len(mockedAPI.BuildinfoCalls())
 func (mock *APIMock) BuildinfoCalls() []struct {
 	Ctx context.Context
 } {
@@ -452,7 +455,8 @@ func (mock *APIMock) CleanTombstones(ctx context.Context) error {
 
 // CleanTombstonesCalls gets all the calls that were made to CleanTombstones.
 // Check the length with:
-//     len(mockedAPI.CleanTombstonesCalls())
+//
+//	len(mockedAPI.CleanTombstonesCalls())
 func (mock *APIMock) CleanTombstonesCalls() []struct {
 	Ctx context.Context
 } {
@@ -483,7 +487,8 @@ func (mock *APIMock) Config(ctx context.Context) (prom_v1.ConfigResult, error) {
 
 // ConfigCalls gets all the calls that were made to Config.
 // Check the length with:
-//     len(mockedAPI.ConfigCalls())
+//
+//	len(mockedAPI.ConfigCalls())
 func (mock *APIMock) ConfigCalls() []struct {
 	Ctx context.Context
 } {
@@ -520,7 +525,8 @@ func (mock *APIMock) DeleteSeries(ctx context.Context, matches []string, startTi
 
 // DeleteSeriesCalls gets all the calls that were made to DeleteSeries.
 // Check the length with:
-//     len(mockedAPI.DeleteSeriesCalls())
+//
+//	len(mockedAPI.DeleteSeriesCalls())
 func (mock *APIMock) DeleteSeriesCalls() []struct {
 	Ctx       context.Context
 	Matches   []string
@@ -557,7 +563,8 @@ func (mock *APIMock) Flags(ctx context.Context) (prom_v1.FlagsResult, error) {
 
 // FlagsCalls gets all the calls that were made to Flags.
 // Check the length with:
-//     len(mockedAPI.FlagsCalls())
+//
+//	len(mockedAPI.FlagsCalls())
 func (mock *APIMock) FlagsCalls() []struct {
 	Ctx context.Context
 } {
@@ -594,7 +601,8 @@ func (mock *APIMock) LabelNames(ctx context.Context, matches []string, startTime
 
 // LabelNamesCalls gets all the calls that were made to LabelNames.
 // Check the length with:
-//     len(mockedAPI.LabelNamesCalls())
+//
+//	len(mockedAPI.LabelNamesCalls())
 func (mock *APIMock) LabelNamesCalls() []struct {
 	Ctx       context.Context
 	Matches   []string
@@ -639,7 +647,8 @@ func (mock *APIMock) LabelValues(ctx context.Context, label string, matches []st
 
 // LabelValuesCalls gets all the calls that were made to LabelValues.
 // Check the length with:
-//     len(mockedAPI.LabelValuesCalls())
+//
+//	len(mockedAPI.LabelValuesCalls())
 func (mock *APIMock) LabelValuesCalls() []struct {
 	Ctx       context.Context
 	Label     string
@@ -682,7 +691,8 @@ func (mock *APIMock) Metadata(ctx context.Context, metric string, limit string) 
 
 // MetadataCalls gets all the calls that were made to Metadata.
 // Check the length with:
-//     len(mockedAPI.MetadataCalls())
+//
+//	len(mockedAPI.MetadataCalls())
 func (mock *APIMock) MetadataCalls() []struct {
 	Ctx    context.Context
 	Metric string
@@ -723,7 +733,8 @@ func (mock *APIMock) Query(ctx context.Context, query string, ts time.Time, opts
 
 // QueryCalls gets all the calls that were made to Query.
 // Check the length with:
-//     len(mockedAPI.QueryCalls())
+//
+//	len(mockedAPI.QueryCalls())
 func (mock *APIMock) QueryCalls() []struct {
 	Ctx   context.Context
 	Query string
@@ -766,7 +777,8 @@ func (mock *APIMock) QueryExemplars(ctx context.Context, query string, startTime
 
 // QueryExemplarsCalls gets all the calls that were made to QueryExemplars.
 // Check the length with:
-//     len(mockedAPI.QueryExemplarsCalls())
+//
+//	len(mockedAPI.QueryExemplarsCalls())
 func (mock *APIMock) QueryExemplarsCalls() []struct {
 	Ctx       context.Context
 	Query     string
@@ -809,7 +821,8 @@ func (mock *APIMock) QueryRange(ctx context.Context, query string, r prom_v1.Ran
 
 // QueryRangeCalls gets all the calls that were made to QueryRange.
 // Check the length with:
-//     len(mockedAPI.QueryRangeCalls())
+//
+//	len(mockedAPI.QueryRangeCalls())
 func (mock *APIMock) QueryRangeCalls() []struct {
 	Ctx   context.Context
 	Query string
@@ -846,7 +859,8 @@ func (mock *APIMock) Rules(ctx context.Context) (prom_v1.RulesResult, error) {
 
 // RulesCalls gets all the calls that were made to Rules.
 // Check the length with:
-//     len(mockedAPI.RulesCalls())
+//
+//	len(mockedAPI.RulesCalls())
 func (mock *APIMock) RulesCalls() []struct {
 	Ctx context.Context
 } {
@@ -877,7 +891,8 @@ func (mock *APIMock) Runtimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResult
 
 // RuntimeinfoCalls gets all the calls that were made to Runtimeinfo.
 // Check the length with:
-//     len(mockedAPI.RuntimeinfoCalls())
+//
+//	len(mockedAPI.RuntimeinfoCalls())
 func (mock *APIMock) RuntimeinfoCalls() []struct {
 	Ctx context.Context
 } {
@@ -914,7 +929,8 @@ func (mock *APIMock) Series(ctx context.Context, matches []string, startTime tim
 
 // SeriesCalls gets all the calls that were made to Series.
 // Check the length with:
-//     len(mockedAPI.SeriesCalls())
+//
+//	len(mockedAPI.SeriesCalls())
 func (mock *APIMock) SeriesCalls() []struct {
 	Ctx       context.Context
 	Matches   []string
@@ -953,7 +969,8 @@ func (mock *APIMock) Snapshot(ctx context.Context, skipHead bool) (prom_v1.Snaps
 
 // SnapshotCalls gets all the calls that were made to Snapshot.
 // Check the length with:
-//     len(mockedAPI.SnapshotCalls())
+//
+//	len(mockedAPI.SnapshotCalls())
 func (mock *APIMock) SnapshotCalls() []struct {
 	Ctx      context.Context
 	SkipHead bool
@@ -986,7 +1003,8 @@ func (mock *APIMock) TSDB(ctx context.Context) (prom_v1.TSDBResult, error) {
 
 // TSDBCalls gets all the calls that were made to TSDB.
 // Check the length with:
-//     len(mockedAPI.TSDBCalls())
+//
+//	len(mockedAPI.TSDBCalls())
 func (mock *APIMock) TSDBCalls() []struct {
 	Ctx context.Context
 } {
@@ -1017,7 +1035,8 @@ func (mock *APIMock) Targets(ctx context.Context) (prom_v1.TargetsResult, error)
 
 // TargetsCalls gets all the calls that were made to Targets.
 // Check the length with:
-//     len(mockedAPI.TargetsCalls())
+//
+//	len(mockedAPI.TargetsCalls())
 func (mock *APIMock) TargetsCalls() []struct {
 	Ctx context.Context
 } {
@@ -1054,7 +1073,8 @@ func (mock *APIMock) TargetsMetadata(ctx context.Context, matchTarget string, me
 
 // TargetsMetadataCalls gets all the calls that were made to TargetsMetadata.
 // Check the length with:
-//     len(mockedAPI.TargetsMetadataCalls())
+//
+//	len(mockedAPI.TargetsMetadataCalls())
 func (mock *APIMock) TargetsMetadataCalls() []struct {
 	Ctx         context.Context
 	MatchTarget string
@@ -1091,7 +1111,8 @@ func (mock *APIMock) WalReplay(ctx context.Context) (prom_v1.WalReplayStatus, er
 
 // WalReplayCalls gets all the calls that were made to WalReplay.
 // Check the length with:
-//     len(mockedAPI.WalReplayCalls())
+//
+//	len(mockedAPI.WalReplayCalls())
 func (mock *APIMock) WalReplayCalls() []struct {
 	Ctx context.Context
 } {

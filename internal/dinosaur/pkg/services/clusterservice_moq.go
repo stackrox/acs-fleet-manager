@@ -16,103 +16,103 @@ var _ ClusterService = &ClusterServiceMock{}
 
 // ClusterServiceMock is a mock implementation of ClusterService.
 //
-// 	func TestSomethingThatUsesClusterService(t *testing.T) {
+//	func TestSomethingThatUsesClusterService(t *testing.T) {
 //
-// 		// make and configure a mocked ClusterService
-// 		mockedClusterService := &ClusterServiceMock{
-// 			ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *serviceError.ServiceError {
-// 				panic("mock out the ApplyResources method")
-// 			},
-// 			CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the CheckClusterStatus method")
-// 			},
-// 			CheckDinosaurOperatorVersionReadyFunc: func(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error) {
-// 				panic("mock out the CheckDinosaurOperatorVersionReady method")
-// 			},
-// 			ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the ConfigureAndSaveIdentityProvider method")
-// 			},
-// 			CountByStatusFunc: func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, *serviceError.ServiceError) {
-// 				panic("mock out the CountByStatus method")
-// 			},
-// 			CreateFunc: func(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the Create method")
-// 			},
-// 			DeleteFunc: func(cluster *api.Cluster) (bool, *serviceError.ServiceError) {
-// 				panic("mock out the Delete method")
-// 			},
-// 			DeleteByClusterIDFunc: func(clusterID string) *serviceError.ServiceError {
-// 				panic("mock out the DeleteByClusterID method")
-// 			},
-// 			FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the FindAllClusters method")
-// 			},
-// 			FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the FindCluster method")
-// 			},
-// 			FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the FindClusterByID method")
-// 			},
-// 			FindDinosaurInstanceCountFunc: func(clusterIDs []string) ([]ResDinosaurInstanceCount, *serviceError.ServiceError) {
-// 				panic("mock out the FindDinosaurInstanceCount method")
-// 			},
-// 			FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the FindNonEmptyClusterByID method")
-// 			},
-// 			GetClusterDNSFunc: func(clusterID string) (string, *serviceError.ServiceError) {
-// 				panic("mock out the GetClusterDNS method")
-// 			},
-// 			GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *serviceError.ServiceError) {
-// 				panic("mock out the GetComputeNodes method")
-// 			},
-// 			GetExternalIDFunc: func(clusterID string) (string, *serviceError.ServiceError) {
-// 				panic("mock out the GetExternalID method")
-// 			},
-// 			InstallDinosaurOperatorFunc: func(cluster *api.Cluster) (bool, *serviceError.ServiceError) {
-// 				panic("mock out the InstallDinosaurOperator method")
-// 			},
-// 			IsDinosaurVersionAvailableInClusterFunc: func(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error) {
-// 				panic("mock out the IsDinosaurVersionAvailableInCluster method")
-// 			},
-// 			ListAllClusterIdsFunc: func() ([]api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the ListAllClusterIds method")
-// 			},
-// 			ListByStatusFunc: func(state api.ClusterStatus) ([]api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the ListByStatus method")
-// 			},
-// 			ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *serviceError.ServiceError) {
-// 				panic("mock out the ListGroupByProviderAndRegion method")
-// 			},
-// 			RegisterClusterJobFunc: func(clusterRequest *api.Cluster) *serviceError.ServiceError {
-// 				panic("mock out the RegisterClusterJob method")
-// 			},
-// 			ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*types.ClusterSpec, *serviceError.ServiceError) {
-// 				panic("mock out the ScaleDownComputeNodes method")
-// 			},
-// 			ScaleUpComputeNodesFunc: func(clusterID string, increment int) (*types.ClusterSpec, *serviceError.ServiceError) {
-// 				panic("mock out the ScaleUpComputeNodes method")
-// 			},
-// 			SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *serviceError.ServiceError) {
-// 				panic("mock out the SetComputeNodes method")
-// 			},
-// 			UpdateFunc: func(cluster api.Cluster) *serviceError.ServiceError {
-// 				panic("mock out the Update method")
-// 			},
-// 			UpdateMultiClusterSkipSchedulingFunc: func(clusterIds []string, skipScheduling bool) *serviceError.ServiceError {
-// 				panic("mock out the UpdateMultiClusterSkipScheduling method")
-// 			},
-// 			UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *serviceError.ServiceError {
-// 				panic("mock out the UpdateMultiClusterStatus method")
-// 			},
-// 			UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-// 				panic("mock out the UpdateStatus method")
-// 			},
-// 		}
+//		// make and configure a mocked ClusterService
+//		mockedClusterService := &ClusterServiceMock{
+//			ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *serviceError.ServiceError {
+//				panic("mock out the ApplyResources method")
+//			},
+//			CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError) {
+//				panic("mock out the CheckClusterStatus method")
+//			},
+//			CheckDinosaurOperatorVersionReadyFunc: func(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error) {
+//				panic("mock out the CheckDinosaurOperatorVersionReady method")
+//			},
+//			ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *serviceError.ServiceError) {
+//				panic("mock out the ConfigureAndSaveIdentityProvider method")
+//			},
+//			CountByStatusFunc: func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, *serviceError.ServiceError) {
+//				panic("mock out the CountByStatus method")
+//			},
+//			CreateFunc: func(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError) {
+//				panic("mock out the Create method")
+//			},
+//			DeleteFunc: func(cluster *api.Cluster) (bool, *serviceError.ServiceError) {
+//				panic("mock out the Delete method")
+//			},
+//			DeleteByClusterIDFunc: func(clusterID string) *serviceError.ServiceError {
+//				panic("mock out the DeleteByClusterID method")
+//			},
+//			FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceError.ServiceError) {
+//				panic("mock out the FindAllClusters method")
+//			},
+//			FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, *serviceError.ServiceError) {
+//				panic("mock out the FindCluster method")
+//			},
+//			FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *serviceError.ServiceError) {
+//				panic("mock out the FindClusterByID method")
+//			},
+//			FindDinosaurInstanceCountFunc: func(clusterIDs []string) ([]ResDinosaurInstanceCount, *serviceError.ServiceError) {
+//				panic("mock out the FindDinosaurInstanceCount method")
+//			},
+//			FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *serviceError.ServiceError) {
+//				panic("mock out the FindNonEmptyClusterByID method")
+//			},
+//			GetClusterDNSFunc: func(clusterID string) (string, *serviceError.ServiceError) {
+//				panic("mock out the GetClusterDNS method")
+//			},
+//			GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *serviceError.ServiceError) {
+//				panic("mock out the GetComputeNodes method")
+//			},
+//			GetExternalIDFunc: func(clusterID string) (string, *serviceError.ServiceError) {
+//				panic("mock out the GetExternalID method")
+//			},
+//			InstallDinosaurOperatorFunc: func(cluster *api.Cluster) (bool, *serviceError.ServiceError) {
+//				panic("mock out the InstallDinosaurOperator method")
+//			},
+//			IsDinosaurVersionAvailableInClusterFunc: func(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error) {
+//				panic("mock out the IsDinosaurVersionAvailableInCluster method")
+//			},
+//			ListAllClusterIdsFunc: func() ([]api.Cluster, *serviceError.ServiceError) {
+//				panic("mock out the ListAllClusterIds method")
+//			},
+//			ListByStatusFunc: func(state api.ClusterStatus) ([]api.Cluster, *serviceError.ServiceError) {
+//				panic("mock out the ListByStatus method")
+//			},
+//			ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *serviceError.ServiceError) {
+//				panic("mock out the ListGroupByProviderAndRegion method")
+//			},
+//			RegisterClusterJobFunc: func(clusterRequest *api.Cluster) *serviceError.ServiceError {
+//				panic("mock out the RegisterClusterJob method")
+//			},
+//			ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*types.ClusterSpec, *serviceError.ServiceError) {
+//				panic("mock out the ScaleDownComputeNodes method")
+//			},
+//			ScaleUpComputeNodesFunc: func(clusterID string, increment int) (*types.ClusterSpec, *serviceError.ServiceError) {
+//				panic("mock out the ScaleUpComputeNodes method")
+//			},
+//			SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *serviceError.ServiceError) {
+//				panic("mock out the SetComputeNodes method")
+//			},
+//			UpdateFunc: func(cluster api.Cluster) *serviceError.ServiceError {
+//				panic("mock out the Update method")
+//			},
+//			UpdateMultiClusterSkipSchedulingFunc: func(clusterIds []string, skipScheduling bool) *serviceError.ServiceError {
+//				panic("mock out the UpdateMultiClusterSkipScheduling method")
+//			},
+//			UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *serviceError.ServiceError {
+//				panic("mock out the UpdateMultiClusterStatus method")
+//			},
+//			UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+//				panic("mock out the UpdateStatus method")
+//			},
+//		}
 //
-// 		// use mockedClusterService in code that requires ClusterService
-// 		// and then make assertions.
+//		// use mockedClusterService in code that requires ClusterService
+//		// and then make assertions.
 //
-// 	}
+//	}
 type ClusterServiceMock struct {
 	// ApplyResourcesFunc mocks the ApplyResources method.
 	ApplyResourcesFunc func(cluster *api.Cluster, resources types.ResourceSet) *serviceError.ServiceError
@@ -424,7 +424,8 @@ func (mock *ClusterServiceMock) ApplyResources(cluster *api.Cluster, resources t
 
 // ApplyResourcesCalls gets all the calls that were made to ApplyResources.
 // Check the length with:
-//     len(mockedClusterService.ApplyResourcesCalls())
+//
+//	len(mockedClusterService.ApplyResourcesCalls())
 func (mock *ClusterServiceMock) ApplyResourcesCalls() []struct {
 	Cluster   *api.Cluster
 	Resources types.ResourceSet
@@ -457,7 +458,8 @@ func (mock *ClusterServiceMock) CheckClusterStatus(cluster *api.Cluster) (*api.C
 
 // CheckClusterStatusCalls gets all the calls that were made to CheckClusterStatus.
 // Check the length with:
-//     len(mockedClusterService.CheckClusterStatusCalls())
+//
+//	len(mockedClusterService.CheckClusterStatusCalls())
 func (mock *ClusterServiceMock) CheckClusterStatusCalls() []struct {
 	Cluster *api.Cluster
 } {
@@ -490,7 +492,8 @@ func (mock *ClusterServiceMock) CheckDinosaurOperatorVersionReady(cluster *api.C
 
 // CheckDinosaurOperatorVersionReadyCalls gets all the calls that were made to CheckDinosaurOperatorVersionReady.
 // Check the length with:
-//     len(mockedClusterService.CheckDinosaurOperatorVersionReadyCalls())
+//
+//	len(mockedClusterService.CheckDinosaurOperatorVersionReadyCalls())
 func (mock *ClusterServiceMock) CheckDinosaurOperatorVersionReadyCalls() []struct {
 	Cluster                 *api.Cluster
 	DinosaurOperatorVersion string
@@ -525,7 +528,8 @@ func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProvider(cluster *api.Cl
 
 // ConfigureAndSaveIdentityProviderCalls gets all the calls that were made to ConfigureAndSaveIdentityProvider.
 // Check the length with:
-//     len(mockedClusterService.ConfigureAndSaveIdentityProviderCalls())
+//
+//	len(mockedClusterService.ConfigureAndSaveIdentityProviderCalls())
 func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProviderCalls() []struct {
 	Cluster              *api.Cluster
 	IdentityProviderInfo types.IdentityProviderInfo
@@ -558,7 +562,8 @@ func (mock *ClusterServiceMock) CountByStatus(clusterStatuss []api.ClusterStatus
 
 // CountByStatusCalls gets all the calls that were made to CountByStatus.
 // Check the length with:
-//     len(mockedClusterService.CountByStatusCalls())
+//
+//	len(mockedClusterService.CountByStatusCalls())
 func (mock *ClusterServiceMock) CountByStatusCalls() []struct {
 	ClusterStatuss []api.ClusterStatus
 } {
@@ -589,7 +594,8 @@ func (mock *ClusterServiceMock) Create(cluster *api.Cluster) (*api.Cluster, *ser
 
 // CreateCalls gets all the calls that were made to Create.
 // Check the length with:
-//     len(mockedClusterService.CreateCalls())
+//
+//	len(mockedClusterService.CreateCalls())
 func (mock *ClusterServiceMock) CreateCalls() []struct {
 	Cluster *api.Cluster
 } {
@@ -620,7 +626,8 @@ func (mock *ClusterServiceMock) Delete(cluster *api.Cluster) (bool, *serviceErro
 
 // DeleteCalls gets all the calls that were made to Delete.
 // Check the length with:
-//     len(mockedClusterService.DeleteCalls())
+//
+//	len(mockedClusterService.DeleteCalls())
 func (mock *ClusterServiceMock) DeleteCalls() []struct {
 	Cluster *api.Cluster
 } {
@@ -651,7 +658,8 @@ func (mock *ClusterServiceMock) DeleteByClusterID(clusterID string) *serviceErro
 
 // DeleteByClusterIDCalls gets all the calls that were made to DeleteByClusterID.
 // Check the length with:
-//     len(mockedClusterService.DeleteByClusterIDCalls())
+//
+//	len(mockedClusterService.DeleteByClusterIDCalls())
 func (mock *ClusterServiceMock) DeleteByClusterIDCalls() []struct {
 	ClusterID string
 } {
@@ -682,7 +690,8 @@ func (mock *ClusterServiceMock) FindAllClusters(criteria FindClusterCriteria) ([
 
 // FindAllClustersCalls gets all the calls that were made to FindAllClusters.
 // Check the length with:
-//     len(mockedClusterService.FindAllClustersCalls())
+//
+//	len(mockedClusterService.FindAllClustersCalls())
 func (mock *ClusterServiceMock) FindAllClustersCalls() []struct {
 	Criteria FindClusterCriteria
 } {
@@ -713,7 +722,8 @@ func (mock *ClusterServiceMock) FindCluster(criteria FindClusterCriteria) (*api.
 
 // FindClusterCalls gets all the calls that were made to FindCluster.
 // Check the length with:
-//     len(mockedClusterService.FindClusterCalls())
+//
+//	len(mockedClusterService.FindClusterCalls())
 func (mock *ClusterServiceMock) FindClusterCalls() []struct {
 	Criteria FindClusterCriteria
 } {
@@ -744,7 +754,8 @@ func (mock *ClusterServiceMock) FindClusterByID(clusterID string) (*api.Cluster,
 
 // FindClusterByIDCalls gets all the calls that were made to FindClusterByID.
 // Check the length with:
-//     len(mockedClusterService.FindClusterByIDCalls())
+//
+//	len(mockedClusterService.FindClusterByIDCalls())
 func (mock *ClusterServiceMock) FindClusterByIDCalls() []struct {
 	ClusterID string
 } {
@@ -775,7 +786,8 @@ func (mock *ClusterServiceMock) FindDinosaurInstanceCount(clusterIDs []string) (
 
 // FindDinosaurInstanceCountCalls gets all the calls that were made to FindDinosaurInstanceCount.
 // Check the length with:
-//     len(mockedClusterService.FindDinosaurInstanceCountCalls())
+//
+//	len(mockedClusterService.FindDinosaurInstanceCountCalls())
 func (mock *ClusterServiceMock) FindDinosaurInstanceCountCalls() []struct {
 	ClusterIDs []string
 } {
@@ -806,7 +818,8 @@ func (mock *ClusterServiceMock) FindNonEmptyClusterByID(clusterID string) (*api.
 
 // FindNonEmptyClusterByIDCalls gets all the calls that were made to FindNonEmptyClusterByID.
 // Check the length with:
-//     len(mockedClusterService.FindNonEmptyClusterByIDCalls())
+//
+//	len(mockedClusterService.FindNonEmptyClusterByIDCalls())
 func (mock *ClusterServiceMock) FindNonEmptyClusterByIDCalls() []struct {
 	ClusterID string
 } {
@@ -837,7 +850,8 @@ func (mock *ClusterServiceMock) GetClusterDNS(clusterID string) (string, *servic
 
 // GetClusterDNSCalls gets all the calls that were made to GetClusterDNS.
 // Check the length with:
-//     len(mockedClusterService.GetClusterDNSCalls())
+//
+//	len(mockedClusterService.GetClusterDNSCalls())
 func (mock *ClusterServiceMock) GetClusterDNSCalls() []struct {
 	ClusterID string
 } {
@@ -868,7 +882,8 @@ func (mock *ClusterServiceMock) GetComputeNodes(clusterID string) (*types.Comput
 
 // GetComputeNodesCalls gets all the calls that were made to GetComputeNodes.
 // Check the length with:
-//     len(mockedClusterService.GetComputeNodesCalls())
+//
+//	len(mockedClusterService.GetComputeNodesCalls())
 func (mock *ClusterServiceMock) GetComputeNodesCalls() []struct {
 	ClusterID string
 } {
@@ -899,7 +914,8 @@ func (mock *ClusterServiceMock) GetExternalID(clusterID string) (string, *servic
 
 // GetExternalIDCalls gets all the calls that were made to GetExternalID.
 // Check the length with:
-//     len(mockedClusterService.GetExternalIDCalls())
+//
+//	len(mockedClusterService.GetExternalIDCalls())
 func (mock *ClusterServiceMock) GetExternalIDCalls() []struct {
 	ClusterID string
 } {
@@ -930,7 +946,8 @@ func (mock *ClusterServiceMock) InstallDinosaurOperator(cluster *api.Cluster) (b
 
 // InstallDinosaurOperatorCalls gets all the calls that were made to InstallDinosaurOperator.
 // Check the length with:
-//     len(mockedClusterService.InstallDinosaurOperatorCalls())
+//
+//	len(mockedClusterService.InstallDinosaurOperatorCalls())
 func (mock *ClusterServiceMock) InstallDinosaurOperatorCalls() []struct {
 	Cluster *api.Cluster
 } {
@@ -965,7 +982,8 @@ func (mock *ClusterServiceMock) IsDinosaurVersionAvailableInCluster(cluster *api
 
 // IsDinosaurVersionAvailableInClusterCalls gets all the calls that were made to IsDinosaurVersionAvailableInCluster.
 // Check the length with:
-//     len(mockedClusterService.IsDinosaurVersionAvailableInClusterCalls())
+//
+//	len(mockedClusterService.IsDinosaurVersionAvailableInClusterCalls())
 func (mock *ClusterServiceMock) IsDinosaurVersionAvailableInClusterCalls() []struct {
 	Cluster                 *api.Cluster
 	DinosaurOperatorVersion string
@@ -997,7 +1015,8 @@ func (mock *ClusterServiceMock) ListAllClusterIds() ([]api.Cluster, *serviceErro
 
 // ListAllClusterIdsCalls gets all the calls that were made to ListAllClusterIds.
 // Check the length with:
-//     len(mockedClusterService.ListAllClusterIdsCalls())
+//
+//	len(mockedClusterService.ListAllClusterIdsCalls())
 func (mock *ClusterServiceMock) ListAllClusterIdsCalls() []struct {
 } {
 	var calls []struct {
@@ -1026,7 +1045,8 @@ func (mock *ClusterServiceMock) ListByStatus(state api.ClusterStatus) ([]api.Clu
 
 // ListByStatusCalls gets all the calls that were made to ListByStatus.
 // Check the length with:
-//     len(mockedClusterService.ListByStatusCalls())
+//
+//	len(mockedClusterService.ListByStatusCalls())
 func (mock *ClusterServiceMock) ListByStatusCalls() []struct {
 	State api.ClusterStatus
 } {
@@ -1061,7 +1081,8 @@ func (mock *ClusterServiceMock) ListGroupByProviderAndRegion(providers []string,
 
 // ListGroupByProviderAndRegionCalls gets all the calls that were made to ListGroupByProviderAndRegion.
 // Check the length with:
-//     len(mockedClusterService.ListGroupByProviderAndRegionCalls())
+//
+//	len(mockedClusterService.ListGroupByProviderAndRegionCalls())
 func (mock *ClusterServiceMock) ListGroupByProviderAndRegionCalls() []struct {
 	Providers []string
 	Regions   []string
@@ -1096,7 +1117,8 @@ func (mock *ClusterServiceMock) RegisterClusterJob(clusterRequest *api.Cluster) 
 
 // RegisterClusterJobCalls gets all the calls that were made to RegisterClusterJob.
 // Check the length with:
-//     len(mockedClusterService.RegisterClusterJobCalls())
+//
+//	len(mockedClusterService.RegisterClusterJobCalls())
 func (mock *ClusterServiceMock) RegisterClusterJobCalls() []struct {
 	ClusterRequest *api.Cluster
 } {
@@ -1129,7 +1151,8 @@ func (mock *ClusterServiceMock) ScaleDownComputeNodes(clusterID string, decremen
 
 // ScaleDownComputeNodesCalls gets all the calls that were made to ScaleDownComputeNodes.
 // Check the length with:
-//     len(mockedClusterService.ScaleDownComputeNodesCalls())
+//
+//	len(mockedClusterService.ScaleDownComputeNodesCalls())
 func (mock *ClusterServiceMock) ScaleDownComputeNodesCalls() []struct {
 	ClusterID string
 	Decrement int
@@ -1164,7 +1187,8 @@ func (mock *ClusterServiceMock) ScaleUpComputeNodes(clusterID string, increment 
 
 // ScaleUpComputeNodesCalls gets all the calls that were made to ScaleUpComputeNodes.
 // Check the length with:
-//     len(mockedClusterService.ScaleUpComputeNodesCalls())
+//
+//	len(mockedClusterService.ScaleUpComputeNodesCalls())
 func (mock *ClusterServiceMock) ScaleUpComputeNodesCalls() []struct {
 	ClusterID string
 	Increment int
@@ -1199,7 +1223,8 @@ func (mock *ClusterServiceMock) SetComputeNodes(clusterID string, numNodes int) 
 
 // SetComputeNodesCalls gets all the calls that were made to SetComputeNodes.
 // Check the length with:
-//     len(mockedClusterService.SetComputeNodesCalls())
+//
+//	len(mockedClusterService.SetComputeNodesCalls())
 func (mock *ClusterServiceMock) SetComputeNodesCalls() []struct {
 	ClusterID string
 	NumNodes  int
@@ -1232,7 +1257,8 @@ func (mock *ClusterServiceMock) Update(cluster api.Cluster) *serviceError.Servic
 
 // UpdateCalls gets all the calls that were made to Update.
 // Check the length with:
-//     len(mockedClusterService.UpdateCalls())
+//
+//	len(mockedClusterService.UpdateCalls())
 func (mock *ClusterServiceMock) UpdateCalls() []struct {
 	Cluster api.Cluster
 } {
@@ -1265,7 +1291,8 @@ func (mock *ClusterServiceMock) UpdateMultiClusterSkipScheduling(clusterIds []st
 
 // UpdateMultiClusterSkipSchedulingCalls gets all the calls that were made to UpdateMultiClusterSkipScheduling.
 // Check the length with:
-//     len(mockedClusterService.UpdateMultiClusterSkipSchedulingCalls())
+//
+//	len(mockedClusterService.UpdateMultiClusterSkipSchedulingCalls())
 func (mock *ClusterServiceMock) UpdateMultiClusterSkipSchedulingCalls() []struct {
 	ClusterIds     []string
 	SkipScheduling bool
@@ -1300,7 +1327,8 @@ func (mock *ClusterServiceMock) UpdateMultiClusterStatus(clusterIds []string, st
 
 // UpdateMultiClusterStatusCalls gets all the calls that were made to UpdateMultiClusterStatus.
 // Check the length with:
-//     len(mockedClusterService.UpdateMultiClusterStatusCalls())
+//
+//	len(mockedClusterService.UpdateMultiClusterStatusCalls())
 func (mock *ClusterServiceMock) UpdateMultiClusterStatusCalls() []struct {
 	ClusterIds []string
 	Status     api.ClusterStatus
@@ -1335,7 +1363,8 @@ func (mock *ClusterServiceMock) UpdateStatus(cluster api.Cluster, status api.Clu
 
 // UpdateStatusCalls gets all the calls that were made to UpdateStatus.
 // Check the length with:
-//     len(mockedClusterService.UpdateStatusCalls())
+//
+//	len(mockedClusterService.UpdateStatusCalls())
 func (mock *ClusterServiceMock) UpdateStatusCalls() []struct {
 	Cluster api.Cluster
 	Status  api.ClusterStatus

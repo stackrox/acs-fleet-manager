@@ -15,19 +15,19 @@ var _ QuotaServiceFactory = &QuotaServiceFactoryMock{}
 
 // QuotaServiceFactoryMock is a mock implementation of QuotaServiceFactory.
 //
-// 	func TestSomethingThatUsesQuotaServiceFactory(t *testing.T) {
+//	func TestSomethingThatUsesQuotaServiceFactory(t *testing.T) {
 //
-// 		// make and configure a mocked QuotaServiceFactory
-// 		mockedQuotaServiceFactory := &QuotaServiceFactoryMock{
-// 			GetQuotaServiceFunc: func(quoataType api.QuotaType) (QuotaService, *serviceError.ServiceError) {
-// 				panic("mock out the GetQuotaService method")
-// 			},
-// 		}
+//		// make and configure a mocked QuotaServiceFactory
+//		mockedQuotaServiceFactory := &QuotaServiceFactoryMock{
+//			GetQuotaServiceFunc: func(quoataType api.QuotaType) (QuotaService, *serviceError.ServiceError) {
+//				panic("mock out the GetQuotaService method")
+//			},
+//		}
 //
-// 		// use mockedQuotaServiceFactory in code that requires QuotaServiceFactory
-// 		// and then make assertions.
+//		// use mockedQuotaServiceFactory in code that requires QuotaServiceFactory
+//		// and then make assertions.
 //
-// 	}
+//	}
 type QuotaServiceFactoryMock struct {
 	// GetQuotaServiceFunc mocks the GetQuotaService method.
 	GetQuotaServiceFunc func(quoataType api.QuotaType) (QuotaService, *serviceError.ServiceError)
@@ -61,7 +61,8 @@ func (mock *QuotaServiceFactoryMock) GetQuotaService(quoataType api.QuotaType) (
 
 // GetQuotaServiceCalls gets all the calls that were made to GetQuotaService.
 // Check the length with:
-//     len(mockedQuotaServiceFactory.GetQuotaServiceCalls())
+//
+//	len(mockedQuotaServiceFactory.GetQuotaServiceCalls())
 func (mock *QuotaServiceFactoryMock) GetQuotaServiceCalls() []struct {
 	QuoataType api.QuotaType
 } {

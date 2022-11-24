@@ -14,25 +14,25 @@ var _ Client = &ClientMock{}
 
 // ClientMock is a mock implementation of Client.
 //
-// 	func TestSomethingThatUsesClient(t *testing.T) {
+//	func TestSomethingThatUsesClient(t *testing.T) {
 //
-// 		// make and configure a mocked Client
-// 		mockedClient := &ClientMock{
-// 			ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
-// 				panic("mock out the ChangeResourceRecordSets method")
-// 			},
-// 			GetChangeFunc: func(changeID string) (*route53.GetChangeOutput, error) {
-// 				panic("mock out the GetChange method")
-// 			},
-// 			ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
-// 				panic("mock out the ListHostedZonesByNameInput method")
-// 			},
-// 		}
+//		// make and configure a mocked Client
+//		mockedClient := &ClientMock{
+//			ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
+//				panic("mock out the ChangeResourceRecordSets method")
+//			},
+//			GetChangeFunc: func(changeID string) (*route53.GetChangeOutput, error) {
+//				panic("mock out the GetChange method")
+//			},
+//			ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
+//				panic("mock out the ListHostedZonesByNameInput method")
+//			},
+//		}
 //
-// 		// use mockedClient in code that requires Client
-// 		// and then make assertions.
+//		// use mockedClient in code that requires Client
+//		// and then make assertions.
 //
-// 	}
+//	}
 type ClientMock struct {
 	// ChangeResourceRecordSetsFunc mocks the ChangeResourceRecordSets method.
 	ChangeResourceRecordSetsFunc func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
@@ -88,7 +88,8 @@ func (mock *ClientMock) ChangeResourceRecordSets(dnsName string, recordChangeBat
 
 // ChangeResourceRecordSetsCalls gets all the calls that were made to ChangeResourceRecordSets.
 // Check the length with:
-//     len(mockedClient.ChangeResourceRecordSetsCalls())
+//
+//	len(mockedClient.ChangeResourceRecordSetsCalls())
 func (mock *ClientMock) ChangeResourceRecordSetsCalls() []struct {
 	DnsName           string
 	RecordChangeBatch *route53.ChangeBatch
@@ -121,7 +122,8 @@ func (mock *ClientMock) GetChange(changeID string) (*route53.GetChangeOutput, er
 
 // GetChangeCalls gets all the calls that were made to GetChange.
 // Check the length with:
-//     len(mockedClient.GetChangeCalls())
+//
+//	len(mockedClient.GetChangeCalls())
 func (mock *ClientMock) GetChangeCalls() []struct {
 	ChangeID string
 } {
@@ -152,7 +154,8 @@ func (mock *ClientMock) ListHostedZonesByNameInput(dnsName string) (*route53.Lis
 
 // ListHostedZonesByNameInputCalls gets all the calls that were made to ListHostedZonesByNameInput.
 // Check the length with:
-//     len(mockedClient.ListHostedZonesByNameInputCalls())
+//
+//	len(mockedClient.ListHostedZonesByNameInputCalls())
 func (mock *ClientMock) ListHostedZonesByNameInputCalls() []struct {
 	DnsName string
 } {

@@ -14,19 +14,19 @@ var _ ProviderFactory = &ProviderFactoryMock{}
 
 // ProviderFactoryMock is a mock implementation of ProviderFactory.
 //
-// 	func TestSomethingThatUsesProviderFactory(t *testing.T) {
+//	func TestSomethingThatUsesProviderFactory(t *testing.T) {
 //
-// 		// make and configure a mocked ProviderFactory
-// 		mockedProviderFactory := &ProviderFactoryMock{
-// 			GetProviderFunc: func(providerType api.ClusterProviderType) (Provider, error) {
-// 				panic("mock out the GetProvider method")
-// 			},
-// 		}
+//		// make and configure a mocked ProviderFactory
+//		mockedProviderFactory := &ProviderFactoryMock{
+//			GetProviderFunc: func(providerType api.ClusterProviderType) (Provider, error) {
+//				panic("mock out the GetProvider method")
+//			},
+//		}
 //
-// 		// use mockedProviderFactory in code that requires ProviderFactory
-// 		// and then make assertions.
+//		// use mockedProviderFactory in code that requires ProviderFactory
+//		// and then make assertions.
 //
-// 	}
+//	}
 type ProviderFactoryMock struct {
 	// GetProviderFunc mocks the GetProvider method.
 	GetProviderFunc func(providerType api.ClusterProviderType) (Provider, error)
@@ -60,7 +60,8 @@ func (mock *ProviderFactoryMock) GetProvider(providerType api.ClusterProviderTyp
 
 // GetProviderCalls gets all the calls that were made to GetProvider.
 // Check the length with:
-//     len(mockedProviderFactory.GetProviderCalls())
+//
+//	len(mockedProviderFactory.GetProviderCalls())
 func (mock *ProviderFactoryMock) GetProviderCalls() []struct {
 	ProviderType api.ClusterProviderType
 } {

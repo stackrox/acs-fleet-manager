@@ -14,82 +14,82 @@ var _ IAMClient = &IAMClientMock{}
 
 // IAMClientMock is a mock implementation of IAMClient.
 //
-// 	func TestSomethingThatUsesIAMClient(t *testing.T) {
+//	func TestSomethingThatUsesIAMClient(t *testing.T) {
 //
-// 		// make and configure a mocked IAMClient
-// 		mockedIAMClient := &IAMClientMock{
-// 			AddRealmRoleToUserFunc: func(accessToken string, userID string, role gocloak.Role) error {
-// 				panic("mock out the AddRealmRoleToUser method")
-// 			},
-// 			ClientConfigFunc: func(client ClientRepresentation) gocloak.Client {
-// 				panic("mock out the ClientConfig method")
-// 			},
-// 			CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-// 				panic("mock out the CreateClient method")
-// 			},
-// 			CreateProtocolMapperConfigFunc: func(s string) []gocloak.ProtocolMapperRepresentation {
-// 				panic("mock out the CreateProtocolMapperConfig method")
-// 			},
-// 			CreateRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
-// 				panic("mock out the CreateRealmRole method")
-// 			},
-// 			DeleteClientFunc: func(internalClientID string, accessToken string) error {
-// 				panic("mock out the DeleteClient method")
-// 			},
-// 			GetCachedTokenFunc: func(tokenKey string) (string, error) {
-// 				panic("mock out the GetCachedToken method")
-// 			},
-// 			GetClientFunc: func(clientID string, accessToken string) (*gocloak.Client, error) {
-// 				panic("mock out the GetClient method")
-// 			},
-// 			GetClientByIDFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-// 				panic("mock out the GetClientByID method")
-// 			},
-// 			GetClientSecretFunc: func(internalClientID string, accessToken string) (string, error) {
-// 				panic("mock out the GetClientSecret method")
-// 			},
-// 			GetClientServiceAccountFunc: func(accessToken string, internalClient string) (*gocloak.User, error) {
-// 				panic("mock out the GetClientServiceAccount method")
-// 			},
-// 			GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
-// 				panic("mock out the GetClients method")
-// 			},
-// 			GetConfigFunc: func() *IAMConfig {
-// 				panic("mock out the GetConfig method")
-// 			},
-// 			GetRealmConfigFunc: func() *IAMRealmConfig {
-// 				panic("mock out the GetRealmConfig method")
-// 			},
-// 			GetRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
-// 				panic("mock out the GetRealmRole method")
-// 			},
-// 			GetTokenFunc: func() (string, error) {
-// 				panic("mock out the GetToken method")
-// 			},
-// 			IsClientExistFunc: func(clientID string, accessToken string) (string, error) {
-// 				panic("mock out the IsClientExist method")
-// 			},
-// 			IsOwnerFunc: func(client *gocloak.Client, userID string) bool {
-// 				panic("mock out the IsOwner method")
-// 			},
-// 			IsSameOrgFunc: func(client *gocloak.Client, orgID string) bool {
-// 				panic("mock out the IsSameOrg method")
-// 			},
-// 			RegenerateClientSecretFunc: func(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
-// 				panic("mock out the RegenerateClientSecret method")
-// 			},
-// 			UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
-// 				panic("mock out the UpdateServiceAccountUser method")
-// 			},
-// 			UserHasRealmRoleFunc: func(accessToken string, userID string, roleName string) (*gocloak.Role, error) {
-// 				panic("mock out the UserHasRealmRole method")
-// 			},
-// 		}
+//		// make and configure a mocked IAMClient
+//		mockedIAMClient := &IAMClientMock{
+//			AddRealmRoleToUserFunc: func(accessToken string, userID string, role gocloak.Role) error {
+//				panic("mock out the AddRealmRoleToUser method")
+//			},
+//			ClientConfigFunc: func(client ClientRepresentation) gocloak.Client {
+//				panic("mock out the ClientConfig method")
+//			},
+//			CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
+//				panic("mock out the CreateClient method")
+//			},
+//			CreateProtocolMapperConfigFunc: func(s string) []gocloak.ProtocolMapperRepresentation {
+//				panic("mock out the CreateProtocolMapperConfig method")
+//			},
+//			CreateRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
+//				panic("mock out the CreateRealmRole method")
+//			},
+//			DeleteClientFunc: func(internalClientID string, accessToken string) error {
+//				panic("mock out the DeleteClient method")
+//			},
+//			GetCachedTokenFunc: func(tokenKey string) (string, error) {
+//				panic("mock out the GetCachedToken method")
+//			},
+//			GetClientFunc: func(clientID string, accessToken string) (*gocloak.Client, error) {
+//				panic("mock out the GetClient method")
+//			},
+//			GetClientByIDFunc: func(id string, accessToken string) (*gocloak.Client, error) {
+//				panic("mock out the GetClientByID method")
+//			},
+//			GetClientSecretFunc: func(internalClientID string, accessToken string) (string, error) {
+//				panic("mock out the GetClientSecret method")
+//			},
+//			GetClientServiceAccountFunc: func(accessToken string, internalClient string) (*gocloak.User, error) {
+//				panic("mock out the GetClientServiceAccount method")
+//			},
+//			GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
+//				panic("mock out the GetClients method")
+//			},
+//			GetConfigFunc: func() *IAMConfig {
+//				panic("mock out the GetConfig method")
+//			},
+//			GetRealmConfigFunc: func() *IAMRealmConfig {
+//				panic("mock out the GetRealmConfig method")
+//			},
+//			GetRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
+//				panic("mock out the GetRealmRole method")
+//			},
+//			GetTokenFunc: func() (string, error) {
+//				panic("mock out the GetToken method")
+//			},
+//			IsClientExistFunc: func(clientID string, accessToken string) (string, error) {
+//				panic("mock out the IsClientExist method")
+//			},
+//			IsOwnerFunc: func(client *gocloak.Client, userID string) bool {
+//				panic("mock out the IsOwner method")
+//			},
+//			IsSameOrgFunc: func(client *gocloak.Client, orgID string) bool {
+//				panic("mock out the IsSameOrg method")
+//			},
+//			RegenerateClientSecretFunc: func(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
+//				panic("mock out the RegenerateClientSecret method")
+//			},
+//			UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
+//				panic("mock out the UpdateServiceAccountUser method")
+//			},
+//			UserHasRealmRoleFunc: func(accessToken string, userID string, roleName string) (*gocloak.Role, error) {
+//				panic("mock out the UserHasRealmRole method")
+//			},
+//		}
 //
-// 		// use mockedIAMClient in code that requires IAMClient
-// 		// and then make assertions.
+//		// use mockedIAMClient in code that requires IAMClient
+//		// and then make assertions.
 //
-// 	}
+//	}
 type IAMClientMock struct {
 	// AddRealmRoleToUserFunc mocks the AddRealmRoleToUser method.
 	AddRealmRoleToUserFunc func(accessToken string, userID string, role gocloak.Role) error
@@ -350,7 +350,8 @@ func (mock *IAMClientMock) AddRealmRoleToUser(accessToken string, userID string,
 
 // AddRealmRoleToUserCalls gets all the calls that were made to AddRealmRoleToUser.
 // Check the length with:
-//     len(mockedIAMClient.AddRealmRoleToUserCalls())
+//
+//	len(mockedIAMClient.AddRealmRoleToUserCalls())
 func (mock *IAMClientMock) AddRealmRoleToUserCalls() []struct {
 	AccessToken string
 	UserID      string
@@ -385,7 +386,8 @@ func (mock *IAMClientMock) ClientConfig(client ClientRepresentation) gocloak.Cli
 
 // ClientConfigCalls gets all the calls that were made to ClientConfig.
 // Check the length with:
-//     len(mockedIAMClient.ClientConfigCalls())
+//
+//	len(mockedIAMClient.ClientConfigCalls())
 func (mock *IAMClientMock) ClientConfigCalls() []struct {
 	Client ClientRepresentation
 } {
@@ -418,7 +420,8 @@ func (mock *IAMClientMock) CreateClient(client gocloak.Client, accessToken strin
 
 // CreateClientCalls gets all the calls that were made to CreateClient.
 // Check the length with:
-//     len(mockedIAMClient.CreateClientCalls())
+//
+//	len(mockedIAMClient.CreateClientCalls())
 func (mock *IAMClientMock) CreateClientCalls() []struct {
 	Client      gocloak.Client
 	AccessToken string
@@ -451,7 +454,8 @@ func (mock *IAMClientMock) CreateProtocolMapperConfig(s string) []gocloak.Protoc
 
 // CreateProtocolMapperConfigCalls gets all the calls that were made to CreateProtocolMapperConfig.
 // Check the length with:
-//     len(mockedIAMClient.CreateProtocolMapperConfigCalls())
+//
+//	len(mockedIAMClient.CreateProtocolMapperConfigCalls())
 func (mock *IAMClientMock) CreateProtocolMapperConfigCalls() []struct {
 	S string
 } {
@@ -484,7 +488,8 @@ func (mock *IAMClientMock) CreateRealmRole(accessToken string, roleName string) 
 
 // CreateRealmRoleCalls gets all the calls that were made to CreateRealmRole.
 // Check the length with:
-//     len(mockedIAMClient.CreateRealmRoleCalls())
+//
+//	len(mockedIAMClient.CreateRealmRoleCalls())
 func (mock *IAMClientMock) CreateRealmRoleCalls() []struct {
 	AccessToken string
 	RoleName    string
@@ -519,7 +524,8 @@ func (mock *IAMClientMock) DeleteClient(internalClientID string, accessToken str
 
 // DeleteClientCalls gets all the calls that were made to DeleteClient.
 // Check the length with:
-//     len(mockedIAMClient.DeleteClientCalls())
+//
+//	len(mockedIAMClient.DeleteClientCalls())
 func (mock *IAMClientMock) DeleteClientCalls() []struct {
 	InternalClientID string
 	AccessToken      string
@@ -552,7 +558,8 @@ func (mock *IAMClientMock) GetCachedToken(tokenKey string) (string, error) {
 
 // GetCachedTokenCalls gets all the calls that were made to GetCachedToken.
 // Check the length with:
-//     len(mockedIAMClient.GetCachedTokenCalls())
+//
+//	len(mockedIAMClient.GetCachedTokenCalls())
 func (mock *IAMClientMock) GetCachedTokenCalls() []struct {
 	TokenKey string
 } {
@@ -585,7 +592,8 @@ func (mock *IAMClientMock) GetClient(clientID string, accessToken string) (*gocl
 
 // GetClientCalls gets all the calls that were made to GetClient.
 // Check the length with:
-//     len(mockedIAMClient.GetClientCalls())
+//
+//	len(mockedIAMClient.GetClientCalls())
 func (mock *IAMClientMock) GetClientCalls() []struct {
 	ClientID    string
 	AccessToken string
@@ -620,7 +628,8 @@ func (mock *IAMClientMock) GetClientByID(id string, accessToken string) (*gocloa
 
 // GetClientByIDCalls gets all the calls that were made to GetClientByID.
 // Check the length with:
-//     len(mockedIAMClient.GetClientByIDCalls())
+//
+//	len(mockedIAMClient.GetClientByIDCalls())
 func (mock *IAMClientMock) GetClientByIDCalls() []struct {
 	ID          string
 	AccessToken string
@@ -655,7 +664,8 @@ func (mock *IAMClientMock) GetClientSecret(internalClientID string, accessToken 
 
 // GetClientSecretCalls gets all the calls that were made to GetClientSecret.
 // Check the length with:
-//     len(mockedIAMClient.GetClientSecretCalls())
+//
+//	len(mockedIAMClient.GetClientSecretCalls())
 func (mock *IAMClientMock) GetClientSecretCalls() []struct {
 	InternalClientID string
 	AccessToken      string
@@ -690,7 +700,8 @@ func (mock *IAMClientMock) GetClientServiceAccount(accessToken string, internalC
 
 // GetClientServiceAccountCalls gets all the calls that were made to GetClientServiceAccount.
 // Check the length with:
-//     len(mockedIAMClient.GetClientServiceAccountCalls())
+//
+//	len(mockedIAMClient.GetClientServiceAccountCalls())
 func (mock *IAMClientMock) GetClientServiceAccountCalls() []struct {
 	AccessToken    string
 	InternalClient string
@@ -729,7 +740,8 @@ func (mock *IAMClientMock) GetClients(accessToken string, first int, max int, at
 
 // GetClientsCalls gets all the calls that were made to GetClients.
 // Check the length with:
-//     len(mockedIAMClient.GetClientsCalls())
+//
+//	len(mockedIAMClient.GetClientsCalls())
 func (mock *IAMClientMock) GetClientsCalls() []struct {
 	AccessToken string
 	First       int
@@ -763,7 +775,8 @@ func (mock *IAMClientMock) GetConfig() *IAMConfig {
 
 // GetConfigCalls gets all the calls that were made to GetConfig.
 // Check the length with:
-//     len(mockedIAMClient.GetConfigCalls())
+//
+//	len(mockedIAMClient.GetConfigCalls())
 func (mock *IAMClientMock) GetConfigCalls() []struct {
 } {
 	var calls []struct {
@@ -789,7 +802,8 @@ func (mock *IAMClientMock) GetRealmConfig() *IAMRealmConfig {
 
 // GetRealmConfigCalls gets all the calls that were made to GetRealmConfig.
 // Check the length with:
-//     len(mockedIAMClient.GetRealmConfigCalls())
+//
+//	len(mockedIAMClient.GetRealmConfigCalls())
 func (mock *IAMClientMock) GetRealmConfigCalls() []struct {
 } {
 	var calls []struct {
@@ -820,7 +834,8 @@ func (mock *IAMClientMock) GetRealmRole(accessToken string, roleName string) (*g
 
 // GetRealmRoleCalls gets all the calls that were made to GetRealmRole.
 // Check the length with:
-//     len(mockedIAMClient.GetRealmRoleCalls())
+//
+//	len(mockedIAMClient.GetRealmRoleCalls())
 func (mock *IAMClientMock) GetRealmRoleCalls() []struct {
 	AccessToken string
 	RoleName    string
@@ -850,7 +865,8 @@ func (mock *IAMClientMock) GetToken() (string, error) {
 
 // GetTokenCalls gets all the calls that were made to GetToken.
 // Check the length with:
-//     len(mockedIAMClient.GetTokenCalls())
+//
+//	len(mockedIAMClient.GetTokenCalls())
 func (mock *IAMClientMock) GetTokenCalls() []struct {
 } {
 	var calls []struct {
@@ -881,7 +897,8 @@ func (mock *IAMClientMock) IsClientExist(clientID string, accessToken string) (s
 
 // IsClientExistCalls gets all the calls that were made to IsClientExist.
 // Check the length with:
-//     len(mockedIAMClient.IsClientExistCalls())
+//
+//	len(mockedIAMClient.IsClientExistCalls())
 func (mock *IAMClientMock) IsClientExistCalls() []struct {
 	ClientID    string
 	AccessToken string
@@ -916,7 +933,8 @@ func (mock *IAMClientMock) IsOwner(client *gocloak.Client, userID string) bool {
 
 // IsOwnerCalls gets all the calls that were made to IsOwner.
 // Check the length with:
-//     len(mockedIAMClient.IsOwnerCalls())
+//
+//	len(mockedIAMClient.IsOwnerCalls())
 func (mock *IAMClientMock) IsOwnerCalls() []struct {
 	Client *gocloak.Client
 	UserID string
@@ -951,7 +969,8 @@ func (mock *IAMClientMock) IsSameOrg(client *gocloak.Client, orgID string) bool 
 
 // IsSameOrgCalls gets all the calls that were made to IsSameOrg.
 // Check the length with:
-//     len(mockedIAMClient.IsSameOrgCalls())
+//
+//	len(mockedIAMClient.IsSameOrgCalls())
 func (mock *IAMClientMock) IsSameOrgCalls() []struct {
 	Client *gocloak.Client
 	OrgID  string
@@ -986,7 +1005,8 @@ func (mock *IAMClientMock) RegenerateClientSecret(accessToken string, id string)
 
 // RegenerateClientSecretCalls gets all the calls that were made to RegenerateClientSecret.
 // Check the length with:
-//     len(mockedIAMClient.RegenerateClientSecretCalls())
+//
+//	len(mockedIAMClient.RegenerateClientSecretCalls())
 func (mock *IAMClientMock) RegenerateClientSecretCalls() []struct {
 	AccessToken string
 	ID          string
@@ -1021,7 +1041,8 @@ func (mock *IAMClientMock) UpdateServiceAccountUser(accessToken string, serviceA
 
 // UpdateServiceAccountUserCalls gets all the calls that were made to UpdateServiceAccountUser.
 // Check the length with:
-//     len(mockedIAMClient.UpdateServiceAccountUserCalls())
+//
+//	len(mockedIAMClient.UpdateServiceAccountUserCalls())
 func (mock *IAMClientMock) UpdateServiceAccountUserCalls() []struct {
 	AccessToken        string
 	ServiceAccountUser gocloak.User
@@ -1058,7 +1079,8 @@ func (mock *IAMClientMock) UserHasRealmRole(accessToken string, userID string, r
 
 // UserHasRealmRoleCalls gets all the calls that were made to UserHasRealmRole.
 // Check the length with:
-//     len(mockedIAMClient.UserHasRealmRoleCalls())
+//
+//	len(mockedIAMClient.UserHasRealmRoleCalls())
 func (mock *IAMClientMock) UserHasRealmRoleCalls() []struct {
 	AccessToken string
 	UserID      string
