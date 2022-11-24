@@ -86,11 +86,7 @@ func ValidateCloudProvider(dinosaurService *services.DinosaurService, dinosaurRe
 		}
 
 		// Validate Region/InstanceType
-		instanceType, err := (*dinosaurService).DetectInstanceType(dinosaurRequest)
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "error detecting instance type: %s", err.Error())
-		}
-
+		instanceType := (*dinosaurService).DetectInstanceType(dinosaurRequest)
 		region, _ := provider.Regions.GetByName(dinosaurRequest.Region)
 		if !region.IsInstanceTypeSupported(config.InstanceType(instanceType)) {
 			return errors.InstanceTypeNotSupported("instance type '%s' not supported for region '%s'", instanceType.String(), region.Name)

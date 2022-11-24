@@ -46,7 +46,7 @@ var _ DinosaurService = &DinosaurServiceMock{}
 // 			DeprovisionExpiredDinosaursFunc: func(dinosaurAgeInHours int) *serviceError.ServiceError {
 // 				panic("mock out the DeprovisionExpiredDinosaurs method")
 // 			},
-// 			DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *serviceError.ServiceError) {
+// 			DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType {
 // 				panic("mock out the DetectInstanceType method")
 // 			},
 // 			GetFunc: func(ctx context.Context, id string) (*dbapi.CentralRequest, *serviceError.ServiceError) {
@@ -132,7 +132,7 @@ type DinosaurServiceMock struct {
 	DeprovisionExpiredDinosaursFunc func(dinosaurAgeInHours int) *serviceError.ServiceError
 
 	// DetectInstanceTypeFunc mocks the DetectInstanceType method.
-	DetectInstanceTypeFunc func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *serviceError.ServiceError)
+	DetectInstanceTypeFunc func(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType
 
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, id string) (*dbapi.CentralRequest, *serviceError.ServiceError)
@@ -576,7 +576,7 @@ func (mock *DinosaurServiceMock) DeprovisionExpiredDinosaursCalls() []struct {
 }
 
 // DetectInstanceType calls DetectInstanceTypeFunc.
-func (mock *DinosaurServiceMock) DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *serviceError.ServiceError) {
+func (mock *DinosaurServiceMock) DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType {
 	if mock.DetectInstanceTypeFunc == nil {
 		panic("DinosaurServiceMock.DetectInstanceTypeFunc: method is nil but DinosaurService.DetectInstanceType was just called")
 	}
