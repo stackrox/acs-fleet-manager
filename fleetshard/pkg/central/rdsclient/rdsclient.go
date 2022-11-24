@@ -130,7 +130,7 @@ func (c *Client) ensureDBInstanceCreated(instanceID string, clusterID string) er
 		glog.Infof("Provisioning RDS database instance.")
 		_, err := c.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID))
 		if err != nil {
-			// TODO: delete cluster
+			// TODO: delete cluster if instance cannot be created?
 			return fmt.Errorf("creating DB instance: %v", err)
 		}
 	}
@@ -150,7 +150,6 @@ func (c *Client) clusterExists(clusterID string) bool {
 func (c *Client) instanceExists(instanceID string) bool {
 	dbInstanceQuery := &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(instanceID),
-		//TODO: add cluster Filter
 	}
 
 	_, err := c.rdsClient.DescribeDBInstances(dbInstanceQuery)
@@ -173,7 +172,6 @@ func (c *Client) clusterStatus(clusterID string) (string, error) {
 func (c *Client) instanceStatus(instanceID string) (string, error) {
 	dbInstanceQuery := &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(instanceID),
-		//TODO: add cluster Filter
 	}
 
 	instanceResult, err := c.rdsClient.DescribeDBInstances(dbInstanceQuery)
@@ -187,7 +185,6 @@ func (c *Client) instanceStatus(instanceID string) (string, error) {
 func (c *Client) waitForInstanceToBeAvailable(instanceID string, clusterID string) (string, error) {
 	dbInstanceQuery := &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(instanceID),
-		//TODO: add cluster Filter
 	}
 
 	dbClusterQuery := &rds.DescribeDBClustersInput{
@@ -287,7 +284,7 @@ func newCreateCentralDBInstanceInput(clusterID, instanceID string) *rds.CreateDB
 		DBClusterIdentifier:  aws.String(clusterID),
 		DBInstanceIdentifier: aws.String(instanceID),
 		Engine:               aws.String(dbEngine),
-		PubliclyAccessible:   aws.Bool(true), // TODO: should be false
+		PubliclyAccessible:   aws.Bool(true), // TODO: must be set to false, after VPC peering is done
 	}
 }
 
