@@ -41,6 +41,7 @@ case $ENVIRONMENT in
 
     # Load configuration
     init_chamber
+    load_external_config "ocm" OCM_
     load_external_config "cluster-$CLUSTER_NAME"
 
     if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qE '^OpenID *$'; then
@@ -96,6 +97,7 @@ case $ENVIRONMENT in
 
     # Load configuration
     init_chamber
+    load_external_config "ocm" OCM_
     load_external_config "cluster-$CLUSTER_NAME"
 
     if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qE '^HTPasswd *$'; then
