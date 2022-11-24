@@ -33,7 +33,7 @@ Secrets are divided to subgroups per each service. The following services are cu
     | local  | stage,prod  | aws-saml        |
     | CI/CD  | stage,prod  | none            |
 
-- For SAML authentication, you must have access to the appropriate `aws-automation` git repository to download the tool (VPN is required).
+- For SAML authentication, you must have access to the [`aws-automation` git repository](https://gitlab.corp.redhat.com/compute/aws-automation) for the script to be able to download the tool (VPN is required).
 - Dependent scripts source the [helper script](./../../scripts/lib/external_config.sh) with `chamber` command wrapper;
 - With this script, the tools are automatically installed from the appropriate `Makefile` targets;
 - It is also recommended to install the tools in the local bin folder so that you can easily use `chamber`, `aws-saml.py` and `aws-vault` from the command line;
