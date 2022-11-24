@@ -1,21 +1,22 @@
 #!/bin/bash -ex
 #
-# This script runs E22 tests against stage environment on app-interface CI for ACS Fleet manager.
+# This script runs the probe based E2E tests against stage environment on app-interface CI for ACS Fleet manager.
+# You can find e2e app-interface CI configuration here:
+# https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/acs-fleet-manager/cicd/jobs.yaml
+#
+# The following environment variables should be provided for running e2e tests:
+#
+# OCM_USERNAME - the OCM user name, It will owner of provisioned ACS instance.
+#
+# OCM_TOKEN - The static OCM token for the SSO.
 #
 # FLEET_MANAGER_ENDPOINT - The base URL endpoint of the sage fleet manager instance.
 #
-# STATIC_OCM_TOKEN - The static token for the SSO.
+# Env variables maps from AppSRE Vault in the CI
 #
-# By default AWS provider on `us-east-1` region is used because stage Data Plane is configured that way.
-#
-
-# print go version
-go version
 
 make \
-  CLUSTER_ID="${DATA_PLANE_CLUSTER_ID}" \
-  DP_CLOUD_PROVIDER="aws" \
-  DP_REGION="us-east-1" \
-  FLEET_MANAGER_ENDPOINT="${ACS_FLEET_MANAGER_ENDPOINT}" \
-  STATIC_TOKEN="${STATIC_OCM_TOKEN}" \
-  test/e2e
+    OCM_USERNAME="${OCM_USERNAME}" \
+    OCM_TOKEN="${STATIC_OCM_TOKEN}" \
+    FLEET_MANAGER_ENDPOINT="${ACS_FLEET_MANAGER_ENDPOINT}" \
+  test/e2e/probe/run
