@@ -17,7 +17,7 @@ if [[ $# -ne 2 ]]; then
     echo "See additional documentation in docs/development/setup-osd-cluster-idp.md"
     echo
     echo "Note: you need to be logged into OCM for your environment's administrator"
-    echo "Note: you need access to BitWarden"
+    echo "Note: you need access to AWS account of the selected environment"
     exit 2
 fi
 
@@ -29,6 +29,26 @@ if [[ "$AWS_AUTH_HELPER" == "aws-vault" ]]; then
     export AWS_PROFILE="$ENVIRONMENT"
 fi
 
+export_cluster_environment() {
+    init_chamber
+    load_external_config "ocm" OCM_
+    load_external_config "cluster-$CLUSTER_NAME"
+
+    if [[ -z "${ADMIN_USERNAME:-}" ]]; then
+        echo "Cluster admin user is missing from Parameter Store."
+        echo "Enter cluster admin username:"
+        read -r ADMIN_USERNAME
+        echo "Saving cluster admin username as parameter '/cluster-${CLUSTER_NAME}/admin_username' in AWS parameter store..."
+        run_chamber write "cluster-$CLUSTER_NAME" "ADMIN_USERNAME" "$ADMIN_USERNAME" --skip-unchanged
+    fi
+    if [[ -z "${ADMIN_PASSWORD:-}" ]]; then
+        echo "Enter cluster admin password:"
+        read -r -s ADMIN_PASSWORD
+        echo "Saving cluster admin username as parameter '/cluster-${CLUSTER_NAME}/admin_password' in AWS parameter store..."
+        run_chamber write "cluster-$CLUSTER_NAME" "ADMIN_PASSWORD" "$ADMIN_PASSWORD" --skip-unchanged
+    fi
+}
+
 case $ENVIRONMENT in
   stage)
     EXPECT_OCM_ID="2ECw6PIE06TzjScQXe6QxMMt3Sa"
@@ -39,10 +59,7 @@ case $ENVIRONMENT in
     fi
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
 
-    # Load configuration
-    init_chamber
-    load_external_config "ocm" OCM_
-    load_external_config "cluster-$CLUSTER_NAME"
+    export_cluster_environment
 
     if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qE '^OpenID *$'; then
       echo "Creating an OpenID IdP for the cluster."
@@ -95,10 +112,7 @@ case $ENVIRONMENT in
     fi
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
 
-    # Load configuration
-    init_chamber
-    load_external_config "ocm" OCM_
-    load_external_config "cluster-$CLUSTER_NAME"
+    export_cluster_environment
 
     if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qE '^HTPasswd *$'; then
       echo "Creating an HTPasswd IdP for the cluster."
@@ -164,6 +178,11 @@ metadata:
 type: kubernetes.io/service-account-token
 END
 
+echo "Saving cluster id as parameter '/cluster-${CLUSTER_NAME}/id' in AWS parameter store..."
+run_chamber write "cluster-$CLUSTER_NAME" "ID" "$CLUSTER_ID" --skip-unchanged
+echo "Saving cluster url as parameter '/cluster-${CLUSTER_NAME}/url' in AWS parameter store..."
+run_chamber write "cluster-$CLUSTER_NAME" "URL" "$CLUSTER_URL" --skip-unchanged
+
 echo "Polling for token to be provisioned."
 attempt=0
 while true
@@ -172,7 +191,7 @@ do
   ROBOT_TOKEN="$(oc get secret "${ROBOT_TOKEN_RESOURCE}" -n "$ROBOT_NS" -o json | jq -r 'if (has("data") and (.data|has("token"))) then (.data.token|@base64d) else "" end')"
   if [[ -n $ROBOT_TOKEN ]]; then
     echo "Saving robot token as parameter '/cluster-${CLUSTER_NAME}/robot_oc_token' in AWS parameter store..."
-    run_chamber write "cluster-$CLUSTER_NAME" "ROBOT_TOKEN" "$ROBOT_TOKEN" --skip-unchanged
+    run_chamber write "cluster-$CLUSTER_NAME" "ROBOT_OC_TOKEN" "$ROBOT_TOKEN" --skip-unchanged
     break
   fi
   if [[ $attempt -gt 30 ]]; then
