@@ -34,6 +34,7 @@ func main() {
 	glog.Infof("FleetManagerEndpoint: %s", config.FleetManagerEndpoint)
 	glog.Infof("ClusterID: %s", config.ClusterID)
 	glog.Infof("RuntimePollPeriod: %s", config.RuntimePollPeriod.String())
+	glog.Infof("AuthType: %s", config.AuthType)
 
 	runtime, err := runtime.NewRuntime(config, k8s.CreateClientOrDie())
 	if err != nil {
