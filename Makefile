@@ -581,7 +581,7 @@ test/run: image/build/test
 
 # Build the probe e2e test image
 image/build/e2e/probe:
-	$(DOCKER) build -t "$(e2e_probe_image)" -f e2e/Dockerfile .
+	$(DOCKER) build -t "$(e2e_probe_image)" -f probe/Dockerfile .
 .PHONY: image/build/e2e/probe
 
 # Run the probe based e2e test in container
