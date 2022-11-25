@@ -17,7 +17,7 @@ if [[ $# -ne 2 ]]; then
     echo "See additional documentation in docs/development/setup-osd-cluster-idp.md"
     echo
     echo "Note: you need to be logged into OCM for your environment's administrator"
-    echo "Note: you need access to BitWarden"
+    echo "Note: you need access to AWS account of the selected environment"
     exit 2
 fi
 
@@ -29,6 +29,31 @@ if [[ "$AWS_AUTH_HELPER" == "aws-vault" ]]; then
     export AWS_PROFILE="$ENVIRONMENT"
 fi
 
+save_cluster_parameter() {
+    local key="$1"
+    local value="$2"
+    echo "Saving parameter '/cluster-${CLUSTER_NAME}/${key}' in AWS parameter store..."
+    run_chamber write "cluster-${CLUSTER_NAME}" "${key}" "${value}" --skip-unchanged
+}
+
+export_cluster_environment() {
+    init_chamber
+    load_external_config "osd" OSD_
+    load_external_config "cluster-$CLUSTER_NAME" STORED_
+
+    if [[ -z ${STORED_ADMIN_USERNAME:-} ]]; then
+        echo "Cluster admin user is missing from Parameter Store."
+        echo "Enter cluster admin username:"
+        read -r STORED_ADMIN_USERNAME
+        save_cluster_parameter "admin_username" "$STORED_ADMIN_USERNAME"
+    fi
+    if [[ -z ${STORED_ADMIN_PASSWORD:-} ]]; then
+        echo "Enter cluster admin password:"
+        read -r -s STORED_ADMIN_PASSWORD
+        save_cluster_parameter "admin_password" "$STORED_ADMIN_PASSWORD"
+    fi
+}
+
 case $ENVIRONMENT in
   stage)
     EXPECT_OCM_ID="2ECw6PIE06TzjScQXe6QxMMt3Sa"
@@ -39,9 +64,7 @@ case $ENVIRONMENT in
     fi
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
 
-    # Load configuration
-    init_chamber
-    load_external_config "cluster-$CLUSTER_NAME"
+    export_cluster_environment
 
     if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qE '^OpenID *$'; then
       echo "Creating an OpenID IdP for the cluster."
@@ -67,8 +90,8 @@ case $ENVIRONMENT in
       ocm create idp --name=HTPasswd \
         --cluster="${CLUSTER_ID}" \
         --type=htpasswd \
-        --username="${ADMIN_USERNAME}" \
-        --password="${ADMIN_PASSWORD}"
+        --username="${STORED_ADMIN_USERNAME}" \
+        --password="${STORED_ADMIN_PASSWORD}"
     else
       echo "Skipping creation an HTPasswd IdP for the cluster, already exists."
     fi
@@ -76,7 +99,7 @@ case $ENVIRONMENT in
     # Create the acsms-admin user. Ignore errors, if it already exists.
     ocm create user --cluster="${CLUSTER_NAME}" \
       --group=cluster-admins \
-      "${ADMIN_USERNAME}" || true
+      "${STORED_ADMIN_USERNAME}" || true
 
     ;;
 
@@ -94,17 +117,15 @@ case $ENVIRONMENT in
     fi
     CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
 
-    # Load configuration
-    init_chamber
-    load_external_config "cluster-$CLUSTER_NAME"
+    export_cluster_environment
 
     if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qE '^HTPasswd *$'; then
       echo "Creating an HTPasswd IdP for the cluster."
       ocm create idp --name=HTPasswd \
         --cluster="${CLUSTER_ID}" \
         --type=htpasswd \
-        --username="${ADMIN_USERNAME}" \
-        --password="${ADMIN_PASSWORD}"
+        --username="${STORED_ADMIN_USERNAME}" \
+        --password="${STORED_ADMIN_PASSWORD}"
     else
       echo "Skipping creation an HTPasswd IdP for the cluster, already exists."
     fi
@@ -112,7 +133,7 @@ case $ENVIRONMENT in
     # Create the acsms-admin user. Ignore errors, if it already exists.
     ocm create user --cluster="${CLUSTER_NAME}" \
       --group=cluster-admins \
-      "${ADMIN_USERNAME}" || true
+      "${STORED_ADMIN_USERNAME}" || true
     ;;
 
   *)
@@ -129,8 +150,8 @@ KUBECONFIG="$(mktemp)"
 export KUBECONFIG
 trap 'rm -f "${KUBECONFIG}"' EXIT
 
-echo "Logging into cluster ${CLUSTER_NAME} as ${ADMIN_USERNAME}..."
-oc login "${CLUSTER_URL}" --username="${ADMIN_USERNAME}" --password="${ADMIN_PASSWORD}"
+echo "Logging into cluster ${CLUSTER_NAME} as ${STORED_ADMIN_USERNAME}..."
+oc login "${CLUSTER_URL}" --username="${STORED_ADMIN_USERNAME}" --password="${STORED_ADMIN_PASSWORD}"
 
 ROBOT_NS="acscs-dataplane-cd"
 ROBOT_SA="acscs-cd-robot"
@@ -162,6 +183,9 @@ metadata:
 type: kubernetes.io/service-account-token
 END
 
+save_cluster_parameter "id" "$CLUSTER_ID"
+save_cluster_parameter "url" "$CLUSTER_URL"
+
 echo "Polling for token to be provisioned."
 attempt=0
 while true
@@ -169,10 +193,7 @@ do
   attempt=$((attempt+1))
   ROBOT_TOKEN="$(oc get secret "${ROBOT_TOKEN_RESOURCE}" -n "$ROBOT_NS" -o json | jq -r 'if (has("data") and (.data|has("token"))) then (.data.token|@base64d) else "" end')"
   if [[ -n $ROBOT_TOKEN ]]; then
-    echo "Retrieved robot token:"
-    echo "$ROBOT_TOKEN"
-    echo "Please save this as parameter '/cluster-${CLUSTER_NAME}/robot_oc_token' in AWS parameter store at https://us-east-1.console.aws.amazon.com/systems-manager/parameters/?region=us-east-1&tab=Table"
-    # TODO(porridge): automate storing this in parameter store in a way suitable for terraform script.
+    save_cluster_parameter "robot_oc_token" "$ROBOT_TOKEN"
     break
   fi
   if [[ $attempt -gt 30 ]]; then
@@ -181,3 +202,6 @@ do
   fi
   sleep 1
 done
+
+echo "The following cluster parameters are currently stored in AWS Parameter Store:"
+run_chamber list "cluster-${CLUSTER_NAME}"

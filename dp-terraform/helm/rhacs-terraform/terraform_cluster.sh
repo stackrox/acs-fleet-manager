@@ -59,7 +59,7 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
 fi
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
-oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="https://api.${CLUSTER_NAME}.${CLUSTER_URL_INFIX}.openshiftapps.com:6443"
+oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
 
 OPERATOR_USE_UPSTREAM=false
 OPERATOR_SOURCE="redhat-operators"
