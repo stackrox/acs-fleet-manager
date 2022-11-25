@@ -594,7 +594,7 @@ test/e2e/probe/run:
 	-e OCM_USERNAME="${OCM_USERNAME}" \
 	-e OCM_TOKEN="${OCM_TOKEN}" \
 	-e FLEET_MANAGER_ENDPOINT="${FLEET_MANAGER_ENDPOINT}" \
-	--rm -it $(IMAGE_REF) \
+	--rm $(IMAGE_REF) \
 	run
 .PHONY: test/e2e/probe/run
 
