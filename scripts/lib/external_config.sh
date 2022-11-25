@@ -113,6 +113,6 @@ load_external_config() {
     local prefix="${2:-}"
     local env_output
     env_output=$(run_chamber env "$service")
-    [[ -z "$env_output" ]] && echo "WARNING: external configuration is empty for service '$service'"
+    [[ -z "$env_output" ]] && echo "WARNING: no parameters found under '/$service' in AWS parameter store of this environment"
     eval "$(echo "$env_output" | sed -E "s/(^export +)(.*)/\1${prefix}\2/")"
 }
