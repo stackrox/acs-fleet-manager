@@ -584,6 +584,20 @@ test/run: image/build/test
 	$(DOCKER) run -u $(shell id -u) --net=host -p 9876:9876 -i "$(test_image)"
 .PHONY: test/run
 
+# Run the probe based e2e test in container
+test/e2e/probe/run: image/build/multi-target/probe
+test/e2e/probe/run: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
+test/e2e/probe/run:
+	$(DOCKER) run \
+	-e QUOTA_TYPE="OCM" \
+	-e AUTH_TYPE="OCM" \
+	-e OCM_USERNAME="${OCM_USERNAME}" \
+	-e OCM_TOKEN="${OCM_TOKEN}" \
+	-e FLEET_MANAGER_ENDPOINT="${FLEET_MANAGER_ENDPOINT}" \
+	--rm -it $(IMAGE_REF) \
+	run
+.PHONY: test/e2e/probe/run
+
 # Touch all necessary secret files for fleet manager to start up
 secrets/touch:
 	touch secrets/aws.accesskey \
