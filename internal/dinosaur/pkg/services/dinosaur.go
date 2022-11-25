@@ -94,7 +94,7 @@ type DinosaurService interface {
 	Updates(dinosaurRequest *dbapi.CentralRequest, values map[string]interface{}) *errors.ServiceError
 	ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error)
-	DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError)
+	DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType
 	RegisterDinosaurDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionDinosaurForUsers registers all dinosaurs for deprovisioning given the list of owners
 	DeprovisionDinosaurForUsers(users []string) *errors.ServiceError
@@ -169,25 +169,27 @@ func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.Ce
 	return count < regionCapacity, nil
 }
 
-// DetectInstanceType ...
-func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
+// DetectInstanceType - returns standard instance type if quota is available. Otherwise falls back to eval instance type.
+func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType {
 	quotaType := api.QuotaType(k.dinosaurConfig.Quota.Type)
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(quotaType)
 	if factoryErr != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
+		glog.Error(errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to get quota service"))
+		return types.EVAL
 	}
 
 	hasQuota, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(dinosaurRequest, types.STANDARD)
 	if err != nil {
-		return "", err
+		glog.Error(errors.NewWithCause(errors.ErrorGeneral, err, "unable to check quota"))
+		return types.EVAL
 	}
 	if hasQuota {
 		glog.Infof("Quota detected for central request %s with quota type %s. Granting instance type %s.", dinosaurRequest.ID, quotaType, types.STANDARD)
-		return types.STANDARD, nil
+		return types.STANDARD
 	}
 
 	glog.Infof("No quota detected for central request %s with quota type %s. Granting instance type %s.", dinosaurRequest.ID, quotaType, types.EVAL)
-	return types.EVAL, nil
+	return types.EVAL
 }
 
 // reserveQuota - reserves quota for the given dinosaur request. If a RHACS quota has been assigned, it will try to reserve RHACS quota, otherwise it will try with RHACSTrial
@@ -210,7 +212,7 @@ func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (s
 		}
 
 		if count > 0 {
-			return "", errors.TooManyDinosaurInstancesReached("only one eval instance is allowed")
+			return "", errors.TooManyDinosaurInstancesReached("only one eval instance is allowed; increase your account quota")
 		}
 	}
 
@@ -237,10 +239,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 		return errors.TooManyDinosaurInstancesReached(errorMsg)
 	}
 
-	instanceType, err := k.DetectInstanceType(dinosaurRequest)
-	if err != nil {
-		return err
-	}
+	instanceType := k.DetectInstanceType(dinosaurRequest)
 
 	dinosaurRequest.InstanceType = instanceType.String()
 

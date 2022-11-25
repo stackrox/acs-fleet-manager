@@ -38,12 +38,12 @@ var supportedAMSBillingModels = map[string]struct{}{
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 	orgID, err := q.amsClient.GetOrganisationIDFromExternalID(dinosaur.OrganisationID)
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", dinosaur.OrganisationID))
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("failed to get organization with external id %v", dinosaur.OrganisationID))
 	}
 
 	hasQuota, err := q.hasConfiguredQuotaCost(orgID, instanceType.GetQuotaType())
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get assigned quota of type %v for organization with id %v", instanceType.GetQuotaType(), orgID))
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("failed to get assigned quota of type %v for organization with id %v", instanceType.GetQuotaType(), orgID))
 	}
 
 	return hasQuota, nil
