@@ -68,9 +68,6 @@ internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 # Test image name that will be used for PR checks
 test_image:=test/$(IMAGE_NAME)
 
-# E2E probe image tag name
-e2e_probe_image:=e2e/probe/$(IMAGE_NAME)
-
 DOCKER ?= docker
 DOCKER_CONFIG ?= "${PWD}/.docker"
 
@@ -579,20 +576,18 @@ test/run: image/build/test
 	$(DOCKER) run -u $(shell id -u) --net=host -p 9876:9876 -i "$(test_image)"
 .PHONY: test/run
 
-# Build the probe e2e test image
-image/build/e2e/probe:
-	$(DOCKER) build -t "$(e2e_probe_image)" -f probe/Dockerfile .
-.PHONY: image/build/e2e/probe
-
 # Run the probe based e2e test in container
-test/e2e/probe/run: image/build/e2e/probe
+test/e2e/probe/run: image/build/multi-target/probe
+test/e2e/probe/run: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
+test/e2e/probe/run:
 	$(DOCKER) run \
 	-e QUOTA_TYPE="OCM" \
 	-e AUTH_TYPE="OCM" \
 	-e OCM_USERNAME="${OCM_USERNAME}" \
 	-e OCM_TOKEN="${OCM_TOKEN}" \
 	-e FLEET_MANAGER_ENDPOINT="${FLEET_MANAGER_ENDPOINT}" \
-	--rm -it "$(e2e_probe_image)"
+	--rm -it $(IMAGE_REF) \
+	run
 .PHONY: test/e2e/probe/run
 
 # Touch all necessary secret files for fleet manager to start up
