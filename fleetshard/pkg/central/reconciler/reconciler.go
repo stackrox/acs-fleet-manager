@@ -12,7 +12,7 @@ import (
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/rdsclient"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/dbprovisioning"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -74,7 +74,7 @@ type CentralReconciler struct {
 	managedDBEnabled         bool
 	managedDBSecurityGroup   string
 	managedDBSubnetGroup     string
-	managedDBCredentials     rdsclient.AWSCredentials
+	managedDBCredentials     dbprovisioning.AWSCredentials
 	managedDBAccessKey       string
 	managedDBSecretAccessKey string
 	managedDBSessionToken    string
@@ -205,7 +205,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace); err != nil {
 			return nil, errors.Wrap(err, "unable to ensure that DB secret exists")
 		}
-		rdsClient, err := rdsclient.NewClient(centralDbSecretName, remoteCentralNamespace, r.managedDBSecurityGroup,
+		rdsClient, err := dbprovisioning.NewClient(centralDbSecretName, remoteCentralNamespace, r.managedDBSecurityGroup,
 			r.managedDBSubnetGroup, r.managedDBCredentials)
 		if err != nil {
 			return nil, fmt.Errorf("creating AWS RDS client: %v", err)
@@ -367,7 +367,7 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	globalDeleted = globalDeleted && centralDeleted
 
 	if r.managedDBEnabled {
-		rdsClient, err := rdsclient.NewClient(centralDbSecretName, central.GetNamespace(), r.managedDBSecurityGroup,
+		rdsClient, err := dbprovisioning.NewClient(centralDbSecretName, central.GetNamespace(), r.managedDBSecurityGroup,
 			r.managedDBSubnetGroup, r.managedDBCredentials)
 		if err != nil {
 			return false, fmt.Errorf("creating AWS RDS client: %v", err)
@@ -743,7 +743,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		managedDBEnabled:       opts.ManagedDBEnabled,
 		managedDBSecurityGroup: opts.ManagedDBSecurityGroup,
 		managedDBSubnetGroup:   opts.ManagedDBSubnetGroup,
-		managedDBCredentials: rdsclient.AWSCredentials{
+		managedDBCredentials: dbprovisioning.AWSCredentials{
 			AccessKeyID:     opts.ManagedDBAccessKeyID,
 			SecretAccessKey: opts.ManagedDBSecretAccessKey, // pragma: allowlist secret
 			SessionToken:    opts.ManagedDBSessionToken},

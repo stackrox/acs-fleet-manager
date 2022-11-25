@@ -1,5 +1,5 @@
-// Package rdsclient provides functionality to provision and deprovision RDS DB instances on AWS
-package rdsclient
+// Package dbprovisioning provides functionality to provision and deprovision RDS DB instances on AWS
+package dbprovisioning
 
 import (
 	"context"
@@ -31,9 +31,9 @@ const (
 	dbClusterSuffix  = "-db-cluster"
 )
 
-// Client is an AWS RDS client tied to one Central instance. It provisions and deprovisions databases
+// RDSProvisioningClient is an AWS RDS client tied to one Central instance. It provisions and deprovisions databases
 // for the Central.
-type Client struct {
+type RDSProvisioningClient struct {
 	centralDbSecretName string
 	centralNamespace    string
 	dbSecurityGroup     string
@@ -53,7 +53,7 @@ type AWSCredentials struct {
 }
 
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
-func (c *Client) EnsureDBProvisioned(ctx context.Context, client ctrlClient.Client) (string, error) {
+func (c *RDSProvisioningClient) EnsureDBProvisioned(ctx context.Context, client ctrlClient.Client) (string, error) {
 	clusterID := c.centralNamespace + dbClusterSuffix
 	instanceID := c.centralNamespace + dbInstanceSuffix
 
@@ -72,7 +72,7 @@ func (c *Client) EnsureDBProvisioned(ctx context.Context, client ctrlClient.Clie
 
 // EnsureDBDeprovisioned is a function that initiates the deprovisioning of the RDS database of a Central
 // Unlike EnsureDBProvisioned, this function does not block until the DB is deprovisioned
-func (c *Client) EnsureDBDeprovisioned() (bool, error) {
+func (c *RDSProvisioningClient) EnsureDBDeprovisioned() (bool, error) {
 	clusterID := c.centralNamespace + dbClusterSuffix
 	instanceID := c.centralNamespace + dbInstanceSuffix
 
@@ -107,7 +107,7 @@ func (c *Client) EnsureDBDeprovisioned() (bool, error) {
 	return true, nil
 }
 
-func (c *Client) ensureDBClusterCreated(ctx context.Context, client ctrlClient.Client, clusterID string) error {
+func (c *RDSProvisioningClient) ensureDBClusterCreated(ctx context.Context, client ctrlClient.Client, clusterID string) error {
 	if !c.clusterExists(clusterID) {
 		// cluster does not exist, create it
 		glog.Infof("Provisioning RDS database cluster.")
@@ -124,7 +124,7 @@ func (c *Client) ensureDBClusterCreated(ctx context.Context, client ctrlClient.C
 	return nil
 }
 
-func (c *Client) ensureDBInstanceCreated(instanceID string, clusterID string) error {
+func (c *RDSProvisioningClient) ensureDBInstanceCreated(instanceID string, clusterID string) error {
 	if !c.instanceExists(instanceID) {
 		// instance does not exist, create it
 		glog.Infof("Provisioning RDS database instance.")
@@ -138,7 +138,7 @@ func (c *Client) ensureDBInstanceCreated(instanceID string, clusterID string) er
 	return nil
 }
 
-func (c *Client) clusterExists(clusterID string) bool {
+func (c *RDSProvisioningClient) clusterExists(clusterID string) bool {
 	dbClusterQuery := &rds.DescribeDBClustersInput{
 		DBClusterIdentifier: aws.String(clusterID),
 	}
@@ -147,7 +147,7 @@ func (c *Client) clusterExists(clusterID string) bool {
 	return err == nil
 }
 
-func (c *Client) instanceExists(instanceID string) bool {
+func (c *RDSProvisioningClient) instanceExists(instanceID string) bool {
 	dbInstanceQuery := &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(instanceID),
 	}
@@ -156,7 +156,7 @@ func (c *Client) instanceExists(instanceID string) bool {
 	return err == nil
 }
 
-func (c *Client) clusterStatus(clusterID string) (string, error) {
+func (c *RDSProvisioningClient) clusterStatus(clusterID string) (string, error) {
 	dbClusterQuery := &rds.DescribeDBClustersInput{
 		DBClusterIdentifier: aws.String(clusterID),
 	}
@@ -169,7 +169,7 @@ func (c *Client) clusterStatus(clusterID string) (string, error) {
 	return *clusterResult.DBClusters[0].Status, nil
 }
 
-func (c *Client) instanceStatus(instanceID string) (string, error) {
+func (c *RDSProvisioningClient) instanceStatus(instanceID string) (string, error) {
 	dbInstanceQuery := &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(instanceID),
 	}
@@ -182,7 +182,7 @@ func (c *Client) instanceStatus(instanceID string) (string, error) {
 	return *instanceResult.DBInstances[0].DBInstanceStatus, nil
 }
 
-func (c *Client) waitForInstanceToBeAvailable(instanceID string, clusterID string) (string, error) {
+func (c *RDSProvisioningClient) waitForInstanceToBeAvailable(instanceID string, clusterID string) (string, error) {
 	dbInstanceQuery := &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(instanceID),
 	}
@@ -219,7 +219,7 @@ func (c *Client) waitForInstanceToBeAvailable(instanceID string, clusterID strin
 	}
 }
 
-func (c *Client) getDBPassword(ctx context.Context, client ctrlClient.Client, remoteCentralNamespace string) (string, error) {
+func (c *RDSProvisioningClient) getDBPassword(ctx context.Context, client ctrlClient.Client, remoteCentralNamespace string) (string, error) {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: c.centralDbSecretName,
@@ -237,14 +237,14 @@ func (c *Client) getDBPassword(ctx context.Context, client ctrlClient.Client, re
 	return "", fmt.Errorf("central DB secret does not contain password field: %v", err)
 }
 
-// NewClient initializes a new rdsclient.Client
-func NewClient(centralDbSecretName, centralNamespace, dbSecurityGroup, dbSubnetGroup string, credentials AWSCredentials) (*Client, error) {
+// NewClient initializes a new dbprovisioning.RDSProvisioningClient
+func NewClient(centralDbSecretName, centralNamespace, dbSecurityGroup, dbSubnetGroup string, credentials AWSCredentials) (*RDSProvisioningClient, error) {
 	rdsClient, err := newRdsClient(credentials.AccessKeyID, credentials.SecretAccessKey, credentials.SessionToken)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create RDS client, %v", err)
 	}
 
-	return &Client{
+	return &RDSProvisioningClient{
 		centralDbSecretName: centralDbSecretName, // pragma: allowlist secret
 		centralNamespace:    centralNamespace,
 		rdsClient:           rdsClient,
@@ -268,13 +268,9 @@ func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnet
 		},
 		BackupRetentionPeriod: aws.Int64(30),
 		StorageEncrypted:      aws.Bool(true),
-
-		// TODO: The following are some extra parameters to consider
 		// AvailabilityZones: // TODO: determine the AZ in which the Central is running
 		// EnableCloudwatchLogsExports // TODO: enable
-		// Tags // TODO: e.g. could add a tag that allows us to identify the associated Central
-		// PreferredBackupWindow
-		// PreferredMaintenanceWindow
+		// Tags // TODO: could add a tag that allows us to identify the associated Central
 	}
 }
 
@@ -284,7 +280,7 @@ func newCreateCentralDBInstanceInput(clusterID, instanceID string) *rds.CreateDB
 		DBClusterIdentifier:  aws.String(clusterID),
 		DBInstanceIdentifier: aws.String(instanceID),
 		Engine:               aws.String(dbEngine),
-		PubliclyAccessible:   aws.Bool(true), // TODO: must be set to false, after VPC peering is done
+		PubliclyAccessible:   aws.Bool(true), // TODO: must be set to false after VPC peering is done
 	}
 }
 
