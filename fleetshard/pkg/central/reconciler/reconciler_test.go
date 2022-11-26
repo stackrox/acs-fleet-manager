@@ -10,6 +10,7 @@ import (
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/dbprovisioning"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
@@ -17,6 +18,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -91,6 +93,68 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, centralReencryptRouteName, route.GetName())
 	assert.Equal(t, openshiftRouteV1.TLSTerminationReencrypt, route.Spec.TLS.Termination)
 	assert.Equal(t, testutils.CentralCA, route.Spec.TLS.DestinationCACertificate)
+}
+
+func TestReconcileCreateWithManagedDB(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+
+	managedDBProvisioningClient := new(testutils.DBProvisioningClientMock)
+	managedDBProvisioningClient.On("EnsureDBProvisioned", mock.Anything, mock.Anything, centralDbSecretName).Return("connectionString", nil)
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
+		CentralReconcilerOptions{
+			UseRoutes:        true,
+			ManagedDBEnabled: true})
+
+	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+	managedDBProvisioningClient.AssertNumberOfCalls(t, "EnsureDBProvisioned", 1)
+
+	if readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady); ok {
+		assert.Equal(t, "True", readyCondition.Status)
+	} else {
+		assert.Fail(t, "Ready condition not found in conditions", status.Conditions)
+	}
+
+	central := &v1alpha1.Central{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
+	require.NoError(t, err)
+	assert.Equal(t, centralName, central.GetName())
+	assert.Equal(t, "1", central.GetAnnotations()[revisionAnnotationKey])
+	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
+	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
+
+	route := &openshiftRouteV1.Route{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
+	require.NoError(t, err)
+	assert.Equal(t, centralReencryptRouteName, route.GetName())
+	assert.Equal(t, openshiftRouteV1.TLSTerminationReencrypt, route.Spec.TLS.Termination)
+	assert.Equal(t, testutils.CentralCA, route.Spec.TLS.DestinationCACertificate)
+
+	secret := &v1.Secret{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralDbSecretName, Namespace: centralNamespace}, secret)
+	require.NoError(t, err)
+	_, ok := secret.Data["password"]
+	assert.True(t, ok)
+}
+
+func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+
+	managedDBProvisioningClient, err := dbprovisioning.NewRDSProvisioningClient("security-group",
+		"db-group", dbprovisioning.AWSCredentials{
+			AccessKeyID:     "invalid-access-key",
+			SecretAccessKey: "invalid-secret-access-key", // pragma: allowlist secret
+			SessionToken:    "invalid-session-token",
+		}, fakeClient)
+	require.NoError(t, err)
+
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
+		CentralReconcilerOptions{
+			UseRoutes:        true,
+			ManagedDBEnabled: true})
+
+	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.ErrorContains(t, err, "InvalidClientTokenId")
 }
 
 func TestReconcileUpdateSucceeds(t *testing.T) {
@@ -225,6 +289,54 @@ func TestReconcileDelete(t *testing.T) {
 
 	route := &openshiftRouteV1.Route{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
+	assert.True(t, k8sErrors.IsNotFound(err))
+}
+
+func TestReconcileDeleteWithManagedDB(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+
+	managedDBProvisioningClient := new(testutils.DBProvisioningClientMock)
+	managedDBProvisioningClient.On("EnsureDBProvisioned", mock.Anything, mock.Anything, centralDbSecretName).Return("connectionString", nil)
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
+		CentralReconcilerOptions{
+			UseRoutes:        true,
+			ManagedDBEnabled: true})
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+	managedDBProvisioningClient.AssertNumberOfCalls(t, "EnsureDBProvisioned", 1)
+
+	deletedCentral := simpleManagedCentral
+	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
+
+	// trigger deletion
+	managedDBProvisioningClient.On("EnsureDBDeprovisioned", mock.Anything).Return(true, nil)
+	statusTrigger, err := r.Reconcile(context.TODO(), deletedCentral)
+	require.Error(t, err, ErrDeletionInProgress)
+	require.Nil(t, statusTrigger)
+	managedDBProvisioningClient.AssertNumberOfCalls(t, "EnsureDBDeprovisioned", 1)
+
+	// deletion completed needs second reconcile to check as deletion is async in a kubernetes cluster
+	statusDeletion, err := r.Reconcile(context.TODO(), deletedCentral)
+	require.NoError(t, err)
+	require.NotNil(t, statusDeletion)
+	managedDBProvisioningClient.AssertNumberOfCalls(t, "EnsureDBDeprovisioned", 2)
+
+	readyCondition, ok := conditionForType(statusDeletion.Conditions, conditionTypeReady)
+	require.True(t, ok, "Ready condition not found in conditions", statusDeletion.Conditions)
+	assert.Equal(t, "False", readyCondition.Status)
+	assert.Equal(t, "Deleted", readyCondition.Reason)
+
+	central := &v1alpha1.Central{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
+	assert.True(t, k8sErrors.IsNotFound(err))
+
+	route := &openshiftRouteV1.Route{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
+	assert.True(t, k8sErrors.IsNotFound(err))
+
+	secret := &v1.Secret{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralDbSecretName, Namespace: centralNamespace}, secret)
 	assert.True(t, k8sErrors.IsNotFound(err))
 }
 
