@@ -46,15 +46,10 @@ const (
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
-	UseRoutes                bool
-	WantsAuthProvider        bool
-	EgressProxyImage         string
-	ManagedDBEnabled         bool
-	ManagedDBSecurityGroup   string
-	ManagedDBSubnetGroup     string
-	ManagedDBAccessKeyID     string
-	ManagedDBSecretAccessKey string
-	ManagedDBSessionToken    string
+	UseRoutes         bool
+	WantsAuthProvider bool
+	EgressProxyImage  string
+	ManagedDBEnabled  bool
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -71,13 +66,8 @@ type CentralReconciler struct {
 	routeService      *k8s.RouteService
 	egressProxyImage  string
 
-	managedDBEnabled         bool
-	managedDBSecurityGroup   string
-	managedDBSubnetGroup     string
-	managedDBCredentials     dbprovisioning.AWSCredentials
-	managedDBAccessKey       string
-	managedDBSecretAccessKey string
-	managedDBSessionToken    string
+	managedDBEnabled            bool
+	managedDBProvisioningClient dbprovisioning.Client
 
 	resourcesChart *chart.Chart
 }
@@ -205,12 +195,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace); err != nil {
 			return nil, errors.Wrap(err, "unable to ensure that DB secret exists")
 		}
-		rdsClient, err := dbprovisioning.NewClient(centralDbSecretName, remoteCentralNamespace, r.managedDBSecurityGroup,
-			r.managedDBSubnetGroup, r.managedDBCredentials)
-		if err != nil {
-			return nil, fmt.Errorf("creating AWS RDS client: %v", err)
-		}
-		dbConnectionString, err := rdsClient.EnsureDBProvisioned(ctx, r.client)
+
+		dbConnectionString, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, central.GetNamespace(), centralDbSecretName)
 		if err != nil {
 			return nil, errors.Wrap(err, "provisioning RDS DB")
 		}
@@ -367,12 +353,7 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	globalDeleted = globalDeleted && centralDeleted
 
 	if r.managedDBEnabled {
-		rdsClient, err := dbprovisioning.NewClient(centralDbSecretName, central.GetNamespace(), r.managedDBSecurityGroup,
-			r.managedDBSubnetGroup, r.managedDBCredentials)
-		if err != nil {
-			return false, fmt.Errorf("creating AWS RDS client: %v", err)
-		}
-		dbDeleted, err := rdsClient.EnsureDBDeprovisioned()
+		dbDeleted, err := r.managedDBProvisioningClient.EnsureDBDeprovisioned(central.GetNamespace())
 		if err != nil {
 			return false, fmt.Errorf("deprovisioning DB: %v", err)
 		}
@@ -730,7 +711,8 @@ var (
 )
 
 // NewCentralReconciler ...
-func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, opts CentralReconcilerOptions) *CentralReconciler {
+func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
+	managedDBProvisioningClient dbprovisioning.Client, opts CentralReconcilerOptions) *CentralReconciler {
 	return &CentralReconciler{
 		client:            k8sClient,
 		central:           central,
@@ -740,13 +722,9 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		routeService:      k8s.NewRouteService(k8sClient),
 		egressProxyImage:  opts.EgressProxyImage,
 
-		managedDBEnabled:       opts.ManagedDBEnabled,
-		managedDBSecurityGroup: opts.ManagedDBSecurityGroup,
-		managedDBSubnetGroup:   opts.ManagedDBSubnetGroup,
-		managedDBCredentials: dbprovisioning.AWSCredentials{
-			AccessKeyID:     opts.ManagedDBAccessKeyID,
-			SecretAccessKey: opts.ManagedDBSecretAccessKey, // pragma: allowlist secret
-			SessionToken:    opts.ManagedDBSessionToken},
+		managedDBEnabled:            opts.ManagedDBEnabled,
+		managedDBProvisioningClient: managedDBProvisioningClient,
+
 		resourcesChart: resourcesChart,
 	}
 }

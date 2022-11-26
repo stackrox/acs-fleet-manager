@@ -7,23 +7,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	v1 "k8s.io/api/core/v1"
-
-	networkingv1 "k8s.io/api/networking/v1"
-
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
@@ -69,7 +66,7 @@ func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestCo
 
 func TestReconcileCreate(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -105,7 +102,7 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 		},
 	}, centralDeploymentObject()).Build()
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{})
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -150,7 +147,7 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 		},
 	}, centralDeploymentObject()).Build()
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{})
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
@@ -182,7 +179,7 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 		},
 	}, centralDeploymentObject()).Build()
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{})
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusProvisioning.String()
@@ -200,7 +197,7 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 
 func TestReconcileDelete(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -270,7 +267,7 @@ func TestCentralChanged(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			reconciler := NewCentralReconciler(fakeClient, test.currentCentral, CentralReconcilerOptions{})
+			reconciler := NewCentralReconciler(fakeClient, test.currentCentral, nil, CentralReconcilerOptions{})
 
 			if test.lastCentral != nil {
 				err := reconciler.setLastCentralHash(*test.lastCentral)
@@ -287,7 +284,7 @@ func TestCentralChanged(t *testing.T) {
 
 func TestReportRoutesStatuses(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -311,7 +308,7 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 	require.NoError(t, err)
 
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{})
 	r.resourcesChart = chrt
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -342,7 +339,7 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 	require.NoError(t, err)
 
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{})
 	r.resourcesChart = chart
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -373,7 +370,7 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 
 func TestEgressProxyIsDeployed(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{})
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -423,7 +420,7 @@ func TestEgressProxyIsDeployed(t *testing.T) {
 
 func TestEgressProxyCustomImage(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{
 		EgressProxyImage: "registry.redhat.io/openshift4/ose-egress-http-proxy:version-for-test",
 	})
 
@@ -449,7 +446,7 @@ func TestEgressProxyCustomImage(t *testing.T) {
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
 	tracker.AddRouteError(centralReencryptRouteName, errors.New("fake error"))
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.Errorf(t, err, "fake error")
 }
@@ -457,7 +454,7 @@ func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
 func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
 	tracker.SetRouteAdmitted(centralReencryptRouteName, false)
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.Errorf(t, err, "unable to find admitted ingress")
 }
@@ -465,7 +462,7 @@ func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
 func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
 	tracker.SetSkipRoute(centralReencryptRouteName, true)
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.Errorf(t, err, "unable to find admitted ingress")
 }

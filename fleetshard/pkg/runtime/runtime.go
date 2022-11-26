@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/dbprovisioning"
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-
-	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/pkg/concurrency"
@@ -90,15 +90,10 @@ func (r *Runtime) Start() error {
 	routesAvailable := r.routesAvailable()
 
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
-		UseRoutes:                routesAvailable,
-		WantsAuthProvider:        r.config.CreateAuthProvider,
-		EgressProxyImage:         r.config.EgressProxyImage,
-		ManagedDBEnabled:         r.config.ManagedDBEnabled,
-		ManagedDBSecurityGroup:   r.config.ManagedDBSecurityGroup,
-		ManagedDBSubnetGroup:     r.config.ManagedDBSubnetGroup,
-		ManagedDBAccessKeyID:     r.config.ManagedDBAccessKeyID,
-		ManagedDBSecretAccessKey: r.config.ManagedDBSecretAccessKey, // pragma: allowlist secret
-		ManagedDBSessionToken:    r.config.ManagedDBSessionToken,
+		UseRoutes:         routesAvailable,
+		WantsAuthProvider: r.config.CreateAuthProvider,
+		EgressProxyImage:  r.config.EgressProxyImage,
+		ManagedDBEnabled:  r.config.ManagedDBEnabled,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
@@ -113,7 +108,22 @@ func (r *Runtime) Start() error {
 		glog.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
-				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, reconcilerOpts)
+				var managedDBProvisioningClient dbprovisioning.Client
+				if r.config.ManagedDBEnabled {
+					managedDBProvisioningClient, err = dbprovisioning.NewRDSProvisioningClient(r.config.ManagedDBSecurityGroup,
+						r.config.ManagedDBSubnetGroup, dbprovisioning.AWSCredentials{
+							AccessKeyID:     r.config.ManagedDBAccessKeyID,
+							SecretAccessKey: r.config.ManagedDBSecretAccessKey, //pragma: allowlist secret
+							SessionToken:    r.config.ManagedDBSessionToken,
+						}, r.k8sClient)
+					if err != nil {
+						err = fmt.Errorf("creating managed DB provisioning client: %v", err)
+						glog.Error(err)
+						return 0, err
+					}
+				}
+
+				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, managedDBProvisioningClient, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]

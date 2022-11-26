@@ -1,4 +1,3 @@
-// Package dbprovisioning provides functionality to provision and deprovision RDS DB instances on AWS
 package dbprovisioning
 
 import (
@@ -6,11 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	awscredentials "github.com/aws/aws-sdk-go/aws/credentials"
-
-	"github.com/aws/aws-sdk-go/aws/session"
-
 	"github.com/aws/aws-sdk-go/aws"
+	awscredentials "github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
@@ -34,11 +31,10 @@ const (
 // RDSProvisioningClient is an AWS RDS client tied to one Central instance. It provisions and deprovisions databases
 // for the Central.
 type RDSProvisioningClient struct {
-	centralDbSecretName string
-	centralNamespace    string
-	dbSecurityGroup     string
-	dbSubnetGroup       string
+	dbSecurityGroup string
+	dbSubnetGroup   string
 
+	client    ctrlClient.Client
 	rdsClient *rds.RDS
 }
 
@@ -53,11 +49,11 @@ type AWSCredentials struct {
 }
 
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
-func (c *RDSProvisioningClient) EnsureDBProvisioned(ctx context.Context, client ctrlClient.Client) (string, error) {
-	clusterID := c.centralNamespace + dbClusterSuffix
-	instanceID := c.centralNamespace + dbInstanceSuffix
+func (c *RDSProvisioningClient) EnsureDBProvisioned(ctx context.Context, centralNamespace, centralDbSecretName string) (string, error) {
+	clusterID := centralNamespace + dbClusterSuffix
+	instanceID := centralNamespace + dbInstanceSuffix
 
-	err := c.ensureDBClusterCreated(ctx, client, clusterID)
+	err := c.ensureDBClusterCreated(ctx, clusterID, centralNamespace, centralDbSecretName)
 	if err != nil {
 		return "", fmt.Errorf("ensuring DB cluster %s exists: %v", clusterID, err)
 	}
@@ -72,9 +68,9 @@ func (c *RDSProvisioningClient) EnsureDBProvisioned(ctx context.Context, client 
 
 // EnsureDBDeprovisioned is a function that initiates the deprovisioning of the RDS database of a Central
 // Unlike EnsureDBProvisioned, this function does not block until the DB is deprovisioned
-func (c *RDSProvisioningClient) EnsureDBDeprovisioned() (bool, error) {
-	clusterID := c.centralNamespace + dbClusterSuffix
-	instanceID := c.centralNamespace + dbInstanceSuffix
+func (c *RDSProvisioningClient) EnsureDBDeprovisioned(centralNamespace string) (bool, error) {
+	clusterID := centralNamespace + dbClusterSuffix
+	instanceID := centralNamespace + dbInstanceSuffix
 
 	if c.instanceExists(instanceID) {
 		status, err := c.instanceStatus(instanceID)
@@ -83,6 +79,7 @@ func (c *RDSProvisioningClient) EnsureDBDeprovisioned() (bool, error) {
 		}
 		if status != dbDeletingStatus {
 			//TODO: do not skip taking a final DB snapshot
+			glog.Infof("Deprovisioning RDS database cluster.")
 			_, err := c.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
 			if err != nil {
 				return false, fmt.Errorf("deleting DB instance: %v", err)
@@ -97,6 +94,7 @@ func (c *RDSProvisioningClient) EnsureDBDeprovisioned() (bool, error) {
 		}
 		if status != dbDeletingStatus {
 			//TODO: do not skip taking a final DB snapshot
+			glog.Infof("Deprovisioning RDS database instance.")
 			_, err := c.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
 			if err != nil {
 				return false, fmt.Errorf("deleting DB cluster: %v", err)
@@ -107,11 +105,11 @@ func (c *RDSProvisioningClient) EnsureDBDeprovisioned() (bool, error) {
 	return true, nil
 }
 
-func (c *RDSProvisioningClient) ensureDBClusterCreated(ctx context.Context, client ctrlClient.Client, clusterID string) error {
+func (c *RDSProvisioningClient) ensureDBClusterCreated(ctx context.Context, clusterID, centralNamespace, centralDbSecretName string) error {
 	if !c.clusterExists(clusterID) {
 		// cluster does not exist, create it
 		glog.Infof("Provisioning RDS database cluster.")
-		dbPassword, err := c.getDBPassword(ctx, client, c.centralNamespace)
+		dbPassword, err := c.getDBPassword(ctx, centralNamespace, centralDbSecretName)
 		if err != nil {
 			return fmt.Errorf("getting password for DB cluster: %v", err)
 		}
@@ -219,13 +217,13 @@ func (c *RDSProvisioningClient) waitForInstanceToBeAvailable(instanceID string, 
 	}
 }
 
-func (c *RDSProvisioningClient) getDBPassword(ctx context.Context, client ctrlClient.Client, remoteCentralNamespace string) (string, error) {
+func (c *RDSProvisioningClient) getDBPassword(ctx context.Context, centralNamespace, centralDbSecretName string) (string, error) {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: c.centralDbSecretName,
+			Name: centralDbSecretName,
 		},
 	}
-	err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: c.centralDbSecretName}, secret)
+	err := c.client.Get(ctx, ctrlClient.ObjectKey{Namespace: centralNamespace, Name: centralDbSecretName}, secret)
 	if err != nil {
 		return "", fmt.Errorf("getting Central DB password from secret: %v", err)
 	}
@@ -237,19 +235,18 @@ func (c *RDSProvisioningClient) getDBPassword(ctx context.Context, client ctrlCl
 	return "", fmt.Errorf("central DB secret does not contain password field: %v", err)
 }
 
-// NewClient initializes a new dbprovisioning.RDSProvisioningClient
-func NewClient(centralDbSecretName, centralNamespace, dbSecurityGroup, dbSubnetGroup string, credentials AWSCredentials) (*RDSProvisioningClient, error) {
+// NewRDSProvisioningClient initializes a new dbprovisioning.RDSProvisioningClient
+func NewRDSProvisioningClient(dbSecurityGroup, dbSubnetGroup string, credentials AWSCredentials, client ctrlClient.Client) (*RDSProvisioningClient, error) {
 	rdsClient, err := newRdsClient(credentials.AccessKeyID, credentials.SecretAccessKey, credentials.SessionToken)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create RDS client, %v", err)
 	}
 
 	return &RDSProvisioningClient{
-		centralDbSecretName: centralDbSecretName, // pragma: allowlist secret
-		centralNamespace:    centralNamespace,
-		rdsClient:           rdsClient,
-		dbSecurityGroup:     dbSecurityGroup,
-		dbSubnetGroup:       dbSubnetGroup,
+		rdsClient:       rdsClient,
+		dbSecurityGroup: dbSecurityGroup,
+		dbSubnetGroup:   dbSubnetGroup,
+		client:          client,
 	}, nil
 }
 
