@@ -130,8 +130,13 @@ func (r *Runtime) Start() error {
 			go func(reconciler *centralReconciler.CentralReconciler, central private.ManagedCentral) {
 				fleetshardmetrics.MetricsInstance().IncActiveCentralReconcilations()
 				defer fleetshardmetrics.MetricsInstance().DecActiveCentralReconcilations()
+
+				// a 15 minutes timeout should cover the duration of a Reconcile call, including the provisioning of an RDS database
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+				defer cancel()
+
 				glog.Infof("Start reconcile central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
-				status, err := reconciler.Reconcile(context.Background(), central)
+				status, err := reconciler.Reconcile(ctx, central)
 				fleetshardmetrics.MetricsInstance().IncCentralReconcilations()
 				r.handleReconcileResult(central, status, err)
 			}(reconciler, central)

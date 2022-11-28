@@ -63,7 +63,7 @@ func (c *RDSProvisioningClient) EnsureDBProvisioned(ctx context.Context, central
 		return "", fmt.Errorf("ensuring DB instance %s exists in cluster %s: %v", instanceID, clusterID, err)
 	}
 
-	return c.waitForInstanceToBeAvailable(instanceID, clusterID)
+	return c.waitForInstanceToBeAvailable(ctx, instanceID, clusterID)
 }
 
 // EnsureDBDeprovisioned is a function that initiates the deprovisioning of the RDS database of a Central
@@ -180,7 +180,7 @@ func (c *RDSProvisioningClient) instanceStatus(instanceID string) (string, error
 	return *instanceResult.DBInstances[0].DBInstanceStatus, nil
 }
 
-func (c *RDSProvisioningClient) waitForInstanceToBeAvailable(instanceID string, clusterID string) (string, error) {
+func (c *RDSProvisioningClient) waitForInstanceToBeAvailable(ctx context.Context, instanceID string, clusterID string) (string, error) {
 	dbInstanceQuery := &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(instanceID),
 	}
@@ -189,8 +189,11 @@ func (c *RDSProvisioningClient) waitForInstanceToBeAvailable(instanceID string, 
 		DBClusterIdentifier: aws.String(clusterID),
 	}
 
-	// TODO: implement a timeout for this loop
 	for {
+		if ctx.Err() != nil {
+			return "", fmt.Errorf("waiting for RDS instance to be available: %v", ctx.Err())
+		}
+
 		result, err := c.rdsClient.DescribeDBInstances(dbInstanceQuery)
 		if err != nil {
 			return "", fmt.Errorf("retrieving DB instance state: %v", err)
