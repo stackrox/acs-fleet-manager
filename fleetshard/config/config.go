@@ -15,7 +15,7 @@ type Config struct {
 	FleetManagerEndpoint string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
 	ClusterID            string        `env:"CLUSTER_ID"`
 	RuntimePollPeriod    time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
-	AuthType             string        `env:"AUTH_TYPE" envDefault:"OCM"`
+	AuthType             string        `env:"AUTH_TYPE" envDefault:"RHSSO"`
 	RHSSOClientID        string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
 	RHSSOClientSecret    string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
 	RHSSORealm           string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
