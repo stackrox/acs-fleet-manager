@@ -25,13 +25,12 @@ type Config struct {
 	CreateAuthProvider   bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
 	MetricsAddress       string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
 	EgressProxyImage     string        `env:"EGRESS_PROXY_IMAGE"`
+	AWSRegion            string        `env:"AWS_REGION" envDefault:"us-east-1"`
+	AWSRoleARN           string        `env:"AWS_ROLE_ARN"`
 
-	ManagedDBEnabled         bool   `env:"MANAGED_DB_ENABLED" envDefault:"false"`
-	ManagedDBSecurityGroup   string `env:"MANAGED_DB_SECURITY_GROUP"`
-	ManagedDBSubnetGroup     string `env:"MANAGED_DB_SUBNET_GROUP"`
-	ManagedDBAccessKeyID     string `env:"MANAGED_DB_ACCESS_KEY_ID"`
-	ManagedDBSecretAccessKey string `env:"MANAGED_DB_SECRET_ACCESS_KEY"`
-	ManagedDBSessionToken    string `env:"MANAGED_DB_SESSION_TOKEN"` // needed for local testing with STS only
+	ManagedDBEnabled       bool   `env:"MANAGED_DB_ENABLED" envDefault:"false"`
+	ManagedDBSecurityGroup string `env:"MANAGED_DB_SECURITY_GROUP"`
+	ManagedDBSubnetGroup   string `env:"MANAGED_DB_SUBNET_GROUP"`
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.
@@ -50,6 +49,9 @@ func GetConfig() (*Config, error) {
 	}
 	if c.AuthType == "" {
 		configErrors.AddError(errors.New("AUTH_TYPE unset in the environment"))
+	}
+	if c.AWSRoleARN == "" {
+		configErrors.AddError(errors.New("AWS_ROLE_ARN unset in the environment"))
 	}
 	cfgErr := configErrors.ToError()
 	if cfgErr != nil {

@@ -4,11 +4,13 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
@@ -16,6 +18,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -131,13 +134,13 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
 	managedDBProvisioningClient, err := awsclient.NewRDSClient(
-		"us-east-1",
-		"security-group",
-		"db-group", awsclient.AWSCredentials{
-			AccessKeyID:     "invalid-access-key",
-			SecretAccessKey: "invalid-secret-access-key", // pragma: allowlist secret
-			SessionToken:    "invalid-session-token",
-		})
+		&config.Config{
+			AWSRegion:              "us-east-1",
+			AWSRoleARN:             "arn:aws:iam::012456789:role/fake_role",
+			ManagedDBSecurityGroup: "security-group",
+			ManagedDBSubnetGroup:   "db-group",
+		},
+		&fakeAuth{})
 	require.NoError(t, err)
 
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
@@ -146,7 +149,7 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 			ManagedDBEnabled: true})
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.ErrorContains(t, err, "InvalidClientTokenId")
+	require.ErrorContains(t, err, "InvalidIdentityToken")
 }
 
 func TestReconcileUpdateSucceeds(t *testing.T) {
@@ -574,4 +577,17 @@ func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
 
 func centralDeploymentObject() *appsv1.Deployment {
 	return testutils.NewCentralDeployment(centralNamespace)
+}
+
+var _ fleetmanager.Auth = &fakeAuth{}
+
+type fakeAuth struct {
+}
+
+func (*fakeAuth) AddAuth(_ *http.Request) error {
+	return nil
+}
+
+func (*fakeAuth) RetrieveIDToken() (string, error) {
+	return "fake.token", nil // minimum field size of 20
 }
