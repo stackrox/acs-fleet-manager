@@ -79,7 +79,7 @@ func (c *RDSProvisioningClient) EnsureDBDeprovisioned(centralNamespace string) (
 		}
 		if status != dbDeletingStatus {
 			//TODO: do not skip taking a final DB snapshot
-			glog.Infof("Deprovisioning RDS database cluster.")
+			glog.Infof("Deprovisioning RDS database instance.")
 			_, err := c.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
 			if err != nil {
 				return false, fmt.Errorf("deleting DB instance: %v", err)
@@ -94,7 +94,7 @@ func (c *RDSProvisioningClient) EnsureDBDeprovisioned(centralNamespace string) (
 		}
 		if status != dbDeletingStatus {
 			//TODO: do not skip taking a final DB snapshot
-			glog.Infof("Deprovisioning RDS database instance.")
+			glog.Infof("Deprovisioning RDS database cluster.")
 			_, err := c.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
 			if err != nil {
 				return false, fmt.Errorf("deleting DB cluster: %v", err)
@@ -189,6 +189,7 @@ func (c *RDSProvisioningClient) waitForInstanceToBeAvailable(instanceID string, 
 		DBClusterIdentifier: aws.String(clusterID),
 	}
 
+	// TODO: implement a timeout for this loop
 	for {
 		result, err := c.rdsClient.DescribeDBInstances(dbInstanceQuery)
 		if err != nil {
