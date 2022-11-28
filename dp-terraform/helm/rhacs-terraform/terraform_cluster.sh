@@ -31,7 +31,7 @@ case $ENVIRONMENT in
   stage)
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
 
-    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:1cf5fce"
+    FLEETSHARD_SYNC_TAG="1cf5fce"
 
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
@@ -40,7 +40,7 @@ case $ENVIRONMENT in
   prod)
     FM_ENDPOINT="https://api.openshift.com"
 
-    FLEETSHARD_SYNC_IMAGE="quay.io/app-sre/acs-fleet-manager:1cf5fce"
+    FLEETSHARD_SYNC_TAG="1cf5fce"
 
     OBSERVABILITY_GITHUB_TAG="b864d5f155b5455bba78eb7b82bc4bf4190852c7"  # pragma: allowlist secret
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
@@ -57,6 +57,8 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     echo "Cluster ${CLUSTER_NAME} is expected to be in environment ${CLUSTER_ENVIRONMENT}, not ${ENVIRONMENT}" >&2
     exit 2
 fi
+
+"${SCRIPT_DIR}/check_image_exists.sh" "${FLEETSHARD_SYNC_TAG}"
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
@@ -86,7 +88,7 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
   --set acsOperator.version=v3.72.0 \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
-  --set fleetshardSync.image="${FLEETSHARD_SYNC_IMAGE}" \
+  --set fleetshardSync.image="quay.io/app-sre/acs-fleet-manager:${FLEETSHARD_SYNC_TAG}" \
   --set fleetshardSync.authType="RHSSO" \
   --set fleetshardSync.clusterId="${CLUSTER_ID}" \
   --set fleetshardSync.fleetManagerEndpoint="${FM_ENDPOINT}" \
