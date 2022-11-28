@@ -30,18 +30,12 @@ load_external_config observability OBSERVABILITY_
 case $ENVIRONMENT in
   stage)
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
-
-    FLEETSHARD_SYNC_TAG="1cf5fce"
-
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     ;;
 
   prod)
     FM_ENDPOINT="https://api.openshift.com"
-
-    FLEETSHARD_SYNC_TAG="1cf5fce"
-
     OBSERVABILITY_GITHUB_TAG="b864d5f155b5455bba78eb7b82bc4bf4190852c7"  # pragma: allowlist secret
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
     ;;
@@ -58,6 +52,9 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     exit 2
 fi
 
+# Get the first non-merge commit, starting with HEAD.
+# On main this should be HEAD, on production, the latest merged main commit.
+FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
 "${SCRIPT_DIR}/check_image_exists.sh" "${FLEETSHARD_SYNC_TAG}"
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
