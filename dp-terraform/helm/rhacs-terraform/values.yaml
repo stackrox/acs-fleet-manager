@@ -25,6 +25,11 @@ fleetshardSync:
     realm: "redhat-external"
   egressProxy:
     image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0"
+  # API key to push telemetry data to a remote backend. Leaving it empty disables telemetry.
+  telemetry:
+    storage:
+      endpoint: ""
+      key: ""
 
 acsOperator:
   enabled: false
