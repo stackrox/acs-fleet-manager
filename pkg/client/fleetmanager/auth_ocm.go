@@ -78,5 +78,12 @@ func (o *ocmAuth) AddAuth(req *http.Request) error {
 }
 
 func (o *ocmAuth) RetrieveIDToken() (string, error) {
-	return "", errors.New("retrieving ID tokens using the OCM auth type is currently not supported")
+	// Our internal definition of the ID token is to have a `aud` claim set.
+	// The OCM bearer token, by default, has the `aud` claim set, hence we can just return it here.
+	access, _, err := o.conn.Tokens(ocmTokenExpirationMargin)
+	if err != nil {
+		return "", errors.Wrap(err, "retrieving access token via OCM auth type")
+	}
+
+	return access, nil
 }

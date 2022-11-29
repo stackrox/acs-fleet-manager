@@ -72,9 +72,9 @@ func (r *rhSSOAuth) RetrieveIDToken() (string, error) {
 	if idTokenRaw == nil {
 		return "", errors.New("no ID token could be retrieved")
 	}
-	if idToken, ok := idTokenRaw.(string); !ok {
+	idToken, ok := idTokenRaw.(string)
+	if !ok {
 		return "", errors.New("ID token was in an unsupported format")
-	} else {
-		return idToken, nil
 	}
+	return idToken, nil
 }

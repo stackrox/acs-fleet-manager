@@ -45,5 +45,7 @@ func (s *staticTokenAuth) AddAuth(req *http.Request) error {
 }
 
 func (s *staticTokenAuth) RetrieveIDToken() (string, error) {
+	// Since we plan to minimize the usage of the static token auth type, potentially removing it going forward,
+	// we skip implementing the `id_token` interface for it.
 	return "", errors.New("retrieving ID tokens using the static token auth type is currently not supported")
 }
