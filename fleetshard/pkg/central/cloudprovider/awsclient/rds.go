@@ -204,13 +204,13 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 
 		dbInstanceStatus := *dbInstanceStatuses.DBInstances[0].DBInstanceStatus
 		if dbInstanceStatus == dbAvailableStatus {
-			clusterResult, err := r.rdsClient.DescribeDBClusters(dbClusterQuery)
+			dbClusterStatus, err := r.rdsClient.DescribeDBClusters(dbClusterQuery)
 			if err != nil {
 				return "", fmt.Errorf("retrieving DB cluster description: %w", err)
 			}
 
 			connectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=require",
-				*clusterResult.DBClusters[0].Endpoint, 5432, dbUser, "postgres")
+				*dbClusterStatus.DBClusters[0].Endpoint, 5432, dbUser, "postgres")
 
 			return connectionString, nil
 		}
