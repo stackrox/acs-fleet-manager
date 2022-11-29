@@ -48,12 +48,9 @@ spec:
             - name: RHSSO_ENDPOINT
               value: {{ .Values.fleetshardSync.redHatSSO.endpoint }}
             - name: TELEMETRY_ENDPOINT
-              value: {{ .Values.fleetshardSync.telemetry.storage.endpoint }}
+              value: {{ .Values.fleetshardSync.telemetry.storage.endpoint | quote }}
             - name: TELEMETRY_STORAGE_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: rhacs-telemetry-storage-key
-                  key: KEY
+              value: {{ .Values.fleetshardSync.telemetry.storage.key | quote }}
           ports:
             - name: monitoring
               containerPort: 8080
