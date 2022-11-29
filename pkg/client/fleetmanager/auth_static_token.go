@@ -43,3 +43,7 @@ func (s *staticTokenAuth) AddAuth(req *http.Request) error {
 	setBearer(req, s.token)
 	return nil
 }
+
+func (s *staticTokenAuth) RetrieveIDToken() (string, error) {
+	return "", errors.New("retrieving ID tokens using the static token auth type is currently not supported")
+}

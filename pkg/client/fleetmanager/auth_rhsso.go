@@ -24,7 +24,6 @@ var (
 
 type rhSSOAuth struct {
 	tokenSource oauth2.TokenSource
-	test        oauth2.TokenSource
 }
 
 type rhSSOAuthFactory struct{}
@@ -61,4 +60,21 @@ func (r *rhSSOAuth) AddAuth(req *http.Request) error {
 	}
 	setBearer(req, token.AccessToken)
 	return nil
+}
+
+func (r *rhSSOAuth) RetrieveIDToken() (string, error) {
+	t, err := r.tokenSource.Token()
+	if err != nil {
+		return "", errors.Wrap(err, "retrieving token from token source")
+	}
+
+	idTokenRaw := t.Extra("id_token")
+	if idTokenRaw == nil {
+		return "", errors.New("no ID token could be retrieved")
+	}
+	if idToken, ok := idTokenRaw.(string); !ok {
+		return "", errors.New("ID token was in an unsupported format")
+	} else {
+		return idToken, nil
+	}
 }

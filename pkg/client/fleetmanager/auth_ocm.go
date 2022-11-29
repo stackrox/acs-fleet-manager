@@ -76,3 +76,7 @@ func (o *ocmAuth) AddAuth(req *http.Request) error {
 	setBearer(req, access)
 	return nil
 }
+
+func (o *ocmAuth) RetrieveIDToken() (string, error) {
+	return "", errors.New("retrieving ID tokens using the OCM auth type is currently not supported")
+}
