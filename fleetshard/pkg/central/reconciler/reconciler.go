@@ -472,7 +472,7 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 
 	generatedPassword, err := random.GenerateString(25, random.AlphanumericCharacters)
 	if err != nil {
-		return fmt.Errorf("generating Central DB password: %v", err)
+		return fmt.Errorf("generating Central DB password: %w", err)
 	}
 
 	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
@@ -488,12 +488,12 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 
 			err = r.client.Create(ctx, secret)
 			if err != nil {
-				return fmt.Errorf("creating Central DB secret: %v", err)
+				return fmt.Errorf("creating Central DB secret: %w", err)
 			}
 			return nil
 		}
 
-		return fmt.Errorf("getting Central DB secret: %v", err)
+		return fmt.Errorf("getting Central DB secret: %w", err)
 	}
 
 	return nil
@@ -507,7 +507,7 @@ func (r *CentralReconciler) ensureCentralDBSecretDeleted(ctx context.Context, re
 			return true, nil
 		}
 
-		return false, fmt.Errorf("deleting Central DB secret: %v", err)
+		return false, fmt.Errorf("deleting Central DB secret: %w", err)
 	}
 
 	if err := r.client.Delete(ctx, secret); err != nil {

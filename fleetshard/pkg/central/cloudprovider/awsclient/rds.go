@@ -56,12 +56,12 @@ func (r *RDS) EnsureDBProvisioned(ctx context.Context, centralNamespace, central
 
 	err := r.ensureDBClusterCreated(ctx, clusterID, centralNamespace, centralDbSecretName)
 	if err != nil {
-		return "", fmt.Errorf("ensuring DB cluster %s exists: %v", clusterID, err)
+		return "", fmt.Errorf("ensuring DB cluster %s exists: %w", clusterID, err)
 	}
 
 	err = r.ensureDBInstanceCreated(instanceID, clusterID)
 	if err != nil {
-		return "", fmt.Errorf("ensuring DB instance %s exists in cluster %s: %v", instanceID, clusterID, err)
+		return "", fmt.Errorf("ensuring DB instance %s exists in cluster %s: %w", instanceID, clusterID, err)
 	}
 
 	return r.waitForInstanceToBeAvailable(ctx, instanceID, clusterID)
@@ -76,14 +76,14 @@ func (r *RDS) EnsureDBDeprovisioned(centralNamespace string) (bool, error) {
 	if r.instanceExists(instanceID) {
 		status, err := r.instanceStatus(instanceID)
 		if err != nil {
-			return false, fmt.Errorf("getting DB instance status: %v", err)
+			return false, fmt.Errorf("getting DB instance status: %w", err)
 		}
 		if status != dbDeletingStatus {
 			//TODO: do not skip taking a final DB snapshot
 			glog.Infof("Deprovisioning RDS database instance.")
 			_, err := r.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
 			if err != nil {
-				return false, fmt.Errorf("deleting DB instance: %v", err)
+				return false, fmt.Errorf("deleting DB instance: %w", err)
 			}
 		}
 	}
@@ -91,14 +91,14 @@ func (r *RDS) EnsureDBDeprovisioned(centralNamespace string) (bool, error) {
 	if r.clusterExists(clusterID) {
 		status, err := r.clusterStatus(clusterID)
 		if err != nil {
-			return false, fmt.Errorf("getting DB cluster status: %v", err)
+			return false, fmt.Errorf("getting DB cluster status: %w", err)
 		}
 		if status != dbDeletingStatus {
 			//TODO: do not skip taking a final DB snapshot
 			glog.Infof("Deprovisioning RDS database cluster.")
 			_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
 			if err != nil {
-				return false, fmt.Errorf("deleting DB cluster: %v", err)
+				return false, fmt.Errorf("deleting DB cluster: %w", err)
 			}
 		}
 	}
@@ -112,11 +112,11 @@ func (r *RDS) ensureDBClusterCreated(ctx context.Context, clusterID, centralName
 		glog.Infof("Provisioning RDS database cluster.")
 		dbPassword, err := r.getDBPassword(ctx, centralNamespace, centralDbSecretName)
 		if err != nil {
-			return fmt.Errorf("getting password for DB cluster: %v", err)
+			return fmt.Errorf("getting password for DB cluster: %w", err)
 		}
 		_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, dbPassword, r.dbSecurityGroup, r.dbSubnetGroup))
 		if err != nil {
-			return fmt.Errorf("creating DB cluster: %v", err)
+			return fmt.Errorf("creating DB cluster: %w", err)
 		}
 	}
 
@@ -130,7 +130,7 @@ func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error
 		_, err := r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID))
 		if err != nil {
 			// TODO: delete cluster if instance cannot be created?
-			return fmt.Errorf("creating DB instance: %v", err)
+			return fmt.Errorf("creating DB instance: %w", err)
 		}
 	}
 
@@ -162,7 +162,7 @@ func (r *RDS) clusterStatus(clusterID string) (string, error) {
 
 	clusterResult, err := r.rdsClient.DescribeDBClusters(dbClusterQuery)
 	if err != nil {
-		return "", fmt.Errorf("getting cluster status: %v", err)
+		return "", fmt.Errorf("getting cluster status: %w", err)
 	}
 
 	return *clusterResult.DBClusters[0].Status, nil
@@ -175,7 +175,7 @@ func (r *RDS) instanceStatus(instanceID string) (string, error) {
 
 	instanceResult, err := r.rdsClient.DescribeDBInstances(dbInstanceQuery)
 	if err != nil {
-		return "", fmt.Errorf("getting instance status: %v", err)
+		return "", fmt.Errorf("getting instance status: %w", err)
 	}
 
 	return *instanceResult.DBInstances[0].DBInstanceStatus, nil
@@ -192,23 +192,19 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 
 	for {
 		if ctx.Err() != nil {
-			return "", fmt.Errorf("waiting for RDS instance to be available: %v", ctx.Err())
+			return "", fmt.Errorf("waiting for RDS instance to be available: %w", ctx.Err())
 		}
 
 		result, err := r.rdsClient.DescribeDBInstances(dbInstanceQuery)
 		if err != nil {
-			return "", fmt.Errorf("retrieving DB instance state: %v", err)
-		}
-
-		if len(result.DBInstances) != 1 {
-			return "", fmt.Errorf("unexpected number of DB instances: %v", err)
+			return "", fmt.Errorf("retrieving DB instance state: %w", err)
 		}
 
 		dbInstanceStatus := *result.DBInstances[0].DBInstanceStatus
 		if dbInstanceStatus == dbAvailableStatus {
 			clusterResult, err := r.rdsClient.DescribeDBClusters(dbClusterQuery)
 			if err != nil {
-				return "", fmt.Errorf("retrieving DB cluster description: %v", err)
+				return "", fmt.Errorf("retrieving DB cluster description: %w", err)
 			}
 
 			connectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=require",
@@ -230,21 +226,21 @@ func (r *RDS) getDBPassword(ctx context.Context, centralNamespace, centralDbSecr
 	}
 	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: centralNamespace, Name: centralDbSecretName}, secret)
 	if err != nil {
-		return "", fmt.Errorf("getting Central DB password from secret: %v", err)
+		return "", fmt.Errorf("getting Central DB password from secret: %w", err)
 	}
 
 	if dbPassword, ok := secret.Data["password"]; ok {
 		return string(dbPassword), nil
 	}
 
-	return "", fmt.Errorf("central DB secret does not contain password field: %v", err)
+	return "", fmt.Errorf("central DB secret does not contain password field: %w", err)
 }
 
 // NewRDSClient initializes a new awsclient.RDS
 func NewRDSClient(dbSecurityGroup, dbSubnetGroup string, credentials AWSCredentials, client ctrlClient.Client) (*RDS, error) {
 	rdsClient, err := newRdsClient(credentials.AccessKeyID, credentials.SecretAccessKey, credentials.SessionToken)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create RDS client, %v", err)
+		return nil, fmt.Errorf("unable to create RDS client, %w", err)
 	}
 
 	return &RDS{
@@ -311,7 +307,7 @@ func newRdsClient(accessKeyID, secretAccessKey, sessionToken string) (*rds.RDS, 
 
 	sess, err := session.NewSession(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create session, %v", err)
+		return nil, fmt.Errorf("unable to create session, %w", err)
 	}
 
 	return rds.New(sess), nil
