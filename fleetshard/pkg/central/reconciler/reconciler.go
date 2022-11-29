@@ -12,7 +12,7 @@ import (
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/dbprovisioning"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -67,7 +67,7 @@ type CentralReconciler struct {
 	egressProxyImage  string
 
 	managedDBEnabled            bool
-	managedDBProvisioningClient dbprovisioning.Client
+	managedDBProvisioningClient cloudprovider.DBClient
 
 	resourcesChart *chart.Chart
 }
@@ -712,7 +712,7 @@ var (
 
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
-	managedDBProvisioningClient dbprovisioning.Client, opts CentralReconcilerOptions) *CentralReconciler {
+	managedDBProvisioningClient cloudprovider.DBClient, opts CentralReconcilerOptions) *CentralReconciler {
 	return &CentralReconciler{
 		client:            k8sClient,
 		central:           central,

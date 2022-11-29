@@ -9,7 +9,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/dbprovisioning"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
@@ -108,10 +109,10 @@ func (r *Runtime) Start() error {
 		glog.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
-				var managedDBProvisioningClient dbprovisioning.Client
+				var managedDBProvisioningClient cloudprovider.DBClient
 				if r.config.ManagedDBEnabled {
-					managedDBProvisioningClient, err = dbprovisioning.NewRDSProvisioningClient(r.config.ManagedDBSecurityGroup,
-						r.config.ManagedDBSubnetGroup, dbprovisioning.AWSCredentials{
+					managedDBProvisioningClient, err = awsclient.NewRDSClient(r.config.ManagedDBSecurityGroup,
+						r.config.ManagedDBSubnetGroup, awsclient.AWSCredentials{
 							AccessKeyID:     r.config.ManagedDBAccessKeyID,
 							SecretAccessKey: r.config.ManagedDBSecretAccessKey, //pragma: allowlist secret
 							SessionToken:    r.config.ManagedDBSessionToken,

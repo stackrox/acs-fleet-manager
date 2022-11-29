@@ -10,7 +10,7 @@ import (
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/dbprovisioning"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
@@ -140,8 +140,8 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
-	managedDBProvisioningClient, err := dbprovisioning.NewRDSProvisioningClient("security-group",
-		"db-group", dbprovisioning.AWSCredentials{
+	managedDBProvisioningClient, err := awsclient.NewRDSClient("security-group",
+		"db-group", awsclient.AWSCredentials{
 			AccessKeyID:     "invalid-access-key",
 			SecretAccessKey: "invalid-secret-access-key", // pragma: allowlist secret
 			SessionToken:    "invalid-session-token",
