@@ -54,13 +54,11 @@ func (r *RDS) EnsureDBProvisioned(ctx context.Context, centralNamespace, central
 	clusterID := centralNamespace + dbClusterSuffix
 	instanceID := centralNamespace + dbInstanceSuffix
 
-	err := r.ensureDBClusterCreated(ctx, clusterID, centralNamespace, centralDbSecretName)
-	if err != nil {
+	if err := r.ensureDBClusterCreated(ctx, clusterID, centralNamespace, centralDbSecretName); err != nil {
 		return "", fmt.Errorf("ensuring DB cluster %s exists: %w", clusterID, err)
 	}
 
-	err = r.ensureDBInstanceCreated(instanceID, clusterID)
-	if err != nil {
+	if err := r.ensureDBInstanceCreated(instanceID, clusterID); err != nil {
 		return "", fmt.Errorf("ensuring DB instance %s exists in cluster %s: %w", instanceID, clusterID, err)
 	}
 
