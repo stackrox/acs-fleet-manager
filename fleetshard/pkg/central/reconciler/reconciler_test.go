@@ -133,8 +133,9 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	secret := &v1.Secret{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralDbSecretName, Namespace: centralNamespace}, secret)
 	require.NoError(t, err)
-	_, ok := secret.Data["password"]
-	assert.True(t, ok)
+	password, ok := secret.Data["password"]
+	require.True(t, ok)
+	assert.True(t, len(password) > 0)
 }
 
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
