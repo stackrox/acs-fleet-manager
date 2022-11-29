@@ -466,9 +466,7 @@ func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name str
 func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, remoteCentralNamespace string) error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        centralDbSecretName,
-			Labels:      map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
-			Annotations: map[string]string{managedServicesAnnotation: "true"},
+			Name: centralDbSecretName,
 		},
 	}
 
@@ -482,8 +480,10 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 		if apiErrors.IsNotFound(err) {
 			secret = &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      centralDbSecretName,
-					Namespace: remoteCentralNamespace,
+					Name:        centralDbSecretName,
+					Namespace:   remoteCentralNamespace,
+					Labels:      map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
+					Annotations: map[string]string{managedServicesAnnotation: "true"},
 				},
 				Data: map[string][]byte{"password": []byte(generatedPassword)},
 			}
