@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
+
 	"github.com/aws/aws-sdk-go/aws"
 	awscredentials "github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -71,7 +73,11 @@ func (r *RDS) EnsureDBDeprovisioned(centralNamespace string) (bool, error) {
 	clusterID := centralNamespace + dbClusterSuffix
 	instanceID := centralNamespace + dbInstanceSuffix
 
-	if r.instanceExists(instanceID) {
+	instanceExists, err := r.instanceExists(instanceID)
+	if err != nil {
+		return false, fmt.Errorf("checking if DB instance exists: %w", err)
+	}
+	if instanceExists {
 		status, err := r.instanceStatus(instanceID)
 		if err != nil {
 			return false, fmt.Errorf("getting DB instance status: %w", err)
@@ -86,7 +92,11 @@ func (r *RDS) EnsureDBDeprovisioned(centralNamespace string) (bool, error) {
 		}
 	}
 
-	if r.clusterExists(clusterID) {
+	clusterExists, err := r.clusterExists(clusterID)
+	if err != nil {
+		return false, fmt.Errorf("checking if DB cluster exists: %w", err)
+	}
+	if clusterExists {
 		status, err := r.clusterStatus(clusterID)
 		if err != nil {
 			return false, fmt.Errorf("getting DB cluster status: %w", err)
@@ -105,7 +115,11 @@ func (r *RDS) EnsureDBDeprovisioned(centralNamespace string) (bool, error) {
 }
 
 func (r *RDS) ensureDBClusterCreated(ctx context.Context, clusterID, centralNamespace, centralDbSecretName string) error {
-	if r.clusterExists(clusterID) {
+	clusterExists, err := r.clusterExists(clusterID)
+	if err != nil {
+		return fmt.Errorf("checking if DB cluster exists: %w", err)
+	}
+	if clusterExists {
 		return nil
 	}
 
@@ -124,12 +138,16 @@ func (r *RDS) ensureDBClusterCreated(ctx context.Context, clusterID, centralName
 }
 
 func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error {
-	if r.instanceExists(instanceID) {
+	instanceExists, err := r.instanceExists(instanceID)
+	if err != nil {
+		return fmt.Errorf("checking if DB instance exists: %w", err)
+	}
+	if instanceExists {
 		return nil
 	}
 
 	glog.Infof("Initiating provisioning of RDS database instance %s.", instanceID)
-	_, err := r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID))
+	_, err = r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID))
 	if err != nil {
 		return fmt.Errorf("creating DB instance: %w", err)
 	}
@@ -137,22 +155,42 @@ func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error
 	return nil
 }
 
-func (r *RDS) clusterExists(clusterID string) bool {
+func (r *RDS) clusterExists(clusterID string) (bool, error) {
 	dbClusterQuery := &rds.DescribeDBClustersInput{
 		DBClusterIdentifier: aws.String(clusterID),
 	}
 
-	_, err := r.rdsClient.DescribeDBClusters(dbClusterQuery)
-	return err == nil
+	if _, err := r.rdsClient.DescribeDBClusters(dbClusterQuery); err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterNotFoundFault:
+				return false, nil
+			}
+		}
+
+		return false, fmt.Errorf("getting DB cluster description: %w", err)
+	}
+
+	return true, nil
 }
 
-func (r *RDS) instanceExists(instanceID string) bool {
+func (r *RDS) instanceExists(instanceID string) (bool, error) {
 	dbInstanceQuery := &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(instanceID),
 	}
 
-	_, err := r.rdsClient.DescribeDBInstances(dbInstanceQuery)
-	return err == nil
+	if _, err := r.rdsClient.DescribeDBInstances(dbInstanceQuery); err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				return false, nil
+			}
+		}
+
+		return false, fmt.Errorf("getting DB instance description: %w", err)
+	}
+
+	return true, nil
 }
 
 func (r *RDS) clusterStatus(clusterID string) (string, error) {
