@@ -280,7 +280,7 @@ func newCreateCentralDBInstanceInput(clusterID, instanceID string) *rds.CreateDB
 		DBClusterIdentifier:  aws.String(clusterID),
 		DBInstanceIdentifier: aws.String(instanceID),
 		Engine:               aws.String(dbEngine),
-		PubliclyAccessible:   aws.Bool(true),
+		PubliclyAccessible:   aws.Bool(false),
 	}
 }
 
