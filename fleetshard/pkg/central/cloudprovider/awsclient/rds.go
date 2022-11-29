@@ -80,7 +80,7 @@ func (r *RDS) EnsureDBDeprovisioned(databaseID string) (bool, error) {
 		}
 		if status != dbDeletingStatus {
 			//TODO: do not skip taking a final DB snapshot
-			glog.Infof("Deprovisioning RDS database instance.")
+			glog.Infof("Initiating deprovisioning of RDS database instance %s.", instanceID)
 			_, err := r.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
 			if err != nil {
 				return false, fmt.Errorf("deleting DB instance: %w", err)
@@ -99,7 +99,7 @@ func (r *RDS) EnsureDBDeprovisioned(databaseID string) (bool, error) {
 		}
 		if status != dbDeletingStatus {
 			//TODO: do not skip taking a final DB snapshot
-			glog.Infof("Deprovisioning RDS database cluster.")
+			glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
 			_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
 			if err != nil {
 				return false, fmt.Errorf("deleting DB cluster: %w", err)
