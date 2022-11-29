@@ -40,6 +40,12 @@ var (
 		dinosaurConstants.CentralRequestStatusReady.String(),
 		dinosaurConstants.CentralRequestStatusFailed.String(),
 	}
+
+	dinosaurTimeoutStatuses = []string{
+		dinosaurConstants.CentralRequestStatusAccepted.String(),
+		dinosaurConstants.CentralRequestStatusPreparing.String(),
+		dinosaurConstants.CentralRequestStatusProvisioning.String(),
+	}
 )
 
 // DinosaurRoutesAction ...
@@ -105,6 +111,7 @@ type DinosaurService interface {
 	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	ListComponentVersions() ([]DinosaurComponentVersions, error)
+	ListInProgressCentralsOlderThan(lastCreationTime time.Time) ([]*dbapi.CentralRequest, *errors.ServiceError)
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -137,6 +144,19 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		dataplaneClusterConfig:   dataplaneClusterConfig,
 		clusterPlacementStrategy: clusterPlacementStrategy,
 	}
+}
+
+func (k *dinosaurService) ListInProgressCentralsOlderThan(lastCreationTime time.Time) ([]*dbapi.CentralRequest, *errors.ServiceError) {
+	dbConn := k.connectionFactory.New().
+		Where("created_at  <=  ?", lastCreationTime).
+		Where("status IN (?)", dinosaurTimeoutStatuses)
+
+	var dinosaurRequestList dbapi.CentralList
+	if err := dbConn.Find(&dinosaurRequestList).Error; err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list central requests")
+	}
+
+	return dinosaurRequestList, nil
 }
 
 // HasAvailableCapacity ...

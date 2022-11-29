@@ -88,6 +88,7 @@ func ServiceProviders() di.Option {
 		di.Provide(dinosaurmgrs.NewReadyDinosaurManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewDinosaurCNAMEManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewCentralAuthConfigManager, di.As(new(workers.Worker))),
+		di.Provide(dinosaurmgrs.NewCentralsTimeoutManager, di.As(new(workers.Worker))),
 		di.Provide(presenters.NewManagedCentralPresenter),
 	)
 }
