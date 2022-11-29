@@ -3,12 +3,12 @@ package awsclient
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	awscredentials "github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
@@ -147,93 +147,91 @@ func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error
 }
 
 func (r *RDS) clusterExists(clusterID string) (bool, error) {
-	dbClusterQuery := &rds.DescribeDBClustersInput{
-		DBClusterIdentifier: aws.String(clusterID),
-	}
-
-	if _, err := r.rdsClient.DescribeDBClusters(dbClusterQuery); err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
+	if _, err := r.describeDBCluster(clusterID); err != nil {
+		var aerr awserr.Error
+		if errors.As(err, &aerr) {
 			switch aerr.Code() {
 			case rds.ErrCodeDBClusterNotFoundFault:
 				return false, nil
 			}
 		}
-
-		return false, fmt.Errorf("getting DB cluster description: %w", err)
+		return false, err
 	}
 
 	return true, nil
 }
 
 func (r *RDS) instanceExists(instanceID string) (bool, error) {
-	dbInstanceQuery := &rds.DescribeDBInstancesInput{
-		DBInstanceIdentifier: aws.String(instanceID),
-	}
-
-	if _, err := r.rdsClient.DescribeDBInstances(dbInstanceQuery); err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
+	if _, err := r.describeDBInstance(instanceID); err != nil {
+		var aerr awserr.Error
+		if errors.As(err, &aerr) {
 			switch aerr.Code() {
 			case rds.ErrCodeDBInstanceNotFoundFault:
 				return false, nil
 			}
 		}
-
-		return false, fmt.Errorf("getting DB instance description: %w", err)
+		return false, err
 	}
 
 	return true, nil
 }
 
 func (r *RDS) clusterStatus(clusterID string) (string, error) {
-	dbClusterQuery := &rds.DescribeDBClustersInput{
-		DBClusterIdentifier: aws.String(clusterID),
-	}
-
-	clusterResult, err := r.rdsClient.DescribeDBClusters(dbClusterQuery)
+	dbCluster, err := r.describeDBCluster(clusterID)
 	if err != nil {
-		return "", fmt.Errorf("getting cluster status: %w", err)
+		return "", err
 	}
 
-	return *clusterResult.DBClusters[0].Status, nil
+	return *dbCluster.Status, nil
 }
 
 func (r *RDS) instanceStatus(instanceID string) (string, error) {
-	dbInstanceQuery := &rds.DescribeDBInstancesInput{
-		DBInstanceIdentifier: aws.String(instanceID),
-	}
-
-	instanceResult, err := r.rdsClient.DescribeDBInstances(dbInstanceQuery)
+	dbInstance, err := r.describeDBInstance(instanceID)
 	if err != nil {
-		return "", fmt.Errorf("getting instance status: %w", err)
+		return "", err
 	}
 
-	return *instanceResult.DBInstances[0].DBInstanceStatus, nil
+	return *dbInstance.DBInstanceStatus, nil
+}
+
+func (r *RDS) describeDBInstance(instanceID string) (*rds.DBInstance, error) {
+	result, err := r.rdsClient.DescribeDBInstances(
+		&rds.DescribeDBInstancesInput{
+			DBInstanceIdentifier: aws.String(instanceID),
+		})
+	if err != nil {
+		return nil, fmt.Errorf("retrieving DB instance state: %w", err)
+	}
+
+	return result.DBInstances[0], nil
+}
+
+func (r *RDS) describeDBCluster(clusterID string) (*rds.DBCluster, error) {
+	result, err := r.rdsClient.DescribeDBClusters(&rds.DescribeDBClustersInput{
+		DBClusterIdentifier: aws.String(clusterID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("retrieving DB cluster description: %w", err)
+	}
+
+	return result.DBClusters[0], nil
 }
 
 func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID string, clusterID string) (string, error) {
-	dbInstanceQuery := &rds.DescribeDBInstancesInput{
-		DBInstanceIdentifier: aws.String(instanceID),
-	}
-
-	dbClusterQuery := &rds.DescribeDBClustersInput{
-		DBClusterIdentifier: aws.String(clusterID),
-	}
-
 	for {
-		dbInstanceStatuses, err := r.rdsClient.DescribeDBInstances(dbInstanceQuery)
+		dbInstanceStatus, err := r.instanceStatus(instanceID)
 		if err != nil {
-			return "", fmt.Errorf("retrieving DB instance state: %w", err)
+			return "", err
 		}
 
-		dbInstanceStatus := *dbInstanceStatuses.DBInstances[0].DBInstanceStatus
 		if dbInstanceStatus == dbAvailableStatus {
-			dbClusterStatus, err := r.rdsClient.DescribeDBClusters(dbClusterQuery)
+			dbCluster, err := r.describeDBCluster(clusterID)
 			if err != nil {
-				return "", fmt.Errorf("retrieving DB cluster description: %w", err)
+				return "", err
 			}
 
 			connectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=require",
-				*dbClusterStatus.DBClusters[0].Endpoint, 5432, dbUser, "postgres")
+				*dbCluster.Endpoint, 5432, dbUser, "postgres")
 
 			return connectionString, nil
 		}
