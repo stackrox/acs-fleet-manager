@@ -191,10 +191,6 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 	}
 
 	for {
-		if ctx.Err() != nil {
-			return "", fmt.Errorf("waiting for RDS instance to be available: %w", ctx.Err())
-		}
-
 		dbInstanceStatuses, err := r.rdsClient.DescribeDBInstances(dbInstanceQuery)
 		if err != nil {
 			return "", fmt.Errorf("retrieving DB instance state: %w", err)
@@ -214,7 +210,13 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 		}
 
 		glog.Infof("RDS instance status: %s", dbInstanceStatus)
-		time.Sleep(10 * time.Second)
+		ticker := time.NewTicker(10 * time.Second)
+		select {
+		case <-ticker.C:
+			continue
+		case <-ctx.Done():
+			return "", fmt.Errorf("waiting for RDS instance to be available: %w", ctx.Err())
+		}
 	}
 }
 
@@ -278,7 +280,7 @@ func newCreateCentralDBInstanceInput(clusterID, instanceID string) *rds.CreateDB
 		DBClusterIdentifier:  aws.String(clusterID),
 		DBInstanceIdentifier: aws.String(instanceID),
 		Engine:               aws.String(dbEngine),
-		PubliclyAccessible:   aws.Bool(false),
+		PubliclyAccessible:   aws.Bool(true),
 	}
 }
 
