@@ -45,6 +45,7 @@ type CentralReconcilerOptions struct {
 	UseRoutes         bool
 	WantsAuthProvider bool
 	EgressProxyImage  string
+	TelemetryOpts     TelemetryOptions
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -60,6 +61,7 @@ type CentralReconciler struct {
 	Resources         bool
 	routeService      *k8s.RouteService
 	egressProxyImage  string
+	telemetryOpts     TelemetryOptions
 
 	resourcesChart *chart.Chart
 }
@@ -103,7 +105,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	// Set proxy configuration
-	envVars := getProxyEnvVars(remoteCentralNamespace)
+	proxyEnvVars := getProxyEnvVars(remoteCentralNamespace)
+	// Set telemetry storage key
+	telemetryEnvVars := getTelemetryEnvVars(r.telemetryOpts)
+	envVars := append(proxyEnvVars, telemetryEnvVars...)
 
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
@@ -624,6 +629,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		wantsAuthProvider: opts.WantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
 		egressProxyImage:  opts.EgressProxyImage,
+		telemetryOpts:     opts.TelemetryOpts,
 
 		resourcesChart: resourcesChart,
 	}

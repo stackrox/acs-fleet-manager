@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rhacs-telemetry-storage-key
+  namespace: {{ .Release.Namespace | quote }}
+stringData:
+  KEY: {{ .Values.telemetry.storage.key | quote }}
+type: Opaque

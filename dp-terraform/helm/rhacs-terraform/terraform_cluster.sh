@@ -94,6 +94,8 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --set fleetshardSync.fleetManagerEndpoint="${FM_ENDPOINT}" \
   --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_ID}" \
   --set fleetshardSync.redHatSSO.clientSecret="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET}" \
+  --set fleetshardSync.telemetry.storage.endpoint="${FLEETSHARD_SYNC_TELEMETRY_ENDPOINT}" \
+  --set fleetshardSync.telemetry.storage.key="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_KEY}" \
   --set logging.aws.accessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \
   --set logging.aws.secretAccessKey="${LOGGING_AWS_SECRET_ACCESS_KEY}" \
   --set observability.github.accessToken="${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" \

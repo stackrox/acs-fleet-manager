@@ -93,6 +93,10 @@ func (r *Runtime) Start() error {
 		UseRoutes:         routesAvailable,
 		WantsAuthProvider: r.config.CreateAuthProvider,
 		EgressProxyImage:  r.config.EgressProxyImage,
+		TelemetryOpts: centralReconciler.TelemetryOptions{
+			Endpoint:   r.config.TelemetryEndpoint,
+			StorageKey: r.config.TelemetryStorageKey,
+		},
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {

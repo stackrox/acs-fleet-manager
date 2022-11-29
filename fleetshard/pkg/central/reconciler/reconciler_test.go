@@ -473,3 +473,22 @@ func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
 func centralDeploymentObject() *appsv1.Deployment {
 	return testutils.NewCentralDeployment(centralNamespace)
 }
+
+func TestTelemetryOptionsAreSetAsEnv(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	expectedEndpoint := "https://dummy.endpoint"
+	expectedStorageKey := "dummy-key"
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{
+		TelemetryOpts: TelemetryOptions{Endpoint: expectedEndpoint, StorageKey: expectedStorageKey},
+	})
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+	central := &v1alpha1.Central{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
+	require.NoError(t, err)
+
+	envVars := central.Spec.Customize.EnvVars
+	assert.Contains(t, envVars, v1.EnvVar{Name: "ROX_TELEMETRY_ENDPOINT", Value: expectedEndpoint})
+	assert.Contains(t, envVars, v1.EnvVar{Name: "ROX_TELEMETRY_STORAGE_KEY_V1", Value: expectedStorageKey})
+}
