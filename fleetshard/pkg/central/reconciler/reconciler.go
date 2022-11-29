@@ -104,9 +104,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrap(err, "converting Scanner DB resources")
 	}
 
-	// Set proxy configuration
 	proxyEnvVars := getProxyEnvVars(remoteCentralNamespace)
-	// Set telemetry storage key
 	telemetryEnvVars := getTelemetryEnvVars(r.telemetryOpts)
 	envVars := append(proxyEnvVars, telemetryEnvVars...)
 
