@@ -7,7 +7,10 @@ import (
 
 // DBClient defines an interface for clients that can provision and deprovision databases on cloud providers
 type DBClient interface {
-	// EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
+	// EnsureDBProvisioned is a blocking function that makes sure that a database with the given name was provisioned,
+	// using the password stored in the secret given as parameter
 	EnsureDBProvisioned(ctx context.Context, name, passwordSecretName string) (string, error)
+	// EnsureDBDeprovisioned is a non-blocking function that makes sure that a managed DB is deprovisioned (more
+	// specifically, that its deletion was initiated)
 	EnsureDBDeprovisioned(name string) (bool, error)
 }

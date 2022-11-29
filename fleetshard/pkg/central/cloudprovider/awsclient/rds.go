@@ -108,12 +108,12 @@ func (r *RDS) EnsureDBDeprovisioned(centralNamespace string) (bool, error) {
 
 func (r *RDS) ensureDBClusterCreated(ctx context.Context, clusterID, centralNamespace, centralDbSecretName string) error {
 	if !r.clusterExists(clusterID) {
-		// cluster does not exist, create it
-		glog.Infof("Provisioning RDS database cluster.")
 		dbPassword, err := r.getDBPassword(ctx, centralNamespace, centralDbSecretName)
 		if err != nil {
 			return fmt.Errorf("getting password for DB cluster: %w", err)
 		}
+
+		glog.Infof("Initiating provisioning of RDS database cluster %s.", clusterID)
 		_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, dbPassword, r.dbSecurityGroup, r.dbSubnetGroup))
 		if err != nil {
 			return fmt.Errorf("creating DB cluster: %w", err)
@@ -125,11 +125,9 @@ func (r *RDS) ensureDBClusterCreated(ctx context.Context, clusterID, centralName
 
 func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error {
 	if !r.instanceExists(instanceID) {
-		// instance does not exist, create it
-		glog.Infof("Provisioning RDS database instance.")
+		glog.Infof("Initiating provisioning of RDS database instance %s.", instanceID)
 		_, err := r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID))
 		if err != nil {
-			// TODO: delete cluster if instance cannot be created?
 			return fmt.Errorf("creating DB instance: %w", err)
 		}
 	}
@@ -195,12 +193,12 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 			return "", fmt.Errorf("waiting for RDS instance to be available: %w", ctx.Err())
 		}
 
-		result, err := r.rdsClient.DescribeDBInstances(dbInstanceQuery)
+		dbInstanceStatuses, err := r.rdsClient.DescribeDBInstances(dbInstanceQuery)
 		if err != nil {
 			return "", fmt.Errorf("retrieving DB instance state: %w", err)
 		}
 
-		dbInstanceStatus := *result.DBInstances[0].DBInstanceStatus
+		dbInstanceStatus := *dbInstanceStatuses.DBInstances[0].DBInstanceStatus
 		if dbInstanceStatus == dbAvailableStatus {
 			clusterResult, err := r.rdsClient.DescribeDBClusters(dbClusterQuery)
 			if err != nil {
