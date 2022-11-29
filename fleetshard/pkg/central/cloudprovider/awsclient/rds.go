@@ -107,29 +107,33 @@ func (r *RDS) EnsureDBDeprovisioned(centralNamespace string) (bool, error) {
 }
 
 func (r *RDS) ensureDBClusterCreated(ctx context.Context, clusterID, centralNamespace, centralDbSecretName string) error {
-	if !r.clusterExists(clusterID) {
-		dbPassword, err := r.getDBPassword(ctx, centralNamespace, centralDbSecretName)
-		if err != nil {
-			return fmt.Errorf("getting password for DB cluster: %w", err)
-		}
+	if r.clusterExists(clusterID) {
+		return nil
+	}
 
-		glog.Infof("Initiating provisioning of RDS database cluster %s.", clusterID)
-		_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, dbPassword, r.dbSecurityGroup, r.dbSubnetGroup))
-		if err != nil {
-			return fmt.Errorf("creating DB cluster: %w", err)
-		}
+	dbPassword, err := r.getDBPassword(ctx, centralNamespace, centralDbSecretName)
+	if err != nil {
+		return fmt.Errorf("getting password for DB cluster: %w", err)
+	}
+
+	glog.Infof("Initiating provisioning of RDS database cluster %s.", clusterID)
+	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, dbPassword, r.dbSecurityGroup, r.dbSubnetGroup))
+	if err != nil {
+		return fmt.Errorf("creating DB cluster: %w", err)
 	}
 
 	return nil
 }
 
 func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error {
-	if !r.instanceExists(instanceID) {
-		glog.Infof("Initiating provisioning of RDS database instance %s.", instanceID)
-		_, err := r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID))
-		if err != nil {
-			return fmt.Errorf("creating DB instance: %w", err)
-		}
+	if r.instanceExists(instanceID) {
+		return nil
+	}
+
+	glog.Infof("Initiating provisioning of RDS database instance %s.", instanceID)
+	_, err := r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID))
+	if err != nil {
+		return fmt.Errorf("creating DB instance: %w", err)
 	}
 
 	return nil
