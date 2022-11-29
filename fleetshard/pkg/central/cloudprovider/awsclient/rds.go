@@ -13,9 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/golang/glog"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -37,7 +34,6 @@ type RDS struct {
 	dbSecurityGroup string
 	dbSubnetGroup   string
 
-	client    ctrlClient.Client
 	rdsClient *rds.RDS
 }
 
@@ -52,11 +48,11 @@ type AWSCredentials struct {
 }
 
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
-func (r *RDS) EnsureDBProvisioned(ctx context.Context, centralNamespace, centralDbSecretName string) (string, error) {
-	clusterID := centralNamespace + dbClusterSuffix
-	instanceID := centralNamespace + dbInstanceSuffix
+func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPassword string) (string, error) {
+	clusterID := getClusterID(databaseID)
+	instanceID := getInstanceID(databaseID)
 
-	if err := r.ensureDBClusterCreated(ctx, clusterID, centralNamespace, centralDbSecretName); err != nil {
+	if err := r.ensureDBClusterCreated(clusterID, masterPassword); err != nil {
 		return "", fmt.Errorf("ensuring DB cluster %s exists: %w", clusterID, err)
 	}
 
@@ -69,9 +65,9 @@ func (r *RDS) EnsureDBProvisioned(ctx context.Context, centralNamespace, central
 
 // EnsureDBDeprovisioned is a function that initiates the deprovisioning of the RDS database of a Central
 // Unlike EnsureDBProvisioned, this function does not block until the DB is deprovisioned
-func (r *RDS) EnsureDBDeprovisioned(centralNamespace string) (bool, error) {
-	clusterID := centralNamespace + dbClusterSuffix
-	instanceID := centralNamespace + dbInstanceSuffix
+func (r *RDS) EnsureDBDeprovisioned(databaseID string) (bool, error) {
+	clusterID := getClusterID(databaseID)
+	instanceID := getInstanceID(databaseID)
 
 	instanceExists, err := r.instanceExists(instanceID)
 	if err != nil {
@@ -114,7 +110,7 @@ func (r *RDS) EnsureDBDeprovisioned(centralNamespace string) (bool, error) {
 	return true, nil
 }
 
-func (r *RDS) ensureDBClusterCreated(ctx context.Context, clusterID, centralNamespace, centralDbSecretName string) error {
+func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string) error {
 	clusterExists, err := r.clusterExists(clusterID)
 	if err != nil {
 		return fmt.Errorf("checking if DB cluster exists: %w", err)
@@ -123,13 +119,8 @@ func (r *RDS) ensureDBClusterCreated(ctx context.Context, clusterID, centralName
 		return nil
 	}
 
-	dbPassword, err := r.getDBPassword(ctx, centralNamespace, centralDbSecretName)
-	if err != nil {
-		return fmt.Errorf("getting password for DB cluster: %w", err)
-	}
-
 	glog.Infof("Initiating provisioning of RDS database cluster %s.", clusterID)
-	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, dbPassword, r.dbSecurityGroup, r.dbSubnetGroup))
+	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, masterPassword, r.dbSecurityGroup, r.dbSubnetGroup))
 	if err != nil {
 		return fmt.Errorf("creating DB cluster: %w", err)
 	}
@@ -258,26 +249,8 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 	}
 }
 
-func (r *RDS) getDBPassword(ctx context.Context, centralNamespace, centralDbSecretName string) (string, error) {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: centralDbSecretName,
-		},
-	}
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: centralNamespace, Name: centralDbSecretName}, secret)
-	if err != nil {
-		return "", fmt.Errorf("getting Central DB password from secret: %w", err)
-	}
-
-	if dbPassword, ok := secret.Data["password"]; ok {
-		return string(dbPassword), nil
-	}
-
-	return "", fmt.Errorf("central DB secret does not contain password field: %w", err)
-}
-
 // NewRDSClient initializes a new awsclient.RDS
-func NewRDSClient(dbSecurityGroup, dbSubnetGroup string, credentials AWSCredentials, client ctrlClient.Client) (*RDS, error) {
+func NewRDSClient(dbSecurityGroup, dbSubnetGroup string, credentials AWSCredentials) (*RDS, error) {
 	rdsClient, err := newRdsClient(credentials.AccessKeyID, credentials.SecretAccessKey, credentials.SessionToken)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create RDS client, %w", err)
@@ -287,8 +260,15 @@ func NewRDSClient(dbSecurityGroup, dbSubnetGroup string, credentials AWSCredenti
 		rdsClient:       rdsClient,
 		dbSecurityGroup: dbSecurityGroup,
 		dbSubnetGroup:   dbSubnetGroup,
-		client:          client,
 	}, nil
+}
+
+func getClusterID(databaseID string) string {
+	return databaseID + dbClusterSuffix
+}
+
+func getInstanceID(databaseID string) string {
+	return databaseID + dbInstanceSuffix
 }
 
 func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup string) *rds.CreateDBClusterInput {

@@ -116,7 +116,7 @@ func (r *Runtime) Start() error {
 							AccessKeyID:     r.config.ManagedDBAccessKeyID,
 							SecretAccessKey: r.config.ManagedDBSecretAccessKey, //pragma: allowlist secret
 							SessionToken:    r.config.ManagedDBSessionToken,
-						}, r.k8sClient)
+						})
 					if err != nil {
 						err = fmt.Errorf("creating managed DB provisioning client: %v", err)
 						glog.Error(err)

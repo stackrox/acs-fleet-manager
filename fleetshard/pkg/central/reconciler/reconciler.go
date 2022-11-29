@@ -193,12 +193,16 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	if r.managedDBEnabled {
 		if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace); err != nil {
-			return nil, errors.Wrap(err, "unable to ensure that DB secret exists")
+			return nil, fmt.Errorf("ensuring that DB secret exists: %w", err)
 		}
 
-		dbConnectionString, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, central.GetNamespace(), centralDbSecretName)
+		dbMasterPassword, err := r.getDBPassword(ctx, remoteCentralNamespace)
 		if err != nil {
-			return nil, errors.Wrap(err, "provisioning RDS DB")
+			return nil, fmt.Errorf("getting DB password from secret: %w", err)
+		}
+		dbConnectionString, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentralNamespace, dbMasterPassword)
+		if err != nil {
+			return nil, fmt.Errorf("provisioning RDS DB: %w", err)
 		}
 
 		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
@@ -518,6 +522,24 @@ func (r *CentralReconciler) ensureCentralDBSecretDeleted(ctx context.Context, re
 
 	glog.Infof("Central DB secret %s/%s is marked for deletion", remoteCentralNamespace, centralDbSecretName)
 	return false, nil
+}
+
+func (r *CentralReconciler) getDBPassword(ctx context.Context, centralNamespace string) (string, error) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: centralDbSecretName,
+		},
+	}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: centralNamespace, Name: centralDbSecretName}, secret)
+	if err != nil {
+		return "", fmt.Errorf("getting Central DB password from secret: %w", err)
+	}
+
+	if dbPassword, ok := secret.Data["password"]; ok {
+		return string(dbPassword), nil
+	}
+
+	return "", fmt.Errorf("central DB secret does not contain password field: %w", err)
 }
 
 func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {

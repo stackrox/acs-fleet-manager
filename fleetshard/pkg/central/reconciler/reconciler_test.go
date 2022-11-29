@@ -99,7 +99,7 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
 	managedDBProvisioningClient := new(testutils.DBProvisioningClientMock)
-	managedDBProvisioningClient.On("EnsureDBProvisioned", mock.Anything, mock.Anything, centralDbSecretName).Return("connectionString", nil)
+	managedDBProvisioningClient.On("EnsureDBProvisioned", mock.Anything, mock.Anything, mock.Anything).Return("connectionString", nil)
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
@@ -145,7 +145,7 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 			AccessKeyID:     "invalid-access-key",
 			SecretAccessKey: "invalid-secret-access-key", // pragma: allowlist secret
 			SessionToken:    "invalid-session-token",
-		}, fakeClient)
+		})
 	require.NoError(t, err)
 
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
@@ -296,7 +296,7 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
 	managedDBProvisioningClient := new(testutils.DBProvisioningClientMock)
-	managedDBProvisioningClient.On("EnsureDBProvisioned", mock.Anything, mock.Anything, centralDbSecretName).Return("connectionString", nil)
+	managedDBProvisioningClient.On("EnsureDBProvisioned", mock.Anything, mock.Anything, mock.Anything).Return("connectionString", nil)
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
