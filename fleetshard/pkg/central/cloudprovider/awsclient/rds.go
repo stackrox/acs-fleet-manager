@@ -295,9 +295,6 @@ func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnet
 		},
 		BackupRetentionPeriod: aws.Int64(30),
 		StorageEncrypted:      aws.Bool(true),
-		// AvailabilityZones: // TODO: determine the AZ in which the Central is running
-		// EnableCloudwatchLogsExports // TODO: enable
-		// Tags // TODO: could add a tag that allows us to identify the associated Central
 	}
 }
 
