@@ -61,9 +61,11 @@ func (p *ProbeImpl) generateCentralName() (string, error) {
 	}
 	rndString := hex.EncodeToString(rnd)
 	// Central instance name have to match ^[a-z]([-a-z0-9]*[a-z0-9])?$ regexp
-	// Also Central name nust contain no more than 32 characters
 	centralName := fmt.Sprintf("probe-%s-%s", p.config.ProbeName, rndString)
-	centralName = centralName[:handlers.MaxCentralNameLength]
+	// Also Central name nust contain no more than 32 characters
+	if len(centralName) > handlers.MaxCentralNameLength {
+		centralName = centralName[:handlers.MaxCentralNameLength]
+	}
 	return centralName, nil
 }
 
