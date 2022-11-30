@@ -8,9 +8,6 @@ source "$GITROOT/scripts/lib/log.sh"
 
 _docker_images=""
 
-DOCKER=${DOCKER:-docker}
-CLUSTER_TYPE=${CLUSTER_TYPE:-default}
-
 is_running_inside_docker() {
     if [[ -f "/.dockerenv" ]]; then
         return 0

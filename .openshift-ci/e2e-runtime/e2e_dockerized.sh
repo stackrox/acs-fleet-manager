@@ -3,6 +3,10 @@ set -eo pipefail
 
 GITROOT="$(git rev-parse --show-toplevel)"
 export GITROOT
+
+export DOCKER=${DOCKER:-docker}
+export CLUSTER_TYPE=${CLUSTER_TYPE:-default}
+
 # shellcheck source=dev/env/scripts/docker.sh
 source "${GITROOT}/dev/env/scripts/docker.sh"
 # shellcheck source=scripts/lib/external_config.sh
