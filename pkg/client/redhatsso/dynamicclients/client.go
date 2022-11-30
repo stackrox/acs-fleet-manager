@@ -10,7 +10,7 @@ import (
 // NewDynamicClientsAPI returns new instance of dynamic clients sso.redhat.com API client.
 func NewDynamicClientsAPI(realmConfig *iam.IAMRealmConfig) *api.AcsTenantsApiService {
 	// We count that the token being returned will contain api.iam.acs scope by default.
-	// TODO: switch to explicitly requesting api.iam.clients scope once it's available.
+	// TODO(ROX-13408): switch to explicitly requesting api.iam.clients scope once it's available.
 	httpClient := redhatsso.NewSSOAuthHTTPClient(realmConfig)
 	configuration := &api.Configuration{
 		BasePath:  realmConfig.BaseURL + realmConfig.APIEndpointURI,
