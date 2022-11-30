@@ -13,19 +13,19 @@ var _ AuthAgentService = &AuthAgentServiceMock{}
 
 // AuthAgentServiceMock is a mock implementation of AuthAgentService.
 //
-// 	func TestSomethingThatUsesAuthAgentService(t *testing.T) {
+//	func TestSomethingThatUsesAuthAgentService(t *testing.T) {
 //
-// 		// make and configure a mocked AuthAgentService
-// 		mockedAuthAgentService := &AuthAgentServiceMock{
-// 			GetClientIdFunc: func(clusterID string) (string, error) {
-// 				panic("mock out the GetClientId method")
-// 			},
-// 		}
+//		// make and configure a mocked AuthAgentService
+//		mockedAuthAgentService := &AuthAgentServiceMock{
+//			GetClientIdFunc: func(clusterID string) (string, error) {
+//				panic("mock out the GetClientId method")
+//			},
+//		}
 //
-// 		// use mockedAuthAgentService in code that requires AuthAgentService
-// 		// and then make assertions.
+//		// use mockedAuthAgentService in code that requires AuthAgentService
+//		// and then make assertions.
 //
-// 	}
+//	}
 type AuthAgentServiceMock struct {
 	// GetClientIdFunc mocks the GetClientId method.
 	GetClientIdFunc func(clusterID string) (string, error)
@@ -59,7 +59,8 @@ func (mock *AuthAgentServiceMock) GetClientId(clusterID string) (string, error) 
 
 // GetClientIdCalls gets all the calls that were made to GetClientId.
 // Check the length with:
-//     len(mockedAuthAgentService.GetClientIdCalls())
+//
+//	len(mockedAuthAgentService.GetClientIdCalls())
 func (mock *AuthAgentServiceMock) GetClientIdCalls() []struct {
 	ClusterID string
 } {
