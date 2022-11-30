@@ -475,20 +475,45 @@ func centralDeploymentObject() *appsv1.Deployment {
 }
 
 func TestTelemetryOptionsAreSetAsEnv(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	expectedEndpoint := "https://dummy.endpoint"
-	expectedStorageKey := "dummy-key"
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{
-		TelemetryOpts: TelemetryOptions{Endpoint: expectedEndpoint, StorageKey: expectedStorageKey},
-	})
+	tt := []struct {
+		testName string
+		opts     TelemetryOptions
+	}{
+		{
+			testName: "endpoint and storage key not empty",
+			opts:     TelemetryOptions{Endpoint: "https://dummy.endpoint", StorageKey: "dummy-key"},
+		},
+		{
+			testName: "endpoint not empty; storage key empty",
+			opts:     TelemetryOptions{Endpoint: "https://dummy.endpoint", StorageKey: ""},
+		},
+		{
+			testName: "endpoint empty; storage key not empty",
+			opts:     TelemetryOptions{Endpoint: "", StorageKey: "dummy-key"},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			fakeClient := testutils.NewFakeClientBuilder(t).Build()
+			r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{TelemetryOpts: tc.opts})
 
-	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-	central := &v1alpha1.Central{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
-	require.NoError(t, err)
+			_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+			require.NoError(t, err)
+			central := &v1alpha1.Central{}
+			err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
+			require.NoError(t, err)
 
-	envVars := central.Spec.Customize.EnvVars
-	assert.Contains(t, envVars, v1.EnvVar{Name: "ROX_TELEMETRY_ENDPOINT", Value: expectedEndpoint})
-	assert.Contains(t, envVars, v1.EnvVar{Name: "ROX_TELEMETRY_STORAGE_KEY_V1", Value: expectedStorageKey})
+			envVars := central.Spec.Customize.EnvVars
+			if tc.opts.Endpoint != "" {
+				assert.Contains(t, envVars, v1.EnvVar{Name: endpointVariable, Value: tc.opts.Endpoint})
+			} else {
+				assert.NotContains(t, envVars, v1.EnvVar{Name: endpointVariable, Value: tc.opts.Endpoint})
+			}
+			if tc.opts.StorageKey != "" {
+				assert.Contains(t, envVars, v1.EnvVar{Name: storageKeyVariable, Value: tc.opts.StorageKey})
+			} else {
+				assert.NotContains(t, envVars, v1.EnvVar{Name: storageKeyVariable, Value: tc.opts.StorageKey})
+			}
+		})
+	}
 }
