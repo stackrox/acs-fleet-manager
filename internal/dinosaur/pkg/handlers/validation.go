@@ -20,20 +20,20 @@ import (
 )
 
 var (
-	// ValidDinosaurClusterNameRegexp ...
-	ValidDinosaurClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
+	// ValidCentralNameRegexp ...
+	ValidCentralNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 
-	// MaxDinosaurNameLength ...
-	MaxDinosaurNameLength = 32
+	// MaxCentralNameLength ...
+	MaxCentralNameLength = 32
 
 	supportedResources = []corev1.ResourceName{corev1.ResourceCPU, corev1.ResourceMemory}
 )
 
-// ValidDinosaurClusterName ...
-func ValidDinosaurClusterName(value *string, field string) handlers.Validate {
+// ValidCentralInstanceName ...
+func ValidCentralInstanceName(value *string, field string) handlers.Validate {
 	return func() *errors.ServiceError {
-		if !ValidDinosaurClusterNameRegexp.MatchString(*value) {
-			return errors.MalformedDinosaurClusterName("%s does not match %s", field, ValidDinosaurClusterNameRegexp.String())
+		if !ValidCentralNameRegexp.MatchString(*value) {
+			return errors.MalformedDinosaurClusterName("%s does not match %s", field, ValidCentralNameRegexp.String())
 		}
 		return nil
 	}

@@ -84,40 +84,40 @@ func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
 	}
 }
 
-func Test_Validations_validateDinosaurClusterNames(t *testing.T) {
+func Test_Validations_validateCentralInstanceNames(t *testing.T) {
 	tests := []struct {
 		description string
 		name        string
 		expectError bool
 	}{
 		{
-			description: "valid dinosaur cluster name",
-			name:        "test-dinosaur1",
+			description: "valid central instance name",
+			name:        "test-central1",
 			expectError: false,
 		},
 		{
-			description: "valid dinosaur cluster name with multiple '-'",
-			name:        "test-my-cluster",
+			description: "valid central instance name with multiple '-'",
+			name:        "test-my-instance",
 			expectError: false,
 		},
 		{
-			description: "invalid dinosaur cluster name begins with number",
-			name:        "1test-cluster",
+			description: "invalid central instance name begins with number",
+			name:        "1test-instance",
 			expectError: true,
 		},
 		{
-			description: "invalid dinosaur cluster name with invalid characters",
+			description: "invalid central instance name with invalid characters",
 			name:        "test-c%*_2",
 			expectError: true,
 		},
 		{
-			description: "invalid dinosaur cluster name with upper-case letters",
-			name:        "Test-cluster",
+			description: "invalid central instance name with upper-case letters",
+			name:        "Test-instance",
 			expectError: true,
 		},
 		{
-			description: "invalid dinosaur cluster name with spaces",
-			name:        "test cluster",
+			description: "invalid central instance name with spaces",
+			name:        "test instance",
 			expectError: true,
 		},
 	}
@@ -125,7 +125,7 @@ func Test_Validations_validateDinosaurClusterNames(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			validateFn := ValidDinosaurClusterName(&tt.name, "name")
+			validateFn := ValidCentralInstanceName(&tt.name, "name")
 			err := validateFn()
 			if tt.expectError {
 				gomega.Expect(err).Should(gomega.HaveOccurred())

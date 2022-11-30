@@ -15,6 +15,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/metrics"
@@ -53,13 +54,17 @@ func recordElapsedTime(start time.Time) {
 	metrics.MetricsInstance().ObserveTotalDuration(elapsedTime)
 }
 
-func (p *ProbeImpl) newCentralName() (string, error) {
+func (p *ProbeImpl) generateCentralName() (string, error) {
 	rnd := make([]byte, 2)
 	if _, err := rand.Read(rnd); err != nil {
 		return "", errors.Wrapf(err, "reading random bytes for unique central name")
 	}
 	rndString := hex.EncodeToString(rnd)
-	return fmt.Sprintf("%s-%s", p.config.ProbeName, rndString), nil
+	// Central instance name have to match ^[a-z]([-a-z0-9]*[a-z0-9])?$ regexp
+	// Also Central name nust contain no more than 32 characters
+	centralName := fmt.Sprintf("probe-%s-%s", p.config.ProbeName, rndString)
+	centralName = centralName[:handlers.MaxCentralNameLength]
+	return centralName, nil
 }
 
 // Execute the probe of the fleet manager API.
@@ -117,7 +122,7 @@ func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
 
 // Create a Central and verify that it transitioned to 'ready' state.
 func (p *ProbeImpl) createCentral(ctx context.Context) (*public.CentralRequest, error) {
-	centralName, err := p.newCentralName()
+	centralName, err := p.generateCentralName()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create central name")
 	}
@@ -128,7 +133,7 @@ func (p *ProbeImpl) createCentral(ctx context.Context) (*public.CentralRequest, 
 		Region:        p.config.DataPlaneRegion,
 	}
 	central, _, err := p.fleetManagerClient.CreateCentral(ctx, true, request)
-	glog.Infof("creation of central instance requested")
+	glog.Infof("creation of central instance requested: %s", request.Name)
 	if err != nil {
 		return nil, errors.Wrap(err, "creation of central instance failed")
 	}

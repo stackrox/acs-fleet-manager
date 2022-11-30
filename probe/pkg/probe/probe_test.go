@@ -12,6 +12,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/rox/pkg/concurrency"
@@ -42,6 +43,19 @@ func makeHTTPResponse(statusCode int) *http.Response {
 func newHTTPClientMock(fn httputil.RoundTripperFunc) *http.Client {
 	return &http.Client{
 		Transport: httputil.RoundTripperFunc(fn),
+	}
+}
+
+func TestGenerateCentralName(t *testing.T) {
+	probe := New(testConfig, nil, nil)
+	for i := 0; i < 10; i++ {
+		centralName, err := probe.generateCentralName()
+		require.NoError(t, err)
+
+		matchedName := handlers.ValidCentralNameRegexp.MatchString(centralName)
+		matchedLength := len(centralName) < handlers.MaxCentralNameLength
+		assert.True(t, matchedName)
+		assert.True(t, matchedLength)
 	}
 }
 
