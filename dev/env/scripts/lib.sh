@@ -298,34 +298,6 @@ is_openshift_cluster() {
     fi
 }
 
-_docker_images=""
-
-docker_pull() {
-    local image_ref="${1:-}"
-    if [[ -z "${_docker_images}" ]]; then
-        _docker_images=$($DOCKER images --format '{{.Repository}}:{{.Tag}}')
-    fi
-    if echo "${_docker_images}" | grep -q "^${image_ref}$"; then
-        log "Skipping pulling of image ${image_ref}, as it is already there"
-    else
-        log "Pulling image ${image_ref}"
-        $DOCKER pull "$image_ref"
-    fi
-}
-
-docker_logged_in() {
-    local registry="${1:-}"
-    if [[ -z "$registry" ]]; then
-        log "docker_logged_in() called with empty registry argument"
-        return 1
-    fi
-    if jq -ec ".auths[\"${registry}\"]" <"$DOCKER_CONFIG/config.json" >/dev/null 2>&1; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 delete_tenant_namespaces() {
     central_namespaces=$($KUBECTL get namespace -o jsonpath='{range .items[?(@.status.phase == "Active")]}{.metadata.name}{"\n"}{end}' | grep '^rhacs-.*$' || true)
     if [[ ! "$central_namespaces" ]]; then

@@ -61,6 +61,13 @@ $ ./.openshift-ci/test/e2e.sh
 ```
 This will trigger the FULL test lifecycle including the cluster bootstrap, building the image (unless `FLEET_MANAGER_IMAGE` points to a specific image tag), deploying it and running E2E tests.
 
+As an alternative you can invoke e2e tests inside the container:
+```shell
+$ make test/deploy/e2e-dockerized
+```
+This may be useful when you're debugging Openshift CI issues specific to the container environment.
+It also does not require extra [tools](#Required tools) dependencies, such as `jq`, `kubectl` or `operator-sdk`.
+
 ### Controlling the execution
 In certain situations it is also useful to be able to execute the respective building blocks manually:
 ##### Prepare the cluster

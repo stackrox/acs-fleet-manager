@@ -4,6 +4,9 @@ GITROOT="$(git rev-parse --show-toplevel)"
 export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
+# shellcheck source=/dev/null
+source "${GITROOT}/dev/env/scripts/docker.sh"
+
 init
 
 cat <<EOF
@@ -152,15 +155,7 @@ EOF
         fi
     fi
 
-    log "Preloading images into ${CLUSTER_TYPE} cluster..."
-    docker_pull "postgres:13"
-    if [[ "$INSTALL_OPERATOR" == "true" ]]; then
-        # Preload images required by Central installation.
-        docker_pull "${IMAGE_REGISTRY}/scanner:${SCANNER_VERSION}"
-        docker_pull "${IMAGE_REGISTRY}/scanner-db:${SCANNER_VERSION}"
-        docker_pull "${IMAGE_REGISTRY}/main:${CENTRAL_VERSION}"
-    fi
-    log "Images preloaded"
+    preload_dependency_images
 fi
 
 log

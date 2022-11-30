@@ -1,17 +1,13 @@
 # More info: https://docs.docker.com/engine/reference/builder/#dockerignore-file
 # Ignore build and test binaries.
 bin/
-e2e/
-dev
 tmp*
-test*
 docs/
 dp-terraform/
 config/
 secrets/
 stackrox/
 .pre-commit-config.yaml
-scripts/
 templates/
 .artifacts/
 .DS_Store
