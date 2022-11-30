@@ -111,22 +111,10 @@ func (r *Runtime) Start() error {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				var managedDBProvisioningClient cloudprovider.DBClient
 				if r.config.ManagedDBEnabled {
-					const awsRegion = "us-east-1" // TODO(ROX-13699): do not hardcode AWS region
-					managedDBProvisioningClient, err = awsclient.NewRDSClient(
-						awsRegion,
-						r.config.ManagedDBSecurityGroup,
-						r.config.ManagedDBSubnetGroup, awsclient.AWSCredentials{
-							AccessKeyID:     r.config.ManagedDBAccessKeyID,
-							SecretAccessKey: r.config.ManagedDBSecretAccessKey, //pragma: allowlist secret
-							SessionToken:    r.config.ManagedDBSessionToken,
-						})
-					if err != nil {
-						err = fmt.Errorf("creating managed DB provisioning client: %v", err)
-						glog.Error(err)
+					if managedDBProvisioningClient, err = r.createDBProvisioningClient(); err != nil {
 						return 0, err
 					}
 				}
-
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, managedDBProvisioningClient, reconcilerOpts)
 			}
 
@@ -157,6 +145,25 @@ func (r *Runtime) Start() error {
 	}
 
 	return nil
+}
+
+func (r *Runtime) createDBProvisioningClient() (*awsclient.RDS, error) {
+	const awsRegion = "us-east-1" // TODO(ROX-13699): do not hardcode AWS region
+	rds, err := awsclient.NewRDSClient(
+		awsRegion,
+		r.config.ManagedDBSecurityGroup,
+		r.config.ManagedDBSubnetGroup, awsclient.AWSCredentials{
+			AccessKeyID:     r.config.ManagedDBAccessKeyID,
+			SecretAccessKey: r.config.ManagedDBSecretAccessKey, //pragma: allowlist secret
+			SessionToken:    r.config.ManagedDBSessionToken,
+		})
+	if err != nil {
+		err = fmt.Errorf("creating managed DB provisioning client: %v", err)
+		glog.Error(err)
+		return nil, err
+	}
+
+	return rds, nil
 }
 
 func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error) {
