@@ -19,7 +19,6 @@ const (
 	dbAvailableStatus = "available"
 	dbDeletingStatus  = "deleting"
 
-	awsRegion        = "us-east-1" // TODO: this should not be hardcoded
 	dbEngine         = "aurora-postgresql"
 	dbEngineVersion  = "13.7"
 	dbInstanceClass  = "db.serverless"
@@ -260,8 +259,8 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 }
 
 // NewRDSClient initializes a new awsclient.RDS
-func NewRDSClient(dbSecurityGroup, dbSubnetGroup string, credentials AWSCredentials) (*RDS, error) {
-	rdsClient, err := newRdsClient(credentials.AccessKeyID, credentials.SecretAccessKey, credentials.SessionToken)
+func NewRDSClient(awsRegion, dbSecurityGroup, dbSubnetGroup string, credentials AWSCredentials) (*RDS, error) {
+	rdsClient, err := newRdsClient(awsRegion, credentials.AccessKeyID, credentials.SecretAccessKey, credentials.SessionToken)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create RDS client, %w", err)
 	}
@@ -326,7 +325,7 @@ func newDeleteCentralDBClusterInput(clusterID string, skipFinalSnapshot bool) *r
 	}
 }
 
-func newRdsClient(accessKeyID, secretAccessKey, sessionToken string) (*rds.RDS, error) {
+func newRdsClient(awsRegion, accessKeyID, secretAccessKey, sessionToken string) (*rds.RDS, error) {
 	cfg := &aws.Config{
 		Region: aws.String(awsRegion),
 		Credentials: awscredentials.NewStaticCredentials(

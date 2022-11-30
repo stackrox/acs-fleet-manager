@@ -141,7 +141,9 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
-	managedDBProvisioningClient, err := awsclient.NewRDSClient("security-group",
+	managedDBProvisioningClient, err := awsclient.NewRDSClient(
+		"us-east-1",
+		"security-group",
 		"db-group", awsclient.AWSCredentials{
 			AccessKeyID:     "invalid-access-key",
 			SecretAccessKey: "invalid-secret-access-key", // pragma: allowlist secret

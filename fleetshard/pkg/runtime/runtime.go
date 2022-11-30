@@ -111,7 +111,10 @@ func (r *Runtime) Start() error {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				var managedDBProvisioningClient cloudprovider.DBClient
 				if r.config.ManagedDBEnabled {
-					managedDBProvisioningClient, err = awsclient.NewRDSClient(r.config.ManagedDBSecurityGroup,
+					const awsRegion = "us-east-1" // TODO(ROX-13699): do not hardcode AWS region
+					managedDBProvisioningClient, err = awsclient.NewRDSClient(
+						awsRegion,
+						r.config.ManagedDBSecurityGroup,
 						r.config.ManagedDBSubnetGroup, awsclient.AWSCredentials{
 							AccessKeyID:     r.config.ManagedDBAccessKeyID,
 							SecretAccessKey: r.config.ManagedDBSecretAccessKey, //pragma: allowlist secret
