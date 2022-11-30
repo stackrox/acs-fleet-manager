@@ -113,7 +113,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	proxyEnvVars := getProxyEnvVars(remoteCentralNamespace)
-	telemetryEnvVars := getTelemetryEnvVars(r.telemetryOpts)
+	telemetryEnvVars := r.telemetryOpts.toEnvVars()
 	envVars := append(proxyEnvVars, telemetryEnvVars...)
 
 	central := &v1alpha1.Central{
