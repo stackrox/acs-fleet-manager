@@ -27,6 +27,7 @@ const (
 	dbInstanceSuffix = "-db-instance"
 	dbClusterSuffix  = "-db-cluster"
 	dbPostgresPort   = 5432
+	dbName           = "postgres"
 )
 
 // RDS is an AWS RDS client tied to one Central instance. It provisions and deprovisions databases
@@ -242,7 +243,7 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 			}
 
 			connectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=require",
-				*dbCluster.Endpoint, dbPostgresPort, dbUser, "postgres")
+				*dbCluster.Endpoint, dbPostgresPort, dbUser, dbName)
 
 			return connectionString, nil
 		}
