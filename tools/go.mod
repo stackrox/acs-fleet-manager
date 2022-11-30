@@ -6,7 +6,7 @@ require (
 	github.com/99designs/aws-vault/v6 v6.6.0
 	github.com/go-bindata/go-bindata/v3 v3.1.3
 	github.com/matryer/moq v0.3.0
-	github.com/onsi/ginkgo/v2 v2.1.4
+	github.com/onsi/ginkgo/v2 v2.5.1
 	github.com/segmentio/chamber/v2 v2.10.12
 	gotest.tools/gotestsum v1.8.2
 )
