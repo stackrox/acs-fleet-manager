@@ -203,6 +203,11 @@ func (r *RDS) describeDBInstance(instanceID string) (*rds.DBInstance, error) {
 		return nil, fmt.Errorf("retrieving DB instance state: %w", err)
 	}
 
+	if len(result.DBInstances) != 1 {
+		// this should never happen (DescribeDBInstances should return either 1 instance, or ErrCodeDBInstanceNotFoundFault)
+		return nil, fmt.Errorf("unexpected number of DB instances: %d", len(result.DBInstances))
+	}
+
 	return result.DBInstances[0], nil
 }
 
@@ -212,6 +217,11 @@ func (r *RDS) describeDBCluster(clusterID string) (*rds.DBCluster, error) {
 	})
 	if err != nil {
 		return nil, fmt.Errorf("retrieving DB cluster description: %w", err)
+	}
+
+	if len(result.DBClusters) != 1 {
+		// this should never happen (DescribeDBClusters should return either 1 cluster, or ErrCodeDBClusterNotFoundFault)
+		return nil, fmt.Errorf("unexpected number of DB clusters: %d", len(result.DBClusters))
 	}
 
 	return result.DBClusters[0], nil
