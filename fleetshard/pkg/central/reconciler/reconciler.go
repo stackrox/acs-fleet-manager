@@ -200,6 +200,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if err != nil {
 			return nil, fmt.Errorf("getting DB password from secret: %w", err)
 		}
+		// TODO(ROX-13693): provide the CentralID as DB name, instead of central namespace
 		dbConnectionString, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentralNamespace, dbMasterPassword)
 		if err != nil {
 			return nil, fmt.Errorf("provisioning RDS DB: %w", err)
