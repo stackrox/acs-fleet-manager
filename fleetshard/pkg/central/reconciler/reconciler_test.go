@@ -73,11 +73,9 @@ func TestReconcileCreate(t *testing.T) {
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
 
-	if readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady); ok {
-		assert.Equal(t, "True", readyCondition.Status)
-	} else {
-		assert.Fail(t, "Ready condition not found in conditions", status.Conditions)
-	}
+	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
+	require.True(t, ok)
+	assert.Equal(t, "True", readyCondition.Status, "Ready condition not found in conditions", status.Conditions)
 
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
@@ -109,11 +107,9 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	require.NoError(t, err)
 	managedDBProvisioningClient.AssertNumberOfCalls(t, "EnsureDBProvisioned", 1)
 
-	if readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady); ok {
-		assert.Equal(t, "True", readyCondition.Status)
-	} else {
-		assert.Fail(t, "Ready condition not found in conditions", status.Conditions)
-	}
+	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
+	require.True(t, ok)
+	assert.Equal(t, "True", readyCondition.Status, "Ready condition not found in conditions", status.Conditions)
 
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
@@ -299,7 +295,7 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
 	managedDBProvisioningClient := new(testutils.DBProvisioningClientMock)
-	managedDBProvisioningClient.On("EnsureDBProvisioned", mock.Anything, mock.Anything, mock.Anything).Return("connectionString", nil)
+	managedDBProvisioningClient.On("EnsureDBProvisioned", mock.Anything, mock.Anything, mock.Anything).Return("host=localhost port=5432 user=rhacs dbname=postgres sslmode=require", nil)
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
@@ -323,12 +319,13 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	statusDeletion, err := r.Reconcile(context.TODO(), deletedCentral)
 	require.NoError(t, err)
 	require.NotNil(t, statusDeletion)
-	managedDBProvisioningClient.AssertNumberOfCalls(t, "EnsureDBDeprovisioned", 2)
 
 	readyCondition, ok := conditionForType(statusDeletion.Conditions, conditionTypeReady)
 	require.True(t, ok, "Ready condition not found in conditions", statusDeletion.Conditions)
 	assert.Equal(t, "False", readyCondition.Status)
 	assert.Equal(t, "Deleted", readyCondition.Reason)
+
+	managedDBProvisioningClient.AssertNumberOfCalls(t, "EnsureDBDeprovisioned", 2)
 
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
