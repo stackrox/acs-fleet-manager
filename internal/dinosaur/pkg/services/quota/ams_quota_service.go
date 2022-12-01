@@ -133,8 +133,16 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 	rr.BillingModel(amsv1.BillingModel(bm))
 	glog.Infof("Billing model of Central request %s with quota type %s has been set to %s.", dinosaur.ID, instanceType.GetQuotaType(), bm)
 
+	if bm != string(amsv1.BillingModelStandard) {
+		if err := q.verifyCloudAccountInAMS(dinosaur, orgID); err != nil {
+			return "", err
+		}
+		rr.BillingMarketplaceAccount(dinosaur.CloudAccountID)
+	}
+
 	requestBuilder := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(dinosaur.Owner).
+		CloudProviderID(dinosaur.CloudProvider).
 		ProductID(instanceType.GetQuotaType().GetProduct()).
 		Managed(true).
 		ClusterID(dinosaurID).
@@ -145,14 +153,6 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 		Reserve(true).
 		Resources(&rr)
 
-	if bm != string(amsv1.BillingModelStandard) {
-		if err := q.verifyCloudAccountInAMS(dinosaur, orgID); err != nil {
-			return "", err
-		}
-		requestBuilder = requestBuilder.
-			CloudProviderID(dinosaur.CloudProvider).
-			CloudAccountID(dinosaur.CloudAccountID)
-	}
 	cb, err := requestBuilder.Build()
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")

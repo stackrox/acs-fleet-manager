@@ -210,12 +210,13 @@ func Test_AMSReserveQuota(t *testing.T) {
 		cloudAccountID string
 	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		want             string
-		wantErr          bool
-		wantBillingModel string
+		name                          string
+		fields                        fields
+		args                          args
+		want                          string
+		wantErr                       bool
+		wantBillingModel              string
+		wantBillingMarketplaceAccount string
 	}{
 		{
 			name: "reserve a quota & get subscription id",
@@ -556,7 +557,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "cloud account matches cloud_accounts response  results in successful call",
+			name: "cloud account matches cloud_accounts response results in successful call",
 			args: args{
 				"12231",
 				"testUser",
@@ -587,9 +588,10 @@ func Test_AMSReserveQuota(t *testing.T) {
 					},
 				},
 			},
-			wantBillingModel: string(v1.BillingModelMarketplace),
-			want:             "1234",
-			wantErr:          false,
+			wantBillingModel:              string(v1.BillingModelMarketplace),
+			wantBillingMarketplaceAccount: "cloudAccountID",
+			want:                          "1234",
+			wantErr:                       false,
 		},
 	}
 
@@ -610,14 +612,19 @@ func Test_AMSReserveQuota(t *testing.T) {
 			gomega.Expect(subID).To(gomega.Equal(tt.want))
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 
-			if tt.wantBillingModel != "" {
+			if tt.wantBillingModel != "" || tt.wantBillingMarketplaceAccount != "" {
 				ocmClientMock := tt.fields.ocmClient.(*ocm.ClientMock)
 				clusterAuthorizationCalls := ocmClientMock.ClusterAuthorizationCalls()
 				gomega.Expect(len(clusterAuthorizationCalls)).To(gomega.Equal(1))
 				clusterAuthorizationResources := clusterAuthorizationCalls[0].Cb.Resources()
 				gomega.Expect(len(clusterAuthorizationResources)).To(gomega.Equal(1))
 				clusterAuthorizationResource := clusterAuthorizationResources[0]
-				gomega.Expect(string(clusterAuthorizationResource.BillingModel())).To(gomega.Equal(tt.wantBillingModel))
+				if tt.wantBillingModel != "" {
+					gomega.Expect(string(clusterAuthorizationResource.BillingModel())).To(gomega.Equal(tt.wantBillingModel))
+				}
+				if tt.wantBillingMarketplaceAccount != "" {
+					gomega.Expect(clusterAuthorizationResource.BillingMarketplaceAccount()).To(gomega.Equal(tt.wantBillingMarketplaceAccount))
+				}
 			}
 		})
 	}
