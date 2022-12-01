@@ -27,6 +27,7 @@ const (
 	dbClusterSuffix  = "-db-cluster"
 	dbPostgresPort   = 5432
 	dbName           = "postgres"
+	awsRetrySeconds  = 30
 )
 
 // RDS is an AWS RDS client tied to one Central instance. It provisions and deprovisions databases
@@ -248,7 +249,7 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 		}
 
 		glog.Infof("RDS instance status: %s", dbInstanceStatus)
-		ticker := time.NewTicker(10 * time.Second)
+		ticker := time.NewTicker(awsRetrySeconds * time.Second)
 		select {
 		case <-ticker.C:
 			continue

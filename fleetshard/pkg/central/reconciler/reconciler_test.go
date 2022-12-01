@@ -114,24 +114,17 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
-	assert.Equal(t, centralName, central.GetName())
-	assert.Equal(t, "1", central.GetAnnotations()[revisionAnnotationKey])
-	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
-	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
 
 	route := &openshiftRouteV1.Route{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
 	require.NoError(t, err)
-	assert.Equal(t, centralReencryptRouteName, route.GetName())
-	assert.Equal(t, openshiftRouteV1.TLSTerminationReencrypt, route.Spec.TLS.Termination)
-	assert.Equal(t, testutils.CentralCA, route.Spec.TLS.DestinationCACertificate)
 
 	secret := &v1.Secret{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralDbSecretName, Namespace: centralNamespace}, secret)
 	require.NoError(t, err)
 	password, ok := secret.Data["password"]
 	require.True(t, ok)
-	assert.True(t, len(password) > 0)
+	assert.NotEmpty(t, password)
 }
 
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
