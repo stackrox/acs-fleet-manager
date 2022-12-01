@@ -38,6 +38,7 @@ const (
 )
 
 var simpleManagedCentral = private.ManagedCentral{
+	Id: centralID,
 	Metadata: private.ManagedCentralAllOfMetadata{
 		Name:      centralName,
 		Namespace: centralNamespace,
@@ -81,6 +82,7 @@ func TestReconcileCreate(t *testing.T) {
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
 	assert.Equal(t, centralName, central.GetName())
+	assert.Equal(t, simpleManagedCentral.Id, central.GetLabels()[tenantIDLabelKey])
 	assert.Equal(t, "1", central.GetAnnotations()[revisionAnnotationKey])
 	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)

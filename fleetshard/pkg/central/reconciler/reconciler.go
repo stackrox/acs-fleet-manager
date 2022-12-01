@@ -40,6 +40,7 @@ const (
 	helmReleaseName = "tenant-resources"
 
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
+	tenantIDLabelKey = "rhacs.redhat.com/tenant"
 
 	centralDbSecretName = "central-db-password" // pragma: allowlist secret
 )
@@ -115,9 +116,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        remoteCentralName,
-			Namespace:   remoteCentralNamespace,
-			Labels:      map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
+			Name:      remoteCentralName,
+			Namespace: remoteCentralNamespace,
+			Labels: map[string]string{
+				k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
+				tenantIDLabelKey:      remoteCentral.Id,
+			},
 			Annotations: map[string]string{managedServicesAnnotation: "true"},
 		},
 		Spec: v1alpha1.CentralSpec{
@@ -431,7 +435,7 @@ func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error)
 
 func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace) error {
 	namespace.Labels = make(map[string]string)
-	namespace.Labels["rhacs.redhat.com/tenant"] = ""
+	namespace.Labels[tenantIDLabelKey] = ""
 	err := r.client.Create(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("creating namespace %q: %w", namespace.ObjectMeta.Name, err)
