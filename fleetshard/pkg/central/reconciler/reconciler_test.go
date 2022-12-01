@@ -597,7 +597,7 @@ func TestTelemetryOptionsAreSetAsEnv(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
 			fakeClient := testutils.NewFakeClientBuilder(t).Build()
-			r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, CentralReconcilerOptions{TelemetryOpts: tc.opts})
+			r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{TelemetryOpts: tc.opts})
 
 			_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 			require.NoError(t, err)
