@@ -591,7 +591,7 @@ test/e2e/probe/run:
 	$(DOCKER) run \
 	-e QUOTA_TYPE="OCM" \
 	-e AUTH_TYPE="OCM" \
-	-e PROBE_NAME="e2e-probe${RANDOM}" \
+	-e PROBE_NAME="e2e-probe-$$$$" \
 	-e OCM_USERNAME="${OCM_USERNAME}" \
 	-e OCM_TOKEN="${OCM_TOKEN}" \
 	-e FLEET_MANAGER_ENDPOINT="${FLEET_MANAGER_ENDPOINT}" \
