@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-
-	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/pkg/concurrency"
@@ -93,6 +94,7 @@ func (r *Runtime) Start() error {
 		UseRoutes:         routesAvailable,
 		WantsAuthProvider: r.config.CreateAuthProvider,
 		EgressProxyImage:  r.config.EgressProxyImage,
+		ManagedDBEnabled:  r.config.ManagedDBEnabled,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
@@ -107,15 +109,26 @@ func (r *Runtime) Start() error {
 		glog.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
-				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, reconcilerOpts)
+				var managedDBProvisioningClient cloudprovider.DBClient
+				if r.config.ManagedDBEnabled {
+					if managedDBProvisioningClient, err = r.createDBProvisioningClient(); err != nil {
+						return 0, err
+					}
+				}
+				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, managedDBProvisioningClient, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]
 			go func(reconciler *centralReconciler.CentralReconciler, central private.ManagedCentral) {
 				fleetshardmetrics.MetricsInstance().IncActiveCentralReconcilations()
 				defer fleetshardmetrics.MetricsInstance().DecActiveCentralReconcilations()
+
+				// a 15 minutes timeout should cover the duration of a Reconcile call, including the provisioning of an RDS database
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+				defer cancel()
+
 				glog.Infof("Start reconcile central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
-				status, err := reconciler.Reconcile(context.Background(), central)
+				status, err := reconciler.Reconcile(ctx, central)
 				fleetshardmetrics.MetricsInstance().IncCentralReconcilations()
 				r.handleReconcileResult(central, status, err)
 			}(reconciler, central)
@@ -132,6 +145,25 @@ func (r *Runtime) Start() error {
 	}
 
 	return nil
+}
+
+func (r *Runtime) createDBProvisioningClient() (*awsclient.RDS, error) {
+	const awsRegion = "us-east-1" // TODO(ROX-13699): do not hardcode AWS region
+	rds, err := awsclient.NewRDSClient(
+		awsRegion,
+		r.config.ManagedDBSecurityGroup,
+		r.config.ManagedDBSubnetGroup, awsclient.AWSCredentials{
+			AccessKeyID:     r.config.ManagedDBAccessKeyID,
+			SecretAccessKey: r.config.ManagedDBSecretAccessKey, //pragma: allowlist secret
+			SessionToken:    r.config.ManagedDBSessionToken,
+		})
+	if err != nil {
+		err = fmt.Errorf("creating managed DB provisioning client: %v", err)
+		glog.Error(err)
+		return nil, err
+	}
+
+	return rds, nil
 }
 
 func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error) {

@@ -25,6 +25,13 @@ type Config struct {
 	CreateAuthProvider   bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
 	MetricsAddress       string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
 	EgressProxyImage     string        `env:"EGRESS_PROXY_IMAGE"`
+
+	ManagedDBEnabled         bool   `env:"MANAGED_DB_ENABLED" envDefault:"false"`
+	ManagedDBSecurityGroup   string `env:"MANAGED_DB_SECURITY_GROUP"`
+	ManagedDBSubnetGroup     string `env:"MANAGED_DB_SUBNET_GROUP"`
+	ManagedDBAccessKeyID     string `env:"MANAGED_DB_ACCESS_KEY_ID"`
+	ManagedDBSecretAccessKey string `env:"MANAGED_DB_SECRET_ACCESS_KEY"`
+	ManagedDBSessionToken    string `env:"MANAGED_DB_SESSION_TOKEN"` // needed for local testing with STS only
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.
