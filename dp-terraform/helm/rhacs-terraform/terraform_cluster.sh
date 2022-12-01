@@ -83,7 +83,7 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
-  --set acsOperator.version=v3.72.0 \
+  --set acsOperator.version=v3.73.0 \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
   --set fleetshardSync.image="quay.io/app-sre/acs-fleet-manager:${FLEETSHARD_SYNC_TAG}" \
   --set fleetshardSync.authType="RHSSO" \
