@@ -41,7 +41,7 @@ jobs:
           AWS_AUTH_HELPER: none # credentials are populated by the above action
         run: |
           set -euo pipefail
-          ./terraform_cluster.sh stage acs-stage-dp-01
+          ./terraform_cluster.sh stage acs-stage-dp-02
 
   deploy-probe:
     name: Deploy blackbox monitoring probe service to stage
@@ -69,4 +69,4 @@ jobs:
           USE_AWS_VAULT: false
         run: |
           set -euo pipefail
-          ./deploy.sh stage acs-stage-dp-01
+          ./deploy.sh stage acs-stage-dp-02
