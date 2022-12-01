@@ -9,6 +9,7 @@ This Changelog should be updated for:
 ## [NEXT RELEASE]
 ### Added
 ### Changed
+- Data Plane terraforming now deploys fleetshard image obtained dynamically rather than hardcoded in the script
 ### Deprecated
 ### Removed
 
