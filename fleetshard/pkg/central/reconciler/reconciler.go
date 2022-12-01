@@ -40,7 +40,7 @@ const (
 	helmReleaseName = "tenant-resources"
 
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
-	tenantIDLabelKey = "rhacs.redhat.com/tenant"
+	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
 
 	centralDbSecretName = "central-db-password" // pragma: allowlist secret
 )
