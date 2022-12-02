@@ -200,8 +200,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if err != nil {
 			return nil, fmt.Errorf("getting DB password from secret: %w", err)
 		}
-		// TODO(ROX-13693): provide the CentralID as DB name, instead of central namespace
-		dbConnectionString, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentralNamespace, dbMasterPassword)
+
+		dbConnectionString, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword)
 		if err != nil {
 			return nil, fmt.Errorf("provisioning RDS DB: %w", err)
 		}
@@ -358,7 +358,7 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	globalDeleted = globalDeleted && centralDeleted
 
 	if r.managedDBEnabled {
-		dbDeleted, err := r.managedDBProvisioningClient.EnsureDBDeprovisioned(central.GetNamespace())
+		dbDeleted, err := r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id)
 		if err != nil {
 			return false, fmt.Errorf("deprovisioning DB: %v", err)
 		}

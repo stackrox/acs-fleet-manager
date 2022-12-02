@@ -23,6 +23,7 @@ const (
 	dbEngineVersion  = "13.7"
 	dbInstanceClass  = "db.serverless"
 	dbUser           = "rhacs_master"
+	dbPrefix         = "rhacs-"
 	dbInstanceSuffix = "-db-instance"
 	dbClusterSuffix  = "-db-cluster"
 	dbPostgresPort   = 5432
@@ -274,11 +275,11 @@ func NewRDSClient(awsRegion, dbSecurityGroup, dbSubnetGroup string, credentials 
 }
 
 func getClusterID(databaseID string) string {
-	return databaseID + dbClusterSuffix
+	return dbPrefix + databaseID + dbClusterSuffix
 }
 
 func getInstanceID(databaseID string) string {
-	return databaseID + dbInstanceSuffix
+	return dbPrefix + databaseID + dbInstanceSuffix
 }
 
 func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup string) *rds.CreateDBClusterInput {
