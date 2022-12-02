@@ -9,6 +9,6 @@ spec:
   installPlanApproval: Automatic
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: "rhacs-operator.v$STACKROX_OPERATOR_VERSION"
+  startingCSV: rhacs-operator.v3.72.0
   config:
     resources: $RHACS_OPERATOR_RESOURCES
