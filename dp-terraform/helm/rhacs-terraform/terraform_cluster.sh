@@ -32,12 +32,19 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
+    # TODO Use downstream operator after downstream release 3.73.0
+    OPERATOR_USE_UPSTREAM=true
+    OPERATOR_SOURCE="rhacs-operators"
+    OPERATOR_VERSION="v3.73.0"
     ;;
 
   prod)
     FM_ENDPOINT="https://api.openshift.com"
     OBSERVABILITY_GITHUB_TAG="b864d5f155b5455bba78eb7b82bc4bf4190852c7"  # pragma: allowlist secret
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
+    OPERATOR_USE_UPSTREAM=false
+    OPERATOR_SOURCE="redhat-operators"
+    OPERATOR_VERSION="v3.72.0"
     ;;
 
   *)
@@ -60,9 +67,6 @@ FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
 
-OPERATOR_USE_UPSTREAM=false
-OPERATOR_SOURCE="redhat-operators"
-
 ## Uncomment this section if you want to deploy an upstream version of the operator.
 ## Update the global pull secret within the dataplane cluster to include the read-only credentials for quay.io/rhacs-eng
 #QUAY_READ_ONLY_USERNAME=$(bw get username "66de0e1f-52fd-470b-ad9b-ae0701339dda")
@@ -83,7 +87,7 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
-  --set acsOperator.version=v3.73.0 \
+  --set acsOperator.version="${OPERATOR_VERSION}" \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
   --set fleetshardSync.image="quay.io/app-sre/acs-fleet-manager:${FLEETSHARD_SYNC_TAG}" \
   --set fleetshardSync.authType="RHSSO" \
