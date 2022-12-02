@@ -91,7 +91,7 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 // RelatedResource with "cost" 0 are considered. Only
 // "standard" and "marketplace-*" billing models are considered. If both are
 // detected "marketplace-*" is returned.
-func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(orgID string, instanceType types.DinosaurInstanceType) (string, error) {
+func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(orgID, cloudProviderID string, instanceType types.DinosaurInstanceType) (string, error) {
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgID, instanceType.GetQuotaType().GetResourceName(), instanceType.GetQuotaType().GetProduct())
 	if err != nil {
 		return "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, instanceType.GetQuotaType().GetProduct())
@@ -102,6 +102,9 @@ func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(orgID 
 		for _, rr := range qc.RelatedResources() {
 			if qc.Consumed() < qc.Allowed() || rr.Cost() == 0 {
 				if rr.BillingModel() != "" && rr.BillingModel() != string(amsv1.BillingModelStandard) {
+					if rr.BillingModel() == string(amsv1.BillingModelMarketplace) && cloudProviderID == "aws" {
+						return string(amsv1.BillingModelMarketplaceAWS), nil
+					}
 					return rr.BillingModel(), nil
 				}
 				billingModel = rr.BillingModel()
@@ -122,7 +125,7 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", dinosaur.OrganisationID))
 	}
-	bm, err := q.getAvailableBillingModelFromDinosaurInstanceType(orgID, instanceType)
+	bm, err := q.getAvailableBillingModelFromDinosaurInstanceType(orgID, dinosaur.CloudProvider, instanceType)
 	if err != nil {
 		svcErr := errors.ToServiceError(err)
 		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
