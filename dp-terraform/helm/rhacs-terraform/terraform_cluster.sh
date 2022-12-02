@@ -36,7 +36,7 @@ case $ENVIRONMENT in
 
   prod)
     FM_ENDPOINT="https://api.openshift.com"
-    OBSERVABILITY_GITHUB_TAG="b864d5f155b5455bba78eb7b82bc4bf4190852c7"  # pragma: allowlist secret
+    OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
     ;;
 
