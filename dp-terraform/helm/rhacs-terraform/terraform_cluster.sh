@@ -34,7 +34,6 @@ case $ENVIRONMENT in
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     # TODO Use downstream operator after downstream release 3.73.0
     OPERATOR_USE_UPSTREAM=true
-    OPERATOR_SOURCE="rhacs-operators"
     OPERATOR_VERSION="v3.73.0"
     ;;
 
@@ -42,8 +41,8 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://api.openshift.com"
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
+
     OPERATOR_USE_UPSTREAM=false
-    OPERATOR_SOURCE="redhat-operators"
     OPERATOR_VERSION="v3.72.0"
     ;;
 
@@ -67,17 +66,18 @@ FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
 
-## Uncomment this section if you want to deploy an upstream version of the operator.
-## Update the global pull secret within the dataplane cluster to include the read-only credentials for quay.io/rhacs-eng
-#QUAY_READ_ONLY_USERNAME=$(bw get username "66de0e1f-52fd-470b-ad9b-ae0701339dda")
-#QUAY_READ_ONLY_PASSWORD=$(bw get password "66de0e1f-52fd-470b-ad9b-ae0701339dda")
-#quay_basic_auth="${QUAY_READ_ONLY_USERNAME}:${QUAY_READ_ONLY_PASSWORD}"
-#oc get secret/pull-secret -n openshift-config --template='{{index .data ".dockerconfigjson" | base64decode}}' > ./tmp-pull-secret.json
-#oc registry login --registry="quay.io/rhacs-eng" --auth-basic="${quay_basic_auth}" --to=./tmp-pull-secret.json --skip-check
-#oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=./tmp-pull-secret.json
-#rm ./tmp-pull-secret.json
-#OPERATOR_USE_UPSTREAM=true
-#OPERATOR_SOURCE="rhacs-operators"
+OPERATOR_SOURCE="redhat-operators"
+if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
+    load_external_config quay/rhacs-eng QUAY_
+    quay_basic_auth="${QUAY_READ_ONLY_USERNAME}:${QUAY_READ_ONLY_PASSWORD}"
+    pull_secret_json="$(mktemp)"
+    trap 'rm -f "${pull_secret_json}"' EXIT
+    oc get secret/pull-secret -n openshift-config --template='{{index .data ".dockerconfigjson" | base64decode}}' > "${pull_secret_json}"
+    oc registry login --registry="quay.io/rhacs-eng" --auth-basic="${quay_basic_auth}" --to="${pull_secret_json}" --skip-check
+    oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson="${pull_secret_json}"
+
+    OPERATOR_SOURCE="rhacs-operators"
+fi
 
 # helm template --debug ... to debug changes
 helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
