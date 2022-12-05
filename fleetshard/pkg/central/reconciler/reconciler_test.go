@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/service/sts"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
@@ -155,9 +156,11 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 			ManagedDBEnabled: true})
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	var awsErr awserr.Error
+	var awsErr, awsOrigErr awserr.Error
 	require.ErrorAs(t, err, &awsErr)
-	assert.Equal(t, awsErr.Code(), sts.ErrCodeInvalidIdentityTokenException)
+	assert.Equal(t, awsErr.Code(), stscreds.ErrCodeWebIdentity)
+	require.ErrorAs(t, awsErr.OrigErr(), &awsOrigErr)
+	assert.Equal(t, awsOrigErr.Code(), sts.ErrCodeInvalidIdentityTokenException)
 }
 
 func TestReconcileUpdateSucceeds(t *testing.T) {
