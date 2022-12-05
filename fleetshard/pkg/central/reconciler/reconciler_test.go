@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/sts"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -135,10 +137,14 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 
 	managedDBProvisioningClient, err := awsclient.NewRDSClient(
 		&config.Config{
-			AWSRegion:              "us-east-1",
-			AWSRoleARN:             "arn:aws:iam::012456789:role/fake_role",
-			ManagedDBSecurityGroup: "security-group",
-			ManagedDBSubnetGroup:   "db-group",
+			AWS: config.AWS{
+				Region:  "us-east-1",
+				RoleARN: "arn:aws:iam::012456789:role/fake_role",
+			},
+			ManagedDB: config.ManagedDB{
+				SecurityGroup: "security-group",
+				SubnetGroup:   "db-group",
+			},
 		},
 		&fakeAuth{})
 	require.NoError(t, err)
@@ -149,7 +155,9 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 			ManagedDBEnabled: true})
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.ErrorContains(t, err, "InvalidIdentityToken")
+	var awsErr awserr.Error
+	require.ErrorAs(t, err, &awsErr)
+	assert.Equal(t, awsErr.Code(), sts.ErrCodeInvalidIdentityTokenException)
 }
 
 func TestReconcileUpdateSucceeds(t *testing.T) {

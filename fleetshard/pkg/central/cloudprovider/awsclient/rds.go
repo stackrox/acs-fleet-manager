@@ -266,15 +266,15 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 
 // NewRDSClient initializes a new awsclient.RDS
 func NewRDSClient(config *config.Config, auth fleetmanager.Auth) (*RDS, error) {
-	rdsClient, err := newRdsClient(config, auth)
+	rdsClient, err := newRdsClient(config.AWS, auth)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create RDS client, %w", err)
+		return nil, fmt.Errorf("unable to create RDS client: %w", err)
 	}
 
 	return &RDS{
 		rdsClient:       rdsClient,
-		dbSecurityGroup: config.ManagedDBSecurityGroup,
-		dbSubnetGroup:   config.ManagedDBSubnetGroup,
+		dbSecurityGroup: config.ManagedDB.SecurityGroup,
+		dbSubnetGroup:   config.ManagedDB.SubnetGroup,
 	}, nil
 }
 
@@ -328,24 +328,24 @@ func newDeleteCentralDBClusterInput(clusterID string, skipFinalSnapshot bool) *r
 	}
 }
 
-func newRdsClient(config *config.Config, auth fleetmanager.Auth) (*rds.RDS, error) {
+func newRdsClient(awsConfig config.AWS, auth fleetmanager.Auth) (*rds.RDS, error) {
 	cfg := &aws.Config{
-		Region: aws.String(config.AWSRegion),
+		Region: aws.String(awsConfig.Region),
 	}
 	sess, err := session.NewSession(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create session for STS client, %w", err)
+		return nil, fmt.Errorf("unable to create session for STS client: %w", err)
 	}
 	stsClient := sts.New(sess)
 
-	roleProvider := stscreds.NewWebIdentityRoleProviderWithOptions(stsClient, config.AWSRoleARN, "gosession",
+	roleProvider := stscreds.NewWebIdentityRoleProviderWithOptions(stsClient, awsConfig.RoleARN, "",
 		&tokenFetcher{auth: auth})
 
 	cfg.Credentials = awscredentials.NewCredentials(roleProvider)
 
 	sess, err = session.NewSession(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create session for RDS client, %w", err)
+		return nil, fmt.Errorf("unable to create session for RDS client: %w", err)
 	}
 
 	return rds.New(sess), nil

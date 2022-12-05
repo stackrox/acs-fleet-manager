@@ -71,7 +71,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		return nil, errors.Wrap(err, "failed to create fleet manager client")
 	}
 	var dbProvisionClient cloudprovider.DBClient
-	if config.ManagedDBEnabled {
+	if config.ManagedDB.Enabled {
 		dbProvisionClient, err = awsclient.NewRDSClient(config, auth)
 		if err != nil {
 			return nil, fmt.Errorf("creating managed DB provisioning client: %v", err)
@@ -103,7 +103,7 @@ func (r *Runtime) Start() error {
 		UseRoutes:         routesAvailable,
 		WantsAuthProvider: r.config.CreateAuthProvider,
 		EgressProxyImage:  r.config.EgressProxyImage,
-		ManagedDBEnabled:  r.config.ManagedDBEnabled,
+		ManagedDBEnabled:  r.config.ManagedDB.Enabled,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
