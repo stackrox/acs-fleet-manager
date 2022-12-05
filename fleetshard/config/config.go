@@ -50,17 +50,23 @@ func GetConfig() (*Config, error) {
 	if c.AuthType == "" {
 		configErrors.AddError(errors.New("AUTH_TYPE unset in the environment"))
 	}
-	if c.ManagedDBEnabled {
-		if c.AWSRoleARN == "" {
-			configErrors.AddError(errors.New("MANAGED_DB_ENABLED == true and AWS_ROLE_ARN unset in the environment"))
-		}
-		if c.ManagedDBSecurityGroup == "" {
-			configErrors.AddError(errors.New("MANAGED_DB_ENABLED == true and MANAGED_DB_SECURITY_GROUP unset in the environment"))
-		}
-	}
+	validateManagedDBConfig(c, configErrors)
+
 	cfgErr := configErrors.ToError()
 	if cfgErr != nil {
 		return nil, errors.Wrap(cfgErr, "unexpected configuration settings")
 	}
 	return &c, nil
+}
+
+func validateManagedDBConfig(c Config, configErrors errorhelpers.ErrorList) {
+	if !c.ManagedDBEnabled {
+		return
+	}
+	if c.AWSRoleARN == "" {
+		configErrors.AddError(errors.New("MANAGED_DB_ENABLED == true and AWS_ROLE_ARN unset in the environment"))
+	}
+	if c.ManagedDBSecurityGroup == "" {
+		configErrors.AddError(errors.New("MANAGED_DB_ENABLED == true and MANAGED_DB_SECURITY_GROUP unset in the environment"))
+	}
 }
