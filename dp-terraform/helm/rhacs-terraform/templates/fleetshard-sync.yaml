@@ -40,13 +40,29 @@ spec:
         - name: EGRESS_PROXY_IMAGE
           value: {{ .Values.fleetshardSync.egressProxy.image | quote }}
         - name: RHSSO_SERVICE_ACCOUNT_CLIENT_ID
-          value: {{ .Values.fleetshardSync.redHatSSO.clientId }}
+          valueFrom:
+            secretKeyRef:
+              name: fleetshard-sync
+              key: "rhsso-service-account-client-id"
+              optional: false
         - name: RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET
-          value: {{ .Values.fleetshardSync.redHatSSO.clientSecret }}
+          valueFrom:
+            secretKeyRef:
+              name: fleetshard-sync
+              key: "rhsso-service-account-client-secret"
+              optional: false
         - name: RHSSO_REALM
           value: {{ .Values.fleetshardSync.redHatSSO.realm }}
         - name: RHSSO_ENDPOINT
           value: {{ .Values.fleetshardSync.redHatSSO.endpoint }}
+        - name: MANAGED_DB_ENABLED
+          value: {{ .Values.fleetshardSync.managedDB.enabled }}
+        {{ if eq .Values.fleetshardSync.managedDB.enabled true }}
+        - name: MANAGED_DB_SUBNET_GROUP
+          value: {{ required "fleetshardSync.managedDB.subnetGroup is required when fleetshardSync.managedDB.enabled = true" .Values.fleetshardSync.managedDB.subnetGroup }}
+        - name: MANAGED_DB_SECURITY_GROUP
+          value: {{ required "fleetshardSync.managedDB.securityGroup is required when fleetshardSync.managedDB.enabled = true" .Values.fleetshardSync.managedDB.securityGroup }}
+        {{ end }}
         ports:
         - name: monitoring
           containerPort: 8080

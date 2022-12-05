@@ -11,6 +11,7 @@ This Changelog should be updated for:
 ### Changed
 - Data Plane terraforming now deploys fleetshard image obtained dynamically rather than hardcoded in the script
 - Upgrade StackRox operator to v3.73.0
+- Add managed DB values to the Data Plane terraforming Helm Chart
 ### Deprecated
 ### Removed
 
