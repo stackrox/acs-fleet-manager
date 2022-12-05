@@ -131,6 +131,17 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
+		It("should not expose URLs until the routes are created", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
+			if !routesEnabled {
+				Skip(skipRouteMsg)
+			}
+			Expect(createdCentral.CentralUIURL).To(BeEmpty())
+			Expect(createdCentral.CentralDataURL).To(BeEmpty())
+		})
+
 		It("should create central routes", func() {
 			if createdCentral == nil {
 				Fail("central not created")
