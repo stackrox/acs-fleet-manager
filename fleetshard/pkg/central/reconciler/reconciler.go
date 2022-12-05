@@ -187,7 +187,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, ErrDeletionInProgress
 	}
 
-	if err := r.ensureNamespaceExists(remoteCentralNamespace); err != nil {
+	if err := r.ensureNamespaceExists(remoteCentralNamespace, remoteCentral.Id); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
@@ -433,9 +433,9 @@ func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error)
 	return namespace, nil
 }
 
-func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace) error {
+func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace, tenantID string) error {
 	namespace.Labels = make(map[string]string)
-	namespace.Labels[tenantIDLabelKey] = ""
+	namespace.Labels[tenantIDLabelKey] = tenantID
 	err := r.client.Create(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("creating namespace %q: %w", namespace.ObjectMeta.Name, err)
@@ -443,11 +443,11 @@ func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace
 	return nil
 }
 
-func (r *CentralReconciler) ensureNamespaceExists(name string) error {
+func (r *CentralReconciler) ensureNamespaceExists(name string, tenantID string) error {
 	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			return r.createTenantNamespace(context.Background(), namespace)
+			return r.createTenantNamespace(context.Background(), namespace, tenantID)
 		}
 		return fmt.Errorf("getting namespace %s: %w", name, err)
 	}
