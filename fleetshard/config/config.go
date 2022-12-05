@@ -50,8 +50,8 @@ func GetConfig() (*Config, error) {
 	if c.AuthType == "" {
 		configErrors.AddError(errors.New("AUTH_TYPE unset in the environment"))
 	}
-	if c.AWSRoleARN == "" {
-		configErrors.AddError(errors.New("AWS_ROLE_ARN unset in the environment"))
+	if c.ManagedDBEnabled && c.AWSRoleARN == "" {
+		configErrors.AddError(errors.New("MANAGED_DB_ENABLED == true and AWS_ROLE_ARN unset in the environment"))
 	}
 	cfgErr := configErrors.ToError()
 	if cfgErr != nil {
