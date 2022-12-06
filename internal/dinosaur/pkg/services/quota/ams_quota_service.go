@@ -14,6 +14,7 @@ import (
 
 // RHACSMarketplaceQuotaID is default quota id used by ACS SKUs.
 const RHACSMarketplaceQuotaID = "cluster|rhinfra|rhacs|marketplace"
+const awsCloudProvider = "aws"
 
 type amsQuotaService struct {
 	amsClient ocm.AMSClient
@@ -110,7 +111,7 @@ func (q amsQuotaService) selectBillingModelFromDinosaurInstanceType(orgID, cloud
 		}
 	}
 
-	if cloudAccountID != "" && cloudProviderID == "aws" {
+	if cloudAccountID != "" && cloudProviderID == awsCloudProvider {
 		if hasMarketplaceAWS || hasGenericMarketplace {
 			return string(amsv1.BillingModelMarketplaceAWS), nil
 		}
