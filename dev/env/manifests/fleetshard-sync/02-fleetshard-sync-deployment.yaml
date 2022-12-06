@@ -49,24 +49,12 @@ spec:
               value: "$MANAGED_DB_SECURITY_GROUP"
             - name: MANAGED_DB_SUBNET_GROUP
               value: "$MANAGED_DB_SUBNET_GROUP"
-            - name: MANAGED_DB_ACCESS_KEY_ID
+            - name: AWS_ROLE_ARN
               valueFrom:
                 secretKeyRef:
                   name: fleetshard-sync
-                  key: "rds-access-key-id"
-                  optional: true
-            - name: MANAGED_DB_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: fleetshard-sync
-                  key: "rds-secret-access-key"
-                  optional: true
-            - name: MANAGED_DB_SESSION_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: fleetshard-sync
-                  key: "rds-sesion-token"
-                  optional: true
+                  key: "aws-role-arn"
+
           image: "${FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent
           name: fleetshard-sync

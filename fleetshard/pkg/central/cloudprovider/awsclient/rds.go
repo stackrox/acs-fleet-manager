@@ -10,9 +10,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	awscredentials "github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
 const (
@@ -261,16 +265,16 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 }
 
 // NewRDSClient initializes a new awsclient.RDS
-func NewRDSClient(awsRegion, dbSecurityGroup, dbSubnetGroup string, credentials AWSCredentials) (*RDS, error) {
-	rdsClient, err := newRdsClient(awsRegion, credentials.AccessKeyID, credentials.SecretAccessKey, credentials.SessionToken)
+func NewRDSClient(config *config.Config, auth fleetmanager.Auth) (*RDS, error) {
+	rdsClient, err := newRdsClient(config.AWS, auth)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create RDS client, %w", err)
+		return nil, fmt.Errorf("unable to create RDS client: %w", err)
 	}
 
 	return &RDS{
 		rdsClient:       rdsClient,
-		dbSecurityGroup: dbSecurityGroup,
-		dbSubnetGroup:   dbSubnetGroup,
+		dbSecurityGroup: config.ManagedDB.SecurityGroup,
+		dbSubnetGroup:   config.ManagedDB.SubnetGroup,
 	}, nil
 }
 
@@ -324,19 +328,37 @@ func newDeleteCentralDBClusterInput(clusterID string, skipFinalSnapshot bool) *r
 	}
 }
 
-func newRdsClient(awsRegion, accessKeyID, secretAccessKey, sessionToken string) (*rds.RDS, error) {
+func newRdsClient(awsConfig config.AWS, auth fleetmanager.Auth) (*rds.RDS, error) {
 	cfg := &aws.Config{
-		Region: aws.String(awsRegion),
-		Credentials: awscredentials.NewStaticCredentials(
-			accessKeyID,
-			secretAccessKey,
-			sessionToken),
+		Region: aws.String(awsConfig.Region),
 	}
-
 	sess, err := session.NewSession(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create session, %w", err)
+		return nil, fmt.Errorf("unable to create session for STS client: %w", err)
+	}
+	stsClient := sts.New(sess)
+
+	roleProvider := stscreds.NewWebIdentityRoleProviderWithOptions(stsClient, awsConfig.RoleARN, "",
+		&tokenFetcher{auth: auth})
+
+	cfg.Credentials = awscredentials.NewCredentials(roleProvider)
+
+	sess, err = session.NewSession(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create session for RDS client: %w", err)
 	}
 
 	return rds.New(sess), nil
+}
+
+type tokenFetcher struct {
+	auth fleetmanager.Auth
+}
+
+func (f *tokenFetcher) FetchToken(_ awscredentials.Context) ([]byte, error) {
+	token, err := f.auth.RetrieveIDToken()
+	if err != nil {
+		return nil, fmt.Errorf("retrieving token from token source: %w", err)
+	}
+	return []byte(token), nil
 }

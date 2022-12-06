@@ -36,12 +36,13 @@ var backoff = wait.Backoff{
 
 // Runtime represents the runtime to reconcile all centrals associated with the given cluster.
 type Runtime struct {
-	config           *config.Config
-	client           *fleetmanager.Client
-	clusterID        string
-	reconcilers      reconcilerRegistry
-	k8sClient        ctrlClient.Client
-	statusResponseCh chan private.DataPlaneCentralStatus
+	config            *config.Config
+	client            *fleetmanager.Client
+	clusterID         string
+	reconcilers       reconcilerRegistry
+	k8sClient         ctrlClient.Client
+	dbProvisionClient cloudprovider.DBClient
+	statusResponseCh  chan private.DataPlaneCentralStatus
 }
 
 // NewRuntime creates a new runtime
@@ -69,13 +70,21 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager client")
 	}
+	var dbProvisionClient cloudprovider.DBClient
+	if config.ManagedDB.Enabled {
+		dbProvisionClient, err = awsclient.NewRDSClient(config, auth)
+		if err != nil {
+			return nil, fmt.Errorf("creating managed DB provisioning client: %v", err)
+		}
+	}
 
 	return &Runtime{
-		config:      config,
-		k8sClient:   k8sClient,
-		client:      client,
-		clusterID:   config.ClusterID,
-		reconcilers: make(reconcilerRegistry),
+		config:            config,
+		k8sClient:         k8sClient,
+		client:            client,
+		clusterID:         config.ClusterID,
+		dbProvisionClient: dbProvisionClient,
+		reconcilers:       make(reconcilerRegistry),
 	}, nil
 }
 
@@ -94,7 +103,7 @@ func (r *Runtime) Start() error {
 		UseRoutes:         routesAvailable,
 		WantsAuthProvider: r.config.CreateAuthProvider,
 		EgressProxyImage:  r.config.EgressProxyImage,
-		ManagedDBEnabled:  r.config.ManagedDBEnabled,
+		ManagedDBEnabled:  r.config.ManagedDB.Enabled,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
@@ -109,13 +118,7 @@ func (r *Runtime) Start() error {
 		glog.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
-				var managedDBProvisioningClient cloudprovider.DBClient
-				if r.config.ManagedDBEnabled {
-					if managedDBProvisioningClient, err = r.createDBProvisioningClient(); err != nil {
-						return 0, err
-					}
-				}
-				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, managedDBProvisioningClient, reconcilerOpts)
+				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, r.dbProvisionClient, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]
@@ -145,25 +148,6 @@ func (r *Runtime) Start() error {
 	}
 
 	return nil
-}
-
-func (r *Runtime) createDBProvisioningClient() (*awsclient.RDS, error) {
-	const awsRegion = "us-east-1" // TODO(ROX-13699): do not hardcode AWS region
-	rds, err := awsclient.NewRDSClient(
-		awsRegion,
-		r.config.ManagedDBSecurityGroup,
-		r.config.ManagedDBSubnetGroup, awsclient.AWSCredentials{
-			AccessKeyID:     r.config.ManagedDBAccessKeyID,
-			SecretAccessKey: r.config.ManagedDBSecretAccessKey, //pragma: allowlist secret
-			SessionToken:    r.config.ManagedDBSessionToken,
-		})
-	if err != nil {
-		err = fmt.Errorf("creating managed DB provisioning client: %v", err)
-		glog.Error(err)
-		return nil, err
-	}
-
-	return rds, nil
 }
 
 func (r *Runtime) handleReconcileResult(central private.ManagedCentral, status *private.DataPlaneCentralStatus, err error) {
