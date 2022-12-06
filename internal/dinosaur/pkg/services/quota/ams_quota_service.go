@@ -98,29 +98,29 @@ func (q amsQuotaService) selectBillingModelFromDinosaurInstanceType(orgID, cloud
 		return "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, instanceType.GetQuotaType().GetProduct())
 	}
 
-	hasGenericMarketplace := false
-	hasMarketplaceAWS := false
-	hasStandardMarketplace := false
+	hasBillingModelMarketplace := false
+	hasBillingModelMarketplaceAWS := false
+	hasBillingModelStandard := false
 	for _, qc := range quotaCosts {
 		for _, rr := range qc.RelatedResources() {
 			if qc.Consumed() < qc.Allowed() || rr.Cost() == 0 {
-				hasGenericMarketplace = hasGenericMarketplace || rr.BillingModel() == string(amsv1.BillingModelMarketplace)
-				hasMarketplaceAWS = hasMarketplaceAWS || rr.BillingModel() == string(amsv1.BillingModelMarketplaceAWS)
-				hasStandardMarketplace = hasStandardMarketplace || rr.BillingModel() == string(amsv1.BillingModelStandard)
+				hasBillingModelMarketplace = hasBillingModelMarketplace || rr.BillingModel() == string(amsv1.BillingModelMarketplace)
+				hasBillingModelMarketplaceAWS = hasBillingModelMarketplaceAWS || rr.BillingModel() == string(amsv1.BillingModelMarketplaceAWS)
+				hasBillingModelStandard = hasBillingModelStandard || rr.BillingModel() == string(amsv1.BillingModelStandard)
 			}
 		}
 	}
 
 	if cloudAccountID != "" && cloudProviderID == awsCloudProvider {
-		if hasMarketplaceAWS || hasGenericMarketplace {
+		if hasBillingModelMarketplaceAWS || hasBillingModelMarketplace {
 			return string(amsv1.BillingModelMarketplaceAWS), nil
 		}
 		return "", errors.InvalidCloudAccountID("No subscription available for cloud account %s", cloudAccountID)
 	}
-	if hasGenericMarketplace {
+	if hasBillingModelMarketplace {
 		return string(amsv1.BillingModelMarketplace), nil
 	}
-	if hasStandardMarketplace {
+	if hasBillingModelStandard {
 		return string(amsv1.BillingModelStandard), nil
 	}
 	return "", errors.InsufficientQuotaError("No available billing model found")
