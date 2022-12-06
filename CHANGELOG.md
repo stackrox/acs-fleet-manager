@@ -10,6 +10,7 @@ This Changelog should be updated for:
 ### Added
 ### Changed
 - Data Plane terraforming now deploys fleetshard image obtained dynamically rather than hardcoded in the script
+- Upgrade StackRox operator to v3.73.0
 ### Deprecated
 ### Removed
 
