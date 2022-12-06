@@ -49,6 +49,8 @@ spec:
               value: "$MANAGED_DB_SECURITY_GROUP"
             - name: MANAGED_DB_SUBNET_GROUP
               value: "$MANAGED_DB_SUBNET_GROUP"
+            - name: MANAGED_DB_PERFORMANCE_INSIGHTS
+              value: "$MANAGED_DB_PERFORMANCE_INSIGHTS"
             - name: AWS_ROLE_ARN
               valueFrom:
                 secretKeyRef:

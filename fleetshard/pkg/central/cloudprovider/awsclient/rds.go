@@ -23,23 +23,29 @@ const (
 	dbAvailableStatus = "available"
 	dbDeletingStatus  = "deleting"
 
-	dbEngine         = "aurora-postgresql"
-	dbEngineVersion  = "13.7"
-	dbInstanceClass  = "db.serverless"
 	dbUser           = "rhacs_master"
 	dbPrefix         = "rhacs-"
 	dbInstanceSuffix = "-db-instance"
 	dbClusterSuffix  = "-db-cluster"
-	dbPostgresPort   = 5432
-	dbName           = "postgres"
 	awsRetrySeconds  = 30
+
+	// DB cluster / instance configuration parameters
+	dbEngine                = "aurora-postgresql"
+	dbEngineVersion         = "13.7"
+	dbInstanceClass         = "db.serverless"
+	dbPostgresPort          = 5432
+	dbName                  = "postgres"
+	dbMinCapacity           = 0.5
+	dbMaxCapacity           = 16
+	dbBackupRetentionPeriod = 30
 )
 
 // RDS is an AWS RDS client tied to one Central instance. It provisions and deprovisions databases
 // for the Central.
 type RDS struct {
-	dbSecurityGroup string
-	dbSubnetGroup   string
+	dbSecurityGroup     string
+	dbSubnetGroup       string
+	performanceInsights bool
 
 	rdsClient *rds.RDS
 }
@@ -135,7 +141,7 @@ func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error
 	}
 
 	glog.Infof("Initiating provisioning of RDS database instance %s.", instanceID)
-	_, err = r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID))
+	_, err = r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID, r.performanceInsights))
 	if err != nil {
 		return fmt.Errorf("creating DB instance: %w", err)
 	}
@@ -262,9 +268,10 @@ func NewRDSClient(config *config.Config, auth fleetmanager.Auth) (*RDS, error) {
 	}
 
 	return &RDS{
-		rdsClient:       rdsClient,
-		dbSecurityGroup: config.ManagedDB.SecurityGroup,
-		dbSubnetGroup:   config.ManagedDB.SubnetGroup,
+		rdsClient:           rdsClient,
+		dbSecurityGroup:     config.ManagedDB.SecurityGroup,
+		dbSubnetGroup:       config.ManagedDB.SubnetGroup,
+		performanceInsights: config.ManagedDB.PerformanceInsights,
 	}, nil
 }
 
@@ -286,21 +293,22 @@ func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnet
 		VpcSecurityGroupIds: aws.StringSlice([]string{securityGroup}),
 		DBSubnetGroupName:   aws.String(subnetGroup),
 		ServerlessV2ScalingConfiguration: &rds.ServerlessV2ScalingConfiguration{
-			MinCapacity: aws.Float64(0.5),
-			MaxCapacity: aws.Float64(16),
+			MinCapacity: aws.Float64(dbMinCapacity),
+			MaxCapacity: aws.Float64(dbMaxCapacity),
 		},
-		BackupRetentionPeriod: aws.Int64(30),
+		BackupRetentionPeriod: aws.Int64(dbBackupRetentionPeriod),
 		StorageEncrypted:      aws.Bool(true),
 	}
 }
 
-func newCreateCentralDBInstanceInput(clusterID, instanceID string) *rds.CreateDBInstanceInput {
+func newCreateCentralDBInstanceInput(clusterID, instanceID string, performanceInsights bool) *rds.CreateDBInstanceInput {
 	return &rds.CreateDBInstanceInput{
-		DBInstanceClass:      aws.String(dbInstanceClass),
-		DBClusterIdentifier:  aws.String(clusterID),
-		DBInstanceIdentifier: aws.String(instanceID),
-		Engine:               aws.String(dbEngine),
-		PubliclyAccessible:   aws.Bool(false),
+		DBInstanceClass:           aws.String(dbInstanceClass),
+		DBClusterIdentifier:       aws.String(clusterID),
+		DBInstanceIdentifier:      aws.String(instanceID),
+		Engine:                    aws.String(dbEngine),
+		PubliclyAccessible:        aws.Bool(false),
+		EnablePerformanceInsights: aws.Bool(performanceInsights),
 	}
 }
 
