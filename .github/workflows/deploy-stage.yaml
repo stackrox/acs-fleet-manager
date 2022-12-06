@@ -1,20 +1,13 @@
 name: Deploy Stage Env
 
+concurrency: stage
+
 on:
   push:
     branches:
       - main
 
 jobs:
-  cancel:
-    name: Cancel previous runs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cancel Previous Runs
-        uses: n1hility/cancel-previous-runs@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
   terraform:
     name: Re-terraform stage clusters
     needs: cancel
