@@ -89,6 +89,7 @@ func TestReconcileCreate(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, centralName, central.GetName())
 	assert.Equal(t, simpleManagedCentral.Id, central.GetLabels()[tenantIDLabelKey])
+	assert.Equal(t, simpleManagedCentral.Id, central.Spec.Customize.Labels[tenantIDLabelKey])
 	assert.Equal(t, "1", central.GetAnnotations()[revisionAnnotationKey])
 	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
