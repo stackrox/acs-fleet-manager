@@ -62,7 +62,7 @@ spec:
           value: {{ required "fleetshardSync.managedDB.subnetGroup is required when fleetshardSync.managedDB.enabled = true" .Values.fleetshardSync.managedDB.subnetGroup }}
         - name: MANAGED_DB_SECURITY_GROUP
           value: {{ required "fleetshardSync.managedDB.securityGroup is required when fleetshardSync.managedDB.enabled = true" .Values.fleetshardSync.managedDB.securityGroup }}
-        {{ end -}}
+        {{- end }}
         - name: AWS_REGION
           value: {{ .Values.fleetshardSync.aws.region }}
         - name: AWS_ROLE_ARN
