@@ -14,15 +14,7 @@ This Changelog should be updated for:
 
 ## 2022-12-06.1.1df0bc5
 ### Added
-- Write cluster params to Parameter Store on cluster IDP setup
-- Provision RDS instances and clusters
-- Add quay user token when installing Operator from the upstream
-### Changed
-- Fallback to EVAL if quota check fails
-- Switch auth type to RHSSO by default for fleetshard-sync
-- Switch auth type to RHSSO by default for fleetshard-sync
-### Removed
-- Rollback automatic tag resolution on prod
+- Upgrade StackRox operator to v3.73.0
 
 ## 2022-11-08.1.3060ea1
 ### Added
