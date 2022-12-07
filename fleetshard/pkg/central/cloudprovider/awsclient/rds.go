@@ -44,16 +44,6 @@ type RDS struct {
 	rdsClient *rds.RDS
 }
 
-// AWSCredentials stores the credentials for the AWS RDS API.
-type AWSCredentials struct {
-	// AccessKeyID is the AWS access key identifier.
-	AccessKeyID string
-	// SecretAccessKey is the AWS secret access key.
-	SecretAccessKey string
-	// SessionToken is a token required for temporary security credentials retrieved via STS.
-	SessionToken string
-}
-
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
 func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPassword string) (string, error) {
 	clusterID := getClusterID(databaseID)
