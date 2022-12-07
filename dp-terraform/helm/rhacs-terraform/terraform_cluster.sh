@@ -32,10 +32,6 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
-    # TODO Use downstream operator after downstream release 3.73.0
-    OPERATOR_USE_UPSTREAM=true
-    OPERATOR_VERSION="v3.73.0"
-
     # Get the first non-merge commit, starting with HEAD.
     # On main this should be HEAD
     FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
@@ -46,9 +42,6 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://api.openshift.com"
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
-
-    OPERATOR_USE_UPSTREAM=false
-    OPERATOR_VERSION="v3.72.0"
 
     FLEETSHARD_SYNC_TAG="1df0bc5"
     ;;
@@ -69,6 +62,7 @@ load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
 
 OPERATOR_SOURCE="redhat-operators"
+OPERATOR_USE_UPSTREAM="${OPERATOR_USE_UPSTREAM:-false}"
 if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     load_external_config quay/rhacs-eng QUAY_
     quay_basic_auth="${QUAY_READ_ONLY_USERNAME}:${QUAY_READ_ONLY_PASSWORD}"
@@ -89,7 +83,7 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
-  --set acsOperator.version="${OPERATOR_VERSION}" \
+  --set acsOperator.version=v3.73.0 \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
   --set fleetshardSync.image="quay.io/app-sre/acs-fleet-manager:${FLEETSHARD_SYNC_TAG}" \
   --set fleetshardSync.authType="RHSSO" \
