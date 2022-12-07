@@ -1,6 +1,8 @@
 # ACS Fleet Manager
 [![Dinosaur counter](https://dinosaurs.rhacs-dev.com/)](https://sourcegraph.com/search?q=context:global+repo:stackrox/acs-fleet-manager+dinosaur+count:all&patternType=standard)
 
+[![Build Status](https://ci.ext.devshift.net/buildStatus/icon?job=stackrox-acs-fleet-manager-build-and-push-main)](https://ci.ext.devshift.net/job/stackrox-acs-fleet-manager-build-and-push-main/)
+
 ACS fleet-manager repository for the ACS managed service.
 
 ## Quickstart

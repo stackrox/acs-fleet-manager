@@ -16,22 +16,22 @@ var _ ObservatoriumService = &ObservatoriumServiceMock{}
 
 // ObservatoriumServiceMock is a mock implementation of ObservatoriumService.
 //
-// 	func TestSomethingThatUsesObservatoriumService(t *testing.T) {
+//	func TestSomethingThatUsesObservatoriumService(t *testing.T) {
 //
-// 		// make and configure a mocked ObservatoriumService
-// 		mockedObservatoriumService := &ObservatoriumServiceMock{
-// 			GetDinosaurStateFunc: func(name string, namespaceName string) (observatorium.DinosaurState, error) {
-// 				panic("mock out the GetDinosaurState method")
-// 			},
-// 			GetMetricsByDinosaurIDFunc: func(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError) {
-// 				panic("mock out the GetMetricsByDinosaurID method")
-// 			},
-// 		}
+//		// make and configure a mocked ObservatoriumService
+//		mockedObservatoriumService := &ObservatoriumServiceMock{
+//			GetDinosaurStateFunc: func(name string, namespaceName string) (observatorium.DinosaurState, error) {
+//				panic("mock out the GetDinosaurState method")
+//			},
+//			GetMetricsByDinosaurIDFunc: func(ctx context.Context, csMetrics *observatorium.DinosaurMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError) {
+//				panic("mock out the GetMetricsByDinosaurID method")
+//			},
+//		}
 //
-// 		// use mockedObservatoriumService in code that requires ObservatoriumService
-// 		// and then make assertions.
+//		// use mockedObservatoriumService in code that requires ObservatoriumService
+//		// and then make assertions.
 //
-// 	}
+//	}
 type ObservatoriumServiceMock struct {
 	// GetDinosaurStateFunc mocks the GetDinosaurState method.
 	GetDinosaurStateFunc func(name string, namespaceName string) (observatorium.DinosaurState, error)
@@ -84,7 +84,8 @@ func (mock *ObservatoriumServiceMock) GetDinosaurState(name string, namespaceNam
 
 // GetDinosaurStateCalls gets all the calls that were made to GetDinosaurState.
 // Check the length with:
-//     len(mockedObservatoriumService.GetDinosaurStateCalls())
+//
+//	len(mockedObservatoriumService.GetDinosaurStateCalls())
 func (mock *ObservatoriumServiceMock) GetDinosaurStateCalls() []struct {
 	Name          string
 	NamespaceName string
@@ -123,7 +124,8 @@ func (mock *ObservatoriumServiceMock) GetMetricsByDinosaurID(ctx context.Context
 
 // GetMetricsByDinosaurIDCalls gets all the calls that were made to GetMetricsByDinosaurID.
 // Check the length with:
-//     len(mockedObservatoriumService.GetMetricsByDinosaurIDCalls())
+//
+//	len(mockedObservatoriumService.GetMetricsByDinosaurIDCalls())
 func (mock *ObservatoriumServiceMock) GetMetricsByDinosaurIDCalls() []struct {
 	Ctx       context.Context
 	CsMetrics *observatorium.DinosaurMetrics

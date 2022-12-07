@@ -38,7 +38,7 @@ jobs:
       - name: Run terraforming on THE production cluster
         working-directory: ./dp-terraform/helm/rhacs-terraform
         env:
-          USE_AWS_VAULT: false
+          AWS_AUTH_HELPER: none # credentials are populated by the above action
         run: |
           set -euo pipefail
           ./terraform_cluster.sh prod acs-prod-dp-01
@@ -66,7 +66,7 @@ jobs:
       - name: Deploy probe
         working-directory: ./deploy/helm/probe
         env:
-          USE_AWS_VAULT: false
+          AWS_AUTH_HELPER: none # credentials are populated by the above action
         run: |
           set -euo pipefail
           ./deploy.sh prod acs-prod-dp-01

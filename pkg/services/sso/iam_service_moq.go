@@ -15,22 +15,22 @@ var _ IAMService = &IAMServiceMock{}
 
 // IAMServiceMock is a mock implementation of IAMService.
 //
-// 	func TestSomethingThatUsesIAMService(t *testing.T) {
+//	func TestSomethingThatUsesIAMService(t *testing.T) {
 //
-// 		// make and configure a mocked IAMService
-// 		mockedIAMService := &IAMServiceMock{
-// 			DeRegisterAcsFleetshardOperatorServiceAccountFunc: func(agentClusterID string) *errors.ServiceError {
-// 				panic("mock out the DeRegisterAcsFleetshardOperatorServiceAccount method")
-// 			},
-// 			RegisterAcsFleetshardOperatorServiceAccountFunc: func(agentClusterID string) (*api.ServiceAccount, *errors.ServiceError) {
-// 				panic("mock out the RegisterAcsFleetshardOperatorServiceAccount method")
-// 			},
-// 		}
+//		// make and configure a mocked IAMService
+//		mockedIAMService := &IAMServiceMock{
+//			DeRegisterAcsFleetshardOperatorServiceAccountFunc: func(agentClusterID string) *errors.ServiceError {
+//				panic("mock out the DeRegisterAcsFleetshardOperatorServiceAccount method")
+//			},
+//			RegisterAcsFleetshardOperatorServiceAccountFunc: func(agentClusterID string) (*api.ServiceAccount, *errors.ServiceError) {
+//				panic("mock out the RegisterAcsFleetshardOperatorServiceAccount method")
+//			},
+//		}
 //
-// 		// use mockedIAMService in code that requires IAMService
-// 		// and then make assertions.
+//		// use mockedIAMService in code that requires IAMService
+//		// and then make assertions.
 //
-// 	}
+//	}
 type IAMServiceMock struct {
 	// DeRegisterAcsFleetshardOperatorServiceAccountFunc mocks the DeRegisterAcsFleetshardOperatorServiceAccount method.
 	DeRegisterAcsFleetshardOperatorServiceAccountFunc func(agentClusterID string) *errors.ServiceError
@@ -73,7 +73,8 @@ func (mock *IAMServiceMock) DeRegisterAcsFleetshardOperatorServiceAccount(agentC
 
 // DeRegisterAcsFleetshardOperatorServiceAccountCalls gets all the calls that were made to DeRegisterAcsFleetshardOperatorServiceAccount.
 // Check the length with:
-//     len(mockedIAMService.DeRegisterAcsFleetshardOperatorServiceAccountCalls())
+//
+//	len(mockedIAMService.DeRegisterAcsFleetshardOperatorServiceAccountCalls())
 func (mock *IAMServiceMock) DeRegisterAcsFleetshardOperatorServiceAccountCalls() []struct {
 	AgentClusterID string
 } {
@@ -104,7 +105,8 @@ func (mock *IAMServiceMock) RegisterAcsFleetshardOperatorServiceAccount(agentClu
 
 // RegisterAcsFleetshardOperatorServiceAccountCalls gets all the calls that were made to RegisterAcsFleetshardOperatorServiceAccount.
 // Check the length with:
-//     len(mockedIAMService.RegisterAcsFleetshardOperatorServiceAccountCalls())
+//
+//	len(mockedIAMService.RegisterAcsFleetshardOperatorServiceAccountCalls())
 func (mock *IAMServiceMock) RegisterAcsFleetshardOperatorServiceAccountCalls() []struct {
 	AgentClusterID string
 } {

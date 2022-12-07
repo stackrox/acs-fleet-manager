@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-
-	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/pkg/concurrency"
@@ -35,12 +36,13 @@ var backoff = wait.Backoff{
 
 // Runtime represents the runtime to reconcile all centrals associated with the given cluster.
 type Runtime struct {
-	config           *config.Config
-	client           *fleetmanager.Client
-	clusterID        string
-	reconcilers      reconcilerRegistry
-	k8sClient        ctrlClient.Client
-	statusResponseCh chan private.DataPlaneCentralStatus
+	config            *config.Config
+	client            *fleetmanager.Client
+	clusterID         string
+	reconcilers       reconcilerRegistry
+	k8sClient         ctrlClient.Client
+	dbProvisionClient cloudprovider.DBClient
+	statusResponseCh  chan private.DataPlaneCentralStatus
 }
 
 // NewRuntime creates a new runtime
@@ -68,13 +70,21 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager client")
 	}
+	var dbProvisionClient cloudprovider.DBClient
+	if config.ManagedDB.Enabled {
+		dbProvisionClient, err = awsclient.NewRDSClient(config, auth)
+		if err != nil {
+			return nil, fmt.Errorf("creating managed DB provisioning client: %v", err)
+		}
+	}
 
 	return &Runtime{
-		config:      config,
-		k8sClient:   k8sClient,
-		client:      client,
-		clusterID:   config.ClusterID,
-		reconcilers: make(reconcilerRegistry),
+		config:            config,
+		k8sClient:         k8sClient,
+		client:            client,
+		clusterID:         config.ClusterID,
+		dbProvisionClient: dbProvisionClient,
+		reconcilers:       make(reconcilerRegistry),
 	}, nil
 }
 
@@ -93,6 +103,7 @@ func (r *Runtime) Start() error {
 		UseRoutes:         routesAvailable,
 		WantsAuthProvider: r.config.CreateAuthProvider,
 		EgressProxyImage:  r.config.EgressProxyImage,
+		ManagedDBEnabled:  r.config.ManagedDB.Enabled,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
@@ -107,15 +118,20 @@ func (r *Runtime) Start() error {
 		glog.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
-				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, reconcilerOpts)
+				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, r.dbProvisionClient, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]
 			go func(reconciler *centralReconciler.CentralReconciler, central private.ManagedCentral) {
 				fleetshardmetrics.MetricsInstance().IncActiveCentralReconcilations()
 				defer fleetshardmetrics.MetricsInstance().DecActiveCentralReconcilations()
+
+				// a 15 minutes timeout should cover the duration of a Reconcile call, including the provisioning of an RDS database
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+				defer cancel()
+
 				glog.Infof("Start reconcile central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
-				status, err := reconciler.Reconcile(context.Background(), central)
+				status, err := reconciler.Reconcile(ctx, central)
 				fleetshardmetrics.MetricsInstance().IncCentralReconcilations()
 				r.handleReconcileResult(central, status, err)
 			}(reconciler, central)

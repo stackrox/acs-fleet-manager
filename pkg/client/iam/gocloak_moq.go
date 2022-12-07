@@ -18,721 +18,721 @@ var _ GoCloak = &GoCloakMock{}
 
 // GoCloakMock is a mock implementation of GoCloak.
 //
-// 	func TestSomethingThatUsesGoCloak(t *testing.T) {
+//	func TestSomethingThatUsesGoCloak(t *testing.T) {
 //
-// 		// make and configure a mocked GoCloak
-// 		mockedGoCloak := &GoCloakMock{
-// 			AddClientRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
-// 				panic("mock out the AddClientRoleComposite method")
-// 			},
-// 			AddClientRoleToGroupFunc: func(ctx context.Context, token string, realm string, idOfClient string, groupID string, roles []gocloak.Role) error {
-// 				panic("mock out the AddClientRoleToGroup method")
-// 			},
-// 			AddClientRoleToUserFunc: func(ctx context.Context, token string, realm string, idOfClient string, userID string, roles []gocloak.Role) error {
-// 				panic("mock out the AddClientRoleToUser method")
-// 			},
-// 			AddDefaultGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) error {
-// 				panic("mock out the AddDefaultGroup method")
-// 			},
-// 			AddDefaultScopeToClientFunc: func(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
-// 				panic("mock out the AddDefaultScopeToClient method")
-// 			},
-// 			AddOptionalScopeToClientFunc: func(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
-// 				panic("mock out the AddOptionalScopeToClient method")
-// 			},
-// 			AddRealmRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleName string, roles []gocloak.Role) error {
-// 				panic("mock out the AddRealmRoleComposite method")
-// 			},
-// 			AddRealmRoleToGroupFunc: func(ctx context.Context, token string, realm string, groupID string, roles []gocloak.Role) error {
-// 				panic("mock out the AddRealmRoleToGroup method")
-// 			},
-// 			AddRealmRoleToUserFunc: func(ctx context.Context, token string, realm string, userID string, roles []gocloak.Role) error {
-// 				panic("mock out the AddRealmRoleToUser method")
-// 			},
-// 			AddUserToGroupFunc: func(ctx context.Context, token string, realm string, userID string, groupID string) error {
-// 				panic("mock out the AddUserToGroup method")
-// 			},
-// 			ClearKeysCacheFunc: func(ctx context.Context, token string, realm string) error {
-// 				panic("mock out the ClearKeysCache method")
-// 			},
-// 			ClearRealmCacheFunc: func(ctx context.Context, token string, realm string) error {
-// 				panic("mock out the ClearRealmCache method")
-// 			},
-// 			ClearUserCacheFunc: func(ctx context.Context, token string, realm string) error {
-// 				panic("mock out the ClearUserCache method")
-// 			},
-// 			CreateAuthenticationExecutionFunc: func(ctx context.Context, token string, realm string, flow string, execution gocloak.CreateAuthenticationExecutionRepresentation) error {
-// 				panic("mock out the CreateAuthenticationExecution method")
-// 			},
-// 			CreateAuthenticationExecutionFlowFunc: func(ctx context.Context, token string, realm string, flow string, execution gocloak.CreateAuthenticationExecutionFlowRepresentation) error {
-// 				panic("mock out the CreateAuthenticationExecutionFlow method")
-// 			},
-// 			CreateAuthenticationFlowFunc: func(ctx context.Context, token string, realm string, flow gocloak.AuthenticationFlowRepresentation) error {
-// 				panic("mock out the CreateAuthenticationFlow method")
-// 			},
-// 			CreateChildGroupFunc: func(ctx context.Context, token string, realm string, groupID string, group gocloak.Group) (string, error) {
-// 				panic("mock out the CreateChildGroup method")
-// 			},
-// 			CreateClientFunc: func(ctx context.Context, accessToken string, realm string, newClient gocloak.Client) (string, error) {
-// 				panic("mock out the CreateClient method")
-// 			},
-// 			CreateClientProtocolMapperFunc: func(ctx context.Context, token string, realm string, idOfClient string, mapper gocloak.ProtocolMapperRepresentation) (string, error) {
-// 				panic("mock out the CreateClientProtocolMapper method")
-// 			},
-// 			CreateClientRepresentationFunc: func(ctx context.Context, realm string) (*gocloak.Client, error) {
-// 				panic("mock out the CreateClientRepresentation method")
-// 			},
-// 			CreateClientRoleFunc: func(ctx context.Context, accessToken string, realm string, idOfClient string, role gocloak.Role) (string, error) {
-// 				panic("mock out the CreateClientRole method")
-// 			},
-// 			CreateClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) (string, error) {
-// 				panic("mock out the CreateClientScope method")
-// 			},
-// 			CreateClientScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string, roles []gocloak.Role) error {
-// 				panic("mock out the CreateClientScopeMappingsClientRoles method")
-// 			},
-// 			CreateClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string, roles []gocloak.Role) error {
-// 				panic("mock out the CreateClientScopeMappingsRealmRoles method")
-// 			},
-// 			CreateClientScopeProtocolMapperFunc: func(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) (string, error) {
-// 				panic("mock out the CreateClientScopeProtocolMapper method")
-// 			},
-// 			CreateClientScopesScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string, roles []gocloak.Role) error {
-// 				panic("mock out the CreateClientScopesScopeMappingsClientRoles method")
-// 			},
-// 			CreateClientScopesScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, roles []gocloak.Role) error {
-// 				panic("mock out the CreateClientScopesScopeMappingsRealmRoles method")
-// 			},
-// 			CreateComponentFunc: func(ctx context.Context, accessToken string, realm string, component gocloak.Component) (string, error) {
-// 				panic("mock out the CreateComponent method")
-// 			},
-// 			CreateGroupFunc: func(ctx context.Context, accessToken string, realm string, group gocloak.Group) (string, error) {
-// 				panic("mock out the CreateGroup method")
-// 			},
-// 			CreateIdentityProviderFunc: func(ctx context.Context, token string, realm string, providerRep gocloak.IdentityProviderRepresentation) (string, error) {
-// 				panic("mock out the CreateIdentityProvider method")
-// 			},
-// 			CreateIdentityProviderMapperFunc: func(ctx context.Context, token string, realm string, alias string, mapper gocloak.IdentityProviderMapper) (string, error) {
-// 				panic("mock out the CreateIdentityProviderMapper method")
-// 			},
-// 			CreatePermissionFunc: func(ctx context.Context, token string, realm string, idOfClient string, permission gocloak.PermissionRepresentation) (*gocloak.PermissionRepresentation, error) {
-// 				panic("mock out the CreatePermission method")
-// 			},
-// 			CreatePermissionTicketFunc: func(ctx context.Context, token string, realm string, permissions []gocloak.CreatePermissionTicketParams) (*gocloak.PermissionTicketResponseRepresentation, error) {
-// 				panic("mock out the CreatePermissionTicket method")
-// 			},
-// 			CreatePolicyFunc: func(ctx context.Context, token string, realm string, idOfClient string, policy gocloak.PolicyRepresentation) (*gocloak.PolicyRepresentation, error) {
-// 				panic("mock out the CreatePolicy method")
-// 			},
-// 			CreateRealmFunc: func(ctx context.Context, token string, realm gocloak.RealmRepresentation) (string, error) {
-// 				panic("mock out the CreateRealm method")
-// 			},
-// 			CreateRealmRoleFunc: func(ctx context.Context, token string, realm string, role gocloak.Role) (string, error) {
-// 				panic("mock out the CreateRealmRole method")
-// 			},
-// 			CreateResourceFunc: func(ctx context.Context, token string, realm string, idOfClient string, resource gocloak.ResourceRepresentation) (*gocloak.ResourceRepresentation, error) {
-// 				panic("mock out the CreateResource method")
-// 			},
-// 			CreateResourceClientFunc: func(ctx context.Context, token string, realm string, resource gocloak.ResourceRepresentation) (*gocloak.ResourceRepresentation, error) {
-// 				panic("mock out the CreateResourceClient method")
-// 			},
-// 			CreateResourcePolicyFunc: func(ctx context.Context, token string, realm string, resourceID string, policy gocloak.ResourcePolicyRepresentation) (*gocloak.ResourcePolicyRepresentation, error) {
-// 				panic("mock out the CreateResourcePolicy method")
-// 			},
-// 			CreateScopeFunc: func(ctx context.Context, token string, realm string, idOfClient string, scope gocloak.ScopeRepresentation) (*gocloak.ScopeRepresentation, error) {
-// 				panic("mock out the CreateScope method")
-// 			},
-// 			CreateUserFunc: func(ctx context.Context, token string, realm string, user gocloak.User) (string, error) {
-// 				panic("mock out the CreateUser method")
-// 			},
-// 			CreateUserFederatedIdentityFunc: func(ctx context.Context, token string, realm string, userID string, providerID string, federatedIdentityRep gocloak.FederatedIdentityRepresentation) error {
-// 				panic("mock out the CreateUserFederatedIdentity method")
-// 			},
-// 			DecodeAccessTokenFunc: func(ctx context.Context, accessToken string, realm string) (*jwt.Token, *jwt.MapClaims, error) {
-// 				panic("mock out the DecodeAccessToken method")
-// 			},
-// 			DecodeAccessTokenCustomClaimsFunc: func(ctx context.Context, accessToken string, realm string, claims jwt.Claims) (*jwt.Token, error) {
-// 				panic("mock out the DecodeAccessTokenCustomClaims method")
-// 			},
-// 			DeleteAuthenticationExecutionFunc: func(ctx context.Context, token string, realm string, executionID string) error {
-// 				panic("mock out the DeleteAuthenticationExecution method")
-// 			},
-// 			DeleteAuthenticationFlowFunc: func(ctx context.Context, token string, realm string, flowID string) error {
-// 				panic("mock out the DeleteAuthenticationFlow method")
-// 			},
-// 			DeleteClientFunc: func(ctx context.Context, accessToken string, realm string, idOfClient string) error {
-// 				panic("mock out the DeleteClient method")
-// 			},
-// 			DeleteClientProtocolMapperFunc: func(ctx context.Context, token string, realm string, idOfClient string, mapperID string) error {
-// 				panic("mock out the DeleteClientProtocolMapper method")
-// 			},
-// 			DeleteClientRepresentationFunc: func(ctx context.Context, accessToken string, realm string, clientID string) error {
-// 				panic("mock out the DeleteClientRepresentation method")
-// 			},
-// 			DeleteClientRoleFunc: func(ctx context.Context, accessToken string, realm string, idOfClient string, roleName string) error {
-// 				panic("mock out the DeleteClientRole method")
-// 			},
-// 			DeleteClientRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
-// 				panic("mock out the DeleteClientRoleComposite method")
-// 			},
-// 			DeleteClientRoleFromGroupFunc: func(ctx context.Context, token string, realm string, idOfClient string, groupID string, roles []gocloak.Role) error {
-// 				panic("mock out the DeleteClientRoleFromGroup method")
-// 			},
-// 			DeleteClientRoleFromUserFunc: func(ctx context.Context, token string, realm string, idOfClient string, userID string, roles []gocloak.Role) error {
-// 				panic("mock out the DeleteClientRoleFromUser method")
-// 			},
-// 			DeleteClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scopeID string) error {
-// 				panic("mock out the DeleteClientScope method")
-// 			},
-// 			DeleteClientScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string, roles []gocloak.Role) error {
-// 				panic("mock out the DeleteClientScopeMappingsClientRoles method")
-// 			},
-// 			DeleteClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string, roles []gocloak.Role) error {
-// 				panic("mock out the DeleteClientScopeMappingsRealmRoles method")
-// 			},
-// 			DeleteClientScopeProtocolMapperFunc: func(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapperID string) error {
-// 				panic("mock out the DeleteClientScopeProtocolMapper method")
-// 			},
-// 			DeleteClientScopesScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, ifOfClient string, roles []gocloak.Role) error {
-// 				panic("mock out the DeleteClientScopesScopeMappingsClientRoles method")
-// 			},
-// 			DeleteClientScopesScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, roles []gocloak.Role) error {
-// 				panic("mock out the DeleteClientScopesScopeMappingsRealmRoles method")
-// 			},
-// 			DeleteComponentFunc: func(ctx context.Context, accessToken string, realm string, componentID string) error {
-// 				panic("mock out the DeleteComponent method")
-// 			},
-// 			DeleteCredentialsFunc: func(ctx context.Context, token string, realm string, UserID string, CredentialID string) error {
-// 				panic("mock out the DeleteCredentials method")
-// 			},
-// 			DeleteGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) error {
-// 				panic("mock out the DeleteGroup method")
-// 			},
-// 			DeleteIdentityProviderFunc: func(ctx context.Context, token string, realm string, alias string) error {
-// 				panic("mock out the DeleteIdentityProvider method")
-// 			},
-// 			DeleteIdentityProviderMapperFunc: func(ctx context.Context, token string, realm string, alias string, mapperID string) error {
-// 				panic("mock out the DeleteIdentityProviderMapper method")
-// 			},
-// 			DeletePermissionFunc: func(ctx context.Context, token string, realm string, idOfClient string, permissionID string) error {
-// 				panic("mock out the DeletePermission method")
-// 			},
-// 			DeletePolicyFunc: func(ctx context.Context, token string, realm string, idOfClient string, policyID string) error {
-// 				panic("mock out the DeletePolicy method")
-// 			},
-// 			DeleteRealmFunc: func(ctx context.Context, token string, realm string) error {
-// 				panic("mock out the DeleteRealm method")
-// 			},
-// 			DeleteRealmRoleFunc: func(ctx context.Context, token string, realm string, roleName string) error {
-// 				panic("mock out the DeleteRealmRole method")
-// 			},
-// 			DeleteRealmRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleName string, roles []gocloak.Role) error {
-// 				panic("mock out the DeleteRealmRoleComposite method")
-// 			},
-// 			DeleteRealmRoleFromGroupFunc: func(ctx context.Context, token string, realm string, groupID string, roles []gocloak.Role) error {
-// 				panic("mock out the DeleteRealmRoleFromGroup method")
-// 			},
-// 			DeleteRealmRoleFromUserFunc: func(ctx context.Context, token string, realm string, userID string, roles []gocloak.Role) error {
-// 				panic("mock out the DeleteRealmRoleFromUser method")
-// 			},
-// 			DeleteResourceFunc: func(ctx context.Context, token string, realm string, idOfClient string, resourceID string) error {
-// 				panic("mock out the DeleteResource method")
-// 			},
-// 			DeleteResourceClientFunc: func(ctx context.Context, token string, realm string, resourceID string) error {
-// 				panic("mock out the DeleteResourceClient method")
-// 			},
-// 			DeleteResourcePolicyFunc: func(ctx context.Context, token string, realm string, permissionID string) error {
-// 				panic("mock out the DeleteResourcePolicy method")
-// 			},
-// 			DeleteScopeFunc: func(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
-// 				panic("mock out the DeleteScope method")
-// 			},
-// 			DeleteUserFunc: func(ctx context.Context, accessToken string, realm string, userID string) error {
-// 				panic("mock out the DeleteUser method")
-// 			},
-// 			DeleteUserFederatedIdentityFunc: func(ctx context.Context, token string, realm string, userID string, providerID string) error {
-// 				panic("mock out the DeleteUserFederatedIdentity method")
-// 			},
-// 			DeleteUserFromGroupFunc: func(ctx context.Context, token string, realm string, userID string, groupID string) error {
-// 				panic("mock out the DeleteUserFromGroup method")
-// 			},
-// 			DeleteUserPermissionFunc: func(ctx context.Context, token string, realm string, ticketID string) error {
-// 				panic("mock out the DeleteUserPermission method")
-// 			},
-// 			DisableAllCredentialsByTypeFunc: func(ctx context.Context, token string, realm string, userID string, types []string) error {
-// 				panic("mock out the DisableAllCredentialsByType method")
-// 			},
-// 			ExecuteActionsEmailFunc: func(ctx context.Context, token string, realm string, params gocloak.ExecuteActionsEmail) error {
-// 				panic("mock out the ExecuteActionsEmail method")
-// 			},
-// 			ExportIDPPublicBrokerConfigFunc: func(ctx context.Context, token string, realm string, alias string) (*string, error) {
-// 				panic("mock out the ExportIDPPublicBrokerConfig method")
-// 			},
-// 			GetAdapterConfigurationFunc: func(ctx context.Context, accessToken string, realm string, clientID string) (*gocloak.AdapterConfiguration, error) {
-// 				panic("mock out the GetAdapterConfiguration method")
-// 			},
-// 			GetAuthenticationExecutionsFunc: func(ctx context.Context, token string, realm string, flow string) ([]*gocloak.ModifyAuthenticationExecutionRepresentation, error) {
-// 				panic("mock out the GetAuthenticationExecutions method")
-// 			},
-// 			GetAuthenticationFlowsFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.AuthenticationFlowRepresentation, error) {
-// 				panic("mock out the GetAuthenticationFlows method")
-// 			},
-// 			GetAuthorizationPolicyAssociatedPoliciesFunc: func(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PolicyRepresentation, error) {
-// 				panic("mock out the GetAuthorizationPolicyAssociatedPolicies method")
-// 			},
-// 			GetAuthorizationPolicyResourcesFunc: func(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PolicyResourceRepresentation, error) {
-// 				panic("mock out the GetAuthorizationPolicyResources method")
-// 			},
-// 			GetAuthorizationPolicyScopesFunc: func(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PolicyScopeRepresentation, error) {
-// 				panic("mock out the GetAuthorizationPolicyScopes method")
-// 			},
-// 			GetAvailableClientRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, groupID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetAvailableClientRolesByGroupID method")
-// 			},
-// 			GetAvailableClientRolesByUserIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, userID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetAvailableClientRolesByUserID method")
-// 			},
-// 			GetAvailableRealmRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, groupID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetAvailableRealmRolesByGroupID method")
-// 			},
-// 			GetAvailableRealmRolesByUserIDFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetAvailableRealmRolesByUserID method")
-// 			},
-// 			GetCertsFunc: func(ctx context.Context, realm string) (*gocloak.CertResponse, error) {
-// 				panic("mock out the GetCerts method")
-// 			},
-// 			GetClientFunc: func(ctx context.Context, accessToken string, realm string, idOfClient string) (*gocloak.Client, error) {
-// 				panic("mock out the GetClient method")
-// 			},
-// 			GetClientOfflineSessionsFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.UserSessionRepresentation, error) {
-// 				panic("mock out the GetClientOfflineSessions method")
-// 			},
-// 			GetClientRepresentationFunc: func(ctx context.Context, accessToken string, realm string, clientID string) (*gocloak.Client, error) {
-// 				panic("mock out the GetClientRepresentation method")
-// 			},
-// 			GetClientRoleFunc: func(ctx context.Context, token string, realm string, idOfClient string, roleName string) (*gocloak.Role, error) {
-// 				panic("mock out the GetClientRole method")
-// 			},
-// 			GetClientRoleByIDFunc: func(ctx context.Context, accessToken string, realm string, roleID string) (*gocloak.Role, error) {
-// 				panic("mock out the GetClientRoleByID method")
-// 			},
-// 			GetClientRolesFunc: func(ctx context.Context, accessToken string, realm string, idOfClient string, params gocloak.GetRoleParams) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetClientRoles method")
-// 			},
-// 			GetClientRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, groupID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetClientRolesByGroupID method")
-// 			},
-// 			GetClientRolesByUserIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, userID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetClientRolesByUserID method")
-// 			},
-// 			GetClientScopeFunc: func(ctx context.Context, token string, realm string, scopeID string) (*gocloak.ClientScope, error) {
-// 				panic("mock out the GetClientScope method")
-// 			},
-// 			GetClientScopeMappingsFunc: func(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.MappingsRepresentation, error) {
-// 				panic("mock out the GetClientScopeMappings method")
-// 			},
-// 			GetClientScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetClientScopeMappingsClientRoles method")
-// 			},
-// 			GetClientScopeMappingsClientRolesAvailableFunc: func(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetClientScopeMappingsClientRolesAvailable method")
-// 			},
-// 			GetClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetClientScopeMappingsRealmRoles method")
-// 			},
-// 			GetClientScopeMappingsRealmRolesAvailableFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetClientScopeMappingsRealmRolesAvailable method")
-// 			},
-// 			GetClientScopeProtocolMapperFunc: func(ctx context.Context, token string, realm string, scopeID string, protocolMapperID string) (*gocloak.ProtocolMappers, error) {
-// 				panic("mock out the GetClientScopeProtocolMapper method")
-// 			},
-// 			GetClientScopeProtocolMappersFunc: func(ctx context.Context, token string, realm string, scopeID string) ([]*gocloak.ProtocolMappers, error) {
-// 				panic("mock out the GetClientScopeProtocolMappers method")
-// 			},
-// 			GetClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
-// 				panic("mock out the GetClientScopes method")
-// 			},
-// 			GetClientScopesScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetClientScopesScopeMappingsClientRoles method")
-// 			},
-// 			GetClientScopesScopeMappingsClientRolesAvailableFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetClientScopesScopeMappingsClientRolesAvailable method")
-// 			},
-// 			GetClientScopesScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetClientScopesScopeMappingsRealmRoles method")
-// 			},
-// 			GetClientScopesScopeMappingsRealmRolesAvailableFunc: func(ctx context.Context, token string, realm string, idOfClientScope string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetClientScopesScopeMappingsRealmRolesAvailable method")
-// 			},
-// 			GetClientSecretFunc: func(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.CredentialRepresentation, error) {
-// 				panic("mock out the GetClientSecret method")
-// 			},
-// 			GetClientServiceAccountFunc: func(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.User, error) {
-// 				panic("mock out the GetClientServiceAccount method")
-// 			},
-// 			GetClientUserSessionsFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.UserSessionRepresentation, error) {
-// 				panic("mock out the GetClientUserSessions method")
-// 			},
-// 			GetClientsFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
-// 				panic("mock out the GetClients method")
-// 			},
-// 			GetClientsDefaultScopesFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.ClientScope, error) {
-// 				panic("mock out the GetClientsDefaultScopes method")
-// 			},
-// 			GetClientsOptionalScopesFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.ClientScope, error) {
-// 				panic("mock out the GetClientsOptionalScopes method")
-// 			},
-// 			GetComponentsFunc: func(ctx context.Context, accessToken string, realm string) ([]*gocloak.Component, error) {
-// 				panic("mock out the GetComponents method")
-// 			},
-// 			GetCompositeClientRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, groupID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetCompositeClientRolesByGroupID method")
-// 			},
-// 			GetCompositeClientRolesByRoleIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, roleID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetCompositeClientRolesByRoleID method")
-// 			},
-// 			GetCompositeClientRolesByUserIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, userID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetCompositeClientRolesByUserID method")
-// 			},
-// 			GetCompositeRealmRolesFunc: func(ctx context.Context, token string, realm string, roleName string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetCompositeRealmRoles method")
-// 			},
-// 			GetCompositeRealmRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, groupID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetCompositeRealmRolesByGroupID method")
-// 			},
-// 			GetCompositeRealmRolesByRoleIDFunc: func(ctx context.Context, token string, realm string, roleID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetCompositeRealmRolesByRoleID method")
-// 			},
-// 			GetCompositeRealmRolesByUserIDFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetCompositeRealmRolesByUserID method")
-// 			},
-// 			GetConfiguredUserStorageCredentialTypesFunc: func(ctx context.Context, token string, realm string, userID string) ([]string, error) {
-// 				panic("mock out the GetConfiguredUserStorageCredentialTypes method")
-// 			},
-// 			GetCredentialRegistratorsFunc: func(ctx context.Context, token string, realm string) ([]string, error) {
-// 				panic("mock out the GetCredentialRegistrators method")
-// 			},
-// 			GetCredentialsFunc: func(ctx context.Context, token string, realm string, UserID string) ([]*gocloak.CredentialRepresentation, error) {
-// 				panic("mock out the GetCredentials method")
-// 			},
-// 			GetDefaultDefaultClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
-// 				panic("mock out the GetDefaultDefaultClientScopes method")
-// 			},
-// 			GetDefaultGroupsFunc: func(ctx context.Context, accessToken string, realm string) ([]*gocloak.Group, error) {
-// 				panic("mock out the GetDefaultGroups method")
-// 			},
-// 			GetDefaultOptionalClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
-// 				panic("mock out the GetDefaultOptionalClientScopes method")
-// 			},
-// 			GetDependentPermissionsFunc: func(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PermissionRepresentation, error) {
-// 				panic("mock out the GetDependentPermissions method")
-// 			},
-// 			GetEventsFunc: func(ctx context.Context, token string, realm string, params gocloak.GetEventsParams) ([]*gocloak.EventRepresentation, error) {
-// 				panic("mock out the GetEvents method")
-// 			},
-// 			GetGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) (*gocloak.Group, error) {
-// 				panic("mock out the GetGroup method")
-// 			},
-// 			GetGroupMembersFunc: func(ctx context.Context, accessToken string, realm string, groupID string, params gocloak.GetGroupsParams) ([]*gocloak.User, error) {
-// 				panic("mock out the GetGroupMembers method")
-// 			},
-// 			GetGroupsFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetGroupsParams) ([]*gocloak.Group, error) {
-// 				panic("mock out the GetGroups method")
-// 			},
-// 			GetGroupsByRoleFunc: func(ctx context.Context, accessToken string, realm string, roleName string) ([]*gocloak.Group, error) {
-// 				panic("mock out the GetGroupsByRole method")
-// 			},
-// 			GetGroupsCountFunc: func(ctx context.Context, token string, realm string, params gocloak.GetGroupsParams) (int, error) {
-// 				panic("mock out the GetGroupsCount method")
-// 			},
-// 			GetIdentityProviderFunc: func(ctx context.Context, token string, realm string, alias string) (*gocloak.IdentityProviderRepresentation, error) {
-// 				panic("mock out the GetIdentityProvider method")
-// 			},
-// 			GetIdentityProviderMapperByIDFunc: func(ctx context.Context, token string, realm string, alias string, mapperID string) (*gocloak.IdentityProviderMapper, error) {
-// 				panic("mock out the GetIdentityProviderMapperByID method")
-// 			},
-// 			GetIdentityProviderMappersFunc: func(ctx context.Context, token string, realm string, alias string) ([]*gocloak.IdentityProviderMapper, error) {
-// 				panic("mock out the GetIdentityProviderMappers method")
-// 			},
-// 			GetIdentityProvidersFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.IdentityProviderRepresentation, error) {
-// 				panic("mock out the GetIdentityProviders method")
-// 			},
-// 			GetIssuerFunc: func(ctx context.Context, realm string) (*gocloak.IssuerResponse, error) {
-// 				panic("mock out the GetIssuer method")
-// 			},
-// 			GetKeyStoreConfigFunc: func(ctx context.Context, accessToken string, realm string) (*gocloak.KeyStoreConfig, error) {
-// 				panic("mock out the GetKeyStoreConfig method")
-// 			},
-// 			GetPermissionFunc: func(ctx context.Context, token string, realm string, idOfClient string, permissionID string) (*gocloak.PermissionRepresentation, error) {
-// 				panic("mock out the GetPermission method")
-// 			},
-// 			GetPermissionResourcesFunc: func(ctx context.Context, token string, realm string, idOfClient string, permissionID string) ([]*gocloak.PermissionResource, error) {
-// 				panic("mock out the GetPermissionResources method")
-// 			},
-// 			GetPermissionScopesFunc: func(ctx context.Context, token string, realm string, idOfClient string, permissionID string) ([]*gocloak.PermissionScope, error) {
-// 				panic("mock out the GetPermissionScopes method")
-// 			},
-// 			GetPermissionsFunc: func(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetPermissionParams) ([]*gocloak.PermissionRepresentation, error) {
-// 				panic("mock out the GetPermissions method")
-// 			},
-// 			GetPoliciesFunc: func(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetPolicyParams) ([]*gocloak.PolicyRepresentation, error) {
-// 				panic("mock out the GetPolicies method")
-// 			},
-// 			GetPolicyFunc: func(ctx context.Context, token string, realm string, idOfClient string, policyID string) (*gocloak.PolicyRepresentation, error) {
-// 				panic("mock out the GetPolicy method")
-// 			},
-// 			GetRawUserInfoFunc: func(ctx context.Context, accessToken string, realm string) (map[string]interface{}, error) {
-// 				panic("mock out the GetRawUserInfo method")
-// 			},
-// 			GetRealmFunc: func(ctx context.Context, token string, realm string) (*gocloak.RealmRepresentation, error) {
-// 				panic("mock out the GetRealm method")
-// 			},
-// 			GetRealmRoleFunc: func(ctx context.Context, token string, realm string, roleName string) (*gocloak.Role, error) {
-// 				panic("mock out the GetRealmRole method")
-// 			},
-// 			GetRealmRoleByIDFunc: func(ctx context.Context, token string, realm string, roleID string) (*gocloak.Role, error) {
-// 				panic("mock out the GetRealmRoleByID method")
-// 			},
-// 			GetRealmRolesFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetRoleParams) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetRealmRoles method")
-// 			},
-// 			GetRealmRolesByGroupIDFunc: func(ctx context.Context, accessToken string, realm string, groupID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetRealmRolesByGroupID method")
-// 			},
-// 			GetRealmRolesByUserIDFunc: func(ctx context.Context, accessToken string, realm string, userID string) ([]*gocloak.Role, error) {
-// 				panic("mock out the GetRealmRolesByUserID method")
-// 			},
-// 			GetRealmsFunc: func(ctx context.Context, token string) ([]*gocloak.RealmRepresentation, error) {
-// 				panic("mock out the GetRealms method")
-// 			},
-// 			GetRequestingPartyPermissionDecisionFunc: func(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*gocloak.RequestingPartyPermissionDecision, error) {
-// 				panic("mock out the GetRequestingPartyPermissionDecision method")
-// 			},
-// 			GetRequestingPartyPermissionsFunc: func(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*[]gocloak.RequestingPartyPermission, error) {
-// 				panic("mock out the GetRequestingPartyPermissions method")
-// 			},
-// 			GetRequestingPartyTokenFunc: func(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*gocloak.JWT, error) {
-// 				panic("mock out the GetRequestingPartyToken method")
-// 			},
-// 			GetResourceFunc: func(ctx context.Context, token string, realm string, idOfClient string, resourceID string) (*gocloak.ResourceRepresentation, error) {
-// 				panic("mock out the GetResource method")
-// 			},
-// 			GetResourceClientFunc: func(ctx context.Context, token string, realm string, resourceID string) (*gocloak.ResourceRepresentation, error) {
-// 				panic("mock out the GetResourceClient method")
-// 			},
-// 			GetResourcePoliciesFunc: func(ctx context.Context, token string, realm string, params gocloak.GetResourcePoliciesParams) ([]*gocloak.ResourcePolicyRepresentation, error) {
-// 				panic("mock out the GetResourcePolicies method")
-// 			},
-// 			GetResourcePolicyFunc: func(ctx context.Context, token string, realm string, permissionID string) (*gocloak.ResourcePolicyRepresentation, error) {
-// 				panic("mock out the GetResourcePolicy method")
-// 			},
-// 			GetResourcesFunc: func(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetResourceParams) ([]*gocloak.ResourceRepresentation, error) {
-// 				panic("mock out the GetResources method")
-// 			},
-// 			GetResourcesClientFunc: func(ctx context.Context, token string, realm string, params gocloak.GetResourceParams) ([]*gocloak.ResourceRepresentation, error) {
-// 				panic("mock out the GetResourcesClient method")
-// 			},
-// 			GetRoleMappingByGroupIDFunc: func(ctx context.Context, accessToken string, realm string, groupID string) (*gocloak.MappingsRepresentation, error) {
-// 				panic("mock out the GetRoleMappingByGroupID method")
-// 			},
-// 			GetRoleMappingByUserIDFunc: func(ctx context.Context, accessToken string, realm string, userID string) (*gocloak.MappingsRepresentation, error) {
-// 				panic("mock out the GetRoleMappingByUserID method")
-// 			},
-// 			GetScopeFunc: func(ctx context.Context, token string, realm string, idOfClient string, scopeID string) (*gocloak.ScopeRepresentation, error) {
-// 				panic("mock out the GetScope method")
-// 			},
-// 			GetScopesFunc: func(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetScopeParams) ([]*gocloak.ScopeRepresentation, error) {
-// 				panic("mock out the GetScopes method")
-// 			},
-// 			GetServerInfoFunc: func(ctx context.Context, accessToken string) (*gocloak.ServerInfoRepesentation, error) {
-// 				panic("mock out the GetServerInfo method")
-// 			},
-// 			GetTokenFunc: func(ctx context.Context, realm string, options gocloak.TokenOptions) (*gocloak.JWT, error) {
-// 				panic("mock out the GetToken method")
-// 			},
-// 			GetUserByIDFunc: func(ctx context.Context, accessToken string, realm string, userID string) (*gocloak.User, error) {
-// 				panic("mock out the GetUserByID method")
-// 			},
-// 			GetUserCountFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetUsersParams) (int, error) {
-// 				panic("mock out the GetUserCount method")
-// 			},
-// 			GetUserFederatedIdentitiesFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.FederatedIdentityRepresentation, error) {
-// 				panic("mock out the GetUserFederatedIdentities method")
-// 			},
-// 			GetUserGroupsFunc: func(ctx context.Context, accessToken string, realm string, userID string, params gocloak.GetGroupsParams) ([]*gocloak.Group, error) {
-// 				panic("mock out the GetUserGroups method")
-// 			},
-// 			GetUserInfoFunc: func(ctx context.Context, accessToken string, realm string) (*gocloak.UserInfo, error) {
-// 				panic("mock out the GetUserInfo method")
-// 			},
-// 			GetUserOfflineSessionsForClientFunc: func(ctx context.Context, token string, realm string, userID string, idOfClient string) ([]*gocloak.UserSessionRepresentation, error) {
-// 				panic("mock out the GetUserOfflineSessionsForClient method")
-// 			},
-// 			GetUserPermissionsFunc: func(ctx context.Context, token string, realm string, params gocloak.GetUserPermissionParams) ([]*gocloak.PermissionGrantResponseRepresentation, error) {
-// 				panic("mock out the GetUserPermissions method")
-// 			},
-// 			GetUserSessionsFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.UserSessionRepresentation, error) {
-// 				panic("mock out the GetUserSessions method")
-// 			},
-// 			GetUsersFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetUsersParams) ([]*gocloak.User, error) {
-// 				panic("mock out the GetUsers method")
-// 			},
-// 			GetUsersByClientRoleNameFunc: func(ctx context.Context, token string, realm string, idOfClient string, roleName string, params gocloak.GetUsersByRoleParams) ([]*gocloak.User, error) {
-// 				panic("mock out the GetUsersByClientRoleName method")
-// 			},
-// 			GetUsersByRoleNameFunc: func(ctx context.Context, token string, realm string, roleName string) ([]*gocloak.User, error) {
-// 				panic("mock out the GetUsersByRoleName method")
-// 			},
-// 			GrantUserPermissionFunc: func(ctx context.Context, token string, realm string, permission gocloak.PermissionGrantParams) (*gocloak.PermissionGrantResponseRepresentation, error) {
-// 				panic("mock out the GrantUserPermission method")
-// 			},
-// 			ImportIdentityProviderConfigFunc: func(ctx context.Context, token string, realm string, fromURL string, providerID string) (map[string]string, error) {
-// 				panic("mock out the ImportIdentityProviderConfig method")
-// 			},
-// 			ImportIdentityProviderConfigFromFileFunc: func(ctx context.Context, token string, realm string, providerID string, fileName string, fileBody io.Reader) (map[string]string, error) {
-// 				panic("mock out the ImportIdentityProviderConfigFromFile method")
-// 			},
-// 			LoginFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string) (*gocloak.JWT, error) {
-// 				panic("mock out the Login method")
-// 			},
-// 			LoginAdminFunc: func(ctx context.Context, username string, password string, realm string) (*gocloak.JWT, error) {
-// 				panic("mock out the LoginAdmin method")
-// 			},
-// 			LoginClientFunc: func(ctx context.Context, clientID string, clientSecret string, realm string) (*gocloak.JWT, error) {
-// 				panic("mock out the LoginClient method")
-// 			},
-// 			LoginClientSignedJWTFunc: func(ctx context.Context, idOfClient string, realm string, key interface{}, signedMethod jwt.SigningMethod, expiresAt *jwt.NumericDate) (*gocloak.JWT, error) {
-// 				panic("mock out the LoginClientSignedJWT method")
-// 			},
-// 			LoginClientTokenExchangeFunc: func(ctx context.Context, clientID string, token string, clientSecret string, realm string, targetClient string, userID string) (*gocloak.JWT, error) {
-// 				panic("mock out the LoginClientTokenExchange method")
-// 			},
-// 			LoginOtpFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string, totp string) (*gocloak.JWT, error) {
-// 				panic("mock out the LoginOtp method")
-// 			},
-// 			LogoutFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, refreshToken string) error {
-// 				panic("mock out the Logout method")
-// 			},
-// 			LogoutAllSessionsFunc: func(ctx context.Context, accessToken string, realm string, userID string) error {
-// 				panic("mock out the LogoutAllSessions method")
-// 			},
-// 			LogoutPublicClientFunc: func(ctx context.Context, idOfClient string, realm string, accessToken string, refreshToken string) error {
-// 				panic("mock out the LogoutPublicClient method")
-// 			},
-// 			LogoutUserSessionFunc: func(ctx context.Context, accessToken string, realm string, session string) error {
-// 				panic("mock out the LogoutUserSession method")
-// 			},
-// 			MoveCredentialBehindFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string, newPreviousCredentialID string) error {
-// 				panic("mock out the MoveCredentialBehind method")
-// 			},
-// 			MoveCredentialToFirstFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string) error {
-// 				panic("mock out the MoveCredentialToFirst method")
-// 			},
-// 			RefreshTokenFunc: func(ctx context.Context, refreshToken string, clientID string, clientSecret string, realm string) (*gocloak.JWT, error) {
-// 				panic("mock out the RefreshToken method")
-// 			},
-// 			RegenerateClientSecretFunc: func(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.CredentialRepresentation, error) {
-// 				panic("mock out the RegenerateClientSecret method")
-// 			},
-// 			RemoveDefaultGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) error {
-// 				panic("mock out the RemoveDefaultGroup method")
-// 			},
-// 			RemoveDefaultScopeFromClientFunc: func(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
-// 				panic("mock out the RemoveDefaultScopeFromClient method")
-// 			},
-// 			RemoveOptionalScopeFromClientFunc: func(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
-// 				panic("mock out the RemoveOptionalScopeFromClient method")
-// 			},
-// 			RestyClientFunc: func() *resty.Client {
-// 				panic("mock out the RestyClient method")
-// 			},
-// 			RetrospectTokenFunc: func(ctx context.Context, accessToken string, clientID string, clientSecret string, realm string) (*gocloak.RetrospecTokenResult, error) {
-// 				panic("mock out the RetrospectToken method")
-// 			},
-// 			RevokeUserConsentsFunc: func(ctx context.Context, accessToken string, realm string, userID string, clientID string) error {
-// 				panic("mock out the RevokeUserConsents method")
-// 			},
-// 			SetPasswordFunc: func(ctx context.Context, token string, userID string, realm string, password string, temporary bool) error {
-// 				panic("mock out the SetPassword method")
-// 			},
-// 			SetRestyClientFunc: func(restyClient *resty.Client)  {
-// 				panic("mock out the SetRestyClient method")
-// 			},
-// 			UpdateAuthenticationExecutionFunc: func(ctx context.Context, token string, realm string, flow string, execution gocloak.ModifyAuthenticationExecutionRepresentation) error {
-// 				panic("mock out the UpdateAuthenticationExecution method")
-// 			},
-// 			UpdateClientFunc: func(ctx context.Context, accessToken string, realm string, updatedClient gocloak.Client) error {
-// 				panic("mock out the UpdateClient method")
-// 			},
-// 			UpdateClientProtocolMapperFunc: func(ctx context.Context, token string, realm string, idOfClient string, mapperID string, mapper gocloak.ProtocolMapperRepresentation) error {
-// 				panic("mock out the UpdateClientProtocolMapper method")
-// 			},
-// 			UpdateClientRepresentationFunc: func(ctx context.Context, accessToken string, realm string, updatedClient gocloak.Client) (*gocloak.Client, error) {
-// 				panic("mock out the UpdateClientRepresentation method")
-// 			},
-// 			UpdateClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) error {
-// 				panic("mock out the UpdateClientScope method")
-// 			},
-// 			UpdateClientScopeProtocolMapperFunc: func(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) error {
-// 				panic("mock out the UpdateClientScopeProtocolMapper method")
-// 			},
-// 			UpdateCredentialUserLabelFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string, userLabel string) error {
-// 				panic("mock out the UpdateCredentialUserLabel method")
-// 			},
-// 			UpdateGroupFunc: func(ctx context.Context, accessToken string, realm string, updatedGroup gocloak.Group) error {
-// 				panic("mock out the UpdateGroup method")
-// 			},
-// 			UpdateIdentityProviderFunc: func(ctx context.Context, token string, realm string, alias string, providerRep gocloak.IdentityProviderRepresentation) error {
-// 				panic("mock out the UpdateIdentityProvider method")
-// 			},
-// 			UpdateIdentityProviderMapperFunc: func(ctx context.Context, token string, realm string, alias string, mapper gocloak.IdentityProviderMapper) error {
-// 				panic("mock out the UpdateIdentityProviderMapper method")
-// 			},
-// 			UpdatePermissionFunc: func(ctx context.Context, token string, realm string, idOfClient string, permission gocloak.PermissionRepresentation) error {
-// 				panic("mock out the UpdatePermission method")
-// 			},
-// 			UpdatePolicyFunc: func(ctx context.Context, token string, realm string, idOfClient string, policy gocloak.PolicyRepresentation) error {
-// 				panic("mock out the UpdatePolicy method")
-// 			},
-// 			UpdateRealmFunc: func(ctx context.Context, token string, realm gocloak.RealmRepresentation) error {
-// 				panic("mock out the UpdateRealm method")
-// 			},
-// 			UpdateRealmRoleFunc: func(ctx context.Context, token string, realm string, roleName string, role gocloak.Role) error {
-// 				panic("mock out the UpdateRealmRole method")
-// 			},
-// 			UpdateRealmRoleByIDFunc: func(ctx context.Context, token string, realm string, roleID string, role gocloak.Role) error {
-// 				panic("mock out the UpdateRealmRoleByID method")
-// 			},
-// 			UpdateRequiredActionFunc: func(ctx context.Context, token string, realm string, requiredAction gocloak.RequiredActionProviderRepresentation) error {
-// 				panic("mock out the UpdateRequiredAction method")
-// 			},
-// 			UpdateResourceFunc: func(ctx context.Context, token string, realm string, idOfClient string, resource gocloak.ResourceRepresentation) error {
-// 				panic("mock out the UpdateResource method")
-// 			},
-// 			UpdateResourceClientFunc: func(ctx context.Context, token string, realm string, resource gocloak.ResourceRepresentation) error {
-// 				panic("mock out the UpdateResourceClient method")
-// 			},
-// 			UpdateResourcePolicyFunc: func(ctx context.Context, token string, realm string, permissionID string, policy gocloak.ResourcePolicyRepresentation) error {
-// 				panic("mock out the UpdateResourcePolicy method")
-// 			},
-// 			UpdateRoleFunc: func(ctx context.Context, accessToken string, realm string, idOfClient string, role gocloak.Role) error {
-// 				panic("mock out the UpdateRole method")
-// 			},
-// 			UpdateScopeFunc: func(ctx context.Context, token string, realm string, idOfClient string, resource gocloak.ScopeRepresentation) error {
-// 				panic("mock out the UpdateScope method")
-// 			},
-// 			UpdateUserFunc: func(ctx context.Context, accessToken string, realm string, user gocloak.User) error {
-// 				panic("mock out the UpdateUser method")
-// 			},
-// 			UpdateUserPermissionFunc: func(ctx context.Context, token string, realm string, permission gocloak.PermissionGrantParams) (*gocloak.PermissionGrantResponseRepresentation, error) {
-// 				panic("mock out the UpdateUserPermission method")
-// 			},
-// 		}
+//		// make and configure a mocked GoCloak
+//		mockedGoCloak := &GoCloakMock{
+//			AddClientRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
+//				panic("mock out the AddClientRoleComposite method")
+//			},
+//			AddClientRoleToGroupFunc: func(ctx context.Context, token string, realm string, idOfClient string, groupID string, roles []gocloak.Role) error {
+//				panic("mock out the AddClientRoleToGroup method")
+//			},
+//			AddClientRoleToUserFunc: func(ctx context.Context, token string, realm string, idOfClient string, userID string, roles []gocloak.Role) error {
+//				panic("mock out the AddClientRoleToUser method")
+//			},
+//			AddDefaultGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) error {
+//				panic("mock out the AddDefaultGroup method")
+//			},
+//			AddDefaultScopeToClientFunc: func(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
+//				panic("mock out the AddDefaultScopeToClient method")
+//			},
+//			AddOptionalScopeToClientFunc: func(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
+//				panic("mock out the AddOptionalScopeToClient method")
+//			},
+//			AddRealmRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleName string, roles []gocloak.Role) error {
+//				panic("mock out the AddRealmRoleComposite method")
+//			},
+//			AddRealmRoleToGroupFunc: func(ctx context.Context, token string, realm string, groupID string, roles []gocloak.Role) error {
+//				panic("mock out the AddRealmRoleToGroup method")
+//			},
+//			AddRealmRoleToUserFunc: func(ctx context.Context, token string, realm string, userID string, roles []gocloak.Role) error {
+//				panic("mock out the AddRealmRoleToUser method")
+//			},
+//			AddUserToGroupFunc: func(ctx context.Context, token string, realm string, userID string, groupID string) error {
+//				panic("mock out the AddUserToGroup method")
+//			},
+//			ClearKeysCacheFunc: func(ctx context.Context, token string, realm string) error {
+//				panic("mock out the ClearKeysCache method")
+//			},
+//			ClearRealmCacheFunc: func(ctx context.Context, token string, realm string) error {
+//				panic("mock out the ClearRealmCache method")
+//			},
+//			ClearUserCacheFunc: func(ctx context.Context, token string, realm string) error {
+//				panic("mock out the ClearUserCache method")
+//			},
+//			CreateAuthenticationExecutionFunc: func(ctx context.Context, token string, realm string, flow string, execution gocloak.CreateAuthenticationExecutionRepresentation) error {
+//				panic("mock out the CreateAuthenticationExecution method")
+//			},
+//			CreateAuthenticationExecutionFlowFunc: func(ctx context.Context, token string, realm string, flow string, execution gocloak.CreateAuthenticationExecutionFlowRepresentation) error {
+//				panic("mock out the CreateAuthenticationExecutionFlow method")
+//			},
+//			CreateAuthenticationFlowFunc: func(ctx context.Context, token string, realm string, flow gocloak.AuthenticationFlowRepresentation) error {
+//				panic("mock out the CreateAuthenticationFlow method")
+//			},
+//			CreateChildGroupFunc: func(ctx context.Context, token string, realm string, groupID string, group gocloak.Group) (string, error) {
+//				panic("mock out the CreateChildGroup method")
+//			},
+//			CreateClientFunc: func(ctx context.Context, accessToken string, realm string, newClient gocloak.Client) (string, error) {
+//				panic("mock out the CreateClient method")
+//			},
+//			CreateClientProtocolMapperFunc: func(ctx context.Context, token string, realm string, idOfClient string, mapper gocloak.ProtocolMapperRepresentation) (string, error) {
+//				panic("mock out the CreateClientProtocolMapper method")
+//			},
+//			CreateClientRepresentationFunc: func(ctx context.Context, realm string) (*gocloak.Client, error) {
+//				panic("mock out the CreateClientRepresentation method")
+//			},
+//			CreateClientRoleFunc: func(ctx context.Context, accessToken string, realm string, idOfClient string, role gocloak.Role) (string, error) {
+//				panic("mock out the CreateClientRole method")
+//			},
+//			CreateClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) (string, error) {
+//				panic("mock out the CreateClientScope method")
+//			},
+//			CreateClientScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string, roles []gocloak.Role) error {
+//				panic("mock out the CreateClientScopeMappingsClientRoles method")
+//			},
+//			CreateClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string, roles []gocloak.Role) error {
+//				panic("mock out the CreateClientScopeMappingsRealmRoles method")
+//			},
+//			CreateClientScopeProtocolMapperFunc: func(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) (string, error) {
+//				panic("mock out the CreateClientScopeProtocolMapper method")
+//			},
+//			CreateClientScopesScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string, roles []gocloak.Role) error {
+//				panic("mock out the CreateClientScopesScopeMappingsClientRoles method")
+//			},
+//			CreateClientScopesScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, roles []gocloak.Role) error {
+//				panic("mock out the CreateClientScopesScopeMappingsRealmRoles method")
+//			},
+//			CreateComponentFunc: func(ctx context.Context, accessToken string, realm string, component gocloak.Component) (string, error) {
+//				panic("mock out the CreateComponent method")
+//			},
+//			CreateGroupFunc: func(ctx context.Context, accessToken string, realm string, group gocloak.Group) (string, error) {
+//				panic("mock out the CreateGroup method")
+//			},
+//			CreateIdentityProviderFunc: func(ctx context.Context, token string, realm string, providerRep gocloak.IdentityProviderRepresentation) (string, error) {
+//				panic("mock out the CreateIdentityProvider method")
+//			},
+//			CreateIdentityProviderMapperFunc: func(ctx context.Context, token string, realm string, alias string, mapper gocloak.IdentityProviderMapper) (string, error) {
+//				panic("mock out the CreateIdentityProviderMapper method")
+//			},
+//			CreatePermissionFunc: func(ctx context.Context, token string, realm string, idOfClient string, permission gocloak.PermissionRepresentation) (*gocloak.PermissionRepresentation, error) {
+//				panic("mock out the CreatePermission method")
+//			},
+//			CreatePermissionTicketFunc: func(ctx context.Context, token string, realm string, permissions []gocloak.CreatePermissionTicketParams) (*gocloak.PermissionTicketResponseRepresentation, error) {
+//				panic("mock out the CreatePermissionTicket method")
+//			},
+//			CreatePolicyFunc: func(ctx context.Context, token string, realm string, idOfClient string, policy gocloak.PolicyRepresentation) (*gocloak.PolicyRepresentation, error) {
+//				panic("mock out the CreatePolicy method")
+//			},
+//			CreateRealmFunc: func(ctx context.Context, token string, realm gocloak.RealmRepresentation) (string, error) {
+//				panic("mock out the CreateRealm method")
+//			},
+//			CreateRealmRoleFunc: func(ctx context.Context, token string, realm string, role gocloak.Role) (string, error) {
+//				panic("mock out the CreateRealmRole method")
+//			},
+//			CreateResourceFunc: func(ctx context.Context, token string, realm string, idOfClient string, resource gocloak.ResourceRepresentation) (*gocloak.ResourceRepresentation, error) {
+//				panic("mock out the CreateResource method")
+//			},
+//			CreateResourceClientFunc: func(ctx context.Context, token string, realm string, resource gocloak.ResourceRepresentation) (*gocloak.ResourceRepresentation, error) {
+//				panic("mock out the CreateResourceClient method")
+//			},
+//			CreateResourcePolicyFunc: func(ctx context.Context, token string, realm string, resourceID string, policy gocloak.ResourcePolicyRepresentation) (*gocloak.ResourcePolicyRepresentation, error) {
+//				panic("mock out the CreateResourcePolicy method")
+//			},
+//			CreateScopeFunc: func(ctx context.Context, token string, realm string, idOfClient string, scope gocloak.ScopeRepresentation) (*gocloak.ScopeRepresentation, error) {
+//				panic("mock out the CreateScope method")
+//			},
+//			CreateUserFunc: func(ctx context.Context, token string, realm string, user gocloak.User) (string, error) {
+//				panic("mock out the CreateUser method")
+//			},
+//			CreateUserFederatedIdentityFunc: func(ctx context.Context, token string, realm string, userID string, providerID string, federatedIdentityRep gocloak.FederatedIdentityRepresentation) error {
+//				panic("mock out the CreateUserFederatedIdentity method")
+//			},
+//			DecodeAccessTokenFunc: func(ctx context.Context, accessToken string, realm string) (*jwt.Token, *jwt.MapClaims, error) {
+//				panic("mock out the DecodeAccessToken method")
+//			},
+//			DecodeAccessTokenCustomClaimsFunc: func(ctx context.Context, accessToken string, realm string, claims jwt.Claims) (*jwt.Token, error) {
+//				panic("mock out the DecodeAccessTokenCustomClaims method")
+//			},
+//			DeleteAuthenticationExecutionFunc: func(ctx context.Context, token string, realm string, executionID string) error {
+//				panic("mock out the DeleteAuthenticationExecution method")
+//			},
+//			DeleteAuthenticationFlowFunc: func(ctx context.Context, token string, realm string, flowID string) error {
+//				panic("mock out the DeleteAuthenticationFlow method")
+//			},
+//			DeleteClientFunc: func(ctx context.Context, accessToken string, realm string, idOfClient string) error {
+//				panic("mock out the DeleteClient method")
+//			},
+//			DeleteClientProtocolMapperFunc: func(ctx context.Context, token string, realm string, idOfClient string, mapperID string) error {
+//				panic("mock out the DeleteClientProtocolMapper method")
+//			},
+//			DeleteClientRepresentationFunc: func(ctx context.Context, accessToken string, realm string, clientID string) error {
+//				panic("mock out the DeleteClientRepresentation method")
+//			},
+//			DeleteClientRoleFunc: func(ctx context.Context, accessToken string, realm string, idOfClient string, roleName string) error {
+//				panic("mock out the DeleteClientRole method")
+//			},
+//			DeleteClientRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
+//				panic("mock out the DeleteClientRoleComposite method")
+//			},
+//			DeleteClientRoleFromGroupFunc: func(ctx context.Context, token string, realm string, idOfClient string, groupID string, roles []gocloak.Role) error {
+//				panic("mock out the DeleteClientRoleFromGroup method")
+//			},
+//			DeleteClientRoleFromUserFunc: func(ctx context.Context, token string, realm string, idOfClient string, userID string, roles []gocloak.Role) error {
+//				panic("mock out the DeleteClientRoleFromUser method")
+//			},
+//			DeleteClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scopeID string) error {
+//				panic("mock out the DeleteClientScope method")
+//			},
+//			DeleteClientScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string, roles []gocloak.Role) error {
+//				panic("mock out the DeleteClientScopeMappingsClientRoles method")
+//			},
+//			DeleteClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string, roles []gocloak.Role) error {
+//				panic("mock out the DeleteClientScopeMappingsRealmRoles method")
+//			},
+//			DeleteClientScopeProtocolMapperFunc: func(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapperID string) error {
+//				panic("mock out the DeleteClientScopeProtocolMapper method")
+//			},
+//			DeleteClientScopesScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, ifOfClient string, roles []gocloak.Role) error {
+//				panic("mock out the DeleteClientScopesScopeMappingsClientRoles method")
+//			},
+//			DeleteClientScopesScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, roles []gocloak.Role) error {
+//				panic("mock out the DeleteClientScopesScopeMappingsRealmRoles method")
+//			},
+//			DeleteComponentFunc: func(ctx context.Context, accessToken string, realm string, componentID string) error {
+//				panic("mock out the DeleteComponent method")
+//			},
+//			DeleteCredentialsFunc: func(ctx context.Context, token string, realm string, UserID string, CredentialID string) error {
+//				panic("mock out the DeleteCredentials method")
+//			},
+//			DeleteGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) error {
+//				panic("mock out the DeleteGroup method")
+//			},
+//			DeleteIdentityProviderFunc: func(ctx context.Context, token string, realm string, alias string) error {
+//				panic("mock out the DeleteIdentityProvider method")
+//			},
+//			DeleteIdentityProviderMapperFunc: func(ctx context.Context, token string, realm string, alias string, mapperID string) error {
+//				panic("mock out the DeleteIdentityProviderMapper method")
+//			},
+//			DeletePermissionFunc: func(ctx context.Context, token string, realm string, idOfClient string, permissionID string) error {
+//				panic("mock out the DeletePermission method")
+//			},
+//			DeletePolicyFunc: func(ctx context.Context, token string, realm string, idOfClient string, policyID string) error {
+//				panic("mock out the DeletePolicy method")
+//			},
+//			DeleteRealmFunc: func(ctx context.Context, token string, realm string) error {
+//				panic("mock out the DeleteRealm method")
+//			},
+//			DeleteRealmRoleFunc: func(ctx context.Context, token string, realm string, roleName string) error {
+//				panic("mock out the DeleteRealmRole method")
+//			},
+//			DeleteRealmRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleName string, roles []gocloak.Role) error {
+//				panic("mock out the DeleteRealmRoleComposite method")
+//			},
+//			DeleteRealmRoleFromGroupFunc: func(ctx context.Context, token string, realm string, groupID string, roles []gocloak.Role) error {
+//				panic("mock out the DeleteRealmRoleFromGroup method")
+//			},
+//			DeleteRealmRoleFromUserFunc: func(ctx context.Context, token string, realm string, userID string, roles []gocloak.Role) error {
+//				panic("mock out the DeleteRealmRoleFromUser method")
+//			},
+//			DeleteResourceFunc: func(ctx context.Context, token string, realm string, idOfClient string, resourceID string) error {
+//				panic("mock out the DeleteResource method")
+//			},
+//			DeleteResourceClientFunc: func(ctx context.Context, token string, realm string, resourceID string) error {
+//				panic("mock out the DeleteResourceClient method")
+//			},
+//			DeleteResourcePolicyFunc: func(ctx context.Context, token string, realm string, permissionID string) error {
+//				panic("mock out the DeleteResourcePolicy method")
+//			},
+//			DeleteScopeFunc: func(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
+//				panic("mock out the DeleteScope method")
+//			},
+//			DeleteUserFunc: func(ctx context.Context, accessToken string, realm string, userID string) error {
+//				panic("mock out the DeleteUser method")
+//			},
+//			DeleteUserFederatedIdentityFunc: func(ctx context.Context, token string, realm string, userID string, providerID string) error {
+//				panic("mock out the DeleteUserFederatedIdentity method")
+//			},
+//			DeleteUserFromGroupFunc: func(ctx context.Context, token string, realm string, userID string, groupID string) error {
+//				panic("mock out the DeleteUserFromGroup method")
+//			},
+//			DeleteUserPermissionFunc: func(ctx context.Context, token string, realm string, ticketID string) error {
+//				panic("mock out the DeleteUserPermission method")
+//			},
+//			DisableAllCredentialsByTypeFunc: func(ctx context.Context, token string, realm string, userID string, types []string) error {
+//				panic("mock out the DisableAllCredentialsByType method")
+//			},
+//			ExecuteActionsEmailFunc: func(ctx context.Context, token string, realm string, params gocloak.ExecuteActionsEmail) error {
+//				panic("mock out the ExecuteActionsEmail method")
+//			},
+//			ExportIDPPublicBrokerConfigFunc: func(ctx context.Context, token string, realm string, alias string) (*string, error) {
+//				panic("mock out the ExportIDPPublicBrokerConfig method")
+//			},
+//			GetAdapterConfigurationFunc: func(ctx context.Context, accessToken string, realm string, clientID string) (*gocloak.AdapterConfiguration, error) {
+//				panic("mock out the GetAdapterConfiguration method")
+//			},
+//			GetAuthenticationExecutionsFunc: func(ctx context.Context, token string, realm string, flow string) ([]*gocloak.ModifyAuthenticationExecutionRepresentation, error) {
+//				panic("mock out the GetAuthenticationExecutions method")
+//			},
+//			GetAuthenticationFlowsFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.AuthenticationFlowRepresentation, error) {
+//				panic("mock out the GetAuthenticationFlows method")
+//			},
+//			GetAuthorizationPolicyAssociatedPoliciesFunc: func(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PolicyRepresentation, error) {
+//				panic("mock out the GetAuthorizationPolicyAssociatedPolicies method")
+//			},
+//			GetAuthorizationPolicyResourcesFunc: func(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PolicyResourceRepresentation, error) {
+//				panic("mock out the GetAuthorizationPolicyResources method")
+//			},
+//			GetAuthorizationPolicyScopesFunc: func(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PolicyScopeRepresentation, error) {
+//				panic("mock out the GetAuthorizationPolicyScopes method")
+//			},
+//			GetAvailableClientRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, groupID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetAvailableClientRolesByGroupID method")
+//			},
+//			GetAvailableClientRolesByUserIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, userID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetAvailableClientRolesByUserID method")
+//			},
+//			GetAvailableRealmRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, groupID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetAvailableRealmRolesByGroupID method")
+//			},
+//			GetAvailableRealmRolesByUserIDFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetAvailableRealmRolesByUserID method")
+//			},
+//			GetCertsFunc: func(ctx context.Context, realm string) (*gocloak.CertResponse, error) {
+//				panic("mock out the GetCerts method")
+//			},
+//			GetClientFunc: func(ctx context.Context, accessToken string, realm string, idOfClient string) (*gocloak.Client, error) {
+//				panic("mock out the GetClient method")
+//			},
+//			GetClientOfflineSessionsFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.UserSessionRepresentation, error) {
+//				panic("mock out the GetClientOfflineSessions method")
+//			},
+//			GetClientRepresentationFunc: func(ctx context.Context, accessToken string, realm string, clientID string) (*gocloak.Client, error) {
+//				panic("mock out the GetClientRepresentation method")
+//			},
+//			GetClientRoleFunc: func(ctx context.Context, token string, realm string, idOfClient string, roleName string) (*gocloak.Role, error) {
+//				panic("mock out the GetClientRole method")
+//			},
+//			GetClientRoleByIDFunc: func(ctx context.Context, accessToken string, realm string, roleID string) (*gocloak.Role, error) {
+//				panic("mock out the GetClientRoleByID method")
+//			},
+//			GetClientRolesFunc: func(ctx context.Context, accessToken string, realm string, idOfClient string, params gocloak.GetRoleParams) ([]*gocloak.Role, error) {
+//				panic("mock out the GetClientRoles method")
+//			},
+//			GetClientRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, groupID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetClientRolesByGroupID method")
+//			},
+//			GetClientRolesByUserIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, userID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetClientRolesByUserID method")
+//			},
+//			GetClientScopeFunc: func(ctx context.Context, token string, realm string, scopeID string) (*gocloak.ClientScope, error) {
+//				panic("mock out the GetClientScope method")
+//			},
+//			GetClientScopeMappingsFunc: func(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.MappingsRepresentation, error) {
+//				panic("mock out the GetClientScopeMappings method")
+//			},
+//			GetClientScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetClientScopeMappingsClientRoles method")
+//			},
+//			GetClientScopeMappingsClientRolesAvailableFunc: func(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetClientScopeMappingsClientRolesAvailable method")
+//			},
+//			GetClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetClientScopeMappingsRealmRoles method")
+//			},
+//			GetClientScopeMappingsRealmRolesAvailableFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetClientScopeMappingsRealmRolesAvailable method")
+//			},
+//			GetClientScopeProtocolMapperFunc: func(ctx context.Context, token string, realm string, scopeID string, protocolMapperID string) (*gocloak.ProtocolMappers, error) {
+//				panic("mock out the GetClientScopeProtocolMapper method")
+//			},
+//			GetClientScopeProtocolMappersFunc: func(ctx context.Context, token string, realm string, scopeID string) ([]*gocloak.ProtocolMappers, error) {
+//				panic("mock out the GetClientScopeProtocolMappers method")
+//			},
+//			GetClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
+//				panic("mock out the GetClientScopes method")
+//			},
+//			GetClientScopesScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetClientScopesScopeMappingsClientRoles method")
+//			},
+//			GetClientScopesScopeMappingsClientRolesAvailableFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetClientScopesScopeMappingsClientRolesAvailable method")
+//			},
+//			GetClientScopesScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetClientScopesScopeMappingsRealmRoles method")
+//			},
+//			GetClientScopesScopeMappingsRealmRolesAvailableFunc: func(ctx context.Context, token string, realm string, idOfClientScope string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetClientScopesScopeMappingsRealmRolesAvailable method")
+//			},
+//			GetClientSecretFunc: func(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.CredentialRepresentation, error) {
+//				panic("mock out the GetClientSecret method")
+//			},
+//			GetClientServiceAccountFunc: func(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.User, error) {
+//				panic("mock out the GetClientServiceAccount method")
+//			},
+//			GetClientUserSessionsFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.UserSessionRepresentation, error) {
+//				panic("mock out the GetClientUserSessions method")
+//			},
+//			GetClientsFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
+//				panic("mock out the GetClients method")
+//			},
+//			GetClientsDefaultScopesFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.ClientScope, error) {
+//				panic("mock out the GetClientsDefaultScopes method")
+//			},
+//			GetClientsOptionalScopesFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.ClientScope, error) {
+//				panic("mock out the GetClientsOptionalScopes method")
+//			},
+//			GetComponentsFunc: func(ctx context.Context, accessToken string, realm string) ([]*gocloak.Component, error) {
+//				panic("mock out the GetComponents method")
+//			},
+//			GetCompositeClientRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, groupID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetCompositeClientRolesByGroupID method")
+//			},
+//			GetCompositeClientRolesByRoleIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, roleID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetCompositeClientRolesByRoleID method")
+//			},
+//			GetCompositeClientRolesByUserIDFunc: func(ctx context.Context, token string, realm string, idOfClient string, userID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetCompositeClientRolesByUserID method")
+//			},
+//			GetCompositeRealmRolesFunc: func(ctx context.Context, token string, realm string, roleName string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetCompositeRealmRoles method")
+//			},
+//			GetCompositeRealmRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, groupID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetCompositeRealmRolesByGroupID method")
+//			},
+//			GetCompositeRealmRolesByRoleIDFunc: func(ctx context.Context, token string, realm string, roleID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetCompositeRealmRolesByRoleID method")
+//			},
+//			GetCompositeRealmRolesByUserIDFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetCompositeRealmRolesByUserID method")
+//			},
+//			GetConfiguredUserStorageCredentialTypesFunc: func(ctx context.Context, token string, realm string, userID string) ([]string, error) {
+//				panic("mock out the GetConfiguredUserStorageCredentialTypes method")
+//			},
+//			GetCredentialRegistratorsFunc: func(ctx context.Context, token string, realm string) ([]string, error) {
+//				panic("mock out the GetCredentialRegistrators method")
+//			},
+//			GetCredentialsFunc: func(ctx context.Context, token string, realm string, UserID string) ([]*gocloak.CredentialRepresentation, error) {
+//				panic("mock out the GetCredentials method")
+//			},
+//			GetDefaultDefaultClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
+//				panic("mock out the GetDefaultDefaultClientScopes method")
+//			},
+//			GetDefaultGroupsFunc: func(ctx context.Context, accessToken string, realm string) ([]*gocloak.Group, error) {
+//				panic("mock out the GetDefaultGroups method")
+//			},
+//			GetDefaultOptionalClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
+//				panic("mock out the GetDefaultOptionalClientScopes method")
+//			},
+//			GetDependentPermissionsFunc: func(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PermissionRepresentation, error) {
+//				panic("mock out the GetDependentPermissions method")
+//			},
+//			GetEventsFunc: func(ctx context.Context, token string, realm string, params gocloak.GetEventsParams) ([]*gocloak.EventRepresentation, error) {
+//				panic("mock out the GetEvents method")
+//			},
+//			GetGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) (*gocloak.Group, error) {
+//				panic("mock out the GetGroup method")
+//			},
+//			GetGroupMembersFunc: func(ctx context.Context, accessToken string, realm string, groupID string, params gocloak.GetGroupsParams) ([]*gocloak.User, error) {
+//				panic("mock out the GetGroupMembers method")
+//			},
+//			GetGroupsFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetGroupsParams) ([]*gocloak.Group, error) {
+//				panic("mock out the GetGroups method")
+//			},
+//			GetGroupsByRoleFunc: func(ctx context.Context, accessToken string, realm string, roleName string) ([]*gocloak.Group, error) {
+//				panic("mock out the GetGroupsByRole method")
+//			},
+//			GetGroupsCountFunc: func(ctx context.Context, token string, realm string, params gocloak.GetGroupsParams) (int, error) {
+//				panic("mock out the GetGroupsCount method")
+//			},
+//			GetIdentityProviderFunc: func(ctx context.Context, token string, realm string, alias string) (*gocloak.IdentityProviderRepresentation, error) {
+//				panic("mock out the GetIdentityProvider method")
+//			},
+//			GetIdentityProviderMapperByIDFunc: func(ctx context.Context, token string, realm string, alias string, mapperID string) (*gocloak.IdentityProviderMapper, error) {
+//				panic("mock out the GetIdentityProviderMapperByID method")
+//			},
+//			GetIdentityProviderMappersFunc: func(ctx context.Context, token string, realm string, alias string) ([]*gocloak.IdentityProviderMapper, error) {
+//				panic("mock out the GetIdentityProviderMappers method")
+//			},
+//			GetIdentityProvidersFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.IdentityProviderRepresentation, error) {
+//				panic("mock out the GetIdentityProviders method")
+//			},
+//			GetIssuerFunc: func(ctx context.Context, realm string) (*gocloak.IssuerResponse, error) {
+//				panic("mock out the GetIssuer method")
+//			},
+//			GetKeyStoreConfigFunc: func(ctx context.Context, accessToken string, realm string) (*gocloak.KeyStoreConfig, error) {
+//				panic("mock out the GetKeyStoreConfig method")
+//			},
+//			GetPermissionFunc: func(ctx context.Context, token string, realm string, idOfClient string, permissionID string) (*gocloak.PermissionRepresentation, error) {
+//				panic("mock out the GetPermission method")
+//			},
+//			GetPermissionResourcesFunc: func(ctx context.Context, token string, realm string, idOfClient string, permissionID string) ([]*gocloak.PermissionResource, error) {
+//				panic("mock out the GetPermissionResources method")
+//			},
+//			GetPermissionScopesFunc: func(ctx context.Context, token string, realm string, idOfClient string, permissionID string) ([]*gocloak.PermissionScope, error) {
+//				panic("mock out the GetPermissionScopes method")
+//			},
+//			GetPermissionsFunc: func(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetPermissionParams) ([]*gocloak.PermissionRepresentation, error) {
+//				panic("mock out the GetPermissions method")
+//			},
+//			GetPoliciesFunc: func(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetPolicyParams) ([]*gocloak.PolicyRepresentation, error) {
+//				panic("mock out the GetPolicies method")
+//			},
+//			GetPolicyFunc: func(ctx context.Context, token string, realm string, idOfClient string, policyID string) (*gocloak.PolicyRepresentation, error) {
+//				panic("mock out the GetPolicy method")
+//			},
+//			GetRawUserInfoFunc: func(ctx context.Context, accessToken string, realm string) (map[string]interface{}, error) {
+//				panic("mock out the GetRawUserInfo method")
+//			},
+//			GetRealmFunc: func(ctx context.Context, token string, realm string) (*gocloak.RealmRepresentation, error) {
+//				panic("mock out the GetRealm method")
+//			},
+//			GetRealmRoleFunc: func(ctx context.Context, token string, realm string, roleName string) (*gocloak.Role, error) {
+//				panic("mock out the GetRealmRole method")
+//			},
+//			GetRealmRoleByIDFunc: func(ctx context.Context, token string, realm string, roleID string) (*gocloak.Role, error) {
+//				panic("mock out the GetRealmRoleByID method")
+//			},
+//			GetRealmRolesFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetRoleParams) ([]*gocloak.Role, error) {
+//				panic("mock out the GetRealmRoles method")
+//			},
+//			GetRealmRolesByGroupIDFunc: func(ctx context.Context, accessToken string, realm string, groupID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetRealmRolesByGroupID method")
+//			},
+//			GetRealmRolesByUserIDFunc: func(ctx context.Context, accessToken string, realm string, userID string) ([]*gocloak.Role, error) {
+//				panic("mock out the GetRealmRolesByUserID method")
+//			},
+//			GetRealmsFunc: func(ctx context.Context, token string) ([]*gocloak.RealmRepresentation, error) {
+//				panic("mock out the GetRealms method")
+//			},
+//			GetRequestingPartyPermissionDecisionFunc: func(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*gocloak.RequestingPartyPermissionDecision, error) {
+//				panic("mock out the GetRequestingPartyPermissionDecision method")
+//			},
+//			GetRequestingPartyPermissionsFunc: func(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*[]gocloak.RequestingPartyPermission, error) {
+//				panic("mock out the GetRequestingPartyPermissions method")
+//			},
+//			GetRequestingPartyTokenFunc: func(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*gocloak.JWT, error) {
+//				panic("mock out the GetRequestingPartyToken method")
+//			},
+//			GetResourceFunc: func(ctx context.Context, token string, realm string, idOfClient string, resourceID string) (*gocloak.ResourceRepresentation, error) {
+//				panic("mock out the GetResource method")
+//			},
+//			GetResourceClientFunc: func(ctx context.Context, token string, realm string, resourceID string) (*gocloak.ResourceRepresentation, error) {
+//				panic("mock out the GetResourceClient method")
+//			},
+//			GetResourcePoliciesFunc: func(ctx context.Context, token string, realm string, params gocloak.GetResourcePoliciesParams) ([]*gocloak.ResourcePolicyRepresentation, error) {
+//				panic("mock out the GetResourcePolicies method")
+//			},
+//			GetResourcePolicyFunc: func(ctx context.Context, token string, realm string, permissionID string) (*gocloak.ResourcePolicyRepresentation, error) {
+//				panic("mock out the GetResourcePolicy method")
+//			},
+//			GetResourcesFunc: func(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetResourceParams) ([]*gocloak.ResourceRepresentation, error) {
+//				panic("mock out the GetResources method")
+//			},
+//			GetResourcesClientFunc: func(ctx context.Context, token string, realm string, params gocloak.GetResourceParams) ([]*gocloak.ResourceRepresentation, error) {
+//				panic("mock out the GetResourcesClient method")
+//			},
+//			GetRoleMappingByGroupIDFunc: func(ctx context.Context, accessToken string, realm string, groupID string) (*gocloak.MappingsRepresentation, error) {
+//				panic("mock out the GetRoleMappingByGroupID method")
+//			},
+//			GetRoleMappingByUserIDFunc: func(ctx context.Context, accessToken string, realm string, userID string) (*gocloak.MappingsRepresentation, error) {
+//				panic("mock out the GetRoleMappingByUserID method")
+//			},
+//			GetScopeFunc: func(ctx context.Context, token string, realm string, idOfClient string, scopeID string) (*gocloak.ScopeRepresentation, error) {
+//				panic("mock out the GetScope method")
+//			},
+//			GetScopesFunc: func(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetScopeParams) ([]*gocloak.ScopeRepresentation, error) {
+//				panic("mock out the GetScopes method")
+//			},
+//			GetServerInfoFunc: func(ctx context.Context, accessToken string) (*gocloak.ServerInfoRepesentation, error) {
+//				panic("mock out the GetServerInfo method")
+//			},
+//			GetTokenFunc: func(ctx context.Context, realm string, options gocloak.TokenOptions) (*gocloak.JWT, error) {
+//				panic("mock out the GetToken method")
+//			},
+//			GetUserByIDFunc: func(ctx context.Context, accessToken string, realm string, userID string) (*gocloak.User, error) {
+//				panic("mock out the GetUserByID method")
+//			},
+//			GetUserCountFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetUsersParams) (int, error) {
+//				panic("mock out the GetUserCount method")
+//			},
+//			GetUserFederatedIdentitiesFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.FederatedIdentityRepresentation, error) {
+//				panic("mock out the GetUserFederatedIdentities method")
+//			},
+//			GetUserGroupsFunc: func(ctx context.Context, accessToken string, realm string, userID string, params gocloak.GetGroupsParams) ([]*gocloak.Group, error) {
+//				panic("mock out the GetUserGroups method")
+//			},
+//			GetUserInfoFunc: func(ctx context.Context, accessToken string, realm string) (*gocloak.UserInfo, error) {
+//				panic("mock out the GetUserInfo method")
+//			},
+//			GetUserOfflineSessionsForClientFunc: func(ctx context.Context, token string, realm string, userID string, idOfClient string) ([]*gocloak.UserSessionRepresentation, error) {
+//				panic("mock out the GetUserOfflineSessionsForClient method")
+//			},
+//			GetUserPermissionsFunc: func(ctx context.Context, token string, realm string, params gocloak.GetUserPermissionParams) ([]*gocloak.PermissionGrantResponseRepresentation, error) {
+//				panic("mock out the GetUserPermissions method")
+//			},
+//			GetUserSessionsFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.UserSessionRepresentation, error) {
+//				panic("mock out the GetUserSessions method")
+//			},
+//			GetUsersFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetUsersParams) ([]*gocloak.User, error) {
+//				panic("mock out the GetUsers method")
+//			},
+//			GetUsersByClientRoleNameFunc: func(ctx context.Context, token string, realm string, idOfClient string, roleName string, params gocloak.GetUsersByRoleParams) ([]*gocloak.User, error) {
+//				panic("mock out the GetUsersByClientRoleName method")
+//			},
+//			GetUsersByRoleNameFunc: func(ctx context.Context, token string, realm string, roleName string) ([]*gocloak.User, error) {
+//				panic("mock out the GetUsersByRoleName method")
+//			},
+//			GrantUserPermissionFunc: func(ctx context.Context, token string, realm string, permission gocloak.PermissionGrantParams) (*gocloak.PermissionGrantResponseRepresentation, error) {
+//				panic("mock out the GrantUserPermission method")
+//			},
+//			ImportIdentityProviderConfigFunc: func(ctx context.Context, token string, realm string, fromURL string, providerID string) (map[string]string, error) {
+//				panic("mock out the ImportIdentityProviderConfig method")
+//			},
+//			ImportIdentityProviderConfigFromFileFunc: func(ctx context.Context, token string, realm string, providerID string, fileName string, fileBody io.Reader) (map[string]string, error) {
+//				panic("mock out the ImportIdentityProviderConfigFromFile method")
+//			},
+//			LoginFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string) (*gocloak.JWT, error) {
+//				panic("mock out the Login method")
+//			},
+//			LoginAdminFunc: func(ctx context.Context, username string, password string, realm string) (*gocloak.JWT, error) {
+//				panic("mock out the LoginAdmin method")
+//			},
+//			LoginClientFunc: func(ctx context.Context, clientID string, clientSecret string, realm string) (*gocloak.JWT, error) {
+//				panic("mock out the LoginClient method")
+//			},
+//			LoginClientSignedJWTFunc: func(ctx context.Context, idOfClient string, realm string, key interface{}, signedMethod jwt.SigningMethod, expiresAt *jwt.NumericDate) (*gocloak.JWT, error) {
+//				panic("mock out the LoginClientSignedJWT method")
+//			},
+//			LoginClientTokenExchangeFunc: func(ctx context.Context, clientID string, token string, clientSecret string, realm string, targetClient string, userID string) (*gocloak.JWT, error) {
+//				panic("mock out the LoginClientTokenExchange method")
+//			},
+//			LoginOtpFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string, totp string) (*gocloak.JWT, error) {
+//				panic("mock out the LoginOtp method")
+//			},
+//			LogoutFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, refreshToken string) error {
+//				panic("mock out the Logout method")
+//			},
+//			LogoutAllSessionsFunc: func(ctx context.Context, accessToken string, realm string, userID string) error {
+//				panic("mock out the LogoutAllSessions method")
+//			},
+//			LogoutPublicClientFunc: func(ctx context.Context, idOfClient string, realm string, accessToken string, refreshToken string) error {
+//				panic("mock out the LogoutPublicClient method")
+//			},
+//			LogoutUserSessionFunc: func(ctx context.Context, accessToken string, realm string, session string) error {
+//				panic("mock out the LogoutUserSession method")
+//			},
+//			MoveCredentialBehindFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string, newPreviousCredentialID string) error {
+//				panic("mock out the MoveCredentialBehind method")
+//			},
+//			MoveCredentialToFirstFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string) error {
+//				panic("mock out the MoveCredentialToFirst method")
+//			},
+//			RefreshTokenFunc: func(ctx context.Context, refreshToken string, clientID string, clientSecret string, realm string) (*gocloak.JWT, error) {
+//				panic("mock out the RefreshToken method")
+//			},
+//			RegenerateClientSecretFunc: func(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.CredentialRepresentation, error) {
+//				panic("mock out the RegenerateClientSecret method")
+//			},
+//			RemoveDefaultGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) error {
+//				panic("mock out the RemoveDefaultGroup method")
+//			},
+//			RemoveDefaultScopeFromClientFunc: func(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
+//				panic("mock out the RemoveDefaultScopeFromClient method")
+//			},
+//			RemoveOptionalScopeFromClientFunc: func(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
+//				panic("mock out the RemoveOptionalScopeFromClient method")
+//			},
+//			RestyClientFunc: func() *resty.Client {
+//				panic("mock out the RestyClient method")
+//			},
+//			RetrospectTokenFunc: func(ctx context.Context, accessToken string, clientID string, clientSecret string, realm string) (*gocloak.RetrospecTokenResult, error) {
+//				panic("mock out the RetrospectToken method")
+//			},
+//			RevokeUserConsentsFunc: func(ctx context.Context, accessToken string, realm string, userID string, clientID string) error {
+//				panic("mock out the RevokeUserConsents method")
+//			},
+//			SetPasswordFunc: func(ctx context.Context, token string, userID string, realm string, password string, temporary bool) error {
+//				panic("mock out the SetPassword method")
+//			},
+//			SetRestyClientFunc: func(restyClient *resty.Client)  {
+//				panic("mock out the SetRestyClient method")
+//			},
+//			UpdateAuthenticationExecutionFunc: func(ctx context.Context, token string, realm string, flow string, execution gocloak.ModifyAuthenticationExecutionRepresentation) error {
+//				panic("mock out the UpdateAuthenticationExecution method")
+//			},
+//			UpdateClientFunc: func(ctx context.Context, accessToken string, realm string, updatedClient gocloak.Client) error {
+//				panic("mock out the UpdateClient method")
+//			},
+//			UpdateClientProtocolMapperFunc: func(ctx context.Context, token string, realm string, idOfClient string, mapperID string, mapper gocloak.ProtocolMapperRepresentation) error {
+//				panic("mock out the UpdateClientProtocolMapper method")
+//			},
+//			UpdateClientRepresentationFunc: func(ctx context.Context, accessToken string, realm string, updatedClient gocloak.Client) (*gocloak.Client, error) {
+//				panic("mock out the UpdateClientRepresentation method")
+//			},
+//			UpdateClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) error {
+//				panic("mock out the UpdateClientScope method")
+//			},
+//			UpdateClientScopeProtocolMapperFunc: func(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) error {
+//				panic("mock out the UpdateClientScopeProtocolMapper method")
+//			},
+//			UpdateCredentialUserLabelFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string, userLabel string) error {
+//				panic("mock out the UpdateCredentialUserLabel method")
+//			},
+//			UpdateGroupFunc: func(ctx context.Context, accessToken string, realm string, updatedGroup gocloak.Group) error {
+//				panic("mock out the UpdateGroup method")
+//			},
+//			UpdateIdentityProviderFunc: func(ctx context.Context, token string, realm string, alias string, providerRep gocloak.IdentityProviderRepresentation) error {
+//				panic("mock out the UpdateIdentityProvider method")
+//			},
+//			UpdateIdentityProviderMapperFunc: func(ctx context.Context, token string, realm string, alias string, mapper gocloak.IdentityProviderMapper) error {
+//				panic("mock out the UpdateIdentityProviderMapper method")
+//			},
+//			UpdatePermissionFunc: func(ctx context.Context, token string, realm string, idOfClient string, permission gocloak.PermissionRepresentation) error {
+//				panic("mock out the UpdatePermission method")
+//			},
+//			UpdatePolicyFunc: func(ctx context.Context, token string, realm string, idOfClient string, policy gocloak.PolicyRepresentation) error {
+//				panic("mock out the UpdatePolicy method")
+//			},
+//			UpdateRealmFunc: func(ctx context.Context, token string, realm gocloak.RealmRepresentation) error {
+//				panic("mock out the UpdateRealm method")
+//			},
+//			UpdateRealmRoleFunc: func(ctx context.Context, token string, realm string, roleName string, role gocloak.Role) error {
+//				panic("mock out the UpdateRealmRole method")
+//			},
+//			UpdateRealmRoleByIDFunc: func(ctx context.Context, token string, realm string, roleID string, role gocloak.Role) error {
+//				panic("mock out the UpdateRealmRoleByID method")
+//			},
+//			UpdateRequiredActionFunc: func(ctx context.Context, token string, realm string, requiredAction gocloak.RequiredActionProviderRepresentation) error {
+//				panic("mock out the UpdateRequiredAction method")
+//			},
+//			UpdateResourceFunc: func(ctx context.Context, token string, realm string, idOfClient string, resource gocloak.ResourceRepresentation) error {
+//				panic("mock out the UpdateResource method")
+//			},
+//			UpdateResourceClientFunc: func(ctx context.Context, token string, realm string, resource gocloak.ResourceRepresentation) error {
+//				panic("mock out the UpdateResourceClient method")
+//			},
+//			UpdateResourcePolicyFunc: func(ctx context.Context, token string, realm string, permissionID string, policy gocloak.ResourcePolicyRepresentation) error {
+//				panic("mock out the UpdateResourcePolicy method")
+//			},
+//			UpdateRoleFunc: func(ctx context.Context, accessToken string, realm string, idOfClient string, role gocloak.Role) error {
+//				panic("mock out the UpdateRole method")
+//			},
+//			UpdateScopeFunc: func(ctx context.Context, token string, realm string, idOfClient string, resource gocloak.ScopeRepresentation) error {
+//				panic("mock out the UpdateScope method")
+//			},
+//			UpdateUserFunc: func(ctx context.Context, accessToken string, realm string, user gocloak.User) error {
+//				panic("mock out the UpdateUser method")
+//			},
+//			UpdateUserPermissionFunc: func(ctx context.Context, token string, realm string, permission gocloak.PermissionGrantParams) (*gocloak.PermissionGrantResponseRepresentation, error) {
+//				panic("mock out the UpdateUserPermission method")
+//			},
+//		}
 //
-// 		// use mockedGoCloak in code that requires GoCloak
-// 		// and then make assertions.
+//		// use mockedGoCloak in code that requires GoCloak
+//		// and then make assertions.
 //
-// 	}
+//	}
 type GoCloakMock struct {
 	// AddClientRoleCompositeFunc mocks the AddClientRoleComposite method.
 	AddClientRoleCompositeFunc func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error
@@ -4480,7 +4480,8 @@ func (mock *GoCloakMock) AddClientRoleComposite(ctx context.Context, token strin
 
 // AddClientRoleCompositeCalls gets all the calls that were made to AddClientRoleComposite.
 // Check the length with:
-//     len(mockedGoCloak.AddClientRoleCompositeCalls())
+//
+//	len(mockedGoCloak.AddClientRoleCompositeCalls())
 func (mock *GoCloakMock) AddClientRoleCompositeCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -4529,7 +4530,8 @@ func (mock *GoCloakMock) AddClientRoleToGroup(ctx context.Context, token string,
 
 // AddClientRoleToGroupCalls gets all the calls that were made to AddClientRoleToGroup.
 // Check the length with:
-//     len(mockedGoCloak.AddClientRoleToGroupCalls())
+//
+//	len(mockedGoCloak.AddClientRoleToGroupCalls())
 func (mock *GoCloakMock) AddClientRoleToGroupCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -4580,7 +4582,8 @@ func (mock *GoCloakMock) AddClientRoleToUser(ctx context.Context, token string, 
 
 // AddClientRoleToUserCalls gets all the calls that were made to AddClientRoleToUser.
 // Check the length with:
-//     len(mockedGoCloak.AddClientRoleToUserCalls())
+//
+//	len(mockedGoCloak.AddClientRoleToUserCalls())
 func (mock *GoCloakMock) AddClientRoleToUserCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -4627,7 +4630,8 @@ func (mock *GoCloakMock) AddDefaultGroup(ctx context.Context, accessToken string
 
 // AddDefaultGroupCalls gets all the calls that were made to AddDefaultGroup.
 // Check the length with:
-//     len(mockedGoCloak.AddDefaultGroupCalls())
+//
+//	len(mockedGoCloak.AddDefaultGroupCalls())
 func (mock *GoCloakMock) AddDefaultGroupCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -4672,7 +4676,8 @@ func (mock *GoCloakMock) AddDefaultScopeToClient(ctx context.Context, token stri
 
 // AddDefaultScopeToClientCalls gets all the calls that were made to AddDefaultScopeToClient.
 // Check the length with:
-//     len(mockedGoCloak.AddDefaultScopeToClientCalls())
+//
+//	len(mockedGoCloak.AddDefaultScopeToClientCalls())
 func (mock *GoCloakMock) AddDefaultScopeToClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -4719,7 +4724,8 @@ func (mock *GoCloakMock) AddOptionalScopeToClient(ctx context.Context, token str
 
 // AddOptionalScopeToClientCalls gets all the calls that were made to AddOptionalScopeToClient.
 // Check the length with:
-//     len(mockedGoCloak.AddOptionalScopeToClientCalls())
+//
+//	len(mockedGoCloak.AddOptionalScopeToClientCalls())
 func (mock *GoCloakMock) AddOptionalScopeToClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -4766,7 +4772,8 @@ func (mock *GoCloakMock) AddRealmRoleComposite(ctx context.Context, token string
 
 // AddRealmRoleCompositeCalls gets all the calls that were made to AddRealmRoleComposite.
 // Check the length with:
-//     len(mockedGoCloak.AddRealmRoleCompositeCalls())
+//
+//	len(mockedGoCloak.AddRealmRoleCompositeCalls())
 func (mock *GoCloakMock) AddRealmRoleCompositeCalls() []struct {
 	Ctx      context.Context
 	Token    string
@@ -4813,7 +4820,8 @@ func (mock *GoCloakMock) AddRealmRoleToGroup(ctx context.Context, token string, 
 
 // AddRealmRoleToGroupCalls gets all the calls that were made to AddRealmRoleToGroup.
 // Check the length with:
-//     len(mockedGoCloak.AddRealmRoleToGroupCalls())
+//
+//	len(mockedGoCloak.AddRealmRoleToGroupCalls())
 func (mock *GoCloakMock) AddRealmRoleToGroupCalls() []struct {
 	Ctx     context.Context
 	Token   string
@@ -4860,7 +4868,8 @@ func (mock *GoCloakMock) AddRealmRoleToUser(ctx context.Context, token string, r
 
 // AddRealmRoleToUserCalls gets all the calls that were made to AddRealmRoleToUser.
 // Check the length with:
-//     len(mockedGoCloak.AddRealmRoleToUserCalls())
+//
+//	len(mockedGoCloak.AddRealmRoleToUserCalls())
 func (mock *GoCloakMock) AddRealmRoleToUserCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -4907,7 +4916,8 @@ func (mock *GoCloakMock) AddUserToGroup(ctx context.Context, token string, realm
 
 // AddUserToGroupCalls gets all the calls that were made to AddUserToGroup.
 // Check the length with:
-//     len(mockedGoCloak.AddUserToGroupCalls())
+//
+//	len(mockedGoCloak.AddUserToGroupCalls())
 func (mock *GoCloakMock) AddUserToGroupCalls() []struct {
 	Ctx     context.Context
 	Token   string
@@ -4950,7 +4960,8 @@ func (mock *GoCloakMock) ClearKeysCache(ctx context.Context, token string, realm
 
 // ClearKeysCacheCalls gets all the calls that were made to ClearKeysCache.
 // Check the length with:
-//     len(mockedGoCloak.ClearKeysCacheCalls())
+//
+//	len(mockedGoCloak.ClearKeysCacheCalls())
 func (mock *GoCloakMock) ClearKeysCacheCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -4989,7 +5000,8 @@ func (mock *GoCloakMock) ClearRealmCache(ctx context.Context, token string, real
 
 // ClearRealmCacheCalls gets all the calls that were made to ClearRealmCache.
 // Check the length with:
-//     len(mockedGoCloak.ClearRealmCacheCalls())
+//
+//	len(mockedGoCloak.ClearRealmCacheCalls())
 func (mock *GoCloakMock) ClearRealmCacheCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -5028,7 +5040,8 @@ func (mock *GoCloakMock) ClearUserCache(ctx context.Context, token string, realm
 
 // ClearUserCacheCalls gets all the calls that were made to ClearUserCache.
 // Check the length with:
-//     len(mockedGoCloak.ClearUserCacheCalls())
+//
+//	len(mockedGoCloak.ClearUserCacheCalls())
 func (mock *GoCloakMock) ClearUserCacheCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -5071,7 +5084,8 @@ func (mock *GoCloakMock) CreateAuthenticationExecution(ctx context.Context, toke
 
 // CreateAuthenticationExecutionCalls gets all the calls that were made to CreateAuthenticationExecution.
 // Check the length with:
-//     len(mockedGoCloak.CreateAuthenticationExecutionCalls())
+//
+//	len(mockedGoCloak.CreateAuthenticationExecutionCalls())
 func (mock *GoCloakMock) CreateAuthenticationExecutionCalls() []struct {
 	Ctx       context.Context
 	Token     string
@@ -5118,7 +5132,8 @@ func (mock *GoCloakMock) CreateAuthenticationExecutionFlow(ctx context.Context, 
 
 // CreateAuthenticationExecutionFlowCalls gets all the calls that were made to CreateAuthenticationExecutionFlow.
 // Check the length with:
-//     len(mockedGoCloak.CreateAuthenticationExecutionFlowCalls())
+//
+//	len(mockedGoCloak.CreateAuthenticationExecutionFlowCalls())
 func (mock *GoCloakMock) CreateAuthenticationExecutionFlowCalls() []struct {
 	Ctx       context.Context
 	Token     string
@@ -5163,7 +5178,8 @@ func (mock *GoCloakMock) CreateAuthenticationFlow(ctx context.Context, token str
 
 // CreateAuthenticationFlowCalls gets all the calls that were made to CreateAuthenticationFlow.
 // Check the length with:
-//     len(mockedGoCloak.CreateAuthenticationFlowCalls())
+//
+//	len(mockedGoCloak.CreateAuthenticationFlowCalls())
 func (mock *GoCloakMock) CreateAuthenticationFlowCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -5208,7 +5224,8 @@ func (mock *GoCloakMock) CreateChildGroup(ctx context.Context, token string, rea
 
 // CreateChildGroupCalls gets all the calls that were made to CreateChildGroup.
 // Check the length with:
-//     len(mockedGoCloak.CreateChildGroupCalls())
+//
+//	len(mockedGoCloak.CreateChildGroupCalls())
 func (mock *GoCloakMock) CreateChildGroupCalls() []struct {
 	Ctx     context.Context
 	Token   string
@@ -5253,7 +5270,8 @@ func (mock *GoCloakMock) CreateClient(ctx context.Context, accessToken string, r
 
 // CreateClientCalls gets all the calls that were made to CreateClient.
 // Check the length with:
-//     len(mockedGoCloak.CreateClientCalls())
+//
+//	len(mockedGoCloak.CreateClientCalls())
 func (mock *GoCloakMock) CreateClientCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -5298,7 +5316,8 @@ func (mock *GoCloakMock) CreateClientProtocolMapper(ctx context.Context, token s
 
 // CreateClientProtocolMapperCalls gets all the calls that were made to CreateClientProtocolMapper.
 // Check the length with:
-//     len(mockedGoCloak.CreateClientProtocolMapperCalls())
+//
+//	len(mockedGoCloak.CreateClientProtocolMapperCalls())
 func (mock *GoCloakMock) CreateClientProtocolMapperCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -5339,7 +5358,8 @@ func (mock *GoCloakMock) CreateClientRepresentation(ctx context.Context, realm s
 
 // CreateClientRepresentationCalls gets all the calls that were made to CreateClientRepresentation.
 // Check the length with:
-//     len(mockedGoCloak.CreateClientRepresentationCalls())
+//
+//	len(mockedGoCloak.CreateClientRepresentationCalls())
 func (mock *GoCloakMock) CreateClientRepresentationCalls() []struct {
 	Ctx   context.Context
 	Realm string
@@ -5380,7 +5400,8 @@ func (mock *GoCloakMock) CreateClientRole(ctx context.Context, accessToken strin
 
 // CreateClientRoleCalls gets all the calls that were made to CreateClientRole.
 // Check the length with:
-//     len(mockedGoCloak.CreateClientRoleCalls())
+//
+//	len(mockedGoCloak.CreateClientRoleCalls())
 func (mock *GoCloakMock) CreateClientRoleCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -5425,7 +5446,8 @@ func (mock *GoCloakMock) CreateClientScope(ctx context.Context, accessToken stri
 
 // CreateClientScopeCalls gets all the calls that were made to CreateClientScope.
 // Check the length with:
-//     len(mockedGoCloak.CreateClientScopeCalls())
+//
+//	len(mockedGoCloak.CreateClientScopeCalls())
 func (mock *GoCloakMock) CreateClientScopeCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -5472,7 +5494,8 @@ func (mock *GoCloakMock) CreateClientScopeMappingsClientRoles(ctx context.Contex
 
 // CreateClientScopeMappingsClientRolesCalls gets all the calls that were made to CreateClientScopeMappingsClientRoles.
 // Check the length with:
-//     len(mockedGoCloak.CreateClientScopeMappingsClientRolesCalls())
+//
+//	len(mockedGoCloak.CreateClientScopeMappingsClientRolesCalls())
 func (mock *GoCloakMock) CreateClientScopeMappingsClientRolesCalls() []struct {
 	Ctx                context.Context
 	Token              string
@@ -5521,7 +5544,8 @@ func (mock *GoCloakMock) CreateClientScopeMappingsRealmRoles(ctx context.Context
 
 // CreateClientScopeMappingsRealmRolesCalls gets all the calls that were made to CreateClientScopeMappingsRealmRoles.
 // Check the length with:
-//     len(mockedGoCloak.CreateClientScopeMappingsRealmRolesCalls())
+//
+//	len(mockedGoCloak.CreateClientScopeMappingsRealmRolesCalls())
 func (mock *GoCloakMock) CreateClientScopeMappingsRealmRolesCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -5568,7 +5592,8 @@ func (mock *GoCloakMock) CreateClientScopeProtocolMapper(ctx context.Context, ac
 
 // CreateClientScopeProtocolMapperCalls gets all the calls that were made to CreateClientScopeProtocolMapper.
 // Check the length with:
-//     len(mockedGoCloak.CreateClientScopeProtocolMapperCalls())
+//
+//	len(mockedGoCloak.CreateClientScopeProtocolMapperCalls())
 func (mock *GoCloakMock) CreateClientScopeProtocolMapperCalls() []struct {
 	Ctx            context.Context
 	AccessToken    string
@@ -5617,7 +5642,8 @@ func (mock *GoCloakMock) CreateClientScopesScopeMappingsClientRoles(ctx context.
 
 // CreateClientScopesScopeMappingsClientRolesCalls gets all the calls that were made to CreateClientScopesScopeMappingsClientRoles.
 // Check the length with:
-//     len(mockedGoCloak.CreateClientScopesScopeMappingsClientRolesCalls())
+//
+//	len(mockedGoCloak.CreateClientScopesScopeMappingsClientRolesCalls())
 func (mock *GoCloakMock) CreateClientScopesScopeMappingsClientRolesCalls() []struct {
 	Ctx             context.Context
 	Token           string
@@ -5666,7 +5692,8 @@ func (mock *GoCloakMock) CreateClientScopesScopeMappingsRealmRoles(ctx context.C
 
 // CreateClientScopesScopeMappingsRealmRolesCalls gets all the calls that were made to CreateClientScopesScopeMappingsRealmRoles.
 // Check the length with:
-//     len(mockedGoCloak.CreateClientScopesScopeMappingsRealmRolesCalls())
+//
+//	len(mockedGoCloak.CreateClientScopesScopeMappingsRealmRolesCalls())
 func (mock *GoCloakMock) CreateClientScopesScopeMappingsRealmRolesCalls() []struct {
 	Ctx             context.Context
 	Token           string
@@ -5711,7 +5738,8 @@ func (mock *GoCloakMock) CreateComponent(ctx context.Context, accessToken string
 
 // CreateComponentCalls gets all the calls that were made to CreateComponent.
 // Check the length with:
-//     len(mockedGoCloak.CreateComponentCalls())
+//
+//	len(mockedGoCloak.CreateComponentCalls())
 func (mock *GoCloakMock) CreateComponentCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -5754,7 +5782,8 @@ func (mock *GoCloakMock) CreateGroup(ctx context.Context, accessToken string, re
 
 // CreateGroupCalls gets all the calls that were made to CreateGroup.
 // Check the length with:
-//     len(mockedGoCloak.CreateGroupCalls())
+//
+//	len(mockedGoCloak.CreateGroupCalls())
 func (mock *GoCloakMock) CreateGroupCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -5797,7 +5826,8 @@ func (mock *GoCloakMock) CreateIdentityProvider(ctx context.Context, token strin
 
 // CreateIdentityProviderCalls gets all the calls that were made to CreateIdentityProvider.
 // Check the length with:
-//     len(mockedGoCloak.CreateIdentityProviderCalls())
+//
+//	len(mockedGoCloak.CreateIdentityProviderCalls())
 func (mock *GoCloakMock) CreateIdentityProviderCalls() []struct {
 	Ctx         context.Context
 	Token       string
@@ -5842,7 +5872,8 @@ func (mock *GoCloakMock) CreateIdentityProviderMapper(ctx context.Context, token
 
 // CreateIdentityProviderMapperCalls gets all the calls that were made to CreateIdentityProviderMapper.
 // Check the length with:
-//     len(mockedGoCloak.CreateIdentityProviderMapperCalls())
+//
+//	len(mockedGoCloak.CreateIdentityProviderMapperCalls())
 func (mock *GoCloakMock) CreateIdentityProviderMapperCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -5889,7 +5920,8 @@ func (mock *GoCloakMock) CreatePermission(ctx context.Context, token string, rea
 
 // CreatePermissionCalls gets all the calls that were made to CreatePermission.
 // Check the length with:
-//     len(mockedGoCloak.CreatePermissionCalls())
+//
+//	len(mockedGoCloak.CreatePermissionCalls())
 func (mock *GoCloakMock) CreatePermissionCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -5934,7 +5966,8 @@ func (mock *GoCloakMock) CreatePermissionTicket(ctx context.Context, token strin
 
 // CreatePermissionTicketCalls gets all the calls that were made to CreatePermissionTicket.
 // Check the length with:
-//     len(mockedGoCloak.CreatePermissionTicketCalls())
+//
+//	len(mockedGoCloak.CreatePermissionTicketCalls())
 func (mock *GoCloakMock) CreatePermissionTicketCalls() []struct {
 	Ctx         context.Context
 	Token       string
@@ -5979,7 +6012,8 @@ func (mock *GoCloakMock) CreatePolicy(ctx context.Context, token string, realm s
 
 // CreatePolicyCalls gets all the calls that were made to CreatePolicy.
 // Check the length with:
-//     len(mockedGoCloak.CreatePolicyCalls())
+//
+//	len(mockedGoCloak.CreatePolicyCalls())
 func (mock *GoCloakMock) CreatePolicyCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -6022,7 +6056,8 @@ func (mock *GoCloakMock) CreateRealm(ctx context.Context, token string, realm go
 
 // CreateRealmCalls gets all the calls that were made to CreateRealm.
 // Check the length with:
-//     len(mockedGoCloak.CreateRealmCalls())
+//
+//	len(mockedGoCloak.CreateRealmCalls())
 func (mock *GoCloakMock) CreateRealmCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -6063,7 +6098,8 @@ func (mock *GoCloakMock) CreateRealmRole(ctx context.Context, token string, real
 
 // CreateRealmRoleCalls gets all the calls that were made to CreateRealmRole.
 // Check the length with:
-//     len(mockedGoCloak.CreateRealmRoleCalls())
+//
+//	len(mockedGoCloak.CreateRealmRoleCalls())
 func (mock *GoCloakMock) CreateRealmRoleCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -6108,7 +6144,8 @@ func (mock *GoCloakMock) CreateResource(ctx context.Context, token string, realm
 
 // CreateResourceCalls gets all the calls that were made to CreateResource.
 // Check the length with:
-//     len(mockedGoCloak.CreateResourceCalls())
+//
+//	len(mockedGoCloak.CreateResourceCalls())
 func (mock *GoCloakMock) CreateResourceCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -6153,7 +6190,8 @@ func (mock *GoCloakMock) CreateResourceClient(ctx context.Context, token string,
 
 // CreateResourceClientCalls gets all the calls that were made to CreateResourceClient.
 // Check the length with:
-//     len(mockedGoCloak.CreateResourceClientCalls())
+//
+//	len(mockedGoCloak.CreateResourceClientCalls())
 func (mock *GoCloakMock) CreateResourceClientCalls() []struct {
 	Ctx      context.Context
 	Token    string
@@ -6198,7 +6236,8 @@ func (mock *GoCloakMock) CreateResourcePolicy(ctx context.Context, token string,
 
 // CreateResourcePolicyCalls gets all the calls that were made to CreateResourcePolicy.
 // Check the length with:
-//     len(mockedGoCloak.CreateResourcePolicyCalls())
+//
+//	len(mockedGoCloak.CreateResourcePolicyCalls())
 func (mock *GoCloakMock) CreateResourcePolicyCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -6245,7 +6284,8 @@ func (mock *GoCloakMock) CreateScope(ctx context.Context, token string, realm st
 
 // CreateScopeCalls gets all the calls that were made to CreateScope.
 // Check the length with:
-//     len(mockedGoCloak.CreateScopeCalls())
+//
+//	len(mockedGoCloak.CreateScopeCalls())
 func (mock *GoCloakMock) CreateScopeCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -6290,7 +6330,8 @@ func (mock *GoCloakMock) CreateUser(ctx context.Context, token string, realm str
 
 // CreateUserCalls gets all the calls that were made to CreateUser.
 // Check the length with:
-//     len(mockedGoCloak.CreateUserCalls())
+//
+//	len(mockedGoCloak.CreateUserCalls())
 func (mock *GoCloakMock) CreateUserCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -6337,7 +6378,8 @@ func (mock *GoCloakMock) CreateUserFederatedIdentity(ctx context.Context, token 
 
 // CreateUserFederatedIdentityCalls gets all the calls that were made to CreateUserFederatedIdentity.
 // Check the length with:
-//     len(mockedGoCloak.CreateUserFederatedIdentityCalls())
+//
+//	len(mockedGoCloak.CreateUserFederatedIdentityCalls())
 func (mock *GoCloakMock) CreateUserFederatedIdentityCalls() []struct {
 	Ctx                  context.Context
 	Token                string
@@ -6382,7 +6424,8 @@ func (mock *GoCloakMock) DecodeAccessToken(ctx context.Context, accessToken stri
 
 // DecodeAccessTokenCalls gets all the calls that were made to DecodeAccessToken.
 // Check the length with:
-//     len(mockedGoCloak.DecodeAccessTokenCalls())
+//
+//	len(mockedGoCloak.DecodeAccessTokenCalls())
 func (mock *GoCloakMock) DecodeAccessTokenCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -6423,7 +6466,8 @@ func (mock *GoCloakMock) DecodeAccessTokenCustomClaims(ctx context.Context, acce
 
 // DecodeAccessTokenCustomClaimsCalls gets all the calls that were made to DecodeAccessTokenCustomClaims.
 // Check the length with:
-//     len(mockedGoCloak.DecodeAccessTokenCustomClaimsCalls())
+//
+//	len(mockedGoCloak.DecodeAccessTokenCustomClaimsCalls())
 func (mock *GoCloakMock) DecodeAccessTokenCustomClaimsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -6466,7 +6510,8 @@ func (mock *GoCloakMock) DeleteAuthenticationExecution(ctx context.Context, toke
 
 // DeleteAuthenticationExecutionCalls gets all the calls that were made to DeleteAuthenticationExecution.
 // Check the length with:
-//     len(mockedGoCloak.DeleteAuthenticationExecutionCalls())
+//
+//	len(mockedGoCloak.DeleteAuthenticationExecutionCalls())
 func (mock *GoCloakMock) DeleteAuthenticationExecutionCalls() []struct {
 	Ctx         context.Context
 	Token       string
@@ -6509,7 +6554,8 @@ func (mock *GoCloakMock) DeleteAuthenticationFlow(ctx context.Context, token str
 
 // DeleteAuthenticationFlowCalls gets all the calls that were made to DeleteAuthenticationFlow.
 // Check the length with:
-//     len(mockedGoCloak.DeleteAuthenticationFlowCalls())
+//
+//	len(mockedGoCloak.DeleteAuthenticationFlowCalls())
 func (mock *GoCloakMock) DeleteAuthenticationFlowCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -6552,7 +6598,8 @@ func (mock *GoCloakMock) DeleteClient(ctx context.Context, accessToken string, r
 
 // DeleteClientCalls gets all the calls that were made to DeleteClient.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientCalls())
+//
+//	len(mockedGoCloak.DeleteClientCalls())
 func (mock *GoCloakMock) DeleteClientCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -6597,7 +6644,8 @@ func (mock *GoCloakMock) DeleteClientProtocolMapper(ctx context.Context, token s
 
 // DeleteClientProtocolMapperCalls gets all the calls that were made to DeleteClientProtocolMapper.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientProtocolMapperCalls())
+//
+//	len(mockedGoCloak.DeleteClientProtocolMapperCalls())
 func (mock *GoCloakMock) DeleteClientProtocolMapperCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -6642,7 +6690,8 @@ func (mock *GoCloakMock) DeleteClientRepresentation(ctx context.Context, accessT
 
 // DeleteClientRepresentationCalls gets all the calls that were made to DeleteClientRepresentation.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientRepresentationCalls())
+//
+//	len(mockedGoCloak.DeleteClientRepresentationCalls())
 func (mock *GoCloakMock) DeleteClientRepresentationCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -6687,7 +6736,8 @@ func (mock *GoCloakMock) DeleteClientRole(ctx context.Context, accessToken strin
 
 // DeleteClientRoleCalls gets all the calls that were made to DeleteClientRole.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientRoleCalls())
+//
+//	len(mockedGoCloak.DeleteClientRoleCalls())
 func (mock *GoCloakMock) DeleteClientRoleCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -6734,7 +6784,8 @@ func (mock *GoCloakMock) DeleteClientRoleComposite(ctx context.Context, token st
 
 // DeleteClientRoleCompositeCalls gets all the calls that were made to DeleteClientRoleComposite.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientRoleCompositeCalls())
+//
+//	len(mockedGoCloak.DeleteClientRoleCompositeCalls())
 func (mock *GoCloakMock) DeleteClientRoleCompositeCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -6783,7 +6834,8 @@ func (mock *GoCloakMock) DeleteClientRoleFromGroup(ctx context.Context, token st
 
 // DeleteClientRoleFromGroupCalls gets all the calls that were made to DeleteClientRoleFromGroup.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientRoleFromGroupCalls())
+//
+//	len(mockedGoCloak.DeleteClientRoleFromGroupCalls())
 func (mock *GoCloakMock) DeleteClientRoleFromGroupCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -6834,7 +6886,8 @@ func (mock *GoCloakMock) DeleteClientRoleFromUser(ctx context.Context, token str
 
 // DeleteClientRoleFromUserCalls gets all the calls that were made to DeleteClientRoleFromUser.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientRoleFromUserCalls())
+//
+//	len(mockedGoCloak.DeleteClientRoleFromUserCalls())
 func (mock *GoCloakMock) DeleteClientRoleFromUserCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -6881,7 +6934,8 @@ func (mock *GoCloakMock) DeleteClientScope(ctx context.Context, accessToken stri
 
 // DeleteClientScopeCalls gets all the calls that were made to DeleteClientScope.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientScopeCalls())
+//
+//	len(mockedGoCloak.DeleteClientScopeCalls())
 func (mock *GoCloakMock) DeleteClientScopeCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -6928,7 +6982,8 @@ func (mock *GoCloakMock) DeleteClientScopeMappingsClientRoles(ctx context.Contex
 
 // DeleteClientScopeMappingsClientRolesCalls gets all the calls that were made to DeleteClientScopeMappingsClientRoles.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientScopeMappingsClientRolesCalls())
+//
+//	len(mockedGoCloak.DeleteClientScopeMappingsClientRolesCalls())
 func (mock *GoCloakMock) DeleteClientScopeMappingsClientRolesCalls() []struct {
 	Ctx                context.Context
 	Token              string
@@ -6977,7 +7032,8 @@ func (mock *GoCloakMock) DeleteClientScopeMappingsRealmRoles(ctx context.Context
 
 // DeleteClientScopeMappingsRealmRolesCalls gets all the calls that were made to DeleteClientScopeMappingsRealmRoles.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientScopeMappingsRealmRolesCalls())
+//
+//	len(mockedGoCloak.DeleteClientScopeMappingsRealmRolesCalls())
 func (mock *GoCloakMock) DeleteClientScopeMappingsRealmRolesCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -7024,7 +7080,8 @@ func (mock *GoCloakMock) DeleteClientScopeProtocolMapper(ctx context.Context, ac
 
 // DeleteClientScopeProtocolMapperCalls gets all the calls that were made to DeleteClientScopeProtocolMapper.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientScopeProtocolMapperCalls())
+//
+//	len(mockedGoCloak.DeleteClientScopeProtocolMapperCalls())
 func (mock *GoCloakMock) DeleteClientScopeProtocolMapperCalls() []struct {
 	Ctx              context.Context
 	AccessToken      string
@@ -7073,7 +7130,8 @@ func (mock *GoCloakMock) DeleteClientScopesScopeMappingsClientRoles(ctx context.
 
 // DeleteClientScopesScopeMappingsClientRolesCalls gets all the calls that were made to DeleteClientScopesScopeMappingsClientRoles.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientScopesScopeMappingsClientRolesCalls())
+//
+//	len(mockedGoCloak.DeleteClientScopesScopeMappingsClientRolesCalls())
 func (mock *GoCloakMock) DeleteClientScopesScopeMappingsClientRolesCalls() []struct {
 	Ctx             context.Context
 	Token           string
@@ -7122,7 +7180,8 @@ func (mock *GoCloakMock) DeleteClientScopesScopeMappingsRealmRoles(ctx context.C
 
 // DeleteClientScopesScopeMappingsRealmRolesCalls gets all the calls that were made to DeleteClientScopesScopeMappingsRealmRoles.
 // Check the length with:
-//     len(mockedGoCloak.DeleteClientScopesScopeMappingsRealmRolesCalls())
+//
+//	len(mockedGoCloak.DeleteClientScopesScopeMappingsRealmRolesCalls())
 func (mock *GoCloakMock) DeleteClientScopesScopeMappingsRealmRolesCalls() []struct {
 	Ctx             context.Context
 	Token           string
@@ -7167,7 +7226,8 @@ func (mock *GoCloakMock) DeleteComponent(ctx context.Context, accessToken string
 
 // DeleteComponentCalls gets all the calls that were made to DeleteComponent.
 // Check the length with:
-//     len(mockedGoCloak.DeleteComponentCalls())
+//
+//	len(mockedGoCloak.DeleteComponentCalls())
 func (mock *GoCloakMock) DeleteComponentCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -7212,7 +7272,8 @@ func (mock *GoCloakMock) DeleteCredentials(ctx context.Context, token string, re
 
 // DeleteCredentialsCalls gets all the calls that were made to DeleteCredentials.
 // Check the length with:
-//     len(mockedGoCloak.DeleteCredentialsCalls())
+//
+//	len(mockedGoCloak.DeleteCredentialsCalls())
 func (mock *GoCloakMock) DeleteCredentialsCalls() []struct {
 	Ctx          context.Context
 	Token        string
@@ -7257,7 +7318,8 @@ func (mock *GoCloakMock) DeleteGroup(ctx context.Context, accessToken string, re
 
 // DeleteGroupCalls gets all the calls that were made to DeleteGroup.
 // Check the length with:
-//     len(mockedGoCloak.DeleteGroupCalls())
+//
+//	len(mockedGoCloak.DeleteGroupCalls())
 func (mock *GoCloakMock) DeleteGroupCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -7300,7 +7362,8 @@ func (mock *GoCloakMock) DeleteIdentityProvider(ctx context.Context, token strin
 
 // DeleteIdentityProviderCalls gets all the calls that were made to DeleteIdentityProvider.
 // Check the length with:
-//     len(mockedGoCloak.DeleteIdentityProviderCalls())
+//
+//	len(mockedGoCloak.DeleteIdentityProviderCalls())
 func (mock *GoCloakMock) DeleteIdentityProviderCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -7345,7 +7408,8 @@ func (mock *GoCloakMock) DeleteIdentityProviderMapper(ctx context.Context, token
 
 // DeleteIdentityProviderMapperCalls gets all the calls that were made to DeleteIdentityProviderMapper.
 // Check the length with:
-//     len(mockedGoCloak.DeleteIdentityProviderMapperCalls())
+//
+//	len(mockedGoCloak.DeleteIdentityProviderMapperCalls())
 func (mock *GoCloakMock) DeleteIdentityProviderMapperCalls() []struct {
 	Ctx      context.Context
 	Token    string
@@ -7392,7 +7456,8 @@ func (mock *GoCloakMock) DeletePermission(ctx context.Context, token string, rea
 
 // DeletePermissionCalls gets all the calls that were made to DeletePermission.
 // Check the length with:
-//     len(mockedGoCloak.DeletePermissionCalls())
+//
+//	len(mockedGoCloak.DeletePermissionCalls())
 func (mock *GoCloakMock) DeletePermissionCalls() []struct {
 	Ctx          context.Context
 	Token        string
@@ -7439,7 +7504,8 @@ func (mock *GoCloakMock) DeletePolicy(ctx context.Context, token string, realm s
 
 // DeletePolicyCalls gets all the calls that were made to DeletePolicy.
 // Check the length with:
-//     len(mockedGoCloak.DeletePolicyCalls())
+//
+//	len(mockedGoCloak.DeletePolicyCalls())
 func (mock *GoCloakMock) DeletePolicyCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -7482,7 +7548,8 @@ func (mock *GoCloakMock) DeleteRealm(ctx context.Context, token string, realm st
 
 // DeleteRealmCalls gets all the calls that were made to DeleteRealm.
 // Check the length with:
-//     len(mockedGoCloak.DeleteRealmCalls())
+//
+//	len(mockedGoCloak.DeleteRealmCalls())
 func (mock *GoCloakMock) DeleteRealmCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -7523,7 +7590,8 @@ func (mock *GoCloakMock) DeleteRealmRole(ctx context.Context, token string, real
 
 // DeleteRealmRoleCalls gets all the calls that were made to DeleteRealmRole.
 // Check the length with:
-//     len(mockedGoCloak.DeleteRealmRoleCalls())
+//
+//	len(mockedGoCloak.DeleteRealmRoleCalls())
 func (mock *GoCloakMock) DeleteRealmRoleCalls() []struct {
 	Ctx      context.Context
 	Token    string
@@ -7568,7 +7636,8 @@ func (mock *GoCloakMock) DeleteRealmRoleComposite(ctx context.Context, token str
 
 // DeleteRealmRoleCompositeCalls gets all the calls that were made to DeleteRealmRoleComposite.
 // Check the length with:
-//     len(mockedGoCloak.DeleteRealmRoleCompositeCalls())
+//
+//	len(mockedGoCloak.DeleteRealmRoleCompositeCalls())
 func (mock *GoCloakMock) DeleteRealmRoleCompositeCalls() []struct {
 	Ctx      context.Context
 	Token    string
@@ -7615,7 +7684,8 @@ func (mock *GoCloakMock) DeleteRealmRoleFromGroup(ctx context.Context, token str
 
 // DeleteRealmRoleFromGroupCalls gets all the calls that were made to DeleteRealmRoleFromGroup.
 // Check the length with:
-//     len(mockedGoCloak.DeleteRealmRoleFromGroupCalls())
+//
+//	len(mockedGoCloak.DeleteRealmRoleFromGroupCalls())
 func (mock *GoCloakMock) DeleteRealmRoleFromGroupCalls() []struct {
 	Ctx     context.Context
 	Token   string
@@ -7662,7 +7732,8 @@ func (mock *GoCloakMock) DeleteRealmRoleFromUser(ctx context.Context, token stri
 
 // DeleteRealmRoleFromUserCalls gets all the calls that were made to DeleteRealmRoleFromUser.
 // Check the length with:
-//     len(mockedGoCloak.DeleteRealmRoleFromUserCalls())
+//
+//	len(mockedGoCloak.DeleteRealmRoleFromUserCalls())
 func (mock *GoCloakMock) DeleteRealmRoleFromUserCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -7709,7 +7780,8 @@ func (mock *GoCloakMock) DeleteResource(ctx context.Context, token string, realm
 
 // DeleteResourceCalls gets all the calls that were made to DeleteResource.
 // Check the length with:
-//     len(mockedGoCloak.DeleteResourceCalls())
+//
+//	len(mockedGoCloak.DeleteResourceCalls())
 func (mock *GoCloakMock) DeleteResourceCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -7754,7 +7826,8 @@ func (mock *GoCloakMock) DeleteResourceClient(ctx context.Context, token string,
 
 // DeleteResourceClientCalls gets all the calls that were made to DeleteResourceClient.
 // Check the length with:
-//     len(mockedGoCloak.DeleteResourceClientCalls())
+//
+//	len(mockedGoCloak.DeleteResourceClientCalls())
 func (mock *GoCloakMock) DeleteResourceClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -7797,7 +7870,8 @@ func (mock *GoCloakMock) DeleteResourcePolicy(ctx context.Context, token string,
 
 // DeleteResourcePolicyCalls gets all the calls that were made to DeleteResourcePolicy.
 // Check the length with:
-//     len(mockedGoCloak.DeleteResourcePolicyCalls())
+//
+//	len(mockedGoCloak.DeleteResourcePolicyCalls())
 func (mock *GoCloakMock) DeleteResourcePolicyCalls() []struct {
 	Ctx          context.Context
 	Token        string
@@ -7842,7 +7916,8 @@ func (mock *GoCloakMock) DeleteScope(ctx context.Context, token string, realm st
 
 // DeleteScopeCalls gets all the calls that were made to DeleteScope.
 // Check the length with:
-//     len(mockedGoCloak.DeleteScopeCalls())
+//
+//	len(mockedGoCloak.DeleteScopeCalls())
 func (mock *GoCloakMock) DeleteScopeCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -7887,7 +7962,8 @@ func (mock *GoCloakMock) DeleteUser(ctx context.Context, accessToken string, rea
 
 // DeleteUserCalls gets all the calls that were made to DeleteUser.
 // Check the length with:
-//     len(mockedGoCloak.DeleteUserCalls())
+//
+//	len(mockedGoCloak.DeleteUserCalls())
 func (mock *GoCloakMock) DeleteUserCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -7932,7 +8008,8 @@ func (mock *GoCloakMock) DeleteUserFederatedIdentity(ctx context.Context, token 
 
 // DeleteUserFederatedIdentityCalls gets all the calls that were made to DeleteUserFederatedIdentity.
 // Check the length with:
-//     len(mockedGoCloak.DeleteUserFederatedIdentityCalls())
+//
+//	len(mockedGoCloak.DeleteUserFederatedIdentityCalls())
 func (mock *GoCloakMock) DeleteUserFederatedIdentityCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -7979,7 +8056,8 @@ func (mock *GoCloakMock) DeleteUserFromGroup(ctx context.Context, token string, 
 
 // DeleteUserFromGroupCalls gets all the calls that were made to DeleteUserFromGroup.
 // Check the length with:
-//     len(mockedGoCloak.DeleteUserFromGroupCalls())
+//
+//	len(mockedGoCloak.DeleteUserFromGroupCalls())
 func (mock *GoCloakMock) DeleteUserFromGroupCalls() []struct {
 	Ctx     context.Context
 	Token   string
@@ -8024,7 +8102,8 @@ func (mock *GoCloakMock) DeleteUserPermission(ctx context.Context, token string,
 
 // DeleteUserPermissionCalls gets all the calls that were made to DeleteUserPermission.
 // Check the length with:
-//     len(mockedGoCloak.DeleteUserPermissionCalls())
+//
+//	len(mockedGoCloak.DeleteUserPermissionCalls())
 func (mock *GoCloakMock) DeleteUserPermissionCalls() []struct {
 	Ctx      context.Context
 	Token    string
@@ -8069,7 +8148,8 @@ func (mock *GoCloakMock) DisableAllCredentialsByType(ctx context.Context, token 
 
 // DisableAllCredentialsByTypeCalls gets all the calls that were made to DisableAllCredentialsByType.
 // Check the length with:
-//     len(mockedGoCloak.DisableAllCredentialsByTypeCalls())
+//
+//	len(mockedGoCloak.DisableAllCredentialsByTypeCalls())
 func (mock *GoCloakMock) DisableAllCredentialsByTypeCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -8114,7 +8194,8 @@ func (mock *GoCloakMock) ExecuteActionsEmail(ctx context.Context, token string, 
 
 // ExecuteActionsEmailCalls gets all the calls that were made to ExecuteActionsEmail.
 // Check the length with:
-//     len(mockedGoCloak.ExecuteActionsEmailCalls())
+//
+//	len(mockedGoCloak.ExecuteActionsEmailCalls())
 func (mock *GoCloakMock) ExecuteActionsEmailCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -8157,7 +8238,8 @@ func (mock *GoCloakMock) ExportIDPPublicBrokerConfig(ctx context.Context, token 
 
 // ExportIDPPublicBrokerConfigCalls gets all the calls that were made to ExportIDPPublicBrokerConfig.
 // Check the length with:
-//     len(mockedGoCloak.ExportIDPPublicBrokerConfigCalls())
+//
+//	len(mockedGoCloak.ExportIDPPublicBrokerConfigCalls())
 func (mock *GoCloakMock) ExportIDPPublicBrokerConfigCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -8200,7 +8282,8 @@ func (mock *GoCloakMock) GetAdapterConfiguration(ctx context.Context, accessToke
 
 // GetAdapterConfigurationCalls gets all the calls that were made to GetAdapterConfiguration.
 // Check the length with:
-//     len(mockedGoCloak.GetAdapterConfigurationCalls())
+//
+//	len(mockedGoCloak.GetAdapterConfigurationCalls())
 func (mock *GoCloakMock) GetAdapterConfigurationCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -8243,7 +8326,8 @@ func (mock *GoCloakMock) GetAuthenticationExecutions(ctx context.Context, token 
 
 // GetAuthenticationExecutionsCalls gets all the calls that were made to GetAuthenticationExecutions.
 // Check the length with:
-//     len(mockedGoCloak.GetAuthenticationExecutionsCalls())
+//
+//	len(mockedGoCloak.GetAuthenticationExecutionsCalls())
 func (mock *GoCloakMock) GetAuthenticationExecutionsCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -8284,7 +8368,8 @@ func (mock *GoCloakMock) GetAuthenticationFlows(ctx context.Context, token strin
 
 // GetAuthenticationFlowsCalls gets all the calls that were made to GetAuthenticationFlows.
 // Check the length with:
-//     len(mockedGoCloak.GetAuthenticationFlowsCalls())
+//
+//	len(mockedGoCloak.GetAuthenticationFlowsCalls())
 func (mock *GoCloakMock) GetAuthenticationFlowsCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -8327,7 +8412,8 @@ func (mock *GoCloakMock) GetAuthorizationPolicyAssociatedPolicies(ctx context.Co
 
 // GetAuthorizationPolicyAssociatedPoliciesCalls gets all the calls that were made to GetAuthorizationPolicyAssociatedPolicies.
 // Check the length with:
-//     len(mockedGoCloak.GetAuthorizationPolicyAssociatedPoliciesCalls())
+//
+//	len(mockedGoCloak.GetAuthorizationPolicyAssociatedPoliciesCalls())
 func (mock *GoCloakMock) GetAuthorizationPolicyAssociatedPoliciesCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -8374,7 +8460,8 @@ func (mock *GoCloakMock) GetAuthorizationPolicyResources(ctx context.Context, to
 
 // GetAuthorizationPolicyResourcesCalls gets all the calls that were made to GetAuthorizationPolicyResources.
 // Check the length with:
-//     len(mockedGoCloak.GetAuthorizationPolicyResourcesCalls())
+//
+//	len(mockedGoCloak.GetAuthorizationPolicyResourcesCalls())
 func (mock *GoCloakMock) GetAuthorizationPolicyResourcesCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -8421,7 +8508,8 @@ func (mock *GoCloakMock) GetAuthorizationPolicyScopes(ctx context.Context, token
 
 // GetAuthorizationPolicyScopesCalls gets all the calls that were made to GetAuthorizationPolicyScopes.
 // Check the length with:
-//     len(mockedGoCloak.GetAuthorizationPolicyScopesCalls())
+//
+//	len(mockedGoCloak.GetAuthorizationPolicyScopesCalls())
 func (mock *GoCloakMock) GetAuthorizationPolicyScopesCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -8468,7 +8556,8 @@ func (mock *GoCloakMock) GetAvailableClientRolesByGroupID(ctx context.Context, t
 
 // GetAvailableClientRolesByGroupIDCalls gets all the calls that were made to GetAvailableClientRolesByGroupID.
 // Check the length with:
-//     len(mockedGoCloak.GetAvailableClientRolesByGroupIDCalls())
+//
+//	len(mockedGoCloak.GetAvailableClientRolesByGroupIDCalls())
 func (mock *GoCloakMock) GetAvailableClientRolesByGroupIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -8515,7 +8604,8 @@ func (mock *GoCloakMock) GetAvailableClientRolesByUserID(ctx context.Context, to
 
 // GetAvailableClientRolesByUserIDCalls gets all the calls that were made to GetAvailableClientRolesByUserID.
 // Check the length with:
-//     len(mockedGoCloak.GetAvailableClientRolesByUserIDCalls())
+//
+//	len(mockedGoCloak.GetAvailableClientRolesByUserIDCalls())
 func (mock *GoCloakMock) GetAvailableClientRolesByUserIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -8560,7 +8650,8 @@ func (mock *GoCloakMock) GetAvailableRealmRolesByGroupID(ctx context.Context, to
 
 // GetAvailableRealmRolesByGroupIDCalls gets all the calls that were made to GetAvailableRealmRolesByGroupID.
 // Check the length with:
-//     len(mockedGoCloak.GetAvailableRealmRolesByGroupIDCalls())
+//
+//	len(mockedGoCloak.GetAvailableRealmRolesByGroupIDCalls())
 func (mock *GoCloakMock) GetAvailableRealmRolesByGroupIDCalls() []struct {
 	Ctx     context.Context
 	Token   string
@@ -8603,7 +8694,8 @@ func (mock *GoCloakMock) GetAvailableRealmRolesByUserID(ctx context.Context, tok
 
 // GetAvailableRealmRolesByUserIDCalls gets all the calls that were made to GetAvailableRealmRolesByUserID.
 // Check the length with:
-//     len(mockedGoCloak.GetAvailableRealmRolesByUserIDCalls())
+//
+//	len(mockedGoCloak.GetAvailableRealmRolesByUserIDCalls())
 func (mock *GoCloakMock) GetAvailableRealmRolesByUserIDCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -8642,7 +8734,8 @@ func (mock *GoCloakMock) GetCerts(ctx context.Context, realm string) (*gocloak.C
 
 // GetCertsCalls gets all the calls that were made to GetCerts.
 // Check the length with:
-//     len(mockedGoCloak.GetCertsCalls())
+//
+//	len(mockedGoCloak.GetCertsCalls())
 func (mock *GoCloakMock) GetCertsCalls() []struct {
 	Ctx   context.Context
 	Realm string
@@ -8681,7 +8774,8 @@ func (mock *GoCloakMock) GetClient(ctx context.Context, accessToken string, real
 
 // GetClientCalls gets all the calls that were made to GetClient.
 // Check the length with:
-//     len(mockedGoCloak.GetClientCalls())
+//
+//	len(mockedGoCloak.GetClientCalls())
 func (mock *GoCloakMock) GetClientCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -8724,7 +8818,8 @@ func (mock *GoCloakMock) GetClientOfflineSessions(ctx context.Context, token str
 
 // GetClientOfflineSessionsCalls gets all the calls that were made to GetClientOfflineSessions.
 // Check the length with:
-//     len(mockedGoCloak.GetClientOfflineSessionsCalls())
+//
+//	len(mockedGoCloak.GetClientOfflineSessionsCalls())
 func (mock *GoCloakMock) GetClientOfflineSessionsCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -8767,7 +8862,8 @@ func (mock *GoCloakMock) GetClientRepresentation(ctx context.Context, accessToke
 
 // GetClientRepresentationCalls gets all the calls that were made to GetClientRepresentation.
 // Check the length with:
-//     len(mockedGoCloak.GetClientRepresentationCalls())
+//
+//	len(mockedGoCloak.GetClientRepresentationCalls())
 func (mock *GoCloakMock) GetClientRepresentationCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -8812,7 +8908,8 @@ func (mock *GoCloakMock) GetClientRole(ctx context.Context, token string, realm 
 
 // GetClientRoleCalls gets all the calls that were made to GetClientRole.
 // Check the length with:
-//     len(mockedGoCloak.GetClientRoleCalls())
+//
+//	len(mockedGoCloak.GetClientRoleCalls())
 func (mock *GoCloakMock) GetClientRoleCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -8857,7 +8954,8 @@ func (mock *GoCloakMock) GetClientRoleByID(ctx context.Context, accessToken stri
 
 // GetClientRoleByIDCalls gets all the calls that were made to GetClientRoleByID.
 // Check the length with:
-//     len(mockedGoCloak.GetClientRoleByIDCalls())
+//
+//	len(mockedGoCloak.GetClientRoleByIDCalls())
 func (mock *GoCloakMock) GetClientRoleByIDCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -8902,7 +9000,8 @@ func (mock *GoCloakMock) GetClientRoles(ctx context.Context, accessToken string,
 
 // GetClientRolesCalls gets all the calls that were made to GetClientRoles.
 // Check the length with:
-//     len(mockedGoCloak.GetClientRolesCalls())
+//
+//	len(mockedGoCloak.GetClientRolesCalls())
 func (mock *GoCloakMock) GetClientRolesCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -8949,7 +9048,8 @@ func (mock *GoCloakMock) GetClientRolesByGroupID(ctx context.Context, token stri
 
 // GetClientRolesByGroupIDCalls gets all the calls that were made to GetClientRolesByGroupID.
 // Check the length with:
-//     len(mockedGoCloak.GetClientRolesByGroupIDCalls())
+//
+//	len(mockedGoCloak.GetClientRolesByGroupIDCalls())
 func (mock *GoCloakMock) GetClientRolesByGroupIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -8996,7 +9096,8 @@ func (mock *GoCloakMock) GetClientRolesByUserID(ctx context.Context, token strin
 
 // GetClientRolesByUserIDCalls gets all the calls that were made to GetClientRolesByUserID.
 // Check the length with:
-//     len(mockedGoCloak.GetClientRolesByUserIDCalls())
+//
+//	len(mockedGoCloak.GetClientRolesByUserIDCalls())
 func (mock *GoCloakMock) GetClientRolesByUserIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -9041,7 +9142,8 @@ func (mock *GoCloakMock) GetClientScope(ctx context.Context, token string, realm
 
 // GetClientScopeCalls gets all the calls that were made to GetClientScope.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopeCalls())
+//
+//	len(mockedGoCloak.GetClientScopeCalls())
 func (mock *GoCloakMock) GetClientScopeCalls() []struct {
 	Ctx     context.Context
 	Token   string
@@ -9084,7 +9186,8 @@ func (mock *GoCloakMock) GetClientScopeMappings(ctx context.Context, token strin
 
 // GetClientScopeMappingsCalls gets all the calls that were made to GetClientScopeMappings.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopeMappingsCalls())
+//
+//	len(mockedGoCloak.GetClientScopeMappingsCalls())
 func (mock *GoCloakMock) GetClientScopeMappingsCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -9129,7 +9232,8 @@ func (mock *GoCloakMock) GetClientScopeMappingsClientRoles(ctx context.Context, 
 
 // GetClientScopeMappingsClientRolesCalls gets all the calls that were made to GetClientScopeMappingsClientRoles.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopeMappingsClientRolesCalls())
+//
+//	len(mockedGoCloak.GetClientScopeMappingsClientRolesCalls())
 func (mock *GoCloakMock) GetClientScopeMappingsClientRolesCalls() []struct {
 	Ctx                context.Context
 	Token              string
@@ -9176,7 +9280,8 @@ func (mock *GoCloakMock) GetClientScopeMappingsClientRolesAvailable(ctx context.
 
 // GetClientScopeMappingsClientRolesAvailableCalls gets all the calls that were made to GetClientScopeMappingsClientRolesAvailable.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopeMappingsClientRolesAvailableCalls())
+//
+//	len(mockedGoCloak.GetClientScopeMappingsClientRolesAvailableCalls())
 func (mock *GoCloakMock) GetClientScopeMappingsClientRolesAvailableCalls() []struct {
 	Ctx                context.Context
 	Token              string
@@ -9221,7 +9326,8 @@ func (mock *GoCloakMock) GetClientScopeMappingsRealmRoles(ctx context.Context, t
 
 // GetClientScopeMappingsRealmRolesCalls gets all the calls that were made to GetClientScopeMappingsRealmRoles.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopeMappingsRealmRolesCalls())
+//
+//	len(mockedGoCloak.GetClientScopeMappingsRealmRolesCalls())
 func (mock *GoCloakMock) GetClientScopeMappingsRealmRolesCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -9264,7 +9370,8 @@ func (mock *GoCloakMock) GetClientScopeMappingsRealmRolesAvailable(ctx context.C
 
 // GetClientScopeMappingsRealmRolesAvailableCalls gets all the calls that were made to GetClientScopeMappingsRealmRolesAvailable.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopeMappingsRealmRolesAvailableCalls())
+//
+//	len(mockedGoCloak.GetClientScopeMappingsRealmRolesAvailableCalls())
 func (mock *GoCloakMock) GetClientScopeMappingsRealmRolesAvailableCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -9309,7 +9416,8 @@ func (mock *GoCloakMock) GetClientScopeProtocolMapper(ctx context.Context, token
 
 // GetClientScopeProtocolMapperCalls gets all the calls that were made to GetClientScopeProtocolMapper.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopeProtocolMapperCalls())
+//
+//	len(mockedGoCloak.GetClientScopeProtocolMapperCalls())
 func (mock *GoCloakMock) GetClientScopeProtocolMapperCalls() []struct {
 	Ctx              context.Context
 	Token            string
@@ -9354,7 +9462,8 @@ func (mock *GoCloakMock) GetClientScopeProtocolMappers(ctx context.Context, toke
 
 // GetClientScopeProtocolMappersCalls gets all the calls that were made to GetClientScopeProtocolMappers.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopeProtocolMappersCalls())
+//
+//	len(mockedGoCloak.GetClientScopeProtocolMappersCalls())
 func (mock *GoCloakMock) GetClientScopeProtocolMappersCalls() []struct {
 	Ctx     context.Context
 	Token   string
@@ -9395,7 +9504,8 @@ func (mock *GoCloakMock) GetClientScopes(ctx context.Context, token string, real
 
 // GetClientScopesCalls gets all the calls that were made to GetClientScopes.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopesCalls())
+//
+//	len(mockedGoCloak.GetClientScopesCalls())
 func (mock *GoCloakMock) GetClientScopesCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -9438,7 +9548,8 @@ func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRoles(ctx context.Con
 
 // GetClientScopesScopeMappingsClientRolesCalls gets all the calls that were made to GetClientScopesScopeMappingsClientRoles.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopesScopeMappingsClientRolesCalls())
+//
+//	len(mockedGoCloak.GetClientScopesScopeMappingsClientRolesCalls())
 func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRolesCalls() []struct {
 	Ctx             context.Context
 	Token           string
@@ -9485,7 +9596,8 @@ func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRolesAvailable(ctx co
 
 // GetClientScopesScopeMappingsClientRolesAvailableCalls gets all the calls that were made to GetClientScopesScopeMappingsClientRolesAvailable.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopesScopeMappingsClientRolesAvailableCalls())
+//
+//	len(mockedGoCloak.GetClientScopesScopeMappingsClientRolesAvailableCalls())
 func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRolesAvailableCalls() []struct {
 	Ctx             context.Context
 	Token           string
@@ -9530,7 +9642,8 @@ func (mock *GoCloakMock) GetClientScopesScopeMappingsRealmRoles(ctx context.Cont
 
 // GetClientScopesScopeMappingsRealmRolesCalls gets all the calls that were made to GetClientScopesScopeMappingsRealmRoles.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopesScopeMappingsRealmRolesCalls())
+//
+//	len(mockedGoCloak.GetClientScopesScopeMappingsRealmRolesCalls())
 func (mock *GoCloakMock) GetClientScopesScopeMappingsRealmRolesCalls() []struct {
 	Ctx             context.Context
 	Token           string
@@ -9573,7 +9686,8 @@ func (mock *GoCloakMock) GetClientScopesScopeMappingsRealmRolesAvailable(ctx con
 
 // GetClientScopesScopeMappingsRealmRolesAvailableCalls gets all the calls that were made to GetClientScopesScopeMappingsRealmRolesAvailable.
 // Check the length with:
-//     len(mockedGoCloak.GetClientScopesScopeMappingsRealmRolesAvailableCalls())
+//
+//	len(mockedGoCloak.GetClientScopesScopeMappingsRealmRolesAvailableCalls())
 func (mock *GoCloakMock) GetClientScopesScopeMappingsRealmRolesAvailableCalls() []struct {
 	Ctx             context.Context
 	Token           string
@@ -9616,7 +9730,8 @@ func (mock *GoCloakMock) GetClientSecret(ctx context.Context, token string, real
 
 // GetClientSecretCalls gets all the calls that were made to GetClientSecret.
 // Check the length with:
-//     len(mockedGoCloak.GetClientSecretCalls())
+//
+//	len(mockedGoCloak.GetClientSecretCalls())
 func (mock *GoCloakMock) GetClientSecretCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -9659,7 +9774,8 @@ func (mock *GoCloakMock) GetClientServiceAccount(ctx context.Context, token stri
 
 // GetClientServiceAccountCalls gets all the calls that were made to GetClientServiceAccount.
 // Check the length with:
-//     len(mockedGoCloak.GetClientServiceAccountCalls())
+//
+//	len(mockedGoCloak.GetClientServiceAccountCalls())
 func (mock *GoCloakMock) GetClientServiceAccountCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -9702,7 +9818,8 @@ func (mock *GoCloakMock) GetClientUserSessions(ctx context.Context, token string
 
 // GetClientUserSessionsCalls gets all the calls that were made to GetClientUserSessions.
 // Check the length with:
-//     len(mockedGoCloak.GetClientUserSessionsCalls())
+//
+//	len(mockedGoCloak.GetClientUserSessionsCalls())
 func (mock *GoCloakMock) GetClientUserSessionsCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -9745,7 +9862,8 @@ func (mock *GoCloakMock) GetClients(ctx context.Context, accessToken string, rea
 
 // GetClientsCalls gets all the calls that were made to GetClients.
 // Check the length with:
-//     len(mockedGoCloak.GetClientsCalls())
+//
+//	len(mockedGoCloak.GetClientsCalls())
 func (mock *GoCloakMock) GetClientsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -9788,7 +9906,8 @@ func (mock *GoCloakMock) GetClientsDefaultScopes(ctx context.Context, token stri
 
 // GetClientsDefaultScopesCalls gets all the calls that were made to GetClientsDefaultScopes.
 // Check the length with:
-//     len(mockedGoCloak.GetClientsDefaultScopesCalls())
+//
+//	len(mockedGoCloak.GetClientsDefaultScopesCalls())
 func (mock *GoCloakMock) GetClientsDefaultScopesCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -9831,7 +9950,8 @@ func (mock *GoCloakMock) GetClientsOptionalScopes(ctx context.Context, token str
 
 // GetClientsOptionalScopesCalls gets all the calls that were made to GetClientsOptionalScopes.
 // Check the length with:
-//     len(mockedGoCloak.GetClientsOptionalScopesCalls())
+//
+//	len(mockedGoCloak.GetClientsOptionalScopesCalls())
 func (mock *GoCloakMock) GetClientsOptionalScopesCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -9872,7 +9992,8 @@ func (mock *GoCloakMock) GetComponents(ctx context.Context, accessToken string, 
 
 // GetComponentsCalls gets all the calls that were made to GetComponents.
 // Check the length with:
-//     len(mockedGoCloak.GetComponentsCalls())
+//
+//	len(mockedGoCloak.GetComponentsCalls())
 func (mock *GoCloakMock) GetComponentsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -9915,7 +10036,8 @@ func (mock *GoCloakMock) GetCompositeClientRolesByGroupID(ctx context.Context, t
 
 // GetCompositeClientRolesByGroupIDCalls gets all the calls that were made to GetCompositeClientRolesByGroupID.
 // Check the length with:
-//     len(mockedGoCloak.GetCompositeClientRolesByGroupIDCalls())
+//
+//	len(mockedGoCloak.GetCompositeClientRolesByGroupIDCalls())
 func (mock *GoCloakMock) GetCompositeClientRolesByGroupIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -9962,7 +10084,8 @@ func (mock *GoCloakMock) GetCompositeClientRolesByRoleID(ctx context.Context, to
 
 // GetCompositeClientRolesByRoleIDCalls gets all the calls that were made to GetCompositeClientRolesByRoleID.
 // Check the length with:
-//     len(mockedGoCloak.GetCompositeClientRolesByRoleIDCalls())
+//
+//	len(mockedGoCloak.GetCompositeClientRolesByRoleIDCalls())
 func (mock *GoCloakMock) GetCompositeClientRolesByRoleIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -10009,7 +10132,8 @@ func (mock *GoCloakMock) GetCompositeClientRolesByUserID(ctx context.Context, to
 
 // GetCompositeClientRolesByUserIDCalls gets all the calls that were made to GetCompositeClientRolesByUserID.
 // Check the length with:
-//     len(mockedGoCloak.GetCompositeClientRolesByUserIDCalls())
+//
+//	len(mockedGoCloak.GetCompositeClientRolesByUserIDCalls())
 func (mock *GoCloakMock) GetCompositeClientRolesByUserIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -10054,7 +10178,8 @@ func (mock *GoCloakMock) GetCompositeRealmRoles(ctx context.Context, token strin
 
 // GetCompositeRealmRolesCalls gets all the calls that were made to GetCompositeRealmRoles.
 // Check the length with:
-//     len(mockedGoCloak.GetCompositeRealmRolesCalls())
+//
+//	len(mockedGoCloak.GetCompositeRealmRolesCalls())
 func (mock *GoCloakMock) GetCompositeRealmRolesCalls() []struct {
 	Ctx      context.Context
 	Token    string
@@ -10097,7 +10222,8 @@ func (mock *GoCloakMock) GetCompositeRealmRolesByGroupID(ctx context.Context, to
 
 // GetCompositeRealmRolesByGroupIDCalls gets all the calls that were made to GetCompositeRealmRolesByGroupID.
 // Check the length with:
-//     len(mockedGoCloak.GetCompositeRealmRolesByGroupIDCalls())
+//
+//	len(mockedGoCloak.GetCompositeRealmRolesByGroupIDCalls())
 func (mock *GoCloakMock) GetCompositeRealmRolesByGroupIDCalls() []struct {
 	Ctx     context.Context
 	Token   string
@@ -10140,7 +10266,8 @@ func (mock *GoCloakMock) GetCompositeRealmRolesByRoleID(ctx context.Context, tok
 
 // GetCompositeRealmRolesByRoleIDCalls gets all the calls that were made to GetCompositeRealmRolesByRoleID.
 // Check the length with:
-//     len(mockedGoCloak.GetCompositeRealmRolesByRoleIDCalls())
+//
+//	len(mockedGoCloak.GetCompositeRealmRolesByRoleIDCalls())
 func (mock *GoCloakMock) GetCompositeRealmRolesByRoleIDCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -10183,7 +10310,8 @@ func (mock *GoCloakMock) GetCompositeRealmRolesByUserID(ctx context.Context, tok
 
 // GetCompositeRealmRolesByUserIDCalls gets all the calls that were made to GetCompositeRealmRolesByUserID.
 // Check the length with:
-//     len(mockedGoCloak.GetCompositeRealmRolesByUserIDCalls())
+//
+//	len(mockedGoCloak.GetCompositeRealmRolesByUserIDCalls())
 func (mock *GoCloakMock) GetCompositeRealmRolesByUserIDCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -10226,7 +10354,8 @@ func (mock *GoCloakMock) GetConfiguredUserStorageCredentialTypes(ctx context.Con
 
 // GetConfiguredUserStorageCredentialTypesCalls gets all the calls that were made to GetConfiguredUserStorageCredentialTypes.
 // Check the length with:
-//     len(mockedGoCloak.GetConfiguredUserStorageCredentialTypesCalls())
+//
+//	len(mockedGoCloak.GetConfiguredUserStorageCredentialTypesCalls())
 func (mock *GoCloakMock) GetConfiguredUserStorageCredentialTypesCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -10267,7 +10396,8 @@ func (mock *GoCloakMock) GetCredentialRegistrators(ctx context.Context, token st
 
 // GetCredentialRegistratorsCalls gets all the calls that were made to GetCredentialRegistrators.
 // Check the length with:
-//     len(mockedGoCloak.GetCredentialRegistratorsCalls())
+//
+//	len(mockedGoCloak.GetCredentialRegistratorsCalls())
 func (mock *GoCloakMock) GetCredentialRegistratorsCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -10308,7 +10438,8 @@ func (mock *GoCloakMock) GetCredentials(ctx context.Context, token string, realm
 
 // GetCredentialsCalls gets all the calls that were made to GetCredentials.
 // Check the length with:
-//     len(mockedGoCloak.GetCredentialsCalls())
+//
+//	len(mockedGoCloak.GetCredentialsCalls())
 func (mock *GoCloakMock) GetCredentialsCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -10349,7 +10480,8 @@ func (mock *GoCloakMock) GetDefaultDefaultClientScopes(ctx context.Context, toke
 
 // GetDefaultDefaultClientScopesCalls gets all the calls that were made to GetDefaultDefaultClientScopes.
 // Check the length with:
-//     len(mockedGoCloak.GetDefaultDefaultClientScopesCalls())
+//
+//	len(mockedGoCloak.GetDefaultDefaultClientScopesCalls())
 func (mock *GoCloakMock) GetDefaultDefaultClientScopesCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -10388,7 +10520,8 @@ func (mock *GoCloakMock) GetDefaultGroups(ctx context.Context, accessToken strin
 
 // GetDefaultGroupsCalls gets all the calls that were made to GetDefaultGroups.
 // Check the length with:
-//     len(mockedGoCloak.GetDefaultGroupsCalls())
+//
+//	len(mockedGoCloak.GetDefaultGroupsCalls())
 func (mock *GoCloakMock) GetDefaultGroupsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -10427,7 +10560,8 @@ func (mock *GoCloakMock) GetDefaultOptionalClientScopes(ctx context.Context, tok
 
 // GetDefaultOptionalClientScopesCalls gets all the calls that were made to GetDefaultOptionalClientScopes.
 // Check the length with:
-//     len(mockedGoCloak.GetDefaultOptionalClientScopesCalls())
+//
+//	len(mockedGoCloak.GetDefaultOptionalClientScopesCalls())
 func (mock *GoCloakMock) GetDefaultOptionalClientScopesCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -10470,7 +10604,8 @@ func (mock *GoCloakMock) GetDependentPermissions(ctx context.Context, token stri
 
 // GetDependentPermissionsCalls gets all the calls that were made to GetDependentPermissions.
 // Check the length with:
-//     len(mockedGoCloak.GetDependentPermissionsCalls())
+//
+//	len(mockedGoCloak.GetDependentPermissionsCalls())
 func (mock *GoCloakMock) GetDependentPermissionsCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -10515,7 +10650,8 @@ func (mock *GoCloakMock) GetEvents(ctx context.Context, token string, realm stri
 
 // GetEventsCalls gets all the calls that were made to GetEvents.
 // Check the length with:
-//     len(mockedGoCloak.GetEventsCalls())
+//
+//	len(mockedGoCloak.GetEventsCalls())
 func (mock *GoCloakMock) GetEventsCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -10558,7 +10694,8 @@ func (mock *GoCloakMock) GetGroup(ctx context.Context, accessToken string, realm
 
 // GetGroupCalls gets all the calls that were made to GetGroup.
 // Check the length with:
-//     len(mockedGoCloak.GetGroupCalls())
+//
+//	len(mockedGoCloak.GetGroupCalls())
 func (mock *GoCloakMock) GetGroupCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -10603,7 +10740,8 @@ func (mock *GoCloakMock) GetGroupMembers(ctx context.Context, accessToken string
 
 // GetGroupMembersCalls gets all the calls that were made to GetGroupMembers.
 // Check the length with:
-//     len(mockedGoCloak.GetGroupMembersCalls())
+//
+//	len(mockedGoCloak.GetGroupMembersCalls())
 func (mock *GoCloakMock) GetGroupMembersCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -10648,7 +10786,8 @@ func (mock *GoCloakMock) GetGroups(ctx context.Context, accessToken string, real
 
 // GetGroupsCalls gets all the calls that were made to GetGroups.
 // Check the length with:
-//     len(mockedGoCloak.GetGroupsCalls())
+//
+//	len(mockedGoCloak.GetGroupsCalls())
 func (mock *GoCloakMock) GetGroupsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -10691,7 +10830,8 @@ func (mock *GoCloakMock) GetGroupsByRole(ctx context.Context, accessToken string
 
 // GetGroupsByRoleCalls gets all the calls that were made to GetGroupsByRole.
 // Check the length with:
-//     len(mockedGoCloak.GetGroupsByRoleCalls())
+//
+//	len(mockedGoCloak.GetGroupsByRoleCalls())
 func (mock *GoCloakMock) GetGroupsByRoleCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -10734,7 +10874,8 @@ func (mock *GoCloakMock) GetGroupsCount(ctx context.Context, token string, realm
 
 // GetGroupsCountCalls gets all the calls that were made to GetGroupsCount.
 // Check the length with:
-//     len(mockedGoCloak.GetGroupsCountCalls())
+//
+//	len(mockedGoCloak.GetGroupsCountCalls())
 func (mock *GoCloakMock) GetGroupsCountCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -10777,7 +10918,8 @@ func (mock *GoCloakMock) GetIdentityProvider(ctx context.Context, token string, 
 
 // GetIdentityProviderCalls gets all the calls that were made to GetIdentityProvider.
 // Check the length with:
-//     len(mockedGoCloak.GetIdentityProviderCalls())
+//
+//	len(mockedGoCloak.GetIdentityProviderCalls())
 func (mock *GoCloakMock) GetIdentityProviderCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -10822,7 +10964,8 @@ func (mock *GoCloakMock) GetIdentityProviderMapperByID(ctx context.Context, toke
 
 // GetIdentityProviderMapperByIDCalls gets all the calls that were made to GetIdentityProviderMapperByID.
 // Check the length with:
-//     len(mockedGoCloak.GetIdentityProviderMapperByIDCalls())
+//
+//	len(mockedGoCloak.GetIdentityProviderMapperByIDCalls())
 func (mock *GoCloakMock) GetIdentityProviderMapperByIDCalls() []struct {
 	Ctx      context.Context
 	Token    string
@@ -10867,7 +11010,8 @@ func (mock *GoCloakMock) GetIdentityProviderMappers(ctx context.Context, token s
 
 // GetIdentityProviderMappersCalls gets all the calls that were made to GetIdentityProviderMappers.
 // Check the length with:
-//     len(mockedGoCloak.GetIdentityProviderMappersCalls())
+//
+//	len(mockedGoCloak.GetIdentityProviderMappersCalls())
 func (mock *GoCloakMock) GetIdentityProviderMappersCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -10908,7 +11052,8 @@ func (mock *GoCloakMock) GetIdentityProviders(ctx context.Context, token string,
 
 // GetIdentityProvidersCalls gets all the calls that were made to GetIdentityProviders.
 // Check the length with:
-//     len(mockedGoCloak.GetIdentityProvidersCalls())
+//
+//	len(mockedGoCloak.GetIdentityProvidersCalls())
 func (mock *GoCloakMock) GetIdentityProvidersCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -10945,7 +11090,8 @@ func (mock *GoCloakMock) GetIssuer(ctx context.Context, realm string) (*gocloak.
 
 // GetIssuerCalls gets all the calls that were made to GetIssuer.
 // Check the length with:
-//     len(mockedGoCloak.GetIssuerCalls())
+//
+//	len(mockedGoCloak.GetIssuerCalls())
 func (mock *GoCloakMock) GetIssuerCalls() []struct {
 	Ctx   context.Context
 	Realm string
@@ -10982,7 +11128,8 @@ func (mock *GoCloakMock) GetKeyStoreConfig(ctx context.Context, accessToken stri
 
 // GetKeyStoreConfigCalls gets all the calls that were made to GetKeyStoreConfig.
 // Check the length with:
-//     len(mockedGoCloak.GetKeyStoreConfigCalls())
+//
+//	len(mockedGoCloak.GetKeyStoreConfigCalls())
 func (mock *GoCloakMock) GetKeyStoreConfigCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -11025,7 +11172,8 @@ func (mock *GoCloakMock) GetPermission(ctx context.Context, token string, realm 
 
 // GetPermissionCalls gets all the calls that were made to GetPermission.
 // Check the length with:
-//     len(mockedGoCloak.GetPermissionCalls())
+//
+//	len(mockedGoCloak.GetPermissionCalls())
 func (mock *GoCloakMock) GetPermissionCalls() []struct {
 	Ctx          context.Context
 	Token        string
@@ -11072,7 +11220,8 @@ func (mock *GoCloakMock) GetPermissionResources(ctx context.Context, token strin
 
 // GetPermissionResourcesCalls gets all the calls that were made to GetPermissionResources.
 // Check the length with:
-//     len(mockedGoCloak.GetPermissionResourcesCalls())
+//
+//	len(mockedGoCloak.GetPermissionResourcesCalls())
 func (mock *GoCloakMock) GetPermissionResourcesCalls() []struct {
 	Ctx          context.Context
 	Token        string
@@ -11119,7 +11268,8 @@ func (mock *GoCloakMock) GetPermissionScopes(ctx context.Context, token string, 
 
 // GetPermissionScopesCalls gets all the calls that were made to GetPermissionScopes.
 // Check the length with:
-//     len(mockedGoCloak.GetPermissionScopesCalls())
+//
+//	len(mockedGoCloak.GetPermissionScopesCalls())
 func (mock *GoCloakMock) GetPermissionScopesCalls() []struct {
 	Ctx          context.Context
 	Token        string
@@ -11166,7 +11316,8 @@ func (mock *GoCloakMock) GetPermissions(ctx context.Context, token string, realm
 
 // GetPermissionsCalls gets all the calls that were made to GetPermissions.
 // Check the length with:
-//     len(mockedGoCloak.GetPermissionsCalls())
+//
+//	len(mockedGoCloak.GetPermissionsCalls())
 func (mock *GoCloakMock) GetPermissionsCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -11213,7 +11364,8 @@ func (mock *GoCloakMock) GetPolicies(ctx context.Context, token string, realm st
 
 // GetPoliciesCalls gets all the calls that were made to GetPolicies.
 // Check the length with:
-//     len(mockedGoCloak.GetPoliciesCalls())
+//
+//	len(mockedGoCloak.GetPoliciesCalls())
 func (mock *GoCloakMock) GetPoliciesCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -11260,7 +11412,8 @@ func (mock *GoCloakMock) GetPolicy(ctx context.Context, token string, realm stri
 
 // GetPolicyCalls gets all the calls that were made to GetPolicy.
 // Check the length with:
-//     len(mockedGoCloak.GetPolicyCalls())
+//
+//	len(mockedGoCloak.GetPolicyCalls())
 func (mock *GoCloakMock) GetPolicyCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -11303,7 +11456,8 @@ func (mock *GoCloakMock) GetRawUserInfo(ctx context.Context, accessToken string,
 
 // GetRawUserInfoCalls gets all the calls that were made to GetRawUserInfo.
 // Check the length with:
-//     len(mockedGoCloak.GetRawUserInfoCalls())
+//
+//	len(mockedGoCloak.GetRawUserInfoCalls())
 func (mock *GoCloakMock) GetRawUserInfoCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -11342,7 +11496,8 @@ func (mock *GoCloakMock) GetRealm(ctx context.Context, token string, realm strin
 
 // GetRealmCalls gets all the calls that were made to GetRealm.
 // Check the length with:
-//     len(mockedGoCloak.GetRealmCalls())
+//
+//	len(mockedGoCloak.GetRealmCalls())
 func (mock *GoCloakMock) GetRealmCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -11383,7 +11538,8 @@ func (mock *GoCloakMock) GetRealmRole(ctx context.Context, token string, realm s
 
 // GetRealmRoleCalls gets all the calls that were made to GetRealmRole.
 // Check the length with:
-//     len(mockedGoCloak.GetRealmRoleCalls())
+//
+//	len(mockedGoCloak.GetRealmRoleCalls())
 func (mock *GoCloakMock) GetRealmRoleCalls() []struct {
 	Ctx      context.Context
 	Token    string
@@ -11426,7 +11582,8 @@ func (mock *GoCloakMock) GetRealmRoleByID(ctx context.Context, token string, rea
 
 // GetRealmRoleByIDCalls gets all the calls that were made to GetRealmRoleByID.
 // Check the length with:
-//     len(mockedGoCloak.GetRealmRoleByIDCalls())
+//
+//	len(mockedGoCloak.GetRealmRoleByIDCalls())
 func (mock *GoCloakMock) GetRealmRoleByIDCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -11469,7 +11626,8 @@ func (mock *GoCloakMock) GetRealmRoles(ctx context.Context, accessToken string, 
 
 // GetRealmRolesCalls gets all the calls that were made to GetRealmRoles.
 // Check the length with:
-//     len(mockedGoCloak.GetRealmRolesCalls())
+//
+//	len(mockedGoCloak.GetRealmRolesCalls())
 func (mock *GoCloakMock) GetRealmRolesCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -11512,7 +11670,8 @@ func (mock *GoCloakMock) GetRealmRolesByGroupID(ctx context.Context, accessToken
 
 // GetRealmRolesByGroupIDCalls gets all the calls that were made to GetRealmRolesByGroupID.
 // Check the length with:
-//     len(mockedGoCloak.GetRealmRolesByGroupIDCalls())
+//
+//	len(mockedGoCloak.GetRealmRolesByGroupIDCalls())
 func (mock *GoCloakMock) GetRealmRolesByGroupIDCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -11555,7 +11714,8 @@ func (mock *GoCloakMock) GetRealmRolesByUserID(ctx context.Context, accessToken 
 
 // GetRealmRolesByUserIDCalls gets all the calls that were made to GetRealmRolesByUserID.
 // Check the length with:
-//     len(mockedGoCloak.GetRealmRolesByUserIDCalls())
+//
+//	len(mockedGoCloak.GetRealmRolesByUserIDCalls())
 func (mock *GoCloakMock) GetRealmRolesByUserIDCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -11594,7 +11754,8 @@ func (mock *GoCloakMock) GetRealms(ctx context.Context, token string) ([]*gocloa
 
 // GetRealmsCalls gets all the calls that were made to GetRealms.
 // Check the length with:
-//     len(mockedGoCloak.GetRealmsCalls())
+//
+//	len(mockedGoCloak.GetRealmsCalls())
 func (mock *GoCloakMock) GetRealmsCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -11633,7 +11794,8 @@ func (mock *GoCloakMock) GetRequestingPartyPermissionDecision(ctx context.Contex
 
 // GetRequestingPartyPermissionDecisionCalls gets all the calls that were made to GetRequestingPartyPermissionDecision.
 // Check the length with:
-//     len(mockedGoCloak.GetRequestingPartyPermissionDecisionCalls())
+//
+//	len(mockedGoCloak.GetRequestingPartyPermissionDecisionCalls())
 func (mock *GoCloakMock) GetRequestingPartyPermissionDecisionCalls() []struct {
 	Ctx     context.Context
 	Token   string
@@ -11676,7 +11838,8 @@ func (mock *GoCloakMock) GetRequestingPartyPermissions(ctx context.Context, toke
 
 // GetRequestingPartyPermissionsCalls gets all the calls that were made to GetRequestingPartyPermissions.
 // Check the length with:
-//     len(mockedGoCloak.GetRequestingPartyPermissionsCalls())
+//
+//	len(mockedGoCloak.GetRequestingPartyPermissionsCalls())
 func (mock *GoCloakMock) GetRequestingPartyPermissionsCalls() []struct {
 	Ctx     context.Context
 	Token   string
@@ -11719,7 +11882,8 @@ func (mock *GoCloakMock) GetRequestingPartyToken(ctx context.Context, token stri
 
 // GetRequestingPartyTokenCalls gets all the calls that were made to GetRequestingPartyToken.
 // Check the length with:
-//     len(mockedGoCloak.GetRequestingPartyTokenCalls())
+//
+//	len(mockedGoCloak.GetRequestingPartyTokenCalls())
 func (mock *GoCloakMock) GetRequestingPartyTokenCalls() []struct {
 	Ctx     context.Context
 	Token   string
@@ -11764,7 +11928,8 @@ func (mock *GoCloakMock) GetResource(ctx context.Context, token string, realm st
 
 // GetResourceCalls gets all the calls that were made to GetResource.
 // Check the length with:
-//     len(mockedGoCloak.GetResourceCalls())
+//
+//	len(mockedGoCloak.GetResourceCalls())
 func (mock *GoCloakMock) GetResourceCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -11809,7 +11974,8 @@ func (mock *GoCloakMock) GetResourceClient(ctx context.Context, token string, re
 
 // GetResourceClientCalls gets all the calls that were made to GetResourceClient.
 // Check the length with:
-//     len(mockedGoCloak.GetResourceClientCalls())
+//
+//	len(mockedGoCloak.GetResourceClientCalls())
 func (mock *GoCloakMock) GetResourceClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -11852,7 +12018,8 @@ func (mock *GoCloakMock) GetResourcePolicies(ctx context.Context, token string, 
 
 // GetResourcePoliciesCalls gets all the calls that were made to GetResourcePolicies.
 // Check the length with:
-//     len(mockedGoCloak.GetResourcePoliciesCalls())
+//
+//	len(mockedGoCloak.GetResourcePoliciesCalls())
 func (mock *GoCloakMock) GetResourcePoliciesCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -11895,7 +12062,8 @@ func (mock *GoCloakMock) GetResourcePolicy(ctx context.Context, token string, re
 
 // GetResourcePolicyCalls gets all the calls that were made to GetResourcePolicy.
 // Check the length with:
-//     len(mockedGoCloak.GetResourcePolicyCalls())
+//
+//	len(mockedGoCloak.GetResourcePolicyCalls())
 func (mock *GoCloakMock) GetResourcePolicyCalls() []struct {
 	Ctx          context.Context
 	Token        string
@@ -11940,7 +12108,8 @@ func (mock *GoCloakMock) GetResources(ctx context.Context, token string, realm s
 
 // GetResourcesCalls gets all the calls that were made to GetResources.
 // Check the length with:
-//     len(mockedGoCloak.GetResourcesCalls())
+//
+//	len(mockedGoCloak.GetResourcesCalls())
 func (mock *GoCloakMock) GetResourcesCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -11985,7 +12154,8 @@ func (mock *GoCloakMock) GetResourcesClient(ctx context.Context, token string, r
 
 // GetResourcesClientCalls gets all the calls that were made to GetResourcesClient.
 // Check the length with:
-//     len(mockedGoCloak.GetResourcesClientCalls())
+//
+//	len(mockedGoCloak.GetResourcesClientCalls())
 func (mock *GoCloakMock) GetResourcesClientCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -12028,7 +12198,8 @@ func (mock *GoCloakMock) GetRoleMappingByGroupID(ctx context.Context, accessToke
 
 // GetRoleMappingByGroupIDCalls gets all the calls that were made to GetRoleMappingByGroupID.
 // Check the length with:
-//     len(mockedGoCloak.GetRoleMappingByGroupIDCalls())
+//
+//	len(mockedGoCloak.GetRoleMappingByGroupIDCalls())
 func (mock *GoCloakMock) GetRoleMappingByGroupIDCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -12071,7 +12242,8 @@ func (mock *GoCloakMock) GetRoleMappingByUserID(ctx context.Context, accessToken
 
 // GetRoleMappingByUserIDCalls gets all the calls that were made to GetRoleMappingByUserID.
 // Check the length with:
-//     len(mockedGoCloak.GetRoleMappingByUserIDCalls())
+//
+//	len(mockedGoCloak.GetRoleMappingByUserIDCalls())
 func (mock *GoCloakMock) GetRoleMappingByUserIDCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -12116,7 +12288,8 @@ func (mock *GoCloakMock) GetScope(ctx context.Context, token string, realm strin
 
 // GetScopeCalls gets all the calls that were made to GetScope.
 // Check the length with:
-//     len(mockedGoCloak.GetScopeCalls())
+//
+//	len(mockedGoCloak.GetScopeCalls())
 func (mock *GoCloakMock) GetScopeCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -12163,7 +12336,8 @@ func (mock *GoCloakMock) GetScopes(ctx context.Context, token string, realm stri
 
 // GetScopesCalls gets all the calls that were made to GetScopes.
 // Check the length with:
-//     len(mockedGoCloak.GetScopesCalls())
+//
+//	len(mockedGoCloak.GetScopesCalls())
 func (mock *GoCloakMock) GetScopesCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -12204,7 +12378,8 @@ func (mock *GoCloakMock) GetServerInfo(ctx context.Context, accessToken string) 
 
 // GetServerInfoCalls gets all the calls that were made to GetServerInfo.
 // Check the length with:
-//     len(mockedGoCloak.GetServerInfoCalls())
+//
+//	len(mockedGoCloak.GetServerInfoCalls())
 func (mock *GoCloakMock) GetServerInfoCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -12241,7 +12416,8 @@ func (mock *GoCloakMock) GetToken(ctx context.Context, realm string, options goc
 
 // GetTokenCalls gets all the calls that were made to GetToken.
 // Check the length with:
-//     len(mockedGoCloak.GetTokenCalls())
+//
+//	len(mockedGoCloak.GetTokenCalls())
 func (mock *GoCloakMock) GetTokenCalls() []struct {
 	Ctx     context.Context
 	Realm   string
@@ -12282,7 +12458,8 @@ func (mock *GoCloakMock) GetUserByID(ctx context.Context, accessToken string, re
 
 // GetUserByIDCalls gets all the calls that were made to GetUserByID.
 // Check the length with:
-//     len(mockedGoCloak.GetUserByIDCalls())
+//
+//	len(mockedGoCloak.GetUserByIDCalls())
 func (mock *GoCloakMock) GetUserByIDCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -12325,7 +12502,8 @@ func (mock *GoCloakMock) GetUserCount(ctx context.Context, accessToken string, r
 
 // GetUserCountCalls gets all the calls that were made to GetUserCount.
 // Check the length with:
-//     len(mockedGoCloak.GetUserCountCalls())
+//
+//	len(mockedGoCloak.GetUserCountCalls())
 func (mock *GoCloakMock) GetUserCountCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -12368,7 +12546,8 @@ func (mock *GoCloakMock) GetUserFederatedIdentities(ctx context.Context, token s
 
 // GetUserFederatedIdentitiesCalls gets all the calls that were made to GetUserFederatedIdentities.
 // Check the length with:
-//     len(mockedGoCloak.GetUserFederatedIdentitiesCalls())
+//
+//	len(mockedGoCloak.GetUserFederatedIdentitiesCalls())
 func (mock *GoCloakMock) GetUserFederatedIdentitiesCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -12413,7 +12592,8 @@ func (mock *GoCloakMock) GetUserGroups(ctx context.Context, accessToken string, 
 
 // GetUserGroupsCalls gets all the calls that were made to GetUserGroups.
 // Check the length with:
-//     len(mockedGoCloak.GetUserGroupsCalls())
+//
+//	len(mockedGoCloak.GetUserGroupsCalls())
 func (mock *GoCloakMock) GetUserGroupsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -12456,7 +12636,8 @@ func (mock *GoCloakMock) GetUserInfo(ctx context.Context, accessToken string, re
 
 // GetUserInfoCalls gets all the calls that were made to GetUserInfo.
 // Check the length with:
-//     len(mockedGoCloak.GetUserInfoCalls())
+//
+//	len(mockedGoCloak.GetUserInfoCalls())
 func (mock *GoCloakMock) GetUserInfoCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -12499,7 +12680,8 @@ func (mock *GoCloakMock) GetUserOfflineSessionsForClient(ctx context.Context, to
 
 // GetUserOfflineSessionsForClientCalls gets all the calls that were made to GetUserOfflineSessionsForClient.
 // Check the length with:
-//     len(mockedGoCloak.GetUserOfflineSessionsForClientCalls())
+//
+//	len(mockedGoCloak.GetUserOfflineSessionsForClientCalls())
 func (mock *GoCloakMock) GetUserOfflineSessionsForClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -12544,7 +12726,8 @@ func (mock *GoCloakMock) GetUserPermissions(ctx context.Context, token string, r
 
 // GetUserPermissionsCalls gets all the calls that were made to GetUserPermissions.
 // Check the length with:
-//     len(mockedGoCloak.GetUserPermissionsCalls())
+//
+//	len(mockedGoCloak.GetUserPermissionsCalls())
 func (mock *GoCloakMock) GetUserPermissionsCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -12587,7 +12770,8 @@ func (mock *GoCloakMock) GetUserSessions(ctx context.Context, token string, real
 
 // GetUserSessionsCalls gets all the calls that were made to GetUserSessions.
 // Check the length with:
-//     len(mockedGoCloak.GetUserSessionsCalls())
+//
+//	len(mockedGoCloak.GetUserSessionsCalls())
 func (mock *GoCloakMock) GetUserSessionsCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -12630,7 +12814,8 @@ func (mock *GoCloakMock) GetUsers(ctx context.Context, accessToken string, realm
 
 // GetUsersCalls gets all the calls that were made to GetUsers.
 // Check the length with:
-//     len(mockedGoCloak.GetUsersCalls())
+//
+//	len(mockedGoCloak.GetUsersCalls())
 func (mock *GoCloakMock) GetUsersCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -12677,7 +12862,8 @@ func (mock *GoCloakMock) GetUsersByClientRoleName(ctx context.Context, token str
 
 // GetUsersByClientRoleNameCalls gets all the calls that were made to GetUsersByClientRoleName.
 // Check the length with:
-//     len(mockedGoCloak.GetUsersByClientRoleNameCalls())
+//
+//	len(mockedGoCloak.GetUsersByClientRoleNameCalls())
 func (mock *GoCloakMock) GetUsersByClientRoleNameCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -12724,7 +12910,8 @@ func (mock *GoCloakMock) GetUsersByRoleName(ctx context.Context, token string, r
 
 // GetUsersByRoleNameCalls gets all the calls that were made to GetUsersByRoleName.
 // Check the length with:
-//     len(mockedGoCloak.GetUsersByRoleNameCalls())
+//
+//	len(mockedGoCloak.GetUsersByRoleNameCalls())
 func (mock *GoCloakMock) GetUsersByRoleNameCalls() []struct {
 	Ctx      context.Context
 	Token    string
@@ -12767,7 +12954,8 @@ func (mock *GoCloakMock) GrantUserPermission(ctx context.Context, token string, 
 
 // GrantUserPermissionCalls gets all the calls that were made to GrantUserPermission.
 // Check the length with:
-//     len(mockedGoCloak.GrantUserPermissionCalls())
+//
+//	len(mockedGoCloak.GrantUserPermissionCalls())
 func (mock *GoCloakMock) GrantUserPermissionCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -12812,7 +13000,8 @@ func (mock *GoCloakMock) ImportIdentityProviderConfig(ctx context.Context, token
 
 // ImportIdentityProviderConfigCalls gets all the calls that were made to ImportIdentityProviderConfig.
 // Check the length with:
-//     len(mockedGoCloak.ImportIdentityProviderConfigCalls())
+//
+//	len(mockedGoCloak.ImportIdentityProviderConfigCalls())
 func (mock *GoCloakMock) ImportIdentityProviderConfigCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -12861,7 +13050,8 @@ func (mock *GoCloakMock) ImportIdentityProviderConfigFromFile(ctx context.Contex
 
 // ImportIdentityProviderConfigFromFileCalls gets all the calls that were made to ImportIdentityProviderConfigFromFile.
 // Check the length with:
-//     len(mockedGoCloak.ImportIdentityProviderConfigFromFileCalls())
+//
+//	len(mockedGoCloak.ImportIdentityProviderConfigFromFileCalls())
 func (mock *GoCloakMock) ImportIdentityProviderConfigFromFileCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -12912,7 +13102,8 @@ func (mock *GoCloakMock) Login(ctx context.Context, clientID string, clientSecre
 
 // LoginCalls gets all the calls that were made to Login.
 // Check the length with:
-//     len(mockedGoCloak.LoginCalls())
+//
+//	len(mockedGoCloak.LoginCalls())
 func (mock *GoCloakMock) LoginCalls() []struct {
 	Ctx          context.Context
 	ClientID     string
@@ -12959,7 +13150,8 @@ func (mock *GoCloakMock) LoginAdmin(ctx context.Context, username string, passwo
 
 // LoginAdminCalls gets all the calls that were made to LoginAdmin.
 // Check the length with:
-//     len(mockedGoCloak.LoginAdminCalls())
+//
+//	len(mockedGoCloak.LoginAdminCalls())
 func (mock *GoCloakMock) LoginAdminCalls() []struct {
 	Ctx      context.Context
 	Username string
@@ -13002,7 +13194,8 @@ func (mock *GoCloakMock) LoginClient(ctx context.Context, clientID string, clien
 
 // LoginClientCalls gets all the calls that were made to LoginClient.
 // Check the length with:
-//     len(mockedGoCloak.LoginClientCalls())
+//
+//	len(mockedGoCloak.LoginClientCalls())
 func (mock *GoCloakMock) LoginClientCalls() []struct {
 	Ctx          context.Context
 	ClientID     string
@@ -13049,7 +13242,8 @@ func (mock *GoCloakMock) LoginClientSignedJWT(ctx context.Context, idOfClient st
 
 // LoginClientSignedJWTCalls gets all the calls that were made to LoginClientSignedJWT.
 // Check the length with:
-//     len(mockedGoCloak.LoginClientSignedJWTCalls())
+//
+//	len(mockedGoCloak.LoginClientSignedJWTCalls())
 func (mock *GoCloakMock) LoginClientSignedJWTCalls() []struct {
 	Ctx          context.Context
 	IdOfClient   string
@@ -13102,7 +13296,8 @@ func (mock *GoCloakMock) LoginClientTokenExchange(ctx context.Context, clientID 
 
 // LoginClientTokenExchangeCalls gets all the calls that were made to LoginClientTokenExchange.
 // Check the length with:
-//     len(mockedGoCloak.LoginClientTokenExchangeCalls())
+//
+//	len(mockedGoCloak.LoginClientTokenExchangeCalls())
 func (mock *GoCloakMock) LoginClientTokenExchangeCalls() []struct {
 	Ctx          context.Context
 	ClientID     string
@@ -13157,7 +13352,8 @@ func (mock *GoCloakMock) LoginOtp(ctx context.Context, clientID string, clientSe
 
 // LoginOtpCalls gets all the calls that were made to LoginOtp.
 // Check the length with:
-//     len(mockedGoCloak.LoginOtpCalls())
+//
+//	len(mockedGoCloak.LoginOtpCalls())
 func (mock *GoCloakMock) LoginOtpCalls() []struct {
 	Ctx          context.Context
 	ClientID     string
@@ -13208,7 +13404,8 @@ func (mock *GoCloakMock) Logout(ctx context.Context, clientID string, clientSecr
 
 // LogoutCalls gets all the calls that were made to Logout.
 // Check the length with:
-//     len(mockedGoCloak.LogoutCalls())
+//
+//	len(mockedGoCloak.LogoutCalls())
 func (mock *GoCloakMock) LogoutCalls() []struct {
 	Ctx          context.Context
 	ClientID     string
@@ -13253,7 +13450,8 @@ func (mock *GoCloakMock) LogoutAllSessions(ctx context.Context, accessToken stri
 
 // LogoutAllSessionsCalls gets all the calls that were made to LogoutAllSessions.
 // Check the length with:
-//     len(mockedGoCloak.LogoutAllSessionsCalls())
+//
+//	len(mockedGoCloak.LogoutAllSessionsCalls())
 func (mock *GoCloakMock) LogoutAllSessionsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -13298,7 +13496,8 @@ func (mock *GoCloakMock) LogoutPublicClient(ctx context.Context, idOfClient stri
 
 // LogoutPublicClientCalls gets all the calls that were made to LogoutPublicClient.
 // Check the length with:
-//     len(mockedGoCloak.LogoutPublicClientCalls())
+//
+//	len(mockedGoCloak.LogoutPublicClientCalls())
 func (mock *GoCloakMock) LogoutPublicClientCalls() []struct {
 	Ctx          context.Context
 	IdOfClient   string
@@ -13343,7 +13542,8 @@ func (mock *GoCloakMock) LogoutUserSession(ctx context.Context, accessToken stri
 
 // LogoutUserSessionCalls gets all the calls that were made to LogoutUserSession.
 // Check the length with:
-//     len(mockedGoCloak.LogoutUserSessionCalls())
+//
+//	len(mockedGoCloak.LogoutUserSessionCalls())
 func (mock *GoCloakMock) LogoutUserSessionCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -13390,7 +13590,8 @@ func (mock *GoCloakMock) MoveCredentialBehind(ctx context.Context, token string,
 
 // MoveCredentialBehindCalls gets all the calls that were made to MoveCredentialBehind.
 // Check the length with:
-//     len(mockedGoCloak.MoveCredentialBehindCalls())
+//
+//	len(mockedGoCloak.MoveCredentialBehindCalls())
 func (mock *GoCloakMock) MoveCredentialBehindCalls() []struct {
 	Ctx                     context.Context
 	Token                   string
@@ -13439,7 +13640,8 @@ func (mock *GoCloakMock) MoveCredentialToFirst(ctx context.Context, token string
 
 // MoveCredentialToFirstCalls gets all the calls that were made to MoveCredentialToFirst.
 // Check the length with:
-//     len(mockedGoCloak.MoveCredentialToFirstCalls())
+//
+//	len(mockedGoCloak.MoveCredentialToFirstCalls())
 func (mock *GoCloakMock) MoveCredentialToFirstCalls() []struct {
 	Ctx          context.Context
 	Token        string
@@ -13486,7 +13688,8 @@ func (mock *GoCloakMock) RefreshToken(ctx context.Context, refreshToken string, 
 
 // RefreshTokenCalls gets all the calls that were made to RefreshToken.
 // Check the length with:
-//     len(mockedGoCloak.RefreshTokenCalls())
+//
+//	len(mockedGoCloak.RefreshTokenCalls())
 func (mock *GoCloakMock) RefreshTokenCalls() []struct {
 	Ctx          context.Context
 	RefreshToken string
@@ -13531,7 +13734,8 @@ func (mock *GoCloakMock) RegenerateClientSecret(ctx context.Context, token strin
 
 // RegenerateClientSecretCalls gets all the calls that were made to RegenerateClientSecret.
 // Check the length with:
-//     len(mockedGoCloak.RegenerateClientSecretCalls())
+//
+//	len(mockedGoCloak.RegenerateClientSecretCalls())
 func (mock *GoCloakMock) RegenerateClientSecretCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -13574,7 +13778,8 @@ func (mock *GoCloakMock) RemoveDefaultGroup(ctx context.Context, accessToken str
 
 // RemoveDefaultGroupCalls gets all the calls that were made to RemoveDefaultGroup.
 // Check the length with:
-//     len(mockedGoCloak.RemoveDefaultGroupCalls())
+//
+//	len(mockedGoCloak.RemoveDefaultGroupCalls())
 func (mock *GoCloakMock) RemoveDefaultGroupCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -13619,7 +13824,8 @@ func (mock *GoCloakMock) RemoveDefaultScopeFromClient(ctx context.Context, token
 
 // RemoveDefaultScopeFromClientCalls gets all the calls that were made to RemoveDefaultScopeFromClient.
 // Check the length with:
-//     len(mockedGoCloak.RemoveDefaultScopeFromClientCalls())
+//
+//	len(mockedGoCloak.RemoveDefaultScopeFromClientCalls())
 func (mock *GoCloakMock) RemoveDefaultScopeFromClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -13666,7 +13872,8 @@ func (mock *GoCloakMock) RemoveOptionalScopeFromClient(ctx context.Context, toke
 
 // RemoveOptionalScopeFromClientCalls gets all the calls that were made to RemoveOptionalScopeFromClient.
 // Check the length with:
-//     len(mockedGoCloak.RemoveOptionalScopeFromClientCalls())
+//
+//	len(mockedGoCloak.RemoveOptionalScopeFromClientCalls())
 func (mock *GoCloakMock) RemoveOptionalScopeFromClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -13702,7 +13909,8 @@ func (mock *GoCloakMock) RestyClient() *resty.Client {
 
 // RestyClientCalls gets all the calls that were made to RestyClient.
 // Check the length with:
-//     len(mockedGoCloak.RestyClientCalls())
+//
+//	len(mockedGoCloak.RestyClientCalls())
 func (mock *GoCloakMock) RestyClientCalls() []struct {
 } {
 	var calls []struct {
@@ -13739,7 +13947,8 @@ func (mock *GoCloakMock) RetrospectToken(ctx context.Context, accessToken string
 
 // RetrospectTokenCalls gets all the calls that were made to RetrospectToken.
 // Check the length with:
-//     len(mockedGoCloak.RetrospectTokenCalls())
+//
+//	len(mockedGoCloak.RetrospectTokenCalls())
 func (mock *GoCloakMock) RetrospectTokenCalls() []struct {
 	Ctx          context.Context
 	AccessToken  string
@@ -13786,7 +13995,8 @@ func (mock *GoCloakMock) RevokeUserConsents(ctx context.Context, accessToken str
 
 // RevokeUserConsentsCalls gets all the calls that were made to RevokeUserConsents.
 // Check the length with:
-//     len(mockedGoCloak.RevokeUserConsentsCalls())
+//
+//	len(mockedGoCloak.RevokeUserConsentsCalls())
 func (mock *GoCloakMock) RevokeUserConsentsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -13835,7 +14045,8 @@ func (mock *GoCloakMock) SetPassword(ctx context.Context, token string, userID s
 
 // SetPasswordCalls gets all the calls that were made to SetPassword.
 // Check the length with:
-//     len(mockedGoCloak.SetPasswordCalls())
+//
+//	len(mockedGoCloak.SetPasswordCalls())
 func (mock *GoCloakMock) SetPasswordCalls() []struct {
 	Ctx       context.Context
 	Token     string
@@ -13876,7 +14087,8 @@ func (mock *GoCloakMock) SetRestyClient(restyClient *resty.Client) {
 
 // SetRestyClientCalls gets all the calls that were made to SetRestyClient.
 // Check the length with:
-//     len(mockedGoCloak.SetRestyClientCalls())
+//
+//	len(mockedGoCloak.SetRestyClientCalls())
 func (mock *GoCloakMock) SetRestyClientCalls() []struct {
 	RestyClient *resty.Client
 } {
@@ -13915,7 +14127,8 @@ func (mock *GoCloakMock) UpdateAuthenticationExecution(ctx context.Context, toke
 
 // UpdateAuthenticationExecutionCalls gets all the calls that were made to UpdateAuthenticationExecution.
 // Check the length with:
-//     len(mockedGoCloak.UpdateAuthenticationExecutionCalls())
+//
+//	len(mockedGoCloak.UpdateAuthenticationExecutionCalls())
 func (mock *GoCloakMock) UpdateAuthenticationExecutionCalls() []struct {
 	Ctx       context.Context
 	Token     string
@@ -13960,7 +14173,8 @@ func (mock *GoCloakMock) UpdateClient(ctx context.Context, accessToken string, r
 
 // UpdateClientCalls gets all the calls that were made to UpdateClient.
 // Check the length with:
-//     len(mockedGoCloak.UpdateClientCalls())
+//
+//	len(mockedGoCloak.UpdateClientCalls())
 func (mock *GoCloakMock) UpdateClientCalls() []struct {
 	Ctx           context.Context
 	AccessToken   string
@@ -14007,7 +14221,8 @@ func (mock *GoCloakMock) UpdateClientProtocolMapper(ctx context.Context, token s
 
 // UpdateClientProtocolMapperCalls gets all the calls that were made to UpdateClientProtocolMapper.
 // Check the length with:
-//     len(mockedGoCloak.UpdateClientProtocolMapperCalls())
+//
+//	len(mockedGoCloak.UpdateClientProtocolMapperCalls())
 func (mock *GoCloakMock) UpdateClientProtocolMapperCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -14054,7 +14269,8 @@ func (mock *GoCloakMock) UpdateClientRepresentation(ctx context.Context, accessT
 
 // UpdateClientRepresentationCalls gets all the calls that were made to UpdateClientRepresentation.
 // Check the length with:
-//     len(mockedGoCloak.UpdateClientRepresentationCalls())
+//
+//	len(mockedGoCloak.UpdateClientRepresentationCalls())
 func (mock *GoCloakMock) UpdateClientRepresentationCalls() []struct {
 	Ctx           context.Context
 	AccessToken   string
@@ -14097,7 +14313,8 @@ func (mock *GoCloakMock) UpdateClientScope(ctx context.Context, accessToken stri
 
 // UpdateClientScopeCalls gets all the calls that were made to UpdateClientScope.
 // Check the length with:
-//     len(mockedGoCloak.UpdateClientScopeCalls())
+//
+//	len(mockedGoCloak.UpdateClientScopeCalls())
 func (mock *GoCloakMock) UpdateClientScopeCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -14142,7 +14359,8 @@ func (mock *GoCloakMock) UpdateClientScopeProtocolMapper(ctx context.Context, ac
 
 // UpdateClientScopeProtocolMapperCalls gets all the calls that were made to UpdateClientScopeProtocolMapper.
 // Check the length with:
-//     len(mockedGoCloak.UpdateClientScopeProtocolMapperCalls())
+//
+//	len(mockedGoCloak.UpdateClientScopeProtocolMapperCalls())
 func (mock *GoCloakMock) UpdateClientScopeProtocolMapperCalls() []struct {
 	Ctx            context.Context
 	AccessToken    string
@@ -14191,7 +14409,8 @@ func (mock *GoCloakMock) UpdateCredentialUserLabel(ctx context.Context, token st
 
 // UpdateCredentialUserLabelCalls gets all the calls that were made to UpdateCredentialUserLabel.
 // Check the length with:
-//     len(mockedGoCloak.UpdateCredentialUserLabelCalls())
+//
+//	len(mockedGoCloak.UpdateCredentialUserLabelCalls())
 func (mock *GoCloakMock) UpdateCredentialUserLabelCalls() []struct {
 	Ctx          context.Context
 	Token        string
@@ -14238,7 +14457,8 @@ func (mock *GoCloakMock) UpdateGroup(ctx context.Context, accessToken string, re
 
 // UpdateGroupCalls gets all the calls that were made to UpdateGroup.
 // Check the length with:
-//     len(mockedGoCloak.UpdateGroupCalls())
+//
+//	len(mockedGoCloak.UpdateGroupCalls())
 func (mock *GoCloakMock) UpdateGroupCalls() []struct {
 	Ctx          context.Context
 	AccessToken  string
@@ -14283,7 +14503,8 @@ func (mock *GoCloakMock) UpdateIdentityProvider(ctx context.Context, token strin
 
 // UpdateIdentityProviderCalls gets all the calls that were made to UpdateIdentityProvider.
 // Check the length with:
-//     len(mockedGoCloak.UpdateIdentityProviderCalls())
+//
+//	len(mockedGoCloak.UpdateIdentityProviderCalls())
 func (mock *GoCloakMock) UpdateIdentityProviderCalls() []struct {
 	Ctx         context.Context
 	Token       string
@@ -14330,7 +14551,8 @@ func (mock *GoCloakMock) UpdateIdentityProviderMapper(ctx context.Context, token
 
 // UpdateIdentityProviderMapperCalls gets all the calls that were made to UpdateIdentityProviderMapper.
 // Check the length with:
-//     len(mockedGoCloak.UpdateIdentityProviderMapperCalls())
+//
+//	len(mockedGoCloak.UpdateIdentityProviderMapperCalls())
 func (mock *GoCloakMock) UpdateIdentityProviderMapperCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -14377,7 +14599,8 @@ func (mock *GoCloakMock) UpdatePermission(ctx context.Context, token string, rea
 
 // UpdatePermissionCalls gets all the calls that were made to UpdatePermission.
 // Check the length with:
-//     len(mockedGoCloak.UpdatePermissionCalls())
+//
+//	len(mockedGoCloak.UpdatePermissionCalls())
 func (mock *GoCloakMock) UpdatePermissionCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -14424,7 +14647,8 @@ func (mock *GoCloakMock) UpdatePolicy(ctx context.Context, token string, realm s
 
 // UpdatePolicyCalls gets all the calls that were made to UpdatePolicy.
 // Check the length with:
-//     len(mockedGoCloak.UpdatePolicyCalls())
+//
+//	len(mockedGoCloak.UpdatePolicyCalls())
 func (mock *GoCloakMock) UpdatePolicyCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -14467,7 +14691,8 @@ func (mock *GoCloakMock) UpdateRealm(ctx context.Context, token string, realm go
 
 // UpdateRealmCalls gets all the calls that were made to UpdateRealm.
 // Check the length with:
-//     len(mockedGoCloak.UpdateRealmCalls())
+//
+//	len(mockedGoCloak.UpdateRealmCalls())
 func (mock *GoCloakMock) UpdateRealmCalls() []struct {
 	Ctx   context.Context
 	Token string
@@ -14510,7 +14735,8 @@ func (mock *GoCloakMock) UpdateRealmRole(ctx context.Context, token string, real
 
 // UpdateRealmRoleCalls gets all the calls that were made to UpdateRealmRole.
 // Check the length with:
-//     len(mockedGoCloak.UpdateRealmRoleCalls())
+//
+//	len(mockedGoCloak.UpdateRealmRoleCalls())
 func (mock *GoCloakMock) UpdateRealmRoleCalls() []struct {
 	Ctx      context.Context
 	Token    string
@@ -14557,7 +14783,8 @@ func (mock *GoCloakMock) UpdateRealmRoleByID(ctx context.Context, token string, 
 
 // UpdateRealmRoleByIDCalls gets all the calls that were made to UpdateRealmRoleByID.
 // Check the length with:
-//     len(mockedGoCloak.UpdateRealmRoleByIDCalls())
+//
+//	len(mockedGoCloak.UpdateRealmRoleByIDCalls())
 func (mock *GoCloakMock) UpdateRealmRoleByIDCalls() []struct {
 	Ctx    context.Context
 	Token  string
@@ -14602,7 +14829,8 @@ func (mock *GoCloakMock) UpdateRequiredAction(ctx context.Context, token string,
 
 // UpdateRequiredActionCalls gets all the calls that were made to UpdateRequiredAction.
 // Check the length with:
-//     len(mockedGoCloak.UpdateRequiredActionCalls())
+//
+//	len(mockedGoCloak.UpdateRequiredActionCalls())
 func (mock *GoCloakMock) UpdateRequiredActionCalls() []struct {
 	Ctx            context.Context
 	Token          string
@@ -14647,7 +14875,8 @@ func (mock *GoCloakMock) UpdateResource(ctx context.Context, token string, realm
 
 // UpdateResourceCalls gets all the calls that were made to UpdateResource.
 // Check the length with:
-//     len(mockedGoCloak.UpdateResourceCalls())
+//
+//	len(mockedGoCloak.UpdateResourceCalls())
 func (mock *GoCloakMock) UpdateResourceCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -14692,7 +14921,8 @@ func (mock *GoCloakMock) UpdateResourceClient(ctx context.Context, token string,
 
 // UpdateResourceClientCalls gets all the calls that were made to UpdateResourceClient.
 // Check the length with:
-//     len(mockedGoCloak.UpdateResourceClientCalls())
+//
+//	len(mockedGoCloak.UpdateResourceClientCalls())
 func (mock *GoCloakMock) UpdateResourceClientCalls() []struct {
 	Ctx      context.Context
 	Token    string
@@ -14737,7 +14967,8 @@ func (mock *GoCloakMock) UpdateResourcePolicy(ctx context.Context, token string,
 
 // UpdateResourcePolicyCalls gets all the calls that were made to UpdateResourcePolicy.
 // Check the length with:
-//     len(mockedGoCloak.UpdateResourcePolicyCalls())
+//
+//	len(mockedGoCloak.UpdateResourcePolicyCalls())
 func (mock *GoCloakMock) UpdateResourcePolicyCalls() []struct {
 	Ctx          context.Context
 	Token        string
@@ -14784,7 +15015,8 @@ func (mock *GoCloakMock) UpdateRole(ctx context.Context, accessToken string, rea
 
 // UpdateRoleCalls gets all the calls that were made to UpdateRole.
 // Check the length with:
-//     len(mockedGoCloak.UpdateRoleCalls())
+//
+//	len(mockedGoCloak.UpdateRoleCalls())
 func (mock *GoCloakMock) UpdateRoleCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -14831,7 +15063,8 @@ func (mock *GoCloakMock) UpdateScope(ctx context.Context, token string, realm st
 
 // UpdateScopeCalls gets all the calls that were made to UpdateScope.
 // Check the length with:
-//     len(mockedGoCloak.UpdateScopeCalls())
+//
+//	len(mockedGoCloak.UpdateScopeCalls())
 func (mock *GoCloakMock) UpdateScopeCalls() []struct {
 	Ctx        context.Context
 	Token      string
@@ -14876,7 +15109,8 @@ func (mock *GoCloakMock) UpdateUser(ctx context.Context, accessToken string, rea
 
 // UpdateUserCalls gets all the calls that were made to UpdateUser.
 // Check the length with:
-//     len(mockedGoCloak.UpdateUserCalls())
+//
+//	len(mockedGoCloak.UpdateUserCalls())
 func (mock *GoCloakMock) UpdateUserCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
@@ -14919,7 +15153,8 @@ func (mock *GoCloakMock) UpdateUserPermission(ctx context.Context, token string,
 
 // UpdateUserPermissionCalls gets all the calls that were made to UpdateUserPermission.
 // Check the length with:
-//     len(mockedGoCloak.UpdateUserPermissionCalls())
+//
+//	len(mockedGoCloak.UpdateUserPermissionCalls())
 func (mock *GoCloakMock) UpdateUserPermissionCalls() []struct {
 	Ctx        context.Context
 	Token      string
