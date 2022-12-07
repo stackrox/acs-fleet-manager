@@ -99,6 +99,7 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --set fleetshardSync.managedDB.enabled=true \
   --set fleetshardSync.managedDB.subnetGroup="${FLEETSHARD_SYNC_MANAGED_DB_SUBNET_GROUP}" \
   --set fleetshardSync.managedDB.securityGroup="${FLEETSHARD_SYNC_MANAGED_DB_SECURITY_GROUP}" \
+  --set fleetshardSync.aws.roleARN="${FLEETSHARD_SYNC_AWS_ROLE_ARN}" \
   --set logging.aws.accessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \
   --set logging.aws.secretAccessKey="${LOGGING_AWS_SECRET_ACCESS_KEY}" \
   --set observability.github.accessToken="${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" \
