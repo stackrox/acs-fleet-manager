@@ -76,3 +76,14 @@ func (o *ocmAuth) AddAuth(req *http.Request) error {
 	setBearer(req, access)
 	return nil
 }
+
+func (o *ocmAuth) RetrieveIDToken() (string, error) {
+	// Our internal definition of the ID token is to have a `aud` claim set.
+	// The OCM bearer token, by default, has the `aud` claim set, hence we can just return it here.
+	access, _, err := o.conn.Tokens(ocmTokenExpirationMargin)
+	if err != nil {
+		return "", errors.Wrap(err, "retrieving access token via OCM auth type")
+	}
+
+	return access, nil
+}

@@ -15,28 +15,28 @@ var _ CloudProvidersService = &CloudProvidersServiceMock{}
 
 // CloudProvidersServiceMock is a mock implementation of CloudProvidersService.
 //
-// 	func TestSomethingThatUsesCloudProvidersService(t *testing.T) {
+//	func TestSomethingThatUsesCloudProvidersService(t *testing.T) {
 //
-// 		// make and configure a mocked CloudProvidersService
-// 		mockedCloudProvidersService := &CloudProvidersServiceMock{
-// 			GetCachedCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, *serviceError.ServiceError) {
-// 				panic("mock out the GetCachedCloudProvidersWithRegions method")
-// 			},
-// 			GetCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, *serviceError.ServiceError) {
-// 				panic("mock out the GetCloudProvidersWithRegions method")
-// 			},
-// 			ListCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *serviceError.ServiceError) {
-// 				panic("mock out the ListCloudProviderRegions method")
-// 			},
-// 			ListCloudProvidersFunc: func() ([]api.CloudProvider, *serviceError.ServiceError) {
-// 				panic("mock out the ListCloudProviders method")
-// 			},
-// 		}
+//		// make and configure a mocked CloudProvidersService
+//		mockedCloudProvidersService := &CloudProvidersServiceMock{
+//			GetCachedCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, *serviceError.ServiceError) {
+//				panic("mock out the GetCachedCloudProvidersWithRegions method")
+//			},
+//			GetCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, *serviceError.ServiceError) {
+//				panic("mock out the GetCloudProvidersWithRegions method")
+//			},
+//			ListCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *serviceError.ServiceError) {
+//				panic("mock out the ListCloudProviderRegions method")
+//			},
+//			ListCloudProvidersFunc: func() ([]api.CloudProvider, *serviceError.ServiceError) {
+//				panic("mock out the ListCloudProviders method")
+//			},
+//		}
 //
-// 		// use mockedCloudProvidersService in code that requires CloudProvidersService
-// 		// and then make assertions.
+//		// use mockedCloudProvidersService in code that requires CloudProvidersService
+//		// and then make assertions.
 //
-// 	}
+//	}
 type CloudProvidersServiceMock struct {
 	// GetCachedCloudProvidersWithRegionsFunc mocks the GetCachedCloudProvidersWithRegions method.
 	GetCachedCloudProvidersWithRegionsFunc func() ([]CloudProviderWithRegions, *serviceError.ServiceError)
@@ -88,7 +88,8 @@ func (mock *CloudProvidersServiceMock) GetCachedCloudProvidersWithRegions() ([]C
 
 // GetCachedCloudProvidersWithRegionsCalls gets all the calls that were made to GetCachedCloudProvidersWithRegions.
 // Check the length with:
-//     len(mockedCloudProvidersService.GetCachedCloudProvidersWithRegionsCalls())
+//
+//	len(mockedCloudProvidersService.GetCachedCloudProvidersWithRegionsCalls())
 func (mock *CloudProvidersServiceMock) GetCachedCloudProvidersWithRegionsCalls() []struct {
 } {
 	var calls []struct {
@@ -114,7 +115,8 @@ func (mock *CloudProvidersServiceMock) GetCloudProvidersWithRegions() ([]CloudPr
 
 // GetCloudProvidersWithRegionsCalls gets all the calls that were made to GetCloudProvidersWithRegions.
 // Check the length with:
-//     len(mockedCloudProvidersService.GetCloudProvidersWithRegionsCalls())
+//
+//	len(mockedCloudProvidersService.GetCloudProvidersWithRegionsCalls())
 func (mock *CloudProvidersServiceMock) GetCloudProvidersWithRegionsCalls() []struct {
 } {
 	var calls []struct {
@@ -143,7 +145,8 @@ func (mock *CloudProvidersServiceMock) ListCloudProviderRegions(id string) ([]ap
 
 // ListCloudProviderRegionsCalls gets all the calls that were made to ListCloudProviderRegions.
 // Check the length with:
-//     len(mockedCloudProvidersService.ListCloudProviderRegionsCalls())
+//
+//	len(mockedCloudProvidersService.ListCloudProviderRegionsCalls())
 func (mock *CloudProvidersServiceMock) ListCloudProviderRegionsCalls() []struct {
 	ID string
 } {
@@ -171,7 +174,8 @@ func (mock *CloudProvidersServiceMock) ListCloudProviders() ([]api.CloudProvider
 
 // ListCloudProvidersCalls gets all the calls that were made to ListCloudProviders.
 // Check the length with:
-//     len(mockedCloudProvidersService.ListCloudProvidersCalls())
+//
+//	len(mockedCloudProvidersService.ListCloudProvidersCalls())
 func (mock *CloudProvidersServiceMock) ListCloudProvidersCalls() []struct {
 } {
 	var calls []struct {

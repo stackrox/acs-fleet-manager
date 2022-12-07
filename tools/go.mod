@@ -5,8 +5,8 @@ go 1.18
 require (
 	github.com/99designs/aws-vault/v6 v6.6.0
 	github.com/go-bindata/go-bindata/v3 v3.1.3
-	github.com/matryer/moq v0.2.7
-	github.com/onsi/ginkgo/v2 v2.1.4
+	github.com/matryer/moq v0.3.0
+	github.com/onsi/ginkgo/v2 v2.5.1
 	github.com/segmentio/chamber/v2 v2.10.12
 	gotest.tools/gotestsum v1.8.2
 )
@@ -58,11 +58,11 @@ require (
 	github.com/stretchr/testify v1.8.0 // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/mod v0.7.0 // indirect
+	golang.org/x/sync v0.1.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/term v0.1.0 // indirect
-	golang.org/x/tools v0.1.11 // indirect
+	golang.org/x/tools v0.3.0 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/segmentio/analytics-go.v3 v3.0.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

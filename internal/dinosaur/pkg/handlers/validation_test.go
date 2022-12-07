@@ -169,8 +169,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
 				dinosaurService: &services.DinosaurServiceMock{
-					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
-						return types.EVAL, nil
+					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType {
+						return types.EVAL
 					},
 				},
 				dinosaurRequest: dbapi.CentralRequest{},
@@ -204,8 +204,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "do not throw an error when cloud provider and region matches",
 			arg: args{
 				dinosaurService: &services.DinosaurServiceMock{
-					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
-						return types.EVAL, nil
+					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType {
+						return types.EVAL
 					},
 				},
 				dinosaurRequest: dbapi.CentralRequest{
@@ -249,8 +249,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "throws an error when cloud provider and region do not match",
 			arg: args{
 				dinosaurService: &services.DinosaurServiceMock{
-					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
-						return types.EVAL, nil
+					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType {
+						return types.EVAL
 					},
 				},
 				dinosaurRequest: dbapi.CentralRequest{
@@ -282,8 +282,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "throws an error when instance type is not supported",
 			arg: args{
 				dinosaurService: &services.DinosaurServiceMock{
-					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
-						return types.EVAL, nil
+					DetectInstanceTypeFunc: func(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType {
+						return types.EVAL
 					},
 				},
 				dinosaurRequest: dbapi.CentralRequest{

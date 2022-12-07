@@ -15,19 +15,19 @@ var _ ClusterBuilder = &ClusterBuilderMock{}
 
 // ClusterBuilderMock is a mock implementation of ClusterBuilder.
 //
-// 	func TestSomethingThatUsesClusterBuilder(t *testing.T) {
+//	func TestSomethingThatUsesClusterBuilder(t *testing.T) {
 //
-// 		// make and configure a mocked ClusterBuilder
-// 		mockedClusterBuilder := &ClusterBuilderMock{
-// 			NewOCMClusterFromClusterFunc: func(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error) {
-// 				panic("mock out the NewOCMClusterFromCluster method")
-// 			},
-// 		}
+//		// make and configure a mocked ClusterBuilder
+//		mockedClusterBuilder := &ClusterBuilderMock{
+//			NewOCMClusterFromClusterFunc: func(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error) {
+//				panic("mock out the NewOCMClusterFromCluster method")
+//			},
+//		}
 //
-// 		// use mockedClusterBuilder in code that requires ClusterBuilder
-// 		// and then make assertions.
+//		// use mockedClusterBuilder in code that requires ClusterBuilder
+//		// and then make assertions.
 //
-// 	}
+//	}
 type ClusterBuilderMock struct {
 	// NewOCMClusterFromClusterFunc mocks the NewOCMClusterFromCluster method.
 	NewOCMClusterFromClusterFunc func(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error)
@@ -61,7 +61,8 @@ func (mock *ClusterBuilderMock) NewOCMClusterFromCluster(clusterRequest *types.C
 
 // NewOCMClusterFromClusterCalls gets all the calls that were made to NewOCMClusterFromCluster.
 // Check the length with:
-//     len(mockedClusterBuilder.NewOCMClusterFromClusterCalls())
+//
+//	len(mockedClusterBuilder.NewOCMClusterFromClusterCalls())
 func (mock *ClusterBuilderMock) NewOCMClusterFromClusterCalls() []struct {
 	ClusterRequest *types.ClusterRequest
 } {

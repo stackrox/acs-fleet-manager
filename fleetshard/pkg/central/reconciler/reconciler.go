@@ -12,12 +12,14 @@ import (
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/pkg/random"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	corev1 "k8s.io/api/core/v1"
@@ -38,6 +40,8 @@ const (
 	helmReleaseName = "tenant-resources"
 
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
+
+	centralDbSecretName = "central-db-password" // pragma: allowlist secret
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -45,6 +49,7 @@ type CentralReconcilerOptions struct {
 	UseRoutes         bool
 	WantsAuthProvider bool
 	EgressProxyImage  string
+	ManagedDBEnabled  bool
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -60,6 +65,9 @@ type CentralReconciler struct {
 	Resources         bool
 	routeService      *k8s.RouteService
 	egressProxyImage  string
+
+	managedDBEnabled            bool
+	managedDBProvisioningClient cloudprovider.DBClient
 
 	resourcesChart *chart.Chart
 }
@@ -181,6 +189,30 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
 		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
+	}
+
+	if r.managedDBEnabled {
+		if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace); err != nil {
+			return nil, fmt.Errorf("ensuring that DB secret exists: %w", err)
+		}
+
+		dbMasterPassword, err := r.getDBPassword(ctx, remoteCentralNamespace)
+		if err != nil {
+			return nil, fmt.Errorf("getting DB password from secret: %w", err)
+		}
+
+		dbConnectionString, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword)
+		if err != nil {
+			return nil, fmt.Errorf("provisioning RDS DB: %w", err)
+		}
+
+		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
+			IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
+			ConnectionStringOverride: pointer.String(dbConnectionString),
+			PasswordSecret: &v1alpha1.LocalSecretReference{
+				Name: centralDbSecretName,
+			},
+		}
 	}
 
 	centralExists := true
@@ -325,6 +357,20 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && centralDeleted
 
+	if r.managedDBEnabled {
+		dbDeleted, err := r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id)
+		if err != nil {
+			return false, fmt.Errorf("deprovisioning DB: %v", err)
+		}
+		globalDeleted = globalDeleted && dbDeleted
+
+		secretDeleted, err := r.ensureCentralDBSecretDeleted(ctx, central.GetNamespace())
+		if err != nil {
+			return false, err
+		}
+		globalDeleted = globalDeleted && secretDeleted
+	}
+
 	chartResourcesDeleted, err := r.ensureChartResourcesDeleted(ctx, remoteCentral)
 	if err != nil {
 		return false, err
@@ -420,6 +466,81 @@ func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name str
 	}
 	glog.Infof("Central namespace %s is marked for deletion", name)
 	return false, nil
+}
+
+func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, remoteCentralNamespace string) error {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: centralDbSecretName,
+		},
+	}
+
+	generatedPassword, err := random.GenerateString(25, random.AlphanumericCharacters)
+	if err != nil {
+		return fmt.Errorf("generating Central DB password: %w", err)
+	}
+
+	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			secret = &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        centralDbSecretName,
+					Namespace:   remoteCentralNamespace,
+					Labels:      map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
+					Annotations: map[string]string{managedServicesAnnotation: "true"},
+				},
+				Data: map[string][]byte{"password": []byte(generatedPassword)},
+			}
+
+			err = r.client.Create(ctx, secret)
+			if err != nil {
+				return fmt.Errorf("creating Central DB secret: %w", err)
+			}
+			return nil
+		}
+
+		return fmt.Errorf("getting Central DB secret: %w", err)
+	}
+
+	return nil
+}
+
+func (r *CentralReconciler) ensureCentralDBSecretDeleted(ctx context.Context, remoteCentralNamespace string) (bool, error) {
+	secret := &corev1.Secret{}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return true, nil
+		}
+
+		return false, fmt.Errorf("deleting Central DB secret: %w", err)
+	}
+
+	if err := r.client.Delete(ctx, secret); err != nil {
+		return false, fmt.Errorf("deleting central DB secret %s/%s", remoteCentralNamespace, centralDbSecretName)
+	}
+
+	glog.Infof("Central DB secret %s/%s is marked for deletion", remoteCentralNamespace, centralDbSecretName)
+	return false, nil
+}
+
+func (r *CentralReconciler) getDBPassword(ctx context.Context, centralNamespace string) (string, error) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: centralDbSecretName,
+		},
+	}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: centralNamespace, Name: centralDbSecretName}, secret)
+	if err != nil {
+		return "", fmt.Errorf("getting Central DB password from secret: %w", err)
+	}
+
+	if dbPassword, ok := secret.Data["password"]; ok {
+		return string(dbPassword), nil
+	}
+
+	return "", fmt.Errorf("central DB secret does not contain password field: %w", err)
 }
 
 func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
@@ -615,7 +736,8 @@ var (
 )
 
 // NewCentralReconciler ...
-func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, opts CentralReconcilerOptions) *CentralReconciler {
+func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
+	managedDBProvisioningClient cloudprovider.DBClient, opts CentralReconcilerOptions) *CentralReconciler {
 	return &CentralReconciler{
 		client:            k8sClient,
 		central:           central,
@@ -624,6 +746,9 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		wantsAuthProvider: opts.WantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
 		egressProxyImage:  opts.EgressProxyImage,
+
+		managedDBEnabled:            opts.ManagedDBEnabled,
+		managedDBProvisioningClient: managedDBProvisioningClient,
 
 		resourcesChart: resourcesChart,
 	}
