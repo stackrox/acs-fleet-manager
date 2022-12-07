@@ -35,7 +35,6 @@ case $ENVIRONMENT in
     # Get the first non-merge commit, starting with HEAD.
     # On main this should be HEAD
     FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
-    "${SCRIPT_DIR}/check_image_exists.sh" "${FLEETSHARD_SYNC_TAG}"
     ;;
 
   prod)
@@ -58,6 +57,12 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     exit 2
 fi
 
+if [[ "${HELM_PRINT_ONLY:-}" == "true" ]]; then
+    HELM_DEBUG_FLAGS="--debug --dry-run"
+else
+    "${SCRIPT_DIR}/check_image_exists.sh" "${FLEETSHARD_SYNC_TAG}"
+fi
+
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
 
@@ -75,8 +80,8 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     OPERATOR_SOURCE="rhacs-operators"
 fi
 
-# helm template --debug ... to debug changes
-helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
+# shellcheck disable=SC2086
+helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --install \
   --namespace rhacs \
   --create-namespace \
@@ -91,6 +96,9 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --set fleetshardSync.fleetManagerEndpoint="${FM_ENDPOINT}" \
   --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_ID}" \
   --set fleetshardSync.redHatSSO.clientSecret="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET}" \
+  --set fleetshardSync.managedDB.enabled=true \
+  --set fleetshardSync.managedDB.subnetGroup="${FLEETSHARD_SYNC_MANAGED_DB_SUBNET_GROUP}" \
+  --set fleetshardSync.managedDB.securityGroup="${FLEETSHARD_SYNC_MANAGED_DB_SECURITY_GROUP}" \
   --set logging.aws.accessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \
   --set logging.aws.secretAccessKey="${LOGGING_AWS_SECRET_ACCESS_KEY}" \
   --set observability.github.accessToken="${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" \
