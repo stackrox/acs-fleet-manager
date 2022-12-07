@@ -29,6 +29,9 @@ fleetshardSync:
     enabled: true
     subnetGroup: ""
     securityGroup: ""
+  aws:
+    region: "us-east-1"
+    roleARN: ""
 
 acsOperator:
   enabled: false
