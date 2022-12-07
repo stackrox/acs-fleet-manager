@@ -35,9 +35,12 @@ const (
 	dbInstanceClass         = "db.serverless"
 	dbPostgresPort          = 5432
 	dbName                  = "postgres"
-	dbMinCapacity           = 0.5
-	dbMaxCapacity           = 16
 	dbBackupRetentionPeriod = 30
+
+	// The Aurora Serverless v2 DB instance configuration in ACUs (Aurora Capacity Units)
+	// 1 ACU = 1 vCPU + 2GB RAM
+	dbMinCapacityACU = 0.5
+	dbMaxCapacityACU = 16
 )
 
 // RDS is an AWS RDS client tied to one Central instance. It provisions and deprovisions databases
@@ -293,8 +296,8 @@ func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnet
 		VpcSecurityGroupIds: aws.StringSlice([]string{securityGroup}),
 		DBSubnetGroupName:   aws.String(subnetGroup),
 		ServerlessV2ScalingConfiguration: &rds.ServerlessV2ScalingConfiguration{
-			MinCapacity: aws.Float64(dbMinCapacity),
-			MaxCapacity: aws.Float64(dbMaxCapacity),
+			MinCapacity: aws.Float64(dbMinCapacityACU),
+			MaxCapacity: aws.Float64(dbMaxCapacityACU),
 		},
 		BackupRetentionPeriod: aws.Int64(dbBackupRetentionPeriod),
 		StorageEncrypted:      aws.Bool(true),
