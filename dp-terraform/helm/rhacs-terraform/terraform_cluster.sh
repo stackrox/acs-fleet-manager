@@ -35,6 +35,11 @@ case $ENVIRONMENT in
     # TODO Use downstream operator after downstream release 3.73.0
     OPERATOR_USE_UPSTREAM=true
     OPERATOR_VERSION="v3.73.0"
+
+    # Get the first non-merge commit, starting with HEAD.
+    # On main this should be HEAD
+    FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
+    "${SCRIPT_DIR}/check_image_exists.sh" "${FLEETSHARD_SYNC_TAG}"
     ;;
 
   prod)
@@ -44,6 +49,8 @@ case $ENVIRONMENT in
 
     OPERATOR_USE_UPSTREAM=false
     OPERATOR_VERSION="v3.72.0"
+
+    FLEETSHARD_SYNC_TAG="1df0bc5"
     ;;
 
   *)
@@ -57,11 +64,6 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     echo "Cluster ${CLUSTER_NAME} is expected to be in environment ${CLUSTER_ENVIRONMENT}, not ${ENVIRONMENT}" >&2
     exit 2
 fi
-
-# Get the first non-merge commit, starting with HEAD.
-# On main this should be HEAD, on production, the latest merged main commit.
-FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
-"${SCRIPT_DIR}/check_image_exists.sh" "${FLEETSHARD_SYNC_TAG}"
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
