@@ -5,7 +5,7 @@ org="app-sre"
 image="acs-fleet-manager"
 tag="$1"
 # 40*15s = 10 minutes
-retry_attempts=40
+retry_attempts="${2:-40}"
 sleep_time_sec=15
 
 function image_exists() {
@@ -21,7 +21,7 @@ function image_exists() {
 if image_exists; then
     exit 0
 fi
-for attempt in $(seq 1 ${retry_attempts})
+for attempt in $(seq 1 "${retry_attempts}")
 do
     echo >&2 "Failed to assert image existence on attempt ${attempt}. Sleeping ${sleep_time_sec}s..."
     sleep ${sleep_time_sec}
