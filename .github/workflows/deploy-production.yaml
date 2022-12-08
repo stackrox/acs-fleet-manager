@@ -1,20 +1,13 @@
 name: Deploy Prod Env
 
+concurrency: production
+
 on:
   push:
     branches:
       - production
 
 jobs:
-  cancel:
-    name: Cancel previous runs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cancel Previous Runs
-        uses: n1hility/cancel-previous-runs@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
   terraform:
     name: Re-terraform production clusters
     needs: cancel
