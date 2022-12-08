@@ -56,7 +56,7 @@ var (
 				Props: &storage.GroupProperties{
 					AuthProviderId: providerId,
 					Key:            "groups",
-					Value:          "org_admin",
+					Value:          "org:admin:all",
 					Traits: &storage.Traits{
 						MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
 					},
@@ -160,6 +160,9 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 			"client_secret":                central.Spec.Auth.ClientSecret, // pragma: allowlist secret
 			"mode":                         "post",
 			"disable_offline_access_scope": "true",
+		},
+		ClaimMappings: map[string]string{
+			"realm_access.roles": "groups",
 		},
 		// TODO: for testing purposes only; remove once host is correctly specified in fleet-manager
 		ExtraUiEndpoints: []string{"localhost:8443"},
