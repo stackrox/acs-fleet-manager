@@ -1,0 +1,20 @@
+name: check shallow clones
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    name: Re-terraform production clusters
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Critical for correct image detection in deploy script
+      - name: Show recent git history graph
+        run: |
+          git log --graph --decorate -10
+      - name: Run the command to discover commit
+        working-directory: ./dp-terraform/helm/rhacs-terraform
+        run: |
+          git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD
