@@ -57,10 +57,14 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     exit 2
 fi
 
-if [[ "${HELM_PRINT_ONLY:-}" == "true" ]]; then
-    HELM_DEBUG_FLAGS="--debug --dry-run"
+if [[ "${HELM_DRY_RUN:-}" == "true" ]]; then
+    HELM_FLAGS="--dry-run"
+    "${SCRIPT_DIR}/check_image_exists.sh" "${FLEETSHARD_SYNC_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
 else
     "${SCRIPT_DIR}/check_image_exists.sh" "${FLEETSHARD_SYNC_TAG}"
+fi
+if [[ "${HELM_DEBUG:-}" == "true" ]]; then
+    HELM_FLAGS="${HELM_FLAGS:-} --debug"
 fi
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
@@ -81,7 +85,7 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
 fi
 
 # shellcheck disable=SC2086
-helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
+helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_FLAGS:-} \
   --install \
   --namespace rhacs \
   --create-namespace \
