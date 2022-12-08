@@ -34,7 +34,6 @@ type CentralConfig struct {
 	CentralIDPClientSecretFile string `json:"central_idp_client_secret_file"`
 	CentralIDPIssuer           string `json:"central_idp_issuer"`
 
-	// Set in minutes. After timeout is reached, central request is cancelled and marked as failed.
 	// TODO: this parameter does not belong here, as it's configuration of central request, not central.
 	// TODO: However, for the time being there's no better place to put this parameter.
 	CentralRequestExpirationTimeout time.Duration `json:"central_request_expiration_timeout"`
