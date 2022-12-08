@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   check:
-    name: Re-terraform production clusters
+    name: Run the check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
