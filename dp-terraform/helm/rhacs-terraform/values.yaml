@@ -29,6 +29,7 @@ fleetshardSync:
     enabled: true
     subnetGroup: ""
     securityGroup: ""
+    performanceInsights: true
   aws:
     region: "us-east-1"
     roleARN: ""
