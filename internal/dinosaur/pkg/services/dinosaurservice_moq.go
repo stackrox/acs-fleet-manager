@@ -13,6 +13,7 @@ import (
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 	"sync"
+	"time"
 )
 
 // Ensure, that DinosaurServiceMock does implement DinosaurService.
@@ -81,6 +82,9 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			},
 //			ListDinosaursWithRoutesNotCreatedFunc: func() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the ListDinosaursWithRoutesNotCreated method")
+//			},
+//			ListTimedOutCentralsFunc: func(lastCreationTime time.Time) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
+//				panic("mock out the ListTimedOutCentrals method")
 //			},
 //			PrepareDinosaurRequestFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the PrepareDinosaurRequest method")
@@ -166,6 +170,9 @@ type DinosaurServiceMock struct {
 
 	// ListDinosaursWithRoutesNotCreatedFunc mocks the ListDinosaursWithRoutesNotCreated method.
 	ListDinosaursWithRoutesNotCreatedFunc func() ([]*dbapi.CentralRequest, *serviceError.ServiceError)
+
+	// ListTimedOutCentralsFunc mocks the ListTimedOutCentrals method.
+	ListTimedOutCentralsFunc func(lastCreationTime time.Time) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
 
 	// PrepareDinosaurRequestFunc mocks the PrepareDinosaurRequest method.
 	PrepareDinosaurRequestFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
@@ -283,6 +290,11 @@ type DinosaurServiceMock struct {
 		// ListDinosaursWithRoutesNotCreated holds details about calls to the ListDinosaursWithRoutesNotCreated method.
 		ListDinosaursWithRoutesNotCreated []struct {
 		}
+		// ListTimedOutCentrals holds details about calls to the ListTimedOutCentrals method.
+		ListTimedOutCentrals []struct {
+			// LastCreationTime is the lastCreationTime argument value.
+			LastCreationTime time.Time
+		}
 		// PrepareDinosaurRequest holds details about calls to the PrepareDinosaurRequest method.
 		PrepareDinosaurRequest []struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
@@ -346,6 +358,7 @@ type DinosaurServiceMock struct {
 	lockListCentralsWithoutAuthConfig     sync.RWMutex
 	lockListComponentVersions             sync.RWMutex
 	lockListDinosaursWithRoutesNotCreated sync.RWMutex
+	lockListTimedOutCentrals              sync.RWMutex
 	lockPrepareDinosaurRequest            sync.RWMutex
 	lockRegisterDinosaurDeprovisionJob    sync.RWMutex
 	lockRegisterDinosaurJob               sync.RWMutex
@@ -951,6 +964,38 @@ func (mock *DinosaurServiceMock) ListDinosaursWithRoutesNotCreatedCalls() []stru
 	mock.lockListDinosaursWithRoutesNotCreated.RLock()
 	calls = mock.calls.ListDinosaursWithRoutesNotCreated
 	mock.lockListDinosaursWithRoutesNotCreated.RUnlock()
+	return calls
+}
+
+// ListTimedOutCentrals calls ListTimedOutCentralsFunc.
+func (mock *DinosaurServiceMock) ListTimedOutCentrals(lastCreationTime time.Time) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
+	if mock.ListTimedOutCentralsFunc == nil {
+		panic("DinosaurServiceMock.ListTimedOutCentralsFunc: method is nil but DinosaurService.ListTimedOutCentrals was just called")
+	}
+	callInfo := struct {
+		LastCreationTime time.Time
+	}{
+		LastCreationTime: lastCreationTime,
+	}
+	mock.lockListTimedOutCentrals.Lock()
+	mock.calls.ListTimedOutCentrals = append(mock.calls.ListTimedOutCentrals, callInfo)
+	mock.lockListTimedOutCentrals.Unlock()
+	return mock.ListTimedOutCentralsFunc(lastCreationTime)
+}
+
+// ListTimedOutCentralsCalls gets all the calls that were made to ListTimedOutCentrals.
+// Check the length with:
+//
+//	len(mockedDinosaurService.ListTimedOutCentralsCalls())
+func (mock *DinosaurServiceMock) ListTimedOutCentralsCalls() []struct {
+	LastCreationTime time.Time
+} {
+	var calls []struct {
+		LastCreationTime time.Time
+	}
+	mock.lockListTimedOutCentrals.RLock()
+	calls = mock.calls.ListTimedOutCentrals
+	mock.lockListTimedOutCentrals.RUnlock()
 	return calls
 }
 
