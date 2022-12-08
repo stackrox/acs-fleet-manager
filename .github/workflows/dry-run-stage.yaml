@@ -8,7 +8,6 @@ on:
 jobs:
   terraform:
     name: Dry-Run Re-terraform stage clusters
-    needs: cancel
     runs-on: ubuntu-latest
     permissions:
       id-token: write
