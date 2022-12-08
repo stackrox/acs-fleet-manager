@@ -1,5 +1,7 @@
 name: Deploy Stage Env
 
+# Please keep dry-run-stage.yaml in sync as far as possible when modifying this file.
+
 concurrency: stage
 
 on:
