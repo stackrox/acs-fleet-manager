@@ -1,0 +1,36 @@
+name: Dry-Run Deployment of Stage Env
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  terraform:
+    name: Dry-Run Re-terraform stage clusters
+    needs: cancel
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: stage
+    steps:
+      - name: Set up Go 1.18
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.18"
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+      - name: Run terraforming on THE stage cluster in DRY-RUN mode
+        working-directory: ./dp-terraform/helm/rhacs-terraform
+        env:
+          AWS_AUTH_HELPER: none # credentials are populated by the above action
+          HELM_DRY_RUN: true
+        run: |
+          set -euo pipefail
+          ./terraform_cluster.sh stage acs-stage-dp-02
