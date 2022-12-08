@@ -10,7 +10,6 @@ on:
 jobs:
   terraform:
     name: Re-terraform production clusters
-    needs: cancel
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -38,7 +37,6 @@ jobs:
 
   deploy-probe:
     name: Deploy blackbox monitoring probe service to production
-    needs: cancel
     runs-on: ubuntu-latest
     permissions:
       id-token: write
