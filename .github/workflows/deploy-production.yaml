@@ -22,6 +22,8 @@ jobs:
           go-version: "1.18"
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Critical for correct image detection in deploy script
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
@@ -49,6 +51,8 @@ jobs:
           go-version: "1.18"
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Critical for correct image detection in deploy script
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
