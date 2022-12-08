@@ -154,6 +154,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			},
 			Customize: &v1alpha1.CustomizeSpec{
 				EnvVars: envVars,
+				Labels: map[string]string{
+					tenantIDLabelKey: remoteCentral.Id,
+				},
 			},
 		},
 	}
