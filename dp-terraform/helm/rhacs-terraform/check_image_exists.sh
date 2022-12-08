@@ -30,3 +30,4 @@ do
     fi
 done
 echo >&2 "Timed out waiting for the image to appear."
+exit 1
