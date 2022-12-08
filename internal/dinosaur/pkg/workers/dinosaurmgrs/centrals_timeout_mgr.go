@@ -3,6 +3,8 @@ package dinosaurmgrs
 import (
 	"time"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
+
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -31,7 +33,7 @@ func NewCentralsTimeoutManager(centralService services.DinosaurService, centralC
 			Reconciler: workers.Reconciler{},
 		},
 		centralService: centralService,
-		timeout:        time.Duration(centralConfig.CentralRequestExpirationTimeout) * time.Minute,
+		timeout:        centralConfig.CentralRequestExpirationTimeout,
 	}
 }
 
@@ -52,7 +54,7 @@ func (k *CentralsTimeoutManager) Reconcile() []error {
 
 	// list central requests eligible to be cancelled
 	lastCreatedAt := time.Now().Add(-k.timeout)
-	timedOutCentralRequests, serviceErr := k.centralService.ListInProgressCentralsOlderThan(lastCreatedAt)
+	timedOutCentralRequests, serviceErr := k.centralService.ListTimedOutCentrals(lastCreatedAt)
 
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list timed out centrals"))
@@ -71,15 +73,12 @@ func (k *CentralsTimeoutManager) Reconcile() []error {
 }
 
 func (k *CentralsTimeoutManager) reconcileTimedOutCentral(centralRequest *dbapi.CentralRequest) error {
-	// Force deletion on the side of dataplane cluster in case central already went into provisioning stage.
-	if centralRequest.Status == constants2.CentralRequestStatusProvisioning.String() {
-		now := time.Now()
-		centralRequest.DeletionTimestamp = &now
-	}
 	centralRequest.Status = constants2.CentralRequestStatusFailed.String()
 	centralRequest.FailedReason = "Creation time went over the timeout. Interrupting central initialization."
 	if err := k.centralService.Update(centralRequest); err != nil {
 		return errors.Wrapf(err, "failed to update timed out central %s", centralRequest.ID)
 	}
+	metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusFailed, centralRequest.ID, centralRequest.ClusterID, time.Since(centralRequest.CreatedAt))
+	metrics.IncreaseCentralTimeoutCountMetric(centralRequest.ID, centralRequest.ClusterID)
 	return nil
 }

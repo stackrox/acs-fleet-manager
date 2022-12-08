@@ -111,7 +111,7 @@ type DinosaurService interface {
 	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	ListComponentVersions() ([]DinosaurComponentVersions, error)
-	ListInProgressCentralsOlderThan(lastCreationTime time.Time) ([]*dbapi.CentralRequest, *errors.ServiceError)
+	ListTimedOutCentrals(lastCreationTime time.Time) ([]*dbapi.CentralRequest, *errors.ServiceError)
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -146,7 +146,7 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 	}
 }
 
-func (k *dinosaurService) ListInProgressCentralsOlderThan(lastCreationTime time.Time) ([]*dbapi.CentralRequest, *errors.ServiceError) {
+func (k *dinosaurService) ListTimedOutCentrals(lastCreationTime time.Time) ([]*dbapi.CentralRequest, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New().
 		Where("created_at  <=  ?", lastCreationTime).
 		Where("status IN (?)", dinosaurTimeoutStatuses)
