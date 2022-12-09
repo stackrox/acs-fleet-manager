@@ -252,7 +252,7 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 			return connectionString, nil
 		}
 
-		glog.Infof("RDS instance status: %s", dbInstanceStatus)
+		glog.Infof("RDS instance status: %s (instance ID: %s)", dbInstanceStatus, instanceID)
 		ticker := time.NewTicker(awsRetrySeconds * time.Second)
 		select {
 		case <-ticker.C:
