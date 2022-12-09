@@ -107,6 +107,14 @@ func (r *Runtime) Start() error {
 		Telemetry:         r.config.Telemetry,
 	}
 
+	glog.Infof("Loading cluster configuration")
+	clusterConfigCtx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+	// Sanity check if the cluster configuration is correct.
+	if _, _, err := r.client.PrivateAPI().GetDataPlaneClusterAgentConfig(clusterConfigCtx, r.clusterID); err != nil {
+		return fmt.Errorf("failed to load cluster configuration: %s", fleetmanager.FormatAPIError(err))
+	}
+
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		list, _, err := r.client.PrivateAPI().GetCentrals(ctx, r.clusterID)
 		if err != nil {
