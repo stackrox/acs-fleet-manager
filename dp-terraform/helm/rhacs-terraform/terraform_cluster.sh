@@ -32,17 +32,12 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
-    # Get the first non-merge commit, starting with HEAD.
-    # On main this should be HEAD
-    FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
     ;;
 
   prod)
     FM_ENDPOINT="https://api.openshift.com"
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
-
-    FLEETSHARD_SYNC_TAG="1df0bc5"
     ;;
 
   *)
@@ -56,6 +51,10 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     echo "Cluster ${CLUSTER_NAME} is expected to be in environment ${CLUSTER_ENVIRONMENT}, not ${ENVIRONMENT}" >&2
     exit 2
 fi
+
+# Get the first non-merge commit, starting with HEAD.
+# On main this should be HEAD, on production, the latest merged main commit.
+FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
 
 if [[ "${HELM_PRINT_ONLY:-}" == "true" ]]; then
     HELM_DEBUG_FLAGS="--debug --dry-run"
