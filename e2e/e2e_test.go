@@ -131,6 +131,26 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
+		It("should not expose URLs until the routes are created", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
+			if !routesEnabled {
+				Skip(skipRouteMsg)
+			}
+			Expect(createdCentral.CentralUIURL).To(BeEmpty())
+			Expect(createdCentral.CentralDataURL).To(BeEmpty())
+		})
+
+		It("should transition central's state to ready", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
+			Eventually(func() string {
+				return centralStatus(createdCentral.Id, client)
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
+		})
+
 		It("should create central routes", func() {
 			if createdCentral == nil {
 				Fail("central not created")
@@ -205,15 +225,6 @@ var _ = Describe("Central", func() {
 				Expect(*recordSet.Name).To(Equal(domain))
 				Expect(*record.Value).To(Equal(reencryptIngress.RouterCanonicalHostname)) // TODO use route specific ingress instead of comparing with reencryptIngress for all cases
 			}
-		})
-
-		It("should transition central's state to ready", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() string {
-				return centralStatus(createdCentral.Id, client)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
 		})
 
 		It("should spin up an egress proxy with two healthy replicas", func() {

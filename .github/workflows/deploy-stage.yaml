@@ -1,23 +1,15 @@
 name: Deploy Stage Env
 
+concurrency: stage
+
 on:
   push:
     branches:
       - main
 
 jobs:
-  cancel:
-    name: Cancel previous runs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cancel Previous Runs
-        uses: n1hility/cancel-previous-runs@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
   terraform:
     name: Re-terraform stage clusters
-    needs: cancel
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -30,6 +22,8 @@ jobs:
           go-version: "1.18"
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Critical for correct image detection in deploy script
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
@@ -45,7 +39,6 @@ jobs:
 
   deploy-probe:
     name: Deploy blackbox monitoring probe service to stage
-    needs: cancel
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -58,6 +51,8 @@ jobs:
           go-version: "1.18"
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Critical for correct image detection in deploy script
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:

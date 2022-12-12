@@ -38,9 +38,10 @@ type AWS struct {
 
 // ManagedDB for configuring managed DB specific parameters
 type ManagedDB struct {
-	Enabled       bool   `env:"MANAGED_DB_ENABLED" envDefault:"false"`
-	SecurityGroup string `env:"MANAGED_DB_SECURITY_GROUP"`
-	SubnetGroup   string `env:"MANAGED_DB_SUBNET_GROUP"`
+	Enabled             bool   `env:"MANAGED_DB_ENABLED" envDefault:"false"`
+	SecurityGroup       string `env:"MANAGED_DB_SECURITY_GROUP"`
+	SubnetGroup         string `env:"MANAGED_DB_SUBNET_GROUP"`
+	PerformanceInsights bool   `env:"MANAGED_DB_PERFORMANCE_INSIGHTS" envDefault:"false"`
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.

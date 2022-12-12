@@ -25,6 +25,14 @@ fleetshardSync:
     realm: "redhat-external"
   egressProxy:
     image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0"
+  managedDB:
+    enabled: true
+    subnetGroup: ""
+    securityGroup: ""
+    performanceInsights: true
+  aws:
+    region: "us-east-1"
+    roleARN: ""
 
 acsOperator:
   enabled: false
