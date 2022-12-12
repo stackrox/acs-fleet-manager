@@ -32,25 +32,12 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
-    # TODO Use downstream operator after downstream release 3.73.0
-    OPERATOR_USE_UPSTREAM=true
-    OPERATOR_VERSION="v3.73.0"
-
-    # Get the first non-merge commit, starting with HEAD.
-    # On main this should be HEAD
-    FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
-    "${SCRIPT_DIR}/check_image_exists.sh" "${FLEETSHARD_SYNC_TAG}"
     ;;
 
   prod)
     FM_ENDPOINT="https://api.openshift.com"
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
-
-    OPERATOR_USE_UPSTREAM=false
-    OPERATOR_VERSION="v3.72.0"
-
-    FLEETSHARD_SYNC_TAG="1df0bc5"
     ;;
 
   *)
@@ -65,10 +52,21 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     exit 2
 fi
 
+# Get the first non-merge commit, starting with HEAD.
+# On main this should be HEAD, on production, the latest merged main commit.
+FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
+
+if [[ "${HELM_PRINT_ONLY:-}" == "true" ]]; then
+    HELM_DEBUG_FLAGS="--debug --dry-run"
+else
+    "${SCRIPT_DIR}/check_image_exists.sh" "${FLEETSHARD_SYNC_TAG}"
+fi
+
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
 
 OPERATOR_SOURCE="redhat-operators"
+OPERATOR_USE_UPSTREAM="${OPERATOR_USE_UPSTREAM:-false}"
 if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     load_external_config quay/rhacs-eng QUAY_
     quay_basic_auth="${QUAY_READ_ONLY_USERNAME}:${QUAY_READ_ONLY_PASSWORD}"
@@ -81,15 +79,15 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     OPERATOR_SOURCE="rhacs-operators"
 fi
 
-# helm template --debug ... to debug changes
-helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
+# shellcheck disable=SC2086
+helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --install \
   --namespace rhacs \
   --create-namespace \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
-  --set acsOperator.version="${OPERATOR_VERSION}" \
+  --set acsOperator.version=v3.73.0 \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
   --set fleetshardSync.image="quay.io/app-sre/acs-fleet-manager:${FLEETSHARD_SYNC_TAG}" \
   --set fleetshardSync.authType="RHSSO" \
@@ -97,6 +95,11 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" \
   --set fleetshardSync.fleetManagerEndpoint="${FM_ENDPOINT}" \
   --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_ID}" \
   --set fleetshardSync.redHatSSO.clientSecret="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET}" \
+  --set fleetshardSync.managedDB.enabled=true \
+  --set fleetshardSync.managedDB.subnetGroup="${FLEETSHARD_SYNC_MANAGED_DB_SUBNET_GROUP}" \
+  --set fleetshardSync.managedDB.securityGroup="${FLEETSHARD_SYNC_MANAGED_DB_SECURITY_GROUP}" \
+  --set fleetshardSync.managedDB.performanceInsights=true \
+  --set fleetshardSync.aws.roleARN="${FLEETSHARD_SYNC_AWS_ROLE_ARN}" \
   --set logging.aws.accessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \
   --set logging.aws.secretAccessKey="${LOGGING_AWS_SECRET_ACCESS_KEY}" \
   --set observability.github.accessToken="${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" \
