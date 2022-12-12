@@ -15,6 +15,10 @@ fi
 
 ENVIRONMENT=$1
 CLUSTER_NAME=$2
+# Get the first non-merge commit, starting with HEAD.
+# On main this should be HEAD, on production, the latest merged main commit.
+PROBE_IMAGE_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
+PROBE_IMAGE="quay.io/rhacs-eng/blackbox-monitoring-probe-service:${PROBE_IMAGE_TAG}"
 
 export AWS_PROFILE="$ENVIRONMENT"
 
@@ -25,12 +29,10 @@ load_external_config probe PROBE_
 case $ENVIRONMENT in
   stage)
     FM_ENDPOINT="https://api.stage.openshift.com"
-    PROBE_IMAGE="quay.io/rhacs-eng/blackbox-monitoring-probe-service:main"
     ;;
 
   prod)
     FM_ENDPOINT="https://api.openshift.com"
-    PROBE_IMAGE="quay.io/rhacs-eng/blackbox-monitoring-probe-service:2b0c84d"
     ;;
 
   *)
