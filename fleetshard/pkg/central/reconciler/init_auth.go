@@ -56,7 +56,7 @@ var (
 				Props: &storage.GroupProperties{
 					AuthProviderId: providerId,
 					Key:            "groups",
-					Value:          "org:admin:all",
+					Value:          "admin:org:all",
 					Traits: &storage.Traits{
 						MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
 					},
