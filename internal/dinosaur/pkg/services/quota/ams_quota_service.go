@@ -14,6 +14,7 @@ import (
 
 // RHACSMarketplaceQuotaID is default quota id used by ACS SKUs.
 const RHACSMarketplaceQuotaID = "cluster|rhinfra|rhacs|marketplace"
+const awsCloudProvider = "aws"
 
 type amsQuotaService struct {
 	amsClient ocm.AMSClient
@@ -30,8 +31,9 @@ func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder
 }
 
 var supportedAMSBillingModels = map[string]struct{}{
-	string(amsv1.BillingModelMarketplace): {},
-	string(amsv1.BillingModelStandard):    {},
+	string(amsv1.BillingModelMarketplace):    {},
+	string(amsv1.BillingModelStandard):       {},
+	string(amsv1.BillingModelMarketplaceAWS): {},
 }
 
 // CheckIfQuotaIsDefinedForInstanceType ...
@@ -84,32 +86,44 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 	return false, nil
 }
 
-// getAvailableBillingModelFromDinosaurInstanceType gets the billing model of a
+// selectBillingModelFromDinosaurInstanceType select the billing model of a
 // dinosaur instance type by looking at the resource name and product of the
-// instanceType. Only QuotaCosts that have available quota, or that contain a
+// instanceType, as well as cloudAccountID and cloudProviderID. Only QuotaCosts that have available quota, or that contain a
 // RelatedResource with "cost" 0 are considered. Only
-// "standard" and "marketplace" billing models are considered. If both are
-// detected "marketplace" is returned.
-func (q amsQuotaService) getAvailableBillingModelFromDinosaurInstanceType(orgID string, instanceType types.DinosaurInstanceType) (string, error) {
+// "standard" and "marketplace" and "marketplace-aws" billing models are considered.
+// If both marketplace and standard billing models are available, marketplace will be given preference.
+func (q amsQuotaService) selectBillingModelFromDinosaurInstanceType(orgID, cloudProviderID, cloudAccountID string, instanceType types.DinosaurInstanceType) (string, error) {
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgID, instanceType.GetQuotaType().GetResourceName(), instanceType.GetQuotaType().GetProduct())
 	if err != nil {
 		return "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, instanceType.GetQuotaType().GetProduct())
 	}
 
-	billingModel := ""
+	hasBillingModelMarketplace := false
+	hasBillingModelMarketplaceAWS := false
+	hasBillingModelStandard := false
 	for _, qc := range quotaCosts {
 		for _, rr := range qc.RelatedResources() {
 			if qc.Consumed() < qc.Allowed() || rr.Cost() == 0 {
-				if rr.BillingModel() == string(amsv1.BillingModelMarketplace) {
-					return rr.BillingModel(), nil
-				} else if rr.BillingModel() == string(amsv1.BillingModelStandard) {
-					billingModel = rr.BillingModel()
-				}
+				hasBillingModelMarketplace = hasBillingModelMarketplace || rr.BillingModel() == string(amsv1.BillingModelMarketplace)
+				hasBillingModelMarketplaceAWS = hasBillingModelMarketplaceAWS || rr.BillingModel() == string(amsv1.BillingModelMarketplaceAWS)
+				hasBillingModelStandard = hasBillingModelStandard || rr.BillingModel() == string(amsv1.BillingModelStandard)
 			}
 		}
 	}
 
-	return billingModel, nil
+	if cloudAccountID != "" && cloudProviderID == awsCloudProvider {
+		if hasBillingModelMarketplaceAWS || hasBillingModelMarketplace {
+			return string(amsv1.BillingModelMarketplaceAWS), nil
+		}
+		return "", errors.InvalidCloudAccountID("No subscription available for cloud account %s", cloudAccountID)
+	}
+	if hasBillingModelMarketplace {
+		return string(amsv1.BillingModelMarketplace), nil
+	}
+	if hasBillingModelStandard {
+		return string(amsv1.BillingModelStandard), nil
+	}
+	return "", errors.InsufficientQuotaError("No available billing model found")
 }
 
 // ReserveQuota ...
@@ -122,19 +136,24 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", dinosaur.OrganisationID))
 	}
-	bm, err := q.getAvailableBillingModelFromDinosaurInstanceType(orgID, instanceType)
+	bm, err := q.selectBillingModelFromDinosaurInstanceType(orgID, dinosaur.CloudProvider, dinosaur.CloudAccountID, instanceType)
 	if err != nil {
 		svcErr := errors.ToServiceError(err)
 		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
 	}
-	if bm == "" {
-		return "", errors.InsufficientQuotaError("Error getting billing model: No available billing model found")
-	}
 	rr.BillingModel(amsv1.BillingModel(bm))
 	glog.Infof("Billing model of Central request %s with quota type %s has been set to %s.", dinosaur.ID, instanceType.GetQuotaType(), bm)
 
+	if bm != string(amsv1.BillingModelStandard) {
+		if err := q.verifyCloudAccountInAMS(dinosaur, orgID); err != nil {
+			return "", err
+		}
+		rr.BillingMarketplaceAccount(dinosaur.CloudAccountID)
+	}
+
 	requestBuilder := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(dinosaur.Owner).
+		CloudProviderID(dinosaur.CloudProvider).
 		ProductID(instanceType.GetQuotaType().GetProduct()).
 		Managed(true).
 		ClusterID(dinosaurID).
@@ -145,14 +164,6 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 		Reserve(true).
 		Resources(&rr)
 
-	if bm != string(amsv1.BillingModelStandard) {
-		if err := q.verifyCloudAccountInAMS(dinosaur, orgID); err != nil {
-			return "", err
-		}
-		requestBuilder = requestBuilder.
-			CloudProviderID(dinosaur.CloudProvider).
-			CloudAccountID(dinosaur.CloudAccountID)
-	}
 	cb, err := requestBuilder.Build()
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
@@ -187,7 +198,7 @@ func (q amsQuotaService) verifyCloudAccountInAMS(dinosaur *dbapi.CentralRequest,
 			return nil
 		}
 	}
-	return errors.InvalidCloudAccountID("Request cloud account does not match organization cloud accounts", dinosaur.CloudAccountID)
+	return errors.InvalidCloudAccountID("Request cloud account %s does not match organization cloud accounts", dinosaur.CloudAccountID)
 }
 
 // DeleteQuota ...

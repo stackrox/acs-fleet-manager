@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stackrox/rox/pkg/utils"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -205,24 +207,25 @@ func Test_AMSReserveQuota(t *testing.T) {
 		ocmClient ocm.Client
 	}
 	type args struct {
-		dinosaurID     string
-		owner          string
-		cloudAccountID string
+		dinosaurID      string
+		owner           string
+		cloudAccountID  string
+		cloudProviderID string
 	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		want             string
-		wantErr          bool
-		wantBillingModel string
+		name                          string
+		fields                        fields
+		args                          args
+		want                          string
+		wantErr                       bool
+		wantBillingModel              string
+		wantBillingMarketplaceAccount string
 	}{
 		{
 			name: "reserve a quota & get subscription id",
 			args: args{
-				"12231",
-				"testUser",
-				"",
+				dinosaurID: "12231",
+				owner:      "testUser",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -250,9 +253,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "when both standard and marketplace billing models are available marketplace is assigned as billing model",
 			args: args{
-				"12231",
-				"testUser",
-				"",
+				dinosaurID: "12231",
+				owner:      "testUser",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -283,9 +285,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "when only marketplace billing model has available resources marketplace billing model is assigned",
 			args: args{
-				"12231",
-				"testUser",
-				"",
+				dinosaurID: "12231",
+				owner:      "testUser",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -316,9 +317,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "when a related resource has a supported billing model with cost of 0 that billing model is allowed",
 			args: args{
-				"12231",
-				"testUser",
-				"",
+				dinosaurID: "12231",
+				owner:      "testUser",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -346,9 +346,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "when all matching quota_costs consumed resources are higher or equal than the allowed resources an error is returned",
 			args: args{
-				"12231",
-				"testUser",
-				"",
+				dinosaurID: "12231",
+				owner:      "testUser",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -377,9 +376,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "when no quota_costs are available for the given product an error is returned",
 			args: args{
-				"12231",
-				"testUser",
-				"",
+				dinosaurID: "12231",
+				owner:      "testUser",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -402,9 +400,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "when the quota_costs returned do not contain a supported billing model an error is returned",
 			args: args{
-				"12231",
-				"testUser",
-				"",
+				dinosaurID: "12231",
+				owner:      "testUser",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -433,9 +430,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "failed to reserve a quota",
 			args: args{
-				"12231",
-				"testUser",
-				"",
+				dinosaurID: "12231",
+				owner:      "testUser",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -462,9 +458,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "failed to get cloud accounts",
 			args: args{
-				"12231",
-				"testUser",
-				"",
+				dinosaurID: "12231",
+				owner:      "testUser",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -490,9 +485,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "cloud account id in request is empty while cloud_accounts response is not results in error",
 			args: args{
-				"12231",
-				"testUser",
-				"",
+				dinosaurID: "12231",
+				owner:      "testUser",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -524,9 +518,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "cloud account id in request does not match ids in cloud_accounts response results in error",
 			args: args{
-				"12231",
-				"testUser",
-				"different cloudAccountID",
+				dinosaurID:     "12231",
+				owner:          "testUser",
+				cloudAccountID: "different cloudAccountID",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -556,11 +550,11 @@ func Test_AMSReserveQuota(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "cloud account matches cloud_accounts response  results in successful call",
+			name: "cloud account matches cloud_accounts response results in successful call",
 			args: args{
-				"12231",
-				"testUser",
-				"cloudAccountID",
+				dinosaurID:     "12231",
+				owner:          "testUser",
+				cloudAccountID: "cloudAccountID",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -587,9 +581,48 @@ func Test_AMSReserveQuota(t *testing.T) {
 					},
 				},
 			},
-			wantBillingModel: string(v1.BillingModelMarketplace),
-			want:             "1234",
-			wantErr:          false,
+			wantBillingModel:              string(v1.BillingModelMarketplace),
+			wantBillingMarketplaceAccount: "cloudAccountID",
+			want:                          "1234",
+			wantErr:                       false,
+		},
+		{
+			name: "aws cloud provider results in marketplace-aws billing model",
+			args: args{
+				dinosaurID:      "12231",
+				owner:           "testUser",
+				cloudAccountID:  "cloudAccountID",
+				cloudProviderID: "aws",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						return mockClusterAuthorizationResponse(), nil
+					},
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
+						qcb1, err := v1.NewQuotaCost().Allowed(0).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
+						require.NoError(t, err)
+						return []*v1.QuotaCost{qcb1}, nil
+					},
+					GetCustomerCloudAccountsFunc: func(externalID string, quotaIDs []string) ([]*v1.CloudAccount, error) {
+						cloudAccount, _ := v1.NewCloudAccount().
+							CloudAccountID("cloudAccountID").
+							CloudProviderID("aws").
+							Build()
+						return []*v1.CloudAccount{
+							cloudAccount,
+						}, nil
+					},
+				},
+			},
+			wantBillingModel:              string(v1.BillingModelMarketplaceAWS),
+			wantBillingMarketplaceAccount: "cloudAccountID",
+			want:                          "1234",
+			wantErr:                       false,
 		},
 	}
 
@@ -604,20 +637,25 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				Owner:          tt.args.owner,
 				CloudAccountID: tt.args.cloudAccountID,
-				CloudProvider:  "cloudProviderID",
+				CloudProvider:  utils.IfThenElse(tt.args.cloudProviderID == "", "cloudProviderID", tt.args.cloudProviderID),
 			}
 			subID, err := quotaService.ReserveQuota(dinosaur, types.STANDARD)
 			gomega.Expect(subID).To(gomega.Equal(tt.want))
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 
-			if tt.wantBillingModel != "" {
+			if tt.wantBillingModel != "" || tt.wantBillingMarketplaceAccount != "" {
 				ocmClientMock := tt.fields.ocmClient.(*ocm.ClientMock)
 				clusterAuthorizationCalls := ocmClientMock.ClusterAuthorizationCalls()
 				gomega.Expect(len(clusterAuthorizationCalls)).To(gomega.Equal(1))
 				clusterAuthorizationResources := clusterAuthorizationCalls[0].Cb.Resources()
 				gomega.Expect(len(clusterAuthorizationResources)).To(gomega.Equal(1))
 				clusterAuthorizationResource := clusterAuthorizationResources[0]
-				gomega.Expect(string(clusterAuthorizationResource.BillingModel())).To(gomega.Equal(tt.wantBillingModel))
+				if tt.wantBillingModel != "" {
+					gomega.Expect(string(clusterAuthorizationResource.BillingModel())).To(gomega.Equal(tt.wantBillingModel))
+				}
+				if tt.wantBillingMarketplaceAccount != "" {
+					gomega.Expect(clusterAuthorizationResource.BillingMarketplaceAccount()).To(gomega.Equal(tt.wantBillingMarketplaceAccount))
+				}
 			}
 		})
 	}
