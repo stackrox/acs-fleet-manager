@@ -305,7 +305,7 @@ install: verify lint
 .PHONY: install
 
 clean:
-	rm -f fleet-manager fleetshard-sync probe
+	rm -f fleet-manager fleetshard-sync probe/bin/probe
 .PHONY: clean
 
 # Runs the unit tests.
