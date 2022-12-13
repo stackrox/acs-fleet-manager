@@ -605,3 +605,46 @@ func (*fakeAuth) AddAuth(_ *http.Request) error {
 func (*fakeAuth) RetrieveIDToken() (string, error) {
 	return "fake.token", nil // minimum field size of 20
 }
+
+func TestTelemetryOptionsAreSetInCR(t *testing.T) {
+	tt := []struct {
+		testName string
+		opts     TelemetryOptions
+		enabled  bool
+	}{
+		{
+			testName: "endpoint and storage key not empty",
+			opts:     TelemetryOptions{Endpoint: "https://dummy.endpoint", StorageKey: "dummy-key"},
+			enabled:  true,
+		},
+		{
+			testName: "endpoint not empty; storage key empty",
+			opts:     TelemetryOptions{Endpoint: "https://dummy.endpoint", StorageKey: ""},
+			enabled:  false,
+		},
+		{
+			testName: "endpoint empty; storage key not empty",
+			opts:     TelemetryOptions{Endpoint: "", StorageKey: "dummy-key"},
+			enabled:  true,
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			fakeClient := testutils.NewFakeClientBuilder(t).Build()
+			r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{TelemetryOpts: tc.opts})
+
+			_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+			require.NoError(t, err)
+			central := &v1alpha1.Central{}
+			err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
+			require.NoError(t, err)
+
+			require.NotNil(t, central.Spec.Central.Telemetry.Enabled)
+			assert.Equal(t, tc.enabled, *central.Spec.Central.Telemetry.Enabled)
+			require.NotNil(t, central.Spec.Central.Telemetry.Storage.Endpoint)
+			assert.Equal(t, tc.opts.Endpoint, *central.Spec.Central.Telemetry.Storage.Endpoint)
+			require.NotNil(t, central.Spec.Central.Telemetry.Storage.Key)
+			assert.Equal(t, tc.opts.StorageKey, *central.Spec.Central.Telemetry.Storage.Key)
+		})
+	}
+}

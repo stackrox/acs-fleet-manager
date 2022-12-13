@@ -25,6 +25,8 @@ type Config struct {
 	CreateAuthProvider   bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
 	MetricsAddress       string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
 	EgressProxyImage     string        `env:"EGRESS_PROXY_IMAGE"`
+	TelemetryEndpoint    string        `env:"TELEMETRY_ENDPOINT"`
+	TelemetryStorageKey  string        `env:"TELEMETRY_STORAGE_KEY"`
 
 	AWS       AWS
 	ManagedDB ManagedDB

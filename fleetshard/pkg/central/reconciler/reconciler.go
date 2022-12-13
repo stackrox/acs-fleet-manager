@@ -51,6 +51,7 @@ type CentralReconcilerOptions struct {
 	WantsAuthProvider bool
 	EgressProxyImage  string
 	ManagedDBEnabled  bool
+	TelemetryOpts     TelemetryOptions
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -66,6 +67,7 @@ type CentralReconciler struct {
 	Resources         bool
 	routeService      *k8s.RouteService
 	egressProxyImage  string
+	telemetryOpts     TelemetryOptions
 
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
@@ -96,6 +98,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	monitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
+	telemetryEnabled := r.telemetryOpts.StorageKey != ""
 
 	centralResources, err := converters.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Central.Resources)
 	if err != nil {
@@ -136,6 +139,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				},
 				DeploymentSpec: v1alpha1.DeploymentSpec{
 					Resources: &centralResources,
+				},
+				Telemetry: &v1alpha1.Telemetry{
+					Enabled: pointer.BoolPtr(telemetryEnabled),
+					Storage: &v1alpha1.TelemetryStorage{
+						Endpoint: &r.telemetryOpts.Endpoint,
+						Key:      &r.telemetryOpts.StorageKey,
+					},
 				},
 			},
 			Scanner: &v1alpha1.ScannerComponentSpec{
@@ -753,6 +763,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		wantsAuthProvider: opts.WantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
 		egressProxyImage:  opts.EgressProxyImage,
+		telemetryOpts:     opts.TelemetryOpts,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,
