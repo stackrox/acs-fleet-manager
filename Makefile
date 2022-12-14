@@ -119,6 +119,7 @@ $(GINKGO_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 TOOLS_VENV_DIR := $(LOCAL_BIN_PATH)/tools_venv
 $(TOOLS_VENV_DIR):
 	@set -e; \
+	trap "rm -rf $(TOOLS_VENV_DIR)" ERR; \
 	python3 -m venv $(TOOLS_VENV_DIR); \
 	. $(TOOLS_VENV_DIR)/bin/activate; \
 	pip install --upgrade pip==22.3.1; \
