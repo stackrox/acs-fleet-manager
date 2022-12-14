@@ -25,11 +25,10 @@ type Config struct {
 	CreateAuthProvider   bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
 	MetricsAddress       string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
 	EgressProxyImage     string        `env:"EGRESS_PROXY_IMAGE"`
-	TelemetryEndpoint    string        `env:"TELEMETRY_ENDPOINT"`
-	TelemetryStorageKey  string        `env:"TELEMETRY_STORAGE_KEY"`
 
 	AWS       AWS
 	ManagedDB ManagedDB
+	Telemetry Telemetry
 }
 
 // AWS for configuring AWS specific parameters
@@ -44,6 +43,12 @@ type ManagedDB struct {
 	SecurityGroup       string `env:"MANAGED_DB_SECURITY_GROUP"`
 	SubnetGroup         string `env:"MANAGED_DB_SUBNET_GROUP"`
 	PerformanceInsights bool   `env:"MANAGED_DB_PERFORMANCE_INSIGHTS" envDefault:"false"`
+}
+
+// Telemetry defines parameters for pushing telemetry to a remote storage.
+type Telemetry struct {
+	StorageEndpoint string `env:"TELEMETRY_STORAGE_ENDPOINT"`
+	StorageKey      string `env:"TELEMETRY_STORAGE_KEY"`
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.

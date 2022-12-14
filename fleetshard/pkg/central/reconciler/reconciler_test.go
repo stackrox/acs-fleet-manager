@@ -608,30 +608,30 @@ func (*fakeAuth) RetrieveIDToken() (string, error) {
 
 func TestTelemetryOptionsAreSetInCR(t *testing.T) {
 	tt := []struct {
-		testName string
-		opts     TelemetryOptions
-		enabled  bool
+		testName  string
+		telemetry config.Telemetry
+		enabled   bool
 	}{
 		{
-			testName: "endpoint and storage key not empty",
-			opts:     TelemetryOptions{Endpoint: "https://dummy.endpoint", StorageKey: "dummy-key"},
-			enabled:  true,
+			testName:  "endpoint and storage key not empty",
+			telemetry: config.Telemetry{StorageEndpoint: "https://dummy.endpoint", StorageKey: "dummy-key"},
+			enabled:   true,
 		},
 		{
-			testName: "endpoint not empty; storage key empty",
-			opts:     TelemetryOptions{Endpoint: "https://dummy.endpoint", StorageKey: ""},
-			enabled:  false,
+			testName:  "endpoint not empty; storage key empty",
+			telemetry: config.Telemetry{StorageEndpoint: "https://dummy.endpoint", StorageKey: ""},
+			enabled:   false,
 		},
 		{
-			testName: "endpoint empty; storage key not empty",
-			opts:     TelemetryOptions{Endpoint: "", StorageKey: "dummy-key"},
-			enabled:  true,
+			testName:  "endpoint empty; storage key not empty",
+			telemetry: config.Telemetry{StorageEndpoint: "", StorageKey: "dummy-key"},
+			enabled:   true,
 		},
 	}
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
 			fakeClient := testutils.NewFakeClientBuilder(t).Build()
-			r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{TelemetryOpts: tc.opts})
+			r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{Telemetry: tc.telemetry})
 
 			_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 			require.NoError(t, err)
@@ -642,9 +642,9 @@ func TestTelemetryOptionsAreSetInCR(t *testing.T) {
 			require.NotNil(t, central.Spec.Central.Telemetry.Enabled)
 			assert.Equal(t, tc.enabled, *central.Spec.Central.Telemetry.Enabled)
 			require.NotNil(t, central.Spec.Central.Telemetry.Storage.Endpoint)
-			assert.Equal(t, tc.opts.Endpoint, *central.Spec.Central.Telemetry.Storage.Endpoint)
+			assert.Equal(t, tc.telemetry.StorageEndpoint, *central.Spec.Central.Telemetry.Storage.Endpoint)
 			require.NotNil(t, central.Spec.Central.Telemetry.Storage.Key)
-			assert.Equal(t, tc.opts.StorageKey, *central.Spec.Central.Telemetry.Storage.Key)
+			assert.Equal(t, tc.telemetry.StorageKey, *central.Spec.Central.Telemetry.Storage.Key)
 		})
 	}
 }
