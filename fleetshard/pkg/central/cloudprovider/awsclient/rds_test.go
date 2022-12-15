@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/google/uuid"
+	"github.com/stackrox/rox/pkg/random"
 	"github.com/stretchr/testify/require"
 )
 
@@ -53,7 +54,8 @@ func TestRDSProvisioning(t *testing.T) {
 	defer cancel()
 
 	dbID := "test-" + uuid.New().String()
-	dbMasterPassword := "TestRDSProvisioning" // pragma: allowlist secret
+	dbMasterPassword, err := random.GenerateString(25, random.AlphanumericCharacters)
+	require.NoError(t, err)
 
 	clusterID := getClusterID(dbID)
 	instanceID := getInstanceID(dbID)
