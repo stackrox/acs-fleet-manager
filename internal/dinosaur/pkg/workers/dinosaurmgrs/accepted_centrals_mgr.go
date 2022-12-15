@@ -84,7 +84,7 @@ func (k *AcceptedCentralManager) Reconcile() []error {
 func (k *AcceptedCentralManager) reconcileAcceptedCentral(centralRequest *dbapi.CentralRequest) error {
 	// Check if instance creation is not expired before trying to reconcile it.
 	// Otherwise, assign status Failed.
-	if err := CheckTimeout(k.centralService, k.centralRequestTimeout, centralRequest); err != nil {
+	if err := FailIfTimeoutExceeded(k.centralService, k.centralRequestTimeout, centralRequest); err != nil {
 		return err
 	}
 	cluster, err := k.clusterPlmtStrategy.FindCluster(centralRequest)

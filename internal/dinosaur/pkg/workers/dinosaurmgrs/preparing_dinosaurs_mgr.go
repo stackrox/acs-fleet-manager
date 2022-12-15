@@ -78,7 +78,7 @@ func (k *PreparingDinosaurManager) Reconcile() []error {
 func (k *PreparingDinosaurManager) reconcilePreparingDinosaur(dinosaur *dbapi.CentralRequest) error {
 	// Check if instance creation is not expired before trying to reconcile it.
 	// Otherwise, assign status Failed.
-	if err := CheckTimeout(k.dinosaurService, k.centralRequestTimeout, dinosaur); err != nil {
+	if err := FailIfTimeoutExceeded(k.dinosaurService, k.centralRequestTimeout, dinosaur); err != nil {
 		return err
 	}
 	if err := k.dinosaurService.PrepareDinosaurRequest(dinosaur); err != nil {

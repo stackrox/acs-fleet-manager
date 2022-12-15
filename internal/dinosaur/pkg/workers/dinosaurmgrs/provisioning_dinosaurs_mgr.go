@@ -64,7 +64,7 @@ func (k *ProvisioningDinosaurManager) Reconcile() []error {
 		glog.Infof("provisioning centrals count = %d", len(provisioningDinosaurs))
 	}
 	for _, dinosaur := range provisioningDinosaurs {
-		if err := CheckTimeout(k.dinosaurService, k.centralRequestTimeout, dinosaur); err != nil {
+		if err := FailIfTimeoutExceeded(k.dinosaurService, k.centralRequestTimeout, dinosaur); err != nil {
 			encounteredErrors = append(encounteredErrors, err)
 		} else {
 			glog.V(10).Infof("provisioning central id = %s", dinosaur.ID)

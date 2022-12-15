@@ -10,8 +10,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
-// CheckTimeout checks timeout on a dinosaur instance and moves it to failed if timeout is exceeded.
-func CheckTimeout(dinosaurService services.DinosaurService, timeout time.Duration, dinosaur *dbapi.CentralRequest) error {
+// FailIfTimeoutExceeded checks timeout on a dinosaur instance and moves it to failed if timeout is exceeded.
+func FailIfTimeoutExceeded(dinosaurService services.DinosaurService, timeout time.Duration, dinosaur *dbapi.CentralRequest) error {
 	if dinosaur.CreatedAt.Before(time.Now().Add(-timeout)) {
 		dinosaur.Status = constants2.CentralRequestStatusFailed.String()
 		dinosaur.FailedReason = "Creation time went over the timeout. Interrupting central initialization."
