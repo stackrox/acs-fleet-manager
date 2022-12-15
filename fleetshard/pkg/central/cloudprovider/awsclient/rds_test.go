@@ -49,7 +49,7 @@ func waitForClusterToBeDeleted(ctx context.Context, rdsClient *RDS, clusterID st
 			return false, err
 		}
 
-		if clusterExists {
+		if !clusterExists {
 			return true, nil
 		}
 
