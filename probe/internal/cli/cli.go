@@ -29,14 +29,14 @@ type CLI struct {
 
 // New creates a CLI.
 func New(config *config.Config) (*CLI, error) {
-	fleetManagerClient, err := fleetmanager.New(config)
+	fleetManagerPublicAPI, err := fleetmanager.New(config)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager client")
 	}
 
 	httpClient := &http.Client{Timeout: config.ProbeHTTPRequestTimeout}
 
-	probe := probe.New(config, fleetManagerClient, httpClient)
+	probe := probe.New(config, fleetManagerPublicAPI, httpClient)
 
 	runtime, err := runtime.New(config, probe)
 	if err != nil {

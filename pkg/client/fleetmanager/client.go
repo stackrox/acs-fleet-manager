@@ -11,20 +11,49 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 )
 
-// PublicClient is a wrapper interface for the fleetmanager client public API.
-//
-//go:generate moq -out client_moq.go . PublicClient
-type PublicClient interface {
+//go:generate moq -out api_moq.go . PublicAPI PrivateAPI AdminAPI
+
+// PublicAPI is a wrapper interface for the fleetmanager client public API.
+type PublicAPI interface {
 	CreateCentral(ctx context.Context, async bool, request public.CentralRequestPayload) (public.CentralRequest, *http.Response, error)
 	DeleteCentralById(ctx context.Context, id string, async bool) (*http.Response, error)
 	GetCentralById(ctx context.Context, id string) (public.CentralRequest, *http.Response, error)
 	GetCentrals(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error)
 }
 
+// PrivateAPI is a wrapper interface for the fleetmanager client private API.
+type PrivateAPI interface {
+	GetDataPlaneClusterAgentConfig(ctx context.Context, id string) (private.DataplaneClusterAgentConfig, *http.Response, error)
+	GetCentrals(ctx context.Context, id string) (private.ManagedCentralList, *http.Response, error)
+	UpdateCentralClusterStatus(ctx context.Context, id string, requestBody map[string]private.DataPlaneCentralStatus) (*http.Response, error)
+}
+
+// AdminAPI is a wrapper interface for the fleetmanager client admin API.
+type AdminAPI interface {
+	GetCentrals(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error)
+	CreateCentral(ctx context.Context, async bool, centralRequestPayload admin.CentralRequestPayload) (admin.CentralRequest, *http.Response, error)
+	UpdateCentralById(ctx context.Context, id string, centralUpdateRequest admin.CentralUpdateRequest) (admin.Central, *http.Response, error)
+	DeleteDbCentralById(ctx context.Context, id string) (*http.Response, error)
+}
+
 var (
 	_ http.RoundTripper = (*authTransport)(nil)
-	_ PublicClient      = (*public.DefaultApiService)(nil)
+	_ PublicAPI         = (*publicAPIDelegate)(nil)
+	_ PrivateAPI        = (*privateAPIDelegate)(nil)
+	_ AdminAPI          = (*adminAPIDelegate)(nil)
 )
+
+type publicAPIDelegate struct {
+	*public.DefaultApiService
+}
+
+type privateAPIDelegate struct {
+	*private.AgentClustersApiService
+}
+
+type adminAPIDelegate struct {
+	*admin.DefaultApiService
+}
 
 type authTransport struct {
 	transport http.RoundTripper
@@ -50,9 +79,9 @@ func newAuthTransport(auth Auth) *authTransport {
 // Client is a helper struct that wraps around the API clients generated from
 // OpenAPI spec for the three different API groups of fleet manager: public, private, admin.
 type Client struct {
-	public  *public.APIClient
-	private *private.APIClient
-	admin   *admin.APIClient
+	publicAPI  PublicAPI
+	privateAPI PrivateAPI
+	adminAPI   AdminAPI
 }
 
 // ClientOption to configure the Client.
@@ -104,39 +133,45 @@ func NewClient(endpoint string, auth Auth, opts ...ClientOption) (*Client, error
 		Transport: newAuthTransport(auth),
 	}
 
-	client.public = public.NewAPIClient(&public.Configuration{
-		BasePath:   endpoint,
-		UserAgent:  o.userAgent,
-		Debug:      o.debug,
-		HTTPClient: httpClient,
-	})
-	client.private = private.NewAPIClient(&private.Configuration{
-		BasePath:   endpoint,
-		UserAgent:  o.userAgent,
-		Debug:      o.debug,
-		HTTPClient: httpClient,
-	})
-	client.admin = admin.NewAPIClient(&admin.Configuration{
-		BasePath:   endpoint,
-		UserAgent:  o.userAgent,
-		Debug:      o.debug,
-		HTTPClient: httpClient,
-	})
+	client.publicAPI = &publicAPIDelegate{
+		DefaultApiService: public.NewAPIClient(&public.Configuration{
+			BasePath:   endpoint,
+			UserAgent:  o.userAgent,
+			Debug:      o.debug,
+			HTTPClient: httpClient,
+		}).DefaultApi,
+	}
+	client.privateAPI = &privateAPIDelegate{
+		AgentClustersApiService: private.NewAPIClient(&private.Configuration{
+			BasePath:   endpoint,
+			UserAgent:  o.userAgent,
+			Debug:      o.debug,
+			HTTPClient: httpClient,
+		}).AgentClustersApi,
+	}
+	client.adminAPI = &adminAPIDelegate{
+		DefaultApiService: admin.NewAPIClient(&admin.Configuration{
+			BasePath:   endpoint,
+			UserAgent:  o.userAgent,
+			Debug:      o.debug,
+			HTTPClient: httpClient,
+		}).DefaultApi,
+	}
 
 	return client, nil
 }
 
 // PublicAPI returns the service to interact with fleet manager's public API.
-func (c *Client) PublicAPI() *public.DefaultApiService {
-	return c.public.DefaultApi
+func (c *Client) PublicAPI() PublicAPI {
+	return c.publicAPI
 }
 
 // PrivateAPI returns the service to interact with fleet manager's private API.
-func (c *Client) PrivateAPI() *private.AgentClustersApiService {
-	return c.private.AgentClustersApi
+func (c *Client) PrivateAPI() PrivateAPI {
+	return c.privateAPI
 }
 
 // AdminAPI returns the service to interact with fleet manager's admin API.
-func (c *Client) AdminAPI() *admin.DefaultApiService {
-	return c.admin.DefaultApi
+func (c *Client) AdminAPI() AdminAPI {
+	return c.adminAPI
 }

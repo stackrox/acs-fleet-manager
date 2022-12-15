@@ -50,7 +50,7 @@ const (
 
 var _ = Describe("Central", func() {
 	var client *fleetmanager.Client
-	var adminAPI *private.DefaultApiService
+	var adminAPI fleetmanager.AdminAPI
 	var notes []string
 
 	BeforeEach(func() {
