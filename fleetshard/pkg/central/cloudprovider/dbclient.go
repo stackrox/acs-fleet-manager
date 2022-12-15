@@ -6,6 +6,8 @@ import (
 )
 
 // DBClient defines an interface for clients that can provision and deprovision databases on cloud providers
+//
+//go:generate moq -out dbclient_moq.go . DBClient
 type DBClient interface {
 	// EnsureDBProvisioned is a blocking function that makes sure that a database with the given databaseID was provisioned,
 	// using the master password given as parameter

@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
@@ -24,7 +25,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -105,8 +105,10 @@ func TestReconcileCreate(t *testing.T) {
 func TestReconcileCreateWithManagedDB(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
-	managedDBProvisioningClient := new(testutils.DBProvisioningClientMock)
-	managedDBProvisioningClient.On("EnsureDBProvisioned", mock.Anything, mock.Anything, mock.Anything).Return("connectionString", nil)
+	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) (string, error) {
+		return "connectionString", nil
+	}
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
@@ -114,7 +116,7 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
-	managedDBProvisioningClient.AssertNumberOfCalls(t, "EnsureDBProvisioned", 1)
+	assert.Len(t, managedDBProvisioningClient.EnsureDBProvisionedCalls(), 1)
 
 	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
 	require.True(t, ok)
@@ -304,8 +306,13 @@ func TestReconcileDelete(t *testing.T) {
 func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
-	managedDBProvisioningClient := new(testutils.DBProvisioningClientMock)
-	managedDBProvisioningClient.On("EnsureDBProvisioned", mock.Anything, mock.Anything, mock.Anything).Return("host=localhost port=5432 user=rhacs dbname=postgres sslmode=require", nil)
+	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) (string, error) {
+		return "host=localhost port=5432 user=rhacs dbname=postgres sslmode=require", nil
+	}
+	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(_ string) (bool, error) {
+		return true, nil
+	}
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
@@ -313,17 +320,19 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
-	managedDBProvisioningClient.AssertNumberOfCalls(t, "EnsureDBProvisioned", 1)
+	assert.Len(t, managedDBProvisioningClient.EnsureDBProvisionedCalls(), 1)
 
 	deletedCentral := simpleManagedCentral
 	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
 
 	// trigger deletion
-	managedDBProvisioningClient.On("EnsureDBDeprovisioned", mock.Anything).Return(true, nil)
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) (string, error) {
+		return "", nil
+	}
 	statusTrigger, err := r.Reconcile(context.TODO(), deletedCentral)
 	require.Error(t, err, ErrDeletionInProgress)
 	require.Nil(t, statusTrigger)
-	managedDBProvisioningClient.AssertNumberOfCalls(t, "EnsureDBDeprovisioned", 1)
+	assert.Len(t, managedDBProvisioningClient.EnsureDBProvisionedCalls(), 1)
 
 	// deletion completed needs second reconcile to check as deletion is async in a kubernetes cluster
 	statusDeletion, err := r.Reconcile(context.TODO(), deletedCentral)
@@ -335,7 +344,7 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	assert.Equal(t, "False", readyCondition.Status)
 	assert.Equal(t, "Deleted", readyCondition.Reason)
 
-	managedDBProvisioningClient.AssertNumberOfCalls(t, "EnsureDBDeprovisioned", 2)
+	assert.Len(t, managedDBProvisioningClient.EnsureDBDeprovisionedCalls(), 2)
 
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
