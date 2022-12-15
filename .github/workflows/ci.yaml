@@ -60,6 +60,9 @@ jobs:
   verify-test:
     name: "Verify & Test"
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     environment: development
     services:
       postgres:
