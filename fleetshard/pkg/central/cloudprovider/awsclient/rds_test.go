@@ -42,6 +42,27 @@ func newTestRDSClient() (*rds.RDS, error) {
 	return rds.New(sess), nil
 }
 
+func waitForClusterToBeDeleted(ctx context.Context, rdsClient *RDS, clusterID string) (bool, error) {
+	for {
+		clusterExists, err := rdsClient.clusterExists(clusterID)
+		if err != nil {
+			return false, err
+		}
+
+		if clusterExists {
+			return true, nil
+		}
+
+		ticker := time.NewTicker(awsRetrySeconds * time.Second)
+		select {
+		case <-ticker.C:
+			continue
+		case <-ctx.Done():
+			return false, fmt.Errorf("waiting for RDS cluster to be deleted: %w", ctx.Err())
+		}
+	}
+}
+
 func TestRDSProvisioning(t *testing.T) {
 	if os.Getenv("RUN_RDS_TESTS") != "true" {
 		t.Skip("Skip RDS tests. Set RUN_RDS_TESTS=true env variable to enable RDS tests.")
@@ -91,20 +112,10 @@ func TestRDSProvisioning(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, deletionStarted)
 
-	// deletion takes a few minutes, so the cluster and instance should still exist
-	clusterExists, err = rdsClient.clusterExists(clusterID)
-	require.NoError(t, err)
-	assert.True(t, clusterExists)
+	deleteCtx, deleteCancel := context.WithTimeout(context.TODO(), 15*time.Minute)
+	defer deleteCancel()
 
-	instanceExists, err = rdsClient.instanceExists(instanceID)
+	clusterDeleted, err := waitForClusterToBeDeleted(deleteCtx, rdsClient, clusterID)
 	require.NoError(t, err)
-	assert.True(t, instanceExists)
-
-	clusterStatus, err = rdsClient.clusterStatus(clusterID)
-	require.NoError(t, err)
-	assert.Equal(t, clusterStatus, dbDeletingStatus)
-
-	instanceStatus, err = rdsClient.instanceStatus(instanceID)
-	require.NoError(t, err)
-	assert.Equal(t, instanceStatus, dbDeletingStatus)
+	assert.True(t, clusterDeleted)
 }
