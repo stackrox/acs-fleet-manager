@@ -1,4 +1,4 @@
-package migration
+package migration1
 
 import "testing"
 

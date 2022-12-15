@@ -1,27 +1,29 @@
-package migration
+package migration1
 
 import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/operator/pkg/types"
 	"github.com/stackrox/rox/pkg/renderer"
 	"github.com/stackrox/rox/pkg/utils"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
+
+	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
+	corev1 "k8s.io/api/core/v1"
 )
 
-func main() {
+// TempFuncName ...
+func TempFuncName() {
 	// This is needed to make `glog` believe that the flags have already been parsed, otherwise
 	// every log messages is prefixed by an error message stating the the flags haven't been
 	// parsed.
