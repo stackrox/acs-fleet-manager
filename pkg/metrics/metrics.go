@@ -715,6 +715,7 @@ func init() {
 	prometheus.MustRegister(reconcilerFailureCountMetric)
 	prometheus.MustRegister(reconcilerErrorsCountMetric)
 	prometheus.MustRegister(leaderWorkerMetric)
+	prometheus.MustRegister(centralTimeoutCountMetric)
 
 	// metrics for observatorium
 	prometheus.MustRegister(observatoriumRequestCountMetric)
@@ -780,6 +781,7 @@ func Reset() {
 	reconcilerFailureCountMetric.Reset()
 	reconcilerErrorsCountMetric.Reset()
 	leaderWorkerMetric.Reset()
+	centralTimeoutCountMetric.Reset()
 
 	ResetMetricsForObservatorium()
 
