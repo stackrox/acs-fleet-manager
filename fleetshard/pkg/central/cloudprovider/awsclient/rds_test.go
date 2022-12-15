@@ -3,7 +3,6 @@ package awsclient
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/google/uuid"
 	"github.com/stackrox/rox/pkg/random"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
