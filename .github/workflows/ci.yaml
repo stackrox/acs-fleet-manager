@@ -60,7 +60,7 @@ jobs:
   verify-test:
     name: "Verify & Test"
     runs-on: ubuntu-latest
-    environment: dev
+    environment: development
     services:
       postgres:
         image: postgres:11
