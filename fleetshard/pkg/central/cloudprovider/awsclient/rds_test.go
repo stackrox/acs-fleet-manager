@@ -112,7 +112,7 @@ func TestRDSProvisioning(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, deletionStarted)
 
-	deleteCtx, deleteCancel := context.WithTimeout(context.TODO(), 15*time.Minute)
+	deleteCtx, deleteCancel := context.WithTimeout(context.TODO(), 10*time.Minute)
 	defer deleteCancel()
 
 	clusterDeleted, err := waitForClusterToBeDeleted(deleteCtx, rdsClient, clusterID)

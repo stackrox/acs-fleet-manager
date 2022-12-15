@@ -322,6 +322,13 @@ test: $(GOTESTSUM_BIN)
 		$(shell go list ./... | grep -v /test)
 .PHONY: test
 
+# Runs the AWS RDS integration tests.
+test/rds: $(GOTESTSUM_BIN)
+	RUN_RDS_TESTS=true \
+	$(GOTESTSUM_BIN) --junitfile data/results/rds-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -timeout 30m -count=1 \
+		$(shell go list ./fleetshard/pkg/central/cloudprovider/awsclient/... | grep -v /test)
+.PHONY: test/rds
+
 # Precompile everything required for development/test.
 test/prepare:
 	$(GO) test -i ./internal/dinosaur/test/integration/...
