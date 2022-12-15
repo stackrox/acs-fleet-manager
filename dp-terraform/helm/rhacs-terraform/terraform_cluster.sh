@@ -32,12 +32,15 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
+    OPERATOR_USE_UPSTREAM="true"
+    OPERATOR_VERSION="v3.73.0-nightly-20221215"
     ;;
 
   prod)
     FM_ENDPOINT="https://api.openshift.com"
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
+    OPERATOR_VERSION="v3.73.0"
     ;;
 
   *)
@@ -87,7 +90,7 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
-  --set acsOperator.version=v3.73.0 \
+  --set acsOperator.version="${OPERATOR_VERSION}" \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
   --set fleetshardSync.image="quay.io/app-sre/acs-fleet-manager:${FLEETSHARD_SYNC_TAG}" \
   --set fleetshardSync.authType="RHSSO" \
