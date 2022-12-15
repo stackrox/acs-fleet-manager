@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/pkg/errors"
 	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
@@ -59,7 +61,7 @@ func TempFuncName() {
 		// 26 = 6(prefix + 20(id)
 		if strings.HasPrefix(ns.GetName(), "rhacs-") && len(ns.GetName()) == 26 {
 			if err := fixCentral(client, ns); err != nil {
-				print(err)
+				glog.Warning(err)
 			}
 		}
 	}
@@ -86,13 +88,15 @@ func fixCentral(client ctrlClient.Client, ns corev1.Namespace) error {
 		Data: data,
 	}
 	if err = client.Create(context.Background(), newSecret); err != nil {
-		// TODO: should we handle the case when secret still exists
-		return errors.Wrap(err, "creating central-htpasswd secret")
+		if !apiErrors.IsAlreadyExists(err) {
+			// TODO: should we handle the case when secret still exists
+			return errors.Wrap(err, "creating central-htpasswd secret")
+		}
 	}
 	// 3. Get Red Hat SSO auth provider <- retry if 401/403
 	central := private.ManagedCentral{
 		Metadata: private.ManagedCentralAllOfMetadata{
-			Namespace: ns.GetNamespace(),
+			Namespace: ns.GetName(),
 			Name:      "unknown",
 		},
 	}

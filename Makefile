@@ -296,6 +296,10 @@ probe:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o probe/bin/probe ./probe/cmd/probe
 .PHONY: probe
 
+dataplane-migrator:
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o migrator ./dataplane-migrator
+.PHONY: dataplane-migrator
+
 binary: fleet-manager fleetshard-sync probe
 .PHONY: binary
 
@@ -515,7 +519,7 @@ docker/login/internal:
 # Go's cross-compilation capabilities and then copying these binaries into a new Docker image.
 image/build: GOOS=linux
 image/build: IMAGE_REF ?= "$(external_image_registry)/$(image_repository):$(image_tag)"
-image/build: fleet-manager fleetshard-sync
+image/build: fleet-manager fleetshard-sync dataplane-migrator
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.hybrid .
 .PHONY: image/build
 

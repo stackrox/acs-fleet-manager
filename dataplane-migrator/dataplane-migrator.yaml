@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: migrator-rhacs
+  namespace: migrator-rhacs
+  labels:
+    app: migrator-rhacs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: migrator-rhacs
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: migrator-rhacs
+    spec:
+      serviceAccountName: fleetshard-sync
+      containers:
+        - name: migrator-rhacs
+          image: "default-route-openshift-image-registry.apps.ivan-0812.hng9.s1.devshift.org/migrator-rhacs/fleet-manager-migrator:ivan1512"
+          imagePullPolicy: Always
+          command:
+            - /usr/local/bin/migrator
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fleetshard-sync
+  namespace: migrator-rhacs
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: migrator-rhacs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fleetshard-sync-role
+subjects:
+  - kind: ServiceAccount
+    name: fleetshard-sync
+    namespace: migrator-rhacs
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fleetshard-sync-role
+# // TODO(create-ticket): Replace with least privileges permissions
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - '*'
