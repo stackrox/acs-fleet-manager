@@ -779,6 +779,7 @@ deploy/service: CENTRAL_OPERATOR_OPERATOR_ADDON_ID ?= "managed-central-qe"
 deploy/service: FLEETSHARD_ADDON_ID ?= "fleetshard-operator-qe"
 deploy/service: CENTRAL_IDP_ISSUER ?= "https://sso.stage.redhat.com/auth/realms/redhat-external"
 deploy/service: CENTRAL_IDP_CLIENT_ID ?= "rhacs-ms-dev"
+deploy/service: CENTRAL_REQUEST_EXPIRATION_TIMEOUT ?= "1h"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q fleet-manager; do echo 'waiting for fleet-manager route to be created'; sleep 1; done"
@@ -818,6 +819,7 @@ deploy/service: deploy/envoy deploy/route
 		-p CENTRAL_OPERATOR_OPERATOR_ADDON_ID="${CENTRAL_OPERATOR_OPERATOR_ADDON_ID}" \
 		-p FLEETSHARD_ADDON_ID="${FLEETSHARD_ADDON_ID}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
+		-p CENTRAL_REQUEST_EXPIRATION_TIMEOUT="${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}" \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 
