@@ -40,7 +40,7 @@ var supportedAMSBillingModels = map[string]struct{}{
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 	orgID, err := q.amsClient.GetOrganisationIDFromExternalID(dinosaur.OrganisationID)
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("failed to get organization with external id %v", dinosaur.OrganisationID))
+		return false, errors.OrganisationNotFound(dinosaur.OrganisationID, err)
 	}
 
 	hasQuota, err := q.hasConfiguredQuotaCost(orgID, instanceType.GetQuotaType())
@@ -134,7 +134,7 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 
 	orgID, err := q.amsClient.GetOrganisationIDFromExternalID(dinosaur.OrganisationID)
 	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", dinosaur.OrganisationID))
+		return "", errors.OrganisationNotFound(dinosaur.OrganisationID, err)
 	}
 	bm, err := q.selectBillingModelFromDinosaurInstanceType(orgID, dinosaur.CloudProvider, dinosaur.CloudAccountID, instanceType)
 	if err != nil {
@@ -171,7 +171,7 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 
 	resp, err := q.amsClient.ClusterAuthorization(cb)
 	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
+		return "", errors.FailedClusterAuthorization(err)
 	}
 
 	if resp.Allowed() {

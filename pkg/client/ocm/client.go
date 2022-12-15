@@ -176,8 +176,7 @@ func (c *client) GetOrganisationIDFromExternalID(externalID string) (string, err
 
 	items := res.Items()
 	if items.Len() < 1 {
-		// should never happen...
-		return "", serviceErrors.New(serviceErrors.ErrorGeneral, "organisation with external_id '%s' can't be found", externalID)
+		return "", serviceErrors.New(serviceErrors.ErrorNotFound, "organisation with external id '%s' not found", externalID)
 	}
 
 	return items.Get(0).ID(), nil

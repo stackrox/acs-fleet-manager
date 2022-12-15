@@ -734,3 +734,27 @@ func InvalidCloudAccountID(reason string, values ...interface{}) *ServiceError {
 	message := fmt.Sprintf("%s: %s", ErrorInvalidCloudAccountIDReason, reason)
 	return New(ErrorInvalidCloudAccountID, message, values...)
 }
+
+// OrganisationNotFound converts the error to a ServiceError and returns a reason and hint for the user.
+func OrganisationNotFound(externalID string, err error) *ServiceError {
+	svcErr := ToServiceError(err)
+	reason := "organisation with external id %s not found"
+	// Visiting the OpenShift page in console registers the user and their organisation with OCM.
+	// See https://issues.redhat.com/browse/SDB-3194 for more context.
+	if svcErr.Is404() {
+		reason += " - visit https://console.redhat.com/openshift and try again"
+	}
+	return NewWithCause(svcErr.Code, svcErr, reason, externalID)
+}
+
+// FailedClusterAuthorization converts the error to a ServiceError and returns a reason and hint for the user.
+func FailedClusterAuthorization(err error) *ServiceError {
+	svcErr := ToServiceError(err)
+	reason := "failed to reserve quota"
+	// Visiting the OpenShift page in console registers the user and their organisation with OCM.
+	// See https://issues.redhat.com/browse/SDB-3194 for more context.
+	if svcErr.Is404() {
+		reason += " - visit https://console.redhat.com/openshift and try again"
+	}
+	return NewWithCause(svcErr.Code, svcErr, reason)
+}
