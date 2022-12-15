@@ -1,9 +1,13 @@
+// Package migration1 ...
 package migration1
 
 import (
 	"context"
 	"flag"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/pkg/errors"
 	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
@@ -13,9 +17,7 @@ import (
 	"github.com/stackrox/rox/pkg/renderer"
 	"github.com/stackrox/rox/pkg/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/http"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
@@ -57,7 +59,7 @@ func TempFuncName() {
 		// 26 = 6(prefix + 20(id)
 		if strings.HasPrefix(ns.GetName(), "rhacs-") && len(ns.GetName()) == 26 {
 			if err := fixCentral(client, ns); err != nil {
-
+				print(err)
 			}
 		}
 	}
@@ -69,7 +71,7 @@ func fixCentral(client ctrlClient.Client, ns corev1.Namespace) error {
 	password := "12345"
 	htpasswdBytes, err := renderer.CreateHtpasswd(password)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Error generating password")
 	}
 	data := types.SecretDataMap{
 		"htpasswd": htpasswdBytes, // pragma: allowlist secret
@@ -85,7 +87,7 @@ func fixCentral(client ctrlClient.Client, ns corev1.Namespace) error {
 	}
 	if err = client.Create(context.Background(), newSecret); err != nil {
 		// TODO: should we handle the case when secret still exists
-		return err
+		return errors.Wrap(err, "creating central-htpasswd secret")
 	}
 	// 3. Get Red Hat SSO auth provider <- retry if 401/403
 	central := private.ManagedCentral{
@@ -104,7 +106,7 @@ func fixCentral(client ctrlClient.Client, ns corev1.Namespace) error {
 		&authProvidersResponse)
 	if err != nil {
 		// TODO: retry if 401/403
-		return err
+		return errors.Wrap(err, "error sending central request")
 	}
 	oldAuthProvider := findRHSSOProviderInResponse(authProvidersResponse)
 	if oldAuthProvider == nil {
@@ -120,6 +122,9 @@ func fixCentral(client ctrlClient.Client, ns corev1.Namespace) error {
 		},
 	}, http.MethodGet, "/v1/groups",
 		&groupsResponse)
+	if err != nil {
+		return errors.Wrap(err, "error sending central request")
+	}
 	oldGroups := groupsResponse.GetGroups()
 	// 5. Delete Red Hat SSO
 	err = centralClient.SendRequestToCentral(context.Background(),
@@ -127,6 +132,9 @@ func fixCentral(client ctrlClient.Client, ns corev1.Namespace) error {
 			Id:    oldAuthProvider.GetId(),
 			Force: true,
 		}, http.MethodDelete, "/v1/authproviders/"+oldAuthProvider.GetId(), &v1.Empty{})
+	if err != nil {
+		return errors.Wrap(err, "error sending central request")
+	}
 	// 6. Delete old groups
 	for _, oldGroup := range oldGroups {
 		id := oldGroup.GetProps().GetId()
@@ -138,6 +146,9 @@ func fixCentral(client ctrlClient.Client, ns corev1.Namespace) error {
 				AuthProviderId: oldGroup.GetProps().GetAuthProviderId(),
 				Force:          true,
 			}, http.MethodDelete, "/v1/groups", &v1.Empty{})
+		if err != nil {
+			return errors.Wrap(err, "error sending central request")
+		}
 	}
 	// 7. Create new Red Hat SSO auth provider
 	newAuthProviderRequest := oldAuthProvider.Clone()
@@ -147,7 +158,7 @@ func fixCentral(client ctrlClient.Client, ns corev1.Namespace) error {
 	newAuthProviderRequest.Id = ""
 	newAuthProvider, err := centralClient.SendAuthProviderRequest(context.Background(), newAuthProviderRequest)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error sending central request")
 	}
 	// 8. Re-create groups
 	newGroups := make([]*storage.Group, 0, len(oldGroups))
@@ -166,13 +177,13 @@ func fixCentral(client ctrlClient.Client, ns corev1.Namespace) error {
 	}
 	for _, newGroup := range newGroups {
 		if err = centralClient.SendGroupRequest(context.Background(), newGroup); err != nil {
-			return err
+			return errors.Wrap(err, "error sending central request")
 		}
 	}
 	// 9. Delete central-htpasswd secret
 	if err = client.Delete(context.Background(), newSecret); err != nil {
 		// TODO: should we handle the case when secret still exists
-		return err
+		return errors.Wrap(err, "error deleting central-htpasswd secret")
 	}
 	return nil
 }
