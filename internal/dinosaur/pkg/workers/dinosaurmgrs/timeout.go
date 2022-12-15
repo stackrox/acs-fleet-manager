@@ -10,17 +10,19 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
-// FailIfTimeoutExceeded checks timeout on a dinosaur instance and moves it to failed if timeout is exceeded.
-func FailIfTimeoutExceeded(dinosaurService services.DinosaurService, timeout time.Duration, dinosaur *dbapi.CentralRequest) error {
-	if dinosaur.CreatedAt.Before(time.Now().Add(-timeout)) {
-		dinosaur.Status = constants2.CentralRequestStatusFailed.String()
-		dinosaur.FailedReason = "Creation time went over the timeout. Interrupting central initialization."
+// FailIfTimeoutExceeded checks timeout on a central instance and moves it to failed if timeout is exceeded.
+// Returns true if timeout is exceeded, otherwise false.
+func FailIfTimeoutExceeded(centralService services.DinosaurService, timeout time.Duration, centralRequest *dbapi.CentralRequest) error {
+	if centralRequest.CreatedAt.Before(time.Now().Add(-timeout)) {
+		centralRequest.Status = constants2.CentralRequestStatusFailed.String()
+		centralRequest.FailedReason = "Creation time went over the timeout. Interrupting central initialization."
 
-		if err := dinosaurService.Update(dinosaur); err != nil {
-			return errors.Wrapf(err, "failed to update timed out central %s", dinosaur.ID)
+		if err := centralService.Update(centralRequest); err != nil {
+			return errors.Wrapf(err, "failed to update timed out central %s", centralRequest.ID)
 		}
-		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusFailed, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
-		metrics.IncreaseCentralTimeoutCountMetric(dinosaur.ID, dinosaur.ClusterID)
+		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusFailed, centralRequest.ID, centralRequest.ClusterID, time.Since(centralRequest.CreatedAt))
+		metrics.IncreaseCentralTimeoutCountMetric(centralRequest.ID, centralRequest.ClusterID)
+		return errors.Errorf("Central request timed out: %s", centralRequest.ID)
 	}
 	return nil
 }
