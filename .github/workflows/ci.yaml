@@ -60,6 +60,7 @@ jobs:
   verify-test:
     name: "Verify & Test"
     runs-on: ubuntu-latest
+    environment: dev
     services:
       postgres:
         image: postgres:11
@@ -100,7 +101,17 @@ jobs:
           echo -n "${{ secrets.POSTGRES_PASSWORD }}" > secrets/db.password
       - name: Run Migration Script
         run: make db/migrate
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-rds-integration-tests
       - name: Verify & Test
+        env:
+          RUN_RDS_TESTS: "true"
+          AWS_RDS_SECURITY_GROUP_ID: ${{ secrets.AWS_RDS_SECURITY_GROUP_ID }}
+          AWS_RDS_DB_SUBNET_GROUP_NAME: ${{ secrets.AWS_RDS_DB_SUBNET_GROUP_NAME }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           export GOPATH=$(go env GOPATH)
           export PATH=${PATH}:$GOPATH/bin
