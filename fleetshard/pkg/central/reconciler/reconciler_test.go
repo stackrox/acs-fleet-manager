@@ -51,6 +51,10 @@ var simpleManagedCentral = private.ManagedCentral{
 		Namespace: centralNamespace,
 	},
 	Spec: private.ManagedCentralAllOfSpec{
+		Auth: private.ManagedCentralAllOfSpecAuth{
+			OwnerOrgId:   "12345",
+			OwnerOrgName: "org-name",
+		},
 		UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
 			Host: fmt.Sprintf("acs-%s.acs.rhcloud.test", centralID),
 		},
@@ -91,6 +95,8 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, centralName, central.GetName())
 	assert.Equal(t, simpleManagedCentral.Id, central.GetLabels()[tenantIDLabelKey])
 	assert.Equal(t, simpleManagedCentral.Id, central.Spec.Customize.Labels[tenantIDLabelKey])
+	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgName, central.Spec.Customize.Annotations[orgNameAnnotationKey])
+	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, central.Spec.Customize.Labels[orgIDLabelKey])
 	assert.Equal(t, "1", central.GetAnnotations()[revisionAnnotationKey])
 	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
