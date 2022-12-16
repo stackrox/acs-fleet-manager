@@ -332,17 +332,9 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 	}
 
 	// Obtain organisation name from AMS to store in central request.
-	// Some environments do not deploy a functioning AMS client - e.g. E2E
-	// tests or if OCM_ENV=testing. Don't fail in this case.
-	orgName := ""
-	if k.amsClient != nil && k.amsClient.Connection() != nil {
-		org, err := k.amsClient.GetOrganisationFromExternalID(dinosaurRequest.OrganisationID)
-		if err != nil {
-			glog.Error(errors.OrganisationNotFound(dinosaurRequest.OrganisationID, err))
-		}
-		orgName = org.Name()
-	} else {
-		glog.Warning("AMS client not initialized - leaving organisation name empty")
+	org, err := k.amsClient.GetOrganisationFromExternalID(dinosaurRequest.OrganisationID)
+	if err != nil {
+		return errors.OrganisationNotFound(dinosaurRequest.OrganisationID, err)
 	}
 
 	// Update the fields of the CentralRequest record in the database.
@@ -350,7 +342,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
 		},
-		OrganisationName: orgName,
+		OrganisationName: org.Name(),
 		Status:           dinosaurConstants.CentralRequestStatusProvisioning.String(),
 	}
 	if err := k.Update(updatedCentralRequest); err != nil {

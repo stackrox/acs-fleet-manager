@@ -129,6 +129,10 @@ func (c *client) Close() {
 
 // CreateCluster ...
 func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	clusterResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, err := clusterResource.Add().Body(cluster).Send()
 	if err != nil {
@@ -141,6 +145,10 @@ func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1
 
 // GetExistingClusterMetrics ...
 func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	subscriptions, err := c.connection.AccountsMgmt().V1().Subscriptions().List().Search(fmt.Sprintf("cluster_id='%s'", clusterID)).Send()
 	if err != nil {
 		return nil, fmt.Errorf("retrieving subscriptions: %w", err)
@@ -168,6 +176,10 @@ func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.Subscriptio
 
 // GetOrganisationFromExternalID takes the external org id as input, and returns the OCM org.
 func (c *client) GetOrganisationFromExternalID(externalID string) (*amsv1.Organization, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	request := c.connection.AccountsMgmt().V1().Organizations().List().Search(fmt.Sprintf("external_id='%s'", externalID))
 	res, err := request.Send()
 	if err != nil {
@@ -184,6 +196,10 @@ func (c *client) GetOrganisationFromExternalID(externalID string) (*amsv1.Organi
 
 // GetRequiresTermsAcceptance ...
 func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectURL string, err error) {
+	if c.connection == nil {
+		return false, "", serviceErrors.InvalidOCMConnection()
+	}
+
 	// Check for Appendix 4 Terms
 	request, err := v1.NewTermsReviewRequest().AccountUsername(username).SiteCode(TermsSitecode).EventCode(TermsEventcodeRegister).Build()
 	if err != nil {
@@ -206,6 +222,10 @@ func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool
 
 // GetClusterIngresses sends a GET request to ocm to retrieve the ingresses of an OSD cluster
 func (c *client) GetClusterIngresses(clusterID string) (*clustersmgmtv1.IngressesListResponse, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	clusterIngresses := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Ingresses()
 	ingressList, err := clusterIngresses.List().Send()
 	if err != nil {
@@ -217,6 +237,10 @@ func (c *client) GetClusterIngresses(clusterID string) (*clustersmgmtv1.Ingresse
 
 // GetCluster ...
 func (c client) GetCluster(clusterID string) (*clustersmgmtv1.Cluster, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Get().Send()
 	if err != nil {
 		return nil, fmt.Errorf("sending get cluster request: %w", err)
@@ -226,6 +250,10 @@ func (c client) GetCluster(clusterID string) (*clustersmgmtv1.Cluster, error) {
 
 // GetClusterStatus ...
 func (c client) GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(id).Status().Get().Send()
 	if err != nil {
 		return nil, fmt.Errorf("sending cluster status request: %w", err)
@@ -235,6 +263,10 @@ func (c client) GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, erro
 
 // GetCloudProviders ...
 func (c *client) GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	providersCollection := c.connection.ClustersMgmt().V1().CloudProviders()
 	providersResponse, err := providersCollection.List().Send()
 	if err != nil {
@@ -246,6 +278,10 @@ func (c *client) GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error) 
 
 // GetRegions ...
 func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	regionsCollection := c.connection.ClustersMgmt().V1().CloudProviders().CloudProvider(provider.ID()).Regions()
 	regionsResponse, err := regionsCollection.List().Send()
 	if err != nil {
@@ -258,6 +294,10 @@ func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmg
 
 // CreateAddonWithParams ...
 func (c client) CreateAddonWithParams(clusterID string, addonID string, params []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	addon := clustersmgmtv1.NewAddOn().ID(addonID)
 	addonParameters := newAddonParameterListBuilder(params)
 	addonInstallationBuilder := clustersmgmtv1.NewAddOnInstallation().Addon(addon)
@@ -277,11 +317,19 @@ func (c client) CreateAddonWithParams(clusterID string, addonID string, params [
 
 // CreateAddon ...
 func (c client) CreateAddon(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	return c.CreateAddonWithParams(clusterID, addonID, []Parameter{})
 }
 
 // GetAddon ...
 func (c client) GetAddon(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	resp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().List().Send()
 	if err != nil {
 		return nil, fmt.Errorf("sending AddOnInstallationList request: %w", err)
@@ -301,6 +349,10 @@ func (c client) GetAddon(clusterID string, addonID string) (*clustersmgmtv1.AddO
 
 // UpdateAddonParameters ...
 func (c client) UpdateAddonParameters(clusterID string, addonInstallationID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	addonInstallationResp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().Addoninstallation(addonInstallationID).Get().Send()
 	if err != nil {
 		return nil, fmt.Errorf("sending AddOnInstallationGet request: %w", err)
@@ -328,6 +380,10 @@ func (c client) UpdateAddonParameters(clusterID string, addonInstallationID stri
 
 // GetClusterDNS ...
 func (c *client) GetClusterDNS(clusterID string) (string, error) {
+	if c.connection == nil {
+		return "", serviceErrors.InvalidOCMConnection()
+	}
+
 	if clusterID == "" {
 		return "", serviceErrors.Validation("clusterID cannot be empty")
 	}
@@ -354,6 +410,10 @@ func (c *client) GetClusterDNS(clusterID string) (string, error) {
 
 // CreateSyncSet ...
 func (c client) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, syncsetErr := clustersResource.Cluster(clusterID).
 		ExternalConfiguration().
@@ -370,6 +430,10 @@ func (c client) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset)
 
 // UpdateSyncSet ...
 func (c client) UpdateSyncSet(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, syncsetErr := clustersResource.Cluster(clusterID).
 		ExternalConfiguration().
@@ -388,6 +452,10 @@ func (c client) UpdateSyncSet(clusterID string, syncSetID string, syncset *clust
 
 // CreateIdentityProvider ...
 func (c client) CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, identityProviderErr := clustersResource.Cluster(clusterID).
 		IdentityProviders().
@@ -403,6 +471,10 @@ func (c client) CreateIdentityProvider(clusterID string, identityProvider *clust
 
 // GetIdentityProviderList ...
 func (c client) GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	clusterResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, getIDPErr := clusterResource.Cluster(clusterID).
 		IdentityProviders().
@@ -417,6 +489,10 @@ func (c client) GetIdentityProviderList(clusterID string) (*clustersmgmtv1.Ident
 
 // GetSyncSet ...
 func (c client) GetSyncSet(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, syncsetErr := clustersResource.Cluster(clusterID).
 		ExternalConfiguration().
@@ -434,6 +510,10 @@ func (c client) GetSyncSet(clusterID string, syncSetID string) (*clustersmgmtv1.
 
 // DeleteSyncSet Status returns the response status code.
 func (c client) DeleteSyncSet(clusterID string, syncsetID string) (int, error) {
+	if c.connection == nil {
+		return 0, serviceErrors.InvalidOCMConnection()
+	}
+
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, syncsetErr := clustersResource.Cluster(clusterID).
 		ExternalConfiguration().
@@ -456,6 +536,10 @@ func (c client) ScaleDownComputeNodes(clusterID string, decrement int) (*cluster
 
 // scaleComputeNodes scales the Compute nodes up or down by the value of `numNodes`
 func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	clusterClient := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID)
 
 	cluster, err := clusterClient.Get().Send()
@@ -485,6 +569,10 @@ func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmt
 
 // SetComputeNodes ...
 func (c client) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	clusterClient := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID)
 
 	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(numNodes)).
@@ -535,6 +623,10 @@ func sameParameters(parameterList *clustersmgmtv1.AddOnInstallationParameterList
 
 // DeleteCluster ...
 func (c client) DeleteCluster(clusterID string) (int, error) {
+	if c.connection == nil {
+		return 0, serviceErrors.InvalidOCMConnection()
+	}
+
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, deleteClusterError := clustersResource.Cluster(clusterID).Delete().Send()
 
@@ -547,6 +639,10 @@ func (c client) DeleteCluster(clusterID string) (int, error) {
 
 // ClusterAuthorization ...
 func (c client) ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	glog.V(10).Infof("Sending request to OCM '%v'", *cb)
 
 	r, err := c.connection.AccountsMgmt().V1().
@@ -562,6 +658,10 @@ func (c client) ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*am
 
 // DeleteSubscription ...
 func (c client) DeleteSubscription(id string) (int, error) {
+	if c.connection == nil {
+		return 0, serviceErrors.InvalidOCMConnection()
+	}
+
 	r := c.connection.AccountsMgmt().V1().Subscriptions().Subscription(id).Delete()
 	resp, err := r.Send()
 	return resp.Status(), err
@@ -569,6 +669,10 @@ func (c client) DeleteSubscription(id string) (int, error) {
 
 // FindSubscriptions ...
 func (c client) FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	r, err := c.connection.AccountsMgmt().V1().Subscriptions().List().Search(query).Send()
 	if err != nil {
 		return nil, fmt.Errorf("querying the accounts management service for subscriptions: %w", err)
@@ -580,6 +684,10 @@ func (c client) FindSubscriptions(query string) (*amsv1.SubscriptionsListRespons
 // whose relatedResources contains at least a relatedResource that has the
 // given resourceName and product
 func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	var res []*amsv1.QuotaCost
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
@@ -603,6 +711,10 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 }
 
 func (c *client) GetCustomerCloudAccounts(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error) {
+	if c.connection == nil {
+		return nil, serviceErrors.InvalidOCMConnection()
+	}
+
 	var res []*amsv1.CloudAccount
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()

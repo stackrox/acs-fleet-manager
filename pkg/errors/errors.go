@@ -735,6 +735,12 @@ func InvalidCloudAccountID(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorInvalidCloudAccountID, message, values...)
 }
 
+// InvalidOCMConnection is raised when the OCM connection is invalid.
+// Root causes for an invalid connection are invalid credentials or OCM base URLs.
+func InvalidOCMConnection() *ServiceError {
+	return New(ErrorGeneral, "invalid OCM connection")
+}
+
 // OrganisationNotFound converts the error to a ServiceError and returns a reason and hint for the user.
 func OrganisationNotFound(externalID string, err error) *ServiceError {
 	svcErr := ToServiceError(err)
