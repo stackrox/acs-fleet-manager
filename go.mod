@@ -58,7 +58,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.4.5
 	gorm.io/gorm v1.24.1
-	helm.sh/helm/v3 v3.10.2
+	helm.sh/helm/v3 v3.10.3
 	k8s.io/api v0.25.4
 	k8s.io/apimachinery v0.25.4
 	k8s.io/client-go v0.25.4
@@ -130,7 +130,6 @@ require (
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/stackrox/scanner v0.0.0-20221122151333-4c8cbd61bfa7 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
