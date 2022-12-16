@@ -54,7 +54,7 @@ type Client interface {
 	FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error)
 	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectURL string, err error)
 	GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error)
-	GetOrganisationIDFromExternalID(externalID string) (string, error)
+	GetOrganisationFromExternalID(externalID string) (*amsv1.Organization, error)
 	Connection() *sdkClient.Connection
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 	GetCustomerCloudAccounts(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error)
@@ -166,20 +166,20 @@ func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.Subscriptio
 	return subscriptionsMetrics[0], nil
 }
 
-// GetOrganisationIDFromExternalID ...
-func (c *client) GetOrganisationIDFromExternalID(externalID string) (string, error) {
+// GetOrganisationFromExternalID takes the external org id as input, and returns the OCM org.
+func (c *client) GetOrganisationFromExternalID(externalID string) (*amsv1.Organization, error) {
 	request := c.connection.AccountsMgmt().V1().Organizations().List().Search(fmt.Sprintf("external_id='%s'", externalID))
 	res, err := request.Send()
 	if err != nil {
-		return "", fmt.Errorf("retrieving organizations: %w", err)
+		return nil, fmt.Errorf("retrieving organizations: %w", err)
 	}
 
 	items := res.Items()
 	if items.Len() < 1 {
-		return "", serviceErrors.New(serviceErrors.ErrorNotFound, "organisation with external id '%s' not found", externalID)
+		return nil, serviceErrors.New(serviceErrors.ErrorNotFound, "organisation with external id '%s' not found", externalID)
 	}
 
-	return items.Get(0).ID(), nil
+	return items.Get(0), nil
 }
 
 // GetRequiresTermsAcceptance ...

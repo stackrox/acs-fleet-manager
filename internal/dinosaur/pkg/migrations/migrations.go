@@ -37,6 +37,7 @@ var migrations = []*gormigrate.Migration{
 	addClientOriginToCentralRequest(),
 	changeCentralClientOrigin(),
 	addCloudAccountIDToCentralRequest(),
+	addOrganisationNameToCentralRequest(),
 }
 
 // New ...
