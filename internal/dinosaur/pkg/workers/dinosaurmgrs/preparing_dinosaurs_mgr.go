@@ -3,6 +3,8 @@ package dinosaurmgrs
 import (
 	"time"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+
 	"github.com/google/uuid"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -20,18 +22,20 @@ import (
 // PreparingDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type PreparingDinosaurManager struct {
 	workers.BaseWorker
-	dinosaurService services.DinosaurService
+	dinosaurService       services.DinosaurService
+	centralRequestTimeout time.Duration
 }
 
 // NewPreparingDinosaurManager creates a new dinosaur manager
-func NewPreparingDinosaurManager(dinosaurService services.DinosaurService) *PreparingDinosaurManager {
+func NewPreparingDinosaurManager(dinosaurService services.DinosaurService, centralConfig *config.CentralConfig) *PreparingDinosaurManager {
 	return &PreparingDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "preparing_dinosaur",
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService: dinosaurService,
+		dinosaurService:       dinosaurService,
+		centralRequestTimeout: centralConfig.CentralRequestExpirationTimeout,
 	}
 }
 
@@ -72,6 +76,11 @@ func (k *PreparingDinosaurManager) Reconcile() []error {
 }
 
 func (k *PreparingDinosaurManager) reconcilePreparingDinosaur(dinosaur *dbapi.CentralRequest) error {
+	// Check if instance creation is not expired before trying to reconcile it.
+	// Otherwise, assign status Failed.
+	if err := FailIfTimeoutExceeded(k.dinosaurService, k.centralRequestTimeout, dinosaur); err != nil {
+		return err
+	}
 	if err := k.dinosaurService.PrepareDinosaurRequest(dinosaur); err != nil {
 		return k.handleDinosaurRequestCreationError(dinosaur, err)
 	}

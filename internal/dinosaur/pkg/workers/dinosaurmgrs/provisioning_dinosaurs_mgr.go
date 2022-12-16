@@ -3,6 +3,8 @@ package dinosaurmgrs
 import (
 	"time"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+
 	"github.com/google/uuid"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
@@ -17,20 +19,22 @@ import (
 // ProvisioningDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type ProvisioningDinosaurManager struct {
 	workers.BaseWorker
-	dinosaurService      services.DinosaurService
-	observatoriumService services.ObservatoriumService
+	dinosaurService       services.DinosaurService
+	observatoriumService  services.ObservatoriumService
+	centralRequestTimeout time.Duration
 }
 
 // NewProvisioningDinosaurManager creates a new dinosaur manager
-func NewProvisioningDinosaurManager(dinosaurService services.DinosaurService, observatoriumService services.ObservatoriumService) *ProvisioningDinosaurManager {
+func NewProvisioningDinosaurManager(dinosaurService services.DinosaurService, observatoriumService services.ObservatoriumService, centralConfig *config.CentralConfig) *ProvisioningDinosaurManager {
 	return &ProvisioningDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "provisioning_dinosaur",
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService:      dinosaurService,
-		observatoriumService: observatoriumService,
+		dinosaurService:       dinosaurService,
+		observatoriumService:  observatoriumService,
+		centralRequestTimeout: centralConfig.CentralRequestExpirationTimeout,
 	}
 }
 
@@ -60,9 +64,13 @@ func (k *ProvisioningDinosaurManager) Reconcile() []error {
 		glog.Infof("provisioning centrals count = %d", len(provisioningDinosaurs))
 	}
 	for _, dinosaur := range provisioningDinosaurs {
-		glog.V(10).Infof("provisioning central id = %s", dinosaur.ID)
-		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
-		// TODO implement additional reconcilation logic for provisioning dinosaurs
+		if err := FailIfTimeoutExceeded(k.dinosaurService, k.centralRequestTimeout, dinosaur); err != nil {
+			encounteredErrors = append(encounteredErrors, err)
+		} else {
+			glog.V(10).Infof("provisioning central id = %s", dinosaur.ID)
+			metrics.UpdateCentralRequestsStatusSinceCreatedMetric(constants2.CentralRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+			// TODO implement additional reconcilation logic for provisioning dinosaurs
+		}
 	}
 
 	return encounteredErrors
