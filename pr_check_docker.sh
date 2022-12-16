@@ -8,7 +8,7 @@ export TEST_SUMMARY_FORMAT="standard-verbose"
 # go version
 
 # start postgres
-which pg_ctl
+command -v pg_ctl
 # shellcheck disable=SC2037,SC2211
 PGDATA=/var/lib/postgresql/data /usr/lib/postgresql/*/bin/pg_ctl -w stop
 # shellcheck disable=SC2037,SC2211
