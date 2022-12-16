@@ -8,9 +8,9 @@ source "$GITROOT/scripts/lib/log.sh"
 
 try_kubectl() {
     local kubectl
-    if which kubectl >/dev/null 2>&1; then
+    if command -v kubectl >/dev/null 2>&1; then
         kubectl="kubectl"
-    elif which oc >/dev/null 2>&1; then
+    elif command -v oc >/dev/null 2>&1; then
         kubectl="oc"
     else
         log "Error: Neither 'kubectl' nor 'oc' found." >&2
@@ -63,7 +63,7 @@ init() {
         source "$env_file"
     done
 
-    if ! which bootstrap.sh >/dev/null 2>&1; then
+    if ! command -v bootstrap.sh >/dev/null 2>&1; then
         export PATH="$GITROOT/dev/env/scripts:${PATH}"
     fi
 

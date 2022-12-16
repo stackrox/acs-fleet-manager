@@ -193,7 +193,7 @@ $(ENVTEST): $(LOCALBIN)
 HELM_OPERATOR = $(shell pwd)/bin/helm-operator
 helm-operator: ## Download helm-operator locally if necessary, preferring the $(pwd)/bin path over global if both exist.
 ifeq (,$(wildcard $(HELM_OPERATOR)))
-ifeq (,$(shell which helm-operator 2>/dev/null))
+ifeq (,$(shell command -v helm-operator 2>/dev/null))
 	@{ \
 	set -e ;\
 	mkdir -p $(dir $(HELM_OPERATOR)) ;\
@@ -201,7 +201,7 @@ ifeq (,$(shell which helm-operator 2>/dev/null))
 	chmod +x $(HELM_OPERATOR) ;\
 	}
 else
-HELM_OPERATOR = $(shell which helm-operator)
+HELM_OPERATOR = $(shell command -v helm-operator)
 endif
 endif
 
@@ -225,7 +225,7 @@ bundle-push: ## Push the bundle image.
 OPM = ./bin/opm
 opm: ## Download opm locally if necessary.
 ifeq (,$(wildcard $(OPM)))
-ifeq (,$(shell which opm 2>/dev/null))
+ifeq (,$(shell command -v opm 2>/dev/null))
 	@{ \
 	set -e ;\
 	mkdir -p $(dir $(OPM)) ;\
@@ -233,7 +233,7 @@ ifeq (,$(shell which opm 2>/dev/null))
 	chmod +x $(OPM) ;\
 	}
 else
-OPM = $(shell which opm)
+OPM = $(shell command -v opm)
 endif
 endif
 

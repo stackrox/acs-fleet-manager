@@ -247,7 +247,7 @@ all: openapi/generate binary
 .PHONY: setup/git/hooks
 setup/git/hooks:
 	-git config --unset-all core.hooksPath
-	@if which -s pre-commit; then \
+	@if command -v pre-commit >/dev/null 2>&1; then \
 		echo "Installing pre-commit hooks"; \
 		pre-commit install; \
 	else \
