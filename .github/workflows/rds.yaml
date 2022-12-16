@@ -63,8 +63,6 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
       - name: Verify & Test
         env:
-          AWS_RDS_SECURITY_GROUP_ID: ${{ secrets.AWS_RDS_SECURITY_GROUP_ID }}
-          AWS_RDS_DB_SUBNET_GROUP_NAME: ${{ secrets.AWS_RDS_DB_SUBNET_GROUP_NAME }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           source "scripts/lib/external_config.sh"
