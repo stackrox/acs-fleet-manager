@@ -65,6 +65,15 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 					continue
 				}
 
+				switch {
+				case changeOutput == nil:
+					glog.Infof("creating CNAME records failed with nil result")
+					continue
+				case changeOutput.ChangeInfo == nil || changeOutput.ChangeInfo.Id == nil || changeOutput.ChangeInfo.Status == nil:
+					glog.Infof("creating CNAME records failed with nil info")
+					continue
+				}
+
 				dinosaur.RoutesCreationID = *changeOutput.ChangeInfo.Id
 				dinosaur.RoutesCreated = *changeOutput.ChangeInfo.Status == "INSYNC"
 			} else {
