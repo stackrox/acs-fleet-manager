@@ -3,7 +3,6 @@ package aws
 
 import (
 	"fmt"
-	"strings"
 
 	errors "github.com/zgalor/weberr"
 
@@ -139,25 +138,9 @@ func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBa
 
 	recordSetsOutput, err := client.route53Client.ChangeResourceRecordSets(recordChanges)
 
+	err = wrapAWSError(err, "Failed to get DNS zone.")
 	if err != nil {
-		awsErr := err.(awserr.Error)
-		if awsErr.Code() == "InvalidChangeBatch" {
-			errorMessage := awsErr.Message()
-
-			// Record set not created in the first place
-			recordSetNotFound := strings.Contains(errorMessage, "but it was not found")
-
-			// Dinosaur cluster failed to create on the cluster, we have an entry in the database.
-			recordSetDomainNameEmpty := strings.Contains(errorMessage, "Domain name is empty")
-
-			// Record set has already been created
-			recordSetAlreadyExists := strings.Contains(errorMessage, "but it already exists")
-
-			if recordSetNotFound || recordSetDomainNameEmpty || recordSetAlreadyExists {
-				return nil, nil
-			}
-		}
-		return nil, wrapAWSError(err, "Failed to get DNS zone.")
+		return nil, errors.Wrapf(err, "failed to change resource record sets")
 	}
 	return recordSetsOutput, nil
 }

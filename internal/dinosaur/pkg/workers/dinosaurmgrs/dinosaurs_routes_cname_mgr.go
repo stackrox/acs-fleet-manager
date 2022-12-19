@@ -64,19 +64,9 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 					errs = append(errs, err)
 					continue
 				}
-				if changeOutput == nil || changeOutput.ChangeInfo == nil || changeOutput.ChangeInfo.Id == nil || changeOutput.ChangeInfo.Status == nil {
-					switch {
-					case changeOutput == nil:
-						glog.Infof("ChangeDinosaurCNAMErecords returned nil value for central %s", dinosaur.ID)
-					case changeOutput.ChangeInfo == nil:
-						glog.Infof("ChangeDinosaurCNAMErecords returned nil ChangeInfo value for central %s", dinosaur.ID)
-					case changeOutput.ChangeInfo.Id == nil:
-						glog.Infof("ChangeDinosaurCNAMErecords returned nil ChangeInfo.Id value for central %s", dinosaur.ID)
-					case changeOutput.ChangeInfo.Status == nil:
-						glog.Infof("ChangeDinosaurCNAMErecords returned nil ChangeInfo.Status value for central %s", dinosaur.ID)
-					}
 
-					errs = append(errs, errors.New("empty change output for central "+dinosaur.ID))
+				if changeOutput == nil {
+					glog.Infof("creating CNAME records failed with nil result")
 					continue
 				}
 
