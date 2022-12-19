@@ -8,7 +8,7 @@ require (
 	github.com/auth0/go-jwt-middleware/v2 v2.1.0
 	github.com/aws/aws-sdk-go v1.44.157
 	github.com/blang/semver/v4 v4.0.0
-	github.com/bxcodec/faker/v3 v3.8.0
+	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/coreos/go-oidc/v3 v3.4.0
 	github.com/docker/go-healthcheck v0.1.0
