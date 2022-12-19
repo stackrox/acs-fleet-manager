@@ -65,8 +65,12 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 					continue
 				}
 
-				dinosaur.RoutesCreationID = *changeOutput.ChangeInfo.Id
-				dinosaur.RoutesCreated = *changeOutput.ChangeInfo.Status == "INSYNC"
+				if changeOutput.ChangeInfo == nil {
+					errs = append(errs, errors.Wrapf(listErr, "failed to get ChangeInfo for %s, %s", dinosaur.ID, dinosaur.Name))
+				} else {
+					dinosaur.RoutesCreationID = *changeOutput.ChangeInfo.Id
+					dinosaur.RoutesCreated = *changeOutput.ChangeInfo.Status == "INSYNC"
+				}
 			} else {
 				recordStatus, err := k.dinosaurService.GetCNAMERecordStatus(dinosaur)
 				if err != nil {
