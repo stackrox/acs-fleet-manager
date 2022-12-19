@@ -117,13 +117,14 @@ $(GINKGO_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/onsi/ginkgo/v2/ginkgo
 
 TOOLS_VENV_DIR := $(LOCAL_BIN_PATH)/tools_venv
-$(TOOLS_VENV_DIR):
+$(TOOLS_VENV_DIR): $(TOOLS_DIR)/requirements.txt
 	@set -e; \
 	trap "rm -rf $(TOOLS_VENV_DIR)" ERR; \
 	python3 -m venv $(TOOLS_VENV_DIR); \
 	. $(TOOLS_VENV_DIR)/bin/activate; \
 	pip install --upgrade pip==22.3.1; \
-	pip install -r $(TOOLS_DIR)/requirements.txt
+	pip install -r $(TOOLS_DIR)/requirements.txt; \
+	touch $(TOOLS_VENV_DIR) # update directory modification timestamp even if no changes were made by pip. This will allow to skip this target if the directory is up-to-date
 
 OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
 NPM ?= "$(shell which npm 2> /dev/null)"
