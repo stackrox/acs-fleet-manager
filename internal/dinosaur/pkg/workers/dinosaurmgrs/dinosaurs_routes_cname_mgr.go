@@ -64,6 +64,21 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 					errs = append(errs, err)
 					continue
 				}
+				if changeOutput == nil || changeOutput.ChangeInfo == nil || changeOutput.ChangeInfo.Id == nil || changeOutput.ChangeInfo.Status == nil {
+					switch {
+					case changeOutput == nil:
+						glog.Infof("ChangeDinosaurCNAMErecords returned nil value")
+					case changeOutput.ChangeInfo == nil:
+						glog.Infof("ChangeDinosaurCNAMErecords returned nil ChangeInfo value")
+					case changeOutput.ChangeInfo.Id == nil:
+						glog.Infof("ChangeDinosaurCNAMErecords returned nil ChangeInfo.Id value")
+					case changeOutput.ChangeInfo.Status == nil:
+						glog.Infof("ChangeDinosaurCNAMErecords returned nil ChangeInfo.Status value")
+					}
+
+					errs = append(errs, errors.New("empty change output"))
+					continue
+				}
 
 				dinosaur.RoutesCreationID = *changeOutput.ChangeInfo.Id
 				dinosaur.RoutesCreated = *changeOutput.ChangeInfo.Status == "INSYNC"
