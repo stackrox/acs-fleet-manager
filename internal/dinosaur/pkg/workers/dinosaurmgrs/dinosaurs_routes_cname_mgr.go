@@ -66,7 +66,8 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 				}
 
 				if changeOutput.ChangeInfo == nil {
-					errs = append(errs, errors.Wrapf(listErr, "failed to get ChangeInfo for %s, %s", dinosaur.ID, dinosaur.Name))
+					glog.Errorf("fetching ChangeInfo is failed for central %s %s", dinosaur.ID, dinosaur.Name)
+					errs = append(errs, errors.Wrapf(listErr, "failed to get ChangeInfo for central %s, %s", dinosaur.ID, dinosaur.Name))
 				} else {
 					dinosaur.RoutesCreationID = *changeOutput.ChangeInfo.Id
 					dinosaur.RoutesCreated = *changeOutput.ChangeInfo.Status == "INSYNC"
