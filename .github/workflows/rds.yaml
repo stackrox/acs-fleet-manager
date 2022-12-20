@@ -71,5 +71,8 @@ jobs:
           init_chamber
           load_external_config fleetshard-sync AWS_RDS_
 
+          export AWS_RDS_SECURITY_GROUP=${AWS_RDS_MANAGED_DB_SECURITY_GROUP}
+          export AWS_RDS_SUBNET_GROUP=${AWS_RDS_MANAGED_DB_SUBNET_GROUP}
+
           make test/rds
         timeout-minutes: 35

@@ -24,8 +24,8 @@ func newTestRDS() (*RDS, error) {
 
 	return &RDS{
 		rdsClient:       rdsClient,
-		dbSecurityGroup: os.Getenv("AWS_RDS_MANAGED_DB_SECURITY_GROUP"),
-		dbSubnetGroup:   os.Getenv("AWS_RDS_MANAGED_DB_SUBNET_GROUP"),
+		dbSecurityGroup: os.Getenv("AWS_RDS_SECURITY_GROUP"),
+		dbSubnetGroup:   os.Getenv("AWS_RDS_SUBNET_GROUP"),
 	}, nil
 }
 
