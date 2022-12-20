@@ -27,16 +27,27 @@ graph
     end
 
     subgraph acsaws[ACS AWS Account]
-        subgraph Data Plane
-            fs[Fleetshard-Sync]
-            acsop[ACS Operator]
-            acsobs[ACS Observability]
-            acs1[ACS instance 1]
-            acs2[ACS instance 2]
+        subgraph Data Plane OSD Cluster
+            
+            subgraph tenants
+                subgraph acs1
+                    acs1central[Central]
+                    acs1scanner[Scanner]
+                end
+                subgraph acs2
+                    acs2central[Central]
+                    acs2scanner[Scanner]
+                end
+            end
+            subgraph acscs
+                fs[Fleetshard-Sync]
+                acsop[ACS Operator]
+                acsobs[ACS Observability]
+            end
 
             fm<-->fs
-            acs1<-.->sso
-            acs2<-.->sso
+            acs1central-.Authn IdP.->sso
+            acs2central-.Authn IdP.->sso
         end
     end
 
@@ -45,46 +56,26 @@ graph
     obs-->subwatch
     acsobs-->obs
 
-    subgraph Customer Domain
-        subgraph Customer 1
-            subgraph Customer Cluster
-                c1s1[Sensor]
-            end
-            subgraph Customer Cluster
-                c1s2[Sensor]
-            end
+    subgraph c1[Customer 1]
+        subgraph Customer Cluster
+            c1s1[Sensor]
         end
-        c1s1 <--> acs1
-        c1s2 <--> acs1
-
-        subgraph Customer 2
-            subgraph Customer Cluster
-                c2s1[Sensor]
-            end
-            subgraph Customer Cluster
-                c2s2[Sensor]
-            end
+        subgraph Customer Cluster
+            c1s2[Sensor]
         end
-        c2s1 <--> acs2
-        c2s2 <--> acs2
     end
-    
+    c1s1 <--> acs1central
+    c1s2 <--> acs1central
+
+    subgraph c2[Customer 2]
+        subgraph Customer Cluster
+            c2s1[Sensor]
+        end
+        subgraph Customer Cluster
+            c2s2[Sensor]
+        end
+    end
+    c1 ~~~ c2
+    c2s1 <--> acs2central
+    c2s2 <--> acs2central
 ```
-
-<!-- ```mermaid
-%% https://quay.io/repository/rhacs-eng/stackrox-operator-index?tab=tags
-%%{init: { 'gitGraph': {'showBranches': true, 'mainBranchName': 'master' }}}%%
-gitGraph
-    commit id: "v3.72.0-527-abcdefghijk"
-    commit id: "v3.72.0-528-abcdefghijk"
-    commit id: "v3.72.0-530-abcdefghijk"
-
-    branch nightly_quay
-    cherry-pick id:"v3.72.0-527-abcdefghijk"
-    cherry-pick id:"v3.72.0-528-abcdefghijk"
-    cherry-pick id:"v3.72.0-530-abcdefghijk" 
-
-    checkout master
-    branch release
-    commit id: "test"
-``` -->
