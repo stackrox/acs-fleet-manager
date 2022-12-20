@@ -1,5 +1,5 @@
 # This runs tests that check the AWS RDS provisioning / deprovisioning logic
-name: AWS RDS integration tests
+name: AWS integration tests
 
 on:
   push:
@@ -64,13 +64,12 @@ jobs:
       - name: Verify & Test
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_AUTH_HELPER: "none"
         run: |
+          set -euo pipefail
           source "scripts/lib/external_config.sh"
-          export AWS_AUTH_HELPER="none"
           init_chamber
           load_external_config fleetshard-sync AWS_RDS_
 
-          export GOPATH=$(go env GOPATH)
-          export PATH=${PATH}:$GOPATH/bin
           make test/rds
         timeout-minutes: 35

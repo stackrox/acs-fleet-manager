@@ -326,7 +326,7 @@ test: $(GOTESTSUM_BIN)
 test/rds: $(GOTESTSUM_BIN)
 	RUN_RDS_TESTS=true \
 	$(GOTESTSUM_BIN) --junitfile data/results/rds-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -timeout 30m -count=1 \
-		$(shell go list ./fleetshard/pkg/central/cloudprovider/awsclient/... | grep -v /test)
+		./fleetshard/pkg/central/cloudprovider/awsclient/...
 .PHONY: test/rds
 
 # Precompile everything required for development/test.
