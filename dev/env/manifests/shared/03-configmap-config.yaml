@@ -25,8 +25,8 @@ data:
     - "16064548"
     # ACS RH SSO Org Prod
     - "16134752"
-    # org_id for the static token
-    - "12345678"
+    # org_id for the static token used in E2E tests.
+    - "16155304"
   fleetshard-authz-org-ids-prod.yaml: |-
     # ACS RH SSO Org Prod
     - "16134752"
@@ -204,8 +204,8 @@ data:
         any_user: true
         max_allowed_instances: 3
         registered_users: []
-        # Static token's org_id, see config/static-token-payload.json
-      - id: 12345678
+        # Static token's org_id, see config/static-token-payload.json. Used in E2E tests.
+      - id: 16155304
         any_user: true
         max_allowed_instances: 100
         registered_users: []
