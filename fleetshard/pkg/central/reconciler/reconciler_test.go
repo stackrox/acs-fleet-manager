@@ -436,6 +436,20 @@ func TestCentralChanged(t *testing.T) {
 
 }
 
+func TestNamespaceLabelsAreSet(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+
+	namespace := &v1.Namespace{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
+	require.NoError(t, err)
+	assert.Equal(t, simpleManagedCentral.Id, namespace.GetLabels()[tenantIDLabelKey])
+	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, namespace.GetLabels()[orgIDLabelKey])
+}
+
 func TestReportRoutesStatuses(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
