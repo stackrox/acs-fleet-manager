@@ -58,13 +58,13 @@ func addOrganisationNameToCentralRequest() *gormigrate.Migration {
 		ID: "202212150000",
 		Migrate: func(tx *gorm.DB) error {
 			if err := tx.Migrator().AddColumn(&CentralRequest{}, "OrganisationName"); err != nil {
-				return fmt.Errorf("adding new column OrganisationName in migration 202212150000: %w", err)
+				return fmt.Errorf("adding column OrganisationName in migration 202212150000: %w", err)
 			}
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
 			if err := tx.Migrator().DropColumn(&CentralRequest{}, "OrganisationName"); err != nil {
-				return fmt.Errorf("rolling back new column OrganisationName in migration 202212150000: %w", err)
+				return fmt.Errorf("rolling back column OrganisationName in migration 202212150000: %w", err)
 			}
 			return nil
 		},
