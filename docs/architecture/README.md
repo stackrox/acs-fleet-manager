@@ -28,7 +28,7 @@
 ### Service Description
 
 ACS Fleet Manager allows [Red Hat Cloud Console](https://console.redhat.com/) users to request and
-manage [ACS Central & Scanner instances](https://github.com/stackrox/stackrox).
+manage [ACS instances](https://github.com/stackrox/stackrox).
 
 
 ### Components
@@ -53,7 +53,7 @@ There are two main components in the system: ACS Fleet Manager and Fleetshard-sy
       migrations
 - The service uses Red Hat SSO
   for [authentication](https://github.com/stackrox/acs-fleet-manager/blob/main/docs/auth/jwt-claims.md)
-- The service metrics gathered by appSRE [Prometheus](https://prometheus.io/)
+- The service metrics are gathered by appSRE [Prometheus](https://prometheus.io/)
 
 
 ### Routes
@@ -107,21 +107,21 @@ about how to restore from the backup.
 
 ### Deployment flow
 
-Deployment steps:
-
-1. AppSRE JenkinsCI runs [build main job](https://ci.ext.devshift.net/job/stackrox-acs-fleet-manager-gh-build-main/).
-    - It includes building an image from source and pushing it to quay.io under the appSRE organisation.
-2. The AppSRE JenkinsCI triggers a Tekton pipeline for the selected target namespaces.
-3. Tekton deploys the latest version to the control plane OSD cluster.
-
 There are two triggers for the service deployment:
 
-- New commit in the main branch in the GitHub ACS Fleet Manager repository.
+- New commit in the `main` [branch](https://github.com/stackrox/acs-fleet-manager/tree/main) in the GitHub ACS Fleet Manager repository.
 - Any ACS Fleet Manager file is changed
   on [app-interface repository](https://gitlab.cee.redhat.com/service/app-interface).
     - The first deployment step is skipped if only ACS Fleet
       Manager [saas.yml](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/acs-fleet-manager/cicd/saas.yaml)
       is changed. It makes sense because `saas.yml` does not have any impact on the image, so there is no need to build a new one.
+
+Deployment steps:
+
+1. AppSRE JenkinsCI runs [build main job](https://ci.ext.devshift.net/job/stackrox-acs-fleet-manager-gh-build-main/).
+    - It includes building an image from source and pushing it to the [`acs-flet-manager` quay.io repository under the app-sre organisation](https://quay.io/repository/app-sre/acs-fleet-manager).
+2. The AppSRE JenkinsCI triggers a Tekton pipeline for the selected target namespaces. Look for "Pipeline Runs" on [this page](https://visual-app-interface.devshift.net/services#/services/acs-fleet-manager/app.yml)
+3. Tekton deploys the latest version to the control plane OSD cluster.
 
 ![deployment flow](./images/deployment_flow.png "Deployment flow diagram")
 
@@ -145,7 +145,7 @@ There are two ACS Grafana dashboards hosted on the appSRE Grafana instance:
 
 ### Alerts
 
-The service alerts are configured and located on
+The service alerts are configured and located in
 the [app-interface repository](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/observability/prometheusrules/acs-fleet-manager-stage.prometheusrules.yaml)
 
 
@@ -186,7 +186,7 @@ Factors which affect CPU and memory usage:
 - AWS RDS:
     - ACS Fleet manager uses only AWS RDS (PostgreSQL) for persisting critical data.
     - The AWS RDS instances are managed by the AppSRE team.
-    - Both ACS Fleet Manager RDS resources are defined in app-interface
+    - Both ACS Fleet Manager RDS instances resources are defined in app-interface
       repository ([prod](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/terraform/resources/acs-fleet-manager/production/rds-pg14.yml)
       and [stage](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/terraform/resources/acs-fleet-manager/staging/rds-pg14.yml))
     - In case of a database disaster, AppSRE would need to recreate that database and restore the latest backup.
