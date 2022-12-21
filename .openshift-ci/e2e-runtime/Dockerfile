@@ -36,6 +36,6 @@ RUN mkdir /src $GOPATH
 WORKDIR /src
 
 COPY . .
-RUN chmod 775 -R /src && chmod 775 -R $GOPATH
+RUN chmod 775 -R /src && chmod 775 -R $GOPATH && git config --system --add safe.directory /src
 
 CMD ./.openshift-ci/tests/e2e.sh
