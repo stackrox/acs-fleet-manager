@@ -45,7 +45,7 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.Ce
 
 	hasQuota, err := q.hasConfiguredQuotaCost(org.ID(), instanceType.GetQuotaType())
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("failed to get assigned quota of type %v for organization with id %v", instanceType.GetQuotaType(), org.ID()))
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("failed to get assigned quota of type %v for organization with external id %v and id %v", instanceType.GetQuotaType(), dinosaur.OrganisationID, org.ID()))
 	}
 
 	return hasQuota, nil
