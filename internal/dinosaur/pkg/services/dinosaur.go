@@ -336,13 +336,17 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 	if err != nil {
 		return errors.OrganisationNotFound(dinosaurRequest.OrganisationID, err)
 	}
+	orgName := org.Name()
+	if orgName == "" {
+		return errors.OrganisationNameInvalid(dinosaurRequest.OrganisationID, org.Name())
+	}
 
 	// Update the fields of the CentralRequest record in the database.
 	updatedCentralRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
 		},
-		OrganisationName: org.Name(),
+		OrganisationName: orgName,
 		Status:           dinosaurConstants.CentralRequestStatusProvisioning.String(),
 	}
 	if err := k.Update(updatedCentralRequest); err != nil {
