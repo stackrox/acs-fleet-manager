@@ -317,10 +317,6 @@ func (c client) CreateAddonWithParams(clusterID string, addonID string, params [
 
 // CreateAddon ...
 func (c client) CreateAddon(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
-	if c.connection == nil {
-		return nil, serviceErrors.InvalidOCMConnection()
-	}
-
 	return c.CreateAddonWithParams(clusterID, addonID, []Parameter{})
 }
 
@@ -380,10 +376,6 @@ func (c client) UpdateAddonParameters(clusterID string, addonInstallationID stri
 
 // GetClusterDNS ...
 func (c *client) GetClusterDNS(clusterID string) (string, error) {
-	if c.connection == nil {
-		return "", serviceErrors.InvalidOCMConnection()
-	}
-
 	if clusterID == "" {
 		return "", serviceErrors.Validation("clusterID cannot be empty")
 	}
