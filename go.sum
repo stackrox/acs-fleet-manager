@@ -616,8 +616,8 @@ github.com/spf13/cobra v1.6.1/go.mod h1:IOw/AERYS7UzyrGinqmz6HLUo219MORXGxhbaJUq
 github.com/spf13/pflag v0.0.0-20170130214245-9ff6c6923cff/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
 github.com/spf13/pflag v1.0.5 h1:iy+VFUOCP1a+8yFto/drg2CJ5u0yRoB7fZw3DKv/JXA=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
-github.com/spyzhov/ajson v0.7.1 h1:1MDIlPc6x0zjNtpa7tDzRAyFAvRX+X8ZsvtYz5lZg6A=
-github.com/spyzhov/ajson v0.7.1/go.mod h1:63V+CGM6f1Bu/p4nLIN8885ojBdt88TbLoSFzyqMuVA=
+github.com/spyzhov/ajson v0.7.2 h1:kyl+ovUoId/RSBbSbCm31xyQvPixA6Sxgvb0eWyt1Ko=
+github.com/spyzhov/ajson v0.7.2/go.mod h1:63V+CGM6f1Bu/p4nLIN8885ojBdt88TbLoSFzyqMuVA=
 github.com/stackrox/scanner v0.0.0-20221122151333-4c8cbd61bfa7 h1:j3rzF44/AEQHDNN+GDKJUn92hbRsOVgk3/k52ZLcxqQ=
 github.com/stackrox/scanner v0.0.0-20221122151333-4c8cbd61bfa7/go.mod h1:Swr/ZyNzXe9VPMY9pJrQwVJVITMWharJnVlSmHh5J2k=
 github.com/stackrox/stackrox v0.0.0-20221213204921-1b6ae2de7ff4 h1:2tfjC+JBMjq3mbDKcYxcdWup7PriOP53EnE1hXUdFQs=
