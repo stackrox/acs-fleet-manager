@@ -107,12 +107,8 @@ func (r *Runtime) Start() error {
 		Telemetry:         r.config.Telemetry,
 	}
 
-	glog.Infof("Loading cluster configuration")
-	clusterConfigCtx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-	// Sanity check if the cluster configuration is correct.
-	if _, _, err := r.client.PrivateAPI().GetDataPlaneClusterAgentConfig(clusterConfigCtx, r.clusterID); err != nil {
-		return fmt.Errorf("failed to load cluster configuration: %s", fleetmanager.FormatAPIError(err))
+	if err := r.sanityCheckClusterConfig(); err != nil {
+		return err
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
@@ -156,6 +152,17 @@ func (r *Runtime) Start() error {
 		return fmt.Errorf("starting ticker: %w", err)
 	}
 
+	return nil
+}
+
+func (r *Runtime) sanityCheckClusterConfig() error {
+	glog.Infof("Loading cluster configuration")
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+	// The fact that we can load the configuration is enough for us to proceed.
+	if _, _, err := r.client.PrivateAPI().GetDataPlaneClusterAgentConfig(ctx, r.clusterID); err != nil {
+		return fmt.Errorf("failed to load cluster configuration: %s", fleetmanager.FormatAPIError(err))
+	}
 	return nil
 }
 
