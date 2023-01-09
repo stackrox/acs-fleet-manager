@@ -1,15 +1,40 @@
 package migrations
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"gorm.io/gorm"
 )
 
-func addOrganisationNameToCentralRequest() *gormigrate.Migration {
+func newAMSClient(ocmConfig *ocm.OCMConfig) (ocm.Client, error) {
+	err := ocmConfig.ReadFiles()
+	if err != nil {
+		return nil, errors.Wrap(err, "reading OCM config files")
+	}
+	if !ocmConfig.EnableMock {
+		conn, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsURL)
+		if err != nil {
+			return nil, errors.Wrap(err, "creating OCM connection")
+		}
+		return ocm.NewClient(conn), nil
+	}
+	return nil, nil
+}
+
+func fetchOrgName(amsClient ocm.Client, orgID string) (string, error) {
+	// Leave org name empty if client is not set.
+	if amsClient == nil {
+		return "", nil
+	}
+	org, err := amsClient.GetOrganisationFromExternalID(orgID)
+	return org.Name(), err
+}
+
+func addOrganisationNameToCentralRequest(ocmConfig *ocm.OCMConfig) *gormigrate.Migration {
 	type AuthConfig struct {
 		ClientID     string `json:"idp_client_id"`
 		ClientSecret string `json:"idp_client_secret"`
@@ -54,17 +79,40 @@ func addOrganisationNameToCentralRequest() *gormigrate.Migration {
 		AuthConfig
 	}
 
+	id := "202212150000"
 	return &gormigrate.Migration{
-		ID: "202212150000",
+		ID: id,
 		Migrate: func(tx *gorm.DB) error {
 			if err := tx.Migrator().AddColumn(&CentralRequest{}, "OrganisationName"); err != nil {
-				return fmt.Errorf("adding column OrganisationName in migration 202212150000: %w", err)
+				return errors.Wrapf(err, "adding column OrganisationName in migration %s", id)
+			}
+
+			amsClient, err := newAMSClient(ocmConfig)
+			if err != nil {
+				return errors.Wrapf(err, "creating AMS client in migration %s", id)
+			}
+
+			rows, err := tx.Model(&CentralRequest{}).Where("organisation_name IS NULL").Rows()
+			defer rows.Close()
+
+			for rows.Next() {
+				var central CentralRequest
+				tx.ScanRows(rows, &central)
+
+				orgName, err := fetchOrgName(amsClient, central.OrganisationID)
+				if err != nil {
+					return errors.Wrapf(err, "fetching organisation_name in migration %s", id)
+				}
+				err = tx.Model(&central).Update("organisation_name", orgName).Error
+				if err != nil {
+					return errors.Wrapf(err, "updating organisation_name in migration %s", id)
+				}
 			}
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
 			if err := tx.Migrator().DropColumn(&CentralRequest{}, "OrganisationName"); err != nil {
-				return fmt.Errorf("rolling back column OrganisationName in migration 202212150000: %w", err)
+				return errors.Wrapf(err, "rolling back column OrganisationName in migration %s", id)
 			}
 			return nil
 		},
