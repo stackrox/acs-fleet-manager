@@ -75,7 +75,7 @@ graph
             c2s2[Sensor]
         end
     end
-    c1 ~~~ c2
+    
     c2s1 <--> acs2central
     c2s2 <--> acs2central
 ```
