@@ -2,6 +2,7 @@ package fleetmanager
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -174,4 +175,21 @@ func (c *Client) PrivateAPI() PrivateAPI {
 // AdminAPI returns the service to interact with fleet manager's admin API.
 func (c *Client) AdminAPI() AdminAPI {
 	return c.adminAPI
+}
+
+// FormatAPIError returns API error message with extra details, like code and reason.
+// Returns the error message if the error is not an API error.
+func FormatAPIError(err error) string {
+	if err == nil {
+		return "nil"
+	}
+	apiError, ok := err.(private.GenericOpenAPIError)
+	if !ok {
+		return err.Error()
+	}
+	errorModel, ok := apiError.Model().(private.Error)
+	if !ok {
+		return apiError.Error()
+	}
+	return fmt.Sprintf("%s (%s: %s)", apiError.Error(), errorModel.Code, errorModel.Reason)
 }
