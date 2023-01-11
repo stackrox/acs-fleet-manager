@@ -16,6 +16,8 @@ import (
 	"github.com/golang/glog"
 )
 
+const provisioningCentralWorkerType = "provisioning_dinosaur"
+
 // ProvisioningDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type ProvisioningDinosaurManager struct {
 	workers.BaseWorker
@@ -26,10 +28,11 @@ type ProvisioningDinosaurManager struct {
 
 // NewProvisioningDinosaurManager creates a new dinosaur manager
 func NewProvisioningDinosaurManager(dinosaurService services.DinosaurService, observatoriumService services.ObservatoriumService, centralConfig *config.CentralConfig) *ProvisioningDinosaurManager {
+	metrics.InitReconcilerMetricsForType(provisioningCentralWorkerType)
 	return &ProvisioningDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
-			WorkerType: "provisioning_dinosaur",
+			WorkerType: provisioningCentralWorkerType,
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService:       dinosaurService,

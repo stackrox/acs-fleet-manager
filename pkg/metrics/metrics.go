@@ -787,4 +787,28 @@ func Reset() {
 
 	databaseRequestCountMetric.Reset()
 	databaseQueryDurationMetric.Reset()
+
+	InitCounterMetricsWithZeroEmptyLabels()
+}
+
+// InitReconcilerMetricsForType initalizes reconciler metrics for specific reconciler type.
+func InitReconcilerMetricsForType(reconcilerType string) {
+	labels := prometheus.Labels{
+		labelWorkerType: reconcilerType,
+	}
+	reconcilerFailureCountMetric.With(labels).Add(0)
+	reconcilerSuccessCountMetric.With(labels).Add(0)
+	reconcilerErrorsCountMetric.With(labels).Add(0)
+}
+
+// InitCounterMetricsWithZeroEmptyLabels initializes counter metrics with 0 value and empty labels.
+func InitCounterMetricsWithZeroEmptyLabels() {
+	emptyLabels := prometheus.Labels{}
+	observatoriumRequestCountMetric.With(emptyLabels).Add(0)
+	databaseRequestCountMetric.With(emptyLabels).Add(0)
+	clusterOperationsSuccessCountMetric.With(emptyLabels).Add(0)
+	clusterOperationsTotalCountMetric.With(emptyLabels).Add(0)
+	centralOperationsTotalCountMetric.With(emptyLabels).Add(0)
+	centralOperationsSuccessCountMetric.With(emptyLabels).Add(0)
+	centralTimeoutCountMetric.With(emptyLabels).Add(0)
 }

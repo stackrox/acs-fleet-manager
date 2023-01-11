@@ -7,9 +7,12 @@ import (
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
+
+const readyCentralWorkerType = "ready_dinosaur"
 
 // ReadyDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type ReadyDinosaurManager struct {
@@ -21,10 +24,11 @@ type ReadyDinosaurManager struct {
 
 // NewReadyDinosaurManager creates a new dinosaur manager
 func NewReadyDinosaurManager(dinosaurService services.DinosaurService, iamService sso.IAMService, iamConfig *iam.IAMConfig) *ReadyDinosaurManager {
+	metrics.InitReconcilerMetricsForType(readyCentralWorkerType)
 	return &ReadyDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
-			WorkerType: "ready_dinosaur",
+			WorkerType: readyCentralWorkerType,
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService: dinosaurService,
