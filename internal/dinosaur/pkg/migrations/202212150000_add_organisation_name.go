@@ -93,7 +93,14 @@ func addOrganisationNameToCentralRequest(ocmConfig *ocm.OCMConfig) *gormigrate.M
 			}
 
 			rows, err := tx.Model(&CentralRequest{}).Where("organisation_name IS NULL").Rows()
-			defer rows.Close()
+			if err != nil {
+				return errors.Wrapf(err, "fetching rows where organisation_name is NULL in migration %s", id)
+			}
+			defer func() {
+				if err := rows.Close(); err != nil {
+					panic(errors.Wrapf(err, "closing rows in migration %s", id))
+				}
+			}()
 
 			for rows.Next() {
 				var central CentralRequest
