@@ -755,8 +755,7 @@ func OrganisationNotFound(externalID string, err error) *ServiceError {
 
 // OrganisationNameInvalid indicates that OCM organisation was found, but its name is invalid.
 func OrganisationNameInvalid(externalID string, name string) *ServiceError {
-	reason := "organisation with external id %s has invalid name %q"
-	return New(ErrorGeneral, reason, externalID, name)
+	return New(ErrorGeneral, "organisation with external id %q has invalid name %q", externalID, name)
 }
 
 // FailedClusterAuthorization converts the error to a ServiceError and returns a reason and hint for the user.

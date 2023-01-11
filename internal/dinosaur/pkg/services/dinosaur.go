@@ -338,7 +338,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 	}
 	orgName := org.Name()
 	if orgName == "" {
-		return errors.OrganisationNameInvalid(dinosaurRequest.OrganisationID, org.Name())
+		return errors.OrganisationNameInvalid(dinosaurRequest.OrganisationID, orgName)
 	}
 
 	// Update the fields of the CentralRequest record in the database.
