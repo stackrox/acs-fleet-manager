@@ -104,14 +104,15 @@ func addOrganisationNameToCentralRequest(ocmConfig *ocm.OCMConfig) *gormigrate.M
 
 			for rows.Next() {
 				var central CentralRequest
-				tx.ScanRows(rows, &central)
+				if err := tx.ScanRows(rows, &central); err != nil {
+					return errors.Wrapf(err, "scanning rows in migration %s", id)
+				}
 
 				orgName, err := fetchOrgName(amsClient, central.OrganisationID)
 				if err != nil {
 					return errors.Wrapf(err, "fetching organisation_name in migration %s", id)
 				}
-				err = tx.Model(&central).Update("organisation_name", orgName).Error
-				if err != nil {
+				if err = tx.Model(&central).Update("organisation_name", orgName).Error; err != nil {
 					return errors.Wrapf(err, "updating organisation_name in migration %s", id)
 				}
 			}
