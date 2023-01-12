@@ -12,7 +12,8 @@ spec:
     - name: cloudwatch-output
       type: cloudwatch
       cloudwatch:
-        groupBy: namespaceName
+        groupBy: "logType"
+        groupPrefix: {{ .Values.groupPrefix | quote }}
         region: {{ .Values.aws.region | quote }}
       secret:
         name: cloudwatch
