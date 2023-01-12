@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/constants"
+
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
@@ -724,6 +726,8 @@ func init() {
 	// metrics for database
 	prometheus.MustRegister(databaseRequestCountMetric)
 	prometheus.MustRegister(databaseQueryDurationMetric)
+
+	InitOperationMetricsWithZero()
 }
 
 // ResetMetricsForCentralManagers will reset the metrics for the CentralManager background reconciler
@@ -787,8 +791,6 @@ func Reset() {
 
 	databaseRequestCountMetric.Reset()
 	databaseQueryDurationMetric.Reset()
-
-	InitCounterMetricsWithZeroEmptyLabels()
 }
 
 // InitReconcilerMetricsForType initalizes reconciler metrics for specific reconciler type.
@@ -801,14 +803,24 @@ func InitReconcilerMetricsForType(reconcilerType string) {
 	reconcilerErrorsCountMetric.With(labels).Add(0)
 }
 
-// InitCounterMetricsWithZeroEmptyLabels initializes counter metrics with 0 value and empty labels.
-func InitCounterMetricsWithZeroEmptyLabels() {
-	emptyLabels := prometheus.Labels{}
-	observatoriumRequestCountMetric.With(emptyLabels).Add(0)
-	databaseRequestCountMetric.With(emptyLabels).Add(0)
-	clusterOperationsSuccessCountMetric.With(emptyLabels).Add(0)
-	clusterOperationsTotalCountMetric.With(emptyLabels).Add(0)
-	centralOperationsTotalCountMetric.With(emptyLabels).Add(0)
-	centralOperationsSuccessCountMetric.With(emptyLabels).Add(0)
-	centralTimeoutCountMetric.With(emptyLabels).Add(0)
+// InitOperationMetricsWithZero initializes counter "operation" metrics with 0 value and all possible labels.
+// We do not initialize central timeout count metric as it has dynamic labels.
+// We do not initialize observatorium request count metric as it is unused.
+// We do not initialize database request count metric as it grows quickly and would not suffer from being undefined.
+// We initialize reconciler metrics in InitReconcilerMetricsForType.
+func InitOperationMetricsWithZero() {
+	for _, operation := range constants.Operations {
+		clusterOperationsSuccessCountMetric.With(prometheus.Labels{
+			labelOperation: operation,
+		}).Add(0)
+		clusterOperationsTotalCountMetric.With(prometheus.Labels{
+			labelOperation: operation,
+		}).Add(0)
+		centralOperationsTotalCountMetric.With(prometheus.Labels{
+			labelOperation: operation,
+		}).Add(0)
+		centralOperationsSuccessCountMetric.With(prometheus.Labels{
+			labelOperation: operation,
+		}).Add(0)
+	}
 }
