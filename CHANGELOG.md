@@ -9,6 +9,7 @@ This Changelog should be updated for:
 ## [NEXT RELEASE]
 ### Added
 ### Changed
+- Collected logs in AWS CloudWatch are grouped by log type instead of namespace
 ### Deprecated
 ### Removed
 
