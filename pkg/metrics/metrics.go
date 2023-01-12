@@ -810,17 +810,12 @@ func InitReconcilerMetricsForType(reconcilerType string) {
 // We initialize reconciler metrics in InitReconcilerMetricsForType.
 func InitOperationMetricsWithZero() {
 	for _, operation := range constants.Operations {
-		clusterOperationsSuccessCountMetric.With(prometheus.Labels{
+		labels := prometheus.Labels{
 			labelOperation: operation,
-		}).Add(0)
-		clusterOperationsTotalCountMetric.With(prometheus.Labels{
-			labelOperation: operation,
-		}).Add(0)
-		centralOperationsTotalCountMetric.With(prometheus.Labels{
-			labelOperation: operation,
-		}).Add(0)
-		centralOperationsSuccessCountMetric.With(prometheus.Labels{
-			labelOperation: operation,
-		}).Add(0)
+		}
+		clusterOperationsSuccessCountMetric.With(labels).Add(0)
+		clusterOperationsTotalCountMetric.With(labels).Add(0)
+		centralOperationsTotalCountMetric.With(labels).Add(0)
+		centralOperationsSuccessCountMetric.With(labels).Add(0)
 	}
 }
