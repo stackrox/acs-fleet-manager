@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/constants"
-
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
@@ -726,8 +724,6 @@ func init() {
 	// metrics for database
 	prometheus.MustRegister(databaseRequestCountMetric)
 	prometheus.MustRegister(databaseQueryDurationMetric)
-
-	InitOperationMetricsWithZero()
 }
 
 // ResetMetricsForCentralManagers will reset the metrics for the CentralManager background reconciler
@@ -801,21 +797,4 @@ func InitReconcilerMetricsForType(reconcilerType string) {
 	reconcilerFailureCountMetric.With(labels).Add(0)
 	reconcilerSuccessCountMetric.With(labels).Add(0)
 	reconcilerErrorsCountMetric.With(labels).Add(0)
-}
-
-// InitOperationMetricsWithZero initializes counter "operation" metrics with 0 value and all possible labels.
-// We do not initialize central timeout count metric as it has dynamic labels.
-// We do not initialize observatorium request count metric as it is unused.
-// We do not initialize database request count metric as it grows quickly and would not suffer from being undefined.
-// We initialize reconciler metrics in InitReconcilerMetricsForType.
-func InitOperationMetricsWithZero() {
-	for _, operation := range constants.Operations {
-		labels := prometheus.Labels{
-			labelOperation: operation,
-		}
-		clusterOperationsSuccessCountMetric.With(labels).Add(0)
-		clusterOperationsTotalCountMetric.With(labels).Add(0)
-		centralOperationsTotalCountMetric.With(labels).Add(0)
-		centralOperationsSuccessCountMetric.With(labels).Add(0)
-	}
 }
