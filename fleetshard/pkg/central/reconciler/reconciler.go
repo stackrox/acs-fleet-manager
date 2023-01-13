@@ -14,7 +14,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -224,14 +223,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if err != nil {
 			return nil, fmt.Errorf("provisioning RDS DB: %w", err)
 		}
-		dbConnectionString, err := postgres.CreatePostgresConnectionString(*dbConnection)
-		if err != nil {
-			return nil, fmt.Errorf("creating RDS DB connection string: %w", err)
-		}
 
 		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
 			IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
-			ConnectionStringOverride: pointer.String(dbConnectionString),
+			ConnectionStringOverride: pointer.String(dbConnection.AsConnectionString()),
 			PasswordSecret: &v1alpha1.LocalSecretReference{
 				Name: centralDbSecretName,
 			},

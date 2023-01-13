@@ -7,27 +7,37 @@ import (
 
 // DBConnection stores the data necessary to connect to a PostgreSQL server
 type DBConnection struct {
-	Host     string
-	Port     int
-	User     string
-	Database string
+	host     string
+	port     int
+	user     string
+	database string
 }
 
-// CreatePostgresConnectionString generates a connection string from a DBConnection struct
-func CreatePostgresConnectionString(connection DBConnection) (string, error) {
-	if connection.Host == "" {
-		return "", fmt.Errorf("host parameter cannot be empty")
+// NewDBConnection constructs a new DBConnection struct
+func NewDBConnection(host string, port int, user, database string) (DBConnection, error) {
+	if host == "" {
+		return DBConnection{}, fmt.Errorf("host parameter cannot be empty")
 	}
-	if connection.Port == 0 {
-		return "", fmt.Errorf("port parameter cannot be 0")
+	if port == 0 {
+		return DBConnection{}, fmt.Errorf("port parameter cannot be 0")
 	}
-	if connection.User == "" {
-		return "", fmt.Errorf("user parameter cannot be empty")
+	if user == "" {
+		return DBConnection{}, fmt.Errorf("user parameter cannot be empty")
 	}
-	if connection.Database == "" {
-		return "", fmt.Errorf("database parameter cannot be empty")
+	if database == "" {
+		return DBConnection{}, fmt.Errorf("database parameter cannot be empty")
 	}
 
+	return DBConnection{
+		host:     host,
+		port:     port,
+		user:     user,
+		database: database,
+	}, nil
+}
+
+// AsConnectionString returns a string that can be used to connect to a PostgreSQL server
+func (c DBConnection) AsConnectionString() string {
 	return fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=require",
-		connection.Host, connection.Port, connection.User, connection.Database), nil
+		c.host, c.port, c.user, c.database)
 }

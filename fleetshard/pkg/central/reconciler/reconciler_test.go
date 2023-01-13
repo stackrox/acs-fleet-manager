@@ -108,12 +108,11 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 
 	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
 	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) (*postgres.DBConnection, error) {
-		return &postgres.DBConnection{
-			Host:     "localhost",
-			Port:     5432,
-			User:     "rhacs",
-			Database: "postgres",
-		}, nil
+		connection, err := postgres.NewDBConnection("localhost", 5432, "rhacs", "postgres")
+		if err != nil {
+			return nil, err
+		}
+		return &connection, nil
 	}
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
 		CentralReconcilerOptions{
@@ -314,12 +313,11 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 
 	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
 	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) (*postgres.DBConnection, error) {
-		return &postgres.DBConnection{
-			Host:     "localhost",
-			Port:     5432,
-			User:     "rhacs",
-			Database: "postgres",
-		}, nil
+		connection, err := postgres.NewDBConnection("localhost", 5432, "rhacs", "postgres")
+		if err != nil {
+			return nil, err
+		}
+		return &connection, nil
 	}
 	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(_ string) (bool, error) {
 		return true, nil

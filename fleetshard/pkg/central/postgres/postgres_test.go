@@ -3,37 +3,28 @@ package postgres
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPostgresConnectionString(t *testing.T) {
-	dbConnection := DBConnection{
-		Host:     "localhost",
-		Port:     14543,
-		User:     "test-user",
-		Database: "postgresdb",
-	}
-
-	dbConnectionString, err := CreatePostgresConnectionString(dbConnection)
+	dbConnection, err := NewDBConnection("localhost", 14543, "test-user", "postgresdb")
 	require.NoError(t, err)
-	require.Equal(t, dbConnectionString, "host=localhost port=14543 user=test-user dbname=postgresdb sslmode=require")
 
-	dbConnection.Host = ""
-	_, err = CreatePostgresConnectionString(dbConnection)
-	require.Error(t, err)
+	require.Equal(t, dbConnection.AsConnectionString(), "host=localhost port=14543 user=test-user dbname=postgresdb sslmode=require")
+}
 
-	dbConnection.Host = "host"
-	dbConnection.Port = 0
-	_, err = CreatePostgresConnectionString(dbConnection)
-	require.Error(t, err)
+func TestNewDBConnection(t *testing.T) {
+	_, err := NewDBConnection("", 14543, "test-user", "postgresdb")
+	assert.EqualErrorf(t, err, "host parameter cannot be empty", "incorrect error message")
 
-	dbConnection.Port = 5432
-	dbConnection.User = ""
-	_, err = CreatePostgresConnectionString(dbConnection)
-	require.Error(t, err)
+	_, err = NewDBConnection("localhost", 0, "test-user", "postgresdb")
+	assert.EqualErrorf(t, err, "port parameter cannot be 0"+
+		"", "incorrect error message")
 
-	dbConnection.User = "postgres"
-	dbConnection.Database = ""
-	_, err = CreatePostgresConnectionString(dbConnection)
-	require.Error(t, err)
+	_, err = NewDBConnection("localhost", 14543, "", "postgresdb")
+	assert.EqualErrorf(t, err, "user parameter cannot be empty", "incorrect error message")
+
+	_, err = NewDBConnection("localhost", 14543, "test-user", "")
+	assert.EqualErrorf(t, err, "database parameter cannot be empty", "incorrect error message")
 }

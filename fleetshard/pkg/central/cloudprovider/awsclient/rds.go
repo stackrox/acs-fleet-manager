@@ -247,14 +247,12 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 				return nil, err
 			}
 
-			connection := &postgres.DBConnection{
-				Host:     *dbCluster.Endpoint,
-				Port:     dbPostgresPort,
-				User:     dbUser,
-				Database: dbName,
+			connection, err := postgres.NewDBConnection(*dbCluster.Endpoint, dbPostgresPort, dbUser, dbName)
+			if err != nil {
+				return nil, fmt.Errorf("incorrect DB connection parameters: %w", err)
 			}
 
-			return connection, nil
+			return &connection, nil
 		}
 
 		glog.Infof("RDS instance status: %s (instance ID: %s)", dbInstanceStatus, instanceID)
