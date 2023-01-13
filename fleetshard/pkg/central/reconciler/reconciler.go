@@ -219,14 +219,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			return nil, fmt.Errorf("getting DB password from secret: %w", err)
 		}
 
-		dbConnectionString, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword)
+		dbConnection, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword)
 		if err != nil {
 			return nil, fmt.Errorf("provisioning RDS DB: %w", err)
 		}
 
 		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
 			IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
-			ConnectionStringOverride: pointer.String(dbConnectionString),
+			ConnectionStringOverride: pointer.String(dbConnection.AsConnectionString()),
 			PasswordSecret: &v1alpha1.LocalSecretReference{
 				Name: centralDbSecretName,
 			},
