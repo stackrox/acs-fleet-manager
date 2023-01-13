@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
@@ -54,16 +55,16 @@ type RDS struct {
 }
 
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
-func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPassword string) (string, error) {
+func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPassword string) (*postgres.DBConnection, error) {
 	clusterID := getClusterID(databaseID)
 	instanceID := getInstanceID(databaseID)
 
 	if err := r.ensureDBClusterCreated(clusterID, masterPassword); err != nil {
-		return "", fmt.Errorf("ensuring DB cluster %s exists: %w", clusterID, err)
+		return nil, fmt.Errorf("ensuring DB cluster %s exists: %w", clusterID, err)
 	}
 
 	if err := r.ensureDBInstanceCreated(instanceID, clusterID); err != nil {
-		return "", fmt.Errorf("ensuring DB instance %s exists in cluster %s: %w", instanceID, clusterID, err)
+		return nil, fmt.Errorf("ensuring DB instance %s exists in cluster %s: %w", instanceID, clusterID, err)
 	}
 
 	return r.waitForInstanceToBeAvailable(ctx, instanceID, clusterID)
@@ -233,23 +234,25 @@ func (r *RDS) describeDBCluster(clusterID string) (*rds.DBCluster, error) {
 	return result.DBClusters[0], nil
 }
 
-func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID string, clusterID string) (string, error) {
+func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID string, clusterID string) (*postgres.DBConnection, error) {
 	for {
 		dbInstanceStatus, err := r.instanceStatus(instanceID)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		if dbInstanceStatus == dbAvailableStatus {
 			dbCluster, err := r.describeDBCluster(clusterID)
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 
-			connectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=require",
-				*dbCluster.Endpoint, dbPostgresPort, dbUser, dbName)
+			connection, err := postgres.NewDBConnection(*dbCluster.Endpoint, dbPostgresPort, dbUser, dbName)
+			if err != nil {
+				return nil, fmt.Errorf("incorrect DB connection parameters: %w", err)
+			}
 
-			return connectionString, nil
+			return &connection, nil
 		}
 
 		glog.Infof("RDS instance status: %s (instance ID: %s)", dbInstanceStatus, instanceID)
@@ -258,7 +261,7 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 		case <-ticker.C:
 			continue
 		case <-ctx.Done():
-			return "", fmt.Errorf("waiting for RDS instance to be available: %w", ctx.Err())
+			return nil, fmt.Errorf("waiting for RDS instance to be available: %w", ctx.Err())
 		}
 	}
 }

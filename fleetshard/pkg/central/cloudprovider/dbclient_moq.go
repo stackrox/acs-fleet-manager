@@ -5,6 +5,7 @@ package cloudprovider
 
 import (
 	"context"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	"sync"
 )
 
@@ -21,7 +22,7 @@ var _ DBClient = &DBClientMock{}
 //			EnsureDBDeprovisionedFunc: func(databaseID string) (bool, error) {
 //				panic("mock out the EnsureDBDeprovisioned method")
 //			},
-//			EnsureDBProvisionedFunc: func(ctx context.Context, databaseID string, passwordSecretName string) (string, error) {
+//			EnsureDBProvisionedFunc: func(ctx context.Context, databaseID string, passwordSecretName string) (*postgres.DBConnection, error) {
 //				panic("mock out the EnsureDBProvisioned method")
 //			},
 //		}
@@ -35,7 +36,7 @@ type DBClientMock struct {
 	EnsureDBDeprovisionedFunc func(databaseID string) (bool, error)
 
 	// EnsureDBProvisionedFunc mocks the EnsureDBProvisioned method.
-	EnsureDBProvisionedFunc func(ctx context.Context, databaseID string, passwordSecretName string) (string, error)
+	EnsureDBProvisionedFunc func(ctx context.Context, databaseID string, passwordSecretName string) (*postgres.DBConnection, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -91,7 +92,7 @@ func (mock *DBClientMock) EnsureDBDeprovisionedCalls() []struct {
 }
 
 // EnsureDBProvisioned calls EnsureDBProvisionedFunc.
-func (mock *DBClientMock) EnsureDBProvisioned(ctx context.Context, databaseID string, passwordSecretName string) (string, error) {
+func (mock *DBClientMock) EnsureDBProvisioned(ctx context.Context, databaseID string, passwordSecretName string) (*postgres.DBConnection, error) {
 	if mock.EnsureDBProvisionedFunc == nil {
 		panic("DBClientMock.EnsureDBProvisionedFunc: method is nil but DBClient.EnsureDBProvisioned was just called")
 	}
