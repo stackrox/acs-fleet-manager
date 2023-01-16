@@ -122,8 +122,8 @@ github.com/rogpeppe/go-internal v1.8.1/go.mod h1:JeRgkft04UBgHMgCIwADu4Pn6Mtm5d4
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/segmentio/backo-go v0.0.0-20160424052352-204274ad699c h1:rsRTAcCR5CeNLkvgBVSjQoDGRRt6kggsE6XYBqCv2KQ=
 github.com/segmentio/backo-go v0.0.0-20160424052352-204274ad699c/go.mod h1:kJ9mm9YmoWSkk+oQ+5Cj8DEoRCX2JT6As4kEtIIOp1M=
-github.com/segmentio/chamber/v2 v2.11.0 h1:dvo2Pl9WJeQE0sPDnwhwZ78JQe2xECcMBaENA4IjVOI=
-github.com/segmentio/chamber/v2 v2.11.0/go.mod h1:xvt1VbQAyg/ZQGjaFyETbCenMP1cStQE8H7JsAfZkU4=
+github.com/segmentio/chamber/v2 v2.11.1 h1:LItJu21pYjkLKpTJOdiWTwlkbg2+2B+uySNrJnDFHe4=
+github.com/segmentio/chamber/v2 v2.11.1/go.mod h1:xvt1VbQAyg/ZQGjaFyETbCenMP1cStQE8H7JsAfZkU4=
 github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 h1:JIAuq3EEf9cgbU6AtGPK4CTG3Zf6CKMNqf0MHTggAUA=
 github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966/go.mod h1:sUM3LWHvSMaG192sy56D9F7CNvL7jUJVXoqM1QKLnog=
 github.com/spf13/cobra v0.0.3/go.mod h1:1l0Ry5zgKvJasoi3XT1TypsSe7PqH0Sj9dhYf7v3XqQ=
