@@ -541,8 +541,8 @@ github.com/openshift/client-go v0.0.0-20200623090625-83993cebb5ae h1:3NJm9lI7FV4
 github.com/openshift/client-go v0.0.0-20200623090625-83993cebb5ae/go.mod h1:6GlTOU9aZVIQI8mF5W6Pgc+zVHpMc2V486sxD2cd8t4=
 github.com/opentracing/opentracing-go v1.2.0 h1:uEJPy/1a5RIPAJ0Ov+OIO8OxWu77jEv+1B0VhjKrZUs=
 github.com/opentracing/opentracing-go v1.2.0/go.mod h1:GxEUsuufX4nBwe+T+Wl9TAgYrxe9dPLANfrWvHYVTgc=
-github.com/operator-framework/api v0.17.2 h1:Sn3OnzgpXfoc8xTEoV3hl+k7r6bGuhOLKbxip3vAPN0=
-github.com/operator-framework/api v0.17.2/go.mod h1:34tb98EwTN5SZLkgoxwvRkhMJKLHUWHOrrcv1ZwvEeA=
+github.com/operator-framework/api v0.17.3 h1:wddE1SLKTNiIzwt28DbBIO+vPG2GOV6dkB9xBkDfT3o=
+github.com/operator-framework/api v0.17.3/go.mod h1:34tb98EwTN5SZLkgoxwvRkhMJKLHUWHOrrcv1ZwvEeA=
 github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=
 github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
 github.com/peterbourgon/diskv v2.0.1+incompatible/go.mod h1:uqqh8zWWbv1HBMNONnaR/tNboyR3/BZd58JJSHlUSCU=
