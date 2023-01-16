@@ -123,10 +123,11 @@ type dinosaurService struct {
 	dataplaneClusterConfig   *config.DataplaneClusterConfig
 	clusterPlacementStrategy ClusterPlacementStrategy
 	amsClient                ocm.AMSClient
+	telemetry                *Telemetry
 }
 
 // NewDinosaurService ...
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient) *dinosaurService {
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, telemetry *Telemetry) *dinosaurService {
 	return &dinosaurService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
@@ -139,6 +140,7 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		dataplaneClusterConfig:   dataplaneClusterConfig,
 		clusterPlacementStrategy: clusterPlacementStrategy,
 		amsClient:                amsClient,
+		telemetry:                telemetry,
 	}
 }
 
@@ -320,6 +322,8 @@ func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequ
 // the request is transitioned to 'Provisioning' status.
 func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	// Check if the request is ready to be transitioned to provisioning.
+
+	k.telemetry.RegisterTenant(dinosaurRequest)
 
 	// Check IdP config is ready.
 	//
