@@ -1036,6 +1036,8 @@ objects:
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
             imagePullPolicy: ${IMAGE_PULL_POLICY}
             volumeMounts:
+            - name: fleet-manager-credentials
+              mountPath: /secrets/fleet-manager-credentials
             - name: service
               mountPath: /secrets/service
             - name: rds
