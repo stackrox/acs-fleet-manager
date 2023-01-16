@@ -19,6 +19,8 @@ import (
 	serviceErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
+const preparingCentralWorkerType = "preparing_dinosaur"
+
 // PreparingDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type PreparingDinosaurManager struct {
 	workers.BaseWorker
@@ -28,10 +30,11 @@ type PreparingDinosaurManager struct {
 
 // NewPreparingDinosaurManager creates a new dinosaur manager
 func NewPreparingDinosaurManager(dinosaurService services.DinosaurService, centralConfig *config.CentralConfig) *PreparingDinosaurManager {
+	metrics.InitReconcilerMetricsForType(preparingCentralWorkerType)
 	return &PreparingDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
-			WorkerType: "preparing_dinosaur",
+			WorkerType: preparingCentralWorkerType,
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService:       dinosaurService,
