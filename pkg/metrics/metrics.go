@@ -788,3 +788,13 @@ func Reset() {
 	databaseRequestCountMetric.Reset()
 	databaseQueryDurationMetric.Reset()
 }
+
+// InitReconcilerMetricsForType initalizes reconciler metrics for specific reconciler type.
+func InitReconcilerMetricsForType(reconcilerType string) {
+	labels := prometheus.Labels{
+		labelWorkerType: reconcilerType,
+	}
+	reconcilerFailureCountMetric.With(labels).Add(0)
+	reconcilerSuccessCountMetric.With(labels).Add(0)
+	reconcilerErrorsCountMetric.With(labels).Add(0)
+}

@@ -20,6 +20,8 @@ import (
 	"github.com/golang/glog"
 )
 
+const acceptedCentralWorkerType = "accepted_dinosaur"
+
 // AcceptedCentralManager represents a manager that periodically reconciles central requests
 type AcceptedCentralManager struct {
 	workers.BaseWorker
@@ -32,10 +34,11 @@ type AcceptedCentralManager struct {
 
 // NewAcceptedCentralManager creates a new manager
 func NewAcceptedCentralManager(centralService services.DinosaurService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, dataPlaneClusterConfig *config.DataplaneClusterConfig, centralConfig *config.CentralConfig) *AcceptedCentralManager {
+	metrics.InitReconcilerMetricsForType(acceptedCentralWorkerType)
 	return &AcceptedCentralManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
-			WorkerType: "accepted_dinosaur",
+			WorkerType: acceptedCentralWorkerType,
 			Reconciler: workers.Reconciler{},
 		},
 		centralService:         centralService,
