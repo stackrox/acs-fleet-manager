@@ -38,14 +38,14 @@ var supportedAMSBillingModels = map[string]struct{}{
 
 // CheckIfQuotaIsDefinedForInstanceType ...
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
-	org, err := q.amsClient.GetOrganisationFromExternalID(dinosaur.OrganisationID)
+	orgID, err := q.amsClient.GetOrganisationIDFromExternalID(dinosaur.OrganisationID)
 	if err != nil {
 		return false, errors.OrganisationNotFound(dinosaur.OrganisationID, err)
 	}
 
-	hasQuota, err := q.hasConfiguredQuotaCost(org.ID(), instanceType.GetQuotaType())
+	hasQuota, err := q.hasConfiguredQuotaCost(orgID, instanceType.GetQuotaType())
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("failed to get assigned quota of type %v for organization with external id %v and id %v", instanceType.GetQuotaType(), dinosaur.OrganisationID, org.ID()))
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("failed to get assigned quota of type %v for organization with id %v", instanceType.GetQuotaType(), orgID))
 	}
 
 	return hasQuota, nil
@@ -132,11 +132,11 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 
 	rr := newBaseQuotaReservedResourceResourceBuilder()
 
-	org, err := q.amsClient.GetOrganisationFromExternalID(dinosaur.OrganisationID)
+	orgID, err := q.amsClient.GetOrganisationIDFromExternalID(dinosaur.OrganisationID)
 	if err != nil {
 		return "", errors.OrganisationNotFound(dinosaur.OrganisationID, err)
 	}
-	bm, err := q.selectBillingModelFromDinosaurInstanceType(org.ID(), dinosaur.CloudProvider, dinosaur.CloudAccountID, instanceType)
+	bm, err := q.selectBillingModelFromDinosaurInstanceType(orgID, dinosaur.CloudProvider, dinosaur.CloudAccountID, instanceType)
 	if err != nil {
 		svcErr := errors.ToServiceError(err)
 		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
@@ -145,7 +145,7 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 	glog.Infof("Billing model of Central request %s with quota type %s has been set to %s.", dinosaur.ID, instanceType.GetQuotaType(), bm)
 
 	if bm != string(amsv1.BillingModelStandard) {
-		if err := q.verifyCloudAccountInAMS(dinosaur, org.ID()); err != nil {
+		if err := q.verifyCloudAccountInAMS(dinosaur, orgID); err != nil {
 			return "", err
 		}
 		rr.BillingMarketplaceAccount(dinosaur.CloudAccountID)

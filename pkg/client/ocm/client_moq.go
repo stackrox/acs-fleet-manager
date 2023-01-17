@@ -80,8 +80,8 @@ var _ Client = &ClientMock{}
 //			GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
 //				panic("mock out the GetIdentityProviderList method")
 //			},
-//			GetOrganisationFromExternalIDFunc: func(externalID string) (*amsv1.Organization, error) {
-//				panic("mock out the GetOrganisationFromExternalID method")
+//			GetOrganisationIDFromExternalIDFunc: func(externalID string) (string, error) {
+//				panic("mock out the GetOrganisationIDFromExternalID method")
 //			},
 //			GetQuotaCostsForProductFunc: func(organizationID string, resourceName string, product string) ([]*amsv1.QuotaCost, error) {
 //				panic("mock out the GetQuotaCostsForProduct method")
@@ -177,8 +177,8 @@ type ClientMock struct {
 	// GetIdentityProviderListFunc mocks the GetIdentityProviderList method.
 	GetIdentityProviderListFunc func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 
-	// GetOrganisationFromExternalIDFunc mocks the GetOrganisationFromExternalID method.
-	GetOrganisationFromExternalIDFunc func(externalID string) (*amsv1.Organization, error)
+	// GetOrganisationIDFromExternalIDFunc mocks the GetOrganisationIDFromExternalID method.
+	GetOrganisationIDFromExternalIDFunc func(externalID string) (string, error)
 
 	// GetQuotaCostsForProductFunc mocks the GetQuotaCostsForProduct method.
 	GetQuotaCostsForProductFunc func(organizationID string, resourceName string, product string) ([]*amsv1.QuotaCost, error)
@@ -321,8 +321,8 @@ type ClientMock struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
-		// GetOrganisationFromExternalID holds details about calls to the GetOrganisationFromExternalID method.
-		GetOrganisationFromExternalID []struct {
+		// GetOrganisationIDFromExternalID holds details about calls to the GetOrganisationIDFromExternalID method.
+		GetOrganisationIDFromExternalID []struct {
 			// ExternalID is the externalID argument value.
 			ExternalID string
 		}
@@ -392,36 +392,36 @@ type ClientMock struct {
 			Syncset *clustersmgmtv1.Syncset
 		}
 	}
-	lockClusterAuthorization          sync.RWMutex
-	lockConnection                    sync.RWMutex
-	lockCreateAddon                   sync.RWMutex
-	lockCreateAddonWithParams         sync.RWMutex
-	lockCreateCluster                 sync.RWMutex
-	lockCreateIdentityProvider        sync.RWMutex
-	lockCreateSyncSet                 sync.RWMutex
-	lockDeleteCluster                 sync.RWMutex
-	lockDeleteSubscription            sync.RWMutex
-	lockDeleteSyncSet                 sync.RWMutex
-	lockFindSubscriptions             sync.RWMutex
-	lockGetAddon                      sync.RWMutex
-	lockGetCloudProviders             sync.RWMutex
-	lockGetCluster                    sync.RWMutex
-	lockGetClusterDNS                 sync.RWMutex
-	lockGetClusterIngresses           sync.RWMutex
-	lockGetClusterStatus              sync.RWMutex
-	lockGetCustomerCloudAccounts      sync.RWMutex
-	lockGetExistingClusterMetrics     sync.RWMutex
-	lockGetIdentityProviderList       sync.RWMutex
-	lockGetOrganisationFromExternalID sync.RWMutex
-	lockGetQuotaCostsForProduct       sync.RWMutex
-	lockGetRegions                    sync.RWMutex
-	lockGetRequiresTermsAcceptance    sync.RWMutex
-	lockGetSyncSet                    sync.RWMutex
-	lockScaleDownComputeNodes         sync.RWMutex
-	lockScaleUpComputeNodes           sync.RWMutex
-	lockSetComputeNodes               sync.RWMutex
-	lockUpdateAddonParameters         sync.RWMutex
-	lockUpdateSyncSet                 sync.RWMutex
+	lockClusterAuthorization            sync.RWMutex
+	lockConnection                      sync.RWMutex
+	lockCreateAddon                     sync.RWMutex
+	lockCreateAddonWithParams           sync.RWMutex
+	lockCreateCluster                   sync.RWMutex
+	lockCreateIdentityProvider          sync.RWMutex
+	lockCreateSyncSet                   sync.RWMutex
+	lockDeleteCluster                   sync.RWMutex
+	lockDeleteSubscription              sync.RWMutex
+	lockDeleteSyncSet                   sync.RWMutex
+	lockFindSubscriptions               sync.RWMutex
+	lockGetAddon                        sync.RWMutex
+	lockGetCloudProviders               sync.RWMutex
+	lockGetCluster                      sync.RWMutex
+	lockGetClusterDNS                   sync.RWMutex
+	lockGetClusterIngresses             sync.RWMutex
+	lockGetClusterStatus                sync.RWMutex
+	lockGetCustomerCloudAccounts        sync.RWMutex
+	lockGetExistingClusterMetrics       sync.RWMutex
+	lockGetIdentityProviderList         sync.RWMutex
+	lockGetOrganisationIDFromExternalID sync.RWMutex
+	lockGetQuotaCostsForProduct         sync.RWMutex
+	lockGetRegions                      sync.RWMutex
+	lockGetRequiresTermsAcceptance      sync.RWMutex
+	lockGetSyncSet                      sync.RWMutex
+	lockScaleDownComputeNodes           sync.RWMutex
+	lockScaleUpComputeNodes             sync.RWMutex
+	lockSetComputeNodes                 sync.RWMutex
+	lockUpdateAddonParameters           sync.RWMutex
+	lockUpdateSyncSet                   sync.RWMutex
 }
 
 // ClusterAuthorization calls ClusterAuthorizationFunc.
@@ -1086,35 +1086,35 @@ func (mock *ClientMock) GetIdentityProviderListCalls() []struct {
 	return calls
 }
 
-// GetOrganisationFromExternalID calls GetOrganisationFromExternalIDFunc.
-func (mock *ClientMock) GetOrganisationFromExternalID(externalID string) (*amsv1.Organization, error) {
-	if mock.GetOrganisationFromExternalIDFunc == nil {
-		panic("ClientMock.GetOrganisationFromExternalIDFunc: method is nil but Client.GetOrganisationFromExternalID was just called")
+// GetOrganisationIDFromExternalID calls GetOrganisationIDFromExternalIDFunc.
+func (mock *ClientMock) GetOrganisationIDFromExternalID(externalID string) (string, error) {
+	if mock.GetOrganisationIDFromExternalIDFunc == nil {
+		panic("ClientMock.GetOrganisationIDFromExternalIDFunc: method is nil but Client.GetOrganisationIDFromExternalID was just called")
 	}
 	callInfo := struct {
 		ExternalID string
 	}{
 		ExternalID: externalID,
 	}
-	mock.lockGetOrganisationFromExternalID.Lock()
-	mock.calls.GetOrganisationFromExternalID = append(mock.calls.GetOrganisationFromExternalID, callInfo)
-	mock.lockGetOrganisationFromExternalID.Unlock()
-	return mock.GetOrganisationFromExternalIDFunc(externalID)
+	mock.lockGetOrganisationIDFromExternalID.Lock()
+	mock.calls.GetOrganisationIDFromExternalID = append(mock.calls.GetOrganisationIDFromExternalID, callInfo)
+	mock.lockGetOrganisationIDFromExternalID.Unlock()
+	return mock.GetOrganisationIDFromExternalIDFunc(externalID)
 }
 
-// GetOrganisationFromExternalIDCalls gets all the calls that were made to GetOrganisationFromExternalID.
+// GetOrganisationIDFromExternalIDCalls gets all the calls that were made to GetOrganisationIDFromExternalID.
 // Check the length with:
 //
-//	len(mockedClient.GetOrganisationFromExternalIDCalls())
-func (mock *ClientMock) GetOrganisationFromExternalIDCalls() []struct {
+//	len(mockedClient.GetOrganisationIDFromExternalIDCalls())
+func (mock *ClientMock) GetOrganisationIDFromExternalIDCalls() []struct {
 	ExternalID string
 } {
 	var calls []struct {
 		ExternalID string
 	}
-	mock.lockGetOrganisationFromExternalID.RLock()
-	calls = mock.calls.GetOrganisationFromExternalID
-	mock.lockGetOrganisationFromExternalID.RUnlock()
+	mock.lockGetOrganisationIDFromExternalID.RLock()
+	calls = mock.calls.GetOrganisationIDFromExternalID
+	mock.lockGetOrganisationIDFromExternalID.RUnlock()
 	return calls
 }
 

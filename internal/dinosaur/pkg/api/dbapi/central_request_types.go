@@ -33,10 +33,9 @@ type CentralRequest struct {
 	OwnerUserID    string `json:"owner_user_id"`
 	// Instance-independent part of the Central's hostname. For example, this
 	// can be `rhacs-dev.com`, `acs-stage.rhcloud.com`, etc.
-	Host             string `json:"host"`
-	OrganisationID   string `json:"organisation_id" gorm:"index"`
-	OrganisationName string `json:"organisation_name"`
-	FailedReason     string `json:"failed_reason"`
+	Host           string `json:"host"`
+	OrganisationID string `json:"organisation_id" gorm:"index"`
+	FailedReason   string `json:"failed_reason"`
 	// PlacementID field should be updated every time when a CentralRequest is assigned to an OSD cluster (even if it's the same one again)
 	PlacementID string   `json:"placement_id"`
 	Central     api.JSON `json:"central"` // Schema is defined by dbapi.CentralSpec

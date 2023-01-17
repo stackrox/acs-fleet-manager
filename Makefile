@@ -481,7 +481,7 @@ db/start:
 .PHONY: db/start
 
 db/migrate:
-	$(GO) run ./cmd/fleet-manager migrate
+	OCM_ENV=integration $(GO) run ./cmd/fleet-manager migrate
 .PHONY: db/migrate
 
 db/teardown:

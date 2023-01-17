@@ -260,8 +260,6 @@ components:
                       type: string
                     ownerOrgId:
                       type: string
-                    ownerOrgName:
-                      type: string
                     issuer:
                       type: string
                 uiEndpoint:
