@@ -1,0 +1,74 @@
+# This runs tests that check the AWS RDS provisioning / deprovisioning logic
+name: AWS integration tests
+
+on:
+  push:
+    branches:
+      - main
+      - release
+    paths-ignore:
+      - '*.md'
+      - '*.sh'
+      - '.github/*.md'
+      - '.github/workflows/openapi_update.yaml'
+      - '.github/CODEOWNERS'
+      - 'templates/**'
+      - '.openapi-generator-ignore'
+      - 'openapi/**'
+      - 'docs/**'
+      - 'pkg/api/openapi/docs/**'
+      - 'pkg/api/openapi/.openapi-generator-ignore'
+
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '*.md'
+      - '*.sh'
+      - '.github/*.md'
+      - '.github/workflows/openapi_update.yaml'
+      - '.github/CODEOWNERS'
+      - 'templates/**'
+      - '.openapi-generator-ignore'
+      - 'openapi/**'
+      - 'docs/**'
+      - 'pkg/api/openapi/docs/**'
+      - 'pkg/api/openapi/.openapi-generator-ignore'
+
+jobs:
+  verify-test:
+    name: "Test RDS Provisioning"
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: development
+    steps:
+      - name: Set up Go 1.18
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.18"
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Cache go module
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+      - name: Verify & Test
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_AUTH_HELPER: "none"
+        run: |
+          set -euo pipefail
+          source "scripts/lib/external_config.sh"
+          init_chamber
+
+          run_chamber exec fleetshard-sync -- make test/rds
+        timeout-minutes: 35

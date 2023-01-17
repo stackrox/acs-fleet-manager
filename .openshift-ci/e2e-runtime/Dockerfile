@@ -1,28 +1,6 @@
 FROM quay.io/centos/centos:stream9
 
-RUN rm -f /etc/yum.repos.d/* && { \
-    echo "[baseos]"; \
-    echo "name=CentOS Stream \$releasever - BaseOS"; \
-    echo "baseurl=http://mirror.stream.centos.org/\$releasever-stream/BaseOS/\$basearch/os/"; \
-    echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial"; \
-    echo "gpgcheck=1"; \
-    echo "repo_gpgcheck=0"; \
-    echo "metadata_expire=6h"; \
-    echo "countme=1"; \
-    echo "enabled=1"; \
-    echo; \
-    echo "[appstream]"; \
-    echo "name=CentOS Stream $releasever - AppStream"; \
-    echo "baseurl=http://mirror.stream.centos.org/\$releasever-stream/AppStream/\$basearch/os/"; \
-    echo "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial"; \
-    echo "gpgcheck=1"; \
-    echo "repo_gpgcheck=0"; \
-    echo "metadata_expire=6h"; \
-    echo "countme=1"; \
-    echo "enabled=1"; \
-    } > "/etc/yum.repos.d/centos.repo"
-
-RUN dnf update -y && dnf -y install make which git gettext jq gcc && dnf clean all && rm -rf /var/cache/dnf
+RUN dnf update -y --disablerepo=\* --enablerepo=baseos,appstream && dnf -y install make which git gettext jq gcc && dnf clean all && rm -rf /var/cache/dnf
 
 COPY --from=registry.ci.openshift.org/openshift/release:golang-1.18 /usr/local/go /usr/local/go
 COPY --from=quay.io/openshift/origin-cli:4.13 /usr/bin/oc /usr/bin
@@ -58,6 +36,6 @@ RUN mkdir /src $GOPATH
 WORKDIR /src
 
 COPY . .
-RUN chmod 775 -R /src && chmod 775 -R $GOPATH
+RUN chmod 775 -R /src && chmod 775 -R $GOPATH && git config --system --add safe.directory /src
 
 CMD ./.openshift-ci/tests/e2e.sh

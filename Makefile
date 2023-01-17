@@ -117,12 +117,14 @@ $(GINKGO_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/onsi/ginkgo/v2/ginkgo
 
 TOOLS_VENV_DIR := $(LOCAL_BIN_PATH)/tools_venv
-$(TOOLS_VENV_DIR):
+$(TOOLS_VENV_DIR): $(TOOLS_DIR)/requirements.txt
 	@set -e; \
+	trap "rm -rf $(TOOLS_VENV_DIR)" ERR; \
 	python3 -m venv $(TOOLS_VENV_DIR); \
 	. $(TOOLS_VENV_DIR)/bin/activate; \
 	pip install --upgrade pip==22.3.1; \
-	pip install -r $(TOOLS_DIR)/requirements.txt
+	pip install -r $(TOOLS_DIR)/requirements.txt; \
+	touch $(TOOLS_VENV_DIR) # update directory modification timestamp even if no changes were made by pip. This will allow to skip this target if the directory is up-to-date
 
 OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
 NPM ?= "$(shell which npm 2> /dev/null)"
@@ -246,7 +248,7 @@ all: openapi/generate binary
 .PHONY: setup/git/hooks
 setup/git/hooks:
 	-git config --unset-all core.hooksPath
-	@if which -s pre-commit; then \
+	@if command -v pre-commit >/dev/null 2>&1; then \
 		echo "Installing pre-commit hooks"; \
 		pre-commit install; \
 	else \
@@ -305,7 +307,7 @@ install: verify lint
 .PHONY: install
 
 clean:
-	rm -f fleet-manager fleetshard-sync probe
+	rm -f fleet-manager fleetshard-sync probe/bin/probe
 .PHONY: clean
 
 # Runs the unit tests.
@@ -319,6 +321,13 @@ test: $(GOTESTSUM_BIN)
 	OCM_ENV=testing $(GOTESTSUM_BIN) --junitfile data/results/unit-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
 		$(shell go list ./... | grep -v /test)
 .PHONY: test
+
+# Runs the AWS RDS integration tests.
+test/rds: $(GOTESTSUM_BIN)
+	RUN_RDS_TESTS=true \
+	$(GOTESTSUM_BIN) --junitfile data/results/rds-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -timeout 30m -count=1 \
+		./fleetshard/pkg/central/cloudprovider/awsclient/...
+.PHONY: test/rds
 
 # Precompile everything required for development/test.
 test/prepare:
@@ -779,6 +788,7 @@ deploy/service: CENTRAL_OPERATOR_OPERATOR_ADDON_ID ?= "managed-central-qe"
 deploy/service: FLEETSHARD_ADDON_ID ?= "fleetshard-operator-qe"
 deploy/service: CENTRAL_IDP_ISSUER ?= "https://sso.stage.redhat.com/auth/realms/redhat-external"
 deploy/service: CENTRAL_IDP_CLIENT_ID ?= "rhacs-ms-dev"
+deploy/service: CENTRAL_REQUEST_EXPIRATION_TIMEOUT ?= "1h"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q fleet-manager; do echo 'waiting for fleet-manager route to be created'; sleep 1; done"
@@ -818,6 +828,7 @@ deploy/service: deploy/envoy deploy/route
 		-p CENTRAL_OPERATOR_OPERATOR_ADDON_ID="${CENTRAL_OPERATOR_OPERATOR_ADDON_ID}" \
 		-p FLEETSHARD_ADDON_ID="${FLEETSHARD_ADDON_ID}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
+		-p CENTRAL_REQUEST_EXPIRATION_TIMEOUT="${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}" \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 

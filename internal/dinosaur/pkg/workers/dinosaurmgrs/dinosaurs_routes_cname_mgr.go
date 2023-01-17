@@ -6,8 +6,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
+
+const centralDNSWorkerType = "dinosaur_dns"
 
 // DinosaurRoutesCNAMEManager ...
 type DinosaurRoutesCNAMEManager struct {
@@ -20,10 +23,11 @@ var _ workers.Worker = &DinosaurRoutesCNAMEManager{}
 
 // NewDinosaurCNAMEManager ...
 func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConfig *config.CentralConfig) *DinosaurRoutesCNAMEManager {
+	metrics.InitReconcilerMetricsForType(centralDNSWorkerType)
 	return &DinosaurRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
-			WorkerType: "dinosaur_dns",
+			WorkerType: centralDNSWorkerType,
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService: dinosaurService,
@@ -62,6 +66,15 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 
 				if err != nil {
 					errs = append(errs, err)
+					continue
+				}
+
+				switch {
+				case changeOutput == nil:
+					glog.Infof("creating CNAME records failed with nil result")
+					continue
+				case changeOutput.ChangeInfo == nil || changeOutput.ChangeInfo.Id == nil || changeOutput.ChangeInfo.Status == nil:
+					glog.Infof("creating CNAME records failed with nil info")
 					continue
 				}
 

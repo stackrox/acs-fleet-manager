@@ -11,6 +11,7 @@ import (
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
@@ -51,6 +52,7 @@ type CentralReconcilerOptions struct {
 	WantsAuthProvider bool
 	EgressProxyImage  string
 	ManagedDBEnabled  bool
+	Telemetry         config.Telemetry
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -66,6 +68,7 @@ type CentralReconciler struct {
 	Resources         bool
 	routeService      *k8s.RouteService
 	egressProxyImage  string
+	telemetry         config.Telemetry
 
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
@@ -96,6 +99,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	monitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
+	telemetryEnabled := r.telemetry.StorageKey != ""
 
 	centralResources, err := converters.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Central.Resources)
 	if err != nil {
@@ -136,6 +140,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				},
 				DeploymentSpec: v1alpha1.DeploymentSpec{
 					Resources: &centralResources,
+				},
+				Telemetry: &v1alpha1.Telemetry{
+					Enabled: pointer.BoolPtr(telemetryEnabled),
+					Storage: &v1alpha1.TelemetryStorage{
+						Endpoint: &r.telemetry.StorageEndpoint,
+						Key:      &r.telemetry.StorageKey,
+					},
 				},
 			},
 			Scanner: &v1alpha1.ScannerComponentSpec{
@@ -208,14 +219,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			return nil, fmt.Errorf("getting DB password from secret: %w", err)
 		}
 
-		dbConnectionString, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword)
+		dbConnection, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword)
 		if err != nil {
 			return nil, fmt.Errorf("provisioning RDS DB: %w", err)
 		}
 
 		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
 			IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
-			ConnectionStringOverride: pointer.String(dbConnectionString),
+			ConnectionStringOverride: pointer.String(dbConnection.AsConnectionString()),
 			PasswordSecret: &v1alpha1.LocalSecretReference{
 				Name: centralDbSecretName,
 			},
@@ -753,6 +764,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		wantsAuthProvider: opts.WantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
 		egressProxyImage:  opts.EgressProxyImage,
+		telemetry:         opts.Telemetry,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,

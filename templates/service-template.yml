@@ -444,6 +444,11 @@ parameters:
   description: Default memory limit for scanner-db deployments for newly created tenants
   value: "2500M"
 
+- name: CENTRAL_REQUEST_EXPIRATION_TIMEOUT
+  displayName: Central request expiration timeout
+  description: Maximum interval after which central request is canceled
+  value: "1h"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -640,8 +645,6 @@ objects:
         - "16064548"
         # ACS RH SSO Org Prod
         - "16134752"
-        # org_id for the static token
-        - "12345678"
         # ACS RH SSO ORG Development
         - "16155304"
       fleetshard-authz-org-ids-prod.yaml: |-
@@ -1233,6 +1236,7 @@ objects:
             - --central-operator-addon-id=${CENTRAL_OPERATOR_OPERATOR_ADDON_ID}
             - --fleetshard-addon-id=${FLEETSHARD_ADDON_ID}
             - --alsologtostderr
+            - --central-request-expiration-timeout=${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}
             - -v=${GLOG_V}
             resources:
               requests:
