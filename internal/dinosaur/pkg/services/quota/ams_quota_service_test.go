@@ -55,9 +55,8 @@ func Test_AMSCheckQuota(t *testing.T) {
 						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
 						return cloudAuthorizationResp, nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						if product != string(ocm.RHACSProduct) {
@@ -95,9 +94,8 @@ func Test_AMSCheckQuota(t *testing.T) {
 						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return cloudAuthorizationResp, nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						if product != string(ocm.RHACSProduct) {
@@ -131,9 +129,8 @@ func Test_AMSCheckQuota(t *testing.T) {
 						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return cloudAuthorizationResp, nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						return []*v1.QuotaCost{}, nil
@@ -160,9 +157,8 @@ func Test_AMSCheckQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return nil, fmt.Errorf("some errors")
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						if product != string(ocm.RHACSProduct) {
@@ -236,9 +232,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
@@ -266,9 +261,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
@@ -299,9 +293,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
@@ -332,9 +325,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
@@ -362,9 +354,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
@@ -393,9 +384,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						return []*v1.QuotaCost{}, nil
@@ -418,9 +408,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						rrbq1 := v1.NewRelatedResource().BillingModel(string("unknownbillingmodelone")).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
@@ -450,9 +439,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 						cloudAuthorizationResp, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return cloudAuthorizationResp, nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
@@ -478,9 +466,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
@@ -506,9 +493,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
@@ -541,9 +527,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
@@ -576,9 +561,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
@@ -615,9 +599,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return mockClusterAuthorizationResponse(), nil
 					},
-					GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-						org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-						return org, nil
+					GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSTrialProduct)).ResourceName(resourceName).Cost(0)
@@ -762,9 +745,8 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns false if no quota cost exists for the dinosaur's organization",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-					return org, nil
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 					return []*v1.QuotaCost{}, nil
@@ -780,9 +762,8 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns false if the quota cost billing model is not among the supported ones",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-					return org, nil
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 					rrbq1 := v1.NewRelatedResource().BillingModel("unknownbillingmodel").Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
@@ -804,9 +785,8 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns true if there is at least a 'standard' quota cost billing model",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-					return org, nil
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 					rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
@@ -828,9 +808,8 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns true if there is at least a 'marketplace' quota cost billing model",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-					return org, nil
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 					rrbq1 := v1.NewRelatedResource().BillingModel("unknownbillingmodel").Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
@@ -857,9 +836,8 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns false if there is no supported billing model with an 'allowed' value greater than 0",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-					return org, nil
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 					rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
@@ -885,8 +863,8 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns an error if it fails retrieving the organization ID",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-					return nil, fmt.Errorf("error getting org")
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+					return "", fmt.Errorf("error getting org")
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 					return []*v1.QuotaCost{}, nil
@@ -901,9 +879,8 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		{
 			name: "returns an error if it fails retrieving quota costs",
 			ocmClient: &ocm.ClientMock{
-				GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
-					org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
-					return org, nil
+				GetOrganisationIDFromExternalIDFunc: func(externalId string) (string, error) {
+					return fmt.Sprintf("fake-org-id-%s", externalId), nil
 				},
 				GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 					return []*v1.QuotaCost{}, fmt.Errorf("error getting quota costs")

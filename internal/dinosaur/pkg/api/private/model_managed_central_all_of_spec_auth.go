@@ -17,6 +17,5 @@ type ManagedCentralAllOfSpecAuth struct {
 	ClientOrigin string `json:"clientOrigin,omitempty"`
 	OwnerUserId  string `json:"ownerUserId,omitempty"`
 	OwnerOrgId   string `json:"ownerOrgId,omitempty"`
-	OwnerOrgName string `json:"ownerOrgName,omitempty"`
 	Issuer       string `json:"issuer,omitempty"`
 }
