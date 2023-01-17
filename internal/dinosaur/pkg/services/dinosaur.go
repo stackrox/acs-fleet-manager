@@ -22,7 +22,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/aws"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
@@ -122,11 +121,10 @@ type dinosaurService struct {
 	authService              authorization.Authorization
 	dataplaneClusterConfig   *config.DataplaneClusterConfig
 	clusterPlacementStrategy ClusterPlacementStrategy
-	amsClient                ocm.AMSClient
 }
 
 // NewDinosaurService ...
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient) *dinosaurService {
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy) *dinosaurService {
 	return &dinosaurService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
@@ -138,7 +136,6 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		authService:              authorizationService,
 		dataplaneClusterConfig:   dataplaneClusterConfig,
 		clusterPlacementStrategy: clusterPlacementStrategy,
-		amsClient:                amsClient,
 	}
 }
 
@@ -331,23 +328,12 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		return nil
 	}
 
-	// Obtain organisation name from AMS to store in central request.
-	org, err := k.amsClient.GetOrganisationFromExternalID(dinosaurRequest.OrganisationID)
-	if err != nil {
-		return errors.OrganisationNotFound(dinosaurRequest.OrganisationID, err)
-	}
-	orgName := org.Name()
-	if orgName == "" {
-		return errors.OrganisationNameInvalid(dinosaurRequest.OrganisationID, orgName)
-	}
-
 	// Update the fields of the CentralRequest record in the database.
 	updatedCentralRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
 		},
-		OrganisationName: orgName,
-		Status:           dinosaurConstants.CentralRequestStatusProvisioning.String(),
+		Status: dinosaurConstants.CentralRequestStatusProvisioning.String(),
 	}
 	if err := k.Update(updatedCentralRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update central request")

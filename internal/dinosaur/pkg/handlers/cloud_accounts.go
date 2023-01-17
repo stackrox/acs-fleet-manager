@@ -42,12 +42,12 @@ func (h *cloudAccountsHandler) actionFunc(r *http.Request) func() (i interface{}
 		if err != nil {
 			return nil, errors.NewWithCause(errors.ErrorForbidden, err, "cannot make request without orgID claim")
 		}
-		organization, err := h.client.GetOrganisationFromExternalID(orgID)
+		organizationID, err := h.client.GetOrganisationIDFromExternalID(orgID)
 		if err != nil {
 			return nil, errors.OrganisationNotFound(orgID, err)
 		}
 
-		cloudAccounts, err := h.client.GetCustomerCloudAccounts(organization.ID(), []string{quota.RHACSMarketplaceQuotaID})
+		cloudAccounts, err := h.client.GetCustomerCloudAccounts(organizationID, []string{quota.RHACSMarketplaceQuotaID})
 		if err != nil {
 			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to fetch cloud accounts from AMS")
 		}

@@ -1036,15 +1036,10 @@ objects:
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
             imagePullPolicy: ${IMAGE_PULL_POLICY}
             volumeMounts:
-            - name: fleet-manager-credentials
-              mountPath: /secrets/fleet-manager-credentials
             - name: service
               mountPath: /secrets/service
             - name: rds
               mountPath: /secrets/rds
-            env:
-              - name: "OCM_ENV"
-                value: "${ENVIRONMENT}"
             command:
             - /usr/local/bin/fleet-manager
             - migrate
@@ -1056,11 +1051,6 @@ objects:
             - --db-ssl-certificate-file=/secrets/rds/db.ca_cert
             - --db-sslmode=${DB_SSLMODE}
             - --db-max-open-connections=${DB_MAX_OPEN_CONNS}
-            - --ocm-client-id-file=/secrets/fleet-manager-credentials/ocm-service.clientId
-            - --ocm-client-secret-file=/secrets/fleet-manager-credentials/ocm-service.clientSecret
-            - --ocm-base-url=${OCM_URL}
-            - --ams-base-url=${AMS_URL}
-            - --ocm-debug=${OCM_DEBUG}
             - --enable-db-debug=${ENABLE_DB_DEBUG}
             - --alsologtostderr
             - -v=${GLOG_V}
