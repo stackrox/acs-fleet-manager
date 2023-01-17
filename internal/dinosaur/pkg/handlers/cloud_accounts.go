@@ -44,7 +44,7 @@ func (h *cloudAccountsHandler) actionFunc(r *http.Request) func() (i interface{}
 		}
 		organizationID, err := h.client.GetOrganisationIDFromExternalID(orgID)
 		if err != nil {
-			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "error getting cloud accounts: failed to get organization with external id %q", orgID)
+			return nil, errors.OrganisationNotFound(orgID, err)
 		}
 
 		cloudAccounts, err := h.client.GetCustomerCloudAccounts(organizationID, []string{quota.RHACSMarketplaceQuotaID})

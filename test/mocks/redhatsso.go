@@ -126,7 +126,7 @@ func (mockServer *redhatSSOMock) serviceAccountAuthMiddleware(next http.Handler)
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		clientID := request.FormValue("client_id")
 		clientSecret := request.FormValue("client_secret")
-
+		// pragma: allowlist nextline secret
 		if clientID == mockServer.initialClientID && mockServer.initialClientSecret == clientSecret {
 			next.ServeHTTP(writer, request)
 			return

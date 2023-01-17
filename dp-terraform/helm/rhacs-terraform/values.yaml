@@ -33,6 +33,11 @@ fleetshardSync:
   aws:
     region: "us-east-1"
     roleARN: ""
+  telemetry:
+    storage:
+      endpoint: ""
+      # API key to push telemetry data to a remote backend. Leaving it empty disables telemetry.
+      key: ""
 
 acsOperator:
   enabled: false

@@ -33,17 +33,17 @@ var _ Probe = (*ProbeImpl)(nil)
 
 // ProbeImpl executes a probe run against fleet manager.
 type ProbeImpl struct {
-	config             *config.Config
-	fleetManagerClient fleetmanager.PublicClient
-	httpClient         *http.Client
+	config                *config.Config
+	fleetManagerPublicAPI fleetmanager.PublicAPI
+	httpClient            *http.Client
 }
 
 // New creates a new probe.
-func New(config *config.Config, fleetManagerClient fleetmanager.PublicClient, httpClient *http.Client) *ProbeImpl {
+func New(config *config.Config, fleetManagerPublicAPI fleetmanager.PublicAPI, httpClient *http.Client) *ProbeImpl {
 	return &ProbeImpl{
-		config:             config,
-		fleetManagerClient: fleetManagerClient,
-		httpClient:         httpClient,
+		config:                config,
+		fleetManagerPublicAPI: fleetManagerPublicAPI,
+		httpClient:            httpClient,
 	}
 }
 
@@ -89,7 +89,7 @@ func (p *ProbeImpl) CleanUp(ctx context.Context) error {
 }
 
 func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
-	centralList, _, err := p.fleetManagerClient.GetCentrals(ctx, nil)
+	centralList, _, err := p.fleetManagerPublicAPI.GetCentrals(ctx, nil)
 	if err != nil {
 		err = errors.Wrap(err, "could not list centrals")
 		glog.Error(err)
@@ -127,7 +127,7 @@ func (p *ProbeImpl) createCentral(ctx context.Context) (*public.CentralRequest, 
 		CloudProvider: p.config.DataCloudProvider,
 		Region:        p.config.DataPlaneRegion,
 	}
-	central, _, err := p.fleetManagerClient.CreateCentral(ctx, true, request)
+	central, _, err := p.fleetManagerPublicAPI.CreateCentral(ctx, true, request)
 	glog.Infof("creation of central instance requested")
 	if err != nil {
 		return nil, errors.Wrap(err, "creation of central instance failed")
@@ -155,7 +155,7 @@ func (p *ProbeImpl) verifyCentral(ctx context.Context, centralRequest *public.Ce
 
 // Delete the Central instance and verify that it transitioned to 'deprovision' state.
 func (p *ProbeImpl) deleteCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
-	_, err := p.fleetManagerClient.DeleteCentralById(ctx, centralRequest.Id, true)
+	_, err := p.fleetManagerPublicAPI.DeleteCentralById(ctx, centralRequest.Id, true)
 	glog.Infof("deletion of central instance %s requested", centralRequest.Id)
 	if err != nil {
 		return errors.Wrapf(err, "deletion of central instance %s failed", centralRequest.Id)
@@ -180,7 +180,7 @@ func (p *ProbeImpl) ensureCentralState(ctx context.Context, centralRequest *publ
 }
 
 func (p *ProbeImpl) ensureStateFunc(ctx context.Context, centralRequest *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
-	centralResp, _, err := p.fleetManagerClient.GetCentralById(ctx, centralRequest.Id)
+	centralResp, _, err := p.fleetManagerPublicAPI.GetCentralById(ctx, centralRequest.Id)
 	if err != nil {
 		err = errors.Wrapf(err, "central instance %s not reachable", centralRequest.Id)
 		glog.Error(err)
@@ -208,7 +208,7 @@ func (p *ProbeImpl) ensureCentralDeleted(ctx context.Context, centralRequest *pu
 }
 
 func (p *ProbeImpl) ensureDeletedFunc(ctx context.Context, centralRequest *public.CentralRequest) error {
-	_, response, err := p.fleetManagerClient.GetCentralById(ctx, centralRequest.Id)
+	_, response, err := p.fleetManagerPublicAPI.GetCentralById(ctx, centralRequest.Id)
 	if err != nil {
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			glog.Infof("central instance %s has been deleted", centralRequest.Id)

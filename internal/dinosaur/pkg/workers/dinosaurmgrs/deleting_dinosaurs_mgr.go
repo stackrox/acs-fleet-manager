@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
+
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -19,6 +21,8 @@ import (
 	"github.com/golang/glog"
 )
 
+const deletingCentralWorkerType = "deleting_dinosaur"
+
 // DeletingDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests.
 type DeletingDinosaurManager struct {
 	workers.BaseWorker
@@ -31,10 +35,11 @@ type DeletingDinosaurManager struct {
 // NewDeletingDinosaurManager creates a new dinosaur manager.
 func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, iamConfig *iam.IAMConfig,
 	quotaServiceFactory services.QuotaServiceFactory) *DeletingDinosaurManager {
+	metrics.InitReconcilerMetricsForType(deletingCentralWorkerType)
 	return &DeletingDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
-			WorkerType: "deleting_dinosaur",
+			WorkerType: deletingCentralWorkerType,
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService:     dinosaurService,

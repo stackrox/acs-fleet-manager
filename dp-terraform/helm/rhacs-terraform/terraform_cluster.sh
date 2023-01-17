@@ -32,12 +32,15 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
+    OPERATOR_USE_UPSTREAM="true"
+    OPERATOR_VERSION="v3.73.0-nightly-20230110"
     ;;
 
   prod)
     FM_ENDPOINT="https://api.openshift.com"
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
+    OPERATOR_VERSION="v3.73.1"
     ;;
 
   *)
@@ -87,7 +90,7 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
-  --set acsOperator.version=v3.73.0 \
+  --set acsOperator.version="${OPERATOR_VERSION}" \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
   --set fleetshardSync.image="quay.io/app-sre/acs-fleet-manager:${FLEETSHARD_SYNC_TAG}" \
   --set fleetshardSync.authType="RHSSO" \
@@ -100,6 +103,8 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --set fleetshardSync.managedDB.securityGroup="${FLEETSHARD_SYNC_MANAGED_DB_SECURITY_GROUP}" \
   --set fleetshardSync.managedDB.performanceInsights=true \
   --set fleetshardSync.aws.roleARN="${FLEETSHARD_SYNC_AWS_ROLE_ARN}" \
+  --set fleetshardSync.telemetry.storage.endpoint="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_ENDPOINT:-}" \
+  --set fleetshardSync.telemetry.storage.key="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_KEY:-}" \
   --set logging.aws.accessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \
   --set logging.aws.secretAccessKey="${LOGGING_AWS_SECRET_ACCESS_KEY}" \
   --set observability.github.accessToken="${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" \

@@ -69,6 +69,10 @@ spec:
           value: {{ .Values.fleetshardSync.aws.region }}
         - name: AWS_ROLE_ARN
           value: {{ .Values.fleetshardSync.aws.roleARN }}
+        - name: TELEMETRY_STORAGE_ENDPOINT
+          value: {{ .Values.fleetshardSync.telemetry.storage.endpoint | quote }}
+        - name: TELEMETRY_STORAGE_KEY
+          value: {{ .Values.fleetshardSync.telemetry.storage.key | quote }}
         ports:
         - name: monitoring
           containerPort: 8080

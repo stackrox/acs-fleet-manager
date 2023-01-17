@@ -136,7 +136,7 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
             apply "${MANIFESTS_DIR}"/rhacs-operator/marketplace/*.yaml
         fi
 
-        wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "app=rhacs-operator" "manager" 500
+        wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "app=rhacs-operator" "manager" 900
     fi
 else
     # We will be running without RHACS operator, but at least install our CRDs.
