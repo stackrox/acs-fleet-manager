@@ -12,6 +12,14 @@ This Changelog should be updated for:
 ### Deprecated
 ### Removed
 
+## 2023-01-17.1.f4e71a7
+### Added
+### Changed
+- Updated operator to version 3.73.1
+- Request the "api.iam.clients" for dynamic client API calls
+### Deprecated
+### Removed
+
 ## 2022-12-12.1.b7b15aa
 ### Added
 ### Changed
