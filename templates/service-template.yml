@@ -119,6 +119,11 @@ parameters:
   description: framework's debug mode
   value: "false"
 
+- name: DB_MIGRATION_RESET
+  displayName: DB migration reset
+  description: If true, all database migrations are rolled back and re-applied on start up
+  value: "false"
+
 - name: ENABLE_METRICS_HTTPS
   displayName: Enable Metrics HTTPS
   description: Enable HTTPS for metrics server
@@ -1040,20 +1045,39 @@ objects:
               mountPath: /secrets/service
             - name: rds
               mountPath: /secrets/rds
-            command:
-            - /usr/local/bin/fleet-manager
-            - migrate
-            - --db-host-file=/secrets/rds/db.host
-            - --db-port-file=/secrets/rds/db.port
-            - --db-user-file=/secrets/rds/db.user
-            - --db-password-file=/secrets/rds/db.password
-            - --db-name-file=/secrets/rds/db.name
-            - --db-ssl-certificate-file=/secrets/rds/db.ca_cert
-            - --db-sslmode=${DB_SSLMODE}
-            - --db-max-open-connections=${DB_MAX_OPEN_CONNS}
-            - --enable-db-debug=${ENABLE_DB_DEBUG}
-            - --alsologtostderr
-            - -v=${GLOG_V}
+            command: ["/bin/sh"]
+            args:
+            - -c
+            - >-
+              if [ "$DB_MIGRATION_RESET" = true ];
+              then
+              /usr/local/bin/fleet-manager
+                migrate rollback-all
+                --db-host-file=/secrets/rds/db.host
+                --db-port-file=/secrets/rds/db.port
+                --db-user-file=/secrets/rds/db.user
+                --db-password-file=/secrets/rds/db.password
+                --db-name-file=/secrets/rds/db.name
+                --db-ssl-certificate-file=/secrets/rds/db.ca_cert
+                --db-sslmode=${DB_SSLMODE}
+                --db-max-open-connections=${DB_MAX_OPEN_CONNS}
+                --enable-db-debug=${ENABLE_DB_DEBUG}
+                --alsologtostderr
+                -v=${GLOG_V};
+              fi &&
+              /usr/local/bin/fleet-manager
+                migrate
+                --db-host-file=/secrets/rds/db.host
+                --db-port-file=/secrets/rds/db.port
+                --db-user-file=/secrets/rds/db.user
+                --db-password-file=/secrets/rds/db.password
+                --db-name-file=/secrets/rds/db.name
+                --db-ssl-certificate-file=/secrets/rds/db.ca_cert
+                --db-sslmode=${DB_SSLMODE}
+                --db-max-open-connections=${DB_MAX_OPEN_CONNS}
+                --enable-db-debug=${ENABLE_DB_DEBUG}
+                --alsologtostderr
+                -v=${GLOG_V};
           containers:
           - name: service
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
