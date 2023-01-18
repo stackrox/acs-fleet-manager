@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	ocmTokenExpirationMargin = time.Minute
+	ocmTokenExpirationMargin = 5 * time.Minute
 	ocmClientID              = "cloud-services"
 	ocmAuthName              = "OCM"
 )
@@ -67,7 +67,7 @@ func (f *ocmAuthFactory) CreateAuth(o Option) (Auth, error) {
 // AddAuth add auth token to the request retrieved from OCM.
 func (o *ocmAuth) AddAuth(req *http.Request) error {
 	// This will only do an external request iff the current access token of the connection has an expiration time
-	// lower than 1 minute.
+	// lower than 5 minutes.
 	access, _, err := o.conn.TokensContext(req.Context(), ocmTokenExpirationMargin)
 	if err != nil {
 		return errors.Wrap(err, "retrieving access token via OCM auth type")
