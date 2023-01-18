@@ -31,6 +31,7 @@ func (t *Telemetry) RegisterTenant(central *dbapi.CentralRequest) {
 	t.config.Telemeter().Group(central.ID, central.ID, props)
 }
 
+// TrackInstanceCreation emits a track event that signals the creation of a Central instance.
 func (t *Telemetry) TrackInstanceCreation(central *dbapi.CentralRequest, error string) {
 	if t == nil || t.config == nil || !t.config.Enabled() {
 		return
