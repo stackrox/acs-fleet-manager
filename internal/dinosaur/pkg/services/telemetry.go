@@ -40,7 +40,7 @@ func (t *Telemetry) TrackInstanceCreation(central *dbapi.CentralRequest, error s
 		"Error":   error,
 		"Success": error == "",
 	}
-	t.config.Telemeter().Track("Central Creation", central.Owner, props)
+	t.config.Telemeter().Track("Central Creation", central.OrganisationID, props)
 }
 
 // Start the telemetry service.
