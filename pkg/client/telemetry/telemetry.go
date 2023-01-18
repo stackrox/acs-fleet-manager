@@ -2,6 +2,8 @@
 package telemetry
 
 import (
+	"os"
+
 	"github.com/spf13/pflag"
 	"github.com/stackrox/rox/pkg/telemetry/phonehome"
 )
@@ -13,7 +15,11 @@ type TelemetryConfig struct {
 
 // NewTelemetryConfig creates a new telemetry configuration.
 func NewTelemetryConfig() *TelemetryConfig {
-	return &TelemetryConfig{}
+	clientID := getEnv("HOSTNAME", "fleet-manager")
+	return &TelemetryConfig{phonehome.Config{
+		ClientID:   clientID,
+		ClientName: "ACS Fleet Manager",
+	}}
 }
 
 // AddFlags adds telemetry CLI flags.
@@ -25,4 +31,11 @@ func (t *TelemetryConfig) AddFlags(fs *pflag.FlagSet) {
 // ReadFiles reads telemetry secret files.
 func (t *TelemetryConfig) ReadFiles() error {
 	return nil
+}
+
+func getEnv(key string, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }

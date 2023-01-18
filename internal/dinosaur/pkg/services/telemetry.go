@@ -17,16 +17,16 @@ func NewTelemetry(config *telemetry.TelemetryConfig) *Telemetry {
 
 // RegisterTenant emits a group event that captures meta data of the input central instance.
 func (t *Telemetry) RegisterTenant(central *dbapi.CentralRequest) {
-	if t != nil && t.config.Enabled() {
+	if t == nil || t.config == nil || !t.config.Enabled() {
 		return
 	}
-	if telemeter := t.config.Telemeter(); telemeter != nil {
+	telemeter := t.config.Telemeter(); if telemeter != nil {
 		props := map[string]any{
-			"cloudAccount":   central.CloudAccountID,
-			"cloudProvider":  central.CloudProvider,
-			"instanceType":   central.InstanceType,
-			"organisationID": central.OrganisationID,
-			"tenantID":       central.ID,
+			"Cloud Account":   central.CloudAccountID,
+			"Cloud Provider":  central.CloudProvider,
+			"Instance Type":   central.InstanceType,
+			"Organisation ID": central.OrganisationID,
+			"Tenant ID":       central.ID,
 		}
 		telemeter.Group(central.ID, central.ID, props)
 	}
@@ -37,10 +37,10 @@ func (t *Telemetry) Start() {}
 
 // Stop the telemetry service.
 func (t *Telemetry) Stop() {
-	if t == nil {
+	if t == nil || t.config == nil {
 		return
 	}
-	if telemeter := t.config.Telemeter(); telemeter != nil {
-		t.config.Telemeter().Stop()
+	telemeter := t.config.Telemeter(); if telemeter != nil {
+		telemeter.Stop()
 	}
 }
