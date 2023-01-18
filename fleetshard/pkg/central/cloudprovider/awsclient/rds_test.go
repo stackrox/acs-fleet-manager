@@ -89,7 +89,7 @@ func TestRDSProvisioning(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, instanceExists)
 
-	_, err = rdsClient.EnsureDBProvisioned(ctx, dbID, dbMasterPassword)
+	err = rdsClient.EnsureDBProvisioned(ctx, dbID, dbMasterPassword)
 	assert.NoError(t, err)
 
 	clusterExists, err = rdsClient.clusterExists(clusterID)
@@ -108,9 +108,8 @@ func TestRDSProvisioning(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, instanceStatus, dbAvailableStatus)
 
-	deletionStarted, err := rdsClient.EnsureDBDeprovisioned(dbID)
+	err = rdsClient.EnsureDBDeprovisioned(dbID)
 	assert.NoError(t, err)
-	assert.True(t, deletionStarted)
 
 	deleteCtx, deleteCancel := context.WithTimeout(context.TODO(), 10*time.Minute)
 	defer deleteCancel()
