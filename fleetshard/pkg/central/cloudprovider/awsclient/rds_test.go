@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/google/uuid"
@@ -92,6 +93,9 @@ func TestRDSProvisioning(t *testing.T) {
 	err = rdsClient.EnsureDBProvisioned(ctx, dbID, dbMasterPassword)
 	assert.NoError(t, err)
 
+	_, err = rdsClient.GetDBConnection(dbID)
+	assert.NoError(t, err)
+
 	clusterExists, err = rdsClient.clusterExists(clusterID)
 	require.NoError(t, err)
 	require.True(t, clusterExists)
@@ -117,4 +121,18 @@ func TestRDSProvisioning(t *testing.T) {
 	clusterDeleted, err := waitForClusterToBeDeleted(deleteCtx, rdsClient, clusterID)
 	require.NoError(t, err)
 	assert.True(t, clusterDeleted)
+}
+
+func TestGetDBConnection(t *testing.T) {
+	if os.Getenv("RUN_RDS_TESTS") != "true" {
+		t.Skip("Skip RDS tests. Set RUN_RDS_TESTS=true env variable to enable RDS tests.")
+	}
+
+	rdsClient, err := newTestRDS()
+	require.NoError(t, err)
+
+	_, err = rdsClient.GetDBConnection("test-" + uuid.New().String())
+	var awsErr awserr.Error
+	require.ErrorAs(t, err, &awsErr)
+	assert.Equal(t, awsErr.Code(), rds.ErrCodeDBClusterNotFoundFault)
 }
