@@ -237,10 +237,13 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	dinosaurRequest.ID = api.NewID()
 
 	if hasCapacity, err := k.HasAvailableCapacityInRegion(dinosaurRequest); err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create central request")
+		errorMsg := "failed to create central request"
+		k.telemetry.TrackInstanceCreation(dinosaurRequest, errorMsg)
+		return errors.NewWithCause(errors.ErrorGeneral, err, errorMsg)
 	} else if !hasCapacity {
 		errorMsg := fmt.Sprintf("Cluster capacity(%d) exhausted in %s region", int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(dinosaurRequest.Region)), dinosaurRequest.Region)
 		logger.Logger.Warningf(errorMsg)
+		k.telemetry.TrackInstanceCreation(dinosaurRequest, errorMsg)
 		return errors.TooManyDinosaurInstancesReached(errorMsg)
 	}
 
@@ -252,11 +255,13 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	if e != nil || cluster == nil {
 		msg := fmt.Sprintf("No available cluster found for '%s' central instance in region: '%s'", dinosaurRequest.InstanceType, dinosaurRequest.Region)
 		logger.Logger.Errorf(msg)
+		k.telemetry.TrackInstanceCreation(dinosaurRequest, msg)
 		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", dinosaurRequest.Region, dinosaurRequest.InstanceType))
 	}
 	dinosaurRequest.ClusterID = cluster.ClusterID
 	subscriptionID, err := k.reserveQuota(dinosaurRequest)
 	if err != nil {
+		k.telemetry.TrackInstanceCreation(dinosaurRequest, err.Reason)
 		return err
 	}
 
@@ -270,7 +275,9 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	// we want to use the correct quota to perform the deletion.
 	dinosaurRequest.QuotaType = k.dinosaurConfig.Quota.Type
 	if err := dbConn.Create(dinosaurRequest).Error; err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create central request") // hide the db error to http caller
+		errorMsg := "failed to create central request"
+		k.telemetry.TrackInstanceCreation(dinosaurRequest, errorMsg)
+		return errors.NewWithCause(errors.ErrorGeneral, err, errorMsg) // hide the db error to http caller
 	}
 	metrics.UpdateCentralRequestsStatusSinceCreatedMetric(dinosaurConstants.CentralRequestStatusAccepted, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
 	return nil
@@ -323,6 +330,7 @@ func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequ
 func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	// Check if the request is ready to be transitioned to provisioning.
 
+	k.telemetry.TrackInstanceCreation(dinosaurRequest, "")
 	k.telemetry.RegisterTenant(dinosaurRequest)
 
 	// Check IdP config is ready.

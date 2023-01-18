@@ -20,15 +20,31 @@ func (t *Telemetry) RegisterTenant(central *dbapi.CentralRequest) {
 	if t == nil || t.config == nil || !t.config.Enabled() {
 		return
 	}
-	telemeter := t.config.Telemeter(); if telemeter != nil {
+	telemeter := t.config.Telemeter()
+	if telemeter != nil {
 		props := map[string]any{
 			"Cloud Account":   central.CloudAccountID,
 			"Cloud Provider":  central.CloudProvider,
 			"Instance Type":   central.InstanceType,
 			"Organisation ID": central.OrganisationID,
+			"Region":          central.Region,
 			"Tenant ID":       central.ID,
 		}
 		telemeter.Group(central.ID, central.ID, props)
+	}
+}
+
+func (t *Telemetry) TrackInstanceCreation(central *dbapi.CentralRequest, error string) {
+	if t == nil || t.config == nil || !t.config.Enabled() {
+		return
+	}
+	telemeter := t.config.Telemeter()
+	if telemeter != nil {
+		props := map[string]any{
+			"Error":   error,
+			"Success": error == "",
+		}
+		telemeter.Track("Central Creation", central.Owner, props)
 	}
 }
 
