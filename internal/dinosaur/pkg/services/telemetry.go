@@ -43,8 +43,8 @@ func (t *Telemetry) TrackCreationRequested(orgID string, isAdmin bool, err error
 		}
 		props := map[string]any{
 			"Is Admin Request": isAdmin,
-			"Error":   errMsg,
-			"Success": err == nil,
+			"Error":            errMsg,
+			"Success":          err == nil,
 		}
 		t.config.Telemeter().Track("Central Creation Requested", orgID, props)
 	}
@@ -59,8 +59,8 @@ func (t *Telemetry) TrackDeletionRequested(orgID string, isAdmin bool, err error
 		}
 		props := map[string]any{
 			"Is Admin Request": isAdmin,
-			"Error":   errMsg,
-			"Success": err == nil,
+			"Error":            errMsg,
+			"Success":          err == nil,
 		}
 		t.config.Telemeter().Track("Central Deletion Requested", orgID, props)
 	}
