@@ -219,9 +219,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			return nil, fmt.Errorf("getting DB password from secret: %w", err)
 		}
 
-		dbConnection, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword)
+		err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword)
 		if err != nil {
 			return nil, fmt.Errorf("provisioning RDS DB: %w", err)
+		}
+
+		dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(remoteCentral.Id)
+		if err != nil {
+			return nil, fmt.Errorf("getting RDS DB connection data: %w", err)
 		}
 
 		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
@@ -376,11 +381,10 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	globalDeleted = globalDeleted && centralDeleted
 
 	if r.managedDBEnabled {
-		dbDeleted, err := r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id)
+		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id)
 		if err != nil {
 			return false, fmt.Errorf("deprovisioning DB: %v", err)
 		}
-		globalDeleted = globalDeleted && dbDeleted
 
 		secretDeleted, err := r.ensureCentralDBSecretDeleted(ctx, central.GetNamespace())
 		if err != nil {
