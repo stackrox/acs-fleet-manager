@@ -1,4 +1,4 @@
-// Package telemetry ...
+// Package telemetry holds telemetry configuration to be applied by dependency injection.
 package telemetry
 
 import (
@@ -15,6 +15,7 @@ type TelemetryConfig struct {
 
 // NewTelemetryConfig creates a new telemetry configuration.
 func NewTelemetryConfig() *TelemetryConfig {
+	// HOSTNAME is set to the pod name by K8s.
 	clientID := getEnv("HOSTNAME", "fleet-manager")
 	return &TelemetryConfig{phonehome.Config{
 		ClientID:   clientID,
