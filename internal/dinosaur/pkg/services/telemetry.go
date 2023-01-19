@@ -35,13 +35,13 @@ func (t *Telemetry) RegisterTenant(central *dbapi.CentralRequest) {
 }
 
 // TrackCreationRequested emits a track event that signals the creation request of a Central instance.
-func (t *Telemetry) TrackCreationRequested(central *dbapi.CentralRequest, error string) {
+func (t *Telemetry) TrackCreationRequested(orgID string, error string) {
 	if t.enabled() {
 		props := map[string]any{
 			"Error":   error,
 			"Success": error == "",
 		}
-		t.config.Telemeter().Track("Central Creation Requested", central.OrganisationID, props)
+		t.config.Telemeter().Track("Central Creation Requested", orgID, props)
 	}
 }
 

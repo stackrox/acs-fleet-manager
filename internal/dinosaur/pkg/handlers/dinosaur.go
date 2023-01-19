@@ -4,12 +4,13 @@ import (
 	"context"
 	"net/http"
 
+	goerr "github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 
@@ -23,14 +24,16 @@ type dinosaurHandler struct {
 	service        services.DinosaurService
 	providerConfig *config.ProviderConfig
 	authService    authorization.Authorization
+	telemetry      *services.Telemetry
 }
 
 // NewDinosaurHandler ...
-func NewDinosaurHandler(service services.DinosaurService, providerConfig *config.ProviderConfig, authService authorization.Authorization) *dinosaurHandler {
+func NewDinosaurHandler(service services.DinosaurService, providerConfig *config.ProviderConfig, authService authorization.Authorization, telemetry *services.Telemetry) *dinosaurHandler {
 	return &dinosaurHandler{
 		service:        service,
 		providerConfig: providerConfig,
 		authService:    authService,
+		telemetry:      telemetry,
 	}
 }
 
@@ -79,9 +82,11 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(convDinosaur)
+			h.telemetry.TrackCreationRequested(convDinosaur.OrganisationID, svcErr.Error())
 			if svcErr != nil {
 				return nil, svcErr
 			}
+			h.telemetry.RegisterTenant(convDinosaur)
 			return presenters.PresentCentralRequest(convDinosaur), nil
 		},
 	}
@@ -117,6 +122,9 @@ func (h dinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
 			err := h.service.RegisterDinosaurDeprovisionJob(ctx, id)
+			if orgID, orgErr := getOrgIDFromContext(ctx); orgErr == nil {
+				h.telemetry.TrackDeletionRequested(orgID, err.Error())
+			}
 			return nil, err
 		},
 	}
@@ -158,4 +166,16 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.HandleList(w, r, cfg)
+}
+
+func getOrgIDFromContext(ctx context.Context) (string, error) {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return "", goerr.Wrap(err, "cannot obtain claims from context")
+	}
+	orgID, err := claims.GetOrgID()
+	if err != nil {
+		return "", goerr.Wrap(err, "no org id in claims")
+	}
+	return orgID, nil
 }
