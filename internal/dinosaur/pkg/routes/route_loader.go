@@ -220,7 +220,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	auth.UseFleetShardAuthorizationMiddleware(apiV1DataPlaneRequestsRouter,
 		s.IAMConfig.RedhatSSORealm.ValidIssuerURI, s.FleetShardAuthZConfig)
 
-	adminCentralHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
+	adminCentralHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig, s.Telemetry)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
