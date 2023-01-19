@@ -34,14 +34,25 @@ func (t *Telemetry) RegisterTenant(central *dbapi.CentralRequest) {
 	}
 }
 
-// TrackInstanceRequested emits a track event that signals the creation request of a Central instance.
-func (t *Telemetry) TrackInstanceRequested(central *dbapi.CentralRequest, error string) {
+// TrackCreationRequested emits a track event that signals the creation request of a Central instance.
+func (t *Telemetry) TrackCreationRequested(central *dbapi.CentralRequest, error string) {
 	if t.enabled() {
 		props := map[string]any{
 			"Error":   error,
 			"Success": error == "",
 		}
 		t.config.Telemeter().Track("Central Creation Requested", central.OrganisationID, props)
+	}
+}
+
+// TrackDeletionRequested emits a track event that signals the deletion request of a Central instance.
+func (t *Telemetry) TrackDeletionRequested(orgID string, error string) {
+	if t.enabled() {
+		props := map[string]any{
+			"Error":   error,
+			"Success": error == "",
+		}
+		t.config.Telemeter().Track("Central Deletion Requested", orgID, props)
 	}
 }
 

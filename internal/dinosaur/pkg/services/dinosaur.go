@@ -238,12 +238,12 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 
 	if hasCapacity, err := k.HasAvailableCapacityInRegion(dinosaurRequest); err != nil {
 		errorMsg := "failed to create central request"
-		k.telemetry.TrackInstanceRequested(dinosaurRequest, errorMsg)
+		k.telemetry.TrackCreationRequested(dinosaurRequest, errorMsg)
 		return errors.NewWithCause(errors.ErrorGeneral, err, errorMsg)
 	} else if !hasCapacity {
 		errorMsg := fmt.Sprintf("Cluster capacity(%d) exhausted in %s region", int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(dinosaurRequest.Region)), dinosaurRequest.Region)
 		logger.Logger.Warningf(errorMsg)
-		k.telemetry.TrackInstanceRequested(dinosaurRequest, errorMsg)
+		k.telemetry.TrackCreationRequested(dinosaurRequest, errorMsg)
 		return errors.TooManyDinosaurInstancesReached(errorMsg)
 	}
 
@@ -255,13 +255,13 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	if e != nil || cluster == nil {
 		msg := fmt.Sprintf("No available cluster found for '%s' central instance in region: '%s'", dinosaurRequest.InstanceType, dinosaurRequest.Region)
 		logger.Logger.Errorf(msg)
-		k.telemetry.TrackInstanceRequested(dinosaurRequest, msg)
+		k.telemetry.TrackCreationRequested(dinosaurRequest, msg)
 		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", dinosaurRequest.Region, dinosaurRequest.InstanceType))
 	}
 	dinosaurRequest.ClusterID = cluster.ClusterID
 	subscriptionID, err := k.reserveQuota(dinosaurRequest)
 	if err != nil {
-		k.telemetry.TrackInstanceRequested(dinosaurRequest, err.Reason)
+		k.telemetry.TrackCreationRequested(dinosaurRequest, err.Reason)
 		return err
 	}
 
@@ -276,7 +276,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	dinosaurRequest.QuotaType = k.dinosaurConfig.Quota.Type
 	if err := dbConn.Create(dinosaurRequest).Error; err != nil {
 		errorMsg := "failed to create central request"
-		k.telemetry.TrackInstanceRequested(dinosaurRequest, errorMsg)
+		k.telemetry.TrackCreationRequested(dinosaurRequest, errorMsg)
 		return errors.NewWithCause(errors.ErrorGeneral, err, errorMsg) // hide the db error to http caller
 	}
 	metrics.UpdateCentralRequestsStatusSinceCreatedMetric(dinosaurConstants.CentralRequestStatusAccepted, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
@@ -330,7 +330,7 @@ func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequ
 func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	// Check if the request is ready to be transitioned to provisioning.
 
-	k.telemetry.TrackInstanceRequested(dinosaurRequest, "")
+	k.telemetry.TrackCreationRequested(dinosaurRequest, "")
 	k.telemetry.RegisterTenant(dinosaurRequest)
 
 	// Check IdP config is ready.
@@ -448,8 +448,11 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 
 	// filter dinosaur request by owner to only retrieve request of the current authenticated user
 	claims, err := auth.GetClaimsFromContext(ctx)
+	orgID, _ := claims.GetOrgID()
 	if err != nil {
-		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
+		errorMsg := "user not authenticated"
+		k.telemetry.TrackDeletionRequested(orgID, errorMsg)
+		return errors.NewWithCause(errors.ErrorUnauthenticated, err, errorMsg)
 	}
 
 	dbConn := k.connectionFactory.New()
@@ -466,6 +469,7 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 
 	var dinosaurRequest dbapi.CentralRequest
 	if err := dbConn.First(&dinosaurRequest).Error; err != nil {
+		k.telemetry.TrackDeletionRequested(orgID, err.Error())
 		return services.HandleGetError("CentralResource", "id", id, err)
 	}
 	metrics.IncreaseCentralTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
@@ -474,12 +478,14 @@ func (k *dinosaurService) RegisterDinosaurDeprovisionJob(ctx context.Context, id
 
 	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
 		if err != nil {
+			k.telemetry.TrackDeletionRequested(orgID, err.Error())
 			return services.HandleGetError("CentralResource", "id", id, err)
 		}
 		metrics.IncreaseCentralSuccessOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
 		metrics.UpdateCentralRequestsStatusSinceCreatedMetric(deprovisionStatus, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
 	}
 
+	k.telemetry.TrackDeletionRequested(orgID, "")
 	return nil
 }
 
