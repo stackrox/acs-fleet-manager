@@ -397,6 +397,9 @@ func (e *ServiceError) Error() string {
 
 // AsError ...
 func (e *ServiceError) AsError() error {
+	if e == nil {
+		return nil
+	}
 	return fmt.Errorf(e.Error())
 }
 
