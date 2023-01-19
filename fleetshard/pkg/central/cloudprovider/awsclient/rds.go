@@ -55,16 +55,16 @@ type RDS struct {
 }
 
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
-func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPassword string) (*postgres.DBConnection, error) {
+func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPassword string) error {
 	clusterID := getClusterID(databaseID)
 	instanceID := getInstanceID(databaseID)
 
 	if err := r.ensureDBClusterCreated(clusterID, masterPassword); err != nil {
-		return nil, fmt.Errorf("ensuring DB cluster %s exists: %w", clusterID, err)
+		return fmt.Errorf("ensuring DB cluster %s exists: %w", clusterID, err)
 	}
 
 	if err := r.ensureDBInstanceCreated(instanceID, clusterID); err != nil {
-		return nil, fmt.Errorf("ensuring DB instance %s exists in cluster %s: %w", instanceID, clusterID, err)
+		return fmt.Errorf("ensuring DB instance %s exists in cluster %s: %w", instanceID, clusterID, err)
 	}
 
 	return r.waitForInstanceToBeAvailable(ctx, instanceID, clusterID)
@@ -72,49 +72,65 @@ func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPasswor
 
 // EnsureDBDeprovisioned is a function that initiates the deprovisioning of the RDS database of a Central
 // Unlike EnsureDBProvisioned, this function does not block until the DB is deprovisioned
-func (r *RDS) EnsureDBDeprovisioned(databaseID string) (bool, error) {
+func (r *RDS) EnsureDBDeprovisioned(databaseID string) error {
 	clusterID := getClusterID(databaseID)
 	instanceID := getInstanceID(databaseID)
 
 	instanceExists, err := r.instanceExists(instanceID)
 	if err != nil {
-		return false, fmt.Errorf("checking if DB instance exists: %w", err)
+		return fmt.Errorf("checking if DB instance exists: %w", err)
 	}
 	if instanceExists {
 		status, err := r.instanceStatus(instanceID)
 		if err != nil {
-			return false, fmt.Errorf("getting DB instance status: %w", err)
+			return fmt.Errorf("getting DB instance status: %w", err)
 		}
 		if status != dbDeletingStatus {
 			glog.Infof("Initiating deprovisioning of RDS database instance %s.", instanceID)
 			// TODO(ROX-13692): do not skip taking a final DB snapshot
 			_, err := r.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
 			if err != nil {
-				return false, fmt.Errorf("deleting DB instance: %w", err)
+				return fmt.Errorf("deleting DB instance: %w", err)
 			}
 		}
 	}
 
 	clusterExists, err := r.clusterExists(clusterID)
 	if err != nil {
-		return false, fmt.Errorf("checking if DB cluster exists: %w", err)
+		return fmt.Errorf("checking if DB cluster exists: %w", err)
 	}
 	if clusterExists {
 		status, err := r.clusterStatus(clusterID)
 		if err != nil {
-			return false, fmt.Errorf("getting DB cluster status: %w", err)
+			return fmt.Errorf("getting DB cluster status: %w", err)
 		}
 		if status != dbDeletingStatus {
 			glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
 			// TODO(ROX-13692): do not skip taking a final DB snapshot
 			_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
 			if err != nil {
-				return false, fmt.Errorf("deleting DB cluster: %w", err)
+				return fmt.Errorf("deleting DB cluster: %w", err)
 			}
 		}
 	}
 
-	return true, nil
+	return nil
+}
+
+// GetDBConnection returns a postgres.DBConnection struct, which contains the data necessary
+// to construct a PostgreSQL connection string. It expects that the database was already provisioned.
+func (r *RDS) GetDBConnection(databaseID string) (postgres.DBConnection, error) {
+	dbCluster, err := r.describeDBCluster(getClusterID(databaseID))
+	if err != nil {
+		return postgres.DBConnection{}, err
+	}
+
+	connection, err := postgres.NewDBConnection(*dbCluster.Endpoint, dbPostgresPort, dbUser, dbName)
+	if err != nil {
+		return postgres.DBConnection{}, fmt.Errorf("incorrect DB connection parameters: %w", err)
+	}
+
+	return connection, nil
 }
 
 func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string) error {
@@ -234,25 +250,15 @@ func (r *RDS) describeDBCluster(clusterID string) (*rds.DBCluster, error) {
 	return result.DBClusters[0], nil
 }
 
-func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID string, clusterID string) (*postgres.DBConnection, error) {
+func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID string, clusterID string) error {
 	for {
 		dbInstanceStatus, err := r.instanceStatus(instanceID)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if dbInstanceStatus == dbAvailableStatus {
-			dbCluster, err := r.describeDBCluster(clusterID)
-			if err != nil {
-				return nil, err
-			}
-
-			connection, err := postgres.NewDBConnection(*dbCluster.Endpoint, dbPostgresPort, dbUser, dbName)
-			if err != nil {
-				return nil, fmt.Errorf("incorrect DB connection parameters: %w", err)
-			}
-
-			return &connection, nil
+			return nil
 		}
 
 		glog.Infof("RDS instance status: %s (instance ID: %s)", dbInstanceStatus, instanceID)
@@ -261,7 +267,7 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 		case <-ticker.C:
 			continue
 		case <-ctx.Done():
-			return nil, fmt.Errorf("waiting for RDS instance to be available: %w", ctx.Err())
+			return fmt.Errorf("waiting for RDS instance to be available: %w", ctx.Err())
 		}
 	}
 }
