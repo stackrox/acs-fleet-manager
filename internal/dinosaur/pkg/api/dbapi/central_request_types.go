@@ -20,11 +20,16 @@ const (
 // CentralRequest ...
 type CentralRequest struct {
 	api.Meta
-	Region         string `json:"region"`
-	ClusterID      string `json:"cluster_id" gorm:"index"`
+	// Region is the cloud region the service is deployed in, i.e. us-east-1
+	Region string `json:"region"`
+	// ClusterID is the data-plane cluster ID
+	ClusterID string `json:"cluster_id" gorm:"index"`
+	// CloudProvider ...
 	CloudProvider  string `json:"cloud_provider"`
 	CloudAccountID string `json:"cloud_account_id"`
-	MultiAZ        bool   `json:"multi_az"`
+	// MultiAZ enables multi AZ support
+	MultiAZ bool `json:"multi_az"`
+	// Name of the ACS instance
 	Name           string `json:"name" gorm:"index"`
 	Status         string `json:"status" gorm:"index"`
 	SubscriptionID string `json:"subscription_id"`
