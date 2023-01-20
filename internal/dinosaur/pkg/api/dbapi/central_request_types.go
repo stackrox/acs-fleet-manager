@@ -20,27 +20,46 @@ const (
 // CentralRequest ...
 type CentralRequest struct {
 	api.Meta
-	Region         string `json:"region"`
-	ClusterID      string `json:"cluster_id" gorm:"index"`
-	CloudProvider  string `json:"cloud_provider"`
+	// Region is the cloud region the service is deployed in, i.e. us-east-1
+	Region string `json:"region"`
+	// ClusterID is the data-plane cluster ID
+	ClusterID string `json:"cluster_id" gorm:"index"`
+	// CloudProvider is the cloud provider the data-plane cluster is running and is used for billing customers.
+	CloudProvider string `json:"cloud_provider"`
+	// CloudAccountID is the billing cloud account
 	CloudAccountID string `json:"cloud_account_id"`
-	MultiAZ        bool   `json:"multi_az"`
-	Name           string `json:"name" gorm:"index"`
-	Status         string `json:"status" gorm:"index"`
+	// MultiAZ enables multi AZ support
+	MultiAZ bool `json:"multi_az"`
+	// Name of the ACS instance
+	Name string `json:"name" gorm:"index"`
+	// Status is the lifecycle status of the Central request. See constants.CentralRequestStatusAccepted to see
+	// valid statuses.
+	Status string `json:"status" gorm:"index"`
+	// SubscriptionID is returned by AMS and identifies a Central instance in their system. We need it to deregister instances again from AMS.
 	SubscriptionID string `json:"subscription_id"`
-	Owner          string `json:"owner" gorm:"index"` // TODO: ocm owner?
+	// Owner is the Red Hat SSO login name. It is either the email, or the user name, depending on what the user chose to login with. It's displayed in the console UI.
+	Owner string `json:"owner" gorm:"index"`
+	// OwnerAccountID is used in telemetry, it is the account_id claim of the Red Hat SSO token.
 	OwnerAccountID string `json:"owner_account_id"`
-	OwnerUserID    string `json:"owner_user_id"`
+	// OwnerUserID is the subject claim (confusingly it is NOT the user_id claim) of the Red Hat SSO token
+	OwnerUserID string `json:"owner_user_id"`
+
 	// Instance-independent part of the Central's hostname. For example, this
 	// can be `rhacs-dev.com`, `acs-stage.rhcloud.com`, etc.
-	Host             string `json:"host"`
-	OrganisationID   string `json:"organisation_id" gorm:"index"`
+	Host string `json:"host"`
+	// OrganisationID is a Red Hat SSO organisation identifier to identify a customer. It is needed as an id for authn/z, and the name for observability purposes.
+	OrganisationID string `json:"organisation_id" gorm:"index"`
+	// OrganisationName is a Red Hat SSO organisation identifier to identify a customer. It is needed as an id for authn/z, and the name for observability purposes.
 	OrganisationName string `json:"organisation_name"`
-	FailedReason     string `json:"failed_reason"`
+	// FailedReason contains the reason of a Central instance failed to schedule.
+	FailedReason string `json:"failed_reason"`
 	// PlacementID field should be updated every time when a CentralRequest is assigned to an OSD cluster (even if it's the same one again)
-	PlacementID string   `json:"placement_id"`
-	Central     api.JSON `json:"central"` // Schema is defined by dbapi.CentralSpec
-	Scanner     api.JSON `json:"scanner"` // Schema is defined by dbapi.ScannerSpec
+	PlacementID string `json:"placement_id"`
+
+	// Central schema is defined by dbapi.CentralSpec
+	Central api.JSON `json:"central"`
+	// Scanner schema is defined by dbapi.ScannerSpec
+	Scanner api.JSON `json:"scanner"`
 
 	DesiredCentralVersion         string `json:"desired_central_version"`
 	ActualCentralVersion          string `json:"actual_central_version"`
