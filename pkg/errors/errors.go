@@ -385,6 +385,9 @@ func (e *ServiceError) StackTrace() errors.StackTrace {
 
 // Error ...
 func (e *ServiceError) Error() string {
+	if e == nil {
+		return ""
+	}
 	if e.cause != nil {
 		return fmt.Sprintf("%s: %s\n caused by: %s", CodeStr(e.Code), e.Reason, e.cause.Error())
 	}
@@ -394,6 +397,9 @@ func (e *ServiceError) Error() string {
 
 // AsError ...
 func (e *ServiceError) AsError() error {
+	if e == nil {
+		return nil
+	}
 	return fmt.Errorf(e.Error())
 }
 
