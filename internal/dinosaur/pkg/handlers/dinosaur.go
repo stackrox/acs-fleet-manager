@@ -82,7 +82,7 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(convDinosaur)
-			h.telemetry.TrackCreationRequested(convDinosaur.OrganisationID, false, svcErr.AsError())
+			h.telemetry.TrackCreationRequested(convDinosaur.ID, convDinosaur.OrganisationID, false, svcErr.AsError())
 			if svcErr != nil {
 				return nil, svcErr
 			}
@@ -123,7 +123,7 @@ func (h dinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 			err := h.service.RegisterDinosaurDeprovisionJob(ctx, id)
 			if orgID, orgErr := getOrgIDFromContext(ctx); orgErr == nil {
-				h.telemetry.TrackDeletionRequested(orgID, false, err.AsError())
+				h.telemetry.TrackDeletionRequested(id, orgID, false, err.AsError())
 			}
 			return nil, err
 		},
