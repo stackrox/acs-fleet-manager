@@ -449,6 +449,16 @@ parameters:
   description: Maximum interval after which central request is canceled
   value: "1h"
 
+- name: TELEMETRY_ENDPONT
+  displayName: Telemetry endpoint
+  description: Endpoint for the telemetry backend
+  value: ""
+
+- name: TELEMETRY_STORAGE_KEY
+  displayName: Telemetry storage key
+  description: API token for the telemetry storage backend
+  value: ""
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -1247,6 +1257,8 @@ objects:
             - --fleetshard-addon-id=${FLEETSHARD_ADDON_ID}
             - --alsologtostderr
             - --central-request-expiration-timeout=${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}
+            - --telemetry-endpoint=${TELEMETRY_ENDPONT}
+            - --telemetry-storage-key=${TELEMETRY_STORAGE_KEY}
             - -v=${GLOG_V}
             resources:
               requests:

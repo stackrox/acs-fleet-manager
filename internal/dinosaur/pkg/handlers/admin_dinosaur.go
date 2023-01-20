@@ -27,14 +27,16 @@ type adminDinosaurHandler struct {
 	service        services.DinosaurService
 	accountService account.AccountService
 	providerConfig *config.ProviderConfig
+	telemetry      *services.Telemetry
 }
 
 // NewAdminDinosaurHandler ...
-func NewAdminDinosaurHandler(service services.DinosaurService, accountService account.AccountService, providerConfig *config.ProviderConfig) *adminDinosaurHandler {
+func NewAdminDinosaurHandler(service services.DinosaurService, accountService account.AccountService, providerConfig *config.ProviderConfig, telemetry *services.Telemetry) *adminDinosaurHandler {
 	return &adminDinosaurHandler{
 		service:        service,
 		accountService: accountService,
 		providerConfig: providerConfig,
+		telemetry:      telemetry,
 	}
 }
 
@@ -72,9 +74,11 @@ func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(&convDinosaur)
+			h.telemetry.TrackCreationRequested(convDinosaur.ID, convDinosaur.OrganisationID, true, svcErr.AsError())
 			if svcErr != nil {
 				return nil, svcErr
 			}
+			h.telemetry.RegisterTenant(&convDinosaur)
 			// TODO(mclasmeier): Do we need PresentDinosaurRequestAdminEndpoint?
 			return presenters.PresentCentralRequest(&convDinosaur), nil
 		},
@@ -154,6 +158,9 @@ func (h adminDinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
 			err := h.service.RegisterDinosaurDeprovisionJob(ctx, id)
+			if orgID, orgErr := getOrgIDFromContext(ctx); orgErr == nil {
+				h.telemetry.TrackDeletionRequested(id, orgID, true, err.AsError())
+			}
 			return nil, err
 		},
 	}
