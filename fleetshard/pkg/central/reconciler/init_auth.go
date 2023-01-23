@@ -163,9 +163,16 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 		},
 		ClaimMappings: map[string]string{
 			"realm_access.roles": "groups",
+			"org_id":             "rhOrgId",
 		},
 		// TODO: for testing purposes only; remove once host is correctly specified in fleet-manager
 		ExtraUiEndpoints: []string{"localhost:8443"},
+		RequiredAttributes: []*storage.AuthProvider_RequiredAttribute{
+			{
+				AttributeKey:   "rhOrgId",
+				AttributeValue: central.Spec.Auth.OwnerOrgId,
+			},
+		},
 		Traits: &storage.Traits{
 			MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
 		},
