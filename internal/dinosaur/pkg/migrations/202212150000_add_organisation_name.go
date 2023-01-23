@@ -11,18 +11,17 @@ import (
 )
 
 func newAMSClient(ocmConfig *ocm.OCMConfig) (ocm.Client, error) {
-	err := ocmConfig.ReadFiles()
-	if err != nil {
+	if ocmConfig.EnableMock {
+		return nil, nil
+	}
+	if err := ocmConfig.ReadFiles(); err != nil {
 		return nil, errors.Wrap(err, "reading OCM config files")
 	}
-	if !ocmConfig.EnableMock {
-		conn, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsURL)
-		if err != nil {
-			return nil, errors.Wrap(err, "creating OCM connection")
-		}
-		return ocm.NewClient(conn), nil
+	conn, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "creating OCM connection")
 	}
-	return nil, nil
+	return ocm.NewClient(conn), nil
 }
 
 func fetchOrgName(amsClient ocm.Client, orgID string) (string, error) {
@@ -80,16 +79,14 @@ func addOrganisationNameToCentralRequest(ocmConfig *ocm.OCMConfig) *gormigrate.M
 	}
 
 	id := "202212150000"
+	colName := "OrganisationName"
 	return &gormigrate.Migration{
 		ID: id,
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.Migrator().AddColumn(&CentralRequest{}, "OrganisationName"); err != nil {
-				return errors.Wrapf(err, "adding column OrganisationName in migration %s", id)
-			}
-
-			amsClient, err := newAMSClient(ocmConfig)
-			if err != nil {
-				return errors.Wrapf(err, "creating AMS client in migration %s", id)
+			if !tx.Migrator().HasColumn(&CentralRequest{}, colName) {
+				if err := tx.Migrator().AddColumn(&CentralRequest{}, colName); err != nil {
+					return errors.Wrapf(err, "adding column %s in migration %s", colName, id)
+				}
 			}
 
 			rows, err := tx.Model(&CentralRequest{}).Where("organisation_name IS NULL").Rows()
@@ -101,6 +98,15 @@ func addOrganisationNameToCentralRequest(ocmConfig *ocm.OCMConfig) *gormigrate.M
 					panic(errors.Wrapf(err, "closing rows in migration %s", id))
 				}
 			}()
+
+			var amsClient ocm.Client
+			// Only create AMS client if there are actually records to migrate.
+			if rows.NextResultSet() {
+				amsClient, err = newAMSClient(ocmConfig)
+				if err != nil {
+					return errors.Wrapf(err, "creating AMS client in migration %s", id)
+				}
+			}
 
 			for rows.Next() {
 				var central CentralRequest
@@ -119,8 +125,10 @@ func addOrganisationNameToCentralRequest(ocmConfig *ocm.OCMConfig) *gormigrate.M
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.Migrator().DropColumn(&CentralRequest{}, "OrganisationName"); err != nil {
-				return errors.Wrapf(err, "rolling back column OrganisationName in migration %s", id)
+			if tx.Migrator().HasColumn(&CentralRequest{}, colName) {
+				if err := tx.Migrator().DropColumn(&CentralRequest{}, colName); err != nil {
+					return errors.Wrapf(err, "rolling back column %s in migration %s", colName, id)
+				}
 			}
 			return nil
 		},
