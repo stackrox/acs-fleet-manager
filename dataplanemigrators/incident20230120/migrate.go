@@ -127,7 +127,7 @@ func (m *migrator) Migrate() error {
 
 	glog.Infof("Sending request to delete auth provider %s for central %s", existingAuthProviderID, m.name)
 	if err := m.client.SendRequestToCentral(context.Background(), nil, http.MethodDelete,
-		fmt.Sprintf("%s/%s?force", authProvidersAPIPath, existingAuthProviderID), nil); err != nil {
+		fmt.Sprintf("%s/%s?force=true", authProvidersAPIPath, existingAuthProviderID), nil); err != nil {
 		return errors.Wrapf(err, "attempting to delete auth provider %q", err)
 	}
 
