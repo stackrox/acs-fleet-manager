@@ -257,9 +257,10 @@ func (m *migrator) migrateGroups(groups []*storage.Group, authProviderID string)
 
 func getGroupsByAuthProviderID(authProviderID string, client *client.Client) ([]*storage.Group, error) {
 	var groups v1.GetGroupsResponse
+
 	if err := client.SendRequestToCentral(context.Background(),
-		&v1.GetGroupsRequest{AuthProviderIdOpt: &v1.GetGroupsRequest_AuthProviderId{AuthProviderId: authProviderID}},
-		http.MethodGet, "/v1/groups", &groups); err != nil {
+		nil,
+		http.MethodGet, fmt.Sprintf("/v1/groups?authProviderId=%s", authProviderID), &groups); err != nil {
 		return nil, errors.Wrapf(err, "retrieving groups associated with auth provider %q",
 			authProviderID)
 	}
