@@ -1,7 +1,9 @@
+// Package main provides a command line utility for running dataplane migrations.
 package main
 
 import (
 	"flag"
+
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/dataplanemigrators"

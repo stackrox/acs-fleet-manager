@@ -3,6 +3,11 @@ package shared
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	centralClient "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
@@ -14,11 +19,7 @@ import (
 	"github.com/stackrox/rox/pkg/httputil"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
-	"net/http"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
-	"strings"
-	"time"
 )
 
 // TODO: Should be shared with fleetshard/pkg/central/reconciler.
@@ -52,7 +53,8 @@ func EnableAdminPassword(ctx context.Context, centralID, centralName string, cen
 	// in that case and the default value false.
 	if pointer.BoolDeref(central.Spec.Central.AdminPasswordGenerationDisabled, false) {
 		// Enable admin password generation, increase the revision, and update the central CR.
-		glog.Infof("Setting admin password generation to false for central %s/%s", centralNamespace, centralName)
+		glog.Infof("Setting disable admin password generation to false for central %s/%s",
+			centralNamespace, centralName)
 		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(false)
 		if err := increaseCentralRevision(&central); err != nil {
 			return "", errors.Wrapf(err, "increasing central revision for central instance %s/%s",
@@ -65,55 +67,25 @@ func EnableAdminPassword(ctx context.Context, centralID, centralName string, cen
 	}
 
 	// Wait for the secret to be created with a timeout of 5 minutes, polling in 10 seconds intervals.
-	glog.Infof("Waiting until secret with admin password is created for central %s/%s",
-		centralNamespace, centralName)
-	exists := concurrency.PollWithTimeout(
-		func() bool {
-			secret := corev1.Secret{} // pragma: allowlist secret
-			err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: centralNamespace, Name: "central-htpasswd"}, &secret)
-			return err == nil
-		}, 10*time.Second, 5*time.Minute)
-	if !exists {
-		return "", errors.Wrapf(err, "waiting for admin password secret %s/central-htpasswd", centralNamespace)
+	secret, err := waitForSecret(ctx, k8sClient, centralNamespace)
+	if err != nil {
+		return "", errors.Wrapf(err, "waiting for secret containing admin password for central %s/%s",
+			centralNamespace, centralName)
 	}
 
-	glog.Infof("Secret with admin password created for central %s/%s", centralNamespace, centralName)
-	// Retrieve the secret and the "password" key, additionally make sure to trim all spaces from the value.
-	secret := corev1.Secret{} // pragma: allowlist secret
-	if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: centralNamespace, Name: "central-htpasswd"}, &secret); err != nil {
-		return "", errors.Wrapf(err, "retrieving secret %s/central-htpasswd", centralNamespace)
-	}
+	// Retrieve the "password" key, additionally make sure to trim all spaces from the value.
 	password := strings.TrimSpace(string(secret.Data["password"]))
 	if password == "" {
 		return "", errors.Errorf("admin password was empty for central instance %s/%s",
 			centralNamespace, centralName)
 	}
-	glog.Infof("Admin password for central %s/%s:\n%s\n", centralNamespace, centralName, password)
+	glog.Infof("Retrieve the admin password for central %s/%s", centralNamespace, centralName)
 
 	// Wait for the first successful response from the central API using the basic auth provider.
-	centralClient := centralClient.NewCentralClient(
-		private.ManagedCentral{
-			Metadata: private.ManagedCentralAllOfMetadata{Name: centralName, Namespace: centralNamespace},
-		}, centralUIEndpoint, password)
-	glog.Infof("Waiting until authentication with basic auth provider works for central %s/%s",
-		centralNamespace, centralName)
-	succeeded := concurrency.PollWithTimeout(
-		func() bool {
-			resp, err := centralClient.SendRequestToCentralRaw(context.Background(), &v1.GetGroupsRequest{},
-				http.MethodGet, "/v1/groups")
-			if err != nil {
-				return false
-			}
-			return httputil.Is2xxStatusCode(resp.StatusCode)
-		},
-		10*time.Second, 5*time.Minute)
-
-	if !succeeded {
-		return "", errors.Errorf(
-			"no successful request could be done with basic auth provider for central instance %s/%s",
+	if err := waitForBasicAuthProvider(centralUIEndpoint, centralName, centralNamespace, password); err != nil {
+		return "", errors.Wrapf(err, "waiting for basic auth provider for central %s/%s",
 			centralNamespace, centralName)
 	}
-	glog.Infof("Authentication with basic auth provider works for central %s/%s", centralNamespace, centralName)
 	return password, nil
 }
 
@@ -138,8 +110,9 @@ func DisableAdminPassword(ctx context.Context, centralID, centralName string) er
 
 	// If admin password generation disabled is not set, default to true, since we need to explicitly set it in this
 	// case to disable it.
-	if pointer.BoolDeref(central.Spec.Central.AdminPasswordGenerationDisabled, true) {
-		glog.Infof("Setting admin password generation to true for central %s/%s", centralNamespace, centralName)
+	if !pointer.BoolDeref(central.Spec.Central.AdminPasswordGenerationDisabled, false) {
+		glog.Infof("Setting disable admin password generation to true for central %s/%s",
+			centralNamespace, centralName)
 		// Disable admin password generation, increase the revision, and update the central CR.
 		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
 		if err := increaseCentralRevision(&central); err != nil {
@@ -164,5 +137,54 @@ func increaseCentralRevision(central *v1alpha1.Central) error {
 	}
 	revision++
 	central.Annotations[revisionAnnotationKey] = fmt.Sprintf("%d", revision)
+	return nil
+}
+
+func waitForSecret(ctx context.Context, client ctrlClient.Client, namespace string) (*corev1.Secret, error) {
+	glog.Info("Waiting until secret with admin password is created")
+	exists := concurrency.PollWithTimeout(
+		func() bool {
+			secret := corev1.Secret{} // pragma: allowlist secret
+			err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: "central-htpasswd"}, &secret)
+			return err == nil
+		}, 10*time.Second, 5*time.Minute)
+	if !exists {
+		return nil, errors.Errorf(
+			"timed out waiting for admin password secret %s/central-htpwass to be created", namespace)
+	}
+
+	glog.Infof("Secret with admin password was created successfully")
+	secret := corev1.Secret{} // pragma: allowlist secret
+	if err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: "central-htpasswd"}, &secret); err != nil {
+		return nil, errors.Wrapf(err, "retrieving secret %s/central-htpasswd", namespace)
+	}
+	return &secret, nil
+}
+
+func waitForBasicAuthProvider(uiEndpoint, name, namespace, password string) error {
+	centralClient := centralClient.NewCentralClient(
+		private.ManagedCentral{
+			Metadata: private.ManagedCentralAllOfMetadata{Name: name, Namespace: namespace},
+		}, uiEndpoint, password)
+
+	glog.Infof("Waiting until authentication with basic auth provider works for central %s/%s",
+		namespace, name)
+	succeeded := concurrency.PollWithTimeout(
+		func() bool {
+			resp, err := centralClient.SendRequestToCentralRaw(context.Background(), &v1.GetGroupsRequest{},
+				http.MethodGet, "/v1/groups")
+			if err != nil {
+				return false
+			}
+			return httputil.Is2xxStatusCode(resp.StatusCode)
+		},
+		10*time.Second, 5*time.Minute)
+
+	if !succeeded {
+		return errors.Errorf(
+			"no successful request could be done with basic auth provider for central instance %s/%s",
+			namespace, name)
+	}
+	glog.Infof("Authentication with basic auth provider works for central %s/%s", namespace, name)
 	return nil
 }

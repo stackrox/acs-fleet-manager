@@ -1,20 +1,24 @@
+// Package incident20230120 provides everything to resolve the incident 20230120.
 package incident20230120
 
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+	"os"
+	"path"
+
 	"github.com/golang/glog"
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/utils"
-	"net/http"
-	"net/url"
 )
 
 const (
@@ -32,11 +36,12 @@ type migrator struct {
 	name            string
 	id              string
 	migrateOrgAdmin bool
+	dir             string
 
-	client        *client.Client
-	dynamicClient *api.AcsTenantsApiService
+	centralClient *client.Client
 }
 
+// Command provides the command and all flags to run the migration of the incident 20230120.
 func Command() *cobra.Command {
 	m := &migrator{}
 
@@ -72,6 +77,8 @@ For more information, visit: https://srox.slack.com/archives/C04L0BUNRKN/p167426
 	cmd.Flags().StringVar(&m.id, "id", "", "id of the central instance")
 	cmd.Flags().BoolVar(&m.migrateOrgAdmin, "migrate-org-admin", false,
 		"include the migration of groups that use org_admin to use admin:org:all instead")
+	cmd.Flags().StringVar(&m.dir, "output-directory", "", "output directory where the access logs"+
+		" should be stored.")
 
 	utils.Must(cmd.MarkFlagRequired("url"))
 	utils.Must(cmd.MarkFlagRequired("client-id"))
@@ -84,16 +91,26 @@ For more information, visit: https://srox.slack.com/archives/C04L0BUNRKN/p167426
 }
 
 func (m *migrator) Construct() error {
-	// Enable the admin password for the specific central instance.
+	// If no output directory is given, use the current working directory.
+	if m.dir == "" {
+		dir, err := os.Getwd()
+		if err != nil {
+			return errors.Wrap(err, "retrieving working directory")
+		}
+		m.dir = dir
+	}
+
+	// Enable the admin password for the specific central instance. This will also ensure that the basic auth provider
+	// is ready to use and accepts the password.
 	adminPassword, err := shared.EnableAdminPassword(context.Background(), m.id, m.name, m.url)
 	if err != nil {
-		return errors.Wrapf(err, "enabling admin password for central %s", m.name)
+		return errors.Wrapf(err, "enabling admin password and basic auth provider for central %s", m.name)
 	}
 	m.adminPassword = adminPassword // pragma: allowlist secret
 
 	// Central client currently has a dependency towards the private.ManagedCentral, however it's only used for reading
-	// contents for error message.
-	m.client = client.NewCentralClient(private.ManagedCentral{
+	// metadata for error message, and ideally shouldn't even have this dependency.
+	m.centralClient = client.NewCentralClient(private.ManagedCentral{
 		Metadata: private.ManagedCentralAllOfMetadata{
 			Name:      m.url,
 			Namespace: "default",
@@ -104,7 +121,7 @@ func (m *migrator) Construct() error {
 }
 
 func (m *migrator) Migrate() error {
-	// Ensure we always disable the admin password after migration.
+	// Ensure we always disable the admin password.
 	defer utils.Must(shared.DisableAdminPassword(context.Background(), m.id, m.name))
 
 	url, err := url.Parse(m.url)
@@ -115,18 +132,16 @@ func (m *migrator) Migrate() error {
 	// 1. Retrieve all existing information from the central.
 	//    This includes:
 	//    - the existing auth provider ID.
-	//    - the existing dynamic sso.r.c client ID.
 	//    - the existing groups associated with the auth provider.
-	existingAuthProviderID, existingGroups, err := m.retrieveAuthProviderRelatedData()
+	existingAuthProviderID, existingGroups, err := m.retrieveAuthProviderAndGroups()
 	if err != nil {
 		return errors.Wrap(err, "retrieving auth provider related data")
 	}
 
 	// 2. Delete the existing auth provider.
 	//    Note: we cannot create a secondary auth provider, since the name must be unique across auth providers.
-
 	glog.Infof("Sending request to delete auth provider %s for central %s", existingAuthProviderID, m.name)
-	if err := m.client.SendRequestToCentral(context.Background(), nil, http.MethodDelete,
+	if err := m.centralClient.SendRequestToCentral(context.Background(), nil, http.MethodDelete,
 		fmt.Sprintf("%s/%s?force=true", authProvidersAPIPath, existingAuthProviderID), nil); err != nil {
 		return errors.Wrapf(err, "attempting to delete auth provider %q", err)
 	}
@@ -134,26 +149,31 @@ func (m *migrator) Migrate() error {
 
 	// 3. Create the new auth provider.
 	//    The new auth provider will:
-	//	  - use dynamic client.
-	//    - the organisation ID associated with the central will be a required attribute.
-	//    - an additional claim mapping will be created, which maps the account_id claim to orgid.
+	//	  - use the dynamic client ID / secret of the previous auth provider.
+	//    - an additional claim mapping will be created, which maps the org_id claim to rh_org_id.
+	//    - the organisation ID associated with the central will be a required attribute for the rh_org_id claim.
 	newAuthProviderID, err := m.createNewAuthProvider(url.Hostname())
 	if err != nil {
 		return errors.Wrapf(err, "creating new auth provider for central %s", m.url)
 	}
 
-	// 4. Migrate the previously existing groups to the newly created auth provider.
-	//    The previously existing group's auth provider ID will be moved to the newly created auth provider's ID.
+	// 4. Re-create the previously existing groups with references to the newly created auth provider.
 	if err := m.migrateGroups(existingGroups, newAuthProviderID); err != nil {
 		return errors.Wrapf(err, "migrating groups for auth provider %q", newAuthProviderID)
+	}
+
+	// 5. Retrieve the list of users which accessed central.
+	//    This will include their ID, attributes, as well as roles with which they were authenticated and authorized.
+	if err := m.storeAuthenticatedUsers(); err != nil {
+		return errors.Wrapf(err, "storing authenticated users for central %s", m.name)
 	}
 
 	return nil
 }
 
-func (m *migrator) retrieveAuthProviderRelatedData() (string, []*storage.Group, error) {
+func (m *migrator) retrieveAuthProviderAndGroups() (string, []*storage.Group, error) {
 	// 1. Retrieve the existing auth provider ID.
-	authProviders, err := m.client.GetLoginAuthProviders(context.Background())
+	authProviders, err := m.centralClient.GetLoginAuthProviders(context.Background())
 	if err != nil {
 		return "", nil, errors.Wrapf(err, "retrieving login authproviders for central %s", m.url)
 	}
@@ -165,6 +185,7 @@ func (m *migrator) retrieveAuthProviderRelatedData() (string, []*storage.Group, 
 		if provider.GetType() == "oidc" && provider.GetName() == "Red Hat SSO" {
 			glog.Infof("Found default sso.r.c. auth provider for central %s:\n %+v\n", m.name, provider)
 			authProviderID = provider.GetId()
+			break
 		}
 	}
 	if authProviderID == "" {
@@ -172,7 +193,7 @@ func (m *migrator) retrieveAuthProviderRelatedData() (string, []*storage.Group, 
 	}
 
 	// 2. Retrieve the groups associated with the existing auth provider.
-	groups, err := getGroupsByAuthProviderID(authProviderID, m.client)
+	groups, err := getGroupsByAuthProviderID(authProviderID, m.centralClient)
 	if err != nil {
 		return "", nil, err
 	}
@@ -189,8 +210,9 @@ func (m *migrator) createNewAuthProvider(uiEndpoint string) (string, error) {
 		UiEndpoint: uiEndpoint,
 		Enabled:    true,
 		Config: map[string]string{
-			"client_id":                    m.clientID,
-			"client_secret":                m.clientSecret, // pragma: allowlist secret
+			"client_id":     m.clientID,
+			"client_secret": m.clientSecret, // pragma: allowlist secret
+			// Issuer will be same across all environments, as we use prod sso.r.c.
 			"issuer":                       "https://sso.redhat.com/auth/realms/redhat-external",
 			"mode":                         "post",
 			"disable_offline_access_scope": "true",
@@ -210,8 +232,7 @@ func (m *migrator) createNewAuthProvider(uiEndpoint string) (string, error) {
 	}
 
 	glog.Infof("Send new auth provider request for central %s:\n%+v\n", m.name, authProviderRequest)
-
-	newAuthProvider, err := m.client.SendAuthProviderRequest(context.Background(), authProviderRequest)
+	newAuthProvider, err := m.centralClient.SendAuthProviderRequest(context.Background(), authProviderRequest)
 	if err != nil {
 		return "", errors.Wrapf(err, "creating new auth provider for central %s", m.url)
 	}
@@ -224,46 +245,72 @@ func (m *migrator) createNewAuthProvider(uiEndpoint string) (string, error) {
 func (m *migrator) migrateGroups(groups []*storage.Group, authProviderID string) error {
 	glog.Infof("Groups before adjusting the auth provider ID for central %s:\n%+v\n", m.name, groups)
 
-	// Patch the previous group's auth provider ID to the new auth provider ID.
 	for _, group := range groups {
+		// Patch the previously existing group, this includes:
+		// - resetting the ID field, as ID field is not allowed to be set when creating new groups.
+		// - setting the auth provider ID to the newly created auth provider ID.
+		// - based on whether --migrated-org-admin is given, migrate all groups with the "org_admin" groups value to
+		//   use "admin:org:all" instead.
 		group.Props.AuthProviderId = authProviderID
 		group.Props.Id = ""
 		if m.migrateOrgAdmin && group.GetProps().GetKey() == "groups" && group.GetProps().GetValue() == "org_admin" {
 			group.Props.Value = "admin:org:all"
 		}
-	}
-
-	glog.Infof("Groups after adjusting the auth provider ID to %s for central %s:\n%+v\n",
-		authProviderID, m.name, groups)
-
-	for _, group := range groups {
 		glog.Infof("Sending group request %+v\n", group)
-		if err := m.client.SendGroupRequest(context.Background(), group); err != nil {
+		if err := m.centralClient.SendGroupRequest(context.Background(), group); err != nil {
 			return errors.Wrapf(err, "updating group %+v to auth provider %s", group, authProviderID)
 		}
 		glog.Infof("Successfully created group %+v\n", group)
 	}
 
 	// Verify the groups are as expected.
-	updatedGroups, err := getGroupsByAuthProviderID(authProviderID, m.client)
+	updatedGroups, err := getGroupsByAuthProviderID(authProviderID, m.centralClient)
 	if err != nil {
 		return err
 	}
 
-	glog.Infof("Groups after executing the groupsbatch request for central %s:\n%+v\n", m.name, updatedGroups)
+	glog.Infof("Groups for auth provider %s after updating:\n%+v\n", authProviderID, updatedGroups)
 
+	if len(updatedGroups) != len(groups) {
+		return errors.Errorf("expected %d groups to be associated with auth provider %s,"+
+			" but were %d.\nExpected:\n%+v\nGot:\n%+v\n",
+			len(groups), authProviderID, len(updatedGroups), groups, updatedGroups)
+	}
+
+	return nil
+}
+
+func (m *migrator) storeAuthenticatedUsers() error {
+	glog.Infof("Sending request to retrieve users from central %s", m.name)
+	var usersResponse v1.GetUsersResponse
+	if err := m.centralClient.SendRequestToCentral(context.Background(), nil, http.MethodGet, "/v1/users",
+		&usersResponse); err != nil {
+		return errors.Wrapf(err, "retrieving users for central %s", m.name)
+	}
+	glog.Infof("Received users from central %s:\n%+v\n", m.name, usersResponse)
+
+	marshaller := jsonpb.Marshaler{Indent: "  "}
+	path := path.Join(m.dir, fmt.Sprintf("%s-%s-users.json", m.name, m.id))
+	f, err := os.Create(path)
+	if err != nil {
+		return errors.Wrapf(err, "creating file at path %s", path)
+	}
+	defer utils.IgnoreError(f.Close)
+	glog.Infof("Created file to store central users at path %s", path)
+	if err := marshaller.Marshal(f, &usersResponse); err != nil {
+		return errors.Wrapf(err, "writing users for central %s to file %s:\n%+v", m.name, path, usersResponse)
+	}
+	glog.Infof("Wrote central users to file at path %s", path)
 	return nil
 }
 
 func getGroupsByAuthProviderID(authProviderID string, client *client.Client) ([]*storage.Group, error) {
 	var groups v1.GetGroupsResponse
-
 	if err := client.SendRequestToCentral(context.Background(),
 		nil,
 		http.MethodGet, fmt.Sprintf("/v1/groups?authProviderId=%s", authProviderID), &groups); err != nil {
 		return nil, errors.Wrapf(err, "retrieving groups associated with auth provider %q",
 			authProviderID)
 	}
-
 	return groups.GetGroups(), nil
 }
