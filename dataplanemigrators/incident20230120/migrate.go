@@ -143,7 +143,7 @@ func (m *migrator) Migrate() error {
 	}
 
 	// 4. Migrate the previously existing groups to the newly created auth provider.
-	//    The previously existing ggroup's auth provider ID will be moved to the newly created auth provider's ID.
+	//    The previously existing group's auth provider ID will be moved to the newly created auth provider's ID.
 	if err := m.migrateGroups(existingGroups, newAuthProviderID); err != nil {
 		return errors.Wrapf(err, "migrating groups for auth provider %q", newAuthProviderID)
 	}
@@ -191,6 +191,7 @@ func (m *migrator) createNewAuthProvider(uiEndpoint string) (string, error) {
 		Config: map[string]string{
 			"client_id":                    m.clientID,
 			"client_secret":                m.clientSecret, // pragma: allowlist secret
+			"issuer":                       "https://sso.redhat.com/auth/realms/redhat-external",
 			"mode":                         "post",
 			"disable_offline_access_scope": "true",
 		},
