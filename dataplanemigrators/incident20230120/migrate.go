@@ -58,6 +58,7 @@ For more information, visit: https://srox.slack.com/archives/C04L0BUNRKN/p167426
 			}
 			return nil
 		},
+		SilenceUsage: true,
 	}
 
 	cmd.Flags().StringVarP(&m.url, "url", "u", "",
