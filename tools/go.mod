@@ -3,7 +3,7 @@ module github.com/stackrox/acs-fleet-manager/tools
 go 1.18
 
 require (
-	github.com/99designs/aws-vault/v6 v6.6.1
+	github.com/99designs/aws-vault/v6 v6.6.2
 	github.com/go-bindata/go-bindata/v3 v3.1.3
 	github.com/matryer/moq v0.3.0
 	github.com/onsi/ginkgo/v2 v2.7.0
