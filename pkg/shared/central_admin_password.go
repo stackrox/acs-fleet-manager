@@ -46,7 +46,7 @@ func EnableAdminPassword(ctx context.Context, centralID, centralName string, cen
 		return "", errors.Wrapf(err, "retrieving central instance %s/%s", centralNamespace, centralName)
 	}
 
-	glog.Infof("Found central CR %s in namespace %s:\n%+v\n", centralName, centralNamespace, central)
+	glog.Infof("Found central CR %s in namespace %s", centralName, centralNamespace)
 
 	// If admin password generation disabled is not set, the admin password will be generated, hence no need to update
 	// in that case and the default value false.
@@ -134,7 +134,7 @@ func DisableAdminPassword(ctx context.Context, centralID, centralName string) er
 		return errors.Wrapf(err, "retrieving central instance %s/%s", centralNamespace, centralName)
 	}
 
-	glog.Infof("Found central CR %s in namespace %s:\n%+v\n", centralName, centralNamespace, central)
+	glog.Infof("Found central CR %s in namespace %s", centralName, centralNamespace)
 
 	// If admin password generation disabled is not set, default to true, since we need to explicitly set it in this
 	// case to disable it.

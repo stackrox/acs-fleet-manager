@@ -130,6 +130,7 @@ func (m *migrator) Migrate() error {
 		fmt.Sprintf("%s/%s?force=true", authProvidersAPIPath, existingAuthProviderID), nil); err != nil {
 		return errors.Wrapf(err, "attempting to delete auth provider %q", err)
 	}
+	glog.Infof("Successfully deleted auth provider %s for central %s", existingAuthProviderID, m.name)
 
 	// 3. Create the new auth provider.
 	//    The new auth provider will:
@@ -142,7 +143,7 @@ func (m *migrator) Migrate() error {
 	}
 
 	// 4. Migrate the previously existing groups to the newly created auth provider.
-	//    The previously existing group's auth provider ID will be moved to the newly created auth provider's ID.
+	//    The previously existing ggroup's auth provider ID will be moved to the newly created auth provider's ID.
 	if err := m.migrateGroups(existingGroups, newAuthProviderID); err != nil {
 		return errors.Wrapf(err, "migrating groups for auth provider %q", newAuthProviderID)
 	}
@@ -182,37 +183,35 @@ func (m *migrator) retrieveAuthProviderRelatedData() (string, []*storage.Group, 
 }
 
 func (m *migrator) createNewAuthProvider(uiEndpoint string) (string, error) {
-	authProviderRequest := &v1.PostAuthProviderRequest{
-		Provider: &storage.AuthProvider{
-			Name:       defaultAuthProviderName,
-			Type:       authProviderOIDCType,
-			UiEndpoint: uiEndpoint,
-			Enabled:    true,
-			Config: map[string]string{
-				"client_id":     m.clientID,
-				"client_secret": m.clientSecret, // pragma: allowlist secret
-				"mode":          "post",
+	authProviderRequest := &storage.AuthProvider{
+		Name:       defaultAuthProviderName,
+		Type:       authProviderOIDCType,
+		UiEndpoint: uiEndpoint,
+		Enabled:    true,
+		Config: map[string]string{
+			"client_id":                    m.clientID,
+			"client_secret":                m.clientSecret, // pragma: allowlist secret
+			"mode":                         "post",
+			"disable_offline_access_scope": "true",
+		},
+		Active: true,
+		RequiredAttributes: []*storage.AuthProvider_RequiredAttribute{
+			{
+				AttributeKey:   "rh_org_id",
+				AttributeValue: m.orgID,
 			},
-			Active: true,
-			RequiredAttributes: []*storage.AuthProvider_RequiredAttribute{
-				{
-					AttributeKey:   "rh_org_id",
-					AttributeValue: m.orgID,
-				},
-			},
-			Traits: &storage.Traits{MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED},
-			ClaimMappings: map[string]string{
-				"org_id":             "rh_org_id",
-				"realm_access.roles": "groups",
-			},
+		},
+		Traits: &storage.Traits{MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED},
+		ClaimMappings: map[string]string{
+			"org_id":             "rh_org_id",
+			"realm_access.roles": "groups",
 		},
 	}
 
 	glog.Infof("Send new auth provider request for central %s:\n%+v\n", m.name, authProviderRequest)
 
-	var newAuthProvider storage.AuthProvider
-	if err := m.client.SendRequestToCentral(context.Background(), authProviderRequest, http.MethodPost,
-		authProvidersAPIPath, &newAuthProvider); err != nil {
+	newAuthProvider, err := m.client.SendAuthProviderRequest(context.Background(), authProviderRequest)
+	if err != nil {
 		return "", errors.Wrapf(err, "creating new auth provider for central %s", m.url)
 	}
 
