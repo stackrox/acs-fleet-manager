@@ -298,7 +298,11 @@ probe:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o probe/bin/probe ./probe/cmd/probe
 .PHONY: probe
 
-binary: fleet-manager fleetshard-sync probe
+dataplane-migrators:
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) ./cmd/dataplane-migrators
+.PHONY: dataplane-migrators
+
+binary: fleet-manager fleetshard-sync probe dataplane-migrators
 .PHONY: binary
 
 # Install
