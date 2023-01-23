@@ -105,7 +105,7 @@ func (m *migrator) Construct() error {
 
 func (m *migrator) Migrate() error {
 	// Ensure we always disable the admin password after migration.
-	defer utils.Must(shared.DisableAdminPassword(context.Background(), m.name))
+	defer utils.Must(shared.DisableAdminPassword(context.Background(), m.id, m.name))
 
 	url, err := url.Parse(m.url)
 	if err != nil {
@@ -127,7 +127,7 @@ func (m *migrator) Migrate() error {
 
 	glog.Infof("Sending request to delete auth provider %s for central %s", existingAuthProviderID, m.name)
 	if err := m.client.SendRequestToCentral(context.Background(), nil, http.MethodDelete,
-		fmt.Sprintf("%s/%s", authProvidersAPIPath, existingAuthProviderID), nil); err != nil {
+		fmt.Sprintf("%s/%s?force", authProvidersAPIPath, existingAuthProviderID), nil); err != nil {
 		return errors.Wrapf(err, "attempting to delete auth provider %q", err)
 	}
 
@@ -202,7 +202,8 @@ func (m *migrator) createNewAuthProvider(uiEndpoint string) (string, error) {
 			},
 			Traits: &storage.Traits{MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED},
 			ClaimMappings: map[string]string{
-				"org_id": "rh_org_id",
+				"org_id":             "rh_org_id",
+				"realm_access.roles": "groups",
 			},
 		},
 	}

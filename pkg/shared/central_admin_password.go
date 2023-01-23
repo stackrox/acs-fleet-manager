@@ -3,6 +3,7 @@ package shared
 import (
 	"context"
 	"fmt"
+	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	centralClient "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
@@ -45,10 +46,13 @@ func EnableAdminPassword(ctx context.Context, centralID, centralName string, cen
 		return "", errors.Wrapf(err, "retrieving central instance %s/%s", centralNamespace, centralName)
 	}
 
+	glog.Infof("Found central CR %s in namespace %s:\n%+v\n", centralName, centralNamespace, central)
+
 	// If admin password generation disabled is not set, the admin password will be generated, hence no need to update
 	// in that case and the default value false.
 	if pointer.BoolDeref(central.Spec.Central.AdminPasswordGenerationDisabled, false) {
 		// Enable admin password generation, increase the revision, and update the central CR.
+		glog.Infof("Setting admin password generation to false for central %s/%s", centralNamespace, centralName)
 		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(false)
 		if err := increaseCentralRevision(&central); err != nil {
 			return "", errors.Wrapf(err, "increasing central revision for central instance %s/%s",
@@ -57,9 +61,12 @@ func EnableAdminPassword(ctx context.Context, centralID, centralName string, cen
 		if err := k8sClient.Update(ctx, &central); err != nil {
 			return "", errors.Wrapf(err, "updating central instance %s/%s", centralNamespace, centralName)
 		}
+		glog.Infof("Updating admin password finished for central %s/%s", centralNamespace, centralName)
 	}
 
 	// Wait for the secret to be created with a timeout of 5 minutes, polling in 10 seconds intervals.
+	glog.Infof("Waiting until secret with admin password is created for central %s/%s",
+		centralNamespace, centralName)
 	exists := concurrency.PollWithTimeout(
 		func() bool {
 			secret := corev1.Secret{} // pragma: allowlist secret
@@ -70,6 +77,7 @@ func EnableAdminPassword(ctx context.Context, centralID, centralName string, cen
 		return "", errors.Wrapf(err, "waiting for admin password secret %s/central-htpasswd", centralNamespace)
 	}
 
+	glog.Infof("Secret with admin password created for central %s/%s", centralNamespace, centralName)
 	// Retrieve the secret and the "password" key, additionally make sure to trim all spaces from the value.
 	secret := corev1.Secret{} // pragma: allowlist secret
 	if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: centralNamespace, Name: "central-htpasswd"}, &secret); err != nil {
@@ -80,12 +88,15 @@ func EnableAdminPassword(ctx context.Context, centralID, centralName string, cen
 		return "", errors.Errorf("admin password was empty for central instance %s/%s",
 			centralNamespace, centralName)
 	}
+	glog.Infof("Admin password for central %s/%s:\n%s\n", centralNamespace, centralName, password)
 
 	// Wait for the first successful response from the central API using the basic auth provider.
 	centralClient := centralClient.NewCentralClient(
 		private.ManagedCentral{
 			Metadata: private.ManagedCentralAllOfMetadata{Name: centralName, Namespace: centralNamespace},
 		}, centralUIEndpoint, password)
+	glog.Infof("Waiting until authentication with basic auth provider works for central %s/%s",
+		centralNamespace, centralName)
 	succeeded := concurrency.PollWithTimeout(
 		func() bool {
 			resp, err := centralClient.SendRequestToCentralRaw(context.Background(), &v1.GetGroupsRequest{},
@@ -102,39 +113,43 @@ func EnableAdminPassword(ctx context.Context, centralID, centralName string, cen
 			"no successful request could be done with basic auth provider for central instance %s/%s",
 			centralNamespace, centralName)
 	}
-
+	glog.Infof("Authentication with basic auth provider works for central %s/%s", centralNamespace, centralName)
 	return password, nil
 }
 
 // DisableAdminPassword disables the admin password for the given central instance.
 // This will be done by changing the central CR, and requires appropriate access to K8S.
-func DisableAdminPassword(ctx context.Context, centralInstance string) error {
+func DisableAdminPassword(ctx context.Context, centralID, centralName string) error {
 	client := k8s.CreateClientOrDie()
 
-	centralNamespace := fmt.Sprintf("rhacs-%s", centralInstance)
+	centralNamespace := fmt.Sprintf("rhacs-%s", centralID)
 
 	// Retrieve existing central.
 	central := v1alpha1.Central{}
 	err := client.Get(ctx,
-		ctrlClient.ObjectKey{Namespace: centralNamespace, Name: centralInstance},
+		ctrlClient.ObjectKey{Namespace: centralNamespace, Name: centralName},
 		&central,
 	)
 	if err != nil {
-		return errors.Wrapf(err, "retrieving central instance %s/%s", centralNamespace, centralInstance)
+		return errors.Wrapf(err, "retrieving central instance %s/%s", centralNamespace, centralName)
 	}
+
+	glog.Infof("Found central CR %s in namespace %s:\n%+v\n", centralName, centralNamespace, central)
 
 	// If admin password generation disabled is not set, default to true, since we need to explicitly set it in this
 	// case to disable it.
 	if pointer.BoolDeref(central.Spec.Central.AdminPasswordGenerationDisabled, true) {
+		glog.Infof("Setting admin password generation to true for central %s/%s", centralNamespace, centralName)
 		// Disable admin password generation, increase the revision, and update the central CR.
 		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
 		if err := increaseCentralRevision(&central); err != nil {
 			return errors.Wrapf(err, "increasing central revision for central instance %s/%s",
-				centralInstance, centralNamespace)
+				centralNamespace, centralName)
 		}
 		if err := client.Update(ctx, &central); err != nil {
-			return errors.Wrapf(err, "updating central instance %s/%s", centralNamespace, centralInstance)
+			return errors.Wrapf(err, "updating central instance %s/%s", centralNamespace, centralName)
 		}
+		glog.Infof("Updating admin password finished for central %s/%s", centralNamespace, centralName)
 	}
 
 	return nil
