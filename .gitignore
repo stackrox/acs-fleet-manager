@@ -33,6 +33,8 @@
 /fleet-manager
 cmd/fleet-manager/fleet-manager
 /fleetshard-sync
+/dataplane-migrators
+cmd/dataplane-migrators/dataplane-migrators
 
 # Ignore generated templates
 /templates/*-template.json
