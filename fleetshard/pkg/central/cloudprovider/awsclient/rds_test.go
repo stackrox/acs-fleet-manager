@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const awsTimeoutMinutes = 15
+
 func newTestRDS() (*RDS, error) {
 	rdsClient, err := newTestRDSClient()
 	if err != nil {
@@ -72,7 +74,7 @@ func TestRDSProvisioning(t *testing.T) {
 	rdsClient, err := newTestRDS()
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Minute)
+	ctx, cancel := context.WithTimeout(context.TODO(), awsTimeoutMinutes*time.Minute)
 	defer cancel()
 
 	dbID := "test-" + uuid.New().String()
@@ -115,7 +117,7 @@ func TestRDSProvisioning(t *testing.T) {
 	err = rdsClient.EnsureDBDeprovisioned(dbID)
 	assert.NoError(t, err)
 
-	deleteCtx, deleteCancel := context.WithTimeout(context.TODO(), 10*time.Minute)
+	deleteCtx, deleteCancel := context.WithTimeout(context.TODO(), awsTimeoutMinutes*time.Minute)
 	defer deleteCancel()
 
 	clusterDeleted, err := waitForClusterToBeDeleted(deleteCtx, rdsClient, clusterID)
