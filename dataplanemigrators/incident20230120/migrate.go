@@ -12,7 +12,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/protoutils"
 	"github.com/stackrox/rox/pkg/utils"
 	"net/http"
 	"net/url"
@@ -223,13 +222,12 @@ func (m *migrator) createNewAuthProvider(uiEndpoint string) (string, error) {
 }
 
 func (m *migrator) migrateGroups(groups []*storage.Group, authProviderID string) error {
-
-	glog.Infof("Groups before adjusting the auth provider ID for central %s:\n%+v\n", groups)
+	glog.Infof("Groups before adjusting the auth provider ID for central %s:\n%+v\n", m.name, groups)
 
 	// Patch the previous group's auth provider ID to the new auth provider ID.
 	for _, group := range groups {
-		group.GetProps().AuthProviderId = authProviderID
-
+		group.Props.AuthProviderId = authProviderID
+		group.Props.Id = ""
 		if m.migrateOrgAdmin && group.GetProps().GetKey() == "groups" && group.GetProps().GetValue() == "org_admin" {
 			group.Props.Value = "admin:org:all"
 		}
@@ -238,15 +236,12 @@ func (m *migrator) migrateGroups(groups []*storage.Group, authProviderID string)
 	glog.Infof("Groups after adjusting the auth provider ID to %s for central %s:\n%+v\n",
 		authProviderID, m.name, groups)
 
-	groupsBatchRequest := &v1.GroupBatchUpdateRequest{
-		PreviousGroups: nil,
-		RequiredGroups: groups,
-	}
-
-	glog.Infof("Sending groupsbatch request to central %s:\n%+v\n", m.name, groupsBatchRequest)
-	if err := m.client.SendRequestToCentral(context.Background(), groupsBatchRequest, http.MethodPost,
-		"/v1/groupsbatch", nil); err != nil {
-		return errors.Wrapf(err, "updating groups to auth provider %q", authProviderID)
+	for _, group := range groups {
+		glog.Infof("Sending group request %+v\n", group)
+		if err := m.client.SendGroupRequest(context.Background(), group); err != nil {
+			return errors.Wrapf(err, "updating group %+v to auth provider %s", group, authProviderID)
+		}
+		glog.Infof("Successfully created group %+v\n", group)
 	}
 
 	// Verify the groups are as expected.
@@ -256,13 +251,6 @@ func (m *migrator) migrateGroups(groups []*storage.Group, authProviderID string)
 	}
 
 	glog.Infof("Groups after executing the groupsbatch request for central %s:\n%+v\n", m.name, updatedGroups)
-
-	for _, group := range groups {
-		if !protoutils.SliceContains(group, updatedGroups) {
-			return errors.Wrapf(err, "group %+v was expected but not found for auth provider %q",
-				group, authProviderID)
-		}
-	}
 
 	return nil
 }
