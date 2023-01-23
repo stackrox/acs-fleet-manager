@@ -50,7 +50,7 @@ require (
 	github.com/stackrox/rox v0.0.0-20210914215712-9ac265932e28
 	github.com/stretchr/testify v1.8.1
 	github.com/xeipuuv/gojsonschema v1.2.0
-	github.com/zgalor/weberr v0.7.0
+	github.com/zgalor/weberr v0.8.2
 	golang.org/x/net v0.5.0
 	golang.org/x/oauth2 v0.3.0
 	golang.org/x/sys v0.4.0
