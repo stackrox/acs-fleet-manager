@@ -68,6 +68,10 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 
 // ReadFiles ...
 func (c *OCMConfig) ReadFiles() error {
+	if c.EnableMock {
+		return nil
+	}
+
 	err := shared.ReadFileValueString(c.ClientIDFile, &c.ClientID)
 	if err != nil {
 		return fmt.Errorf("reading client ID file: %w", err)

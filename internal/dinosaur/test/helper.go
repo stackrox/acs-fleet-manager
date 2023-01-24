@@ -62,11 +62,15 @@ func NewDinosaurHelper(t *testing.T, server *httptest.Server) (*test.Helper, *pu
 // NewDinosaurHelperWithHooks ...
 func NewDinosaurHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
 	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, dinosaur.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
-		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, dinosaurConfig *config.CentralConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, fleetshardConfig *config.FleetshardConfig) {
+		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, dinosaurConfig *config.CentralConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, fleetshardConfig *config.FleetshardConfig, ocmConfig *ocm.OCMConfig) {
 			dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral = true
 			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
+
+			// Integration tests require a valid OCM client. This requires OCM service account credentials to be set.
+			ocmConfig.EnableMock = false
+			ocmConfig.ReadFiles()
 		},
 	}))
 	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
