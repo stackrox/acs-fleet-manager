@@ -269,8 +269,8 @@ func (m *migrator) migrateGroups(groups []*storage.Group, authProviderID string)
 			Props: &storage.GroupProperties{
 				Traits:         &storage.Traits{MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED},
 				AuthProviderId: authProviderID,
-				Key:            "groups",
-				Value:          "rh_is_org_admin",
+				Key:            "rh_is_org_admin",
+				Value:          "true",
 			},
 			RoleName: "Admin",
 		},
