@@ -82,7 +82,7 @@ function migrate_all_centrals() {
             --id "${csv_id}" \
             --name "${csv_name}" \
             --org-id "${csv_organisation_id}" \
-            --url "${csv_host}" \
+            --url "${csv_host}"
 
         # execute migration
         ${binary_file_path} incident-20230120 \
@@ -91,7 +91,7 @@ function migrate_all_centrals() {
             --id "${csv_id}" \
             --name "${csv_name}" \
             --org-id "${csv_organisation_id}" \
-            --url "${csv_host}" \
+            --url "${csv_host}"
 
         echo ">>> Done"
     done <"${central_list_path}"
