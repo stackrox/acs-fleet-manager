@@ -31,8 +31,9 @@ func TestGetSuccess(t *testing.T) {
 		Build()
 	assert.NoError(t, err)
 	c := ocm.ClientMock{
-		GetOrganisationIDFromExternalIDFunc: func(externalID string) (string, error) {
-			return "external-id", nil
+		GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
+			org, _ := v1.NewOrganization().ID("external-id").Build()
+			return org, nil
 		},
 		GetCustomerCloudAccountsFunc: func(externalID string, quotaID []string) ([]*v1.CloudAccount, error) {
 			return []*v1.CloudAccount{
@@ -65,9 +66,10 @@ func TestGetSuccess(t *testing.T) {
 func TestGetNoOrgId(t *testing.T) {
 	timesClientCalled := 0
 	c := ocm.ClientMock{
-		GetOrganisationIDFromExternalIDFunc: func(externalID string) (string, error) {
+		GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
 			timesClientCalled++
-			return "external-id", nil
+			org, _ := v1.NewOrganization().ID("external-id").Build()
+			return org, nil
 		},
 		GetCustomerCloudAccountsFunc: func(externalID string, quotaID []string) ([]*v1.CloudAccount, error) {
 			timesClientCalled++
@@ -100,8 +102,8 @@ func TestGetNoOrgId(t *testing.T) {
 func TestGetCannotGetOrganizationID(t *testing.T) {
 	timesClientCalled := 0
 	c := ocm.ClientMock{
-		GetOrganisationIDFromExternalIDFunc: func(externalID string) (string, error) {
-			return "", errors.New("test failure")
+		GetOrganisationFromExternalIDFunc: func(externalId string) (*v1.Organization, error) {
+			return nil, errors.New("test failure")
 		},
 		GetCustomerCloudAccountsFunc: func(externalID string, quotaID []string) ([]*v1.CloudAccount, error) {
 			timesClientCalled++

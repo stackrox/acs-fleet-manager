@@ -9,6 +9,15 @@ This Changelog should be updated for:
 ## [NEXT RELEASE]
 ### Added
 ### Changed
+- Collected logs in AWS CloudWatch are grouped by log type instead of namespace
+### Deprecated
+### Removed
+
+## 2023-01-17.1.f4e71a7
+### Added
+### Changed
+- Updated operator to version 3.73.1
+- Request the "api.iam.clients" for dynamic client API calls
 ### Deprecated
 ### Removed
 

@@ -54,6 +54,7 @@ type options struct {
 	AccountService           account.AccountService
 	AuthService              authorization.Authorization
 	DB                       *db.ConnectionFactory
+	Telemetry                *services.Telemetry
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
@@ -85,7 +86,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}
 
-	dinosaurHandler := handlers.NewDinosaurHandler(s.Dinosaur, s.ProviderConfig, s.AuthService)
+	dinosaurHandler := handlers.NewDinosaurHandler(s.Dinosaur, s.ProviderConfig, s.AuthService, s.Telemetry)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
@@ -219,7 +220,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	auth.UseFleetShardAuthorizationMiddleware(apiV1DataPlaneRequestsRouter,
 		s.IAMConfig.RedhatSSORealm.ValidIssuerURI, s.FleetShardAuthZConfig)
 
-	adminCentralHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
+	adminCentralHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig, s.Telemetry)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(

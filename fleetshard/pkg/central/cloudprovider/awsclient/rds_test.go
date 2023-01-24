@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/google/uuid"
@@ -15,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+const awsTimeoutMinutes = 15
 
 func newTestRDS() (*RDS, error) {
 	rdsClient, err := newTestRDSClient()
@@ -71,7 +74,7 @@ func TestRDSProvisioning(t *testing.T) {
 	rdsClient, err := newTestRDS()
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 15*time.Minute)
+	ctx, cancel := context.WithTimeout(context.TODO(), awsTimeoutMinutes*time.Minute)
 	defer cancel()
 
 	dbID := "test-" + uuid.New().String()
@@ -89,7 +92,10 @@ func TestRDSProvisioning(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, instanceExists)
 
-	_, err = rdsClient.EnsureDBProvisioned(ctx, dbID, dbMasterPassword)
+	err = rdsClient.EnsureDBProvisioned(ctx, dbID, dbMasterPassword)
+	assert.NoError(t, err)
+
+	_, err = rdsClient.GetDBConnection(dbID)
 	assert.NoError(t, err)
 
 	clusterExists, err = rdsClient.clusterExists(clusterID)
@@ -108,14 +114,27 @@ func TestRDSProvisioning(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, instanceStatus, dbAvailableStatus)
 
-	deletionStarted, err := rdsClient.EnsureDBDeprovisioned(dbID)
+	err = rdsClient.EnsureDBDeprovisioned(dbID)
 	assert.NoError(t, err)
-	assert.True(t, deletionStarted)
 
-	deleteCtx, deleteCancel := context.WithTimeout(context.TODO(), 10*time.Minute)
+	deleteCtx, deleteCancel := context.WithTimeout(context.TODO(), awsTimeoutMinutes*time.Minute)
 	defer deleteCancel()
 
 	clusterDeleted, err := waitForClusterToBeDeleted(deleteCtx, rdsClient, clusterID)
 	require.NoError(t, err)
 	assert.True(t, clusterDeleted)
+}
+
+func TestGetDBConnection(t *testing.T) {
+	if os.Getenv("RUN_RDS_TESTS") != "true" {
+		t.Skip("Skip RDS tests. Set RUN_RDS_TESTS=true env variable to enable RDS tests.")
+	}
+
+	rdsClient, err := newTestRDS()
+	require.NoError(t, err)
+
+	_, err = rdsClient.GetDBConnection("test-" + uuid.New().String())
+	var awsErr awserr.Error
+	require.ErrorAs(t, err, &awsErr)
+	assert.Equal(t, awsErr.Code(), rds.ErrCodeDBClusterNotFoundFault)
 }

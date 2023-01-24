@@ -41,6 +41,8 @@ const (
 	helmReleaseName = "tenant-resources"
 
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
+	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
+	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
 
 	centralDbSecretName = "central-db-password" // pragma: allowlist secret
@@ -165,7 +167,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			},
 			Customize: &v1alpha1.CustomizeSpec{
 				EnvVars: envVars,
+				Annotations: map[string]string{
+					orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
+				},
 				Labels: map[string]string{
+					orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
 					tenantIDLabelKey: remoteCentral.Id,
 				},
 			},
@@ -201,7 +207,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, ErrDeletionInProgress
 	}
 
-	if err := r.ensureNamespaceExists(remoteCentralNamespace, remoteCentral.Id); err != nil {
+	namespaceLabels := map[string]string{
+		orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
+		tenantIDLabelKey: remoteCentral.Id,
+	}
+	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
@@ -219,9 +229,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			return nil, fmt.Errorf("getting DB password from secret: %w", err)
 		}
 
-		dbConnection, err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword)
+		err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword)
 		if err != nil {
 			return nil, fmt.Errorf("provisioning RDS DB: %w", err)
+		}
+
+		dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(remoteCentral.Id)
+		if err != nil {
+			return nil, fmt.Errorf("getting RDS DB connection data: %w", err)
 		}
 
 		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
@@ -376,11 +391,10 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	globalDeleted = globalDeleted && centralDeleted
 
 	if r.managedDBEnabled {
-		dbDeleted, err := r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id)
+		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id)
 		if err != nil {
 			return false, fmt.Errorf("deprovisioning DB: %v", err)
 		}
-		globalDeleted = globalDeleted && dbDeleted
 
 		secretDeleted, err := r.ensureCentralDBSecretDeleted(ctx, central.GetNamespace())
 		if err != nil {
@@ -447,9 +461,8 @@ func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error)
 	return namespace, nil
 }
 
-func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace, tenantID string) error {
-	namespace.Labels = make(map[string]string)
-	namespace.Labels[tenantIDLabelKey] = tenantID
+func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace, labels map[string]string) error {
+	namespace.Labels = labels
 	err := r.client.Create(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("creating namespace %q: %w", namespace.ObjectMeta.Name, err)
@@ -457,11 +470,11 @@ func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace
 	return nil
 }
 
-func (r *CentralReconciler) ensureNamespaceExists(name string, tenantID string) error {
+func (r *CentralReconciler) ensureNamespaceExists(name string, labels map[string]string) error {
 	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			return r.createTenantNamespace(context.Background(), namespace, tenantID)
+			return r.createTenantNamespace(context.Background(), namespace, labels)
 		}
 		return fmt.Errorf("getting namespace %s: %w", name, err)
 	}

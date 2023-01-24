@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/s2i-base:1-394 AS build
+FROM registry.access.redhat.com/ubi8/s2i-base:1-408 AS build
 
 ARG GO_VERSION=1.18.8
 RUN curl -L --retry 10 --silent --show-error --fail -o /tmp/go.linux-amd64.tar.gz \
