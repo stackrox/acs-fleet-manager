@@ -245,9 +245,12 @@ func (m *migrator) migrateGroups(groups []*storage.Group, authProviderID string)
 	for _, group := range groups {
 		if group.GetProps().GetKey() == "groups" {
 			// Explicitly drop the groups mapping to Admin using org_admin, rh_is_org_admin, admin:org:all.
-			if group.GetProps().GetValue() == "org_admin" || group.GetProps().GetValue() == "rh_is_org_admin" || group.GetProps().GetValue() == "admin:org:all" {
+			if group.GetProps().GetValue() == "org_admin" || group.GetProps().GetValue() == "admin:org:all" {
 				continue
 			}
+		}
+		if group.GetProps().GetKey() == "rh_is_org_admin" {
+			continue
 		}
 		// Patch the previously existing group, this includes:
 		// - resetting the ID field, as ID field is not allowed to be set when creating new groups.
