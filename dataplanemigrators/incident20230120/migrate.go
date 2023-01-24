@@ -224,6 +224,7 @@ func (m *migrator) createNewAuthProvider(uiEndpoint string) (string, error) {
 		Traits: &storage.Traits{MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED},
 		ClaimMappings: map[string]string{
 			"org_id":             "rh_org_id",
+			"is_org_admin":       "rh_is_org_admin",
 			"realm_access.roles": "groups",
 		},
 	}
@@ -241,17 +242,11 @@ func (m *migrator) createNewAuthProvider(uiEndpoint string) (string, error) {
 
 func (m *migrator) migrateGroups(groups []*storage.Group, authProviderID string) error {
 	glog.Infof("Groups before adjusting the auth provider ID for central %s:\n%+v\n", m.name, groups)
-	var (
-		adminOrgAllGroupExists bool
-		orgAdminGroupExists    bool
-	)
 	for _, group := range groups {
 		if group.GetProps().GetKey() == "groups" {
-			if group.GetProps().GetValue() == "org_admin" {
-				orgAdminGroupExists = true
-			}
-			if group.GetProps().GetValue() == "admin:org:all" {
-				adminOrgAllGroupExists = true
+			// Explicitly drop the groups mapping to Admin using org_admin, rh_is_org_admin, admin:org:all.
+			if group.GetProps().GetValue() == "org_admin" || group.GetProps().GetValue() == "rh_is_org_admin" || group.GetProps().GetValue() == "admin:org:all" {
+				continue
 			}
 		}
 		// Patch the previously existing group, this includes:
@@ -262,51 +257,39 @@ func (m *migrator) migrateGroups(groups []*storage.Group, authProviderID string)
 
 		glog.Infof("Sending group request %+v\n", group)
 		if err := m.centralClient.SendGroupRequest(context.Background(), group); err != nil {
-			return errors.Wrapf(err, "updating group %+v to auth provider %s", group, authProviderID)
+			return errors.Wrapf(err, "creating group %+v for auth provider %s", group, authProviderID)
 		}
-
 		glog.Infof("Successfully created group %+v\n", group)
 	}
 
 	// Ensure we have two groups mapping to admin with the org_admin claim and the admin:org:all claim.
 	// Note that for the time being, the admin:org:all claim may not work due to limitations on sso.r.c.
-	if !adminOrgAllGroupExists {
-		group := &storage.Group{
+	adminGroups := []*storage.Group{
+		{
 			Props: &storage.GroupProperties{
-				Traits: &storage.Traits{
-					MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
-				},
+				Traits:         &storage.Traits{MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED},
+				AuthProviderId: authProviderID,
+				Key:            "groups",
+				Value:          "rh_is_org_admin",
+			},
+			RoleName: "Admin",
+		},
+		{
+			Props: &storage.GroupProperties{
+				Traits:         &storage.Traits{MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED},
 				AuthProviderId: authProviderID,
 				Key:            "groups",
 				Value:          "admin:org:all",
 			},
 			RoleName: "Admin",
-		}
-		glog.Infof("Sending group request for admin:org:all %+v\n", group)
-		if err := m.centralClient.SendGroupRequest(context.Background(), group); err != nil {
-			return errors.Wrapf(err, "updating group %+v to auth provider %s", group, authProviderID)
-		}
-
-		glog.Infof("Successfully created admin:org:all group %+v\n", group)
+		},
 	}
-	if !orgAdminGroupExists {
-		group := &storage.Group{
-			Props: &storage.GroupProperties{
-				Traits: &storage.Traits{
-					MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
-				},
-				AuthProviderId: authProviderID,
-				Key:            "groups",
-				Value:          "org_admin",
-			},
-			RoleName: "Admin",
+	for _, adminGroup := range adminGroups {
+		glog.Infof("Sending admin group request %+v\n", adminGroup)
+		if err := m.centralClient.SendGroupRequest(context.Background(), adminGroup); err != nil {
+			return errors.Wrapf(err, "creating admin group %+v for auth provider %s", adminGroup, authProviderID)
 		}
-		glog.Infof("Sending group request for org_admin group %+v\n", group)
-		if err := m.centralClient.SendGroupRequest(context.Background(), group); err != nil {
-			return errors.Wrapf(err, "updating group %+v to auth provider %s", group, authProviderID)
-		}
-
-		glog.Infof("Successfully created org_admin group %+v\n", group)
+		glog.Infof("Successfully created admin group %+v\n", adminGroup)
 	}
 
 	// Verify the groups are as expected.
