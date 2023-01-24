@@ -143,7 +143,11 @@ func installExtensions(ctx context.Context, con DBConnection) error {
 
 	defer db.Close()
 
-	_, err = db.ExecContext(ctx, "CREATE EXTENSION IF NOT EXISTS pg_stat_statements")
+	return installExtensionsOnCentralDB(ctx, db)
+}
+
+func installExtensionsOnCentralDB(ctx context.Context, db *sql.DB) error {
+	_, err := db.ExecContext(ctx, "CREATE EXTENSION IF NOT EXISTS pg_stat_statements")
 	if err != nil {
 		return fmt.Errorf("creating extension: %w", err)
 	}
