@@ -1128,8 +1128,8 @@ github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1
 github.com/yuin/goldmark v1.4.1/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=
-github.com/zgalor/weberr v0.7.0 h1:tFBgr7szrPHyr3uFjrxXIgi3XC5dqtddI+FjbSIXYL8=
-github.com/zgalor/weberr v0.7.0/go.mod h1:cqK89mj84q3PRgqQXQFWJDzCorOd8xOtov/ulOnqDwc=
+github.com/zgalor/weberr v0.8.2 h1:rzGP0jQVt8hGSNnzjDAQNHMxNNrf3gUrYhpSgY76+mk=
+github.com/zgalor/weberr v0.8.2/go.mod h1:cqK89mj84q3PRgqQXQFWJDzCorOd8xOtov/ulOnqDwc=
 github.com/ziutek/mymysql v1.5.4/go.mod h1:LMSpPZ6DbqWFxNCHW77HeMg9I646SAhApZ/wKdgO/C0=
 github.com/zmap/rc2 v0.0.0-20131011165748-24b9757f5521/go.mod h1:3YZ9o3WnatTIZhuOtot4IcUfzoKVjUHqu6WALIyI0nE=
 github.com/zmap/zcertificate v0.0.0-20180516150559-0e3d58b1bac4/go.mod h1:5iU54tB79AMBcySS0R2XIyZBAVmeHranShAFELYx7is=
