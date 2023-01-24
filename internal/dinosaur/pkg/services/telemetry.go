@@ -35,7 +35,7 @@ func (t *Telemetry) RegisterTenant(central *dbapi.CentralRequest) {
 }
 
 // TrackCreationRequested emits a track event that signals the creation request of a Central instance.
-func (t *Telemetry) TrackCreationRequested(id string, orgID string, isAdmin bool, err error) {
+func (t *Telemetry) TrackCreationRequested(id string, user string, isAdmin bool, err error) {
 	if t.enabled() {
 		var errMsg string
 		if err != nil {
@@ -47,12 +47,12 @@ func (t *Telemetry) TrackCreationRequested(id string, orgID string, isAdmin bool
 			"Success":          err == nil,
 			"Is Admin Request": isAdmin,
 		}
-		t.config.Telemeter().Track("Central Creation Requested", orgID, props)
+		t.config.Telemeter().Track("Central Creation Requested", user, props)
 	}
 }
 
 // TrackDeletionRequested emits a track event that signals the deletion request of a Central instance.
-func (t *Telemetry) TrackDeletionRequested(id string, orgID string, isAdmin bool, err error) {
+func (t *Telemetry) TrackDeletionRequested(id string, user string, isAdmin bool, err error) {
 	if t.enabled() {
 		var errMsg string
 		if err != nil {
@@ -64,7 +64,7 @@ func (t *Telemetry) TrackDeletionRequested(id string, orgID string, isAdmin bool
 			"Success":          err == nil,
 			"Is Admin Request": isAdmin,
 		}
-		t.config.Telemeter().Track("Central Deletion Requested", orgID, props)
+		t.config.Telemeter().Track("Central Deletion Requested", user, props)
 	}
 }
 
