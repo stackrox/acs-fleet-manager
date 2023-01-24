@@ -67,6 +67,7 @@ observability:
 # - enabled flag is used to completely enable/disable logging sub-chart
 logging:
   enabled: true
+  groupPrefix: ""
   aws:
     accessKeyId: ""
     secretAccessKey: ""

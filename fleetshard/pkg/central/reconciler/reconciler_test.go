@@ -51,6 +51,10 @@ var simpleManagedCentral = private.ManagedCentral{
 		Namespace: centralNamespace,
 	},
 	Spec: private.ManagedCentralAllOfSpec{
+		Auth: private.ManagedCentralAllOfSpecAuth{
+			OwnerOrgId:   "12345",
+			OwnerOrgName: "org-name",
+		},
 		UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
 			Host: fmt.Sprintf("acs-%s.acs.rhcloud.test", centralID),
 		},
@@ -91,6 +95,8 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, centralName, central.GetName())
 	assert.Equal(t, simpleManagedCentral.Id, central.GetLabels()[tenantIDLabelKey])
 	assert.Equal(t, simpleManagedCentral.Id, central.Spec.Customize.Labels[tenantIDLabelKey])
+	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgName, central.Spec.Customize.Annotations[orgNameAnnotationKey])
+	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, central.Spec.Customize.Labels[orgIDLabelKey])
 	assert.Equal(t, "1", central.GetAnnotations()[revisionAnnotationKey])
 	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
@@ -107,13 +113,17 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
 	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
-	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) (*postgres.DBConnection, error) {
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) error {
+		return nil
+	}
+	managedDBProvisioningClient.GetDBConnectionFunc = func(_ string) (postgres.DBConnection, error) {
 		connection, err := postgres.NewDBConnection("localhost", 5432, "rhacs", "postgres")
 		if err != nil {
-			return nil, err
+			return postgres.DBConnection{}, err
 		}
-		return &connection, nil
+		return connection, nil
 	}
+
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
@@ -312,16 +322,20 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
 	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
-	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) (*postgres.DBConnection, error) {
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) error {
+		return nil
+	}
+	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(_ string) error {
+		return nil
+	}
+	managedDBProvisioningClient.GetDBConnectionFunc = func(_ string) (postgres.DBConnection, error) {
 		connection, err := postgres.NewDBConnection("localhost", 5432, "rhacs", "postgres")
 		if err != nil {
-			return nil, err
+			return postgres.DBConnection{}, err
 		}
-		return &connection, nil
+		return connection, nil
 	}
-	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(_ string) (bool, error) {
-		return true, nil
-	}
+
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
@@ -335,8 +349,8 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
 
 	// trigger deletion
-	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) (*postgres.DBConnection, error) {
-		return nil, nil
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) error {
+		return nil
 	}
 	statusTrigger, err := r.Reconcile(context.TODO(), deletedCentral)
 	require.Error(t, err, ErrDeletionInProgress)
@@ -420,6 +434,20 @@ func TestCentralChanged(t *testing.T) {
 		})
 	}
 
+}
+
+func TestNamespaceLabelsAreSet(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+
+	namespace := &v1.Namespace{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralNamespace}, namespace)
+	require.NoError(t, err)
+	assert.Equal(t, simpleManagedCentral.Id, namespace.GetLabels()[tenantIDLabelKey])
+	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, namespace.GetLabels()[orgIDLabelKey])
 }
 
 func TestReportRoutesStatuses(t *testing.T) {

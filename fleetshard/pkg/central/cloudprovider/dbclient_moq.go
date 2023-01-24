@@ -19,11 +19,14 @@ var _ DBClient = &DBClientMock{}
 //
 //		// make and configure a mocked DBClient
 //		mockedDBClient := &DBClientMock{
-//			EnsureDBDeprovisionedFunc: func(databaseID string) (bool, error) {
+//			EnsureDBDeprovisionedFunc: func(databaseID string) error {
 //				panic("mock out the EnsureDBDeprovisioned method")
 //			},
-//			EnsureDBProvisionedFunc: func(ctx context.Context, databaseID string, passwordSecretName string) (*postgres.DBConnection, error) {
+//			EnsureDBProvisionedFunc: func(ctx context.Context, databaseID string, passwordSecretName string) error {
 //				panic("mock out the EnsureDBProvisioned method")
+//			},
+//			GetDBConnectionFunc: func(databaseID string) (postgres.DBConnection, error) {
+//				panic("mock out the GetDBConnection method")
 //			},
 //		}
 //
@@ -33,10 +36,13 @@ var _ DBClient = &DBClientMock{}
 //	}
 type DBClientMock struct {
 	// EnsureDBDeprovisionedFunc mocks the EnsureDBDeprovisioned method.
-	EnsureDBDeprovisionedFunc func(databaseID string) (bool, error)
+	EnsureDBDeprovisionedFunc func(databaseID string) error
 
 	// EnsureDBProvisionedFunc mocks the EnsureDBProvisioned method.
-	EnsureDBProvisionedFunc func(ctx context.Context, databaseID string, passwordSecretName string) (*postgres.DBConnection, error)
+	EnsureDBProvisionedFunc func(ctx context.Context, databaseID string, passwordSecretName string) error
+
+	// GetDBConnectionFunc mocks the GetDBConnection method.
+	GetDBConnectionFunc func(databaseID string) (postgres.DBConnection, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -54,13 +60,19 @@ type DBClientMock struct {
 			// PasswordSecretName is the passwordSecretName argument value.
 			PasswordSecretName string
 		}
+		// GetDBConnection holds details about calls to the GetDBConnection method.
+		GetDBConnection []struct {
+			// DatabaseID is the databaseID argument value.
+			DatabaseID string
+		}
 	}
 	lockEnsureDBDeprovisioned sync.RWMutex
 	lockEnsureDBProvisioned   sync.RWMutex
+	lockGetDBConnection       sync.RWMutex
 }
 
 // EnsureDBDeprovisioned calls EnsureDBDeprovisionedFunc.
-func (mock *DBClientMock) EnsureDBDeprovisioned(databaseID string) (bool, error) {
+func (mock *DBClientMock) EnsureDBDeprovisioned(databaseID string) error {
 	if mock.EnsureDBDeprovisionedFunc == nil {
 		panic("DBClientMock.EnsureDBDeprovisionedFunc: method is nil but DBClient.EnsureDBDeprovisioned was just called")
 	}
@@ -92,7 +104,7 @@ func (mock *DBClientMock) EnsureDBDeprovisionedCalls() []struct {
 }
 
 // EnsureDBProvisioned calls EnsureDBProvisionedFunc.
-func (mock *DBClientMock) EnsureDBProvisioned(ctx context.Context, databaseID string, passwordSecretName string) (*postgres.DBConnection, error) {
+func (mock *DBClientMock) EnsureDBProvisioned(ctx context.Context, databaseID string, passwordSecretName string) error {
 	if mock.EnsureDBProvisionedFunc == nil {
 		panic("DBClientMock.EnsureDBProvisionedFunc: method is nil but DBClient.EnsureDBProvisioned was just called")
 	}
@@ -128,5 +140,37 @@ func (mock *DBClientMock) EnsureDBProvisionedCalls() []struct {
 	mock.lockEnsureDBProvisioned.RLock()
 	calls = mock.calls.EnsureDBProvisioned
 	mock.lockEnsureDBProvisioned.RUnlock()
+	return calls
+}
+
+// GetDBConnection calls GetDBConnectionFunc.
+func (mock *DBClientMock) GetDBConnection(databaseID string) (postgres.DBConnection, error) {
+	if mock.GetDBConnectionFunc == nil {
+		panic("DBClientMock.GetDBConnectionFunc: method is nil but DBClient.GetDBConnection was just called")
+	}
+	callInfo := struct {
+		DatabaseID string
+	}{
+		DatabaseID: databaseID,
+	}
+	mock.lockGetDBConnection.Lock()
+	mock.calls.GetDBConnection = append(mock.calls.GetDBConnection, callInfo)
+	mock.lockGetDBConnection.Unlock()
+	return mock.GetDBConnectionFunc(databaseID)
+}
+
+// GetDBConnectionCalls gets all the calls that were made to GetDBConnection.
+// Check the length with:
+//
+//	len(mockedDBClient.GetDBConnectionCalls())
+func (mock *DBClientMock) GetDBConnectionCalls() []struct {
+	DatabaseID string
+} {
+	var calls []struct {
+		DatabaseID string
+	}
+	mock.lockGetDBConnection.RLock()
+	calls = mock.calls.GetDBConnection
+	mock.lockGetDBConnection.RUnlock()
 	return calls
 }
