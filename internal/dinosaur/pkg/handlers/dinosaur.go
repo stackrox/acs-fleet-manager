@@ -82,7 +82,7 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(convDinosaur)
-			h.telemetry.TrackCreationRequested(convDinosaur.ID, convDinosaur.OrganisationID, false, svcErr.AsError())
+			h.telemetry.TrackCreationRequested(convDinosaur.ID, convDinosaur.OwnerAccountID, false, svcErr.AsError())
 			if svcErr != nil {
 				return nil, svcErr
 			}
@@ -122,8 +122,8 @@ func (h dinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
 			err := h.service.RegisterDinosaurDeprovisionJob(ctx, id)
-			if orgID, orgErr := getOrgIDFromContext(ctx); orgErr == nil {
-				h.telemetry.TrackDeletionRequested(id, orgID, false, err.AsError())
+			if accountID, orgErr := getAccountIDFromContext(ctx); orgErr == nil {
+				h.telemetry.TrackDeletionRequested(id, accountID, false, err.AsError())
 			}
 			return nil, err
 		},
@@ -168,14 +168,14 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleList(w, r, cfg)
 }
 
-func getOrgIDFromContext(ctx context.Context) (string, error) {
+func getAccountIDFromContext(ctx context.Context) (string, error) {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return "", goerr.Wrap(err, "cannot obtain claims from context")
 	}
-	orgID, err := claims.GetOrgID()
+	accountID, err := claims.GetAccountID()
 	if err != nil {
-		return "", goerr.Wrap(err, "no org id in claims")
+		return "", goerr.Wrap(err, "no account id in claims")
 	}
-	return orgID, nil
+	return accountID, nil
 }
