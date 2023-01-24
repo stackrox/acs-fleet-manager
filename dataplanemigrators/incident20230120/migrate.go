@@ -28,15 +28,14 @@ const (
 )
 
 type migrator struct {
-	url             string
-	adminPassword   string
-	clientID        string
-	clientSecret    string // pragma: allowlist secret
-	orgID           string
-	name            string
-	id              string
-	migrateOrgAdmin bool
-	dir             string
+	url           string
+	adminPassword string
+	clientID      string
+	clientSecret  string // pragma: allowlist secret
+	orgID         string
+	name          string
+	id            string
+	dir           string
 
 	centralClient *client.Client
 }
@@ -75,8 +74,6 @@ For more information, visit: https://srox.slack.com/archives/C04L0BUNRKN/p167426
 	cmd.Flags().StringVar(&m.orgID, "org-id", "", "organisation ID associated with the central.")
 	cmd.Flags().StringVar(&m.name, "name", "", "name of the central instance")
 	cmd.Flags().StringVar(&m.id, "id", "", "id of the central instance")
-	cmd.Flags().BoolVar(&m.migrateOrgAdmin, "migrate-org-admin", false,
-		"include the migration of groups that use org_admin to use admin:org:all instead")
 	cmd.Flags().StringVar(&m.dir, "output-directory", "", "output directory where the access logs"+
 		" should be stored.")
 
@@ -244,23 +241,72 @@ func (m *migrator) createNewAuthProvider(uiEndpoint string) (string, error) {
 
 func (m *migrator) migrateGroups(groups []*storage.Group, authProviderID string) error {
 	glog.Infof("Groups before adjusting the auth provider ID for central %s:\n%+v\n", m.name, groups)
-
+	var (
+		adminOrgAllGroupExists bool
+		orgAdminGroupExists    bool
+	)
 	for _, group := range groups {
+		if group.GetProps().GetKey() == "groups" {
+			if group.GetProps().GetValue() == "org_admin" {
+				orgAdminGroupExists = true
+			}
+			if group.GetProps().GetValue() == "admin:org:all" {
+				adminOrgAllGroupExists = true
+			}
+		}
 		// Patch the previously existing group, this includes:
 		// - resetting the ID field, as ID field is not allowed to be set when creating new groups.
 		// - setting the auth provider ID to the newly created auth provider ID.
-		// - based on whether --migrated-org-admin is given, migrate all groups with the "org_admin" groups value to
-		//   use "admin:org:all" instead.
 		group.Props.AuthProviderId = authProviderID
 		group.Props.Id = ""
-		if m.migrateOrgAdmin && group.GetProps().GetKey() == "groups" && group.GetProps().GetValue() == "org_admin" {
-			group.Props.Value = "admin:org:all"
-		}
+
 		glog.Infof("Sending group request %+v\n", group)
 		if err := m.centralClient.SendGroupRequest(context.Background(), group); err != nil {
 			return errors.Wrapf(err, "updating group %+v to auth provider %s", group, authProviderID)
 		}
+
 		glog.Infof("Successfully created group %+v\n", group)
+	}
+
+	// Ensure we have two groups mapping to admin with the org_admin claim and the admin:org:all claim.
+	// Note that for the time being, the admin:org:all claim may not work due to limitations on sso.r.c.
+	if !adminOrgAllGroupExists {
+		group := &storage.Group{
+			Props: &storage.GroupProperties{
+				Traits: &storage.Traits{
+					MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
+				},
+				AuthProviderId: authProviderID,
+				Key:            "groups",
+				Value:          "admin:org:all",
+			},
+			RoleName: "Admin",
+		}
+		glog.Infof("Sending group request for admin:org:all %+v\n", group)
+		if err := m.centralClient.SendGroupRequest(context.Background(), group); err != nil {
+			return errors.Wrapf(err, "updating group %+v to auth provider %s", group, authProviderID)
+		}
+
+		glog.Infof("Successfully created admin:org:all group %+v\n", group)
+	}
+	if !orgAdminGroupExists {
+		group := &storage.Group{
+			Props: &storage.GroupProperties{
+				Traits: &storage.Traits{
+					MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
+				},
+				AuthProviderId: authProviderID,
+				Key:            "groups",
+				Value:          "org_admin",
+			},
+			RoleName: "Admin",
+		}
+		glog.Infof("Sending group request for org_admin group %+v\n", group)
+		if err := m.centralClient.SendGroupRequest(context.Background(), group); err != nil {
+			return errors.Wrapf(err, "updating group %+v to auth provider %s", group, authProviderID)
+		}
+
+		glog.Infof("Successfully created org_admin group %+v\n", group)
 	}
 
 	// Verify the groups are as expected.
@@ -270,12 +316,6 @@ func (m *migrator) migrateGroups(groups []*storage.Group, authProviderID string)
 	}
 
 	glog.Infof("Groups for auth provider %s after updating:\n%+v\n", authProviderID, updatedGroups)
-
-	if len(updatedGroups) != len(groups) {
-		return errors.Errorf("expected %d groups to be associated with auth provider %s,"+
-			" but were %d.\nExpected:\n%+v\nGot:\n%+v\n",
-			len(groups), authProviderID, len(updatedGroups), groups, updatedGroups)
-	}
 
 	return nil
 }
