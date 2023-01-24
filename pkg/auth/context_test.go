@@ -14,16 +14,16 @@ func TestContext_GetAccountIdFromClaims(t *testing.T) {
 		want   string
 	}{
 		{
-			name:   "Should return empty when tenantUserIdClaim is empty",
+			name:   "Should return empty when tenantAccountIdClaim is empty",
 			claims: ACSClaims{},
 			want:   "",
 		},
 		{
-			name: "Should return when tenantUserIdClaim is not empty",
+			name: "Should return when tenantAccountIdClaim is not empty",
 			claims: ACSClaims{
-				tenantUserIDClaim: "Test_user_id",
+				tenantAccountIDClaim: "Test_account_id",
 			},
-			want: "Test_user_id",
+			want: "Test_account_id",
 		},
 	}
 
@@ -33,6 +33,87 @@ func TestContext_GetAccountIdFromClaims(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			accountID, _ := tt.claims.GetAccountID()
 			Expect(accountID).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestContext_GetUserIdFromClaims(t *testing.T) {
+	tests := []struct {
+		name    string
+		claims  ACSClaims
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "Should return empty when tenantUserIDClaim and alternateUserIDClaim empty",
+			claims:  ACSClaims{},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "Should return when tenantUserIDClaim is not empty",
+			claims: ACSClaims{
+				tenantUserIDClaim: "12345678",
+			},
+			want: "12345678",
+		},
+		{
+			name: "Should return when alternateUserIDClaim is not empty",
+			claims: ACSClaims{
+				alternateTenantUserIDClaim: "87654321",
+			},
+			want: "87654321",
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			userID, err := tt.claims.GetUserID()
+			Expect(userID).To(Equal(tt.want))
+			if tt.wantErr {
+				Expect(err).To(HaveOccurred())
+			} else {
+				Expect(err).To(Not(HaveOccurred()))
+			}
+		})
+	}
+}
+
+func TestContext_GetSubjectFromClaims(t *testing.T) {
+	tests := []struct {
+		name    string
+		claims  ACSClaims
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "Should return empty when tenantSubClaim empty",
+			claims:  ACSClaims{},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "Should return when tenantSubClaim is not empty",
+			claims: ACSClaims{
+				tenantSubClaim: "12345678",
+			},
+			want: "12345678",
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sub, err := tt.claims.GetSubject()
+			Expect(sub).To(Equal(tt.want))
+			if tt.wantErr {
+				Expect(err).To(HaveOccurred())
+			} else {
+				Expect(err).To(Not(HaveOccurred()))
+			}
 		})
 	}
 }
