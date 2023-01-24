@@ -454,11 +454,6 @@ parameters:
   description: Endpoint for the telemetry backend
   value: ""
 
-- name: TELEMETRY_STORAGE_KEY
-  displayName: Telemetry storage key
-  description: API token for the telemetry storage backend
-  value: ""
-
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -1258,7 +1253,7 @@ objects:
             - --alsologtostderr
             - --central-request-expiration-timeout=${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}
             - --telemetry-endpoint=${TELEMETRY_ENDPONT}
-            - --telemetry-storage-key=${TELEMETRY_STORAGE_KEY}
+            - --telemetry-storage-key-secret-file=/secrets/fleet-manager-credentials/telemetry.storageKey
             - -v=${GLOG_V}
             resources:
               requests:
