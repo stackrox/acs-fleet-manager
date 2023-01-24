@@ -64,6 +64,19 @@ var (
 				RoleName: "Admin",
 			}
 		},
+		func(providerId string, auth private.ManagedCentralAllOfSpecAuth) *storage.Group {
+			return &storage.Group{
+				Props: &storage.GroupProperties{
+					AuthProviderId: providerId,
+					Key:            "rh_is_org_admin",
+					Value:          "true",
+					Traits: &storage.Traits{
+						MutabilityMode: storage.Traits_ALLOW_MUTATE_FORCED,
+					},
+				},
+				RoleName: "Admin",
+			}
+		},
 	}
 )
 
@@ -164,6 +177,7 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 		ClaimMappings: map[string]string{
 			"realm_access.roles": "groups",
 			"org_id":             "rh_org_id",
+			"is_org_admin":       "rh_is_org_admin",
 		},
 		// TODO: for testing purposes only; remove once host is correctly specified in fleet-manager
 		ExtraUiEndpoints: []string{"localhost:8443"},
