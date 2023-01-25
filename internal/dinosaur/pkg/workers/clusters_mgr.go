@@ -221,7 +221,10 @@ func (c *ClusterManager) processCleanupClusters() []error {
 		errs = append(errs, errors.Wrap(serviceErr, "failed to list of cleaup clusters"))
 		return errs
 	}
-	glog.Infof("cleanup clusters count = %d", len(cleanupClusters))
+
+	if len(cleanupClusters) > 0 {
+		glog.Infof("cleanup clusters count = %d", len(cleanupClusters))
+	}
 
 	for _, cluster := range cleanupClusters {
 		glog.V(10).Infof("cleanup cluster ClusterID = %s", cluster.ClusterID)
@@ -240,7 +243,10 @@ func (c *ClusterManager) processAcceptedClusters() []error {
 		errs = append(errs, errors.Wrap(serviceErr, "failed to list accepted clusters"))
 		return errs
 	}
-	glog.Infof("accepted clusters count = %d", len(acceptedClusters))
+
+	if len(acceptedClusters) > 0 {
+		glog.Infof("accepted clusters count = %d", len(acceptedClusters))
+	}
 
 	for i := range acceptedClusters {
 		cluster := acceptedClusters[i]
@@ -437,7 +443,7 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 // reconcileClusterInstanceType checks whether a cluster has an instance type, if not, set to the instance type provided in the manual cluster configuration
 // If the cluster does not exist, assume the cluster supports both instance types
 func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error {
-	logger.Logger.Infof("reconciling cluster = %s instance type", cluster.ClusterID)
+	logger.Logger.V(10).Infof("reconciling cluster = %s instance type", cluster.ClusterID)
 	supportedInstanceType := api.AllInstanceTypeSupport.String()
 	manualScalingEnabled := c.DataplaneClusterConfig.IsDataPlaneManualScalingEnabled()
 	if manualScalingEnabled {
@@ -463,7 +469,7 @@ func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error
 		}
 	}
 
-	logger.Logger.Infof("supported instance type for cluster = %s successful updated", cluster.ClusterID)
+	logger.Logger.V(10).Infof("supported instance type for cluster = %s successful updated", cluster.ClusterID)
 	return nil
 }
 

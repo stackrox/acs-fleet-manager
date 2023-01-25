@@ -58,7 +58,7 @@ func (k *DinosaurManager) Stop() {
 
 // Reconcile ...
 func (k *DinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling centrals")
+	glog.V(10).Infoln("reconciling centrals")
 	var encounteredErrors []error
 
 	// record the metrics at the beginning of the reconcile loop as some of the states like "accepted"
@@ -76,7 +76,7 @@ func (k *DinosaurManager) Reconcile() []error {
 	// delete dinosaurs of denied owners
 	accessControlListConfig := k.accessControlListConfig
 	if accessControlListConfig.EnableDenyList {
-		glog.Infoln("reconciling denied central owners")
+		glog.V(10).Infoln("reconciling denied central owners")
 		dinosaurDeprovisioningForDeniedOwnersErr := k.reconcileDeniedDinosaurOwners(accessControlListConfig.DenyList)
 		if dinosaurDeprovisioningForDeniedOwnersErr != nil {
 			wrappedError := errors.Wrapf(dinosaurDeprovisioningForDeniedOwnersErr, "Failed to deprovision central for denied owners %s", accessControlListConfig.DenyList)
@@ -87,7 +87,7 @@ func (k *DinosaurManager) Reconcile() []error {
 	// cleaning up expired dinosaurs
 	dinosaurConfig := k.dinosaurConfig
 	if dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral {
-		glog.Infoln("deprovisioning expired centrals")
+		glog.V(10).Infoln("deprovisioning expired centrals")
 		expiredDinosaursError := k.dinosaurService.DeprovisionExpiredDinosaurs(dinosaurConfig.CentralLifespan.CentralLifespanInHours)
 		if expiredDinosaursError != nil {
 			wrappedError := errors.Wrap(expiredDinosaursError, "failed to deprovision expired Central instances")
