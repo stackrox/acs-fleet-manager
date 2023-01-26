@@ -83,6 +83,7 @@ func TestRDSProvisioning(t *testing.T) {
 
 	clusterID := getClusterID(dbID)
 	instanceID := getInstanceID(dbID)
+	failoverID := getFailoverInstanceID(dbID)
 
 	clusterExists, err := rdsClient.clusterExists(clusterID)
 	require.NoError(t, err)
@@ -91,6 +92,10 @@ func TestRDSProvisioning(t *testing.T) {
 	instanceExists, err := rdsClient.instanceExists(instanceID)
 	require.NoError(t, err)
 	require.False(t, instanceExists)
+
+	failoverExists, err := rdsClient.instanceExists(failoverID)
+	require.NoError(t, err)
+	require.False(t, failoverExists)
 
 	err = rdsClient.EnsureDBProvisioned(ctx, dbID, dbMasterPassword)
 	assert.NoError(t, err)
@@ -105,6 +110,10 @@ func TestRDSProvisioning(t *testing.T) {
 	instanceExists, err = rdsClient.instanceExists(instanceID)
 	require.NoError(t, err)
 	require.True(t, instanceExists)
+
+	failoverExists, err = rdsClient.instanceExists(failoverID)
+	require.NoError(t, err)
+	require.True(t, failoverExists)
 
 	clusterStatus, err := rdsClient.clusterStatus(clusterID)
 	require.NoError(t, err)
