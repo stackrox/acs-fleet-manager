@@ -27,6 +27,7 @@ const (
 	dbUser           = "rhacs_master"
 	dbPrefix         = "rhacs-"
 	dbInstanceSuffix = "-db-instance"
+	dbFailoverSuffix = "-db-failover"
 	dbClusterSuffix  = "-db-cluster"
 	awsRetrySeconds  = 30
 
@@ -57,14 +58,18 @@ type RDS struct {
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
 func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPassword string) error {
 	clusterID := getClusterID(databaseID)
-	instanceID := getInstanceID(databaseID)
-
 	if err := r.ensureDBClusterCreated(clusterID, masterPassword); err != nil {
 		return fmt.Errorf("ensuring DB cluster %s exists: %w", clusterID, err)
 	}
 
+	instanceID := getInstanceID(databaseID)
 	if err := r.ensureDBInstanceCreated(instanceID, clusterID); err != nil {
 		return fmt.Errorf("ensuring DB instance %s exists in cluster %s: %w", instanceID, clusterID, err)
+	}
+
+	failoverID := getFailoverInstanceID(databaseID)
+	if err := r.ensureDBInstanceCreated(failoverID, clusterID); err != nil {
+		return fmt.Errorf("ensuring failover DB instance %s exists in cluster %s: %w", failoverID, clusterID, err)
 	}
 
 	return r.waitForInstanceToBeAvailable(ctx, instanceID, clusterID)
@@ -73,45 +78,19 @@ func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPasswor
 // EnsureDBDeprovisioned is a function that initiates the deprovisioning of the RDS database of a Central
 // Unlike EnsureDBProvisioned, this function does not block until the DB is deprovisioned
 func (r *RDS) EnsureDBDeprovisioned(databaseID string) error {
-	clusterID := getClusterID(databaseID)
-	instanceID := getInstanceID(databaseID)
-
-	instanceExists, err := r.instanceExists(instanceID)
+	err := r.ensureInstanceDeleted(getInstanceID(databaseID))
 	if err != nil {
-		return fmt.Errorf("checking if DB instance exists: %w", err)
-	}
-	if instanceExists {
-		status, err := r.instanceStatus(instanceID)
-		if err != nil {
-			return fmt.Errorf("getting DB instance status: %w", err)
-		}
-		if status != dbDeletingStatus {
-			glog.Infof("Initiating deprovisioning of RDS database instance %s.", instanceID)
-			// TODO(ROX-13692): do not skip taking a final DB snapshot
-			_, err := r.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
-			if err != nil {
-				return fmt.Errorf("deleting DB instance: %w", err)
-			}
-		}
+		return err
 	}
 
-	clusterExists, err := r.clusterExists(clusterID)
+	err = r.ensureInstanceDeleted(getFailoverInstanceID(databaseID))
 	if err != nil {
-		return fmt.Errorf("checking if DB cluster exists: %w", err)
+		return err
 	}
-	if clusterExists {
-		status, err := r.clusterStatus(clusterID)
-		if err != nil {
-			return fmt.Errorf("getting DB cluster status: %w", err)
-		}
-		if status != dbDeletingStatus {
-			glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
-			// TODO(ROX-13692): do not skip taking a final DB snapshot
-			_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
-			if err != nil {
-				return fmt.Errorf("deleting DB cluster: %w", err)
-			}
-		}
+
+	err = r.ensureClusterDeleted(getClusterID(databaseID))
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -164,6 +143,52 @@ func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error
 	_, err = r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID, r.performanceInsights))
 	if err != nil {
 		return fmt.Errorf("creating DB instance: %w", err)
+	}
+
+	return nil
+}
+
+func (r *RDS) ensureInstanceDeleted(instanceID string) error {
+	instanceExists, err := r.instanceExists(instanceID)
+	if err != nil {
+		return fmt.Errorf("checking if DB instance exists: %w", err)
+	}
+	if instanceExists {
+		status, err := r.instanceStatus(instanceID)
+		if err != nil {
+			return fmt.Errorf("getting DB instance status: %w", err)
+		}
+		if status != dbDeletingStatus {
+			glog.Infof("Initiating deprovisioning of RDS database instance %s.", instanceID)
+			// TODO(ROX-13692): do not skip taking a final DB snapshot
+			_, err := r.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
+			if err != nil {
+				return fmt.Errorf("deleting DB instance: %w", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *RDS) ensureClusterDeleted(clusterID string) error {
+	clusterExists, err := r.clusterExists(clusterID)
+	if err != nil {
+		return fmt.Errorf("checking if DB cluster exists: %w", err)
+	}
+	if clusterExists {
+		status, err := r.clusterStatus(clusterID)
+		if err != nil {
+			return fmt.Errorf("getting DB cluster status: %w", err)
+		}
+		if status != dbDeletingStatus {
+			glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
+			// TODO(ROX-13692): do not skip taking a final DB snapshot
+			_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
+			if err != nil {
+				return fmt.Errorf("deleting DB cluster: %w", err)
+			}
+		}
 	}
 
 	return nil
@@ -293,6 +318,10 @@ func getClusterID(databaseID string) string {
 
 func getInstanceID(databaseID string) string {
 	return dbPrefix + databaseID + dbInstanceSuffix
+}
+
+func getFailoverInstanceID(databaseID string) string {
+	return dbPrefix + databaseID + dbFailoverSuffix
 }
 
 func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup string) *rds.CreateDBClusterInput {
