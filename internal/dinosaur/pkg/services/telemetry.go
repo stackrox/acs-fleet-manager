@@ -39,70 +39,76 @@ func getUserFromContext(ctx context.Context) (string, error) {
 // RegisterTenant emits a group event that captures meta data of the input central instance.
 // Adds the token user to the tenant group.
 func (t *Telemetry) RegisterTenant(ctx context.Context, central *dbapi.CentralRequest) {
-	if t.enabled() {
-		user, err := getUserFromContext(ctx)
-		if err != nil {
-			glog.Warning(errors.Wrap(err, "cannot get telemetry user from context claims"))
-			return
-		}
-		props := map[string]any{
-			"Cloud Account":   central.CloudAccountID,
-			"Cloud Provider":  central.CloudProvider,
-			"Instance Type":   central.InstanceType,
-			"Organisation ID": central.OrganisationID,
-			"Region":          central.Region,
-			"Tenant ID":       central.ID,
-		}
-		t.config.Telemeter().Group(central.ID, user, props)
+	if !t.enabled() {
+		return
 	}
+
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		glog.Warning(errors.Wrap(err, "cannot get telemetry user from context claims"))
+		return
+	}
+	props := map[string]any{
+		"Cloud Account":   central.CloudAccountID,
+		"Cloud Provider":  central.CloudProvider,
+		"Instance Type":   central.InstanceType,
+		"Organisation ID": central.OrganisationID,
+		"Region":          central.Region,
+		"Tenant ID":       central.ID,
+	}
+	t.config.Telemeter().Group(central.ID, user, props)
 }
 
 // TrackCreationRequested emits a track event that signals the creation request of a Central instance.
 func (t *Telemetry) TrackCreationRequested(ctx context.Context, tenantID string, isAdmin bool, requestErr error) {
-	if t.enabled() {
-		var errMsg string
-		if requestErr != nil {
-			errMsg = requestErr.Error()
-		}
-
-		user, err := getUserFromContext(ctx)
-		if err != nil {
-			glog.Warning(errors.Wrap(err, "cannot get telemetry user from context claims"))
-			return
-		}
-
-		props := map[string]any{
-			"Tenant ID":        tenantID,
-			"Error":            errMsg,
-			"Success":          err == nil,
-			"Is Admin Request": isAdmin,
-		}
-		t.config.Telemeter().Track("Central Creation Requested", user, props)
+	if !t.enabled() {
+		return
 	}
+
+	var errMsg string
+	if requestErr != nil {
+		errMsg = requestErr.Error()
+	}
+
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		glog.Warning(errors.Wrap(err, "cannot get telemetry user from context claims"))
+		return
+	}
+
+	props := map[string]any{
+		"Tenant ID":        tenantID,
+		"Error":            errMsg,
+		"Success":          err == nil,
+		"Is Admin Request": isAdmin,
+	}
+	t.config.Telemeter().Track("Central Creation Requested", user, props)
 }
 
 // TrackDeletionRequested emits a track event that signals the deletion request of a Central instance.
 func (t *Telemetry) TrackDeletionRequested(ctx context.Context, tenantID string, isAdmin bool, requestErr error) {
-	if t.enabled() {
-		var errMsg string
-		if requestErr != nil {
-			errMsg = requestErr.Error()
-		}
-
-		user, err := getUserFromContext(ctx)
-		if err != nil {
-			glog.Warning(errors.Wrap(err, "cannot get telemetry user from context claims"))
-			return
-		}
-
-		props := map[string]any{
-			"Tenant ID":        tenantID,
-			"Error":            errMsg,
-			"Success":          err == nil,
-			"Is Admin Request": isAdmin,
-		}
-		t.config.Telemeter().Track("Central Deletion Requested", user, props)
+	if !t.enabled() {
+		return
 	}
+
+	var errMsg string
+	if requestErr != nil {
+		errMsg = requestErr.Error()
+	}
+
+	user, err := getUserFromContext(ctx)
+	if err != nil {
+		glog.Warning(errors.Wrap(err, "cannot get telemetry user from context claims"))
+		return
+	}
+
+	props := map[string]any{
+		"Tenant ID":        tenantID,
+		"Error":            errMsg,
+		"Success":          err == nil,
+		"Is Admin Request": isAdmin,
+	}
+	t.config.Telemeter().Track("Central Deletion Requested", user, props)
 }
 
 // Start the telemetry service.
