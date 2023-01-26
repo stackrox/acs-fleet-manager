@@ -203,7 +203,7 @@ func TestACSClaims_GetUserId(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			userID, err := tt.claims.GetUserID()
+			userID, err := tt.claims.GetSubject()
 
 			assert.Equal(t, tt.error, err != nil)
 			assert.Equal(t, tt.userID, userID)
