@@ -40,8 +40,8 @@ func (c *ACSClaims) GetAccountID() (string, error) {
 func (c *ACSClaims) GetUserID() (string, error) {
 	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil },
 		(*c)[tenantUserIDClaim], (*c)[alternateTenantUserIDClaim]); idx != -1 {
-		if orgID, ok := val.(string); ok {
-			return orgID, nil
+		if userID, ok := val.(string); ok {
+			return userID, nil
 		}
 	}
 
