@@ -79,9 +79,16 @@ type CentralIndex map[string]*CentralRequest
 
 // AuthConfig keeps all we need to set up IdP for a Central instance.
 type AuthConfig struct {
-	ClientID     string `json:"idp_client_id"`
+	// OIDC client ID. It is used for authenticating users in Central via connected IdP.
+	ClientID string `json:"idp_client_id"`
+	// OIDC client secret.
 	ClientSecret string `json:"idp_client_secret"`
-	Issuer       string `json:"idp_issuer"`
+	// OIDC client issuer.
+	Issuer string `json:"idp_issuer"`
+	// Specifies whether:
+	// 1) OIDC client was dynamically created via sso.redhat.com API
+	// or
+	// 2) We reuse static OIDC client
 	ClientOrigin string `json:"client_origin"`
 }
 
