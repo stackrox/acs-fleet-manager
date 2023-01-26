@@ -74,11 +74,11 @@ func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(&convDinosaur)
+			h.telemetry.RegisterTenant(r.Context(), &convDinosaur)
 			h.telemetry.TrackCreationRequested(r.Context(), convDinosaur.ID, true, svcErr.AsError())
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			h.telemetry.RegisterTenant(r.Context(), &convDinosaur)
 			// TODO(mclasmeier): Do we need PresentDinosaurRequestAdminEndpoint?
 			return presenters.PresentCentralRequest(&convDinosaur), nil
 		},
