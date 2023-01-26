@@ -45,7 +45,7 @@ func (t *Telemetry) RegisterTenant(ctx context.Context, central *dbapi.CentralRe
 
 	user, err := getUserFromContext(ctx)
 	if err != nil {
-		glog.Warning(errors.Wrap(err, "cannot get telemetry user from context claims"))
+		glog.Error(errors.Wrap(err, "cannot get telemetry user from context claims"))
 		return
 	}
 	props := map[string]any{
@@ -72,7 +72,7 @@ func (t *Telemetry) TrackCreationRequested(ctx context.Context, tenantID string,
 
 	user, err := getUserFromContext(ctx)
 	if err != nil {
-		glog.Warning(errors.Wrap(err, "cannot get telemetry user from context claims"))
+		glog.Error(errors.Wrap(err, "cannot get telemetry user from context claims"))
 		return
 	}
 
@@ -98,7 +98,7 @@ func (t *Telemetry) TrackDeletionRequested(ctx context.Context, tenantID string,
 
 	user, err := getUserFromContext(ctx)
 	if err != nil {
-		glog.Warning(errors.Wrap(err, "cannot get telemetry user from context claims"))
+		glog.Error(errors.Wrap(err, "cannot get telemetry user from context claims"))
 		return
 	}
 
