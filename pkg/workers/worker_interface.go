@@ -64,7 +64,6 @@ func (b *BaseWorker) SetIsRunning(val bool) {
 
 // StartWorker ...
 func (b *BaseWorker) StartWorker(w Worker) {
-	glog.Infof("started worker %q", w.GetWorkerType())
 	metrics.SetLeaderWorkerMetric(b.WorkerType, true)
 	b.Reconciler.Start(w)
 }

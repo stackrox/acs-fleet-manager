@@ -46,9 +46,9 @@ type ErrorHandlerFunc func(r *http.Request, w http.ResponseWriter, err *errors.S
 type HTTPAction func() (interface{}, *errors.ServiceError)
 
 func success(r *http.Request) {
-	ctx := context.WithValue(r.Context(), logger.ActionResultKey, logger.ActionSuccess)
-	ulog := logger.NewUHCLogger(ctx)
-	ulog.V(10).Infof("operation ended successfully")
+	//ctx := context.WithValue(r.Context(), logger.ActionResultKey, logger.ActionSuccess)
+	//ulog := logger.NewUHCLogger(ctx)
+	//ulog.V(10).Infof("operation ended successfully")
 }
 
 func errorHandler(r *http.Request, w http.ResponseWriter, cfg *HandlerConfig, err *errors.ServiceError) {

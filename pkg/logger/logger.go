@@ -4,9 +4,9 @@ package logger
 import (
 	"context"
 	"fmt"
+	sentry "github.com/getsentry/sentry-go"
 	"strings"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
@@ -25,6 +25,7 @@ const (
 	ActionSuccess LoggerKeys = "success"
 
 	logEventSeparator = "$$"
+	logDepth          = 1
 )
 
 // LogEvent ...
@@ -74,6 +75,7 @@ func (l LogEvent) ToString() string {
 // UHCLogger ...
 type UHCLogger interface {
 	V(level int32) UHCLogger
+	AddDepth() UHCLogger
 	Infof(format string, args ...interface{})
 	Warningf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
@@ -93,6 +95,7 @@ type logger struct {
 	username  string
 	session   string
 	sentryHub *sentry.Hub
+	logDepth  int
 }
 
 // NewUHCLogger creates a new logger instance with a default verbosity of 1
@@ -103,6 +106,7 @@ func NewUHCLogger(ctx context.Context) UHCLogger {
 		username:  getUsernameFromClaims(ctx),
 		sentryHub: sentry.GetHubFromContext(ctx),
 		session:   getSessionFromClaims(ctx),
+		logDepth:  logDepth,
 	}
 	return logger
 }
@@ -153,7 +157,14 @@ func (l *logger) V(level int32) UHCLogger {
 		username:  l.username,
 		session:   l.session,
 		level:     level,
+		logDepth:  l.logDepth,
 	}
+}
+
+// Depth ...
+func (l *logger) AddDepth() UHCLogger {
+	l.logDepth = l.logDepth + 1
+	return l
 }
 
 func getSessionFromClaims(ctx context.Context) string {
@@ -178,13 +189,13 @@ func getSessionFromClaims(ctx context.Context) string {
 // Infof ...
 func (l *logger) Infof(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
-	glog.V(glog.Level(l.level)).Infof(prefixed)
+	glog.InfoDepth(logDepth, prefixed)
 }
 
 // Warningf ...
 func (l *logger) Warningf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
-	glog.Warningln(prefixed)
+	glog.WarningDepth(logDepth, prefixed)
 	l.captureSentryEvent(sentry.LevelWarning, format, args...)
 }
 
@@ -192,12 +203,13 @@ func (l *logger) Warningf(format string, args ...interface{}) {
 func (l *logger) Errorf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.Errorln(prefixed)
+	glog.ErrorDepth(logDepth, prefixed)
 	l.captureSentryEvent(sentry.LevelError, format, args...)
 }
 
 // Error ...
 func (l *logger) Error(err error) {
-	glog.Error(err)
+	glog.ErrorDepth(logDepth, err)
 	if l.sentryHub == nil {
 		sentry.CaptureException(err)
 		return
@@ -208,7 +220,7 @@ func (l *logger) Error(err error) {
 // Fatalf ...
 func (l *logger) Fatalf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
-	glog.Fatalln(prefixed)
+	glog.FatalDepth(logDepth, prefixed)
 	l.captureSentryEvent(sentry.LevelFatal, format, args...)
 }
 

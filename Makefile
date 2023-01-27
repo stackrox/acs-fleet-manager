@@ -557,6 +557,12 @@ image/build/local: image/build
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
 .PHONY: image/build/local
 
+image/build/local-deploy: GOOS=linux
+image/build/local-deploy: fleet-manager
+	docker build -t fleet-manager:test1 -f Dockerfile.hybrid .
+	kubectl set image deploy/fleet-manager fleet-manager=fleet-manager:test1
+	kubectl delete pod -l application=fleet-manager
+
 # Build and push the image
 image/push: image/push/fleet-manager image/push/probe
 .PHONY: image/push

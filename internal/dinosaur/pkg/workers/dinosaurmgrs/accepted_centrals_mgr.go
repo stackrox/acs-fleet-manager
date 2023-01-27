@@ -61,7 +61,6 @@ func (k *AcceptedCentralManager) Stop() {
 
 // Reconcile ...
 func (k *AcceptedCentralManager) Reconcile() []error {
-	glog.Infoln("reconciling accepted centrals")
 	var encounteredErrors []error
 
 	// handle accepted central requests

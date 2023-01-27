@@ -201,7 +201,7 @@ func (c *ClusterManager) processDeprovisioningClusters() []error {
 		errs = append(errs, serviceErr)
 		return errs
 	}
-	glog.Infof("deprovisioning clusters count = %d", len(deprovisioningClusters))
+	//glog.Infof("deprovisioning clusters count = %d", len(deprovisioningClusters))
 
 	for i := range deprovisioningClusters {
 		cluster := deprovisioningClusters[i]
@@ -267,7 +267,9 @@ func (c *ClusterManager) processProvisioningClusters() []error {
 		errs = append(errs, errors.Wrap(listErr, "failed to list pending clusters"))
 		return errs
 	}
-	glog.Infof("provisioning clusters count = %d", len(provisioningClusters))
+	if len(provisioningClusters) > 0 {
+		glog.Infof("provisioning clusters count = %d", len(provisioningClusters))
+	}
 
 	// process each local pending cluster and compare to the underlying ocm cluster
 	for i := range provisioningClusters {
@@ -293,11 +295,11 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 		errs = append(errs, errors.Wrap(listErr, "failed to list provisioned clusters"))
 		return errs
 	}
-	glog.Infof("provisioned clusters count = %d", len(provisionedClusters))
+	//glog.Infof("provisioned clusters count = %d", len(provisionedClusters))
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
-		glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
+		//glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterProvisioned)
 		err := c.reconcileProvisionedCluster(provisionedCluster)
 		if err != nil {
@@ -317,10 +319,10 @@ func (c *ClusterManager) processReadyClusters() []error {
 		errs = append(errs, errors.Wrap(listErr, "failed to list ready clusters"))
 		return errs
 	}
-	glog.Infof("ready clusters count = %d", len(readyClusters))
+	//glog.V(10).Infof("ready clusters count = %d", len(readyClusters))
 
 	for _, readyCluster := range readyClusters {
-		glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
+		//glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
 		emptyClusterReconciled := false
 		var recErr error
 		if c.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
@@ -630,7 +632,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		return []error{}
 	}
 
-	glog.Infoln("reconciling manual cluster configurations")
+	glog.V(10).Infoln("reconciling manual cluster configurations")
 	allClusterIds, err := c.ClusterService.ListAllClusterIds()
 	if err != nil {
 		return []error{errors.Wrapf(err, "failed to retrieve cluster ids from clusters")}
@@ -687,7 +689,6 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		}
 
 		if cmp.Equal(*cluster, newCluster) {
-			glog.Infof("Data-plane cluster %s unchanged", manualCluster.ClusterID)
 			continue
 		}
 		diff := cmp.Diff(*cluster, newCluster)

@@ -58,7 +58,6 @@ func (k *DinosaurManager) Stop() {
 
 // Reconcile ...
 func (k *DinosaurManager) Reconcile() []error {
-	glog.V(10).Infoln("reconciling centrals")
 	var encounteredErrors []error
 
 	// record the metrics at the beginning of the reconcile loop as some of the states like "accepted"
