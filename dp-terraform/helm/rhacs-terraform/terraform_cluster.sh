@@ -99,8 +99,8 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_ID}" \
   --set fleetshardSync.redHatSSO.clientSecret="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET}" \
   --set fleetshardSync.managedDB.enabled=true \
-  --set fleetshardSync.managedDB.subnetGroup="${FLEETSHARD_SYNC_MANAGED_DB_SUBNET_GROUP}" \
-  --set fleetshardSync.managedDB.securityGroup="${FLEETSHARD_SYNC_MANAGED_DB_SECURITY_GROUP}" \
+  --set fleetshardSync.managedDB.subnetGroup="${CLUSTER_MANAGED_DB_SUBNET_GROUP}" \
+  --set fleetshardSync.managedDB.securityGroup="${CLUSTER_MANAGED_DB_SECURITY_GROUP}" \
   --set fleetshardSync.managedDB.performanceInsights=true \
   --set fleetshardSync.aws.roleARN="${FLEETSHARD_SYNC_AWS_ROLE_ARN}" \
   --set fleetshardSync.telemetry.storage.endpoint="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_ENDPOINT:-}" \
