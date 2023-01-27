@@ -42,7 +42,7 @@ init_chamber
 ```
 Dev environment is selected by default. After this you may call
 ```shell
-run_chamber exec fleetshard-sync -- ./fleetshard-sync
+./dev/env/scripts/exec_fleetshard_sync.sh
 ```
 to inject the necessary environment variables to the fleetshard-sync application.
 
@@ -55,7 +55,7 @@ Fleetshard sync provides different authentication types that can be used when ca
 This is the default authentication type used.
 To run fleetshard-sync with RH SSO, use the following command:
 ```shell
-run_chamber exec fleetshard-sync -- ./fleetshard-sync
+./dev/env/scripts/exec_fleetshard_sync.sh
 ```
 
 ### OCM Refresh token
@@ -64,7 +64,7 @@ To run fleetshard-sync with the OCM refresh token, use the following:
 ```shell
 OCM_TOKEN=$(ocm token --refresh) \
 AUTH_TYPE=OCM \
-run_chamber exec fleetshard-sync -- ./fleetshard-sync
+./dev/env/scripts/exec_fleetshard_sync.sh
 ```
 
 ### Static token
@@ -76,5 +76,5 @@ use the token found within Bitwarden (`ACS Fleet* static token`):
 ```
 STATIC_TOKEN=<generated value | bitwarden value> \
 AUTH_TYPE=STATIC_TOKEN \
-run_chamber exec fleetshard-sync -- ./fleetshard-sync
+./dev/env/scripts/exec_fleetshard_sync.sh
 ```

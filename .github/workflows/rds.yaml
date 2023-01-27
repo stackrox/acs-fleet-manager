@@ -66,9 +66,5 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_AUTH_HELPER: "none"
         run: |
-          set -euo pipefail
-          source "scripts/lib/external_config.sh"
-          init_chamber
-
-          run_chamber exec fleetshard-sync -- make test/rds
+          ./dev/env/scripts/exec_fleetshard_sync.sh make test/rds
         timeout-minutes: 35
