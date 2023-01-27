@@ -5,7 +5,6 @@
 <!-- Please strikethrough options not relevant using two tildes ~~Text~~. Do not delete non relevant options -->
 - [ ] Unit and integration tests added
 - [ ] Added test description under `Test manual`
-- [ ] Evaluated and added CHANGELOG.md entry if required
 - [ ] Documentation added if necessary (i.e. changes to dev setup, test execution, ...)
 - [ ] CI and all relevant tests are passing
 - [ ] Add the ticket number to the PR title if available, i.e. `ROX-12345: ...`
