@@ -50,7 +50,7 @@ func ConfigProviders() di.Option {
 		di.Provide(config.NewCentralConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewDataplaneClusterConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewFleetshardConfig, di.As(new(environments2.ConfigModule))),
-		di.Provide(config.NewCentralRequestConfig(), di.As(new(environments2.ConfigModule))),
+		di.Provide(config.NewCentralRequestConfig, di.As(new(environments2.ConfigModule))),
 
 		// Additional CLI subcommands
 		di.Provide(cluster.NewClusterCommand),
