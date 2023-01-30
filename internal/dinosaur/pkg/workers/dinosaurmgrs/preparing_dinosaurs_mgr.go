@@ -29,7 +29,7 @@ type PreparingDinosaurManager struct {
 }
 
 // NewPreparingDinosaurManager creates a new dinosaur manager
-func NewPreparingDinosaurManager(dinosaurService services.DinosaurService, centralConfig *config.CentralConfig) *PreparingDinosaurManager {
+func NewPreparingDinosaurManager(dinosaurService services.DinosaurService, centralRequestConfig *config.CentralRequestConfig) *PreparingDinosaurManager {
 	metrics.InitReconcilerMetricsForType(preparingCentralWorkerType)
 	return &PreparingDinosaurManager{
 		BaseWorker: workers.BaseWorker{
@@ -38,7 +38,7 @@ func NewPreparingDinosaurManager(dinosaurService services.DinosaurService, centr
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService:       dinosaurService,
-		centralRequestTimeout: centralConfig.CentralRequestExpirationTimeout,
+		centralRequestTimeout: centralRequestConfig.CentralRequestExpirationTimeout,
 	}
 }
 
