@@ -16,8 +16,18 @@ const (
 // IncrementCentralRevision will increment the central's revision within its annotations.
 // In case no revision annotation exists, the revision will be set to 1.
 func IncrementCentralRevision(central *v1alpha1.Central) error {
+	if central == nil {
+		return errors.New("no central given to increment revision")
+	}
+	if central.GetAnnotations() == nil {
+		central.Annotations = map[string]string{
+			RevisionAnnotationKey: "1",
+		}
+		return nil
+	}
+
 	revisionString, ok := central.GetAnnotations()[RevisionAnnotationKey]
-	// Annotation does not exist yet, create the initial revision of 1.
+
 	if !ok {
 		central.GetAnnotations()[RevisionAnnotationKey] = "1"
 		return nil

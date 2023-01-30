@@ -23,9 +23,14 @@ import (
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	centralHTPasswdSecret = "central-htpasswd" // pragma: allowlist secret
+)
+
 // EnableAdminPassword enables the admin password for the given central instance.
 // This will be done by changing the central CR, and requires appropriate access to K8S.
-// The generated password will be returned, and the basic auth provider will be
+// The generated password will be returned, and the basic auth provider will be validated
+// to allow login with the password before returning.
 // NOTE: It's the callers responsibility to reset the admin password afterwards!
 func EnableAdminPassword(ctx context.Context, centralID, centralName string, centralUIEndpoint string) (string, error) {
 	k8sClient := k8s.CreateClientOrDie()
@@ -61,7 +66,7 @@ func EnableAdminPassword(ctx context.Context, centralID, centralName string, cen
 	}
 
 	// Wait for the secret to be created with a timeout of 5 minutes, polling in 10 seconds intervals.
-	secret, err := waitForSecret(ctx, k8sClient, centralNamespace)
+	secret, err := getSecretWithWait(ctx, k8sClient, centralNamespace, centralHTPasswdSecret)
 	if err != nil {
 		return "", errors.Wrapf(err, "waiting for secret containing admin password for central %s/%s",
 			centralNamespace, centralName)
@@ -122,23 +127,23 @@ func DisableAdminPassword(ctx context.Context, centralID, centralName string) er
 	return nil
 }
 
-func waitForSecret(ctx context.Context, client ctrlClient.Client, namespace string) (*corev1.Secret, error) {
+func getSecretWithWait(ctx context.Context, client ctrlClient.Client, namespace string, secretName string) (*corev1.Secret, error) {
 	glog.Info("Waiting until secret with admin password is created")
 	exists := concurrency.PollWithTimeout(
 		func() bool {
 			secret := corev1.Secret{} // pragma: allowlist secret
-			err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: "central-htpasswd"}, &secret)
+			err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: secretName}, &secret)
 			return err == nil
 		}, 10*time.Second, 5*time.Minute)
 	if !exists {
 		return nil, errors.Errorf(
-			"timed out waiting for admin password secret %s/central-htpwass to be created", namespace)
+			"timed out waiting for admin password secret %s/%s to be created", namespace, secretName)
 	}
 
 	glog.Infof("Secret with admin password was created successfully")
 	secret := corev1.Secret{} // pragma: allowlist secret
-	if err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: "central-htpasswd"}, &secret); err != nil {
-		return nil, errors.Wrapf(err, "retrieving secret %s/central-htpasswd", namespace)
+	if err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: secretName}, &secret); err != nil {
+		return nil, errors.Wrapf(err, "retrieving secret %s/%s", namespace, secretName)
 	}
 	return &secret, nil
 }

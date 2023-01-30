@@ -30,6 +30,10 @@ func TestIncrementCentralRevision(t *testing.T) {
 			},
 			shouldFail: true,
 		},
+		"nil annotations should lead to revision == 1": {
+			annotations:      nil,
+			expectedRevision: "1",
+		},
 	}
 
 	for name, c := range cases {
@@ -48,4 +52,9 @@ func TestIncrementCentralRevision(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIncrementCentralRevisionNilCentral(t *testing.T) {
+	err := IncrementCentralRevision(nil)
+	assert.Error(t, err)
 }
