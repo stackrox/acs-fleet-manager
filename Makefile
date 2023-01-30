@@ -561,13 +561,13 @@ image/build/local-deploy: GOOS=linux
 image/build/local-deploy: image/build/deploy-fleet-manager-local image/build/deploy-fleetshard-sync-local
 
 image/build/fleet-manager-local-deploy: GOOS=linux
-image/build/fleet-manager-local-deploy: fleet-manager image/build/local
+image/build/fleet-manager-local-deploy: fleet-manager
 	docker build -t fleet-manager:dev-image -f Dockerfile.hybrid .
 	kubectl set image deploy/fleet-manager fleet-manager=fleet-manager:dev-image
 	kubectl delete pod -l application=fleet-manager
 
 image/build/fleetshard-sync-local-deploy: GOOS=linux
-image/build/fleetshard-sync-local-deploy: fleetshard-sync image/build/local
+image/build/fleetshard-sync-local-deploy: fleetshard-sync
 	docker build -t fleet-manager:dev-image -f Dockerfile.hybrid .
 	kubectl set image deploy/fleetshard-sync fleetshard-sync=fleet-manager:dev-image
 	kubectl delete pod -l application=fleetshard-sync
