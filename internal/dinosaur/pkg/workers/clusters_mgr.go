@@ -157,7 +157,6 @@ func (c *ClusterManager) SetIsRunning(val bool) {
 
 // Reconcile ...
 func (c *ClusterManager) Reconcile() []error {
-	glog.Infoln("reconciling clusters")
 	var encounteredErrors []error
 
 	processors := []processor{
@@ -201,7 +200,9 @@ func (c *ClusterManager) processDeprovisioningClusters() []error {
 		errs = append(errs, serviceErr)
 		return errs
 	}
-	//glog.Infof("deprovisioning clusters count = %d", len(deprovisioningClusters))
+	if len(deprovisioningClusters) > 0 {
+		glog.Infof("deprovisioning clusters count = %d", len(deprovisioningClusters))
+	}
 
 	for i := range deprovisioningClusters {
 		cluster := deprovisioningClusters[i]
@@ -295,11 +296,13 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 		errs = append(errs, errors.Wrap(listErr, "failed to list provisioned clusters"))
 		return errs
 	}
-	//glog.Infof("provisioned clusters count = %d", len(provisionedClusters))
+	if len(provisionedClusters) > 0 {
+		glog.Infof("provisioned clusters count = %d", len(provisionedClusters))
+	}
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
-		//glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
+		glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterProvisioned)
 		err := c.reconcileProvisionedCluster(provisionedCluster)
 		if err != nil {
@@ -319,10 +322,11 @@ func (c *ClusterManager) processReadyClusters() []error {
 		errs = append(errs, errors.Wrap(listErr, "failed to list ready clusters"))
 		return errs
 	}
-	//glog.V(10).Infof("ready clusters count = %d", len(readyClusters))
+	if len(readyClusters) > 0 {
+		glog.V(10).Infof("ready clusters count = %d", len(readyClusters))
+	}
 
 	for _, readyCluster := range readyClusters {
-		//glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
 		emptyClusterReconciled := false
 		var recErr error
 		if c.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
@@ -445,7 +449,6 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 // reconcileClusterInstanceType checks whether a cluster has an instance type, if not, set to the instance type provided in the manual cluster configuration
 // If the cluster does not exist, assume the cluster supports both instance types
 func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error {
-	logger.Logger.V(10).Infof("reconciling cluster = %s instance type", cluster.ClusterID)
 	supportedInstanceType := api.AllInstanceTypeSupport.String()
 	manualScalingEnabled := c.DataplaneClusterConfig.IsDataPlaneManualScalingEnabled()
 	if manualScalingEnabled {
@@ -632,7 +635,6 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		return []error{}
 	}
 
-	glog.V(10).Infoln("reconciling manual cluster configurations")
 	allClusterIds, err := c.ClusterService.ListAllClusterIds()
 	if err != nil {
 		return []error{errors.Wrapf(err, "failed to retrieve cluster ids from clusters")}

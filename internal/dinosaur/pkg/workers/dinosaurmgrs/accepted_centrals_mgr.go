@@ -67,7 +67,8 @@ func (k *AcceptedCentralManager) Reconcile() []error {
 	acceptedCentralRequests, serviceErr := k.centralService.ListByStatus(constants2.CentralRequestStatusAccepted)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list accepted centrals"))
-	} else {
+	}
+	if len(acceptedCentralRequests) > 0 {
 		glog.Infof("accepted centrals count = %d", len(acceptedCentralRequests))
 	}
 

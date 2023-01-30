@@ -83,7 +83,8 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	deprovisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants.CentralRequestStatusDeprovision)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list central deprovisioning requests"))
-	} else {
+	}
+	if len(deprovisioningDinosaurs) > 0 {
 		glog.Infof("%s centrals count = %d", constants.CentralRequestStatusDeprovision.String(), len(deprovisioningDinosaurs))
 	}
 

@@ -54,14 +54,14 @@ func (k *PreparingDinosaurManager) Stop() {
 
 // Reconcile ...
 func (k *PreparingDinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling preparing centrals")
 	var encounteredErrors []error
 
 	// handle preparing dinosaurs
 	preparingDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusPreparing)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list preparing centrals"))
-	} else {
+	}
+	if len(preparingDinosaurs) > 0 {
 		glog.Infof("preparing centrals count = %d", len(preparingDinosaurs))
 	}
 

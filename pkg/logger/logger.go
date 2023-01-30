@@ -75,8 +75,8 @@ func (l LogEvent) ToString() string {
 // UHCLogger ...
 type UHCLogger interface {
 	V(level int32) UHCLogger
-	AddDepth() UHCLogger
 	Infof(format string, args ...interface{})
+	InfoDepth(depth int, args ...interface{})
 	Warningf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Error(err error)
@@ -95,7 +95,6 @@ type logger struct {
 	username  string
 	session   string
 	sentryHub *sentry.Hub
-	logDepth  int
 }
 
 // NewUHCLogger creates a new logger instance with a default verbosity of 1
@@ -106,7 +105,6 @@ func NewUHCLogger(ctx context.Context) UHCLogger {
 		username:  getUsernameFromClaims(ctx),
 		sentryHub: sentry.GetHubFromContext(ctx),
 		session:   getSessionFromClaims(ctx),
-		logDepth:  logDepth,
 	}
 	return logger
 }
@@ -157,14 +155,7 @@ func (l *logger) V(level int32) UHCLogger {
 		username:  l.username,
 		session:   l.session,
 		level:     level,
-		logDepth:  l.logDepth,
 	}
-}
-
-// Depth ...
-func (l *logger) AddDepth() UHCLogger {
-	l.logDepth = l.logDepth + 1
-	return l
 }
 
 func getSessionFromClaims(ctx context.Context) string {
@@ -190,6 +181,12 @@ func getSessionFromClaims(ctx context.Context) string {
 func (l *logger) Infof(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.InfoDepth(logDepth, prefixed)
+}
+
+// InfoDepth ...
+func (l *logger) InfoDepth(depth int, args ...interface{}) {
+	glog.InfoDepth(logDepth+depth, args)
+
 }
 
 // Warningf ...

@@ -49,7 +49,6 @@ func (k *ReadyDinosaurManager) Stop() {
 
 // Reconcile ...
 func (k *ReadyDinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling ready centrals")
 
 	var encounteredErrors []error
 

@@ -76,7 +76,6 @@ func (k *CentralAuthConfigManager) Stop() {
 // Reconcile fetches all CentralRequests without auth config from the DB and
 // updates them.
 func (k *CentralAuthConfigManager) Reconcile() []error {
-	glog.Infoln("reconciling auth config for Centrals")
 	var errs []error
 
 	centralRequests, listErr := k.centralService.ListCentralsWithoutAuthConfig()
