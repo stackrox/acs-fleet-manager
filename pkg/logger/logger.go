@@ -186,8 +186,7 @@ func (l *logger) Infof(format string, args ...interface{}) {
 
 // InfoDepth ...
 func (l *logger) InfoDepth(depth int, args ...interface{}) {
-	glog.InfoDepth(logDepth+depth, args)
-
+	glog.InfoDepth(logDepth+depth, args...)
 }
 
 // Warningf ...
