@@ -63,6 +63,12 @@ type CentralRequest struct {
 	// DeletionTimestamp stores the timestamp of the DELETE api call for the resource
 	DeletionTimestamp *time.Time `json:"deletionTimestamp"`
 
+	// Internal will be set for instances created by internal services, such as the probe service.
+	// If Internal is set to true, telemetry will be disabled for this particular instance.
+	// Note: Internal cannot be set via API, but instead will be set based on the User-Agent for the central creation
+	// request (see pkg/handlers/dinosaur.go).
+	Internal bool `json:"internal"`
+
 	// All we need to integrate Central with an IdP.
 	AuthConfig
 }

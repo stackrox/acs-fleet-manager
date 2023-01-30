@@ -37,7 +37,7 @@ func NewDinosaurHandler(service services.DinosaurService, providerConfig *config
 	}
 }
 
-func validateCentralResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
+func validateCentralResourcesUnspecified(dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
 		if len(dinosaurRequest.Central.Resources.Limits) > 0 ||
 			len(dinosaurRequest.Central.Resources.Requests) > 0 {
@@ -47,7 +47,7 @@ func validateCentralResourcesUnspecified(ctx context.Context, dinosaurRequest *p
 	}
 }
 
-func validateScannerResourcesUnspecified(ctx context.Context, dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
+func validateScannerResourcesUnspecified(dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
 		if len(dinosaurRequest.Scanner.Analyzer.Resources.Limits) > 0 ||
 			len(dinosaurRequest.Scanner.Analyzer.Resources.Requests) > 0 {
@@ -63,27 +63,37 @@ func validateScannerResourcesUnspecified(ctx context.Context, dinosaurRequest *p
 
 // Create ...
 func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var dinosaurRequest public.CentralRequestPayload
+	var centralRequest public.CentralRequestPayload
 	ctx := r.Context()
 	convDinosaur := &dbapi.CentralRequest{}
 
 	cfg := &handlers.HandlerConfig{
-		MarshalInto: &dinosaurRequest,
+		MarshalInto: &centralRequest,
 		Validate: []handlers.Validate{
 			handlers.ValidateAsyncEnabled(r, "creating central requests"),
-			handlers.ValidateLength(&dinosaurRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxDinosaurNameLength),
-			ValidDinosaurClusterName(&dinosaurRequest.Name, "name"),
-			ValidateDinosaurClusterNameIsUnique(r.Context(), &dinosaurRequest.Name, h.service),
-			ValidateDinosaurClaims(ctx, &dinosaurRequest, convDinosaur),
+			handlers.ValidateLength(&centralRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxDinosaurNameLength),
+			ValidDinosaurClusterName(&centralRequest.Name, "name"),
+			ValidateDinosaurClusterNameIsUnique(r.Context(), &centralRequest.Name, h.service),
+			ValidateDinosaurClaims(ctx, &centralRequest, convDinosaur),
 			ValidateCloudProvider(&h.service, convDinosaur, h.providerConfig, "creating central requests"),
-			handlers.ValidateMultiAZEnabled(&dinosaurRequest.MultiAz, "creating central requests"),
-			validateCentralResourcesUnspecified(ctx, &dinosaurRequest),
-			validateScannerResourcesUnspecified(ctx, &dinosaurRequest),
+			handlers.ValidateMultiAZEnabled(&centralRequest.MultiAz, "creating central requests"),
+			validateCentralResourcesUnspecified(&centralRequest),
+			validateScannerResourcesUnspecified(&centralRequest),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
+			// Set the internalInstance to true. This will mean that telemetry won't be enabled for it, both within the
+			// central itself and the track requests.
+			// We probably want to expose this as a configuration setting to change it in a "flexible" way in the future.
+			if r.UserAgent() == "fleet-manager-probe-service" {
+				convDinosaur.Internal = true
+			}
 			svcErr := h.service.RegisterDinosaurJob(convDinosaur)
-			h.telemetry.RegisterTenant(r.Context(), convDinosaur)
-			h.telemetry.TrackCreationRequested(r.Context(), convDinosaur.ID, false, svcErr.AsError())
+
+			// Do not track centrals created from internal services.
+			if !convDinosaur.Internal {
+				h.telemetry.RegisterTenant(r.Context(), convDinosaur)
+				h.telemetry.TrackCreationRequested(r.Context(), convDinosaur.ID, false, svcErr.AsError())
+			}
 			if svcErr != nil {
 				return nil, svcErr
 			}
