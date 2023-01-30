@@ -557,11 +557,20 @@ image/build/local: image/build
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
 .PHONY: image/build/local
 
-image/build/local-deploy: GOOS=linux
-image/build/local-deploy: fleet-manager
-	docker build -t fleet-manager:test1 -f Dockerfile.hybrid .
-	kubectl set image deploy/fleet-manager fleet-manager=fleet-manager:test1
+image/build/deploy-local: GOOS=linux
+image/build/deploy-local: image/build/deploy-fleet-manager-local image/build/deploy-fleetshard-sync-local
+
+image/build/deploy-fleet-manager-local: GOOS=linux
+image/build/deploy-fleet-manager-local: fleet-manager
+	docker build -t fleet-manager:dev-image -f Dockerfile.hybrid .
+	kubectl set image deploy/fleet-manager fleet-manager=fleet-manager:dev-image
 	kubectl delete pod -l application=fleet-manager
+
+image/build/deploy-fleetshard-sync-local: GOOS=linux
+image/build/deploy-fleetshard-sync-local: fleetshard-sync
+	docker build -t fleet-manager:dev-image -f Dockerfile.hybrid .
+	kubectl set image deploy/fleetshard-sync fleetshard-sync=fleet-manager:dev-image
+	kubectl delete pod -l application=fleetshard-sync
 
 # Build and push the image
 image/push: image/push/fleet-manager image/push/probe
