@@ -76,7 +76,7 @@ $ ./scripts/create-central.sh
 $ ./scripts/fmcurl
 
 # To build and re-deploy the fleet-manager and fleetshard-sync locally run:
-$ make image/build/local-deploy
+$ make deploy/dev-fast
 ```
 
 #### Common make targets

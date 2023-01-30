@@ -557,21 +557,6 @@ image/build/local: image/build
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
 .PHONY: image/build/local
 
-image/build/local-deploy: GOOS=linux
-image/build/local-deploy: image/build/deploy-fleet-manager-local image/build/deploy-fleetshard-sync-local
-
-image/build/fleet-manager-local-deploy: GOOS=linux
-image/build/fleet-manager-local-deploy: fleet-manager image/build/local
-	docker build -t fleet-manager:dev-image -f Dockerfile.hybrid .
-	kubectl set image deploy/fleet-manager fleet-manager=fleet-manager:dev-image
-	kubectl delete pod -l application=fleet-manager
-
-image/build/fleetshard-sync-local-deploy: GOOS=linux
-image/build/fleetshard-sync-local-deploy: fleetshard-sync image/build/local
-	docker build -t fleet-manager:dev-image -f Dockerfile.hybrid .
-	kubectl set image deploy/fleetshard-sync fleetshard-sync=fleet-manager:dev-image
-	kubectl delete pod -l application=fleetshard-sync
-
 # Build and push the image
 image/push: image/push/fleet-manager image/push/probe
 .PHONY: image/push
@@ -903,6 +888,23 @@ undeploy/dev:
 deploy/bootstrap:
 	./dev/env/scripts/bootstrap.sh
 .PHONY: deploy/bootstrap
+
+
+deploy/dev-fast: GOOS=linux
+deploy/dev-fast: deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
+
+deploy/dev-fast/fleet-manager: GOOS=linux
+deploy/dev-fast/fleet-manager: fleet-manager
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) context list
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t fleet-manager:dev-image -f Dockerfile.hybrid .
+	kubectl set image deploy/fleet-manager fleet-manager=fleet-manager:dev-image
+	kubectl delete pod -l application=fleet-manager
+
+deploy/dev-fast/fleetshard-sync: GOOS=linux
+deploy/dev-fast/fleetshard-sync: fleetshard-sync
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t fleet-manager:dev-image -f Dockerfile.hybrid .
+	kubectl set image deploy/fleetshard-sync fleetshard-sync=fleet-manager:dev-image
+	kubectl delete pod -l application=fleetshard-sync
 
 tag:
 	@echo "$(image_tag)"
