@@ -889,13 +889,11 @@ deploy/bootstrap:
 	./dev/env/scripts/bootstrap.sh
 .PHONY: deploy/bootstrap
 
-
 deploy/dev-fast: GOOS=linux
 deploy/dev-fast: deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
 
 deploy/dev-fast/fleet-manager: GOOS=linux
 deploy/dev-fast/fleet-manager: fleet-manager
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) context list
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t fleet-manager:dev-image -f Dockerfile.hybrid .
 	kubectl set image deploy/fleet-manager fleet-manager=fleet-manager:dev-image
 	kubectl delete pod -l application=fleet-manager
