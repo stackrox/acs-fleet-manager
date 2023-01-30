@@ -1,16 +1,15 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 
-	goerr "github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
+
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 
@@ -21,19 +20,23 @@ import (
 )
 
 type dinosaurHandler struct {
-	service        services.DinosaurService
-	providerConfig *config.ProviderConfig
-	authService    authorization.Authorization
-	telemetry      *services.Telemetry
+	service              services.DinosaurService
+	providerConfig       *config.ProviderConfig
+	authService          authorization.Authorization
+	telemetry            *services.Telemetry
+	centralRequestConfig *config.CentralRequestConfig
 }
 
 // NewDinosaurHandler ...
-func NewDinosaurHandler(service services.DinosaurService, providerConfig *config.ProviderConfig, authService authorization.Authorization, telemetry *services.Telemetry) *dinosaurHandler {
+func NewDinosaurHandler(service services.DinosaurService, providerConfig *config.ProviderConfig,
+	authService authorization.Authorization, telemetry *services.Telemetry,
+	centralRequestConfig *config.CentralRequestConfig) *dinosaurHandler {
 	return &dinosaurHandler{
-		service:        service,
-		providerConfig: providerConfig,
-		authService:    authService,
-		telemetry:      telemetry,
+		service:              service,
+		providerConfig:       providerConfig,
+		authService:          authService,
+		telemetry:            telemetry,
+		centralRequestConfig: centralRequestConfig,
 	}
 }
 
@@ -65,7 +68,7 @@ func validateScannerResourcesUnspecified(dinosaurRequest *public.CentralRequestP
 func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var centralRequest public.CentralRequestPayload
 	ctx := r.Context()
-	convDinosaur := &dbapi.CentralRequest{}
+	convCentral := &dbapi.CentralRequest{}
 
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &centralRequest,
@@ -74,30 +77,28 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.ValidateLength(&centralRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxDinosaurNameLength),
 			ValidDinosaurClusterName(&centralRequest.Name, "name"),
 			ValidateDinosaurClusterNameIsUnique(r.Context(), &centralRequest.Name, h.service),
-			ValidateDinosaurClaims(ctx, &centralRequest, convDinosaur),
-			ValidateCloudProvider(&h.service, convDinosaur, h.providerConfig, "creating central requests"),
+			ValidateDinosaurClaims(ctx, &centralRequest, convCentral),
+			ValidateCloudProvider(&h.service, convCentral, h.providerConfig, "creating central requests"),
 			handlers.ValidateMultiAZEnabled(&centralRequest.MultiAz, "creating central requests"),
 			validateCentralResourcesUnspecified(&centralRequest),
 			validateScannerResourcesUnspecified(&centralRequest),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			// Set the internalInstance to true. This will mean that telemetry won't be enabled for it, both within the
-			// central itself and the track requests.
-			// We probably want to expose this as a configuration setting to change it in a "flexible" way in the future.
-			if r.UserAgent() == "fleet-manager-probe-service" {
-				convDinosaur.Internal = true
+			// Set the central request as internal, **iff** the user agent used within the creation request is contained
+			// within the list of user agents for internal services / clients, such as the probe service.
+			if arrays.Contains(h.centralRequestConfig.CentralRequestInternalUserAgents, r.UserAgent()) {
+				convCentral.Internal = true
 			}
-			svcErr := h.service.RegisterDinosaurJob(convDinosaur)
-
+			svcErr := h.service.RegisterDinosaurJob(convCentral)
 			// Do not track centrals created from internal services.
-			if !convDinosaur.Internal {
-				h.telemetry.RegisterTenant(r.Context(), convDinosaur)
-				h.telemetry.TrackCreationRequested(r.Context(), convDinosaur.ID, false, svcErr.AsError())
+			if !convCentral.Internal {
+				h.telemetry.RegisterTenant(r.Context(), convCentral)
+				h.telemetry.TrackCreationRequested(r.Context(), convCentral.ID, false, svcErr.AsError())
 			}
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			return presenters.PresentCentralRequest(convDinosaur), nil
+			return presenters.PresentCentralRequest(convCentral), nil
 		},
 	}
 
@@ -173,16 +174,4 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.HandleList(w, r, cfg)
-}
-
-func getAccountIDFromContext(ctx context.Context) (string, error) {
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return "", goerr.Wrap(err, "cannot obtain claims from context")
-	}
-	accountID, err := claims.GetAccountID()
-	if err != nil {
-		return "", goerr.Wrap(err, "no account id in claims")
-	}
-	return accountID, nil
 }
