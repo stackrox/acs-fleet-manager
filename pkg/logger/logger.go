@@ -4,8 +4,9 @@ package logger
 import (
 	"context"
 	"fmt"
-	sentry "github.com/getsentry/sentry-go"
 	"strings"
+
+	sentry "github.com/getsentry/sentry-go"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
