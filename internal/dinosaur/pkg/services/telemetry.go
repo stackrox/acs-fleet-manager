@@ -10,21 +10,22 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/telemetry"
 )
 
-// Telemetry is the telemetry boot service.
-type Telemetry struct {
-	config *telemetry.TelemetryConfig
+// TelemetryAuth is a wrapper around the user claim extraction.
+//
+//go:generate moq -out telemetry_moq.go . TelemetryAuth
+type TelemetryAuth interface {
+	getUserFromContext(ctx context.Context) (string, error)
 }
 
-// NewTelemetry creates a new telemetry service instance.
-func NewTelemetry(config *telemetry.TelemetryConfig) *Telemetry {
-	return &Telemetry{config: config}
+// TelemetryAuthImpl is the default telemetry auth implementation.
+type TelemetryAuthImpl struct{}
+
+// NewTelemetryAuth creates a new telemetry auth.
+func NewTelemetryAuth() TelemetryAuth {
+	return &TelemetryAuthImpl{}
 }
 
-func (t *Telemetry) enabled() bool {
-	return t != nil && t.config != nil && t.config.Enabled()
-}
-
-func getUserFromContext(ctx context.Context) (string, error) {
+func (t *TelemetryAuthImpl) getUserFromContext(ctx context.Context) (string, error) {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return "", errors.Wrap(err, "cannot obtain claims from context")
@@ -36,6 +37,21 @@ func getUserFromContext(ctx context.Context) (string, error) {
 	return user, nil
 }
 
+// Telemetry is the telemetry boot service.
+type Telemetry struct {
+	auth   TelemetryAuth
+	config telemetry.TelemetryConfig
+}
+
+// NewTelemetry creates a new telemetry service instance.
+func NewTelemetry(auth TelemetryAuth, config telemetry.TelemetryConfig) *Telemetry {
+	return &Telemetry{auth: auth, config: config}
+}
+
+func (t *Telemetry) enabled() bool {
+	return t != nil && t.config != nil && t.config.Enabled()
+}
+
 // RegisterTenant emits a group event that captures meta data of the input central instance.
 // Adds the token user to the tenant group.
 func (t *Telemetry) RegisterTenant(ctx context.Context, central *dbapi.CentralRequest) {
@@ -43,7 +59,7 @@ func (t *Telemetry) RegisterTenant(ctx context.Context, central *dbapi.CentralRe
 		return
 	}
 
-	user, err := getUserFromContext(ctx)
+	user, err := t.auth.getUserFromContext(ctx)
 	if err != nil {
 		glog.Error(errors.Wrap(err, "cannot get telemetry user from context claims"))
 		return
@@ -70,7 +86,7 @@ func (t *Telemetry) TrackCreationRequested(ctx context.Context, tenantID string,
 		errMsg = requestErr.Error()
 	}
 
-	user, err := getUserFromContext(ctx)
+	user, err := t.auth.getUserFromContext(ctx)
 	if err != nil {
 		glog.Error(errors.Wrap(err, "cannot get telemetry user from context claims"))
 		return
@@ -79,7 +95,7 @@ func (t *Telemetry) TrackCreationRequested(ctx context.Context, tenantID string,
 	props := map[string]any{
 		"Tenant ID":        tenantID,
 		"Error":            errMsg,
-		"Success":          err == nil,
+		"Success":          requestErr == nil,
 		"Is Admin Request": isAdmin,
 	}
 	t.config.Telemeter().Track("Central Creation Requested", user, props)
@@ -96,7 +112,7 @@ func (t *Telemetry) TrackDeletionRequested(ctx context.Context, tenantID string,
 		errMsg = requestErr.Error()
 	}
 
-	user, err := getUserFromContext(ctx)
+	user, err := t.auth.getUserFromContext(ctx)
 	if err != nil {
 		glog.Error(errors.Wrap(err, "cannot get telemetry user from context claims"))
 		return
@@ -105,7 +121,7 @@ func (t *Telemetry) TrackDeletionRequested(ctx context.Context, tenantID string,
 	props := map[string]any{
 		"Tenant ID":        tenantID,
 		"Error":            errMsg,
-		"Success":          err == nil,
+		"Success":          requestErr == nil,
 		"Is Admin Request": isAdmin,
 	}
 	t.config.Telemeter().Track("Central Deletion Requested", user, props)
