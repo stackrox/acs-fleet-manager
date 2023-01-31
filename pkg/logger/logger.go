@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/getsentry/sentry-go"
+	sentry "github.com/getsentry/sentry-go"
+
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
@@ -25,6 +26,7 @@ const (
 	ActionSuccess LoggerKeys = "success"
 
 	logEventSeparator = "$$"
+	logDepth          = 1
 )
 
 // LogEvent ...
@@ -75,6 +77,7 @@ func (l LogEvent) ToString() string {
 type UHCLogger interface {
 	V(level int32) UHCLogger
 	Infof(format string, args ...interface{})
+	InfoDepth(depth int, args ...interface{})
 	Warningf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Error(err error)
@@ -178,13 +181,18 @@ func getSessionFromClaims(ctx context.Context) string {
 // Infof ...
 func (l *logger) Infof(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
-	glog.V(glog.Level(l.level)).Infof(prefixed)
+	glog.InfoDepth(logDepth, prefixed)
+}
+
+// InfoDepth logs an info log message, wrapping glogs info depth
+func (l *logger) InfoDepth(depth int, args ...interface{}) {
+	glog.InfoDepth(logDepth+depth, args...)
 }
 
 // Warningf ...
 func (l *logger) Warningf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
-	glog.Warningln(prefixed)
+	glog.WarningDepth(logDepth, prefixed)
 	l.captureSentryEvent(sentry.LevelWarning, format, args...)
 }
 
@@ -192,12 +200,13 @@ func (l *logger) Warningf(format string, args ...interface{}) {
 func (l *logger) Errorf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.Errorln(prefixed)
+	glog.ErrorDepth(logDepth, prefixed)
 	l.captureSentryEvent(sentry.LevelError, format, args...)
 }
 
 // Error ...
 func (l *logger) Error(err error) {
-	glog.Error(err)
+	glog.ErrorDepth(logDepth, err)
 	if l.sentryHub == nil {
 		sentry.CaptureException(err)
 		return
@@ -208,7 +217,7 @@ func (l *logger) Error(err error) {
 // Fatalf ...
 func (l *logger) Fatalf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
-	glog.Fatalln(prefixed)
+	glog.FatalDepth(logDepth, prefixed)
 	l.captureSentryEvent(sentry.LevelFatal, format, args...)
 }
 

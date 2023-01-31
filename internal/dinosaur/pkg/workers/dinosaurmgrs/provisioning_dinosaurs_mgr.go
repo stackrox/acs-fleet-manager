@@ -53,7 +53,6 @@ func (k *ProvisioningDinosaurManager) Stop() {
 
 // Reconcile ...
 func (k *ProvisioningDinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling centrals")
 	var encounteredErrors []error
 
 	// handle provisioning dinosaurs state
@@ -63,7 +62,8 @@ func (k *ProvisioningDinosaurManager) Reconcile() []error {
 	provisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusProvisioning)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list provisioning centrals"))
-	} else {
+	}
+	if len(provisioningDinosaurs) > 0 {
 		glog.Infof("provisioning centrals count = %d", len(provisioningDinosaurs))
 	}
 	for _, dinosaur := range provisioningDinosaurs {
