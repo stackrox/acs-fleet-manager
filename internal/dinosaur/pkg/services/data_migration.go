@@ -20,12 +20,14 @@ func NewDataMigration(connectionFactory *db.ConnectionFactory, amsClient ocm.AMS
 	return &DataMigration{connectionFactory: connectionFactory, amsClient: amsClient}
 }
 
-func (m *DataMigration) migrateOrganisationNames() error {
+// Returns number of migrated records for testing purposes.
+func (m *DataMigration) migrateOrganisationNames() (int, error) {
+	migratedCnt := 0
 	colName := "OrganisationName"
 	dbConn := m.connectionFactory.New()
 	rows, err := dbConn.Model(&dbapi.CentralRequest{}).Where("COALESCE(organisation_name, '') = ''").Rows()
 	if err != nil {
-		return errors.Wrap(err, "querying rows requiring data migration")
+		return migratedCnt, errors.Wrap(err, "querying rows requiring data migration")
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
@@ -36,24 +38,25 @@ func (m *DataMigration) migrateOrganisationNames() error {
 	for rows.Next() {
 		var central dbapi.CentralRequest
 		if err := dbConn.ScanRows(rows, &central); err != nil {
-			return errors.Wrap(err, "scanning row record")
+			return migratedCnt, errors.Wrap(err, "scanning row record")
 		}
 
 		org, err := m.amsClient.GetOrganisationFromExternalID(central.OrganisationID)
 		if err != nil {
-			return errors.Wrap(err, "fetching organisation name from OCM")
+			return migratedCnt, errors.Wrap(err, "fetching organisation name from OCM")
 		}
 		if err = dbConn.Model(&central).Update(colName, org.Name()).Error; err != nil {
-			return errors.Wrap(err, "updating organisation name")
+			return migratedCnt, errors.Wrap(err, "updating organisation name")
 		}
 		glog.Infof("migrated column %q for central instance %q to new value %q", colName, central.ID, central.OrganisationName)
+		migratedCnt += 1
 	}
-	return nil
+	return migratedCnt, nil
 }
 
 // Start the migration service.
 func (m *DataMigration) Start() {
-	err := m.migrateOrganisationNames()
+	_, err := m.migrateOrganisationNames()
 	if err != nil {
 		glog.Error(errors.Wrapf(err, "data migration of column %q", "organisation_name"))
 	}
