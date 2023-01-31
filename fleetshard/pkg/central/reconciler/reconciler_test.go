@@ -97,7 +97,7 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, simpleManagedCentral.Id, central.Spec.Customize.Labels[tenantIDLabelKey])
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgName, central.Spec.Customize.Annotations[orgNameAnnotationKey])
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, central.Spec.Customize.Labels[orgIDLabelKey])
-	assert.Equal(t, "1", central.GetAnnotations()[revisionAnnotationKey])
+	assert.Equal(t, "1", central.GetAnnotations()[util.RevisionAnnotationKey])
 	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
 
@@ -188,7 +188,7 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        centralName,
 			Namespace:   centralNamespace,
-			Annotations: map[string]string{revisionAnnotationKey: "3"},
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
 		},
 	}, centralDeploymentObject()).Build()
 
@@ -203,7 +203,7 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
 	assert.Equal(t, centralName, central.GetName())
-	assert.Equal(t, "4", central.GetAnnotations()[revisionAnnotationKey])
+	assert.Equal(t, "4", central.GetAnnotations()[util.RevisionAnnotationKey])
 }
 
 func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
@@ -211,7 +211,7 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        centralName,
 			Namespace:   centralNamespace,
-			Annotations: map[string]string{revisionAnnotationKey: "invalid annotation"},
+			Annotations: map[string]string{util.RevisionAnnotationKey: "invalid annotation"},
 		},
 	}, centralDeploymentObject()).Build()
 
@@ -233,7 +233,7 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        centralName,
 			Namespace:   centralNamespace,
-			Annotations: map[string]string{revisionAnnotationKey: "3"},
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
 		},
 	}, centralDeploymentObject()).Build()
 
@@ -257,7 +257,7 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
-	assert.Equal(t, "4", central.Annotations[revisionAnnotationKey])
+	assert.Equal(t, "4", central.Annotations[util.RevisionAnnotationKey])
 }
 
 func TestIgnoreCacheForCentralNotReady(t *testing.T) {
@@ -265,7 +265,7 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        centralName,
 			Namespace:   centralNamespace,
-			Annotations: map[string]string{revisionAnnotationKey: "3"},
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
 		},
 	}, centralDeploymentObject()).Build()
 
