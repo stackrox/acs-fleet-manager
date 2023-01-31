@@ -74,11 +74,11 @@ func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(&convDinosaur)
-			h.telemetry.TrackCreationRequested(convDinosaur.ID, convDinosaur.OwnerAccountID, true, svcErr.AsError())
+			h.telemetry.RegisterTenant(r.Context(), &convDinosaur)
+			h.telemetry.TrackCreationRequested(r.Context(), convDinosaur.ID, true, svcErr.AsError())
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			h.telemetry.RegisterTenant(&convDinosaur)
 			// TODO(mclasmeier): Do we need PresentDinosaurRequestAdminEndpoint?
 			return presenters.PresentCentralRequest(&convDinosaur), nil
 		},
@@ -156,11 +156,8 @@ func (h adminDinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-
 			err := h.service.RegisterDinosaurDeprovisionJob(ctx, id)
-			if accountID, orgErr := getAccountIDFromContext(ctx); orgErr == nil {
-				h.telemetry.TrackDeletionRequested(id, accountID, true, err.AsError())
-			}
+			h.telemetry.TrackDeletionRequested(ctx, id, true, err.AsError())
 			return nil, err
 		},
 	}
@@ -322,7 +319,6 @@ func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.
 
 // Update a Central instance.
 func (h adminDinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
-
 	var dinosaurUpdateReq private.CentralUpdateRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &dinosaurUpdateReq,
