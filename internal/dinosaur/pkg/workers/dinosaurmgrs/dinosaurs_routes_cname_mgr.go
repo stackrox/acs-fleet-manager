@@ -47,13 +47,13 @@ func (k *DinosaurRoutesCNAMEManager) Stop() {
 
 // Reconcile ...
 func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
-	glog.Infoln("reconciling DNS for centrals")
 	var errs []error
 
 	dinosaurs, listErr := k.dinosaurService.ListDinosaursWithRoutesNotCreated()
 	if listErr != nil {
 		errs = append(errs, errors.Wrap(listErr, "failed to list centrals whose routes are not created"))
-	} else {
+	}
+	if len(dinosaurs) > 0 {
 		glog.Infof("centrals need routes created count = %d", len(dinosaurs))
 	}
 
