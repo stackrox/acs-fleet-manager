@@ -49,7 +49,7 @@ func (m *DataMigration) migrateOrganisationNames() (int, error) {
 			return migratedCnt, errors.Wrap(err, "updating organisation name")
 		}
 		glog.Infof("migrated column %q for central instance %q to new value %q", colName, central.ID, central.OrganisationName)
-		migratedCnt += 1
+		migratedCnt++
 	}
 	return migratedCnt, nil
 }
