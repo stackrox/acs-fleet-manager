@@ -128,7 +128,7 @@ func DisableAdminPassword(ctx context.Context, centralID, centralName string) er
 }
 
 func getSecretWithWait(ctx context.Context, client ctrlClient.Client, namespace string, secretName string) (*corev1.Secret, error) {
-	glog.Info("Waiting until secret with admin password is created")
+	glog.Info("Waiting until secret is created")
 	exists := concurrency.PollWithTimeout(
 		func() bool {
 			secret := corev1.Secret{} // pragma: allowlist secret
@@ -137,10 +137,10 @@ func getSecretWithWait(ctx context.Context, client ctrlClient.Client, namespace 
 		}, 10*time.Second, 5*time.Minute)
 	if !exists {
 		return nil, errors.Errorf(
-			"timed out waiting for admin password secret %s/%s to be created", namespace, secretName)
+			"timed out waiting for secret %s/%s to be created", namespace, secretName)
 	}
 
-	glog.Infof("Secret with admin password was created successfully")
+	glog.Infof("Secret was created successfully")
 	secret := corev1.Secret{} // pragma: allowlist secret
 	if err := client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: secretName}, &secret); err != nil {
 		return nil, errors.Wrapf(err, "retrieving secret %s/%s", namespace, secretName)
