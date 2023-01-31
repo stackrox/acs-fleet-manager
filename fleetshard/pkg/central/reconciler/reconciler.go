@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strconv"
 	"sync/atomic"
 
 	"github.com/golang/glog"
@@ -35,8 +34,6 @@ import (
 const (
 	FreeStatus int32 = iota
 	BlockedStatus
-
-	revisionAnnotationKey = "rhacs.redhat.com/revision"
 
 	helmReleaseName = "tenant-resources"
 
@@ -262,7 +259,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if central.GetAnnotations() == nil {
 			central.Annotations = map[string]string{}
 		}
-		central.GetAnnotations()[revisionAnnotationKey] = "1"
+		if err := util.IncrementCentralRevision(central); err != nil {
+			return nil, errors.Wrap(err, "incrementing central's revision")
+		}
 
 		glog.Infof("Creating central %s/%s", central.GetNamespace(), central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
@@ -273,9 +272,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		glog.Infof("Update central %s/%s", central.GetNamespace(), central.GetName())
 		existingCentral.Spec = central.Spec
 
-		err = r.incrementCentralRevision(&existingCentral)
-		if err != nil {
-			return nil, err
+		if err := util.IncrementCentralRevision(&existingCentral); err != nil {
+			return nil, errors.Wrap(err, "incrementing central's revision")
 		}
 		existingCentral.Spec = *central.Spec.DeepCopy()
 
@@ -434,16 +432,6 @@ func (r *CentralReconciler) setLastCentralHash(central private.ManagedCentral) e
 	}
 
 	r.lastCentralHash = hash
-	return nil
-}
-
-func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) error {
-	revision, err := strconv.Atoi(central.Annotations[revisionAnnotationKey])
-	if err != nil {
-		return errors.Wrapf(err, "failed to increment central revision %s", central.GetName())
-	}
-	revision++
-	central.Annotations[revisionAnnotationKey] = fmt.Sprintf("%d", revision)
 	return nil
 }
 
