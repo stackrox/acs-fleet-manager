@@ -98,7 +98,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	monitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
-	telemetryEnabled := r.telemetry.StorageKey != ""
+	// Telemetry will only be enabled if the storage key is set _and_ the central is not an "internal" central created
+	// from internal clients such as probe service or others.
+	telemetryEnabled := r.telemetry.StorageKey != "" && !remoteCentral.Metadata.Internal
 
 	centralResources, err := converters.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Central.Resources)
 	if err != nil {
@@ -131,7 +133,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			Central: &v1alpha1.CentralComponentSpec{
 				Exposure: &v1alpha1.Exposure{
 					Route: &v1alpha1.ExposureRoute{
-						Enabled: pointer.BoolPtr(r.useRoutes),
+						Enabled: pointer.Bool(r.useRoutes),
 					},
 				},
 				Monitoring: &v1alpha1.Monitoring{
@@ -141,7 +143,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 					Resources: &centralResources,
 				},
 				Telemetry: &v1alpha1.Telemetry{
-					Enabled: pointer.BoolPtr(telemetryEnabled),
+					Enabled: pointer.Bool(telemetryEnabled),
 					Storage: &v1alpha1.TelemetryStorage{
 						Endpoint: &r.telemetry.StorageEndpoint,
 						Key:      &r.telemetry.StorageKey,
@@ -190,7 +192,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	if r.hasAuthProvider {
-		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.BoolPtr(true)
+		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
 	}
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
