@@ -38,7 +38,7 @@ func NewPreparingDinosaurManager(dinosaurService services.DinosaurService, centr
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService:       dinosaurService,
-		centralRequestTimeout: centralRequestConfig.CentralRequestExpirationTimeout,
+		centralRequestTimeout: centralRequestConfig.ExpirationTimeout,
 	}
 }
 

@@ -37,7 +37,7 @@ func NewProvisioningDinosaurManager(dinosaurService services.DinosaurService, ob
 		},
 		dinosaurService:       dinosaurService,
 		observatoriumService:  observatoriumService,
-		centralRequestTimeout: centralRequestConfig.CentralRequestExpirationTimeout,
+		centralRequestTimeout: centralRequestConfig.ExpirationTimeout,
 	}
 }
 

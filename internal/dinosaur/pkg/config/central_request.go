@@ -8,24 +8,24 @@ import (
 
 // CentralRequestConfig holds all configuration for CentralRequests, e.g. expiration timeouts.
 type CentralRequestConfig struct {
-	CentralRequestExpirationTimeout  time.Duration `json:"central_request_expiration_timeout"`
-	CentralRequestInternalUserAgents []string      `json:"central_request_internal_user_agents"`
+	ExpirationTimeout  time.Duration `json:"expiration_timeout"`
+	InternalUserAgents []string      `json:"internal_user_agents"`
 }
 
 // NewCentralRequestConfig creates a new CentralRequestConfig with default values.
 func NewCentralRequestConfig() *CentralRequestConfig {
 	return &CentralRequestConfig{
-		CentralRequestExpirationTimeout:  60 * time.Minute,
-		CentralRequestInternalUserAgents: []string{"fleet-manager-probe-service"},
+		ExpirationTimeout:  60 * time.Minute,
+		InternalUserAgents: []string{"fleet-manager-probe-service"},
 	}
 }
 
 // AddFlags adds flags for all configuration settings within CentralRequestConfig to the flag set.
 func (c *CentralRequestConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.DurationVar(&c.CentralRequestExpirationTimeout, "central-request-expiration-timeout",
-		c.CentralRequestExpirationTimeout, "Timeout for central requests")
-	fs.StringSliceVar(&c.CentralRequestInternalUserAgents, "central-request-internal-user-agents",
-		c.CentralRequestInternalUserAgents,
+	fs.DurationVar(&c.ExpirationTimeout, "central-request-expiration-timeout",
+		c.ExpirationTimeout, "Timeout for central requests")
+	fs.StringSliceVar(&c.InternalUserAgents, "central-request-internal-user-agents",
+		c.InternalUserAgents,
 		"HTTP User-Agents for central requests coming from internal services such as the probe service")
 }
 

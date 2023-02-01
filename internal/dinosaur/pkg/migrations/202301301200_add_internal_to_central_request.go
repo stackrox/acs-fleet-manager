@@ -3,6 +3,8 @@ package migrations
 import (
 	"time"
 
+	"github.com/golang/glog"
+
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
@@ -64,6 +66,7 @@ func addInternalToCentralRequest() *gormigrate.Migration {
 				if err := tx.Migrator().AddColumn(&CentralRequest{}, colName); err != nil {
 					return errors.Wrapf(err, "adding column %s in migration %s", colName, id)
 				}
+				glog.Infof("Successfully added the %s column", colName)
 			}
 			return nil
 		},
@@ -72,6 +75,7 @@ func addInternalToCentralRequest() *gormigrate.Migration {
 				if err := tx.Migrator().DropColumn(&CentralRequest{}, colName); err != nil {
 					return errors.Wrapf(err, "rolling back from column %s in migration %s", colName, id)
 				}
+				glog.Infof("Successfully removed the %s column", colName)
 			}
 			return nil
 		},

@@ -86,7 +86,7 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 			// Set the central request as internal, **iff** the user agent used within the creation request is contained
 			// within the list of user agents for internal services / clients, such as the probe service.
-			if arrays.Contains(h.centralRequestConfig.CentralRequestInternalUserAgents, r.UserAgent()) {
+			if arrays.Contains(h.centralRequestConfig.InternalUserAgents, r.UserAgent()) {
 				convCentral.Internal = true
 			}
 			svcErr := h.service.RegisterDinosaurJob(convCentral)

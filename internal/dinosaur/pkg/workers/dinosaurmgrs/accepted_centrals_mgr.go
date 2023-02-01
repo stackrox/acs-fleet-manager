@@ -45,7 +45,7 @@ func NewAcceptedCentralManager(centralService services.DinosaurService, quotaSer
 		quotaServiceFactory:    quotaServiceFactory,
 		clusterPlmtStrategy:    clusterPlmtStrategy,
 		dataPlaneClusterConfig: dataPlaneClusterConfig,
-		centralRequestTimeout:  centralRequestConfig.CentralRequestExpirationTimeout,
+		centralRequestTimeout:  centralRequestConfig.ExpirationTimeout,
 	}
 }
 
