@@ -10,12 +10,13 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
+	"k8s.io/utils/pointer"
 	"sync/atomic"
 )
 
 const readyCentralWorkerType = "ready_dinosaur"
 
-var readyCentralCountCache *int64
+var readyCentralCountCache = pointer.Int64(0)
 
 // ReadyDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type ReadyDinosaurManager struct {

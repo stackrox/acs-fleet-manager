@@ -4,6 +4,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"k8s.io/utils/pointer"
 	"sync/atomic"
 	"time"
 
@@ -28,7 +29,7 @@ import (
 // TODO(SimonBaeumer): set a unique identifier for the map key, currently the instance name is used
 type reconcilerRegistry map[string]*centralReconciler.CentralReconciler
 
-var reconciledCentralCountCache *int64
+var reconciledCentralCountCache = pointer.Int64(0)
 
 var backoff = wait.Backoff{
 	Duration: 1 * time.Second,

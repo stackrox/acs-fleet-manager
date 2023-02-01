@@ -3,6 +3,7 @@ package workers
 
 import (
 	"fmt"
+	"k8s.io/utils/pointer"
 	"sync/atomic"
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -60,7 +61,7 @@ const (
 	clusterAdminRoleName             = "cluster-admin"
 )
 
-var readyClusterCountCache *int64
+var readyClusterCountCache = pointer.Int64(0)
 
 var clusterMetricsStatuses = []api.ClusterStatus{
 	api.ClusterAccepted,
