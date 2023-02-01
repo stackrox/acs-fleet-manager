@@ -3,6 +3,7 @@ package workers
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
@@ -58,6 +59,8 @@ const (
 	dedicatedReadersRoleBindingName  = "dedicated-readers"
 	clusterAdminRoleName             = "cluster-admin"
 )
+
+var readyClusterCountCache *int64
 
 var clusterMetricsStatuses = []api.ClusterStatus{
 	api.ClusterAccepted,
@@ -322,8 +325,8 @@ func (c *ClusterManager) processReadyClusters() []error {
 		errs = append(errs, errors.Wrap(listErr, "failed to list ready clusters"))
 		return errs
 	}
-	if len(readyClusters) > 0 {
-		glog.V(10).Infof("ready clusters count = %d", len(readyClusters))
+	if atomic.CompareAndSwapInt64(readyClusterCountCache, *readyClusterCountCache, int64(len(readyClusters))) {
+		glog.V(10).Infof("ready clusters count = %d", atomic.LoadInt64(readyClusterCountCache))
 	}
 
 	for _, readyCluster := range readyClusters {
@@ -472,9 +475,9 @@ func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error
 		if err != nil {
 			return errors.Wrapf(err, "failed to update instance type in database for cluster %s", cluster.ClusterID)
 		}
+		logger.Logger.V(10).Infof("supported instance type for cluster = %s successful updated", cluster.ClusterID)
 	}
 
-	logger.Logger.V(10).Infof("supported instance type for cluster = %s successful updated", cluster.ClusterID)
 	return nil
 }
 

@@ -4,6 +4,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/golang/glog"
@@ -26,6 +27,8 @@ import (
 // Central instance.
 // TODO(SimonBaeumer): set a unique identifier for the map key, currently the instance name is used
 type reconcilerRegistry map[string]*centralReconciler.CentralReconciler
+
+var reconciledCentralCountCache *int64
 
 var backoff = wait.Backoff{
 	Duration: 1 * time.Second,
@@ -119,7 +122,9 @@ func (r *Runtime) Start() error {
 		}
 
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
-		glog.Infof("Received %d centrals", len(list.Items))
+		if atomic.CompareAndSwapInt64(reconciledCentralCountCache, *reconciledCentralCountCache, int64(len(list.Items))) {
+			glog.Infof("Received central count changed: received %d centrals", len(list.Items))
+		}
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central,
