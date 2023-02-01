@@ -74,6 +74,9 @@ $ ./scripts/create-central.sh
 
 # To interact with the API use
 $ ./scripts/fmcurl
+
+# To build and re-deploy the fleet-manager and fleetshard-sync locally run:
+$ make deploy/dev-fast
 ```
 
 #### Common make targets
