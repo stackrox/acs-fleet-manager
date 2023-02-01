@@ -123,7 +123,7 @@ func (r *Runtime) Start() error {
 
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
 		if atomic.CompareAndSwapInt64(reconciledCentralCountCache, *reconciledCentralCountCache, int64(len(list.Items))) {
-			glog.Infof("Received central count changed: received %d centrals", len(list.Items))
+			glog.Infof("Received central count changed: received %d centrals", atomic.LoadInt64(reconciledCentralCountCache))
 		}
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
