@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/pkg/errors"
 	pkgerrors "github.com/pkg/errors"
 
 	"github.com/golang/glog"
@@ -113,6 +114,19 @@ func NewOCMConnection(ocmConfig *OCMConfig, BaseURL string) (*sdkClient.Connecti
 // NewClient ...
 func NewClient(connection *sdkClient.Connection) Client {
 	return &client{connection: connection}
+}
+
+// NewMockClient returns a new OCM client with stubbed responses.
+func NewMockClient() Client {
+	return &ClientMock{
+		GetOrganisationFromExternalIDFunc: func(externalID string) (*amsv1.Organization, error) {
+			org, err := amsv1.NewOrganization().
+				ID("12345678").
+				Name("stubbed-name").
+				Build()
+			return org, errors.Wrap(err, "failed to build organisation")
+		},
+	}
 }
 
 // Connection ...
