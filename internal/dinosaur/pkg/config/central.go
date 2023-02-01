@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -33,10 +32,6 @@ type CentralConfig struct {
 	CentralIDPClientSecret     string `json:"central_idp_client_secret"`
 	CentralIDPClientSecretFile string `json:"central_idp_client_secret_file"`
 	CentralIDPIssuer           string `json:"central_idp_issuer"`
-
-	// TODO: this parameter does not belong here, as it's configuration of central request, not central.
-	// TODO: However, for the time being there's no better place to put this parameter.
-	CentralRequestExpirationTimeout time.Duration `json:"central_request_expiration_timeout"`
 }
 
 // NewCentralConfig ...
@@ -50,7 +45,6 @@ func NewCentralConfig() *CentralConfig {
 		Quota:                            NewCentralQuotaConfig(),
 		CentralIDPClientSecretFile:       "secrets/central.idp-client-secret", //pragma: allowlist secret
 		CentralIDPIssuer:                 "https://sso.redhat.com/auth/realms/redhat-external",
-		CentralRequestExpirationTimeout:  60 * time.Minute,
 	}
 }
 
@@ -68,7 +62,6 @@ func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.CentralIDPClientID, "central-idp-client-id", c.CentralIDPClientID, "OIDC client_id to pass to Central's auth config")
 	fs.StringVar(&c.CentralIDPClientSecretFile, "central-idp-client-secret-file", c.CentralIDPClientSecretFile, "File containing OIDC client_secret to pass to Central's auth config")
 	fs.StringVar(&c.CentralIDPIssuer, "central-idp-issuer", c.CentralIDPIssuer, "OIDC issuer URL to pass to Central's auth config")
-	fs.DurationVar(&c.CentralRequestExpirationTimeout, "central-request-expiration-timeout", c.CentralRequestExpirationTimeout, "Timeout for central requests")
 }
 
 // ReadFiles ...

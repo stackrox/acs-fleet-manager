@@ -39,10 +39,11 @@ import (
 
 type options struct {
 	di.Inject
-	ServerConfig   *server.ServerConfig
-	OCMConfig      *ocm.OCMConfig
-	ProviderConfig *config.ProviderConfig
-	IAMConfig      *iam.IAMConfig
+	ServerConfig         *server.ServerConfig
+	OCMConfig            *ocm.OCMConfig
+	ProviderConfig       *config.ProviderConfig
+	IAMConfig            *iam.IAMConfig
+	CentralRequestConfig *config.CentralRequestConfig
 
 	AMSClient                ocm.AMSClient
 	Dinosaur                 services.DinosaurService
@@ -86,7 +87,8 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}
 
-	dinosaurHandler := handlers.NewDinosaurHandler(s.Dinosaur, s.ProviderConfig, s.AuthService, s.Telemetry)
+	dinosaurHandler := handlers.NewDinosaurHandler(s.Dinosaur, s.ProviderConfig, s.AuthService, s.Telemetry,
+		s.CentralRequestConfig)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)

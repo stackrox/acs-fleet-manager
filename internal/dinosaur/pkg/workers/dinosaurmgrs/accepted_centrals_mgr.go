@@ -33,7 +33,7 @@ type AcceptedCentralManager struct {
 }
 
 // NewAcceptedCentralManager creates a new manager
-func NewAcceptedCentralManager(centralService services.DinosaurService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, dataPlaneClusterConfig *config.DataplaneClusterConfig, centralConfig *config.CentralConfig) *AcceptedCentralManager {
+func NewAcceptedCentralManager(centralService services.DinosaurService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, dataPlaneClusterConfig *config.DataplaneClusterConfig, centralRequestConfig *config.CentralRequestConfig) *AcceptedCentralManager {
 	metrics.InitReconcilerMetricsForType(acceptedCentralWorkerType)
 	return &AcceptedCentralManager{
 		BaseWorker: workers.BaseWorker{
@@ -45,7 +45,7 @@ func NewAcceptedCentralManager(centralService services.DinosaurService, quotaSer
 		quotaServiceFactory:    quotaServiceFactory,
 		clusterPlmtStrategy:    clusterPlmtStrategy,
 		dataPlaneClusterConfig: dataPlaneClusterConfig,
-		centralRequestTimeout:  centralConfig.CentralRequestExpirationTimeout,
+		centralRequestTimeout:  centralRequestConfig.ExpirationTimeout,
 	}
 }
 

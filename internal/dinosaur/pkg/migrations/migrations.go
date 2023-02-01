@@ -40,6 +40,7 @@ func getMigrations(ocmConfig *ocm.OCMConfig) []*gormigrate.Migration {
 		changeCentralClientOrigin(),
 		addCloudAccountIDToCentralRequest(),
 		addOrganisationNameToCentralRequest(ocmConfig),
+		addInternalToCentralRequest(),
 	}
 }
 
