@@ -1,17 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    deployment.kubernetes.io/revision: "1"
   labels:
     app: rhacs-operator
     control-plane: controller-manager
   name: rhacs-operator-controller-manager
   namespace: stackrox-operator
 spec:
-  progressDeadlineSeconds: 600
   replicas: 1
-  revisionHistoryLimit: 1
   selector:
     matchLabels:
       app: rhacs-operator
@@ -56,16 +52,13 @@ spec:
             memory: 300Mi
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
-        volumeMounts:
-        - mountPath: /apiserver.local.config/certificates
-          name: apiservice-cert
-        - mountPath: /tmp/k8s-webhook-server/serving-certs
-          name: webhook-cert
       - args:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         env:
+        - name: ENABLE_WEBHOOKS
+          value: "false"
         - name: RELATED_IMAGE_MAIN
         - name: RELATED_IMAGE_SCANNER
         - name: RELATED_IMAGE_SCANNER_SLIM
@@ -120,11 +113,6 @@ spec:
           allowPrivilegeEscalation: false
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
-        volumeMounts:
-        - mountPath: /apiserver.local.config/certificates
-          name: apiservice-cert
-        - mountPath: /tmp/k8s-webhook-server/serving-certs
-          name: webhook-cert
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -133,23 +121,3 @@ spec:
       serviceAccount: rhacs-operator-controller-manager
       serviceAccountName: rhacs-operator-controller-manager
       terminationGracePeriodSeconds: 10
-      volumes:
-      - name: apiservice-cert
-        secret:
-          defaultMode: 420
-          items:
-          - key: tls.crt
-            path: apiserver.crt
-          - key: tls.key
-            path: apiserver.key
-          secretName: rhacs-operator-controller-manager-service-cert
-      - name: webhook-cert
-        secret:
-          defaultMode: 420
-          items:
-          - key: tls.crt
-            path: tls.crt
-          - key: tls.key
-            path: tls.key
-          secretName: rhacs-operator-controller-manager-service-cert
-
