@@ -10,9 +10,12 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
+	"sync/atomic"
 )
 
 const readyCentralWorkerType = "ready_dinosaur"
+
+var readyCentralCountCache *int64
 
 // ReadyDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type ReadyDinosaurManager struct {
@@ -49,20 +52,14 @@ func (k *ReadyDinosaurManager) Stop() {
 
 // Reconcile ...
 func (k *ReadyDinosaurManager) Reconcile() []error {
-
 	var encounteredErrors []error
 
 	readyDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusReady)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list ready centrals"))
 	}
-	if len(readyDinosaurs) > 0 {
-		glog.Infof("ready centrals count = %d", len(readyDinosaurs))
-	}
-
-	for _, dinosaur := range readyDinosaurs {
-		glog.V(10).Infof("ready central id = %s", dinosaur.ID)
-		// TODO implement reconciliation logic for ready dinosaurs
+	if atomic.CompareAndSwapInt64(readyCentralCountCache, *readyCentralCountCache, int64(len(readyDinosaurs))) {
+		glog.Infof("ready centrals count = %d", atomic.LoadInt64(readyCentralCountCache))
 	}
 
 	return encounteredErrors
