@@ -8,9 +8,10 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/lib/pq"
+	stackroxDBClones "github.com/stackrox/rox/migrator/clone/postgres"
 )
 
-const centralDBName = "central_active"
+const centralDBName = stackroxDBClones.CurrentClone
 
 // CentralDBInitFunc is a type for functions that perform initialization on a fresh Central DB.
 // It requires a valid DBConnection of a user with administrative privileges, and the user name and password
@@ -42,6 +43,13 @@ func InitializeDatabase(ctx context.Context, con DBConnection, userName, userPas
 	err = createCentralDB(ctx, db, centralDBName, userName, con.user)
 	if err != nil {
 		return err
+	}
+
+	// TODO: this step can be removed after this code is deployed to production and
+	// all legacy Centrals are migrated
+	err = migrateLegacyDBs(ctx, con, userName, con.user)
+	if err != nil {
+		return nil
 	}
 
 	con.database = centralDBName // extensions are installed in the newly created DB
@@ -138,6 +146,60 @@ func createCentralDB(ctx context.Context, db *sql.DB, databaseName, owner, curre
 		} else {
 			return fmt.Errorf("checking if central_active DB exists: %w", err)
 		}
+	}
+
+	return nil
+}
+
+func migrateLegacyDBs(ctx context.Context, con DBConnection, newOwner, currentOwner string) error {
+	con.database = centralDBName
+	err := changeDBOwner(ctx, con, newOwner, currentOwner)
+	if err != nil {
+		return fmt.Errorf("changing DB %s owner: %w", con.database, err)
+	}
+
+	optionalDatabases := [...]string{stackroxDBClones.PreviousClone, stackroxDBClones.TempClone,
+		stackroxDBClones.BackupClone, stackroxDBClones.RestoreClone}
+
+	for _, dbName := range optionalDatabases {
+		con.database = dbName
+		err = changeDBOwner(ctx, con, newOwner, currentOwner)
+		if err != nil {
+			var pqErr *pq.Error
+			if errors.As(err, &pqErr) {
+				if pqErr.Code.Name() == "invalid_catalog_name" {
+					glog.Infof("DB %s does not exist, migration skipped", con.database)
+					continue
+				}
+			}
+
+			return fmt.Errorf("changing DB %s owner: %w", con.database, err)
+		}
+	}
+
+	return nil
+}
+
+func changeDBOwner(ctx context.Context, con DBConnection, newOwner, currentOwner string) error {
+	db, err := sql.Open("postgres", con.asConnectionStringWithPassword())
+	if err != nil {
+		return fmt.Errorf("opening DB: %w", err)
+	}
+
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			glog.Errorf("Error closing DB: %v", closeErr)
+		}
+	}()
+
+	_, err = db.ExecContext(ctx, "ALTER DATABASE "+con.database+" OWNER TO "+newOwner)
+	if err != nil {
+		return fmt.Errorf("chaging DB %s owner: %w", con.database, err)
+	}
+
+	_, err = db.ExecContext(ctx, "REASSIGN OWNED BY "+currentOwner+" TO "+newOwner)
+	if err != nil {
+		return fmt.Errorf("reassigning tables from in DB %s: %w", con.database, err)
 	}
 
 	return nil
