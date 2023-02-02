@@ -3,9 +3,6 @@ package workers
 
 import (
 	"fmt"
-	"k8s.io/utils/pointer"
-	"sync/atomic"
-
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -13,7 +10,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/constants"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-
 	"strings"
 	"sync"
 
@@ -61,7 +57,14 @@ const (
 	clusterAdminRoleName             = "cluster-admin"
 )
 
-var readyClusterCountCache = pointer.Int64(0)
+var (
+	readyClusterCount        int32
+	cleanUpClustersCount     int32
+	deprovisionClusterCount  int32
+	acceptedClusterCount     int32
+	provisioningClusterCount int32
+	provisionedClustersCount int32
+)
 
 var clusterMetricsStatuses = []api.ClusterStatus{
 	api.ClusterAccepted,
@@ -204,9 +207,8 @@ func (c *ClusterManager) processDeprovisioningClusters() []error {
 		errs = append(errs, serviceErr)
 		return errs
 	}
-	if len(deprovisioningClusters) > 0 {
-		glog.Infof("deprovisioning clusters count = %d", len(deprovisioningClusters))
-	}
+	deprovisionClusterCount = int32(len(deprovisioningClusters))
+	logger.InfoChangedInt32(&deprovisionClusterCount, "deprovisioning clusters count = %d")
 
 	for i := range deprovisioningClusters {
 		cluster := deprovisioningClusters[i]
@@ -227,9 +229,8 @@ func (c *ClusterManager) processCleanupClusters() []error {
 		return errs
 	}
 
-	if len(cleanupClusters) > 0 {
-		glog.Infof("cleanup clusters count = %d", len(cleanupClusters))
-	}
+	cleanUpClustersCount = int32(len(cleanupClusters))
+	logger.InfoChangedInt32(&cleanUpClustersCount, "cleanup clusters count = %d")
 
 	for _, cluster := range cleanupClusters {
 		glog.V(10).Infof("cleanup cluster ClusterID = %s", cluster.ClusterID)
@@ -249,8 +250,10 @@ func (c *ClusterManager) processAcceptedClusters() []error {
 		return errs
 	}
 
+	acceptedClusterCount = int32(len(acceptedClusters))
+	logger.InfoChangedInt32(&acceptedClusterCount, "accepted clusters count = %d")
 	if len(acceptedClusters) > 0 {
-		glog.Infof("accepted clusters count = %d", len(acceptedClusters))
+		glog.Infof("")
 	}
 
 	for i := range acceptedClusters {
@@ -272,9 +275,9 @@ func (c *ClusterManager) processProvisioningClusters() []error {
 		errs = append(errs, errors.Wrap(listErr, "failed to list pending clusters"))
 		return errs
 	}
-	if len(provisioningClusters) > 0 {
-		glog.Infof("provisioning clusters count = %d", len(provisioningClusters))
-	}
+
+	provisioningClusterCount = int32(len(provisioningClusters))
+	logger.InfoChangedInt32(&provisioningClusterCount, "provisioning clusters count = %d")
 
 	// process each local pending cluster and compare to the underlying ocm cluster
 	for i := range provisioningClusters {
@@ -300,9 +303,9 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 		errs = append(errs, errors.Wrap(listErr, "failed to list provisioned clusters"))
 		return errs
 	}
-	if len(provisionedClusters) > 0 {
-		glog.Infof("provisioned clusters count = %d", len(provisionedClusters))
-	}
+
+	provisionedClustersCount = int32(len(provisionedClusters))
+	logger.InfoChangedInt32(&provisionedClustersCount, "provisioned clusters count = %d")
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
@@ -326,9 +329,9 @@ func (c *ClusterManager) processReadyClusters() []error {
 		errs = append(errs, errors.Wrap(listErr, "failed to list ready clusters"))
 		return errs
 	}
-	if atomic.CompareAndSwapInt64(readyClusterCountCache, *readyClusterCountCache, int64(len(readyClusters))) {
-		glog.V(10).Infof("ready clusters count = %d", atomic.LoadInt64(readyClusterCountCache))
-	}
+
+	readyClusterCount = int32(len(readyClusters))
+	logger.InfoChangedInt32(&readyClusterCount, "ready clusters count = %d")
 
 	for _, readyCluster := range readyClusters {
 		emptyClusterReconciled := false

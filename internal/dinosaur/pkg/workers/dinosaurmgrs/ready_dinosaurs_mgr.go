@@ -1,22 +1,20 @@
 package dinosaurmgrs
 
 import (
-	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
-	"k8s.io/utils/pointer"
-	"sync/atomic"
 )
 
 const readyCentralWorkerType = "ready_dinosaur"
 
-var readyCentralCountCache = pointer.Int64(0)
+var readyCentralCountCache int32
 
 // ReadyDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type ReadyDinosaurManager struct {
@@ -55,13 +53,12 @@ func (k *ReadyDinosaurManager) Stop() {
 func (k *ReadyDinosaurManager) Reconcile() []error {
 	var encounteredErrors []error
 
-	readyDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusReady)
+	readyCentrals, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusReady)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list ready centrals"))
 	}
-	if atomic.CompareAndSwapInt64(readyCentralCountCache, *readyCentralCountCache, int64(len(readyDinosaurs))) {
-		glog.Infof("ready centrals count = %d", atomic.LoadInt64(readyCentralCountCache))
-	}
+	readyCentralCountCache = int32(len(readyCentrals))
+	logger.InfoChangedInt32(&readyCentralCountCache, "ready centrals count = %d")
 
 	return encounteredErrors
 }

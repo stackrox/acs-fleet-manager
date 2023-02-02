@@ -4,9 +4,9 @@ package logger
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	sentry "github.com/getsentry/sentry-go"
+	"strings"
+	"sync"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
@@ -78,6 +78,7 @@ type UHCLogger interface {
 	V(level int32) UHCLogger
 	Infof(format string, args ...interface{})
 	InfoDepth(depth int, args ...interface{})
+	//InfoChangedInt32(counter *int32, args ...interface{})
 	Warningf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Error(err error)
@@ -187,6 +188,18 @@ func (l *logger) Infof(format string, args ...interface{}) {
 // InfoDepth logs an info log message, wrapping glogs info depth
 func (l *logger) InfoDepth(depth int, args ...interface{}) {
 	glog.InfoDepth(logDepth+depth, args...)
+}
+
+var cache = sync.Map{}
+
+func InfoChangedInt32(counter *int32, args ...interface{}) {
+	val, loaded := cache.LoadOrStore(counter, *counter)
+	if loaded && val == *counter {
+		return // counter not changed, do not log
+	}
+
+	args = append(args, val.(int32))
+	glog.InfoDepth(logDepth, args...)
 }
 
 // Warningf ...
