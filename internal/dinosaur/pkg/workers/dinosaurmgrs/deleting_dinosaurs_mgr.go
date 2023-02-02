@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/hashicorp/go-multierror"
+
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
 	"github.com/google/uuid"
@@ -114,9 +116,11 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 	if factoryErr != nil {
 		return factoryErr
 	}
+	var multiErr *multierror.Error
 	err := quotaService.DeleteQuota(dinosaur.SubscriptionID)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete subscription id %s for central %s", dinosaur.SubscriptionID, dinosaur.ID)
+		svcErr := errors.Wrapf(err, "failed to delete subscription id %s for central %s", dinosaur.SubscriptionID, dinosaur.ID)
+		multiErr = multierror.Append(multiErr, svcErr)
 	}
 
 	switch dinosaur.ClientOrigin {
@@ -129,8 +133,9 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 				glog.V(7).Infof("dynamic client %s could not be found; will continue as if the client "+
 					"has been deleted", dinosaur.ClientID)
 			} else {
-				return errors.Wrapf(err, "failed to delete dynamic OIDC client id %s for central %s",
+				err := errors.Wrapf(err, "failed to delete dynamic OIDC client id %s for central %s",
 					dinosaur.ClientID, dinosaur.ID)
+				multiErr = multierror.Append(multiErr, err)
 			}
 		}
 	default:
@@ -138,7 +143,12 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 			dinosaur.ClientOrigin, dinosaur.ID)
 	}
 
-	if err := k.dinosaurService.Delete(dinosaur, false); err != nil {
+	// If at least one of resources was not cleaned up, do not delete Central yet.
+	if multiErr.ErrorOrNil() != nil {
+		return multiErr
+	}
+
+	if err = k.dinosaurService.Delete(dinosaur, false); err != nil {
 		return errors.Wrapf(err, "failed to delete central %s", dinosaur.ID)
 	}
 	return nil
