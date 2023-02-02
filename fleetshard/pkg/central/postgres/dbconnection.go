@@ -51,8 +51,9 @@ func (c DBConnection) AsConnectionString() string {
 		c.host, c.port, c.user, c.database, sslMode)
 }
 
-// AsConnectionStringWithPassword returns a string that can be used to connect to a PostgreSQL server
-func (c DBConnection) AsConnectionStringWithPassword() string {
+// asConnectionStringWithPassword returns a string that can be used to connect to a PostgreSQL server. This function
+// exposes the password in plain-text, so it should be used with care.
+func (c DBConnection) asConnectionStringWithPassword() string {
 	return c.AsConnectionString() + fmt.Sprintf(" password=%s", c.password)
 }
 

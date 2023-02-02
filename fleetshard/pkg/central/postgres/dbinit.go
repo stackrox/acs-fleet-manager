@@ -21,7 +21,7 @@ type CentralDBInitFunc func(ctx context.Context, con DBConnection, userName, use
 // - creates a user for Central, with appropriate privileges
 // - creates the central_active DB and installs extensions
 func InitializeDatabase(ctx context.Context, con DBConnection, userName, userPassword string) error {
-	db, err := sql.Open("postgres", con.AsConnectionStringWithPassword())
+	db, err := sql.Open("postgres", con.asConnectionStringWithPassword())
 	if err != nil {
 		return fmt.Errorf("opening DB: %w", err)
 	}
@@ -144,7 +144,7 @@ func createCentralDB(ctx context.Context, db *sql.DB, databaseName, owner, curre
 }
 
 func installExtensions(ctx context.Context, con DBConnection) error {
-	db, err := sql.Open("postgres", con.AsConnectionStringWithPassword())
+	db, err := sql.Open("postgres", con.asConnectionStringWithPassword())
 	if err != nil {
 		return fmt.Errorf("opening DB: %w", err)
 	}
