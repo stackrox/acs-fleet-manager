@@ -32,6 +32,7 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
+    OBSERVABILITY_OPERATOR_VERSION="v4.0.4"
     OPERATOR_USE_UPSTREAM="true"
     OPERATOR_VERSION="v3.73.0-nightly-20230110"
     ;;
@@ -40,6 +41,7 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://api.openshift.com"
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
+    OBSERVABILITY_OPERATOR_VERSION="v3.0.16"
     OPERATOR_VERSION="v3.73.1"
     ;;
 
@@ -111,6 +113,7 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --set observability.github.accessToken="${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" \
   --set observability.github.repository=https://api.github.com/repos/stackrox/rhacs-observability-resources/contents \
   --set observability.github.tag="${OBSERVABILITY_GITHUB_TAG}" \
+  --set observability.observabilityOperatorVersion="${OBSERVABILITY_OPERATOR_VERSION}" \
   --set observability.observatorium.gateway="${OBSERVABILITY_OBSERVATORIUM_GATEWAY}" \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
