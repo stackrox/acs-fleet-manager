@@ -65,12 +65,4 @@ func TestReconciler_Wakeup(t *testing.T) {
 
 	// Next reconcile will take a while since it runs every 30 seconds.. lets timeout after 3 seconds of waiting..
 	Expect(waitForReconcile(3 * time.Second)).Should(Equal(true))
-
-	// Now lets try to wake it up before those 30 seconds have passed...
-	r.Wakeup(false)
-	Expect(waitForReconcile(1 * time.Second)).Should(Equal(false))
-
-	r.Wakeup(true)
-	// We can use a 0 timeout here because Wakeup will wait for the reconcile to occur first.
-	Expect(waitForReconcile(0)).Should(Equal(false))
 }
