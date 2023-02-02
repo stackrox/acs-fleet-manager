@@ -59,6 +59,8 @@ func (k *AcceptedCentralManager) Stop() {
 	k.StopWorker(k)
 }
 
+var acceptedCentralCount int32
+
 // Reconcile ...
 func (k *AcceptedCentralManager) Reconcile() []error {
 	var encounteredErrors []error
@@ -68,6 +70,9 @@ func (k *AcceptedCentralManager) Reconcile() []error {
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list accepted centrals"))
 	}
+
+	acceptedCentralCount
+	logger.InfoChangedInt32()
 	if len(acceptedCentralRequests) > 0 {
 		glog.Infof("accepted centrals count = %d", len(acceptedCentralRequests))
 	}

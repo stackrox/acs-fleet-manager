@@ -4,8 +4,7 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"k8s.io/utils/pointer"
-	"sync/atomic"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"time"
 
 	"github.com/golang/glog"
@@ -29,7 +28,7 @@ import (
 // TODO(SimonBaeumer): set a unique identifier for the map key, currently the instance name is used
 type reconcilerRegistry map[string]*centralReconciler.CentralReconciler
 
-var reconciledCentralCountCache = pointer.Int64(0)
+var reconciledCentralCountCache int32
 
 var backoff = wait.Backoff{
 	Duration: 1 * time.Second,
@@ -123,9 +122,8 @@ func (r *Runtime) Start() error {
 		}
 
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
-		if atomic.CompareAndSwapInt64(reconciledCentralCountCache, *reconciledCentralCountCache, int64(len(list.Items))) {
-			glog.Infof("Received central count changed: received %d centrals", atomic.LoadInt64(reconciledCentralCountCache))
-		}
+		reconciledCentralCountCache = int32(len(list.Items))
+		logger.InfoChangedInt32(&reconciledCentralCountCache, "Received central count changed: received %d centrals")
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central,
