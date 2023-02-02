@@ -24,7 +24,7 @@ func TestInitializeNonPrivilegedUser(t *testing.T) {
 	mock.ExpectExec("GRANT pg_read_all_stats").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	err = initializeNonPrivilegedUser(context.TODO(), db, "test_user", "user_pass")
+	err = initializeCentralDBUser(context.TODO(), db, "test_user", "user_pass")
 	require.NoError(t, err)
 
 	// we make sure that all expectations were met
@@ -44,7 +44,7 @@ func TestInitializeNonPrivilegedUserError(t *testing.T) {
 	mock.ExpectExec("CREATE USER").WillReturnError(fmt.Errorf("some error"))
 	mock.ExpectRollback()
 
-	err = initializeNonPrivilegedUser(context.TODO(), db, "test_user", "user_pass")
+	err = initializeCentralDBUser(context.TODO(), db, "test_user", "user_pass")
 	require.Error(t, err)
 
 	// we make sure that all expectations were met
@@ -68,7 +68,7 @@ func TestInitializeNonPrivilegedUserAlreadyExists(t *testing.T) {
 	mock.ExpectRollback()
 	mock.ExpectExec("ALTER USER").WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = initializeNonPrivilegedUser(context.TODO(), db, "test_user", "user_pass")
+	err = initializeCentralDBUser(context.TODO(), db, "test_user", "user_pass")
 	require.NoError(t, err)
 
 	// we make sure that all expectations were met

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/golang/glog"
 	"github.com/lib/pq"
 )
 
@@ -25,9 +26,13 @@ func InitializeDatabase(ctx context.Context, con DBConnection, userName, userPas
 		return fmt.Errorf("opening DB: %w", err)
 	}
 
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			glog.Errorf("Error closing DB: %v", closeErr)
+		}
+	}()
 
-	err = initializeNonPrivilegedUser(ctx, db, userName, userPassword)
+	err = initializeCentralDBUser(ctx, db, userName, userPassword)
 	if err != nil {
 		return err
 	}
@@ -48,26 +53,26 @@ func InitializeDatabase(ctx context.Context, con DBConnection, userName, userPas
 	return nil
 }
 
-func initializeNonPrivilegedUser(ctx context.Context, db *sql.DB, userName, userPassword string) error {
-	err := createUser(ctx, db, userName, userPassword)
-	if err != nil {
-		var pqErr *pq.Error
-		if errors.As(err, &pqErr) {
-			// It's possible that the non privileged user already exists, but for some reason (e.g. termination) its
-			// password was not stored. In that case, we can simply change its password.
-			if pqErr.Code.Name() == "duplicate_object" {
-				return changeUserPassword(ctx, db, userName, userPassword)
-			}
-		}
-
-		return err
+func initializeCentralDBUser(ctx context.Context, db *sql.DB, userName, userPassword string) error {
+	err := createNonPrivilegedUser(ctx, db, userName, userPassword)
+	if err == nil {
+		return nil
 	}
 
-	return nil
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
+		// It's possible that the Central user already exists, but for some reason (e.g. termination) its
+		// password was not stored. In that case, we can simply change its password.
+		if pqErr.Code.Name() == "duplicate_object" {
+			return changeUserPassword(ctx, db, userName, userPassword)
+		}
+	}
+
+	return err
 }
 
-func createUser(ctx context.Context, db *sql.DB, userName, userPassword string) error {
-	tx, err := db.Begin()
+func createNonPrivilegedUser(ctx context.Context, db *sql.DB, userName, userPassword string) error {
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("beginning PostgreSQL transaction: %w", err)
 	}
@@ -77,7 +82,10 @@ func createUser(ctx context.Context, db *sql.DB, userName, userPassword string) 
 		case nil:
 			err = tx.Commit()
 		default:
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				// Just logging the rollback error, because we're already returning the error from the function body
+				glog.Errorf("Error rolling back transaction: %v", rollbackErr)
+			}
 		}
 	}()
 
@@ -141,7 +149,11 @@ func installExtensions(ctx context.Context, con DBConnection) error {
 		return fmt.Errorf("opening DB: %w", err)
 	}
 
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			glog.Errorf("Error closing DB: %v", closeErr)
+		}
+	}()
 
 	return installExtensionsOnCentralDB(ctx, db)
 }

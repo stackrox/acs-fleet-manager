@@ -43,10 +43,10 @@ const (
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
 
-	dbUserTypeAnnotation    = "platform.stackrox.io/user-type"
-	dbUserTypeMaster        = "master"
-	dbUserTypeCentral       = "central"
-	dbNonPrivilegedUserName = "rhacs_central"
+	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
+	dbUserTypeMaster     = "master"
+	dbUserTypeCentral    = "central"
+	dbCentralUserName    = "rhacs_central"
 
 	centralDbSecretName = "central-db-password" // pragma: allowlist secret
 )
@@ -483,10 +483,15 @@ func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name str
 }
 
 func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral private.ManagedCentral) (string, error) {
-	// If a non privileged Central DB user already exists, it means the managed DB was already
+	centralDBUserExists, err := r.centralDBUserExists(ctx, remoteCentral.Metadata.Namespace)
+	if err != nil {
+		return "", err
+	}
+
+	// If a Central DB user already exists, it means the managed DB was already
 	// provisioned and successfully created (access to a running Postgres instance is a
 	// precondition to create this user)
-	if !r.noPrivilegedCentralDBUserExists(ctx, remoteCentral.Metadata.Namespace) {
+	if !centralDBUserExists {
 		if err := r.ensureManagedCentralDBInitialized(ctx, remoteCentral); err != nil {
 			return "", fmt.Errorf("initializing managed DB: %w", err)
 		}
@@ -496,13 +501,25 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 	if err != nil {
 		return "", fmt.Errorf("getting RDS DB connection data: %w", err)
 	}
-	return dbConnection.GetConnectionForUser(dbNonPrivilegedUserName).AsConnectionString(), nil
+	return dbConnection.GetConnectionForUser(dbCentralUserName).AsConnectionString(), nil
 }
 
 func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-	if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace); err != nil {
-		return fmt.Errorf("ensuring that DB secret exists: %w", err)
+
+	centralDBSecretExists, err := r.centralDBSecretExists(ctx, remoteCentralNamespace)
+	if err != nil {
+		return err
+	}
+
+	if !centralDBSecretExists {
+		dbMasterPassword, err := random.GenerateString(25, random.AlphanumericCharacters)
+		if err != nil {
+			return fmt.Errorf("generating Central DB master password: %w", err)
+		}
+		if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace, dbUserTypeMaster, dbMasterPassword); err != nil {
+			return fmt.Errorf("ensuring that DB secret exists: %w", err)
+		}
 	}
 
 	dbMasterPassword, err := r.getDBPasswordFromSecret(ctx, remoteCentralNamespace)
@@ -524,15 +541,15 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 	if err != nil {
 		return fmt.Errorf("generating Central DB password: %w", err)
 	}
-	err = r.managedDBInitFunc(ctx, dbConnection.WithPassword(dbMasterPassword), dbNonPrivilegedUserName, dbCentralPassword)
+	err = r.managedDBInitFunc(ctx, dbConnection.WithPassword(dbMasterPassword), dbCentralUserName, dbCentralPassword)
 	if err != nil {
-		return fmt.Errorf("creating non-privileged DB user: %w", err)
+		return fmt.Errorf("initializing managed DB: %w", err)
 	}
 
 	// Replace the password stored in the secret. This replaces the master password (the password of the
-	// rds_superuser account) with the password of the non-privileged account. Note that we don't store
-	// the master anywhere from this point on.
-	err = r.updateCentralDBSecret(ctx, remoteCentralNamespace, dbUserTypeCentral, dbCentralPassword)
+	// rds_superuser account) with the password of the Central user. Note that we don't store
+	// the master password anywhere from this point on.
+	err = r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace, dbUserTypeCentral, dbCentralPassword)
 	if err != nil {
 		return err
 	}
@@ -540,86 +557,88 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 	return nil
 }
 
-func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, remoteCentralNamespace string) error {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: centralDbSecretName,
-		},
+func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, remoteCentralNamespace, userType, password string) error {
+	secret := &corev1.Secret{}
+	setPasswordFunc := func(secret *corev1.Secret, userType, password string) {
+		secret.Data = map[string][]byte{"password": []byte(password)}
+		if secret.Annotations == nil {
+			secret.Annotations = make(map[string]string)
+		}
+		secret.Annotations[dbUserTypeAnnotation] = userType
 	}
 
-	generatedPassword, err := random.GenerateString(25, random.AlphanumericCharacters)
-	if err != nil {
-		return fmt.Errorf("generating Central DB password: %w", err)
-	}
-
-	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			secret = &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      centralDbSecretName,
-					Namespace: remoteCentralNamespace,
-					Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
-					Annotations: map[string]string{
-						managedServicesAnnotation: "true",
-						dbUserTypeAnnotation:      dbUserTypeMaster},
-				},
-				Data: map[string][]byte{"password": []byte(generatedPassword)},
-			}
-
-			err = r.client.Create(ctx, secret)
-			if err != nil {
-				return fmt.Errorf("creating Central DB secret: %w", err)
-			}
-			return nil
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	if err == nil {
+		setPasswordFunc(secret, userType, password)
+		err = r.client.Update(ctx, secret)
+		if err != nil {
+			return fmt.Errorf("updating Central DB secret: %w", err)
 		}
 
+		return nil
+	}
+
+	if !apiErrors.IsNotFound(err) {
 		return fmt.Errorf("getting Central DB secret: %w", err)
+
 	}
 
-	return nil
-}
-
-func (r *CentralReconciler) updateCentralDBSecret(ctx context.Context, remoteCentralNamespace, userType, updatedPassword string) error {
-	secret := &corev1.Secret{
+	// create secret if it does not exist
+	secret = &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: centralDbSecretName,
+			Name:      centralDbSecretName,
+			Namespace: remoteCentralNamespace,
+			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
+			Annotations: map[string]string{
+				managedServicesAnnotation: "true"},
 		},
 	}
 
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	setPasswordFunc(secret, userType, password)
+	err = r.client.Create(ctx, secret)
 	if err != nil {
-		return fmt.Errorf("updating Central DB secret: %w", err)
-	}
-	secret.Data = map[string][]byte{"password": []byte(updatedPassword)}
-	secret.Annotations[dbUserTypeAnnotation] = userType
-
-	err = r.client.Update(ctx, secret)
-	if err != nil {
-		return fmt.Errorf("updating Central DB secret: %w", err)
+		return fmt.Errorf("creating Central DB secret: %w", err)
 	}
 	return nil
 }
 
-func (r *CentralReconciler) noPrivilegedCentralDBUserExists(ctx context.Context, remoteCentralNamespace string) bool {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: centralDbSecretName,
-		},
-	}
-
+func (r *CentralReconciler) centralDBSecretExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
+	secret := &corev1.Secret{}
 	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
 	if err != nil {
-		return false
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("getting central DB secret: %w", err)
+	}
+
+	return true, nil
+}
+
+func (r *CentralReconciler) centralDBUserExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
+	secret := &corev1.Secret{}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("getting central DB secret: %w", err)
+	}
+
+	if secret.Annotations == nil {
+		// if the annotation section is missing, assume it's the master password
+		return false, nil
 	}
 
 	dbUserType, exists := secret.Annotations[dbUserTypeAnnotation]
 	if !exists {
 		// legacy Centrals use the master password and do not have this annotation
-		return false
+		return false, nil
 	}
 
-	return dbUserType == dbUserTypeCentral
+	return dbUserType == dbUserTypeCentral, nil
 }
 
 func (r *CentralReconciler) ensureCentralDBSecretDeleted(ctx context.Context, remoteCentralNamespace string) (bool, error) {
