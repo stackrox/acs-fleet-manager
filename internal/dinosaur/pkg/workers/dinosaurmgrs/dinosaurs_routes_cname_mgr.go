@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
@@ -45,6 +46,8 @@ func (k *DinosaurRoutesCNAMEManager) Stop() {
 	k.StopWorker(k)
 }
 
+var dinosaurCounter int32
+
 // Reconcile ...
 func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 	var errs []error
@@ -53,9 +56,8 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 	if listErr != nil {
 		errs = append(errs, errors.Wrap(listErr, "failed to list centrals whose routes are not created"))
 	}
-	if len(dinosaurs) > 0 {
-		glog.Infof("centrals need routes created count = %d", len(dinosaurs))
-	}
+	dinosaurCounter = int32(len(dinosaurs))
+	logger.InfoChangedInt32(&dinosaurCounter, "centrals need routes created count = %d")
 
 	for _, dinosaur := range dinosaurs {
 		if k.dinosaurConfig.EnableCentralExternalCertificate {

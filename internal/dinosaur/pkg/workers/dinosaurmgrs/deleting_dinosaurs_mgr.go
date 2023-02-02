@@ -2,6 +2,7 @@ package dinosaurmgrs
 
 import (
 	"context"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"net/http"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
@@ -22,6 +23,8 @@ import (
 )
 
 const deletingCentralWorkerType = "deleting_dinosaur"
+
+var deprovisioningDinosaursCount int32
 
 // DeletingDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests.
 type DeletingDinosaurManager struct {
@@ -59,6 +62,8 @@ func (k *DeletingDinosaurManager) Stop() {
 	k.StopWorker(k)
 }
 
+var originalTotalDinosaurInDeletingCount int32
+
 // Reconcile reconciles deleting dionosaur requests.
 // It handles:
 //   - freeing up any associated quota with the central
@@ -71,22 +76,19 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	// from the data plane cluster by the Fleetshard operator. This reconcile phase ensures that any other
 	// dependencies (i.e. SSO clients, CNAME records) are cleaned up for these Dinosaurs and their records soft deleted from the database.
 	deletingDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants.CentralRequestStatusDeleting)
-	originalTotalDinosaurInDeleting := len(deletingDinosaurs)
+	originalTotalDinosaurInDeletingCount = int32(len(deletingDinosaurs))
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list deleting central requests"))
 	}
-	if originalTotalDinosaurInDeleting > 0 {
-		glog.Infof("%s centrals count = %d", constants.CentralRequestStatusDeleting.String(), originalTotalDinosaurInDeleting)
-	}
+	logger.InfoChangedInt32(&originalTotalDinosaurInDeletingCount, "%s centrals count = %d", constants.CentralRequestStatusDeleting.String())
 
 	// We also want to remove Dinosaurs that are set to deprovisioning but have not been provisioned on a data plane cluster
 	deprovisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants.CentralRequestStatusDeprovision)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list central deprovisioning requests"))
 	}
-	if len(deprovisioningDinosaurs) > 0 {
-		glog.Infof("%s centrals count = %d", constants.CentralRequestStatusDeprovision.String(), len(deprovisioningDinosaurs))
-	}
+	deprovisioningDinosaursCount = int32(len(deprovisioningDinosaurs))
+	logger.InfoChangedInt32(&deprovisioningDinosaursCount, "%s centrals count = %d", constants.CentralRequestStatusDeprovision.String())
 
 	for _, deprovisioningDinosaur := range deprovisioningDinosaurs {
 		glog.V(10).Infof("deprovision central id = %s", deprovisioningDinosaur.ID)
@@ -97,7 +99,7 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 		}
 	}
 
-	additionalMarkedRemovals := len(deletingDinosaurs) - originalTotalDinosaurInDeleting
+	additionalMarkedRemovals := int32(len(deletingDinosaurs)) - originalTotalDinosaurInDeletingCount
 	if additionalMarkedRemovals > 0 {
 		glog.Infof("An additional of centrals count = %d which are marked for removal before being provisioned will also be deleted", additionalMarkedRemovals)
 	}
