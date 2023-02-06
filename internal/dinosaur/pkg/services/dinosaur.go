@@ -151,8 +151,7 @@ func (k *dinosaurService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count central request")
 	}
 
-	glog.Infof("%d of %d central clusters currently instantiated", count, k.dinosaurConfig.MaxCapacity.MaxCapacity)
-	return count < k.dinosaurConfig.MaxCapacity.MaxCapacity, nil
+	return true, nil
 }
 
 // HasAvailableCapacityInRegion ...
