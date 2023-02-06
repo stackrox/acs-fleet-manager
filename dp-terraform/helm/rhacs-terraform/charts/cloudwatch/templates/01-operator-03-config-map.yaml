@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudwatch-exporter-config
+  namespace: {{ include "cloudwatch.namespace" . }}
+data:
+  config.yaml: |-
+    region: us-east-1
+    metrics:
+      - aws_metric_name: DatabaseConnections
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+
+      - aws_metric_name: ACUUtilization
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+
+      - aws_metric_name: FreeableMemory
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+
+      - aws_metric_name: CPUUtilization
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+
+      - aws_metric_name: ReadLatency
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+
+      - aws_metric_name: WriteLatency
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+
+      - aws_metric_name: NetworkThroughput
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
