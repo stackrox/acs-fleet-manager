@@ -62,7 +62,7 @@ func addOrganisationNameToCentralRequest() *gormigrate.Migration {
 		Migrate: func(tx *gorm.DB) error {
 			if !tx.Migrator().HasColumn(&CentralRequest{}, colName) {
 				if err := tx.Migrator().AddColumn(&CentralRequest{}, colName); err != nil {
-					return errors.Wrapf(err, "adding column %s in migration %s", colName, id)
+					return errors.Wrapf(err, "adding column %q in migration %q", colName, id)
 				}
 				glog.Infof("added column %q in schema migration %q", colName, id)
 			}
@@ -71,7 +71,7 @@ func addOrganisationNameToCentralRequest() *gormigrate.Migration {
 		Rollback: func(tx *gorm.DB) error {
 			if tx.Migrator().HasColumn(&CentralRequest{}, colName) {
 				if err := tx.Migrator().DropColumn(&CentralRequest{}, colName); err != nil {
-					return errors.Wrapf(err, "rolling back column %s in migration %s", colName, id)
+					return errors.Wrapf(err, "rolling back column %q in migration %q", colName, id)
 				}
 				glog.Infof("removed column %q in schema migration %q", colName, id)
 			}

@@ -43,12 +43,12 @@ func (m *DataMigration) migrateOrganisationNames() (int, error) {
 
 		org, err := m.amsClient.GetOrganisationFromExternalID(central.OrganisationID)
 		if err != nil {
-			return migratedCnt, errors.Wrap(err, "fetching organisation name from OCM")
+			return migratedCnt, errors.Wrapf(err, "fetching organisation name to %q from OCM for central instance %q", org.Name(), central.ID)
 		}
 		if err = dbConn.Model(&central).Update(colName, org.Name()).Error; err != nil {
-			return migratedCnt, errors.Wrap(err, "updating organisation name")
+			return migratedCnt, errors.Wrapf(err, "updating organisation name to %q for central instance %q", org.Name(), central.ID)
 		}
-		glog.Infof("migrated column %q for central instance %q to new value %q", colName, central.ID, central.OrganisationName)
+		glog.Infof("migrated column %q to new value %q for central instance %q ", colName, central.OrganisationName, central.ID)
 		migratedCnt++
 	}
 	return migratedCnt, nil
