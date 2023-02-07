@@ -62,7 +62,6 @@ type CNameRecordStatus struct {
 //
 //go:generate moq -out dinosaurservice_moq.go . DinosaurService
 type DinosaurService interface {
-	HasAvailableCapacity() (bool, *errors.ServiceError)
 	// HasAvailableCapacityInRegion checks if there is capacity in the clusters for a given region
 	HasAvailableCapacityInRegion(dinosaurRequest *dbapi.CentralRequest) (bool, *errors.ServiceError)
 	// AcceptCentralRequest transitions CentralRequest to 'Preparing'.
@@ -140,18 +139,6 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		clusterPlacementStrategy: clusterPlacementStrategy,
 		amsClient:                amsClient,
 	}
-}
-
-// HasAvailableCapacity ...
-func (k *dinosaurService) HasAvailableCapacity() (bool, *errors.ServiceError) {
-	dbConn := k.connectionFactory.New()
-	var count int64
-
-	if err := dbConn.Model(&dbapi.CentralRequest{}).Count(&count).Error; err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count central request")
-	}
-
-	return true, nil
 }
 
 // HasAvailableCapacityInRegion ...
