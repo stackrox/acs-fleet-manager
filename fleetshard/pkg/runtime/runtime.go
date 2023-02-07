@@ -11,6 +11,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
@@ -119,7 +120,8 @@ func (r *Runtime) Start() error {
 		glog.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
-				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, r.dbProvisionClient, reconcilerOpts)
+				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central,
+					r.dbProvisionClient, postgres.InitializeDatabase, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]
