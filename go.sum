@@ -1852,8 +1852,8 @@ gorm.io/driver/postgres v1.4.6/go.mod h1:UJChCNLFKeBqQRE+HrkFUbKbq9idPXmTOk2u4Wo
 gorm.io/driver/sqlite v1.3.2 h1:nWTy4cE52K6nnMhv23wLmur9Y3qWbZvOBz+V4PrGAxg=
 gorm.io/driver/sqlserver v1.3.2 h1:yYt8f/xdAKLY7lCCyXxIUEgZ/WsURos3dHrx8MKFGAk=
 gorm.io/gorm v1.24.2/go.mod h1:DVrVomtaYTbqs7gB/x2uVvqnXzv0nqjB396B8cG4dBA=
-gorm.io/gorm v1.24.3 h1:WL2ifUmzR/SLp85CSURAfybcHnGZ+yLSGSxgYXlFBHg=
-gorm.io/gorm v1.24.3/go.mod h1:DVrVomtaYTbqs7gB/x2uVvqnXzv0nqjB396B8cG4dBA=
+gorm.io/gorm v1.24.5 h1:g6OPREKqqlWq4kh/3MCQbZKImeB9e6Xgc4zD+JgNZGE=
+gorm.io/gorm v1.24.5/go.mod h1:DVrVomtaYTbqs7gB/x2uVvqnXzv0nqjB396B8cG4dBA=
 helm.sh/helm/v3 v3.11.0 h1:F+peaCQYbycY1FIqIQ6dAortHd/VzV5FkhMciv4Kf+c=
 helm.sh/helm/v3 v3.11.0/go.mod h1:z/Bu/BylToGno/6dtNGuSmjRqxKq5gaH+FU0BPO+AQ8=
 honnef.co/go/tools v0.0.0-20180728063816-88497007e858/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
