@@ -504,6 +504,15 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 	return dbConnection.GetConnectionForUser(dbCentralUserName).AsConnectionString(), nil
 }
 
+func generateDBPassword() (string, error) {
+	password, err := random.GenerateString(25, random.AlphanumericCharacters)
+	if err != nil {
+		return "", fmt.Errorf("generating DB password: %w", err)
+	}
+
+	return password, nil
+}
+
 func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
@@ -513,7 +522,7 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 	}
 
 	if !centralDBSecretExists {
-		dbMasterPassword, err := random.GenerateString(25, random.AlphanumericCharacters)
+		dbMasterPassword, err := generateDBPassword()
 		if err != nil {
 			return fmt.Errorf("generating Central DB master password: %w", err)
 		}
@@ -537,7 +546,7 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 		return fmt.Errorf("getting RDS DB connection data: %w", err)
 	}
 
-	dbCentralPassword, err := random.GenerateString(25, random.AlphanumericCharacters)
+	dbCentralPassword, err := generateDBPassword()
 	if err != nil {
 		return fmt.Errorf("generating Central DB password: %w", err)
 	}
