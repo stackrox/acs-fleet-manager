@@ -5,7 +5,7 @@ import (
 )
 
 // PresentServiceStatus ...
-func PresentServiceStatus(userInDenyList bool, dinosaurMaximumCapacityReached bool) *public.ServiceStatus {
+func PresentServiceStatus() *public.ServiceStatus {
 	var res *public.ServiceStatus
 	return res
 }
