@@ -15,6 +15,7 @@ data:
           - Average
           - Maximum
           - Minimum
+        use_get_metric_data: true
 
       - aws_metric_name: ACUUtilization
         aws_namespace: AWS/RDS
@@ -24,6 +25,7 @@ data:
           - Average
           - Maximum
           - Minimum
+        use_get_metric_data: true
 
       - aws_metric_name: FreeableMemory
         aws_namespace: AWS/RDS
@@ -33,6 +35,7 @@ data:
           - Average
           - Maximum
           - Minimum
+        use_get_metric_data: true
 
       - aws_metric_name: CPUUtilization
         aws_namespace: AWS/RDS
@@ -42,6 +45,7 @@ data:
           - Average
           - Maximum
           - Minimum
+        use_get_metric_data: true
 
       - aws_metric_name: ReadLatency
         aws_namespace: AWS/RDS
@@ -51,6 +55,7 @@ data:
           - Average
           - Maximum
           - Minimum
+        use_get_metric_data: true
 
       - aws_metric_name: WriteLatency
         aws_namespace: AWS/RDS
@@ -60,6 +65,7 @@ data:
           - Average
           - Maximum
           - Minimum
+        use_get_metric_data: true
 
       - aws_metric_name: NetworkThroughput
         aws_namespace: AWS/RDS
@@ -69,3 +75,4 @@ data:
           - Average
           - Maximum
           - Minimum
+        use_get_metric_data: true

@@ -54,7 +54,6 @@ cloudwatch:
   aws:
     accessKeyId: ""
     secretAccessKey: ""
-  image: ""
 
 # See available parameters in charts/observability/values.yaml
 # - enabled flag is used to completely enable/disable observability sub-chart
