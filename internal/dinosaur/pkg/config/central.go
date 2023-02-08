@@ -8,11 +8,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
-// MaxCapacityConfig ...
-type MaxCapacityConfig struct {
-	MaxCapacity int64 `json:"maxCapacity"`
-}
-
 // CentralConfig ...
 type CentralConfig struct {
 	CentralTLSCert                   string `json:"central_tls_cert"`
@@ -21,8 +16,6 @@ type CentralConfig struct {
 	CentralTLSKeyFile                string `json:"central_tls_key_file"`
 	EnableCentralExternalCertificate bool   `json:"enable_central_external_certificate"`
 	CentralDomainName                string `json:"central_domain_name"`
-	// TODO(ROX-11289): drop MaxCapacity
-	MaxCapacity MaxCapacityConfig `json:"max_capacity_config"`
 
 	CentralLifespan *CentralLifespanConfig `json:"central_lifespan"`
 	Quota           *CentralQuotaConfig    `json:"central_quota"`
@@ -91,10 +84,6 @@ func (c *CentralConfig) ReadFiles() error {
 		}
 	}
 
-	// TODO(ROX-11289): drop MaxCapacity
-	// MaxCapacity is deprecated and will not be used.
-	// Temporarily set MaxCapacity manually in order to simplify app start.
-	c.MaxCapacity = MaxCapacityConfig{1000}
 	return nil
 }
 
