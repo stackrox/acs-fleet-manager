@@ -14,7 +14,7 @@ import (
 // existing data records, which have the `organisation_name` column not yet set.
 // Once all records have this column set in production, the data migration service
 // becomes obsolete and will be removed again.
-// TODO (2023-03/stehessel): remove data migration service.
+// TODO (ROX-15037): remove data migration service.
 type DataMigration struct {
 	connectionFactory *db.ConnectionFactory
 	amsClient         ocm.AMSClient
