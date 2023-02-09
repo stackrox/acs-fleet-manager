@@ -232,7 +232,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 
 		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
-			IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
 			ConnectionStringOverride: pointer.String(centralDBConnectionString),
 			PasswordSecret: &v1alpha1.LocalSecretReference{
 				Name: centralDbSecretName,
