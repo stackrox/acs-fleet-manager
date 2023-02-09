@@ -8,19 +8,20 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/stackrox/rox/pkg/telemetry/phonehome"
+	"github.com/stackrox/rox/pkg/telemetry/phonehome/telemeter"
 )
 
 // Telemeter is a wrapper interface for the telemeter interface to enable mock testing.
 //go:generate moq -out telemeter_moq.go . Telemeter
 type Telemeter interface {
-	phonehome.Telemeter
+	telemeter.Telemeter
 }
 
 // TelemetryConfig is a wrapper for the telemetry configuration.
 //go:generate moq -out config_moq.go . TelemetryConfig
 type TelemetryConfig interface {
 	Enabled() bool
-	Telemeter() phonehome.Telemeter
+	Telemeter() telemeter.Telemeter
 
 	AddFlags(fs *pflag.FlagSet)
 	ReadFiles() error
