@@ -15,6 +15,24 @@ data:
           - Average
           - Maximum
           - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
+        use_get_metric_data: true
+
+      - aws_metric_name: ServerlessDatabaseCapacity
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
         use_get_metric_data: true
 
       - aws_metric_name: ACUUtilization
@@ -25,6 +43,10 @@ data:
           - Average
           - Maximum
           - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
         use_get_metric_data: true
 
       - aws_metric_name: FreeableMemory
@@ -35,6 +57,10 @@ data:
           - Average
           - Maximum
           - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
         use_get_metric_data: true
 
       - aws_metric_name: CPUUtilization
@@ -45,6 +71,10 @@ data:
           - Average
           - Maximum
           - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
         use_get_metric_data: true
 
       - aws_metric_name: ReadLatency
@@ -55,6 +85,24 @@ data:
           - Average
           - Maximum
           - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
+        use_get_metric_data: true
+
+      - aws_metric_name: ReadThroughput
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
         use_get_metric_data: true
 
       - aws_metric_name: WriteLatency
@@ -65,6 +113,24 @@ data:
           - Average
           - Maximum
           - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
+        use_get_metric_data: true
+
+      - aws_metric_name: WriteThroughput
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
         use_get_metric_data: true
 
       - aws_metric_name: NetworkThroughput
@@ -75,4 +141,78 @@ data:
           - Average
           - Maximum
           - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
+        use_get_metric_data: true
+
+      - aws_metric_name: AuroraReplicaLag
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
+        use_get_metric_data: true
+
+      - aws_metric_name: MaximumUsedTransactionIDs
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
+        use_get_metric_data: true
+
+      - aws_metric_name: TransactionLogsDiskUsage
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
+        use_get_metric_data: true
+
+      - aws_metric_name: Deadlocks
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
+        use_get_metric_data: true
+
+      - aws_metric_name: BufferCacheHitRatio
+        aws_namespace: AWS/RDS
+        aws_dimensions:
+          - DBInstanceIdentifier
+        aws_statistics:
+          - Average
+          - Maximum
+          - Minimum
+        aws_extended_statistics:
+          - p90
+          - p95
+          - p99
         use_get_metric_data: true
