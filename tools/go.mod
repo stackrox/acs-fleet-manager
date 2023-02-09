@@ -1,6 +1,6 @@
 module github.com/stackrox/acs-fleet-manager/tools
 
-go 1.18
+go 1.19
 
 require (
 	github.com/99designs/aws-vault/v6 v6.6.2
