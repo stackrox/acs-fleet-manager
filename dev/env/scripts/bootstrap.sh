@@ -49,8 +49,11 @@ if [[ "$INSTALL_OPENSHIFT_ROUTER" == "true" ]]; then
     apply "${MANIFESTS_DIR}/openshift-router"
 fi
 
-if [[ "$INSTALL_OPERATOR" == "true" ]]; thenelse
+if [[ "$INSTALL_OPERATOR" == "true" ]]; then
     ./install_operator.sh
+else
+    # We will be running without RHACS operator, but at least install our CRDs.
+    apply "${MANIFESTS_DIR}/crds"
 fi
 
 if is_local_cluster "$CLUSTER_TYPE"; then

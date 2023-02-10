@@ -84,6 +84,3 @@ elif [[ "$OPERATOR_SOURCE" == "marketplace" ]]; then
 fi
 
 wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "app=rhacs-operator" "manager" 900
-
-# We will be running without RHACS operator, but at least install our CRDs.
-apply "${MANIFESTS_DIR}/crds"
