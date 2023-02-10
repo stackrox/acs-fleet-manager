@@ -1,0 +1,6 @@
+# AWS credentials
+aws:
+  accessKeyId: ""
+  secretAccessKey: ""
+
+image: "quay.io/prometheus/cloudwatch-exporter:v0.15.1"
