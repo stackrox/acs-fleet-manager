@@ -457,7 +457,7 @@ parameters:
 - name: CENTRAL_REQUEST_INTERNAL_USER_AGENTS
   displayName: Central request internal user agents
   description: List of user agents from internal clients
-  value: "[fleet-manager-probe-service]"
+  value: "fleet-manager-probe-service"
 
 objects:
   - kind: ConfigMap
