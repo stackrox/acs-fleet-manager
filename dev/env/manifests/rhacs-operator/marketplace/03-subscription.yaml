@@ -6,9 +6,9 @@ metadata:
 spec:
   channel: latest
   name: rhacs-operator
-  installPlanApproval: Manual
+  installPlanApproval: Automatic
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: rhacs-operator.${STACKROX_OPERATOR_VERSION}
+  startingCSV: rhacs-operator.v3.73.1
   config:
     resources: $RHACS_OPERATOR_RESOURCES
