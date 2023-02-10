@@ -8,6 +8,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/telemetry"
+	"github.com/stackrox/rox/pkg/telemetry/phonehome/telemeter"
 )
 
 // TelemetryAuth is a wrapper around the user claim extraction.
@@ -72,7 +73,11 @@ func (t *Telemetry) RegisterTenant(ctx context.Context, central *dbapi.CentralRe
 		"Region":          central.Region,
 		"Tenant ID":       central.ID,
 	}
-	t.config.Telemeter().Group(central.ID, user, props)
+	t.config.Telemeter().Group(
+		central.ID,
+		props,
+		telemeter.WithUserID(user),
+	)
 }
 
 // TrackCreationRequested emits a track event that signals the creation request of a Central instance.
@@ -98,7 +103,12 @@ func (t *Telemetry) TrackCreationRequested(ctx context.Context, tenantID string,
 		"Success":          requestErr == nil,
 		"Is Admin Request": isAdmin,
 	}
-	t.config.Telemeter().Track("Central Creation Requested", user, props)
+	t.config.Telemeter().Track(
+		"Central Creation Requested",
+		props,
+		telemeter.WithUserID(user),
+		telemeter.WithGroups("Tenant", tenantID),
+	)
 }
 
 // TrackDeletionRequested emits a track event that signals the deletion request of a Central instance.
@@ -124,7 +134,12 @@ func (t *Telemetry) TrackDeletionRequested(ctx context.Context, tenantID string,
 		"Success":          requestErr == nil,
 		"Is Admin Request": isAdmin,
 	}
-	t.config.Telemeter().Track("Central Deletion Requested", user, props)
+	t.config.Telemeter().Track(
+		"Central Deletion Requested",
+		props,
+		telemeter.WithUserID(user),
+		telemeter.WithGroups("Tenant", tenantID),
+	)
 }
 
 // Start the telemetry service.

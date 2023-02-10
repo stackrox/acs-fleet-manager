@@ -4,6 +4,7 @@
 package telemetry
 
 import (
+	"github.com/stackrox/rox/pkg/telemetry/phonehome/telemeter"
 	"sync"
 )
 
@@ -17,16 +18,16 @@ var _ Telemeter = &TelemeterMock{}
 //
 //		// make and configure a mocked Telemeter
 //		mockedTelemeter := &TelemeterMock{
-//			GroupFunc: func(groupID string, userID string, props map[string]any)  {
+//			GroupFunc: func(groupID string, props map[string]any, opts ...telemeter.Option)  {
 //				panic("mock out the Group method")
 //			},
-//			IdentifyFunc: func(userID string, props map[string]any)  {
+//			IdentifyFunc: func(props map[string]any, opts ...telemeter.Option)  {
 //				panic("mock out the Identify method")
 //			},
 //			StopFunc: func()  {
 //				panic("mock out the Stop method")
 //			},
-//			TrackFunc: func(event string, userID string, props map[string]any)  {
+//			TrackFunc: func(event string, props map[string]any, opts ...telemeter.Option)  {
 //				panic("mock out the Track method")
 //			},
 //		}
@@ -37,16 +38,16 @@ var _ Telemeter = &TelemeterMock{}
 //	}
 type TelemeterMock struct {
 	// GroupFunc mocks the Group method.
-	GroupFunc func(groupID string, userID string, props map[string]any)
+	GroupFunc func(groupID string, props map[string]any, opts ...telemeter.Option)
 
 	// IdentifyFunc mocks the Identify method.
-	IdentifyFunc func(userID string, props map[string]any)
+	IdentifyFunc func(props map[string]any, opts ...telemeter.Option)
 
 	// StopFunc mocks the Stop method.
 	StopFunc func()
 
 	// TrackFunc mocks the Track method.
-	TrackFunc func(event string, userID string, props map[string]any)
+	TrackFunc func(event string, props map[string]any, opts ...telemeter.Option)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -54,17 +55,17 @@ type TelemeterMock struct {
 		Group []struct {
 			// GroupID is the groupID argument value.
 			GroupID string
-			// UserID is the userID argument value.
-			UserID string
 			// Props is the props argument value.
 			Props map[string]any
+			// Opts is the opts argument value.
+			Opts []telemeter.Option
 		}
 		// Identify holds details about calls to the Identify method.
 		Identify []struct {
-			// UserID is the userID argument value.
-			UserID string
 			// Props is the props argument value.
 			Props map[string]any
+			// Opts is the opts argument value.
+			Opts []telemeter.Option
 		}
 		// Stop holds details about calls to the Stop method.
 		Stop []struct {
@@ -73,10 +74,10 @@ type TelemeterMock struct {
 		Track []struct {
 			// Event is the event argument value.
 			Event string
-			// UserID is the userID argument value.
-			UserID string
 			// Props is the props argument value.
 			Props map[string]any
+			// Opts is the opts argument value.
+			Opts []telemeter.Option
 		}
 	}
 	lockGroup    sync.RWMutex
@@ -86,23 +87,23 @@ type TelemeterMock struct {
 }
 
 // Group calls GroupFunc.
-func (mock *TelemeterMock) Group(groupID string, userID string, props map[string]any) {
+func (mock *TelemeterMock) Group(groupID string, props map[string]any, opts ...telemeter.Option) {
 	if mock.GroupFunc == nil {
 		panic("TelemeterMock.GroupFunc: method is nil but Telemeter.Group was just called")
 	}
 	callInfo := struct {
 		GroupID string
-		UserID  string
 		Props   map[string]any
+		Opts    []telemeter.Option
 	}{
 		GroupID: groupID,
-		UserID:  userID,
 		Props:   props,
+		Opts:    opts,
 	}
 	mock.lockGroup.Lock()
 	mock.calls.Group = append(mock.calls.Group, callInfo)
 	mock.lockGroup.Unlock()
-	mock.GroupFunc(groupID, userID, props)
+	mock.GroupFunc(groupID, props, opts...)
 }
 
 // GroupCalls gets all the calls that were made to Group.
@@ -111,13 +112,13 @@ func (mock *TelemeterMock) Group(groupID string, userID string, props map[string
 //	len(mockedTelemeter.GroupCalls())
 func (mock *TelemeterMock) GroupCalls() []struct {
 	GroupID string
-	UserID  string
 	Props   map[string]any
+	Opts    []telemeter.Option
 } {
 	var calls []struct {
 		GroupID string
-		UserID  string
 		Props   map[string]any
+		Opts    []telemeter.Option
 	}
 	mock.lockGroup.RLock()
 	calls = mock.calls.Group
@@ -126,21 +127,21 @@ func (mock *TelemeterMock) GroupCalls() []struct {
 }
 
 // Identify calls IdentifyFunc.
-func (mock *TelemeterMock) Identify(userID string, props map[string]any) {
+func (mock *TelemeterMock) Identify(props map[string]any, opts ...telemeter.Option) {
 	if mock.IdentifyFunc == nil {
 		panic("TelemeterMock.IdentifyFunc: method is nil but Telemeter.Identify was just called")
 	}
 	callInfo := struct {
-		UserID string
-		Props  map[string]any
+		Props map[string]any
+		Opts  []telemeter.Option
 	}{
-		UserID: userID,
-		Props:  props,
+		Props: props,
+		Opts:  opts,
 	}
 	mock.lockIdentify.Lock()
 	mock.calls.Identify = append(mock.calls.Identify, callInfo)
 	mock.lockIdentify.Unlock()
-	mock.IdentifyFunc(userID, props)
+	mock.IdentifyFunc(props, opts...)
 }
 
 // IdentifyCalls gets all the calls that were made to Identify.
@@ -148,12 +149,12 @@ func (mock *TelemeterMock) Identify(userID string, props map[string]any) {
 //
 //	len(mockedTelemeter.IdentifyCalls())
 func (mock *TelemeterMock) IdentifyCalls() []struct {
-	UserID string
-	Props  map[string]any
+	Props map[string]any
+	Opts  []telemeter.Option
 } {
 	var calls []struct {
-		UserID string
-		Props  map[string]any
+		Props map[string]any
+		Opts  []telemeter.Option
 	}
 	mock.lockIdentify.RLock()
 	calls = mock.calls.Identify
@@ -189,23 +190,23 @@ func (mock *TelemeterMock) StopCalls() []struct {
 }
 
 // Track calls TrackFunc.
-func (mock *TelemeterMock) Track(event string, userID string, props map[string]any) {
+func (mock *TelemeterMock) Track(event string, props map[string]any, opts ...telemeter.Option) {
 	if mock.TrackFunc == nil {
 		panic("TelemeterMock.TrackFunc: method is nil but Telemeter.Track was just called")
 	}
 	callInfo := struct {
-		Event  string
-		UserID string
-		Props  map[string]any
+		Event string
+		Props map[string]any
+		Opts  []telemeter.Option
 	}{
-		Event:  event,
-		UserID: userID,
-		Props:  props,
+		Event: event,
+		Props: props,
+		Opts:  opts,
 	}
 	mock.lockTrack.Lock()
 	mock.calls.Track = append(mock.calls.Track, callInfo)
 	mock.lockTrack.Unlock()
-	mock.TrackFunc(event, userID, props)
+	mock.TrackFunc(event, props, opts...)
 }
 
 // TrackCalls gets all the calls that were made to Track.
@@ -213,14 +214,14 @@ func (mock *TelemeterMock) Track(event string, userID string, props map[string]a
 //
 //	len(mockedTelemeter.TrackCalls())
 func (mock *TelemeterMock) TrackCalls() []struct {
-	Event  string
-	UserID string
-	Props  map[string]any
+	Event string
+	Props map[string]any
+	Opts  []telemeter.Option
 } {
 	var calls []struct {
-		Event  string
-		UserID string
-		Props  map[string]any
+		Event string
+		Props map[string]any
+		Opts  []telemeter.Option
 	}
 	mock.lockTrack.RLock()
 	calls = mock.calls.Track
