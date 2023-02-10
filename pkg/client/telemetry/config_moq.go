@@ -5,7 +5,7 @@ package telemetry
 
 import (
 	"github.com/spf13/pflag"
-	"github.com/stackrox/rox/pkg/telemetry/phonehome"
+	"github.com/stackrox/rox/pkg/telemetry/phonehome/telemeter"
 	"sync"
 )
 
@@ -28,7 +28,7 @@ var _ TelemetryConfig = &TelemetryConfigMock{}
 //			ReadFilesFunc: func() error {
 //				panic("mock out the ReadFiles method")
 //			},
-//			TelemeterFunc: func() phonehome.Telemeter {
+//			TelemeterFunc: func() telemeter.Telemeter {
 //				panic("mock out the Telemeter method")
 //			},
 //		}
@@ -48,7 +48,7 @@ type TelemetryConfigMock struct {
 	ReadFilesFunc func() error
 
 	// TelemeterFunc mocks the Telemeter method.
-	TelemeterFunc func() phonehome.Telemeter
+	TelemeterFunc func() telemeter.Telemeter
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -160,7 +160,7 @@ func (mock *TelemetryConfigMock) ReadFilesCalls() []struct {
 }
 
 // Telemeter calls TelemeterFunc.
-func (mock *TelemetryConfigMock) Telemeter() phonehome.Telemeter {
+func (mock *TelemetryConfigMock) Telemeter() telemeter.Telemeter {
 	if mock.TelemeterFunc == nil {
 		panic("TelemetryConfigMock.TelemeterFunc: method is nil but TelemetryConfig.Telemeter was just called")
 	}
