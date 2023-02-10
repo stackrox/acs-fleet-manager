@@ -47,6 +47,14 @@ acsOperator:
   # This setting specifies whether to use a upstream operator to test unreleased versions of ACS.
   upstream: false
 
+# See available parameters in charts/cloudwatch/values.yaml
+# - enabled flag is used to completely enable/disable cloudwatch sub-chart
+cloudwatch:
+  enabled: true
+  aws:
+    accessKeyId: ""
+    secretAccessKey: ""
+
 # See available parameters in charts/observability/values.yaml
 # - enabled flag is used to completely enable/disable observability sub-chart
 observability:
