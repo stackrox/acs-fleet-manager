@@ -11,6 +11,8 @@ import (
 	"github.com/stackrox/rox/pkg/telemetry/phonehome/telemeter"
 )
 
+const tenantGroupName = "Tenant"
+
 // TelemetryAuth is a wrapper around the user claim extraction.
 //
 //go:generate moq -out telemetry_moq.go . TelemetryAuth
@@ -66,6 +68,7 @@ func (t *Telemetry) RegisterTenant(ctx context.Context, central *dbapi.CentralRe
 		return
 	}
 	props := map[string]any{
+		"name":            tenantGroupName,
 		"Cloud Account":   central.CloudAccountID,
 		"Cloud Provider":  central.CloudProvider,
 		"Instance Type":   central.InstanceType,
@@ -107,7 +110,7 @@ func (t *Telemetry) TrackCreationRequested(ctx context.Context, tenantID string,
 		"Central Creation Requested",
 		props,
 		telemeter.WithUserID(user),
-		telemeter.WithGroups("Tenant", tenantID),
+		telemeter.WithGroups(tenantGroupName, tenantID),
 	)
 }
 
@@ -138,7 +141,7 @@ func (t *Telemetry) TrackDeletionRequested(ctx context.Context, tenantID string,
 		"Central Deletion Requested",
 		props,
 		telemeter.WithUserID(user),
-		telemeter.WithGroups("Tenant", tenantID),
+		telemeter.WithGroups(tenantGroupName, tenantID),
 	)
 }
 
