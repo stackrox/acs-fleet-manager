@@ -3,6 +3,7 @@ package telemetry
 
 import (
 	"os"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
@@ -12,12 +13,14 @@ import (
 )
 
 // Telemeter is a wrapper interface for the telemeter interface to enable mock testing.
+//
 //go:generate moq -out telemeter_moq.go . Telemeter
 type Telemeter interface {
 	telemeter.Telemeter
 }
 
 // TelemetryConfig is a wrapper for the telemetry configuration.
+//
 //go:generate moq -out config_moq.go . TelemetryConfig
 type TelemetryConfig interface {
 	Enabled() bool
@@ -42,8 +45,9 @@ func NewTelemetryConfig() TelemetryConfig {
 	clientID := getEnv("HOSTNAME", "fleet-manager")
 	return &TelemetryConfigImpl{
 		Config: phonehome.Config{
-			ClientID:   clientID,
-			ClientName: "ACS Fleet Manager",
+			ClientID:     clientID,
+			ClientName:   "ACS Fleet Manager",
+			PushInterval: 1 * time.Minute,
 		},
 		StorageKeyFile: "secrets/telemetry.storageKey",
 	}
