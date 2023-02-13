@@ -15,14 +15,14 @@ RUN GOARGS="-gcflags 'all=-N -l'" make binary
 FROM build as build-standard
 RUN make binary
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.7 as debug
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.7-1049.1675784874 as debug
 COPY --from=build-debug /go/bin/dlv /src/fleet-manager /src/fleetshard-sync /usr/local/bin/
 COPY --from=build-debug /src /src
 EXPOSE 8000
 WORKDIR /
 ENTRYPOINT [ "/usr/local/bin/dlv" , "--listen=:40000", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/usr/local/bin/fleet-manager", "serve"]
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.7 as standard
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.7-1049.1675784874 as standard
 COPY --from=build-standard /src/fleet-manager /src/fleetshard-sync /usr/local/bin/
 EXPOSE 8000
 WORKDIR /
