@@ -4,7 +4,7 @@
 
 # Version of observability operator
 # https://github.com/redhat-developer/observability-operator/releases
-observabilityOperatorVersion: "v3.0.16"
+observabilityOperatorVersion: "v4.0.4"
 
 github:
   # You can generate a new one at https://github.com/settings/tokens/new, for a user
