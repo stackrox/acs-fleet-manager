@@ -1,27 +1,10 @@
-FROM registry.access.redhat.com/ubi8/s2i-base:1-408 AS build
+FROM registry.ci.openshift.org/openshift/release:golang-1.19 AS build
 
-ARG GO_VERSION=1.18.8
-RUN curl -L --retry 10 --silent --show-error --fail -o /tmp/go.linux-amd64.tar.gz \
-	"https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" && \
-	tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz && \
-	rm -f /tmp/go.linux-amd64.tar.gz
-ENV PATH="/usr/local/go/bin:${PATH}"
-
-ARG GOPATH=/go
-ENV GOPATH=${GOPATH}
-
-ARG GOCACHE=/go/.cache
-ENV GOCACHE=${GOCACHE}
-
-ARG GOROOT=/usr/local/go
-ENV GOROOT=${GOROOT}
-
-ARG GOFLAGS=-mod=mod
-ENV GOFLAGS=${GOFLAGS}
+ENV GOFLAGS="-mod=mod"
 
 RUN mkdir /src
 WORKDIR /src
-RUN CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@v1.9.1
+RUN CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@v1.20.1
 COPY go.*  ./
 RUN go mod download
 COPY . ./
