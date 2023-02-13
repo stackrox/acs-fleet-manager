@@ -23,28 +23,8 @@ registered_service_accounts:
 # - "registered_users": A list of registered users for this organisation. If empty, no one is registered unless "any_user" is set to true.
 #      - username: is the account of the user. The username must be unique within the organisation and across organisations.
 registered_users_per_organisation:
-    # The Control Plane team
-  - id: 13640203
+    # The Red Hat employee org
+  - id: 11009103
     any_user: true
-    max_allowed_instances: 5
-    registered_users: []
-    # The App SRE team
-  - id: 12147054
-    any_user: true
-    max_allowed_instances: 1
-    registered_users: []
-    # The Dinosaur Instances team
-  - id: 13639843
-    any_user: true
-    max_allowed_instances: 1
-    registered_users: []
-    # The MK Security team
-  - id: 13785172
-    any_user: true
-    max_allowed_instances: 1
-    registered_users: []
-    # The Running the Service team
-  - id: 13645369
-    any_user: true
-    max_allowed_instances: 3
+    max_allowed_instances: 50
     registered_users: []
