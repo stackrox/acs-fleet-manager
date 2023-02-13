@@ -15,14 +15,14 @@ RUN GOARGS="-gcflags 'all=-N -l'" make probe
 FROM build as build-standard
 RUN make probe
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.7 as debug
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.7-1049.1675784874 as debug
 COPY --from=build-debug /go/bin/dlv /src/probe/bin /stackrox/
 COPY --from=build-debug /src /src
 EXPOSE 7070
 ENTRYPOINT [ "/stackrox/dlv" , "--listen=:40000", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/stackrox/probe"]
 CMD ["start"]
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.7 as standard
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.7-1049.1675784874 as standard
 COPY --from=build-standard /src/probe/bin /stackrox/
 EXPOSE 7070
 ENTRYPOINT ["/stackrox/probe"]
