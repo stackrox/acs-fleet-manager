@@ -10,6 +10,8 @@ fleetshardSync:
   ocmToken: ""
   fleetManagerEndpoint: ""
   clusterId: ""
+  clusterName: ""
+  environment: ""
   # Flag controlling whether tenant's sso.redhat.com auth provider will be initialised by fleetshard-sync.
   # Currently this functionality is supported only when fleetshard-sync is deployed in the same k8s cluster as tenant.
   createAuthProvider: true

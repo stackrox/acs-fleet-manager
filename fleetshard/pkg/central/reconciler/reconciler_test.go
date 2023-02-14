@@ -42,6 +42,8 @@ const (
 	centralNamespace          = "rhacs-" + centralID
 	centralReencryptRouteName = "managed-central-reencrypt"
 	conditionTypeReady        = "Ready"
+	clusterName               = "test-cluster"
+	environment               = "test"
 )
 
 var simpleManagedCentral = private.ManagedCentral{
@@ -64,10 +66,8 @@ var simpleManagedCentral = private.ManagedCentral{
 	},
 }
 
-var (
-	//go:embed testdata
-	testdata embed.FS
-)
+//go:embed testdata
+var testdata embed.FS
 
 func centralDBInitFunc(_ context.Context, _ postgres.DBConnection, _, _ string) error {
 	return nil
@@ -84,7 +84,12 @@ func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestCo
 
 func TestReconcileCreate(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient,
+		private.ManagedCentral{},
+		nil,
+		centralDBInitFunc,
+		CentralReconcilerOptions{ClusterName: clusterName, Environment: environment, UseRoutes: true},
+	)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -99,6 +104,8 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, centralName, central.GetName())
 	assert.Equal(t, simpleManagedCentral.Id, central.GetLabels()[tenantIDLabelKey])
 	assert.Equal(t, simpleManagedCentral.Id, central.Spec.Customize.Labels[tenantIDLabelKey])
+	assert.Equal(t, environment, central.Spec.Customize.Annotations[envAnnotationKey])
+	assert.Equal(t, clusterName, central.Spec.Customize.Annotations[clusterNameAnnotationKey])
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgName, central.Spec.Customize.Annotations[orgNameAnnotationKey])
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, central.Spec.Customize.Labels[orgIDLabelKey])
 	assert.Equal(t, "1", central.GetAnnotations()[util.RevisionAnnotationKey])
@@ -131,7 +138,8 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient, centralDBInitFunc,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
-			ManagedDBEnabled: true})
+			ManagedDBEnabled: true,
+		})
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -177,7 +185,8 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient, centralDBInitFunc,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
-			ManagedDBEnabled: true})
+			ManagedDBEnabled: true,
+		})
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	var awsErr, awsOrigErr awserr.Error
@@ -343,7 +352,8 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient, centralDBInitFunc,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
-			ManagedDBEnabled: true})
+			ManagedDBEnabled: true,
+		})
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -387,7 +397,6 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 }
 
 func TestCentralChanged(t *testing.T) {
-
 	tests := []struct {
 		name           string
 		lastCentral    *private.ManagedCentral
@@ -437,7 +446,6 @@ func TestCentralChanged(t *testing.T) {
 			assert.Equal(t, test.want, got)
 		})
 	}
-
 }
 
 func TestNamespaceLabelsAreSet(t *testing.T) {
@@ -646,8 +654,7 @@ func centralDeploymentObject() *appsv1.Deployment {
 
 var _ fleetmanager.Auth = &fakeAuth{}
 
-type fakeAuth struct {
-}
+type fakeAuth struct{}
 
 func (*fakeAuth) AddAuth(_ *http.Request) error {
 	return nil
