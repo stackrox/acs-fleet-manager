@@ -4,6 +4,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/upgrader"
 	"time"
 
 	"github.com/golang/glog"
@@ -44,10 +45,11 @@ type Runtime struct {
 	k8sClient         ctrlClient.Client
 	dbProvisionClient cloudprovider.DBClient
 	statusResponseCh  chan private.DataPlaneCentralStatus
+	upgrader          upgrader.CanaryUpgrader
 }
 
 // NewRuntime creates a new runtime
-func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
+func NewRuntime(config *config.Config, upgrader upgrader.CanaryUpgrader, k8sClient ctrlClient.Client) (*Runtime, error) {
 	auth, err := fleetmanager.NewAuth(config.AuthType, fleetmanager.Option{
 		Sso: fleetmanager.RHSSOOption{
 			ClientID:     config.RHSSOClientID,
@@ -86,6 +88,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		clusterID:         config.ClusterID,
 		dbProvisionClient: dbProvisionClient,
 		reconcilers:       make(reconcilerRegistry),
+		upgrader:          upgrader,
 	}, nil
 }
 
@@ -124,6 +127,7 @@ func (r *Runtime) Start() error {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central,
 					r.dbProvisionClient, postgres.InitializeDatabase, reconcilerOpts)
+				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, r.dbProvisionClient, r.upgrader, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]

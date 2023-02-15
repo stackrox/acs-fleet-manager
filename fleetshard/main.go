@@ -3,15 +3,17 @@ package main
 
 import (
 	"flag"
-	"os"
-	"os/signal"
-
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/runtime"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/upgrader"
 	"golang.org/x/sys/unix"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"os"
+	"os/signal"
 )
 
 func main() {
@@ -40,7 +42,24 @@ func main() {
 	glog.Infof("ManagedDB.SecurityGroup: %s", config.ManagedDB.SecurityGroup)
 	glog.Infof("ManagedDB.SubnetGroup: %s", config.ManagedDB.SubnetGroup)
 
-	runtime, err := runtime.NewRuntime(config, k8s.CreateClientOrDie())
+	k8sConfig, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	clientset, err := kubernetes.NewForConfig(k8sConfig)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	u := upgrader.NewCanaryUpgrader(k8s.CreateClientOrDie())
+	go func() {
+		//TODO: refactor to an indepedent component to re-use shared informers?
+		err := u.DeploymentInformer(clientset)
+		glog.Info(err)
+	}()
+
+	runtime, err := runtime.NewRuntime(config, u, k8s.CreateClientOrDie())
 	if err != nil {
 		glog.Fatal(err)
 	}
