@@ -51,7 +51,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 	auth, err := fleetmanager.NewAuth(config.AuthType, fleetmanager.Option{
 		Sso: fleetmanager.RHSSOOption{
 			ClientID:     config.RHSSOClientID,
-			ClientSecret: config.RHSSOClientSecret, //pragma: allowlist secret
+			ClientSecret: config.RHSSOClientSecret, // pragma: allowlist secret
 			Realm:        config.RHSSORealm,
 			Endpoint:     config.RHSSOEndpoint,
 		},
@@ -106,6 +106,8 @@ func (r *Runtime) Start() error {
 		EgressProxyImage:  r.config.EgressProxyImage,
 		ManagedDBEnabled:  r.config.ManagedDB.Enabled,
 		Telemetry:         r.config.Telemetry,
+		ClusterName:       r.config.ClusterName,
+		Environment:       r.config.Environment,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {

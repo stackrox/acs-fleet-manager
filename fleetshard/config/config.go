@@ -14,6 +14,8 @@ import (
 type Config struct {
 	FleetManagerEndpoint string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
 	ClusterID            string        `env:"CLUSTER_ID"`
+	ClusterName          string        `env:"CLUSTER_NAME"`
+	Environment          string        `env:"ENVIRONMENT"`
 	RuntimePollPeriod    time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
 	AuthType             string        `env:"AUTH_TYPE" envDefault:"RHSSO"`
 	RHSSOClientID        string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`

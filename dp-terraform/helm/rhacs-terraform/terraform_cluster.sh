@@ -98,6 +98,8 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --set fleetshardSync.image="quay.io/app-sre/acs-fleet-manager:${FLEETSHARD_SYNC_TAG}" \
   --set fleetshardSync.authType="RHSSO" \
   --set fleetshardSync.clusterId="${CLUSTER_ID}" \
+  --set fleetshardSync.clusterName="${CLUSTER_NAME}" \
+  --set fleetshardSync.environment="${ENVIRONMENT}" \
   --set fleetshardSync.fleetManagerEndpoint="${FM_ENDPOINT}" \
   --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_ID}" \
   --set fleetshardSync.redHatSSO.clientSecret="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET}" \
