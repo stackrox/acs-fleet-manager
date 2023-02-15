@@ -40,6 +40,7 @@ type CentralRequest struct {
 	// Owner is the Red Hat SSO login name of the user who created the instance. It is either the email, or the user name, depending on what the user chose to login with. It's displayed in the console UI.
 	Owner string `json:"owner" gorm:"index"`
 	// OwnerAccountID is used in telemetry, it is the account_id claim of the Red Hat SSO token.
+	// Deprecated: Use user_id claim in telemetry.
 	OwnerAccountID string `json:"owner_account_id"`
 	// OwnerUserID is the subject claim (confusingly it is NOT the user_id claim) of the Red Hat SSO token.
 	OwnerUserID string `json:"owner_user_id"`
