@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/upgrader"
 	"sync/atomic"
 
 	"github.com/golang/glog"
@@ -44,6 +45,7 @@ const (
 	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
+	versionAnnotation         = "rhacs.redhat.com/version"
 
 	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
 	dbUserTypeMaster     = "master"
@@ -51,6 +53,7 @@ const (
 	dbCentralUserName    = "rhacs_central"
 
 	centralDbSecretName = "central-db-password" // pragma: allowlist secret
+
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -86,6 +89,7 @@ type CentralReconciler struct {
 	managedDBInitFunc           postgres.CentralDBInitFunc
 
 	resourcesChart *chart.Chart
+	upgrader       upgrader.CanaryUpgrader
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -140,7 +144,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
 				tenantIDLabelKey:      remoteCentral.Id,
 			},
-			Annotations: map[string]string{managedServicesAnnotation: "true"},
+			Annotations: map[string]string{
+				managedServicesAnnotation: "true",
+				versionAnnotation:         remoteCentral.Spec.Versions.Central,
+			},
 		},
 		Spec: v1alpha1.CentralSpec{
 			Central: &v1alpha1.CentralComponentSpec{
@@ -279,6 +286,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			return nil, errors.Wrap(err, "incrementing central's revision")
 		}
 		existingCentral.Spec = *central.Spec.DeepCopy()
+
+		if central.GetAnnotations()[versionAnnotation] != remoteCentral.Spec.Versions.Central {
+			//TODO: trigger upgrade
+			r.upgrader.StartUpgrade(ctx, central)
+		}
 
 		if err := r.client.Update(ctx, &existingCentral); err != nil {
 			return nil, errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
@@ -901,6 +913,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		telemetry:         opts.Telemetry,
 		clusterName:       opts.ClusterName,
 		environment:       opts.Environment,
+		upgrader:          upgrader,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,
