@@ -131,8 +131,14 @@ func (h dinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-			err := h.service.RegisterDinosaurDeprovisionJob(ctx, id)
-			h.telemetry.TrackDeletionRequested(ctx, id, false, err.AsError())
+			centralRequest, err := h.service.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			err = h.service.RegisterDinosaurDeprovisionJob(ctx, id)
+			if !centralRequest.Internal {
+				h.telemetry.TrackDeletionRequested(ctx, id, false, err.AsError())
+			}
 			return nil, err
 		},
 	}
