@@ -112,6 +112,8 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --set fleetshardSync.telemetry.storage.key="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_KEY:-}" \
   --set cloudwatch.aws.accessKeyId="${CLOUDWATCH_EXPORTER_AWS_ACCESS_KEY_ID:-}" \
   --set cloudwatch.aws.secretAccessKey="${CLOUDWATCH_EXPORTER_AWS_SECRET_ACCESS_KEY:-}" \
+  --set cloudwatch.clusterName="${CLUSTER_NAME}" \
+  --set cloudwatch.environment="${ENVIRONMENT}" \
   --set logging.groupPrefix="${CLUSTER_NAME}" \
   --set logging.aws.accessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \
   --set logging.aws.secretAccessKey="${LOGGING_AWS_SECRET_ACCESS_KEY}" \

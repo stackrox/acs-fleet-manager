@@ -1,6 +1,8 @@
 image: "quay.io/rhacs-eng/blackbox-monitoring-probe-service:main"
 namespace: "rhacs-probe"
 fleetManagerEndpoint: ""
+clusterName: ""
+environment: ""
 # Must be either 'RHSSO' or 'OCM'.
 authType: "RHSSO"
 ocm:
