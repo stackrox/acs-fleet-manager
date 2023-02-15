@@ -39,6 +39,8 @@ const (
 	helmReleaseName = "tenant-resources"
 
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
+	envAnnotationKey          = "rhacs.redhat.com/environment"
+	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
 	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
@@ -58,6 +60,8 @@ type CentralReconcilerOptions struct {
 	EgressProxyImage  string
 	ManagedDBEnabled  bool
 	Telemetry         config.Telemetry
+	ClusterName       string
+	Environment       string
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -74,6 +78,8 @@ type CentralReconciler struct {
 	routeService      *k8s.RouteService
 	egressProxyImage  string
 	telemetry         config.Telemetry
+	clusterName       string
+	environment       string
 
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
@@ -174,7 +180,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			Customize: &v1alpha1.CustomizeSpec{
 				EnvVars: envVars,
 				Annotations: map[string]string{
-					orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
+					envAnnotationKey:         r.environment,
+					clusterNameAnnotationKey: r.clusterName,
+					orgNameAnnotationKey:     remoteCentral.Spec.Auth.OwnerOrgName,
 				},
 				Labels: map[string]string{
 					orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
@@ -589,7 +597,6 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 
 	if !apiErrors.IsNotFound(err) {
 		return fmt.Errorf("getting Central DB secret: %w", err)
-
 	}
 
 	// create secret if it does not exist
@@ -599,7 +606,8 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 			Namespace: remoteCentralNamespace,
 			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
 			Annotations: map[string]string{
-				managedServicesAnnotation: "true"},
+				managedServicesAnnotation: "true",
+			},
 		},
 	}
 
@@ -875,14 +883,13 @@ func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (c
 	return vals, nil
 }
 
-var (
-	resourcesChart = charts.MustGetChart("tenant-resources")
-)
+var resourcesChart = charts.MustGetChart("tenant-resources")
 
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
 	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
-	opts CentralReconcilerOptions) *CentralReconciler {
+	opts CentralReconcilerOptions,
+) *CentralReconciler {
 	return &CentralReconciler{
 		client:            k8sClient,
 		central:           central,
@@ -892,6 +899,8 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		routeService:      k8s.NewRouteService(k8sClient),
 		egressProxyImage:  opts.EgressProxyImage,
 		telemetry:         opts.Telemetry,
+		clusterName:       opts.ClusterName,
+		environment:       opts.Environment,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,
