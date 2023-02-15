@@ -50,7 +50,7 @@ if [[ "$INSTALL_OPENSHIFT_ROUTER" == "true" ]]; then
 fi
 
 if [[ "$INSTALL_OPERATOR" == "true" ]]; then
-    ./install_operator.sh
+    install_operator.sh
 else
     # We will be running without RHACS operator, but at least install our CRDs.
     apply "${MANIFESTS_DIR}/crds"
