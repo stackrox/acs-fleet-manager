@@ -79,6 +79,7 @@ init() {
 
     export ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-$ENABLE_EXTERNAL_CONFIG_DEFAULT}"
     export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-$AWS_AUTH_HELPER_DEFAULT}"
+    export AWS_REGION="${AWS_REGION:-"us-east-1"}"
 
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
     export ACSMS_NAMESPACE="${ACSMS_NAMESPACE:-$ACSMS_NAMESPACE_DEFAULT}"
@@ -329,4 +330,12 @@ delete_tenant_namespaces() {
         sleep 1
     done
     log "All RHACS tenant namespaces deleted."
+}
+
+create_rds_ca_bundle_secret() {
+    local rds_ca_bundle="rds-ca-bundle.pem"
+    curl https://truststore.pki.rds.amazonaws.com/"${AWS_REGION}"/"${AWS_REGION}"-bundle.pem -o ${rds_ca_bundle}
+    $KUBECTL -n "${ACSMS_NAMESPACE}" delete secret fleetshard-sync-rds-ca-bundle --ignore-not-found
+    $KUBECTL -n "${ACSMS_NAMESPACE}" create secret generic fleetshard-sync-rds-ca-bundle --from-file=${rds_ca_bundle}
+    rm ${rds_ca_bundle}
 }

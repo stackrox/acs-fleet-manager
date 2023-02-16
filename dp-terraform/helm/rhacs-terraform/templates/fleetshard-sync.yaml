@@ -80,3 +80,11 @@ spec:
         ports:
         - name: monitoring
           containerPort: 8080
+        volumeMounts:
+          - mountPath: /rds-ca-bundle
+            name: rds-ca-bundle
+      volumes:
+        - name: rds-ca-bundle
+          secret:
+            secretName: fleetshard-sync-rds-ca-bundle # pragma: allowlist secret
+            optional: false

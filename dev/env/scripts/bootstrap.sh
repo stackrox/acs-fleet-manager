@@ -37,6 +37,8 @@ wait_for_default_service_account "$ACSMS_NAMESPACE"
 apply "${MANIFESTS_DIR}/rhacs-operator/00-namespace.yaml"
 wait_for_default_service_account "$STACKROX_OPERATOR_NAMESPACE"
 
+create_rds_ca_bundle_secret
+
 # pragma: allowlist nextline secret
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
     create-imagepullsecrets

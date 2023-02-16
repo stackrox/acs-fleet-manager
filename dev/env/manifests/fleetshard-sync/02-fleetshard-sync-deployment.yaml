@@ -66,6 +66,8 @@ spec:
               name: secrets
             - mountPath: /config
               name: config
+            - mountPath: /rds-ca-bundle
+              name: rds-ca-bundle
       restartPolicy: Always
       volumes:
         - name: secrets
@@ -75,3 +77,7 @@ spec:
         - name: config
           configMap:
             name: config
+        - name: rds-ca-bundle
+          secret:
+            secretName: fleetshard-sync-rds-ca-bundle # pragma: allowlist secret
+            optional: true

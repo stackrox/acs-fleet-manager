@@ -35,6 +35,7 @@ fleetshardSync:
   aws:
     region: "us-east-1"
     roleARN: ""
+    rdsCertsBundle: ""
   telemetry:
     storage:
       endpoint: ""
