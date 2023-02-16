@@ -3,4 +3,6 @@ aws:
   accessKeyId: ""
   secretAccessKey: ""
 
+clusterName: ""
+environment: ""
 image: "quay.io/prometheus/cloudwatch-exporter:v0.15.1"

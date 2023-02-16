@@ -12,6 +12,9 @@ spec:
       app: cloudwatch-exporter
   template:
     metadata:
+      annotations:
+        rhacs.redhat.com/cluster-name: {{ .Values.clusterName | quote }}
+        rhacs.redhat.com/environment: {{ .Values.environment | quote }}
       labels:
         app: cloudwatch-exporter
     spec:
