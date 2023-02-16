@@ -59,6 +59,8 @@ helm upgrade rhacs-probe "${SCRIPT_DIR}" \
   --namespace "${NAMESPACE}" \
   --create-namespace \
   --set authType="${AUTH_TYPE}" \
+  --set clusterName="${CLUSTER_NAME}" \
+  --set environment="${ENVIRONMENT}" \
   --set fleetManagerEndpoint="${FM_ENDPOINT}" \
   --set image="${PROBE_IMAGE}" \
   --set ocm.token="${PROBE_OCM_TOKEN}" \
