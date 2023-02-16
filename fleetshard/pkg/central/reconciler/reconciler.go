@@ -133,11 +133,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// Set proxy configuration
 	envVars := getProxyEnvVars(remoteCentralNamespace)
 
-	additionalCa, err := os.ReadFile(postgres.RDSCertificatePath)
-	if err != nil {
-		return nil, fmt.Errorf("reading RDS CA bundle: %w", err)
-	}
-
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
@@ -195,14 +190,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 					tenantIDLabelKey: remoteCentral.Id,
 				},
 			},
-			TLS: &v1alpha1.TLSConfig{
-				AdditionalCAs: []v1alpha1.AdditionalCA{
-					{
-						Name:    postgres.CentralRDSCertificateBaseName,
-						Content: string(additionalCa),
-					},
-				},
-			},
 		},
 	}
 
@@ -258,6 +245,20 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			ConnectionStringOverride: pointer.String(centralDBConnectionString),
 			PasswordSecret: &v1alpha1.LocalSecretReference{
 				Name: centralDbSecretName,
+			},
+		}
+
+		additionalCa, err := os.ReadFile(postgres.RDSCertificatePath)
+		if err != nil {
+			return nil, fmt.Errorf("reading RDS CA bundle: %w", err)
+		}
+
+		central.Spec.TLS = &v1alpha1.TLSConfig{
+			AdditionalCAs: []v1alpha1.AdditionalCA{
+				{
+					Name:    postgres.CentralRDSCertificateBaseName,
+					Content: string(additionalCa),
+				},
 			},
 		}
 	}
