@@ -16,6 +16,7 @@ FROM build as build-standard
 RUN make binary
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.7 as debug
+ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /usr/local/share/ca-certificates/aws-rds-ca-global-bundle.pem
 COPY --from=build-debug /go/bin/dlv /src/fleet-manager /src/fleetshard-sync /usr/local/bin/
 COPY --from=build-debug /src /src
 EXPOSE 8000

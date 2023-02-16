@@ -14,7 +14,18 @@ type DBConnection struct {
 	password string
 }
 
-const sslMode = "require"
+const sslMode = "verify-full"
+
+const caPath = "/usr/local/share/ca-certificates/"
+
+// RDSCertificatePath stores the location where the RDS CA bundle is mounted in the fleetshard image
+const RDSCertificatePath = caPath + "aws-rds-ca-global-bundle.pem"
+
+// CentralRDSCertificateBaseName is the name of the additional CA that is passed to Central
+const CentralRDSCertificateBaseName = "rds-ca-bundle"
+
+// rdsCertificatePathCentral stores the location where the RDS CA bundle is mounted in the Central image
+const rdsCertificatePathCentral = caPath + "00-" + CentralRDSCertificateBaseName + ".crt"
 
 // NewDBConnection constructs a new DBConnection struct
 func NewDBConnection(host string, port int, user, database string) (DBConnection, error) {
@@ -45,16 +56,17 @@ func (c DBConnection) WithPassword(password string) DBConnection {
 	return c
 }
 
-// AsConnectionString returns a string that can be used to connect to a PostgreSQL server. The password is omitted.
-func (c DBConnection) AsConnectionString() string {
-	return fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s",
-		c.host, c.port, c.user, c.database, sslMode)
+// AsConnectionStringForCentral returns a string that can be used by Central to connect to the PostgreSQL server
+func (c DBConnection) AsConnectionStringForCentral() string {
+	return fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s sslrootcert=%s",
+		c.host, c.port, c.user, c.database, sslMode, rdsCertificatePathCentral)
 }
 
-// asConnectionStringWithPassword returns a string that can be used to connect to a PostgreSQL server. This function
-// exposes the password in plain-text, so it should be used with care.
-func (c DBConnection) asConnectionStringWithPassword() string {
-	return c.AsConnectionString() + fmt.Sprintf(" password=%s", c.password)
+// asConnectionForFleetshard returns a string that can be used by fleetshard to connect to a PostgreSQL server. This function
+// exposes the password in plain-text, so its output should be used with care.
+func (c DBConnection) asConnectionForFleetshard() string {
+	return fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s sslrootcert=%s password=%s",
+		c.host, c.port, c.user, c.database, sslMode, RDSCertificatePath, c.password)
 }
 
 // GetConnectionForUser returns a DBConnection struct for the user given as parameter

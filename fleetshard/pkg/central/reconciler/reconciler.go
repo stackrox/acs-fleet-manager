@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"sync/atomic"
 
 	"github.com/golang/glog"
@@ -132,6 +133,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// Set proxy configuration
 	envVars := getProxyEnvVars(remoteCentralNamespace)
 
+	additionalCa, err := os.ReadFile(postgres.RDSCertificatePath)
+	if err != nil {
+		return nil, fmt.Errorf("reading RDS CA bundle: %w", err)
+	}
+
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
@@ -187,6 +193,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				Labels: map[string]string{
 					orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
 					tenantIDLabelKey: remoteCentral.Id,
+				},
+			},
+			TLS: &v1alpha1.TLSConfig{
+				AdditionalCAs: []v1alpha1.AdditionalCA{
+					{
+						Name:    postgres.CentralRDSCertificateBaseName,
+						Content: string(additionalCa),
+					},
 				},
 			},
 		},
@@ -509,7 +523,7 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 	if err != nil {
 		return "", fmt.Errorf("getting RDS DB connection data: %w", err)
 	}
-	return dbConnection.GetConnectionForUser(dbCentralUserName).AsConnectionString(), nil
+	return dbConnection.GetConnectionForUser(dbCentralUserName).AsConnectionStringForCentral(), nil
 }
 
 func generateDBPassword() (string, error) {
