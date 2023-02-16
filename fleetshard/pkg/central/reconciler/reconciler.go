@@ -899,7 +899,7 @@ var resourcesChart = charts.MustGetChart("tenant-resources")
 
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
-	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
+	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc, upgrader upgrader.CanaryUpgrader,
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
 	return &CentralReconciler{

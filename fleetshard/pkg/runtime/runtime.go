@@ -126,8 +126,7 @@ func (r *Runtime) Start() error {
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central,
-					r.dbProvisionClient, postgres.InitializeDatabase, reconcilerOpts)
-				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, r.dbProvisionClient, r.upgrader, reconcilerOpts)
+					r.dbProvisionClient, postgres.InitializeDatabase, r.upgrader, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]
