@@ -72,7 +72,7 @@ func (c *CanaryUpgrader) Manager() error {
 	os.Exit(0)
 
 	for _, group := range availableGroups {
-		glog.Infof("Upgrade Central Group <GROUP_NAME>")
+		glog.Infof("Upgrade Central Group %s", group)
 		// TODO: Filter list by group label
 		list := &platform.CentralList{}
 		err := c.k8sClient.List(ctx, list)
@@ -82,7 +82,7 @@ func (c *CanaryUpgrader) Manager() error {
 
 		// TODO: wait until group is finished?
 		// TODO: Do it async?
-		err = c.StartUpgrade(ctx)
+		err = c.StartUpgrade(ctx, &platform.Central{})
 		if err != nil {
 			return err
 		}
