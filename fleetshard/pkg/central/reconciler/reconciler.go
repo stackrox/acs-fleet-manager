@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"sync/atomic"
 
 	"github.com/golang/glog"
@@ -248,15 +247,15 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			},
 		}
 
-		additionalCa, err := os.ReadFile(postgres.RDSCertificatePath)
+		rdsCA, err := postgres.GetRDSCertificate()
 		if err != nil {
-			glog.Warningf("Could not read RDS CA bundle at %s: %v", postgres.RDSCertificatePath, err)
+			glog.Warningf("Could not read RDS CA bundle: %v", err)
 		} else {
 			central.Spec.TLS = &v1alpha1.TLSConfig{
 				AdditionalCAs: []v1alpha1.AdditionalCA{
 					{
 						Name:    postgres.CentralRDSCertificateBaseName,
-						Content: string(additionalCa),
+						Content: string(rdsCA),
 					},
 				},
 			}

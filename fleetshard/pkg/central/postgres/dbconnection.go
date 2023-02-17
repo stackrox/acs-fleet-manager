@@ -3,6 +3,8 @@ package postgres
 
 import (
 	"fmt"
+	"os"
+	"sync"
 )
 
 // DBConnection stores the data necessary to connect to a PostgreSQL server
@@ -14,18 +16,22 @@ type DBConnection struct {
 	password string
 }
 
-const sslMode = "verify-full"
+var once sync.Once
+var rdsCertificateData []byte
 
-const caPath = "/usr/local/share/ca-certificates/"
+const (
+	// CentralRDSCertificateBaseName is the name of the additional CA that is passed to Central
+	CentralRDSCertificateBaseName = "rds-ca-bundle"
 
-// RDSCertificatePath stores the location where the RDS CA bundle is mounted in the fleetshard image
-const RDSCertificatePath = caPath + "aws-rds-ca-global-bundle.pem"
+	sslMode = "verify-full"
 
-// CentralRDSCertificateBaseName is the name of the additional CA that is passed to Central
-const CentralRDSCertificateBaseName = "rds-ca-bundle"
+	caPath = "/usr/local/share/ca-certificates/"
 
-// rdsCertificatePathCentral stores the location where the RDS CA bundle is mounted in the Central image
-const rdsCertificatePathCentral = caPath + "00-" + CentralRDSCertificateBaseName + ".crt"
+	rdsCertificatePath = caPath + "aws-rds-ca-global-bundle.pem"
+
+	// rdsCertificatePathCentral stores the location where the RDS CA bundle is mounted in the Central image
+	rdsCertificatePathCentral = caPath + "00-" + CentralRDSCertificateBaseName + ".crt"
+)
 
 // NewDBConnection constructs a new DBConnection struct
 func NewDBConnection(host string, port int, user, database string) (DBConnection, error) {
@@ -66,7 +72,7 @@ func (c DBConnection) AsConnectionStringForCentral() string {
 // exposes the password in plain-text, so its output should be used with care.
 func (c DBConnection) asConnectionStringForFleetshard() string {
 	return fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s sslrootcert=%s password=%s",
-		c.host, c.port, c.user, c.database, sslMode, RDSCertificatePath, c.password)
+		c.host, c.port, c.user, c.database, sslMode, rdsCertificatePath, c.password)
 }
 
 // GetConnectionForUser returns a DBConnection struct for the user given as parameter
@@ -75,4 +81,18 @@ func (c DBConnection) GetConnectionForUser(userName string) DBConnection {
 	nonPrivilegedConnection.user = userName
 
 	return nonPrivilegedConnection
+}
+
+// GetRDSCertificate returns the location where the RDS CA bundle is mounted in the fleetshard image
+func GetRDSCertificate() ([]byte, error) {
+	var err error
+	once.Do(func() {
+		rdsCertificateData, err = os.ReadFile(rdsCertificatePath)
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("reading RDS CA file: %w", err)
+	}
+
+	return rdsCertificateData, nil
 }
