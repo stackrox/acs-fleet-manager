@@ -62,9 +62,9 @@ func (c DBConnection) AsConnectionStringForCentral() string {
 		c.host, c.port, c.user, c.database, sslMode, rdsCertificatePathCentral)
 }
 
-// asConnectionForFleetshard returns a string that can be used by fleetshard to connect to a PostgreSQL server. This function
+// asConnectionStringForFleetshard returns a string that can be used by fleetshard to connect to a PostgreSQL server. This function
 // exposes the password in plain-text, so its output should be used with care.
-func (c DBConnection) asConnectionForFleetshard() string {
+func (c DBConnection) asConnectionStringForFleetshard() string {
 	return fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s sslrootcert=%s password=%s",
 		c.host, c.port, c.user, c.database, sslMode, RDSCertificatePath, c.password)
 }

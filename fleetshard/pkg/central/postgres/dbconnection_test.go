@@ -17,7 +17,7 @@ func TestPostgresConnectionString(t *testing.T) {
 	dbConnectionWithPassword := dbConnection.WithPassword("test_pass")
 	require.Equal(t, dbConnectionWithPassword.AsConnectionStringForCentral(),
 		"host=localhost port=14543 user=test-user dbname=postgresdb sslmode=verify-full sslrootcert=/usr/local/share/ca-certificates/00-rds-ca-bundle.crt")
-	require.Equal(t, dbConnectionWithPassword.asConnectionForFleetshard(),
+	require.Equal(t, dbConnectionWithPassword.asConnectionStringForFleetshard(),
 		"host=localhost port=14543 user=test-user dbname=postgresdb sslmode=verify-full sslrootcert=/usr/local/share/ca-certificates/aws-rds-ca-global-bundle.pem password=test_pass") // pragma: allowlist secret
 }
 
