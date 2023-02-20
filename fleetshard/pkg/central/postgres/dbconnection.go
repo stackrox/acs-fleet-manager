@@ -3,17 +3,17 @@ package postgres
 
 import (
 	"fmt"
-	"os"
 	"sync"
 )
 
 // DBConnection stores the data necessary to connect to a PostgreSQL server
 type DBConnection struct {
-	host     string
-	port     int
-	database string
-	user     string
-	password string
+	host        string
+	port        int
+	database    string
+	user        string
+	password    string
+	sslrootcert string
 }
 
 var (
@@ -21,17 +21,7 @@ var (
 	rdsCertificateData []byte
 )
 
-const (
-	// CentralRDSCACertificateBaseName is the name of the additional CA that is passed to Central
-	CentralRDSCACertificateBaseName = "rds-ca-bundle"
-
-	sslMode = "verify-full"
-	caPath  = "/usr/local/share/ca-certificates/"
-	// rdsCACertificatePath stores the location where the RDS CA bundle is mounted in the fleetshard image
-	rdsCACertificatePath = caPath + "aws-rds-ca-global-bundle.pem"
-	// rdsCACertificatePathCentral stores the location where the RDS CA bundle is mounted in the Central image
-	rdsCACertificatePathCentral = caPath + "00-" + CentralRDSCACertificateBaseName + ".crt"
-)
+const sslMode = "verify-full"
 
 // NewDBConnection constructs a new DBConnection struct
 func NewDBConnection(host string, port int, user, database string) (DBConnection, error) {
@@ -62,17 +52,27 @@ func (c DBConnection) WithPassword(password string) DBConnection {
 	return c
 }
 
-// AsConnectionStringForCentral returns a string that can be used by Central to connect to the PostgreSQL server
-func (c DBConnection) AsConnectionStringForCentral() string {
-	return fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s sslrootcert=%s",
-		c.host, c.port, c.user, c.database, sslMode, rdsCACertificatePathCentral)
+// WithSSLRootCert adds an optional sslrootcert parameter to the DBConnection struct, which points PostgreSQL to the
+// location of the CA root certificate
+func (c DBConnection) WithSSLRootCert(sslrootcert string) DBConnection {
+	c.sslrootcert = sslrootcert
+	return c
 }
 
-// asConnectionStringForFleetshard returns a string that can be used by fleetshard to connect to a PostgreSQL server. This function
-// exposes the password in plain-text, so its output should be used with care.
-func (c DBConnection) asConnectionStringForFleetshard() string {
-	return fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s sslrootcert=%s password=%s",
-		c.host, c.port, c.user, c.database, sslMode, rdsCACertificatePath, c.password)
+// AsConnectionString returns a string that can be used to connect to a PostgreSQL server. The password is omitted.
+func (c DBConnection) AsConnectionString() string {
+	connectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s",
+		c.host, c.port, c.user, c.database, sslMode)
+	if c.sslrootcert != "" {
+		connectionString = fmt.Sprintf("%s sslrootcert=%s", connectionString, c.sslrootcert)
+	}
+
+	return connectionString
+}
+
+// asConnectionStringWithPassword returns a string that can be used to connect to a PostgreSQL server
+func (c DBConnection) asConnectionStringWithPassword() string {
+	return c.AsConnectionString() + fmt.Sprintf(" password=%s", c.password)
 }
 
 // GetConnectionForUser returns a DBConnection struct for the user given as parameter
@@ -81,18 +81,4 @@ func (c DBConnection) GetConnectionForUser(userName string) DBConnection {
 	nonPrivilegedConnection.user = userName
 
 	return nonPrivilegedConnection
-}
-
-// GetRDSCACertificate returns the location where the RDS CA bundle is mounted in the fleetshard image
-func GetRDSCACertificate() ([]byte, error) {
-	var err error
-	once.Do(func() {
-		rdsCertificateData, err = os.ReadFile(rdsCACertificatePath)
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("reading RDS CA file: %w", err)
-	}
-
-	return rdsCertificateData, nil
 }
