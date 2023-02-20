@@ -154,8 +154,8 @@ type Cluster struct {
 	StatusDetails      string        `json:"status_details" gorm:"-"`
 	IdentityProviderID string        `json:"identity_provider_id"`
 	ClusterDNS         string        `json:"cluster_dns"`
-	// SkipScheduling indicates if this cluster should be skipped when searching for a cluster
-	// to schedule an ACS tenant to.
+	// SkipScheduling indicates if this cluster should be skipped when a services.ClusterPlacementStrategy
+	// implementation is searching for a cluster to schedule an ACS tenant to.
 	SkipScheduling bool `json:"skip_scheduling"`
 	// the provider type for the cluster, e.g. OCM, AWS, GCP, Standalone etc
 	ProviderType ClusterProviderType `json:"provider_type"`
