@@ -247,14 +247,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			},
 		}
 
-		rdsCA, err := postgres.GetRDSCertificate()
+		rdsCA, err := postgres.GetRDSCACertificate()
 		if err != nil {
 			glog.Warningf("Could not read RDS CA bundle: %v", err)
 		} else {
 			central.Spec.TLS = &v1alpha1.TLSConfig{
 				AdditionalCAs: []v1alpha1.AdditionalCA{
 					{
-						Name:    postgres.CentralRDSCertificateBaseName,
+						Name:    postgres.CentralRDSCACertificateBaseName,
 						Content: string(rdsCA),
 					},
 				},
