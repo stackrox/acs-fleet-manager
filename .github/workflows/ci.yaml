@@ -106,18 +106,12 @@ jobs:
           export PATH=${PATH}:$GOPATH/bin
           make verify binary test test/integration
         timeout-minutes: 14
-      - name: Build and publish image to quay.io
+      - name: Build and publish fleet* image to quay.io
         if: github.event_name == 'push'
         env:
           QUAY_USER: ${{ secrets.QUAY_RHACS_ENG_FM_RW_USERNAME }}
           QUAY_TOKEN: ${{ secrets.QUAY_RHACS_ENG_FM_RW_PASSWORD }}
           QUAY_IMAGE_REPOSITORY: rhacs-eng/fleet-manager
-
-          QUAY_PROBE_USER: ${{ secrets.QUAY_RHACS_ENG_PROBE_RW_USERNAME }}
-          QUAY_PROBE_TOKEN: ${{ secrets.QUAY_RHACS_ENG_PROBE_RW_PASSWORD }}
-          QUAY_PROBE_IMAGE_REPOSITORY: rhacs-eng/blackbox-monitoring-probe-service
         run: |
           chmod +x ./build_push_fleet_manager.sh
-          chmod +x ./build_push_probe.sh
           ./build_push_fleet_manager.sh
-          ./build_push_probe.sh
