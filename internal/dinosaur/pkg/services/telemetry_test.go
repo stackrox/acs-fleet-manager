@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/telemetry"
-	"github.com/stackrox/rox/pkg/telemetry/phonehome"
+	"github.com/stackrox/rox/pkg/telemetry/phonehome/telemeter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -85,22 +85,22 @@ func TestTelemetryTrackRequests(t *testing.T) {
 					return "user", nil
 				},
 			}
-			telemeter := &telemetry.TelemeterMock{
-				TrackFunc: func(event, userID string, props map[string]any) {},
+			tel := &telemetry.TelemeterMock{
+				TrackFunc: func(event string, props map[string]any, opts ...telemeter.Option) {},
 			}
 			config := &telemetry.TelemetryConfigMock{
 				EnabledFunc: func() bool {
 					return true
 				},
-				TelemeterFunc: func() phonehome.Telemeter {
-					return telemeter
+				TelemeterFunc: func() telemeter.Telemeter {
+					return tel
 				},
 			}
 
 			telemetry := NewTelemetry(auth, config)
 			tt.trackFunc(telemetry, tt)
 
-			calls := telemeter.TrackCalls()
+			calls := tel.TrackCalls()
 			require.Len(t, calls, 1)
 			assert.Equal(t, tenantID, calls[0].Props["Tenant ID"])
 			assert.Equal(t, tt.isAdmin, calls[0].Props["Is Admin Request"])

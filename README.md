@@ -32,7 +32,7 @@ ACS fleet-manager repository for the ACS managed service.
 
 #### Prerequisites
 
-* [Golang 1.18+](https://golang.org/dl/)
+* [Golang 1.19+](https://golang.org/dl/)
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 * [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
@@ -74,6 +74,9 @@ $ ./scripts/create-central.sh
 
 # To interact with the API use
 $ ./scripts/fmcurl
+
+# To build and re-deploy the fleet-manager and fleetshard-sync locally run:
+$ make deploy/dev-fast
 ```
 
 #### Common make targets

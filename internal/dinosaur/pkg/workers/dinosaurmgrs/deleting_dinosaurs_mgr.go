@@ -64,7 +64,6 @@ func (k *DeletingDinosaurManager) Stop() {
 //   - freeing up any associated quota with the central
 //   - any dynamically created OIDC client within sso.redhat.com
 func (k *DeletingDinosaurManager) Reconcile() []error {
-	glog.Infoln("reconciling deleting centrals")
 	var encounteredErrors []error
 
 	// handle deleting dinosaur requests
@@ -75,7 +74,8 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	originalTotalDinosaurInDeleting := len(deletingDinosaurs)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list deleting central requests"))
-	} else {
+	}
+	if originalTotalDinosaurInDeleting > 0 {
 		glog.Infof("%s centrals count = %d", constants.CentralRequestStatusDeleting.String(), originalTotalDinosaurInDeleting)
 	}
 
@@ -83,7 +83,8 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	deprovisioningDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants.CentralRequestStatusDeprovision)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list central deprovisioning requests"))
-	} else {
+	}
+	if len(deprovisioningDinosaurs) > 0 {
 		glog.Infof("%s centrals count = %d", constants.CentralRequestStatusDeprovision.String(), len(deprovisioningDinosaurs))
 	}
 
@@ -96,7 +97,10 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 		}
 	}
 
-	glog.Infof("An additional of centrals count = %d which are marked for removal before being provisioned will also be deleted", len(deletingDinosaurs)-originalTotalDinosaurInDeleting)
+	additionalMarkedRemovals := len(deletingDinosaurs) - originalTotalDinosaurInDeleting
+	if additionalMarkedRemovals > 0 {
+		glog.Infof("An additional of centrals count = %d which are marked for removal before being provisioned will also be deleted", additionalMarkedRemovals)
+	}
 
 	for _, dinosaur := range deletingDinosaurs {
 		glog.V(10).Infof("deleting central id = %s", dinosaur.ID)

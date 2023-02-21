@@ -276,6 +276,15 @@ EOF
     echo "$config"
 }
 
+inject_ips() {
+    local namespace="$1"
+    local service_account="$2"
+    local secret_name="$3"
+
+    log "Patching ServiceAccount ${namespace}/default to use Quay.io imagePullSecrets"
+    $KUBECTL -n "$namespace" patch sa "$service_account" -p "\"imagePullSecrets\": [{\"name\": \"${secret_name}\" }]"
+}
+
 is_local_cluster() {
     local cluster_type=${1:-}
     if [[ "$cluster_type" == "minikube" || "$cluster_type" == "colima" || "$cluster_type" == "rancher-desktop" ]]; then

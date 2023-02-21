@@ -59,6 +59,7 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 				MasId:          from.ID,
 				MasPlacementId: from.PlacementID,
 			},
+			Internal: from.Internal,
 		},
 		Spec: private.ManagedCentralAllOfSpec{
 			Owners: []string{

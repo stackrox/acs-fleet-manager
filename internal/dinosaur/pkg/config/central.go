@@ -2,17 +2,11 @@ package config
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
-
-// MaxCapacityConfig ...
-type MaxCapacityConfig struct {
-	MaxCapacity int64 `json:"maxCapacity"`
-}
 
 // CentralConfig ...
 type CentralConfig struct {
@@ -22,8 +16,6 @@ type CentralConfig struct {
 	CentralTLSKeyFile                string `json:"central_tls_key_file"`
 	EnableCentralExternalCertificate bool   `json:"enable_central_external_certificate"`
 	CentralDomainName                string `json:"central_domain_name"`
-	// TODO(ROX-11289): drop MaxCapacity
-	MaxCapacity MaxCapacityConfig `json:"max_capacity_config"`
 
 	CentralLifespan *CentralLifespanConfig `json:"central_lifespan"`
 	Quota           *CentralQuotaConfig    `json:"central_quota"`
@@ -33,10 +25,6 @@ type CentralConfig struct {
 	CentralIDPClientSecret     string `json:"central_idp_client_secret"`
 	CentralIDPClientSecretFile string `json:"central_idp_client_secret_file"`
 	CentralIDPIssuer           string `json:"central_idp_issuer"`
-
-	// TODO: this parameter does not belong here, as it's configuration of central request, not central.
-	// TODO: However, for the time being there's no better place to put this parameter.
-	CentralRequestExpirationTimeout time.Duration `json:"central_request_expiration_timeout"`
 }
 
 // NewCentralConfig ...
@@ -50,7 +38,6 @@ func NewCentralConfig() *CentralConfig {
 		Quota:                            NewCentralQuotaConfig(),
 		CentralIDPClientSecretFile:       "secrets/central.idp-client-secret", //pragma: allowlist secret
 		CentralIDPIssuer:                 "https://sso.redhat.com/auth/realms/redhat-external",
-		CentralRequestExpirationTimeout:  60 * time.Minute,
 	}
 }
 
@@ -68,7 +55,6 @@ func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.CentralIDPClientID, "central-idp-client-id", c.CentralIDPClientID, "OIDC client_id to pass to Central's auth config")
 	fs.StringVar(&c.CentralIDPClientSecretFile, "central-idp-client-secret-file", c.CentralIDPClientSecretFile, "File containing OIDC client_secret to pass to Central's auth config")
 	fs.StringVar(&c.CentralIDPIssuer, "central-idp-issuer", c.CentralIDPIssuer, "OIDC issuer URL to pass to Central's auth config")
-	fs.DurationVar(&c.CentralRequestExpirationTimeout, "central-request-expiration-timeout", c.CentralRequestExpirationTimeout, "Timeout for central requests")
 }
 
 // ReadFiles ...
@@ -98,10 +84,6 @@ func (c *CentralConfig) ReadFiles() error {
 		}
 	}
 
-	// TODO(ROX-11289): drop MaxCapacity
-	// MaxCapacity is deprecated and will not be used.
-	// Temporarily set MaxCapacity manually in order to simplify app start.
-	c.MaxCapacity = MaxCapacityConfig{1000}
 	return nil
 }
 

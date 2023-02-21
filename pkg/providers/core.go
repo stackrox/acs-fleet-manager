@@ -69,6 +69,10 @@ func ServiceProviders() di.Option {
 		di.Provide(observatorium.NewObservatoriumClient),
 
 		di.Provide(func(config *ocm.OCMConfig) ocm.ClusterManagementClient {
+			if config.EnableMock {
+				return ocm.NewMockClient()
+			}
+
 			conn, _, err := ocm.NewOCMConnection(config, config.BaseURL)
 			if err != nil {
 				logger.Logger.Error(err)
@@ -77,6 +81,10 @@ func ServiceProviders() di.Option {
 		}),
 
 		di.Provide(func(config *ocm.OCMConfig) ocm.AMSClient {
+			if config.EnableMock {
+				return ocm.NewMockClient()
+			}
+
 			conn, _, err := ocm.NewOCMConnection(config, config.AmsURL)
 			if err != nil {
 				logger.Logger.Error(err)
@@ -99,5 +107,6 @@ func ServiceProviders() di.Option {
 		di.Provide(server.NewHealthCheckServer, di.As(new(environments.BootService))),
 		di.Provide(workers.NewLeaderElectionManager, di.As(new(environments.BootService))),
 		di.Provide(services.NewTelemetry, di.As(new(environments.BootService))),
+		di.Provide(services.NewDataMigration, di.As(new(environments.BootService))),
 	)
 }

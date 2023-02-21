@@ -11,6 +11,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
@@ -50,7 +51,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 	auth, err := fleetmanager.NewAuth(config.AuthType, fleetmanager.Option{
 		Sso: fleetmanager.RHSSOOption{
 			ClientID:     config.RHSSOClientID,
-			ClientSecret: config.RHSSOClientSecret, //pragma: allowlist secret
+			ClientSecret: config.RHSSOClientSecret, // pragma: allowlist secret
 			Realm:        config.RHSSORealm,
 			Endpoint:     config.RHSSOEndpoint,
 		},
@@ -105,10 +106,8 @@ func (r *Runtime) Start() error {
 		EgressProxyImage:  r.config.EgressProxyImage,
 		ManagedDBEnabled:  r.config.ManagedDB.Enabled,
 		Telemetry:         r.config.Telemetry,
-	}
-
-	if err := r.sanityCheckClusterConfig(); err != nil {
-		return err
+		ClusterName:       r.config.ClusterName,
+		Environment:       r.config.Environment,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
@@ -123,7 +122,8 @@ func (r *Runtime) Start() error {
 		glog.Infof("Received %d centrals", len(list.Items))
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
-				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central, r.dbProvisionClient, reconcilerOpts)
+				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central,
+					r.dbProvisionClient, postgres.InitializeDatabase, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]
@@ -152,17 +152,6 @@ func (r *Runtime) Start() error {
 		return fmt.Errorf("starting ticker: %w", err)
 	}
 
-	return nil
-}
-
-func (r *Runtime) sanityCheckClusterConfig() error {
-	glog.Infof("Loading cluster configuration")
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-	// The fact that we can load the configuration is enough for us to proceed.
-	if _, _, err := r.client.PrivateAPI().GetDataPlaneClusterAgentConfig(ctx, r.clusterID); err != nil {
-		return fmt.Errorf("failed to load cluster configuration: %s", fleetmanager.FormatAPIError(err))
-	}
 	return nil
 }
 

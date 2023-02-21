@@ -42,6 +42,8 @@ const (
 	centralNamespace          = "rhacs-" + centralID
 	centralReencryptRouteName = "managed-central-reencrypt"
 	conditionTypeReady        = "Ready"
+	clusterName               = "test-cluster"
+	environment               = "test"
 )
 
 var simpleManagedCentral = private.ManagedCentral{
@@ -64,10 +66,12 @@ var simpleManagedCentral = private.ManagedCentral{
 	},
 }
 
-var (
-	//go:embed testdata
-	testdata embed.FS
-)
+//go:embed testdata
+var testdata embed.FS
+
+func centralDBInitFunc(_ context.Context, _ postgres.DBConnection, _, _ string) error {
+	return nil
+}
 
 func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestConditions, conditionType string) (*private.DataPlaneClusterUpdateStatusRequestConditions, bool) {
 	for _, c := range conditions {
@@ -80,7 +84,12 @@ func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestCo
 
 func TestReconcileCreate(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient,
+		private.ManagedCentral{},
+		nil,
+		centralDBInitFunc,
+		CentralReconcilerOptions{ClusterName: clusterName, Environment: environment, UseRoutes: true},
+	)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -95,9 +104,11 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, centralName, central.GetName())
 	assert.Equal(t, simpleManagedCentral.Id, central.GetLabels()[tenantIDLabelKey])
 	assert.Equal(t, simpleManagedCentral.Id, central.Spec.Customize.Labels[tenantIDLabelKey])
+	assert.Equal(t, environment, central.Spec.Customize.Annotations[envAnnotationKey])
+	assert.Equal(t, clusterName, central.Spec.Customize.Annotations[clusterNameAnnotationKey])
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgName, central.Spec.Customize.Annotations[orgNameAnnotationKey])
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, central.Spec.Customize.Labels[orgIDLabelKey])
-	assert.Equal(t, "1", central.GetAnnotations()[revisionAnnotationKey])
+	assert.Equal(t, "1", central.GetAnnotations()[util.RevisionAnnotationKey])
 	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
 
@@ -124,10 +135,11 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 		return connection, nil
 	}
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient, centralDBInitFunc,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
-			ManagedDBEnabled: true})
+			ManagedDBEnabled: true,
+		})
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -170,10 +182,11 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 		&fakeAuth{})
 	require.NoError(t, err)
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient, centralDBInitFunc,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
-			ManagedDBEnabled: true})
+			ManagedDBEnabled: true,
+		})
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	var awsErr, awsOrigErr awserr.Error
@@ -188,11 +201,11 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        centralName,
 			Namespace:   centralNamespace,
-			Annotations: map[string]string{revisionAnnotationKey: "3"},
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
 		},
 	}, centralDeploymentObject()).Build()
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -203,7 +216,7 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
 	assert.Equal(t, centralName, central.GetName())
-	assert.Equal(t, "4", central.GetAnnotations()[revisionAnnotationKey])
+	assert.Equal(t, "4", central.GetAnnotations()[util.RevisionAnnotationKey])
 }
 
 func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
@@ -211,7 +224,7 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        centralName,
 			Namespace:   centralNamespace,
-			Annotations: map[string]string{revisionAnnotationKey: "invalid annotation"},
+			Annotations: map[string]string{util.RevisionAnnotationKey: "invalid annotation"},
 		},
 	}, centralDeploymentObject()).Build()
 
@@ -233,11 +246,11 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        centralName,
 			Namespace:   centralNamespace,
-			Annotations: map[string]string{revisionAnnotationKey: "3"},
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
 		},
 	}, centralDeploymentObject()).Build()
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
@@ -257,7 +270,7 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
-	assert.Equal(t, "4", central.Annotations[revisionAnnotationKey])
+	assert.Equal(t, "4", central.Annotations[util.RevisionAnnotationKey])
 }
 
 func TestIgnoreCacheForCentralNotReady(t *testing.T) {
@@ -265,11 +278,11 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        centralName,
 			Namespace:   centralNamespace,
-			Annotations: map[string]string{revisionAnnotationKey: "3"},
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
 		},
 	}, centralDeploymentObject()).Build()
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusProvisioning.String()
@@ -287,7 +300,7 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 
 func TestReconcileDelete(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -336,10 +349,11 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 		return connection, nil
 	}
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient,
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient, centralDBInitFunc,
 		CentralReconcilerOptions{
 			UseRoutes:        true,
-			ManagedDBEnabled: true})
+			ManagedDBEnabled: true,
+		})
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -383,7 +397,6 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 }
 
 func TestCentralChanged(t *testing.T) {
-
 	tests := []struct {
 		name           string
 		lastCentral    *private.ManagedCentral
@@ -421,7 +434,7 @@ func TestCentralChanged(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			reconciler := NewCentralReconciler(fakeClient, test.currentCentral, nil, CentralReconcilerOptions{})
+			reconciler := NewCentralReconciler(fakeClient, test.currentCentral, nil, centralDBInitFunc, CentralReconcilerOptions{})
 
 			if test.lastCentral != nil {
 				err := reconciler.setLastCentralHash(*test.lastCentral)
@@ -433,12 +446,11 @@ func TestCentralChanged(t *testing.T) {
 			assert.Equal(t, test.want, got)
 		})
 	}
-
 }
 
 func TestNamespaceLabelsAreSet(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -452,7 +464,7 @@ func TestNamespaceLabelsAreSet(t *testing.T) {
 
 func TestReportRoutesStatuses(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -476,7 +488,7 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 	require.NoError(t, err)
 
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
 	r.resourcesChart = chrt
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -507,7 +519,7 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 	require.NoError(t, err)
 
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
 	r.resourcesChart = chart
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -538,7 +550,7 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 
 func TestEgressProxyIsDeployed(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -588,9 +600,10 @@ func TestEgressProxyIsDeployed(t *testing.T) {
 
 func TestEgressProxyCustomImage(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{
-		EgressProxyImage: "registry.redhat.io/openshift4/ose-egress-http-proxy:version-for-test",
-	})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc,
+		CentralReconcilerOptions{
+			EgressProxyImage: "registry.redhat.io/openshift4/ose-egress-http-proxy:version-for-test",
+		})
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -614,7 +627,7 @@ func TestEgressProxyCustomImage(t *testing.T) {
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
 	tracker.AddRouteError(centralReencryptRouteName, errors.New("fake error"))
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.Errorf(t, err, "fake error")
 }
@@ -622,7 +635,7 @@ func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
 func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
 	tracker.SetRouteAdmitted(centralReencryptRouteName, false)
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.Errorf(t, err, "unable to find admitted ingress")
 }
@@ -630,7 +643,7 @@ func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
 func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
 	tracker.SetSkipRoute(centralReencryptRouteName, true)
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{UseRoutes: true})
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.Errorf(t, err, "unable to find admitted ingress")
 }
@@ -641,8 +654,7 @@ func centralDeploymentObject() *appsv1.Deployment {
 
 var _ fleetmanager.Auth = &fakeAuth{}
 
-type fakeAuth struct {
-}
+type fakeAuth struct{}
 
 func (*fakeAuth) AddAuth(_ *http.Request) error {
 	return nil
@@ -677,7 +689,7 @@ func TestTelemetryOptionsAreSetInCR(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
 			fakeClient := testutils.NewFakeClientBuilder(t).Build()
-			r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, CentralReconcilerOptions{Telemetry: tc.telemetry})
+			r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{Telemetry: tc.telemetry})
 
 			_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 			require.NoError(t, err)

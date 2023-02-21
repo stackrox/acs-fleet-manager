@@ -20,27 +20,47 @@ const (
 // CentralRequest ...
 type CentralRequest struct {
 	api.Meta
-	Region         string `json:"region"`
-	ClusterID      string `json:"cluster_id" gorm:"index"`
-	CloudProvider  string `json:"cloud_provider"`
+	// Region is the cloud region the service is deployed in, i.e. us-east-1.
+	Region string `json:"region"`
+	// ClusterID is the data-plane cluster ID.
+	ClusterID string `json:"cluster_id" gorm:"index"`
+	// CloudProvider is the cloud provider the data-plane cluster is running and is used for billing customers.
+	CloudProvider string `json:"cloud_provider"`
+	// CloudAccountID is the billing cloud account.
 	CloudAccountID string `json:"cloud_account_id"`
-	MultiAZ        bool   `json:"multi_az"`
-	Name           string `json:"name" gorm:"index"`
-	Status         string `json:"status" gorm:"index"`
+	// MultiAZ enables multi availability zone (AZ) support.
+	MultiAZ bool `json:"multi_az"`
+	// Name of the ACS instance.
+	Name string `json:"name" gorm:"index"`
+	// Status is the lifecycle status of the Central request. See constants.CentralRequestStatusAccepted to see
+	// valid statuses.
+	Status string `json:"status" gorm:"index"`
+	// SubscriptionID is returned by AMS and identifies a Central instance in their system. We need it to deregister instances again from AMS.
 	SubscriptionID string `json:"subscription_id"`
-	Owner          string `json:"owner" gorm:"index"` // TODO: ocm owner?
+	// Owner is the Red Hat SSO login name of the user who created the instance. It is either the email, or the user name, depending on what the user chose to login with. It's displayed in the console UI.
+	Owner string `json:"owner" gorm:"index"`
+	// OwnerAccountID is used in telemetry, it is the account_id claim of the Red Hat SSO token.
+	// Deprecated: Use user_id claim in telemetry.
 	OwnerAccountID string `json:"owner_account_id"`
-	OwnerUserID    string `json:"owner_user_id"`
+	// OwnerUserID is the subject claim (confusingly it is NOT the user_id claim) of the Red Hat SSO token.
+	OwnerUserID string `json:"owner_user_id"`
+
 	// Instance-independent part of the Central's hostname. For example, this
 	// can be `rhacs-dev.com`, `acs-stage.rhcloud.com`, etc.
-	Host             string `json:"host"`
-	OrganisationID   string `json:"organisation_id" gorm:"index"`
+	Host string `json:"host"`
+	// OrganisationID identifies a customer's organisation. It is needed as an id for authn/z, and the name for observability purposes.
+	OrganisationID string `json:"organisation_id" gorm:"index"`
+	// OrganisationName is not unique. Its purpose is mostly human readability and observability purposes (e.g. display in dashboards).
 	OrganisationName string `json:"organisation_name"`
-	FailedReason     string `json:"failed_reason"`
-	// PlacementID field should be updated every time when a CentralRequest is assigned to an OSD cluster (even if it's the same one again)
-	PlacementID string   `json:"placement_id"`
-	Central     api.JSON `json:"central"` // Schema is defined by dbapi.CentralSpec
-	Scanner     api.JSON `json:"scanner"` // Schema is defined by dbapi.ScannerSpec
+	// FailedReason contains the reason of a Central instance failed to schedule.
+	FailedReason string `json:"failed_reason"`
+	// PlacementID field should be updated every time when a CentralRequest is assigned to an OSD cluster (even if it's the same one again).
+	PlacementID string `json:"placement_id"`
+
+	// Central schema is defined by dbapi.CentralSpec.
+	Central api.JSON `json:"central"`
+	// Scanner schema is defined by dbapi.ScannerSpec.
+	Scanner api.JSON `json:"scanner"`
 
 	DesiredCentralVersion         string `json:"desired_central_version"`
 	ActualCentralVersion          string `json:"actual_central_version"`
@@ -48,11 +68,11 @@ type CentralRequest struct {
 	ActualCentralOperatorVersion  string `json:"actual_central_operator_version"`
 	CentralUpgrading              bool   `json:"central_upgrading"`
 	CentralOperatorUpgrading      bool   `json:"central_operator_upgrading"`
-	// The type of central instance (eval or standard)
+	// The type of central instance (eval or standard).
 	InstanceType string `json:"instance_type"`
-	// the quota service type for the central, e.g. ams, quota-management-list
+	// the quota service type for the central, e.g. ams, quota-management-list.
 	QuotaType string `json:"quota_type"`
-	// Routes routes mapping for the central instance. It is an array and each item in the array contains a domain value and the corresponding route url
+	// Routes routes mapping for the central instance. It is an array and each item in the array contains a domain value and the corresponding route url.
 	Routes api.JSON `json:"routes"`
 	// RoutesCreated if the routes mapping have been created in the DNS provider like Route53. Use a separate field to make it easier to query.
 	RoutesCreated bool `json:"routes_created"`
@@ -60,8 +80,14 @@ type CentralRequest struct {
 	// We store this in the database to ensure that old centrals whose namespace contained "owner-<central-id>" information will continue to work.
 	Namespace        string `json:"namespace"`
 	RoutesCreationID string `json:"routes_creation_id"`
-	// DeletionTimestamp stores the timestamp of the DELETE api call for the resource
+	// DeletionTimestamp stores the timestamp of the DELETE api call for the resource.
 	DeletionTimestamp *time.Time `json:"deletionTimestamp"`
+
+	// Internal will be set for instances created by internal services, such as the probe service.
+	// If Internal is set to true, telemetry will be disabled for this particular instance.
+	// Note: Internal cannot be set via API, but instead will be set based on the User-Agent for the central creation
+	// request (see pkg/handlers/dinosaur.go).
+	Internal bool `json:"internal"`
 
 	// All we need to integrate Central with an IdP.
 	AuthConfig

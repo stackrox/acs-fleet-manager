@@ -421,6 +421,8 @@ components:
           type: string
         namespace:
           type: string
+        internal:
+          type: boolean
         annotations:
           $ref: '#/components/schemas/ManagedCentral_allOf_metadata_annotations'
         deletionTimestamp:

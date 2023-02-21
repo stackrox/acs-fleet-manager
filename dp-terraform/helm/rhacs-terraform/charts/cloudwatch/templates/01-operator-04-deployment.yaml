@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudwatch-exporter
+  namespace: {{ include "cloudwatch.namespace" . }}
+  labels:
+    app: cloudwatch-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudwatch-exporter
+  template:
+    metadata:
+      annotations:
+        rhacs.redhat.com/cluster-name: {{ .Values.clusterName | quote }}
+        rhacs.redhat.com/environment: {{ .Values.environment | quote }}
+      labels:
+        app: cloudwatch-exporter
+    spec:
+      containers:
+        - name: cloudwatch-exporter
+          image: {{ .Values.image | quote }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: rhacs-cloudwatch-exporter
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rhacs-cloudwatch-exporter
+                  key: AWS_SECRET_ACCESS_KEY
+          volumeMounts:
+            - mountPath: /config/config.yml
+              name: config
+              subPath: config.yaml
+          ports:
+            - name: monitoring
+              containerPort: 9106
+      volumes:
+        - name: config
+          configMap:
+            name: cloudwatch-exporter-config
