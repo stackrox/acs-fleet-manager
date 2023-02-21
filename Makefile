@@ -81,7 +81,7 @@ SSO_REALM ?="rhoas" # update your realm here
 
 GO := go
 GOFMT := gofmt
-# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set).
 ifeq (,$(shell $(GO) env GOBIN))
 GOBIN=$(shell $(GO) env GOPATH)/bin
 else
