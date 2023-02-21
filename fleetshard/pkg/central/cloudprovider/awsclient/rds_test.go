@@ -56,6 +56,16 @@ func waitForClusterToBeDeleted(ctx context.Context, rdsClient *RDS, clusterID st
 			return true, nil
 		}
 
+		clusterStatus, err := rdsClient.clusterStatus(clusterID)
+		if err != nil {
+			return false, err
+		}
+
+		// exit early if cluster is marked as deleting
+		if clusterStatus == dbDeletingStatus {
+			return true, nil
+		}
+
 		ticker := time.NewTicker(awsRetrySeconds * time.Second)
 		select {
 		case <-ticker.C:
@@ -98,7 +108,12 @@ func TestRDSProvisioning(t *testing.T) {
 	require.False(t, failoverExists)
 
 	err = rdsClient.EnsureDBProvisioned(ctx, dbID, dbMasterPassword)
-	assert.NoError(t, err)
+	defer func() {
+		// clean-up AWS resources in case the test fails
+		deleteErr := rdsClient.EnsureDBDeprovisioned(dbID)
+		assert.NoError(t, deleteErr)
+	}()
+	require.NoError(t, err)
 
 	_, err = rdsClient.GetDBConnection(dbID)
 	assert.NoError(t, err)
