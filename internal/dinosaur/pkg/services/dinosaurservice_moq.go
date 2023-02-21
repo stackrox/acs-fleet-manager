@@ -58,9 +58,6 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			GetCNAMERecordStatusFunc: func(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error) {
 //				panic("mock out the GetCNAMERecordStatus method")
 //			},
-//			HasAvailableCapacityFunc: func() (bool, *serviceError.ServiceError) {
-//				panic("mock out the HasAvailableCapacity method")
-//			},
 //			HasAvailableCapacityInRegionFunc: func(dinosaurRequest *dbapi.CentralRequest) (bool, *serviceError.ServiceError) {
 //				panic("mock out the HasAvailableCapacityInRegion method")
 //			},
@@ -142,9 +139,6 @@ type DinosaurServiceMock struct {
 
 	// GetCNAMERecordStatusFunc mocks the GetCNAMERecordStatus method.
 	GetCNAMERecordStatusFunc func(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error)
-
-	// HasAvailableCapacityFunc mocks the HasAvailableCapacity method.
-	HasAvailableCapacityFunc func() (bool, *serviceError.ServiceError)
 
 	// HasAvailableCapacityInRegionFunc mocks the HasAvailableCapacityInRegion method.
 	HasAvailableCapacityInRegionFunc func(dinosaurRequest *dbapi.CentralRequest) (bool, *serviceError.ServiceError)
@@ -249,9 +243,6 @@ type DinosaurServiceMock struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
 			DinosaurRequest *dbapi.CentralRequest
 		}
-		// HasAvailableCapacity holds details about calls to the HasAvailableCapacity method.
-		HasAvailableCapacity []struct {
-		}
 		// HasAvailableCapacityInRegion holds details about calls to the HasAvailableCapacityInRegion method.
 		HasAvailableCapacityInRegion []struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
@@ -338,7 +329,6 @@ type DinosaurServiceMock struct {
 	lockGet                               sync.RWMutex
 	lockGetByID                           sync.RWMutex
 	lockGetCNAMERecordStatus              sync.RWMutex
-	lockHasAvailableCapacity              sync.RWMutex
 	lockHasAvailableCapacityInRegion      sync.RWMutex
 	lockList                              sync.RWMutex
 	lockListByClusterID                   sync.RWMutex
@@ -711,33 +701,6 @@ func (mock *DinosaurServiceMock) GetCNAMERecordStatusCalls() []struct {
 	mock.lockGetCNAMERecordStatus.RLock()
 	calls = mock.calls.GetCNAMERecordStatus
 	mock.lockGetCNAMERecordStatus.RUnlock()
-	return calls
-}
-
-// HasAvailableCapacity calls HasAvailableCapacityFunc.
-func (mock *DinosaurServiceMock) HasAvailableCapacity() (bool, *serviceError.ServiceError) {
-	if mock.HasAvailableCapacityFunc == nil {
-		panic("DinosaurServiceMock.HasAvailableCapacityFunc: method is nil but DinosaurService.HasAvailableCapacity was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockHasAvailableCapacity.Lock()
-	mock.calls.HasAvailableCapacity = append(mock.calls.HasAvailableCapacity, callInfo)
-	mock.lockHasAvailableCapacity.Unlock()
-	return mock.HasAvailableCapacityFunc()
-}
-
-// HasAvailableCapacityCalls gets all the calls that were made to HasAvailableCapacity.
-// Check the length with:
-//
-//	len(mockedDinosaurService.HasAvailableCapacityCalls())
-func (mock *DinosaurServiceMock) HasAvailableCapacityCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockHasAvailableCapacity.RLock()
-	calls = mock.calls.HasAvailableCapacity
-	mock.lockHasAvailableCapacity.RUnlock()
 	return calls
 }
 

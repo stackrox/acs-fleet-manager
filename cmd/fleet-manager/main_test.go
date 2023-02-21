@@ -38,7 +38,7 @@ func TestInjections(t *testing.T) {
 
 	var bootList []environments.BootService
 	env.MustResolve(&bootList)
-	Expect(len(bootList)).To(Equal(5))
+	Expect(len(bootList)).To(Equal(6))
 
 	_, ok := bootList[0].(*server.APIServer)
 	Expect(ok).To(Equal(true))

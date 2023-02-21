@@ -10,7 +10,7 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"ocm-debug":                                       "false",
 		"ams-base-url":                                    "https://api.stage.openshift.com",
 		"ocm-base-url":                                    "https://api.stage.openshift.com",
-		"enable-ocm-mock":                                 "false",
+		"enable-ocm-mock":                                 "true",
 		"enable-https":                                    "false",
 		"enable-metrics-https":                            "false",
 		"enable-terms-acceptance":                         "false",

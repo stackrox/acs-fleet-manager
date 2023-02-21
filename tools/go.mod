@@ -1,12 +1,12 @@
 module github.com/stackrox/acs-fleet-manager/tools
 
-go 1.18
+go 1.19
 
 require (
 	github.com/99designs/aws-vault/v6 v6.6.2
-	github.com/go-bindata/go-bindata/v3 v3.1.3
+	github.com/go-bindata/go-bindata/v3 v3.1.4-0.20210427095211-26949cc13d95
 	github.com/matryer/moq v0.3.0
-	github.com/onsi/ginkgo/v2 v2.7.0
+	github.com/onsi/ginkgo/v2 v2.8.0
 	github.com/segmentio/chamber/v2 v2.11.1
 	gotest.tools/gotestsum v1.9.0
 )
@@ -60,9 +60,9 @@ require (
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/term v0.3.0 // indirect
-	golang.org/x/tools v0.4.0 // indirect
+	golang.org/x/tools v0.5.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/segmentio/analytics-go.v3 v3.0.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

@@ -39,10 +39,6 @@ data:
     # These a sample users used in integration tests
     - denied-test-user1@example.com
     - denied-test-user2@example.com
-  dinosaur-capacity-config.yaml: |-
-    ---
-    # see https://docs.google.com/spreadsheets/d/1W4H1IgDXKv24Sf7aWeqeAqxjKVj8EJB9giYN9obqPgU/edit#gid=493008265
-    maxCapacity: 1000
   dinosaur-sre-user-list.yaml: |-
     ---
     # A list of dinosaur-sre users with cluster-admin permissions for data plane clusters

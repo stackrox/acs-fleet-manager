@@ -454,6 +454,11 @@ parameters:
   description: Endpoint for the telemetry backend
   value: ""
 
+- name: CENTRAL_REQUEST_INTERNAL_USER_AGENTS
+  displayName: Central request internal user agents
+  description: List of user agents from internal clients
+  value: "fleet-manager-probe-service"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -1252,6 +1257,7 @@ objects:
             - --fleetshard-addon-id=${FLEETSHARD_ADDON_ID}
             - --alsologtostderr
             - --central-request-expiration-timeout=${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}
+            - --central-request-internal-user-agents=${CENTRAL_REQUEST_INTERNAL_USER_AGENTS}
             - --telemetry-endpoint=${TELEMETRY_ENDPONT}
             - --telemetry-storage-key-secret-file=/secrets/fleet-manager-credentials/telemetry.storageKey
             - -v=${GLOG_V}

@@ -69,7 +69,7 @@ func (writer *loggingWriter) Log(log string, err error) {
 	ulog := logger.NewUHCLogger(writer.request.Context())
 	switch err {
 	case nil:
-		ulog.V(LoggingThreshold).Infof(log)
+		ulog.V(LoggingThreshold).InfoDepth(1, log)
 	default:
 		ulog.Error(errors.Wrap(err, "Unable to format request/response for log."))
 	}

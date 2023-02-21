@@ -25,6 +25,8 @@ appVersion: "0.4.0"
 
 # List of sub-charts and other dependencies
 dependencies:
+  - name: cloudwatch
+    condition: cloudwatch.enabled
   - name: observability
     condition: observability.enabled
   - name: logging
