@@ -1,0 +1,38 @@
+name: Build and push probe image.
+
+on:
+  push:
+    branches:
+    - main
+    - production
+
+jobs:
+  build-push:
+    name: "Build & Push Probe"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs
+        uses: n1hility/cancel-previous-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.19"
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Cache go module
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Build and publish probe image to quay.io
+        env:
+          QUAY_PROBE_USER: ${{ secrets.QUAY_RHACS_ENG_PROBE_RW_USERNAME }}
+          QUAY_PROBE_TOKEN: ${{ secrets.QUAY_RHACS_ENG_PROBE_RW_PASSWORD }}
+          QUAY_PROBE_IMAGE_REPOSITORY: rhacs-eng/blackbox-monitoring-probe-service
+        run: |
+          chmod +x ./build_push_probe.sh
+          ./build_push_probe.sh
