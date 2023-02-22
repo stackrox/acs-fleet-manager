@@ -78,7 +78,6 @@ type UHCLogger interface {
 	V(level int32) UHCLogger
 	Infof(format string, args ...interface{})
 	InfoDepth(depth int, args ...interface{})
-	//InfoChangedInt32(counter *int32, args ...interface{})
 	Warningf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Error(err error)
@@ -192,6 +191,7 @@ func (l *logger) InfoDepth(depth int, args ...interface{}) {
 
 var cache = sync.Map{}
 
+// InfoChangedInt32 logs whenever the value of the passed counter reference changes when it is called.
 func InfoChangedInt32(counter *int32, args ...interface{}) {
 	val, loaded := cache.LoadOrStore(counter, *counter)
 	if loaded && val == *counter {
