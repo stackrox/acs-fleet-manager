@@ -58,12 +58,7 @@ const (
 )
 
 var (
-	readyClusterCount        int32
-	cleanUpClustersCount     int32
-	deprovisionClusterCount  int32
-	acceptedClusterCount     int32
-	provisioningClusterCount int32
-	provisionedClustersCount int32
+	readyClusterCount int32
 )
 
 var clusterMetricsStatuses = []api.ClusterStatus{
@@ -207,8 +202,9 @@ func (c *ClusterManager) processDeprovisioningClusters() []error {
 		errs = append(errs, serviceErr)
 		return errs
 	}
-	deprovisionClusterCount = int32(len(deprovisioningClusters))
-	logger.InfoChangedInt32(&deprovisionClusterCount, "deprovisioning clusters count = %d")
+	if len(deprovisioningClusters) > 0 {
+		glog.Infof("deprovisioning clusters count = %d", len(deprovisioningClusters))
+	}
 
 	for i := range deprovisioningClusters {
 		cluster := deprovisioningClusters[i]
@@ -229,8 +225,9 @@ func (c *ClusterManager) processCleanupClusters() []error {
 		return errs
 	}
 
-	cleanUpClustersCount = int32(len(cleanupClusters))
-	logger.InfoChangedInt32(&cleanUpClustersCount, "cleanup clusters count = %d")
+	if len(cleanupClusters) > 0 {
+		glog.Infof("cleanup clusters count = %d", len(cleanupClusters))
+	}
 
 	for _, cluster := range cleanupClusters {
 		glog.V(10).Infof("cleanup cluster ClusterID = %s", cluster.ClusterID)
@@ -250,10 +247,8 @@ func (c *ClusterManager) processAcceptedClusters() []error {
 		return errs
 	}
 
-	acceptedClusterCount = int32(len(acceptedClusters))
-	logger.InfoChangedInt32(&acceptedClusterCount, "accepted clusters count = %d")
 	if len(acceptedClusters) > 0 {
-		glog.Infof("")
+		glog.Infof("accepted clusters count = %d", len(acceptedClusters))
 	}
 
 	for i := range acceptedClusters {
@@ -275,9 +270,9 @@ func (c *ClusterManager) processProvisioningClusters() []error {
 		errs = append(errs, errors.Wrap(listErr, "failed to list pending clusters"))
 		return errs
 	}
-
-	provisioningClusterCount = int32(len(provisioningClusters))
-	logger.InfoChangedInt32(&provisioningClusterCount, "provisioning clusters count = %d")
+	if len(provisioningClusters) > 0 {
+		glog.Infof("provisioning clusters count = %d", len(provisioningClusters))
+	}
 
 	// process each local pending cluster and compare to the underlying ocm cluster
 	for i := range provisioningClusters {
@@ -303,9 +298,9 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 		errs = append(errs, errors.Wrap(listErr, "failed to list provisioned clusters"))
 		return errs
 	}
-
-	provisionedClustersCount = int32(len(provisionedClusters))
-	logger.InfoChangedInt32(&provisionedClustersCount, "provisioned clusters count = %d")
+	if len(provisionedClusters) > 0 {
+		glog.Infof("provisioned clusters count = %d", len(provisionedClusters))
+	}
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
