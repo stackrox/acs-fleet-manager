@@ -246,6 +246,20 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				Name: centralDbSecretName,
 			},
 		}
+
+		dbCA, err := postgres.GetDatabaseCACertificates()
+		if err != nil {
+			glog.Warningf("Could not read DB server CA bundle: %v", err)
+		} else {
+			central.Spec.TLS = &v1alpha1.TLSConfig{
+				AdditionalCAs: []v1alpha1.AdditionalCA{
+					{
+						Name:    postgres.CentralDatabaseCACertificateBaseName,
+						Content: string(dbCA),
+					},
+				},
+			}
+		}
 	}
 
 	centralExists := true
@@ -509,7 +523,7 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 	if err != nil {
 		return "", fmt.Errorf("getting RDS DB connection data: %w", err)
 	}
-	return dbConnection.GetConnectionForUser(dbCentralUserName).AsConnectionString(), nil
+	return dbConnection.GetConnectionForUser(dbCentralUserName).WithSSLRootCert(postgres.DatabaseCACertificatePathCentral).AsConnectionString(), nil
 }
 
 func generateDBPassword() (string, error) {
@@ -558,7 +572,8 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 	if err != nil {
 		return fmt.Errorf("generating Central DB password: %w", err)
 	}
-	err = r.managedDBInitFunc(ctx, dbConnection.WithPassword(dbMasterPassword), dbCentralUserName, dbCentralPassword)
+	err = r.managedDBInitFunc(ctx, dbConnection.WithPassword(dbMasterPassword).WithSSLRootCert(postgres.DatabaseCACertificatePathFleetshard),
+		dbCentralUserName, dbCentralPassword)
 	if err != nil {
 		return fmt.Errorf("initializing managed DB: %w", err)
 	}
