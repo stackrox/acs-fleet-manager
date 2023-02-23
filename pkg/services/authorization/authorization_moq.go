@@ -13,19 +13,19 @@ var _ Authorization = &AuthorizationMock{}
 
 // AuthorizationMock is a mock implementation of Authorization.
 //
-// 	func TestSomethingThatUsesAuthorization(t *testing.T) {
+//	func TestSomethingThatUsesAuthorization(t *testing.T) {
 //
-// 		// make and configure a mocked Authorization
-// 		mockedAuthorization := &AuthorizationMock{
-// 			CheckUserValidFunc: func(username string, orgID string) (bool, error) {
-// 				panic("mock out the CheckUserValid method")
-// 			},
-// 		}
+//		// make and configure a mocked Authorization
+//		mockedAuthorization := &AuthorizationMock{
+//			CheckUserValidFunc: func(username string, orgID string) (bool, error) {
+//				panic("mock out the CheckUserValid method")
+//			},
+//		}
 //
-// 		// use mockedAuthorization in code that requires Authorization
-// 		// and then make assertions.
+//		// use mockedAuthorization in code that requires Authorization
+//		// and then make assertions.
 //
-// 	}
+//	}
 type AuthorizationMock struct {
 	// CheckUserValidFunc mocks the CheckUserValid method.
 	CheckUserValidFunc func(username string, orgID string) (bool, error)
@@ -63,7 +63,8 @@ func (mock *AuthorizationMock) CheckUserValid(username string, orgID string) (bo
 
 // CheckUserValidCalls gets all the calls that were made to CheckUserValid.
 // Check the length with:
-//     len(mockedAuthorization.CheckUserValidCalls())
+//
+//	len(mockedAuthorization.CheckUserValidCalls())
 func (mock *AuthorizationMock) CheckUserValidCalls() []struct {
 	Username string
 	OrgID    string

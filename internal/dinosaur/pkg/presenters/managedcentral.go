@@ -59,6 +59,7 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 				MasId:          from.ID,
 				MasPlacementId: from.PlacementID,
 			},
+			Internal: from.Internal,
 		},
 		Spec: private.ManagedCentralAllOfSpec{
 			Owners: []string{
@@ -69,6 +70,7 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 				ClientSecret: from.AuthConfig.ClientSecret, // pragma: allowlist secret
 				ClientOrigin: from.AuthConfig.ClientOrigin,
 				OwnerOrgId:   from.OrganisationID,
+				OwnerOrgName: from.OrganisationName,
 				OwnerUserId:  from.OwnerUserID,
 				Issuer:       from.AuthConfig.Issuer,
 			},

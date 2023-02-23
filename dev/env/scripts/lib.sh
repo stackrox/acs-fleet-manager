@@ -8,9 +8,9 @@ source "$GITROOT/scripts/lib/log.sh"
 
 try_kubectl() {
     local kubectl
-    if which kubectl >/dev/null 2>&1; then
+    if command -v kubectl >/dev/null 2>&1; then
         kubectl="kubectl"
-    elif which oc >/dev/null 2>&1; then
+    elif command -v oc >/dev/null 2>&1; then
         kubectl="oc"
     else
         log "Error: Neither 'kubectl' nor 'oc' found." >&2
@@ -63,7 +63,7 @@ init() {
         source "$env_file"
     done
 
-    if ! which bootstrap.sh >/dev/null 2>&1; then
+    if ! command -v bootstrap.sh >/dev/null 2>&1; then
         export PATH="$GITROOT/dev/env/scripts:${PATH}"
     fi
 
@@ -78,7 +78,7 @@ init() {
     done
 
     export ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-$ENABLE_EXTERNAL_CONFIG_DEFAULT}"
-    export USE_AWS_VAULT="${USE_AWS_VAULT:-$USE_AWS_VAULT_DEFAULT}"
+    export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-$AWS_AUTH_HELPER_DEFAULT}"
 
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
     export ACSMS_NAMESPACE="${ACSMS_NAMESPACE:-$ACSMS_NAMESPACE_DEFAULT}"
@@ -125,7 +125,6 @@ init() {
     export INSTALL_OLM=${INSTALL_OLM:-$INSTALL_OLM_DEFAULT}
     export ENABLE_DB_PORT_FORWARDING=${ENABLE_DB_PORT_FORWARDING:-$ENABLE_DB_PORT_FORWARDING_DEFAULT}
     export ENABLE_FM_PORT_FORWARDING=${ENABLE_FM_PORT_FORWARDING:-$ENABLE_FM_PORT_FORWARDING_DEFAULT}
-    export AUTH_TYPE=${AUTH_TYPE:-$AUTH_TYPE_DEFAULT}
     export FINAL_TEAR_DOWN=${FINAL_TEAR_DOWN:-$FINAL_TEAR_DOWN_DEFAULT}
     export FLEET_MANAGER_RESOURCES=${FLEET_MANAGER_RESOURCES:-$FLEET_MANAGER_RESOURCES_DEFAULT}
     export FLEETSHARD_SYNC_RESOURCES=${FLEETSHARD_SYNC_RESOURCES:-$FLEETSHARD_SYNC_RESOURCES_DEFAULT}
@@ -277,6 +276,15 @@ EOF
     echo "$config"
 }
 
+inject_ips() {
+    local namespace="$1"
+    local service_account="$2"
+    local secret_name="$3"
+
+    log "Patching ServiceAccount ${namespace}/default to use Quay.io imagePullSecrets"
+    $KUBECTL -n "$namespace" patch sa "$service_account" -p "\"imagePullSecrets\": [{\"name\": \"${secret_name}\" }]"
+}
+
 is_local_cluster() {
     local cluster_type=${1:-}
     if [[ "$cluster_type" == "minikube" || "$cluster_type" == "colima" || "$cluster_type" == "rancher-desktop" ]]; then
@@ -293,34 +301,6 @@ is_openshift_cluster() {
         return 1
     fi
     if [[ ",${openshift_cluster_types}," == *",${cluster_type},"* ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-_docker_images=""
-
-docker_pull() {
-    local image_ref="${1:-}"
-    if [[ -z "${_docker_images}" ]]; then
-        _docker_images=$($DOCKER images --format '{{.Repository}}:{{.Tag}}')
-    fi
-    if echo "${_docker_images}" | grep -q "^${image_ref}$"; then
-        log "Skipping pulling of image ${image_ref}, as it is already there"
-    else
-        log "Pulling image ${image_ref}"
-        $DOCKER pull "$image_ref"
-    fi
-}
-
-docker_logged_in() {
-    local registry="${1:-}"
-    if [[ -z "$registry" ]]; then
-        log "docker_logged_in() called with empty registry argument"
-        return 1
-    fi
-    if jq -ec ".auths[\"${registry}\"]" <"$DOCKER_CONFIG/config.json" >/dev/null 2>&1; then
         return 0
     else
         return 1

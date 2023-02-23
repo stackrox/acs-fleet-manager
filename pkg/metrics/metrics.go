@@ -121,6 +121,11 @@ var CentralPerClusterCountMetricsLabels = []string{
 	LabelClusterExternalID,
 }
 
+var centralTimeoutCountMetricLabels = []string{
+	LabelID,
+	LabelClusterID,
+}
+
 // ClusterOperationsCountMetricsLabels - is the slice of labels to add to Central operations count metrics
 var ClusterOperationsCountMetricsLabels = []string{
 	labelOperation,
@@ -416,6 +421,24 @@ var centralStatusSinceCreatedMetric = prometheus.NewGaugeVec(
 	centralStatusSinceCreatedMetricLabels,
 )
 
+var centralTimeoutCountMetric = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: FleetManager,
+		Name:      "central_timeout_total_count",
+		Help:      "number of total timed-out centrals",
+	},
+	centralTimeoutCountMetricLabels,
+)
+
+// IncreaseCentralTimeoutCountMetric - increase counter for the centralTimeoutCountMetric
+func IncreaseCentralTimeoutCountMetric(centralID, clusterID string) {
+	labels := prometheus.Labels{
+		LabelID:        centralID,
+		LabelClusterID: clusterID,
+	}
+	centralTimeoutCountMetric.With(labels).Inc()
+}
+
 // IncreaseCentralSuccessOperationsCountMetric - increase counter for the centralOperationsSuccessCountMetric
 func IncreaseCentralSuccessOperationsCountMetric(operation constants2.CentralOperation) {
 	labels := prometheus.Labels{
@@ -692,6 +715,7 @@ func init() {
 	prometheus.MustRegister(reconcilerFailureCountMetric)
 	prometheus.MustRegister(reconcilerErrorsCountMetric)
 	prometheus.MustRegister(leaderWorkerMetric)
+	prometheus.MustRegister(centralTimeoutCountMetric)
 
 	// metrics for observatorium
 	prometheus.MustRegister(observatoriumRequestCountMetric)
@@ -757,9 +781,20 @@ func Reset() {
 	reconcilerFailureCountMetric.Reset()
 	reconcilerErrorsCountMetric.Reset()
 	leaderWorkerMetric.Reset()
+	centralTimeoutCountMetric.Reset()
 
 	ResetMetricsForObservatorium()
 
 	databaseRequestCountMetric.Reset()
 	databaseQueryDurationMetric.Reset()
+}
+
+// InitReconcilerMetricsForType initalizes reconciler metrics for specific reconciler type.
+func InitReconcilerMetricsForType(reconcilerType string) {
+	labels := prometheus.Labels{
+		labelWorkerType: reconcilerType,
+	}
+	reconcilerFailureCountMetric.With(labels).Add(0)
+	reconcilerSuccessCountMetric.With(labels).Add(0)
+	reconcilerErrorsCountMetric.With(labels).Add(0)
 }

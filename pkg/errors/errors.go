@@ -385,6 +385,9 @@ func (e *ServiceError) StackTrace() errors.StackTrace {
 
 // Error ...
 func (e *ServiceError) Error() string {
+	if e == nil {
+		return ""
+	}
 	if e.cause != nil {
 		return fmt.Sprintf("%s: %s\n caused by: %s", CodeStr(e.Code), e.Reason, e.cause.Error())
 	}
@@ -394,6 +397,9 @@ func (e *ServiceError) Error() string {
 
 // AsError ...
 func (e *ServiceError) AsError() error {
+	if e == nil {
+		return nil
+	}
 	return fmt.Errorf(e.Error())
 }
 
@@ -733,4 +739,39 @@ func FailedToCheckQuota(reason string, values ...interface{}) *ServiceError {
 func InvalidCloudAccountID(reason string, values ...interface{}) *ServiceError {
 	message := fmt.Sprintf("%s: %s", ErrorInvalidCloudAccountIDReason, reason)
 	return New(ErrorInvalidCloudAccountID, message, values...)
+}
+
+// InvalidOCMConnection is raised when the OCM connection is invalid.
+// Root causes for an invalid connection are invalid credentials or OCM base URLs.
+func InvalidOCMConnection() *ServiceError {
+	return New(ErrorGeneral, "invalid OCM connection")
+}
+
+// OrganisationNotFound converts the error to a ServiceError and returns a reason and hint for the user.
+func OrganisationNotFound(externalID string, err error) *ServiceError {
+	svcErr := ToServiceError(err)
+	reason := "organisation with external id %s not found"
+	// Visiting the OpenShift page in console registers the user and their organisation with OCM.
+	// See https://issues.redhat.com/browse/SDB-3194 for more context.
+	if svcErr.Is404() {
+		reason += " - visit https://console.redhat.com/openshift and try again"
+	}
+	return NewWithCause(svcErr.Code, svcErr, reason, externalID)
+}
+
+// OrganisationNameInvalid indicates that OCM organisation was found, but its name is invalid.
+func OrganisationNameInvalid(externalID string, name string) *ServiceError {
+	return New(ErrorGeneral, "organisation with external id %q has invalid name %q", externalID, name)
+}
+
+// FailedClusterAuthorization converts the error to a ServiceError and returns a reason and hint for the user.
+func FailedClusterAuthorization(err error) *ServiceError {
+	svcErr := ToServiceError(err)
+	reason := "failed to reserve quota"
+	// Visiting the OpenShift page in console registers the user and their organisation with OCM.
+	// See https://issues.redhat.com/browse/SDB-3194 for more context.
+	if svcErr.Is404() {
+		reason += " - visit https://console.redhat.com/openshift and try again"
+	}
+	return NewWithCause(svcErr.Code, svcErr, reason)
 }

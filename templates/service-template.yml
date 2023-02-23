@@ -444,6 +444,21 @@ parameters:
   description: Default memory limit for scanner-db deployments for newly created tenants
   value: "2500M"
 
+- name: CENTRAL_REQUEST_EXPIRATION_TIMEOUT
+  displayName: Central request expiration timeout
+  description: Maximum interval after which central request is canceled
+  value: "1h"
+
+- name: TELEMETRY_ENDPONT
+  displayName: Telemetry endpoint
+  description: Endpoint for the telemetry backend
+  value: ""
+
+- name: CENTRAL_REQUEST_INTERNAL_USER_AGENTS
+  displayName: Central request internal user agents
+  description: List of user agents from internal clients
+  value: "fleet-manager-probe-service"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -640,8 +655,6 @@ objects:
         - "16064548"
         # ACS RH SSO Org Prod
         - "16134752"
-        # org_id for the static token
-        - "12345678"
         # ACS RH SSO ORG Development
         - "16155304"
       fleetshard-authz-org-ids-prod.yaml: |-
@@ -1033,10 +1046,15 @@ objects:
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
             imagePullPolicy: ${IMAGE_PULL_POLICY}
             volumeMounts:
+            - name: fleet-manager-credentials
+              mountPath: /secrets/fleet-manager-credentials
             - name: service
               mountPath: /secrets/service
             - name: rds
               mountPath: /secrets/rds
+            env:
+              - name: "OCM_ENV"
+                value: "${ENVIRONMENT}"
             command:
             - /usr/local/bin/fleet-manager
             - migrate
@@ -1048,6 +1066,11 @@ objects:
             - --db-ssl-certificate-file=/secrets/rds/db.ca_cert
             - --db-sslmode=${DB_SSLMODE}
             - --db-max-open-connections=${DB_MAX_OPEN_CONNS}
+            - --ocm-client-id-file=/secrets/fleet-manager-credentials/ocm-service.clientId
+            - --ocm-client-secret-file=/secrets/fleet-manager-credentials/ocm-service.clientSecret
+            - --ocm-base-url=${OCM_URL}
+            - --ams-base-url=${AMS_URL}
+            - --ocm-debug=${OCM_DEBUG}
             - --enable-db-debug=${ENABLE_DB_DEBUG}
             - --alsologtostderr
             - -v=${GLOG_V}
@@ -1233,6 +1256,10 @@ objects:
             - --central-operator-addon-id=${CENTRAL_OPERATOR_OPERATOR_ADDON_ID}
             - --fleetshard-addon-id=${FLEETSHARD_ADDON_ID}
             - --alsologtostderr
+            - --central-request-expiration-timeout=${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}
+            - --central-request-internal-user-agents=${CENTRAL_REQUEST_INTERNAL_USER_AGENTS}
+            - --telemetry-endpoint=${TELEMETRY_ENDPONT}
+            - --telemetry-storage-key-secret-file=/secrets/fleet-manager-credentials/telemetry.storageKey
             - -v=${GLOG_V}
             resources:
               requests:

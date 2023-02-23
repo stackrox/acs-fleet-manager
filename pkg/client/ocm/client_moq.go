@@ -16,106 +16,106 @@ var _ Client = &ClientMock{}
 
 // ClientMock is a mock implementation of Client.
 //
-// 	func TestSomethingThatUsesClient(t *testing.T) {
+//	func TestSomethingThatUsesClient(t *testing.T) {
 //
-// 		// make and configure a mocked Client
-// 		mockedClient := &ClientMock{
-// 			ClusterAuthorizationFunc: func(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error) {
-// 				panic("mock out the ClusterAuthorization method")
-// 			},
-// 			ConnectionFunc: func() *sdkClient.Connection {
-// 				panic("mock out the Connection method")
-// 			},
-// 			CreateAddonFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
-// 				panic("mock out the CreateAddon method")
-// 			},
-// 			CreateAddonWithParamsFunc: func(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
-// 				panic("mock out the CreateAddonWithParams method")
-// 			},
-// 			CreateClusterFunc: func(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error) {
-// 				panic("mock out the CreateCluster method")
-// 			},
-// 			CreateIdentityProviderFunc: func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
-// 				panic("mock out the CreateIdentityProvider method")
-// 			},
-// 			CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-// 				panic("mock out the CreateSyncSet method")
-// 			},
-// 			DeleteClusterFunc: func(clusterID string) (int, error) {
-// 				panic("mock out the DeleteCluster method")
-// 			},
-// 			DeleteSubscriptionFunc: func(id string) (int, error) {
-// 				panic("mock out the DeleteSubscription method")
-// 			},
-// 			DeleteSyncSetFunc: func(clusterID string, syncsetID string) (int, error) {
-// 				panic("mock out the DeleteSyncSet method")
-// 			},
-// 			FindSubscriptionsFunc: func(query string) (*amsv1.SubscriptionsListResponse, error) {
-// 				panic("mock out the FindSubscriptions method")
-// 			},
-// 			GetAddonFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
-// 				panic("mock out the GetAddon method")
-// 			},
-// 			GetCloudProvidersFunc: func() (*clustersmgmtv1.CloudProviderList, error) {
-// 				panic("mock out the GetCloudProviders method")
-// 			},
-// 			GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
-// 				panic("mock out the GetCluster method")
-// 			},
-// 			GetClusterDNSFunc: func(clusterID string) (string, error) {
-// 				panic("mock out the GetClusterDNS method")
-// 			},
-// 			GetClusterIngressesFunc: func(clusterID string) (*clustersmgmtv1.IngressesListResponse, error) {
-// 				panic("mock out the GetClusterIngresses method")
-// 			},
-// 			GetClusterStatusFunc: func(id string) (*clustersmgmtv1.ClusterStatus, error) {
-// 				panic("mock out the GetClusterStatus method")
-// 			},
-// 			GetCustomerCloudAccountsFunc: func(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error) {
-// 				panic("mock out the GetCustomerCloudAccounts method")
-// 			},
-// 			GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
-// 				panic("mock out the GetExistingClusterMetrics method")
-// 			},
-// 			GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
-// 				panic("mock out the GetIdentityProviderList method")
-// 			},
-// 			GetOrganisationIDFromExternalIDFunc: func(externalID string) (string, error) {
-// 				panic("mock out the GetOrganisationIDFromExternalID method")
-// 			},
-// 			GetQuotaCostsForProductFunc: func(organizationID string, resourceName string, product string) ([]*amsv1.QuotaCost, error) {
-// 				panic("mock out the GetQuotaCostsForProduct method")
-// 			},
-// 			GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
-// 				panic("mock out the GetRegions method")
-// 			},
-// 			GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
-// 				panic("mock out the GetRequiresTermsAcceptance method")
-// 			},
-// 			GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
-// 				panic("mock out the GetSyncSet method")
-// 			},
-// 			ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
-// 				panic("mock out the ScaleDownComputeNodes method")
-// 			},
-// 			ScaleUpComputeNodesFunc: func(clusterID string, increment int) (*clustersmgmtv1.Cluster, error) {
-// 				panic("mock out the ScaleUpComputeNodes method")
-// 			},
-// 			SetComputeNodesFunc: func(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
-// 				panic("mock out the SetComputeNodes method")
-// 			},
-// 			UpdateAddonParametersFunc: func(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
-// 				panic("mock out the UpdateAddonParameters method")
-// 			},
-// 			UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-// 				panic("mock out the UpdateSyncSet method")
-// 			},
-// 		}
+//		// make and configure a mocked Client
+//		mockedClient := &ClientMock{
+//			ClusterAuthorizationFunc: func(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error) {
+//				panic("mock out the ClusterAuthorization method")
+//			},
+//			ConnectionFunc: func() *sdkClient.Connection {
+//				panic("mock out the Connection method")
+//			},
+//			CreateAddonFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
+//				panic("mock out the CreateAddon method")
+//			},
+//			CreateAddonWithParamsFunc: func(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+//				panic("mock out the CreateAddonWithParams method")
+//			},
+//			CreateClusterFunc: func(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error) {
+//				panic("mock out the CreateCluster method")
+//			},
+//			CreateIdentityProviderFunc: func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
+//				panic("mock out the CreateIdentityProvider method")
+//			},
+//			CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+//				panic("mock out the CreateSyncSet method")
+//			},
+//			DeleteClusterFunc: func(clusterID string) (int, error) {
+//				panic("mock out the DeleteCluster method")
+//			},
+//			DeleteSubscriptionFunc: func(id string) (int, error) {
+//				panic("mock out the DeleteSubscription method")
+//			},
+//			DeleteSyncSetFunc: func(clusterID string, syncsetID string) (int, error) {
+//				panic("mock out the DeleteSyncSet method")
+//			},
+//			FindSubscriptionsFunc: func(query string) (*amsv1.SubscriptionsListResponse, error) {
+//				panic("mock out the FindSubscriptions method")
+//			},
+//			GetAddonFunc: func(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error) {
+//				panic("mock out the GetAddon method")
+//			},
+//			GetCloudProvidersFunc: func() (*clustersmgmtv1.CloudProviderList, error) {
+//				panic("mock out the GetCloudProviders method")
+//			},
+//			GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
+//				panic("mock out the GetCluster method")
+//			},
+//			GetClusterDNSFunc: func(clusterID string) (string, error) {
+//				panic("mock out the GetClusterDNS method")
+//			},
+//			GetClusterIngressesFunc: func(clusterID string) (*clustersmgmtv1.IngressesListResponse, error) {
+//				panic("mock out the GetClusterIngresses method")
+//			},
+//			GetClusterStatusFunc: func(id string) (*clustersmgmtv1.ClusterStatus, error) {
+//				panic("mock out the GetClusterStatus method")
+//			},
+//			GetCustomerCloudAccountsFunc: func(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error) {
+//				panic("mock out the GetCustomerCloudAccounts method")
+//			},
+//			GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
+//				panic("mock out the GetExistingClusterMetrics method")
+//			},
+//			GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
+//				panic("mock out the GetIdentityProviderList method")
+//			},
+//			GetOrganisationFromExternalIDFunc: func(externalID string) (*amsv1.Organization, error) {
+//				panic("mock out the GetOrganisationFromExternalID method")
+//			},
+//			GetQuotaCostsForProductFunc: func(organizationID string, resourceName string, product string) ([]*amsv1.QuotaCost, error) {
+//				panic("mock out the GetQuotaCostsForProduct method")
+//			},
+//			GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
+//				panic("mock out the GetRegions method")
+//			},
+//			GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
+//				panic("mock out the GetRequiresTermsAcceptance method")
+//			},
+//			GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
+//				panic("mock out the GetSyncSet method")
+//			},
+//			ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
+//				panic("mock out the ScaleDownComputeNodes method")
+//			},
+//			ScaleUpComputeNodesFunc: func(clusterID string, increment int) (*clustersmgmtv1.Cluster, error) {
+//				panic("mock out the ScaleUpComputeNodes method")
+//			},
+//			SetComputeNodesFunc: func(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
+//				panic("mock out the SetComputeNodes method")
+//			},
+//			UpdateAddonParametersFunc: func(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+//				panic("mock out the UpdateAddonParameters method")
+//			},
+//			UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+//				panic("mock out the UpdateSyncSet method")
+//			},
+//		}
 //
-// 		// use mockedClient in code that requires Client
-// 		// and then make assertions.
+//		// use mockedClient in code that requires Client
+//		// and then make assertions.
 //
-// 	}
+//	}
 type ClientMock struct {
 	// ClusterAuthorizationFunc mocks the ClusterAuthorization method.
 	ClusterAuthorizationFunc func(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
@@ -177,8 +177,8 @@ type ClientMock struct {
 	// GetIdentityProviderListFunc mocks the GetIdentityProviderList method.
 	GetIdentityProviderListFunc func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 
-	// GetOrganisationIDFromExternalIDFunc mocks the GetOrganisationIDFromExternalID method.
-	GetOrganisationIDFromExternalIDFunc func(externalID string) (string, error)
+	// GetOrganisationFromExternalIDFunc mocks the GetOrganisationFromExternalID method.
+	GetOrganisationFromExternalIDFunc func(externalID string) (*amsv1.Organization, error)
 
 	// GetQuotaCostsForProductFunc mocks the GetQuotaCostsForProduct method.
 	GetQuotaCostsForProductFunc func(organizationID string, resourceName string, product string) ([]*amsv1.QuotaCost, error)
@@ -321,8 +321,8 @@ type ClientMock struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
-		// GetOrganisationIDFromExternalID holds details about calls to the GetOrganisationIDFromExternalID method.
-		GetOrganisationIDFromExternalID []struct {
+		// GetOrganisationFromExternalID holds details about calls to the GetOrganisationFromExternalID method.
+		GetOrganisationFromExternalID []struct {
 			// ExternalID is the externalID argument value.
 			ExternalID string
 		}
@@ -392,36 +392,36 @@ type ClientMock struct {
 			Syncset *clustersmgmtv1.Syncset
 		}
 	}
-	lockClusterAuthorization            sync.RWMutex
-	lockConnection                      sync.RWMutex
-	lockCreateAddon                     sync.RWMutex
-	lockCreateAddonWithParams           sync.RWMutex
-	lockCreateCluster                   sync.RWMutex
-	lockCreateIdentityProvider          sync.RWMutex
-	lockCreateSyncSet                   sync.RWMutex
-	lockDeleteCluster                   sync.RWMutex
-	lockDeleteSubscription              sync.RWMutex
-	lockDeleteSyncSet                   sync.RWMutex
-	lockFindSubscriptions               sync.RWMutex
-	lockGetAddon                        sync.RWMutex
-	lockGetCloudProviders               sync.RWMutex
-	lockGetCluster                      sync.RWMutex
-	lockGetClusterDNS                   sync.RWMutex
-	lockGetClusterIngresses             sync.RWMutex
-	lockGetClusterStatus                sync.RWMutex
-	lockGetCustomerCloudAccounts        sync.RWMutex
-	lockGetExistingClusterMetrics       sync.RWMutex
-	lockGetIdentityProviderList         sync.RWMutex
-	lockGetOrganisationIDFromExternalID sync.RWMutex
-	lockGetQuotaCostsForProduct         sync.RWMutex
-	lockGetRegions                      sync.RWMutex
-	lockGetRequiresTermsAcceptance      sync.RWMutex
-	lockGetSyncSet                      sync.RWMutex
-	lockScaleDownComputeNodes           sync.RWMutex
-	lockScaleUpComputeNodes             sync.RWMutex
-	lockSetComputeNodes                 sync.RWMutex
-	lockUpdateAddonParameters           sync.RWMutex
-	lockUpdateSyncSet                   sync.RWMutex
+	lockClusterAuthorization          sync.RWMutex
+	lockConnection                    sync.RWMutex
+	lockCreateAddon                   sync.RWMutex
+	lockCreateAddonWithParams         sync.RWMutex
+	lockCreateCluster                 sync.RWMutex
+	lockCreateIdentityProvider        sync.RWMutex
+	lockCreateSyncSet                 sync.RWMutex
+	lockDeleteCluster                 sync.RWMutex
+	lockDeleteSubscription            sync.RWMutex
+	lockDeleteSyncSet                 sync.RWMutex
+	lockFindSubscriptions             sync.RWMutex
+	lockGetAddon                      sync.RWMutex
+	lockGetCloudProviders             sync.RWMutex
+	lockGetCluster                    sync.RWMutex
+	lockGetClusterDNS                 sync.RWMutex
+	lockGetClusterIngresses           sync.RWMutex
+	lockGetClusterStatus              sync.RWMutex
+	lockGetCustomerCloudAccounts      sync.RWMutex
+	lockGetExistingClusterMetrics     sync.RWMutex
+	lockGetIdentityProviderList       sync.RWMutex
+	lockGetOrganisationFromExternalID sync.RWMutex
+	lockGetQuotaCostsForProduct       sync.RWMutex
+	lockGetRegions                    sync.RWMutex
+	lockGetRequiresTermsAcceptance    sync.RWMutex
+	lockGetSyncSet                    sync.RWMutex
+	lockScaleDownComputeNodes         sync.RWMutex
+	lockScaleUpComputeNodes           sync.RWMutex
+	lockSetComputeNodes               sync.RWMutex
+	lockUpdateAddonParameters         sync.RWMutex
+	lockUpdateSyncSet                 sync.RWMutex
 }
 
 // ClusterAuthorization calls ClusterAuthorizationFunc.
@@ -442,7 +442,8 @@ func (mock *ClientMock) ClusterAuthorization(cb *amsv1.ClusterAuthorizationReque
 
 // ClusterAuthorizationCalls gets all the calls that were made to ClusterAuthorization.
 // Check the length with:
-//     len(mockedClient.ClusterAuthorizationCalls())
+//
+//	len(mockedClient.ClusterAuthorizationCalls())
 func (mock *ClientMock) ClusterAuthorizationCalls() []struct {
 	Cb *amsv1.ClusterAuthorizationRequest
 } {
@@ -470,7 +471,8 @@ func (mock *ClientMock) Connection() *sdkClient.Connection {
 
 // ConnectionCalls gets all the calls that were made to Connection.
 // Check the length with:
-//     len(mockedClient.ConnectionCalls())
+//
+//	len(mockedClient.ConnectionCalls())
 func (mock *ClientMock) ConnectionCalls() []struct {
 } {
 	var calls []struct {
@@ -501,7 +503,8 @@ func (mock *ClientMock) CreateAddon(clusterID string, addonID string) (*clusters
 
 // CreateAddonCalls gets all the calls that were made to CreateAddon.
 // Check the length with:
-//     len(mockedClient.CreateAddonCalls())
+//
+//	len(mockedClient.CreateAddonCalls())
 func (mock *ClientMock) CreateAddonCalls() []struct {
 	ClusterID string
 	AddonID   string
@@ -538,7 +541,8 @@ func (mock *ClientMock) CreateAddonWithParams(clusterID string, addonID string, 
 
 // CreateAddonWithParamsCalls gets all the calls that were made to CreateAddonWithParams.
 // Check the length with:
-//     len(mockedClient.CreateAddonWithParamsCalls())
+//
+//	len(mockedClient.CreateAddonWithParamsCalls())
 func (mock *ClientMock) CreateAddonWithParamsCalls() []struct {
 	ClusterID  string
 	AddonID    string
@@ -573,7 +577,8 @@ func (mock *ClientMock) CreateCluster(cluster *clustersmgmtv1.Cluster) (*cluster
 
 // CreateClusterCalls gets all the calls that were made to CreateCluster.
 // Check the length with:
-//     len(mockedClient.CreateClusterCalls())
+//
+//	len(mockedClient.CreateClusterCalls())
 func (mock *ClientMock) CreateClusterCalls() []struct {
 	Cluster *clustersmgmtv1.Cluster
 } {
@@ -606,7 +611,8 @@ func (mock *ClientMock) CreateIdentityProvider(clusterID string, identityProvide
 
 // CreateIdentityProviderCalls gets all the calls that were made to CreateIdentityProvider.
 // Check the length with:
-//     len(mockedClient.CreateIdentityProviderCalls())
+//
+//	len(mockedClient.CreateIdentityProviderCalls())
 func (mock *ClientMock) CreateIdentityProviderCalls() []struct {
 	ClusterID        string
 	IdentityProvider *clustersmgmtv1.IdentityProvider
@@ -641,7 +647,8 @@ func (mock *ClientMock) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.
 
 // CreateSyncSetCalls gets all the calls that were made to CreateSyncSet.
 // Check the length with:
-//     len(mockedClient.CreateSyncSetCalls())
+//
+//	len(mockedClient.CreateSyncSetCalls())
 func (mock *ClientMock) CreateSyncSetCalls() []struct {
 	ClusterID string
 	Syncset   *clustersmgmtv1.Syncset
@@ -674,7 +681,8 @@ func (mock *ClientMock) DeleteCluster(clusterID string) (int, error) {
 
 // DeleteClusterCalls gets all the calls that were made to DeleteCluster.
 // Check the length with:
-//     len(mockedClient.DeleteClusterCalls())
+//
+//	len(mockedClient.DeleteClusterCalls())
 func (mock *ClientMock) DeleteClusterCalls() []struct {
 	ClusterID string
 } {
@@ -705,7 +713,8 @@ func (mock *ClientMock) DeleteSubscription(id string) (int, error) {
 
 // DeleteSubscriptionCalls gets all the calls that were made to DeleteSubscription.
 // Check the length with:
-//     len(mockedClient.DeleteSubscriptionCalls())
+//
+//	len(mockedClient.DeleteSubscriptionCalls())
 func (mock *ClientMock) DeleteSubscriptionCalls() []struct {
 	ID string
 } {
@@ -738,7 +747,8 @@ func (mock *ClientMock) DeleteSyncSet(clusterID string, syncsetID string) (int, 
 
 // DeleteSyncSetCalls gets all the calls that were made to DeleteSyncSet.
 // Check the length with:
-//     len(mockedClient.DeleteSyncSetCalls())
+//
+//	len(mockedClient.DeleteSyncSetCalls())
 func (mock *ClientMock) DeleteSyncSetCalls() []struct {
 	ClusterID string
 	SyncsetID string
@@ -771,7 +781,8 @@ func (mock *ClientMock) FindSubscriptions(query string) (*amsv1.SubscriptionsLis
 
 // FindSubscriptionsCalls gets all the calls that were made to FindSubscriptions.
 // Check the length with:
-//     len(mockedClient.FindSubscriptionsCalls())
+//
+//	len(mockedClient.FindSubscriptionsCalls())
 func (mock *ClientMock) FindSubscriptionsCalls() []struct {
 	Query string
 } {
@@ -804,7 +815,8 @@ func (mock *ClientMock) GetAddon(clusterID string, addonID string) (*clustersmgm
 
 // GetAddonCalls gets all the calls that were made to GetAddon.
 // Check the length with:
-//     len(mockedClient.GetAddonCalls())
+//
+//	len(mockedClient.GetAddonCalls())
 func (mock *ClientMock) GetAddonCalls() []struct {
 	ClusterID string
 	AddonID   string
@@ -834,7 +846,8 @@ func (mock *ClientMock) GetCloudProviders() (*clustersmgmtv1.CloudProviderList, 
 
 // GetCloudProvidersCalls gets all the calls that were made to GetCloudProviders.
 // Check the length with:
-//     len(mockedClient.GetCloudProvidersCalls())
+//
+//	len(mockedClient.GetCloudProvidersCalls())
 func (mock *ClientMock) GetCloudProvidersCalls() []struct {
 } {
 	var calls []struct {
@@ -863,7 +876,8 @@ func (mock *ClientMock) GetCluster(clusterID string) (*clustersmgmtv1.Cluster, e
 
 // GetClusterCalls gets all the calls that were made to GetCluster.
 // Check the length with:
-//     len(mockedClient.GetClusterCalls())
+//
+//	len(mockedClient.GetClusterCalls())
 func (mock *ClientMock) GetClusterCalls() []struct {
 	ClusterID string
 } {
@@ -894,7 +908,8 @@ func (mock *ClientMock) GetClusterDNS(clusterID string) (string, error) {
 
 // GetClusterDNSCalls gets all the calls that were made to GetClusterDNS.
 // Check the length with:
-//     len(mockedClient.GetClusterDNSCalls())
+//
+//	len(mockedClient.GetClusterDNSCalls())
 func (mock *ClientMock) GetClusterDNSCalls() []struct {
 	ClusterID string
 } {
@@ -925,7 +940,8 @@ func (mock *ClientMock) GetClusterIngresses(clusterID string) (*clustersmgmtv1.I
 
 // GetClusterIngressesCalls gets all the calls that were made to GetClusterIngresses.
 // Check the length with:
-//     len(mockedClient.GetClusterIngressesCalls())
+//
+//	len(mockedClient.GetClusterIngressesCalls())
 func (mock *ClientMock) GetClusterIngressesCalls() []struct {
 	ClusterID string
 } {
@@ -956,7 +972,8 @@ func (mock *ClientMock) GetClusterStatus(id string) (*clustersmgmtv1.ClusterStat
 
 // GetClusterStatusCalls gets all the calls that were made to GetClusterStatus.
 // Check the length with:
-//     len(mockedClient.GetClusterStatusCalls())
+//
+//	len(mockedClient.GetClusterStatusCalls())
 func (mock *ClientMock) GetClusterStatusCalls() []struct {
 	ID string
 } {
@@ -989,7 +1006,8 @@ func (mock *ClientMock) GetCustomerCloudAccounts(organizationID string, quotaIDs
 
 // GetCustomerCloudAccountsCalls gets all the calls that were made to GetCustomerCloudAccounts.
 // Check the length with:
-//     len(mockedClient.GetCustomerCloudAccountsCalls())
+//
+//	len(mockedClient.GetCustomerCloudAccountsCalls())
 func (mock *ClientMock) GetCustomerCloudAccountsCalls() []struct {
 	OrganizationID string
 	QuotaIDs       []string
@@ -1022,7 +1040,8 @@ func (mock *ClientMock) GetExistingClusterMetrics(clusterID string) (*amsv1.Subs
 
 // GetExistingClusterMetricsCalls gets all the calls that were made to GetExistingClusterMetrics.
 // Check the length with:
-//     len(mockedClient.GetExistingClusterMetricsCalls())
+//
+//	len(mockedClient.GetExistingClusterMetricsCalls())
 func (mock *ClientMock) GetExistingClusterMetricsCalls() []struct {
 	ClusterID string
 } {
@@ -1053,7 +1072,8 @@ func (mock *ClientMock) GetIdentityProviderList(clusterID string) (*clustersmgmt
 
 // GetIdentityProviderListCalls gets all the calls that were made to GetIdentityProviderList.
 // Check the length with:
-//     len(mockedClient.GetIdentityProviderListCalls())
+//
+//	len(mockedClient.GetIdentityProviderListCalls())
 func (mock *ClientMock) GetIdentityProviderListCalls() []struct {
 	ClusterID string
 } {
@@ -1066,34 +1086,35 @@ func (mock *ClientMock) GetIdentityProviderListCalls() []struct {
 	return calls
 }
 
-// GetOrganisationIDFromExternalID calls GetOrganisationIDFromExternalIDFunc.
-func (mock *ClientMock) GetOrganisationIDFromExternalID(externalID string) (string, error) {
-	if mock.GetOrganisationIDFromExternalIDFunc == nil {
-		panic("ClientMock.GetOrganisationIDFromExternalIDFunc: method is nil but Client.GetOrganisationIDFromExternalID was just called")
+// GetOrganisationFromExternalID calls GetOrganisationFromExternalIDFunc.
+func (mock *ClientMock) GetOrganisationFromExternalID(externalID string) (*amsv1.Organization, error) {
+	if mock.GetOrganisationFromExternalIDFunc == nil {
+		panic("ClientMock.GetOrganisationFromExternalIDFunc: method is nil but Client.GetOrganisationFromExternalID was just called")
 	}
 	callInfo := struct {
 		ExternalID string
 	}{
 		ExternalID: externalID,
 	}
-	mock.lockGetOrganisationIDFromExternalID.Lock()
-	mock.calls.GetOrganisationIDFromExternalID = append(mock.calls.GetOrganisationIDFromExternalID, callInfo)
-	mock.lockGetOrganisationIDFromExternalID.Unlock()
-	return mock.GetOrganisationIDFromExternalIDFunc(externalID)
+	mock.lockGetOrganisationFromExternalID.Lock()
+	mock.calls.GetOrganisationFromExternalID = append(mock.calls.GetOrganisationFromExternalID, callInfo)
+	mock.lockGetOrganisationFromExternalID.Unlock()
+	return mock.GetOrganisationFromExternalIDFunc(externalID)
 }
 
-// GetOrganisationIDFromExternalIDCalls gets all the calls that were made to GetOrganisationIDFromExternalID.
+// GetOrganisationFromExternalIDCalls gets all the calls that were made to GetOrganisationFromExternalID.
 // Check the length with:
-//     len(mockedClient.GetOrganisationIDFromExternalIDCalls())
-func (mock *ClientMock) GetOrganisationIDFromExternalIDCalls() []struct {
+//
+//	len(mockedClient.GetOrganisationFromExternalIDCalls())
+func (mock *ClientMock) GetOrganisationFromExternalIDCalls() []struct {
 	ExternalID string
 } {
 	var calls []struct {
 		ExternalID string
 	}
-	mock.lockGetOrganisationIDFromExternalID.RLock()
-	calls = mock.calls.GetOrganisationIDFromExternalID
-	mock.lockGetOrganisationIDFromExternalID.RUnlock()
+	mock.lockGetOrganisationFromExternalID.RLock()
+	calls = mock.calls.GetOrganisationFromExternalID
+	mock.lockGetOrganisationFromExternalID.RUnlock()
 	return calls
 }
 
@@ -1119,7 +1140,8 @@ func (mock *ClientMock) GetQuotaCostsForProduct(organizationID string, resourceN
 
 // GetQuotaCostsForProductCalls gets all the calls that were made to GetQuotaCostsForProduct.
 // Check the length with:
-//     len(mockedClient.GetQuotaCostsForProductCalls())
+//
+//	len(mockedClient.GetQuotaCostsForProductCalls())
 func (mock *ClientMock) GetQuotaCostsForProductCalls() []struct {
 	OrganizationID string
 	ResourceName   string
@@ -1154,7 +1176,8 @@ func (mock *ClientMock) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clu
 
 // GetRegionsCalls gets all the calls that were made to GetRegions.
 // Check the length with:
-//     len(mockedClient.GetRegionsCalls())
+//
+//	len(mockedClient.GetRegionsCalls())
 func (mock *ClientMock) GetRegionsCalls() []struct {
 	Provider *clustersmgmtv1.CloudProvider
 } {
@@ -1185,7 +1208,8 @@ func (mock *ClientMock) GetRequiresTermsAcceptance(username string) (bool, strin
 
 // GetRequiresTermsAcceptanceCalls gets all the calls that were made to GetRequiresTermsAcceptance.
 // Check the length with:
-//     len(mockedClient.GetRequiresTermsAcceptanceCalls())
+//
+//	len(mockedClient.GetRequiresTermsAcceptanceCalls())
 func (mock *ClientMock) GetRequiresTermsAcceptanceCalls() []struct {
 	Username string
 } {
@@ -1218,7 +1242,8 @@ func (mock *ClientMock) GetSyncSet(clusterID string, syncSetID string) (*cluster
 
 // GetSyncSetCalls gets all the calls that were made to GetSyncSet.
 // Check the length with:
-//     len(mockedClient.GetSyncSetCalls())
+//
+//	len(mockedClient.GetSyncSetCalls())
 func (mock *ClientMock) GetSyncSetCalls() []struct {
 	ClusterID string
 	SyncSetID string
@@ -1253,7 +1278,8 @@ func (mock *ClientMock) ScaleDownComputeNodes(clusterID string, decrement int) (
 
 // ScaleDownComputeNodesCalls gets all the calls that were made to ScaleDownComputeNodes.
 // Check the length with:
-//     len(mockedClient.ScaleDownComputeNodesCalls())
+//
+//	len(mockedClient.ScaleDownComputeNodesCalls())
 func (mock *ClientMock) ScaleDownComputeNodesCalls() []struct {
 	ClusterID string
 	Decrement int
@@ -1288,7 +1314,8 @@ func (mock *ClientMock) ScaleUpComputeNodes(clusterID string, increment int) (*c
 
 // ScaleUpComputeNodesCalls gets all the calls that were made to ScaleUpComputeNodes.
 // Check the length with:
-//     len(mockedClient.ScaleUpComputeNodesCalls())
+//
+//	len(mockedClient.ScaleUpComputeNodesCalls())
 func (mock *ClientMock) ScaleUpComputeNodesCalls() []struct {
 	ClusterID string
 	Increment int
@@ -1323,7 +1350,8 @@ func (mock *ClientMock) SetComputeNodes(clusterID string, numNodes int) (*cluste
 
 // SetComputeNodesCalls gets all the calls that were made to SetComputeNodes.
 // Check the length with:
-//     len(mockedClient.SetComputeNodesCalls())
+//
+//	len(mockedClient.SetComputeNodesCalls())
 func (mock *ClientMock) SetComputeNodesCalls() []struct {
 	ClusterID string
 	NumNodes  int
@@ -1360,7 +1388,8 @@ func (mock *ClientMock) UpdateAddonParameters(clusterID string, addonID string, 
 
 // UpdateAddonParametersCalls gets all the calls that were made to UpdateAddonParameters.
 // Check the length with:
-//     len(mockedClient.UpdateAddonParametersCalls())
+//
+//	len(mockedClient.UpdateAddonParametersCalls())
 func (mock *ClientMock) UpdateAddonParametersCalls() []struct {
 	ClusterID  string
 	AddonID    string
@@ -1399,7 +1428,8 @@ func (mock *ClientMock) UpdateSyncSet(clusterID string, syncSetID string, syncse
 
 // UpdateSyncSetCalls gets all the calls that were made to UpdateSyncSet.
 // Check the length with:
-//     len(mockedClient.UpdateSyncSetCalls())
+//
+//	len(mockedClient.UpdateSyncSetCalls())
 func (mock *ClientMock) UpdateSyncSetCalls() []struct {
 	ClusterID string
 	SyncSetID string

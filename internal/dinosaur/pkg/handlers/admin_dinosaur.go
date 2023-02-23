@@ -27,14 +27,16 @@ type adminDinosaurHandler struct {
 	service        services.DinosaurService
 	accountService account.AccountService
 	providerConfig *config.ProviderConfig
+	telemetry      *services.Telemetry
 }
 
 // NewAdminDinosaurHandler ...
-func NewAdminDinosaurHandler(service services.DinosaurService, accountService account.AccountService, providerConfig *config.ProviderConfig) *adminDinosaurHandler {
+func NewAdminDinosaurHandler(service services.DinosaurService, accountService account.AccountService, providerConfig *config.ProviderConfig, telemetry *services.Telemetry) *adminDinosaurHandler {
 	return &adminDinosaurHandler{
 		service:        service,
 		accountService: accountService,
 		providerConfig: providerConfig,
+		telemetry:      telemetry,
 	}
 }
 
@@ -72,6 +74,8 @@ func (h adminDinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(&convDinosaur)
+			h.telemetry.RegisterTenant(r.Context(), &convDinosaur)
+			h.telemetry.TrackCreationRequested(r.Context(), convDinosaur.ID, true, svcErr.AsError())
 			if svcErr != nil {
 				return nil, svcErr
 			}
@@ -152,8 +156,8 @@ func (h adminDinosaurHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-
 			err := h.service.RegisterDinosaurDeprovisionJob(ctx, id)
+			h.telemetry.TrackDeletionRequested(ctx, id, true, err.AsError())
 			return nil, err
 		},
 	}
@@ -315,7 +319,6 @@ func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.
 
 // Update a Central instance.
 func (h adminDinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
-
 	var dinosaurUpdateReq private.CentralUpdateRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &dinosaurUpdateReq,

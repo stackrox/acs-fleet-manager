@@ -22,6 +22,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/aws"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
@@ -61,7 +62,6 @@ type CNameRecordStatus struct {
 //
 //go:generate moq -out dinosaurservice_moq.go . DinosaurService
 type DinosaurService interface {
-	HasAvailableCapacity() (bool, *errors.ServiceError)
 	// HasAvailableCapacityInRegion checks if there is capacity in the clusters for a given region
 	HasAvailableCapacityInRegion(dinosaurRequest *dbapi.CentralRequest) (bool, *errors.ServiceError)
 	// AcceptCentralRequest transitions CentralRequest to 'Preparing'.
@@ -94,7 +94,7 @@ type DinosaurService interface {
 	Updates(dinosaurRequest *dbapi.CentralRequest, values map[string]interface{}) *errors.ServiceError
 	ChangeDinosaurCNAMErecords(dinosaurRequest *dbapi.CentralRequest, action DinosaurRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralRequest) (*CNameRecordStatus, error)
-	DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError)
+	DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType
 	RegisterDinosaurDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionDinosaurForUsers registers all dinosaurs for deprovisioning given the list of owners
 	DeprovisionDinosaurForUsers(users []string) *errors.ServiceError
@@ -121,10 +121,11 @@ type dinosaurService struct {
 	authService              authorization.Authorization
 	dataplaneClusterConfig   *config.DataplaneClusterConfig
 	clusterPlacementStrategy ClusterPlacementStrategy
+	amsClient                ocm.AMSClient
 }
 
 // NewDinosaurService ...
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy) *dinosaurService {
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient) *dinosaurService {
 	return &dinosaurService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
@@ -136,20 +137,8 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		authService:              authorizationService,
 		dataplaneClusterConfig:   dataplaneClusterConfig,
 		clusterPlacementStrategy: clusterPlacementStrategy,
+		amsClient:                amsClient,
 	}
-}
-
-// HasAvailableCapacity ...
-func (k *dinosaurService) HasAvailableCapacity() (bool, *errors.ServiceError) {
-	dbConn := k.connectionFactory.New()
-	var count int64
-
-	if err := dbConn.Model(&dbapi.CentralRequest{}).Count(&count).Error; err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count central request")
-	}
-
-	glog.Infof("%d of %d central clusters currently instantiated", count, k.dinosaurConfig.MaxCapacity.MaxCapacity)
-	return count < k.dinosaurConfig.MaxCapacity.MaxCapacity, nil
 }
 
 // HasAvailableCapacityInRegion ...
@@ -169,25 +158,27 @@ func (k *dinosaurService) HasAvailableCapacityInRegion(dinosaurRequest *dbapi.Ce
 	return count < regionCapacity, nil
 }
 
-// DetectInstanceType ...
-func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) (types.DinosaurInstanceType, *errors.ServiceError) {
+// DetectInstanceType - returns standard instance type if quota is available. Otherwise falls back to eval instance type.
+func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralRequest) types.DinosaurInstanceType {
 	quotaType := api.QuotaType(k.dinosaurConfig.Quota.Type)
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(quotaType)
 	if factoryErr != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
+		glog.Error(errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to get quota service"))
+		return types.EVAL
 	}
 
 	hasQuota, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(dinosaurRequest, types.STANDARD)
 	if err != nil {
-		return "", err
+		glog.Error(errors.NewWithCause(errors.ErrorGeneral, err, "unable to check quota"))
+		return types.EVAL
 	}
 	if hasQuota {
 		glog.Infof("Quota detected for central request %s with quota type %s. Granting instance type %s.", dinosaurRequest.ID, quotaType, types.STANDARD)
-		return types.STANDARD, nil
+		return types.STANDARD
 	}
 
 	glog.Infof("No quota detected for central request %s with quota type %s. Granting instance type %s.", dinosaurRequest.ID, quotaType, types.EVAL)
-	return types.EVAL, nil
+	return types.EVAL
 }
 
 // reserveQuota - reserves quota for the given dinosaur request. If a RHACS quota has been assigned, it will try to reserve RHACS quota, otherwise it will try with RHACSTrial
@@ -210,7 +201,7 @@ func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (s
 		}
 
 		if count > 0 {
-			return "", errors.TooManyDinosaurInstancesReached("only one eval instance is allowed")
+			return "", errors.TooManyDinosaurInstancesReached("only one eval instance is allowed; increase your account quota")
 		}
 	}
 
@@ -237,10 +228,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 		return errors.TooManyDinosaurInstancesReached(errorMsg)
 	}
 
-	instanceType, err := k.DetectInstanceType(dinosaurRequest)
-	if err != nil {
-		return err
-	}
+	instanceType := k.DetectInstanceType(dinosaurRequest)
 
 	dinosaurRequest.InstanceType = instanceType.String()
 
@@ -329,12 +317,23 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 		return nil
 	}
 
+	// Obtain organisation name from AMS to store in central request.
+	org, err := k.amsClient.GetOrganisationFromExternalID(dinosaurRequest.OrganisationID)
+	if err != nil {
+		return errors.OrganisationNotFound(dinosaurRequest.OrganisationID, err)
+	}
+	orgName := org.Name()
+	if orgName == "" {
+		return errors.OrganisationNameInvalid(dinosaurRequest.OrganisationID, orgName)
+	}
+
 	// Update the fields of the CentralRequest record in the database.
 	updatedCentralRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
 		},
-		Status: dinosaurConstants.CentralRequestStatusProvisioning.String(),
+		OrganisationName: orgName,
+		Status:           dinosaurConstants.CentralRequestStatusProvisioning.String(),
 	}
 	if err := k.Update(updatedCentralRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update central request")

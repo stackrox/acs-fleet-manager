@@ -30,10 +30,23 @@ func (c *ACSClaims) GetUsername() (string, error) {
 
 // GetAccountID ...
 func (c *ACSClaims) GetAccountID() (string, error) {
-	if accountID, ok := (*c)[tenantUserIDClaim].(string); ok {
+	if accountID, ok := (*c)[tenantAccountIDClaim].(string); ok {
 		return accountID, nil
 	}
-	return "", fmt.Errorf("can't find %q attribute in claims", tenantUserIDClaim)
+	return "", fmt.Errorf("can't find %q attribute in claims", tenantAccountIDClaim)
+}
+
+// GetUserID returns the user id of the Red Hat account associated to the token.
+func (c *ACSClaims) GetUserID() (string, error) {
+	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil },
+		(*c)[tenantUserIDClaim], (*c)[alternateTenantUserIDClaim]); idx != -1 {
+		if userID, ok := val.(string); ok {
+			return userID, nil
+		}
+	}
+
+	return "", fmt.Errorf("can't find neither %q or %q attribute in claims",
+		tenantUserIDClaim, alternateTenantUserIDClaim)
 }
 
 // GetOrgID ...
@@ -49,8 +62,8 @@ func (c *ACSClaims) GetOrgID() (string, error) {
 		tenantIDClaim, alternateTenantIDClaim)
 }
 
-// GetUserID ...
-func (c *ACSClaims) GetUserID() (string, error) {
+// GetSubject returns the subject claim of the token. It identifies the principal authenticated by the token.
+func (c *ACSClaims) GetSubject() (string, error) {
 	if sub, ok := (*c)[tenantSubClaim].(string); ok {
 		return sub, nil
 	}

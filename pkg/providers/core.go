@@ -3,12 +3,14 @@ package providers
 
 import (
 	"github.com/goava/di"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/aws"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/telemetry"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/migrate"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/serve"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
@@ -43,6 +45,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(auth.NewContextConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(auth.NewFleetShardAuthZConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(auth.NewAdminAuthZConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(telemetry.NewTelemetryConfig, di.As(new(environments.ConfigModule))),
 
 		// Add common CLI sub commands
 		di.Provide(serve.NewServeCommand),
@@ -66,6 +69,10 @@ func ServiceProviders() di.Option {
 		di.Provide(observatorium.NewObservatoriumClient),
 
 		di.Provide(func(config *ocm.OCMConfig) ocm.ClusterManagementClient {
+			if config.EnableMock {
+				return ocm.NewMockClient()
+			}
+
 			conn, _, err := ocm.NewOCMConnection(config, config.BaseURL)
 			if err != nil {
 				logger.Logger.Error(err)
@@ -74,6 +81,10 @@ func ServiceProviders() di.Option {
 		}),
 
 		di.Provide(func(config *ocm.OCMConfig) ocm.AMSClient {
+			if config.EnableMock {
+				return ocm.NewMockClient()
+			}
+
 			conn, _, err := ocm.NewOCMConnection(config, config.AmsURL)
 			if err != nil {
 				logger.Logger.Error(err)
@@ -88,11 +99,14 @@ func ServiceProviders() di.Option {
 		di.Provide(func(c *iam.IAMConfig) sso.IAMService {
 			return sso.NewIAMService(c)
 		}),
+		di.Provide(services.NewTelemetryAuth),
 
 		// Types registered as a BootService are started when the env is started
 		di.Provide(server.NewAPIServer, di.As(new(environments.BootService))),
 		di.Provide(server.NewMetricsServer, di.As(new(environments.BootService))),
 		di.Provide(server.NewHealthCheckServer, di.As(new(environments.BootService))),
 		di.Provide(workers.NewLeaderElectionManager, di.As(new(environments.BootService))),
+		di.Provide(services.NewTelemetry, di.As(new(environments.BootService))),
+		di.Provide(services.NewDataMigration, di.As(new(environments.BootService))),
 	)
 }

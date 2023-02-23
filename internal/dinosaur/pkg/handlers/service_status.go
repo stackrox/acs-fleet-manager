@@ -33,7 +33,7 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 			context := r.Context()
 			claims, err := auth.GetClaimsFromContext(context)
 			if err != nil {
-				return presenters.PresentServiceStatus(true, false), nil
+				return presenters.PresentServiceStatus(), nil
 			}
 
 			username, _ := claims.GetUsername()
@@ -41,13 +41,12 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if accessControlListConfig.EnableDenyList {
 				userIsDenied := accessControlListConfig.DenyList.IsUserDenied(username)
 				if userIsDenied {
-					glog.V(5).Infof("User %s is denied to access the service. Setting central maximum capacity to 'true'", username)
-					return presenters.PresentServiceStatus(true, false), nil
+					glog.V(5).Infof("User %s is denied to access the service", username)
+					return presenters.PresentServiceStatus(), nil
 				}
 			}
 
-			hasAvailableDinosaurCapacity, capacityErr := h.dinosaurService.HasAvailableCapacity()
-			return presenters.PresentServiceStatus(false, !hasAvailableDinosaurCapacity), capacityErr
+			return presenters.PresentServiceStatus(), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)

@@ -24,30 +24,34 @@ import (
 //
 //  4. Create one function in a separate file that returns your Migration. Add that single function call
 //     to the end of this list.
-var migrations = []*gormigrate.Migration{
-	addCentralRequest(),
-	addClusters(),
-	addLeaderLease(),
-	sampleMigration(),
-	addOwnerUserIDToCentralRequest(),
-	addResourcesToCentralRequest(),
-	addAuthConfigToCentralRequest(),
-	addCentralAuthLease(),
-	addSkipSchedulingToClusters(),
-	addClientOriginToCentralRequest(),
-	changeCentralClientOrigin(),
-	addCloudAccountIDToCentralRequest(),
+func getMigrations() []*gormigrate.Migration {
+	return []*gormigrate.Migration{
+		addCentralRequest(),
+		addClusters(),
+		addLeaderLease(),
+		sampleMigration(),
+		addOwnerUserIDToCentralRequest(),
+		addResourcesToCentralRequest(),
+		addAuthConfigToCentralRequest(),
+		addCentralAuthLease(),
+		addSkipSchedulingToClusters(),
+		addClientOriginToCentralRequest(),
+		changeCentralClientOrigin(),
+		addCloudAccountIDToCentralRequest(),
+		addOrganisationNameToCentralRequest(),
+		addInternalToCentralRequest(),
+	}
 }
 
 // New ...
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
+	migrations := getMigrations()
 	m, f, err := db.NewMigration(dbConfig, &gormigrate.Options{
 		TableName:      "migrations",
 		IDColumnName:   "id",
 		IDColumnSize:   255,
 		UseTransaction: false,
 	}, migrations)
-
 	if err != nil {
 		return m, f, fmt.Errorf("assembling database migration: %w", err)
 	}

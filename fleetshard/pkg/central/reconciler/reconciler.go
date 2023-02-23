@@ -5,19 +5,22 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strconv"
 	"sync/atomic"
 
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/pkg/random"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	corev1 "k8s.io/api/core/v1"
@@ -33,11 +36,21 @@ const (
 	FreeStatus int32 = iota
 	BlockedStatus
 
-	revisionAnnotationKey = "rhacs.redhat.com/revision"
-
 	helmReleaseName = "tenant-resources"
 
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
+	envAnnotationKey          = "rhacs.redhat.com/environment"
+	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
+	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
+	orgIDLabelKey             = "rhacs.redhat.com/org-id"
+	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
+
+	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
+	dbUserTypeMaster     = "master"
+	dbUserTypeCentral    = "central"
+	dbCentralUserName    = "rhacs_central"
+
+	centralDbSecretName = "central-db-password" // pragma: allowlist secret
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -45,6 +58,10 @@ type CentralReconcilerOptions struct {
 	UseRoutes         bool
 	WantsAuthProvider bool
 	EgressProxyImage  string
+	ManagedDBEnabled  bool
+	Telemetry         config.Telemetry
+	ClusterName       string
+	Environment       string
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -60,6 +77,13 @@ type CentralReconciler struct {
 	Resources         bool
 	routeService      *k8s.RouteService
 	egressProxyImage  string
+	telemetry         config.Telemetry
+	clusterName       string
+	environment       string
+
+	managedDBEnabled            bool
+	managedDBProvisioningClient cloudprovider.DBClient
+	managedDBInitFunc           postgres.CentralDBInitFunc
 
 	resourcesChart *chart.Chart
 }
@@ -87,6 +111,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	monitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
+	// Telemetry will only be enabled if the storage key is set _and_ the central is not an "internal" central created
+	// from internal clients such as probe service or others.
+	telemetryEnabled := r.telemetry.StorageKey != "" && !remoteCentral.Metadata.Internal
 
 	centralResources, err := converters.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Central.Resources)
 	if err != nil {
@@ -107,16 +134,19 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        remoteCentralName,
-			Namespace:   remoteCentralNamespace,
-			Labels:      map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
+			Name:      remoteCentralName,
+			Namespace: remoteCentralNamespace,
+			Labels: map[string]string{
+				k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
+				tenantIDLabelKey:      remoteCentral.Id,
+			},
 			Annotations: map[string]string{managedServicesAnnotation: "true"},
 		},
 		Spec: v1alpha1.CentralSpec{
 			Central: &v1alpha1.CentralComponentSpec{
 				Exposure: &v1alpha1.Exposure{
 					Route: &v1alpha1.ExposureRoute{
-						Enabled: pointer.BoolPtr(r.useRoutes),
+						Enabled: pointer.Bool(r.useRoutes),
 					},
 				},
 				Monitoring: &v1alpha1.Monitoring{
@@ -124,6 +154,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				},
 				DeploymentSpec: v1alpha1.DeploymentSpec{
 					Resources: &centralResources,
+				},
+				Telemetry: &v1alpha1.Telemetry{
+					Enabled: pointer.Bool(telemetryEnabled),
+					Storage: &v1alpha1.TelemetryStorage{
+						Endpoint: &r.telemetry.StorageEndpoint,
+						Key:      &r.telemetry.StorageKey,
+					},
 				},
 			},
 			Scanner: &v1alpha1.ScannerComponentSpec{
@@ -142,6 +179,15 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			},
 			Customize: &v1alpha1.CustomizeSpec{
 				EnvVars: envVars,
+				Annotations: map[string]string{
+					envAnnotationKey:         r.environment,
+					clusterNameAnnotationKey: r.clusterName,
+					orgNameAnnotationKey:     remoteCentral.Spec.Auth.OwnerOrgName,
+				},
+				Labels: map[string]string{
+					orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
+					tenantIDLabelKey: remoteCentral.Id,
+				},
 			},
 		},
 	}
@@ -161,7 +207,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	if r.hasAuthProvider {
-		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.BoolPtr(true)
+		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
 	}
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
@@ -175,12 +221,45 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, ErrDeletionInProgress
 	}
 
-	if err := r.ensureNamespaceExists(remoteCentralNamespace); err != nil {
+	namespaceLabels := map[string]string{
+		orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
+		tenantIDLabelKey: remoteCentral.Id,
+	}
+	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
 	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
 		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
+	}
+
+	if r.managedDBEnabled {
+		centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
+		if err != nil {
+			return nil, fmt.Errorf("getting Central DB connection string: %w", err)
+		}
+
+		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
+			IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
+			ConnectionStringOverride: pointer.String(centralDBConnectionString),
+			PasswordSecret: &v1alpha1.LocalSecretReference{
+				Name: centralDbSecretName,
+			},
+		}
+
+		dbCA, err := postgres.GetDatabaseCACertificates()
+		if err != nil {
+			glog.Warningf("Could not read DB server CA bundle: %v", err)
+		} else {
+			central.Spec.TLS = &v1alpha1.TLSConfig{
+				AdditionalCAs: []v1alpha1.AdditionalCA{
+					{
+						Name:    postgres.CentralDatabaseCACertificateBaseName,
+						Content: string(dbCA),
+					},
+				},
+			}
+		}
 	}
 
 	centralExists := true
@@ -197,7 +276,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if central.GetAnnotations() == nil {
 			central.Annotations = map[string]string{}
 		}
-		central.GetAnnotations()[revisionAnnotationKey] = "1"
+		if err := util.IncrementCentralRevision(central); err != nil {
+			return nil, errors.Wrap(err, "incrementing central's revision")
+		}
 
 		glog.Infof("Creating central %s/%s", central.GetNamespace(), central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
@@ -208,9 +289,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		glog.Infof("Update central %s/%s", central.GetNamespace(), central.GetName())
 		existingCentral.Spec = central.Spec
 
-		err = r.incrementCentralRevision(&existingCentral)
-		if err != nil {
-			return nil, err
+		if err := util.IncrementCentralRevision(&existingCentral); err != nil {
+			return nil, errors.Wrap(err, "incrementing central's revision")
 		}
 		existingCentral.Spec = *central.Spec.DeepCopy()
 
@@ -325,6 +405,19 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && centralDeleted
 
+	if r.managedDBEnabled {
+		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id)
+		if err != nil {
+			return false, fmt.Errorf("deprovisioning DB: %v", err)
+		}
+
+		secretDeleted, err := r.ensureCentralDBSecretDeleted(ctx, central.GetNamespace())
+		if err != nil {
+			return false, err
+		}
+		globalDeleted = globalDeleted && secretDeleted
+	}
+
 	chartResourcesDeleted, err := r.ensureChartResourcesDeleted(ctx, remoteCentral)
 	if err != nil {
 		return false, err
@@ -359,16 +452,6 @@ func (r *CentralReconciler) setLastCentralHash(central private.ManagedCentral) e
 	return nil
 }
 
-func (r *CentralReconciler) incrementCentralRevision(central *v1alpha1.Central) error {
-	revision, err := strconv.Atoi(central.Annotations[revisionAnnotationKey])
-	if err != nil {
-		return errors.Wrapf(err, "failed to increment central revision %s", central.GetName())
-	}
-	revision++
-	central.Annotations[revisionAnnotationKey] = fmt.Sprintf("%d", revision)
-	return nil
-}
-
 func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error) {
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -383,9 +466,8 @@ func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error)
 	return namespace, nil
 }
 
-func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace) error {
-	namespace.Labels = make(map[string]string)
-	namespace.Labels["rhacs.redhat.com/tenant"] = ""
+func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace, labels map[string]string) error {
+	namespace.Labels = labels
 	err := r.client.Create(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("creating namespace %q: %w", namespace.ObjectMeta.Name, err)
@@ -393,11 +475,11 @@ func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace
 	return nil
 }
 
-func (r *CentralReconciler) ensureNamespaceExists(name string) error {
+func (r *CentralReconciler) ensureNamespaceExists(name string, labels map[string]string) error {
 	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			return r.createTenantNamespace(context.Background(), namespace)
+			return r.createTenantNamespace(context.Background(), namespace, labels)
 		}
 		return fmt.Errorf("getting namespace %s: %w", name, err)
 	}
@@ -420,6 +502,212 @@ func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name str
 	}
 	glog.Infof("Central namespace %s is marked for deletion", name)
 	return false, nil
+}
+
+func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral private.ManagedCentral) (string, error) {
+	centralDBUserExists, err := r.centralDBUserExists(ctx, remoteCentral.Metadata.Namespace)
+	if err != nil {
+		return "", err
+	}
+
+	// If a Central DB user already exists, it means the managed DB was already
+	// provisioned and successfully created (access to a running Postgres instance is a
+	// precondition to create this user)
+	if !centralDBUserExists {
+		if err := r.ensureManagedCentralDBInitialized(ctx, remoteCentral); err != nil {
+			return "", fmt.Errorf("initializing managed DB: %w", err)
+		}
+	}
+
+	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(remoteCentral.Id)
+	if err != nil {
+		return "", fmt.Errorf("getting RDS DB connection data: %w", err)
+	}
+	return dbConnection.GetConnectionForUser(dbCentralUserName).WithSSLRootCert(postgres.DatabaseCACertificatePathCentral).AsConnectionString(), nil
+}
+
+func generateDBPassword() (string, error) {
+	password, err := random.GenerateString(25, random.AlphanumericCharacters)
+	if err != nil {
+		return "", fmt.Errorf("generating DB password: %w", err)
+	}
+
+	return password, nil
+}
+
+func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
+
+	centralDBSecretExists, err := r.centralDBSecretExists(ctx, remoteCentralNamespace)
+	if err != nil {
+		return err
+	}
+
+	if !centralDBSecretExists {
+		dbMasterPassword, err := generateDBPassword()
+		if err != nil {
+			return fmt.Errorf("generating Central DB master password: %w", err)
+		}
+		if err := r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace, dbUserTypeMaster, dbMasterPassword); err != nil {
+			return fmt.Errorf("ensuring that DB secret exists: %w", err)
+		}
+	}
+
+	dbMasterPassword, err := r.getDBPasswordFromSecret(ctx, remoteCentralNamespace)
+	if err != nil {
+		return fmt.Errorf("getting DB password from secret: %w", err)
+	}
+
+	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword)
+	if err != nil {
+		return fmt.Errorf("provisioning RDS DB: %w", err)
+	}
+
+	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(remoteCentral.Id)
+	if err != nil {
+		return fmt.Errorf("getting RDS DB connection data: %w", err)
+	}
+
+	dbCentralPassword, err := generateDBPassword()
+	if err != nil {
+		return fmt.Errorf("generating Central DB password: %w", err)
+	}
+	err = r.managedDBInitFunc(ctx, dbConnection.WithPassword(dbMasterPassword).WithSSLRootCert(postgres.DatabaseCACertificatePathFleetshard),
+		dbCentralUserName, dbCentralPassword)
+	if err != nil {
+		return fmt.Errorf("initializing managed DB: %w", err)
+	}
+
+	// Replace the password stored in the secret. This replaces the master password (the password of the
+	// rds_superuser account) with the password of the Central user. Note that we don't store
+	// the master password anywhere from this point on.
+	err = r.ensureCentralDBSecretExists(ctx, remoteCentralNamespace, dbUserTypeCentral, dbCentralPassword)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, remoteCentralNamespace, userType, password string) error {
+	secret := &corev1.Secret{}
+	setPasswordFunc := func(secret *corev1.Secret, userType, password string) {
+		secret.Data = map[string][]byte{"password": []byte(password)}
+		if secret.Annotations == nil {
+			secret.Annotations = make(map[string]string)
+		}
+		secret.Annotations[dbUserTypeAnnotation] = userType
+	}
+
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	if err == nil {
+		setPasswordFunc(secret, userType, password)
+		err = r.client.Update(ctx, secret)
+		if err != nil {
+			return fmt.Errorf("updating Central DB secret: %w", err)
+		}
+
+		return nil
+	}
+
+	if !apiErrors.IsNotFound(err) {
+		return fmt.Errorf("getting Central DB secret: %w", err)
+	}
+
+	// create secret if it does not exist
+	secret = &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      centralDbSecretName,
+			Namespace: remoteCentralNamespace,
+			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
+			Annotations: map[string]string{
+				managedServicesAnnotation: "true",
+			},
+		},
+	}
+
+	setPasswordFunc(secret, userType, password)
+	err = r.client.Create(ctx, secret)
+	if err != nil {
+		return fmt.Errorf("creating Central DB secret: %w", err)
+	}
+	return nil
+}
+
+func (r *CentralReconciler) centralDBSecretExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
+	secret := &corev1.Secret{}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("getting central DB secret: %w", err)
+	}
+
+	return true, nil
+}
+
+func (r *CentralReconciler) centralDBUserExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
+	secret := &corev1.Secret{}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("getting central DB secret: %w", err)
+	}
+
+	if secret.Annotations == nil {
+		// if the annotation section is missing, assume it's the master password
+		return false, nil
+	}
+
+	dbUserType, exists := secret.Annotations[dbUserTypeAnnotation]
+	if !exists {
+		// legacy Centrals use the master password and do not have this annotation
+		return false, nil
+	}
+
+	return dbUserType == dbUserTypeCentral, nil
+}
+
+func (r *CentralReconciler) ensureCentralDBSecretDeleted(ctx context.Context, remoteCentralNamespace string) (bool, error) {
+	secret := &corev1.Secret{}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return true, nil
+		}
+
+		return false, fmt.Errorf("deleting Central DB secret: %w", err)
+	}
+
+	if err := r.client.Delete(ctx, secret); err != nil {
+		return false, fmt.Errorf("deleting central DB secret %s/%s", remoteCentralNamespace, centralDbSecretName)
+	}
+
+	glog.Infof("Central DB secret %s/%s is marked for deletion", remoteCentralNamespace, centralDbSecretName)
+	return false, nil
+}
+
+func (r *CentralReconciler) getDBPasswordFromSecret(ctx context.Context, centralNamespace string) (string, error) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: centralDbSecretName,
+		},
+	}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: centralNamespace, Name: centralDbSecretName}, secret)
+	if err != nil {
+		return "", fmt.Errorf("getting Central DB password from secret: %w", err)
+	}
+
+	if dbPassword, ok := secret.Data["password"]; ok {
+		return string(dbPassword), nil
+	}
+
+	return "", fmt.Errorf("central DB secret does not contain password field: %w", err)
 }
 
 func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
@@ -610,12 +898,13 @@ func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (c
 	return vals, nil
 }
 
-var (
-	resourcesChart = charts.MustGetChart("tenant-resources")
-)
+var resourcesChart = charts.MustGetChart("tenant-resources")
 
 // NewCentralReconciler ...
-func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral, opts CentralReconcilerOptions) *CentralReconciler {
+func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
+	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
+	opts CentralReconcilerOptions,
+) *CentralReconciler {
 	return &CentralReconciler{
 		client:            k8sClient,
 		central:           central,
@@ -624,6 +913,13 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		wantsAuthProvider: opts.WantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
 		egressProxyImage:  opts.EgressProxyImage,
+		telemetry:         opts.Telemetry,
+		clusterName:       opts.ClusterName,
+		environment:       opts.Environment,
+
+		managedDBEnabled:            opts.ManagedDBEnabled,
+		managedDBProvisioningClient: managedDBProvisioningClient,
+		managedDBInitFunc:           managedDBInitFunc,
 
 		resourcesChart: resourcesChart,
 	}

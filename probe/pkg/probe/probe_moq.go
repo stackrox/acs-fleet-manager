@@ -14,22 +14,22 @@ var _ Probe = &ProbeMock{}
 
 // ProbeMock is a mock implementation of Probe.
 //
-// 	func TestSomethingThatUsesProbe(t *testing.T) {
+//	func TestSomethingThatUsesProbe(t *testing.T) {
 //
-// 		// make and configure a mocked Probe
-// 		mockedProbe := &ProbeMock{
-// 			CleanUpFunc: func(ctx context.Context) error {
-// 				panic("mock out the CleanUp method")
-// 			},
-// 			ExecuteFunc: func(ctx context.Context) error {
-// 				panic("mock out the Execute method")
-// 			},
-// 		}
+//		// make and configure a mocked Probe
+//		mockedProbe := &ProbeMock{
+//			CleanUpFunc: func(ctx context.Context) error {
+//				panic("mock out the CleanUp method")
+//			},
+//			ExecuteFunc: func(ctx context.Context) error {
+//				panic("mock out the Execute method")
+//			},
+//		}
 //
-// 		// use mockedProbe in code that requires Probe
-// 		// and then make assertions.
+//		// use mockedProbe in code that requires Probe
+//		// and then make assertions.
 //
-// 	}
+//	}
 type ProbeMock struct {
 	// CleanUpFunc mocks the CleanUp method.
 	CleanUpFunc func(ctx context.Context) error
@@ -72,7 +72,8 @@ func (mock *ProbeMock) CleanUp(ctx context.Context) error {
 
 // CleanUpCalls gets all the calls that were made to CleanUp.
 // Check the length with:
-//     len(mockedProbe.CleanUpCalls())
+//
+//	len(mockedProbe.CleanUpCalls())
 func (mock *ProbeMock) CleanUpCalls() []struct {
 	Ctx context.Context
 } {
@@ -103,7 +104,8 @@ func (mock *ProbeMock) Execute(ctx context.Context) error {
 
 // ExecuteCalls gets all the calls that were made to Execute.
 // Check the length with:
-//     len(mockedProbe.ExecuteCalls())
+//
+//	len(mockedProbe.ExecuteCalls())
 func (mock *ProbeMock) ExecuteCalls() []struct {
 	Ctx context.Context
 } {

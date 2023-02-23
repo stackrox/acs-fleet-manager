@@ -1,23 +1,9 @@
-FROM registry.access.redhat.com/ubi8/s2i-base:1-388 AS build
+FROM registry.ci.openshift.org/openshift/release:golang-1.19 AS build
 
-ARG GO_VERSION=1.18.8
-RUN curl -L --retry 10 --silent --show-error --fail -o /tmp/go.linux-amd64.tar.gz \
-    "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" && \
-    tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz && \
-    rm -f /tmp/go.linux-amd64.tar.gz
-ENV PATH="/usr/local/go/bin:${PATH}"
+ENV GOFLAGS="-mod=mod"
 
-ARG GOPATH=/go
-ENV GOPATH=${GOPATH}
-
-ARG GOCACHE=/go/.cache
-ENV GOCACHE=${GOCACHE}
-
-ARG GOROOT=/usr/local/go
-ENV GOROOT=${GOROOT}
-
-ARG GOFLAGS=-mod=mod
-ENV GOFLAGS=${GOFLAGS}
+RUN mkdir /rds_ca
+ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /rds_ca/aws-rds-ca-global-bundle.pem
 
 RUN mkdir /src
 WORKDIR /src
@@ -32,15 +18,17 @@ RUN GOARGS="-gcflags 'all=-N -l'" make binary
 FROM build as build-standard
 RUN make binary
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.6 as debug
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.7 as debug
 COPY --from=build-debug /go/bin/dlv /src/fleet-manager /src/fleetshard-sync /usr/local/bin/
 COPY --from=build-debug /src /src
+COPY --from=build /rds_ca /usr/local/share/ca-certificates
 EXPOSE 8000
 WORKDIR /
 ENTRYPOINT [ "/usr/local/bin/dlv" , "--listen=:40000", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/usr/local/bin/fleet-manager", "serve"]
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.6 as standard
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.7 as standard
 COPY --from=build-standard /src/fleet-manager /src/fleetshard-sync /usr/local/bin/
+COPY --from=build /rds_ca /usr/local/share/ca-certificates
 EXPOSE 8000
 WORKDIR /
 ENTRYPOINT ["/usr/local/bin/fleet-manager", "serve"]

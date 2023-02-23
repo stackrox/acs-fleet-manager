@@ -228,6 +228,8 @@ components:
                   type: string
                 namespace:
                   type: string
+                internal:
+                  type: boolean
                 annotations:
                   type: object
                   required:
@@ -259,6 +261,8 @@ components:
                     ownerUserId:
                       type: string
                     ownerOrgId:
+                      type: string
+                    ownerOrgName:
                       type: string
                     issuer:
                       type: string

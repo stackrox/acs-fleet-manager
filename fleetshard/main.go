@@ -34,6 +34,11 @@ func main() {
 	glog.Infof("FleetManagerEndpoint: %s", config.FleetManagerEndpoint)
 	glog.Infof("ClusterID: %s", config.ClusterID)
 	glog.Infof("RuntimePollPeriod: %s", config.RuntimePollPeriod.String())
+	glog.Infof("AuthType: %s", config.AuthType)
+
+	glog.Infof("ManagedDB.Enabled: %t", config.ManagedDB.Enabled)
+	glog.Infof("ManagedDB.SecurityGroup: %s", config.ManagedDB.SecurityGroup)
+	glog.Infof("ManagedDB.SubnetGroup: %s", config.ManagedDB.SubnetGroup)
 
 	runtime, err := runtime.NewRuntime(config, k8s.CreateClientOrDie())
 	if err != nil {

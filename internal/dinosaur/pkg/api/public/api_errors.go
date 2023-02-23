@@ -28,8 +28,9 @@ type ErrorsApiService service
 
 /*
 GetErrorById Returns the error by id
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+
 @return Error
 */
 func (a *ErrorsApiService) GetErrorById(ctx _context.Context, id string) (Error, *_nethttp.Response, error) {
@@ -105,7 +106,8 @@ func (a *ErrorsApiService) GetErrorById(ctx _context.Context, id string) (Error,
 
 /*
 GetErrors Returns the list of possible API errors
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+
 @return ErrorList
 */
 func (a *ErrorsApiService) GetErrors(ctx _context.Context) (ErrorList, *_nethttp.Response, error) {

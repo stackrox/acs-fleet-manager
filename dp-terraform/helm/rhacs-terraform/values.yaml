@@ -4,12 +4,14 @@
 
 fleetshardSync:
   image: "quay.io/app-sre/acs-fleet-manager:59142fe"
-  # Can be either OCM, RHSSO, STATIC_TOKEN. When choosing RHSSO, make sure the clientId/secret is set. By default, uses OCM.
-  authType: "OCM"
+  # Can be either OCM, RHSSO, STATIC_TOKEN. When choosing RHSSO, make sure the clientId/secret is set. By default, uses RHSSO.
+  authType: "RHSSO"
   # OCM refresh token, only required in combination with authType=OCM.
   ocmToken: ""
   fleetManagerEndpoint: ""
   clusterId: ""
+  clusterName: ""
+  environment: ""
   # Flag controlling whether tenant's sso.redhat.com auth provider will be initialised by fleetshard-sync.
   # Currently this functionality is supported only when fleetshard-sync is deployed in the same k8s cluster as tenant.
   createAuthProvider: true
@@ -25,6 +27,19 @@ fleetshardSync:
     realm: "redhat-external"
   egressProxy:
     image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0"
+  managedDB:
+    enabled: true
+    subnetGroup: ""
+    securityGroup: ""
+    performanceInsights: true
+  aws:
+    region: "us-east-1"
+    roleARN: ""
+  telemetry:
+    storage:
+      endpoint: ""
+      # API key to push telemetry data to a remote backend. Leaving it empty disables telemetry.
+      key: ""
 
 acsOperator:
   enabled: false
@@ -33,6 +48,16 @@ acsOperator:
   version: v3.70.0
   # This setting specifies whether to use a upstream operator to test unreleased versions of ACS.
   upstream: false
+
+# See available parameters in charts/cloudwatch/values.yaml
+# - enabled flag is used to completely enable/disable cloudwatch sub-chart
+cloudwatch:
+  enabled: true
+  aws:
+    accessKeyId: ""
+    secretAccessKey: ""
+  clusterName: ""
+  environment: ""
 
 # See available parameters in charts/observability/values.yaml
 # - enabled flag is used to completely enable/disable observability sub-chart
@@ -54,6 +79,7 @@ observability:
 # - enabled flag is used to completely enable/disable logging sub-chart
 logging:
   enabled: true
+  groupPrefix: ""
   aws:
     accessKeyId: ""
     secretAccessKey: ""

@@ -45,22 +45,12 @@ cmd/fleet-manager/fleet-manager
 .idea/
 
 # Ignore secret files
-/secrets/db.ca_cert
-/secrets/aws.*
-/secrets/ocm-service.*
-/secrets/central-tls.*
-/secrets/dinosaur-tls.*
-/secrets/dx.*
-/secrets/observatorium.*
-/secrets/observability-config-access.token
-/secrets/image-pull.dockerconfigjson
-/secrets/osd-idp-keycloak-service.*
-/secrets/rhsso-logs.*
-/secrets/rhsso-metrics.*
-/secrets/sentry.*
-/secrets/redhatsso-service.*
-/secrets/keycloak-service.crt
-/secrets/central.idp*
+/secrets/*
+!/secrets/db.host*
+!/secrets/db.name
+!/secrets/db.password
+!/secrets/db.port
+!/secrets/db.user
 
 # cluster details (used for testing)
 /internal/dinosaur/test/integration/test_cluster.json

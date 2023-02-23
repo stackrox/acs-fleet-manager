@@ -17,6 +17,10 @@ import (
 type Auth interface {
 	// AddAuth will add authentication information to the request, e.g. in the form of the Authorization header.
 	AddAuth(req *http.Request) error
+
+	// RetrieveIDToken will return the ID token, if available.
+	// If the ID token cannot be retrieved, an error will be returned.
+	RetrieveIDToken() (string, error)
 }
 
 type authFactory interface {

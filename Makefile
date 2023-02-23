@@ -72,6 +72,7 @@ DOCKER ?= docker
 DOCKER_CONFIG ?= "${PWD}/.docker"
 
 # Default Variables
+ACSMS_NAMESPACE ?= acsms
 ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
@@ -80,7 +81,7 @@ SSO_REALM ?="rhoas" # update your realm here
 
 GO := go
 GOFMT := gofmt
-# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set).
 ifeq (,$(shell $(GO) env GOBIN))
 GOBIN=$(shell $(GO) env GOPATH)/bin
 else
@@ -116,8 +117,18 @@ GINKGO_BIN := $(LOCAL_BIN_PATH)/ginkgo
 $(GINKGO_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/onsi/ginkgo/v2/ginkgo
 
+TOOLS_VENV_DIR := $(LOCAL_BIN_PATH)/tools_venv
+$(TOOLS_VENV_DIR): $(TOOLS_DIR)/requirements.txt
+	@set -e; \
+	trap "rm -rf $(TOOLS_VENV_DIR)" ERR; \
+	python3 -m venv $(TOOLS_VENV_DIR); \
+	. $(TOOLS_VENV_DIR)/bin/activate; \
+	pip install --upgrade pip==22.3.1; \
+	pip install -r $(TOOLS_DIR)/requirements.txt; \
+	touch $(TOOLS_VENV_DIR) # update directory modification timestamp even if no changes were made by pip. This will allow to skip this target if the directory is up-to-date
+
 OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
-NPM ?= "$(shell which npm)"
+NPM ?= "$(shell which npm 2> /dev/null)"
 openapi-generator:
 ifeq (, $(shell which ${NPM} 2> /dev/null))
 	@echo "npm is not available please install it to be able to install openapi-generator"
@@ -135,7 +146,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/openapi-generator 2> /dev/null))
 endif
 
 SPECTRAL ?= ${LOCAL_BIN_PATH}/spectral
-NPM ?= "$(shell which npm)"
+NPM ?= "$(shell which npm 2> /dev/null)"
 specinstall:
 ifeq (, $(shell which ${NPM} 2> /dev/null))
 	@echo "npm is not available please install it to be able to install spectral"
@@ -238,7 +249,7 @@ all: openapi/generate binary
 .PHONY: setup/git/hooks
 setup/git/hooks:
 	-git config --unset-all core.hooksPath
-	@if which -s pre-commit; then \
+	@if command -v pre-commit >/dev/null 2>&1; then \
 		echo "Installing pre-commit hooks"; \
 		pre-commit install; \
 	else \
@@ -297,7 +308,7 @@ install: verify lint
 .PHONY: install
 
 clean:
-	rm -f fleet-manager fleetshard-sync probe
+	rm -f fleet-manager fleetshard-sync probe/bin/probe
 .PHONY: clean
 
 # Runs the unit tests.
@@ -311,6 +322,13 @@ test: $(GOTESTSUM_BIN)
 	OCM_ENV=testing $(GOTESTSUM_BIN) --junitfile data/results/unit-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
 		$(shell go list ./... | grep -v /test)
 .PHONY: test
+
+# Runs the AWS RDS integration tests.
+test/rds: $(GOTESTSUM_BIN)
+	RUN_RDS_TESTS=true \
+	$(GOTESTSUM_BIN) --junitfile data/results/rds-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -timeout 30m -count=1 \
+		./fleetshard/pkg/central/cloudprovider/awsclient/...
+.PHONY: test/rds
 
 # Precompile everything required for development/test.
 test/prepare:
@@ -342,7 +360,6 @@ test/cluster/cleanup:
 .PHONY: test/cluster/cleanup
 
 test/e2e: $(GINKGO_BIN)
-	GOBIN=${LOCAL_BIN_PATH} \
 	CLUSTER_ID=1234567890abcdef1234567890abcdef \
 	RUN_E2E=true \
 	ENABLE_CENTRAL_EXTERNAL_CERTIFICATE=$(ENABLE_CENTRAL_EXTERNAL_CERTIFICATE) \
@@ -356,6 +373,12 @@ test/e2e: $(GINKGO_BIN)
 		--slow-spec-threshold=5m \
 		 ./e2e/...
 .PHONY: test/e2e
+
+# Deploys the necessary applications to the selected cluster and runs e2e tests inside the container
+# Useful for debugging Openshift CI runs locally
+test/deploy/e2e-dockerized:
+	./.openshift-ci/e2e-runtime/e2e_dockerized.sh
+.PHONY: test/deploy/e2e-dockerized
 
 test/e2e/reset:
 	@./dev/env/scripts/reset
@@ -459,7 +482,7 @@ db/start:
 .PHONY: db/start
 
 db/migrate:
-	OCM_ENV=integration $(GO) run ./cmd/fleet-manager migrate
+	$(GO) run ./cmd/fleet-manager migrate
 .PHONY: db/migrate
 
 db/teardown:
@@ -575,6 +598,21 @@ image/build/test: binary
 test/run: image/build/test
 	$(DOCKER) run -u $(shell id -u) --net=host -p 9876:9876 -i "$(test_image)"
 .PHONY: test/run
+
+# Run the probe based e2e test in container
+test/e2e/probe/run: image/build/multi-target/probe
+test/e2e/probe/run: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
+test/e2e/probe/run:
+	$(DOCKER) run \
+	-e QUOTA_TYPE="OCM" \
+	-e AUTH_TYPE="OCM" \
+	-e PROBE_NAME="e2e-probe-$$$$" \
+	-e OCM_USERNAME="${OCM_USERNAME}" \
+	-e OCM_TOKEN="${OCM_TOKEN}" \
+	-e FLEET_MANAGER_ENDPOINT="${FLEET_MANAGER_ENDPOINT}" \
+	--rm $(IMAGE_REF) \
+	run
+.PHONY: test/e2e/probe/run
 
 # Touch all necessary secret files for fleet manager to start up
 secrets/touch:
@@ -751,6 +789,7 @@ deploy/service: CENTRAL_OPERATOR_OPERATOR_ADDON_ID ?= "managed-central-qe"
 deploy/service: FLEETSHARD_ADDON_ID ?= "fleetshard-operator-qe"
 deploy/service: CENTRAL_IDP_ISSUER ?= "https://sso.stage.redhat.com/auth/realms/redhat-external"
 deploy/service: CENTRAL_IDP_CLIENT_ID ?= "rhacs-ms-dev"
+deploy/service: CENTRAL_REQUEST_EXPIRATION_TIMEOUT ?= "1h"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q fleet-manager; do echo 'waiting for fleet-manager route to be created'; sleep 1; done"
@@ -790,6 +829,7 @@ deploy/service: deploy/envoy deploy/route
 		-p CENTRAL_OPERATOR_OPERATOR_ADDON_ID="${CENTRAL_OPERATOR_OPERATOR_ADDON_ID}" \
 		-p FLEETSHARD_ADDON_ID="${FLEETSHARD_ADDON_ID}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
+		-p CENTRAL_REQUEST_EXPIRATION_TIMEOUT="${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}" \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 
@@ -850,11 +890,34 @@ deploy/bootstrap:
 	./dev/env/scripts/bootstrap.sh
 .PHONY: deploy/bootstrap
 
+deploy/dev-fast: GOOS=linux
+deploy/dev-fast: deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
+
+deploy/dev-fast/fleet-manager: GOOS=linux
+deploy/dev-fast/fleet-manager: fleet-manager
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(SHORT_IMAGE_REF) -f Dockerfile.hybrid .
+	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF)
+	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleet-manager
+
+deploy/dev-fast/fleetshard-sync: GOOS=linux
+deploy/dev-fast/fleetshard-sync: fleetshard-sync
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(SHORT_IMAGE_REF) -f Dockerfile.hybrid .
+	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
+	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleetshard-sync
+
 tag:
 	@echo "$(image_tag)"
 .PHONY: tag
 
-
 full-image-tag:
 	@echo "$(IMAGE_NAME):$(image_tag)"
 .PHONY: full-image-tag
+
+release_date="$(shell date '+%Y-%m-%d')"
+release_commit="$(shell git rev-parse --short=7 HEAD)"
+tag_count="$(shell git tag -l $(release_date)* | wc -l | xargs)" # use xargs to remove unnecessary whitespace
+start_rev=1
+rev="$(shell expr $(tag_count) + $(start_rev))"
+release-version:
+	@echo "$(release_date).$(rev).$(release_commit)"
+.PHONY: release-version

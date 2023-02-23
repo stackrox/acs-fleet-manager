@@ -15,25 +15,25 @@ var _ FleetshardOperatorAddon = &FleetshardOperatorAddonMock{}
 
 // FleetshardOperatorAddonMock is a mock implementation of FleetshardOperatorAddon.
 //
-// 	func TestSomethingThatUsesFleetshardOperatorAddon(t *testing.T) {
+//	func TestSomethingThatUsesFleetshardOperatorAddon(t *testing.T) {
 //
-// 		// make and configure a mocked FleetshardOperatorAddon
-// 		mockedFleetshardOperatorAddon := &FleetshardOperatorAddonMock{
-// 			ProvisionFunc: func(cluster api.Cluster) (bool, *serviceError.ServiceError) {
-// 				panic("mock out the Provision method")
-// 			},
-// 			ReconcileParametersFunc: func(cluster api.Cluster) *serviceError.ServiceError {
-// 				panic("mock out the ReconcileParameters method")
-// 			},
-// 			RemoveServiceAccountFunc: func(cluster api.Cluster) *serviceError.ServiceError {
-// 				panic("mock out the RemoveServiceAccount method")
-// 			},
-// 		}
+//		// make and configure a mocked FleetshardOperatorAddon
+//		mockedFleetshardOperatorAddon := &FleetshardOperatorAddonMock{
+//			ProvisionFunc: func(cluster api.Cluster) (bool, *serviceError.ServiceError) {
+//				panic("mock out the Provision method")
+//			},
+//			ReconcileParametersFunc: func(cluster api.Cluster) *serviceError.ServiceError {
+//				panic("mock out the ReconcileParameters method")
+//			},
+//			RemoveServiceAccountFunc: func(cluster api.Cluster) *serviceError.ServiceError {
+//				panic("mock out the RemoveServiceAccount method")
+//			},
+//		}
 //
-// 		// use mockedFleetshardOperatorAddon in code that requires FleetshardOperatorAddon
-// 		// and then make assertions.
+//		// use mockedFleetshardOperatorAddon in code that requires FleetshardOperatorAddon
+//		// and then make assertions.
 //
-// 	}
+//	}
 type FleetshardOperatorAddonMock struct {
 	// ProvisionFunc mocks the Provision method.
 	ProvisionFunc func(cluster api.Cluster) (bool, *serviceError.ServiceError)
@@ -85,7 +85,8 @@ func (mock *FleetshardOperatorAddonMock) Provision(cluster api.Cluster) (bool, *
 
 // ProvisionCalls gets all the calls that were made to Provision.
 // Check the length with:
-//     len(mockedFleetshardOperatorAddon.ProvisionCalls())
+//
+//	len(mockedFleetshardOperatorAddon.ProvisionCalls())
 func (mock *FleetshardOperatorAddonMock) ProvisionCalls() []struct {
 	Cluster api.Cluster
 } {
@@ -116,7 +117,8 @@ func (mock *FleetshardOperatorAddonMock) ReconcileParameters(cluster api.Cluster
 
 // ReconcileParametersCalls gets all the calls that were made to ReconcileParameters.
 // Check the length with:
-//     len(mockedFleetshardOperatorAddon.ReconcileParametersCalls())
+//
+//	len(mockedFleetshardOperatorAddon.ReconcileParametersCalls())
 func (mock *FleetshardOperatorAddonMock) ReconcileParametersCalls() []struct {
 	Cluster api.Cluster
 } {
@@ -147,7 +149,8 @@ func (mock *FleetshardOperatorAddonMock) RemoveServiceAccount(cluster api.Cluste
 
 // RemoveServiceAccountCalls gets all the calls that were made to RemoveServiceAccount.
 // Check the length with:
-//     len(mockedFleetshardOperatorAddon.RemoveServiceAccountCalls())
+//
+//	len(mockedFleetshardOperatorAddon.RemoveServiceAccountCalls())
 func (mock *FleetshardOperatorAddonMock) RemoveServiceAccountCalls() []struct {
 	Cluster api.Cluster
 } {
