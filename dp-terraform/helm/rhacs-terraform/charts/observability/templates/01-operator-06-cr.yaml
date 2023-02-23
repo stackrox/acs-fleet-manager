@@ -1,0 +1,34 @@
+apiVersion: observability.redhat.com/v1
+kind: Observability
+metadata:
+  name: observability-stack
+  namespace: {{ include "observability.namespace" . }}
+spec:
+  # The cluster ID is added as a label to all metrics when interacting with external services.
+  clusterId: {{ .Values.clusterName | quote }}
+  configurationSelector:
+    matchLabels:
+      configures: observability-operator
+  resyncPeriod: {{ .Values.resyncPeriod | quote }}
+  retention: {{ .Values.retention | quote }}
+  selfContained:
+    disableBlackboxExporter: true
+    # Disable logging features of the operator, because we set up the logging operator
+    # ourselves via the logging sub-chart.
+    disableLogging: true
+    podMonitorLabelSelector:
+      matchLabels:
+        app: rhacs
+    serviceMonitorLabelSelector:
+      matchLabels:
+        app: rhacs
+  storage:
+    prometheus:
+      volumeClaimTemplate:
+        metadata:
+          name: managed-services
+        spec:
+          resources:
+            requests:
+              storage: 250Gi
+        status: {}

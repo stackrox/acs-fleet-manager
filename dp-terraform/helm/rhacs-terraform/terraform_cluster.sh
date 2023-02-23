@@ -118,6 +118,7 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --set logging.groupPrefix="${CLUSTER_NAME}" \
   --set logging.aws.accessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \
   --set logging.aws.secretAccessKey="${LOGGING_AWS_SECRET_ACCESS_KEY}" \
+  --set observability.clusterName="${CLUSTER_NAME}" \
   --set observability.github.accessToken="${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" \
   --set observability.github.repository=https://api.github.com/repos/stackrox/rhacs-observability-resources/contents \
   --set observability.github.tag="${OBSERVABILITY_GITHUB_TAG}" \
