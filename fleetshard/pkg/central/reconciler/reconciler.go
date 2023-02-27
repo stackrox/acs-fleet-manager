@@ -104,7 +104,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "checking if central changed")
 	}
 
-	glog.Infof("Start reconcile central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
+	glog.Infof(r.getLogMessage("start reconcile central"))
 
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
@@ -203,7 +203,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		// If sso.redhat.com auth provider exists, there is no need for admin/password login.
 		// We also store whether auth provider exists within reconciler instance to avoid polluting network.
 		if exists {
-			glog.Infof("Auth provider for %s/%s already exists", remoteCentralNamespace, remoteCentralName)
+			glog.Infof("Auth provider for %s/%s already exists. Id: %s", remoteCentralNamespace, remoteCentralName, remoteCentral.Id)
 			r.hasAuthProvider = true
 		}
 	}
@@ -228,7 +228,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		tenantIDLabelKey: remoteCentral.Id,
 	}
 	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels); err != nil {
-		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
+		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists. ID: %s", remoteCentralNamespace, remoteCentral.Id)
 	}
 
 	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
@@ -269,7 +269,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}, &existingCentral)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return nil, errors.Wrapf(err, "unable to check the existence of central %s/%s", central.GetNamespace(), central.GetName())
+			return nil, errors.Wrapf(err, "unable to check the existence of central %s/%s. Id: %s", central.GetNamespace(), central.GetName(), remoteCentral.Id)
 		}
 		centralExists = false
 	}
@@ -354,6 +354,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	return status, nil
+}
+
+func (c CentralReconciler) getLogMessage(msg string, args ...string) string {
+	idPrefixMsg := fmt.Sprintf("[tenant-id: %s, namespace: %s]", c.central.Id, c.central.Metadata.Namespace)
+	message := fmt.Sprintf(msg, args)
+	return fmt.Sprintf("%s %s", idPrefixMsg, message)
 }
 
 func isRemoteCentralProvisioning(remoteCentral private.ManagedCentral) bool {
