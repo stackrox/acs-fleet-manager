@@ -123,7 +123,7 @@ func (r *Runtime) Start() error {
 
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
 		reconciledCentralCountCache = int32(len(list.Items))
-		logger.InfoChangedInt32(&reconciledCentralCountCache, "Received central count changed: received %d centrals")
+		logger.InfoChangedInt32(&reconciledCentralCountCache, "Received central count changed: received %d centrals", reconciledCentralCountCache)
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central,

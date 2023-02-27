@@ -72,7 +72,7 @@ func (k *AcceptedCentralManager) Reconcile() []error {
 	}
 
 	acceptedCentralCount = int32(len(acceptedCentralRequests))
-	logger.InfoChangedInt32(&acceptedCentralCount, "accepted centrals count = %d")
+	logger.InfoChangedInt32(&acceptedCentralCount, "accepted centrals count = %d", acceptedCentralCount)
 
 	for _, centralRequest := range acceptedCentralRequests {
 		glog.V(10).Infof("accepted central id = %s", centralRequest.ID)

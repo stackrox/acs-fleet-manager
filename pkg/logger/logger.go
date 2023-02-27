@@ -192,14 +192,13 @@ func (l *logger) InfoDepth(depth int, args ...interface{}) {
 var cache = sync.Map{}
 
 // InfoChangedInt32 logs whenever the value of the passed counter reference changes when it is called.
-func InfoChangedInt32(counter *int32, args ...interface{}) {
+func InfoChangedInt32(counter *int32, msg string, args ...interface{}) {
 	val, loaded := cache.LoadOrStore(counter, *counter)
 	if loaded && val == *counter {
 		return // counter not changed, do not log
 	}
 
-	args = append(args, val.(int32))
-	glog.InfoDepth(logDepth, args...)
+	glog.InfoDepth(logDepth, fmt.Sprintf(msg, args...))
 }
 
 // Warningf ...
