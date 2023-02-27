@@ -40,6 +40,7 @@ const (
 	dbBackupRetentionPeriod = 30
 	dbInstancePromotionTier = 2 // a tier of 2 (or higher) ensures that readers and writers can scale independently
 	dbCACertificateType     = "rds-ca-ecc384-g1"
+	dataplaneClusterNameKey = "DataplaneClusterName"
 
 	// The Aurora Serverless v2 DB instance configuration in ACUs (Aurora Capacity Units)
 	// 1 ACU = 1 vCPU + 2GB RAM
@@ -50,9 +51,10 @@ const (
 // RDS is an AWS RDS client tied to one Central instance. It provisions and deprovisions databases
 // for the Central.
 type RDS struct {
-	dbSecurityGroup     string
-	dbSubnetGroup       string
-	performanceInsights bool
+	dbSecurityGroup      string
+	dbSubnetGroup        string
+	performanceInsights  bool
+	dataplaneClusterName string
 
 	rdsClient *rds.RDS
 }
@@ -124,7 +126,8 @@ func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string) error {
 	}
 
 	glog.Infof("Initiating provisioning of RDS database cluster %s.", clusterID)
-	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, masterPassword, r.dbSecurityGroup, r.dbSubnetGroup))
+	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, masterPassword, r.dbSecurityGroup,
+		r.dbSubnetGroup, r.dataplaneClusterName))
 	if err != nil {
 		return fmt.Errorf("creating DB cluster: %w", err)
 	}
@@ -142,7 +145,8 @@ func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error
 	}
 
 	glog.Infof("Initiating provisioning of RDS database instance %s.", instanceID)
-	_, err = r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID, r.performanceInsights))
+	_, err = r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID,
+		r.dataplaneClusterName, r.performanceInsights))
 	if err != nil {
 		return fmt.Errorf("creating DB instance: %w", err)
 	}
@@ -291,10 +295,11 @@ func NewRDSClient(config *config.Config, auth fleetmanager.Auth) (*RDS, error) {
 	}
 
 	return &RDS{
-		rdsClient:           rdsClient,
-		dbSecurityGroup:     config.ManagedDB.SecurityGroup,
-		dbSubnetGroup:       config.ManagedDB.SubnetGroup,
-		performanceInsights: config.ManagedDB.PerformanceInsights,
+		rdsClient:            rdsClient,
+		dbSecurityGroup:      config.ManagedDB.SecurityGroup,
+		dbSubnetGroup:        config.ManagedDB.SubnetGroup,
+		performanceInsights:  config.ManagedDB.PerformanceInsights,
+		dataplaneClusterName: config.ClusterName,
 	}, nil
 }
 
@@ -310,7 +315,7 @@ func getFailoverInstanceID(databaseID string) string {
 	return dbPrefix + databaseID + dbFailoverSuffix
 }
 
-func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup string) *rds.CreateDBClusterInput {
+func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup, dataplaneClusterName string) *rds.CreateDBClusterInput {
 	return &rds.CreateDBClusterInput{
 		DBClusterIdentifier: aws.String(clusterID),
 		Engine:              aws.String(dbEngine),
@@ -325,10 +330,15 @@ func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnet
 		},
 		BackupRetentionPeriod: aws.Int64(dbBackupRetentionPeriod),
 		StorageEncrypted:      aws.Bool(true),
+		Tags: []*rds.Tag{
+			{
+				Key:   aws.String(dataplaneClusterNameKey),
+				Value: aws.String(dataplaneClusterName)},
+		},
 	}
 }
 
-func newCreateCentralDBInstanceInput(clusterID, instanceID string, performanceInsights bool) *rds.CreateDBInstanceInput {
+func newCreateCentralDBInstanceInput(clusterID, instanceID, dataplaneClusterName string, performanceInsights bool) *rds.CreateDBInstanceInput {
 	return &rds.CreateDBInstanceInput{
 		DBInstanceClass:           aws.String(dbInstanceClass),
 		DBClusterIdentifier:       aws.String(clusterID),
@@ -338,6 +348,11 @@ func newCreateCentralDBInstanceInput(clusterID, instanceID string, performanceIn
 		EnablePerformanceInsights: aws.Bool(performanceInsights),
 		PromotionTier:             aws.Int64(dbInstancePromotionTier),
 		CACertificateIdentifier:   aws.String(dbCACertificateType),
+		Tags: []*rds.Tag{
+			{
+				Key:   aws.String(dataplaneClusterNameKey),
+				Value: aws.String(dataplaneClusterName)},
+		},
 	}
 }
 
