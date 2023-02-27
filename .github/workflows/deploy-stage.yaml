@@ -72,10 +72,3 @@ jobs:
         run: |
           set -euo pipefail
           ./deploy.sh stage acs-stage-dp-02
-      - name: Deploy probe on acs-stage-eu-01
-        working-directory: ./deploy/helm/probe
-        env:
-          AWS_AUTH_HELPER: none # credentials are populated by the above action
-        run: |
-          set -euo pipefail
-          ./deploy.sh stage acs-stage-eu-01
