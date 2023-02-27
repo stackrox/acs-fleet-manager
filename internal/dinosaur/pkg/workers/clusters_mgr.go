@@ -326,7 +326,7 @@ func (c *ClusterManager) processReadyClusters() []error {
 	}
 
 	readyClusterCount = int32(len(readyClusters))
-	logger.InfoChangedInt32(&readyClusterCount, "ready clusters count = %d")
+	logger.InfoChangedInt32(&readyClusterCount, "ready clusters count = %d", readyClusterCount)
 
 	for _, readyCluster := range readyClusters {
 		emptyClusterReconciled := false

@@ -58,7 +58,7 @@ func (k *ReadyDinosaurManager) Reconcile() []error {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list ready centrals"))
 	}
 	readyCentralCountCache = int32(len(readyCentrals))
-	logger.InfoChangedInt32(&readyCentralCountCache, "ready centrals count = %d")
+	logger.InfoChangedInt32(&readyCentralCountCache, "ready centrals count = %d", readyCentralCountCache)
 
 	return encounteredErrors
 }
