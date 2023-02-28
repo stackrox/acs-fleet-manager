@@ -27,6 +27,20 @@ graph
     end
 
     subgraph acsaws[ACS AWS Account]
+        subgraph RDS
+            subgraph acs1rds
+                acs1rdsp["RDS 1 R/W Primary ⛁"]
+                acs1rdss["RDS 1 RO Replica ⛁"]
+                acs1rdsp-->acs1rdss
+            end
+
+            subgraph acs2rds
+                acs2rdsp["RDS 2 R/W Primary ⛁"]
+                acs2rdss["RDS 2 RO Replica ⛁"]
+                acs2rdsp-->acs2rdss
+            end
+        end
+
         subgraph Data Plane OSD Cluster
             
             subgraph tenants
@@ -46,8 +60,10 @@ graph
             end
 
             fm<-->fs
-            acs1central-.Authn IdP.->sso
-            acs2central-.Authn IdP.->sso
+            acs1central-->sso
+            acs1central-->acs1rdsp
+            acs2central-->sso
+            acs2central-->acs2rdsp
         end
     end
 
