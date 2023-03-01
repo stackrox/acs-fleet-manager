@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	sentry "github.com/getsentry/sentry-go"
 
@@ -187,6 +188,18 @@ func (l *logger) Infof(format string, args ...interface{}) {
 // InfoDepth logs an info log message, wrapping glogs info depth
 func (l *logger) InfoDepth(depth int, args ...interface{}) {
 	glog.InfoDepth(logDepth+depth, args...)
+}
+
+var cache = sync.Map{}
+
+// InfoChangedInt32 logs whenever the value of the passed counter reference changes when it is called.
+func InfoChangedInt32(counter *int32, msg string, args ...interface{}) {
+	val, loaded := cache.LoadOrStore(counter, *counter)
+	if loaded && val == *counter {
+		return // counter not changed, do not log
+	}
+
+	glog.InfoDepth(logDepth, fmt.Sprintf(msg, args...))
 }
 
 // Warningf ...
