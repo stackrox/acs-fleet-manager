@@ -59,6 +59,8 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     exit 2
 fi
 
+FLEETSHARD_SYNC_ORG="app-sre"
+FLEETSHARD_SYNC_IMAGE="acs-fleet-manager"
 # Get the first non-merge commit, starting with HEAD.
 # On main this should be HEAD, on production, the latest merged main commit.
 FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
@@ -66,7 +68,7 @@ FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --
 if [[ "${HELM_PRINT_ONLY:-}" == "true" ]]; then
     HELM_DEBUG_FLAGS="--debug --dry-run"
 else
-    "${SCRIPT_DIR}/check_image_exists.sh" "${FLEETSHARD_SYNC_TAG}"
+    "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
 fi
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
@@ -96,7 +98,7 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --set acsOperator.sourceNamespace=openshift-marketplace \
   --set acsOperator.version="${OPERATOR_VERSION}" \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
-  --set fleetshardSync.image="quay.io/app-sre/acs-fleet-manager:${FLEETSHARD_SYNC_TAG}" \
+  --set fleetshardSync.image="quay.io/${FLEETSHARD_SYNC_ORG}/${FLEETSHARD_SYNC_IMAGE}:${FLEETSHARD_SYNC_TAG}" \
   --set fleetshardSync.authType="RHSSO" \
   --set fleetshardSync.clusterId="${CLUSTER_ID}" \
   --set fleetshardSync.clusterName="${CLUSTER_NAME}" \
