@@ -62,7 +62,8 @@ NAMESPACE="rhacs-probe"
 AUTH_TYPE="OCM"
 
 # helm template --debug ... to debug changes
-helm upgrade rhacs-probe "${SCRIPT_DIR}" "${HELM_DEBUG_FLAGS:-}" \
+# shellcheck disable=SC2086
+helm upgrade rhacs-probe "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --install \
   --namespace "${NAMESPACE}" \
   --create-namespace \
