@@ -1,9 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-org="app-sre"
-image="acs-fleet-manager"
-tag="$1"
+org="$1"
+image="$2"
+tag="$3"
 # 40*15s = 10 minutes
 retry_attempts=40
 sleep_time_sec=15
