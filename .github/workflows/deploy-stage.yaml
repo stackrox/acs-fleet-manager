@@ -7,6 +7,12 @@ on:
     branches:
       - main
 
+env:
+  # Credentials are populated by explicit `configure-aws-credentials` jobs in
+  # the workflow, so loading additional credentials in the terraform_cluster.sh
+  # script is not necessary.
+  AWS_AUTH_HELPER: none
+
 jobs:
   terraform:
     name: Re-terraform stage clusters
@@ -31,15 +37,11 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
       - name: Run terraforming on acs-stage-dp-02
         working-directory: ./dp-terraform/helm/rhacs-terraform
-        env:
-          AWS_AUTH_HELPER: none # credentials are populated by the above action
         run: |
           set -euo pipefail
           ./terraform_cluster.sh stage acs-stage-dp-02
       - name: Run terraforming on acs-stage-eu-01
         working-directory: ./dp-terraform/helm/rhacs-terraform
-        env:
-          AWS_AUTH_HELPER: none # credentials are populated by the above action
         run: |
           set -euo pipefail
           ./terraform_cluster.sh stage acs-stage-eu-01
@@ -67,8 +69,6 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
       - name: Deploy probe on acs-stage-dp-02
         working-directory: ./deploy/helm/probe
-        env:
-          AWS_AUTH_HELPER: none # credentials are populated by the above action
         run: |
           set -euo pipefail
           ./deploy.sh stage acs-stage-dp-02
