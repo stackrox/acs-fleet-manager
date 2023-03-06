@@ -3,7 +3,6 @@ package telemetry
 
 import (
 	"os"
-	"time"
 
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
@@ -45,9 +44,9 @@ func NewTelemetryConfig() TelemetryConfig {
 	clientID := getEnv("HOSTNAME", "fleet-manager")
 	return &TelemetryConfigImpl{
 		Config: phonehome.Config{
-			ClientID:     clientID,
-			ClientName:   "ACS Fleet Manager",
-			PushInterval: 1 * time.Minute,
+			ClientID:   clientID,
+			ClientName: "ACS Fleet Manager",
+			BatchSize:  1, // This makes Group and Track to not go in one batch.
 		},
 		StorageKeyFile: "secrets/telemetry.storageKey",
 	}

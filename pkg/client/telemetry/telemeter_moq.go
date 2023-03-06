@@ -18,7 +18,7 @@ var _ Telemeter = &TelemeterMock{}
 //
 //		// make and configure a mocked Telemeter
 //		mockedTelemeter := &TelemeterMock{
-//			GroupFunc: func(groupID string, props map[string]any, opts ...telemeter.Option)  {
+//			GroupFunc: func(props map[string]any, opts ...telemeter.Option)  {
 //				panic("mock out the Group method")
 //			},
 //			IdentifyFunc: func(props map[string]any, opts ...telemeter.Option)  {
@@ -38,7 +38,7 @@ var _ Telemeter = &TelemeterMock{}
 //	}
 type TelemeterMock struct {
 	// GroupFunc mocks the Group method.
-	GroupFunc func(groupID string, props map[string]any, opts ...telemeter.Option)
+	GroupFunc func(props map[string]any, opts ...telemeter.Option)
 
 	// IdentifyFunc mocks the Identify method.
 	IdentifyFunc func(props map[string]any, opts ...telemeter.Option)
@@ -53,8 +53,6 @@ type TelemeterMock struct {
 	calls struct {
 		// Group holds details about calls to the Group method.
 		Group []struct {
-			// GroupID is the groupID argument value.
-			GroupID string
 			// Props is the props argument value.
 			Props map[string]any
 			// Opts is the opts argument value.
@@ -87,23 +85,21 @@ type TelemeterMock struct {
 }
 
 // Group calls GroupFunc.
-func (mock *TelemeterMock) Group(groupID string, props map[string]any, opts ...telemeter.Option) {
+func (mock *TelemeterMock) Group(props map[string]any, opts ...telemeter.Option) {
 	if mock.GroupFunc == nil {
 		panic("TelemeterMock.GroupFunc: method is nil but Telemeter.Group was just called")
 	}
 	callInfo := struct {
-		GroupID string
-		Props   map[string]any
-		Opts    []telemeter.Option
+		Props map[string]any
+		Opts  []telemeter.Option
 	}{
-		GroupID: groupID,
-		Props:   props,
-		Opts:    opts,
+		Props: props,
+		Opts:  opts,
 	}
 	mock.lockGroup.Lock()
 	mock.calls.Group = append(mock.calls.Group, callInfo)
 	mock.lockGroup.Unlock()
-	mock.GroupFunc(groupID, props, opts...)
+	mock.GroupFunc(props, opts...)
 }
 
 // GroupCalls gets all the calls that were made to Group.
@@ -111,14 +107,12 @@ func (mock *TelemeterMock) Group(groupID string, props map[string]any, opts ...t
 //
 //	len(mockedTelemeter.GroupCalls())
 func (mock *TelemeterMock) GroupCalls() []struct {
-	GroupID string
-	Props   map[string]any
-	Opts    []telemeter.Option
+	Props map[string]any
+	Opts  []telemeter.Option
 } {
 	var calls []struct {
-		GroupID string
-		Props   map[string]any
-		Opts    []telemeter.Option
+		Props map[string]any
+		Opts  []telemeter.Option
 	}
 	mock.lockGroup.RLock()
 	calls = mock.calls.Group
