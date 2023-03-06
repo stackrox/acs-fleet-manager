@@ -63,6 +63,7 @@ cloudwatch:
 # - enabled flag is used to completely enable/disable observability sub-chart
 observability:
   enabled: true
+  clusterName: ""
   github:
     accessToken: ""
     repository: ""
