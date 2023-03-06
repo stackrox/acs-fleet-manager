@@ -37,5 +37,5 @@ graph
     central-01-1 --> rds-01-1
     central-01-2 --> rds-01-2
     central-02-1 --> rds-02-1
-    central-02-2 --> rds-02-2    
+    central-02-2 --> rds-02-2
 ```

@@ -42,7 +42,7 @@ graph
         end
 
         subgraph Data Plane OSD Cluster
-            
+
             subgraph tenants
                 subgraph acs1
                     acs1central[Central]
@@ -91,7 +91,7 @@ graph
             c2s2[Sensor]
         end
     end
-    
+
     c2s1 <--> acs2central
     c2s2 <--> acs2central
 ```
