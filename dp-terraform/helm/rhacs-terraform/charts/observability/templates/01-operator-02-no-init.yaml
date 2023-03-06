@@ -1,0 +1,6 @@
+# This config map prevents the operator from creating a Observability custom resoruce on start up.
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: observability-operator-no-init
+  namespace: {{ include "observability.namespace" . }}
