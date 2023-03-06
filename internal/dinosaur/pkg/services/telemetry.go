@@ -75,6 +75,8 @@ func (t *Telemetry) RegisterTenant(ctx context.Context, central *dbapi.CentralRe
 		"Region":          central.Region,
 		"Tenant ID":       central.ID,
 	}
+	// Group call will issue a supporting Track event to force group properties
+	// update.
 	t.config.Telemeter().Group(props,
 		telemeter.WithUserID(user),
 		telemeter.WithGroups(TenantGroupName, central.ID),
