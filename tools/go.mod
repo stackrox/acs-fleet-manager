@@ -7,7 +7,7 @@ require (
 	github.com/go-bindata/go-bindata/v3 v3.1.4-0.20210427095211-26949cc13d95
 	github.com/matryer/moq v0.3.0
 	github.com/onsi/ginkgo/v2 v2.8.3
-	github.com/segmentio/chamber/v2 v2.11.1
+	github.com/segmentio/chamber/v2 v2.12.0
 	gotest.tools/gotestsum v1.9.0
 )
 
