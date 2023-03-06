@@ -17,11 +17,19 @@ spec:
     # ourselves via the logging sub-chart.
     disableLogging: true
     podMonitorLabelSelector:
-      matchLabels:
-        app: rhacs
+      matchExpressions:
+        - key: app
+          operator: In
+          values:
+            - rhacs
+            - strimzi
     serviceMonitorLabelSelector:
-      matchLabels:
-        app: rhacs
+      matchExpressions:
+        - key: app
+          operator: In
+          values:
+            - rhacs
+            - strimzi
   storage:
     prometheus:
       volumeClaimTemplate:
