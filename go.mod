@@ -7,7 +7,7 @@ require (
 	github.com/Nerzal/gocloak/v11 v11.2.0
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware/v2 v2.1.0
-	github.com/aws/aws-sdk-go v1.44.204
+	github.com/aws/aws-sdk-go v1.44.209
 	github.com/blang/semver/v4 v4.0.0
 	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/caarlos0/env/v6 v6.10.1
@@ -32,7 +32,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo/v2 v2.8.3
 	github.com/onsi/gomega v1.27.0
-	github.com/openshift-online/ocm-sdk-go v0.1.317
+	github.com/openshift-online/ocm-sdk-go v0.1.320
 	github.com/openshift/api v3.9.1-0.20191201231411-9f834e337466+incompatible
 	github.com/operator-framework/api v0.17.3
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -40,7 +40,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/client_model v0.3.0
-	github.com/prometheus/common v0.39.0
+	github.com/prometheus/common v0.40.0
 	github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.5.0
 	github.com/rs/xid v1.4.0
 	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0
@@ -49,7 +49,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spyzhov/ajson v0.7.2
 	github.com/stackrox/rox v0.0.0-20210914215712-9ac265932e28
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zgalor/weberr v0.8.2
 	golang.org/x/net v0.7.0
