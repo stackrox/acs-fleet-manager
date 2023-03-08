@@ -1,0 +1,5 @@
+# Default values for rhacs-operator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+operatorVersion: rhacs-operator.v3.74.0

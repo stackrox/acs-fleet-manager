@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
+
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -44,6 +46,7 @@ type Runtime struct {
 	k8sClient         ctrlClient.Client
 	dbProvisionClient cloudprovider.DBClient
 	statusResponseCh  chan private.DataPlaneCentralStatus
+	operatorManager   *operator.ACSOperatorManager
 }
 
 // NewRuntime creates a new runtime
@@ -79,6 +82,8 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		}
 	}
 
+	operatorManager := operator.NewACSOperatorManager(k8sClient)
+
 	return &Runtime{
 		config:            config,
 		k8sClient:         k8sClient,
@@ -86,6 +91,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		clusterID:         config.ClusterID,
 		dbProvisionClient: dbProvisionClient,
 		reconcilers:       make(reconcilerRegistry),
+		operatorManager:   operatorManager,
 	}, nil
 }
 
@@ -108,6 +114,13 @@ func (r *Runtime) Start() error {
 		Telemetry:         r.config.Telemetry,
 		ClusterName:       r.config.ClusterName,
 		Environment:       r.config.Environment,
+	}
+
+	err := r.upgradeOperator()
+	if err != nil {
+		err = errors.Wrapf(err, "Upgrading operator")
+		glog.Error(err)
+		return err
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
@@ -147,7 +160,7 @@ func (r *Runtime) Start() error {
 		return r.config.RuntimePollPeriod, nil
 	}, 10*time.Minute, backoff)
 
-	err := ticker.Start()
+	err = ticker.Start()
 	if err != nil {
 		return fmt.Errorf("starting ticker: %w", err)
 	}
@@ -191,6 +204,16 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 			delete(r.reconcilers, key)
 		}
 	}
+}
+
+func (r *Runtime) upgradeOperator() error {
+	glog.Infof("Start Operator upgrade")
+	ctx := context.Background()
+	err := r.operatorManager.Upgrade(ctx)
+	if err != nil {
+		return fmt.Errorf("Operator upgrade: %w", err)
+	}
+	return nil
 }
 
 func (r *Runtime) routesAvailable() bool {
