@@ -142,6 +142,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
 				tenantIDLabelKey:      remoteCentral.Id,
 				instanceTypeLabelKey:  remoteCentral.Spec.Central.InstanceType,
+				orgNameAnnotationKey:  remoteCentral.Spec.Auth.OwnerOrgName,
 			},
 			Annotations: map[string]string{managedServicesAnnotation: "true"},
 		},
@@ -226,8 +227,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	namespaceLabels := map[string]string{
-		orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
-		tenantIDLabelKey: remoteCentral.Id,
+		orgIDLabelKey:        remoteCentral.Spec.Auth.OwnerOrgId,
+		tenantIDLabelKey:     remoteCentral.Id,
+		orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
 	}
 	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
