@@ -143,6 +143,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				tenantIDLabelKey:      remoteCentral.Id,
 				instanceTypeLabelKey:  remoteCentral.Spec.Central.InstanceType,
 				orgNameAnnotationKey:  remoteCentral.Spec.Auth.OwnerOrgName,
+				orgIDLabelKey:         remoteCentral.Spec.Auth.OwnerOrgId,
 			},
 			Annotations: map[string]string{managedServicesAnnotation: "true"},
 		},
