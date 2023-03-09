@@ -17,6 +17,7 @@ import (
 const (
 	operatorNamespace = "stackrox-operator"
 	releaseName       = "rhacs-operator"
+	operatorImage     = "quay.io/rhacs-eng/stackrox-operator:3.73.1"
 )
 
 // ACSOperatorManager ...
@@ -27,9 +28,13 @@ type ACSOperatorManager struct {
 
 // Upgrade ...
 func (u *ACSOperatorManager) Upgrade(ctx context.Context) error {
-	vals := chartutil.Values{}
+	chartVals := chartutil.Values{
+		"operator": chartutil.Values{
+			"image": operatorImage,
+		},
+	}
 	u.resourcesChart = charts.MustGetChart("rhacs-operator")
-	objs, err := charts.RenderToObjects(releaseName, operatorNamespace, u.resourcesChart, vals)
+	objs, err := charts.RenderToObjects(releaseName, operatorNamespace, u.resourcesChart, chartVals)
 	if err != nil {
 		return fmt.Errorf("installing operator chart: %w", err)
 	}

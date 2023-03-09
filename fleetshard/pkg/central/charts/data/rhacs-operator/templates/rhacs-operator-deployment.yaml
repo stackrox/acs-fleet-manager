@@ -75,7 +75,7 @@ spec:
               value: quay.io/rhacs-eng
             - name: OPERATOR_CONDITION_NAME
               value: rhacs-operator.v3.73.1
-          image: quay.io/rhacs-eng/stackrox-operator:3.73.1
+          image: {{ .Values.operator.image }}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             failureThreshold: 3
