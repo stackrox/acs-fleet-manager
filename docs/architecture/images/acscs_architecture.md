@@ -21,7 +21,7 @@ graph
             fm[Fleet-Manager]
         end
         cplogs["CloudWatch Logs 📜"]
-        cprds["RDS ⛁"]
+        cprds["RDS 🐘⛁"]
 
         fm <--> cprds
     end
@@ -29,14 +29,14 @@ graph
     subgraph acsaws[ACS AWS Account]
         subgraph RDS
             subgraph acs1rds
-                acs1rdsp["RDS 1 R/W Primary ⛁"]
-                acs1rdss["RDS 1 RO Replica ⛁"]
+                acs1rdsp["RDS 1 R/W Primary 🐘⛁"]
+                acs1rdss["RDS 1 RO Replica 🐘⛁"]
                 acs1rdsp-->acs1rdss
             end
 
             subgraph acs2rds
-                acs2rdsp["RDS 2 R/W Primary ⛁"]
-                acs2rdss["RDS 2 RO Replica ⛁"]
+                acs2rdsp["RDS 2 R/W Primary 🐘⛁"]
+                acs2rdss["RDS 2 RO Replica 🐘⛁"]
                 acs2rdsp-->acs2rdss
             end
         end
