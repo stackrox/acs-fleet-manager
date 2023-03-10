@@ -2,54 +2,113 @@ package operator
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
-	"helm.sh/helm/v3/pkg/chart"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func TestACSOperatorManager_Upgrade(t *testing.T) {
-	type fields struct {
-		client         client.Client
-		resourcesChart *chart.Chart
-	}
-	type args struct {
-		ctx context.Context
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			u := &ACSOperatorManager{
-				client:         tt.fields.client,
-				resourcesChart: tt.fields.resourcesChart,
-			}
-			if err := u.Upgrade(tt.args.ctx); (err != nil) != tt.wantErr {
-				t.Errorf("Upgrade() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+const (
+	kindCRDName   = "CustomResourceDefinition"
+	k8sAPIVersion = "apiextensions.k8s.io/v1"
+)
+
+var SecuredClusterCRD = &unstructured.Unstructured{
+	Object: map[string]interface{}{
+		"kind":       kindCRDName,
+		"apiVersion": k8sAPIVersion,
+		"metadata": map[string]interface{}{
+			"name": "securedclusters.platform.stackrox.io",
+		},
+	},
 }
 
-func TestNewACSOperatorManager(t *testing.T) {
-	type args struct {
-		k8sClient client.Client
-	}
-	tests := []struct {
-		name string
-		args args
-		want *ACSOperatorManager
-	}{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewACSOperatorManager(tt.args.k8sClient); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewACSOperatorManager() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+var CentralCRD = &unstructured.Unstructured{
+	Object: map[string]interface{}{
+		"kind":       kindCRDName,
+		"apiVersion": k8sAPIVersion,
+		"metadata": map[string]interface{}{
+			"name": "centrals.platform.stackrox.io",
+		},
+	},
+}
+
+var ServiceAccount = &unstructured.Unstructured{
+	Object: map[string]interface{}{
+		"kind":       "ServiceAccount",
+		"apiVersion": "v1",
+		"metadata": map[string]interface{}{
+			"name":      "rhacs-operator-controller-manager",
+			"namespace": operatorNamespace,
+		},
+	},
+}
+
+var OperatorDeployment = &unstructured.Unstructured{
+	Object: map[string]interface{}{
+		"kind":       "Deployment",
+		"apiVersion": "apps/v1",
+		"metadata": map[string]interface{}{
+			"name":      "rhacs-operator-controller-manager",
+			"namespace": operatorNamespace,
+		},
+	},
+}
+
+var OperatorConfigMap = &unstructured.Unstructured{
+	Object: map[string]interface{}{
+		"kind":       "ConfigMap",
+		"apiVersion": "v1",
+		"metadata": map[string]interface{}{
+			"name": "rhacs-operator-manager-config",
+		},
+	},
+}
+
+func TestOperatorUpgradeFreshInstall(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	u := NewACSOperatorManager(fakeClient)
+
+	err := u.Upgrade(context.TODO())
+
+	require.NoError(t, err)
+
+	// check Secured Cluster CRD exists and correct
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Namespace: operatorNamespace, Name: SecuredClusterCRD.GetName()}, SecuredClusterCRD)
+	require.NoError(t, err)
+	assert.Equal(t, k8sAPIVersion, SecuredClusterCRD.GetAPIVersion())
+	assert.NotEmpty(t, SecuredClusterCRD.Object["metadata"])
+	assert.NotEmpty(t, SecuredClusterCRD.Object["spec"])
+
+	// check Central CRD exists and correct
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Namespace: operatorNamespace, Name: CentralCRD.GetName()}, CentralCRD)
+	require.NoError(t, err)
+	assert.Equal(t, k8sAPIVersion, CentralCRD.GetAPIVersion())
+	assert.NotEmpty(t, CentralCRD.Object["metadata"])
+	assert.NotEmpty(t, CentralCRD.Object["spec"])
+
+	// check ServiceAccount exists
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Namespace: operatorNamespace, Name: ServiceAccount.GetName()}, ServiceAccount)
+	require.NoError(t, err)
+	assert.Equal(t, k8sAPIVersion, CentralCRD.GetAPIVersion())
+	assert.NotEmpty(t, CentralCRD.Object["metadata"])
+	assert.NotEmpty(t, CentralCRD.Object["spec"])
+
+	// check Operator Deployment exists
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Namespace: operatorNamespace, Name: OperatorDeployment.GetName()}, OperatorDeployment)
+	require.NoError(t, err)
+	assert.Equal(t, "apps/v1", OperatorDeployment.GetAPIVersion())
+	assert.NotEmpty(t, OperatorDeployment.Object["metadata"])
+	assert.NotEmpty(t, OperatorDeployment.Object["spec"])
+
+	// check Operator ConfigMap exists
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Namespace: operatorNamespace, Name: OperatorConfigMap.GetName()}, OperatorConfigMap)
+	require.NoError(t, err)
+	assert.Equal(t, "v1", OperatorConfigMap.GetAPIVersion())
+	assert.NotEmpty(t, OperatorConfigMap.Object["metadata"])
+
 }
