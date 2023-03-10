@@ -79,6 +79,19 @@ unpause_all_centrals() {
     done
 }
 
+# unpause_central unpauses/upgrades one Central instance in a given namespace
+unpause_central() {
+    ns="$1"
+    if [[ -z "$ns" ]]; then
+        echo "no central namespace provided."
+        exit 1
+    fi
+
+    central_name=$(kubectl get centrals.platform.stackrox.io -n "$ns" | awk '(NR>1) {print $1}')
+    kubectl -n "$ns" annotate centrals.platform.stackrox.io "$central_name" stackrox.io/pause-reconcile=false --overwrite=true
+    kubectl get pods -n "$ns" -w
+}
+
 # list_paused_centrals lists all Central instances in a cluster which are annotated as "stackrox.io/pause-reconcile=true"
 list_paused_centrals() {
     central_namespaces=$(get_central_namespaces)
@@ -87,6 +100,7 @@ list_paused_centrals() {
     paused_counter=0
     for ns in $central_namespaces
     do
+      echo -ne "reading namespace $ns\r"
       central=$(kubectl get centrals.platform.stackrox.io -n "$ns" -o json | jq '.items[0]')
       if [[ "$central" == "null" ]]; then
         continue
@@ -97,7 +111,8 @@ list_paused_centrals() {
           continue
       fi
 
-      echo "$central" | jq '{namespace: .metadata.namespace, name: .metadata.name}' -r
+      echo -ne "\033[2K"
+      echo -ne "$central" | jq '{namespace: .metadata.namespace, name: .metadata.name}' -r
       paused_counter=$((paused_counter+1))
     done
     if [[ "$paused_counter" != "0" ]]; then
@@ -125,6 +140,10 @@ case $1 in
   unpause_all_centrals)
     shift
     unpause_all_centrals "$@"
+    ;;
+  unpause_central)
+    shift
+    unpause_central "$@"
     ;;
   pause_all_centrals)
     shift
