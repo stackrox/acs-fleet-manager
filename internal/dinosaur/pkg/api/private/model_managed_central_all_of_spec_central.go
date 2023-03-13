@@ -12,5 +12,6 @@ package private
 
 // ManagedCentralAllOfSpecCentral struct for ManagedCentralAllOfSpecCentral
 type ManagedCentralAllOfSpecCentral struct {
-	Resources ResourceRequirements `json:"resources,omitempty"`
+	InstanceType string               `json:"instanceType,omitempty"`
+	Resources    ResourceRequirements `json:"resources,omitempty"`
 }

@@ -89,6 +89,7 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 				CentralOperator: from.DesiredCentralOperatorVersion,
 			},
 			Central: private.ManagedCentralAllOfSpecCentral{
+				InstanceType: from.InstanceType,
 				Resources: private.ResourceRequirements{
 					Requests: map[string]string{
 						corev1.ResourceCPU.String():    orDefaultQty(central.Resources.Requests[corev1.ResourceCPU], defaults.Central.CPURequest).String(),
