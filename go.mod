@@ -59,7 +59,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.4.8
 	gorm.io/gorm v1.24.6
-	helm.sh/helm/v3 v3.11.1
+	helm.sh/helm/v3 v3.11.2
 	k8s.io/api v0.26.1
 	k8s.io/apimachinery v0.26.2
 	k8s.io/client-go v0.26.1
@@ -117,7 +117,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.1 // indirect
-	github.com/huandu/xstrings v1.3.3 // indirect
+	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
@@ -156,7 +156,7 @@ require (
 	github.com/segmentio/analytics-go/v3 v3.2.1 // indirect
 	github.com/segmentio/backo-go v1.0.1 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
-	github.com/shopspring/decimal v1.2.0 // indirect
+	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/stackrox/scanner v0.0.0-20230203220100-227fe5f4c75c // indirect
