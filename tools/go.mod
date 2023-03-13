@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/99designs/aws-vault/v6 v6.6.2
 	github.com/go-bindata/go-bindata/v3 v3.1.4-0.20210427095211-26949cc13d95
-	github.com/matryer/moq v0.3.0
+	github.com/matryer/moq v0.3.1
 	github.com/onsi/ginkgo/v2 v2.9.1
 	github.com/segmentio/chamber/v2 v2.12.0
 	gotest.tools/gotestsum v1.9.0
