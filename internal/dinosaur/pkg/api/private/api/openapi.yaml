@@ -463,6 +463,11 @@ components:
           type: string
     ManagedCentral_allOf_spec_central:
       properties:
+        instanceType:
+          enum:
+          - eval
+          - standard
+          type: string
         resources:
           $ref: '#/components/schemas/ResourceRequirements'
     ManagedCentral_allOf_spec_scanner_analyzer_scaling:

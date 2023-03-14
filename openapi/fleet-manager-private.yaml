@@ -290,6 +290,9 @@ components:
                 central:
                   type: object
                   properties:
+                    instanceType:
+                      type: string
+                      enum: [eval, standard]
                     resources:
                       $ref: "#/components/schemas/ResourceRequirements"
                 scanner:

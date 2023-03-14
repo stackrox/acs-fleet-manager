@@ -42,6 +42,7 @@ const (
 	envAnnotationKey          = "rhacs.redhat.com/environment"
 	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
 	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
+	instanceTypeLabelKey      = "rhacs.redhat.com/instance-type"
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
 
@@ -139,6 +140,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			Labels: map[string]string{
 				k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
 				tenantIDLabelKey:      remoteCentral.Id,
+				instanceTypeLabelKey:  remoteCentral.Spec.Central.InstanceType,
 			},
 			Annotations: map[string]string{managedServicesAnnotation: "true"},
 		},
@@ -185,8 +187,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 					orgNameAnnotationKey:     remoteCentral.Spec.Auth.OwnerOrgName,
 				},
 				Labels: map[string]string{
-					orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
-					tenantIDLabelKey: remoteCentral.Id,
+					orgIDLabelKey:        remoteCentral.Spec.Auth.OwnerOrgId,
+					tenantIDLabelKey:     remoteCentral.Id,
+					instanceTypeLabelKey: remoteCentral.Spec.Central.InstanceType,
 				},
 			},
 		},
