@@ -27,13 +27,13 @@ Afterwards, you can call the script and adjust the parameters based on your need
 
 The script will handle the following (again, split by environments):
 - stage:
-  1. Fetch required credentials from AWS Parameter Store. The first time it runs, it will ask for AWS credentials.
+  1. Fetch required parameters from AWS Parameter Store and credentials from AWS Secrets Manager. The first time it runs, it will ask for AWS credentials.
   2. Create the OIDC IdP for the cluster.
   3. Create the user <-> group mapping for cluster-admins.
   4. Create the HTPasswd IdP for the cluster.
   5. Create the `acsms-stage-admin` user and map it to cluster-admins group.
 - prod:
-  1. Fetch required credentials from AWS Parameter Store. The first time it runs, it will ask for AWS credentials.
+  1. Fetch required parameters from AWS Parameter Store and credentials from AWS Secrets Manager. The first time it runs, it will ask for AWS credentials.
   2. Create the HTPasswd IdP for the cluster.
   3. Create the `acsms-prod-admin` user and map it to cluster-admins group.
 
