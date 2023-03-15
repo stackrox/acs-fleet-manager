@@ -49,7 +49,7 @@ export_cluster_environment() {
     load_external_config "cluster-$CLUSTER_NAME" STORED_
 
     if [[ -z ${STORED_ADMIN_USERNAME:-} ]]; then
-        echo "Cluster admin user is missing from Secrets Manager."
+        echo "Cluster admin user not specified in Secrets Manager nor Parameter Store."
         echo "Enter cluster admin username:"
         read -r STORED_ADMIN_USERNAME
         save_cluster_secret "admin_username" "$STORED_ADMIN_USERNAME"
