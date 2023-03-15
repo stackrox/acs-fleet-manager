@@ -1,8 +1,8 @@
 # Secret Management
 
 ## Overview / Tools
-Application Secrets are stored in AWS Parameter Store.
-The following tools are used to integrate with Parameter Store:
+Application Secrets are stored in AWS Secrets Manager.
+The following tools are used to integrate with Secrets Manager:
 - [chamber](https://github.com/segmentio/chamber) - CLI for managing secrets
 - [aws-vault](https://github.com/99designs/aws-vault) - supplementary tool to store AWS credentials in the secure local storage
 - [aws-saml.py](https://gitlab.corp.redhat.com/compute/aws-automation) - helper tool for authenticating in AWS using SAML
@@ -22,7 +22,7 @@ Secrets are divided to subgroups per each service. The following services are cu
 
 ## Instructions
 - `AWS_AUTH_HELPER` environment variable selects the appropriate authentication method within the deployment scripts. Possible options are:
-  - `aws-vault`
+  - `aws-vault` (deprecated)
   - `aws-saml`
   - `none` (default)
 - Depending on the environment, the following choices are set:
@@ -49,18 +49,18 @@ Without the alias you have to load the session token manually or always add `aws
 
 ### Write secret
 ```shell
-chamber write <service> <KEY> -
+chamber write -b secretsmanager <service> <KEY> -
 <value>
 ^D # end-of-stdin
 ```
 for example:
 ```shell
-chamber write fleetshard-sync RHSSO_SERVICE_ACCOUNT_CLIENT_ID -
+chamber write -b secretsmanager fleetshard-sync RHSSO_SERVICE_ACCOUNT_CLIENT_ID -
 changeme
 ^D
 ```
 
 ### Print environment
 ```shell
-chamber env fleetshard-sync
+chamber env -b secretsmanager fleetshard-sync
 ```

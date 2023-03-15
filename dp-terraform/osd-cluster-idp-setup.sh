@@ -36,21 +36,28 @@ save_cluster_parameter() {
     run_chamber write "cluster-${CLUSTER_NAME}" "${key}" "${value}" --skip-unchanged
 }
 
+save_cluster_secret() {
+    local key="$1"
+    local value="$2"
+    echo "Saving parameter '/cluster-${CLUSTER_NAME}/${key}' in AWS Secrets Manager..."
+    run_chamber write -b secretsmanager "cluster-${CLUSTER_NAME}" "${key}" "${value}" --skip-unchanged
+}
+
 export_cluster_environment() {
     init_chamber
     load_external_config "osd" OSD_
     load_external_config "cluster-$CLUSTER_NAME" STORED_
 
     if [[ -z ${STORED_ADMIN_USERNAME:-} ]]; then
-        echo "Cluster admin user is missing from Parameter Store."
+        echo "Cluster admin user not specified in Secrets Manager nor Parameter Store."
         echo "Enter cluster admin username:"
         read -r STORED_ADMIN_USERNAME
-        save_cluster_parameter "admin_username" "$STORED_ADMIN_USERNAME"
+        save_cluster_secret "admin_username" "$STORED_ADMIN_USERNAME"
     fi
     if [[ -z ${STORED_ADMIN_PASSWORD:-} ]]; then
         echo "Enter cluster admin password:"
         read -r -s STORED_ADMIN_PASSWORD
-        save_cluster_parameter "admin_password" "$STORED_ADMIN_PASSWORD"
+        save_cluster_secret "admin_password" "$STORED_ADMIN_PASSWORD"
     fi
 }
 
@@ -193,7 +200,7 @@ do
   attempt=$((attempt+1))
   ROBOT_TOKEN="$(oc get secret "${ROBOT_TOKEN_RESOURCE}" -n "$ROBOT_NS" -o json | jq -r 'if (has("data") and (.data|has("token"))) then (.data.token|@base64d) else "" end')"
   if [[ -n $ROBOT_TOKEN ]]; then
-    save_cluster_parameter "robot_oc_token" "$ROBOT_TOKEN"
+    save_cluster_secret "robot_oc_token" "$ROBOT_TOKEN"
     break
   fi
   if [[ $attempt -gt 30 ]]; then
@@ -205,3 +212,5 @@ done
 
 echo "The following cluster parameters are currently stored in AWS Parameter Store:"
 run_chamber list "cluster-${CLUSTER_NAME}"
+echo "The following cluster parameters are currently stored in AWS Secrets Manager:"
+run_chamber list "cluster-${CLUSTER_NAME}" -p secretsmanager
