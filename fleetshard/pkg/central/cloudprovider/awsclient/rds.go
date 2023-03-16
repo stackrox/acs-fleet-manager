@@ -40,6 +40,7 @@ const (
 	dbBackupRetentionPeriod = 30
 	dbInstancePromotionTier = 2 // a tier of 2 (or higher) ensures that readers and writers can scale independently
 	dbCACertificateType     = "rds-ca-ecc384-g1"
+	dataplaneClusterNameKey = "DataplaneClusterName"
 
 	// The Aurora Serverless v2 DB instance configuration in ACUs (Aurora Capacity Units)
 	// 1 ACU = 1 vCPU + 2GB RAM
@@ -50,9 +51,10 @@ const (
 // RDS is an AWS RDS client tied to one Central instance. It provisions and deprovisions databases
 // for the Central.
 type RDS struct {
-	dbSecurityGroup     string
-	dbSubnetGroup       string
-	performanceInsights bool
+	dbSecurityGroup      string
+	dbSubnetGroup        string
+	performanceInsights  bool
+	dataplaneClusterName string
 
 	rdsClient *rds.RDS
 }
@@ -74,7 +76,7 @@ func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPasswor
 		return fmt.Errorf("ensuring failover DB instance %s exists in cluster %s: %w", failoverID, clusterID, err)
 	}
 
-	return r.waitForInstanceToBeAvailable(ctx, instanceID, clusterID)
+	return r.waitForInstanceToBeAvailable(ctx, instanceID)
 }
 
 // EnsureDBDeprovisioned is a function that initiates the deprovisioning of the RDS database of a Central
@@ -115,7 +117,7 @@ func (r *RDS) GetDBConnection(databaseID string) (postgres.DBConnection, error) 
 }
 
 func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string) error {
-	clusterExists, err := r.clusterExists(clusterID)
+	clusterExists, _, err := r.clusterStatus(clusterID)
 	if err != nil {
 		return fmt.Errorf("checking if DB cluster exists: %w", err)
 	}
@@ -124,7 +126,8 @@ func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string) error {
 	}
 
 	glog.Infof("Initiating provisioning of RDS database cluster %s.", clusterID)
-	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, masterPassword, r.dbSecurityGroup, r.dbSubnetGroup))
+	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, masterPassword, r.dbSecurityGroup,
+		r.dbSubnetGroup, r.dataplaneClusterName))
 	if err != nil {
 		return fmt.Errorf("creating DB cluster: %w", err)
 	}
@@ -133,7 +136,7 @@ func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string) error {
 }
 
 func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error {
-	instanceExists, err := r.instanceExists(instanceID)
+	instanceExists, _, err := r.instanceStatus(instanceID)
 	if err != nil {
 		return fmt.Errorf("checking if DB instance exists: %w", err)
 	}
@@ -142,7 +145,8 @@ func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error
 	}
 
 	glog.Infof("Initiating provisioning of RDS database instance %s.", instanceID)
-	_, err = r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID, r.performanceInsights))
+	_, err = r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID,
+		r.dataplaneClusterName, r.performanceInsights))
 	if err != nil {
 		return fmt.Errorf("creating DB instance: %w", err)
 	}
@@ -151,22 +155,20 @@ func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error
 }
 
 func (r *RDS) ensureInstanceDeleted(instanceID string) error {
-	instanceExists, err := r.instanceExists(instanceID)
+	instanceExists, instanceStatus, err := r.instanceStatus(instanceID)
 	if err != nil {
-		return fmt.Errorf("checking if DB instance exists: %w", err)
+		return fmt.Errorf("getting DB instance status: %w", err)
 	}
-	if instanceExists {
-		status, err := r.instanceStatus(instanceID)
+	if !instanceExists {
+		return nil
+	}
+
+	if instanceStatus != dbDeletingStatus {
+		glog.Infof("Initiating deprovisioning of RDS database instance %s.", instanceID)
+		// TODO(ROX-13692): do not skip taking a final DB snapshot
+		_, err := r.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
 		if err != nil {
-			return fmt.Errorf("getting DB instance status: %w", err)
-		}
-		if status != dbDeletingStatus {
-			glog.Infof("Initiating deprovisioning of RDS database instance %s.", instanceID)
-			// TODO(ROX-13692): do not skip taking a final DB snapshot
-			_, err := r.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
-			if err != nil {
-				return fmt.Errorf("deleting DB instance: %w", err)
-			}
+			return fmt.Errorf("deleting DB instance: %w", err)
 		}
 	}
 
@@ -174,74 +176,56 @@ func (r *RDS) ensureInstanceDeleted(instanceID string) error {
 }
 
 func (r *RDS) ensureClusterDeleted(clusterID string) error {
-	clusterExists, err := r.clusterExists(clusterID)
+	clusterExists, clusterStatus, err := r.clusterStatus(clusterID)
 	if err != nil {
-		return fmt.Errorf("checking if DB cluster exists: %w", err)
+		return fmt.Errorf("getting DB cluster status: %w", err)
 	}
-	if clusterExists {
-		status, err := r.clusterStatus(clusterID)
+	if !clusterExists {
+		return nil
+	}
+
+	if clusterStatus != dbDeletingStatus {
+		glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
+		// TODO(ROX-13692): do not skip taking a final DB snapshot
+		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
 		if err != nil {
-			return fmt.Errorf("getting DB cluster status: %w", err)
-		}
-		if status != dbDeletingStatus {
-			glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
-			// TODO(ROX-13692): do not skip taking a final DB snapshot
-			_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
-			if err != nil {
-				return fmt.Errorf("deleting DB cluster: %w", err)
-			}
+			return fmt.Errorf("deleting DB cluster: %w", err)
 		}
 	}
 
 	return nil
 }
 
-func (r *RDS) clusterExists(clusterID string) (bool, error) {
-	if _, err := r.describeDBCluster(clusterID); err != nil {
+func (r *RDS) clusterStatus(clusterID string) (bool, string, error) {
+	dbCluster, err := r.describeDBCluster(clusterID)
+	if err != nil {
 		var aerr awserr.Error
 		if errors.As(err, &aerr) {
 			switch aerr.Code() {
 			case rds.ErrCodeDBClusterNotFoundFault:
-				return false, nil
+				return false, "", nil
 			}
 		}
-		return false, err
+		return false, "", err
 	}
 
-	return true, nil
+	return true, *dbCluster.Status, nil
 }
 
-func (r *RDS) instanceExists(instanceID string) (bool, error) {
-	if _, err := r.describeDBInstance(instanceID); err != nil {
+func (r *RDS) instanceStatus(instanceID string) (bool, string, error) {
+	dbInstance, err := r.describeDBInstance(instanceID)
+	if err != nil {
 		var aerr awserr.Error
 		if errors.As(err, &aerr) {
 			switch aerr.Code() {
 			case rds.ErrCodeDBInstanceNotFoundFault:
-				return false, nil
+				return false, "", nil
 			}
 		}
-		return false, err
+		return false, "", err
 	}
 
-	return true, nil
-}
-
-func (r *RDS) clusterStatus(clusterID string) (string, error) {
-	dbCluster, err := r.describeDBCluster(clusterID)
-	if err != nil {
-		return "", err
-	}
-
-	return *dbCluster.Status, nil
-}
-
-func (r *RDS) instanceStatus(instanceID string) (string, error) {
-	dbInstance, err := r.describeDBInstance(instanceID)
-	if err != nil {
-		return "", err
-	}
-
-	return *dbInstance.DBInstanceStatus, nil
+	return true, *dbInstance.DBInstanceStatus, nil
 }
 
 func (r *RDS) describeDBInstance(instanceID string) (*rds.DBInstance, error) {
@@ -277,11 +261,15 @@ func (r *RDS) describeDBCluster(clusterID string) (*rds.DBCluster, error) {
 	return result.DBClusters[0], nil
 }
 
-func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID string, clusterID string) error {
+func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID string) error {
 	for {
-		dbInstanceStatus, err := r.instanceStatus(instanceID)
+		dbInstanceExists, dbInstanceStatus, err := r.instanceStatus(instanceID)
 		if err != nil {
 			return err
+		}
+
+		if !dbInstanceExists {
+			return fmt.Errorf("DB instance does not exist: %s", instanceID)
 		}
 
 		if dbInstanceStatus == dbAvailableStatus {
@@ -307,10 +295,11 @@ func NewRDSClient(config *config.Config, auth fleetmanager.Auth) (*RDS, error) {
 	}
 
 	return &RDS{
-		rdsClient:           rdsClient,
-		dbSecurityGroup:     config.ManagedDB.SecurityGroup,
-		dbSubnetGroup:       config.ManagedDB.SubnetGroup,
-		performanceInsights: config.ManagedDB.PerformanceInsights,
+		rdsClient:            rdsClient,
+		dbSecurityGroup:      config.ManagedDB.SecurityGroup,
+		dbSubnetGroup:        config.ManagedDB.SubnetGroup,
+		performanceInsights:  config.ManagedDB.PerformanceInsights,
+		dataplaneClusterName: config.ClusterName,
 	}, nil
 }
 
@@ -326,7 +315,7 @@ func getFailoverInstanceID(databaseID string) string {
 	return dbPrefix + databaseID + dbFailoverSuffix
 }
 
-func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup string) *rds.CreateDBClusterInput {
+func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup, dataplaneClusterName string) *rds.CreateDBClusterInput {
 	return &rds.CreateDBClusterInput{
 		DBClusterIdentifier: aws.String(clusterID),
 		Engine:              aws.String(dbEngine),
@@ -341,10 +330,15 @@ func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnet
 		},
 		BackupRetentionPeriod: aws.Int64(dbBackupRetentionPeriod),
 		StorageEncrypted:      aws.Bool(true),
+		Tags: []*rds.Tag{
+			{
+				Key:   aws.String(dataplaneClusterNameKey),
+				Value: aws.String(dataplaneClusterName)},
+		},
 	}
 }
 
-func newCreateCentralDBInstanceInput(clusterID, instanceID string, performanceInsights bool) *rds.CreateDBInstanceInput {
+func newCreateCentralDBInstanceInput(clusterID, instanceID, dataplaneClusterName string, performanceInsights bool) *rds.CreateDBInstanceInput {
 	return &rds.CreateDBInstanceInput{
 		DBInstanceClass:           aws.String(dbInstanceClass),
 		DBClusterIdentifier:       aws.String(clusterID),
@@ -354,6 +348,11 @@ func newCreateCentralDBInstanceInput(clusterID, instanceID string, performanceIn
 		EnablePerformanceInsights: aws.Bool(performanceInsights),
 		PromotionTier:             aws.Int64(dbInstancePromotionTier),
 		CACertificateIdentifier:   aws.String(dbCACertificateType),
+		Tags: []*rds.Tag{
+			{
+				Key:   aws.String(dataplaneClusterNameKey),
+				Value: aws.String(dataplaneClusterName)},
+		},
 	}
 }
 

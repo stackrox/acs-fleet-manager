@@ -15,10 +15,12 @@ fi
 
 ENVIRONMENT=$1
 CLUSTER_NAME=$2
+PROBE_IMAGE_ORG="rhacs-eng"
+PROBE_IMAGE_NAME="blackbox-monitoring-probe-service"
 # Get the first non-merge commit, starting with HEAD.
 # On main this should be HEAD, on production, the latest merged main commit.
 PROBE_IMAGE_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
-PROBE_IMAGE="quay.io/rhacs-eng/blackbox-monitoring-probe-service:${PROBE_IMAGE_TAG}"
+PROBE_IMAGE="quay.io/${PROBE_IMAGE_ORG}/${PROBE_IMAGE_NAME}:${PROBE_IMAGE_TAG}"
 
 export AWS_PROFILE="$ENVIRONMENT"
 
@@ -47,6 +49,12 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     exit 2
 fi
 
+if [[ "${HELM_PRINT_ONLY:-}" == "true" ]]; then
+    HELM_DEBUG_FLAGS="--debug --dry-run"
+else
+    "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${PROBE_IMAGE_ORG}" "${PROBE_IMAGE_NAME}" "${PROBE_IMAGE_TAG}"
+fi
+
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
 
@@ -54,7 +62,8 @@ NAMESPACE="rhacs-probe"
 AUTH_TYPE="OCM"
 
 # helm template --debug ... to debug changes
-helm upgrade rhacs-probe "${SCRIPT_DIR}" \
+# shellcheck disable=SC2086
+helm upgrade rhacs-probe "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --install \
   --namespace "${NAMESPACE}" \
   --create-namespace \

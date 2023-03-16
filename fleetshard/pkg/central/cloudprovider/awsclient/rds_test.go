@@ -47,12 +47,17 @@ func newTestRDSClient() (*rds.RDS, error) {
 
 func waitForClusterToBeDeleted(ctx context.Context, rdsClient *RDS, clusterID string) (bool, error) {
 	for {
-		clusterExists, err := rdsClient.clusterExists(clusterID)
+		clusterExists, clusterStatus, err := rdsClient.clusterStatus(clusterID)
 		if err != nil {
 			return false, err
 		}
 
 		if !clusterExists {
+			return true, nil
+		}
+
+		// exit early if cluster is marked as deleting
+		if clusterStatus == dbDeletingStatus {
 			return true, nil
 		}
 
@@ -85,43 +90,42 @@ func TestRDSProvisioning(t *testing.T) {
 	instanceID := getInstanceID(dbID)
 	failoverID := getFailoverInstanceID(dbID)
 
-	clusterExists, err := rdsClient.clusterExists(clusterID)
+	clusterExists, _, err := rdsClient.clusterStatus(clusterID)
 	require.NoError(t, err)
 	require.False(t, clusterExists)
 
-	instanceExists, err := rdsClient.instanceExists(instanceID)
+	instanceExists, _, err := rdsClient.clusterStatus(instanceID)
 	require.NoError(t, err)
 	require.False(t, instanceExists)
 
-	failoverExists, err := rdsClient.instanceExists(failoverID)
+	failoverExists, _, err := rdsClient.clusterStatus(failoverID)
 	require.NoError(t, err)
 	require.False(t, failoverExists)
 
 	err = rdsClient.EnsureDBProvisioned(ctx, dbID, dbMasterPassword)
-	assert.NoError(t, err)
+	defer func() {
+		// clean-up AWS resources in case the test fails
+		deleteErr := rdsClient.EnsureDBDeprovisioned(dbID)
+		assert.NoError(t, deleteErr)
+	}()
+	require.NoError(t, err)
 
 	_, err = rdsClient.GetDBConnection(dbID)
 	assert.NoError(t, err)
 
-	clusterExists, err = rdsClient.clusterExists(clusterID)
+	clusterExists, clusterStatus, err := rdsClient.clusterStatus(clusterID)
 	require.NoError(t, err)
 	require.True(t, clusterExists)
-
-	instanceExists, err = rdsClient.instanceExists(instanceID)
-	require.NoError(t, err)
-	require.True(t, instanceExists)
-
-	failoverExists, err = rdsClient.instanceExists(failoverID)
-	require.NoError(t, err)
-	require.True(t, failoverExists)
-
-	clusterStatus, err := rdsClient.clusterStatus(clusterID)
-	require.NoError(t, err)
 	assert.Equal(t, clusterStatus, dbAvailableStatus)
 
-	instanceStatus, err := rdsClient.instanceStatus(instanceID)
+	instanceExists, instanceStatus, err := rdsClient.instanceStatus(instanceID)
 	require.NoError(t, err)
+	require.True(t, instanceExists)
 	assert.Equal(t, instanceStatus, dbAvailableStatus)
+
+	failoverExists, _, err = rdsClient.instanceStatus(failoverID)
+	require.NoError(t, err)
+	require.True(t, failoverExists)
 
 	err = rdsClient.EnsureDBDeprovisioned(dbID)
 	assert.NoError(t, err)
