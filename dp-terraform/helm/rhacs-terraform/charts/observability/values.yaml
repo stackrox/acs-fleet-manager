@@ -14,6 +14,10 @@ github:
   repository: ""
   tag: "master"
 
+clusterName: ""
+resyncPeriod: "1h"
+retention: "45d"
+
 # Credentials for Observatorium https://observatorium.io/ instance
 observatorium:
   tenant: "rhacs"
