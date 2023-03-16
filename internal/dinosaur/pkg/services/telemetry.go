@@ -11,6 +11,7 @@ import (
 	"github.com/stackrox/rox/pkg/telemetry/phonehome/telemeter"
 )
 
+// TenantGroupName holds the name of the Tenant group.
 const TenantGroupName = "Tenant"
 
 // TelemetryAuth is a wrapper around the user claim extraction.
