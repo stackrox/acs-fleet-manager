@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 GITROOT="${GITROOT:-"$(git rev-parse --show-toplevel)"}"
-ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-true}"
 
 # shellcheck source=scripts/lib/log.sh
 source "$GITROOT/scripts/lib/log.sh"
@@ -12,15 +11,15 @@ ensure_tool_installed() {
     make -s -C "$GITROOT" "$GITROOT/bin/$1"
 }
 
-init_chamber() {
+add_bin_to_path() {
     if ! [[ ":$PATH:" == *":$GITROOT/bin:"* ]]; then
         export PATH="$GITROOT/bin:$PATH"
     fi
-    ensure_tool_installed chamber
+}
 
-    if [[ "$ENABLE_EXTERNAL_CONFIG" != "true" ]]; then
-        return
-    fi
+init_chamber() {
+    add_bin_to_path
+    ensure_tool_installed chamber
 
     AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-none}"
     case $AWS_AUTH_HELPER in
@@ -96,10 +95,6 @@ ensure_bitwarden_session_exists() {
 
 run_chamber() {
     local args=("$@")
-    if [[ "$ENABLE_EXTERNAL_CONFIG" != "true" ]]; then
-        # External config disabled. Using 'null' backend for chamber
-        args=("-b" "null" "${args[@]}")
-    fi
     if [[ "$AWS_AUTH_HELPER" == "aws-vault" ]]; then
         aws-vault exec "${AWS_PROFILE}" -- chamber "${args[@]}"
     else
