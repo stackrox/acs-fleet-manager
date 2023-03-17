@@ -26,7 +26,7 @@ export AWS_PROFILE="$ENVIRONMENT"
 
 init_chamber
 
-load_external_config probe PROBE_
+load_external_config "$ENVIRONMENT/acscs/probe" PROBE_
 
 case $ENVIRONMENT in
   stage)
@@ -55,7 +55,7 @@ else
     "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${PROBE_IMAGE_ORG}" "${PROBE_IMAGE_NAME}" "${PROBE_IMAGE_TAG}"
 fi
 
-load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
+load_external_config "$ENVIRONMENT/acscs/cluster-${CLUSTER_NAME}" CLUSTER_
 oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
 
 NAMESPACE="rhacs-probe"

@@ -23,10 +23,10 @@ fi
 
 init_chamber
 
-load_external_config fleetshard-sync FLEETSHARD_SYNC_
-load_external_config cloudwatch-exporter CLOUDWATCH_EXPORTER_
-load_external_config logging LOGGING_
-load_external_config observability OBSERVABILITY_
+load_external_config "$ENVIRONMENT/acscs/fleetshard-sync" FLEETSHARD_SYNC_
+load_external_config "$ENVIRONMENT/acscs/cloudwatch-exporter" CLOUDWATCH_EXPORTER_
+load_external_config "$ENVIRONMENT/acscs/logging" LOGGING_
+load_external_config "$ENVIRONMENT/acscs/observability" OBSERVABILITY_
 
 case $ENVIRONMENT in
   stage)
@@ -71,7 +71,7 @@ else
     "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
 fi
 
-load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
+load_external_config "$ENVIRONMENT/acscs/cluster-${CLUSTER_NAME}" CLUSTER_
 oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
 
 OPERATOR_SOURCE="redhat-operators"

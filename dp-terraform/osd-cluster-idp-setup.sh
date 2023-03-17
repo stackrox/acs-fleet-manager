@@ -32,21 +32,21 @@ fi
 save_cluster_parameter() {
     local key="$1"
     local value="$2"
-    echo "Saving parameter '/cluster-${CLUSTER_NAME}/${key}' in AWS parameter store..."
-    run_chamber write "cluster-${CLUSTER_NAME}" "${key}" "${value}" --skip-unchanged
+    echo "Saving parameter '/$ENVIRONMENT/acscs/cluster-${CLUSTER_NAME}/${key}' in AWS Parameter Store..."
+    run_chamber write "$ENVIRONMENT/acscs/cluster-${CLUSTER_NAME}" "${key}" "${value}" --skip-unchanged
 }
 
 save_cluster_secret() {
     local key="$1"
     local value="$2"
-    echo "Saving parameter '/cluster-${CLUSTER_NAME}/${key}' in AWS Secrets Manager..."
-    run_chamber write -b secretsmanager "cluster-${CLUSTER_NAME}" "${key}" "${value}" --skip-unchanged
+    echo "Saving parameter '$ENVIRONMENT/acscs/cluster-${CLUSTER_NAME}/${key}' in AWS Secrets Manager..."
+    run_chamber write -b secretsmanager "$ENVIRONMENT/acscs/cluster-${CLUSTER_NAME}" "${key}" "${value}" --skip-unchanged
 }
 
 export_cluster_environment() {
     init_chamber
-    load_external_config "osd" OSD_
-    load_external_config "cluster-$CLUSTER_NAME" STORED_
+    load_external_config "$ENVIRONMENT/acscs/osd" OSD_
+    load_external_config "$ENVIRONMENT/acscs/cluster-$CLUSTER_NAME" STORED_
 
     if [[ -z ${STORED_ADMIN_USERNAME:-} ]]; then
         echo "Cluster admin user not specified in Secrets Manager nor Parameter Store."
