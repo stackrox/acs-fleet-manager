@@ -29,6 +29,7 @@ load_external_config fleetshard-sync FLEETSHARD_SYNC_
 load_external_config cloudwatch-exporter CLOUDWATCH_EXPORTER_
 load_external_config logging LOGGING_
 load_external_config observability OBSERVABILITY_
+load_external_config secured-cluster SECURED_CLUSTER_
 
 case $ENVIRONMENT in
   dev)
@@ -157,7 +158,16 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" \
-  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}"
+  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" \
+  --set securedCluster.clusterName="${CLUSTER_NAME}" \
+  --set securedCluster.centralEndpoint="${SECURED_CLUSTER_CENTRAL_ENDPOINT}" \
+  --set securedCluster.ca.cert="${SECURED_CLUSTER_CA_CERT}" \
+  --set securedCluster.admissionControl.serviceTLS.cert="${SECURED_CLUSTER_ADMISSION_CONTROL_CERT}" \
+  --set securedCluster.admissionControl.serviceTLS.key="${SECURED_CLUSTER_ADMISSION_CONTROL_KEY}" \
+  --set securedCluster.collector.serviceTLS.cert="${SECURED_CLUSTER_COLLECTOR_CERT}" \
+  --set securedCluster.collector.serviceTLS.key="${SECURED_CLUSTER_COLLECTOR_KEY}" \
+  --set securedCluster.sensor.serviceTLS.cert="${SECURED_CLUSTER_SENSOR_CERT}" \
+  --set securedCluster.sensor.serviceTLS.key="${SECURED_CLUSTER_SENSOR_KEY}" \
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs

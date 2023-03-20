@@ -91,3 +91,22 @@ logging:
   aws:
     accessKeyId: ""
     secretAccessKey: ""
+securedCluster:
+  enabled: true
+  pullSecret: ""
+  clusterName: ""
+  centralEndpoint: ""
+  admissionControl:
+    serviceTLS:
+      cert: ""
+      key: ""
+  ca:
+    cert: ""
+  collector:
+    serviceTLS:
+      cert: ""
+      key: ""
+  sensor:
+    serviceTLS:
+      cert: ""
+      key: ""
