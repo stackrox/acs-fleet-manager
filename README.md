@@ -67,7 +67,7 @@ $ make deploy/bootstrap
 $ make deploy/dev
 
 # Start fleetshard-sync
-$ OCM_TOKEN=$(ocm token --refresh) CLUSTER_ID=1234567890abcdef1234567890abcdef ./fleetshard-sync
+$ OCM_TOKEN=$(ocm token --refresh) AUTH_TYPE=OCM CLUSTER_ID=1234567890abcdef1234567890abcdef ./fleetshard-sync
 
 # To create a central instance
 $ ./scripts/create-central.sh
