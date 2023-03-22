@@ -31,10 +31,9 @@ type DefaultApiService service
 /*
 CreateCentral Creates a Central request
 Each central has a single owner organisation and a single owner user. Creates a new Central that is owned by the user and organisation authenticated for the request.
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param async Perform the action in an asynchronous manner
-  - @param centralRequestPayload Central data
-
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param async Perform the action in an asynchronous manner
+ * @param centralRequestPayload Central data
 @return CentralRequest
 */
 func (a *DefaultApiService) CreateCentral(ctx _context.Context, async bool, centralRequestPayload CentralRequestPayload) (CentralRequest, *_nethttp.Response, error) {
@@ -171,9 +170,9 @@ func (a *DefaultApiService) CreateCentral(ctx _context.Context, async bool, cent
 /*
 DeleteCentralById Deletes a Central request by ID
 The only users authorized for this operation are: 1) The administrator of the owner organisation of the specified Central. 2) The owner user, and only if it is also part of the owner organisation of the specified Central.
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id The ID of record
-  - @param async Perform the action in an asynchronous manner
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param id The ID of record
+ * @param async Perform the action in an asynchronous manner
 */
 func (a *DefaultApiService) DeleteCentralById(ctx _context.Context, id string, async bool) (*_nethttp.Response, error) {
 	var (
@@ -288,9 +287,8 @@ func (a *DefaultApiService) DeleteCentralById(ctx _context.Context, id string, a
 
 /*
 FederateMetrics Returns all metrics in scrapeable format for a given Central ID
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id The ID of record
-
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param id The ID of record
 @return string
 */
 func (a *DefaultApiService) FederateMetrics(ctx _context.Context, id string) (string, *_nethttp.Response, error) {
@@ -406,9 +404,8 @@ func (a *DefaultApiService) FederateMetrics(ctx _context.Context, id string) (st
 /*
 GetCentralById Returns a Central request by ID
 This operation is only authorized to users in the same organisation as the owner organisation of the specified Central.
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id The ID of record
-
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param id The ID of record
 @return CentralRequest
 */
 func (a *DefaultApiService) GetCentralById(ctx _context.Context, id string) (CentralRequest, *_nethttp.Response, error) {
@@ -532,13 +529,12 @@ type GetCentralsOpts struct {
 /*
 GetCentrals Returns a list of Central requests
 Only returns those centrals that are owned by the organisation of the user authenticated for the request.
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param optional nil or *GetCentralsOpts - Optional Parameters:
-  - @param "Page" (optional.String) -  Page index
-  - @param "Size" (optional.String) -  Number of items in each page
-  - @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the following `centralRequests` fields:  * centralUIURL * centralDataURL * cloud_provider * cluster_id * created_at * href * id * instance_type * multi_az * name * organisation_id * owner * region * status * updated_at * version  For example, to return all Central instances ordered by their name, use the following syntax:  ```sql name asc ```  To return all Central instances ordered by their name _and_ created date, use the following syntax:  ```sql name asc, created_at asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
-  - @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of an SQL statement. Allowed fields in the search are `cloud_provider`, `name`, `owner`, `region`, and `status`. Allowed comparators are `<>`, `=`, or `LIKE`. Allowed joins are `AND` and `OR`. However, you can use a maximum of 10 joins in a search query.  Examples:  To return a Central instance with the name `my-central` and the region `aws`, use the following syntax:  ``` name = my-central and cloud_provider = aws ```[p-]  To return a Central instance with a name that starts with `my`, use the following syntax:  ``` name like my%25 ```  If the parameter isn't provided, or if the value is empty, then all the Central instances that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
-
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param optional nil or *GetCentralsOpts - Optional Parameters:
+ * @param "Page" (optional.String) -  Page index
+ * @param "Size" (optional.String) -  Number of items in each page
+ * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the following `centralRequests` fields:  * centralUIURL * centralDataURL * cloud_provider * cluster_id * created_at * href * id * instance_type * multi_az * name * organisation_id * owner * region * status * updated_at * version  For example, to return all Central instances ordered by their name, use the following syntax:  ```sql name asc ```  To return all Central instances ordered by their name _and_ created date, use the following syntax:  ```sql name asc, created_at asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
+ * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of an SQL statement. Allowed fields in the search are `cloud_provider`, `name`, `owner`, `region`, and `status`. Allowed comparators are `<>`, `=`, or `LIKE`. Allowed joins are `AND` and `OR`. However, you can use a maximum of 10 joins in a search query.  Examples:  To return a Central instance with the name `my-central` and the region `aws`, use the following syntax:  ``` name = my-central and cloud_provider = aws ```[p-]  To return a Central instance with a name that starts with `my`, use the following syntax:  ``` name like my%25 ```  If the parameter isn't provided, or if the value is empty, then all the Central instances that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
 @return CentralRequestList
 */
 func (a *DefaultApiService) GetCentrals(ctx _context.Context, localVarOptionals *GetCentralsOpts) (CentralRequestList, *_nethttp.Response, error) {
@@ -663,8 +659,7 @@ func (a *DefaultApiService) GetCentrals(ctx _context.Context, localVarOptionals 
 
 /*
 GetCloudAccounts Returns the list of cloud accounts which belong to user's organization
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 @return CloudAccountsList
 */
 func (a *DefaultApiService) GetCloudAccounts(ctx _context.Context) (CloudAccountsList, *_nethttp.Response, error) {
@@ -764,13 +759,12 @@ type GetCloudProviderRegionsOpts struct {
 
 /*
 GetCloudProviderRegions Returns the list of supported regions of the supported cloud provider
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id The ID of record
-  - @param optional nil or *GetCloudProviderRegionsOpts - Optional Parameters:
-  - @param "Page" (optional.String) -  Page index
-  - @param "Size" (optional.String) -  Number of items in each page
-  - @param "InstanceType" (optional.String) -  The Central instance type to filter the results by
-
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param id The ID of record
+ * @param optional nil or *GetCloudProviderRegionsOpts - Optional Parameters:
+ * @param "Page" (optional.String) -  Page index
+ * @param "Size" (optional.String) -  Number of items in each page
+ * @param "InstanceType" (optional.String) -  The Central instance type to filter the results by
 @return CloudRegionList
 */
 func (a *DefaultApiService) GetCloudProviderRegions(ctx _context.Context, id string, localVarOptionals *GetCloudProviderRegionsOpts) (CloudRegionList, *_nethttp.Response, error) {
@@ -880,11 +874,10 @@ type GetCloudProvidersOpts struct {
 
 /*
 GetCloudProviders Returns the list of supported cloud providers
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param optional nil or *GetCloudProvidersOpts - Optional Parameters:
-  - @param "Page" (optional.String) -  Page index
-  - @param "Size" (optional.String) -  Number of items in each page
-
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param optional nil or *GetCloudProvidersOpts - Optional Parameters:
+ * @param "Page" (optional.String) -  Page index
+ * @param "Size" (optional.String) -  Number of items in each page
 @return CloudProviderList
 */
 func (a *DefaultApiService) GetCloudProviders(ctx _context.Context, localVarOptionals *GetCloudProvidersOpts) (CloudProviderList, *_nethttp.Response, error) {
@@ -988,11 +981,10 @@ type GetMetricsByInstantQueryOpts struct {
 
 /*
 GetMetricsByInstantQuery Returns metrics with instant query by Central ID
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id The ID of record
-  - @param optional nil or *GetMetricsByInstantQueryOpts - Optional Parameters:
-  - @param "Filters" (optional.Interface of []string) -  List of metrics to fetch. Fetch all metrics when empty. List entries are Central internal metric names.
-
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param id The ID of record
+ * @param optional nil or *GetMetricsByInstantQueryOpts - Optional Parameters:
+ * @param "Filters" (optional.Interface of []string) -  List of metrics to fetch. Fetch all metrics when empty. List entries are Central internal metric names.
 @return MetricsInstantQueryList
 */
 func (a *DefaultApiService) GetMetricsByInstantQuery(ctx _context.Context, id string, localVarOptionals *GetMetricsByInstantQueryOpts) (MetricsInstantQueryList, *_nethttp.Response, error) {
@@ -1103,13 +1095,12 @@ type GetMetricsByRangeQueryOpts struct {
 
 /*
 GetMetricsByRangeQuery Returns metrics with timeseries range query by Central ID
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id The ID of record
-  - @param duration The length of time in minutes for which to return the metrics
-  - @param interval The interval in seconds between data points
-  - @param optional nil or *GetMetricsByRangeQueryOpts - Optional Parameters:
-  - @param "Filters" (optional.Interface of []string) -  List of metrics to fetch. Fetch all metrics when empty. List entries are Central internal metric names.
-
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param id The ID of record
+ * @param duration The length of time in minutes for which to return the metrics
+ * @param interval The interval in seconds between data points
+ * @param optional nil or *GetMetricsByRangeQueryOpts - Optional Parameters:
+ * @param "Filters" (optional.Interface of []string) -  List of metrics to fetch. Fetch all metrics when empty. List entries are Central internal metric names.
 @return MetricsRangeQueryList
 */
 func (a *DefaultApiService) GetMetricsByRangeQuery(ctx _context.Context, id string, duration int64, interval int64, localVarOptionals *GetMetricsByRangeQueryOpts) (MetricsRangeQueryList, *_nethttp.Response, error) {
@@ -1229,8 +1220,7 @@ func (a *DefaultApiService) GetMetricsByRangeQuery(ctx _context.Context, id stri
 
 /*
 GetServiceStatus Returns the status of resources, such as whether maximum service capacity has been reached
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 @return ServiceStatus
 */
 func (a *DefaultApiService) GetServiceStatus(ctx _context.Context) (ServiceStatus, *_nethttp.Response, error) {
@@ -1313,8 +1303,7 @@ func (a *DefaultApiService) GetServiceStatus(ctx _context.Context) (ServiceStatu
 
 /*
 GetVersionMetadata Returns the version metadata
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 @return VersionMetadata
 */
 func (a *DefaultApiService) GetVersionMetadata(ctx _context.Context) (VersionMetadata, *_nethttp.Response, error) {

@@ -30,9 +30,8 @@ type AcsTenantsApiService service
 /*
 CreateAcsClient Create ACS managed central client
 Create an ACS managed central client. Created ACS managed central clients are associated with the supplied organization id.
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param acsClientRequestData The name, redirect URIs and the organization id of the ACS managed central client
-
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param acsClientRequestData The name, redirect URIs and the organization id of the ACS managed central client
 @return AcsClientResponseData
 */
 func (a *AcsTenantsApiService) CreateAcsClient(ctx _context.Context, acsClientRequestData AcsClientRequestData) (AcsClientResponseData, *_nethttp.Response, error) {
@@ -148,8 +147,8 @@ func (a *AcsTenantsApiService) CreateAcsClient(ctx _context.Context, acsClientRe
 /*
 DeleteAcsClient Delete ACS managed central client
 Delete ACS managed central client by clientId. Throws not found exception if the client is not found
-  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param clientId
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param clientId
 */
 func (a *AcsTenantsApiService) DeleteAcsClient(ctx _context.Context, clientId string) (*_nethttp.Response, error) {
 	var (
