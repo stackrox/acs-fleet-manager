@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func removeSkipSchedulingFromClusters() *gormigrate.Migration {
+func dropSkipSchedulingFromClusters() *gormigrate.Migration {
 	type Cluster struct {
 		db.Model
 		CloudProvider                    string   `json:"cloud_provider"`
@@ -36,16 +36,22 @@ func removeSkipSchedulingFromClusters() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202303221200",
 		Migrate: func(tx *gorm.DB) error {
-			err := tx.AutoMigrate(&Cluster{})
+			err := tx.Migrator().DropColumn(&Cluster{}, "SkipScheduling")
 			if err != nil {
-				return fmt.Errorf("migrating 202303221200: %w", err)
+				return fmt.Errorf("migrating 202303220000: %w", err)
 			}
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			err := tx.Migrator().DropColumn(&Cluster{}, "SkipScheduling")
+			// If the DropColumn fails then per https://gorm.io/docs/migration.html#Auto-Migration
+			// this should still set the Cluster table to the expected schema from Cluster{} above,
+			// with the SkipScheduling column no longer present. This will not delete the column.
+			// It's not a true rollback because the column will now simply be unused, but the
+			// dropping of the column is just for cleanliness; leaving the data there will have no
+			// effect anyways.
+			err := tx.AutoMigrate(&Cluster{})
 			if err != nil {
-				return fmt.Errorf("rolling back 202303221200: %w", err)
+				return fmt.Errorf("rolling back 202303220000: %w", err)
 			}
 			return nil
 		},

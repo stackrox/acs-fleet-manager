@@ -41,6 +41,7 @@ func getMigrations() []*gormigrate.Migration {
 		addOrganisationNameToCentralRequest(),
 		addInternalToCentralRequest(),
 		addCentralDefaultVersion(),
+		dropSkipSchedulingFromClusters(),
 	}
 }
 
