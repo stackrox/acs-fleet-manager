@@ -345,3 +345,11 @@ func (h adminCentralHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
 }
+
+func (h adminCentralHandler) SetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
+	panic("TODO: implement")
+}
+
+func (h adminCentralHandler) GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
+	panic("TODO: implement")
+}

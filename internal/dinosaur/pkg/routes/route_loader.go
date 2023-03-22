@@ -235,6 +235,14 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminDbCentralsRouter.HandleFunc("/{id}", adminCentralHandler.DbDelete).
 		Name(logger.NewLogEvent("admin-db-delete-central", "[admin] delete central by id").ToString()).
 		Methods(http.MethodDelete)
+
+	adminCentralsRouter.HandleFunc("/default-version", adminCentralHandler.SetCentralDefaultVersion).
+		Name(logger.NewLogEvent("admin-set-centrals-default-version", "[admin] set centrals default version").ToString()).
+		Methods(http.MethodPost)
+	adminCentralsRouter.HandleFunc("/default-version", adminCentralHandler.GetCentralDefaultVersion).
+		Name(logger.NewLogEvent("admin-get-centrals-default-version", "[admin] get centrals default version").ToString()).
+		Methods(http.MethodGet)
+
 	adminCentralsRouter.HandleFunc("", adminCentralHandler.List).
 		Name(logger.NewLogEvent("admin-list-centrals", "[admin] list all centrals").ToString()).
 		Methods(http.MethodGet)
