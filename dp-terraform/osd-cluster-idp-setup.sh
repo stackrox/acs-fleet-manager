@@ -213,4 +213,4 @@ done
 echo "The following cluster parameters are currently stored in AWS Parameter Store:"
 run_chamber list "cluster-${CLUSTER_NAME}"
 echo "The following cluster parameters are currently stored in AWS Secrets Manager:"
-run_chamber list "cluster-${CLUSTER_NAME}" -p secretsmanager
+run_chamber list "cluster-${CLUSTER_NAME}" -b secretsmanager
