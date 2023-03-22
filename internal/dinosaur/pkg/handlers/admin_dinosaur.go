@@ -354,11 +354,11 @@ func (h adminCentralHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h adminCentralHandler) SetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
-	var centralDefaultVersion private.CentralDefaultVersion
+	centralDefaultVersion := &private.CentralDefaultVersion{}
 	cfg := &handlers.HandlerConfig{
-		MarshalInto: &centralDefaultVersion,
+		MarshalInto: centralDefaultVersion,
 		Validate: []handlers.Validate{
-			ValidateCentralVersionString(centralDefaultVersion.Version),
+			ValidateCentralVersion(centralDefaultVersion),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			if err := h.centralDefaultVersionService.SetDefaultVersion(centralDefaultVersion.Version); err != nil {
