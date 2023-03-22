@@ -78,7 +78,6 @@ func ServiceProviders() di.Option {
 		di.Provide(services.NewDataPlaneCentralService, di.As(new(services.DataPlaneCentralService))),
 		di.Provide(handlers.NewAuthenticationBuilder),
 		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
-		di.Provide(services.NewCentralDefaultVersionService),
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(quota.NewDefaultQuotaServiceFactory),
 		di.Provide(workers.NewClusterManager, di.As(new(workers.Worker))),
