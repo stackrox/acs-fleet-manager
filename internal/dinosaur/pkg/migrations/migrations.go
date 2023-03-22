@@ -40,7 +40,7 @@ func getMigrations() []*gormigrate.Migration {
 		addCloudAccountIDToCentralRequest(),
 		addOrganisationNameToCentralRequest(),
 		addInternalToCentralRequest(),
-		addCentralOperatorDefaultVersion(),
+		addCentralDefaultVersion(),
 	}
 }
 

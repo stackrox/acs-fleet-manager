@@ -16,6 +16,9 @@ type CentralConfig struct {
 	CentralTLSKeyFile                string `json:"central_tls_key_file"`
 	EnableCentralExternalCertificate bool   `json:"enable_central_external_certificate"`
 	CentralDomainName                string `json:"central_domain_name"`
+	// CentralDefaultVersion is the default version for new Central instances. If this is set to a
+	// non empty value, fleet-manager will store it as the new default value in its database on start up.
+	CentralDefaultVersion string `json:"central_default_version"`
 
 	CentralLifespan *CentralLifespanConfig `json:"central_lifespan"`
 	Quota           *CentralQuotaConfig    `json:"central_quota"`
@@ -49,6 +52,7 @@ func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.CentralLifespan.EnableDeletionOfExpiredCentral, "enable-deletion-of-expired-central", c.CentralLifespan.EnableDeletionOfExpiredCentral, "Enable the deletion of centrals when its life span has expired")
 	fs.IntVar(&c.CentralLifespan.CentralLifespanInHours, "central-lifespan", c.CentralLifespan.CentralLifespanInHours, "The desired lifespan of a Central instance")
 	fs.StringVar(&c.CentralDomainName, "central-domain-name", c.CentralDomainName, "The domain name to use for Central instances")
+	fs.StringVar(&c.CentralDefaultVersion, "central-default-version", c.CentralDefaultVersion, "The default version for Central instances")
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
 	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of central evaluator instances")
 
