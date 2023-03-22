@@ -45,17 +45,18 @@ type options struct {
 	IAMConfig            *iam.IAMConfig
 	CentralRequestConfig *config.CentralRequestConfig
 
-	AMSClient               ocm.AMSClient
-	Central                 services.DinosaurService
-	CloudProviders          services.CloudProvidersService
-	Observatorium           services.ObservatoriumService
-	IAM                     sso.IAMService
-	DataPlaneCluster        services.DataPlaneClusterService
-	DataPlaneCentralService services.DataPlaneCentralService
-	AccountService          account.AccountService
-	AuthService             authorization.Authorization
-	DB                      *db.ConnectionFactory
-	Telemetry               *services.Telemetry
+	AMSClient                    ocm.AMSClient
+	Central                      services.DinosaurService
+	CentralDefaultVersionService services.CentralDefaultVersionService
+	CloudProviders               services.CloudProvidersService
+	Observatorium                services.ObservatoriumService
+	IAM                          sso.IAMService
+	DataPlaneCluster             services.DataPlaneClusterService
+	DataPlaneCentralService      services.DataPlaneCentralService
+	AccountService               account.AccountService
+	AuthService                  authorization.Authorization
+	DB                           *db.ConnectionFactory
+	Telemetry                    *services.Telemetry
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
@@ -222,7 +223,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	auth.UseFleetShardAuthorizationMiddleware(apiV1DataPlaneRequestsRouter,
 		s.IAMConfig.RedhatSSORealm.ValidIssuerURI, s.FleetShardAuthZConfig)
 
-	adminCentralHandler := handlers.NewAdminCentralHandler(s.Central, s.AccountService, s.ProviderConfig, s.Telemetry)
+	adminCentralHandler := handlers.NewAdminCentralHandler(s.Central, s.AccountService, s.ProviderConfig, s.Telemetry, s.CentralDefaultVersionService)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(

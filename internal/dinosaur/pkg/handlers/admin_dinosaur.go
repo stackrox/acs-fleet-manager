@@ -24,19 +24,26 @@ import (
 )
 
 type adminCentralHandler struct {
-	service        services.DinosaurService
-	accountService account.AccountService
-	providerConfig *config.ProviderConfig
-	telemetry      *services.Telemetry
+	service                      services.DinosaurService
+	accountService               account.AccountService
+	providerConfig               *config.ProviderConfig
+	telemetry                    *services.Telemetry
+	centralDefaultVersionService services.CentralDefaultVersionService
 }
 
 // NewAdminCentralHandler ...
-func NewAdminCentralHandler(service services.DinosaurService, accountService account.AccountService, providerConfig *config.ProviderConfig, telemetry *services.Telemetry) *adminCentralHandler {
+func NewAdminCentralHandler(
+	service services.DinosaurService,
+	accountService account.AccountService,
+	providerConfig *config.ProviderConfig,
+	telemetry *services.Telemetry,
+	centralDefaultVersionService services.CentralDefaultVersionService) *adminCentralHandler {
 	return &adminCentralHandler{
-		service:        service,
-		accountService: accountService,
-		providerConfig: providerConfig,
-		telemetry:      telemetry,
+		service:                      service,
+		accountService:               accountService,
+		providerConfig:               providerConfig,
+		telemetry:                    telemetry,
+		centralDefaultVersionService: centralDefaultVersionService,
 	}
 }
 
@@ -347,9 +354,34 @@ func (h adminCentralHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h adminCentralHandler) SetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
-	panic("TODO: implement")
+	var centralDefaultVersion private.CentralDefaultVersion
+	cfg := &handlers.HandlerConfig{
+		MarshalInto: &centralDefaultVersion,
+		Validate: []handlers.Validate{
+			ValidateCentralVersionString(centralDefaultVersion.Version),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+			if err := h.centralDefaultVersionService.SetDefaultVersion(centralDefaultVersion.Version); err != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Set CentralDefaultVersion requests: %s", err.Error())
+			}
+
+			return nil, nil
+		},
+	}
+
+	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
 func (h adminCentralHandler) GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
-	panic("TODO: implement")
+	cfg := &handlers.HandlerConfig{
+		Action: func() (interface{}, *errors.ServiceError) {
+			version, err := h.centralDefaultVersionService.GetDefaultVersion()
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Get CentralDefaultVersion requests: %s", err.Error())
+			}
+			return &private.CentralDefaultVersion{Version: version}, nil
+		},
+	}
+
+	handlers.Handle(w, r, cfg, http.StatusOK)
 }

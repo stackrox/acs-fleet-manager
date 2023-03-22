@@ -28,8 +28,9 @@ type AgentClustersApiService service
 
 /*
 GetCentrals Get the list of ManagedaCentrals for the specified agent cluster
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+
 @return ManagedCentralList
 */
 func (a *AgentClustersApiService) GetCentrals(ctx _context.Context, id string) (ManagedCentralList, *_nethttp.Response, error) {
@@ -124,8 +125,9 @@ func (a *AgentClustersApiService) GetCentrals(ctx _context.Context, id string) (
 
 /*
 GetDataPlaneClusterAgentConfig Get the data plane cluster agent configuration
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+
 @return DataplaneClusterAgentConfig
 */
 func (a *AgentClustersApiService) GetDataPlaneClusterAgentConfig(ctx _context.Context, id string) (DataplaneClusterAgentConfig, *_nethttp.Response, error) {
@@ -220,9 +222,9 @@ func (a *AgentClustersApiService) GetDataPlaneClusterAgentConfig(ctx _context.Co
 
 /*
 UpdateAgentClusterStatus Update the status of an agent cluster
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
- * @param dataPlaneClusterUpdateStatusRequest Cluster status update data
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+  - @param dataPlaneClusterUpdateStatusRequest Cluster status update data
 */
 func (a *AgentClustersApiService) UpdateAgentClusterStatus(ctx _context.Context, id string, dataPlaneClusterUpdateStatusRequest DataPlaneClusterUpdateStatusRequest) (*_nethttp.Response, error) {
 	var (
@@ -308,9 +310,9 @@ func (a *AgentClustersApiService) UpdateAgentClusterStatus(ctx _context.Context,
 
 /*
 UpdateCentralClusterStatus Update the status of Centrals on an agent cluster
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
- * @param requestBody Centrals status update data
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+  - @param requestBody Centrals status update data
 */
 func (a *AgentClustersApiService) UpdateCentralClusterStatus(ctx _context.Context, id string, requestBody map[string]DataPlaneCentralStatus) (*_nethttp.Response, error) {
 	var (

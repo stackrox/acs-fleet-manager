@@ -30,9 +30,10 @@ type DefaultApiService service
 /*
 CreateCentral Creates a Central request
 Creates a new Central that is owned by the user and organisation authenticated for the request. Each Central has a single owner organisation and a single owner user. This API allows providing custom resource settings for the new Central instance.
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param async Perform the action in an asynchronous manner
- * @param centralRequestPayload Central data
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param async Perform the action in an asynchronous manner
+  - @param centralRequestPayload Central data
+
 @return CentralRequest
 */
 func (a *DefaultApiService) CreateCentral(ctx _context.Context, async bool, centralRequestPayload CentralRequestPayload) (CentralRequest, *_nethttp.Response, error) {
@@ -168,9 +169,10 @@ func (a *DefaultApiService) CreateCentral(ctx _context.Context, async bool, cent
 
 /*
 DeleteCentralById Delete a Central by ID
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
- * @param async Perform the action in an asynchronous manner
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+  - @param async Perform the action in an asynchronous manner
+
 @return Central
 */
 func (a *DefaultApiService) DeleteCentralById(ctx _context.Context, id string, async bool) (Central, *_nethttp.Response, error) {
@@ -286,8 +288,8 @@ func (a *DefaultApiService) DeleteCentralById(ctx _context.Context, id string, a
 
 /*
 DeleteDbCentralById Delete a Central directly in the Database by ID
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
 */
 func (a *DefaultApiService) DeleteDbCentralById(ctx _context.Context, id string) (*_nethttp.Response, error) {
 	var (
@@ -391,8 +393,9 @@ func (a *DefaultApiService) DeleteDbCentralById(ctx _context.Context, id string)
 
 /*
 GetCentralById Return the details of Central instance by ID
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+
 @return Central
 */
 func (a *DefaultApiService) GetCentralById(ctx _context.Context, id string) (Central, *_nethttp.Response, error) {
@@ -507,7 +510,8 @@ func (a *DefaultApiService) GetCentralById(ctx _context.Context, id string) (Cen
 
 /*
 GetCentralDefaultVersion Get the current central default version
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+
 @return CentralDefaultVersion
 */
 func (a *DefaultApiService) GetCentralDefaultVersion(ctx _context.Context) (CentralDefaultVersion, *_nethttp.Response, error) {
@@ -618,12 +622,13 @@ type GetCentralsOpts struct {
 
 /*
 GetCentrals Returns a list of Centrals
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *GetCentralsOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
- * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the following `centralRequests` fields:  * centralUIURL * centralDataURL * cloud_provider * cluster_id * created_at * href * id * instance_type * multi_az * name * organisation_id * owner * region * status * updated_at * version  For example, to return all Central instances ordered by their name, use the following syntax:  ```sql name asc ```  To return all Central instances ordered by their name _and_ created date, use the following syntax:  ```sql name asc, created_at asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
- * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of an SQL statement. Allowed fields in the search are `cloud_provider`, `name`, `owner`, `region`, and `status`. Allowed comparators are `<>`, `=`, or `LIKE`. Allowed joins are `AND` and `OR`. However, you can use a maximum of 10 joins in a search query.  Examples:  To return a Central instance with the name `my-central` and the region `aws`, use the following syntax:  ``` name = my-central and cloud_provider = aws ```[p-]  To return a Central instance with a name that starts with `my`, use the following syntax:  ``` name like my%25 ```  If the parameter isn't provided, or if the value is empty, then all the Central instances that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param optional nil or *GetCentralsOpts - Optional Parameters:
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+  - @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the following `centralRequests` fields:  * centralUIURL * centralDataURL * cloud_provider * cluster_id * created_at * href * id * instance_type * multi_az * name * organisation_id * owner * region * status * updated_at * version  For example, to return all Central instances ordered by their name, use the following syntax:  ```sql name asc ```  To return all Central instances ordered by their name _and_ created date, use the following syntax:  ```sql name asc, created_at asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
+  - @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of an SQL statement. Allowed fields in the search are `cloud_provider`, `name`, `owner`, `region`, and `status`. Allowed comparators are `<>`, `=`, or `LIKE`. Allowed joins are `AND` and `OR`. However, you can use a maximum of 10 joins in a search query.  Examples:  To return a Central instance with the name `my-central` and the region `aws`, use the following syntax:  ``` name = my-central and cloud_provider = aws ```[p-]  To return a Central instance with a name that starts with `my`, use the following syntax:  ``` name like my%25 ```  If the parameter isn't provided, or if the value is empty, then all the Central instances that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+
 @return CentralList
 */
 func (a *DefaultApiService) GetCentrals(ctx _context.Context, localVarOptionals *GetCentralsOpts) (CentralList, *_nethttp.Response, error) {
@@ -748,8 +753,8 @@ func (a *DefaultApiService) GetCentrals(ctx _context.Context, localVarOptionals 
 
 /*
 SetCentralDefaultVersion Set the central default version
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param centralDefaultVersion Central version data
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param centralDefaultVersion Central version data
 */
 func (a *DefaultApiService) SetCentralDefaultVersion(ctx _context.Context, centralDefaultVersion CentralDefaultVersion) (*_nethttp.Response, error) {
 	var (
@@ -843,9 +848,10 @@ func (a *DefaultApiService) SetCentralDefaultVersion(ctx _context.Context, centr
 
 /*
 UpdateCentralById Update a Central instance by ID
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
- * @param centralUpdateRequest Central update data
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+  - @param centralUpdateRequest Central update data
+
 @return Central
 */
 func (a *DefaultApiService) UpdateCentralById(ctx _context.Context, id string, centralUpdateRequest CentralUpdateRequest) (Central, *_nethttp.Response, error) {

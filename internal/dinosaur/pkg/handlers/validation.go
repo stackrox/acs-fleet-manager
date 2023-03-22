@@ -255,3 +255,14 @@ func ValidateResourceName(name string) (corev1.ResourceName, bool) {
 	}
 	return corev1.ResourceName(""), false
 }
+
+// ValidateCentralVersionString validates the given version string
+func ValidateCentralVersionString(version string) handlers.Validate {
+	return func() *errors.ServiceError {
+		if err := services.ValidateCentralVersionString(version); err != nil {
+			return errors.Validation("validating central version string: %s", err)
+		}
+
+		return nil
+	}
+}

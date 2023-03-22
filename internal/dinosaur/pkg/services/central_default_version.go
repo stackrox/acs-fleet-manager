@@ -48,6 +48,10 @@ func (c *centralDefaultVersionService) Start() {
 		return
 	}
 
+	if err := ValidateCentralVersionString(c.centralConfig.CentralDefaultVersion); err != nil {
+		glog.Errorf("validating central default version: %s with error: %s", c.centralConfig.CentralDefaultVersion, err)
+	}
+
 	if err := c.SetDefaultVersion(c.centralConfig.CentralDefaultVersion); err != nil {
 		glog.Errorf("setting central default version to: %s: %s", c.centralConfig.CentralDefaultVersion, err)
 		os.Exit(1)
@@ -61,10 +65,6 @@ func (c *centralDefaultVersionService) Start() {
 func (c *centralDefaultVersionService) Stop() {}
 
 func (c *centralDefaultVersionService) SetDefaultVersion(version string) error {
-	if !isVersionAllowed(version) {
-		return fmt.Errorf("version: %s does not match one of the allowed version prefixes: %s", version, allowedVersionPrefixes)
-	}
-
 	dbConn := c.connectionFactory.New()
 	versionEntry := &dbapi.CentralDefaultVersion{Version: version}
 
@@ -85,7 +85,16 @@ func (c *centralDefaultVersionService) GetDefaultVersion() (string, error) {
 	return defaultVersion.Version, nil
 }
 
-func isVersionAllowed(version string) bool {
+// ValidateCentralVersionString validates if the given version is allowed to be stored
+func ValidateCentralVersionString(version string) error {
+	if !isAllowedVersion(version) {
+		return fmt.Errorf("version: %s does not match one of the allowed version prefixes: %s", version, allowedVersionPrefixes)
+	}
+
+	return nil
+}
+
+func isAllowedVersion(version string) bool {
 	for _, v := range allowedVersionPrefixes {
 		if strings.HasPrefix(version, v) {
 			return true
