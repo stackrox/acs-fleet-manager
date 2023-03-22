@@ -15,7 +15,6 @@ import (
 )
 
 func TestPlacementStrategyType(t *testing.T) {
-
 	tt := []struct {
 		description          string
 		createClusterService func() ClusterService
@@ -27,20 +26,8 @@ func TestPlacementStrategyType(t *testing.T) {
 			createClusterService: func() ClusterService {
 				return &ClusterServiceMock{}
 			},
-			dataPlaneConfig: &config.DataplaneClusterConfig{
-				DataPlaneClusterTarget: "",
-			},
-			expectedType: FirstReadyPlacementStrategy{},
-		},
-		{
-			description: "TargetClusterPlacementStrategy",
-			createClusterService: func() ClusterService {
-				return &ClusterServiceMock{}
-			},
-			dataPlaneConfig: &config.DataplaneClusterConfig{
-				DataPlaneClusterTarget: "test-cluster-id",
-			},
-			expectedType: TargetClusterPlacementStrategy{},
+			dataPlaneConfig: &config.DataplaneClusterConfig{},
+			expectedType:    FirstReadyPlacementStrategy{},
 		},
 	}
 
