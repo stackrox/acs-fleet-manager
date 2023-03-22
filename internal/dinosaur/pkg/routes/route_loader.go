@@ -45,17 +45,17 @@ type options struct {
 	IAMConfig            *iam.IAMConfig
 	CentralRequestConfig *config.CentralRequestConfig
 
-	AMSClient                ocm.AMSClient
-	Dinosaur                 services.DinosaurService
-	CloudProviders           services.CloudProvidersService
-	Observatorium            services.ObservatoriumService
-	IAM                      sso.IAMService
-	DataPlaneCluster         services.DataPlaneClusterService
-	DataPlaneDinosaurService services.DataPlaneCentralService
-	AccountService           account.AccountService
-	AuthService              authorization.Authorization
-	DB                       *db.ConnectionFactory
-	Telemetry                *services.Telemetry
+	AMSClient               ocm.AMSClient
+	Central                 services.DinosaurService
+	CloudProviders          services.CloudProvidersService
+	Observatorium           services.ObservatoriumService
+	IAM                     sso.IAMService
+	DataPlaneCluster        services.DataPlaneClusterService
+	DataPlaneCentralService services.DataPlaneCentralService
+	AccountService          account.AccountService
+	AuthService             authorization.Authorization
+	DB                      *db.ConnectionFactory
+	Telemetry               *services.Telemetry
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
@@ -87,12 +87,12 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}
 
-	dinosaurHandler := handlers.NewDinosaurHandler(s.Dinosaur, s.ProviderConfig, s.AuthService, s.Telemetry,
+	centralHandler := handlers.NewDinosaurHandler(s.Central, s.ProviderConfig, s.AuthService, s.Telemetry,
 		s.CentralRequestConfig)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
-	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Dinosaur, s.AccessControlListConfig)
+	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Central, s.AccessControlListConfig)
 	cloudAccountsHandler := handlers.NewCloudAccountsHandler(s.AMSClient)
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
@@ -127,26 +127,26 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		ID:   "centrals",
 		Kind: "CentralList",
 	})
-	apiV1DinosaursRouter := apiV1Router.PathPrefix("/centrals").Subrouter()
-	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Get).
+	apiV1CentralsRouter := apiV1Router.PathPrefix("/centrals").Subrouter()
+	apiV1CentralsRouter.HandleFunc("/{id}", centralHandler.Get).
 		Name(logger.NewLogEvent("get-central", "get a central instance").ToString()).
 		Methods(http.MethodGet)
-	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Delete).
+	apiV1CentralsRouter.HandleFunc("/{id}", centralHandler.Delete).
 		Name(logger.NewLogEvent("delete-central", "delete a central instance").ToString()).
 		Methods(http.MethodDelete)
-	apiV1DinosaursRouter.HandleFunc("", dinosaurHandler.List).
+	apiV1CentralsRouter.HandleFunc("", centralHandler.List).
 		Name(logger.NewLogEvent("list-central", "list all central").ToString()).
 		Methods(http.MethodGet)
-	apiV1DinosaursRouter.Use(requireIssuer)
-	apiV1DinosaursRouter.Use(requireOrgID)
-	apiV1DinosaursRouter.Use(authorizeMiddleware)
+	apiV1CentralsRouter.Use(requireIssuer)
+	apiV1CentralsRouter.Use(requireOrgID)
+	apiV1CentralsRouter.Use(authorizeMiddleware)
 
-	apiV1DinosaursCreateRouter := apiV1DinosaursRouter.NewRoute().Subrouter()
-	apiV1DinosaursCreateRouter.HandleFunc("", dinosaurHandler.Create).Methods(http.MethodPost)
-	apiV1DinosaursCreateRouter.Use(requireTermsAcceptance)
+	apiV1CentralsCreateRouter := apiV1CentralsRouter.NewRoute().Subrouter()
+	apiV1CentralsCreateRouter.HandleFunc("", centralHandler.Create).Methods(http.MethodPost)
+	apiV1CentralsCreateRouter.Use(requireTermsAcceptance)
 
-	//  /dinosaurs/{id}/metrics
-	apiV1MetricsRouter := apiV1DinosaursRouter.PathPrefix("/{id}/metrics").Subrouter()
+	//  /centrals/{id}/metrics
+	apiV1MetricsRouter := apiV1CentralsRouter.PathPrefix("/{id}/metrics").Subrouter()
 	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).
 		Name(logger.NewLogEvent("get-metrics", "list metrics by range").ToString()).
 		Methods(http.MethodGet)
@@ -204,7 +204,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	// /agent-clusters/{id}
 	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
-	dataPlaneDinosaurHandler := handlers.NewDataPlaneDinosaurHandler(s.DataPlaneDinosaurService, s.Dinosaur, s.ManagedCentralPresenter)
+	dataPlaneCentralHandler := handlers.NewDataPlaneDinosaurHandler(s.DataPlaneCentralService, s.Central, s.ManagedCentralPresenter)
 	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).
 		Name(logger.NewLogEvent("get-dataplane-cluster-config", "get dataplane cluster config by id").ToString()).
@@ -212,17 +212,17 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).
 		Name(logger.NewLogEvent("update-dataplane-cluster-status", "update dataplane cluster status by id").ToString()).
 		Methods(http.MethodPut)
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/centrals/status", dataPlaneDinosaurHandler.UpdateDinosaurStatuses).
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/centrals/status", dataPlaneCentralHandler.UpdateDinosaurStatuses).
 		Name(logger.NewLogEvent("update-dataplane-centrals-status", "update dataplane centrals status by id").ToString()).
 		Methods(http.MethodPut)
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/centrals", dataPlaneDinosaurHandler.GetAll).
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/centrals", dataPlaneCentralHandler.GetAll).
 		Name(logger.NewLogEvent("list-dataplane-centrals", "list all dataplane centrals").ToString()).
 		Methods(http.MethodGet)
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	auth.UseFleetShardAuthorizationMiddleware(apiV1DataPlaneRequestsRouter,
 		s.IAMConfig.RedhatSSORealm.ValidIssuerURI, s.FleetShardAuthZConfig)
 
-	adminCentralHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig, s.Telemetry)
+	adminCentralHandler := handlers.NewAdminCentralHandler(s.Central, s.AccountService, s.ProviderConfig, s.Telemetry)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(

@@ -23,8 +23,8 @@ var (
 	// ValidDinosaurClusterNameRegexp ...
 	ValidDinosaurClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 
-	// MaxDinosaurNameLength ...
-	MaxDinosaurNameLength = 32
+	// MaxCentralNameLength ...
+	MaxCentralNameLength = 32
 
 	supportedResources = []corev1.ResourceName{corev1.ResourceCPU, corev1.ResourceMemory}
 )
