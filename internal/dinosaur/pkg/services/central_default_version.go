@@ -10,6 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	"gorm.io/gorm"
 )
 
 var allowedVersionPrefixes = []string{
@@ -40,16 +41,6 @@ func (c *centralDefaultVersionService) Start() {
 		return
 	}
 
-	currentVersion, err := c.GetDefaultVersion()
-	if err != nil {
-		glog.Errorf("error getting current central default version: %s", err)
-		os.Exit(1)
-	}
-
-	if currentVersion == c.centralConfig.CentralDefaultVersion {
-		return
-	}
-
 	if err := ValidateCentralVersionString(c.centralConfig.CentralDefaultVersion); err != nil {
 		glog.Errorf("validating central default version: %s with error: %s", c.centralConfig.CentralDefaultVersion, err)
 	}
@@ -68,7 +59,17 @@ func (c *centralDefaultVersionService) Stop() {}
 
 func (c *centralDefaultVersionService) SetDefaultVersion(version string) error {
 	dbConn := c.connectionFactory.New()
+
 	versionEntry := &dbapi.CentralDefaultVersion{Version: version}
+
+	currentVersion, err := queryCurrentDefaultVersion(dbConn)
+	if err != nil {
+		return err
+	}
+
+	if currentVersion == version {
+		return nil
+	}
 
 	if err := dbConn.Create(versionEntry).Error; err != nil {
 		return fmt.Errorf("failed creating central default version entry: %s", err)
@@ -79,6 +80,10 @@ func (c *centralDefaultVersionService) SetDefaultVersion(version string) error {
 
 func (c *centralDefaultVersionService) GetDefaultVersion() (string, error) {
 	dbConn := c.connectionFactory.New()
+	return queryCurrentDefaultVersion(dbConn)
+}
+
+func queryCurrentDefaultVersion(dbConn *gorm.DB) (string, error) {
 	defaultVersion := &dbapi.CentralDefaultVersion{}
 	if err := dbConn.Order("id DESC").First(defaultVersion).Error; err != nil {
 		return "", fmt.Errorf("failed getting central default version: %s", err)
