@@ -109,8 +109,7 @@ load_external_config() {
     local parameter_store_output
     local secrets_manager_output
     parameter_store_output=$(run_chamber env "$service")
-    [[ -z "$parameter_store_output" ]] && echo "WARNING: no parameters found under '/$service' in AWS Parameter Store of this environment"
     secrets_manager_output=$(run_chamber env "$service" -b secretsmanager)
-    [[ -z "$secrets_manager_output" ]] && echo "WARNING: no parameters found under '/$service' in AWS Secrets Manager of this environment"
+    [[ -z "$parameter_store_output" && -z "$secrets_manager_output" ]] && echo "WARNING: no parameters found under '/$service' of this environment"
     eval "$(printf '%s\n%s' "$parameter_store_output" "$secrets_manager_output" | sed -E "s/(^export +)(.*)/readonly ${prefix}\2/")"
 }
