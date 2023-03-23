@@ -684,7 +684,6 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		newCluster.ProviderType = manualCluster.ProviderType
 		newCluster.ClusterDNS = manualCluster.ClusterDNS
 		newCluster.SupportedInstanceType = manualCluster.SupportedInstanceType
-		newCluster.SkipScheduling = false
 
 		if err := cluster.SetAvailableCentralOperatorVersions(manualCluster.AvailableCentralOperatorVersions); err != nil {
 			return []error{errors.Wrapf(err, "Failed to update operator versions for manual cluster %s with config file", manualCluster.ClusterID)}
@@ -715,23 +714,15 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	}
 
 	var idsOfClustersToDeprovision []string
-	var idsOfClusterToSkipScheduling []string
 	for _, c := range dinosaurInstanceCount {
 		if c.Count > 0 {
 			glog.Infof("Excess cluster %s is not going to be deleted because it has %d centrals.", c.Clusterid, c.Count)
-			idsOfClusterToSkipScheduling = append(idsOfClusterToSkipScheduling, c.Clusterid)
 		} else {
 			glog.Infof("Excess cluster is going to be deleted %s", c.Clusterid)
 			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, c.Clusterid)
 		}
 	}
 
-	if len(idsOfClusterToSkipScheduling) != 0 {
-		if err := c.ClusterService.UpdateMultiClusterSkipScheduling(idsOfClusterToSkipScheduling, true); err != nil {
-			return []error{errors.Wrapf(err, "setting skip_scheduling for clusters: %v", idsOfClusterToSkipScheduling)}
-		}
-	}
-	glog.Infof("Set skip_scheduling to true for clusters: %v", idsOfClusterToSkipScheduling)
 	if len(idsOfClustersToDeprovision) == 0 {
 		return nil
 	}

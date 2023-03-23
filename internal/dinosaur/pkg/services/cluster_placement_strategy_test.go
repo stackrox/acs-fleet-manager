@@ -75,26 +75,6 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 			expectedCluster: nil,
 		},
 		{
-			description: "should return error if no clusters with SkipScheduling false was found",
-			newClusterServiceMock: func() ClusterService {
-				return &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceErrors.ServiceError) {
-						return []*api.Cluster{
-							buildCluster(func(cluster *api.Cluster) {
-								cluster.SkipScheduling = true
-							}),
-							buildCluster(func(cluster *api.Cluster) {
-								cluster.SkipScheduling = true
-							}),
-						}, nil
-					},
-				}
-			},
-			central:         buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {}),
-			expectedError:   errors.New("no schedulable cluster found"),
-			expectedCluster: nil,
-		},
-		{
 			description: "should return error if no cluster supporting central instancetype was found",
 			newClusterServiceMock: func() ClusterService {
 				return &ClusterServiceMock{

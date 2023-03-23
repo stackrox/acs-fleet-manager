@@ -39,7 +39,7 @@ func (d FirstReadyPlacementStrategy) FindCluster(central *dbapi.CentralRequest) 
 	}
 
 	for _, c := range clusters {
-		if !c.SkipScheduling && supportsInstanceType(c, central.InstanceType) {
+		if d.clusterService.IsClusterSchedulable(c.ID) && supportsInstanceType(c, central.InstanceType) {
 			return c, nil
 		}
 	}
