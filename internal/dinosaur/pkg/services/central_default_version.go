@@ -20,6 +20,8 @@ var allowedVersionPrefixes = []string{
 
 // CentralDefaultVersionService defines methods for managing
 // CentralDefaultVersion values through API and on startup of fleet-manager
+//
+//go:generate moq -out central_default_version_moq.go . CentralDefaultVersionService
 type CentralDefaultVersionService interface {
 	environments.BootService
 	SetDefaultVersion(string) error
