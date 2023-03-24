@@ -724,16 +724,10 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
 
-	if central.Annotations != nil {
-		// avoid being stuck in a deprovisioning state due to the pause reconcile annotation
-		if _, exists := central.Annotations[pauseReconcileAnnotation]; exists {
-			central.Annotations[pauseReconcileAnnotation] = "false"
-			err = r.client.Update(ctx, central)
-			if err != nil {
-				return false, fmt.Errorf("removing pause reconcile annotation: %v", err)
-			}
-
-		}
+	// avoid being stuck in a deprovisioning state due to the pause reconcile annotation
+	err = r.disablePauseReconcileIfPresent(ctx, central)
+	if err != nil {
+		return false, err
 	}
 
 	if err := r.client.Delete(ctx, central); err != nil {
@@ -741,6 +735,24 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 	}
 	glog.Infof("Central CR %s/%s is marked for deletion", central.GetNamespace(), central.GetName())
 	return false, nil
+}
+
+func (r *CentralReconciler) disablePauseReconcileIfPresent(ctx context.Context, central *v1alpha1.Central) error {
+	if central.Annotations == nil {
+		return nil
+	}
+
+	if value, exists := central.Annotations[pauseReconcileAnnotation]; !exists || value != "true" {
+		return nil
+	}
+
+	central.Annotations[pauseReconcileAnnotation] = "false"
+	err := r.client.Update(ctx, central)
+	if err != nil {
+		return fmt.Errorf("removing pause reconcile annotation: %v", err)
+	}
+
+	return nil
 }
 
 func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
