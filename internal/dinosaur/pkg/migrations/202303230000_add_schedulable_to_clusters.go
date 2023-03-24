@@ -35,7 +35,7 @@ func addSchedulableToClusters() *gormigrate.Migration {
 		Schedulable                      bool     `json:"schedulable"` // To be added
 	}
 
-	id := "202303221200"
+	id := "202303231200"
 	colName := "Schedulable"
 	return &gormigrate.Migration{
 		ID: id,
