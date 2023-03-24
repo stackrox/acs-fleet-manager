@@ -335,6 +335,28 @@ func TestReconcileDelete(t *testing.T) {
 	assert.True(t, k8sErrors.IsNotFound(err))
 }
 
+func TestDisablePauseAnnotation(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+
+	central := &v1alpha1.Central{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
+	require.NoError(t, err)
+	central.Annotations[pauseReconcileAnnotation] = "true"
+	err = fakeClient.Update(context.TODO(), central)
+	require.NoError(t, err)
+
+	err = r.disablePauseReconcileIfPresent(context.TODO(), central)
+	require.NoError(t, err)
+
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
+	require.NoError(t, err)
+	require.Equal(t, "false", central.Annotations[pauseReconcileAnnotation])
+}
+
 func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
