@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 )
 
@@ -20,7 +19,7 @@ type ClusterPlacementStrategy interface {
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the
 // placement configuration. An appropriate ClusterPlacementStrategy implementation
 // is returned based on the received parameters content
-func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneClusterConfig *config.DataplaneClusterConfig) ClusterPlacementStrategy {
+func NewClusterPlacementStrategy(clusterService ClusterService) ClusterPlacementStrategy {
 	return &FirstReadyPlacementStrategy{clusterService: clusterService}
 }
 
@@ -39,7 +38,7 @@ func (d FirstReadyPlacementStrategy) FindCluster(central *dbapi.CentralRequest) 
 	}
 
 	for _, c := range clusters {
-		if d.clusterService.IsClusterSchedulable(c.ID) && supportsInstanceType(c, central.InstanceType) {
+		if c.Schedulable && supportsInstanceType(c, central.InstanceType) {
 			return c, nil
 		}
 	}

@@ -113,6 +113,7 @@ func (c clusterService) Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.S
 	cluster.ClusterID = clusterSpec.InternalID
 	cluster.ExternalID = clusterSpec.ExternalID
 	cluster.Status = clusterSpec.Status
+	cluster.Schedulable = true
 	if clusterSpec.AdditionalInfo != nil {
 		clusterInfo, err := json.Marshal(clusterSpec.AdditionalInfo)
 		if err != nil {

@@ -170,6 +170,8 @@ type Cluster struct {
 	// SupportedInstanceType holds information on what kind of instances types can be provisioned on this cluster.
 	// A cluster can support two kinds of instance types: 'eval', 'standard' or both in this case it will be a comma separated list of instance types e.g 'standard,eval'.
 	SupportedInstanceType string `json:"supported_instance_type"`
+	// The cluster is "schedulable" if tenants can be placed there.
+	Schedulable bool `json:"schedulable"`
 }
 
 // ClusterList ...

@@ -93,6 +93,24 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 			expectedCluster: nil,
 		},
 		{
+			description: "should return error if no cluster is schedulable",
+			newClusterServiceMock: func() ClusterService {
+				return &ClusterServiceMock{
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceErrors.ServiceError) {
+						return []*api.Cluster{
+							buildCluster(func(cluster *api.Cluster) {}),
+							buildCluster(func(cluster *api.Cluster) {}),
+						}, nil
+					},
+				}
+			},
+			central: buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {
+				centralRequest.InstanceType = "standard"
+			}),
+			expectedError:   errors.New("no schedulable cluster found"),
+			expectedCluster: nil,
+		},
+		{
 			description: "should return first schedulable cluster",
 			newClusterServiceMock: func() ClusterService {
 				return &ClusterServiceMock{
