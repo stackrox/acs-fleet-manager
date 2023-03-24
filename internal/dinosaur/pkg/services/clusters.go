@@ -261,6 +261,7 @@ type FindClusterCriteria struct {
 	MultiAZ               bool
 	Status                api.ClusterStatus
 	SupportedInstanceType string
+	Schedulable           bool
 }
 
 // FindCluster ...

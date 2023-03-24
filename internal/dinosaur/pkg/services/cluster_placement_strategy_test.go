@@ -98,8 +98,10 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 				return &ClusterServiceMock{
 					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceErrors.ServiceError) {
 						return []*api.Cluster{
-							buildCluster(func(cluster *api.Cluster) {}),
-							buildCluster(func(cluster *api.Cluster) {}),
+							buildCluster(func(cluster *api.Cluster) {
+								cluster.SupportedInstanceType = "standard,eval"
+								cluster.Schedulable = false
+							}),
 						}, nil
 					},
 				}
@@ -116,9 +118,14 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 				return &ClusterServiceMock{
 					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceErrors.ServiceError) {
 						return []*api.Cluster{
-							buildCluster(func(cluster *api.Cluster) {}),
+							buildCluster(func(cluster *api.Cluster) { /* No supported instance type */ }),
 							buildCluster(func(cluster *api.Cluster) {
 								cluster.SupportedInstanceType = "standard,eval"
+								cluster.Schedulable = false
+							}),
+							buildCluster(func(cluster *api.Cluster) {
+								cluster.SupportedInstanceType = "standard,eval"
+								cluster.Schedulable = true
 							}),
 						}, nil
 					},
