@@ -36,8 +36,9 @@ type Config struct {
 
 // AWS for configuring AWS specific parameters
 type AWS struct {
-	Region  string `env:"AWS_REGION" envDefault:"us-east-1"`
-	RoleARN string `env:"AWS_ROLE_ARN"`
+	Region    string `env:"AWS_REGION" envDefault:"us-east-1"`
+	RoleARN   string `env:"AWS_ROLE_ARN"`
+	TokenFile string `env:"AWS_STS_TOKEN_FILE" envDefault:"/var/run/secrets/tokens/aws-token"`
 }
 
 // ManagedDB for configuring managed DB specific parameters
