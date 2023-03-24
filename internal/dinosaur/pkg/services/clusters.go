@@ -256,12 +256,10 @@ func (c clusterService) ListGroupByProviderAndRegion(providers []string, regions
 
 // FindClusterCriteria ...
 type FindClusterCriteria struct {
-	Provider              string
-	Region                string
-	MultiAZ               bool
-	Status                api.ClusterStatus
-	SupportedInstanceType string
-	Schedulable           bool
+	Provider string
+	Region   string
+	MultiAZ  bool
+	Status   api.ClusterStatus
 }
 
 // FindCluster ...
@@ -275,11 +273,6 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 		Region:        criteria.Region,
 		MultiAZ:       criteria.MultiAZ,
 		Status:        criteria.Status,
-	}
-
-	// filter by supported instance type
-	if criteria.SupportedInstanceType != "" {
-		dbConn = dbConn.Where("supported_instance_type like ?", fmt.Sprintf("%%%s%%", criteria.SupportedInstanceType))
 	}
 
 	// we order them by "created_at" field instead of the default "id" field.
@@ -543,10 +536,6 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 		Status:        criteria.Status,
 	}
 
-	// filter by supported instance type
-	if criteria.SupportedInstanceType != "" {
-		dbConn.Where("supported_instance_type like ?", fmt.Sprintf("%%%s%%", criteria.SupportedInstanceType))
-	}
 	// we order them by "created_at" field instead of the default "id" field.
 	// They are mostly the same as the library we use (xid) does take the generation timestamp into consideration,
 	// However, it only down to the level of seconds. This means that if a few records are created at almost the same time,

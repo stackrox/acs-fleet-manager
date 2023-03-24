@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -33,7 +32,7 @@ func TestPlacementStrategyType(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.description, func(t *testing.T) {
-			strategy := NewClusterPlacementStrategy(tc.createClusterService(), tc.dataPlaneConfig)
+			strategy := NewClusterPlacementStrategy(tc.createClusterService())
 
 			require.IsType(t, tc.expectedType, strategy)
 		})
@@ -41,6 +40,31 @@ func TestPlacementStrategyType(t *testing.T) {
 }
 
 func TestFirstClusterPlacementStrategy(t *testing.T) {
+	centralRequest := buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {
+		centralRequest.InstanceType = "standard"
+	})
+
+	notSchedulable := buildCluster(func(cluster *api.Cluster) {
+		cluster.ClusterID = "notSchedulable"
+		cluster.SupportedInstanceType = "standard,eval"
+		cluster.Schedulable = false
+	})
+	notSupported := buildCluster(func(cluster *api.Cluster) {
+		cluster.ClusterID = "notSupported"
+		cluster.SupportedInstanceType = "eval"
+		cluster.Schedulable = true
+	})
+	goodCluster1 := buildCluster(func(cluster *api.Cluster) {
+		cluster.ClusterID = "good1"
+		cluster.SupportedInstanceType = "standard,eval"
+		cluster.Schedulable = true
+	})
+	goodCluster2 := buildCluster(func(cluster *api.Cluster) {
+		cluster.ClusterID = "good2"
+		cluster.SupportedInstanceType = "standard,eval"
+		cluster.Schedulable = true
+	})
+
 	tt := []struct {
 		description           string
 		newClusterServiceMock func() ClusterService
@@ -57,12 +81,12 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 					},
 				}
 			},
-			central:         buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {}),
+			central:         centralRequest,
 			expectedError:   serviceErrors.New(apiErrors.ErrorGeneral, "error in FindAllClusters"),
 			expectedCluster: nil,
 		},
 		{
-			description: "should return error if clusters is empty",
+			description: "should return nil if clusters is empty",
 			newClusterServiceMock: func() ClusterService {
 				return &ClusterServiceMock{
 					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceErrors.ServiceError) {
@@ -70,74 +94,48 @@ func TestFirstClusterPlacementStrategy(t *testing.T) {
 					},
 				}
 			},
-			central:         buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {}),
-			expectedError:   errors.New("no schedulable cluster found"),
+			central:         centralRequest,
+			expectedError:   nil,
 			expectedCluster: nil,
 		},
 		{
-			description: "should return error if no cluster supporting central instancetype was found",
+			description: "should return nil if no cluster supporting central instancetype was found",
 			newClusterServiceMock: func() ClusterService {
 				return &ClusterServiceMock{
 					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceErrors.ServiceError) {
-						return []*api.Cluster{
-							buildCluster(func(cluster *api.Cluster) {}),
-							buildCluster(func(cluster *api.Cluster) {}),
-						}, nil
+						return []*api.Cluster{notSupported}, nil
 					},
 				}
 			},
-			central: buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {
-				centralRequest.InstanceType = "standard"
-			}),
-			expectedError:   errors.New("no schedulable cluster found"),
+			central:         centralRequest,
+			expectedError:   nil,
 			expectedCluster: nil,
 		},
 		{
-			description: "should return error if no cluster is schedulable",
+			description: "should return nil if no cluster is schedulable",
 			newClusterServiceMock: func() ClusterService {
 				return &ClusterServiceMock{
 					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceErrors.ServiceError) {
-						return []*api.Cluster{
-							buildCluster(func(cluster *api.Cluster) {
-								cluster.SupportedInstanceType = "standard,eval"
-								cluster.Schedulable = false
-							}),
-						}, nil
+						return []*api.Cluster{notSchedulable}, nil
 					},
 				}
 			},
-			central: buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {
-				centralRequest.InstanceType = "standard"
-			}),
-			expectedError:   errors.New("no schedulable cluster found"),
+			central:         centralRequest,
+			expectedError:   nil,
 			expectedCluster: nil,
 		},
 		{
-			description: "should return first schedulable cluster",
+			description: "should return first good cluster",
 			newClusterServiceMock: func() ClusterService {
 				return &ClusterServiceMock{
 					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceErrors.ServiceError) {
-						return []*api.Cluster{
-							buildCluster(func(cluster *api.Cluster) { /* No supported instance type */ }),
-							buildCluster(func(cluster *api.Cluster) {
-								cluster.SupportedInstanceType = "standard,eval"
-								cluster.Schedulable = false
-							}),
-							buildCluster(func(cluster *api.Cluster) {
-								cluster.SupportedInstanceType = "standard,eval"
-								cluster.Schedulable = true
-							}),
-						}, nil
+						return []*api.Cluster{notSupported, goodCluster1, notSchedulable, goodCluster2}, nil
 					},
 				}
 			},
-			central: buildCentralRequest(func(centralRequest *dbapi.CentralRequest) {
-				centralRequest.InstanceType = "standard"
-			}),
-			expectedError: nil,
-			expectedCluster: buildCluster(func(cluster *api.Cluster) {
-				cluster.SupportedInstanceType = "standard,eval"
-			}),
+			central:         centralRequest,
+			expectedError:   nil,
+			expectedCluster: goodCluster1,
 		},
 	}
 

@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -32,7 +31,12 @@ type FirstReadyPlacementStrategy struct {
 
 // FindCluster ...
 func (d FirstReadyPlacementStrategy) FindCluster(central *dbapi.CentralRequest) (*api.Cluster, error) {
-	clusters, err := d.clusterService.FindAllClusters(FindClusterCriteria{Status: api.ClusterReady})
+	clusters, err := d.clusterService.FindAllClusters(FindClusterCriteria{
+		Provider: central.CloudProvider,
+		Region:   central.Region,
+		MultiAZ:  central.MultiAZ,
+		Status:   api.ClusterReady,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +47,7 @@ func (d FirstReadyPlacementStrategy) FindCluster(central *dbapi.CentralRequest) 
 		}
 	}
 
-	return nil, errors.New("no schedulable cluster found")
+	return nil, nil
 }
 
 func supportsInstanceType(c *api.Cluster, instanceType string) bool {
