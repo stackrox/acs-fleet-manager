@@ -6,9 +6,10 @@ package migrations
 // is done here, even though the same type is defined in pkg/api
 
 import (
-	"fmt"
+	"github.com/golang/glog"
 
 	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"gorm.io/gorm"
@@ -31,22 +32,28 @@ func addSchedulableToClusters() *gormigrate.Migration {
 		ClusterSpec                      string   `json:"cluster_spec"`
 		AvailableCentralOperatorVersions api.JSON `json:"available_central_operator_versions"`
 		SupportedInstanceType            string   `json:"supported_instance_type"`
-		Schedulable                      bool     `json:schedulable`
+		Schedulable                      bool     `json:"schedulable"` // To be added
 	}
 
+	id := "202303221200"
+	colName := "Schedulable"
 	return &gormigrate.Migration{
-		ID: "202303230000",
+		ID: id,
 		Migrate: func(tx *gorm.DB) error {
-			err := tx.AutoMigrate(&Cluster{})
-			if err != nil {
-				return fmt.Errorf("migrating 202303230000: %w", err)
+			if !tx.Migrator().HasColumn(&Cluster{}, colName) {
+				if err := tx.Migrator().AddColumn(&Cluster{}, colName); err != nil {
+					return errors.Wrapf(err, "adding column %s in migration %s", colName, id)
+				}
+				glog.Infof("Successfully added the %s column", colName)
 			}
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			err := tx.Migrator().DropColumn(&Cluster{}, "Schedulable")
-			if err != nil {
-				return fmt.Errorf("rolling back 202303230000: %w", err)
+			if tx.Migrator().HasColumn(&Cluster{}, colName) {
+				if err := tx.Migrator().DropColumn(&Cluster{}, colName); err != nil {
+					return errors.Wrapf(err, "rolling back from column %s in migration %s", colName, id)
+				}
+				glog.Infof("Successfully removed the %s column", colName)
 			}
 			return nil
 		},

@@ -6,9 +6,10 @@ package migrations
 // is done here, even though the same type is defined in pkg/api
 
 import (
-	"fmt"
+	"github.com/golang/glog"
 
 	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"gorm.io/gorm"
@@ -31,27 +32,28 @@ func dropSkipSchedulingFromClusters() *gormigrate.Migration {
 		ClusterSpec                      string   `json:"cluster_spec"`
 		AvailableCentralOperatorVersions api.JSON `json:"available_central_operator_versions"`
 		SupportedInstanceType            string   `json:"supported_instance_type"`
+		SkipScheduling                   bool     `json:"skip_scheduling" gorm:"default:false"` // To be dropped
 	}
 
+	id := "202303221200"
+	colName := "SkipScheduling"
 	return &gormigrate.Migration{
-		ID: "202303221200",
+		ID: id,
 		Migrate: func(tx *gorm.DB) error {
-			err := tx.Migrator().DropColumn(&Cluster{}, "SkipScheduling")
-			if err != nil {
-				return fmt.Errorf("migrating 202303220000: %w", err)
+			if tx.Migrator().HasColumn(&Cluster{}, colName) {
+				if err := tx.Migrator().DropColumn(&Cluster{}, colName); err != nil {
+					return errors.Wrapf(err, "rolling back from column %s in migration %s", colName, id)
+				}
+				glog.Infof("Successfully removed the %s column", colName)
 			}
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			// If the DropColumn fails then per https://gorm.io/docs/migration.html#Auto-Migration
-			// this should still set the Cluster table to the expected schema from Cluster{} above,
-			// with the SkipScheduling column no longer present. This will not delete the column.
-			// It's not a true rollback because the column will now simply be unused, but the
-			// dropping of the column is just for cleanliness; leaving the data there will have no
-			// effect anyways.
-			err := tx.AutoMigrate(&Cluster{})
-			if err != nil {
-				return fmt.Errorf("rolling back 202303220000: %w", err)
+			if !tx.Migrator().HasColumn(&Cluster{}, colName) {
+				if err := tx.Migrator().AddColumn(&Cluster{}, colName); err != nil {
+					return errors.Wrapf(err, "adding column %s in migration %s", colName, id)
+				}
+				glog.Infof("Successfully added the %s column", colName)
 			}
 			return nil
 		},
