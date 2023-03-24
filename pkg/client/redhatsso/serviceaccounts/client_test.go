@@ -9,7 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 
 	. "github.com/onsi/gomega"
-	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
+	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt/apiv1/client"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
 )
 

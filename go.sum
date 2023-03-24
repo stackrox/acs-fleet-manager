@@ -973,9 +973,9 @@ github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40T
 github.com/pseudomuto/protoc-gen-doc v1.4.1/go.mod h1:exDTOVwqpp30eV/EDPFLZy3Pwr2sn6hBC1WIYH/UbIg=
 github.com/pseudomuto/protokit v0.2.0/go.mod h1:2PdH30hxVHsup8KpBTOXTBeMVhJZVio3Q8ViKSAXT0Q=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
-github.com/redhat-developer/app-services-sdk-go v0.10.0/go.mod h1:enn8Zz6IT0HZYzS6LSttiME2apwnvfVWZnGRS81A4rk=
-github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.5.0 h1:RLLHQA5Pxf3a5khNYaEqqj22xjIpEh6IUN+sCt4t90o=
-github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.5.0/go.mod h1:SXhFcIpBh7Qu804KHXrKEQg+5BgSBeoeNq0yuWVskxA=
+github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go v0.1.0/go.mod h1:JPNDOitDoHoHk5ZPRjfOxHQhE4Br0WtiyV8m43E0rso=
+github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt v0.0.0-20230323122535-49460b57cc45 h1:zB7YuR81lby8jPK9CKIvzKQIrbpooR7R2lr5l3aL5KE=
+github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt v0.0.0-20230323122535-49460b57cc45/go.mod h1:9UjE86bWDvSfAwSAqweZPRNEAjAgI0ZvKYMIoz06qd0=
 github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.4.3 h1:utMvzDsuh3suAEnhH0RdHmoPbU648o6CvXxTx4SBMOw=
