@@ -27,7 +27,7 @@ func TestPlacementStrategyType(t *testing.T) {
 				return &ClusterServiceMock{}
 			},
 			dataPlaneConfig: &config.DataplaneClusterConfig{},
-			expectedType:    FirstReadyPlacementStrategy{},
+			expectedType:    &FirstReadyPlacementStrategy{},
 		},
 	}
 
