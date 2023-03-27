@@ -19,6 +19,10 @@ var allowedVersionPrefixes = []string{
 	"quay.io/stackrox-io",
 }
 
+var osExit = func(code int) {
+	os.Exit(code)
+}
+
 // CentralDefaultVersionService defines methods for managing
 // CentralDefaultVersion values through API and on startup of fleet-manager
 //
@@ -42,12 +46,14 @@ func (c *centralDefaultVersionService) Start() {
 	}
 
 	if err := ValidateCentralVersionString(c.centralConfig.CentralDefaultVersion); err != nil {
-		glog.Errorf("validating central default version: %s with error: %s", c.centralConfig.CentralDefaultVersion, err)
+		glog.Errorf("validating central default version: %s with error: %s, shutting down...", c.centralConfig.CentralDefaultVersion, err)
+		osExit(1)
+		return
 	}
 
 	if err := c.SetDefaultVersion(c.centralConfig.CentralDefaultVersion); err != nil {
-		glog.Errorf("setting central default version to: %s: %s", c.centralConfig.CentralDefaultVersion, err)
-		os.Exit(1)
+		glog.Errorf("setting central default version to: %s: %s, shutting down...", c.centralConfig.CentralDefaultVersion, err)
+		osExit(1)
 	}
 
 	glog.Info("set central default version to: ", c.centralConfig.CentralDefaultVersion)
