@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const initialCentralDefaultVersion = "quay.io/rhacs-eng/stackrox-operator:3.73.1"
+const initialCentralDefaultVersion = "quay.io/rhacs-eng/stackrox-operator:3.74.1"
 
 func addCentralDefaultVersion() *gormigrate.Migration {
 	type CentralDefaultVersion struct {
