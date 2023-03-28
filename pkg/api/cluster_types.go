@@ -156,7 +156,7 @@ type Cluster struct {
 	ClusterDNS         string        `json:"cluster_dns"`
 	// the provider type for the cluster, e.g. OCM, AWS, GCP, Standalone etc
 	ProviderType ClusterProviderType `json:"provider_type"`
-	// store the provider-specific information that can be used to managed the openshift/k8s cluster
+	// store the provider-specific information that can be used to manage the openshift/k8s cluster
 	ProviderSpec JSON `json:"provider_spec"`
 	// store the specs of the openshift/k8s cluster which can be used to access the cluster
 	ClusterSpec JSON `json:"cluster_spec"`
