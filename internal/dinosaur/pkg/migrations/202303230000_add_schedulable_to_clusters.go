@@ -17,7 +17,7 @@ import (
 func addSchedulableToClusters() *gormigrate.Migration {
 	type Cluster struct {
 		db.Model
-		Schedulable bool `json:"schedulable"` // To be added
+		Schedulable bool `json:"schedulable" gorm:"default:true"` // To be added
 	}
 
 	id := "202303231200"

@@ -655,6 +655,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			ProviderType:          p.ProviderType,
 			ClusterDNS:            p.ClusterDNS,
 			SupportedInstanceType: p.SupportedInstanceType,
+			Schedulable:           p.Schedulable,
 		}
 
 		if len(p.AvailableCentralOperatorVersions) > 0 {
