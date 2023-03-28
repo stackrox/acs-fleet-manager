@@ -257,13 +257,31 @@ func ValidateResourceName(name string) (corev1.ResourceName, bool) {
 	return corev1.ResourceName(""), false
 }
 
-// ValidateCentralVersion validates the given version string
-func ValidateCentralVersion(version *private.CentralDefaultVersion) handlers.Validate {
+// ValidateUpdateCentralVersion validates the CentralVersion field of a CentralUpdateRequest
+func ValidateUpdateCentralVersion(updateReq *private.CentralUpdateRequest) handlers.Validate {
 	return func() *errors.ServiceError {
-		if err := services.ValidateCentralVersionString(version.Version); err != nil {
+		if updateReq.CentralVersion == "" {
+			return nil
+		}
+
+		return validateCentralVersionString(updateReq.CentralVersion)()
+	}
+}
+
+// ValidateCentralDefaultVersion validates the given version
+func ValidateCentralDefaultVersion(version *private.CentralDefaultVersion) handlers.Validate {
+	return validateCentralVersionString(version.Version)
+}
+
+func validateCentralVersionString(version string) handlers.Validate {
+	return func() *errors.ServiceError {
+
+		err := services.ValidateCentralVersionString(version)
+		if err != nil {
 			return errors.Validation("validating central version string: %s", err)
 		}
 
 		return nil
 	}
+
 }
