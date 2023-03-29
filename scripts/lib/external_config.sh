@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 GITROOT="${GITROOT:-"$(git rev-parse --show-toplevel)"}"
-ENABLE_EXTERNAL_CONFIG="${ENABLE_EXTERNAL_CONFIG:-true}"
 
 # shellcheck source=scripts/lib/log.sh
 source "$GITROOT/scripts/lib/log.sh"
@@ -12,15 +11,15 @@ ensure_tool_installed() {
     make -s -C "$GITROOT" "$GITROOT/bin/$1"
 }
 
-init_chamber() {
+add_bin_to_path() {
     if ! [[ ":$PATH:" == *":$GITROOT/bin:"* ]]; then
         export PATH="$GITROOT/bin:$PATH"
     fi
-    ensure_tool_installed chamber
+}
 
-    if [[ "$ENABLE_EXTERNAL_CONFIG" != "true" ]]; then
-        return
-    fi
+init_chamber() {
+    add_bin_to_path
+    ensure_tool_installed chamber
 
     AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-none}"
     case $AWS_AUTH_HELPER in
@@ -96,10 +95,6 @@ ensure_bitwarden_session_exists() {
 
 run_chamber() {
     local args=("$@")
-    if [[ "$ENABLE_EXTERNAL_CONFIG" != "true" ]]; then
-        # External config disabled. Using 'null' backend for chamber
-        args=("-b" "null" "${args[@]}")
-    fi
     if [[ "$AWS_AUTH_HELPER" == "aws-vault" ]]; then
         aws-vault exec "${AWS_PROFILE}" -- chamber "${args[@]}"
     else
@@ -111,8 +106,10 @@ run_chamber() {
 load_external_config() {
     local service="$1"
     local prefix="${2:-}"
-    local env_output
-    env_output=$(run_chamber env "$service")
-    [[ -z "$env_output" ]] && echo "WARNING: no parameters found under '/$service' in AWS parameter store of this environment"
-    eval "$(echo "$env_output" | sed -E "s/(^export +)(.*)/readonly ${prefix}\2/")"
+    local parameter_store_output
+    local secrets_manager_output
+    parameter_store_output=$(run_chamber env "$service")
+    secrets_manager_output=$(run_chamber env "$service" -b secretsmanager)
+    [[ -z "$parameter_store_output" && -z "$secrets_manager_output" ]] && echo "WARNING: no parameters found under '/$service' of this environment"
+    eval "$(printf '%s\n%s' "$parameter_store_output" "$secrets_manager_output" | sed -E "s/(^export +)(.*)/readonly ${prefix}\2/")"
 }

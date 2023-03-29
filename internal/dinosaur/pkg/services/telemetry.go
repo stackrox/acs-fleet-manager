@@ -11,6 +11,9 @@ import (
 	"github.com/stackrox/rox/pkg/telemetry/phonehome/telemeter"
 )
 
+// TenantGroupName holds the name of the Tenant group.
+const TenantGroupName = "Tenant"
+
 // TelemetryAuth is a wrapper around the user claim extraction.
 //
 //go:generate moq -out telemetry_moq.go . TelemetryAuth
@@ -73,10 +76,11 @@ func (t *Telemetry) RegisterTenant(ctx context.Context, central *dbapi.CentralRe
 		"Region":          central.Region,
 		"Tenant ID":       central.ID,
 	}
-	t.config.Telemeter().Group(
-		central.ID,
-		props,
+	// Group call will issue a supporting Track event to force group properties
+	// update.
+	t.config.Telemeter().Group(props,
 		telemeter.WithUserID(user),
+		telemeter.WithGroups(TenantGroupName, central.ID),
 	)
 }
 
@@ -107,7 +111,7 @@ func (t *Telemetry) TrackCreationRequested(ctx context.Context, tenantID string,
 		"Central Creation Requested",
 		props,
 		telemeter.WithUserID(user),
-		telemeter.WithGroups("Tenant", tenantID),
+		telemeter.WithGroups(TenantGroupName, tenantID),
 	)
 }
 
@@ -138,7 +142,7 @@ func (t *Telemetry) TrackDeletionRequested(ctx context.Context, tenantID string,
 		"Central Deletion Requested",
 		props,
 		telemeter.WithUserID(user),
-		telemeter.WithGroups("Tenant", tenantID),
+		telemeter.WithGroups(TenantGroupName, tenantID),
 	)
 }
 

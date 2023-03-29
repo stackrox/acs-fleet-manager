@@ -39,6 +39,7 @@ const (
 	helmReleaseName = "tenant-resources"
 
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
+	pauseReconcileAnnotation  = "stackrox.io/pause-reconcile"
 	envAnnotationKey          = "rhacs.redhat.com/environment"
 	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
 	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
@@ -722,11 +723,36 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
+
+	// avoid being stuck in a deprovisioning state due to the pause reconcile annotation
+	err = r.disablePauseReconcileIfPresent(ctx, central)
+	if err != nil {
+		return false, err
+	}
+
 	if err := r.client.Delete(ctx, central); err != nil {
 		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
 	}
 	glog.Infof("Central CR %s/%s is marked for deletion", central.GetNamespace(), central.GetName())
 	return false, nil
+}
+
+func (r *CentralReconciler) disablePauseReconcileIfPresent(ctx context.Context, central *v1alpha1.Central) error {
+	if central.Annotations == nil {
+		return nil
+	}
+
+	if value, exists := central.Annotations[pauseReconcileAnnotation]; !exists || value != "true" {
+		return nil
+	}
+
+	central.Annotations[pauseReconcileAnnotation] = "false"
+	err := r.client.Update(ctx, central)
+	if err != nil {
+		return fmt.Errorf("removing pause reconcile annotation: %v", err)
+	}
+
+	return nil
 }
 
 func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {
