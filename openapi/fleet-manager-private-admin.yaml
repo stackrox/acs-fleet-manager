@@ -467,6 +467,7 @@ components:
       properties:
         version:
           type: string
+          example: "quay.io/rhacs-eng/stackrox-operator:3.74.1"
 
   securitySchemes:
     Bearer:

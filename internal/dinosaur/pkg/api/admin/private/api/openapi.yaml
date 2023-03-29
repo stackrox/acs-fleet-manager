@@ -534,9 +534,10 @@ components:
       type: object
     CentralDefaultVersion:
       example:
-        version: version
+        version: quay.io/rhacs-eng/stackrox-operator:3.74.1
       properties:
         version:
+          example: quay.io/rhacs-eng/stackrox-operator:3.74.1
           type: string
       type: object
     Error:
