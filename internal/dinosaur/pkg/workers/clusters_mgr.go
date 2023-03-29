@@ -677,6 +677,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			glog.Warningf("Failed to lookup cluster %s in cluster service: %v", manualCluster.ClusterID, err)
 			continue
 		}
+
 		newCluster := *cluster
 		newCluster.CloudProvider = manualCluster.CloudProvider
 		newCluster.Region = manualCluster.Region
@@ -686,8 +687,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		newCluster.ClusterDNS = manualCluster.ClusterDNS
 		newCluster.SupportedInstanceType = manualCluster.SupportedInstanceType
 		newCluster.Schedulable = manualCluster.Schedulable
-
-		if err := cluster.SetAvailableCentralOperatorVersions(manualCluster.AvailableCentralOperatorVersions); err != nil {
+		if err := newCluster.SetAvailableCentralOperatorVersions(manualCluster.AvailableCentralOperatorVersions); err != nil {
 			return []error{errors.Wrapf(err, "Failed to update operator versions for manual cluster %s with config file", manualCluster.ClusterID)}
 		}
 
@@ -699,7 +699,22 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		for _, diffLine := range strings.Split(diff, "\n") {
 			glog.Infoln(diffLine)
 		}
-		if err := c.ClusterService.Update(newCluster); err != nil {
+
+		// Gorm will not update primitive values if their new value is the same as their default value.
+		// We therefore
+		values := map[string]interface{}{
+			"cloud_provider":                      newCluster.CloudProvider,
+			"region":                              newCluster.Region,
+			"multi_az":                            newCluster.MultiAZ,
+			"status":                              newCluster.Status,
+			"provider_type":                       newCluster.ProviderType,
+			"cluster_dns":                         newCluster.ClusterDNS,
+			"supported_instance_type":             newCluster.SupportedInstanceType,
+			"available_central_operator_versions": newCluster.AvailableCentralOperatorVersions,
+			"schedulable":                         newCluster.Schedulable,
+		}
+
+		if err := c.ClusterService.Updates(newCluster, values); err != nil {
 			return []error{errors.Wrapf(err, "Failed to update manual cluster %s", cluster.ClusterID)}
 		}
 	}
