@@ -142,10 +142,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
 				tenantIDLabelKey:      remoteCentral.Id,
 				instanceTypeLabelKey:  remoteCentral.Spec.Central.InstanceType,
-				orgNameAnnotationKey:  remoteCentral.Spec.Auth.OwnerOrgName,
 				orgIDLabelKey:         remoteCentral.Spec.Auth.OwnerOrgId,
 			},
-			Annotations: map[string]string{managedServicesAnnotation: "true"},
+			Annotations: map[string]string{
+				managedServicesAnnotation: "true",
+				orgNameAnnotationKey:      remoteCentral.Spec.Auth.OwnerOrgName,
+			},
 		},
 		Spec: v1alpha1.CentralSpec{
 			Central: &v1alpha1.CentralComponentSpec{
@@ -228,11 +230,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	namespaceLabels := map[string]string{
-		orgIDLabelKey:        remoteCentral.Spec.Auth.OwnerOrgId,
-		tenantIDLabelKey:     remoteCentral.Id,
+		orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
+		tenantIDLabelKey: remoteCentral.Id,
+	}
+	namespaceAnnotations := map[string]string{
 		orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
 	}
-	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels); err != nil {
+	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels, namespaceAnnotations); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
@@ -473,8 +477,7 @@ func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error)
 	return namespace, nil
 }
 
-func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace, labels map[string]string) error {
-	namespace.Labels = labels
+func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace) error {
 	err := r.client.Create(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("creating namespace %q: %w", namespace.ObjectMeta.Name, err)
@@ -482,11 +485,13 @@ func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace
 	return nil
 }
 
-func (r *CentralReconciler) ensureNamespaceExists(name string, labels map[string]string) error {
+func (r *CentralReconciler) ensureNamespaceExists(name string, labels map[string]string, annotations map[string]string) error {
 	namespace, err := r.getNamespace(name)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			return r.createTenantNamespace(context.Background(), namespace, labels)
+			namespace.Annotations = annotations
+			namespace.Labels = labels
+			return r.createTenantNamespace(context.Background(), namespace)
 		}
 		return fmt.Errorf("getting namespace %s: %w", name, err)
 	}
