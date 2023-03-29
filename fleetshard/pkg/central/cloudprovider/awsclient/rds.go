@@ -33,7 +33,8 @@ const (
 
 	// DB cluster / instance configuration parameters
 	dbEngine                = "aurora-postgresql"
-	dbEngineVersion         = "13.7"
+	dbEngineVersion         = "13.9" // 13.9 is a LTS Aurora PostgreSQL version
+	dbAutoVersionUpgrade    = false  // disable auto upgrades while on LTS version (see ROX-16099)
 	dbInstanceClass         = "db.serverless"
 	dbPostgresPort          = 5432
 	dbName                  = "postgres"
@@ -348,6 +349,7 @@ func newCreateCentralDBInstanceInput(clusterID, instanceID, dataplaneClusterName
 		EnablePerformanceInsights: aws.Bool(performanceInsights),
 		PromotionTier:             aws.Int64(dbInstancePromotionTier),
 		CACertificateIdentifier:   aws.String(dbCACertificateType),
+		AutoMinorVersionUpgrade:   aws.Bool(dbAutoVersionUpgrade),
 		Tags: []*rds.Tag{
 			{
 				Key:   aws.String(dataplaneClusterNameKey),

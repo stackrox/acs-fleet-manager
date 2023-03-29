@@ -16,6 +16,20 @@ spec:
     # Disable logging features of the operator, because we set up the logging operator
     # ourselves via the logging sub-chart.
     disableLogging: true
+    grafanaDashboardLabelSelector:
+      matchExpressions:
+        - key: app
+          operator: In
+          values:
+            - rhacs
+            - strimzi
+    ruleLabelSelector:
+      matchExpressions:
+        - key: app
+          operator: In
+          values:
+            - rhacs
+            - strimzi
     podMonitorLabelSelector:
       matchExpressions:
         - key: app

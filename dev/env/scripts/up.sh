@@ -12,7 +12,15 @@ source "${GITROOT}/scripts/lib/external_config.sh"
 source "${GITROOT}/dev/env/scripts/docker.sh"
 
 init
-init_chamber
+
+if [[ "$ENABLE_EXTERNAL_CONFIG" == "true" ]]; then
+    init_chamber
+    export CHAMBER_SECRET_BACKEND=secretsmanager
+else
+    add_bin_to_path
+    ensure_tool_installed chamber
+    export CHAMBER_SECRET_BACKEND=null
+fi
 
 if [[ "$IGNORE_REPOSITORY_DIRTINESS" = "true" ]]; then
     fleet_manager_image_info="${FLEET_MANAGER_IMAGE} (ignoring repository dirtiness)"

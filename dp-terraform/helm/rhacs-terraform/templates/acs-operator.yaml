@@ -17,6 +17,14 @@ spec:
   source: {{ .Values.acsOperator.source }}
   sourceNamespace: {{ .Values.acsOperator.sourceNamespace }}
   startingCSV: rhacs-operator.{{ .Values.acsOperator.version }}
+  config:
+    resources:
+      requests:
+        cpu: 1
+        memory: 200Mi
+      limits:
+        cpu: 2
+        memory: 1Gi
 ---
 {{- if .Values.acsOperator.upstream }}
 apiVersion: operators.coreos.com/v1alpha1
