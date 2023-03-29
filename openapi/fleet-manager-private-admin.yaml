@@ -435,9 +435,9 @@ components:
             namespace:
               type: string
             central:
-              $ref: "#/components/schemas/CentralSpec"
+              $ref: "fleet-manager.yaml#/components/schemas/CentralSpec"
             scanner:
-              $ref: "#/components/schemas/ScannerSpec"
+              $ref: "fleet-manager.yaml#/components/schemas/ScannerSpec"
     CentralList:
       allOf:
         - $ref: "fleet-manager.yaml#/components/schemas/List"

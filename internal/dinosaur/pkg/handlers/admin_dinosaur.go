@@ -320,6 +320,8 @@ func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.
 		return fmt.Errorf("updating ScannerSpec within CentralRequest: %w", err)
 	}
 
+	new.DesiredCentralVersion = updateRequest.CentralVersion
+
 	*request = new
 	return nil
 }
@@ -329,7 +331,9 @@ func (h adminCentralHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var centralUpdateReq private.CentralUpdateRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &centralUpdateReq,
-		Validate:    []handlers.Validate{},
+		Validate: []handlers.Validate{
+			ValidateUpdateCentralVersion(&centralUpdateReq),
+		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
@@ -358,7 +362,7 @@ func (h adminCentralHandler) SetCentralDefaultVersion(w http.ResponseWriter, r *
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: centralDefaultVersion,
 		Validate: []handlers.Validate{
-			ValidateCentralVersion(centralDefaultVersion),
+			ValidateCentralDefaultVersion(centralDefaultVersion),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			if err := h.centralDefaultVersionService.SetDefaultVersion(centralDefaultVersion.Version); err != nil {
