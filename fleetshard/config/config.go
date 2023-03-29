@@ -12,21 +12,22 @@ import (
 
 // Config contains this application's runtime configuration.
 type Config struct {
-	FleetManagerEndpoint string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
-	ClusterID            string        `env:"CLUSTER_ID"`
-	ClusterName          string        `env:"CLUSTER_NAME"`
-	Environment          string        `env:"ENVIRONMENT"`
-	RuntimePollPeriod    time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
-	AuthType             string        `env:"AUTH_TYPE" envDefault:"RHSSO"`
-	RHSSOClientID        string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
-	RHSSOClientSecret    string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
-	RHSSORealm           string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
-	RHSSOEndpoint        string        `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
-	OCMRefreshToken      string        `env:"OCM_TOKEN"`
-	StaticToken          string        `env:"STATIC_TOKEN"`
-	CreateAuthProvider   bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
-	MetricsAddress       string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
-	EgressProxyImage     string        `env:"EGRESS_PROXY_IMAGE"`
+	FleetManagerEndpoint        string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
+	ClusterID                   string        `env:"CLUSTER_ID"`
+	ClusterName                 string        `env:"CLUSTER_NAME"`
+	Environment                 string        `env:"ENVIRONMENT"`
+	RuntimePollPeriod           time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
+	AuthType                    string        `env:"AUTH_TYPE" envDefault:"RHSSO"`
+	RHSSOClientID               string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
+	RHSSOClientSecret           string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
+	RHSSORealm                  string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
+	RHSSOEndpoint               string        `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
+	OCMRefreshToken             string        `env:"OCM_TOKEN"`
+	StaticToken                 string        `env:"STATIC_TOKEN"`
+	CreateAuthProvider          bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
+	MetricsAddress              string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
+	EgressProxyImage            string        `env:"EGRESS_PROXY_IMAGE"`
+	LabelOperatorVersionEnabled bool          `env:"LABEL_OPERATOR_VERSION_ENABLED" envDefault:"false"`
 
 	AWS       AWS
 	ManagedDB ManagedDB

@@ -46,6 +46,8 @@ const (
 	instanceTypeLabelKey      = "rhacs.redhat.com/instance-type"
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
+	operatorVersionKey        = "stackrox.io/operator-version"
+	defaultOperatorVersion    = "rhacs-operator.v3.74.0"
 
 	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
 	dbUserTypeMaster     = "master"
@@ -57,31 +59,33 @@ const (
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
-	UseRoutes         bool
-	WantsAuthProvider bool
-	EgressProxyImage  string
-	ManagedDBEnabled  bool
-	Telemetry         config.Telemetry
-	ClusterName       string
-	Environment       string
+	UseRoutes                   bool
+	WantsAuthProvider           bool
+	EgressProxyImage            string
+	ManagedDBEnabled            bool
+	Telemetry                   config.Telemetry
+	ClusterName                 string
+	Environment                 string
+	LabelOperatorVersionEnabled bool
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client            ctrlClient.Client
-	central           private.ManagedCentral
-	status            *int32
-	lastCentralHash   [16]byte
-	useRoutes         bool
-	wantsAuthProvider bool
-	hasAuthProvider   bool
-	Resources         bool
-	routeService      *k8s.RouteService
-	egressProxyImage  string
-	telemetry         config.Telemetry
-	clusterName       string
-	environment       string
+	client                      ctrlClient.Client
+	central                     private.ManagedCentral
+	status                      *int32
+	lastCentralHash             [16]byte
+	useRoutes                   bool
+	wantsAuthProvider           bool
+	hasAuthProvider             bool
+	Resources                   bool
+	routeService                *k8s.RouteService
+	egressProxyImage            string
+	telemetry                   config.Telemetry
+	clusterName                 string
+	environment                 string
+	labelOperatorVersionEnabled bool
 
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
@@ -194,6 +198,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				},
 			},
 		},
+	}
+
+	if r.labelOperatorVersionEnabled {
+		labels := central.ObjectMeta.Labels
+		labels[operatorVersionKey] = defaultOperatorVersion
+		central.ObjectMeta.Labels = labels
 	}
 
 	// Check whether auth provider is actually created and this reconciler just is not aware of that.
@@ -935,16 +945,17 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
 	return &CentralReconciler{
-		client:            k8sClient,
-		central:           central,
-		status:            pointer.Int32(FreeStatus),
-		useRoutes:         opts.UseRoutes,
-		wantsAuthProvider: opts.WantsAuthProvider,
-		routeService:      k8s.NewRouteService(k8sClient),
-		egressProxyImage:  opts.EgressProxyImage,
-		telemetry:         opts.Telemetry,
-		clusterName:       opts.ClusterName,
-		environment:       opts.Environment,
+		client:                      k8sClient,
+		central:                     central,
+		status:                      pointer.Int32(FreeStatus),
+		useRoutes:                   opts.UseRoutes,
+		wantsAuthProvider:           opts.WantsAuthProvider,
+		routeService:                k8s.NewRouteService(k8sClient),
+		egressProxyImage:            opts.EgressProxyImage,
+		telemetry:                   opts.Telemetry,
+		clusterName:                 opts.ClusterName,
+		environment:                 opts.Environment,
+		labelOperatorVersionEnabled: opts.LabelOperatorVersionEnabled,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,

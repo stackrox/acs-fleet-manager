@@ -19,6 +19,7 @@ func TestSingleton_Success(t *testing.T) {
 	assert.Equal(t, cfg.RHSSORealm, "redhat-external")
 	assert.Equal(t, cfg.RHSSOEndpoint, "https://sso.redhat.com")
 	assert.Empty(t, cfg.OCMRefreshToken)
+	assert.Equal(t, cfg.LabelOperatorVersionEnabled, false)
 }
 
 func TestSingleton_Failure(t *testing.T) {

@@ -101,13 +101,14 @@ func (r *Runtime) Start() error {
 	routesAvailable := r.routesAvailable()
 
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
-		UseRoutes:         routesAvailable,
-		WantsAuthProvider: r.config.CreateAuthProvider,
-		EgressProxyImage:  r.config.EgressProxyImage,
-		ManagedDBEnabled:  r.config.ManagedDB.Enabled,
-		Telemetry:         r.config.Telemetry,
-		ClusterName:       r.config.ClusterName,
-		Environment:       r.config.Environment,
+		UseRoutes:                   routesAvailable,
+		WantsAuthProvider:           r.config.CreateAuthProvider,
+		EgressProxyImage:            r.config.EgressProxyImage,
+		ManagedDBEnabled:            r.config.ManagedDB.Enabled,
+		Telemetry:                   r.config.Telemetry,
+		ClusterName:                 r.config.ClusterName,
+		Environment:                 r.config.Environment,
+		LabelOperatorVersionEnabled: r.config.LabelOperatorVersionEnabled,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {

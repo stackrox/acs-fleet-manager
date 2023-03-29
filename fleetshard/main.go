@@ -35,6 +35,7 @@ func main() {
 	glog.Infof("ClusterID: %s", config.ClusterID)
 	glog.Infof("RuntimePollPeriod: %s", config.RuntimePollPeriod.String())
 	glog.Infof("AuthType: %s", config.AuthType)
+	glog.Infof("LabelOperatorVersionEnabled: %t", config.LabelOperatorVersionEnabled)
 
 	glog.Infof("ManagedDB.Enabled: %t", config.ManagedDB.Enabled)
 	glog.Infof("ManagedDB.SecurityGroup: %s", config.ManagedDB.SecurityGroup)

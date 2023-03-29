@@ -115,6 +115,7 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, "1", central.GetAnnotations()[util.RevisionAnnotationKey])
 	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
+	assert.Empty(t, central.ObjectMeta.Labels[operatorVersionKey])
 
 	route := &openshiftRouteV1.Route{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
@@ -167,6 +168,27 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	password, ok := secret.Data["password"]
 	require.True(t, ok)
 	assert.NotEmpty(t, password)
+}
+
+func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc,
+		CentralReconcilerOptions{
+			UseRoutes:                   true,
+			LabelOperatorVersionEnabled: true,
+		})
+
+	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
+	require.True(t, ok)
+	assert.Equal(t, "True", readyCondition.Status, "Ready condition not found in conditions", status.Conditions)
+
+	central := &v1alpha1.Central{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
+	require.NoError(t, err)
+	assert.Equal(t, defaultOperatorVersion, central.ObjectMeta.Labels[operatorVersionKey])
 }
 
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
@@ -628,7 +650,7 @@ func TestEgressProxyCustomImage(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc,
 		CentralReconcilerOptions{
-			EgressProxyImage: "registry.redhat.io/openshift4/ose-egress-http-proxy:version-for-test",
+			EgressProxyImage: "registry.redhat.io/openshift4/ose-egress-http-proxy:defaultOperatorVersion-for-test",
 		})
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -647,7 +669,7 @@ func TestEgressProxyCustomImage(t *testing.T) {
 	containers := dep.Spec.Template.Spec.Containers
 	require.Len(t, containers, 1)
 
-	assert.Equal(t, "registry.redhat.io/openshift4/ose-egress-http-proxy:version-for-test", containers[0].Image)
+	assert.Equal(t, "registry.redhat.io/openshift4/ose-egress-http-proxy:defaultOperatorVersion-for-test", containers[0].Image)
 }
 
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
