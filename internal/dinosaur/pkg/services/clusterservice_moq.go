@@ -104,6 +104,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //			UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 //				panic("mock out the UpdateStatus method")
 //			},
+//			UpdatesFunc: func(cluster api.Cluster, values map[string]interface{}) *serviceError.ServiceError {
+//				panic("mock out the Updates method")
+//			},
 //		}
 //
 //		// use mockedClusterService in code that requires ClusterService
@@ -194,6 +197,9 @@ type ClusterServiceMock struct {
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(cluster api.Cluster, status api.ClusterStatus) error
+
+	// UpdatesFunc mocks the Updates method.
+	UpdatesFunc func(cluster api.Cluster, values map[string]interface{}) *serviceError.ServiceError
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -359,6 +365,13 @@ type ClusterServiceMock struct {
 			// Status is the status argument value.
 			Status api.ClusterStatus
 		}
+		// Updates holds details about calls to the Updates method.
+		Updates []struct {
+			// Cluster is the cluster argument value.
+			Cluster api.Cluster
+			// Values is the values argument value.
+			Values map[string]interface{}
+		}
 	}
 	lockApplyResources                      sync.RWMutex
 	lockCheckClusterStatus                  sync.RWMutex
@@ -388,6 +401,7 @@ type ClusterServiceMock struct {
 	lockUpdate                              sync.RWMutex
 	lockUpdateMultiClusterStatus            sync.RWMutex
 	lockUpdateStatus                        sync.RWMutex
+	lockUpdates                             sync.RWMutex
 }
 
 // ApplyResources calls ApplyResourcesFunc.
@@ -1326,5 +1340,41 @@ func (mock *ClusterServiceMock) UpdateStatusCalls() []struct {
 	mock.lockUpdateStatus.RLock()
 	calls = mock.calls.UpdateStatus
 	mock.lockUpdateStatus.RUnlock()
+	return calls
+}
+
+// Updates calls UpdatesFunc.
+func (mock *ClusterServiceMock) Updates(cluster api.Cluster, values map[string]interface{}) *serviceError.ServiceError {
+	if mock.UpdatesFunc == nil {
+		panic("ClusterServiceMock.UpdatesFunc: method is nil but ClusterService.Updates was just called")
+	}
+	callInfo := struct {
+		Cluster api.Cluster
+		Values  map[string]interface{}
+	}{
+		Cluster: cluster,
+		Values:  values,
+	}
+	mock.lockUpdates.Lock()
+	mock.calls.Updates = append(mock.calls.Updates, callInfo)
+	mock.lockUpdates.Unlock()
+	return mock.UpdatesFunc(cluster, values)
+}
+
+// UpdatesCalls gets all the calls that were made to Updates.
+// Check the length with:
+//
+//	len(mockedClusterService.UpdatesCalls())
+func (mock *ClusterServiceMock) UpdatesCalls() []struct {
+	Cluster api.Cluster
+	Values  map[string]interface{}
+} {
+	var calls []struct {
+		Cluster api.Cluster
+		Values  map[string]interface{}
+	}
+	mock.lockUpdates.RLock()
+	calls = mock.calls.Updates
+	mock.lockUpdates.RUnlock()
 	return calls
 }
