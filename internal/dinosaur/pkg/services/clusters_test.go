@@ -41,6 +41,7 @@ func buildCluster(modifyFn func(cluster *api.Cluster)) *api.Cluster {
 		Meta: api.Meta{
 			DeletedAt: gorm.DeletedAt{Valid: true},
 		},
+		Schedulable: true,
 	}
 	if modifyFn != nil {
 		modifyFn(cluster)
@@ -71,6 +72,7 @@ func Test_Cluster_Create(t *testing.T) {
 		ProviderType:  api.ClusterProviderOCM,
 		ProviderSpec:  nil,
 		ClusterSpec:   nil,
+		Schedulable:   true,
 	}
 
 	type fields struct {

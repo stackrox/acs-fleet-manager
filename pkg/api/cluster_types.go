@@ -154,10 +154,9 @@ type Cluster struct {
 	StatusDetails      string        `json:"status_details" gorm:"-"`
 	IdentityProviderID string        `json:"identity_provider_id"`
 	ClusterDNS         string        `json:"cluster_dns"`
-	SkipScheduling     bool          `json:"skip_scheduling"`
 	// the provider type for the cluster, e.g. OCM, AWS, GCP, Standalone etc
 	ProviderType ClusterProviderType `json:"provider_type"`
-	// store the provider-specific information that can be used to managed the openshift/k8s cluster
+	// store the provider-specific information that can be used to manage the openshift/k8s cluster
 	ProviderSpec JSON `json:"provider_spec"`
 	// store the specs of the openshift/k8s cluster which can be used to access the cluster
 	ClusterSpec JSON `json:"cluster_spec"`
@@ -171,6 +170,8 @@ type Cluster struct {
 	// SupportedInstanceType holds information on what kind of instances types can be provisioned on this cluster.
 	// A cluster can support two kinds of instance types: 'eval', 'standard' or both in this case it will be a comma separated list of instance types e.g 'standard,eval'.
 	SupportedInstanceType string `json:"supported_instance_type"`
+	// The cluster is "schedulable" if tenants can be placed there.
+	Schedulable bool `json:"schedulable"`
 }
 
 // ClusterList ...

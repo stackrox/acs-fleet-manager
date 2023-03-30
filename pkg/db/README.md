@@ -25,11 +25,11 @@ Each migration has an ID that defines the order in which the migration is run.
 IDs are numerical timestamps that must sort ascending. Use YYYYMMDDHHMM w/ 24 hour time for format.
 Example: `August 21 2018 at 2:54pm` would be `201808211454`.
 
-Migration IDs must be descending. If you create a migration, submit an MR, and another MR is merged before yours is able to be merged, you must update the ID to represent a date later than any previous migration.
+Migration IDs must be ascending. If you create a migration, submit an MR, and another MR is merged before yours is able to be merged, you must update the ID to represent a date later than any previous migration.
 
 ### Models in Migrations
 
-Represent modesl inline with migrations to represent the evolution of the object over time.
+Represent models inline with migrations to represent the evolution of the object over time.
 
 For example, it is necessary to add a boolean field "hidden" to the "Account" model. This is how you would represent the account model in that migration:
 ```golang
