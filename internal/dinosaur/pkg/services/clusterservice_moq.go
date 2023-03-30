@@ -98,14 +98,14 @@ var _ ClusterService = &ClusterServiceMock{}
 //			UpdateFunc: func(cluster api.Cluster) *serviceError.ServiceError {
 //				panic("mock out the Update method")
 //			},
-//			UpdateMultiClusterSkipSchedulingFunc: func(clusterIds []string, skipScheduling bool) *serviceError.ServiceError {
-//				panic("mock out the UpdateMultiClusterSkipScheduling method")
-//			},
 //			UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *serviceError.ServiceError {
 //				panic("mock out the UpdateMultiClusterStatus method")
 //			},
 //			UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 //				panic("mock out the UpdateStatus method")
+//			},
+//			UpdatesFunc: func(cluster api.Cluster, values map[string]interface{}) *serviceError.ServiceError {
+//				panic("mock out the Updates method")
 //			},
 //		}
 //
@@ -192,14 +192,14 @@ type ClusterServiceMock struct {
 	// UpdateFunc mocks the Update method.
 	UpdateFunc func(cluster api.Cluster) *serviceError.ServiceError
 
-	// UpdateMultiClusterSkipSchedulingFunc mocks the UpdateMultiClusterSkipScheduling method.
-	UpdateMultiClusterSkipSchedulingFunc func(clusterIds []string, skipScheduling bool) *serviceError.ServiceError
-
 	// UpdateMultiClusterStatusFunc mocks the UpdateMultiClusterStatus method.
 	UpdateMultiClusterStatusFunc func(clusterIds []string, status api.ClusterStatus) *serviceError.ServiceError
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(cluster api.Cluster, status api.ClusterStatus) error
+
+	// UpdatesFunc mocks the Updates method.
+	UpdatesFunc func(cluster api.Cluster, values map[string]interface{}) *serviceError.ServiceError
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -351,13 +351,6 @@ type ClusterServiceMock struct {
 			// Cluster is the cluster argument value.
 			Cluster api.Cluster
 		}
-		// UpdateMultiClusterSkipScheduling holds details about calls to the UpdateMultiClusterSkipScheduling method.
-		UpdateMultiClusterSkipScheduling []struct {
-			// ClusterIds is the clusterIds argument value.
-			ClusterIds []string
-			// SkipScheduling is the skipScheduling argument value.
-			SkipScheduling bool
-		}
 		// UpdateMultiClusterStatus holds details about calls to the UpdateMultiClusterStatus method.
 		UpdateMultiClusterStatus []struct {
 			// ClusterIds is the clusterIds argument value.
@@ -371,6 +364,13 @@ type ClusterServiceMock struct {
 			Cluster api.Cluster
 			// Status is the status argument value.
 			Status api.ClusterStatus
+		}
+		// Updates holds details about calls to the Updates method.
+		Updates []struct {
+			// Cluster is the cluster argument value.
+			Cluster api.Cluster
+			// Values is the values argument value.
+			Values map[string]interface{}
 		}
 	}
 	lockApplyResources                      sync.RWMutex
@@ -399,9 +399,9 @@ type ClusterServiceMock struct {
 	lockScaleUpComputeNodes                 sync.RWMutex
 	lockSetComputeNodes                     sync.RWMutex
 	lockUpdate                              sync.RWMutex
-	lockUpdateMultiClusterSkipScheduling    sync.RWMutex
 	lockUpdateMultiClusterStatus            sync.RWMutex
 	lockUpdateStatus                        sync.RWMutex
+	lockUpdates                             sync.RWMutex
 }
 
 // ApplyResources calls ApplyResourcesFunc.
@@ -1271,42 +1271,6 @@ func (mock *ClusterServiceMock) UpdateCalls() []struct {
 	return calls
 }
 
-// UpdateMultiClusterSkipScheduling calls UpdateMultiClusterSkipSchedulingFunc.
-func (mock *ClusterServiceMock) UpdateMultiClusterSkipScheduling(clusterIds []string, skipScheduling bool) *serviceError.ServiceError {
-	if mock.UpdateMultiClusterSkipSchedulingFunc == nil {
-		panic("ClusterServiceMock.UpdateMultiClusterSkipSchedulingFunc: method is nil but ClusterService.UpdateMultiClusterSkipScheduling was just called")
-	}
-	callInfo := struct {
-		ClusterIds     []string
-		SkipScheduling bool
-	}{
-		ClusterIds:     clusterIds,
-		SkipScheduling: skipScheduling,
-	}
-	mock.lockUpdateMultiClusterSkipScheduling.Lock()
-	mock.calls.UpdateMultiClusterSkipScheduling = append(mock.calls.UpdateMultiClusterSkipScheduling, callInfo)
-	mock.lockUpdateMultiClusterSkipScheduling.Unlock()
-	return mock.UpdateMultiClusterSkipSchedulingFunc(clusterIds, skipScheduling)
-}
-
-// UpdateMultiClusterSkipSchedulingCalls gets all the calls that were made to UpdateMultiClusterSkipScheduling.
-// Check the length with:
-//
-//	len(mockedClusterService.UpdateMultiClusterSkipSchedulingCalls())
-func (mock *ClusterServiceMock) UpdateMultiClusterSkipSchedulingCalls() []struct {
-	ClusterIds     []string
-	SkipScheduling bool
-} {
-	var calls []struct {
-		ClusterIds     []string
-		SkipScheduling bool
-	}
-	mock.lockUpdateMultiClusterSkipScheduling.RLock()
-	calls = mock.calls.UpdateMultiClusterSkipScheduling
-	mock.lockUpdateMultiClusterSkipScheduling.RUnlock()
-	return calls
-}
-
 // UpdateMultiClusterStatus calls UpdateMultiClusterStatusFunc.
 func (mock *ClusterServiceMock) UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *serviceError.ServiceError {
 	if mock.UpdateMultiClusterStatusFunc == nil {
@@ -1376,5 +1340,41 @@ func (mock *ClusterServiceMock) UpdateStatusCalls() []struct {
 	mock.lockUpdateStatus.RLock()
 	calls = mock.calls.UpdateStatus
 	mock.lockUpdateStatus.RUnlock()
+	return calls
+}
+
+// Updates calls UpdatesFunc.
+func (mock *ClusterServiceMock) Updates(cluster api.Cluster, values map[string]interface{}) *serviceError.ServiceError {
+	if mock.UpdatesFunc == nil {
+		panic("ClusterServiceMock.UpdatesFunc: method is nil but ClusterService.Updates was just called")
+	}
+	callInfo := struct {
+		Cluster api.Cluster
+		Values  map[string]interface{}
+	}{
+		Cluster: cluster,
+		Values:  values,
+	}
+	mock.lockUpdates.Lock()
+	mock.calls.Updates = append(mock.calls.Updates, callInfo)
+	mock.lockUpdates.Unlock()
+	return mock.UpdatesFunc(cluster, values)
+}
+
+// UpdatesCalls gets all the calls that were made to Updates.
+// Check the length with:
+//
+//	len(mockedClusterService.UpdatesCalls())
+func (mock *ClusterServiceMock) UpdatesCalls() []struct {
+	Cluster api.Cluster
+	Values  map[string]interface{}
+} {
+	var calls []struct {
+		Cluster api.Cluster
+		Values  map[string]interface{}
+	}
+	mock.lockUpdates.RLock()
+	calls = mock.calls.Updates
+	mock.lockUpdates.RUnlock()
 	return calls
 }

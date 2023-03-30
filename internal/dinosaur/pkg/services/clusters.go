@@ -32,6 +32,10 @@ type ClusterService interface {
 	// Update updates a Cluster. Only fields whose value is different than the
 	// zero-value of their corresponding type will be updated
 	Update(cluster api.Cluster) *apiErrors.ServiceError
+	// Updates() updates the given fields of a Clister. This takes in a map so that even zero-fields can be updated.
+	// Use this only when you want to update the multiple columns that may contain zero-fields, otherwise use the `ClusterService.Update()` method.
+	// See https://gorm.io/docs/update.html#Updates-multiple-columns for more info
+	Updates(cluster api.Cluster, values map[string]interface{}) *apiErrors.ServiceError
 	FindCluster(criteria FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError)
 	// FindClusterByID returns the cluster corresponding to the provided clusterID.
 	// If the cluster has not been found nil is returned. If there has been an issue
@@ -56,8 +60,6 @@ type ClusterService interface {
 	FindDinosaurInstanceCount(clusterIDs []string) ([]ResDinosaurInstanceCount, *apiErrors.ServiceError)
 	// UpdateMultiClusterStatus updates a list of clusters' status to a status
 	UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
-	// UpdateMultiClusterSkipScheduling updates the SkipScheduling field of a list of clusters
-	UpdateMultiClusterSkipScheduling(clusterIds []string, skipScheduling bool) *apiErrors.ServiceError
 	// CountByStatus returns the count of clusters for each given status in the database
 	CountByStatus([]api.ClusterStatus) ([]ClusterStatusCount, *apiErrors.ServiceError)
 	CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
@@ -115,6 +117,7 @@ func (c clusterService) Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.S
 	cluster.ClusterID = clusterSpec.InternalID
 	cluster.ExternalID = clusterSpec.ExternalID
 	cluster.Status = clusterSpec.Status
+	cluster.Schedulable = true
 	if clusterSpec.AdditionalInfo != nil {
 		clusterInfo, err := json.Marshal(clusterSpec.AdditionalInfo)
 		if err != nil {
@@ -193,6 +196,23 @@ func (c clusterService) Update(cluster api.Cluster) *apiErrors.ServiceError {
 	return nil
 }
 
+// Updates ...
+func (c clusterService) Updates(cluster api.Cluster, fields map[string]interface{}) *apiErrors.ServiceError {
+	if cluster.ID == "" {
+		return apiErrors.Validation("id is undefined")
+	}
+
+	// by specifying the Model with a non-empty primary key we ensure
+	// only the record with that primary key is updated
+	dbConn := c.connectionFactory.New().Model(cluster)
+
+	if err := dbConn.Updates(fields).Error; err != nil {
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster")
+	}
+
+	return nil
+}
+
 // UpdateStatus ...
 func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error {
 	if status.String() == "" {
@@ -257,11 +277,10 @@ func (c clusterService) ListGroupByProviderAndRegion(providers []string, regions
 
 // FindClusterCriteria ...
 type FindClusterCriteria struct {
-	Provider              string
-	Region                string
-	MultiAZ               bool
-	Status                api.ClusterStatus
-	SupportedInstanceType string
+	Provider string
+	Region   string
+	MultiAZ  bool
+	Status   api.ClusterStatus
 }
 
 // FindCluster ...
@@ -275,11 +294,6 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 		Region:        criteria.Region,
 		MultiAZ:       criteria.MultiAZ,
 		Status:        criteria.Status,
-	}
-
-	// filter by supported instance type
-	if criteria.SupportedInstanceType != "" {
-		dbConn = dbConn.Where("supported_instance_type like ?", fmt.Sprintf("%%%s%%", criteria.SupportedInstanceType))
 	}
 
 	// we order them by "created_at" field instead of the default "id" field.
@@ -543,10 +557,6 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 		Status:        criteria.Status,
 	}
 
-	// filter by supported instance type
-	if criteria.SupportedInstanceType != "" {
-		dbConn.Where("supported_instance_type like ?", fmt.Sprintf("%%%s%%", criteria.SupportedInstanceType))
-	}
 	// we order them by "created_at" field instead of the default "id" field.
 	// They are mostly the same as the library we use (xid) does take the generation timestamp into consideration,
 	// However, it only down to the level of seconds. This means that if a few records are created at almost the same time,
@@ -590,22 +600,6 @@ func (c clusterService) UpdateMultiClusterStatus(clusterIds []string, status api
 			metrics.IncreaseClusterTotalOperationsCountMetric(constants2.ClusterOperationCreate)
 			metrics.IncreaseClusterSuccessOperationsCountMetric(constants2.ClusterOperationCreate)
 		}
-	}
-
-	return nil
-}
-
-func (c clusterService) UpdateMultiClusterSkipScheduling(clusterIds []string, skipScheduling bool) *apiErrors.ServiceError {
-	if len(clusterIds) == 0 {
-		return apiErrors.Validation("ids is empty")
-	}
-
-	dbConn := c.connectionFactory.New().
-		Model(&api.Cluster{}).
-		Where("cluster_id in (?)", clusterIds)
-
-	if err := dbConn.Update("skip_scheduling", skipScheduling).Error; err != nil {
-		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update skip_scheduling: %s", clusterIds)
 	}
 
 	return nil
