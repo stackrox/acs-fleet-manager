@@ -1,0 +1,89 @@
+name: Deploy to an ACS Environment
+
+concurrency: ${{ inputs.github_environment }}
+
+on:
+  workflow_call:
+    inputs:
+      acs_environment:
+        description: 'Name of the ACS environment.'
+        required: true
+        type: string
+      github_environment:
+        description: 'Name of the environment defined in GitHub.'
+        required: true
+        type: string
+      deploy_clusters:
+        description: 'Names of clusters to deploy to, space separated.'
+        required: true
+        type: string
+      probe_cluster:
+        description: 'Name of cluster to deploy probe to.'
+        required: true
+        type: string
+
+env:
+  # Credentials are populated by explicit `configure-aws-credentials` jobs in
+  # the workflow, so loading additional credentials in the terraform_cluster.sh
+  # script is not necessary.
+  AWS_AUTH_HELPER: none
+
+jobs:
+  terraform:
+    name: Re-terraform ${{ inputs.acs_environment }} clusters
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: ${{ inputs.github_environment }}
+    steps:
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.19"
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Critical for correct image detection in deploy script
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+      - name: Run terraforming on ${{ inputs.deploy_clusters }}
+        working-directory: ./dp-terraform/helm/rhacs-terraform
+        run: |
+          set -euo pipefail
+          for cluster in ${{ inputs.acs_environment }}
+          do
+            echo "Running script terraform_cluster.sh on ${cluster}"
+            ./terraform_cluster.sh ${{ inputs.acs_environment }} "${cluster}"
+            echo "Script terraform_cluster.sh on ${cluster} succeeded"
+          done
+
+  deploy-probe:
+    name: Deploy blackbox monitoring probe service to ${{ inputs.acs_environment }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: ${{ inputs.github_environment }}
+    steps:
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.19"
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Critical for correct image detection in deploy script
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+      - name: Deploy probe on ${{ inputs.probe_cluster }}
+        working-directory: ./deploy/helm/probe
+        run: |
+          set -euo pipefail
+          ./deploy.sh ${{ inputs.acs_environment }} ${{ inputs.probe_cluster }}

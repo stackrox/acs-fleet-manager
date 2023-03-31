@@ -1,67 +1,15 @@
 name: Deploy Prod Env
 
-concurrency: production
-
 on:
   push:
     branches:
       - production
 
 jobs:
-  terraform:
-    name: Re-terraform production clusters
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    environment: production
-    steps:
-      - name: Set up Go 1.19
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.19"
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Critical for correct image detection in deploy script
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
-        with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
-      - name: Run terraforming on THE production cluster
-        working-directory: ./dp-terraform/helm/rhacs-terraform
-        env:
-          AWS_AUTH_HELPER: none # credentials are populated by the above action
-        run: |
-          set -euo pipefail
-          ./terraform_cluster.sh prod acs-prod-dp-01
-
-  deploy-probe:
-    name: Deploy blackbox monitoring probe service to production
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    environment: production
-    steps:
-      - name: Set up Go 1.19
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.19"
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Critical for correct image detection in deploy script
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
-        with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
-      - name: Deploy probe
-        working-directory: ./deploy/helm/probe
-        env:
-          AWS_AUTH_HELPER: none # credentials are populated by the above action
-        run: |
-          set -euo pipefail
-          ./deploy.sh prod acs-prod-dp-01
+  call-deploy-workflow:
+    uses: ./.github/workflows/deploy-data-plane.yaml
+    with:
+      acs_environment: prod
+      github_environment: production
+      deploy_clusters: "acs-prod-dp-01"
+      probe_cluster: "acs-prod-dp-01"
