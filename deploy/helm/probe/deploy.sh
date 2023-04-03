@@ -49,10 +49,14 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     exit 2
 fi
 
-if [[ "${HELM_PRINT_ONLY:-}" == "true" ]]; then
-    HELM_DEBUG_FLAGS="--debug --dry-run"
+if [[ "${HELM_DRY_RUN:-}" == "true" ]]; then
+    HELM_FLAGS="--dry-run"
+    "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${PROBE_IMAGE_ORG}" "${PROBE_IMAGE_NAME}" "${PROBE_IMAGE_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
 else
     "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${PROBE_IMAGE_ORG}" "${PROBE_IMAGE_NAME}" "${PROBE_IMAGE_TAG}"
+fi
+if [[ "${HELM_DEBUG:-}" == "true" ]]; then
+    HELM_FLAGS="${HELM_FLAGS:-} --debug"
 fi
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
@@ -63,7 +67,7 @@ AUTH_TYPE="OCM"
 
 # helm template --debug ... to debug changes
 # shellcheck disable=SC2086
-helm upgrade rhacs-probe "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
+helm upgrade rhacs-probe "${SCRIPT_DIR}" ${HELM_FLAGS:-} \
   --install \
   --namespace "${NAMESPACE}" \
   --create-namespace \

@@ -64,10 +64,14 @@ FLEETSHARD_SYNC_IMAGE="acs-fleet-manager"
 # Get HEAD for both main and production. This is the latest merged commit.
 FLEETSHARD_SYNC_TAG="$(git rev-parse --short=7 HEAD)"
 
-if [[ "${HELM_PRINT_ONLY:-}" == "true" ]]; then
-    HELM_DEBUG_FLAGS="--debug --dry-run"
+if [[ "${HELM_DRY_RUN:-}" == "true" ]]; then
+    HELM_FLAGS="--dry-run"
+    "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
 else
     "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
+fi
+if [[ "${HELM_DEBUG:-}" == "true" ]]; then
+    HELM_FLAGS="${HELM_FLAGS:-} --debug"
 fi
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
@@ -88,7 +92,7 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
 fi
 
 # shellcheck disable=SC2086
-helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
+helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_FLAGS:-} \
   --install \
   --namespace rhacs \
   --create-namespace \
