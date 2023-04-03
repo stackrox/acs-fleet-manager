@@ -54,7 +54,7 @@ jobs:
         working-directory: ./dp-terraform/helm/rhacs-terraform
         run: |
           set -euo pipefail
-          for cluster in ${{ inputs.acs_environment }}
+          for cluster in ${{ inputs.deploy_clusters }}
           do
             echo "Running script terraform_cluster.sh on ${cluster}"
             ./terraform_cluster.sh ${{ inputs.acs_environment }} "${cluster}"
