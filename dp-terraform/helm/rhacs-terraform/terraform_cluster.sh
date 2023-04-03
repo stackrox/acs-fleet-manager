@@ -110,7 +110,7 @@ helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
   --set fleetshardSync.managedDB.subnetGroup="${CLUSTER_MANAGED_DB_SUBNET_GROUP}" \
   --set fleetshardSync.managedDB.securityGroup="${CLUSTER_MANAGED_DB_SECURITY_GROUP}" \
   --set fleetshardSync.managedDB.performanceInsights=true \
-  --set fleetshardSync.aws.region="${FLEETSHARD_SYNC_AWS_REGION}" \
+  --set fleetshardSync.aws.region="${CLUSTER_REGION}" \
   --set fleetshardSync.aws.roleARN="${FLEETSHARD_SYNC_AWS_ROLE_ARN}" \
   --set fleetshardSync.telemetry.storage.endpoint="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_ENDPOINT:-}" \
   --set fleetshardSync.telemetry.storage.key="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_KEY:-}" \
