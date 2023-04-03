@@ -5,10 +5,10 @@ on:
       - master
       - main
     paths:
-    - '.github/'
+    - '.github/**'
   pull_request:
     paths:
-    - '.github/'
+    - '.github/**'
 
 jobs:
   actionlint:
