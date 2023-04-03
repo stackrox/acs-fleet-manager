@@ -40,7 +40,7 @@ const (
 	dbName                  = "postgres"
 	dbBackupRetentionPeriod = 30
 	dbInstancePromotionTier = 2 // a tier of 2 (or higher) ensures that readers and writers can scale independently
-	dbCACertificateType     = "rds-ca-ecc384-g1"
+	dbCACertificateType     = "rds-ca-rsa4096-g1"
 	dataplaneClusterNameKey = "DataplaneClusterName"
 
 	// The Aurora Serverless v2 DB instance configuration in ACUs (Aurora Capacity Units)
