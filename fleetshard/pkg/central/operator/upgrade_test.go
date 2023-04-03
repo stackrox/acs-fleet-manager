@@ -73,40 +73,40 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient)
 
-	err := u.Upgrade(context.TODO())
+	err := u.InstallOrUpgrade(context.Background())
 
 	require.NoError(t, err)
 
 	// check Secured Cluster CRD exists and correct
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Namespace: operatorNamespace, Name: SecuredClusterCRD.GetName()}, SecuredClusterCRD)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: SecuredClusterCRD.GetName()}, SecuredClusterCRD)
 	require.NoError(t, err)
 	assert.Equal(t, k8sAPIVersion, SecuredClusterCRD.GetAPIVersion())
 	assert.NotEmpty(t, SecuredClusterCRD.Object["metadata"])
 	assert.NotEmpty(t, SecuredClusterCRD.Object["spec"])
 
 	// check Central CRD exists and correct
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Namespace: operatorNamespace, Name: CentralCRD.GetName()}, CentralCRD)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: CentralCRD.GetName()}, CentralCRD)
 	require.NoError(t, err)
 	assert.Equal(t, k8sAPIVersion, CentralCRD.GetAPIVersion())
 	assert.NotEmpty(t, CentralCRD.Object["metadata"])
 	assert.NotEmpty(t, CentralCRD.Object["spec"])
 
 	// check ServiceAccount exists
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Namespace: operatorNamespace, Name: ServiceAccount.GetName()}, ServiceAccount)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: ServiceAccount.GetName()}, ServiceAccount)
 	require.NoError(t, err)
 	assert.Equal(t, k8sAPIVersion, CentralCRD.GetAPIVersion())
 	assert.NotEmpty(t, CentralCRD.Object["metadata"])
 	assert.NotEmpty(t, CentralCRD.Object["spec"])
 
 	// check Operator Deployment exists
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Namespace: operatorNamespace, Name: OperatorDeployment.GetName()}, OperatorDeployment)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: OperatorDeployment.GetName()}, OperatorDeployment)
 	require.NoError(t, err)
 	assert.Equal(t, "apps/v1", OperatorDeployment.GetAPIVersion())
 	assert.NotEmpty(t, OperatorDeployment.Object["metadata"])
 	assert.NotEmpty(t, OperatorDeployment.Object["spec"])
 
 	// check Operator ConfigMap exists
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Namespace: operatorNamespace, Name: OperatorConfigMap.GetName()}, OperatorConfigMap)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: OperatorConfigMap.GetName()}, OperatorConfigMap)
 	require.NoError(t, err)
 	assert.Equal(t, "v1", OperatorConfigMap.GetAPIVersion())
 	assert.NotEmpty(t, OperatorConfigMap.Object["metadata"])

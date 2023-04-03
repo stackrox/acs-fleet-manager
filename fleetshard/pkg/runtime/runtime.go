@@ -116,11 +116,13 @@ func (r *Runtime) Start() error {
 		Environment:       r.config.Environment,
 	}
 
-	err := r.upgradeOperator()
-	if err != nil {
-		err = errors.Wrapf(err, "Upgrading operator")
-		glog.Error(err)
-		return err
+	if r.config.UpgradeOperatorEnabled {
+		err := r.upgradeOperator()
+		if err != nil {
+			err = errors.Wrapf(err, "Upgrading operator")
+			glog.Error(err)
+			return err
+		}
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
@@ -160,7 +162,7 @@ func (r *Runtime) Start() error {
 		return r.config.RuntimePollPeriod, nil
 	}, 10*time.Minute, backoff)
 
-	err = ticker.Start()
+	err := ticker.Start()
 	if err != nil {
 		return fmt.Errorf("starting ticker: %w", err)
 	}
@@ -209,9 +211,9 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 func (r *Runtime) upgradeOperator() error {
 	glog.Infof("Start Operator upgrade")
 	ctx := context.Background()
-	err := r.operatorManager.Upgrade(ctx)
+	err := r.operatorManager.InstallOrUpgrade(ctx)
 	if err != nil {
-		return fmt.Errorf("Operator upgrade: %w", err)
+		return fmt.Errorf("operator upgrade: %w", err)
 	}
 	return nil
 }

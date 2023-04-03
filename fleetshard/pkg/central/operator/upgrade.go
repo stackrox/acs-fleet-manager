@@ -17,17 +17,17 @@ import (
 const (
 	operatorNamespace = "stackrox-operator"
 	releaseName       = "rhacs-operator"
-	operatorImage     = "quay.io/rhacs-eng/stackrox-operator:3.73.1"
+	operatorImage     = "quay.io/rhacs-eng/stackrox-operator:3.74.0"
 )
 
-// ACSOperatorManager ...
+// ACSOperatorManager keeps data necessary for managing ACS Operator
 type ACSOperatorManager struct {
 	client         ctrlClient.Client
 	resourcesChart *chart.Chart
 }
 
-// Upgrade ...
-func (u *ACSOperatorManager) Upgrade(ctx context.Context) error {
+// InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
+func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context) error {
 	chartVals := chartutil.Values{
 		"operator": chartutil.Values{
 			"image": operatorImage,
@@ -71,7 +71,7 @@ func (u *ACSOperatorManager) Upgrade(ctx context.Context) error {
 
 }
 
-// NewACSOperatorManager ...
+// NewACSOperatorManager creates a new ACS Operator Manager
 func NewACSOperatorManager(k8sClient ctrlClient.Client) *ACSOperatorManager {
 	return &ACSOperatorManager{
 		client: k8sClient,
