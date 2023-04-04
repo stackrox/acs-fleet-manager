@@ -17,7 +17,7 @@ const (
 	k8sAPIVersion = "apiextensions.k8s.io/v1"
 )
 
-var SecuredClusterCRD = &unstructured.Unstructured{
+var securedClusterCRD = &unstructured.Unstructured{
 	Object: map[string]interface{}{
 		"kind":       kindCRDName,
 		"apiVersion": k8sAPIVersion,
@@ -27,7 +27,7 @@ var SecuredClusterCRD = &unstructured.Unstructured{
 	},
 }
 
-var CentralCRD = &unstructured.Unstructured{
+var centralCRD = &unstructured.Unstructured{
 	Object: map[string]interface{}{
 		"kind":       kindCRDName,
 		"apiVersion": k8sAPIVersion,
@@ -37,7 +37,7 @@ var CentralCRD = &unstructured.Unstructured{
 	},
 }
 
-var ServiceAccount = &unstructured.Unstructured{
+var serviceAccount = &unstructured.Unstructured{
 	Object: map[string]interface{}{
 		"kind":       "ServiceAccount",
 		"apiVersion": "v1",
@@ -48,7 +48,7 @@ var ServiceAccount = &unstructured.Unstructured{
 	},
 }
 
-var OperatorDeployment = &unstructured.Unstructured{
+var operatorDeployment = &unstructured.Unstructured{
 	Object: map[string]interface{}{
 		"kind":       "Deployment",
 		"apiVersion": "apps/v1",
@@ -59,7 +59,7 @@ var OperatorDeployment = &unstructured.Unstructured{
 	},
 }
 
-var OperatorConfigMap = &unstructured.Unstructured{
+var operatorConfigMap = &unstructured.Unstructured{
 	Object: map[string]interface{}{
 		"kind":       "ConfigMap",
 		"apiVersion": "v1",
@@ -78,37 +78,44 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	require.NoError(t, err)
 
 	// check Secured Cluster CRD exists and correct
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: SecuredClusterCRD.GetName()}, SecuredClusterCRD)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: securedClusterCRD.GetName()}, securedClusterCRD)
 	require.NoError(t, err)
-	assert.Equal(t, k8sAPIVersion, SecuredClusterCRD.GetAPIVersion())
-	assert.NotEmpty(t, SecuredClusterCRD.Object["metadata"])
-	assert.NotEmpty(t, SecuredClusterCRD.Object["spec"])
+	assert.Equal(t, k8sAPIVersion, securedClusterCRD.GetAPIVersion())
+	assert.NotEmpty(t, securedClusterCRD.Object["metadata"])
+	assert.NotEmpty(t, securedClusterCRD.Object["spec"])
 
 	// check Central CRD exists and correct
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: CentralCRD.GetName()}, CentralCRD)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: centralCRD.GetName()}, centralCRD)
 	require.NoError(t, err)
-	assert.Equal(t, k8sAPIVersion, CentralCRD.GetAPIVersion())
-	assert.NotEmpty(t, CentralCRD.Object["metadata"])
-	assert.NotEmpty(t, CentralCRD.Object["spec"])
+	assert.Equal(t, k8sAPIVersion, centralCRD.GetAPIVersion())
+	assert.NotEmpty(t, centralCRD.Object["metadata"])
+	assert.NotEmpty(t, centralCRD.Object["spec"])
 
-	// check ServiceAccount exists
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: ServiceAccount.GetName()}, ServiceAccount)
+	// check serviceAccount exists
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
-	assert.Equal(t, k8sAPIVersion, CentralCRD.GetAPIVersion())
-	assert.NotEmpty(t, CentralCRD.Object["metadata"])
-	assert.NotEmpty(t, CentralCRD.Object["spec"])
+	assert.Equal(t, k8sAPIVersion, centralCRD.GetAPIVersion())
+	assert.NotEmpty(t, centralCRD.Object["metadata"])
+	assert.NotEmpty(t, centralCRD.Object["spec"])
 
 	// check Operator Deployment exists
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: OperatorDeployment.GetName()}, OperatorDeployment)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment.GetName()}, operatorDeployment)
 	require.NoError(t, err)
-	assert.Equal(t, "apps/v1", OperatorDeployment.GetAPIVersion())
-	assert.NotEmpty(t, OperatorDeployment.Object["metadata"])
-	assert.NotEmpty(t, OperatorDeployment.Object["spec"])
+	assert.Equal(t, "apps/v1", operatorDeployment.GetAPIVersion())
+	assert.NotEmpty(t, operatorDeployment.Object["metadata"])
+	assert.NotEmpty(t, operatorDeployment.Object["spec"])
+	templateSpec := operatorDeployment.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"]
+	assert.NotEmpty(t, templateSpec)
+	assert.Contains(t, templateSpec, "containers")
+	containers := templateSpec.(map[string]interface{})["containers"].([]interface{})
+	assert.Len(t, containers, 2)
+	managerContainer := containers[1].(map[string]interface{})
+	assert.Equal(t, managerContainer["image"], operatorImage)
 
 	// check Operator ConfigMap exists
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: OperatorConfigMap.GetName()}, OperatorConfigMap)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorConfigMap.GetName()}, operatorConfigMap)
 	require.NoError(t, err)
-	assert.Equal(t, "v1", OperatorConfigMap.GetAPIVersion())
-	assert.NotEmpty(t, OperatorConfigMap.Object["metadata"])
+	assert.Equal(t, "v1", operatorConfigMap.GetAPIVersion())
+	assert.NotEmpty(t, operatorConfigMap.Object["metadata"])
 
 }

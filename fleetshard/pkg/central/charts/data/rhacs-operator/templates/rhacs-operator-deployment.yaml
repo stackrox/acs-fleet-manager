@@ -35,7 +35,7 @@ spec:
             - name: ROX_OPERATOR_COLLECTOR_REGISTRY
               value: quay.io/rhacs-eng
             - name: OPERATOR_CONDITION_NAME
-              value: rhacs-operator.v3.73.1
+              value: rhacs-operator.v3.74.0
           image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
           imagePullPolicy: IfNotPresent
           name: kube-rbac-proxy
@@ -74,7 +74,7 @@ spec:
             - name: ROX_OPERATOR_COLLECTOR_REGISTRY
               value: quay.io/rhacs-eng
             - name: OPERATOR_CONDITION_NAME
-              value: rhacs-operator.v3.73.1
+              value: rhacs-operator.v3.74.0
           image: {{ .Values.operator.image }}
           imagePullPolicy: IfNotPresent
           livenessProbe:

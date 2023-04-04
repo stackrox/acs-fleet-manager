@@ -3,4 +3,4 @@
 # Declare variables to be passed into your templates.
 
 operator:
-  image: quay.io/rhacs-eng/stackrox-operator:3.73.1
+  image: quay.io/rhacs-eng/stackrox-operator:3.74.0
