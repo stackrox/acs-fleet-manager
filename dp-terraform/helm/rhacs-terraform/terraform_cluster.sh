@@ -61,9 +61,8 @@ fi
 
 FLEETSHARD_SYNC_ORG="app-sre"
 FLEETSHARD_SYNC_IMAGE="acs-fleet-manager"
-# Get the first non-merge commit, starting with HEAD.
-# On main this should be HEAD, on production, the latest merged main commit.
-FLEETSHARD_SYNC_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
+# Get HEAD for both main and production. This is the latest merged commit.
+FLEETSHARD_SYNC_TAG="$(git rev-list --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
 
 if [[ "${HELM_PRINT_ONLY:-}" == "true" ]]; then
     HELM_DEBUG_FLAGS="--debug --dry-run"
