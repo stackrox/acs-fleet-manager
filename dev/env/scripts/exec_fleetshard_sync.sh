@@ -12,7 +12,7 @@ fi
 
 if [[ "$ENABLE_EXTERNAL_CONFIG" != "true" ]]; then
     ${ARGS}
-    return
+    exit
 fi
 
 export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-vault}"
