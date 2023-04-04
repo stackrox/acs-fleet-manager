@@ -59,16 +59,6 @@ var operatorDeployment = &unstructured.Unstructured{
 	},
 }
 
-var operatorConfigMap = &unstructured.Unstructured{
-	Object: map[string]interface{}{
-		"kind":       "ConfigMap",
-		"apiVersion": "v1",
-		"metadata": map[string]interface{}{
-			"name": "rhacs-operator-manager-config",
-		},
-	},
-}
-
 func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient)
@@ -111,11 +101,5 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	assert.Len(t, containers, 2)
 	managerContainer := containers[1].(map[string]interface{})
 	assert.Equal(t, managerContainer["image"], operatorImage)
-
-	// check Operator ConfigMap exists
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorConfigMap.GetName()}, operatorConfigMap)
-	require.NoError(t, err)
-	assert.Equal(t, "v1", operatorConfigMap.GetAPIVersion())
-	assert.NotEmpty(t, operatorConfigMap.Object["metadata"])
 
 }

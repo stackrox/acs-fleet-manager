@@ -36,7 +36,7 @@ spec:
               value: quay.io/rhacs-eng
             - name: OPERATOR_CONDITION_NAME
               value: rhacs-operator.v3.74.0
-          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
           imagePullPolicy: IfNotPresent
           name: kube-rbac-proxy
           ports:
@@ -45,11 +45,11 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 200m
-              memory: 300Mi
+              cpu: 2
+              memory: 1Gi
             requests:
-              cpu: 200m
-              memory: 300Mi
+              cpu: 1
+              memory: 200Mi
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         - args:
@@ -67,12 +67,17 @@ spec:
             - name: RELATED_IMAGE_COLLECTOR_SLIM
             - name: RELATED_IMAGE_COLLECTOR_FULL
             - name: RELATED_IMAGE_ROXCTL
-            - name: RELATED_IMAGE_DOCS
             - name: RELATED_IMAGE_CENTRAL_DB
             - name: ROX_OPERATOR_MAIN_REGISTRY
               value: quay.io/rhacs-eng
             - name: ROX_OPERATOR_COLLECTOR_REGISTRY
               value: quay.io/rhacs-eng
+            - name: MEMORY_LIMIT_BYTES
+              valueFrom:
+                resourceFieldRef:
+                  containerName: manager
+                  resource: limits.memory
+                  divisor: '0'
             - name: OPERATOR_CONDITION_NAME
               value: rhacs-operator.v3.74.0
           image: {{ .Values.operator.image }}
@@ -104,11 +109,11 @@ spec:
             timeoutSeconds: 1
           resources:
             limits:
-              cpu: 200m
-              memory: 300Mi
+              cpu: 2
+              memory: 1Gi
             requests:
-              cpu: 200m
-              memory: 300Mi
+              cpu: 1
+              memory: 200Mi
           securityContext:
             allowPrivilegeEscalation: false
           terminationMessagePath: /dev/termination-log
