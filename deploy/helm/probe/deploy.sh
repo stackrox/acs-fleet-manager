@@ -29,6 +29,10 @@ init_chamber
 load_external_config probe PROBE_
 
 case $ENVIRONMENT in
+  dev)
+    FM_ENDPOINT="https://api.fake.openshift.com"
+    ;;
+
   stage)
     FM_ENDPOINT="https://api.stage.openshift.com"
     ;;
