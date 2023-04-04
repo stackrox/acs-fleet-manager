@@ -39,6 +39,7 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context) error {
 		return fmt.Errorf("installing operator chart: %w", err)
 	}
 
+	// TODO(ROX-16338): handle namespace assigning with refactoring of chart deployment
 	for _, obj := range objs {
 		if obj.GetNamespace() == "" {
 			obj.SetNamespace(operatorNamespace)

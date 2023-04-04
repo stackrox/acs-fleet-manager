@@ -116,7 +116,7 @@ func (r *Runtime) Start() error {
 		Environment:       r.config.Environment,
 	}
 
-	if r.config.UpgradeOperatorEnabled {
+	if r.config.FeatureFlagUpgradeOperatorEnabled {
 		err := r.upgradeOperator()
 		if err != nil {
 			err = errors.Wrapf(err, "Upgrading operator")
