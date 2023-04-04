@@ -8,6 +8,7 @@ on:
 jobs:
   call-deploy-workflow:
     uses: ./.github/workflows/deploy-data-plane.yaml
+    secrets: inherit # pragma: allowlist secret
     with:
       acs_environment: stage
       github_environment: stage

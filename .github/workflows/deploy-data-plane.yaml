@@ -4,6 +4,11 @@ concurrency: ${{ inputs.github_environment }}
 
 on:
   workflow_call:
+    secrets:
+      AWS_REGION:
+        required: true
+      AWS_ACCOUNT_ID:
+        required: true
     inputs:
       acs_environment:
         description: 'Name of the ACS environment.'
