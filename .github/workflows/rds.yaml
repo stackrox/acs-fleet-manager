@@ -5,22 +5,6 @@ on:
   push:
     branches:
       - main
-      - release
-    paths-ignore:
-      - '*.md'
-      - '*.sh'
-      - '.github/*.md'
-      - '.github/workflows/openapi_update.yaml'
-      - '.github/CODEOWNERS'
-      - 'templates/**'
-      - '.openapi-generator-ignore'
-      - 'openapi/**'
-      - 'docs/**'
-      - 'pkg/api/openapi/docs/**'
-      - 'pkg/api/openapi/.openapi-generator-ignore'
-
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
       - '*.md'
       - '*.sh'
