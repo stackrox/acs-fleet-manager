@@ -39,7 +39,13 @@ repos:
         entry: make code/check
         language: system
         pass_filenames: false
-  - repo: https://github.com/rhysd/actionlint
-    rev: v1.6.24
+  - repo: local
     hooks:
       - id: actionlint
+        name: lint GitHub Actions workflow files
+        description: Runs actionlint to lint GitHub Actions workflow files
+        entry: actionlint
+        language: golang
+        additional_dependencies: [github.com/rhysd/actionlint/cmd/actionlint@v1.6.24]
+        types: [ "yaml" ]
+        files: "^.github/workflows/"
