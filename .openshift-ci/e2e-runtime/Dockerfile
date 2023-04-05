@@ -1,5 +1,8 @@
 FROM quay.io/centos/centos:stream9
 
+# Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=2184640
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
+
 RUN dnf update -y --disablerepo=\* --enablerepo=baseos,appstream && dnf -y install make which git gettext jq gcc && dnf clean all && rm -rf /var/cache/dnf
 
 COPY --from=registry.ci.openshift.org/openshift/release:golang-1.19 /usr/local/go /usr/local/go
