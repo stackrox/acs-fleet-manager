@@ -5,6 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # shellcheck source=scripts/lib/external_config.sh
 source "$SCRIPT_DIR/../../../scripts/lib/external_config.sh"
+# shellcheck source=scripts/lib/helm.sh
+source "$SCRIPT_DIR/../../../scripts/lib/helm.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
