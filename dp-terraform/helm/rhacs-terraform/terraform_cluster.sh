@@ -74,17 +74,15 @@ FLEETSHARD_SYNC_IMAGE="acs-fleet-manager"
 FLEETSHARD_SYNC_TAG="$(git rev-parse --short=7 HEAD)"
 
 if [[ "${HELM_DRY_RUN:-}" == "true" ]]; then
-    HELM_FLAGS="--dry-run"
     "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
 else
     "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
 fi
-if [[ "${HELM_DEBUG:-}" == "true" ]]; then
-    HELM_FLAGS="${HELM_FLAGS:-} --debug"
-fi
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
-oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
+if [[ "${ENVIRONMENT}" != "dev" ]]; then
+    oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
+fi
 
 OPERATOR_SOURCE="redhat-operators"
 OPERATOR_USE_UPSTREAM="${OPERATOR_USE_UPSTREAM:-false}"
@@ -100,11 +98,26 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     OPERATOR_SOURCE="rhacs-operators"
 fi
 
-# shellcheck disable=SC2086
-helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_FLAGS:-} \
-  --install \
+function invoke_helm() {
+    if [[ "${ENVIRONMENT}" == "dev" ]]; then
+        # Dev env is special, as there is no real dev cluster. Instead
+        # we just run lint to smoke test the chart.
+        helm lint "${SCRIPT_DIR}" "$@"
+    else
+        if [[ "${HELM_DRY_RUN:-}" == "true" ]]; then
+            HELM_FLAGS="--dry-run"
+        fi
+        if [[ "${HELM_DEBUG:-}" == "true" ]]; then
+            HELM_FLAGS="${HELM_FLAGS:-} --debug"
+        fi
+        # shellcheck disable=SC2086
+        helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_FLAGS:-} \
+          --install --create-namespace "$@"
+  fi
+}
+
+invoke_helm \
   --namespace rhacs \
-  --create-namespace \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
