@@ -5,6 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # shellcheck source=scripts/lib/external_config.sh
 source "$SCRIPT_DIR/../../../scripts/lib/external_config.sh"
+# shellcheck source=scripts/lib/helm.sh
+source "$SCRIPT_DIR/../../../scripts/lib/helm.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
@@ -98,25 +100,7 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     OPERATOR_SOURCE="rhacs-operators"
 fi
 
-function invoke_helm() {
-    if [[ "${ENVIRONMENT}" == "dev" ]]; then
-        # Dev env is special, as there is no real dev cluster. Instead
-        # we just run lint to smoke test the chart.
-        helm lint "${SCRIPT_DIR}" "$@"
-    else
-        if [[ "${HELM_DRY_RUN:-}" == "true" ]]; then
-            HELM_FLAGS="--dry-run"
-        fi
-        if [[ "${HELM_DEBUG:-}" == "true" ]]; then
-            HELM_FLAGS="${HELM_FLAGS:-} --debug"
-        fi
-        # shellcheck disable=SC2086
-        helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_FLAGS:-} \
-          --install --create-namespace "$@"
-  fi
-}
-
-invoke_helm \
+invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --namespace rhacs \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
