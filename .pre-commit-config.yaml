@@ -39,3 +39,7 @@ repos:
         entry: make code/check
         language: system
         pass_filenames: false
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.6.24
+    hooks:
+      - id: actionlint
