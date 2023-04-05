@@ -62,7 +62,7 @@ fi
 FLEETSHARD_SYNC_ORG="app-sre"
 FLEETSHARD_SYNC_IMAGE="acs-fleet-manager"
 # Get HEAD for both main and production. This is the latest merged commit.
-FLEETSHARD_SYNC_TAG="$(git rev-list --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
+FLEETSHARD_SYNC_TAG="$(git rev-parse --short=7 HEAD)"
 
 if [[ "${HELM_PRINT_ONLY:-}" == "true" ]]; then
     HELM_DEBUG_FLAGS="--debug --dry-run"
