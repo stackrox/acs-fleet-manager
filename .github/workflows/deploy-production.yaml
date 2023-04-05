@@ -12,5 +12,5 @@ jobs:
     with:
       acs_environment: prod
       github_environment: production
-      deploy_clusters: "acs-prod-dp-01"
+      deploy_clusters: "acs-prod-dp-01 acs-prod-eu-1"
       probe_cluster: "acs-prod-dp-01"
