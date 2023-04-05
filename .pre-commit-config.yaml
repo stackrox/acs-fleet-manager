@@ -46,6 +46,7 @@ repos:
         description: Runs actionlint to lint GitHub Actions workflow files
         entry: actionlint
         language: golang
+        # This dependency can't be updated with 'pre-commit autoupdate'. Please bump it manually when necessary.
         additional_dependencies: [github.com/rhysd/actionlint/cmd/actionlint@v1.6.24]
         types: [ "yaml" ]
         files: "^.github/workflows/"
