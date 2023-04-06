@@ -39,6 +39,20 @@ Secrets are divided to subgroups per each service. The following services are cu
 - It is also recommended to install the tools in the local bin folder so that you can easily use `chamber`, `aws-saml.py` and `aws-vault` from the command line;
 
 ## Tips / Examples
+
+### Initializing a profile
+
+When populating a new `aws-vault` profile with data from BitWarden you might get an error such as the following:
+
+```
+                return Response.error("Syncing failed: " + e.toString());
+                                                             ^
+TypeError: Cannot read properties of null (reading 'toString')
+```
+
+In that case running `bw login` manually should help.
+
+
 ### Useful environment aliases
 ```shell
 alias chamberdev='aws-vault exec dev -- chamber'

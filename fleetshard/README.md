@@ -40,6 +40,9 @@ export AWS_AUTH_HELPER=aws-vault
 source ./scripts/lib/external_config.sh
 init_chamber
 ```
+
+See [secret management docs](docs/development/secret-management.md) for more information and tips.
+
 Dev environment is selected by default. After this you may call
 ```shell
 ./dev/env/scripts/exec_fleetshard_sync.sh
