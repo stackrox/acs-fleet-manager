@@ -18,10 +18,26 @@ on:
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
 
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '*.md'
+      - '*.sh'
+      - '.github/*.md'
+      - '.github/workflows/openapi_update.yaml'
+      - '.github/CODEOWNERS'
+      - 'templates/**'
+      - '.openapi-generator-ignore'
+      - 'openapi/**'
+      - 'docs/**'
+      - 'pkg/api/openapi/docs/**'
+      - 'pkg/api/openapi/.openapi-generator-ignore'
+
 jobs:
   verify-test:
     name: "Test RDS Provisioning"
     runs-on: ubuntu-latest
+    if: github.repository == 'stackrox/acs-fleet-manager' # do not run in forks
     permissions:
       id-token: write
       contents: read
