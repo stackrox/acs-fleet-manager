@@ -17,9 +17,8 @@ ENVIRONMENT=$1
 CLUSTER_NAME=$2
 PROBE_IMAGE_ORG="rhacs-eng"
 PROBE_IMAGE_NAME="blackbox-monitoring-probe-service"
-# Get the first non-merge commit, starting with HEAD.
-# On main this should be HEAD, on production, the latest merged main commit.
-PROBE_IMAGE_TAG="$(git rev-list --no-merges --max-count 1 --abbrev-commit --abbrev=7 HEAD)"
+# Get HEAD for both main and production. This is the latest merged commit.
+PROBE_IMAGE_TAG="$(git rev-parse --short=7 HEAD)"
 PROBE_IMAGE="quay.io/${PROBE_IMAGE_ORG}/${PROBE_IMAGE_NAME}:${PROBE_IMAGE_TAG}"
 
 export AWS_PROFILE="$ENVIRONMENT"
