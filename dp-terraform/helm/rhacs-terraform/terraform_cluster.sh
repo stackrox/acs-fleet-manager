@@ -5,6 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # shellcheck source=scripts/lib/external_config.sh
 source "$SCRIPT_DIR/../../../scripts/lib/external_config.sh"
+# shellcheck source=scripts/lib/helm.sh
+source "$SCRIPT_DIR/../../../scripts/lib/helm.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
@@ -29,6 +31,15 @@ load_external_config logging LOGGING_
 load_external_config observability OBSERVABILITY_
 
 case $ENVIRONMENT in
+  dev)
+    FM_ENDPOINT="https://nonexistent.api.stage.openshift.com"
+    OBSERVABILITY_GITHUB_TAG="master"
+    OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.nonexistent.openshift.com"
+    OBSERVABILITY_OPERATOR_VERSION="v4.0.4"
+    OPERATOR_USE_UPSTREAM="false"
+    OPERATOR_VERSION="v3.74.0"
+    ;;
+
   stage)
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
     OBSERVABILITY_GITHUB_TAG="master"
@@ -64,14 +75,16 @@ FLEETSHARD_SYNC_IMAGE="acs-fleet-manager"
 # Get HEAD for both main and production. This is the latest merged commit.
 FLEETSHARD_SYNC_TAG="$(git rev-parse --short=7 HEAD)"
 
-if [[ "${HELM_PRINT_ONLY:-}" == "true" ]]; then
-    HELM_DEBUG_FLAGS="--debug --dry-run"
+if [[ "${HELM_DRY_RUN:-}" == "true" ]]; then
+    "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
 else
     "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
 fi
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
-oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
+if [[ "${ENVIRONMENT}" != "dev" ]]; then
+    oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
+fi
 
 OPERATOR_SOURCE="redhat-operators"
 OPERATOR_USE_UPSTREAM="${OPERATOR_USE_UPSTREAM:-false}"
@@ -87,11 +100,8 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     OPERATOR_SOURCE="rhacs-operators"
 fi
 
-# shellcheck disable=SC2086
-helm upgrade rhacs-terraform "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
-  --install \
+invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --namespace rhacs \
-  --create-namespace \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \

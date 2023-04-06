@@ -1,0 +1,22 @@
+name: Dry-run Deploy Dev Env
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '.openapi-generator-ignore'
+      - 'openapi/**'
+      - 'docs/**'
+      - 'pkg/api/openapi/docs/**'
+      - 'pkg/api/openapi/.openapi-generator-ignore'
+
+jobs:
+  call-deploy-workflow:
+    uses: ./.github/workflows/deploy-data-plane.yaml
+    secrets: inherit # pragma: allowlist secret
+    with:
+      acs_environment: dev
+      github_environment: development
+      deploy_clusters: "acs-dev-dp-01"
+      probe_cluster: "acs-dev-dp-01"
+      dry_run: true
