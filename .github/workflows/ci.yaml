@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - release
     paths-ignore:
       - '*.md'
       - '*.sh'
@@ -64,7 +63,7 @@ jobs:
       postgres:
         image: postgres:11
         env:
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_PASSWORD: foobar-bizz-buzz # pragma: allowlist secret - dummy value
           POSTGRES_USER: fleet_manager
           POSTGRES_DB: serviceapitests
         ports:
@@ -97,7 +96,6 @@ jobs:
       - name: Setup tests secrets
         run: |
           make ocm/setup aws/setup redhatsso/setup centralcert/setup observatorium/setup secrets/touch
-          echo -n "${{ secrets.POSTGRES_PASSWORD }}" > secrets/db.password
       - name: Run Migration Script
         run: make db/migrate
       - name: Verify & Test
