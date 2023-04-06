@@ -1,74 +1,16 @@
 name: Deploy Stage Env
 
-concurrency: stage
-
 on:
   push:
     branches:
       - main
 
-env:
-  # Credentials are populated by explicit `configure-aws-credentials` jobs in
-  # the workflow, so loading additional credentials in the terraform_cluster.sh
-  # script is not necessary.
-  AWS_AUTH_HELPER: none
-
 jobs:
-  terraform:
-    name: Re-terraform stage clusters
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    environment: stage
-    steps:
-      - name: Set up Go 1.19
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.19"
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Critical for correct image detection in deploy script
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
-        with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
-      - name: Run terraforming on acs-stage-dp-02
-        working-directory: ./dp-terraform/helm/rhacs-terraform
-        run: |
-          set -euo pipefail
-          ./terraform_cluster.sh stage acs-stage-dp-02
-      - name: Run terraforming on acs-stage-eu-01
-        working-directory: ./dp-terraform/helm/rhacs-terraform
-        run: |
-          set -euo pipefail
-          ./terraform_cluster.sh stage acs-stage-eu-01
-
-  deploy-probe:
-    name: Deploy blackbox monitoring probe service to stage
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    environment: stage
-    steps:
-      - name: Set up Go 1.19
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.19"
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Critical for correct image detection in deploy script
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
-        with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
-      - name: Deploy probe on acs-stage-dp-02
-        working-directory: ./deploy/helm/probe
-        run: |
-          set -euo pipefail
-          ./deploy.sh stage acs-stage-dp-02
+  call-deploy-workflow:
+    uses: ./.github/workflows/deploy-data-plane.yaml
+    secrets: inherit # pragma: allowlist secret
+    with:
+      acs_environment: stage
+      github_environment: stage
+      deploy_clusters: "acs-stage-dp-02 acs-stage-eu-01"
+      probe_cluster: "acs-stage-dp-02"

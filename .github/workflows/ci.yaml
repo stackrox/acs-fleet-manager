@@ -102,7 +102,8 @@ jobs:
         run: make db/migrate
       - name: Verify & Test
         run: |
-          export GOPATH=$(go env GOPATH)
+          GOPATH=$(go env GOPATH)
+          export GOPATH
           export PATH=${PATH}:$GOPATH/bin
           make verify binary test test/integration
         timeout-minutes: 14
