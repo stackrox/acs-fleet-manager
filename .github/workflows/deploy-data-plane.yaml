@@ -26,8 +26,14 @@ on:
         description: 'Name of cluster to deploy probe to.'
         required: true
         type: string
+      dry_run:
+        description: 'Do not change any state if true.'
+        type: boolean
+        default: false
+        required: false
 
 env:
+  HELM_DRY_RUN: ${{ inputs.dry_run }}
   # Credentials are populated by explicit `configure-aws-credentials` jobs in
   # the workflow, so loading additional credentials in the terraform_cluster.sh
   # script is not necessary.
