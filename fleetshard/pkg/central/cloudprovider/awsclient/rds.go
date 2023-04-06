@@ -1,4 +1,4 @@
-// Package awsclient provides AWS-specific implementations of the interfaces in cloudprovider test
+// Package awsclient provides AWS-specific implementations of the interfaces in cloudprovider
 package awsclient
 
 import (
