@@ -70,7 +70,7 @@ oc delete users <user ids>
 In case you are receiving an "authentication error" when logging in, here are some steps to further investigate the issue:
 ```shell
 ocm cluster login <cluster name> --token
-oc logni --token <copied token> <cluster URL>
+oc login --token <copied token> <cluster URL>
 
 # Get the authentication operator pods
 oc get pods -n openshift-authentication
