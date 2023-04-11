@@ -12,3 +12,6 @@
 - method: DELETE
   roles:
     - "acs-fleet-manager-admin-full"      # Prod rover group, will only include selected members + SREs.
+- method: POST
+  roles:
+    - "acs-fleet-manager-admin-full"

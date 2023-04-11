@@ -33,6 +33,7 @@ func ConvertCluster(cluster *api.Cluster) []map[string]interface{} {
 			"provider_type":  cluster.ProviderType.String(),
 			"provider_spec":  p,
 			"cluster_spec":   c,
+			"schedulable":    cluster.Schedulable,
 		},
 	}
 }

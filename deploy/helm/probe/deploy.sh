@@ -5,6 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # shellcheck source=scripts/lib/external_config.sh
 source "$SCRIPT_DIR/../../../scripts/lib/external_config.sh"
+# shellcheck source=scripts/lib/helm.sh
+source "$SCRIPT_DIR/../../../scripts/lib/helm.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
@@ -28,6 +30,10 @@ init_chamber
 load_external_config probe PROBE_
 
 case $ENVIRONMENT in
+  dev)
+    FM_ENDPOINT="https://api.fake.openshift.com"
+    ;;
+
   stage)
     FM_ENDPOINT="https://api.stage.openshift.com"
     ;;
@@ -48,24 +54,22 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     exit 2
 fi
 
-if [[ "${HELM_PRINT_ONLY:-}" == "true" ]]; then
-    HELM_DEBUG_FLAGS="--debug --dry-run"
+if [[ "${HELM_DRY_RUN:-}" == "true" ]]; then
+    "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${PROBE_IMAGE_ORG}" "${PROBE_IMAGE_NAME}" "${PROBE_IMAGE_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
 else
     "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${PROBE_IMAGE_ORG}" "${PROBE_IMAGE_NAME}" "${PROBE_IMAGE_TAG}"
 fi
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
-oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
+if [[ "${ENVIRONMENT}" != "dev" ]]; then
+    oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
+fi
 
 NAMESPACE="rhacs-probe"
 AUTH_TYPE="OCM"
 
-# helm template --debug ... to debug changes
-# shellcheck disable=SC2086
-helm upgrade rhacs-probe "${SCRIPT_DIR}" ${HELM_DEBUG_FLAGS:-} \
-  --install \
+invoke_helm "${SCRIPT_DIR}" rhacs-probe \
   --namespace "${NAMESPACE}" \
-  --create-namespace \
   --set authType="${AUTH_TYPE}" \
   --set clusterName="${CLUSTER_NAME}" \
   --set environment="${ENVIRONMENT}" \

@@ -70,7 +70,7 @@ if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
 fi
 
 log "Deploying fleetshard-sync"
-run_chamber exec "fleetshard-sync" -- apply "${MANIFESTS_DIR}/fleetshard-sync"
+exec_fleetshard_sync.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
 wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
     $KUBECTL -n "$ACSMS_NAMESPACE" logs -l application=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &

@@ -416,6 +416,70 @@ paths:
       security:
       - Bearer: []
       summary: Delete a Central directly in the Database by ID
+  /api/rhacs/v1/admin/centrals/default-version:
+    get:
+      operationId: getCentralDefaultVersion
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CentralDefaultVersion'
+          description: Return current central default version
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Get the current central default version
+    post:
+      operationId: setCentralDefaultVersion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CentralDefaultVersion'
+        description: Central version data
+        required: true
+      responses:
+        "200":
+          description: Central default version set to new value
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Set the central default version
 components:
   schemas:
     Central:
@@ -467,6 +531,14 @@ components:
           $ref: '#/components/schemas/CentralSpec'
         scanner:
           $ref: '#/components/schemas/ScannerSpec'
+      type: object
+    CentralDefaultVersion:
+      example:
+        version: quay.io/rhacs-eng/stackrox-operator:3.74.1
+      properties:
+        version:
+          example: quay.io/rhacs-eng/stackrox-operator:3.74.1
+          type: string
       type: object
     Error:
       allOf:
