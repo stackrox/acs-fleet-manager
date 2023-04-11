@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deploy,ent
+kind: Deployment
 metadata:
   name: eventrouter
   namespace: openshift-logging
@@ -31,8 +31,8 @@ spec:
               cpu: "100m"
               memory: "128Mi"
           volumeMounts:
-          - name: config-volume
-            mountPath: /etc/eventrouter
+            - name: config-volume
+              mountPath: /etc/eventrouter
       volumes:
         - name: config-volume
           configMap:
