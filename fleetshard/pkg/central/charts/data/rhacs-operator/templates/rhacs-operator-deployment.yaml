@@ -80,6 +80,10 @@ spec:
                   divisor: '0'
             - name: OPERATOR_CONDITION_NAME
               value: rhacs-operator.v3.74.0
+            {{ if .Values.operator.centralLabelSelector -}}
+            - name: CENTRAL_LABEL_SELECTOR
+              value: {{ .Values.operator.centralLabelSelector | quote }}
+            {{- end }}
           image: {{ .Values.operator.image }}
           imagePullPolicy: IfNotPresent
           livenessProbe:
