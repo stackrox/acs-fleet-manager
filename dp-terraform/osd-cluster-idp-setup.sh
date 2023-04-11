@@ -12,7 +12,6 @@ if [[ $# -ne 2 ]]; then
     echo "Cluster typically looks like: acs-{environment}-dp-01"
     echo "Description: This script will create identity providers for the OSD cluster:"
     echo "- OIDC provider using auth.redhat.com"
-    echo "- HTPasswd provider"
     echo "It will also create and configure a ServiceAccount for the data plane continuous deployment."
     echo "See additional documentation in docs/development/setup-osd-cluster-idp.md"
     echo
@@ -47,18 +46,6 @@ export_cluster_environment() {
     init_chamber
     load_external_config "osd" OSD_
     load_external_config "cluster-$CLUSTER_NAME" STORED_
-
-    if [[ -z ${STORED_ADMIN_USERNAME:-} ]]; then
-        echo "Cluster admin user not specified in Secrets Manager nor Parameter Store."
-        echo "Enter cluster admin username:"
-        read -r STORED_ADMIN_USERNAME
-        save_cluster_secret "admin_username" "$STORED_ADMIN_USERNAME"
-    fi
-    if [[ -z ${STORED_ADMIN_PASSWORD:-} ]]; then
-        echo "Enter cluster admin password:"
-        read -r -s STORED_ADMIN_PASSWORD
-        save_cluster_secret "admin_password" "$STORED_ADMIN_PASSWORD"
-    fi
 }
 
 setup_oidc_provider() {
@@ -72,7 +59,7 @@ setup_oidc_provider() {
         --issuer-url=https://auth.redhat.com/auth/realms/EmployeeIDP \
         --email-claims=email --name-claims=preferred_username --username-claims=preferred_username
     else
-      echo "Skipping creation an OpenID IdP for the cluster, already exists."
+      echo "Skipping creating an OIDC IdP for the cluster, already exists."
     fi
 
     # Create the users that should have access to the cluster with cluster administrative rights.
@@ -80,24 +67,6 @@ setup_oidc_provider() {
     ocm create user --cluster="${CLUSTER_NAME}" \
       --group=cluster-admins \
       "${OSD_OIDC_USER_LIST}" || true
-}
-
-setup_htpasswd_provider() {
-    if ! ocm list idps --cluster="${CLUSTER_NAME}" --columns name | grep -qE '^HTPasswd *$'; then
-      echo "Creating an HTPasswd IdP for the cluster."
-      ocm create idp --name=HTPasswd \
-        --cluster="${CLUSTER_ID}" \
-        --type=htpasswd \
-        --username="${STORED_ADMIN_USERNAME}" \
-        --password="${STORED_ADMIN_PASSWORD}"
-    else
-      echo "Skipping creation an HTPasswd IdP for the cluster, already exists."
-    fi
-
-    # Create the acsms-admin user. Ignore errors, if it already exists.
-    ocm create user --cluster="${CLUSTER_NAME}" \
-      --group=cluster-admins \
-      "${STORED_ADMIN_USERNAME}" || true
 }
 
 case $ENVIRONMENT in
@@ -125,7 +94,13 @@ CLUSTER_ID=$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns="ID")
 
 export_cluster_environment
 setup_oidc_provider
-setup_htpasswd_provider
+
+# Retrieve the cluster token from the configured IdP interactively.
+echo "Login to the cluster using the OIDC IdP and obtain a token."
+ocm cluster login "${CLUSTER_NAME}" --token
+# This requires users to paste the token, since the command only opens the browser but doesn't retrieve the token itself.
+echo "Paste the token:"
+read -r -s CLUSTER_TOKEN
 
 # The ocm command likes to return trailing whitespace, so try and trim it:
 CLUSTER_URL="$(ocm list cluster "${CLUSTER_NAME}" --no-headers --columns api.url | awk '{print $1}')"
@@ -135,8 +110,8 @@ KUBECONFIG="$(mktemp)"
 export KUBECONFIG
 trap 'rm -f "${KUBECONFIG}"' EXIT
 
-echo "Logging into cluster ${CLUSTER_NAME} as ${STORED_ADMIN_USERNAME}..."
-oc login "${CLUSTER_URL}" --username="${STORED_ADMIN_USERNAME}" --password="${STORED_ADMIN_PASSWORD}"
+echo "Logging into cluster ${CLUSTER_NAME}..."
+oc login "${CLUSTER_URL}" --token="${CLUSTER_TOKEN}"
 
 ROBOT_NS="acscs-dataplane-cd"
 ROBOT_SA="acscs-cd-robot"

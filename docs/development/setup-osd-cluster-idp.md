@@ -10,12 +10,8 @@ Additionally, you will require access to the environment specific AWS account.
 
 For each OSD cluster, you can create IdPs that will allow login to the OpenShift Console and map your user to a specific group within the cluster, providing i.e. administrative rights.
 
-Based on the environment (stage or prod), the following IdPs will be created:
-- stage:
-  - OIDC IdP using auth.redhat.com as backend.
-  - HTPasswd using username password.
-- prod:
-  - HTPasswd using username password.
+The following IdPs will be created:
+- OIDC IdP using auth.redhat.com as backend.
 
 Before executing the script that manages the IdP setup, you have to ensure you are logged in with OCM.
 Based on the environment, you have to choose between `rhacs-managed-service-stage` or `rhacs-managed-service-prod` account.
@@ -25,20 +21,13 @@ Afterwards, you can call the script and adjust the parameters based on your need
 ./dp-terraform/osd-cluster-idp-setup.sh "stage|prod" "cluster-name"
 ```
 
-The script will handle the following (again, split by environments):
-- stage:
-  1. Fetch required parameters from AWS Parameter Store and credentials from AWS Secrets Manager. The first time it runs, it will ask for AWS credentials.
-  2. Create the OIDC IdP for the cluster.
-  3. Create the user <-> group mapping for cluster-admins.
-  4. Create the HTPasswd IdP for the cluster.
-  5. Create the `acsms-stage-admin` user and map it to cluster-admins group.
-- prod:
-  1. Fetch required parameters from AWS Parameter Store and credentials from AWS Secrets Manager. The first time it runs, it will ask for AWS credentials.
-  2. Create the HTPasswd IdP for the cluster.
-  3. Create the `acsms-prod-admin` user and map it to cluster-admins group.
+The script will handle the following:
+1. Fetch required parameters from AWS Parameter Store and credentials from AWS Secrets Manager. The first time it runs, it will ask for AWS credentials.
+2. Create the OIDC IdP for the cluster.
+3. Create the user <-> group mapping for cluster-admins.
 
 Afterwards, you should see the list of users and their group mapping within the console.openshift.com and when
-logging in the OSD cluster you should see the option to login via `HTPasswd / OIDC` (based on your environment).
+logging in the OSD cluster you should see the option to login via `OIDC`.
 
 **Note: The sync from console.openshift.com and your OSD cluster may take some time for your IdP to show up when trying to log in.**
 
@@ -57,7 +46,8 @@ Additionally, you will have to clear the users within the OSD cluster.
 You can do so by running the following:
 ```shell
 # Login to the cluster. This will automatically set the correct context for oc.
-ocm cluster login <cluster name> --username "acsms-(stage|prod)-admin"
+ocm cluster login <cluster name> --token
+oc login --token <copied token> <cluster URL>
 
 # List the identities that have been created. An identity will be created the first time
 # a user logins via an IdP
@@ -79,7 +69,8 @@ oc delete users <user ids>
 
 In case you are receiving an "authentication error" when logging in, here are some steps to further investigate the issue:
 ```shell
-ocm cluster login <cluster name>
+ocm cluster login <cluster name> --token
+oc logni --token <copied token> <cluster URL>
 
 # Get the authentication operator pods
 oc get pods -n openshift-authentication
