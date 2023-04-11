@@ -4,215 +4,134 @@ metadata:
   name: cloudwatch-exporter-config
   namespace: {{ include "cloudwatch.namespace" . }}
 data:
-  config.yaml: |-
-    region: us-east-1
-    metrics:
-      - aws_metric_name: DatabaseConnections
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: ServerlessDatabaseCapacity
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: ACUUtilization
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: FreeableMemory
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: CPUUtilization
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: ReadLatency
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: ReadThroughput
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: WriteLatency
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: WriteThroughput
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: NetworkThroughput
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: AuroraReplicaLag
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: MaximumUsedTransactionIDs
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: TransactionLogsDiskUsage
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: Deadlocks
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
-
-      - aws_metric_name: BufferCacheHitRatio
-        aws_namespace: AWS/RDS
-        aws_dimensions:
-          - DBInstanceIdentifier
-        aws_statistics:
-          - Average
-          - Maximum
-          - Minimum
-        aws_extended_statistics:
-          - p90
-          - p95
-          - p99
-        use_get_metric_data: true
+  config.yml: |-
+    apiVersion: v1alpha1
+    discovery:
+      jobs:
+        - type: rds
+          regions:
+            - us-east-1
+          searchTags:
+            - key: DataplaneClusterName
+              value: ^{{ .Values.clusterName }}$
+          metrics:
+            - name: DatabaseConnections
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: ServerlessDatabaseCapacity
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: ACUUtilization
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: FreeableMemory
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: CPUUtilization
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: ReadLatency
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: ReadThroughput
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: WriteLatency
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: WriteThroughput
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: NetworkThroughput
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: AuroraReplicaLag
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: MaximumUsedTransactionIDs
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: TransactionLogsDiskUsage
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: Deadlocks
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
+            - name: BufferCacheHitRatio
+              statistics:
+                - Average
+                - Maximum
+                - Minimum
+                - p90
+                - p95
+                - p99
