@@ -5,4 +5,4 @@ aws:
 
 clusterName: ""
 environment: ""
-image: "quay.io/prometheus/cloudwatch-exporter:v0.15.1"
+image: "ghcr.io/nerdswords/yet-another-cloudwatch-exporter:v0.48.0-alpha"

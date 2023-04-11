@@ -29,6 +29,8 @@ spec:
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
+          args:
+            - "--config.file=/tmp/config.yml"
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
@@ -41,12 +43,11 @@ spec:
                   name: rhacs-cloudwatch-exporter
                   key: AWS_SECRET_ACCESS_KEY
           volumeMounts:
-            - mountPath: /config/config.yml
+            - mountPath: /tmp
               name: config
-              subPath: config.yaml
           ports:
             - name: monitoring
-              containerPort: 9106
+              containerPort: 5000
       volumes:
         - name: config
           configMap:

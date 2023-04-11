@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -23,8 +24,8 @@ var (
 	// ValidDinosaurClusterNameRegexp ...
 	ValidDinosaurClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 
-	// MaxDinosaurNameLength ...
-	MaxDinosaurNameLength = 32
+	// MaxCentralNameLength ...
+	MaxCentralNameLength = 32
 
 	supportedResources = []corev1.ResourceName{corev1.ResourceCPU, corev1.ResourceMemory}
 )
@@ -254,4 +255,33 @@ func ValidateResourceName(name string) (corev1.ResourceName, bool) {
 		}
 	}
 	return corev1.ResourceName(""), false
+}
+
+// ValidateUpdateCentralVersion validates the CentralVersion field of a CentralUpdateRequest
+func ValidateUpdateCentralVersion(updateReq *private.CentralUpdateRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		if updateReq.CentralVersion == "" {
+			return nil
+		}
+
+		return validateCentralVersionString(updateReq.CentralVersion)()
+	}
+}
+
+// ValidateCentralDefaultVersion validates the given version
+func ValidateCentralDefaultVersion(version *private.CentralDefaultVersion) handlers.Validate {
+	return validateCentralVersionString(version.Version)
+}
+
+func validateCentralVersionString(version string) handlers.Validate {
+	return func() *errors.ServiceError {
+
+		err := services.ValidateCentralVersionString(version)
+		if err != nil {
+			return errors.Validation("validating central version string: %s", err)
+		}
+
+		return nil
+	}
+
 }

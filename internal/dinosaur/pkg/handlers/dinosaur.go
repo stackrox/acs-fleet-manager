@@ -74,7 +74,7 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 		MarshalInto: &centralRequest,
 		Validate: []handlers.Validate{
 			handlers.ValidateAsyncEnabled(r, "creating central requests"),
-			handlers.ValidateLength(&centralRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxDinosaurNameLength),
+			handlers.ValidateLength(&centralRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxCentralNameLength),
 			ValidDinosaurClusterName(&centralRequest.Name, "name"),
 			ValidateDinosaurClusterNameIsUnique(r.Context(), &centralRequest.Name, h.service),
 			ValidateDinosaurClaims(ctx, &centralRequest, convCentral),

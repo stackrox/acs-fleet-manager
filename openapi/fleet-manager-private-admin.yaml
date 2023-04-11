@@ -294,6 +294,70 @@ paths:
             application/json:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
+  '/api/rhacs/v1/admin/centrals/default-version':
+    post:
+      summary: Set the central default version
+      operationId: setCentralDefaultVersion
+      security:
+        - Bearer: []
+      requestBody:
+        description: Central version data
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CentralDefaultVersion"
+        required: true
+      responses:
+        "200":
+          description: Central default version set to new value
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+    get:
+      summary: Get the current central default version
+      operationId: getCentralDefaultVersion
+      security:
+        - Bearer: []
+      responses:
+        "200":
+          description: Return current central default version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CentralDefaultVersion'
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
 
 components:
   schemas:
@@ -371,9 +435,9 @@ components:
             namespace:
               type: string
             central:
-              $ref: "#/components/schemas/CentralSpec"
+              $ref: "fleet-manager.yaml#/components/schemas/CentralSpec"
             scanner:
-              $ref: "#/components/schemas/ScannerSpec"
+              $ref: "fleet-manager.yaml#/components/schemas/ScannerSpec"
     CentralList:
       allOf:
         - $ref: "fleet-manager.yaml#/components/schemas/List"
@@ -397,6 +461,13 @@ components:
           $ref: "fleet-manager.yaml#/components/schemas/CentralSpec"
         scanner:
           $ref: "fleet-manager.yaml#/components/schemas/ScannerSpec"
+
+    CentralDefaultVersion:
+      type: object
+      properties:
+        version:
+          type: string
+          example: "quay.io/rhacs-eng/stackrox-operator:3.74.1"
 
   securitySchemes:
     Bearer:

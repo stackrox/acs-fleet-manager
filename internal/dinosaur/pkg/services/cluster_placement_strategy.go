@@ -1,11 +1,9 @@
 package services
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 )
 
@@ -20,7 +18,7 @@ type ClusterPlacementStrategy interface {
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the
 // placement configuration. An appropriate ClusterPlacementStrategy implementation
 // is returned based on the received parameters content
-func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneClusterConfig *config.DataplaneClusterConfig) ClusterPlacementStrategy {
+func NewClusterPlacementStrategy(clusterService ClusterService) ClusterPlacementStrategy {
 	return &FirstReadyPlacementStrategy{clusterService: clusterService}
 }
 
@@ -33,18 +31,23 @@ type FirstReadyPlacementStrategy struct {
 
 // FindCluster ...
 func (d FirstReadyPlacementStrategy) FindCluster(central *dbapi.CentralRequest) (*api.Cluster, error) {
-	clusters, err := d.clusterService.FindAllClusters(FindClusterCriteria{Status: api.ClusterReady})
+	clusters, err := d.clusterService.FindAllClusters(FindClusterCriteria{
+		Provider: central.CloudProvider,
+		Region:   central.Region,
+		MultiAZ:  central.MultiAZ,
+		Status:   api.ClusterReady,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	for _, c := range clusters {
-		if !c.SkipScheduling && supportsInstanceType(c, central.InstanceType) {
+		if c.Schedulable && supportsInstanceType(c, central.InstanceType) {
 			return c, nil
 		}
 	}
 
-	return nil, errors.New("no schedulable cluster found")
+	return nil, nil
 }
 
 func supportsInstanceType(c *api.Cluster, instanceType string) bool {

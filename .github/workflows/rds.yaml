@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - release
     paths-ignore:
       - '*.md'
       - '*.sh'
@@ -38,6 +37,7 @@ jobs:
   verify-test:
     name: "Test RDS Provisioning"
     runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.head.repo.fork }} # do not run for PRs from forks
     permissions:
       id-token: write
       contents: read

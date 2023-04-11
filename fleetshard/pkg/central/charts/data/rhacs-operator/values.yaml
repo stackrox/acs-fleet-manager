@@ -1,0 +1,8 @@
+# Default values for rhacs-operator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+operator:
+  # TODO: Split image into registry and image name + tag
+  image: quay.io/rhacs-eng/stackrox-operator:3.74.0
+  # TODO: and values for resource limits and requests for both proxy and manager container
