@@ -35,7 +35,7 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://nonexistent.api.stage.openshift.com"
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.nonexistent.openshift.com"
-    OBSERVABILITY_OPERATOR_VERSION="v4.0.4"
+    OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_VERSION="v3.74.0"
     ;;
@@ -44,7 +44,7 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
-    OBSERVABILITY_OPERATOR_VERSION="v4.0.4"
+    OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_VERSION="v3.74.0"
     ;;
