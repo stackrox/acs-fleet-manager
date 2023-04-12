@@ -45,7 +45,6 @@ save_cluster_secret() {
 export_cluster_environment() {
     init_chamber
     load_external_config "osd" OSD_
-    load_external_config "cluster-$CLUSTER_NAME" STORED_
 }
 
 setup_oidc_provider() {
