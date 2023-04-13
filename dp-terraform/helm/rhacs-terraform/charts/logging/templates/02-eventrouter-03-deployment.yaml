@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventrouter
+  namespace: openshift-logging
+  labels:
+    component: "eventrouter"
+    logging-infra: "eventrouter"
+    provider: "openshift"
+spec:
+  replicas: 1
+  selector:
+    component: "eventrouter"
+    logging-infra: "eventrouter"
+    provider: "openshift"
+  template:
+    metadata:
+      labels:
+        component: "eventrouter"
+        logging-infra: "eventrouter"
+        provider: "openshift"
+      name: eventrouter
+    spec:
+      serviceAccount: eventrouter
+      containers:
+        - name: kube-eventrouter
+          image: "registry.redhat.io/openshift-logging/eventrouter-rhel8:v0.4"
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/eventrouter
+      volumes:
+        - name: config-volume
+          configMap:
+            name: eventrouter
