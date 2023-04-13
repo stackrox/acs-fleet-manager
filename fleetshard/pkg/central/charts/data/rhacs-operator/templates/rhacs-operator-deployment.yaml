@@ -4,7 +4,7 @@ metadata:
   labels:
     app: rhacs-operator
     control-plane: controller-manager
-  name: rhacs-operator-controller-manager-{{ .Values.operator.tag }}
+  name: rhacs-operator-controller-manager-{{ .Values.operatorImage.tag }}
   namespace: stackrox-operator
 spec:
   replicas: 1
@@ -76,7 +76,7 @@ spec:
                   containerName: manager
                   resource: limits.memory
                   divisor: '0'
-          image: {{ .Values.operator.image }}
+          image: "{{ .Values.operatorImage.repository }}:{{ .Values.operatorImage.tag }}"
           imagePullPolicy: IfNotPresent
           livenessProbe:
             failureThreshold: 3

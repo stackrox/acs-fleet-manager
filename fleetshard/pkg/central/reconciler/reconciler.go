@@ -777,27 +777,9 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 		if obj.GetNamespace() == "" {
 			obj.SetNamespace(remoteCentral.Metadata.Namespace)
 		}
-		key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
-		var out unstructured.Unstructured
-		out.SetGroupVersionKind(obj.GroupVersionKind())
-		err := r.client.Get(ctx, key, &out)
-		if err == nil {
-			glog.V(10).Infof("Updating object %s/%s", obj.GetNamespace(), obj.GetName())
-			obj.SetResourceVersion(out.GetResourceVersion())
-			err := r.client.Update(ctx, obj)
-			if err != nil {
-				return fmt.Errorf("failed to update object %s/%s of type %v: %w", key.Namespace, key.Namespace, obj.GroupVersionKind(), err)
-			}
-
-			continue
-		}
-		if !apiErrors.IsNotFound(err) {
-			return fmt.Errorf("failed to retrieve object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
-		}
-		err = r.client.Create(ctx, obj)
-		glog.V(10).Infof("Creating object %s/%s", obj.GetNamespace(), obj.GetName())
-		if err != nil && !apiErrors.IsAlreadyExists(err) {
-			return fmt.Errorf("failed to create object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
+		err := charts.InstallOrUpdateChart(ctx, obj, r.client)
+		if err != nil {
+			return fmt.Errorf("failed to update central tenant object %w", err)
 		}
 	}
 

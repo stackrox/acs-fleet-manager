@@ -18,6 +18,18 @@ const (
 	crdKind           = "CustomResourceDefinition"
 )
 
+// Image represents operator image
+type Image struct {
+	repository string
+	tag        string
+}
+
+// ImageFromString creates Image from image string
+func ImageFromString(image string) Image {
+	s := strings.Split(image, ":")
+	return Image{s[0], s[1]}
+}
+
 // ACSOperatorManager keeps data necessary for managing ACS Operator
 type ACSOperatorManager struct {
 	client         ctrlClient.Client
@@ -25,11 +37,11 @@ type ACSOperatorManager struct {
 }
 
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
-func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, image string) error {
+func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, image Image) error {
 	chartVals := chartutil.Values{
-		"operator": chartutil.Values{
-			"image": image,
-			"tag":   strings.Split(image, ":")[1],
+		"operatorImage": chartutil.Values{
+			"repository": image.repository,
+			"tag":        image.tag,
 		},
 	}
 	u.resourcesChart = charts.MustGetChart("rhacs-operator")
@@ -44,7 +56,7 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, image string)
 		}
 		err := charts.InstallOrUpdateChart(ctx, obj, u.client)
 		if err != nil {
-			return fmt.Errorf("failed to update object %w", err)
+			return fmt.Errorf("failed to update operator object %w", err)
 		}
 	}
 
