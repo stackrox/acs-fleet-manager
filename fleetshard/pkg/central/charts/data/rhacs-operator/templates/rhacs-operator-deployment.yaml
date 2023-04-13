@@ -4,7 +4,7 @@ metadata:
   labels:
     app: rhacs-operator
     control-plane: controller-manager
-  name: rhacs-operator-controller-manager
+  name: rhacs-operator-controller-manager-{{ .Values.operator.tag }}
   namespace: stackrox-operator
 spec:
   replicas: 1
@@ -34,8 +34,6 @@ spec:
               value: quay.io/rhacs-eng
             - name: ROX_OPERATOR_COLLECTOR_REGISTRY
               value: quay.io/rhacs-eng
-            - name: OPERATOR_CONDITION_NAME
-              value: rhacs-operator.v3.74.0
           image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
           imagePullPolicy: IfNotPresent
           name: kube-rbac-proxy
@@ -78,8 +76,6 @@ spec:
                   containerName: manager
                   resource: limits.memory
                   divisor: '0'
-            - name: OPERATOR_CONDITION_NAME
-              value: rhacs-operator.v3.74.0
           image: {{ .Values.operator.image }}
           imagePullPolicy: IfNotPresent
           livenessProbe:

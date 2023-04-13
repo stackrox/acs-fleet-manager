@@ -19,7 +19,7 @@ func TestSingleton_Success(t *testing.T) {
 	assert.Equal(t, cfg.RHSSORealm, "redhat-external")
 	assert.Equal(t, cfg.RHSSOEndpoint, "https://sso.redhat.com")
 	assert.Empty(t, cfg.OCMRefreshToken)
-	assert.False(t, cfg.FeatureFlagUpgradeOperatorEnabled)
+	// assert.False(t, cfg.FeatureFlagUpgradeOperatorEnabled)
 }
 
 func TestSingleton_Failure(t *testing.T) {

@@ -63,7 +63,7 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient)
 
-	err := u.InstallOrUpgrade(context.Background())
+	err := u.InstallOrUpgrade(context.Background(), operatorImage)
 
 	require.NoError(t, err)
 
