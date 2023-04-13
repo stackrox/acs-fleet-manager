@@ -22,6 +22,6 @@ subjects:
   name: eventrouter
   namespace: openshift-logging
 roleRef:
-  aoiGroup: rbac.authorization.k8s.io
+  apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: event-reader
