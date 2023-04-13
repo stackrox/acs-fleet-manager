@@ -10,9 +10,10 @@ metadata:
 spec:
   replicas: 1
   selector:
-    component: "eventrouter"
-    logging-infra: "eventrouter"
-    provider: "openshift"
+    matchLabels:
+      component: "eventrouter"
+      logging-infra: "eventrouter"
+      provider: "openshift"
   template:
     metadata:
       labels:
