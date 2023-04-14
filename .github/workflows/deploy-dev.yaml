@@ -18,5 +18,5 @@ jobs:
       acs_environment: dev
       github_environment: development
       deploy_clusters: "acs-dev-dp-01"
-      probe_cluster: "acs-dev-dp-01"
+      probe_clusters: "acs-dev-dp-01"
       dry_run: true
