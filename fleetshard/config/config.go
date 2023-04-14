@@ -27,7 +27,7 @@ type Config struct {
 	CreateAuthProvider                bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
 	MetricsAddress                    string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
 	EgressProxyImage                  string        `env:"EGRESS_PROXY_IMAGE"`
-	FeatureFlagUpgradeOperatorEnabled bool          `env:"FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED" envDefault:"true"`
+	FeatureFlagUpgradeOperatorEnabled bool          `env:"FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED" envDefault:"false"`
 
 	AWS       AWS
 	ManagedDB ManagedDB

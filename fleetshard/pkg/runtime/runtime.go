@@ -116,7 +116,7 @@ func (r *Runtime) Start() error {
 		Environment:       r.config.Environment,
 	}
 
-	if true { // r.config.FeatureFlagUpgradeOperatorEnabled {
+	if r.config.FeatureFlagUpgradeOperatorEnabled {
 		err := r.upgradeOperator()
 		if err != nil {
 			err = errors.Wrapf(err, "Upgrading operator")
@@ -211,6 +211,7 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 func (r *Runtime) upgradeOperator() error {
 	ctx := context.Background()
 	// TODO: gather desired operator versions from fleet-manager and update operators based on ticker
+	// TODO: Leave Operator installation before reconciler run until migration
 	operatorImages := [2]string{"quay.io/rhacs-eng/stackrox-operator:3.74.0", "quay.io/rhacs-eng/stackrox-operator:3.74.1"}
 	for _, image := range operatorImages {
 		glog.Infof("Install Operator: %s", image)
