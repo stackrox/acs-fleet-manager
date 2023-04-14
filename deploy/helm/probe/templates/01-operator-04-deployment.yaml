@@ -50,6 +50,8 @@ spec:
                   name: rhacs-probe-ocm-token
                   key: TOKEN
             {{- end }}
+            - name: DATA_PLANE_REGION
+              value: {{ .Values.dataPlaneRegion | quote }}
           ports:
             - name: monitoring
               containerPort: 7070
