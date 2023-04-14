@@ -35,8 +35,7 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 417,
-      "iteration": 1664185624659,
+      "id": 48034,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -45,7 +44,7 @@ data:
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "description": "The availability is calculated as the average of binary up (1) or down (0) values. Each value represents an interval of 10 minutes, in which the service is either up or down. The service counts as available if at most 35% of requests return a status code 5xx in the interval.",
+          "description": "The availability SLI is calculated as the product of the pod ready SLI and http error rate SLI. For the service to be available, at least one pod must be ready and the http error rate over the last 10 minutes must be below 35%.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -96,7 +95,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
               "datasource": {
@@ -105,7 +104,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "avg_over_time(floor(sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\",code!=\"5xx\"}[10m])) / sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\"}[10m])) > 0 + 0.35)[$__range:])",
+              "expr": "avg_over_time(acs_fleet_manager:sli:availability[$__range])",
               "hide": false,
               "instant": true,
               "interval": "",
@@ -169,7 +168,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
               "datasource": {
@@ -236,7 +235,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
               "datasource": {
@@ -302,7 +301,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
               "datasource": {
@@ -369,7 +368,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
               "datasource": {
@@ -435,7 +434,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
               "datasource": {
@@ -505,7 +504,7 @@ data:
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
               "datasource": {
@@ -514,7 +513,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "(1-avg_over_time(floor(sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\",code!=\"5xx\"}[10m])) / sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\"}[10m])) > 0 + 0.35)[$__range:]))/(1-0.99)",
+              "expr": "(1 - avg_over_time(acs_fleet_manager:sli:availability[$__range])) / (1 - acs_fleet_manager:slo:availability)",
               "hide": false,
               "instant": true,
               "interval": "",
@@ -597,6 +596,8 @@ data:
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
@@ -655,7 +656,8 @@ data:
             "legend": {
               "calcs": [],
               "displayMode": "list",
-              "placement": "bottom"
+              "placement": "bottom",
+              "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
@@ -690,6 +692,8 @@ data:
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
@@ -751,7 +755,8 @@ data:
             "legend": {
               "calcs": [],
               "displayMode": "list",
-              "placement": "bottom"
+              "placement": "bottom",
+              "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
@@ -810,6 +815,8 @@ data:
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
@@ -868,7 +875,8 @@ data:
             "legend": {
               "calcs": [],
               "displayMode": "list",
-              "placement": "bottom"
+              "placement": "bottom",
+              "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
@@ -946,7 +954,7 @@ data:
             "showUnfilled": true,
             "text": {}
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
               "datasource": {
@@ -968,7 +976,7 @@ data:
         }
       ],
       "refresh": false,
-      "schemaVersion": 36,
+      "schemaVersion": 37,
       "style": "dark",
       "tags": [],
       "templating": {
@@ -1054,6 +1062,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager SLOs",
       "uid": "T2kek3H9a",
-      "version": 21,
+      "version": 22,
       "weekStart": ""
     }
