@@ -35,7 +35,7 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 48034,
+      "id": 104671,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -671,7 +671,7 @@ data:
                 "uid": "$datasource"
               },
               "editorMode": "code",
-              "expr": "floor(sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\",code!=\"5xx\"}[10m])) / sum(rate(haproxy_backend_http_responses_total{route=\"acs-fleet-manager\",exported_namespace=\"$namespace\"}[10m])) > 0 + 0.35)",
+              "expr": "acs_fleet_manager:sli:availability",
               "interval": "",
               "legendFormat": "acs-fleet-manager",
               "range": true,
@@ -1062,6 +1062,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager SLOs",
       "uid": "T2kek3H9a",
-      "version": 22,
+      "version": 23,
       "weekStart": ""
     }
