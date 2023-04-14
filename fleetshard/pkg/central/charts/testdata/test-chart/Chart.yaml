@@ -1,6 +1,0 @@
-apiVersion: v1
-name: test-resource
-description: Testing Helm Chart
-type: application
-version: 0.0.0
-appVersion: 0.0.0

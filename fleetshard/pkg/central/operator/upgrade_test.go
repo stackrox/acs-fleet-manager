@@ -82,8 +82,7 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient)
 
-	err := u.InstallOrUpgrade(context.Background(), ImageFromString(operatorImage1))
-
+	err := u.InstallOrUpgrade(context.Background(), []string{operatorImage1})
 	require.NoError(t, err)
 
 	// check Secured Cluster CRD exists and correct
@@ -127,13 +126,11 @@ func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient)
 
-	operatorImages := [2]string{operatorImage1, operatorImage2}
-	for _, img := range operatorImages {
-		err := u.InstallOrUpgrade(context.Background(), ImageFromString(img))
-		require.NoError(t, err)
-	}
+	operatorImages := []string{operatorImage1, operatorImage2}
+	err := u.InstallOrUpgrade(context.Background(), operatorImages)
+	require.NoError(t, err)
 
-	err := fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.NoError(t, err)
 	managerContainer := operatorDeployment1.Spec.Template.Spec.Containers[1]
 	assert.Equal(t, managerContainer.Image, operatorImage1)

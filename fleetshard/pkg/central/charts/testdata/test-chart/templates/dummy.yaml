@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: Deployment
-metadata:
-  name: dummy
-  labels:
-    foo: {{ .Values.foo }}
-spec:
-  replicas: 1

@@ -2,17 +2,11 @@
 package charts
 
 import (
-	"context"
 	"embed"
 	"fmt"
 	"io/fs"
 	"path"
 	"strings"
-
-	"github.com/golang/glog"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -70,30 +64,4 @@ func MustGetChart(name string) *chart.Chart {
 		panic(err)
 	}
 	return chrt
-}
-
-// InstallOrUpdateChart installs a new object from helm chart or update an existing object with the same Name, Namespace and Kind
-func InstallOrUpdateChart(ctx context.Context, obj *unstructured.Unstructured, client ctrlClient.Client) error {
-	key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
-	var out unstructured.Unstructured
-	out.SetGroupVersionKind(obj.GroupVersionKind())
-	err := client.Get(ctx, key, &out)
-	if err == nil {
-		glog.V(10).Infof("Updating object %s/%s", obj.GetNamespace(), obj.GetName())
-		obj.SetResourceVersion(out.GetResourceVersion())
-		err := client.Update(ctx, obj)
-		if err != nil {
-			return fmt.Errorf("failed to update object %s/%s of type %s %w", key.Namespace, key.Name, obj.GetKind(), err)
-		}
-	} else {
-		if !apiErrors.IsNotFound(err) {
-			return fmt.Errorf("failed to retrieve object %s/%s of type %s %w", key.Namespace, key.Name, obj.GetKind(), err)
-		}
-		err = client.Create(ctx, obj)
-		glog.Infof("Creating object %s/%s", obj.GetNamespace(), obj.GetName())
-		if err != nil && !apiErrors.IsAlreadyExists(err) {
-			return fmt.Errorf("failed to create object %s/%s of type %s: %w", key.Namespace, key.Name, obj.GetKind(), err)
-		}
-	}
-	return nil
 }

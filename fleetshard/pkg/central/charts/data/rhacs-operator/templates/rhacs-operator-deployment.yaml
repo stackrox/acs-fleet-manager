@@ -1,10 +1,14 @@
+## Iterate over operator versions passed by fleet-shard sync
+{{- range $tag := .Values.operator.tags }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
     app: rhacs-operator
     control-plane: controller-manager
-  name: rhacs-operator-controller-manager-{{ .Values.operatorImage.tag }}
+  ## Name field must contain up to 63 characters
+  ## https://www.rfc-editor.org/rfc/rfc1123
+  name: rhacs-operator-controller-manager-{{ $tag | trunc 29 }}
   namespace: stackrox-operator
 spec:
   replicas: 1
@@ -76,7 +80,7 @@ spec:
                   containerName: manager
                   resource: limits.memory
                   divisor: '0'
-          image: "{{ .Values.operatorImage.repository }}:{{ .Values.operatorImage.tag }}"
+          image: "{{ $.Values.operator.repository }}:{{ $tag }}"
           imagePullPolicy: IfNotPresent
           livenessProbe:
             failureThreshold: 3
@@ -122,3 +126,5 @@ spec:
       serviceAccount: rhacs-operator-controller-manager
       serviceAccountName: rhacs-operator-controller-manager
       terminationGracePeriodSeconds: 10
+---
+{{- end }}

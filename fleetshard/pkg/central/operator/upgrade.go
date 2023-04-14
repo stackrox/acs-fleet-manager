@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/glog"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -18,16 +22,28 @@ const (
 	crdKind           = "CustomResourceDefinition"
 )
 
-// Image represents operator image
-type Image struct {
+// chartValue represents operator image
+type chartValue struct {
 	repository string
-	tag        string
+	tags       []string
 }
 
-// ImageFromString creates Image from image string
-func ImageFromString(image string) Image {
-	s := strings.Split(image, ":")
-	return Image{s[0], s[1]}
+func parseRepositoryAndTags(images []string) (*chartValue, error) {
+	val := chartValue{}
+	for _, img := range images {
+		if strings.Contains(img, ":") {
+			s := strings.Split(img, ":")
+			val.repository = s[0]
+			val.tags = append(val.tags, s[1])
+		} else {
+			glog.Errorf("failed to parse image %s", img)
+		}
+	}
+	if len(val.tags) == 0 {
+		return nil, fmt.Errorf("zero tags parsed from images %s", strings.Join(images, ", "))
+	}
+
+	return &val, nil
 }
 
 // ACSOperatorManager keeps data necessary for managing ACS Operator
@@ -37,13 +53,18 @@ type ACSOperatorManager struct {
 }
 
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
-func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, image Image) error {
+func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []string) error {
+	val, err := parseRepositoryAndTags(images)
+	if err != nil {
+		return fmt.Errorf("failed to parse images: %w", err)
+	}
 	chartVals := chartutil.Values{
-		"operatorImage": chartutil.Values{
-			"repository": image.repository,
-			"tag":        image.tag,
+		"operator": chartutil.Values{
+			"repository": val.repository,
+			"tags":       val.tags,
 		},
 	}
+
 	u.resourcesChart = charts.MustGetChart("rhacs-operator")
 	objs, err := charts.RenderToObjects(releaseName, operatorNamespace, u.resourcesChart, chartVals)
 	if err != nil {
@@ -54,9 +75,26 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, image Image) 
 		if obj.GetNamespace() == "" && obj.GetKind() != crdKind {
 			obj.SetNamespace(operatorNamespace)
 		}
-		err := charts.InstallOrUpdateChart(ctx, obj, u.client)
-		if err != nil {
-			return fmt.Errorf("failed to update operator object %w", err)
+		key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
+		var out unstructured.Unstructured
+		out.SetGroupVersionKind(obj.GroupVersionKind())
+		err := u.client.Get(ctx, key, &out)
+		if err == nil {
+			glog.V(10).Infof("Updating object %s/%s", obj.GetNamespace(), obj.GetName())
+			obj.SetResourceVersion(out.GetResourceVersion())
+			err := u.client.Update(ctx, obj)
+			if err != nil {
+				return fmt.Errorf("failed to update object %s/%s of type %s %w", key.Namespace, key.Name, obj.GetKind(), err)
+			}
+		} else {
+			if !apiErrors.IsNotFound(err) {
+				return fmt.Errorf("failed to retrieve object %s/%s of type %s %w", key.Namespace, key.Name, obj.GetKind(), err)
+			}
+			err = u.client.Create(ctx, obj)
+			glog.Infof("Creating object %s/%s", obj.GetNamespace(), obj.GetName())
+			if err != nil && !apiErrors.IsAlreadyExists(err) {
+				return fmt.Errorf("failed to create object %s/%s of type %s: %w", key.Namespace, key.Name, obj.GetKind(), err)
+			}
 		}
 	}
 
