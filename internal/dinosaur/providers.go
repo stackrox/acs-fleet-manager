@@ -4,11 +4,6 @@ package dinosaur
 import (
 	"github.com/goava/di"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/central"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/cloudprovider"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/cluster"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/errors"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/observatorium"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/handlers"
@@ -52,12 +47,6 @@ func ConfigProviders() di.Option {
 		di.Provide(config.NewFleetshardConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewCentralRequestConfig, di.As(new(environments2.ConfigModule))),
 
-		// Additional CLI subcommands
-		di.Provide(cluster.NewClusterCommand),
-		di.Provide(central.NewCentralCommand),
-		di.Provide(cloudprovider.NewCloudProviderCommand),
-		di.Provide(observatorium.NewRunObservatoriumCommand),
-		di.Provide(errors.NewErrorsCommand),
 		di.Provide(environments2.Func(ServiceProviders)),
 		di.Provide(migrations.New),
 
