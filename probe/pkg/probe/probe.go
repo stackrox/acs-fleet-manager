@@ -64,7 +64,11 @@ func (p *ProbeImpl) newCentralName() (string, error) {
 
 // Execute the probe of the fleet manager API.
 func (p *ProbeImpl) Execute(ctx context.Context) error {
-	glog.Info("probe run has been started")
+	glog.Infof("probe run has been started: fleetManagerEndpoint=%q, provider=%q, region=%q",
+		p.config.FleetManagerEndpoint,
+		p.config.DataCloudProvider,
+		p.config.DataPlaneRegion,
+	)
 	defer glog.Info("probe run has ended")
 	defer recordElapsedTime(time.Now())
 
@@ -192,7 +196,6 @@ func (p *ProbeImpl) ensureStateFunc(ctx context.Context, centralRequest *public.
 		return &centralResp, nil
 	}
 	err = errors.Errorf("central instance %s not in target state %q", centralRequest.Id, targetState)
-	glog.Warning(err)
 	return nil, err
 }
 
@@ -219,7 +222,6 @@ func (p *ProbeImpl) ensureDeletedFunc(ctx context.Context, centralRequest *publi
 		return err
 	}
 	err = errors.Errorf("central instance %s not deleted", centralRequest.Id)
-	glog.Warning(err)
 	return err
 }
 
