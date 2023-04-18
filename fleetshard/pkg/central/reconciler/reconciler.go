@@ -46,6 +46,8 @@ const (
 	instanceTypeLabelKey      = "rhacs.redhat.com/instance-type"
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
+	operatorVersionKey        = "stackrox.io/operator-version"
+	defaultOperatorVersion    = "rhacs-operator.v3.74.0"
 
 	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
 	dbUserTypeMaster     = "master"
@@ -57,13 +59,14 @@ const (
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
-	UseRoutes         bool
-	WantsAuthProvider bool
-	EgressProxyImage  string
-	ManagedDBEnabled  bool
-	Telemetry         config.Telemetry
-	ClusterName       string
-	Environment       string
+	UseRoutes                         bool
+	WantsAuthProvider                 bool
+	EgressProxyImage                  string
+	ManagedDBEnabled                  bool
+	Telemetry                         config.Telemetry
+	ClusterName                       string
+	Environment                       string
+	FeatureFlagUpgradeOperatorEnabled bool
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -86,6 +89,8 @@ type CentralReconciler struct {
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
 	managedDBInitFunc           postgres.CentralDBInitFunc
+
+	featureFlagUpgradeOperatorEnabled bool
 
 	resourcesChart *chart.Chart
 }
@@ -198,6 +203,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				},
 			},
 		},
+	}
+
+	if r.featureFlagUpgradeOperatorEnabled {
+		labels := central.ObjectMeta.Labels
+		labels[operatorVersionKey] = defaultOperatorVersion
+		central.ObjectMeta.Labels = labels
 	}
 
 	// Check whether auth provider is actually created and this reconciler just is not aware of that.
@@ -953,6 +964,8 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		telemetry:         opts.Telemetry,
 		clusterName:       opts.ClusterName,
 		environment:       opts.Environment,
+
+		featureFlagUpgradeOperatorEnabled: opts.FeatureFlagUpgradeOperatorEnabled,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,
