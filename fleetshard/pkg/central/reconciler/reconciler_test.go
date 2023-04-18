@@ -169,6 +169,27 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	assert.NotEmpty(t, password)
 }
 
+func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc,
+		CentralReconcilerOptions{
+			UseRoutes:                         true,
+			FeatureFlagUpgradeOperatorEnabled: true,
+		})
+
+	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
+	require.True(t, ok)
+	assert.Equal(t, "True", readyCondition.Status, "Ready condition not found in conditions", status.Conditions)
+
+	central := &v1alpha1.Central{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
+	require.NoError(t, err)
+	assert.Equal(t, defaultOperatorVersion, central.ObjectMeta.Labels[operatorVersionKey])
+}
+
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
