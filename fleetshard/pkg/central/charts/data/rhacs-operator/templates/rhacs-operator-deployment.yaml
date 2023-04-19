@@ -38,6 +38,8 @@ spec:
               value: quay.io/rhacs-eng
             - name: ROX_OPERATOR_COLLECTOR_REGISTRY
               value: quay.io/rhacs-eng
+            - name: OPERATOR_CONDITION_NAME
+              value: rhacs-operator.v3.74.0
           image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
           imagePullPolicy: IfNotPresent
           name: kube-rbac-proxy
@@ -80,6 +82,10 @@ spec:
                   containerName: manager
                   resource: limits.memory
                   divisor: '0'
+            {{ if $.Values.operator.centralLabelSelector - }}
+            - name: CENTRAL_LABEL_SELECTOR
+              value: {{ $.Values.operator.centralLabelSelector | quote }}
+            {{ - end }}
           image: "{{ .repository }}:{{ .tag }}"
           imagePullPolicy: IfNotPresent
           livenessProbe:
