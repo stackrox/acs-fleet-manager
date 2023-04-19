@@ -20,6 +20,9 @@ const (
 	operatorNamespace = "stackrox-operator"
 	releaseName       = "rhacs-operator"
 	crdKind           = "CustomResourceDefinition"
+	// maximum number of characters for operator deployment suffix
+	// See rhacs-operator-deployment.yaml for more details
+	maxOperatorDeploymentSuffixLength = 29
 )
 
 func parseOperatorImages(images []string) ([]chartutil.Values, error) {
@@ -27,8 +30,13 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 	for _, img := range images {
 		if strings.Contains(img, ":") {
 			s := strings.Split(img, ":")
-			img := chartutil.Values{"repository": s[0], "tag": s[1]}
-			operatorImages = append(operatorImages, img)
+			tag := s[1]
+			if len(tag) > maxOperatorDeploymentSuffixLength {
+				glog.Errorf("tag version %s contains more than %d characters and cannot be used as a deployment suffix", tag, maxOperatorDeploymentSuffixLength)
+			} else {
+				img := chartutil.Values{"repository": s[0], "tag": tag}
+				operatorImages = append(operatorImages, img)
+			}
 		} else {
 			glog.Errorf("failed to parse image %s", img)
 		}

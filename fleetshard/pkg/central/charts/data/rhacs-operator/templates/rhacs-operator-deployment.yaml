@@ -8,7 +8,7 @@ metadata:
     control-plane: controller-manager
   ## Name field must contain up to 63 characters
   ## https://www.rfc-editor.org/rfc/rfc1123
-  name: rhacs-operator-controller-manager-{{ .tag | trunc 10 }}-{{ randAlphaNum 10 | lower }}
+  name: rhacs-operator-controller-manager-{{ .tag | lower }}
   namespace: stackrox-operator
 spec:
   replicas: 1

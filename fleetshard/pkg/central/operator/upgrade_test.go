@@ -114,11 +114,9 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	assert.NotEmpty(t, metricService.Object["spec"])
 
 	// check Operator Deployment exists
-	deployments := &appsv1.DeploymentList{}
-	err = fakeClient.List(context.Background(), deployments)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.NoError(t, err)
-	assert.Len(t, deployments.Items, 1)
-	containers := deployments.Items[0].Spec.Template.Spec.Containers
+	containers := operatorDeployment1.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 2)
 	managerContainer := containers[1]
 	assert.Equal(t, managerContainer.Image, operatorImage1)
@@ -132,13 +130,27 @@ func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 	err := u.InstallOrUpgrade(context.Background(), operatorImages)
 	require.NoError(t, err)
 
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	require.NoError(t, err)
+	managerContainer := operatorDeployment1.Spec.Template.Spec.Containers[1]
+	assert.Equal(t, managerContainer.Image, operatorImage1)
+
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
+	require.NoError(t, err)
+	managerContainer = operatorDeployment2.Spec.Template.Spec.Containers[1]
+	assert.Equal(t, managerContainer.Image, operatorImage2)
+}
+
+func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	u := NewACSOperatorManager(fakeClient)
+
+	operatorImageWithLongTag := "quay.io/rhacs-eng/stackrox-operator:3.74.1-with-ridiculously-long-tag-version-name"
+	err := u.InstallOrUpgrade(context.Background(), []string{operatorImageWithLongTag})
+	require.Errorf(t, err, "zero tags parsed from images")
+
 	deployments := &appsv1.DeploymentList{}
 	err = fakeClient.List(context.Background(), deployments)
 	require.NoError(t, err)
-	assert.Len(t, deployments.Items, 2)
-	managerContainer1 := deployments.Items[0].Spec.Template.Spec.Containers[1]
-	managerContainer2 := deployments.Items[1].Spec.Template.Spec.Containers[1]
-	deploymentImages := []string{managerContainer1.Image, managerContainer2.Image}
-	assert.Contains(t, deploymentImages, operatorImage1)
-	assert.Contains(t, deploymentImages, operatorImage2)
+	assert.Len(t, deployments.Items, 0)
 }
