@@ -88,15 +88,15 @@ Fleetshard-sync service is able to manager installation/update
 of ACS Operator based on running and desired ACS Instances versions.
 Fleetshard-sync operator ACS Operator management should replace OLM based approach.
 
-#### Rolling out installation/update of ACS Operator:
+#### Rollout installation/update of ACS Operator:
 
 1. Make sure that OLM ACS Operator subscription is deleted.
 OLM uses the subscription resource to subscribe to the latest version of an operator.
 OLM reinstalls a new version of the operator even if the operator’s CSV was deleted earlier.
 In effect, you must tell OLM that you do not want new versions of the operator to be installed by deleting the ACS Operator subscription
 ```
-kubectl get subscription -n stackrox-operator
-kubectl delete subscription <subscription> -n stackrox-operator
+kubectl get subscription -n <operator_namespace>
+kubectl delete subscription <subscription> -n <operator_namespace>
 ```
 
 2. Delete the Operator’s ClusterServiceVersion.
@@ -104,14 +104,14 @@ The ClusterServiceVersion contains all the information that OLM needs to manage 
 and it effectively represents an operator that is installed on cluster
 
 ```
-kubectl get clusterserviceversion -n stackrox-operator
-kubectl delete clusterserviceversion rhacs-operator.<version> -n stackrox-operator
+kubectl get clusterserviceversion -n <operator_namespace>
+kubectl delete clusterserviceversion rhacs-operator.<version> -n <operator_namespace>
 ```
 
 3. Check that there is no running ACS Operator
 
 ```
-kubectl get pods -n stackrox-operator
+kubectl get pods -n <operator_namespace>
 NAME                                                              READY   STATUS      RESTARTS      AGE
 ```
 
@@ -122,7 +122,7 @@ set `FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED` to `true` and redeploy Fleetshard-sy
 5.  Check that the ACS Operator is running again
 
 ```
-kubectl get pods -n stackrox-operator
+kubectl get pods -n <operator_namespace>
 NAME                                                              READY   STATUS      RESTARTS       AGE
 rhacs-operator-controller-manager-3.74.1-5765676ffc-l9bpp         2/2     Running     0              13s
 ...
@@ -131,7 +131,42 @@ rhacs-operator-controller-manager-3.74.1-5765676ffc-l9bpp         2/2     Runnin
 5.  Check deployment
 
 ```
-kubectl get deployments -n stackrox-operator
+kubectl get deployments -n <operator_namespace>
 NAME                                       READY   UP-TO-DATE   AVAILABLE   AGE
 rhacs-operator-controller-manager-3.74.1   1/1     1            1           27s
+```
+
+#### Rollback installation/update of ACS Operator:
+
+1. Redeploy Fleetshard-syn with disabled `FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED` environment variable
+2. Delete existing ACS Operator deployment(s)
+
+```
+kubectl get deployments -n <operator_namespace>
+kubectl delete deployment <deployment> -n <operator_namespace>
+```
+
+3. Check that there is no running ACS Operator pod(s)
+
+```
+kubectl get pods -n <operator_namespace>
+NAME
+...
+```
+
+4. install ACS Operator
+In Openshift console go to `Operators -> OperatorHub -> Advanced Cluster Security for Kubernetes`
+and press `Install`. Alternatively, use helm template
+```
+cd dp-terraform/helm/rhacs-terraform
+helm template -s templates/acs-operator.yaml --values values.yaml | kubectl apply -f -
+```
+
+5. Check that ACS Operator is running
+
+```
+kubectl get pods -n <operator_namespace>
+NAME                                                              READY   STATUS      RESTARTS       AGE
+rhacs-operator-controller-manager-688d74ffb5-lkbm7         2/2     Running     0              13s
+...
 ```
