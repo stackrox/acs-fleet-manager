@@ -81,3 +81,57 @@ STATIC_TOKEN=<generated value | bitwarden value> \
 AUTH_TYPE=STATIC_TOKEN \
 ./dev/env/scripts/exec_fleetshard_sync.sh
 ```
+
+### Manage ACS Operator(s)
+
+Fleetshard-sync service is able to manager installation/update
+of ACS Operator based on running and desired ACS Instances versions.
+Fleetshard-sync operator ACS Operator management should replace OLM based approach.
+
+#### Rolling out installation/update of ACS Operator:
+
+1. Make sure that OLM ACS Operator subscription is deleted.
+OLM uses the subscription resource to subscribe to the latest version of an operator.
+OLM reinstalls a new version of the operator even if the operator’s CSV was deleted earlier.
+In effect, you must tell OLM that you do not want new versions of the operator to be installed by deleting the ACS Operator subscription
+```
+kubectl get subscription -n stackrox-operator
+kubectl delete subscription <subscription> -n stackrox-operator
+```
+
+2. Delete the Operator’s ClusterServiceVersion.
+The ClusterServiceVersion contains all the information that OLM needs to manage an operator,
+and it effectively represents an operator that is installed on cluster
+
+```
+kubectl get clusterserviceversion -n stackrox-operator
+kubectl delete clusterserviceversion rhacs-operator.<version> -n stackrox-operator
+```
+
+3. Check that there is no running ACS Operator
+
+```
+kubectl get pods -n stackrox-operator
+NAME                                                              READY   STATUS      RESTARTS      AGE
+```
+
+4. Turn on ACS Operator management feature flag
+
+set `FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED` to `true` and redeploy Fleetshard-sync service
+
+5.  Check that the ACS Operator is running again
+
+```
+kubectl get pods -n stackrox-operator
+NAME                                                              READY   STATUS      RESTARTS       AGE
+rhacs-operator-controller-manager-3.74.1-5765676ffc-l9bpp         2/2     Running     0              13s
+...
+```
+
+5.  Check deployment
+
+```
+kubectl get deployments -n stackrox-operator
+NAME                                       READY   UP-TO-DATE   AVAILABLE   AGE
+rhacs-operator-controller-manager-3.74.1   1/1     1            1           27s
+```

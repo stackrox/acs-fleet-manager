@@ -214,13 +214,13 @@ func (r *Runtime) upgradeOperator() error {
 	// TODO: gather desired operator versions from fleet-manager and update operators based on ticker
 	// TODO: Leave Operator installation before reconciler run until migration
 	operatorImages := []string{"quay.io/rhacs-eng/stackrox-operator:3.74.0", "quay.io/rhacs-eng/stackrox-operator:3.74.1"}
-	glog.Infof("Install Operators: %s", strings.Join(operatorImages, ", "))
+	glog.Infof("Installing Operators: %s", strings.Join(operatorImages, ", "))
 	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages)
 	if err != nil {
 		return fmt.Errorf("operator upgrade: %w", err)
 	}
 
-	// TODO: delete redundant operators
+	// TODO: delete unused operator versions
 	return nil
 }
 

@@ -22,28 +22,22 @@ const (
 	crdKind           = "CustomResourceDefinition"
 )
 
-// chartValue represents operator image
-type chartValue struct {
-	repository string
-	tags       []string
-}
-
-func parseRepositoryAndTags(images []string) (*chartValue, error) {
-	val := chartValue{}
+func parseOperatorImages(images []string) ([]chartutil.Values, error) {
+	var operatorImages []chartutil.Values
 	for _, img := range images {
 		if strings.Contains(img, ":") {
 			s := strings.Split(img, ":")
-			val.repository = s[0]
-			val.tags = append(val.tags, s[1])
+			img := chartutil.Values{"repository": s[0], "tag": s[1]}
+			operatorImages = append(operatorImages, img)
 		} else {
 			glog.Errorf("failed to parse image %s", img)
 		}
 	}
-	if len(val.tags) == 0 {
+	if len(operatorImages) == 0 {
 		return nil, fmt.Errorf("zero tags parsed from images %s", strings.Join(images, ", "))
 	}
 
-	return &val, nil
+	return operatorImages, nil
 }
 
 // ACSOperatorManager keeps data necessary for managing ACS Operator
@@ -54,14 +48,13 @@ type ACSOperatorManager struct {
 
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
 func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []string) error {
-	val, err := parseRepositoryAndTags(images)
+	operatorImages, err := parseOperatorImages(images)
 	if err != nil {
 		return fmt.Errorf("failed to parse images: %w", err)
 	}
 	chartVals := chartutil.Values{
 		"operator": chartutil.Values{
-			"repository": val.repository,
-			"tags":       val.tags,
+			"images": operatorImages,
 		},
 	}
 
@@ -80,18 +73,18 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 		out.SetGroupVersionKind(obj.GroupVersionKind())
 		err := u.client.Get(ctx, key, &out)
 		if err == nil {
-			glog.V(10).Infof("Updating object %s/%s", obj.GetNamespace(), obj.GetName())
+			glog.V(10).Infof("Updating %s/%s", obj.GetKind(), obj.GetName())
 			obj.SetResourceVersion(out.GetResourceVersion())
 			err := u.client.Update(ctx, obj)
 			if err != nil {
-				return fmt.Errorf("failed to update object %s/%s of type %s %w", key.Namespace, key.Name, obj.GetKind(), err)
+				return fmt.Errorf("failed to update object %s/%s: %w", obj.GetKind(), key.Name, err)
 			}
 		} else {
 			if !apiErrors.IsNotFound(err) {
-				return fmt.Errorf("failed to retrieve object %s/%s of type %s %w", key.Namespace, key.Name, obj.GetKind(), err)
+				return fmt.Errorf("failed to retrieve object %s/%s: %w", obj.GetKind(), key.Name, err)
 			}
 			err = u.client.Create(ctx, obj)
-			glog.Infof("Creating object %s/%s", obj.GetNamespace(), obj.GetName())
+			glog.Infof("Creating %s/%s", obj.GetKind(), obj.GetName())
 			if err != nil && !apiErrors.IsAlreadyExists(err) {
 				return fmt.Errorf("failed to create object %s/%s of type %s: %w", key.Namespace, key.Name, obj.GetKind(), err)
 			}

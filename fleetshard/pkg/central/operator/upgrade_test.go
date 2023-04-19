@@ -106,20 +106,22 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	assert.NotEmpty(t, centralCRD.Object["metadata"])
 	assert.NotEmpty(t, centralCRD.Object["spec"])
 
-	// check Operator Deployment exists
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
-	require.NoError(t, err)
-	containers := operatorDeployment1.Spec.Template.Spec.Containers
-	assert.Len(t, containers, 2)
-	managerContainer := containers[1]
-	assert.Equal(t, managerContainer.Image, operatorImage1)
-
 	// check metric service exists
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: metricService.GetName()}, metricService)
 	require.NoError(t, err)
 	assert.Equal(t, k8sAPIVersion, centralCRD.GetAPIVersion())
 	assert.NotEmpty(t, metricService.Object["metadata"])
 	assert.NotEmpty(t, metricService.Object["spec"])
+
+	// check Operator Deployment exists
+	deployments := &appsv1.DeploymentList{}
+	err = fakeClient.List(context.Background(), deployments)
+	require.NoError(t, err)
+	assert.Len(t, deployments.Items, 1)
+	containers := deployments.Items[0].Spec.Template.Spec.Containers
+	assert.Len(t, containers, 2)
+	managerContainer := containers[1]
+	assert.Equal(t, managerContainer.Image, operatorImage1)
 }
 
 func TestOperatorUpgradeMultipleVersions(t *testing.T) {
@@ -130,13 +132,13 @@ func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 	err := u.InstallOrUpgrade(context.Background(), operatorImages)
 	require.NoError(t, err)
 
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	deployments := &appsv1.DeploymentList{}
+	err = fakeClient.List(context.Background(), deployments)
 	require.NoError(t, err)
-	managerContainer := operatorDeployment1.Spec.Template.Spec.Containers[1]
-	assert.Equal(t, managerContainer.Image, operatorImage1)
-
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
-	require.NoError(t, err)
-	managerContainer = operatorDeployment2.Spec.Template.Spec.Containers[1]
-	assert.Equal(t, managerContainer.Image, operatorImage2)
+	assert.Len(t, deployments.Items, 2)
+	managerContainer1 := deployments.Items[0].Spec.Template.Spec.Containers[1]
+	managerContainer2 := deployments.Items[1].Spec.Template.Spec.Containers[1]
+	deploymentImages := []string{managerContainer1.Image, managerContainer2.Image}
+	assert.Contains(t, deploymentImages, operatorImage1)
+	assert.Contains(t, deploymentImages, operatorImage2)
 }
