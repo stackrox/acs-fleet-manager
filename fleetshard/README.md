@@ -84,7 +84,7 @@ AUTH_TYPE=STATIC_TOKEN \
 
 ### Manage ACS Operator(s)
 
-Fleetshard-sync service is able to manager installation/update
+Fleetshard-sync service is able to manage installation/update
 of ACS Operator based on running and desired ACS Instances versions.
 Fleetshard-sync operator ACS Operator management should replace OLM based approach.
 
