@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var regionValue = "us-east-1"
+
 func TestCounterIncrements(t *testing.T) {
 	const expectedIncrement = 1.0
 
@@ -20,19 +22,19 @@ func TestCounterIncrements(t *testing.T) {
 		{
 			metricName: "acs_probe_runs_started_total",
 			callIncrementFunc: func(m *Metrics) {
-				m.IncStartedRuns()
+				m.IncStartedRuns(regionValue)
 			},
 		},
 		{
 			metricName: "acs_probe_runs_succeeded_total",
 			callIncrementFunc: func(m *Metrics) {
-				m.IncSucceededRuns()
+				m.IncSucceededRuns(regionValue)
 			},
 		},
 		{
 			metricName: "acs_probe_runs_failed_total",
 			callIncrementFunc: func(m *Metrics) {
-				m.IncFailedRuns()
+				m.IncFailedRuns(regionValue)
 			},
 		},
 	}
@@ -49,8 +51,12 @@ func TestCounterIncrements(t *testing.T) {
 
 			// Test that the metrics value is 1 after calling the incrementFunc.
 			require.NotEmpty(t, targetMetric.Metric)
-			value := targetMetric.Metric[0].GetCounter().GetValue()
+			targetSeries := targetMetric.Metric[0]
+			value := targetSeries.GetCounter().GetValue()
 			assert.Equalf(t, expectedIncrement, value, "metric %s has unexpected value", tc.metricName)
+			label := targetSeries.GetLabel()[0]
+			assert.Containsf(t, label.GetName(), regionLabelName, "metric %s has unexpected label", tc.metricName)
+			assert.Containsf(t, label.GetValue(), regionValue, "metric %s has unexpected label", tc.metricName)
 		})
 	}
 }
@@ -63,19 +69,19 @@ func TestTimestampGauges(t *testing.T) {
 		{
 			metricName: "acs_probe_last_started_timestamp",
 			callSetTimestampFunc: func(m *Metrics) {
-				m.SetLastStartedTimestamp()
+				m.SetLastStartedTimestamp(regionValue)
 			},
 		},
 		{
 			metricName: "acs_probe_last_success_timestamp",
 			callSetTimestampFunc: func(m *Metrics) {
-				m.SetLastSuccessTimestamp()
+				m.SetLastSuccessTimestamp(regionValue)
 			},
 		},
 		{
 			metricName: "acs_probe_last_failure_timestamp",
 			callSetTimestampFunc: func(m *Metrics) {
-				m.SetLastFailureTimestamp()
+				m.SetLastFailureTimestamp(regionValue)
 			},
 		},
 	}
@@ -92,8 +98,12 @@ func TestTimestampGauges(t *testing.T) {
 			targetMetric := metrics[tc.metricName]
 
 			require.NotEmpty(t, targetMetric.Metric)
-			value := int64(targetMetric.Metric[0].GetGauge().GetValue())
+			targetSeries := targetMetric.Metric[0]
+			value := int64(targetSeries.GetGauge().GetValue())
 			assert.GreaterOrEqualf(t, value, lowerBound, "metric %s has unexpected value", tc.metricName)
+			label := targetSeries.GetLabel()[0]
+			assert.Containsf(t, label.GetName(), regionLabelName, "metric %s has unexpected label", tc.metricName)
+			assert.Containsf(t, label.GetValue(), regionValue, "metric %s has unexpected label", tc.metricName)
 		})
 	}
 }
@@ -106,8 +116,8 @@ func TestHistograms(t *testing.T) {
 		{
 			metricName: "acs_probe_total_duration_seconds",
 			callObserveFunc: func(m *Metrics) {
-				m.ObserveTotalDuration(5 * time.Minute)
-				m.ObserveTotalDuration(3 * time.Minute)
+				m.ObserveTotalDuration(5*time.Minute, regionValue)
+				m.ObserveTotalDuration(3*time.Minute, regionValue)
 			},
 		},
 	}
@@ -125,10 +135,14 @@ func TestHistograms(t *testing.T) {
 			targetMetric := metrics[tc.metricName]
 
 			require.NotEmpty(t, targetMetric.Metric)
-			count := targetMetric.Metric[0].GetHistogram().GetSampleCount()
-			sum := targetMetric.Metric[0].GetHistogram().GetSampleSum()
+			targetSeries := targetMetric.Metric[0]
+			count := targetSeries.GetHistogram().GetSampleCount()
+			sum := targetSeries.GetHistogram().GetSampleSum()
 			assert.Equalf(t, expectedCount, count, "expected metric: %s to have a count of %v", tc.metricName, expectedCount)
 			assert.Equalf(t, expectedSum, sum, "expected metric: %s to have a sum of %v", tc.metricName, expectedSum)
+			label := targetSeries.GetLabel()[0]
+			assert.Containsf(t, label.GetName(), regionLabelName, "metric %s has unexpected label", tc.metricName)
+			assert.Containsf(t, label.GetValue(), regionValue, "metric %s has unexpected label", tc.metricName)
 		})
 	}
 }
