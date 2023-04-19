@@ -82,10 +82,10 @@ spec:
                   containerName: manager
                   resource: limits.memory
                   divisor: '0'
-            {{ if $.Values.operator.centralLabelSelector - }}
+            {{- if $.Values.operator.centralLabelSelector -}}
             - name: CENTRAL_LABEL_SELECTOR
-              value: {{ $.Values.operator.centralLabelSelector | quote }}
-            {{ - end }}
+              value: {{ $.Values.operator.centralLabelSelector }}
+            {{- end }}
           image: "{{ .repository }}:{{ .tag }}"
           imagePullPolicy: IfNotPresent
           livenessProbe:
