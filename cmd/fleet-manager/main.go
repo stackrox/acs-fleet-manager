@@ -47,11 +47,11 @@ func main() {
 	rootCmd.AddCommand(migrate.NewMigrateCommand(env))
 	rootCmd.AddCommand(serve.NewServeCommand(env))
 	// Unsupported CLI commands. Eventually some of them can be removed.
-	//rootCmd.AddCommand(central.NewCentralCommand(env))
-	//rootCmd.AddCommand(cluster.NewClusterCommand(env))
-	//rootCmd.AddCommand(cloudprovider.NewCloudProviderCommand(env))
-	//rootCmd.AddCommand(observatorium.NewRunObservatoriumCommand(env))
-	//rootCmd.AddCommand(errors.NewErrorsCommand(env))
+	// rootCmd.AddCommand(central.NewCentralCommand(env))
+	// rootCmd.AddCommand(cluster.NewClusterCommand(env))
+	// rootCmd.AddCommand(cloudprovider.NewCloudProviderCommand(env))
+	// rootCmd.AddCommand(observatorium.NewRunObservatoriumCommand(env))
+	// rootCmd.AddCommand(errors.NewErrorsCommand(env))
 
 	if err := rootCmd.Execute(); err != nil {
 		glog.Fatalf("error running command: %v", err)
