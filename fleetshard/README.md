@@ -101,7 +101,7 @@ kubectl delete subscription <subscription> -n <operator_namespace>
 
 2. Delete the Operator’s ClusterServiceVersion.
 The ClusterServiceVersion contains all the information that OLM needs to manage an operator,
-and it effectively represents an operator that is installed on cluster
+and it effectively represents an operator that is installed on the cluster
 
 ```
 kubectl get clusterserviceversion -n <operator_namespace>
@@ -138,7 +138,7 @@ rhacs-operator-controller-manager-3.74.1   1/1     1            1           27s
 
 #### Rollback installation/update of ACS Operator:
 
-1. Redeploy Fleetshard-syn with disabled `FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED` environment variable
+1. Redeploy Fleetshard-sync with disabled `FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED=false` environment variable
 2. Delete existing ACS Operator deployment(s)
 
 ```
