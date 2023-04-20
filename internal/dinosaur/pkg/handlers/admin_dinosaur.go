@@ -321,6 +321,7 @@ func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.
 	}
 
 	new.DesiredCentralVersion = updateRequest.CentralVersion
+	new.ForceReconcile = updateRequest.ForceReconcile
 
 	*request = new
 	return nil

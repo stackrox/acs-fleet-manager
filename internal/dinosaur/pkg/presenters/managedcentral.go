@@ -58,7 +58,6 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 			Annotations: private.ManagedCentralAllOfMetadataAnnotations{
 				MasId:          from.ID,
 				MasPlacementId: from.PlacementID,
-				ForceReconcile: from.ForceReconcile,
 			},
 			Internal: from.Internal,
 		},
@@ -136,7 +135,8 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 				},
 			},
 		},
-		RequestStatus: from.Status,
+		RequestStatus:  from.Status,
+		ForceReconcile: from.ForceReconcile,
 	}
 
 	if from.DeletionTimestamp != nil {

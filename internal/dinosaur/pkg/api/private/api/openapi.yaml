@@ -412,8 +412,6 @@ components:
           type: string
         mas/placementId:
           type: string
-        forceReconcile:
-          type: boolean
       required:
       - mas/id
       - mas/placementId
@@ -532,6 +530,8 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec'
         requestStatus:
           type: string
+        forceReconcile:
+          type: boolean
     ManagedCentralList_allOf:
       example: '{"kind":"ManagedCentralList","items":{"$ref":"#/components/examples/ManagedCentralExample"}}'
       properties:

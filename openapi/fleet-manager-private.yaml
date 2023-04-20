@@ -240,8 +240,6 @@ components:
                       type: string
                     mas/placementId:
                       type: string
-                    forceReconcile:
-                      type: boolean
                 deletionTimestamp:
                   type: string
             spec:
@@ -331,6 +329,8 @@ components:
                           $ref: "#/components/schemas/ResourceRequirements"
             requestStatus:
               type: string
+            forceReconcile:
+              type: boolean
 
     ManagedCentralList:
       description: >-

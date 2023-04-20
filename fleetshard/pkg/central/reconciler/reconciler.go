@@ -110,7 +110,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, errors.Wrapf(err, "checking if central changed")
 	}
-	useCache := !changed && !remoteCentral.Metadata.Annotations.ForceReconcile
+	useCache := !changed && !remoteCentral.ForceReconcile
 
 	if useCache && r.shouldSkipReadyCentral(remoteCentral) {
 		return nil, ErrCentralNotChanged
