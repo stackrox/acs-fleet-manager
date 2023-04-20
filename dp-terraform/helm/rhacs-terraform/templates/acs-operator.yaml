@@ -1,3 +1,4 @@
+## TODO disable operator installation when FSS runs with FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED=true
 {{- if .Values.acsOperator.enabled }}
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
