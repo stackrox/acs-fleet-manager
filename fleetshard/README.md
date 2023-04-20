@@ -146,6 +146,12 @@ kubectl get deployments -n <operator_namespace>
 kubectl delete deployment <deployment> -n <operator_namespace>
 ```
 
+Also, delete metric Service and serviceAccount
+```
+kubectl delete service rhacs-operator-controller-manager-metrics-service -n <operator_namespace>
+kubectl delete serviceAccount rhacs-operator-controller-manager -n <operator_namespace>
+```
+
 3. Check that there is no running ACS Operator pod(s)
 
 ```
