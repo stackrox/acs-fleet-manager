@@ -27,18 +27,24 @@ const (
 
 func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 	var operatorImages []chartutil.Values
+	uniqueTags := make(map[string]bool)
 	for _, img := range images {
 		if strings.Contains(img, ":") {
-			s := strings.Split(img, ":")
-			tag := s[1]
+			strs := strings.Split(img, ":")
+			if len(strs) != 2 {
+				return nil, fmt.Errorf("failed to split image and tag from %s", img)
+			}
+			tag := strs[1]
 			if len(tag) > maxOperatorDeploymentSuffixLength {
-				glog.Errorf("Tag version %s contains more than %d characters and cannot be used as a deployment suffix.", tag, maxOperatorDeploymentSuffixLength)
-			} else {
-				img := chartutil.Values{"repository": s[0], "tag": tag}
+				return nil, fmt.Errorf("tag version %s contains more than %d characters and cannot be used as a deployment suffix", tag, maxOperatorDeploymentSuffixLength)
+			}
+			if _, used := uniqueTags[tag]; !used {
+				uniqueTags[tag] = true
+				img := chartutil.Values{"repository": strs[0], "tag": tag}
 				operatorImages = append(operatorImages, img)
 			}
 		} else {
-			glog.Errorf("failed to parse image %s", img)
+			return nil, fmt.Errorf("failed to parse image %s", img)
 		}
 	}
 	if len(operatorImages) == 0 {
@@ -81,7 +87,7 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 		out.SetGroupVersionKind(obj.GroupVersionKind())
 		err := u.client.Get(ctx, key, &out)
 		if err == nil {
-			glog.V(10).Infof("Updating %s/%s", obj.GetKind(), obj.GetName())
+			glog.V(10).Infof("Updating %s/%s in %s namespace", obj.GetKind(), obj.GetName(), obj.GetNamespace())
 			obj.SetResourceVersion(out.GetResourceVersion())
 			err := u.client.Update(ctx, obj)
 			if err != nil {
