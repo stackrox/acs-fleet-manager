@@ -4,11 +4,6 @@ package main
 import (
 	"flag"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/central"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/cloudprovider"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/cluster"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/errors"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/observatorium"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/migrate"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/serve"
 
@@ -51,11 +46,12 @@ func main() {
 
 	rootCmd.AddCommand(migrate.NewMigrateCommand(env))
 	rootCmd.AddCommand(serve.NewServeCommand(env))
-	rootCmd.AddCommand(central.NewCentralCommand(env))
-	rootCmd.AddCommand(cluster.NewClusterCommand(env))
-	rootCmd.AddCommand(cloudprovider.NewCloudProviderCommand(env))
-	rootCmd.AddCommand(observatorium.NewRunObservatoriumCommand(env))
-	rootCmd.AddCommand(errors.NewErrorsCommand(env))
+	// Unsupported CLI commands. Eventually some of them can be removed.
+	// rootCmd.AddCommand(central.NewCentralCommand(env))
+	// rootCmd.AddCommand(cluster.NewClusterCommand(env))
+	// rootCmd.AddCommand(cloudprovider.NewCloudProviderCommand(env))
+	// rootCmd.AddCommand(observatorium.NewRunObservatoriumCommand(env))
+	// rootCmd.AddCommand(errors.NewErrorsCommand(env))
 
 	if err := rootCmd.Execute(); err != nil {
 		glog.Fatalf("error running command: %v", err)
