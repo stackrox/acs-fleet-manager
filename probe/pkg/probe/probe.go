@@ -47,10 +47,10 @@ func New(config *config.Config, fleetManagerPublicAPI fleetmanager.PublicAPI, ht
 	}
 }
 
-func recordElapsedTime(start time.Time) {
+func recordElapsedTime(start time.Time, region string) {
 	elapsedTime := time.Since(start)
 	glog.Infof("elapsed time: %v", elapsedTime)
-	metrics.MetricsInstance().ObserveTotalDuration(elapsedTime)
+	metrics.MetricsInstance().ObserveTotalDuration(elapsedTime, region)
 }
 
 func (p *ProbeImpl) newCentralName() (string, error) {
@@ -70,7 +70,7 @@ func (p *ProbeImpl) Execute(ctx context.Context) error {
 		p.config.DataPlaneRegion,
 	)
 	defer glog.Info("probe run has ended")
-	defer recordElapsedTime(time.Now())
+	defer recordElapsedTime(time.Now(), p.config.DataPlaneRegion)
 
 	central, err := p.createCentral(ctx)
 	if err != nil {

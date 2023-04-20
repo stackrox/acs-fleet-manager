@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
@@ -25,7 +26,16 @@ func TestMetricsServerServesDefaultMetrics(t *testing.T) {
 }
 
 func TestMetricsServerServesCustomMetrics(t *testing.T) {
-	metrics := serveMetrics(t, newMetrics())
+	// Initialize metric series such that they are not empty.
+	customMetrics := newMetrics()
+	customMetrics.IncStartedRuns(regionValue)
+	customMetrics.IncSucceededRuns(regionValue)
+	customMetrics.IncFailedRuns(regionValue)
+	customMetrics.SetLastStartedTimestamp(regionValue)
+	customMetrics.SetLastSuccessTimestamp(regionValue)
+	customMetrics.SetLastFailureTimestamp(regionValue)
+	customMetrics.ObserveTotalDuration(time.Minute, regionValue)
+	metrics := serveMetrics(t, customMetrics)
 
 	expectedKeys := []string{
 		"acs_probe_runs_started_total",
