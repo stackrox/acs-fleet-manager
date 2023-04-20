@@ -446,15 +446,15 @@ func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProv
 		return nil, err
 	}
 
-	items := []types.CloudProviderRegionInfo{}
-	for _, result := range results {
-		items = append(items, types.CloudProviderRegionInfo{
+	var items = make([]types.CloudProviderRegionInfo, len(results))
+	for i, result := range results {
+		items[i] = types.CloudProviderRegionInfo{
 			ID:              result.Region,
 			Name:            result.Region,
-			DisplayName:     result.Region,
+			DisplayName:     GetCloudRegionDisplayName(providerInf.ID, result.Region),
 			SupportsMultiAZ: result.MultiAZ,
 			CloudProviderID: providerInf.ID,
-		})
+		}
 	}
 
 	return &types.CloudProviderRegionInfoList{Items: items}, nil

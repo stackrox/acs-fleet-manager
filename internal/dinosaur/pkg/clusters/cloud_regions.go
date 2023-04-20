@@ -1,4 +1,4 @@
-package services
+package clusters
 
 var cloudRegions = map[string]map[string]string{
 	"aws": {
@@ -34,11 +34,11 @@ var cloudRegions = map[string]map[string]string{
 	},
 }
 
-func GetCloudRegionDisplayName(provider, region string) string {
-	if regions, ok := cloudRegions[provider]; ok {
-		if displayName, ok := regions[region]; ok {
+func GetCloudRegionDisplayName(providerName, regionName string) string {
+	if regions, ok := cloudRegions[providerName]; ok {
+		if displayName, ok := regions[regionName]; ok {
 			return displayName
 		}
 	}
-	return region
+	return regionName
 }
