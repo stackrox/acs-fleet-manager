@@ -32,7 +32,7 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 			s := strings.Split(img, ":")
 			tag := s[1]
 			if len(tag) > maxOperatorDeploymentSuffixLength {
-				glog.Errorf("tag version %s contains more than %d characters and cannot be used as a deployment suffix", tag, maxOperatorDeploymentSuffixLength)
+				glog.Errorf("Tag version %s contains more than %d characters and cannot be used as a deployment suffix.", tag, maxOperatorDeploymentSuffixLength)
 			} else {
 				img := chartutil.Values{"repository": s[0], "tag": tag}
 				operatorImages = append(operatorImages, img)
