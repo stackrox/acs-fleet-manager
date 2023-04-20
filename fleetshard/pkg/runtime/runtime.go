@@ -218,7 +218,7 @@ func (r *Runtime) upgradeOperator() error {
 	glog.Infof("Installing Operators: %s", strings.Join(operatorImages, ", "))
 	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages)
 	if err != nil {
-		return fmt.Errorf("operator upgrade: %w", err)
+		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
 	}
 
 	// TODO: delete unused operator versions
