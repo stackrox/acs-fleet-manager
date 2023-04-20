@@ -91,6 +91,10 @@ type CentralRequest struct {
 
 	// All we need to integrate Central with an IdP.
 	AuthConfig
+
+	// ForceReconcile will be set by the admin API to indicate to fleetshard-sync that this instance needs
+	// to be reconciled even if it has not changed and is in a state were reconciliation should be skipped.
+	ForceReconcile bool `json:"force_reconcile"`
 }
 
 // CentralList ...

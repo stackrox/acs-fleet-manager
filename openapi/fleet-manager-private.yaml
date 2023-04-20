@@ -240,6 +240,8 @@ components:
                       type: string
                     mas/placementId:
                       type: string
+                    forceReconcile:
+                      type: boolean
                 deletionTimestamp:
                   type: string
             spec:

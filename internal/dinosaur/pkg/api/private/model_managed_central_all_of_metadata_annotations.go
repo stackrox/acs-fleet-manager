@@ -14,4 +14,5 @@ package private
 type ManagedCentralAllOfMetadataAnnotations struct {
 	MasId          string `json:"mas/id"`
 	MasPlacementId string `json:"mas/placementId"`
+	ForceReconcile bool   `json:"forceReconcile,omitempty"`
 }

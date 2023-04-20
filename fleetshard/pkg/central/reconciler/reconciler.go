@@ -110,8 +110,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, errors.Wrapf(err, "checking if central changed")
 	}
+	useCache := !changed && !remoteCentral.Metadata.Annotations.ForceReconcile
 
-	if !changed && r.shouldSkipReadyCentral(remoteCentral) {
+	if useCache && r.shouldSkipReadyCentral(remoteCentral) {
 		return nil, ErrCentralNotChanged
 	}
 
@@ -341,7 +342,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 	if !centralDeploymentReady || !centralTLSSecretFound {
-		if isRemoteCentralProvisioning(remoteCentral) && !changed { // no changes detected, wait until central become ready
+		if isRemoteCentralProvisioning(remoteCentral) && useCache { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
 		}
 		return installingStatus(), nil

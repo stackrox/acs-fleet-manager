@@ -58,6 +58,7 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 			Annotations: private.ManagedCentralAllOfMetadataAnnotations{
 				MasId:          from.ID,
 				MasPlacementId: from.PlacementID,
+				ForceReconcile: from.ForceReconcile,
 			},
 			Internal: from.Internal,
 		},
