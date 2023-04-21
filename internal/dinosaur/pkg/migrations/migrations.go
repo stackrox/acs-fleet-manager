@@ -46,6 +46,17 @@ func getMigrations() []*gormigrate.Migration {
 	}
 }
 
+// Migrations can should not rollback columns. These might in case of a rollback lead to data losses.
+// If a database must be rolled back a new snapshot must be restored.
+// Migrations should never drop a column or edit a column.
+func init() {
+	for _, migration := range getMigrations() {
+		if migration.Rollback != nil {
+			panic("Migrations have rollbacks implemented. Rollback func must be removed.")
+		}
+	}
+}
+
 // New ...
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
 	migrations := getMigrations()

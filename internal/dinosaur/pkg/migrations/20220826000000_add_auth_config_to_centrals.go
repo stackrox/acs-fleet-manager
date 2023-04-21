@@ -64,14 +64,5 @@ func addAuthConfigToCentralRequest() *gormigrate.Migration {
 			}
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			for _, col := range newColumns {
-				err := tx.Migrator().DropColumn(&CentralRequest{}, col)
-				if err != nil {
-					return fmt.Errorf("removing column %q: %w", col, err)
-				}
-			}
-			return nil
-		},
 	}
 }

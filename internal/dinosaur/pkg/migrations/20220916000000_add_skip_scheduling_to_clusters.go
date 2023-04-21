@@ -43,12 +43,5 @@ func addSkipSchedulingToClusters() *gormigrate.Migration {
 			}
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			err := tx.Migrator().DropColumn(&Cluster{}, "SkipScheduling")
-			if err != nil {
-				return fmt.Errorf("rolling back 20220916000000: %w", err)
-			}
-			return nil
-		},
 	}
 }

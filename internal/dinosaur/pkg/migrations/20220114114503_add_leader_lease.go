@@ -48,12 +48,5 @@ func addLeaderLease() *gormigrate.Migration {
 			}
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			err := tx.Migrator().DropTable(&LeaderLease{})
-			if err != nil {
-				return fmt.Errorf("rolling back 20220114114503: %w", err)
-			}
-			return nil
-		},
 	}
 }

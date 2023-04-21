@@ -70,14 +70,5 @@ func addInternalToCentralRequest() *gormigrate.Migration {
 			}
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			if tx.Migrator().HasColumn(&CentralRequest{}, colName) {
-				if err := tx.Migrator().DropColumn(&CentralRequest{}, colName); err != nil {
-					return errors.Wrapf(err, "rolling back from column %s in migration %s", colName, id)
-				}
-				glog.Infof("Successfully removed the %s column", colName)
-			}
-			return nil
-		},
 	}
 }
