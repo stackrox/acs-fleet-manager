@@ -1,4 +1,4 @@
-package clusters
+package wellknown
 
 import (
 	"testing"

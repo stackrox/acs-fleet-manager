@@ -1,6 +1,8 @@
-package clusters
+package wellknown
 
-var cloudRegions = map[string]map[string]string{
+// cloudRegionDisplayNames is a map of cloud provider names to a map of region names to display names.
+// Obtained from https://docs.aws.amazon.com/general/latest/gr/rande.html
+var cloudRegionDisplayNames = map[string]map[string]string{
 	"aws": {
 		"af-south-1":     "Africa (Cape Town)",
 		"ap-east-1":      "Asia Pacific (Hong Kong)",
@@ -34,8 +36,10 @@ var cloudRegions = map[string]map[string]string{
 	},
 }
 
+// GetCloudRegionDisplayName returns the display name for a cloud region.
+// If the provider or region is unknown, the input region name is returned.
 func GetCloudRegionDisplayName(providerName, regionName string) string {
-	if regions, ok := cloudRegions[providerName]; ok {
+	if regions, ok := cloudRegionDisplayNames[providerName]; ok {
 		if displayName, ok := regions[regionName]; ok {
 			return displayName
 		}

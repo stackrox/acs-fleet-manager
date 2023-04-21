@@ -7,6 +7,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/wellknown"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -451,7 +452,7 @@ func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProv
 		items[i] = types.CloudProviderRegionInfo{
 			ID:              result.Region,
 			Name:            result.Region,
-			DisplayName:     GetCloudRegionDisplayName(providerInf.ID, result.Region),
+			DisplayName:     wellknown.GetCloudRegionDisplayName(providerInf.ID, result.Region),
 			SupportsMultiAZ: result.MultiAZ,
 			CloudProviderID: providerInf.ID,
 		}
