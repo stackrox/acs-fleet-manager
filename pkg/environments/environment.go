@@ -59,7 +59,6 @@ func New(name string, options ...di.Option) (env *Env, err error) {
 func GetEnvironmentStrFromEnv() string {
 	envStr, specified := os.LookupEnv(EnvironmentStringKey)
 	if !specified || envStr == "" {
-		glog.Infof("Environment variable %q not specified, using default %q", EnvironmentStringKey, EnvironmentDefault)
 		envStr = EnvironmentDefault
 	}
 	return envStr
