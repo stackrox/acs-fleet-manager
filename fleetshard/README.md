@@ -160,12 +160,9 @@ NAME
 ...
 ```
 
-4. install ACS Operator
-In Openshift console go to `Operators -> OperatorHub -> Advanced Cluster Security for Kubernetes`
-and press `Install`. Alternatively, use helm template
+4. Re-terraform the cluster
 ```
-cd dp-terraform/helm/rhacs-terraform
-helm template -s templates/acs-operator.yaml --values values.yaml | kubectl apply -f -
+./terraform_cluster.sh <environment> <cluster>
 ```
 
 5. Check that ACS Operator is running
