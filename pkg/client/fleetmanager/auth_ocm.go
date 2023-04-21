@@ -39,15 +39,17 @@ func (f *ocmAuthFactory) CreateAuth(o Option) (Auth, error) {
 		return nil, errors.New("empty ocm token")
 	}
 
-	l, err := sdk.NewGlogLoggerBuilder().Build()
-	if err != nil {
-		return nil, fmt.Errorf("creating Glog logger: %w", err)
-	}
-
 	builder := sdk.NewConnectionBuilder().
 		Client(ocmClientID, "").
-		Tokens(initialToken).
-		Logger(l)
+		Tokens(initialToken)
+
+	if o.Ocm.EnableLogger {
+		l, err := sdk.NewGlogLoggerBuilder().Build()
+		if err != nil {
+			return nil, fmt.Errorf("creating Glog logger: %w", err)
+		}
+		builder.Logger(l)
+	}
 
 	// Check if the connection can be established and tokens can be retrieved.
 	conn, err := builder.Build()
