@@ -91,16 +91,16 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 			obj.SetResourceVersion(out.GetResourceVersion())
 			err := u.client.Update(ctx, obj)
 			if err != nil {
-				return fmt.Errorf("failed to update object %s/%s: %w", obj.GetKind(), key.Name, err)
+				return fmt.Errorf("failed to update object %s/%s in %s namespace: %w", obj.GetKind(), key.Name, key.Namespace, err)
 			}
 		} else {
 			if !apiErrors.IsNotFound(err) {
-				return fmt.Errorf("failed to retrieve object %s/%s: %w", obj.GetKind(), key.Name, err)
+				return fmt.Errorf("failed to retrieve object %s/%s in %s namespace: %w", obj.GetKind(), key.Name, key.Namespace, err)
 			}
 			err = u.client.Create(ctx, obj)
-			glog.Infof("Creating %s/%s", obj.GetKind(), obj.GetName())
+			glog.Infof("Creating %s/%s in %s namespace", obj.GetKind(), obj.GetName(), obj.GetNamespace())
 			if err != nil && !apiErrors.IsAlreadyExists(err) {
-				return fmt.Errorf("failed to create object %s/%s of type %s: %w", key.Namespace, key.Name, obj.GetKind(), err)
+				return fmt.Errorf("failed to create object %s/%s in %s namespace: %w", obj.GetKind(), key.Name, key.Namespace, err)
 			}
 		}
 	}
