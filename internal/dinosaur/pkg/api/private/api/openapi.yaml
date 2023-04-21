@@ -296,9 +296,9 @@ components:
       type: object
     ManagedCentralVersions:
       properties:
-        central:
+        desiredVersion:
           type: string
-        centralOperator:
+        actualVersion:
           type: string
       type: object
     ManagedCentral:
