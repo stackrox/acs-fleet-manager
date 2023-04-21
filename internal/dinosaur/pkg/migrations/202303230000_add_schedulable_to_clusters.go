@@ -33,14 +33,5 @@ func addSchedulableToClusters() *gormigrate.Migration {
 			}
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			if tx.Migrator().HasColumn(&Cluster{}, colName) {
-				if err := tx.Migrator().DropColumn(&Cluster{}, colName); err != nil {
-					return errors.Wrapf(err, "rolling back from column %s in migration %s", colName, id)
-				}
-				glog.Infof("Successfully removed the %s column", colName)
-			}
-			return nil
-		},
 	}
 }

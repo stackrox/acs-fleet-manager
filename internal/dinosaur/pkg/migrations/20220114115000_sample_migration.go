@@ -34,12 +34,5 @@ func sampleMigration() *gormigrate.Migration {
 			var err error
 			return err
 		},
-		Rollback: func(tx *gorm.DB) error {
-			// Implement here the logic to perform a rollback in case this migration fails.
-			// It should be implement assuming that the migration could have failed in any existing
-			// step
-			var err error
-			return err
-		},
 	}
 }

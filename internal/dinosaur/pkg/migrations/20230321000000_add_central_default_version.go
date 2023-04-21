@@ -37,12 +37,5 @@ func addCentralDefaultVersion() *gormigrate.Migration {
 
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			err := tx.Migrator().DropTable(&CentralDefaultVersion{})
-			if err != nil {
-				return fmt.Errorf("rolling back 20230321000000: %w", err)
-			}
-			return nil
-		},
 	}
 }

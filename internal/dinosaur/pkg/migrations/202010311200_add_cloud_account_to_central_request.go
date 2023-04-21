@@ -61,11 +61,5 @@ func addCloudAccountIDToCentralRequest() *gormigrate.Migration {
 			}
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			if err := tx.Migrator().DropColumn(&CentralRequest{}, "CloudAccountID"); err != nil {
-				return fmt.Errorf("rolling back new column CloudAccountID in migration 202210311200: %w", err)
-			}
-			return nil
-		},
 	}
 }

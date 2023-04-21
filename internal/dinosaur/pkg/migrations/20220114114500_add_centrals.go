@@ -56,12 +56,5 @@ func addCentralRequest() *gormigrate.Migration {
 			}
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			err := tx.Migrator().DropTable(&CentralRequest{})
-			if err != nil {
-				return fmt.Errorf("rolling back 20220114114500: %w", err)
-			}
-			return nil
-		},
 	}
 }

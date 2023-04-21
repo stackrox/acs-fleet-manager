@@ -42,12 +42,5 @@ func addClusters() *gormigrate.Migration {
 			}
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			err := tx.Migrator().DropTable(&Cluster{})
-			if err != nil {
-				return fmt.Errorf("rolling back 20220114114501: %w", err)
-			}
-			return nil
-		},
 	}
 }

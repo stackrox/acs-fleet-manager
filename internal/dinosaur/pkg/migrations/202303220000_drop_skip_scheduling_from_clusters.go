@@ -33,14 +33,5 @@ func dropSkipSchedulingFromClusters() *gormigrate.Migration {
 			}
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			if !tx.Migrator().HasColumn(&Cluster{}, colName) {
-				if err := tx.Migrator().AddColumn(&Cluster{}, colName); err != nil {
-					return errors.Wrapf(err, "adding column %s in migration %s", colName, id)
-				}
-				glog.Infof("Successfully added the %s column", colName)
-			}
-			return nil
-		},
 	}
 }

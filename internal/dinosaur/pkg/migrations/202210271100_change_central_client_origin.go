@@ -67,8 +67,5 @@ func changeCentralClientOrigin() *gormigrate.Migration {
 			}
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			return nil
-		},
 	}
 }

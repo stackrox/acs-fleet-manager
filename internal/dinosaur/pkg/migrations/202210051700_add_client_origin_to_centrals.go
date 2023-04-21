@@ -75,11 +75,5 @@ func addClientOriginToCentralRequest() *gormigrate.Migration {
 			}
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			if err := tx.Migrator().DropColumn(&CentralRequest{}, "ClientOrigin"); err != nil {
-				return fmt.Errorf("rolling back new column ClientOrigin in migration 202210051700: %w", err)
-			}
-			return nil
-		},
 	}
 }

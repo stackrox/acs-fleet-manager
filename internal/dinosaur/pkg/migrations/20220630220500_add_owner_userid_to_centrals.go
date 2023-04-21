@@ -51,12 +51,5 @@ func addOwnerUserIDToCentralRequest() *gormigrate.Migration {
 			}
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
-			err := tx.Migrator().DropColumn(&CentralRequest{}, "OwnerUserID")
-			if err != nil {
-				return fmt.Errorf("rolling back 20220630220500: %w", err)
-			}
-			return nil
-		},
 	}
 }
