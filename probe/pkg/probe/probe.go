@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stackrox/rox/pkg/utils"
-
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -22,6 +20,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/probe/config"
 	"github.com/stackrox/acs-fleet-manager/probe/pkg/metrics"
 	"github.com/stackrox/rox/pkg/httputil"
+	"github.com/stackrox/rox/pkg/utils"
 )
 
 // Probe is a wrapper interface for the core probe logic.
@@ -96,8 +95,10 @@ func (p *ProbeImpl) CleanUp(ctx context.Context) error {
 }
 
 func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
-	centralList, _, err := p.fleetManagerPublicAPI.GetCentrals(ctx, nil)
+	centralList, resp, err := p.fleetManagerPublicAPI.GetCentrals(ctx, nil)
+	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))
 	if err != nil {
+		err = errors.WithMessage(err, extractCentralError(resp))
 		err = errors.Wrap(err, "could not list centrals")
 		glog.Error(err)
 		return err
@@ -135,6 +136,7 @@ func (p *ProbeImpl) createCentral(ctx context.Context) (*public.CentralRequest, 
 		Region:        p.config.DataPlaneRegion,
 	}
 	central, resp, err := p.fleetManagerPublicAPI.CreateCentral(ctx, true, request)
+	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))
 	glog.Infof("creation of central instance requested")
 	if err != nil {
 		err = errors.WithMessage(err, extractCentralError(resp))
@@ -165,6 +167,7 @@ func (p *ProbeImpl) verifyCentral(ctx context.Context, centralRequest *public.Ce
 func (p *ProbeImpl) deleteCentral(ctx context.Context, centralRequest *public.CentralRequest) error {
 	resp, err := p.fleetManagerPublicAPI.DeleteCentralById(ctx, centralRequest.Id, true)
 	glog.Infof("deletion of central instance %s requested", centralRequest.Id)
+	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))
 	if err != nil {
 		err = errors.WithMessage(err, extractCentralError(resp))
 		return errors.Wrapf(err, "deletion of central instance %s failed", centralRequest.Id)
@@ -190,6 +193,7 @@ func (p *ProbeImpl) ensureCentralState(ctx context.Context, centralRequest *publ
 
 func (p *ProbeImpl) ensureStateFunc(ctx context.Context, centralRequest *public.CentralRequest, targetState string) (*public.CentralRequest, error) {
 	centralResp, resp, err := p.fleetManagerPublicAPI.GetCentralById(ctx, centralRequest.Id)
+	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))
 	if err != nil {
 		err = errors.WithMessage(err, extractCentralError(resp))
 		err = errors.Wrapf(err, "central instance %s not reachable", centralRequest.Id)
@@ -218,6 +222,7 @@ func (p *ProbeImpl) ensureCentralDeleted(ctx context.Context, centralRequest *pu
 
 func (p *ProbeImpl) ensureDeletedFunc(ctx context.Context, centralRequest *public.CentralRequest) error {
 	_, response, err := p.fleetManagerPublicAPI.GetCentralById(ctx, centralRequest.Id)
+	defer utils.IgnoreError(closeBodyIfNonEmpty(response))
 	if err != nil {
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			glog.Infof("central instance %s has been deleted", centralRequest.Id)
@@ -250,6 +255,7 @@ func (p *ProbeImpl) pingFunc(ctx context.Context, url string) error {
 		return err
 	}
 	response, err := p.httpClient.Do(request)
+	defer utils.IgnoreError(closeBodyIfNonEmpty(response))
 	if err != nil {
 		err = errors.Wrap(err, "URL not reachable")
 		glog.Error(err)
@@ -300,10 +306,20 @@ func extractCentralError(resp *http.Response) string {
 	if resp == nil || resp.Body == nil {
 		return ""
 	}
-	defer utils.IgnoreError(resp.Body.Close)
 	if err := json.NewDecoder(resp.Body).Decode(&centralError); err != nil {
 		return "parsing HTTP response"
 	}
 	return fmt.Sprintf("request responded with %d: central error %s and reason %s", resp.StatusCode,
 		centralError.Code, centralError.Reason)
+}
+
+func closeBodyIfNonEmpty(resp *http.Response) func() error {
+	if resp == nil || resp.Body == nil {
+		return func() error {
+			return nil
+		}
+	}
+	return func() error {
+		return errors.Wrap(resp.Body.Close(), "closing response body")
+	}
 }
