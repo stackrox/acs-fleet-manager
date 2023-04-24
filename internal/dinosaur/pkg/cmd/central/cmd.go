@@ -3,31 +3,28 @@
 package central
 
 import (
-	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+)
+
+const (
+	apiErrorMsg = "Status Code: %s. Are you authenticated? Is the correct endpoint configured and reachable?"
 )
 
 // NewCentralCommand ...
-func NewCentralCommand(env *environments.Env) *cobra.Command {
+func NewCentralCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "central",
-		Short: "Perform central CRUD actions directly",
-		Long:  "Perform central CRUD actions directly.",
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			err := env.CreateServices()
-			if err != nil {
-				glog.Fatalf("Unable to initialize environment: %s", err.Error())
-			}
-		},
+		Use:              "central",
+		Short:            "Perform central CRUD actions directly",
+		Long:             "Perform central CRUD actions directly.",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 	}
 
 	// add sub-commands
 	cmd.AddCommand(
-		NewCreateCommand(env),
-		NewGetCommand(env),
-		NewDeleteCommand(env),
-		NewListCommand(env),
+		NewCreateCommand(),
+		NewGetCommand(),
+		NewDeleteCommand(),
+		NewListCommand(),
 	)
 
 	return cmd

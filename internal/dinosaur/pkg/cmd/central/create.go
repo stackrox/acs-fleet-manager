@@ -2,23 +2,26 @@ package central
 
 import (
 	"encoding/json"
+	"fmt"
+
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
+	"github.com/stackrox/rox/pkg/httputil"
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 )
 
 // NewCreateCommand creates a new command for creating centrals.
-func NewCreateCommand(env *environments.Env) *cobra.Command {
+func NewCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new central request",
 		Long:  "Create a new central request.",
 		Run: func(cmd *cobra.Command, args []string) {
-			runCreate(env, cmd, args)
+			runCreate(fleetmanagerclient.AuthenticatedClientWithOCM(), cmd, args)
 		},
 	}
 
@@ -33,34 +36,34 @@ func NewCreateCommand(env *environments.Env) *cobra.Command {
 	return cmd
 }
 
-func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
+func runCreate(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	name := flags.MustGetDefinedString(FlagName, cmd.Flags())
 	region := flags.MustGetDefinedString(FlagRegion, cmd.Flags())
 	provider := flags.MustGetDefinedString(FlagProvider, cmd.Flags())
-	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
-	multiAZ := flags.MustGetBool(FlagMultiAZ, cmd.Flags())
-	clusterID := flags.MustGetDefinedString(FlagClusterID, cmd.Flags())
-	orgID := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 
-	var centralService services.DinosaurService
-	env.MustResolveAll(&centralService)
-
-	centralRequest := &dbapi.CentralRequest{
-		Region:         region,
-		ClusterID:      clusterID,
-		CloudProvider:  provider,
-		MultiAZ:        multiAZ,
-		Name:           name,
-		Owner:          owner,
-		OrganisationID: orgID,
+	request := public.CentralRequestPayload{
+		Region:        region,
+		CloudProvider: provider,
+		Name:          name,
+		MultiAz:       true,
 	}
 
-	if err := centralService.RegisterDinosaurJob(centralRequest); err != nil {
-		glog.Fatalf("Unable to create central request: %s", err.Error())
-	}
-	indentedCentralRequest, err := json.MarshalIndent(centralRequest, "", "    ")
+	const async = true
+	centralRequest, resp, err := client.PublicAPI().CreateCentral(cmd.Context(), async, request)
 	if err != nil {
-		glog.Fatalf("Failed to format central request: %s", err.Error())
+		glog.Error(err)
+		return
 	}
-	glog.V(10).Infof("%s", indentedCentralRequest)
+
+	if httputil.Is2xxStatusCode(resp.StatusCode) {
+		glog.Errorf(apiErrorMsg, resp.Status)
+		return
+	}
+
+	centralJSON, err := json.Marshal(centralRequest)
+	if err != nil {
+		glog.Error(err)
+		return
+	}
+	fmt.Println(string(centralJSON))
 }

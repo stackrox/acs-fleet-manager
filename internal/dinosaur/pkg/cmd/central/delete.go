@@ -2,47 +2,46 @@ package central
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/stackrox/rox/pkg/httputil"
+
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/auth"
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 )
 
 // NewDeleteCommand command for deleting centrals.
-func NewDeleteCommand(env *environments.Env) *cobra.Command {
+func NewDeleteCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Delete a central request",
 		Long:  "Delete a central request.",
 		Run: func(cmd *cobra.Command, args []string) {
-			runDelete(env, cmd, args)
+			runDelete(fleetmanagerclient.AuthenticatedClientWithOCM(), cmd, args)
 		},
 	}
 
 	cmd.Flags().String(FlagID, "", "Central ID")
-	cmd.Flags().String(FlagOwner, "test-user", "Username")
 	return cmd
 }
 
-func runDelete(env *environments.Env, cmd *cobra.Command, _ []string) {
+func runDelete(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
-	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
-	var centralService services.DinosaurService
-	env.MustResolveAll(&centralService)
 
-	// create jwt with claims and set it in the context
-	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"username": owner,
-	})
-	ctx := auth.SetTokenInContext(context.TODO(), jwt)
-
-	if err := centralService.RegisterDinosaurDeprovisionJob(ctx, id); err != nil {
-		glog.Fatalf("Unable to register the deprovisioning request: %s", err.Error())
-	} else {
-		glog.V(10).Infof("Deprovisioning request accepted for central cluster with id %s", id)
+	const async = true
+	resp, err := client.PublicAPI().DeleteCentralById(context.Background(), id, async)
+	if err != nil {
+		glog.Error(err)
+		return
 	}
+
+	if httputil.Is2xxStatusCode(resp.StatusCode) {
+		glog.Errorf(apiErrorMsg, resp.Status)
+		return
+	}
+
+	fmt.Printf("{status_code: %d}", resp.StatusCode)
 }
