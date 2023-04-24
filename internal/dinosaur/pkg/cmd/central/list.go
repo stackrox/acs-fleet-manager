@@ -1,7 +1,6 @@
 package central
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 
@@ -27,7 +26,7 @@ func NewListCommand() *cobra.Command {
 		Short: "lists all managed central requests",
 		Long:  "lists all managed central requests",
 		Run: func(cmd *cobra.Command, args []string) {
-			runList(fleetmanagerclient.AuthenticatedClientWithOCM(), args)
+			runList(fleetmanagerclient.AuthenticatedClientWithOCM(), cmd, args)
 		},
 	}
 	cmd.Flags().String(FlagOwner, "test-user", "Username")
@@ -37,8 +36,8 @@ func NewListCommand() *cobra.Command {
 	return cmd
 }
 
-func runList(client *fleetmanager.Client, _ []string) {
-	centrals, resp, err := client.PublicAPI().GetCentrals(context.Background(), &public.GetCentralsOpts{})
+func runList(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
+	centrals, resp, err := client.PublicAPI().GetCentrals(cmd.Context(), &public.GetCentralsOpts{})
 	if err != nil {
 		glog.Error(err)
 		return
