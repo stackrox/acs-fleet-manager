@@ -89,14 +89,14 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	require.NoError(t, err)
 
 	// check Secured Cluster CRD exists and correct
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: "", Name: securedClusterCRD.GetName()}, securedClusterCRD)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: securedClusterCRD.GetName()}, securedClusterCRD)
 	require.NoError(t, err)
 	assert.Equal(t, k8sAPIVersion, securedClusterCRD.GetAPIVersion())
 	assert.NotEmpty(t, securedClusterCRD.Object["metadata"])
 	assert.NotEmpty(t, securedClusterCRD.Object["spec"])
 
 	// check Central CRD exists and correct
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: "", Name: centralCRD.GetName()}, centralCRD)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: centralCRD.GetName()}, centralCRD)
 	require.NoError(t, err)
 	assert.Equal(t, k8sAPIVersion, centralCRD.GetAPIVersion())
 	assert.NotEmpty(t, centralCRD.Object["metadata"])

@@ -79,7 +79,7 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 	}
 
 	for _, obj := range objs {
-		if obj.GetNamespace() == "" && obj.GetKind() != crdKind {
+		if obj.GetNamespace() == "" {
 			obj.SetNamespace(operatorNamespace)
 		}
 		key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
