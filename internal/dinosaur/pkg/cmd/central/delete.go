@@ -1,7 +1,6 @@
 package central
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/stackrox/rox/pkg/httputil"
@@ -32,7 +31,7 @@ func runDelete(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 
 	const async = true
-	resp, err := client.PublicAPI().DeleteCentralById(context.Background(), id, async)
+	resp, err := client.PublicAPI().DeleteCentralById(cmd.Context(), id, async)
 	if err != nil {
 		glog.Error(err)
 		return

@@ -1,7 +1,6 @@
 package central
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 
@@ -31,7 +30,7 @@ func NewGetCommand() *cobra.Command {
 func runGet(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 
-	centralRequest, resp, err := client.PublicAPI().GetCentralById(context.Background(), id)
+	centralRequest, resp, err := client.PublicAPI().GetCentralById(cmd.Context(), id)
 	if err != nil {
 		glog.Error(err)
 		return
