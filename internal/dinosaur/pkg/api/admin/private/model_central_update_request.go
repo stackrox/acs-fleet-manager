@@ -16,5 +16,5 @@ type CentralUpdateRequest struct {
 	CentralVersion         string      `json:"central_version,omitempty"`
 	Central                CentralSpec `json:"central,omitempty"`
 	Scanner                ScannerSpec `json:"scanner,omitempty"`
-	ForceReconcile         bool        `json:"force_reconcile,omitempty"`
+	ForceReconcile         string      `json:"force_reconcile,omitempty"`
 }

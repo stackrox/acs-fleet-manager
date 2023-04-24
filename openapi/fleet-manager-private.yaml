@@ -330,7 +330,7 @@ components:
             requestStatus:
               type: string
             forceReconcile:
-              type: boolean
+              type: string
 
     ManagedCentralList:
       description: >-

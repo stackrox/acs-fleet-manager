@@ -439,7 +439,7 @@ components:
             scanner:
               $ref: "fleet-manager.yaml#/components/schemas/ScannerSpec"
             force_reconcile:
-              type: boolean
+              type: string
     CentralList:
       allOf:
         - $ref: "fleet-manager.yaml#/components/schemas/List"
@@ -464,7 +464,7 @@ components:
         scanner:
           $ref: "fleet-manager.yaml#/components/schemas/ScannerSpec"
         force_reconcile:
-          type: boolean
+          type: string
 
     CentralDefaultVersion:
       type: object

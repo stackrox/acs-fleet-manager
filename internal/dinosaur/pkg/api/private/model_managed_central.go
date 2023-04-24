@@ -17,5 +17,5 @@ type ManagedCentral struct {
 	Metadata       ManagedCentralAllOfMetadata `json:"metadata,omitempty"`
 	Spec           ManagedCentralAllOfSpec     `json:"spec,omitempty"`
 	RequestStatus  string                      `json:"requestStatus,omitempty"`
-	ForceReconcile bool                        `json:"forceReconcile,omitempty"`
+	ForceReconcile string                      `json:"forceReconcile,omitempty"`
 }

@@ -12,7 +12,7 @@ import (
 func addForceReconcileToCentralRequest() *gormigrate.Migration {
 	type CentralRequest struct {
 		api.Meta
-		ForceReconcile bool `json:"force_reconcile"`
+		ForceReconcile string `json:"force_reconcile"`
 	}
 
 	id := "202304200000"

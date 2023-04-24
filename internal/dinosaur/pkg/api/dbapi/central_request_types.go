@@ -94,7 +94,9 @@ type CentralRequest struct {
 
 	// ForceReconcile will be set by the admin API to indicate to fleetshard-sync that this instance needs
 	// to be reconciled even if it has not changed and is in a state were reconciliation should be skipped.
-	ForceReconcile bool `json:"force_reconcile"`
+	// Set this to "always" to force reconcilation until unset or to any other string to force a
+	// one time reconcilation
+	ForceReconcile string `json:"force_reconcile"`
 }
 
 // CentralList ...

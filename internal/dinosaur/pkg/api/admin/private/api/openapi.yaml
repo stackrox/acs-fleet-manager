@@ -503,7 +503,7 @@ components:
               key: requests
             limits:
               key: limits
-        force_reconcile: true
+        force_reconcile: force_reconcile
         scanner:
           analyzer:
             scaling:
@@ -533,7 +533,7 @@ components:
         scanner:
           $ref: '#/components/schemas/ScannerSpec'
         force_reconcile:
-          type: boolean
+          type: string
       type: object
     CentralDefaultVersion:
       example:
@@ -766,7 +766,7 @@ components:
         scanner:
           $ref: '#/components/schemas/ScannerSpec'
         force_reconcile:
-          type: boolean
+          type: string
     CentralList_allOf:
       properties:
         items:

@@ -531,7 +531,7 @@ components:
         requestStatus:
           type: string
         forceReconcile:
-          type: boolean
+          type: string
     ManagedCentralList_allOf:
       example: '{"kind":"ManagedCentralList","items":{"$ref":"#/components/examples/ManagedCentralExample"}}'
       properties:

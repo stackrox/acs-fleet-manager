@@ -956,8 +956,8 @@ func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.Managed
 		remoteCentral.Spec.Versions.ActualVersion == remoteCentral.Spec.Versions.DesiredVersion
 }
 
-func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile bool) bool {
-	return changed || forceReconcile
+func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile string) bool {
+	return changed || forceReconcile == "always"
 }
 
 var resourcesChart = charts.MustGetChart("tenant-resources")
