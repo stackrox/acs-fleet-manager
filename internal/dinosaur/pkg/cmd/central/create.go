@@ -55,7 +55,7 @@ func runCreate(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	if httputil.Is2xxStatusCode(resp.StatusCode) {
+	if !httputil.Is2xxStatusCode(resp.StatusCode) {
 		glog.Errorf(apiErrorMsg, resp.Status)
 		return
 	}

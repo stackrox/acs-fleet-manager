@@ -36,7 +36,7 @@ func runGet(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 		glog.Error(err)
 		return
 	}
-	if httputil.Is2xxStatusCode(resp.StatusCode) {
+	if !httputil.Is2xxStatusCode(resp.StatusCode) {
 		glog.Errorf(apiErrorMsg, resp.Status)
 		return
 	}

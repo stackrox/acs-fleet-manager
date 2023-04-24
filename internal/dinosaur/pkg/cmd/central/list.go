@@ -43,7 +43,7 @@ func runList(client *fleetmanager.Client, _ []string) {
 		glog.Error(err)
 		return
 	}
-	if httputil.Is2xxStatusCode(resp.StatusCode) {
+	if !httputil.Is2xxStatusCode(resp.StatusCode) {
 		glog.Errorf(apiErrorMsg, resp.Status)
 		return
 	}
