@@ -49,13 +49,13 @@ func runCreate(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	const async = true
 	centralRequest, _, err := client.PublicAPI().CreateCentral(cmd.Context(), async, request)
 	if err != nil {
-		glog.Error(err)
+		glog.Errorf(apiErrorMsg, "create", err)
 		return
 	}
 
 	centralJSON, err := json.Marshal(centralRequest)
 	if err != nil {
-		glog.Errorf(apiErrorMsg, "create", err)
+		glog.Errorf("Failed to marshal Central: %s", err)
 		return
 	}
 	fmt.Println(string(centralJSON))
