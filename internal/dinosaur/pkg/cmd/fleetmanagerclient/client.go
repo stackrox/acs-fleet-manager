@@ -24,7 +24,8 @@ const (
 // AuthenticatedClientWithOCM returns a rest client to the fleet-manager and receives the OCM refresh token.
 // This function will panic on an error, designed to be used by the fleet-manager CLI.
 func AuthenticatedClientWithOCM() *fleetmanager.Client {
-	if os.Getenv(ocmRefreshTokenEnvVar) == "" {
+	ocmRefreshToken := os.Getenv(ocmRefreshTokenEnvVar)
+	if ocmRefreshToken == "" {
 		panic("OCM_TOKEN not set. Please set OCM token with 'export OCM_TOKEN=$(ocm token --refresh)'")
 	}
 
@@ -36,7 +37,7 @@ func AuthenticatedClientWithOCM() *fleetmanager.Client {
 	singletonInstance.Do(func() {
 		auth, err := fleetmanager.NewAuth("OCM", fleetmanager.Option{
 			Ocm: fleetmanager.OCMOption{
-				RefreshToken: os.Getenv(ocmRefreshTokenEnvVar),
+				RefreshToken: ocmRefreshToken,
 			},
 		})
 		if err != nil {
