@@ -37,7 +37,7 @@ func runGet(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 
 	centralJSON, err := json.Marshal(centralRequest)
 	if err != nil {
-		glog.Error(err)
+		glog.Errorf("Failed to marshal CentralRequests: %s", err)
 		return
 	}
 	fmt.Println(string(centralJSON))
