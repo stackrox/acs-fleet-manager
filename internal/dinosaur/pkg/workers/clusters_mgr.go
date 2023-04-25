@@ -3,6 +3,8 @@ package workers
 
 import (
 	"fmt"
+	"strings"
+	"sync"
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
@@ -11,9 +13,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/constants"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-
-	"strings"
-	"sync"
 
 	"github.com/goava/di"
 	"github.com/google/go-cmp/cmp"
@@ -57,6 +56,10 @@ const (
 	mkSRERoleBindingName             = "dinosaur-sre-cluster-admin"
 	dedicatedReadersRoleBindingName  = "dedicated-readers"
 	clusterAdminRoleName             = "cluster-admin"
+)
+
+var (
+	readyClusterCount int32
 )
 
 var clusterMetricsStatuses = []api.ClusterStatus{
@@ -322,9 +325,9 @@ func (c *ClusterManager) processReadyClusters() []error {
 		errs = append(errs, errors.Wrap(listErr, "failed to list ready clusters"))
 		return errs
 	}
-	if len(readyClusters) > 0 {
-		glog.V(10).Infof("ready clusters count = %d", len(readyClusters))
-	}
+
+	readyClusterCount = int32(len(readyClusters))
+	logger.InfoChangedInt32(&readyClusterCount, "ready clusters count = %d", readyClusterCount)
 
 	for _, readyCluster := range readyClusters {
 		emptyClusterReconciled := false
@@ -472,9 +475,9 @@ func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error
 		if err != nil {
 			return errors.Wrapf(err, "failed to update instance type in database for cluster %s", cluster.ClusterID)
 		}
+		logger.Logger.V(10).Infof("supported instance type for cluster = %s successful updated", cluster.ClusterID)
 	}
 
-	logger.Logger.V(10).Infof("supported instance type for cluster = %s successful updated", cluster.ClusterID)
 	return nil
 }
 
