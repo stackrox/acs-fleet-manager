@@ -26,6 +26,7 @@ spec:
         cpu: 2
         memory: 1Gi
 ---
+# test if this triggers e2e tests
 {{- if .Values.acsOperator.upstream }}
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
