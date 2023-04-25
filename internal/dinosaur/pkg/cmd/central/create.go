@@ -4,12 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
-	"github.com/stackrox/rox/pkg/httputil"
-
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 )
@@ -49,20 +47,15 @@ func runCreate(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	}
 
 	const async = true
-	centralRequest, resp, err := client.PublicAPI().CreateCentral(cmd.Context(), async, request)
+	centralRequest, _, err := client.PublicAPI().CreateCentral(cmd.Context(), async, request)
 	if err != nil {
 		glog.Error(err)
-		return
-	}
-
-	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		glog.Errorf(apiErrorMsg, resp.Status)
 		return
 	}
 
 	centralJSON, err := json.Marshal(centralRequest)
 	if err != nil {
-		glog.Error(err)
+		glog.Errorf(apiErrorMsg, "create", err)
 		return
 	}
 	fmt.Println(string(centralJSON))

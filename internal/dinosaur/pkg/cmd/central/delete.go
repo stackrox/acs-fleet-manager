@@ -3,8 +3,6 @@ package central
 import (
 	"fmt"
 
-	"github.com/stackrox/rox/pkg/httputil"
-
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
@@ -33,12 +31,7 @@ func runDelete(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	const async = true
 	resp, err := client.PublicAPI().DeleteCentralById(cmd.Context(), id, async)
 	if err != nil {
-		glog.Error(err)
-		return
-	}
-
-	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		glog.Errorf(apiErrorMsg, resp.Status)
+		glog.Error(apiErrorMsg, "delete", err)
 		return
 	}
 

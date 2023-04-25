@@ -4,12 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
-	"github.com/stackrox/rox/pkg/httputil"
-
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
@@ -37,13 +35,9 @@ func NewListCommand() *cobra.Command {
 }
 
 func runList(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
-	centrals, resp, err := client.PublicAPI().GetCentrals(cmd.Context(), &public.GetCentralsOpts{})
+	centrals, _, err := client.PublicAPI().GetCentrals(cmd.Context(), &public.GetCentralsOpts{})
 	if err != nil {
-		glog.Error(err)
-		return
-	}
-	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		glog.Errorf(apiErrorMsg, resp.Status)
+		glog.Errorf(apiErrorMsg, "list", err)
 		return
 	}
 

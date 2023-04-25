@@ -9,7 +9,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/flags"
-	"github.com/stackrox/rox/pkg/httputil"
 )
 
 // NewGetCommand gets a new command for getting centrals.
@@ -30,13 +29,9 @@ func NewGetCommand() *cobra.Command {
 func runGet(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 
-	centralRequest, resp, err := client.PublicAPI().GetCentralById(cmd.Context(), id)
+	centralRequest, _, err := client.PublicAPI().GetCentralById(cmd.Context(), id)
 	if err != nil {
-		glog.Error(err)
-		return
-	}
-	if !httputil.Is2xxStatusCode(resp.StatusCode) {
-		glog.Errorf(apiErrorMsg, resp.Status)
+		glog.Errorf(apiErrorMsg, "get", err)
 		return
 	}
 
