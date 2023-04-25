@@ -2,6 +2,7 @@
 package fleetmanagerclient
 
 import (
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -26,12 +27,12 @@ const (
 func AuthenticatedClientWithOCM() *fleetmanager.Client {
 	ocmRefreshToken := os.Getenv(ocmRefreshTokenEnvVar)
 	if ocmRefreshToken == "" {
-		panic("OCM_TOKEN not set. Please set OCM token with 'export OCM_TOKEN=$(ocm token --refresh)'")
+		panic(fmt.Sprintf("%s not set. Please set OCM token with 'export %s=$(ocm token --refresh)'", ocmRefreshTokenEnvVar, ocmRefreshTokenEnvVar))
 	}
 
-	fleetmanagerEndpoint := defaultFleetManagerEndpoint
-	if os.Getenv(fleetManagerEndpointEnvVar) != "" {
-		fleetmanagerEndpoint = os.Getenv(fleetManagerEndpointEnvVar)
+	fleetManagerEndpoint := os.Getenv(fleetManagerEndpointEnvVar)
+	if fleetManagerEndpoint == "" {
+		fleetManagerEndpoint = defaultFleetManagerEndpoint
 	}
 
 	singletonInstance.Do(func() {
@@ -45,7 +46,7 @@ func AuthenticatedClientWithOCM() *fleetmanager.Client {
 			return
 		}
 
-		client, err = fleetmanager.NewClient(fleetmanagerEndpoint, auth)
+		client, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
 		if err != nil {
 			glog.Fatalf("Failed to create connection: %s", err)
 			return
@@ -54,7 +55,7 @@ func AuthenticatedClientWithOCM() *fleetmanager.Client {
 
 	// sleep timer necessary to avoid "token issued in future" errors for time lags between fleet-manager running on a
 	// local VM and the OCM server.
-	if fleetmanagerEndpoint == defaultFleetManagerEndpoint {
+	if fleetManagerEndpoint == defaultFleetManagerEndpoint {
 		time.Sleep(5 * time.Second)
 	}
 	return client
