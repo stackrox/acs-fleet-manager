@@ -43,7 +43,7 @@ func runList(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 
 	centralJSON, err := json.Marshal(centrals)
 	if err != nil {
-		glog.Error("Failed to marshal CentralRequests: %s", err)
+		glog.Errorf("Failed to marshal CentralRequests: %s", err)
 		return
 	}
 
