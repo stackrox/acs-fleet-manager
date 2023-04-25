@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	apiErrorMsg = "%s Central failed: Status Code: %s. Are you authenticated? Is the correct endpoint configured and reachable?"
+	apiErrorMsg = "%s Central failed: To fix this check if you are authenticated and the correct endpoint configured and reachable. Status Code: %s."
 )
 
 // NewCentralCommand ...
