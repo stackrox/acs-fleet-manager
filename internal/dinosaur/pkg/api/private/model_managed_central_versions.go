@@ -12,6 +12,6 @@ package private
 
 // ManagedCentralVersions struct for ManagedCentralVersions
 type ManagedCentralVersions struct {
-	Central         string `json:"central,omitempty"`
-	CentralOperator string `json:"centralOperator,omitempty"`
+	DesiredVersion string `json:"desiredVersion,omitempty"`
+	ActualVersion  string `json:"actualVersion,omitempty"`
 }

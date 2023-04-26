@@ -111,11 +111,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "checking if central changed")
 	}
 
-	remoteCentralName := remoteCentral.Metadata.Name
-	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-	if !changed && r.wantsAuthProvider == r.hasAuthProvider && isRemoteCentralReady(remoteCentral) {
+	if !changed && r.shouldSkipReadyCentral(remoteCentral) {
 		return nil, ErrCentralNotChanged
 	}
+
+	glog.Infof("Start reconcile central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
+
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
 	monitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
 	// Telemetry will only be enabled if the storage key is set _and_ the central is not an "internal" central created
@@ -944,6 +947,12 @@ func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (c
 	}
 
 	return vals, nil
+}
+
+func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
+	return r.wantsAuthProvider == r.hasAuthProvider &&
+		isRemoteCentralReady(remoteCentral) &&
+		remoteCentral.Spec.Versions.ActualVersion == remoteCentral.Spec.Versions.DesiredVersion
 }
 
 var resourcesChart = charts.MustGetChart("tenant-resources")
