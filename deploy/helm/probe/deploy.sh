@@ -72,6 +72,7 @@ invoke_helm "${SCRIPT_DIR}" rhacs-probe \
   --namespace "${NAMESPACE}" \
   --set authType="${AUTH_TYPE}" \
   --set clusterName="${CLUSTER_NAME}" \
+  --set dataPlaneRegion="${CLUSTER_REGION}" \
   --set environment="${ENVIRONMENT}" \
   --set fleetManagerEndpoint="${FM_ENDPOINT}" \
   --set image="${PROBE_IMAGE}" \

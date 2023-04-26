@@ -3,6 +3,7 @@ namespace: "rhacs-probe"
 fleetManagerEndpoint: ""
 clusterName: ""
 environment: ""
+dataPlaneRegion: "us-east-1"
 # Must be either 'RHSSO' or 'OCM'.
 authType: "RHSSO"
 ocm:
