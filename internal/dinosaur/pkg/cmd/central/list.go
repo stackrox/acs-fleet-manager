@@ -1,22 +1,14 @@
 package central
 
 import (
-	"context"
 	"encoding/json"
-	"net/url"
+	"fmt"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/flags"
-
-	"github.com/stackrox/acs-fleet-manager/pkg/auth"
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
-
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
 // FlagPage ...
@@ -26,13 +18,13 @@ const (
 )
 
 // NewListCommand creates a new command for listing centrals.
-func NewListCommand(env *environments.Env) *cobra.Command {
+func NewListCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "lists all managed central requests",
 		Long:  "lists all managed central requests",
 		Run: func(cmd *cobra.Command, args []string) {
-			runList(env, cmd, args)
+			runList(fleetmanagerclient.AuthenticatedClientWithOCM(), cmd, args)
 		},
 	}
 	cmd.Flags().String(FlagOwner, "test-user", "Username")
@@ -42,49 +34,18 @@ func NewListCommand(env *environments.Env) *cobra.Command {
 	return cmd
 }
 
-func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
-	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
-	page := flags.MustGetString(FlagPage, cmd.Flags())
-	size := flags.MustGetString(FlagSize, cmd.Flags())
-	var centralService services.DinosaurService
-	env.MustResolveAll(&centralService)
-
-	// create jwt with claims and set it in the context
-	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"username": owner,
-	})
-	ctx := auth.SetTokenInContext(context.TODO(), jwt)
-
-	// build list arguments
-	url := url.URL{}
-	query := url.Query()
-	query.Add(FlagPage, page)
-	query.Add(FlagSize, size)
-	listArgs := coreServices.NewListArguments(query)
-
-	centralList, paging, err := centralService.List(ctx, listArgs)
+func runList(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
+	centrals, _, err := client.PublicAPI().GetCentrals(cmd.Context(), &public.GetCentralsOpts{})
 	if err != nil {
-		glog.Fatalf("Unable to list central request: %s", err.Error())
+		glog.Errorf(apiErrorMsg, "list", err)
+		return
 	}
 
-	// format output
-	centralRequestList := public.CentralRequestList{
-		Kind:  "CentralRequestList",
-		Page:  int32(paging.Page),
-		Size:  int32(paging.Size),
-		Total: int32(paging.Total),
-		Items: []public.CentralRequest{},
+	centralJSON, err := json.Marshal(centrals)
+	if err != nil {
+		glog.Errorf("Failed to marshal CentralRequests: %s", err)
+		return
 	}
 
-	for _, centralRequest := range centralList {
-		converted := presenters.PresentCentralRequest(centralRequest)
-		centralRequestList.Items = append(centralRequestList.Items, converted)
-	}
-
-	output, marshalErr := json.MarshalIndent(centralRequestList, "", "    ")
-	if marshalErr != nil {
-		glog.Fatalf("Failed to format central request list: %s", err.Error())
-	}
-
-	glog.V(10).Infof("%s", output)
+	fmt.Println(string(centralJSON))
 }
