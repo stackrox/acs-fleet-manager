@@ -49,8 +49,8 @@ func (r *Runtime) RunLoop(ctx context.Context) error {
 
 // RunSingle executes a single probe run.
 func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
-	metrics.MetricsInstance().IncStartedRuns()
-	metrics.MetricsInstance().SetLastStartedTimestamp()
+	metrics.MetricsInstance().IncStartedRuns(r.Config.DataPlaneRegion)
+	metrics.MetricsInstance().SetLastStartedTimestamp(r.Config.DataPlaneRegion)
 
 	probeRunCtx, cancel := context.WithTimeout(ctx, r.Config.ProbeRunTimeout)
 	defer cancel()
@@ -72,11 +72,11 @@ func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
 	}()
 
 	if err := r.probe.Execute(probeRunCtx); err != nil {
-		metrics.MetricsInstance().IncFailedRuns()
-		metrics.MetricsInstance().SetLastFailureTimestamp()
+		metrics.MetricsInstance().IncFailedRuns(r.Config.DataPlaneRegion)
+		metrics.MetricsInstance().SetLastFailureTimestamp(r.Config.DataPlaneRegion)
 		return errors.Wrap(err, "probe run failed")
 	}
-	metrics.MetricsInstance().IncSucceededRuns()
-	metrics.MetricsInstance().SetLastSuccessTimestamp()
+	metrics.MetricsInstance().IncSucceededRuns(r.Config.DataPlaneRegion)
+	metrics.MetricsInstance().SetLastSuccessTimestamp(r.Config.DataPlaneRegion)
 	return nil
 }

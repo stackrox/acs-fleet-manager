@@ -10,128 +10,33 @@ data:
       jobs:
         - type: rds
           regions:
+            - eu-west-1
             - us-east-1
           searchTags:
             - key: DataplaneClusterName
               value: ^{{ .Values.clusterName }}$
+          dimensionNameRequirements:
+            - DBInstanceIdentifier
+          statistics:
+            - Average
+            - Maximum
+            - Minimum
+            - p90
+            - p95
+            - p99
           metrics:
             - name: DatabaseConnections
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: ServerlessDatabaseCapacity
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: ACUUtilization
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: FreeableMemory
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: CPUUtilization
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: ReadLatency
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: ReadThroughput
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: WriteLatency
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: WriteThroughput
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: NetworkThroughput
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: AuroraReplicaLag
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: MaximumUsedTransactionIDs
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: TransactionLogsDiskUsage
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: Deadlocks
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99
             - name: BufferCacheHitRatio
-              statistics:
-                - Average
-                - Maximum
-                - Minimum
-                - p90
-                - p95
-                - p99

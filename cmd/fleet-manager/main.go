@@ -4,6 +4,9 @@ package main
 import (
 	"flag"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/cmd/migrate"
+	"github.com/stackrox/acs-fleet-manager/pkg/cmd/serve"
+
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
@@ -41,14 +44,19 @@ func main() {
 		glog.Fatalf("Unable to add global flags: %s", err.Error())
 	}
 
-	env.MustInvoke(func(subcommands []*cobra.Command) {
-		rootCmd.AddCommand(subcommands...)
+	rootCmd.AddCommand(migrate.NewMigrateCommand(env))
+	rootCmd.AddCommand(serve.NewServeCommand(env))
+	// Unsupported CLI commands. Eventually some of them can be removed.
+	// rootCmd.AddCommand(central.NewCentralCommand(env))
+	// rootCmd.AddCommand(cluster.NewClusterCommand(env))
+	// rootCmd.AddCommand(cloudprovider.NewCloudProviderCommand(env))
+	// rootCmd.AddCommand(observatorium.NewRunObservatoriumCommand(env))
+	// rootCmd.AddCommand(errors.NewErrorsCommand(env))
 
-		if err := rootCmd.Execute(); err != nil {
-			glog.Fatalf("error running command: %v", err)
-		}
+	if err := rootCmd.Execute(); err != nil {
+		glog.Fatalf("error running command: %v", err)
+	}
 
-	})
 	if err != nil {
 		glog.Fatalf("Unable to initialize environment: %s", err.Error())
 	}

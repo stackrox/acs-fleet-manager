@@ -69,7 +69,7 @@ internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 test_image:=test/$(IMAGE_NAME)
 
 DOCKER ?= docker
-DOCKER_CONFIG ?= "${PWD}/.docker"
+DOCKER_CONFIG ?= "${HOME}/.docker"
 
 # Default Variables
 ACSMS_NAMESPACE ?= acsms

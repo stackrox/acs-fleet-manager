@@ -11,8 +11,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/telemetry"
-	"github.com/stackrox/acs-fleet-manager/pkg/cmd/migrate"
-	"github.com/stackrox/acs-fleet-manager/pkg/cmd/serve"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
@@ -46,10 +44,6 @@ func CoreConfigProviders() di.Option {
 		di.Provide(auth.NewFleetShardAuthZConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(auth.NewAdminAuthZConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(telemetry.NewTelemetryConfig, di.As(new(environments.ConfigModule))),
-
-		// Add common CLI sub commands
-		di.Provide(serve.NewServeCommand),
-		di.Provide(migrate.NewMigrateCommand),
 
 		// Add other core config providers..
 		sentry.ConfigProviders(),

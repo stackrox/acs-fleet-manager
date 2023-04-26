@@ -1,6 +1,7 @@
 # Data plane terraform logging Helm chart
 
 This chart installs resource into `openshift-logging` namespace. This namespace is Openshift dedicated namespace for logging stack for OSD cluster.
+It installs on top the openshift eventrouter in order to log kubernetes events in the `openshift-logging` namespace.
 
 ## Custom resource definitions
 

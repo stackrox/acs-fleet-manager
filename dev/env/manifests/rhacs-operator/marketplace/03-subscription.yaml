@@ -4,11 +4,10 @@ metadata:
   name: stackrox-operator-test-subscription
   namespace: "$STACKROX_OPERATOR_NAMESPACE"
 spec:
-  channel: latest
+  channel: $STACKROX_OPERATOR_CHANNEL
   name: rhacs-operator
   installPlanApproval: Automatic
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: rhacs-operator.v${STACKROX_OPERATOR_VERSION}
   config:
     resources: $RHACS_OPERATOR_RESOURCES
