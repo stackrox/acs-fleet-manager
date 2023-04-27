@@ -55,4 +55,11 @@ spec:
           ports:
             - name: monitoring
               containerPort: 7070
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+              memory: {{ .Values.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | quote }}
+              memory: {{ .Values.resources.limits.memory | quote }}
       terminationGracePeriodSeconds: 300
