@@ -933,20 +933,21 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 }
 
 func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (chartutil.Values, error) {
-	vals := r.resourcesChart.Values
-	vals["labels"] = map[string]interface{}{
-		k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
+	if r.resourcesChart == nil {
+		return nil, errors.New("resources chart is not set")
+	}
+	src := r.resourcesChart.Values
+	var dst = map[string]interface{}{
+		"labels": map[string]interface{}{
+			k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
+		},
 	}
 	if r.egressProxyImage != "" {
-		override := map[string]interface{}{
-			"egressProxy": map[string]interface{}{
-				"image": r.egressProxyImage,
-			},
+		dst["egressProxy"] = map[string]interface{}{
+			"image": r.egressProxyImage,
 		}
-		vals = chartutil.CoalesceTables(override, vals)
 	}
-
-	return vals, nil
+	return chartutil.CoalesceTables(dst, src), nil
 }
 
 func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
