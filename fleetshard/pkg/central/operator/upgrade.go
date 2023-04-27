@@ -17,40 +17,39 @@ import (
 )
 
 const (
-	operatorNamespace = "stackrox-operator"
-	releaseName       = "rhacs-operator"
-	crdKind           = "CustomResourceDefinition"
-	// maximum number of characters for operator deployment suffix
-	// See rhacs-operator-deployment.yaml for more details
-	maxOperatorDeploymentSuffixLength = 29
+	operatorNamespace        = "stackrox-operator"
+	releaseName              = "rhacs-operator"
+	operatorDeploymentPrefix = "rhacs-operator-controller-manager"
+
+	// deployment names should contain at most 63 characters
+	// RFC 1035 Label Names: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
+	maxOperatorDeploymentNameLength = 63
 )
 
 func parseOperatorImages(images []string) ([]chartutil.Values, error) {
+	if len(images) == 0 {
+		return nil, fmt.Errorf("the list of images is empty")
+	}
 	var operatorImages []chartutil.Values
 	uniqueTags := make(map[string]bool)
 	for _, img := range images {
-		if strings.Contains(img, ":") {
-			strs := strings.Split(img, ":")
-			if len(strs) != 2 {
-				return nil, fmt.Errorf("failed to split image and tag from %s", img)
-			}
-			tag := strs[1]
-			if len(tag) > maxOperatorDeploymentSuffixLength {
-				return nil, fmt.Errorf("tag version %s contains more than %d characters and cannot be used as a deployment suffix", tag, maxOperatorDeploymentSuffixLength)
-			}
-			if _, used := uniqueTags[tag]; !used {
-				uniqueTags[tag] = true
-				img := chartutil.Values{"repository": strs[0], "tag": tag}
-				operatorImages = append(operatorImages, img)
-			}
-		} else {
+		if !strings.Contains(img, ":") {
 			return nil, fmt.Errorf("failed to parse image %s", img)
 		}
+		strs := strings.Split(img, ":")
+		if len(strs) != 2 {
+			return nil, fmt.Errorf("failed to split image and tag from %s", img)
+		}
+		repo, tag := strs[0], strs[1]
+		if len(operatorDeploymentPrefix+"-"+tag) > maxOperatorDeploymentNameLength {
+			return nil, fmt.Errorf("%s-%s contains more than %d characters and cannot be used as a deployment name", operatorDeploymentPrefix, tag, maxOperatorDeploymentNameLength)
+		}
+		if _, used := uniqueTags[repo+tag]; !used {
+			uniqueTags[repo+tag] = true
+			img := chartutil.Values{"repository": repo, "tag": tag}
+			operatorImages = append(operatorImages, img)
+		}
 	}
-	if len(operatorImages) == 0 {
-		return nil, fmt.Errorf("zero tags parsed from images %s", strings.Join(images, ", "))
-	}
-
 	return operatorImages, nil
 }
 
@@ -68,7 +67,8 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 	}
 	chartVals := chartutil.Values{
 		"operator": chartutil.Values{
-			"images": operatorImages,
+			"deploymentPrefix": operatorDeploymentPrefix,
+			"images":           operatorImages,
 		},
 	}
 

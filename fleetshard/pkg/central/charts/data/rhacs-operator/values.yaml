@@ -3,6 +3,8 @@
 # Declare variables to be passed into your templates.
 
 operator:
+  deploymentPrefix: rhacs-operator-controller-manager
+
   # Each item in images should contain `repository` and `tag` key
   # example:
   #   images:

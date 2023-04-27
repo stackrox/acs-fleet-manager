@@ -183,6 +183,10 @@ func TestParseOperatorImages(t *testing.T) {
 				{"repository": operatorRepository, "tag": "3.74.1"},
 			},
 		},
+		"fail if images list is empty": {
+			images:     []string{},
+			shouldFail: true,
+		},
 		"fail if image does contain colon": {
 			images:     []string{"quay.io/without-colon-123-tag"},
 			shouldFail: true,
