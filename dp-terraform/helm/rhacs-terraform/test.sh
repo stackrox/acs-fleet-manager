@@ -5,7 +5,7 @@ CLUSTER_ID="test-clusterId"
 FM_ENDPOINT="127.0.0.1:443"
 OCM_TOKEN="example-token"
 
-# TODO ROX-16645: set acsOperator.enabled to false
+# TODO(ROX-16645): set acsOperator.enabled to false
 helm template rhacs-terraform \
   --debug \
   --namespace rhacs \
