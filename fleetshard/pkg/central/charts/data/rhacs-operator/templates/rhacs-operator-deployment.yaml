@@ -84,7 +84,7 @@ spec:
                   divisor: '0'
             {{- if $.Values.operator.centralLabelSelector -}}
             - name: CENTRAL_LABEL_SELECTOR
-              value: {{ $.Values.operator.centralLabelSelector }}
+              value: "rhacs.redhat.com/tag={{ substr 0 64 (lower .tag) }},rhacs.redhat.com/repository={{ substr 0 64 (lower .repository )}}"
             {{- end }}
           image: "{{ .repository }}:{{ .tag }}"
           imagePullPolicy: IfNotPresent
