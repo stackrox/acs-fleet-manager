@@ -44,6 +44,41 @@ spec:
           values:
             - rhacs
             - strimzi
+    alertManagerResourceRequirement:
+      requests:
+        cpu: {{ .Values.alertManager.resources.cpu.requests | quote }}
+        memory: {{ .Values.alertManager.resources.memory.requests | quote }}
+      limits:
+        cpu: {{ .Values.alertManager.resources.cpu.limits | quote }}
+        memory: {{ .Values.alertManager.resources.memory.limits | quote }}
+    prometheusResourceRequirement:
+      requests:
+        cpu: {{ .Values.prometheus.resources.cpu.requests | quote }}
+        memory: {{ .Values.prometheus.resources.memory.requests | quote }}
+      limits:
+        cpu: {{ .Values.prometheus.resources.cpu.limits | quote }}
+        memory: {{ .Values.prometheus.resources.memory.limits | quote }}
+    prometheusOperatorResourceRequirement:
+      requests:
+        cpu: {{ .Values.prometheusOperator.resources.cpu.requests | quote }}
+        memory: {{ .Values.prometheusOperator.resources.memory.requests | quote }}
+      limits:
+        cpu: {{ .Values.prometheusOperator.resources.cpu.limits | quote }}
+        memory: {{ .Values.prometheusOperator.resources.memory.limits | quote }}
+    grafanaResourceRequirement:
+      requests:
+        cpu: {{ .Values.grafana.resources.cpu.requests | quote }}
+        memory: {{ .Values.grafana.resources.memory.requests | quote }}
+      limits:
+        cpu: {{ .Values.grafana.resources.cpu.limits | quote }}
+        memory: {{ .Values.grafana.resources.memory.limits | quote }}
+    grafanaOperatorResourceRequirement:
+      requests:
+        cpu: {{ .Values.grafanaOperator.resources.cpu.requests | quote }}
+        memory: {{ .Values.grafanaOperator.resources.memory.requests | quote }}
+      limits:
+        cpu: {{ .Values.grafanaOperator.resources.cpu.limits | quote }}
+        memory: {{ .Values.grafanaOperator.resources.memory.limits | quote }}
   storage:
     prometheus:
       volumeClaimTemplate:

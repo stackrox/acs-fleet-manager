@@ -35,3 +35,48 @@ pagerduty:
 deadMansSwitch:
   # Webhook URL of the dead man's switch provider.
   url: ""
+
+prometheus:
+  resources:
+    requests:
+      cpu: 1500m
+      memory: 18Gi
+    limits:
+      cpu: 1500m
+      memory: 18Gi
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+grafana:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1024Mi
+
+grafanaOperator:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+alertManager:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
