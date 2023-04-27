@@ -136,6 +136,12 @@ func TestRDSProvisioning(t *testing.T) {
 	clusterDeleted, err := waitForClusterToBeDeleted(deleteCtx, rdsClient, clusterID)
 	require.NoError(t, err)
 	assert.True(t, clusterDeleted)
+
+	// test that final snapshot was created
+	snapshotOut, err := rdsClient.rdsClient.DescribeDBSnapshots(&rds.DescribeDBSnapshotsInput{DBSnapshotIdentifier: aws.String(fmt.Sprintf("%s-%s", clusterID, "final"))})
+	require.NoError(t, err)
+	require.NotNil(t, snapshotOut)
+	require.NotEmpty(t, snapshotOut.DBSnapshots)
 }
 
 func TestGetDBConnection(t *testing.T) {
