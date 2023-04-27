@@ -933,18 +933,17 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 }
 
 func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (chartutil.Values, error) {
-	vals := chartutil.Values{
-		"labels": map[string]interface{}{
-			k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
-		},
+	vals := r.resourcesChart.Values
+	vals["labels"] = map[string]interface{}{
+		k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
 	}
 	if r.egressProxyImage != "" {
-		override := chartutil.Values{
-			"egressProxy": chartutil.Values{
+		override := map[string]interface{}{
+			"egressProxy": map[string]interface{}{
 				"image": r.egressProxyImage,
 			},
 		}
-		vals = chartutil.CoalesceTables(vals, override)
+		vals = chartutil.CoalesceTables(override, vals)
 	}
 
 	return vals, nil

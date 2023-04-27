@@ -1,7 +1,6 @@
-
 egressProxy:
   image: ubuntu/squid:5.2-22.04_beta
-  replicas: 2
+  replicas: 1
   resources:
     limits:
       cpu: 100m
@@ -9,6 +8,5 @@ egressProxy:
     requests:
       cpu: 200m
       memory: 256Mi
-
 labels: {}
 annotations: {}
