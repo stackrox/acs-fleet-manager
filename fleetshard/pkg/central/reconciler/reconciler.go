@@ -937,7 +937,7 @@ func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (c
 		return nil, errors.New("resources chart is not set")
 	}
 	src := r.resourcesChart.Values
-	var dst = map[string]interface{}{
+	dst := map[string]interface{}{
 		"labels": map[string]interface{}{
 			k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
 		},
