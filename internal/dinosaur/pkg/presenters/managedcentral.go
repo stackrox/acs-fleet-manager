@@ -135,7 +135,8 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 				},
 			},
 		},
-		RequestStatus: from.Status,
+		RequestStatus:  from.Status,
+		ForceReconcile: from.ForceReconcile,
 	}
 
 	if from.DeletionTimestamp != nil {
