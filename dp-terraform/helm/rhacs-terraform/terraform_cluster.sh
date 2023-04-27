@@ -53,7 +53,7 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://api.openshift.com"
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
-    OBSERVABILITY_OPERATOR_VERSION="v4.0.4"
+    OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
     OPERATOR_USE_UPSTREAM="true"
     OPERATOR_VERSION="v4.0.0"
     ;;
