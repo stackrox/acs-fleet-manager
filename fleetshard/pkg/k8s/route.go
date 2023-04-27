@@ -20,7 +20,7 @@ const (
 	centralPassthroughRouteName = "managed-central-passthrough"
 	centralTLSSecretName        = "central-tls" // pragma: allowlist secret
 
-	centralReencryptTimeoutAnnotationKey   = "router.openshift.io/haproxy.health.check.interval"
+	centralReencryptTimeoutAnnotationKey   = "haproxy.router.openshift.io/timeout"
 	centralReencryptTimeoutAnnotationValue = "10m"
 )
 
