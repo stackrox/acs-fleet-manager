@@ -49,6 +49,13 @@ spec:
           mountPath: /etc/squid/squid.conf
           subPath: squid.conf
           readOnly: true
+        resources:
+          limits:
+            cpu: {{ .Values.egressProxy.resources.limits.cpu }}
+            memory: {{ .Values.egressProxy.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.egressProxy.resources.requests.cpu }}
+            memory: {{ .Values.egressProxy.resources.requests.memory }}
       volumes:
       - name: config-volume
         configMap:
