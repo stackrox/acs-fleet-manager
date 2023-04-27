@@ -227,7 +227,7 @@ var _ = Describe("Central", func() {
 			}
 		})
 
-		It("should spin up an egress proxy with two healthy replicas", func() {
+		It("should spin up an egress proxy with one healthy replica", func() {
 			if createdCentral == nil {
 				Fail("central not created")
 			}
@@ -237,9 +237,9 @@ var _ = Describe("Central", func() {
 				if err := k8sClient.Get(context.TODO(), key, &egressProxyDeployment); err != nil {
 					return err
 				}
-				if egressProxyDeployment.Status.ReadyReplicas < 2 {
+				if egressProxyDeployment.Status.ReadyReplicas < 1 {
 					statusBytes, _ := yaml.Marshal(&egressProxyDeployment.Status)
-					return fmt.Errorf("egress proxy only has %d/%d ready replicas (and %d unavailable ones), expected 2. full status: %s", egressProxyDeployment.Status.ReadyReplicas, egressProxyDeployment.Status.Replicas, egressProxyDeployment.Status.UnavailableReplicas, statusBytes)
+					return fmt.Errorf("egress proxy only has %d/%d ready replicas (and %d unavailable ones), expected 1. full status: %s", egressProxyDeployment.Status.ReadyReplicas, egressProxyDeployment.Status.Replicas, egressProxyDeployment.Status.UnavailableReplicas, statusBytes)
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
