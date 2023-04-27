@@ -187,6 +187,13 @@ func TestParseOperatorImages(t *testing.T) {
 			images:     []string{},
 			shouldFail: true,
 		},
+		"should accept images from multiple repositories with the same tag": {
+			images: []string{"repo1:tag","repo2:tag"},
+			expected: []map[string]string{
+				{"repository":"repo1", "tag": "tag"},
+				{"repository":"repo2", "tag": "tag"},
+			},
+		},
 		"fail if image does contain colon": {
 			images:     []string{"quay.io/without-colon-123-tag"},
 			shouldFail: true,
