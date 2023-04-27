@@ -51,11 +51,11 @@ spec:
           readOnly: true
         resources:
           limits:
-            cpu: {{ .Values.egressProxy.resources.limits.cpu }}
-            memory: {{ .Values.egressProxy.resources.limits.memory }}
+            cpu: {{ .Values.egressProxy.resources.limits.cpu | quote }}
+            memory: {{ .Values.egressProxy.resources.limits.memory | quote }}
           requests:
-            cpu: {{ .Values.egressProxy.resources.requests.cpu }}
-            memory: {{ .Values.egressProxy.resources.requests.memory }}
+            cpu: {{ .Values.egressProxy.resources.requests.cpu | quote }}
+            memory: {{ .Values.egressProxy.resources.requests.memory | quote }}
       volumes:
       - name: config-volume
         configMap:
