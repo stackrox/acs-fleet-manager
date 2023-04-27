@@ -57,8 +57,8 @@ prometheusOperator:
 grafana:
   resources:
     requests:
-      cpu: 100m
-      memory: 512Mi
+      cpu: 500m
+      memory: 1024Mi
     limits:
       cpu: 500m
       memory: 1024Mi
@@ -66,10 +66,10 @@ grafana:
 grafanaOperator:
   resources:
     requests:
-      cpu: 100m
+      cpu: 200m
       memory: 256Mi
     limits:
-      cpu: 500m
+      cpu: 200m
       memory: 256Mi
 
 alertManager:
