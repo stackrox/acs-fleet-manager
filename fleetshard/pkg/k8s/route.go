@@ -19,6 +19,9 @@ const (
 	centralReencryptRouteName   = "managed-central-reencrypt"
 	centralPassthroughRouteName = "managed-central-passthrough"
 	centralTLSSecretName        = "central-tls" // pragma: allowlist secret
+
+	centralReencryptTimeoutAnnotationKey   = "router.openshift.io/haproxy.health.check.interval"
+	centralReencryptTimeoutAnnotationValue = "10m"
 )
 
 // ErrCentralTLSSecretNotFound returned when central-tls secret is not found during creation of the reencrypt route
@@ -120,9 +123,10 @@ func (s *RouteService) CreatePassthroughRoute(ctx context.Context, remoteCentral
 func (s *RouteService) createCentralRoute(ctx context.Context, name string, namespace string, host string, tls *openshiftRouteV1.TLSConfig) error {
 	route := &openshiftRouteV1.Route{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			Labels:    map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
+			Annotations: map[string]string{centralReencryptTimeoutAnnotationKey: centralReencryptTimeoutAnnotationValue},
 		},
 		Spec: openshiftRouteV1.RouteSpec{
 			Host: host,
