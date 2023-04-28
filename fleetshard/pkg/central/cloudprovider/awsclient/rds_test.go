@@ -72,13 +72,13 @@ func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, clusterID 
 	for {
 		select {
 		case <-ticker.C:
-			snapshotOut, err := rdsClient.rdsClient.DescribeDBSnapshots(&rds.DescribeDBSnapshotsInput{
-				DBSnapshotIdentifier: aws.String(fmt.Sprintf("%s-%s", clusterID, "final")),
+			snapshotOut, err := rdsClient.rdsClient.DescribeDBClusterSnapshots(&rds.DescribeDBClusterSnapshotsInput{
+				DBClusterSnapshotIdentifier: aws.String(fmt.Sprintf("%s-%s", clusterID, "final")),
 			})
 
 			if err != nil {
 				if awsErr, ok := err.(awserr.Error); ok {
-					if awsErr.Code() != rds.ErrCodeDBSnapshotNotFoundFault {
+					if awsErr.Code() != rds.ErrCodeDBClusterSnapshotNotFoundFault {
 						return false, err
 					}
 
@@ -87,7 +87,7 @@ func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, clusterID 
 			}
 
 			if snapshotOut != nil {
-				return len(snapshotOut.DBSnapshots) == 1, nil
+				return len(snapshotOut.DBClusterSnapshots) == 1, nil
 			}
 		case <-ctx.Done():
 			return false, fmt.Errorf("waiting for final DB snapshot: %w", ctx.Err())

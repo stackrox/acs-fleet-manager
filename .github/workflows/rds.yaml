@@ -32,6 +32,7 @@ on:
       - 'docs/**'
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
+      - 'dp-terraform/**'
 
 jobs:
   verify-test:
