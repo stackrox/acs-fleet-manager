@@ -47,17 +47,12 @@ func newTestRDSClient() (*rds.RDS, error) {
 
 func waitForClusterToBeDeleted(ctx context.Context, rdsClient *RDS, clusterID string) (bool, error) {
 	for {
-		clusterExists, clusterStatus, err := rdsClient.clusterStatus(clusterID)
+		clusterExists, _, err := rdsClient.clusterStatus(clusterID)
 		if err != nil {
 			return false, err
 		}
 
 		if !clusterExists {
-			return true, nil
-		}
-
-		// exit early if cluster is marked as deleting
-		if clusterStatus == dbDeletingStatus {
 			return true, nil
 		}
 
