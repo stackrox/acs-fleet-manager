@@ -108,18 +108,24 @@ kubectl get clusterserviceversion -n <operator_namespace>
 kubectl delete clusterserviceversion rhacs-operator.<version> -n <operator_namespace>
 ```
 
-3. Check that there is no running ACS Operator
+3. Delete the Operator’s OperatorGroup.
+```
+kubectl get OperatorGroup -n <operator_namespace>
+kubectl delete OperatorGroup rhacs-operator.<version> -n <operator_namespace>
+```
+
+4. Check that there is no running ACS Operator
 
 ```
 kubectl get pods -n <operator_namespace>
 NAME                                                              READY   STATUS      RESTARTS      AGE
 ```
 
-4. Turn on ACS Operator management feature flag
+5. Turn on ACS Operator management feature flag
 
 set `FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED` to `true` and redeploy Fleetshard-sync service
 
-5.  Check that the ACS Operator is running again
+6. Check that the ACS Operator is running again
 
 ```
 kubectl get pods -n <operator_namespace>
@@ -128,7 +134,7 @@ rhacs-operator-controller-manager-3.74.1-5765676ffc-l9bpp         2/2     Runnin
 ...
 ```
 
-5.  Check deployment
+7. Check deployment
 
 ```
 kubectl get deployments -n <operator_namespace>
