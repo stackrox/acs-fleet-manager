@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	admin "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/central"
+	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
@@ -11,26 +13,26 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
-// TODO: Update error message
-const (
-	ApiErrorMsg = "%s Central failed: To fix this ensure you are authenticated, fleet-manager endpoint is configured and reachable. Status Code: %s."
-)
-
-// NewListCommand creates a new command for listing centrals.
-func NewListCommand() *cobra.Command {
+// NewUpdateCommand creates a new command for updating centrals.
+func NewUpdateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "lists all managed central requests",
-		Long:  "lists all managed central requests",
+		Short: "Update a Central request.",
+		Long:  "Update a Central request.",
 		Run: func(cmd *cobra.Command, args []string) {
-			runList(fleetmanagerclient.AuthenticatedClientWithStaticToken(), cmd, args)
+			runUpdate(fleetmanagerclient.AuthenticatedClientWithStaticToken(), cmd, args)
 		},
 	}
+
+	cmd.Flags().String(central.FlagID, "", "Central ID")
+
 	return cmd
 }
 
-func runList(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
-	centrals, _, err := client.AdminAPI().GetCentrals(cmd.Context(), &admin.GetCentralsOpts{})
+func runUpdate(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
+	id := flags.MustGetDefinedString(central.FlagID, cmd.Flags())
+
+	centrals, _, err := client.AdminAPI().UpdateCentralById(cmd.Context(), id, admin.CentralUpdateRequest{})
 	if err != nil {
 		glog.Errorf(ApiErrorMsg, "list", err)
 		return
