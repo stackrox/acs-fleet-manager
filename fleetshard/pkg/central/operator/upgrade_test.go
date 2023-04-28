@@ -50,7 +50,7 @@ var serviceAccount = &unstructured.Unstructured{
 		"kind":       "ServiceAccount",
 		"apiVersion": "v1",
 		"metadata": map[string]interface{}{
-			"name":      "rhacs-operator-controller-manager",
+			"name":      "rhacs-operator-manager",
 			"namespace": operatorNamespace,
 		},
 	},
@@ -58,14 +58,14 @@ var serviceAccount = &unstructured.Unstructured{
 
 var operatorDeployment1 = &appsv1.Deployment{
 	ObjectMeta: metav1.ObjectMeta{
-		Name:      "rhacs-operator-controller-manager-3.74.1",
+		Name:      "rhacs-operator-manager-3.74.1",
 		Namespace: operatorNamespace,
 	},
 }
 
 var operatorDeployment2 = &appsv1.Deployment{
 	ObjectMeta: metav1.ObjectMeta{
-		Name:      "rhacs-operator-controller-manager-3.74.2",
+		Name:      "rhacs-operator-manager-3.74.2",
 		Namespace: operatorNamespace,
 	},
 }
@@ -75,7 +75,7 @@ var metricService = &unstructured.Unstructured{
 		"kind":       "Service",
 		"apiVersion": "v1",
 		"metadata": map[string]interface{}{
-			"name":      "rhacs-operator-controller-manager-metrics-service",
+			"name":      "rhacs-operator-manager-metrics-service",
 			"namespace": operatorNamespace,
 		},
 	},

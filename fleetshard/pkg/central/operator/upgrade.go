@@ -19,7 +19,7 @@ import (
 const (
 	operatorNamespace        = "stackrox-operator"
 	releaseName              = "rhacs-operator"
-	operatorDeploymentPrefix = "rhacs-operator-controller-manager"
+	operatorDeploymentPrefix = "rhacs-operator-manager"
 
 	// deployment names should contain at most 63 characters
 	// RFC 1035 Label Names: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
@@ -38,7 +38,7 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 		}
 		strs := strings.Split(img, ":")
 		if len(strs) != 2 {
-			return nil, fmt.Errorf("failed to split image and tag from %s", img)
+			return nil, fmt.Errorf("failed to split image and tag from %q", img)
 		}
 		repo, tag := strs[0], strs[1]
 		if len(operatorDeploymentPrefix+"-"+tag) > maxOperatorDeploymentNameLength {
@@ -67,7 +67,7 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 	}
 	chartVals := chartutil.Values{
 		"operator": chartutil.Values{
-			"deploymentPrefix": operatorDeploymentPrefix,
+			"deploymentPrefix": operatorDeploymentPrefix + "-",
 			"images":           operatorImages,
 		},
 	}
