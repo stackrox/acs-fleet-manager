@@ -66,6 +66,7 @@ type CentralRequest struct {
 	ActualCentralVersion          string `json:"actual_central_version"`
 	DesiredCentralOperatorVersion string `json:"desired_central_operator_version"`
 	ActualCentralOperatorVersion  string `json:"actual_central_operator_version"`
+	PreviousOperatorVersion       string `json:"previous_operator_version"`
 	CentralUpgrading              bool   `json:"central_upgrading"`
 	CentralOperatorUpgrading      bool   `json:"central_operator_upgrading"`
 	// The type of central instance (eval or standard).
