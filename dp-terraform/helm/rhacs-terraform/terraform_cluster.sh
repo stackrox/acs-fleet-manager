@@ -112,6 +112,7 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     OPERATOR_SOURCE="rhacs-operators"
 fi
 
+# TODO(ROX-16771): Move this to env-specific values.yaml files
 invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --namespace rhacs \
   --set acsOperator.enabled=true \
