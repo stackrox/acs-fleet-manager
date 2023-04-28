@@ -133,7 +133,9 @@ func TestRDSProvisioning(t *testing.T) {
 	assert.True(t, clusterDeleted)
 
 	// test that final snapshot was created
-	snapshotOut, err := rdsClient.rdsClient.DescribeDBSnapshots(&rds.DescribeDBSnapshotsInput{DBSnapshotIdentifier: aws.String(fmt.Sprintf("%s-%s", clusterID, "final"))})
+	snapshotOut, err := rdsClient.rdsClient.DescribeDBSnapshots(&rds.DescribeDBSnapshotsInput{
+		DBSnapshotIdentifier: aws.String(fmt.Sprintf("%s-%s", clusterID, "final")),
+	})
 	require.NoError(t, err)
 	require.NotNil(t, snapshotOut)
 	require.NotEmpty(t, snapshotOut.DBSnapshots)
