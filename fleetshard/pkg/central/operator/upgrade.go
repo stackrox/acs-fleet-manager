@@ -31,7 +31,7 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 		return nil, fmt.Errorf("the list of images is empty")
 	}
 	var operatorImages []chartutil.Values
-	uniqueTags := make(map[string]bool)
+	uniqueImages := make(map[string]bool)
 	for _, img := range images {
 		if !strings.Contains(img, ":") {
 			return nil, fmt.Errorf("failed to parse image %s", img)
@@ -44,8 +44,8 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 		if len(operatorDeploymentPrefix+"-"+tag) > maxOperatorDeploymentNameLength {
 			return nil, fmt.Errorf("%s-%s contains more than %d characters and cannot be used as a deployment name", operatorDeploymentPrefix, tag, maxOperatorDeploymentNameLength)
 		}
-		if _, used := uniqueTags[repo+tag]; !used {
-			uniqueTags[repo+tag] = true
+		if _, used := uniqueImages[repo+tag]; !used {
+			uniqueImages[repo+tag] = true
 			img := chartutil.Values{"repository": repo, "tag": tag}
 			operatorImages = append(operatorImages, img)
 		}
