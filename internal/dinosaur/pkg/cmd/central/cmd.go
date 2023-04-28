@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	apiErrorMsg = "%s Central failed: To fix this ensure you are authenticated, fleet-manager endpoint is configured and reachable. Status Code: %s."
+	ApiErrorMsg = "%s Central failed: To fix this ensure you are authenticated, fleet-manager endpoint is configured and reachable. Status Code: %s."
 )
 
 // NewCentralCommand ...

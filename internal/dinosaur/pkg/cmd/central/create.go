@@ -49,7 +49,7 @@ func runCreate(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	const async = true
 	centralRequest, _, err := client.PublicAPI().CreateCentral(cmd.Context(), async, request)
 	if err != nil {
-		glog.Errorf(apiErrorMsg, "create", err)
+		glog.Errorf(ApiErrorMsg, "create", err)
 		return
 	}
 

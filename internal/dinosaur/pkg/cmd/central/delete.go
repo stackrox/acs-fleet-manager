@@ -31,7 +31,7 @@ func runDelete(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	const async = true
 	resp, err := client.PublicAPI().DeleteCentralById(cmd.Context(), id, async)
 	if err != nil {
-		glog.Errorf(apiErrorMsg, "delete", err)
+		glog.Errorf(ApiErrorMsg, "delete", err)
 		return
 	}
 

@@ -1,20 +1,18 @@
-package central
+package centrals
 
 import (
 	"encoding/json"
 	"fmt"
+	admin "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
-// FlagPage ...
 const (
-	FlagPage = "page"
-	FlagSize = "size"
+	ApiErrorMsg = "%s Central failed: To fix this ensure you are authenticated, fleet-manager endpoint is configured and reachable. Status Code: %s."
 )
 
 // NewListCommand creates a new command for listing centrals.
@@ -24,18 +22,14 @@ func NewListCommand() *cobra.Command {
 		Short: "lists all managed central requests",
 		Long:  "lists all managed central requests",
 		Run: func(cmd *cobra.Command, args []string) {
-			runList(fleetmanagerclient.AuthenticatedClientWithOCM(), cmd, args)
+			runList(fleetmanagerclient.AuthenticatedClientWithStaticToken(), cmd, args)
 		},
 	}
-	cmd.Flags().String(FlagOwner, "test-user", "Username")
-	cmd.Flags().String(FlagPage, "1", "Page index")
-	cmd.Flags().String(FlagSize, "100", "Number of central requests per page")
-
 	return cmd
 }
 
 func runList(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
-	centrals, _, err := client.PublicAPI().GetCentrals(cmd.Context(), &public.GetCentralsOpts{})
+	centrals, _, err := client.AdminAPI().GetCentrals(cmd.Context(), &admin.GetCentralsOpts{})
 	if err != nil {
 		glog.Errorf(ApiErrorMsg, "list", err)
 		return
