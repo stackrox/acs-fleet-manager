@@ -66,6 +66,37 @@ func waitForClusterToBeDeleted(ctx context.Context, rdsClient *RDS, clusterID st
 	}
 }
 
+func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, clusterID string) (bool, error) {
+
+	ticker := time.NewTicker(awsRetrySeconds * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			snapshotOut, err := rdsClient.rdsClient.DescribeDBSnapshots(&rds.DescribeDBSnapshotsInput{
+				DBSnapshotIdentifier: aws.String(fmt.Sprintf("%s-%s", clusterID, "final")),
+			})
+
+			if err != nil {
+				if awsErr, ok := err.(awserr.Error); ok {
+					if awsErr.Code() != rds.ErrCodeDBClusterSnapshotNotFoundFault {
+						return false, err
+					}
+
+					continue
+				}
+			}
+
+			if snapshotOut != nil {
+				return len(snapshotOut.DBSnapshots) == 1, nil
+			}
+		case <-ctx.Done():
+			return false, fmt.Errorf("waiting for final DB snapshot: %w", ctx.Err())
+		}
+
+	}
+
+}
+
 func TestRDSProvisioning(t *testing.T) {
 	if os.Getenv("RUN_RDS_TESTS") != "true" {
 		t.Skip("Skip RDS tests. Set RUN_RDS_TESTS=true env variable to enable RDS tests.")
@@ -133,12 +164,9 @@ func TestRDSProvisioning(t *testing.T) {
 	assert.True(t, clusterDeleted)
 
 	// test that final snapshot was created
-	snapshotOut, err := rdsClient.rdsClient.DescribeDBSnapshots(&rds.DescribeDBSnapshotsInput{
-		DBSnapshotIdentifier: aws.String(fmt.Sprintf("%s-%s", clusterID, "final")),
-	})
+	snapshotExists, err := waitForFinalSnapshotToExist(deleteCtx, rdsClient, clusterID)
 	require.NoError(t, err)
-	require.NotNil(t, snapshotOut)
-	require.NotEmpty(t, snapshotOut.DBSnapshots)
+	require.True(t, snapshotExists)
 }
 
 func TestGetDBConnection(t *testing.T) {
