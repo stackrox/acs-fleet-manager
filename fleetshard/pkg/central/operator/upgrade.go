@@ -34,7 +34,7 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 	uniqueImages := make(map[string]bool)
 	for _, img := range images {
 		if !strings.Contains(img, ":") {
-			return nil, fmt.Errorf("failed to parse image %s", img)
+			return nil, fmt.Errorf("failed to parse image %q", img)
 		}
 		strs := strings.Split(img, ":")
 		if len(strs) != 2 {
