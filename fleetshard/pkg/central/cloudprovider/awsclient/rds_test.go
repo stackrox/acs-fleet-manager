@@ -78,7 +78,7 @@ func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, clusterID 
 
 			if err != nil {
 				if awsErr, ok := err.(awserr.Error); ok {
-					if awsErr.Code() != rds.ErrCodeDBClusterSnapshotNotFoundFault {
+					if awsErr.Code() != rds.ErrCodeDBSnapshotNotFoundFault {
 						return false, err
 					}
 
