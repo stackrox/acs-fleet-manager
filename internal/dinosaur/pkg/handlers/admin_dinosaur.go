@@ -4,6 +4,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	corev1 "k8s.io/api/core/v1"
@@ -82,7 +83,13 @@ func (h adminCentralHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(&convCentral)
 			h.telemetry.RegisterTenant(r.Context(), &convCentral)
-			h.telemetry.TrackCreationRequested(r.Context(), convCentral.ID, true, svcErr.AsError())
+			go func() {
+				// This is to raise the chances for the group properties to
+				// be procesed by Segment:
+				time.Sleep(6 * time.Second)
+				h.telemetry.TrackCreationRequested(r.Context(), convCentral.ID, true, svcErr.AsError())
+			}()
+
 			if svcErr != nil {
 				return nil, svcErr
 			}

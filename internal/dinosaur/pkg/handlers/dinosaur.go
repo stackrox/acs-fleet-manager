@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 
@@ -93,7 +94,12 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			// Do not track centrals created from internal services.
 			if !convCentral.Internal {
 				h.telemetry.RegisterTenant(r.Context(), convCentral)
-				h.telemetry.TrackCreationRequested(r.Context(), convCentral.ID, false, svcErr.AsError())
+				go func() {
+					// This is to raise the chances for the group properties to
+					// be procesed by Segment:
+					time.Sleep(6 * time.Second)
+					h.telemetry.TrackCreationRequested(r.Context(), convCentral.ID, false, svcErr.AsError())
+				}()
 			}
 			if svcErr != nil {
 				return nil, svcErr
