@@ -188,10 +188,10 @@ func TestParseOperatorImages(t *testing.T) {
 			shouldFail: true,
 		},
 		"should accept images from multiple repositories with the same tag": {
-			images: []string{"repo1:tag","repo2:tag"},
+			images: []string{"repo1:tag", "repo2:tag"},
 			expected: []map[string]string{
-				{"repository":"repo1", "tag": "tag"},
-				{"repository":"repo2", "tag": "tag"},
+				{"repository": "repo1", "tag": "tag"},
+				{"repository": "repo2", "tag": "tag"},
 			},
 		},
 		"fail if image does contain colon": {
