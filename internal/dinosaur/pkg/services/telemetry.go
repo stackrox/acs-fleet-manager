@@ -120,6 +120,8 @@ func (t *Telemetry) trackCreationRequested(ctx context.Context, tenantID string,
 	)
 }
 
+// RegisterTenant initializes the tenant group with the associated properties
+// and issues a following event tracking the central creation request.
 func (t *Telemetry) RegisterTenant(ctx context.Context, convCentral *dbapi.CentralRequest, isAdmin bool, err error) {
 	t.setTenantProperties(ctx, convCentral)
 	go func() {
