@@ -227,7 +227,7 @@ var _ = Describe("Central", func() {
 			}
 		})
 
-		It("should spin up an egress proxy with three healthy replica", func() {
+		It("should spin up an egress proxy with three healthy replicas", func() {
 			if createdCentral == nil {
 				Fail("central not created")
 			}
