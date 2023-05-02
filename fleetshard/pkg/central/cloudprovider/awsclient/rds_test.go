@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const awsTimeoutMinutes = 15
+const awsTimeoutMinutes = 30
 
 func newTestRDS() (*RDS, error) {
 	rdsClient, err := newTestRDSClient()
