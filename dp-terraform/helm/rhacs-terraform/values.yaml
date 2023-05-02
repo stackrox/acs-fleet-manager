@@ -40,6 +40,13 @@ fleetshardSync:
       endpoint: ""
       # API key to push telemetry data to a remote backend. Leaving it empty disables telemetry.
       key: ""
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
 
 acsOperator:
   enabled: false

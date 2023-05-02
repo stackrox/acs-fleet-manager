@@ -83,3 +83,10 @@ spec:
         ports:
         - name: monitoring
           containerPort: 8080
+        resources:
+          limits:
+            cpu: {{ .Values.fleetshardSync.resources.limits.cpu | quote }}
+            memory: {{ .Values.fleetshardSync.resources.limits.memory | quote }}
+          requests:
+            cpu: {{ .Values.fleetshardSync.resources.requests.cpu | quote }}
+            memory: {{ .Values.fleetshardSync.resources.requests.memory | quote }}
