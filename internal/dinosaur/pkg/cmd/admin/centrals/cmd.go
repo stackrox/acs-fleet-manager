@@ -11,7 +11,7 @@ func NewAdminCentralsCommand() *cobra.Command {
 	}
 	cmd.AddCommand(
 		NewListCommand(),
-		NewUpdateCommand(),
+		// NewUpdateCommand(),
 	)
 
 	return cmd

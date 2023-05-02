@@ -20,12 +20,13 @@ const (
 	defaultFleetManagerEndpoint = "http://localhost:8000"
 	fleetManagerEndpointEnvVar  = "FMCLI_FLEET_MANAGER_ENDPOINT"
 	ocmRefreshTokenEnvVar       = "OCM_TOKEN"
+	staticTokenEnvVar           = "STATIC_TOKEN"
 )
 
 func AuthenticatedClientWithStaticToken() *fleetmanager.Client {
-	staticToken := os.Getenv("STATIC_TOKEN")
+	staticToken := os.Getenv(staticTokenEnvVar)
 	if staticToken == "" {
-		panic(fmt.Sprintf("%s not set. Please set static token with 'export %s=<token>'", ocmRefreshTokenEnvVar, ocmRefreshTokenEnvVar))
+		panic(fmt.Sprintf("%s not set. Please set static token with 'export %s=<token>'", staticTokenEnvVar, staticTokenEnvVar))
 	}
 
 	fleetManagerEndpoint := os.Getenv(fleetManagerEndpointEnvVar)
