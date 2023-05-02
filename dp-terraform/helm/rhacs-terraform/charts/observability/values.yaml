@@ -4,7 +4,7 @@
 
 # Version of observability operator
 # https://github.com/redhat-developer/observability-operator/releases
-observabilityOperatorVersion: "v4.0.4"
+observabilityOperatorVersion: "v4.2.1"
 
 github:
   # You can generate a new one at https://github.com/settings/tokens/new, for a user
@@ -36,6 +36,7 @@ deadMansSwitch:
   # Webhook URL of the dead man's switch provider.
   url: ""
 
+
 observabilityOperator:
   resources:
     requests:
@@ -44,3 +45,49 @@ observabilityOperator:
     limits:
       cpu: "500m"
       memory: "2048Mi"
+
+prometheus:
+  resources:
+    requests:
+      cpu: 1500m
+      memory: 18Gi
+    limits:
+      cpu: 1500m
+      memory: 18Gi
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+grafana:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1024Mi
+    limits:
+      cpu: 500m
+      memory: 1024Mi
+
+grafanaOperator:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+alertManager:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
