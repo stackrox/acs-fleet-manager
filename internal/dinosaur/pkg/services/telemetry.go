@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -13,6 +14,10 @@ import (
 
 // TenantGroupName holds the name of the Tenant group.
 const TenantGroupName = "Tenant"
+
+// segmentChancesRaiser is a sleep period for the telemeter.Group call to finish
+// its 3 background attempts to set the group properties.
+const segmentChancesRaiser = 6 * time.Second
 
 // TelemetryAuth is a wrapper around the user claim extraction.
 //
@@ -56,9 +61,9 @@ func (t *Telemetry) enabled() bool {
 	return t != nil && t.config != nil && t.config.Enabled()
 }
 
-// RegisterTenant emits a group event that captures meta data of the input central instance.
+// setTenantProperties emits a group event that captures meta data of the input central instance.
 // Adds the token user to the tenant group.
-func (t *Telemetry) RegisterTenant(ctx context.Context, central *dbapi.CentralRequest) {
+func (t *Telemetry) setTenantProperties(ctx context.Context, central *dbapi.CentralRequest) {
 	if !t.enabled() {
 		return
 	}
@@ -84,8 +89,8 @@ func (t *Telemetry) RegisterTenant(ctx context.Context, central *dbapi.CentralRe
 	)
 }
 
-// TrackCreationRequested emits a track event that signals the creation request of a Central instance.
-func (t *Telemetry) TrackCreationRequested(ctx context.Context, tenantID string, isAdmin bool, requestErr error) {
+// trackCreationRequested emits a track event that signals the creation request of a Central instance.
+func (t *Telemetry) trackCreationRequested(ctx context.Context, tenantID string, isAdmin bool, requestErr error) {
 	if !t.enabled() {
 		return
 	}
@@ -113,6 +118,16 @@ func (t *Telemetry) TrackCreationRequested(ctx context.Context, tenantID string,
 		telemeter.WithUserID(user),
 		telemeter.WithGroups(TenantGroupName, tenantID),
 	)
+}
+
+func (t *Telemetry) RegisterTenant(ctx context.Context, convCentral *dbapi.CentralRequest, isAdmin bool, err error) {
+	t.setTenantProperties(ctx, convCentral)
+	go func() {
+		// This is to raise the chances for the tenant group properties be
+		// procesed by Segment:
+		time.Sleep(segmentChancesRaiser)
+		t.trackCreationRequested(ctx, convCentral.ID, isAdmin, err)
+	}()
 }
 
 // TrackDeletionRequested emits a track event that signals the deletion request of a Central instance.
