@@ -3,8 +3,8 @@ package main
 
 import (
 	"flag"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/admin"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/admin"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/central"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/migrate"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/serve"
