@@ -110,8 +110,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, errors.Wrapf(err, "checking if central changed")
 	}
+	needsReconcile := r.needsReconcile(changed, remoteCentral.ForceReconcile)
 
-	if !changed && r.shouldSkipReadyCentral(remoteCentral) {
+	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
 		return nil, ErrCentralNotChanged
 	}
 
@@ -341,7 +342,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 	if !centralDeploymentReady || !centralTLSSecretFound {
-		if isRemoteCentralProvisioning(remoteCentral) && !changed { // no changes detected, wait until central become ready
+		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
 		}
 		return installingStatus(), nil
@@ -953,6 +954,10 @@ func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.Managed
 	return r.wantsAuthProvider == r.hasAuthProvider &&
 		isRemoteCentralReady(remoteCentral) &&
 		remoteCentral.Spec.Versions.ActualVersion == remoteCentral.Spec.Versions.DesiredVersion
+}
+
+func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile string) bool {
+	return changed || forceReconcile == "always"
 }
 
 var resourcesChart = charts.MustGetChart("tenant-resources")

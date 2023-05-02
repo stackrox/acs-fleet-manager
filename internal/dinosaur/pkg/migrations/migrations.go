@@ -43,6 +43,7 @@ func getMigrations() []*gormigrate.Migration {
 		addCentralDefaultVersion(),
 		dropSkipSchedulingFromClusters(),
 		addSchedulableToClusters(),
+		addForceReconcileToCentralRequest(),
 	}
 }
 
