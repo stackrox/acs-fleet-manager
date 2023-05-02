@@ -141,13 +141,6 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 	return nil
 }
 
-func (d *dataPlaneClusterService) clusterCanProcessStatusReports(cluster *api.Cluster) bool {
-	return cluster.Status == api.ClusterReady ||
-		cluster.Status == api.ClusterComputeNodeScalingUp ||
-		cluster.Status == api.ClusterFull ||
-		cluster.Status == api.ClusterWaitingForFleetShardOperator
-}
-
 func (d *dataPlaneClusterService) isFleetShardOperatorReady(status *dbapi.DataPlaneClusterStatus) (bool, error) {
 	for _, cond := range status.Conditions {
 		if cond.Type == dataPlaneClusterStatusCondReadyName {
