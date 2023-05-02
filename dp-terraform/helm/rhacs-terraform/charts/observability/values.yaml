@@ -36,6 +36,16 @@ deadMansSwitch:
   # Webhook URL of the dead man's switch provider.
   url: ""
 
+
+observabilityOperator:
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "2048Mi"
+    limits:
+      cpu: "500m"
+      memory: "2048Mi"
+
 prometheus:
   resources:
     requests:
