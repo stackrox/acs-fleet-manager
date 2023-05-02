@@ -5,15 +5,14 @@ import (
 	"reflect"
 	"testing"
 
+	"gorm.io/gorm"
+
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 
+	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-
-	pkgErr "github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"gorm.io/gorm"
 )
 
 const (
@@ -23,7 +22,7 @@ const (
 )
 
 func Test_HandleGetError(t *testing.T) {
-	cause := pkgErr.WithStack(gorm.ErrInvalidData)
+	cause := errors.WithStack(gorm.ErrInvalidData)
 	type args struct {
 		resourceType string
 		field        string
@@ -33,7 +32,7 @@ func Test_HandleGetError(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *serviceError.ServiceError
+		want *serviceErrors.ServiceError
 	}{
 		{
 			name: "Handler should return a general error for any errors other than record not found",
@@ -43,7 +42,7 @@ func Test_HandleGetError(t *testing.T) {
 				value:        "sample-id",
 				err:          cause,
 			},
-			want: serviceError.NewWithCause(serviceError.ErrorGeneral, cause, "Unable to find %s with id='sample-id'", resourceType),
+			want: serviceErrors.NewWithCause(serviceErrors.ErrorGeneral, cause, "Unable to find %s with id='sample-id'", resourceType),
 		},
 		{
 			name: "Handler should return a not found error if record was not found in the database",
@@ -53,7 +52,7 @@ func Test_HandleGetError(t *testing.T) {
 				value:        "sample-id",
 				err:          gorm.ErrRecordNotFound,
 			},
-			want: serviceError.NotFound("%s with id='sample-id' not found", resourceType),
+			want: serviceErrors.NotFound("%s with id='sample-id' not found", resourceType),
 		},
 		{
 			name: "Handler should redact sensitive fields from the error message",
@@ -63,7 +62,7 @@ func Test_HandleGetError(t *testing.T) {
 				value:        "sample@example.com",
 				err:          gorm.ErrRecordNotFound,
 			},
-			want: serviceError.NotFound("%s with email='<redacted>' not found", resourceType),
+			want: serviceErrors.NotFound("%s with email='<redacted>' not found", resourceType),
 		},
 	}
 	for _, tt := range tests {
@@ -83,7 +82,7 @@ func Test_handleCreateError(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *errors.ServiceError
+		want *serviceErrors.ServiceError
 	}{
 		{
 			name: "Handler should return a general error for any other errors than violating unique constraints",
@@ -91,7 +90,7 @@ func Test_handleCreateError(t *testing.T) {
 				resourceType: resourceType,
 				err:          gorm.ErrInvalidField,
 			},
-			want: errors.GeneralError("Unable to create %s: %s", resourceType, gorm.ErrInvalidField.Error()),
+			want: serviceErrors.GeneralError("Unable to create %s: %s", resourceType, gorm.ErrInvalidField.Error()),
 		},
 		{
 			name: "Handler should return a conflict error if creation error is due to violating unique constraints",
@@ -99,7 +98,7 @@ func Test_handleCreateError(t *testing.T) {
 				resourceType: resourceType,
 				err:          fmt.Errorf("transaction violates unique constraints"),
 			},
-			want: errors.Conflict("This %s already exists", resourceType),
+			want: serviceErrors.Conflict("This %s already exists", resourceType),
 		},
 	}
 	for _, tt := range tests {
@@ -119,7 +118,7 @@ func Test_handleUpdateError(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *errors.ServiceError
+		want *serviceErrors.ServiceError
 	}{
 		{
 			name: "Handler should return a general error for any other errors than violating unique constraints",
@@ -127,7 +126,7 @@ func Test_handleUpdateError(t *testing.T) {
 				resourceType: resourceType,
 				err:          gorm.ErrInvalidData,
 			},
-			want: errors.GeneralError("Unable to update %s: %s", resourceType, gorm.ErrInvalidData.Error()),
+			want: serviceErrors.GeneralError("Unable to update %s: %s", resourceType, gorm.ErrInvalidData.Error()),
 		},
 		{
 			name: "Handler should return a conflict error if update error is due to violating unique constraints",
@@ -135,7 +134,7 @@ func Test_handleUpdateError(t *testing.T) {
 				resourceType: resourceType,
 				err:          fmt.Errorf("transaction violates unique constraints"),
 			},
-			want: errors.Conflict("Changes to %s conflict with existing records", resourceType),
+			want: serviceErrors.Conflict("Changes to %s conflict with existing records", resourceType),
 		},
 	}
 	for _, tt := range tests {
