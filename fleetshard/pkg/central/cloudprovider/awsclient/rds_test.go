@@ -73,7 +73,7 @@ func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, clusterID 
 		select {
 		case <-ticker.C:
 			snapshotOut, err := rdsClient.rdsClient.DescribeDBClusterSnapshots(&rds.DescribeDBClusterSnapshotsInput{
-				DBClusterSnapshotIdentifier: aws.String(fmt.Sprintf("%s-%s", clusterID, "final")),
+				DBClusterSnapshotIdentifier: getFinalSnapshotID(clusterID),
 			})
 
 			if err != nil {
