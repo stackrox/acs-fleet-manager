@@ -1,4 +1,4 @@
-// Package fleetmanagerclient is a client for the CLI to connect to the fleetmanager.
+// Package fleetmanagerclient is a ocmClient for the CLI to connect to the fleetmanager.
 package fleetmanagerclient
 
 import (
@@ -13,7 +13,10 @@ import (
 
 var (
 	singletonInstance sync.Once
-	client            *fleetmanager.Client
+	ocmClient         *fleetmanager.Client
+
+	ocmClientStaticToken         *fleetmanager.Client
+	singletonStaticTokenInstance sync.Once
 )
 
 const (
@@ -23,7 +26,8 @@ const (
 	staticTokenEnvVar           = "STATIC_TOKEN"
 )
 
-// AuthenticatedClientWithStaticToken returns a rest client to the fleet-manager using a static token.
+// AuthenticatedClientWithStaticToken returns a rest ocmClient to the fleet-manager using a static token.
+// This function should only be used for CLI commands.
 func AuthenticatedClientWithStaticToken() *fleetmanager.Client {
 	staticToken := os.Getenv(staticTokenEnvVar)
 	if staticToken == "" {
@@ -35,7 +39,7 @@ func AuthenticatedClientWithStaticToken() *fleetmanager.Client {
 		fleetManagerEndpoint = defaultFleetManagerEndpoint
 	}
 
-	singletonInstance.Do(func() {
+	singletonStaticTokenInstance.Do(func() {
 		auth, err := fleetmanager.NewAuth("STATIC_TOKEN", fleetmanager.Option{
 			Static: fleetmanager.StaticOption{
 				StaticToken: staticToken,
@@ -46,7 +50,7 @@ func AuthenticatedClientWithStaticToken() *fleetmanager.Client {
 			return
 		}
 
-		client, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
+		ocmClientStaticToken, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
 		if err != nil {
 			glog.Fatalf("Failed to create connection: %s", err)
 			return
@@ -58,11 +62,10 @@ func AuthenticatedClientWithStaticToken() *fleetmanager.Client {
 	if fleetManagerEndpoint == defaultFleetManagerEndpoint {
 		time.Sleep(5 * time.Second)
 	}
-	return client
-
+	return ocmClientStaticToken
 }
 
-// AuthenticatedClientWithOCM returns a rest client to the fleet-manager and receives the OCM refresh token.
+// AuthenticatedClientWithOCM returns a rest ocmClient to the fleet-manager and receives the OCM refresh token.
 // This function will panic on an error, designed to be used by the fleet-manager CLI.
 func AuthenticatedClientWithOCM() *fleetmanager.Client {
 	ocmRefreshToken := os.Getenv(ocmRefreshTokenEnvVar)
@@ -86,7 +89,7 @@ func AuthenticatedClientWithOCM() *fleetmanager.Client {
 			return
 		}
 
-		client, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
+		ocmClient, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
 		if err != nil {
 			glog.Fatalf("Failed to create connection: %s", err)
 			return
@@ -98,5 +101,5 @@ func AuthenticatedClientWithOCM() *fleetmanager.Client {
 	if fleetManagerEndpoint == defaultFleetManagerEndpoint {
 		time.Sleep(5 * time.Second)
 	}
-	return client
+	return ocmClient
 }
