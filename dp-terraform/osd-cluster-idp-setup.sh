@@ -113,7 +113,7 @@ echo "Logging into cluster ${CLUSTER_NAME}..."
 oc login "${CLUSTER_URL}" --token="${CLUSTER_TOKEN}"
 
 # This set of commands modifies OIDC provider to include "groups" claim mapping.
-CLUSTER_IDP_ID=$(ocm get /api/clusters_mgmt/v1/clusters/"$CLUSTER_ID"/identity_providers | jq '.items[0].id' | tr -d '"')
+CLUSTER_IDP_ID=$(ocm get /api/clusters_mgmt/v1/clusters/"$CLUSTER_ID"/identity_providers | jq -r '.items[0].id')
 tmpfile=$(mktemp /tmp/dataplane-idp-setup-tmp-patch-body.XXXXXX)
 cat <<END >"$tmpfile"
 {
