@@ -320,11 +320,11 @@ var _ = Describe("Central", func() {
 		centralResources := private.ResourceRequirements{
 			Requests: map[string]string{
 				corev1.ResourceCPU.String():    "210m",
-				corev1.ResourceMemory.String(): "210M",
+				corev1.ResourceMemory.String(): "201M",
 			},
 			Limits: map[string]string{
 				corev1.ResourceCPU.String():    "310m",
-				corev1.ResourceMemory.String(): "310M",
+				corev1.ResourceMemory.String(): "202M",
 			},
 		}
 		centralSpec := private.CentralSpec{
@@ -333,11 +333,11 @@ var _ = Describe("Central", func() {
 		scannerResources := private.ResourceRequirements{
 			Requests: map[string]string{
 				corev1.ResourceCPU.String():    "210m",
-				corev1.ResourceMemory.String(): "310M",
+				corev1.ResourceMemory.String(): "151M",
 			},
 			Limits: map[string]string{
 				corev1.ResourceCPU.String():    "211m",
-				corev1.ResourceMemory.String(): "311M",
+				corev1.ResourceMemory.String(): "152M",
 			},
 		}
 		scannerScaling := private.ScannerSpecAnalyzerScaling{
@@ -434,7 +434,7 @@ var _ = Describe("Central", func() {
 				},
 				Limits: corev1.ResourceList{
 					corev1.ResourceCPU:    resource.MustParse("315m"),
-					corev1.ResourceMemory: resource.MustParse("310M"),
+					corev1.ResourceMemory: resource.MustParse("202M"),
 				},
 			}
 
