@@ -319,12 +319,12 @@ var _ = Describe("Central", func() {
 
 		centralResources := private.ResourceRequirements{
 			Requests: map[string]string{
-				corev1.ResourceCPU.String():    "501m",
-				corev1.ResourceMemory.String(): "201M",
+				corev1.ResourceCPU.String():    "210m",
+				corev1.ResourceMemory.String(): "210M",
 			},
 			Limits: map[string]string{
-				corev1.ResourceCPU.String():    "502m",
-				corev1.ResourceMemory.String(): "202M",
+				corev1.ResourceCPU.String():    "310m",
+				corev1.ResourceMemory.String(): "310M",
 			},
 		}
 		centralSpec := private.CentralSpec{
@@ -332,12 +332,12 @@ var _ = Describe("Central", func() {
 		}
 		scannerResources := private.ResourceRequirements{
 			Requests: map[string]string{
-				corev1.ResourceCPU.String():    "301m",
-				corev1.ResourceMemory.String(): "151M",
+				corev1.ResourceCPU.String():    "210m",
+				corev1.ResourceMemory.String(): "310M",
 			},
 			Limits: map[string]string{
-				corev1.ResourceCPU.String():    "302m",
-				corev1.ResourceMemory.String(): "152M",
+				corev1.ResourceCPU.String():    "211m",
+				corev1.ResourceMemory.String(): "311M",
 			},
 		}
 		scannerScaling := private.ScannerSpecAnalyzerScaling{
@@ -422,19 +422,19 @@ var _ = Describe("Central", func() {
 							corev1.ResourceMemory.String(): "199M",
 						},
 						Limits: map[string]string{
-							corev1.ResourceCPU.String(): "505m",
+							corev1.ResourceCPU.String(): "315m",
 						},
 					},
 				},
 			}
 			newCentralResources := corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("501m"),
+					corev1.ResourceCPU:    resource.MustParse("210m"),
 					corev1.ResourceMemory: resource.MustParse("199M"),
 				},
 				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("505m"),
-					corev1.ResourceMemory: resource.MustParse("202M"),
+					corev1.ResourceCPU:    resource.MustParse("315m"),
+					corev1.ResourceMemory: resource.MustParse("310M"),
 				},
 			}
 
