@@ -37,7 +37,7 @@ func NewListCommand() *cobra.Command {
 func runList(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	centrals, _, err := client.PublicAPI().GetCentrals(cmd.Context(), &public.GetCentralsOpts{})
 	if err != nil {
-		glog.Errorf(ApiErrorMsg, "list", err)
+		glog.Errorf(apiErrorMsg, "list", err)
 		return
 	}
 

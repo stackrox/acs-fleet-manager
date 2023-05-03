@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	CentralOperatorVersion = "central-operator-version" // TODO(sbaumer): move operator version to a separate command.
-	ForceReconcile         = "force-reconcile"
+	centralOperatorVersion = "central-operator-version" // TODO(sbaumer): move operator version to a separate command.
 )
 
 // NewUpdateCommand creates a new command for updating centrals.
@@ -31,7 +30,7 @@ func NewUpdateCommand() *cobra.Command {
 	}
 
 	cmd.Flags().String(central.FlagID, "", "Central ID")
-	cmd.Flags().String(CentralOperatorVersion, "", "Central Operator Version")
+	cmd.Flags().String(centralOperatorVersion, "", "Central Operator Version")
 
 	return cmd
 }
@@ -41,17 +40,15 @@ func runUpdate(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	glog.Fatal("Not implemented yet.")
 
 	id := fleetManagerFlags.MustGetDefinedString(central.FlagID, cmd.Flags())
-	centralOperatorVersion, _ := cmd.Flags().GetString(CentralOperatorVersion)
-	forceReconcile, _ := cmd.Flags().GetString(ForceReconcile)
+	centralOperatorVersion, _ := cmd.Flags().GetString(centralOperatorVersion)
 
 	request := admin.CentralUpdateRequest{
 		CentralOperatorVersion: centralOperatorVersion,
-		ForceReconcile:         forceReconcile,
 	}
 
 	centrals, _, err := client.AdminAPI().UpdateCentralById(cmd.Context(), id, request)
 	if err != nil {
-		glog.Errorf(ApiErrorMsg, "update", err)
+		glog.Errorf(apiErrorMsg, "update", err)
 		return
 	}
 

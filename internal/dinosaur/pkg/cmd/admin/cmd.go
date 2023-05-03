@@ -1,3 +1,4 @@
+// Package admin contains all admin API related CLI commands.
 package admin
 
 import (
@@ -5,6 +6,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/admin/centrals"
 )
 
+// NewAdminCommand creates a new admin command.
 func NewAdminCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:              "admin",

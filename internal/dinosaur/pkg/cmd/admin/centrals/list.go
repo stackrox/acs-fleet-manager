@@ -12,11 +12,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
-// TODO: Update error message
-const (
-	ApiErrorMsg = "%s Central failed: To fix this ensure you are authenticated, fleet-manager endpoint is configured and reachable. Status Code: %s."
-)
-
 // NewListCommand creates a new command for listing centrals.
 func NewListCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -33,7 +28,7 @@ func NewListCommand() *cobra.Command {
 func runList(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 	centrals, _, err := client.AdminAPI().GetCentrals(cmd.Context(), &admin.GetCentralsOpts{})
 	if err != nil {
-		glog.Errorf(ApiErrorMsg, "list", err)
+		glog.Errorf(apiErrorMsg, "list", err)
 		return
 	}
 

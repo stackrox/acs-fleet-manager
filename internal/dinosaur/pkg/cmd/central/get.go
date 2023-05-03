@@ -31,7 +31,7 @@ func runGet(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 
 	centralRequest, _, err := client.PublicAPI().GetCentralById(cmd.Context(), id)
 	if err != nil {
-		glog.Errorf(ApiErrorMsg, "get", err)
+		glog.Errorf(apiErrorMsg, "get", err)
 		return
 	}
 

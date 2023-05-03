@@ -23,6 +23,7 @@ const (
 	staticTokenEnvVar           = "STATIC_TOKEN"
 )
 
+// AuthenticatedClientWithStaticToken returns a rest client to the fleet-manager using a static token.
 func AuthenticatedClientWithStaticToken() *fleetmanager.Client {
 	staticToken := os.Getenv(staticTokenEnvVar)
 	if staticToken == "" {
