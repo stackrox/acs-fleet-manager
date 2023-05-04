@@ -326,7 +326,7 @@ test: $(GOTESTSUM_BIN)
 # Runs the AWS RDS integration tests.
 test/rds: $(GOTESTSUM_BIN)
 	RUN_RDS_TESTS=true \
-	$(GOTESTSUM_BIN) --junitfile data/results/rds-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -timeout 30m -count=1 \
+	$(GOTESTSUM_BIN) --junitfile data/results/rds-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -timeout 45m -count=1 \
 		./fleetshard/pkg/central/cloudprovider/awsclient/...
 .PHONY: test/rds
 
