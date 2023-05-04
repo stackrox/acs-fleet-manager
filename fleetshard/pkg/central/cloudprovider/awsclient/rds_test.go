@@ -163,7 +163,7 @@ func TestRDSProvisioning(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, clusterDeleted)
 
-	// Always attemt to delete the final snapshot if it exists
+	// Always attempt to delete the final snapshot if it exists
 	defer func() {
 		_, err := rdsClient.rdsClient.DeleteDBClusterSnapshot(
 			&rds.DeleteDBClusterSnapshotInput{DBClusterSnapshotIdentifier: getFinalSnapshotID(clusterID)},
