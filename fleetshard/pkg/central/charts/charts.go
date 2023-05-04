@@ -4,7 +4,10 @@ package charts
 import (
 	"embed"
 	"fmt"
+	"io"
 	"io/fs"
+	"net/http"
+	"os"
 	"path"
 	"strings"
 
@@ -64,4 +67,28 @@ func MustGetChart(name string) *chart.Chart {
 		panic(err)
 	}
 	return chrt
+}
+
+// DownloadTemplate downloads a file from the URL to the templates folder of specified chart
+func DownloadTemplate(url string, chartName string) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("failed Get for %s: %w", url, err)
+	}
+	defer resp.Body.Close()
+
+	// generate the filename from the URL
+	filename := url[strings.LastIndex(url, "/")+1:]
+	filepath := path.Join("data", chartName, "templates", filename)
+	out, err := os.Create(filepath)
+	if err != nil {
+		return fmt.Errorf("cannot create file %s: %w", filepath, err)
+	}
+	defer out.Close()
+
+	if _, err = io.Copy(out, resp.Body); err != nil {
+		return fmt.Errorf("cannot copy to file %s: %w", filepath, err)
+	}
+
+	return nil
 }

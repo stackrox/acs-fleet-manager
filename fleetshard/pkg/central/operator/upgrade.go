@@ -20,6 +20,8 @@ const (
 	operatorNamespace        = "stackrox-operator"
 	releaseName              = "rhacs-operator"
 	operatorDeploymentPrefix = "rhacs-operator-manager"
+	centralCrdURL            = "https://raw.githubusercontent.com/stackrox/stackrox/master/operator/bundle/manifests/platform.stackrox.io_centrals.yaml"
+	securedClusterCrdURL     = "https://raw.githubusercontent.com/stackrox/stackrox/master/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml"
 
 	// deployment names should contain at most 63 characters
 	// RFC 1035 Label Names: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
@@ -72,6 +74,12 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 		},
 	}
 
+	if err := charts.DownloadTemplate(centralCrdURL, "rhacs-operator"); err != nil {
+		return fmt.Errorf("failed to download %s: %w", centralCrdURL, err)
+	}
+	if err := charts.DownloadTemplate(securedClusterCrdURL, "rhacs-operator"); err != nil {
+		return fmt.Errorf("failed to download %s: %w", securedClusterCrdURL, err)
+	}
 	u.resourcesChart = charts.MustGetChart("rhacs-operator")
 	objs, err := charts.RenderToObjects(releaseName, operatorNamespace, u.resourcesChart, chartVals)
 	if err != nil {
