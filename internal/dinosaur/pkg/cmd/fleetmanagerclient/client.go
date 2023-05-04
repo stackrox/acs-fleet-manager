@@ -40,7 +40,7 @@ func AuthenticatedClientWithStaticToken() *fleetmanager.Client {
 	}
 
 	singletonStaticTokenInstance.Do(func() {
-		auth, err := fleetmanager.NewAuth("STATIC_TOKEN", fleetmanager.Option{
+		auth, err := fleetmanager.NewAuth(fleetmanager.StaticTokenAuthName, fleetmanager.Option{
 			Static: fleetmanager.StaticOption{
 				StaticToken: staticToken,
 			},
@@ -79,7 +79,7 @@ func AuthenticatedClientWithOCM() *fleetmanager.Client {
 	}
 
 	singletonInstance.Do(func() {
-		auth, err := fleetmanager.NewAuth("OCM", fleetmanager.Option{
+		auth, err := fleetmanager.NewAuth(fleetmanager.OCMAuthName, fleetmanager.Option{
 			Ocm: fleetmanager.OCMOption{
 				RefreshToken: ocmRefreshToken,
 			},

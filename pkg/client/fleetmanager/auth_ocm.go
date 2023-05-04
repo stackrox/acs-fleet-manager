@@ -12,7 +12,8 @@ import (
 const (
 	ocmTokenExpirationMargin = 5 * time.Minute
 	ocmClientID              = "cloud-services"
-	ocmAuthName              = "OCM"
+	// OCMAuthName is the name of the OCM auth authentication method
+	OCMAuthName = "OCM"
 )
 
 var (
@@ -29,7 +30,7 @@ type ocmAuthFactory struct{}
 
 // GetName gets the name of the factory.
 func (f *ocmAuthFactory) GetName() string {
-	return ocmAuthName
+	return OCMAuthName
 }
 
 // CreateAuth ...
