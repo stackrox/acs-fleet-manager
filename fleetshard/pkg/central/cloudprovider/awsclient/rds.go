@@ -23,13 +23,13 @@ import (
 const (
 	dbAvailableStatus = "available"
 	dbDeletingStatus  = "deleting"
-
-	dbUser           = "rhacs_master"
-	dbPrefix         = "rhacs-"
-	dbInstanceSuffix = "-db-instance"
-	dbFailoverSuffix = "-db-failover"
-	dbClusterSuffix  = "-db-cluster"
-	awsRetrySeconds  = 30
+	dbBackingUpStatus = "backing-up"
+	dbUser            = "rhacs_master"
+	dbPrefix          = "rhacs-"
+	dbInstanceSuffix  = "-db-instance"
+	dbFailoverSuffix  = "-db-failover"
+	dbClusterSuffix   = "-db-cluster"
+	awsRetrySeconds   = 30
 
 	// DB cluster / instance configuration parameters
 	dbEngine                = "aurora-postgresql"
@@ -184,7 +184,7 @@ func (r *RDS) ensureClusterDeleted(clusterID string) error {
 		return nil
 	}
 
-	if clusterStatus != dbDeletingStatus {
+	if clusterStatus != dbDeletingStatus && clusterStatus != dbBackingUpStatus {
 		glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
 		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, false))
 		if err != nil {
