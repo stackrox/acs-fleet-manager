@@ -166,7 +166,6 @@ func (r *RDS) ensureInstanceDeleted(instanceID string) error {
 
 	if instanceStatus != dbDeletingStatus {
 		glog.Infof("Initiating deprovisioning of RDS database instance %s.", instanceID)
-		// TODO(ROX-13692): do not skip taking a final DB snapshot
 		_, err := r.rdsClient.DeleteDBInstance(newDeleteCentralDBInstanceInput(instanceID, true))
 		if err != nil {
 			return fmt.Errorf("deleting DB instance: %w", err)
@@ -187,8 +186,7 @@ func (r *RDS) ensureClusterDeleted(clusterID string) error {
 
 	if clusterStatus != dbDeletingStatus {
 		glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
-		// TODO(ROX-13692): do not skip taking a final DB snapshot
-		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, true))
+		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, false))
 		if err != nil {
 			return fmt.Errorf("deleting DB cluster: %w", err)
 		}
@@ -366,10 +364,16 @@ func newDeleteCentralDBInstanceInput(instanceID string, skipFinalSnapshot bool) 
 }
 
 func newDeleteCentralDBClusterInput(clusterID string, skipFinalSnapshot bool) *rds.DeleteDBClusterInput {
-	return &rds.DeleteDBClusterInput{
+	input := &rds.DeleteDBClusterInput{
 		DBClusterIdentifier: aws.String(clusterID),
 		SkipFinalSnapshot:   aws.Bool(skipFinalSnapshot),
 	}
+
+	if !skipFinalSnapshot {
+		input.FinalDBSnapshotIdentifier = getFinalSnapshotID(clusterID)
+	}
+
+	return input
 }
 
 func newRdsClient(awsConfig config.AWS, auth fleetmanager.Auth) (*rds.RDS, error) {
@@ -393,6 +397,10 @@ func newRdsClient(awsConfig config.AWS, auth fleetmanager.Auth) (*rds.RDS, error
 	}
 
 	return rds.New(sess), nil
+}
+
+func getFinalSnapshotID(clusterID string) *string {
+	return aws.String(fmt.Sprintf("%s-%s", clusterID, "final"))
 }
 
 type tokenFetcher struct {

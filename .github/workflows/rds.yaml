@@ -32,6 +32,7 @@ on:
       - 'docs/**'
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
+      - 'dp-terraform/**'
 
 jobs:
   verify-test:
@@ -67,4 +68,4 @@ jobs:
           AWS_AUTH_HELPER: "none"
         run: |
           ./dev/env/scripts/exec_fleetshard_sync.sh make test/rds
-        timeout-minutes: 35
+        timeout-minutes: 50
