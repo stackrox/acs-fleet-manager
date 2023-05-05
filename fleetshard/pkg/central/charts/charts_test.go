@@ -51,6 +51,7 @@ func TestInstallOrUpdateChartCreateNew(t *testing.T) {
 	objs, err := RenderToObjects("test-release", testNamespace, chart, chartVals)
 	require.NoError(t, err)
 	obj := objs[0]
+	require.NotEmpty(t, objs)
 
 	err = InstallOrUpdateChart(ctx, obj, fakeClient)
 	require.NoError(t, err)
@@ -77,6 +78,7 @@ func TestInstallOrUpdateChartUpdateExisting(t *testing.T) {
 	objs, err := RenderToObjects("test-release", testNamespace, chart, chartVals)
 	require.NoError(t, err)
 	obj := objs[0]
+	require.NotEmpty(t, objs)
 
 	err = InstallOrUpdateChart(ctx, obj, fakeClient)
 	require.NoError(t, err)
