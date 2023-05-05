@@ -6,10 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/glog"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -82,26 +78,9 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 		if obj.GetNamespace() == "" {
 			obj.SetNamespace(operatorNamespace)
 		}
-		key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
-		var out unstructured.Unstructured
-		out.SetGroupVersionKind(obj.GroupVersionKind())
-		err := u.client.Get(ctx, key, &out)
-		if err == nil {
-			glog.V(10).Infof("Updating %s/%s in %s namespace", obj.GetKind(), obj.GetName(), obj.GetNamespace())
-			obj.SetResourceVersion(out.GetResourceVersion())
-			err := u.client.Update(ctx, obj)
-			if err != nil {
-				return fmt.Errorf("failed to update object %s/%s in %s namespace: %w", obj.GetKind(), key.Name, key.Namespace, err)
-			}
-		} else {
-			if !apiErrors.IsNotFound(err) {
-				return fmt.Errorf("failed to retrieve object %s/%s in %s namespace: %w", obj.GetKind(), key.Name, key.Namespace, err)
-			}
-			err = u.client.Create(ctx, obj)
-			glog.Infof("Creating %s/%s in %s namespace", obj.GetKind(), obj.GetName(), obj.GetNamespace())
-			if err != nil && !apiErrors.IsAlreadyExists(err) {
-				return fmt.Errorf("failed to create object %s/%s in %s namespace: %w", obj.GetKind(), key.Name, key.Namespace, err)
-			}
+		err := charts.InstallOrUpdateChart(ctx, obj, u.client)
+		if err != nil {
+			return fmt.Errorf("failed to update operator object %w", err)
 		}
 	}
 
