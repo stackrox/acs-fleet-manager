@@ -46,6 +46,7 @@ type RHSSOOption struct {
 // OCMOption for the OCM Auth type.
 type OCMOption struct {
 	RefreshToken string `env:"OCM_TOKEN"`
+	EnableLogger bool   `env:"OCM_ENABLE_LOGGER"`
 }
 
 // StaticOption for the Static Auth type.

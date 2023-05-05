@@ -22,8 +22,8 @@ on:
         description: 'Names of clusters to deploy to, space separated.'
         required: true
         type: string
-      probe_cluster:
-        description: 'Name of cluster to deploy probe to.'
+      probe_clusters:
+        description: 'Name of clusters to deploy probe to, space separated.'
         required: true
         type: string
       dry_run:
@@ -48,10 +48,10 @@ jobs:
       contents: read
     environment: ${{ inputs.github_environment }}
     steps:
-      - name: Set up Go 1.19
+      - name: Set up Go 1.20
         uses: actions/setup-go@v3
         with:
-          go-version: "1.19"
+          go-version: "1.20"
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -81,10 +81,10 @@ jobs:
       contents: read
     environment: ${{ inputs.github_environment }}
     steps:
-      - name: Set up Go 1.19
+      - name: Set up Go 1.20
         uses: actions/setup-go@v3
         with:
-          go-version: "1.19"
+          go-version: "1.20"
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -94,8 +94,17 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
-      - name: Deploy probe on ${{ inputs.probe_cluster }}
+      - name: Deploy probe on ${{ inputs.probe_clusters }}
         working-directory: ./deploy/helm/probe
+        # The probe requests Central instances located in the region of `probe_clusters`.
+        # As a result, the respective US/EU data plane Prometheus instances contain only
+        # metrics of probe runs related to their region.
         run: |
           set -euo pipefail
-          ./deploy.sh ${{ inputs.acs_environment }} ${{ inputs.probe_cluster }}
+          # shellcheck disable=SC2043
+          for cluster in ${{ inputs.probe_clusters }}
+          do
+            echo "Deploying probe to ${cluster}"
+            ./deploy.sh ${{ inputs.acs_environment }} "${cluster}"
+            echo "Probe deployment on ${cluster} succeeded"
+          done

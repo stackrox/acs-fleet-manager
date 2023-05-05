@@ -81,8 +81,8 @@ func (h adminCentralHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(&convCentral)
-			h.telemetry.RegisterTenant(r.Context(), &convCentral)
-			h.telemetry.TrackCreationRequested(r.Context(), convCentral.ID, true, svcErr.AsError())
+			h.telemetry.RegisterTenant(ctx, &convCentral, true, svcErr.AsError())
+
 			if svcErr != nil {
 				return nil, svcErr
 			}
@@ -321,6 +321,7 @@ func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.
 	}
 
 	new.DesiredCentralVersion = updateRequest.CentralVersion
+	new.ForceReconcile = updateRequest.ForceReconcile
 
 	*request = new
 	return nil

@@ -211,9 +211,9 @@ components:
     ManagedCentralVersions:
       type: object
       properties:
-        central:
+        desiredVersion:
           type: string
-        centralOperator:
+        actualVersion:
           type: string
 
     ManagedCentral:
@@ -328,6 +328,8 @@ components:
                         resources:
                           $ref: "#/components/schemas/ResourceRequirements"
             requestStatus:
+              type: string
+            forceReconcile:
               type: string
 
     ManagedCentralList:

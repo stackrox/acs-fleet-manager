@@ -1,18 +1,20 @@
 package dinosaurmgrs
 
 import (
-	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
 const readyCentralWorkerType = "ready_dinosaur"
+
+var readyCentralCountCache int32
 
 // ReadyDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type ReadyDinosaurManager struct {
@@ -49,21 +51,14 @@ func (k *ReadyDinosaurManager) Stop() {
 
 // Reconcile ...
 func (k *ReadyDinosaurManager) Reconcile() []error {
-
 	var encounteredErrors []error
 
-	readyDinosaurs, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusReady)
+	readyCentrals, serviceErr := k.dinosaurService.ListByStatus(constants2.CentralRequestStatusReady)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list ready centrals"))
 	}
-	if len(readyDinosaurs) > 0 {
-		glog.Infof("ready centrals count = %d", len(readyDinosaurs))
-	}
-
-	for _, dinosaur := range readyDinosaurs {
-		glog.V(10).Infof("ready central id = %s", dinosaur.ID)
-		// TODO implement reconciliation logic for ready dinosaurs
-	}
+	readyCentralCountCache = int32(len(readyCentrals))
+	logger.InfoChangedInt32(&readyCentralCountCache, "ready centrals count = %d", readyCentralCountCache)
 
 	return encounteredErrors
 }

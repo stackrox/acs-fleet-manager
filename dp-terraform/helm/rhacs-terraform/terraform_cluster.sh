@@ -37,7 +37,11 @@ case $ENVIRONMENT in
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.nonexistent.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
     OPERATOR_USE_UPSTREAM="false"
-    OPERATOR_VERSION="v3.74.0"
+    OPERATOR_VERSION="v4.0.0"
+    FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
+    FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"512Mi"}"
+    FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"500m"}"
+    FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"512Mi"}"
     ;;
 
   stage)
@@ -45,17 +49,25 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
-    OPERATOR_USE_UPSTREAM="false"
-    OPERATOR_VERSION="v3.74.0"
+    OPERATOR_USE_UPSTREAM="true"
+    OPERATOR_VERSION="v4.0.0"
+    FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
+    FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
+    FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
+    FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
     ;;
 
   prod)
     FM_ENDPOINT="https://api.openshift.com"
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
-    OBSERVABILITY_OPERATOR_VERSION="v4.0.4"
-    OPERATOR_USE_UPSTREAM="false"
-    OPERATOR_VERSION="v3.74.0"
+    OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
+    OPERATOR_USE_UPSTREAM="true"
+    OPERATOR_VERSION="v4.0.0"
+    FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
+    FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
+    FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
+    FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
     ;;
 
   *)
@@ -100,6 +112,8 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     OPERATOR_SOURCE="rhacs-operators"
 fi
 
+# TODO(ROX-16771): Move this to env-specific values.yaml files
+# TODO(ROX-16645): set acsOperator.enabled to false
 invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --namespace rhacs \
   --set acsOperator.enabled=true \
@@ -123,6 +137,10 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set fleetshardSync.aws.roleARN="${FLEETSHARD_SYNC_AWS_ROLE_ARN}" \
   --set fleetshardSync.telemetry.storage.endpoint="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_ENDPOINT:-}" \
   --set fleetshardSync.telemetry.storage.key="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_KEY:-}" \
+  --set fleetshardSync.resources.requests.cpu="${FLEETSHARD_SYNC_CPU_REQUEST}" \
+  --set fleetshardSync.resources.requests.memory="${FLEETSHARD_SYNC_MEMORY_REQUEST}" \
+  --set fleetshardSync.resources.limits.cpu="${FLEETSHARD_SYNC_CPU_LIMIT}" \
+  --set fleetshardSync.resources.limits.memory="${FLEETSHARD_SYNC_MEMORY_LIMIT}" \
   --set cloudwatch.aws.accessKeyId="${CLOUDWATCH_EXPORTER_AWS_ACCESS_KEY_ID:-}" \
   --set cloudwatch.aws.secretAccessKey="${CLOUDWATCH_EXPORTER_AWS_SECRET_ACCESS_KEY:-}" \
   --set cloudwatch.clusterName="${CLUSTER_NAME}" \

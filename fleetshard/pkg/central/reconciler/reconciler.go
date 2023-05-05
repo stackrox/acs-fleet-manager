@@ -46,6 +46,8 @@ const (
 	instanceTypeLabelKey      = "rhacs.redhat.com/instance-type"
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
+	operatorVersionKey        = "stackrox.io/operator-version"
+	defaultOperatorVersion    = "rhacs-operator.v3.74.0"
 
 	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
 	dbUserTypeMaster     = "master"
@@ -57,13 +59,14 @@ const (
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
-	UseRoutes         bool
-	WantsAuthProvider bool
-	EgressProxyImage  string
-	ManagedDBEnabled  bool
-	Telemetry         config.Telemetry
-	ClusterName       string
-	Environment       string
+	UseRoutes                         bool
+	WantsAuthProvider                 bool
+	EgressProxyImage                  string
+	ManagedDBEnabled                  bool
+	Telemetry                         config.Telemetry
+	ClusterName                       string
+	Environment                       string
+	FeatureFlagUpgradeOperatorEnabled bool
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -87,6 +90,8 @@ type CentralReconciler struct {
 	managedDBProvisioningClient cloudprovider.DBClient
 	managedDBInitFunc           postgres.CentralDBInitFunc
 
+	featureFlagUpgradeOperatorEnabled bool
+
 	resourcesChart *chart.Chart
 }
 
@@ -105,12 +110,16 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, errors.Wrapf(err, "checking if central changed")
 	}
+	needsReconcile := r.needsReconcile(changed, remoteCentral.ForceReconcile)
+
+	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
+		return nil, ErrCentralNotChanged
+	}
+
+	glog.Infof("Start reconcile central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-	if !changed && r.wantsAuthProvider == r.hasAuthProvider && isRemoteCentralReady(remoteCentral) {
-		return nil, ErrCentralNotChanged
-	}
 
 	monitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
 	// Telemetry will only be enabled if the storage key is set _and_ the central is not an "internal" central created
@@ -198,6 +207,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 				},
 			},
 		},
+	}
+
+	if r.featureFlagUpgradeOperatorEnabled {
+		labels := central.ObjectMeta.Labels
+		labels[operatorVersionKey] = defaultOperatorVersion
+		central.ObjectMeta.Labels = labels
 	}
 
 	// Check whether auth provider is actually created and this reconciler just is not aware of that.
@@ -327,7 +342,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 	if !centralDeploymentReady || !centralTLSSecretFound {
-		if isRemoteCentralProvisioning(remoteCentral) && !changed { // no changes detected, wait until central become ready
+		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
 		}
 		return installingStatus(), nil
@@ -900,21 +915,31 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 }
 
 func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (chartutil.Values, error) {
-	vals := chartutil.Values{
+	if r.resourcesChart == nil {
+		return nil, errors.New("resources chart is not set")
+	}
+	src := r.resourcesChart.Values
+	dst := map[string]interface{}{
 		"labels": map[string]interface{}{
 			k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
 		},
 	}
 	if r.egressProxyImage != "" {
-		override := chartutil.Values{
-			"egressProxy": chartutil.Values{
-				"image": r.egressProxyImage,
-			},
+		dst["egressProxy"] = map[string]interface{}{
+			"image": r.egressProxyImage,
 		}
-		vals = chartutil.CoalesceTables(vals, override)
 	}
+	return chartutil.CoalesceTables(dst, src), nil
+}
 
-	return vals, nil
+func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
+	return r.wantsAuthProvider == r.hasAuthProvider &&
+		isRemoteCentralReady(remoteCentral) &&
+		remoteCentral.Spec.Versions.ActualVersion == remoteCentral.Spec.Versions.DesiredVersion
+}
+
+func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile string) bool {
+	return changed || forceReconcile == "always"
 }
 
 var resourcesChart = charts.MustGetChart("tenant-resources")
@@ -935,6 +960,8 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		telemetry:         opts.Telemetry,
 		clusterName:       opts.ClusterName,
 		environment:       opts.Environment,
+
+		featureFlagUpgradeOperatorEnabled: opts.FeatureFlagUpgradeOperatorEnabled,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,

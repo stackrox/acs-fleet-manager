@@ -318,13 +318,14 @@ func getFailoverInstanceID(databaseID string) string {
 
 func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup, dataplaneClusterName string) *rds.CreateDBClusterInput {
 	return &rds.CreateDBClusterInput{
-		DBClusterIdentifier: aws.String(clusterID),
-		Engine:              aws.String(dbEngine),
-		EngineVersion:       aws.String(dbEngineVersion),
-		MasterUsername:      aws.String(dbUser),
-		MasterUserPassword:  aws.String(dbPassword),
-		VpcSecurityGroupIds: aws.StringSlice([]string{securityGroup}),
-		DBSubnetGroupName:   aws.String(subnetGroup),
+		DBClusterIdentifier:         aws.String(clusterID),
+		Engine:                      aws.String(dbEngine),
+		EngineVersion:               aws.String(dbEngineVersion),
+		EnableCloudwatchLogsExports: aws.StringSlice([]string{"postgresql"}),
+		MasterUsername:              aws.String(dbUser),
+		MasterUserPassword:          aws.String(dbPassword),
+		VpcSecurityGroupIds:         aws.StringSlice([]string{securityGroup}),
+		DBSubnetGroupName:           aws.String(subnetGroup),
 		ServerlessV2ScalingConfiguration: &rds.ServerlessV2ScalingConfiguration{
 			MinCapacity: aws.Float64(dbMinCapacityACU),
 			MaxCapacity: aws.Float64(dbMaxCapacityACU),

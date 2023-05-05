@@ -296,9 +296,9 @@ components:
       type: object
     ManagedCentralVersions:
       properties:
-        central:
+        desiredVersion:
           type: string
-        centralOperator:
+        actualVersion:
           type: string
       type: object
     ManagedCentral:
@@ -529,6 +529,8 @@ components:
         spec:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec'
         requestStatus:
+          type: string
+        forceReconcile:
           type: string
     ManagedCentralList_allOf:
       example: '{"kind":"ManagedCentralList","items":{"$ref":"#/components/examples/ManagedCentralExample"}}'

@@ -3,6 +3,7 @@ namespace: "rhacs-probe"
 fleetManagerEndpoint: ""
 clusterName: ""
 environment: ""
+dataPlaneRegion: "us-east-1"
 # Must be either 'RHSSO' or 'OCM'.
 authType: "RHSSO"
 ocm:
@@ -15,3 +16,10 @@ redHatSSO:
   clientSecret: ""
   endpoint: "https://sso.redhat.com"
   realm: "redhat-external"
+resources:
+  limits:
+    cpu: "100m"
+    memory: "128Mi"
+  requests:
+    cpu: "100m"
+    memory: "128Mi"

@@ -85,8 +85,8 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 				Host: from.GetDataHost(),
 			},
 			Versions: private.ManagedCentralVersions{
-				Central:         from.DesiredCentralVersion,
-				CentralOperator: from.DesiredCentralOperatorVersion,
+				DesiredVersion: from.DesiredCentralVersion,
+				ActualVersion:  from.ActualCentralVersion,
 			},
 			Central: private.ManagedCentralAllOfSpecCentral{
 				InstanceType: from.InstanceType,
@@ -135,7 +135,8 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 				},
 			},
 		},
-		RequestStatus: from.Status,
+		RequestStatus:  from.Status,
+		ForceReconcile: from.ForceReconcile,
 	}
 
 	if from.DeletionTimestamp != nil {

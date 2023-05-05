@@ -50,4 +50,5 @@ type Central struct {
 	Namespace                     string               `json:"namespace,omitempty"`
 	Central                       CentralSpec          `json:"central,omitempty"`
 	Scanner                       ScannerSpec          `json:"scanner,omitempty"`
+	ForceReconcile                string               `json:"force_reconcile,omitempty"`
 }

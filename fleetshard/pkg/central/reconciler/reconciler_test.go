@@ -169,6 +169,27 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	assert.NotEmpty(t, password)
 }
 
+func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc,
+		CentralReconcilerOptions{
+			UseRoutes:                         true,
+			FeatureFlagUpgradeOperatorEnabled: true,
+		})
+
+	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
+	require.True(t, ok)
+	assert.Equal(t, "True", readyCondition.Status, "Ready condition not found in conditions", status.Conditions)
+
+	central := &v1alpha1.Central{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
+	require.NoError(t, err)
+	assert.Equal(t, defaultOperatorVersion, central.ObjectMeta.Labels[operatorVersionKey])
+}
+
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
@@ -290,6 +311,32 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusProvisioning.String()
+
+	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)
+	require.NoError(t, err)
+
+	_, err = r.Reconcile(context.TODO(), managedCentral)
+	require.NoError(t, err)
+	assert.Equal(t, expectedHash, r.lastCentralHash)
+
+	_, err = r.Reconcile(context.TODO(), managedCentral)
+	require.NoError(t, err)
+}
+
+func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        centralName,
+			Namespace:   centralNamespace,
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
+		},
+	}, centralDeploymentObject()).Build()
+
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
+
+	managedCentral := simpleManagedCentral
+	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
+	managedCentral.ForceReconcile = "always"
 
 	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)
 	require.NoError(t, err)

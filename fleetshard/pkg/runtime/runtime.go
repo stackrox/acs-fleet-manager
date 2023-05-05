@@ -4,6 +4,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
@@ -19,6 +20,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,6 +30,8 @@ import (
 // Central instance.
 // TODO(SimonBaeumer): set a unique identifier for the map key, currently the instance name is used
 type reconcilerRegistry map[string]*centralReconciler.CentralReconciler
+
+var reconciledCentralCountCache int32
 
 var backoff = wait.Backoff{
 	Duration: 1 * time.Second,
@@ -107,13 +111,14 @@ func (r *Runtime) Start() error {
 	routesAvailable := r.routesAvailable()
 
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
-		UseRoutes:         routesAvailable,
-		WantsAuthProvider: r.config.CreateAuthProvider,
-		EgressProxyImage:  r.config.EgressProxyImage,
-		ManagedDBEnabled:  r.config.ManagedDB.Enabled,
-		Telemetry:         r.config.Telemetry,
-		ClusterName:       r.config.ClusterName,
-		Environment:       r.config.Environment,
+		UseRoutes:                         routesAvailable,
+		WantsAuthProvider:                 r.config.CreateAuthProvider,
+		EgressProxyImage:                  r.config.EgressProxyImage,
+		ManagedDBEnabled:                  r.config.ManagedDB.Enabled,
+		Telemetry:                         r.config.Telemetry,
+		ClusterName:                       r.config.ClusterName,
+		Environment:                       r.config.Environment,
+		FeatureFlagUpgradeOperatorEnabled: r.config.FeatureFlagUpgradeOperatorEnabled,
 	}
 
 	if r.config.FeatureFlagUpgradeOperatorEnabled {
@@ -134,7 +139,8 @@ func (r *Runtime) Start() error {
 		}
 
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
-		glog.Infof("Received %d centrals", len(list.Items))
+		reconciledCentralCountCache = int32(len(list.Items))
+		logger.InfoChangedInt32(&reconciledCentralCountCache, "Received central count changed: received %d centrals", reconciledCentralCountCache)
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central,
@@ -150,7 +156,6 @@ func (r *Runtime) Start() error {
 				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 				defer cancel()
 
-				glog.Infof("Start reconcile central %s/%s", central.Metadata.Namespace, central.Metadata.Name)
 				status, err := reconciler.Reconcile(ctx, central)
 				fleetshardmetrics.MetricsInstance().IncCentralReconcilations()
 				r.handleReconcileResult(central, status, err)
@@ -209,12 +214,17 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 }
 
 func (r *Runtime) upgradeOperator() error {
-	glog.Infof("Start Operator upgrade")
 	ctx := context.Background()
-	err := r.operatorManager.InstallOrUpgrade(ctx)
+	// TODO: gather desired operator versions from fleet-manager and update operators based on ticker
+	// TODO: Leave Operator installation before reconciler run until migration
+	operatorImages := []string{"quay.io/rhacs-eng/stackrox-operator:3.74.0", "quay.io/rhacs-eng/stackrox-operator:3.74.1"}
+	glog.Infof("Installing Operators: %s", strings.Join(operatorImages, ", "))
+	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages)
 	if err != nil {
-		return fmt.Errorf("operator upgrade: %w", err)
+		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
 	}
+
+	// TODO: delete unused operator versions
 	return nil
 }
 

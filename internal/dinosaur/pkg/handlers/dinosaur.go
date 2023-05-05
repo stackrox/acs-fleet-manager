@@ -92,8 +92,7 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			svcErr := h.service.RegisterDinosaurJob(convCentral)
 			// Do not track centrals created from internal services.
 			if !convCentral.Internal {
-				h.telemetry.RegisterTenant(r.Context(), convCentral)
-				h.telemetry.TrackCreationRequested(r.Context(), convCentral.ID, false, svcErr.AsError())
+				h.telemetry.RegisterTenant(ctx, convCentral, false, svcErr.AsError())
 			}
 			if svcErr != nil {
 				return nil, svcErr
