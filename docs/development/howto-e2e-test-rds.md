@@ -34,9 +34,10 @@ At the point in time this documentation was written AWS RDS DB creation and dele
     source <(run_chamber env -b secretsmanager "fleetshard-sync")
     source <(run_chamber env "local_cluster")
     export MANAGED_DB_ENABLED=true
+    # flip the PublicAcessible flag to true in rds.go line 354
+    make binary
 
     ./fleetshard-sync
-
     ```
 
 1. Create a central instance and wait for DB Creation
