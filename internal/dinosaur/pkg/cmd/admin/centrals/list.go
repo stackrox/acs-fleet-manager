@@ -12,14 +12,14 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
-// NewListCommand creates a new command for listing centrals.
-func NewListCommand() *cobra.Command {
+// NewAdminCentralsListCommand creates a new command for listing centrals.
+func NewAdminCentralsListCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "lists all managed central requests",
 		Long:  "lists all managed central requests",
 		Run: func(cmd *cobra.Command, args []string) {
-			runList(fleetmanagerclient.AuthenticatedClientWithStaticToken(), cmd, args)
+			runList(fleetmanagerclient.AuthenticatedClientWithRHOASToken(), cmd, args)
 		},
 	}
 	return cmd
