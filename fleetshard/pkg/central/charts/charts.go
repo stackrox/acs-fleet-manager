@@ -80,6 +80,18 @@ func DownloadTemplate(url string, chartName string) error {
 	// generate the filename from the URL
 	filename := url[strings.LastIndex(url, "/")+1:]
 	filepath := path.Join("data", chartName, "templates", filename)
+
+	// Make sure that file will be created in charts/data/<chart>/templates folder
+	wd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot get working directory %w", err)
+	}
+	parent := path.Dir(wd)
+	err = os.Chdir(path.Join(parent, "charts"))
+	if err != nil {
+		return fmt.Errorf("cannot change working directory %w", err)
+	}
+
 	out, err := os.Create(filepath)
 	if err != nil {
 		return fmt.Errorf("cannot create file %s: %w", filepath, err)
