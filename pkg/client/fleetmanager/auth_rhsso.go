@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	rhSSOAuthName = "RHSSO"
+	// RHSSOAuthName is the name of the Red Hat Single Sign On authentication method.
+	RHSSOAuthName = "RHSSO"
 )
 
 var (
@@ -30,7 +31,7 @@ type rhSSOAuthFactory struct{}
 
 // GetName gets the name of the factory.
 func (f *rhSSOAuthFactory) GetName() string {
-	return rhSSOAuthName
+	return RHSSOAuthName
 }
 
 // CreateAuth creates an Auth using RH SSO.
