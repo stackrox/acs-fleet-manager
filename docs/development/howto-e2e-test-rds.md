@@ -32,7 +32,7 @@ At the point in time this documentation was written AWS RDS DB creation and dele
 
     source <(run_chamber env "fleetshard-sync")
     source <(run_chamber env -b secretsmanager "fleetshard-sync")
-    source <(run_chamber env "cluster-acs-dev-dp-01")
+    source <(run_chamber env "local_cluster")
     export MANAGED_DB_ENABLED=true
 
     ./fleetshard-sync
@@ -46,10 +46,8 @@ At the point in time this documentation was written AWS RDS DB creation and dele
     # Watch the fleetshard-sync logs to tell what's happening in the background.
     # It should print something like this if everything works like expected:
     # RDS instance status: creating (instance ID: rhacs-chcb5m8ah6b2ko6qut0g-db-instance)
-    # At somepoint fleetshard-sync will logs this:
-    Unexpected error occurred rhacs-chcb5m8ah6b2ko6qut0g/test-central-1: getting Central DB connection string: initializing managed DB: initializing managed DB: beginning PostgreSQL transaction: dial tcp 10.1.206.163:5432: connect: operation timed out
 
-    # This is expected because the RDS DB is created within a VPC you can't reach from your local environment, we assume that this test was a success, since the DB got to a avaialble state.
+    # At some point your central instance should become ready
     ```
 
 1. Make sure DB state is available and 2 instances exist in state available
