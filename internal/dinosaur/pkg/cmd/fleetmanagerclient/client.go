@@ -26,7 +26,7 @@ const (
 	rhoasTokenEnvVar            = "RHOAS_TOKEN"
 )
 
-// AuthenticatedClientWithRHOASToken returns a rest fmClientAuthWithOCMRefreshToken to the fleet-manager using a static token.
+// AuthenticatedClientWithRHOASToken returns a rest client for fleet-manager API using a static OCM token for authentication.
 // This function should only be used for CLI commands.
 func AuthenticatedClientWithRHOASToken() *fleetmanager.Client {
 	rhoasToken := os.Getenv(rhoasTokenEnvVar)
@@ -65,7 +65,7 @@ func AuthenticatedClientWithRHOASToken() *fleetmanager.Client {
 	return fmClientAuthWithRHOASToken
 }
 
-// AuthenticatedClientWithOCM returns a rest fmClientAuthWithOCMRefreshToken to the fleet-manager and receives the OCM refresh token.
+// AuthenticatedClientWithOCM returns a rest client to the fleet-manager and receives the OCM refresh token.
 // This function will panic on an error, designed to be used by the fleet-manager CLI.
 func AuthenticatedClientWithOCM() *fleetmanager.Client {
 	ocmRefreshToken := os.Getenv(ocmRefreshTokenEnvVar)
