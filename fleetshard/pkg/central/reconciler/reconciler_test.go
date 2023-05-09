@@ -27,6 +27,7 @@ import (
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -557,12 +558,14 @@ func TestReportRoutesStatuses(t *testing.T) {
 }
 
 func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
-	chrt, err := charts.LoadChart(testdata, "testdata/tenant-resources")
+	chartFiles, err := charts.TraverseChart(testdata, "testdata/tenant-resources")
+	require.NoError(t, err)
+	chart, err := loader.LoadFiles(chartFiles)
 	require.NoError(t, err)
 
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
-	r.resourcesChart = chrt
+	r.resourcesChart = chart
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -588,7 +591,9 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 }
 
 func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
-	chart, err := charts.LoadChart(testdata, "testdata/tenant-resources")
+	chartFiles, err := charts.TraverseChart(testdata, "testdata/tenant-resources")
+	require.NoError(t, err)
+	chart, err := loader.LoadFiles(chartFiles)
 	require.NoError(t, err)
 
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()

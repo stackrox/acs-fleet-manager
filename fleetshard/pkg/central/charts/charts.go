@@ -28,39 +28,8 @@ var (
 	data embed.FS
 )
 
-// LoadChart loads a chart from the given path on the given file system.
-func LoadChart(fsys fs.FS, chartPath string) (*chart.Chart, error) {
-	chartPath = strings.TrimRight(chartPath, "/")
-	var chartFiles []*loader.BufferedFile
-	err := fs.WalkDir(fsys, chartPath, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-		bytes, err := fs.ReadFile(fsys, path)
-		if err != nil {
-			return fmt.Errorf("reading embedded file %s: %w", path, err)
-		}
-		chartFiles = append(chartFiles, &loader.BufferedFile{
-			Name: path[len(chartPath)+1:], // strip "<path>/"
-			Data: bytes,
-		})
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("loading chart from %q: %w", chartPath, err)
-	}
-
-	chrt, err := loader.LoadFiles(chartFiles)
-	if err != nil {
-		return nil, fmt.Errorf("loading chart from %s: %w", chartPath, err)
-	}
-	return chrt, nil
-}
-
-func traverseChartDir(fsys fs.FS, chartPath string) ([]*loader.BufferedFile, error) {
+// TraverseChart combines all chart files into memory from given file system
+func TraverseChart(fsys fs.FS, chartPath string) ([]*loader.BufferedFile, error) {
 	chartPath = strings.TrimRight(chartPath, "/")
 	var chartFiles []*loader.BufferedFile
 	err := fs.WalkDir(fsys, chartPath, func(path string, d fs.DirEntry, err error) error {
@@ -125,7 +94,7 @@ func downloadTemplate(url string) (*loader.BufferedFile, error) {
 // GetChart loads a chart from the data directory. The name should be the name of the containing directory.
 // Optional: pass list of URLs to download additional template files for the chart.
 func GetChart(name string, urls []string) (*chart.Chart, error) {
-	chartFiles, err := traverseChartDir(data, path.Join("data", name))
+	chartFiles, err := TraverseChart(data, path.Join("data", name))
 	if err != nil {
 		return nil, fmt.Errorf("failed getting chart files for %q: %w", name, err)
 	}
