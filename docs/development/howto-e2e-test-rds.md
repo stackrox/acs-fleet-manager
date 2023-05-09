@@ -51,7 +51,7 @@ At the point in time this documentation was written AWS RDS DB creation and dele
     # At some point your central instance should become ready
     ```
 
-1. Make sure DB state is available and 2 instances exist in state available
+1. Make sure DB state is available and 2 instances exist in state available the central pod is ready
 1. Delete the central
 
     ```

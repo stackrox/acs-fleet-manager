@@ -189,7 +189,7 @@ func (r *RDS) ensureClusterDeleted(clusterID string) error {
 		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, false))
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok {
-				// This assumes that if a final snapshot exists, a deletion for the RDS cluster was already trigger
+				// This assumes that if a final snapshot exists, a deletion for the RDS cluster was already triggered
 				// and we can move on with deprovisioning,
 				if awsErr.Code() == rds.ErrCodeDBClusterSnapshotAlreadyExistsFault {
 					return nil
