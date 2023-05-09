@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"os"
 	"path"
 	"strings"
 
@@ -61,14 +60,92 @@ func LoadChart(fsys fs.FS, chartPath string) (*chart.Chart, error) {
 	return chrt, nil
 }
 
+func traverseChartDir(fsys fs.FS, chartPath string) ([]*loader.BufferedFile, error) {
+	chartPath = strings.TrimRight(chartPath, "/")
+	var chartFiles []*loader.BufferedFile
+	err := fs.WalkDir(fsys, chartPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		bytes, err := fs.ReadFile(fsys, path)
+		if err != nil {
+			return fmt.Errorf("reading embedded file %s: %w", path, err)
+		}
+		chartFiles = append(chartFiles, &loader.BufferedFile{
+			Name: path[len(chartPath)+1:], // strip "<path>/"
+			Data: bytes,
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("loading chart from %q: %w", chartPath, err)
+	}
+	return chartFiles, nil
+}
+
+func downloadTemplates(urls []string) ([]*loader.BufferedFile, error) {
+	var chartFiles []*loader.BufferedFile
+	for _, url := range urls {
+		buffered, err := downloadTemplate(url)
+		if err != nil {
+			return nil, fmt.Errorf("failed downloading template from %s: %w", url, err)
+		}
+		chartFiles = append(chartFiles, buffered)
+	}
+	return chartFiles, nil
+}
+
+func downloadTemplate(url string) (*loader.BufferedFile, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed Get for %s: %w", url, err)
+	}
+	defer resp.Body.Close()
+
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read bytes: %w", err)
+	}
+
+	// parse filename from the URL
+	filename := url[strings.LastIndex(url, "/")+1:]
+	name := path.Join("templates", filename)
+
+	bufferedFile := &loader.BufferedFile{
+		Name: name,
+		Data: bytes,
+	}
+
+	return bufferedFile, nil
+}
+
 // GetChart loads a chart from the data directory. The name should be the name of the containing directory.
-func GetChart(name string) (*chart.Chart, error) {
-	return LoadChart(data, path.Join("data", name))
+// Optional: pass list of URLs to download additional template files for the chart.
+func GetChart(name string, urls []string) (*chart.Chart, error) {
+	chartFiles, err := traverseChartDir(data, path.Join("data", name))
+	if err != nil {
+		return nil, fmt.Errorf("failed getting chart files for %q: %w", name, err)
+	}
+	if len(urls) > 0 {
+		downloadedFiles, err := downloadTemplates(urls)
+		if err != nil {
+			return nil, fmt.Errorf("failed downloading chart files %q: %w", name, err)
+		}
+		chartFiles = append(chartFiles, downloadedFiles...)
+	}
+	loadedChart, err := loader.LoadFiles(chartFiles)
+	if err != nil {
+		return nil, fmt.Errorf("failed loading chart %q: %w", name, err)
+	}
+	return loadedChart, nil
 }
 
 // MustGetChart loads a chart from the data directory. Unlike GetChart, it panics if an error is encountered.
-func MustGetChart(name string) *chart.Chart {
-	chrt, err := GetChart(name)
+func MustGetChart(name string, urls []string) *chart.Chart {
+	chrt, err := GetChart(name, urls)
 	if err != nil {
 		panic(err)
 	}
@@ -98,41 +175,5 @@ func InstallOrUpdateChart(ctx context.Context, obj *unstructured.Unstructured, c
 			return fmt.Errorf("failed to create object %s/%s of type %s: %w", key.Namespace, key.Name, obj.GetKind(), err)
 		}
 	}
-	return nil
-}
-
-// DownloadTemplate downloads a file from the URL to the templates folder of specified chart
-func DownloadTemplate(url string, chartName string) error {
-	resp, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("failed Get for %s: %w", url, err)
-	}
-	defer resp.Body.Close()
-
-	// generate the filename from the URL
-	filename := url[strings.LastIndex(url, "/")+1:]
-	filepath := path.Join("data", chartName, "templates", filename)
-
-	// Make sure that file will be created in charts/data/<chart>/templates folder
-	wd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("cannot get working directory %w", err)
-	}
-	parent := path.Dir(wd)
-	err = os.Chdir(path.Join(parent, "charts"))
-	if err != nil {
-		return fmt.Errorf("cannot change working directory %w", err)
-	}
-
-	out, err := os.Create(filepath)
-	if err != nil {
-		return fmt.Errorf("cannot create file %s: %w", filepath, err)
-	}
-	defer out.Close()
-
-	if _, err = io.Copy(out, resp.Body); err != nil {
-		return fmt.Errorf("cannot copy to file %s: %w", filepath, err)
-	}
-
 	return nil
 }

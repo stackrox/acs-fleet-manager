@@ -3,7 +3,6 @@ package charts
 import (
 	"context"
 	"embed"
-	"os"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,7 +34,7 @@ var dummyDeployment = &appsv1.Deployment{
 }
 
 func TestTenantResourcesChart(t *testing.T) {
-	c, err := GetChart("tenant-resources")
+	c, err := GetChart("tenant-resources", nil)
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 }
@@ -94,14 +93,11 @@ func TestInstallOrUpdateChartUpdateExisting(t *testing.T) {
 	assert.Equal(t, "baz", res.GetLabels()["foo"])
 }
 
-func TestDownloadTemplate(t *testing.T) {
+func TestGetChartWithDynamicTemplate(t *testing.T) {
 	crdURL := "https://raw.githubusercontent.com/stackrox/stackrox/master/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml"
-	err := DownloadTemplate(crdURL, "rhacs-operator")
-	require.NoError(t, err)
-	_, err = os.Stat("data/rhacs-operator/templates/platform.stackrox.io_securedclusters.yaml")
-	require.NoError(t, err)
+	dynamicTemplates := []string{crdURL}
 
-	c, err := GetChart("rhacs-operator")
+	c, err := GetChart("rhacs-operator", dynamicTemplates)
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 }

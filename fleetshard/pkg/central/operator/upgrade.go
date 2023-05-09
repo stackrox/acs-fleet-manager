@@ -70,13 +70,8 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 		},
 	}
 
-	if err := charts.DownloadTemplate(centralCrdURL, "rhacs-operator"); err != nil {
-		return fmt.Errorf("failed to download %s: %w", centralCrdURL, err)
-	}
-	if err := charts.DownloadTemplate(securedClusterCrdURL, "rhacs-operator"); err != nil {
-		return fmt.Errorf("failed to download %s: %w", securedClusterCrdURL, err)
-	}
-	u.resourcesChart = charts.MustGetChart("rhacs-operator")
+	dynamicTemplatesUrls := []string{centralCrdURL, securedClusterCrdURL}
+	u.resourcesChart = charts.MustGetChart("rhacs-operator", dynamicTemplatesUrls)
 	objs, err := charts.RenderToObjects(releaseName, operatorNamespace, u.resourcesChart, chartVals)
 	if err != nil {
 		return fmt.Errorf("failed rendering operator chart: %w", err)

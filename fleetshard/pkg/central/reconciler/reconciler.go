@@ -942,7 +942,7 @@ func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile string) 
 	return changed || forceReconcile == "always"
 }
 
-var resourcesChart = charts.MustGetChart("tenant-resources")
+var resourcesChart = charts.MustGetChart("tenant-resources", nil)
 
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
