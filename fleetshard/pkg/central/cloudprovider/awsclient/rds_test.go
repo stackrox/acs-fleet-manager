@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const awsTimeoutMinutes = 15
+const awsTimeoutMinutes = 30
 
 func newTestRDS() (*RDS, error) {
 	rdsClient, err := newTestRDSClient()
@@ -47,17 +47,12 @@ func newTestRDSClient() (*rds.RDS, error) {
 
 func waitForClusterToBeDeleted(ctx context.Context, rdsClient *RDS, clusterID string) (bool, error) {
 	for {
-		clusterExists, clusterStatus, err := rdsClient.clusterStatus(clusterID)
+		clusterExists, _, err := rdsClient.clusterStatus(clusterID)
 		if err != nil {
 			return false, err
 		}
 
 		if !clusterExists {
-			return true, nil
-		}
-
-		// exit early if cluster is marked as deleting
-		if clusterStatus == dbDeletingStatus {
 			return true, nil
 		}
 
@@ -69,6 +64,37 @@ func waitForClusterToBeDeleted(ctx context.Context, rdsClient *RDS, clusterID st
 			return false, fmt.Errorf("waiting for RDS cluster to be deleted: %w", ctx.Err())
 		}
 	}
+}
+
+func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, clusterID string) (bool, error) {
+
+	ticker := time.NewTicker(awsRetrySeconds * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			snapshotOut, err := rdsClient.rdsClient.DescribeDBClusterSnapshots(&rds.DescribeDBClusterSnapshotsInput{
+				DBClusterSnapshotIdentifier: getFinalSnapshotID(clusterID),
+			})
+
+			if err != nil {
+				if awsErr, ok := err.(awserr.Error); ok {
+					if awsErr.Code() != rds.ErrCodeDBClusterSnapshotNotFoundFault {
+						return false, err
+					}
+
+					continue
+				}
+			}
+
+			if snapshotOut != nil {
+				return len(snapshotOut.DBClusterSnapshots) == 1, nil
+			}
+		case <-ctx.Done():
+			return false, fmt.Errorf("waiting for final DB snapshot: %w", ctx.Err())
+		}
+
+	}
+
 }
 
 func TestRDSProvisioning(t *testing.T) {
@@ -136,6 +162,19 @@ func TestRDSProvisioning(t *testing.T) {
 	clusterDeleted, err := waitForClusterToBeDeleted(deleteCtx, rdsClient, clusterID)
 	require.NoError(t, err)
 	assert.True(t, clusterDeleted)
+
+	// Always attempt to delete the final snapshot if it exists
+	defer func() {
+		_, err := rdsClient.rdsClient.DeleteDBClusterSnapshot(
+			&rds.DeleteDBClusterSnapshotInput{DBClusterSnapshotIdentifier: getFinalSnapshotID(clusterID)},
+		)
+
+		assert.NoError(t, err)
+	}()
+
+	snapshotExists, err := waitForFinalSnapshotToExist(deleteCtx, rdsClient, clusterID)
+	require.NoError(t, err)
+	require.True(t, snapshotExists)
 }
 
 func TestGetDBConnection(t *testing.T) {
