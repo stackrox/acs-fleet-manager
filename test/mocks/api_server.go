@@ -1186,8 +1186,7 @@ func GetMockMachineBuilder(modifyFn func(*clustersmgmtv1.MachinePoolBuilder)) *c
 	builder := clustersmgmtv1.NewMachinePool().
 		ID(MockMachinePoolID).
 		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/machine_pools/%s", MockClusterID, MockMachinePoolID)).
-		Replicas(MockMachinePoolReplicas).
-		Cluster(GetMockClusterBuilder(nil))
+		Replicas(MockMachinePoolReplicas)
 	if modifyFn != nil {
 		modifyFn(builder)
 	}
