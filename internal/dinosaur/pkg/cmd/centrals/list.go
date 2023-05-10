@@ -1,4 +1,4 @@
-package central
+package centrals
 
 import (
 	"encoding/json"
