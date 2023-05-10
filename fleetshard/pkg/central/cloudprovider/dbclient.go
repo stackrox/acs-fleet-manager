@@ -16,7 +16,7 @@ type DBClient interface {
 	EnsureDBProvisioned(ctx context.Context, databaseID, passwordSecretName string) error
 	// EnsureDBDeprovisioned is a non-blocking function that makes sure that a managed DB is deprovisioned (more
 	// specifically, that its deletion was initiated)
-	EnsureDBDeprovisioned(databaseID string) error
+	EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) error
 	// GetDBConnection returns a postgres.DBConnection struct, which contains the data necessary
 	// to construct a PostgreSQL connection string. It expects that the database was already provisioned.
 	GetDBConnection(databaseID string) (postgres.DBConnection, error)

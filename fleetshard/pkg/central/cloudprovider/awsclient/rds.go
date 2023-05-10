@@ -82,7 +82,7 @@ func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPasswor
 
 // EnsureDBDeprovisioned is a function that initiates the deprovisioning of the RDS database of a Central
 // Unlike EnsureDBProvisioned, this function does not block until the DB is deprovisioned
-func (r *RDS) EnsureDBDeprovisioned(databaseID string) error {
+func (r *RDS) EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) error {
 	err := r.ensureInstanceDeleted(getInstanceID(databaseID))
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (r *RDS) EnsureDBDeprovisioned(databaseID string) error {
 		return err
 	}
 
-	err = r.ensureClusterDeleted(getClusterID(databaseID))
+	err = r.ensureClusterDeleted(getClusterID(databaseID), skipFinalSnapshot)
 	if err != nil {
 		return err
 	}
@@ -175,7 +175,7 @@ func (r *RDS) ensureInstanceDeleted(instanceID string) error {
 	return nil
 }
 
-func (r *RDS) ensureClusterDeleted(clusterID string) error {
+func (r *RDS) ensureClusterDeleted(clusterID string, skipFinalSnapshot bool) error {
 	clusterExists, clusterStatus, err := r.clusterStatus(clusterID)
 	if err != nil {
 		return fmt.Errorf("getting DB cluster status: %w", err)
@@ -186,7 +186,7 @@ func (r *RDS) ensureClusterDeleted(clusterID string) error {
 
 	if clusterStatus != dbDeletingStatus && clusterStatus != dbBackingUpStatus {
 		glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
-		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, false))
+		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, skipFinalSnapshot))
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok {
 				// This assumes that if a final snapshot exists, a deletion for the RDS cluster was already triggered
