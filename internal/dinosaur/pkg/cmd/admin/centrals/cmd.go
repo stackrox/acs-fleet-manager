@@ -11,6 +11,7 @@ const (
 func NewAdminCentralsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:              "centrals",
+		Aliases:          []string{"central"},
 		Short:            "Perform admin central API calls.",
 		Long:             "Perform admin central API calls.",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {},
