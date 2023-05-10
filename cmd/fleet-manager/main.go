@@ -5,7 +5,7 @@ import (
 	"flag"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/admin"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/central"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/centrals"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/migrate"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/serve"
 
@@ -48,7 +48,7 @@ func main() {
 
 	rootCmd.AddCommand(migrate.NewMigrateCommand(env))
 	rootCmd.AddCommand(serve.NewServeCommand(env))
-	rootCmd.AddCommand(central.NewCentralCommand())
+	rootCmd.AddCommand(centrals.NewCentralsCommand())
 	rootCmd.AddCommand(admin.NewAdminCommand())
 	// Unsupported CLI commands. Eventually some of them can be removed.
 	// rootCmd.AddCommand(cluster.NewClusterCommand(env))
