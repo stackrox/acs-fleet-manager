@@ -432,7 +432,9 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	globalDeleted = globalDeleted && centralDeleted
 
 	if r.managedDBEnabled {
-		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id)
+		// skip Snapshot for remoteCentral created by probe
+		skipSnapshot := remoteCentral.Metadata.Internal
+		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id, skipSnapshot)
 		if err != nil {
 			return false, fmt.Errorf("deprovisioning DB: %v", err)
 		}

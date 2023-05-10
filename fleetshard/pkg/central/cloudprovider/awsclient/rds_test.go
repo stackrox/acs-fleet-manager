@@ -131,7 +131,7 @@ func TestRDSProvisioning(t *testing.T) {
 	err = rdsClient.EnsureDBProvisioned(ctx, dbID, dbMasterPassword)
 	defer func() {
 		// clean-up AWS resources in case the test fails
-		deleteErr := rdsClient.EnsureDBDeprovisioned(dbID)
+		deleteErr := rdsClient.EnsureDBDeprovisioned(dbID, false)
 		assert.NoError(t, deleteErr)
 	}()
 	require.NoError(t, err)
@@ -153,7 +153,7 @@ func TestRDSProvisioning(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, failoverExists)
 
-	err = rdsClient.EnsureDBDeprovisioned(dbID)
+	err = rdsClient.EnsureDBDeprovisioned(dbID, false)
 	assert.NoError(t, err)
 
 	deleteCtx, deleteCancel := context.WithTimeout(context.TODO(), awsTimeoutMinutes*time.Minute)
