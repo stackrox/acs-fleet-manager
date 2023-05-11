@@ -61,9 +61,9 @@ type RDS struct {
 }
 
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
-func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPassword string) error {
+func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPassword string, exportLogs bool) error {
 	clusterID := getClusterID(databaseID)
-	if err := r.ensureDBClusterCreated(clusterID, masterPassword); err != nil {
+	if err := r.ensureDBClusterCreated(clusterID, masterPassword, exportLogs); err != nil {
 		return fmt.Errorf("ensuring DB cluster %s exists: %w", clusterID, err)
 	}
 
@@ -117,7 +117,7 @@ func (r *RDS) GetDBConnection(databaseID string) (postgres.DBConnection, error) 
 	return connection, nil
 }
 
-func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string) error {
+func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string, exportLogs bool) error {
 	clusterExists, _, err := r.clusterStatus(clusterID)
 	if err != nil {
 		return fmt.Errorf("checking if DB cluster exists: %w", err)
@@ -128,7 +128,7 @@ func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string) error {
 
 	glog.Infof("Initiating provisioning of RDS database cluster %s.", clusterID)
 	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, masterPassword, r.dbSecurityGroup,
-		r.dbSubnetGroup, r.dataplaneClusterName))
+		r.dbSubnetGroup, r.dataplaneClusterName, exportLogs))
 	if err != nil {
 		return fmt.Errorf("creating DB cluster: %w", err)
 	}
@@ -322,16 +322,15 @@ func getFailoverInstanceID(databaseID string) string {
 	return dbPrefix + databaseID + dbFailoverSuffix
 }
 
-func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup, dataplaneClusterName string) *rds.CreateDBClusterInput {
-	return &rds.CreateDBClusterInput{
-		DBClusterIdentifier:         aws.String(clusterID),
-		Engine:                      aws.String(dbEngine),
-		EngineVersion:               aws.String(dbEngineVersion),
-		EnableCloudwatchLogsExports: aws.StringSlice([]string{"postgresql"}),
-		MasterUsername:              aws.String(dbUser),
-		MasterUserPassword:          aws.String(dbPassword),
-		VpcSecurityGroupIds:         aws.StringSlice([]string{securityGroup}),
-		DBSubnetGroupName:           aws.String(subnetGroup),
+func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup, dataplaneClusterName string, exportLogs bool) *rds.CreateDBClusterInput {
+	input := &rds.CreateDBClusterInput{
+		DBClusterIdentifier: aws.String(clusterID),
+		Engine:              aws.String(dbEngine),
+		EngineVersion:       aws.String(dbEngineVersion),
+		MasterUsername:      aws.String(dbUser),
+		MasterUserPassword:  aws.String(dbPassword),
+		VpcSecurityGroupIds: aws.StringSlice([]string{securityGroup}),
+		DBSubnetGroupName:   aws.String(subnetGroup),
 		ServerlessV2ScalingConfiguration: &rds.ServerlessV2ScalingConfiguration{
 			MinCapacity: aws.Float64(dbMinCapacityACU),
 			MaxCapacity: aws.Float64(dbMaxCapacityACU),
@@ -344,6 +343,12 @@ func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnet
 				Value: aws.String(dataplaneClusterName)},
 		},
 	}
+
+	if exportLogs {
+		input.EnableCloudwatchLogsExports = aws.StringSlice([]string{"postgresql"})
+	}
+
+	return input
 }
 
 func newCreateCentralDBInstanceInput(clusterID, instanceID, dataplaneClusterName string, performanceInsights bool) *rds.CreateDBInstanceInput {

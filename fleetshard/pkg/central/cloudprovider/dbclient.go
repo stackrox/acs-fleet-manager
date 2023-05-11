@@ -13,7 +13,7 @@ import (
 type DBClient interface {
 	// EnsureDBProvisioned is a blocking function that makes sure that a database with the given databaseID was provisioned,
 	// using the master password given as parameter
-	EnsureDBProvisioned(ctx context.Context, databaseID, passwordSecretName string) error
+	EnsureDBProvisioned(ctx context.Context, databaseID, passwordSecretName string, exportLogs bool) error
 	// EnsureDBDeprovisioned is a non-blocking function that makes sure that a managed DB is deprovisioned (more
 	// specifically, that its deletion was initiated)
 	EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) error
