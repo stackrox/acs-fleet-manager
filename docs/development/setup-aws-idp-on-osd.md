@@ -5,7 +5,7 @@ The goal is to authenticate ACSCS applications (pods) to AWS. The recommended ap
 Every Openshift cluster (OCP) has a built-in OAuth server that is used to authenticate service accounts within the cluster. OSD is no exception. This document describes how to add an Identity Provider to the AWS IAM configuration to use the OAuth server to authenticate ACSCS pods to AWS.
 
 ## Implementation
-In scope are the environments that run on OSD clusters, namely _stage_ and _prod_. Engineers may want to set up their own OSD cluster to make experiments. The setup procedure is described  [below](#manual-setup-dev).
+In scope are the environments that run on OSD clusters, namely _stage_ and _prod_. Engineers may want to set up their own OSD cluster to make experiments. The setup procedure is described [below](#manual-setup-dev).
 The main idea is the following: The OAuth server has been added to the AWS IAM configuration as an Identity Provider. Each cluster has its own server, so each must be declared in the AWS IAM configuration. AWS has a limit of 100 identity providers per account [1].
 The complication is that server is not reachable from AWS STS, therefore, it couldn't load the public keys to verify a JWT token. The recommended approach is to expose OAuth server's public keys in a **public** S3 bucket [2].
 
