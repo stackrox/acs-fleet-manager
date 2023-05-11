@@ -12,6 +12,7 @@ spec:
   resyncPeriod: {{ .Values.resyncPeriod | quote }}
   retention: {{ .Values.retention | quote }}
   selfContained:
+    alertManagerConfigSecret: rhacs-alertmanager-configuration
     disableBlackboxExporter: true
     # Disable logging features of the operator, because we set up the logging operator
     # ourselves via the logging sub-chart.
