@@ -11,10 +11,10 @@ import (
 
 // CentralDefaults ...
 type CentralDefaults struct {
-	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"2Gi"`
-	CPURequest    resource.Quantity `env:"CPU_REQUEST" envDefault:"750m"`
-	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT" envDefault:"6Gi"`
-	CPULimit      resource.Quantity `env:"CPU_LIMIT" envDefault:"2.2"`
+	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"4Gi"`
+	CPURequest    resource.Quantity `env:"CPU_REQUEST" envDefault:"1000m"`
+	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT" envDefault:"8Gi"`
+	CPULimit      resource.Quantity `env:"CPU_LIMIT" envDefault:"4000m"`
 }
 
 var (

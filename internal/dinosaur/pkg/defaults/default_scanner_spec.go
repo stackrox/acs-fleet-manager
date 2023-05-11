@@ -10,10 +10,10 @@ import (
 
 // AnalyzerDefaults ...
 type AnalyzerDefaults struct {
-	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"2Gi"`
-	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"750m"`
-	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"6Gi"`
-	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"2.2"`
+	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"2.75Gi"`
+	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"500m"`
+	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"8Gi"`
+	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"3000m"`
 	AutoScaling   string            `env:"AUTOSCALING"    envDefault:"Enabled"`
 	MinReplicas   int32             `env:"MIN_REPLICAS"   envDefault:"1"`
 	Replicas      int32             `env:"REPLICAS"       envDefault:"1"`
@@ -22,10 +22,10 @@ type AnalyzerDefaults struct {
 
 // DbDefaults ...
 type DbDefaults struct {
-	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"250Mi"`
-	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"100m"`
-	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500Mi"`
-	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"2.2"`
+	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"2Gi"`
+	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"1000m"`
+	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"4Gi"`
+	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"2500m"`
 }
 
 // ScannerDefaults ...
