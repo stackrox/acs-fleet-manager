@@ -4,6 +4,13 @@ metadata:
   name: observability-stack
   namespace: {{ include "observability.namespace" . }}
 spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-role.kubernetes.io/infra
+            operator: Exists
   # The cluster ID is added as a label to all metrics when interacting with external services.
   clusterId: {{ .Values.clusterName | quote }}
   configurationSelector:
