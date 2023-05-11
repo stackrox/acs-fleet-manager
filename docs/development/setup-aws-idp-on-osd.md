@@ -15,8 +15,12 @@ S3 bucket name has the following pattern: `<osdClusterName>-<randomAlphanumeric>
 - `oidc` suffix is chosen to indicate that bucket corresponds to an OAuth server. This suffix also corresponds to the pattern used in the `ccoctl` tool [3].
 
 ## Manual setup (dev)
-> ❗️This instruction is intended only for OSD clusters. For local clusters, it is recommended to use the OCM token for authentication.
+> ❗️This instruction is intended only for OSD clusters. For local clusters, it is recommended to use the static token (AWS_STATIC_TOKEN env variable) for authentication.
 
+1. Install `ccoctl`
+   ```shell
+   go install github.com/openshift/cloud-credential-operator/cmd/ccoctl@latest
+   ```
 1. Prepare the environment
     ```shell
     ENVIRONMENT=dev
