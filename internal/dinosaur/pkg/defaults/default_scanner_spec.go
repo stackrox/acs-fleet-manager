@@ -10,7 +10,7 @@ import (
 
 // AnalyzerDefaults ...
 type AnalyzerDefaults struct {
-	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"2.75Gi"`
+	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"3Gi"`
 	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"500m"`
 	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"8Gi"`
 	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"3000m"`
