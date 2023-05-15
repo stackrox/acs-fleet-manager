@@ -41,7 +41,11 @@ const (
 	dbBackupRetentionPeriod = 30
 	dbInstancePromotionTier = 2 // a tier of 2 (or higher) ensures that readers and writers can scale independently
 	dbCACertificateType     = "rds-ca-rsa4096-g1"
+
 	dataplaneClusterNameKey = "DataplaneClusterName"
+	instanceTypeTagKey      = "ACSInstanceType"
+	regularInstaceTagValue  = "regular"
+	testInstanceTagValue    = "test"
 
 	// The Aurora Serverless v2 DB instance configuration in ACUs (Aurora Capacity Units)
 	// 1 ACU = 1 vCPU + 2GB RAM
@@ -61,19 +65,19 @@ type RDS struct {
 }
 
 // EnsureDBProvisioned is a blocking function that makes sure that an RDS database was provisioned for a Central
-func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPassword string, exportLogs bool) error {
+func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, masterPassword string, isTestInstance bool) error {
 	clusterID := getClusterID(databaseID)
-	if err := r.ensureDBClusterCreated(clusterID, masterPassword, exportLogs); err != nil {
+	if err := r.ensureDBClusterCreated(clusterID, masterPassword, isTestInstance); err != nil {
 		return fmt.Errorf("ensuring DB cluster %s exists: %w", clusterID, err)
 	}
 
 	instanceID := getInstanceID(databaseID)
-	if err := r.ensureDBInstanceCreated(instanceID, clusterID); err != nil {
+	if err := r.ensureDBInstanceCreated(instanceID, clusterID, isTestInstance); err != nil {
 		return fmt.Errorf("ensuring DB instance %s exists in cluster %s: %w", instanceID, clusterID, err)
 	}
 
 	failoverID := getFailoverInstanceID(databaseID)
-	if err := r.ensureDBInstanceCreated(failoverID, clusterID); err != nil {
+	if err := r.ensureDBInstanceCreated(failoverID, clusterID, isTestInstance); err != nil {
 		return fmt.Errorf("ensuring failover DB instance %s exists in cluster %s: %w", failoverID, clusterID, err)
 	}
 
@@ -117,7 +121,7 @@ func (r *RDS) GetDBConnection(databaseID string) (postgres.DBConnection, error) 
 	return connection, nil
 }
 
-func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string, exportLogs bool) error {
+func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string, isTestInstance bool) error {
 	clusterExists, _, err := r.clusterStatus(clusterID)
 	if err != nil {
 		return fmt.Errorf("checking if DB cluster exists: %w", err)
@@ -128,7 +132,7 @@ func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string, exportLog
 
 	glog.Infof("Initiating provisioning of RDS database cluster %s.", clusterID)
 	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, masterPassword, r.dbSecurityGroup,
-		r.dbSubnetGroup, r.dataplaneClusterName, exportLogs))
+		r.dbSubnetGroup, r.dataplaneClusterName, isTestInstance))
 	if err != nil {
 		return fmt.Errorf("creating DB cluster: %w", err)
 	}
@@ -136,7 +140,7 @@ func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string, exportLog
 	return nil
 }
 
-func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error {
+func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string, isTestInstance bool) error {
 	instanceExists, _, err := r.instanceStatus(instanceID)
 	if err != nil {
 		return fmt.Errorf("checking if DB instance exists: %w", err)
@@ -147,7 +151,7 @@ func (r *RDS) ensureDBInstanceCreated(instanceID string, clusterID string) error
 
 	glog.Infof("Initiating provisioning of RDS database instance %s.", instanceID)
 	_, err = r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID,
-		r.dataplaneClusterName, r.performanceInsights))
+		r.dataplaneClusterName, r.performanceInsights, isTestInstance))
 	if err != nil {
 		return fmt.Errorf("creating DB instance: %w", err)
 	}
@@ -322,7 +326,7 @@ func getFailoverInstanceID(databaseID string) string {
 	return dbPrefix + databaseID + dbFailoverSuffix
 }
 
-func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup, dataplaneClusterName string, exportLogs bool) *rds.CreateDBClusterInput {
+func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnetGroup, dataplaneClusterName string, isTestInstance bool) *rds.CreateDBClusterInput {
 	input := &rds.CreateDBClusterInput{
 		DBClusterIdentifier: aws.String(clusterID),
 		Engine:              aws.String(dbEngine),
@@ -340,18 +344,24 @@ func newCreateCentralDBClusterInput(clusterID, dbPassword, securityGroup, subnet
 		Tags: []*rds.Tag{
 			{
 				Key:   aws.String(dataplaneClusterNameKey),
-				Value: aws.String(dataplaneClusterName)},
+				Value: aws.String(dataplaneClusterName),
+			},
+			{
+				Key:   aws.String(instanceTypeTagKey),
+				Value: aws.String(getInstanceType(isTestInstance)),
+			},
 		},
 	}
 
-	if exportLogs {
+	// do not export DB logs of internal instances (e.g. Probes)
+	if !isTestInstance {
 		input.EnableCloudwatchLogsExports = aws.StringSlice([]string{"postgresql"})
 	}
 
 	return input
 }
 
-func newCreateCentralDBInstanceInput(clusterID, instanceID, dataplaneClusterName string, performanceInsights bool) *rds.CreateDBInstanceInput {
+func newCreateCentralDBInstanceInput(clusterID, instanceID, dataplaneClusterName string, performanceInsights bool, isTestInstance bool) *rds.CreateDBInstanceInput {
 	return &rds.CreateDBInstanceInput{
 		DBInstanceClass:           aws.String(dbInstanceClass),
 		DBClusterIdentifier:       aws.String(clusterID),
@@ -365,7 +375,12 @@ func newCreateCentralDBInstanceInput(clusterID, instanceID, dataplaneClusterName
 		Tags: []*rds.Tag{
 			{
 				Key:   aws.String(dataplaneClusterNameKey),
-				Value: aws.String(dataplaneClusterName)},
+				Value: aws.String(dataplaneClusterName),
+			},
+			{
+				Key:   aws.String(instanceTypeTagKey),
+				Value: aws.String(getInstanceType(isTestInstance)),
+			},
 		},
 	}
 }
@@ -415,6 +430,13 @@ func newRdsClient(awsConfig config.AWS, auth fleetmanager.Auth) (*rds.RDS, error
 
 func getFinalSnapshotID(clusterID string) *string {
 	return aws.String(fmt.Sprintf("%s-%s", clusterID, "final"))
+}
+
+func getInstanceType(isTestInstance bool) string {
+	if isTestInstance {
+		return testInstanceTagValue
+	}
+	return regularInstaceTagValue
 }
 
 type tokenFetcher struct {
