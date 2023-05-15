@@ -587,8 +587,7 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 		return fmt.Errorf("getting DB password from secret: %w", err)
 	}
 
-	exportLogs := !remoteCentral.Metadata.Internal // do not export DB logs of internal instances (e.g. Probes)
-	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword, exportLogs)
+	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword, remoteCentral.Metadata.Internal)
 	if err != nil {
 		return fmt.Errorf("provisioning RDS DB: %w", err)
 	}
