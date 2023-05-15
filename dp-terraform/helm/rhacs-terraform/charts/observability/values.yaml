@@ -28,6 +28,9 @@ observatorium:
   metricsClientId: ""
   metricsSecret: ""
 
+slack:
+  apiURL: ""
+
 pagerduty:
   # PagerDuty integration key, which is generated within a Ruleset.
   key: ""
