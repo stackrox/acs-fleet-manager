@@ -157,7 +157,9 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${OBSERVABILITY_PAGERDUTY_SERVICE_KEY}" \
-  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}"
+  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" \
+  --set observability.slack.apiURL="${OBSERVABILITY_SLACK_API_URL}"
+
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs

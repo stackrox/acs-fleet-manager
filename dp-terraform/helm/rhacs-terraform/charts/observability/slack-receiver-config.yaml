@@ -1,0 +1,18 @@
+# Due to nested go template syntax, this section needs to be moved to a separate file
+# The alternative is quite unreadable escaping, e.g.:
+# title_link: '{{ "{{" }} template "slack.default.titlelink" . {{ "}}" }}'
+title_link: '{{ template "slack.default.titlelink" . }}'
+fallback: '{{ template "slack.default.fallback" . }}'
+title: '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ index .CommonLabels "alertname" }}'
+text: |
+  *Cluster*: {{ index .CommonLabels "rhacs_cluster_name" }}
+  *Namespace*: {{ index .CommonLabels "namespace" }}
+  *Summary*: {{(index .Alerts 0).Annotations.summary }}
+  *Description*: {{ (index .Alerts 0).Annotations.description }}
+actions:
+- type: button
+  text: 'SOP :green_book:'
+  url: '{{ (index .Alerts 0).Annotations.sop_url }}'
+- type: button
+  text: 'Prometheus :prometheus:'
+  url: '{{ (index .Alerts 0).GeneratorURL}}'
