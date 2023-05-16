@@ -12,9 +12,10 @@ package private
 
 // ManagedCentral struct for ManagedCentral
 type ManagedCentral struct {
-	Id            string                      `json:"id,omitempty"`
-	Kind          string                      `json:"kind,omitempty"`
-	Metadata      ManagedCentralAllOfMetadata `json:"metadata,omitempty"`
-	Spec          ManagedCentralAllOfSpec     `json:"spec,omitempty"`
-	RequestStatus string                      `json:"requestStatus,omitempty"`
+	Id             string                      `json:"id,omitempty"`
+	Kind           string                      `json:"kind,omitempty"`
+	Metadata       ManagedCentralAllOfMetadata `json:"metadata,omitempty"`
+	Spec           ManagedCentralAllOfSpec     `json:"spec,omitempty"`
+	RequestStatus  string                      `json:"requestStatus,omitempty"`
+	ForceReconcile string                      `json:"forceReconcile,omitempty"`
 }

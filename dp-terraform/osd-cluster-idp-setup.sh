@@ -112,6 +112,52 @@ trap 'rm -f "${KUBECONFIG}"' EXIT
 echo "Logging into cluster ${CLUSTER_NAME}..."
 oc login "${CLUSTER_URL}" --token="${CLUSTER_TOKEN}"
 
+# This set of commands modifies OIDC provider to include "groups" claim mapping.
+CLUSTER_IDP_ID=$(ocm get /api/clusters_mgmt/v1/clusters/"$CLUSTER_ID"/identity_providers | jq -r '.items[0].id')
+tmpfile=$(mktemp /tmp/dataplane-idp-setup-tmp-patch-body.XXXXXX)
+cat <<END >"$tmpfile"
+{
+  "type": "OpenIDIdentityProvider",
+  "open_id": {
+    "claims": {
+      "email": [
+        "email"
+      ],
+      "groups": [
+        "groups"
+      ],
+      "name": [
+        "preferred_username"
+      ],
+      "preferred_username": [
+        "preferred_username"
+      ]
+    },
+    "client_id": "${OSD_OIDC_CLIENT_ID}",
+    "client_secret": "${OSD_OIDC_CLIENT_SECRET}",
+    "issuer": "https://auth.redhat.com/auth/realms/EmployeeIDP"
+  }
+}
+END
+ocm patch /api/clusters_mgmt/v1/clusters/"$CLUSTER_ID"/identity_providers/"$CLUSTER_IDP_ID" --body="$tmpfile"
+rm "$tmpfile"
+
+# This command grants access to all RH employees to access cluster monitoring.
+oc apply -f - <<END
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: acs-general-observability
+subjects:
+  - kind: Group
+    apiGroup: rbac.authorization.k8s.io
+    name: Employee
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-monitoring-view
+END
+
 ROBOT_NS="acscs-dataplane-cd"
 ROBOT_SA="acscs-cd-robot"
 ROBOT_TOKEN_RESOURCE="robot-token"

@@ -5,7 +5,7 @@ metadata:
   labels:
     app: rhacs-operator
     control-plane: controller-manager
-  name: rhacs-operator-controller-manager-metrics-service
+  name: rhacs-operator-manager-metrics-service
 spec:
   ports:
     - name: https

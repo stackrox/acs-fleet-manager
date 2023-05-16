@@ -329,6 +329,8 @@ components:
                           $ref: "#/components/schemas/ResourceRequirements"
             requestStatus:
               type: string
+            forceReconcile:
+              type: string
 
     ManagedCentralList:
       description: >-

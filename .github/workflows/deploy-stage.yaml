@@ -12,5 +12,5 @@ jobs:
     with:
       acs_environment: stage
       github_environment: stage
-      deploy_clusters: "acs-stage-dp-02 acs-stage-eu-01 acs-stage-eu-02"
+      deploy_clusters: "acs-stage-dp-02 acs-stage-eu-02"
       probe_clusters: "acs-stage-dp-02 acs-stage-eu-02"

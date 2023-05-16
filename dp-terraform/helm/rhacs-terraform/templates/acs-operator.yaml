@@ -1,3 +1,4 @@
+## TODO(ROX-16646): drop acs-operator.yaml template
 {{- if .Values.acsOperator.enabled }}
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup

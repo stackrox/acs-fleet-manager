@@ -19,6 +19,9 @@ const (
 	centralReencryptRouteName   = "managed-central-reencrypt"
 	centralPassthroughRouteName = "managed-central-passthrough"
 	centralTLSSecretName        = "central-tls" // pragma: allowlist secret
+
+	centralReencryptTimeoutAnnotationKey   = "haproxy.router.openshift.io/timeout"
+	centralReencryptTimeoutAnnotationValue = "10m"
 )
 
 // ErrCentralTLSSecretNotFound returned when central-tls secret is not found during creation of the reencrypt route
@@ -94,6 +97,10 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 		return errors.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
 	}
 
+	annotations := map[string]string{
+		centralReencryptTimeoutAnnotationKey: centralReencryptTimeoutAnnotationValue,
+	}
+
 	return s.createCentralRoute(ctx,
 		centralReencryptRouteName,
 		remoteCentral.Metadata.Namespace,
@@ -103,7 +110,8 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 			Key:                      remoteCentral.Spec.UiEndpoint.Tls.Key,
 			Certificate:              remoteCentral.Spec.UiEndpoint.Tls.Cert,
 			DestinationCACertificate: string(centralCA),
-		})
+		},
+		annotations)
 }
 
 // CreatePassthroughRoute creates a new managed central passthrough route.
@@ -114,15 +122,16 @@ func (s *RouteService) CreatePassthroughRoute(ctx context.Context, remoteCentral
 		remoteCentral.Spec.DataEndpoint.Host,
 		&openshiftRouteV1.TLSConfig{
 			Termination: openshiftRouteV1.TLSTerminationPassthrough,
-		})
+		}, nil)
 }
 
-func (s *RouteService) createCentralRoute(ctx context.Context, name string, namespace string, host string, tls *openshiftRouteV1.TLSConfig) error {
+func (s *RouteService) createCentralRoute(ctx context.Context, name, namespace, host string, tls *openshiftRouteV1.TLSConfig, annotations map[string]string) error {
 	route := &openshiftRouteV1.Route{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			Labels:    map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
+			Annotations: annotations,
 		},
 		Spec: openshiftRouteV1.RouteSpec{
 			Host: host,

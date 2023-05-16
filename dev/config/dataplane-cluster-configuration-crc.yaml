@@ -15,6 +15,7 @@ clusters:
    provider_type: standalone
    supported_instance_type: "eval,standard"
    cluster_dns: apps-crc.testing
+   multi_az: true
    available_central_operator_versions:
     - version: "0.1.0"
       ready: true

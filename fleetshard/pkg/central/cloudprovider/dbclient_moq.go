@@ -19,10 +19,10 @@ var _ DBClient = &DBClientMock{}
 //
 //		// make and configure a mocked DBClient
 //		mockedDBClient := &DBClientMock{
-//			EnsureDBDeprovisionedFunc: func(databaseID string) error {
+//			EnsureDBDeprovisionedFunc: func(databaseID string, skipFinalSnapshot bool) error {
 //				panic("mock out the EnsureDBDeprovisioned method")
 //			},
-//			EnsureDBProvisionedFunc: func(ctx context.Context, databaseID string, passwordSecretName string) error {
+//			EnsureDBProvisionedFunc: func(ctx context.Context, databaseID string, passwordSecretName string, isTestInstance bool) error {
 //				panic("mock out the EnsureDBProvisioned method")
 //			},
 //			GetDBConnectionFunc: func(databaseID string) (postgres.DBConnection, error) {
@@ -36,10 +36,10 @@ var _ DBClient = &DBClientMock{}
 //	}
 type DBClientMock struct {
 	// EnsureDBDeprovisionedFunc mocks the EnsureDBDeprovisioned method.
-	EnsureDBDeprovisionedFunc func(databaseID string) error
+	EnsureDBDeprovisionedFunc func(databaseID string, skipFinalSnapshot bool) error
 
 	// EnsureDBProvisionedFunc mocks the EnsureDBProvisioned method.
-	EnsureDBProvisionedFunc func(ctx context.Context, databaseID string, passwordSecretName string) error
+	EnsureDBProvisionedFunc func(ctx context.Context, databaseID string, passwordSecretName string, isTestInstance bool) error
 
 	// GetDBConnectionFunc mocks the GetDBConnection method.
 	GetDBConnectionFunc func(databaseID string) (postgres.DBConnection, error)
@@ -50,6 +50,8 @@ type DBClientMock struct {
 		EnsureDBDeprovisioned []struct {
 			// DatabaseID is the databaseID argument value.
 			DatabaseID string
+			// SkipFinalSnapshot is the skipFinalSnapshot argument value.
+			SkipFinalSnapshot bool
 		}
 		// EnsureDBProvisioned holds details about calls to the EnsureDBProvisioned method.
 		EnsureDBProvisioned []struct {
@@ -59,6 +61,8 @@ type DBClientMock struct {
 			DatabaseID string
 			// PasswordSecretName is the passwordSecretName argument value.
 			PasswordSecretName string
+			// IsTestInstance is the isTestInstance argument value.
+			IsTestInstance bool
 		}
 		// GetDBConnection holds details about calls to the GetDBConnection method.
 		GetDBConnection []struct {
@@ -72,19 +76,21 @@ type DBClientMock struct {
 }
 
 // EnsureDBDeprovisioned calls EnsureDBDeprovisionedFunc.
-func (mock *DBClientMock) EnsureDBDeprovisioned(databaseID string) error {
+func (mock *DBClientMock) EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) error {
 	if mock.EnsureDBDeprovisionedFunc == nil {
 		panic("DBClientMock.EnsureDBDeprovisionedFunc: method is nil but DBClient.EnsureDBDeprovisioned was just called")
 	}
 	callInfo := struct {
-		DatabaseID string
+		DatabaseID        string
+		SkipFinalSnapshot bool
 	}{
-		DatabaseID: databaseID,
+		DatabaseID:        databaseID,
+		SkipFinalSnapshot: skipFinalSnapshot,
 	}
 	mock.lockEnsureDBDeprovisioned.Lock()
 	mock.calls.EnsureDBDeprovisioned = append(mock.calls.EnsureDBDeprovisioned, callInfo)
 	mock.lockEnsureDBDeprovisioned.Unlock()
-	return mock.EnsureDBDeprovisionedFunc(databaseID)
+	return mock.EnsureDBDeprovisionedFunc(databaseID, skipFinalSnapshot)
 }
 
 // EnsureDBDeprovisionedCalls gets all the calls that were made to EnsureDBDeprovisioned.
@@ -92,10 +98,12 @@ func (mock *DBClientMock) EnsureDBDeprovisioned(databaseID string) error {
 //
 //	len(mockedDBClient.EnsureDBDeprovisionedCalls())
 func (mock *DBClientMock) EnsureDBDeprovisionedCalls() []struct {
-	DatabaseID string
+	DatabaseID        string
+	SkipFinalSnapshot bool
 } {
 	var calls []struct {
-		DatabaseID string
+		DatabaseID        string
+		SkipFinalSnapshot bool
 	}
 	mock.lockEnsureDBDeprovisioned.RLock()
 	calls = mock.calls.EnsureDBDeprovisioned
@@ -104,7 +112,7 @@ func (mock *DBClientMock) EnsureDBDeprovisionedCalls() []struct {
 }
 
 // EnsureDBProvisioned calls EnsureDBProvisionedFunc.
-func (mock *DBClientMock) EnsureDBProvisioned(ctx context.Context, databaseID string, passwordSecretName string) error {
+func (mock *DBClientMock) EnsureDBProvisioned(ctx context.Context, databaseID string, passwordSecretName string, isTestInstance bool) error {
 	if mock.EnsureDBProvisionedFunc == nil {
 		panic("DBClientMock.EnsureDBProvisionedFunc: method is nil but DBClient.EnsureDBProvisioned was just called")
 	}
@@ -112,15 +120,17 @@ func (mock *DBClientMock) EnsureDBProvisioned(ctx context.Context, databaseID st
 		Ctx                context.Context
 		DatabaseID         string
 		PasswordSecretName string
+		IsTestInstance     bool
 	}{
 		Ctx:                ctx,
 		DatabaseID:         databaseID,
 		PasswordSecretName: passwordSecretName,
+		IsTestInstance:     isTestInstance,
 	}
 	mock.lockEnsureDBProvisioned.Lock()
 	mock.calls.EnsureDBProvisioned = append(mock.calls.EnsureDBProvisioned, callInfo)
 	mock.lockEnsureDBProvisioned.Unlock()
-	return mock.EnsureDBProvisionedFunc(ctx, databaseID, passwordSecretName)
+	return mock.EnsureDBProvisionedFunc(ctx, databaseID, passwordSecretName, isTestInstance)
 }
 
 // EnsureDBProvisionedCalls gets all the calls that were made to EnsureDBProvisioned.
@@ -131,11 +141,13 @@ func (mock *DBClientMock) EnsureDBProvisionedCalls() []struct {
 	Ctx                context.Context
 	DatabaseID         string
 	PasswordSecretName string
+	IsTestInstance     bool
 } {
 	var calls []struct {
 		Ctx                context.Context
 		DatabaseID         string
 		PasswordSecretName string
+		IsTestInstance     bool
 	}
 	mock.lockEnsureDBProvisioned.RLock()
 	calls = mock.calls.EnsureDBProvisioned

@@ -326,14 +326,9 @@ test: $(GOTESTSUM_BIN)
 # Runs the AWS RDS integration tests.
 test/rds: $(GOTESTSUM_BIN)
 	RUN_RDS_TESTS=true \
-	$(GOTESTSUM_BIN) --junitfile data/results/rds-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -timeout 30m -count=1 \
+	$(GOTESTSUM_BIN) --junitfile data/results/rds-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -timeout 45m -count=1 \
 		./fleetshard/pkg/central/cloudprovider/awsclient/...
 .PHONY: test/rds
-
-# Precompile everything required for development/test.
-test/prepare:
-	$(GO) test -i ./internal/dinosaur/test/integration/...
-.PHONY: test/prepare
 
 # Runs the integration tests.
 #
@@ -345,7 +340,7 @@ test/prepare:
 #   make test/integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
-test/integration/dinosaur: test/prepare $(GOTESTSUM_BIN)
+test/integration/dinosaur: $(GOTESTSUM_BIN)
 	$(GOTESTSUM_BIN) --junitfile data/results/fleet-manager-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
 				./internal/dinosaur/test/integration/...
 .PHONY: test/integration/dinosaur

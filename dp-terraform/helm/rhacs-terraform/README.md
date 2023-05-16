@@ -17,6 +17,8 @@ Run the script for your environment and cluster name:
 The env var `FM_ENDPOINT` should point to an endpoint for the fleet manager. An option to use a fleet manager instance running in your laptop is to [setup ngrok](https://ngrok.com/docs/getting-started), launch the fleet manager, and run `ngrok http 8000` to expose it to the internet. That commands outputs an endpoint that you can use for `FM_ENDPOINT`.  
 To get the cluster id for staging look for `cluster_id` in `dev/config/dataplane-cluster-configuration-staging.yaml` file. Export that value to environment variable `export CLUSTER_ID="<cluster_id from config file>"`.
 
+The FLEETSHARD_SYNC_<CPU|MEMORY>_<REQUEST|LIMIT> environment variables can be used to override the default values for the fleetshard-sync container resource requests and limits. See the `terraform_cluster.sh` for the current default values.
+
 **Create values file**
 
 Create a file `~/acs-terraform-values.yaml` with the values for the parameters in [values.yaml](./values.yaml) that are missing or that you want to override. That file will contain credentials, so make sure you put it in a safe location, and with suitable permissions.
