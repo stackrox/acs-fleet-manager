@@ -33,7 +33,7 @@ fleetshardSync:
     securityGroup: ""
     performanceInsights: true
   aws:
-    region: "us-east-1"  # TODO(2023-05-01): Remove the default value here as we now set it explicitly
+    region: "us-east-1" # TODO(2023-05-01): Remove the default value here as we now set it explicitly
     roleARN: ""
   telemetry:
     storage:
@@ -91,3 +91,45 @@ logging:
   aws:
     accessKeyId: ""
     secretAccessKey: ""
+
+vector:
+  role: "Stateless-Aggregator"
+  service:
+    annotations:
+      rhacs.redhat.com/cluster-name: ""
+      rhacs.redhat.com/environment: ""
+  serviceHeadless:
+    enabled: false
+  customConfig:
+    sources:
+      http_server:
+        type: "http_server"
+        address: "0.0.0.0:8888"
+        decoding:
+          codec: "json"
+    sinks:
+      aws_s3:
+        type: "aws_s3"
+        region: "us-east-1"
+        bucket: "rox-14547-test-vector-us-east-1"
+        key_prefix: '{{ "{{" }} .tenant_id {{ "}}" }}/%F/'
+        inputs: ["http_server"]
+        compression: none
+        filename_extension: "json"
+        batch:
+          timeout_secs: 10
+        encoding:
+          codec: "json"
+        auth:
+          region: "us-east-1"
+  env:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: cloudwatch
+          key: aws_access_key_id
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: cloudwatch
+          key: aws_secret_access_key

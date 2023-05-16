@@ -157,7 +157,12 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" \
-  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}"
+  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" \
+  --set vector.enabled=true \
+  --set vector.secrets.generic.awsAccessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \
+  --set vector.secrets.generic.awsSecretAccessKey="${LOGGING_AWS_SECRET_ACCESS_KEY}" \
+  --set vector.service.annotations.rhacs\\.redhat\\.com/cluster-name="${CLUSTER_NAME}" \
+  --set vector.service.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}"
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs
