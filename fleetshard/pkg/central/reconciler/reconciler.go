@@ -110,8 +110,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, errors.Wrapf(err, "checking if central changed")
 	}
+	needsReconcile := r.needsReconcile(changed, remoteCentral.ForceReconcile)
 
-	if !changed && r.shouldSkipReadyCentral(remoteCentral) {
+	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
 		return nil, ErrCentralNotChanged
 	}
 
@@ -341,7 +342,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 	if !centralDeploymentReady || !centralTLSSecretFound {
-		if isRemoteCentralProvisioning(remoteCentral) && !changed { // no changes detected, wait until central become ready
+		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
 		}
 		return installingStatus(), nil
@@ -431,7 +432,9 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	globalDeleted = globalDeleted && centralDeleted
 
 	if r.managedDBEnabled {
-		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id)
+		// skip Snapshot for remoteCentral created by probe
+		skipSnapshot := remoteCentral.Metadata.Internal
+		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id, skipSnapshot)
 		if err != nil {
 			return false, fmt.Errorf("deprovisioning DB: %v", err)
 		}
@@ -584,7 +587,7 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 		return fmt.Errorf("getting DB password from secret: %w", err)
 	}
 
-	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword)
+	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword, remoteCentral.Metadata.Internal)
 	if err != nil {
 		return fmt.Errorf("provisioning RDS DB: %w", err)
 	}
@@ -791,27 +794,9 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 		if obj.GetNamespace() == "" {
 			obj.SetNamespace(remoteCentral.Metadata.Namespace)
 		}
-		key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
-		var out unstructured.Unstructured
-		out.SetGroupVersionKind(obj.GroupVersionKind())
-		err := r.client.Get(ctx, key, &out)
-		if err == nil {
-			glog.V(10).Infof("Updating object %s/%s", obj.GetNamespace(), obj.GetName())
-			obj.SetResourceVersion(out.GetResourceVersion())
-			err := r.client.Update(ctx, obj)
-			if err != nil {
-				return fmt.Errorf("failed to update object %s/%s of type %v: %w", key.Namespace, key.Namespace, obj.GroupVersionKind(), err)
-			}
-
-			continue
-		}
-		if !apiErrors.IsNotFound(err) {
-			return fmt.Errorf("failed to retrieve object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
-		}
-		err = r.client.Create(ctx, obj)
-		glog.V(10).Infof("Creating object %s/%s", obj.GetNamespace(), obj.GetName())
-		if err != nil && !apiErrors.IsAlreadyExists(err) {
-			return fmt.Errorf("failed to create object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
+		err := charts.InstallOrUpdateChart(ctx, obj, r.client)
+		if err != nil {
+			return fmt.Errorf("failed to update central tenant object %w", err)
 		}
 	}
 
@@ -932,27 +917,31 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 }
 
 func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (chartutil.Values, error) {
-	vals := chartutil.Values{
+	if r.resourcesChart == nil {
+		return nil, errors.New("resources chart is not set")
+	}
+	src := r.resourcesChart.Values
+	dst := map[string]interface{}{
 		"labels": map[string]interface{}{
 			k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
 		},
 	}
 	if r.egressProxyImage != "" {
-		override := chartutil.Values{
-			"egressProxy": chartutil.Values{
-				"image": r.egressProxyImage,
-			},
+		dst["egressProxy"] = map[string]interface{}{
+			"image": r.egressProxyImage,
 		}
-		vals = chartutil.CoalesceTables(vals, override)
 	}
-
-	return vals, nil
+	return chartutil.CoalesceTables(dst, src), nil
 }
 
 func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
 	return r.wantsAuthProvider == r.hasAuthProvider &&
 		isRemoteCentralReady(remoteCentral) &&
 		remoteCentral.Spec.Versions.ActualVersion == remoteCentral.Spec.Versions.DesiredVersion
+}
+
+func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile string) bool {
+	return changed || forceReconcile == "always"
 }
 
 var resourcesChart = charts.MustGetChart("tenant-resources")

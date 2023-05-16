@@ -13,10 +13,10 @@ import (
 type DBClient interface {
 	// EnsureDBProvisioned is a blocking function that makes sure that a database with the given databaseID was provisioned,
 	// using the master password given as parameter
-	EnsureDBProvisioned(ctx context.Context, databaseID, passwordSecretName string) error
+	EnsureDBProvisioned(ctx context.Context, databaseID, passwordSecretName string, isTestInstance bool) error
 	// EnsureDBDeprovisioned is a non-blocking function that makes sure that a managed DB is deprovisioned (more
 	// specifically, that its deletion was initiated)
-	EnsureDBDeprovisioned(databaseID string) error
+	EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) error
 	// GetDBConnection returns a postgres.DBConnection struct, which contains the data necessary
 	// to construct a PostgreSQL connection string. It expects that the database was already provisioned.
 	GetDBConnection(databaseID string) (postgres.DBConnection, error)

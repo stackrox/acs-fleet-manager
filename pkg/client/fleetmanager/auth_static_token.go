@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	staticTokenAuthName = "STATIC_TOKEN"
+	// StaticTokenAuthName is the name of the static token authentication method.
+	StaticTokenAuthName = "STATIC_TOKEN"
 )
 
 var (
@@ -24,7 +25,7 @@ type staticTokenAuthFactory struct{}
 
 // GetName gets the name of the factory.
 func (f *staticTokenAuthFactory) GetName() string {
-	return staticTokenAuthName
+	return StaticTokenAuthName
 }
 
 // CreateAuth ...

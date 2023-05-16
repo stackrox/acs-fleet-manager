@@ -22,7 +22,7 @@ func TestTelemetryTrackRequests(t *testing.T) {
 	ctx := context.Background()
 	tenantID := "tenant-id"
 	createFunc := func(t *Telemetry, tt testCase) {
-		t.TrackCreationRequested(ctx, tenantID, tt.isAdmin, tt.requestErr)
+		t.trackCreationRequested(ctx, tenantID, tt.isAdmin, tt.requestErr)
 	}
 	deleteFunc := func(t *Telemetry, tt testCase) {
 		t.TrackDeletionRequested(ctx, tenantID, tt.isAdmin, tt.requestErr)

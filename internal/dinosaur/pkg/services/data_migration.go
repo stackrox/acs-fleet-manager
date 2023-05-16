@@ -56,6 +56,9 @@ func (m *DataMigration) migrateOrganisationNames() (int, error) {
 		glog.Infof("migrated column %q to new value %q for central instance %q ", colName, central.OrganisationName, central.ID)
 		migratedCnt++
 	}
+	if err := rows.Err(); err != nil {
+		glog.Error(errors.Wrapf(err, "iterating %q rows", colName))
+	}
 	return migratedCnt, nil
 }
 

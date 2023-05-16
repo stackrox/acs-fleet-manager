@@ -32,6 +32,15 @@ spec:
       annotations:
         config-hash: {{ .Files.Get "config/squid.conf" | sha256sum | quote }}
     spec:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/component
+              operator: In
+              values:
+              - egress-proxy
+          topologyKey: kubernetes.io/hostname
       containers:
       - name: egress-proxy
         image: {{ .Values.egressProxy.image }}
@@ -49,6 +58,13 @@ spec:
           mountPath: /etc/squid/squid.conf
           subPath: squid.conf
           readOnly: true
+        resources:
+          limits:
+            cpu: {{ .Values.egressProxy.resources.limits.cpu | quote }}
+            memory: {{ .Values.egressProxy.resources.limits.memory | quote }}
+          requests:
+            cpu: {{ .Values.egressProxy.resources.requests.cpu | quote }}
+            memory: {{ .Values.egressProxy.resources.requests.memory | quote }}
       volumes:
       - name: config-volume
         configMap:

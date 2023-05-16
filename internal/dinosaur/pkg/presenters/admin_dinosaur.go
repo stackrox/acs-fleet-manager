@@ -64,5 +64,6 @@ func PresentDinosaurRequestAdminEndpoint(request *dbapi.CentralRequest, _ accoun
 		InstanceType:         request.InstanceType,
 		Central:              adminCentral,
 		Scanner:              adminScanner,
+		ForceReconcile:       request.ForceReconcile,
 	}, nil
 }

@@ -12,3 +12,11 @@ spec:
   source: observability-operator-manifests
   sourceNamespace: {{ include "observability.namespace" . }}
   startingCSV: observability-operator.{{ .Values.observabilityOperatorVersion }}
+  config:
+    resources:
+      requests:
+        cpu: {{ .Values.observabilityOperator.resources.requests.cpu | quote }}
+        memory: {{ .Values.observabilityOperator.resources.requests.memory | quote }}
+      limits:
+        cpu: {{ .Values.observabilityOperator.resources.limits.cpu | quote }}
+        memory: {{ .Values.observabilityOperator.resources.limits.memory | quote }}

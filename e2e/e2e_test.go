@@ -227,19 +227,20 @@ var _ = Describe("Central", func() {
 			}
 		})
 
-		It("should spin up an egress proxy with two healthy replicas", func() {
+		It("should spin up an egress proxy with three healthy replicas", func() {
 			if createdCentral == nil {
 				Fail("central not created")
 			}
+			var expected int32 = 3
 			Eventually(func() error {
 				var egressProxyDeployment appsv1.Deployment
 				key := ctrlClient.ObjectKey{Namespace: namespaceName, Name: "egress-proxy"}
 				if err := k8sClient.Get(context.TODO(), key, &egressProxyDeployment); err != nil {
 					return err
 				}
-				if egressProxyDeployment.Status.ReadyReplicas < 2 {
+				if egressProxyDeployment.Status.ReadyReplicas < expected {
 					statusBytes, _ := yaml.Marshal(&egressProxyDeployment.Status)
-					return fmt.Errorf("egress proxy only has %d/%d ready replicas (and %d unavailable ones), expected 2. full status: %s", egressProxyDeployment.Status.ReadyReplicas, egressProxyDeployment.Status.Replicas, egressProxyDeployment.Status.UnavailableReplicas, statusBytes)
+					return fmt.Errorf("egress proxy only has %d/%d ready replicas (and %d unavailable ones), expected %d. full status: %s", egressProxyDeployment.Status.ReadyReplicas, egressProxyDeployment.Status.Replicas, egressProxyDeployment.Status.UnavailableReplicas, expected, statusBytes)
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
@@ -319,12 +320,12 @@ var _ = Describe("Central", func() {
 
 		centralResources := private.ResourceRequirements{
 			Requests: map[string]string{
-				corev1.ResourceCPU.String():    "501m",
-				corev1.ResourceMemory.String(): "201M",
+				corev1.ResourceCPU.String():    "210m",
+				corev1.ResourceMemory.String(): "210M",
 			},
 			Limits: map[string]string{
-				corev1.ResourceCPU.String():    "502m",
-				corev1.ResourceMemory.String(): "202M",
+				corev1.ResourceCPU.String():    "310m",
+				corev1.ResourceMemory.String(): "310M",
 			},
 		}
 		centralSpec := private.CentralSpec{
@@ -332,12 +333,12 @@ var _ = Describe("Central", func() {
 		}
 		scannerResources := private.ResourceRequirements{
 			Requests: map[string]string{
-				corev1.ResourceCPU.String():    "301m",
-				corev1.ResourceMemory.String(): "151M",
+				corev1.ResourceCPU.String():    "210m",
+				corev1.ResourceMemory.String(): "310M",
 			},
 			Limits: map[string]string{
-				corev1.ResourceCPU.String():    "302m",
-				corev1.ResourceMemory.String(): "152M",
+				corev1.ResourceCPU.String():    "211m",
+				corev1.ResourceMemory.String(): "311M",
 			},
 		}
 		scannerScaling := private.ScannerSpecAnalyzerScaling{
@@ -422,19 +423,19 @@ var _ = Describe("Central", func() {
 							corev1.ResourceMemory.String(): "199M",
 						},
 						Limits: map[string]string{
-							corev1.ResourceCPU.String(): "505m",
+							corev1.ResourceCPU.String(): "315m",
 						},
 					},
 				},
 			}
 			newCentralResources := corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("501m"),
+					corev1.ResourceCPU:    resource.MustParse("210m"),
 					corev1.ResourceMemory: resource.MustParse("199M"),
 				},
 				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("505m"),
-					corev1.ResourceMemory: resource.MustParse("202M"),
+					corev1.ResourceCPU:    resource.MustParse("315m"),
+					corev1.ResourceMemory: resource.MustParse("310M"),
 				},
 			}
 

@@ -128,7 +128,7 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
 	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
-	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) error {
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string, _ bool) error {
 		return nil
 	}
 	managedDBProvisioningClient.GetDBConnectionFunc = func(_ string) (postgres.DBConnection, error) {
@@ -323,6 +323,32 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        centralName,
+			Namespace:   centralNamespace,
+			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
+		},
+	}, centralDeploymentObject()).Build()
+
+	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
+
+	managedCentral := simpleManagedCentral
+	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
+	managedCentral.ForceReconcile = "always"
+
+	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)
+	require.NoError(t, err)
+
+	_, err = r.Reconcile(context.TODO(), managedCentral)
+	require.NoError(t, err)
+	assert.Equal(t, expectedHash, r.lastCentralHash)
+
+	_, err = r.Reconcile(context.TODO(), managedCentral)
+	require.NoError(t, err)
+}
+
 func TestReconcileDelete(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
@@ -382,10 +408,10 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
 	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
-	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) error {
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string, _ bool) error {
 		return nil
 	}
-	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(_ string) error {
+	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(_ string, _ bool) error {
 		return nil
 	}
 	managedDBProvisioningClient.GetDBConnectionFunc = func(_ string) (postgres.DBConnection, error) {
@@ -410,7 +436,7 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
 
 	// trigger deletion
-	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string) error {
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string, _ bool) error {
 		return nil
 	}
 	statusTrigger, err := r.Reconcile(context.TODO(), deletedCentral)

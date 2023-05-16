@@ -12,6 +12,7 @@ spec:
   resyncPeriod: {{ .Values.resyncPeriod | quote }}
   retention: {{ .Values.retention | quote }}
   selfContained:
+    alertManagerConfigSecret: rhacs-alertmanager-configuration
     disableBlackboxExporter: true
     # Disable logging features of the operator, because we set up the logging operator
     # ourselves via the logging sub-chart.
@@ -44,6 +45,41 @@ spec:
           values:
             - rhacs
             - strimzi
+    alertManagerResourceRequirement:
+      requests:
+        cpu: {{ .Values.alertManager.resources.requests.cpu | quote }}
+        memory: {{ .Values.alertManager.resources.requests.memory | quote }}
+      limits:
+        cpu: {{ .Values.alertManager.resources.limits.cpu | quote }}
+        memory: {{ .Values.alertManager.resources.limits.memory | quote }}
+    prometheusResourceRequirement:
+      requests:
+        cpu: {{ .Values.prometheus.resources.requests.cpu | quote }}
+        memory: {{ .Values.prometheus.resources.requests.memory | quote }}
+      limits:
+        cpu: {{ .Values.prometheus.resources.limits.cpu | quote }}
+        memory: {{ .Values.prometheus.resources.limits.memory | quote }}
+    prometheusOperatorResourceRequirement:
+      requests:
+        cpu: {{ .Values.prometheusOperator.resources.requests.cpu | quote }}
+        memory: {{ .Values.prometheusOperator.resources.requests.memory | quote }}
+      limits:
+        cpu: {{ .Values.prometheusOperator.resources.limits.cpu | quote }}
+        memory: {{ .Values.prometheusOperator.resources.limits.memory | quote }}
+    grafanaResourceRequirement:
+      requests:
+        cpu: {{ .Values.grafana.resources.requests.cpu | quote }}
+        memory: {{ .Values.grafana.resources.requests.memory | quote }}
+      limits:
+        cpu: {{ .Values.grafana.resources.limits.cpu | quote }}
+        memory: {{ .Values.grafana.resources.limits.memory | quote }}
+    grafanaOperatorResourceRequirement:
+      requests:
+        cpu: {{ .Values.grafanaOperator.resources.requests.cpu | quote }}
+        memory: {{ .Values.grafanaOperator.resources.requests.memory | quote }}
+      limits:
+        cpu: {{ .Values.grafanaOperator.resources.limits.cpu | quote }}
+        memory: {{ .Values.grafanaOperator.resources.limits.memory | quote }}
   storage:
     prometheus:
       volumeClaimTemplate:

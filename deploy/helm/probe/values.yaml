@@ -16,3 +16,10 @@ redHatSSO:
   clientSecret: ""
   endpoint: "https://sso.redhat.com"
   realm: "redhat-external"
+resources:
+  limits:
+    cpu: "100m"
+    memory: "128Mi"
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
