@@ -120,14 +120,19 @@ vector:
           timeout_secs: 10
         encoding:
           codec: "json"
+  fullnameOverride: rhacs-vector
+  secrets:
+    generic:
+      aws_access_key_id: ""
+      aws_secret_access_key: ""
   env:
     - name: AWS_ACCESS_KEY_ID
       valueFrom:
         secretKeyRef:
-          name: cloudwatch
+          name: rhacs-vector
           key: aws_access_key_id
     - name: AWS_SECRET_ACCESS_KEY
       valueFrom:
         secretKeyRef:
-          name: cloudwatch
+          name: rhacs-vector
           key: aws_secret_access_key

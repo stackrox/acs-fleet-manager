@@ -161,8 +161,10 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set vector.enabled=true \
   --set vector.service.annotations.rhacs\\.redhat\\.com/cluster-name="${CLUSTER_NAME}" \
   --set vector.service.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}" \
-  --set vector.customConfig.sinks.aws_s3.region="${CLUSTER_REGION:-us-east-1}" \
-  --set vector.customConfig.sinks.aws_s3.bucket="${AWS_VECTOR_BUCKET:-rox-14547-test-vector-us-east-1}"
+  --set vector.customConfig.sinks.aws_s3.region="${CLUSTER_REGION}" \
+  --set vector.customConfig.sinks.aws_s3.bucket="${VECTOR_AWS_BUCKET}" \
+  --set vector.secrets.generic.aws_access_key_id="${VECTOR_AWS_ACCESS_KEY_ID}" \
+  --set vector.secrets.generic.aws_secret_access_key="${VECTOR_AWS_SECRET_ACCESS_KEY}"
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs
