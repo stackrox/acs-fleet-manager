@@ -160,7 +160,9 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" \
   --set vector.enabled=true \
   --set vector.service.annotations.rhacs\\.redhat\\.com/cluster-name="${CLUSTER_NAME}" \
-  --set vector.service.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}"
+  --set vector.service.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}" \
+  --set vector.customConfig.sinks.aws_s3.region="${CLUSTER_REGION:-us-east-1}" \
+  --set vector.customConfig.sinks.aws_s3.bucket="${AWS_VECTOR_BUCKET:-rox-14547-test-vector-us-east-1}"
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs
