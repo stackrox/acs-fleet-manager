@@ -118,6 +118,91 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	glog.Infof("Start reconcile central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
+
+	central, err := r.getInstanceConfig(&remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = r.reconcileAuthProviderConfig(ctx, remoteCentral, central); err != nil {
+		return nil, err
+	}
+
+	if remoteCentral.Metadata.DeletionTimestamp != "" {
+		return r.reconcileInstanceDeletion(ctx, remoteCentral, central)
+	}
+
+	namespaceLabels := map[string]string{
+		orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
+		tenantIDLabelKey: remoteCentral.Id,
+	}
+	namespaceAnnotations := map[string]string{
+		orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
+	}
+	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels, namespaceAnnotations); err != nil {
+		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
+	}
+
+	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
+		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
+	}
+
+	if r.managedDBEnabled {
+		if err = r.reconcileCentralDBConfig(ctx, remoteCentral, central); err != nil {
+			return nil, err
+		}
+	}
+
+	if err = r.reconcileCentral(ctx, remoteCentral, central); err != nil {
+		return nil, err
+	}
+
+	centralTLSSecretFound := true // pragma: allowlist secret
+	if r.useRoutes {
+		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
+			if errors.Is(err, k8s.ErrCentralTLSSecretNotFound) {
+				centralTLSSecretFound = false // pragma: allowlist secret
+			} else {
+				return nil, errors.Wrapf(err, "updating routes")
+			}
+		}
+	}
+
+	// Check whether deployment is ready.
+	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+	if !centralDeploymentReady || !centralTLSSecretFound {
+		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
+			return nil, ErrCentralNotChanged
+		}
+		return installingStatus(), nil
+	}
+
+	if err = r.reconcileAuthProvider(ctx, remoteCentral); err != nil {
+		return nil, err
+	}
+
+	status, err := r.collectReconciliationStatus(ctx, remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+
+	// Setting the last central hash must always be executed as the last step.
+	// defer can't be used for this call because it is also executed after the reconcile failed.
+	if err := r.setLastCentralHash(remoteCentral); err != nil {
+		return nil, errors.Wrapf(err, "setting central reconcilation cache")
+	}
+
+	return status, nil
+}
+
+func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
+	if remoteCentral == nil {
+		return nil, errInvalidArguments
+	}
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
@@ -215,11 +300,18 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		central.ObjectMeta.Labels = labels
 	}
 
+	return central, nil
+}
+
+func (r *CentralReconciler) reconcileAuthProviderConfig(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) error {
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
+
 	// Check whether auth provider is actually created and this reconciler just is not aware of that.
 	if r.wantsAuthProvider && !r.hasAuthProvider {
 		exists, err := existsRHSSOAuthProvider(ctx, remoteCentral, r.client)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		// If sso.redhat.com auth provider exists, there is no need for admin/password login.
 		// We also store whether auth provider exists within reconciler instance to avoid polluting network.
@@ -233,67 +325,63 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
 	}
 
-	if remoteCentral.Metadata.DeletionTimestamp != "" {
-		deleted, err := r.ensureCentralDeleted(ctx, remoteCentral, central)
-		if err != nil {
-			return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
-		}
-		if deleted {
-			return deletedStatus(), nil
-		}
-		return nil, ErrDeletionInProgress
+	return nil
+}
+
+func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) (*private.DataPlaneCentralStatus, error) {
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
+
+	deleted, err := r.ensureCentralDeleted(ctx, remoteCentral, central)
+	if err != nil {
+		return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
+	}
+	if deleted {
+		return deletedStatus(), nil
+	}
+	return nil, ErrDeletionInProgress
+}
+
+func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) error {
+	centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
+	if err != nil {
+		return fmt.Errorf("getting Central DB connection string: %w", err)
 	}
 
-	namespaceLabels := map[string]string{
-		orgIDLabelKey:    remoteCentral.Spec.Auth.OwnerOrgId,
-		tenantIDLabelKey: remoteCentral.Id,
-	}
-	namespaceAnnotations := map[string]string{
-		orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
-	}
-	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels, namespaceAnnotations); err != nil {
-		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
+	central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
+		IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
+		ConnectionStringOverride: pointer.String(centralDBConnectionString),
+		PasswordSecret: &v1alpha1.LocalSecretReference{
+			Name: centralDbSecretName,
+		},
 	}
 
-	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
-	}
-
-	if r.managedDBEnabled {
-		centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
-		if err != nil {
-			return nil, fmt.Errorf("getting Central DB connection string: %w", err)
-		}
-
-		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
-			IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
-			ConnectionStringOverride: pointer.String(centralDBConnectionString),
-			PasswordSecret: &v1alpha1.LocalSecretReference{
-				Name: centralDbSecretName,
+	dbCA, err := postgres.GetDatabaseCACertificates()
+	if err != nil {
+		glog.Warningf("Could not read DB server CA bundle: %v", err)
+	} else {
+		central.Spec.TLS = &v1alpha1.TLSConfig{
+			AdditionalCAs: []v1alpha1.AdditionalCA{
+				{
+					Name:    postgres.CentralDatabaseCACertificateBaseName,
+					Content: string(dbCA),
+				},
 			},
 		}
-
-		dbCA, err := postgres.GetDatabaseCACertificates()
-		if err != nil {
-			glog.Warningf("Could not read DB server CA bundle: %v", err)
-		} else {
-			central.Spec.TLS = &v1alpha1.TLSConfig{
-				AdditionalCAs: []v1alpha1.AdditionalCA{
-					{
-						Name:    postgres.CentralDatabaseCACertificateBaseName,
-						Content: string(dbCA),
-					},
-				},
-			}
-		}
 	}
+	return nil
+}
+
+func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) error {
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
 	centralExists := true
 	existingCentral := v1alpha1.Central{}
-	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}, &existingCentral)
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}, &existingCentral)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return nil, errors.Wrapf(err, "unable to check the existence of central %s/%s", central.GetNamespace(), central.GetName())
+			return errors.Wrapf(err, "unable to check the existence of central %s/%s", central.GetNamespace(), central.GetName())
 		}
 		centralExists = false
 	}
@@ -303,12 +391,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			central.Annotations = map[string]string{}
 		}
 		if err := util.IncrementCentralRevision(central); err != nil {
-			return nil, errors.Wrap(err, "incrementing central's revision")
+			return errors.Wrap(err, "incrementing central's revision")
 		}
 
 		glog.Infof("Creating central %s/%s", central.GetNamespace(), central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
-			return nil, errors.Wrapf(err, "creating new central %s/%s", remoteCentralNamespace, remoteCentralName)
+			return errors.Wrapf(err, "creating new central %s/%s", remoteCentralNamespace, remoteCentralName)
 		}
 		glog.Infof("Central %s/%s created", central.GetNamespace(), central.GetName())
 	} else {
@@ -316,67 +404,47 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		existingCentral.Spec = central.Spec
 
 		if err := util.IncrementCentralRevision(&existingCentral); err != nil {
-			return nil, errors.Wrap(err, "incrementing central's revision")
+			return errors.Wrap(err, "incrementing central's revision")
 		}
 		existingCentral.Spec = *central.Spec.DeepCopy()
 
 		if err := r.client.Update(ctx, &existingCentral); err != nil {
-			return nil, errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
+			return errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
 		}
 	}
+	return nil
+}
 
-	centralTLSSecretFound := true // pragma: allowlist secret
-	if r.useRoutes {
-		if err := r.ensureRoutesExist(ctx, remoteCentral); err != nil {
-			if errors.Is(err, k8s.ErrCentralTLSSecretNotFound) {
-				centralTLSSecretFound = false // pragma: allowlist secret
-			} else {
-				return nil, errors.Wrapf(err, "updating routes")
-			}
-		}
-	}
-
-	// Check whether deployment is ready.
-	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral)
-	if err != nil {
-		return nil, err
-	}
-	if !centralDeploymentReady || !centralTLSSecretFound {
-		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
-			return nil, ErrCentralNotChanged
-		}
-		return installingStatus(), nil
-	}
-
+func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	// Skip auth provider initialisation if:
 	// 1. Auth provider is already created
 	// 2. OR reconciler creator specified auth provider not to be created
 	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
 	if r.wantsAuthProvider && !r.hasAuthProvider && !isRemoteCentralReady(remoteCentral) {
-		err = createRHSSOAuthProvider(ctx, remoteCentral, r.client)
+		err := createRHSSOAuthProvider(ctx, remoteCentral, r.client)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		r.hasAuthProvider = true
 	}
+
+	return nil
+}
+
+func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
 	status := readyStatus()
 	// Do not report routes statuses if:
 	// 1. Routes are not used on the cluster
 	// 2. Central request is in status "Ready" - assuming that routes are already reported and saved
 	if r.useRoutes && !isRemoteCentralReady(remoteCentral) {
+		var err error
 		status.Routes, err = r.getRoutesStatuses(ctx, remoteCentralNamespace)
 		if err != nil {
 			return nil, err
 		}
 	}
-
-	// Setting the last central hash must always be executed as the last step.
-	// defer can't be used for this call because it is also executed after the reconcile failed.
-	if err := r.setLastCentralHash(remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "setting central reconcilation cache")
-	}
-
 	return status, nil
 }
 
