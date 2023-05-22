@@ -99,8 +99,6 @@ vector:
       rhacs.redhat.com/cluster-name: ""
       rhacs.redhat.com/environment: ""
       service.beta.openshift.io/serving-cert-secret-name: rhacs-vector-tls-secret
-    topologyKeys:
-      - "topology.kubernetes.io/zone"
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -133,7 +131,7 @@ vector:
           codec: "json"
         tls:
           enabled: true
-          ca_file: "/etc/vector/tls/service-ca.crt"
+          ca_file: "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
           crt_file: "/etc/vector/tls/tls.crt"
           key_file: "/etc/vector/tls/tls.key"
     sinks:
@@ -145,6 +143,8 @@ vector:
         inputs: ["http_server"]
         compression: none
         filename_extension: "json"
+        healthcheck:
+          enabled: false
         batch:
           timeout_secs: 10
         encoding:
