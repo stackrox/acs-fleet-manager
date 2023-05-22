@@ -111,6 +111,7 @@ vector:
           topologyKey: "topology.kubernetes.io/zone"
   persistence:
     enabled: true
+    size: 100Mi
   replicas: 3
   extraVolumes:
     - name: service-tls-secret
