@@ -4,7 +4,6 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
@@ -217,8 +216,19 @@ func (r *Runtime) upgradeOperator() error {
 	ctx := context.Background()
 	// TODO: gather desired operator versions from fleet-manager and update operators based on ticker
 	// TODO: Leave Operator installation before reconciler run until migration
-	operatorImages := []string{"quay.io/rhacs-eng/stackrox-operator:3.74.0", "quay.io/rhacs-eng/stackrox-operator:3.74.1"}
-	glog.Infof("Installing Operators: %s", strings.Join(operatorImages, ", "))
+	operatorImages := []operator.ACSOperatorImage{
+		{
+			Image:      "quay.io/rhacs-eng/stackrox-operator:4.0.0",
+			InstallCRD: false,
+		},
+		{
+			Image:      "quay.io/rhacs-eng/stackrox-operator:4.0.1",
+			InstallCRD: false,
+		},
+	}
+	for _, img := range operatorImages {
+		glog.Infof("Installing Operator: %s and download CRD: %t", img.Image, img.InstallCRD)
+	}
 	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages)
 	if err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)

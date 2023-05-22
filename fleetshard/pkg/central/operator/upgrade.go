@@ -16,31 +16,33 @@ const (
 	operatorNamespace        = "stackrox-operator"
 	releaseName              = "rhacs-operator"
 	operatorDeploymentPrefix = "rhacs-operator-manager"
-	centralCrdURL            = "https://raw.githubusercontent.com/stackrox/stackrox/master/operator/bundle/manifests/platform.stackrox.io_centrals.yaml"
-	securedClusterCrdURL     = "https://raw.githubusercontent.com/stackrox/stackrox/master/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml"
 
 	// deployment names should contain at most 63 characters
 	// RFC 1035 Label Names: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
 	maxOperatorDeploymentNameLength = 63
 )
 
-func parseOperatorImages(images []string) ([]chartutil.Values, error) {
+func parseOperatorImages(images []ACSOperatorImage) ([]chartutil.Values, string, error) {
 	if len(images) == 0 {
-		return nil, fmt.Errorf("the list of images is empty")
+		return nil, "", fmt.Errorf("the list of images is empty")
 	}
 	var operatorImages []chartutil.Values
+	var crdTag string
 	uniqueImages := make(map[string]bool)
 	for _, img := range images {
-		if !strings.Contains(img, ":") {
-			return nil, fmt.Errorf("failed to parse image %q", img)
+		if !strings.Contains(img.Image, ":") {
+			return nil, "", fmt.Errorf("failed to parse image %q", img.Image)
 		}
-		strs := strings.Split(img, ":")
+		strs := strings.Split(img.Image, ":")
 		if len(strs) != 2 {
-			return nil, fmt.Errorf("failed to split image and tag from %q", img)
+			return nil, "", fmt.Errorf("failed to split image and tag from %q", img.Image)
 		}
 		repo, tag := strs[0], strs[1]
 		if len(operatorDeploymentPrefix+"-"+tag) > maxOperatorDeploymentNameLength {
-			return nil, fmt.Errorf("%s-%s contains more than %d characters and cannot be used as a deployment name", operatorDeploymentPrefix, tag, maxOperatorDeploymentNameLength)
+			return nil, "", fmt.Errorf("%s-%s contains more than %d characters and cannot be used as a deployment name", operatorDeploymentPrefix, tag, maxOperatorDeploymentNameLength)
+		}
+		if img.InstallCRD {
+			crdTag = tag
 		}
 		if _, used := uniqueImages[repo+tag]; !used {
 			uniqueImages[repo+tag] = true
@@ -48,7 +50,7 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 			operatorImages = append(operatorImages, img)
 		}
 	}
-	return operatorImages, nil
+	return operatorImages, crdTag, nil
 }
 
 // ACSOperatorManager keeps data necessary for managing ACS Operator
@@ -57,9 +59,15 @@ type ACSOperatorManager struct {
 	resourcesChart *chart.Chart
 }
 
+// ACSOperatorImage operator image representation which tells when to download CRD or skip it
+type ACSOperatorImage struct {
+	Image      string
+	InstallCRD bool
+}
+
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
-func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []string) error {
-	operatorImages, err := parseOperatorImages(images)
+func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []ACSOperatorImage) error {
+	operatorImages, crdTag, err := parseOperatorImages(images)
 	if err != nil {
 		return fmt.Errorf("failed to parse images: %w", err)
 	}
@@ -70,7 +78,10 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 		},
 	}
 
-	dynamicTemplatesUrls := []string{centralCrdURL, securedClusterCrdURL}
+	var dynamicTemplatesUrls []string
+	if crdTag != "" {
+		dynamicTemplatesUrls = generateCRDTemplateUrls(crdTag)
+	}
 	u.resourcesChart = charts.MustGetChart("rhacs-operator", dynamicTemplatesUrls)
 	objs, err := charts.RenderToObjects(releaseName, operatorNamespace, u.resourcesChart, chartVals)
 	if err != nil {
@@ -89,6 +100,13 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 
 	return nil
 
+}
+
+func generateCRDTemplateUrls(tag string) []string {
+	stackroxWithTag := fmt.Sprintf("https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/", tag)
+	centralCrdURL := stackroxWithTag + "platform.stackrox.io_centrals.yaml"
+	securedClusterCrdURL := stackroxWithTag + "platform.stackrox.io_securedclusters.yaml"
+	return []string{centralCrdURL, securedClusterCrdURL}
 }
 
 // NewACSOperatorManager creates a new ACS Operator Manager
