@@ -88,7 +88,7 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	err := u.InstallOrUpgrade(context.Background(), []ACSOperatorImage{
 		{
 			Image:      operatorImage1,
-			InstallCRD: false,
+			InstallCRD: true,
 		},
 	})
 	require.NoError(t, err)
