@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
@@ -53,8 +54,7 @@ const (
 	dbMaxCapacityACU = 16
 )
 
-// RDS is an AWS RDS client tied to one Central instance. It provisions and deprovisions databases
-// for the Central.
+// RDS is an AWS RDS client that provisions and deprovisions databases for ACS instances.
 type RDS struct {
 	dbSecurityGroup      string
 	dbSubnetGroup        string
@@ -119,6 +119,34 @@ func (r *RDS) GetDBConnection(databaseID string) (postgres.DBConnection, error) 
 	}
 
 	return connection, nil
+}
+
+// GetAccountQuotas returns database-related service quotas for the AWS region on which
+// the instance of fleetshard-sync runs
+func (r *RDS) GetAccountQuotas(ctx context.Context) (cloudprovider.AccountQuotas, error) {
+	accountAttributes, err := r.rdsClient.DescribeAccountAttributesWithContext(ctx, &rds.DescribeAccountAttributesInput{})
+	if err != nil {
+		return nil, fmt.Errorf("getting account quotas: %w", err)
+	}
+
+	neededQuotas := map[string]cloudprovider.AccountQuotaType{
+		"DBInstances":            cloudprovider.DBInstances,
+		"DBClusters":             cloudprovider.DBClusters,
+		"ManualClusterSnapshots": cloudprovider.DBSnapshots,
+	}
+
+	accountQuotas := make(cloudprovider.AccountQuotas, len(neededQuotas))
+	for _, quota := range accountAttributes.AccountQuotas {
+		quotaType, ok := neededQuotas[*quota.AccountQuotaName]
+		if ok {
+			accountQuotas[quotaType] = cloudprovider.AccountQuotaValue{
+				Used: *quota.Used,
+				Max:  *quota.Max,
+			}
+		}
+	}
+
+	return accountQuotas, nil
 }
 
 func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string, isTestInstance bool) error {

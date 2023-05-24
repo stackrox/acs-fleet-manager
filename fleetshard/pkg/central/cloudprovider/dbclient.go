@@ -20,4 +20,26 @@ type DBClient interface {
 	// GetDBConnection returns a postgres.DBConnection struct, which contains the data necessary
 	// to construct a PostgreSQL connection string. It expects that the database was already provisioned.
 	GetDBConnection(databaseID string) (postgres.DBConnection, error)
+	// GetAccountQuotas returns database-related service quotas for the cloud provider region on which
+	// the instance of fleetshard-sync runs
+	GetAccountQuotas(ctx context.Context) (AccountQuotas, error)
+}
+
+// AccountQuotas maps a service to its quota values
+type AccountQuotas map[AccountQuotaType]AccountQuotaValue
+
+// AccountQuotaType uniquely identifies an account quota type
+type AccountQuotaType int
+
+// Database account quota types that are relevant to fleetshard-sync
+const (
+	DBClusters AccountQuotaType = iota
+	DBInstances
+	DBSnapshots
+)
+
+// AccountQuotaValue holds quota data for services, as a pair of currently Used out of Max
+type AccountQuotaValue struct {
+	Used int64
+	Max  int64
 }

@@ -25,6 +25,9 @@ var _ DBClient = &DBClientMock{}
 //			EnsureDBProvisionedFunc: func(ctx context.Context, databaseID string, passwordSecretName string, isTestInstance bool) error {
 //				panic("mock out the EnsureDBProvisioned method")
 //			},
+//			GetAccountQuotasFunc: func(ctx context.Context) (AccountQuotas, error) {
+//				panic("mock out the GetAccountQuotas method")
+//			},
 //			GetDBConnectionFunc: func(databaseID string) (postgres.DBConnection, error) {
 //				panic("mock out the GetDBConnection method")
 //			},
@@ -40,6 +43,9 @@ type DBClientMock struct {
 
 	// EnsureDBProvisionedFunc mocks the EnsureDBProvisioned method.
 	EnsureDBProvisionedFunc func(ctx context.Context, databaseID string, passwordSecretName string, isTestInstance bool) error
+
+	// GetAccountQuotasFunc mocks the GetAccountQuotas method.
+	GetAccountQuotasFunc func(ctx context.Context) (AccountQuotas, error)
 
 	// GetDBConnectionFunc mocks the GetDBConnection method.
 	GetDBConnectionFunc func(databaseID string) (postgres.DBConnection, error)
@@ -64,6 +70,11 @@ type DBClientMock struct {
 			// IsTestInstance is the isTestInstance argument value.
 			IsTestInstance bool
 		}
+		// GetAccountQuotas holds details about calls to the GetAccountQuotas method.
+		GetAccountQuotas []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+		}
 		// GetDBConnection holds details about calls to the GetDBConnection method.
 		GetDBConnection []struct {
 			// DatabaseID is the databaseID argument value.
@@ -72,6 +83,7 @@ type DBClientMock struct {
 	}
 	lockEnsureDBDeprovisioned sync.RWMutex
 	lockEnsureDBProvisioned   sync.RWMutex
+	lockGetAccountQuotas      sync.RWMutex
 	lockGetDBConnection       sync.RWMutex
 }
 
@@ -152,6 +164,38 @@ func (mock *DBClientMock) EnsureDBProvisionedCalls() []struct {
 	mock.lockEnsureDBProvisioned.RLock()
 	calls = mock.calls.EnsureDBProvisioned
 	mock.lockEnsureDBProvisioned.RUnlock()
+	return calls
+}
+
+// GetAccountQuotas calls GetAccountQuotasFunc.
+func (mock *DBClientMock) GetAccountQuotas(ctx context.Context) (AccountQuotas, error) {
+	if mock.GetAccountQuotasFunc == nil {
+		panic("DBClientMock.GetAccountQuotasFunc: method is nil but DBClient.GetAccountQuotas was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockGetAccountQuotas.Lock()
+	mock.calls.GetAccountQuotas = append(mock.calls.GetAccountQuotas, callInfo)
+	mock.lockGetAccountQuotas.Unlock()
+	return mock.GetAccountQuotasFunc(ctx)
+}
+
+// GetAccountQuotasCalls gets all the calls that were made to GetAccountQuotas.
+// Check the length with:
+//
+//	len(mockedDBClient.GetAccountQuotasCalls())
+func (mock *DBClientMock) GetAccountQuotasCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockGetAccountQuotas.RLock()
+	calls = mock.calls.GetAccountQuotas
+	mock.lockGetAccountQuotas.RUnlock()
 	return calls
 }
 

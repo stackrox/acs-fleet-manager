@@ -161,7 +161,16 @@ func (r *Runtime) Start() error {
 				r.handleReconcileResult(central, status, err)
 			}(reconciler, central)
 		}
+
 		fleetshardmetrics.MetricsInstance().SetTotalCentrals(float64(len(r.reconcilers)))
+		if reconcilerOpts.ManagedDBEnabled {
+			accountQuotas, err := r.dbProvisionClient.GetAccountQuotas(ctx)
+			if err != nil {
+				glog.Warningf("Error retrieving account quotas: %v", err)
+			} else {
+				fleetshardmetrics.MetricsInstance().SetDatabaseAccountQuotas(accountQuotas)
+			}
+		}
 
 		r.deleteStaleReconcilers(&list)
 		return r.config.RuntimePollPeriod, nil
