@@ -167,9 +167,9 @@ func (r *Runtime) Start() error {
 			accountQuotas, err := r.dbProvisionClient.GetAccountQuotas(ctx)
 			if err != nil {
 				glog.Warningf("Error retrieving account quotas: %v", err)
+			} else {
+				fleetshardmetrics.MetricsInstance().SetDatabaseAccountQuotas(accountQuotas)
 			}
-
-			fleetshardmetrics.MetricsInstance().SetDatabaseAccountQuotas(accountQuotas)
 		}
 
 		r.deleteStaleReconcilers(&list)

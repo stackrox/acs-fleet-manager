@@ -135,7 +135,7 @@ func (r *RDS) GetAccountQuotas(ctx context.Context) (cloudprovider.AccountQuotas
 		"ManualClusterSnapshots": cloudprovider.DBSnapshots,
 	}
 
-	accountQuotas := make(cloudprovider.AccountQuotas, 3)
+	accountQuotas := make(cloudprovider.AccountQuotas, len(neededQuotas))
 	for _, quota := range accountAttributes.AccountQuotas {
 		quotaType, ok := neededQuotas[*quota.AccountQuotaName]
 		if ok {
