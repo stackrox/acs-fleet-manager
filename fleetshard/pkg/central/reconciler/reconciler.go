@@ -363,7 +363,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		r.hasAuthProvider = true
 	}
 
-	status, err := r.collectReconciliationStatus(ctx, remoteCentral)
+	status, err := r.collectReconciliationStatus(ctx, &remoteCentral)
 	if err != nil {
 		return nil, err
 	}
@@ -377,14 +377,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	return status, nil
 }
 
-func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
+func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
 	status := readyStatus()
 	// Do not report routes statuses if:
 	// 1. Routes are not used on the cluster
 	// 2. Central request is in status "Ready" - assuming that routes are already reported and saved
-	if r.useRoutes && !isRemoteCentralReady(remoteCentral) {
+	if r.useRoutes && !isRemoteCentralReady(*remoteCentral) {
 		var err error
 		status.Routes, err = r.getRoutesStatuses(ctx, remoteCentralNamespace)
 		if err != nil {
