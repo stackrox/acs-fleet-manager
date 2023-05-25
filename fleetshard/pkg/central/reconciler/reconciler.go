@@ -237,14 +237,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
-		deleted, err := r.ensureCentralDeleted(ctx, remoteCentral, central)
-		if err != nil {
-			return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
-		}
-		if deleted {
-			return deletedStatus(), nil
-		}
-		return nil, ErrDeletionInProgress
+		return r.reconcileInstanceDeletion(ctx, remoteCentral, central)
 	}
 
 	namespaceLabels := map[string]string{
@@ -311,6 +304,20 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	return status, nil
+}
+
+func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) (*private.DataPlaneCentralStatus, error) {
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
+
+	deleted, err := r.ensureCentralDeleted(ctx, remoteCentral, central)
+	if err != nil {
+		return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
+	}
+	if deleted {
+		return deletedStatus(), nil
+	}
+	return nil, ErrDeletionInProgress
 }
 
 func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
