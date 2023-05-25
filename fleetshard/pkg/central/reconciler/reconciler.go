@@ -351,16 +351,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return installingStatus(), nil
 	}
 
-	// Skip auth provider initialisation if:
-	// 1. Auth provider is already created
-	// 2. OR reconciler creator specified auth provider not to be created
-	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
-	if r.wantsAuthProvider && !r.hasAuthProvider && !isRemoteCentralReady(remoteCentral) {
-		err = createRHSSOAuthProvider(ctx, remoteCentral, r.client)
-		if err != nil {
-			return nil, err
-		}
-		r.hasAuthProvider = true
+	if err = r.reconcileAuthProvider(ctx, remoteCentral); err != nil {
+		return nil, err
 	}
 
 	status, err := r.collectReconciliationStatus(ctx, &remoteCentral)
@@ -375,6 +367,22 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	return status, nil
+}
+
+func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	// Skip auth provider initialisation if:
+	// 1. Auth provider is already created
+	// 2. OR reconciler creator specified auth provider not to be created
+	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
+	if r.wantsAuthProvider && !r.hasAuthProvider && !isRemoteCentralReady(remoteCentral) {
+		err := createRHSSOAuthProvider(ctx, remoteCentral, r.client)
+		if err != nil {
+			return err
+		}
+		r.hasAuthProvider = true
+	}
+
+	return nil
 }
 
 func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
