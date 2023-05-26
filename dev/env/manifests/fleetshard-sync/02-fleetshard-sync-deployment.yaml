@@ -56,7 +56,6 @@ spec:
                 secretKeyRef:
                   name: fleetshard-sync
                   key: "aws-role-arn"
-
           image: "${FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent
           name: fleetshard-sync
@@ -66,6 +65,8 @@ spec:
               name: secrets
             - mountPath: /config
               name: config
+            - mountPath: /var/run/secrets/tokens
+              name: aws-token
       restartPolicy: Always
       volumes:
         - name: secrets
@@ -75,3 +76,9 @@ spec:
         - name: config
           configMap:
             name: config
+        - name: aws-token
+          secret:
+            secretName: fleetshard-sync # pragma: allowlist secret
+            items:
+              - key: aws-token
+                path: aws-token
