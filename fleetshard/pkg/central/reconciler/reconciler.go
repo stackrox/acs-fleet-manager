@@ -351,7 +351,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return installingStatus(), nil
 	}
 
-	if err = r.reconcileAuthProvider(ctx, remoteCentral); err != nil {
+	if err = r.reconcileAuthProvider(ctx, &remoteCentral); err != nil {
 		return nil, err
 	}
 
@@ -369,13 +369,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	return status, nil
 }
 
-func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context, remoteCentral private.ManagedCentral) error {
+func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context, remoteCentral *private.ManagedCentral) error {
 	// Skip auth provider initialisation if:
 	// 1. Auth provider is already created
 	// 2. OR reconciler creator specified auth provider not to be created
 	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
 	if r.wantsAuthProvider && !r.hasAuthProvider && !isRemoteCentralReady(remoteCentral) {
-		err := createRHSSOAuthProvider(ctx, remoteCentral, r.client)
+		err := createRHSSOAuthProvider(ctx, *remoteCentral, r.client)
 		if err != nil {
 			return err
 		}
@@ -392,7 +392,7 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 	// Do not report routes statuses if:
 	// 1. Routes are not used on the cluster
 	// 2. Central request is in status "Ready" - assuming that routes are already reported and saved
-	if r.useRoutes && !isRemoteCentralReady(*remoteCentral) {
+	if r.useRoutes && !isRemoteCentralReady(remoteCentral) {
 		var err error
 		status.Routes, err = r.getRoutesStatuses(ctx, remoteCentralNamespace)
 		if err != nil {
@@ -407,7 +407,7 @@ func isRemoteCentralProvisioning(remoteCentral private.ManagedCentral) bool {
 	return remoteCentral.RequestStatus == centralConstants.CentralRequestStatusProvisioning.String()
 }
 
-func isRemoteCentralReady(remoteCentral private.ManagedCentral) bool {
+func isRemoteCentralReady(remoteCentral *private.ManagedCentral) bool {
 	return remoteCentral.RequestStatus == centralConstants.CentralRequestStatusReady.String()
 }
 
@@ -992,7 +992,7 @@ func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (c
 
 func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
 	return r.wantsAuthProvider == r.hasAuthProvider &&
-		isRemoteCentralReady(remoteCentral) &&
+		isRemoteCentralReady(&remoteCentral) &&
 		remoteCentral.Spec.Versions.ActualVersion == remoteCentral.Spec.Versions.DesiredVersion
 }
 
