@@ -55,7 +55,7 @@ type Runtime struct {
 
 // NewRuntime creates a new runtime
 func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
-	auth, err := fleetmanager.NewAuth(config.AuthType, fleetmanager.Option{
+	authOption := fleetmanager.Option{
 		Sso: fleetmanager.RHSSOOption{
 			ClientID:     config.RHSSOClientID,
 			ClientSecret: config.RHSSOClientSecret, // pragma: allowlist secret
@@ -68,7 +68,8 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		Static: fleetmanager.StaticOption{
 			StaticToken: config.StaticToken,
 		},
-	})
+	}
+	auth, err := fleetmanager.NewAuth(config.AuthType, authOption)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager authentication")
 	}
@@ -80,7 +81,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 	}
 	var dbProvisionClient cloudprovider.DBClient
 	if config.ManagedDB.Enabled {
-		dbProvisionClient, err = awsclient.NewRDSClient(config, auth)
+		dbProvisionClient, err = awsclient.NewRDSClient(config)
 		if err != nil {
 			return nil, fmt.Errorf("creating managed DB provisioning client: %v", err)
 		}
