@@ -75,6 +75,9 @@ wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleetshard-sync" "f
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
     $KUBECTL -n "$ACSMS_NAMESPACE" logs -l application=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
 fi
+if [[ -n "$FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED" ]]; then
+  kubectl set env -n acsms deploy/fleetshard-sync FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED=true
+fi
 
 # Sanity check.
 wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync"

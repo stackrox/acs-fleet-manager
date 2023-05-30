@@ -49,6 +49,10 @@ dump_env() {
 init() {
     set -eu -o pipefail
 
+    if [[ -n "$FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED" ]]; then
+      export INSTALL_OLM="false"
+    fi
+
     # For reading the defaults we need access to the
     if [[ -z "${CLUSTER_NAME:-}" ]]; then
         CLUSTER_NAME=$(get_current_cluster_name)
