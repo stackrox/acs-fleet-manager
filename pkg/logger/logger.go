@@ -194,12 +194,18 @@ var cache = sync.Map{}
 
 // InfoChangedInt32 logs whenever the value of the passed counter reference changes when it is called.
 func InfoChangedInt32(counter *int32, msg string, args ...interface{}) {
-	val, loaded := cache.LoadOrStore(counter, *counter)
-	if loaded && val == *counter {
+	doIfChangedInt32(counter, func() {
+		glog.InfoDepth(logDepth, fmt.Sprintf(msg, args...))
+	})
+}
+
+func doIfChangedInt32(counter *int32, f func()) {
+	prev, loaded := cache.Swap(counter, *counter)
+	if loaded && prev == *counter {
 		return // counter not changed, do not log
 	}
 
-	glog.InfoDepth(logDepth, fmt.Sprintf(msg, args...))
+	f()
 }
 
 // Warningf ...
