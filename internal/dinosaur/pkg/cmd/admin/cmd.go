@@ -4,10 +4,11 @@ package admin
 import (
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/admin/centrals"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
 // NewAdminCommand creates a new admin command.
-func NewAdminCommand() *cobra.Command {
+func NewAdminCommand(client *fleetmanager.Client) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:              "admin",
 		Short:            "Perform admin API calls.",

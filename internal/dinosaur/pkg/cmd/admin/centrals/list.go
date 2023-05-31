@@ -1,9 +1,6 @@
 package centrals
 
 import (
-	"encoding/json"
-	"fmt"
-
 	admin "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 
 	"github.com/golang/glog"
@@ -32,11 +29,5 @@ func runList(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	centralJSON, err := json.Marshal(centrals)
-	if err != nil {
-		glog.Errorf("Failed to marshal CentralRequests: %s", err)
-		return
-	}
-
-	fmt.Println(string(centralJSON))
+	printJSON(cmd.OutOrStdout(), centrals)
 }
