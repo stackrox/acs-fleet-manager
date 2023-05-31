@@ -23,6 +23,7 @@ const (
 	operatorRepository = "quay.io/rhacs-eng/stackrox-operator"
 	operatorImage1     = "quay.io/rhacs-eng/stackrox-operator:3.74.1"
 	operatorImage2     = "quay.io/rhacs-eng/stackrox-operator:3.74.2"
+	crdURL             = "https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"
 )
 
 var securedClusterCRD = &unstructured.Unstructured{
@@ -83,7 +84,7 @@ var metricService = &unstructured.Unstructured{
 
 func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	u := NewACSOperatorManager(fakeClient)
+	u := NewACSOperatorManager(fakeClient, crdURL)
 
 	err := u.InstallOrUpgrade(context.Background(), []ACSOperatorImage{
 		{
@@ -132,7 +133,7 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 
 func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	u := NewACSOperatorManager(fakeClient)
+	u := NewACSOperatorManager(fakeClient, crdURL)
 
 	operatorImages := []ACSOperatorImage{
 		{
@@ -160,7 +161,7 @@ func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 
 func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	u := NewACSOperatorManager(fakeClient)
+	u := NewACSOperatorManager(fakeClient, crdURL)
 
 	operatorImageWithLongTag := "quay.io/rhacs-eng/stackrox-operator:3.74.1-with-ridiculously-long-tag-version-name"
 	err := u.InstallOrUpgrade(context.Background(), []ACSOperatorImage{

@@ -28,6 +28,7 @@ type Config struct {
 	MetricsAddress                    string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
 	EgressProxyImage                  string        `env:"EGRESS_PROXY_IMAGE"`
 	FeatureFlagUpgradeOperatorEnabled bool          `env:"FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED" envDefault:"false"`
+	BaseCrdURL                        string        `env:"BASE_CRD_URL" envDefault:"https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"`
 
 	AWS       AWS
 	ManagedDB ManagedDB

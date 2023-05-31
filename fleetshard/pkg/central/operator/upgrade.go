@@ -56,6 +56,7 @@ func parseOperatorImages(images []ACSOperatorImage) ([]chartutil.Values, string,
 // ACSOperatorManager keeps data necessary for managing ACS Operator
 type ACSOperatorManager struct {
 	client         ctrlClient.Client
+	crdURL         string
 	resourcesChart *chart.Chart
 }
 
@@ -80,7 +81,7 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []ACSO
 
 	var dynamicTemplatesUrls []string
 	if crdTag != "" {
-		dynamicTemplatesUrls = generateCRDTemplateUrls(crdTag)
+		dynamicTemplatesUrls = u.generateCRDTemplateUrls(crdTag)
 	}
 	u.resourcesChart = charts.MustGetChart("rhacs-operator", dynamicTemplatesUrls)
 	objs, err := charts.RenderToObjects(releaseName, operatorNamespace, u.resourcesChart, chartVals)
@@ -102,16 +103,17 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []ACSO
 
 }
 
-func generateCRDTemplateUrls(tag string) []string {
-	stackroxWithTag := fmt.Sprintf("https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/", tag)
+func (u *ACSOperatorManager) generateCRDTemplateUrls(tag string) []string {
+	stackroxWithTag := fmt.Sprintf(u.crdURL, tag)
 	centralCrdURL := stackroxWithTag + "platform.stackrox.io_centrals.yaml"
 	securedClusterCrdURL := stackroxWithTag + "platform.stackrox.io_securedclusters.yaml"
 	return []string{centralCrdURL, securedClusterCrdURL}
 }
 
 // NewACSOperatorManager creates a new ACS Operator Manager
-func NewACSOperatorManager(k8sClient ctrlClient.Client) *ACSOperatorManager {
+func NewACSOperatorManager(k8sClient ctrlClient.Client, baseCrdURL string) *ACSOperatorManager {
 	return &ACSOperatorManager{
 		client: k8sClient,
+		crdURL: baseCrdURL,
 	}
 }

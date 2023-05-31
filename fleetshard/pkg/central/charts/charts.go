@@ -80,6 +80,9 @@ func downloadTemplate(url string) (*loader.BufferedFile, error) {
 	}
 
 	// parse filename from the URL
+	if !strings.Contains(url, "/") {
+		return nil, fmt.Errorf("cannot parse filename from %s", url)
+	}
 	filename := url[strings.LastIndex(url, "/")+1:]
 	name := path.Join("templates", filename)
 
