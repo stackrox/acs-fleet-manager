@@ -36,10 +36,11 @@ const (
 	FreeStatus int32 = iota
 	BlockedStatus
 
+	PauseReconcileAnnotation = "stackrox.io/pause-reconcile"
+
 	helmReleaseName = "tenant-resources"
 
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
-	pauseReconcileAnnotation  = "stackrox.io/pause-reconcile"
 	envAnnotationKey          = "rhacs.redhat.com/environment"
 	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
 	orgNameAnnotationKey      = "rhacs.redhat.com/org-name"
@@ -767,11 +768,11 @@ func (r *CentralReconciler) disablePauseReconcileIfPresent(ctx context.Context, 
 		return nil
 	}
 
-	if value, exists := central.Annotations[pauseReconcileAnnotation]; !exists || value != "true" {
+	if value, exists := central.Annotations[PauseReconcileAnnotation]; !exists || value != "true" {
 		return nil
 	}
 
-	central.Annotations[pauseReconcileAnnotation] = "false"
+	central.Annotations[PauseReconcileAnnotation] = "false"
 	err := r.client.Update(ctx, central)
 	if err != nil {
 		return fmt.Errorf("removing pause reconcile annotation: %v", err)
