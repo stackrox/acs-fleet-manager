@@ -30,9 +30,9 @@ At the point in time this documentation was written AWS RDS DB creation and dele
     init_chamber
     # When prompted select your profile for the dev AWS account arn:aws:iam::047735621815:role/047735621815-poweruser
 
-    source <(run_chamber env "fleetshard-sync")
-    source <(run_chamber env -b secretsmanager "fleetshard-sync")
-    source <(run_chamber env "local_cluster")
+    source <(chamber env "fleetshard-sync")
+    source <(chamber env -b secretsmanager "fleetshard-sync")
+    source <(chamber env "local_cluster")
     export MANAGED_DB_ENABLED=true
     # flip the PublicAcessible flag to true in rds.go line 354
     make binary
