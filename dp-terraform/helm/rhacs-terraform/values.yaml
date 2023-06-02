@@ -34,7 +34,7 @@ fleetshardSync:
     performanceInsights: true
   aws:
     region: "us-east-1"  # TODO(2023-05-01): Remove the default value here as we now set it explicitly
-    roleARN: ""
+    accountId: ""
   telemetry:
     storage:
       endpoint: ""
@@ -91,3 +91,8 @@ logging:
   aws:
     accessKeyId: ""
     secretAccessKey: ""
+
+externalSecrets:
+  enabled: true
+  aws:
+    region: "us-east-1"

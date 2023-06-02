@@ -25,7 +25,6 @@ fi
 
 init_chamber
 
-load_external_config fleetshard-sync FLEETSHARD_SYNC_
 load_external_config cloudwatch-exporter CLOUDWATCH_EXPORTER_
 load_external_config logging LOGGING_
 load_external_config observability OBSERVABILITY_
@@ -127,16 +126,12 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set fleetshardSync.clusterName="${CLUSTER_NAME}" \
   --set fleetshardSync.environment="${ENVIRONMENT}" \
   --set fleetshardSync.fleetManagerEndpoint="${FM_ENDPOINT}" \
-  --set fleetshardSync.redHatSSO.clientId="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_ID}" \
-  --set fleetshardSync.redHatSSO.clientSecret="${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET}" \
   --set fleetshardSync.managedDB.enabled=true \
   --set fleetshardSync.managedDB.subnetGroup="${CLUSTER_MANAGED_DB_SUBNET_GROUP}" \
   --set fleetshardSync.managedDB.securityGroup="${CLUSTER_MANAGED_DB_SECURITY_GROUP}" \
   --set fleetshardSync.managedDB.performanceInsights=true \
   --set fleetshardSync.aws.region="${CLUSTER_REGION}" \
-  --set fleetshardSync.aws.roleARN="${FLEETSHARD_SYNC_AWS_ROLE_ARN}" \
-  --set fleetshardSync.telemetry.storage.endpoint="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_ENDPOINT:-}" \
-  --set fleetshardSync.telemetry.storage.key="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_KEY:-}" \
+  --set fleetshardSync.aws.accountId="${AWS_ACCOUNT_ID}" \
   --set fleetshardSync.resources.requests.cpu="${FLEETSHARD_SYNC_CPU_REQUEST}" \
   --set fleetshardSync.resources.requests.memory="${FLEETSHARD_SYNC_MEMORY_REQUEST}" \
   --set fleetshardSync.resources.limits.cpu="${FLEETSHARD_SYNC_CPU_LIMIT}" \

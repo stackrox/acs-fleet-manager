@@ -1,0 +1,9 @@
+# Fixes https://github.com/external-secrets/external-secrets/issues/2342
+securityContext:
+  runAsUser: null
+webhook:
+  securityContext:
+    runAsUser: null
+certController:
+  securityContext:
+    runAsUser: null
