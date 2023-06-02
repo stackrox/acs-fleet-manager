@@ -387,7 +387,7 @@ func TestDisablePauseAnnotation(t *testing.T) {
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
-	central.Annotations[pauseReconcileAnnotation] = "true"
+	central.Annotations[PauseReconcileAnnotation] = "true"
 	err = fakeClient.Update(context.TODO(), central)
 	require.NoError(t, err)
 
@@ -396,7 +396,7 @@ func TestDisablePauseAnnotation(t *testing.T) {
 
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
-	require.Equal(t, "false", central.Annotations[pauseReconcileAnnotation])
+	require.Equal(t, "false", central.Annotations[PauseReconcileAnnotation])
 }
 
 func TestReconcileDeleteWithManagedDB(t *testing.T) {
