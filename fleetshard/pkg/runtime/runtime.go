@@ -7,13 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
-
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
@@ -21,7 +20,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/concurrency"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -161,6 +162,13 @@ func (r *Runtime) Start() error {
 				fleetshardmetrics.MetricsInstance().IncCentralReconcilations()
 				r.handleReconcileResult(central, status, err)
 			}(reconciler, central)
+
+			reconcilePaused, err := r.isReconcilePaused(ctx, central)
+			if err != nil {
+				glog.Warningf("Error getting pause annotation status: %v", err)
+			} else {
+				fleetshardmetrics.MetricsInstance().SetPauseReconcileStatus(central.Id, reconcilePaused)
+			}
 		}
 
 		fleetshardmetrics.MetricsInstance().SetTotalCentrals(float64(len(r.reconcilers)))
@@ -251,4 +259,33 @@ func (r *Runtime) routesAvailable() bool {
 		return false
 	}
 	return true
+}
+
+func (r *Runtime) isReconcilePaused(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
+	central := &v1alpha1.Central{}
+	err := r.k8sClient.Get(ctx, ctrlClient.ObjectKey{
+		Namespace: remoteCentral.Metadata.Namespace,
+		Name:      remoteCentral.Metadata.Name}, central)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+
+		return false, errors.Wrapf(err, "getting CR for Central: %s", remoteCentral.Id)
+	}
+
+	if central.Annotations == nil {
+		return false, nil
+	}
+
+	value, exists := central.Annotations[centralReconciler.PauseReconcileAnnotation]
+	if !exists {
+		return false, nil
+	}
+
+	if value == "true" {
+		return true, nil
+	}
+
+	return false, nil
 }

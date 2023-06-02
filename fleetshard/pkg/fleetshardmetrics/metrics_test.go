@@ -116,6 +116,32 @@ func TestDatabaseQuotaMetrics(t *testing.T) {
 	}
 }
 
+func TestPauseReconcileMetrics(t *testing.T) {
+	m := newMetrics()
+
+	m.SetPauseReconcileStatus("instance-1", false)
+	m.SetPauseReconcileStatus("instance-2", true)
+
+	metrics := serveMetrics(t, m)
+
+	expectedValues := map[string]float64{
+		"instance-1": 0.0,
+		"instance-2": 1.0,
+	}
+
+	metricName := metricsPrefix + "pause_reconcile_instances"
+	targetMetric := requireMetric(t, metrics, metricName)
+	require.Equal(t, 2, len(targetMetric.Metric))
+
+	for _, metric := range targetMetric.Metric {
+		require.Equal(t, 1, len(metric.Label))
+		require.Equal(t, "instance", *metric.Label[0].Name)
+		instanceName := *metric.Label[0].Value
+
+		assert.Equal(t, expectedValues[instanceName], *metric.Gauge.Value)
+	}
+}
+
 func requireMetric(t *testing.T, metrics metricResponse, metricName string) *io_prometheus_client.MetricFamily {
 	targetMetric, hasKey := metrics[metricName]
 	require.Truef(t, hasKey, "expected metrics to contain %s but it did not: %v", metricName, metrics)

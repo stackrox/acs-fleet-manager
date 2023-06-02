@@ -30,6 +30,7 @@ type Metrics struct {
 	centralDBInstancesMax       prometheus.Gauge
 	centralDBSnapshotsUsed      prometheus.Gauge
 	centralDBSnapshotsMax       prometheus.Gauge
+	pauseReconcileInstances     *prometheus.GaugeVec
 }
 
 // Register registers the metrics with the given prometheus.Registerer
@@ -46,6 +47,7 @@ func (m *Metrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.centralDBInstancesMax)
 	r.MustRegister(m.centralDBSnapshotsUsed)
 	r.MustRegister(m.centralDBSnapshotsMax)
+	r.MustRegister(m.pauseReconcileInstances)
 }
 
 // IncFleetManagerRequests increments the metric counter for fleet-manager requests
@@ -97,6 +99,16 @@ func (m *Metrics) SetDatabaseAccountQuotas(quotas cloudprovider.AccountQuotas) {
 		m.centralDBSnapshotsUsed.Set(float64(quota.Used))
 		m.centralDBSnapshotsMax.Set(float64(quota.Max))
 	}
+}
+
+// SetPauseReconcileStatus sets the pause reconcile metric for a particular instance
+func (m *Metrics) SetPauseReconcileStatus(instance string, pauseReconcileEnabled bool) {
+	var pauseReconcileValue float64
+	if pauseReconcileEnabled {
+		pauseReconcileValue = 1.0
+	}
+
+	m.pauseReconcileInstances.With(prometheus.Labels{"instance": instance}).Set(pauseReconcileValue)
 }
 
 // MetricsInstance return the global Singleton instance for Metrics
@@ -159,5 +171,12 @@ func newMetrics() *Metrics {
 			Name: metricsPrefix + "central_db_snapshots_max",
 			Help: "The maximum number of Central DB snapshots in the cloud region of fleetshard-sync",
 		}),
+		pauseReconcileInstances: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: metricsPrefix + "pause_reconcile_instances",
+				Help: "The pause-reconcile annotation status of all the instances managed by fleetshard-sync",
+			},
+			[]string{"instance"},
+		),
 	}
 }
