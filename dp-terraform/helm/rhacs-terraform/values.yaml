@@ -99,19 +99,21 @@ vector:
       rhacs.redhat.com/cluster-name: ""
       rhacs.redhat.com/environment: ""
       service.beta.openshift.io/serving-cert-secret-name: rhacs-vector-tls-secret
+  podLabels:
+    app: rhacs-vector
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
             matchExpressions:
-              - key: app.kubernetes.io/name
+              - key: app
                 operator: In
                 values:
                   - vector
           topologyKey: "topology.kubernetes.io/zone"
   persistence:
     enabled: true
-    size: 100Mi
+    size: 300Mi
   replicas: 3
   extraVolumes:
     - name: service-tls-secret
@@ -147,7 +149,12 @@ vector:
         healthcheck:
           enabled: false
         batch:
-          timeout_secs: 10
+          timeout_secs: 60
+          max_size: 2621440
+        buffer:
+          type: disk
+          max_size: 283115520
+          when_full: block
         encoding:
           codec: "json"
   fullnameOverride: rhacs-vector
