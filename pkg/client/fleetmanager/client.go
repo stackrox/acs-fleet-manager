@@ -11,7 +11,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 )
 
-//go:generate moq -out api_moq.go . PublicAPI PrivateAPI AdminAPI
+//go:generate moq -rm -out api_moq.go . PublicAPI PrivateAPI AdminAPI
 
 // PublicAPI is a wrapper interface for the fleetmanager client public API.
 type PublicAPI interface {
@@ -35,6 +35,7 @@ type AdminAPI interface {
 	UpdateCentralById(ctx context.Context, id string, centralUpdateRequest admin.CentralUpdateRequest) (admin.Central, *http.Response, error)
 	DeleteDbCentralById(ctx context.Context, id string) (*http.Response, error)
 	GetCentralDefaultVersion(ctx context.Context) (admin.CentralDefaultVersion, *http.Response, error)
+	SetCentralDefaultVersion(ctx context.Context, centralDefaultVersionPayload admin.CentralDefaultVersion) (*http.Response, error)
 }
 
 var (

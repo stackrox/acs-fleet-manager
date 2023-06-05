@@ -446,6 +446,9 @@ var _ AdminAPI = &AdminAPIMock{}
 //			GetCentralsFunc: func(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error) {
 //				panic("mock out the GetCentrals method")
 //			},
+//			SetCentralDefaultVersionFunc: func(ctx context.Context, centralDefaultVersionPayload admin.CentralDefaultVersion) (*http.Response, error) {
+//				panic("mock out the SetCentralDefaultVersion method")
+//			},
 //			UpdateCentralByIdFunc: func(ctx context.Context, id string, centralUpdateRequest admin.CentralUpdateRequest) (admin.Central, *http.Response, error) {
 //				panic("mock out the UpdateCentralById method")
 //			},
@@ -467,6 +470,9 @@ type AdminAPIMock struct {
 
 	// GetCentralsFunc mocks the GetCentrals method.
 	GetCentralsFunc func(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error)
+
+	// SetCentralDefaultVersionFunc mocks the SetCentralDefaultVersion method.
+	SetCentralDefaultVersionFunc func(ctx context.Context, centralDefaultVersionPayload admin.CentralDefaultVersion) (*http.Response, error)
 
 	// UpdateCentralByIdFunc mocks the UpdateCentralById method.
 	UpdateCentralByIdFunc func(ctx context.Context, id string, centralUpdateRequest admin.CentralUpdateRequest) (admin.Central, *http.Response, error)
@@ -501,6 +507,13 @@ type AdminAPIMock struct {
 			// LocalVarOptionals is the localVarOptionals argument value.
 			LocalVarOptionals *admin.GetCentralsOpts
 		}
+		// SetCentralDefaultVersion holds details about calls to the SetCentralDefaultVersion method.
+		SetCentralDefaultVersion []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// CentralDefaultVersionPayload is the centralDefaultVersionPayload argument value.
+			CentralDefaultVersionPayload admin.CentralDefaultVersion
+		}
 		// UpdateCentralById holds details about calls to the UpdateCentralById method.
 		UpdateCentralById []struct {
 			// Ctx is the ctx argument value.
@@ -515,6 +528,7 @@ type AdminAPIMock struct {
 	lockDeleteDbCentralById      sync.RWMutex
 	lockGetCentralDefaultVersion sync.RWMutex
 	lockGetCentrals              sync.RWMutex
+	lockSetCentralDefaultVersion sync.RWMutex
 	lockUpdateCentralById        sync.RWMutex
 }
 
@@ -659,6 +673,42 @@ func (mock *AdminAPIMock) GetCentralsCalls() []struct {
 	mock.lockGetCentrals.RLock()
 	calls = mock.calls.GetCentrals
 	mock.lockGetCentrals.RUnlock()
+	return calls
+}
+
+// SetCentralDefaultVersion calls SetCentralDefaultVersionFunc.
+func (mock *AdminAPIMock) SetCentralDefaultVersion(ctx context.Context, centralDefaultVersionPayload admin.CentralDefaultVersion) (*http.Response, error) {
+	if mock.SetCentralDefaultVersionFunc == nil {
+		panic("AdminAPIMock.SetCentralDefaultVersionFunc: method is nil but AdminAPI.SetCentralDefaultVersion was just called")
+	}
+	callInfo := struct {
+		Ctx                          context.Context
+		CentralDefaultVersionPayload admin.CentralDefaultVersion
+	}{
+		Ctx:                          ctx,
+		CentralDefaultVersionPayload: centralDefaultVersionPayload,
+	}
+	mock.lockSetCentralDefaultVersion.Lock()
+	mock.calls.SetCentralDefaultVersion = append(mock.calls.SetCentralDefaultVersion, callInfo)
+	mock.lockSetCentralDefaultVersion.Unlock()
+	return mock.SetCentralDefaultVersionFunc(ctx, centralDefaultVersionPayload)
+}
+
+// SetCentralDefaultVersionCalls gets all the calls that were made to SetCentralDefaultVersion.
+// Check the length with:
+//
+//	len(mockedAdminAPI.SetCentralDefaultVersionCalls())
+func (mock *AdminAPIMock) SetCentralDefaultVersionCalls() []struct {
+	Ctx                          context.Context
+	CentralDefaultVersionPayload admin.CentralDefaultVersion
+} {
+	var calls []struct {
+		Ctx                          context.Context
+		CentralDefaultVersionPayload admin.CentralDefaultVersion
+	}
+	mock.lockSetCentralDefaultVersion.RLock()
+	calls = mock.calls.SetCentralDefaultVersion
+	mock.lockSetCentralDefaultVersion.RUnlock()
 	return calls
 }
 

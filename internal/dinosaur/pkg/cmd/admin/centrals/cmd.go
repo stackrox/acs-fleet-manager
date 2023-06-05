@@ -27,6 +27,7 @@ func NewAdminCentralsCommand() *cobra.Command {
 	cmd.AddCommand(
 		NewAdminCentralsListCommand(),
 		NewAdminCentralsGetDefaultVersionCommand(fleetmanagerclient.AuthenticatedClientWithRHOASToken()),
+		NewAdminCentralsSetDefaultVersionCommand(fleetmanagerclient.AuthenticatedClientWithRHOASToken()),
 	)
 
 	return cmd
