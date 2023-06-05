@@ -40,12 +40,6 @@ data:
     # These a sample users used in integration tests
     - denied-test-user1@example.com
     - denied-test-user2@example.com
-  dinosaur-sre-user-list.yaml: |-
-    ---
-    # A list of dinosaur-sre users with cluster-admin permissions for data plane clusters
-    # A dinosaur-sre user is represented in the below list by their Kerboros ID
-    - dinosaur-sre-user-1
-    - dinosaur-sre-user-2
   jwks-file.json: |
     {
       "keys": [
