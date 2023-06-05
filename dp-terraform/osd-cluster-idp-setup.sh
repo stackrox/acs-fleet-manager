@@ -24,22 +24,19 @@ ENVIRONMENT=$1
 CLUSTER_NAME=$2
 
 export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-saml}"
-if [[ "$AWS_AUTH_HELPER" == "aws-vault" ]]; then
-    export AWS_PROFILE="$ENVIRONMENT"
-fi
 
 save_cluster_parameter() {
     local key="$1"
     local value="$2"
     echo "Saving parameter '/cluster-${CLUSTER_NAME}/${key}' in AWS parameter store..."
-    run_chamber write "cluster-${CLUSTER_NAME}" "${key}" "${value}" --skip-unchanged
+    chamber write "cluster-${CLUSTER_NAME}" "${key}" "${value}" --skip-unchanged
 }
 
 save_cluster_secret() {
     local key="$1"
     local value="$2"
     echo "Saving parameter '/cluster-${CLUSTER_NAME}/${key}' in AWS Secrets Manager..."
-    run_chamber write -b secretsmanager "cluster-${CLUSTER_NAME}" "${key}" "${value}" --skip-unchanged
+    chamber write -b secretsmanager "cluster-${CLUSTER_NAME}" "${key}" "${value}" --skip-unchanged
 }
 
 export_cluster_environment() {
@@ -209,6 +206,6 @@ do
 done
 
 echo "The following cluster parameters are currently stored in AWS Parameter Store:"
-run_chamber list "cluster-${CLUSTER_NAME}"
+chamber list "cluster-${CLUSTER_NAME}"
 echo "The following cluster parameters are currently stored in AWS Secrets Manager:"
-run_chamber list "cluster-${CLUSTER_NAME}" -b secretsmanager
+chamber list "cluster-${CLUSTER_NAME}" -b secretsmanager

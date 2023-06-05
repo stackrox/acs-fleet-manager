@@ -22,22 +22,15 @@ At the point in time this documentation was written AWS RDS DB creation and dele
 1. Run local fleetshard-sync
 
     ```
-    # Prepare environment and secrets
-    export PATH="$PATH:$(pwd)/bin"
-    source ./scripts/lib/external_config.sh
-    kinit # get a kerberos ticket
+    # Prepare environment
     export AWS_AUTH_HELPER=aws-saml
-    init_chamber
-    # When prompted select your profile for the dev AWS account arn:aws:iam::047735621815:role/047735621815-poweruser
-
-    source <(run_chamber env "fleetshard-sync")
-    source <(run_chamber env -b secretsmanager "fleetshard-sync")
-    source <(run_chamber env "local_cluster")
     export MANAGED_DB_ENABLED=true
+
     # flip the PublicAcessible flag to true in rds.go line 354
     make binary
 
-    ./fleetshard-sync
+    ./dev/env/scripts/exec_fleetshard_sync.sh
+    # When prompted select your profile for the dev AWS account arn:aws:iam::047735621815:role/047735621815-poweruser
     ```
 
 1. Create a central instance and wait for DB Creation
