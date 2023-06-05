@@ -23,6 +23,7 @@ const (
 	operatorRepository = "quay.io/rhacs-eng/stackrox-operator"
 	operatorImage1     = "quay.io/rhacs-eng/stackrox-operator:3.74.1"
 	operatorImage2     = "quay.io/rhacs-eng/stackrox-operator:3.74.2"
+	crdURL             = "https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"
 )
 
 var securedClusterCRD = &unstructured.Unstructured{
@@ -83,9 +84,14 @@ var metricService = &unstructured.Unstructured{
 
 func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	u := NewACSOperatorManager(fakeClient)
+	u := NewACSOperatorManager(fakeClient, crdURL)
 
-	err := u.InstallOrUpgrade(context.Background(), []string{operatorImage1})
+	err := u.InstallOrUpgrade(context.Background(), []ACSOperatorImage{
+		{
+			Image:      operatorImage1,
+			InstallCRD: true,
+		},
+	})
 	require.NoError(t, err)
 
 	// check Secured Cluster CRD exists and correct
@@ -127,9 +133,18 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 
 func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	u := NewACSOperatorManager(fakeClient)
+	u := NewACSOperatorManager(fakeClient, crdURL)
 
-	operatorImages := []string{operatorImage1, operatorImage2}
+	operatorImages := []ACSOperatorImage{
+		{
+			Image:      operatorImage1,
+			InstallCRD: false,
+		},
+		{
+			Image:      operatorImage2,
+			InstallCRD: false,
+		},
+	}
 	err := u.InstallOrUpgrade(context.Background(), operatorImages)
 	require.NoError(t, err)
 
@@ -146,10 +161,14 @@ func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 
 func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	u := NewACSOperatorManager(fakeClient)
+	u := NewACSOperatorManager(fakeClient, crdURL)
 
 	operatorImageWithLongTag := "quay.io/rhacs-eng/stackrox-operator:3.74.1-with-ridiculously-long-tag-version-name"
-	err := u.InstallOrUpgrade(context.Background(), []string{operatorImageWithLongTag})
+	err := u.InstallOrUpgrade(context.Background(), []ACSOperatorImage{
+		{
+			Image:      operatorImageWithLongTag,
+			InstallCRD: false,
+		}})
 	require.Errorf(t, err, "zero tags parsed from images")
 
 	deployments := &appsv1.DeploymentList{}
@@ -160,57 +179,102 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 
 func TestParseOperatorImages(t *testing.T) {
 	cases := map[string]struct {
-		images     []string
-		expected   []map[string]string
-		shouldFail bool
+		images             []ACSOperatorImage
+		expected           []map[string]string
+		expectedCrdVersion string
+		shouldFail         bool
 	}{
 		"should parse one valid operator image": {
-			images: []string{operatorImage1},
+			images: []ACSOperatorImage{{
+				Image:      operatorImage1,
+				InstallCRD: false,
+			}},
 			expected: []map[string]string{
 				{"repository": operatorRepository, "tag": "3.74.1"},
 			},
 		},
 		"should parse two valid operator images": {
-			images: []string{operatorImage1, operatorImage2},
+			images: []ACSOperatorImage{{
+				Image:      operatorImage1,
+				InstallCRD: false,
+			}, {
+				Image:      operatorImage2,
+				InstallCRD: false,
+			}},
 			expected: []map[string]string{
 				{"repository": operatorRepository, "tag": "3.74.1"},
 				{"repository": operatorRepository, "tag": "3.74.2"},
 			},
 		},
+		"should return correct desired CRD version": {
+			images: []ACSOperatorImage{{
+				Image:      operatorImage1,
+				InstallCRD: false,
+			}, {
+				Image:      operatorImage2,
+				InstallCRD: true,
+			}},
+			expected: []map[string]string{
+				{"repository": operatorRepository, "tag": "3.74.1"},
+				{"repository": operatorRepository, "tag": "3.74.2"},
+			},
+			expectedCrdVersion: "3.74.2",
+		},
 		"should ignore duplicate operator images": {
-			images: []string{operatorImage1, operatorImage1},
+			images: []ACSOperatorImage{{
+				Image:      operatorImage1,
+				InstallCRD: false,
+			}, {
+				Image:      operatorImage1,
+				InstallCRD: false,
+			}},
 			expected: []map[string]string{
 				{"repository": operatorRepository, "tag": "3.74.1"},
 			},
 		},
 		"fail if images list is empty": {
-			images:     []string{},
+			images:     []ACSOperatorImage{},
 			shouldFail: true,
 		},
 		"should accept images from multiple repositories with the same tag": {
-			images: []string{"repo1:tag", "repo2:tag"},
+			images: []ACSOperatorImage{{
+				Image:      "repo1:tag",
+				InstallCRD: false,
+			}, {
+				Image:      "repo2:tag",
+				InstallCRD: false,
+			}},
 			expected: []map[string]string{
 				{"repository": "repo1", "tag": "tag"},
 				{"repository": "repo2", "tag": "tag"},
 			},
 		},
 		"fail if image does contain colon": {
-			images:     []string{"quay.io/without-colon-123-tag"},
+			images: []ACSOperatorImage{{
+				Image:      "quay.io/without-colon-123-tag",
+				InstallCRD: false,
+			}},
 			shouldFail: true,
 		},
 		"fail if image contains more than one colon": {
-			images:     []string{"quay.io/image-name:1.2.3:"},
+			images: []ACSOperatorImage{{
+				Image:      "quay.io/image-name:1.2.3:",
+				InstallCRD: false,
+			}},
 			shouldFail: true,
 		},
 		"fail if image tag is too long": {
-			images:     []string{"quay.io/image-name:1.2.3-with-ridiculously-long-tag-version-name"},
+			images: []ACSOperatorImage{{
+				Image:      "quay.io/image-name:1.2.3-with-ridiculously-long-tag-version-name",
+				InstallCRD: false,
+			}},
 			shouldFail: true,
 		},
 	}
 
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			got, err := parseOperatorImages(c.images)
+			gotImages, gotCrdVersion, err := parseOperatorImages(c.images)
 			if c.shouldFail {
 				assert.Error(t, err)
 			} else {
@@ -220,7 +284,8 @@ func TestParseOperatorImages(t *testing.T) {
 					val := chartutil.Values{"repository": m["repository"], "tag": m["tag"]}
 					expectedRepositoryAndTags = append(expectedRepositoryAndTags, val)
 				}
-				assert.Equal(t, expectedRepositoryAndTags, got)
+				assert.Equal(t, c.expectedCrdVersion, gotCrdVersion)
+				assert.Equal(t, expectedRepositoryAndTags, gotImages)
 			}
 		})
 	}

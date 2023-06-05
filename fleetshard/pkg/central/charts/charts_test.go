@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 
 	"github.com/stretchr/testify/assert"
@@ -34,13 +35,15 @@ var dummyDeployment = &appsv1.Deployment{
 }
 
 func TestTenantResourcesChart(t *testing.T) {
-	c, err := GetChart("tenant-resources")
+	c, err := GetChart("tenant-resources", nil)
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 }
 
 func TestInstallOrUpdateChartCreateNew(t *testing.T) {
-	chart, err := LoadChart(testdata, "testdata/test-chart")
+	chartFiles, err := TraverseChart(testdata, "testdata/test-chart")
+	require.NoError(t, err)
+	chart, err := loader.LoadFiles(chartFiles)
 	require.NoError(t, err)
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	ctx := context.Background()
@@ -67,7 +70,9 @@ func TestInstallOrUpdateChartCreateNew(t *testing.T) {
 }
 
 func TestInstallOrUpdateChartUpdateExisting(t *testing.T) {
-	chart, err := LoadChart(testdata, "testdata/test-chart")
+	chartFiles, err := TraverseChart(testdata, "testdata/test-chart")
+	require.NoError(t, err)
+	chart, err := loader.LoadFiles(chartFiles)
 	require.NoError(t, err)
 	fakeClient := testutils.NewFakeClientBuilder(t, dummyDeployment).Build()
 	ctx := context.Background()
@@ -91,4 +96,13 @@ func TestInstallOrUpdateChartUpdateExisting(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, res.GetLabels())
 	assert.Equal(t, "baz", res.GetLabels()["foo"])
+}
+
+func TestGetChartWithDynamicTemplate(t *testing.T) {
+	crdURL := "https://raw.githubusercontent.com/stackrox/stackrox/master/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml"
+	dynamicTemplates := []string{crdURL}
+
+	c, err := GetChart("rhacs-operator", dynamicTemplates)
+	require.NoError(t, err)
+	assert.NotNil(t, c)
 }
