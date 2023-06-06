@@ -83,6 +83,8 @@ spec:
         volumeMounts:
           - mountPath: /var/run/secrets/tokens
             name: aws-token
+          - mountPath: /run/config/acs-fleetshard-sync/rhacs-operator-helm-values.yaml
+            name: rhacs-operator-helm-values
         ports:
         - name: monitoring
           containerPort: 8080
@@ -100,3 +102,15 @@ spec:
               - serviceAccountToken:
                   path: aws-token
                   audience: sts.amazonaws.com
+        - name: rhacs-operator-helm-values
+          configMap:
+            name: rhacs-operator-helm-values-config
+            optional: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rhacs-operator-helm-values-config
+  namespace: {{ .Release.Namespace }}
+data:
+  "rhacs-operator-helm-values.yaml": {{ .Values.acsOperator.values }}

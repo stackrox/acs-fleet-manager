@@ -4,7 +4,12 @@ package operator
 import (
 	"context"
 	"fmt"
+	"github.com/golang/glog"
+	"github.com/stackrox/rox/pkg/k8scfgwatch"
+	"gopkg.in/yaml.v2"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"helm.sh/helm/v3/pkg/chart"
@@ -20,7 +25,12 @@ const (
 	// deployment names should contain at most 63 characters
 	// RFC 1035 Label Names: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
 	maxOperatorDeploymentNameLength = 63
+
+	operatorHelmValuesFile = "/run/config/acs-fleetshard-sync/rhacs-operator-helm-values.yaml"
 )
+
+// TODO: fix race condition
+var operatorHelmValues map[string]interface{}
 
 func parseOperatorImages(images []ACSOperatorImage) ([]chartutil.Values, string, error) {
 	if len(images) == 0 {
@@ -60,10 +70,42 @@ type ACSOperatorManager struct {
 	resourcesChart *chart.Chart
 }
 
+func (u *ACSOperatorManager) OnChange(dir string) (interface{}, error) {
+	content, err := os.ReadFile(dir)
+	if err != nil {
+		return nil, fmt.Errorf("reading config file", err)
+	}
+	if err := yaml.Unmarshal(content, operatorHelmValues); err != nil {
+		return nil, fmt.Errorf("unmarshal configuration", err)
+	}
+
+	return operatorHelmValues, nil
+}
+
+func (u *ACSOperatorManager) OnStableUpdate(val interface{}, err error) {
+	if err != nil {
+		glog.Infof("failed loading helm operator config", err)
+	}
+	operatorHelmValues = val.(map[string]interface{})
+
+}
+
+func (u *ACSOperatorManager) OnWatchError(err error) {
+	glog.Errorf("Error watching config map mount directory %s: %v", operatorHelmValuesFile, err)
+}
+
 // ACSOperatorImage operator image representation which tells when to download CRD or skip it
 type ACSOperatorImage struct {
 	Image      string
 	InstallCRD bool
+}
+
+func (u *ACSOperatorManager) readHelmValuesConfigMap() {
+	watchOpts := k8scfgwatch.Options{
+		Interval: 10 * time.Second,
+	}
+
+	_ = k8scfgwatch.WatchConfigMountDir(context.Background(), operatorHelmValuesFile, k8scfgwatch.DeduplicateWatchErrors(u), watchOpts)
 }
 
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
@@ -78,6 +120,8 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []ACSO
 			"images":           operatorImages,
 		},
 	}
+
+	chartutil.CoalesceTables(chartVals, operatorHelmValues)
 
 	var dynamicTemplatesUrls []string
 	if crdTag != "" {

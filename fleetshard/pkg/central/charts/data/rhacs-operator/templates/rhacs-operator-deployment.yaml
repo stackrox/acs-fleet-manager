@@ -49,11 +49,11 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 2
-              memory: 1Gi
+              cpu: {{ $.Values.operator.limits.cpu }}
+              memory: {{ $.Values.operator.limits.memory }}
             requests:
-              cpu: 1
-              memory: 200Mi
+              cpu: {{ $.Values.operator.requests.cpu }}
+              memory: {{ $.Values.operator.requests.memory }}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         - args:
