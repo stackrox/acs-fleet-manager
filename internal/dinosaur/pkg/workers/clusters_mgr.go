@@ -999,20 +999,6 @@ func (c *ClusterManager) buildDedicatedReaderClusterRoleBindingResource() *authv
 	}
 }
 
-// buildReadOnlyGroupResource creates a group to which read-only cluster users are added.
-func (c *ClusterManager) buildSREGroupResource() *userv1.Group {
-	return &userv1.Group{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: userv1.SchemeGroupVersion.String(),
-			Kind:       "Group",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: mkSREGroupName,
-		},
-		Users: c.DataplaneClusterConfig.SREUsers,
-	}
-}
-
 // buildClusterAdminClusterRoleBindingResource creates a cluster role binding, associates it with the dinosaur-sre group, and attaches the cluster-admin role.
 func (c *ClusterManager) buildDinosaurSREClusterRoleBindingResource() *authv1.ClusterRoleBinding {
 	return &authv1.ClusterRoleBinding{

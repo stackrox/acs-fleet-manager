@@ -4,16 +4,14 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
-
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
@@ -21,7 +19,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/concurrency"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -55,7 +55,7 @@ type Runtime struct {
 
 // NewRuntime creates a new runtime
 func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
-	auth, err := fleetmanager.NewAuth(config.AuthType, fleetmanager.Option{
+	authOption := fleetmanager.Option{
 		Sso: fleetmanager.RHSSOOption{
 			ClientID:     config.RHSSOClientID,
 			ClientSecret: config.RHSSOClientSecret, // pragma: allowlist secret
@@ -68,7 +68,8 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		Static: fleetmanager.StaticOption{
 			StaticToken: config.StaticToken,
 		},
-	})
+	}
+	auth, err := fleetmanager.NewAuth(config.AuthType, authOption)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager authentication")
 	}
@@ -80,13 +81,13 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 	}
 	var dbProvisionClient cloudprovider.DBClient
 	if config.ManagedDB.Enabled {
-		dbProvisionClient, err = awsclient.NewRDSClient(config, auth)
+		dbProvisionClient, err = awsclient.NewRDSClient(config)
 		if err != nil {
 			return nil, fmt.Errorf("creating managed DB provisioning client: %v", err)
 		}
 	}
 
-	operatorManager := operator.NewACSOperatorManager(k8sClient)
+	operatorManager := operator.NewACSOperatorManager(k8sClient, config.BaseCrdURL)
 
 	return &Runtime{
 		config:            config,
@@ -160,8 +161,24 @@ func (r *Runtime) Start() error {
 				fleetshardmetrics.MetricsInstance().IncCentralReconcilations()
 				r.handleReconcileResult(central, status, err)
 			}(reconciler, central)
+
+			reconcilePaused, err := r.isReconcilePaused(ctx, central)
+			if err != nil {
+				glog.Warningf("Error getting pause annotation status: %v", err)
+			} else {
+				fleetshardmetrics.MetricsInstance().SetPauseReconcileStatus(central.Id, reconcilePaused)
+			}
 		}
+
 		fleetshardmetrics.MetricsInstance().SetTotalCentrals(float64(len(r.reconcilers)))
+		if reconcilerOpts.ManagedDBEnabled {
+			accountQuotas, err := r.dbProvisionClient.GetAccountQuotas(ctx)
+			if err != nil {
+				glog.Warningf("Error retrieving account quotas: %v", err)
+			} else {
+				fleetshardmetrics.MetricsInstance().SetDatabaseAccountQuotas(accountQuotas)
+			}
+		}
 
 		r.deleteStaleReconcilers(&list)
 		return r.config.RuntimePollPeriod, nil
@@ -217,8 +234,19 @@ func (r *Runtime) upgradeOperator() error {
 	ctx := context.Background()
 	// TODO: gather desired operator versions from fleet-manager and update operators based on ticker
 	// TODO: Leave Operator installation before reconciler run until migration
-	operatorImages := []string{"quay.io/rhacs-eng/stackrox-operator:3.74.0", "quay.io/rhacs-eng/stackrox-operator:3.74.1"}
-	glog.Infof("Installing Operators: %s", strings.Join(operatorImages, ", "))
+	operatorImages := []operator.ACSOperatorImage{
+		{
+			Image:      "quay.io/rhacs-eng/stackrox-operator:4.0.0",
+			InstallCRD: false,
+		},
+		{
+			Image:      "quay.io/rhacs-eng/stackrox-operator:4.0.1",
+			InstallCRD: false,
+		},
+	}
+	for _, img := range operatorImages {
+		glog.Infof("Installing Operator: %s and download CRD: %t", img.Image, img.InstallCRD)
+	}
 	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages)
 	if err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
@@ -241,4 +269,33 @@ func (r *Runtime) routesAvailable() bool {
 		return false
 	}
 	return true
+}
+
+func (r *Runtime) isReconcilePaused(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
+	central := &v1alpha1.Central{}
+	err := r.k8sClient.Get(ctx, ctrlClient.ObjectKey{
+		Namespace: remoteCentral.Metadata.Namespace,
+		Name:      remoteCentral.Metadata.Name}, central)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+
+		return false, errors.Wrapf(err, "getting CR for Central: %s", remoteCentral.Id)
+	}
+
+	if central.Annotations == nil {
+		return false, nil
+	}
+
+	value, exists := central.Annotations[centralReconciler.PauseReconcileAnnotation]
+	if !exists {
+		return false, nil
+	}
+
+	if value == "true" {
+		return true, nil
+	}
+
+	return false, nil
 }

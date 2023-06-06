@@ -28,6 +28,7 @@ type Config struct {
 	MetricsAddress                    string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
 	EgressProxyImage                  string        `env:"EGRESS_PROXY_IMAGE"`
 	FeatureFlagUpgradeOperatorEnabled bool          `env:"FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED" envDefault:"false"`
+	BaseCrdURL                        string        `env:"BASE_CRD_URL" envDefault:"https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"`
 
 	AWS       AWS
 	ManagedDB ManagedDB
@@ -36,8 +37,9 @@ type Config struct {
 
 // AWS for configuring AWS specific parameters
 type AWS struct {
-	Region  string `env:"AWS_REGION" envDefault:"us-east-1"`
-	RoleARN string `env:"AWS_ROLE_ARN"`
+	Region    string `env:"AWS_REGION" envDefault:"us-east-1"`
+	RoleARN   string `env:"AWS_ROLE_ARN"`
+	TokenFile string `env:"AWS_STS_TOKEN_FILE" envDefault:"/var/run/secrets/tokens/aws-token"`
 }
 
 // ManagedDB for configuring managed DB specific parameters

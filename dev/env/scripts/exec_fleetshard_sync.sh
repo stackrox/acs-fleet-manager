@@ -15,17 +15,17 @@ if [[ "$ENABLE_EXTERNAL_CONFIG" != "true" ]]; then
     exit
 fi
 
-export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-vault}"
+export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-saml}"
 # shellcheck source=scripts/lib/external_config.sh
 source "${GITROOT}/scripts/lib/external_config.sh"
 init_chamber
 
 CLUSTER_NAME="cluster-acs-dev-dp-01"
 
-ARGS="CLUSTER_ID=$(run_chamber read ${CLUSTER_NAME} ID -q -b ssm) \
-    MANAGED_DB_SECURITY_GROUP=$(run_chamber read ${CLUSTER_NAME} MANAGED_DB_SECURITY_GROUP -q -b ssm) \
-    MANAGED_DB_SUBNET_GROUP=$(run_chamber read ${CLUSTER_NAME} MANAGED_DB_SUBNET_GROUP -q -b ssm) \
-    AWS_ROLE_ARN=$(run_chamber read fleetshard-sync AWS_ROLE_ARN -q -b ssm) \
+ARGS="CLUSTER_ID=${CLUSTER_ID:-$(chamber read ${CLUSTER_NAME} ID -q -b ssm)} \
+    MANAGED_DB_SECURITY_GROUP=${MANAGED_DB_SECURITY_GROUP:-$(chamber read ${CLUSTER_NAME} MANAGED_DB_SECURITY_GROUP -q -b ssm)} \
+    MANAGED_DB_SUBNET_GROUP=${MANAGED_DB_SUBNET_GROUP:-$(chamber read ${CLUSTER_NAME} MANAGED_DB_SUBNET_GROUP -q -b ssm)} \
+    AWS_ROLE_ARN=${FLEETSHARD_SYNC_AWS_ROLE_ARN:-$(chamber read fleetshard-sync AWS_ROLE_ARN -q -b ssm)} \
     $ARGS"
 
-run_chamber exec fleetshard-sync -b secretsmanager -- sh -c "$ARGS"
+chamber exec fleetshard-sync -b secretsmanager -- sh -c "$ARGS"
