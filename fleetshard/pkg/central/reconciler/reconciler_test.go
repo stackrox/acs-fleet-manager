@@ -4,13 +4,12 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/service/sts"
+
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -23,10 +22,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -203,8 +202,7 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 				SecurityGroup: "security-group",
 				SubnetGroup:   "db-group",
 			},
-		},
-		&fakeAuth{})
+		})
 	require.NoError(t, err)
 
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient, centralDBInitFunc,
@@ -214,11 +212,9 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 		})
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
-	var awsErr, awsOrigErr awserr.Error
+	var awsErr awserr.Error
 	require.ErrorAs(t, err, &awsErr)
-	assert.Equal(t, awsErr.Code(), stscreds.ErrCodeWebIdentity)
-	require.ErrorAs(t, awsErr.OrigErr(), &awsOrigErr)
-	assert.Equal(t, awsOrigErr.Code(), sts.ErrCodeInvalidIdentityTokenException)
+	assert.Equal(t, stscreds.ErrCodeWebIdentity, awsErr.Code())
 }
 
 func TestReconcileUpdateSucceeds(t *testing.T) {
@@ -392,7 +388,7 @@ func TestDisablePauseAnnotation(t *testing.T) {
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
-	central.Annotations[pauseReconcileAnnotation] = "true"
+	central.Annotations[PauseReconcileAnnotation] = "true"
 	err = fakeClient.Update(context.TODO(), central)
 	require.NoError(t, err)
 
@@ -401,7 +397,7 @@ func TestDisablePauseAnnotation(t *testing.T) {
 
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
-	require.Equal(t, "false", central.Annotations[pauseReconcileAnnotation])
+	require.Equal(t, "false", central.Annotations[PauseReconcileAnnotation])
 }
 
 func TestReconcileDeleteWithManagedDB(t *testing.T) {
@@ -557,12 +553,14 @@ func TestReportRoutesStatuses(t *testing.T) {
 }
 
 func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
-	chrt, err := charts.LoadChart(testdata, "testdata/tenant-resources")
+	chartFiles, err := charts.TraverseChart(testdata, "testdata/tenant-resources")
+	require.NoError(t, err)
+	chart, err := loader.LoadFiles(chartFiles)
 	require.NoError(t, err)
 
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
-	r.resourcesChart = chrt
+	r.resourcesChart = chart
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -588,7 +586,9 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 }
 
 func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
-	chart, err := charts.LoadChart(testdata, "testdata/tenant-resources")
+	chartFiles, err := charts.TraverseChart(testdata, "testdata/tenant-resources")
+	require.NoError(t, err)
+	chart, err := loader.LoadFiles(chartFiles)
 	require.NoError(t, err)
 
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
@@ -723,18 +723,6 @@ func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
 
 func centralDeploymentObject() *appsv1.Deployment {
 	return testutils.NewCentralDeployment(centralNamespace)
-}
-
-var _ fleetmanager.Auth = &fakeAuth{}
-
-type fakeAuth struct{}
-
-func (*fakeAuth) AddAuth(_ *http.Request) error {
-	return nil
-}
-
-func (*fakeAuth) RetrieveIDToken() (string, error) {
-	return "fake.token", nil // minimum field size of 20
 }
 
 func TestTelemetryOptionsAreSetInCR(t *testing.T) {

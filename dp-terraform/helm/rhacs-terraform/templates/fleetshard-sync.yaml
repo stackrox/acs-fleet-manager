@@ -80,6 +80,9 @@ spec:
           value: {{ .Values.fleetshardSync.telemetry.storage.endpoint | quote }}
         - name: TELEMETRY_STORAGE_KEY
           value: {{ .Values.fleetshardSync.telemetry.storage.key | quote }}
+        volumeMounts:
+          - mountPath: /var/run/secrets/tokens
+            name: aws-token
         ports:
         - name: monitoring
           containerPort: 8080
@@ -90,3 +93,10 @@ spec:
           requests:
             cpu: {{ .Values.fleetshardSync.resources.requests.cpu | quote }}
             memory: {{ .Values.fleetshardSync.resources.requests.memory | quote }}
+      volumes:
+        - name: aws-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: aws-token
+                  audience: sts.amazonaws.com

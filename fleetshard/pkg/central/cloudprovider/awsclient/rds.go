@@ -16,8 +16,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
 const (
@@ -53,8 +53,7 @@ const (
 	dbMaxCapacityACU = 16
 )
 
-// RDS is an AWS RDS client tied to one Central instance. It provisions and deprovisions databases
-// for the Central.
+// RDS is an AWS RDS client that provisions and deprovisions databases for ACS instances.
 type RDS struct {
 	dbSecurityGroup      string
 	dbSubnetGroup        string
@@ -119,6 +118,34 @@ func (r *RDS) GetDBConnection(databaseID string) (postgres.DBConnection, error) 
 	}
 
 	return connection, nil
+}
+
+// GetAccountQuotas returns database-related service quotas for the AWS region on which
+// the instance of fleetshard-sync runs
+func (r *RDS) GetAccountQuotas(ctx context.Context) (cloudprovider.AccountQuotas, error) {
+	accountAttributes, err := r.rdsClient.DescribeAccountAttributesWithContext(ctx, &rds.DescribeAccountAttributesInput{})
+	if err != nil {
+		return nil, fmt.Errorf("getting account quotas: %w", err)
+	}
+
+	neededQuotas := map[string]cloudprovider.AccountQuotaType{
+		"DBInstances":            cloudprovider.DBInstances,
+		"DBClusters":             cloudprovider.DBClusters,
+		"ManualClusterSnapshots": cloudprovider.DBSnapshots,
+	}
+
+	accountQuotas := make(cloudprovider.AccountQuotas, len(neededQuotas))
+	for _, quota := range accountAttributes.AccountQuotas {
+		quotaType, ok := neededQuotas[*quota.AccountQuotaName]
+		if ok {
+			accountQuotas[quotaType] = cloudprovider.AccountQuotaValue{
+				Used: *quota.Used,
+				Max:  *quota.Max,
+			}
+		}
+	}
+
+	return accountQuotas, nil
 }
 
 func (r *RDS) ensureDBClusterCreated(clusterID, masterPassword string, isTestInstance bool) error {
@@ -299,8 +326,8 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 }
 
 // NewRDSClient initializes a new awsclient.RDS
-func NewRDSClient(config *config.Config, auth fleetmanager.Auth) (*RDS, error) {
-	rdsClient, err := newRdsClient(config.AWS, auth)
+func NewRDSClient(config *config.Config) (*RDS, error) {
+	rdsClient, err := newRdsClient(config.AWS)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create RDS client: %w", err)
 	}
@@ -405,7 +432,7 @@ func newDeleteCentralDBClusterInput(clusterID string, skipFinalSnapshot bool) *r
 	return input
 }
 
-func newRdsClient(awsConfig config.AWS, auth fleetmanager.Auth) (*rds.RDS, error) {
+func newRdsClient(awsConfig config.AWS) (*rds.RDS, error) {
 	cfg := &aws.Config{
 		Region: aws.String(awsConfig.Region),
 	}
@@ -415,8 +442,8 @@ func newRdsClient(awsConfig config.AWS, auth fleetmanager.Auth) (*rds.RDS, error
 	}
 	stsClient := sts.New(sess)
 
-	roleProvider := stscreds.NewWebIdentityRoleProviderWithOptions(stsClient, awsConfig.RoleARN, "",
-		&tokenFetcher{auth: auth})
+	roleProvider := stscreds.NewWebIdentityRoleProviderWithOptions(stsClient, awsConfig.RoleARN, "rds",
+		stscreds.FetchTokenPath(awsConfig.TokenFile))
 
 	cfg.Credentials = awscredentials.NewCredentials(roleProvider)
 
@@ -437,16 +464,4 @@ func getInstanceType(isTestInstance bool) string {
 		return testInstanceTagValue
 	}
 	return regularInstaceTagValue
-}
-
-type tokenFetcher struct {
-	auth fleetmanager.Auth
-}
-
-func (f *tokenFetcher) FetchToken(_ awscredentials.Context) ([]byte, error) {
-	token, err := f.auth.RetrieveIDToken()
-	if err != nil {
-		return nil, fmt.Errorf("retrieving token from token source: %w", err)
-	}
-	return []byte(token), nil
 }

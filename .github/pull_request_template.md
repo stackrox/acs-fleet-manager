@@ -10,6 +10,8 @@
 - [ ] Add the ticket number to the PR title if available, i.e. `ROX-12345: ...`
 - [ ] Discussed security and business related topics privately. Will move any security and business related topics that arise to private communication channel.
 - [ ] Add secret to app-interface Vault or Secrets Manager if necessary
+- [ ] RDS changes were e2e tested [manually](../docs/development/howto-e2e-test-rds.md)
+- [ ] Check AWS limits are reasonable for changes provisioning new resources
 
 ## Test manual
 

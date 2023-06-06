@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/google/uuid"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/rox/pkg/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -189,4 +190,28 @@ func TestGetDBConnection(t *testing.T) {
 	var awsErr awserr.Error
 	require.ErrorAs(t, err, &awsErr)
 	assert.Equal(t, awsErr.Code(), rds.ErrCodeDBClusterNotFoundFault)
+}
+
+func TestGetAccountQuotas(t *testing.T) {
+	if os.Getenv("RUN_RDS_TESTS") != "true" {
+		t.Skip("Skip RDS tests. Set RUN_RDS_TESTS=true env variable to enable RDS tests.")
+	}
+
+	rdsClient, err := newTestRDS()
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
+	accountQuotas, err := rdsClient.GetAccountQuotas(ctx)
+	require.NoError(t, err)
+
+	expectedQuotas := [...]cloudprovider.AccountQuotaType{cloudprovider.DBClusters, cloudprovider.DBInstances, cloudprovider.DBSnapshots}
+	for _, quota := range expectedQuotas {
+		quotaValue, found := accountQuotas[quota]
+		require.True(t, found)
+		var minQuotaValue int64
+		assert.GreaterOrEqual(t, quotaValue.Used, minQuotaValue)
+		assert.GreaterOrEqual(t, quotaValue.Max, minQuotaValue)
+	}
 }

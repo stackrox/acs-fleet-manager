@@ -5,7 +5,9 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"io"
 	"io/fs"
+	"net/http"
 	"path"
 	"strings"
 
@@ -26,8 +28,8 @@ var (
 	data embed.FS
 )
 
-// LoadChart loads a chart from the given path on the given file system.
-func LoadChart(fsys fs.FS, chartPath string) (*chart.Chart, error) {
+// TraverseChart combines all chart files into memory from given file system
+func TraverseChart(fsys fs.FS, chartPath string) ([]*loader.BufferedFile, error) {
 	chartPath = strings.TrimRight(chartPath, "/")
 	var chartFiles []*loader.BufferedFile
 	err := fs.WalkDir(fsys, chartPath, func(path string, d fs.DirEntry, err error) error {
@@ -50,22 +52,72 @@ func LoadChart(fsys fs.FS, chartPath string) (*chart.Chart, error) {
 	if err != nil {
 		return nil, fmt.Errorf("loading chart from %q: %w", chartPath, err)
 	}
+	return chartFiles, nil
+}
 
-	chrt, err := loader.LoadFiles(chartFiles)
-	if err != nil {
-		return nil, fmt.Errorf("loading chart from %s: %w", chartPath, err)
+func downloadTemplates(urls []string) ([]*loader.BufferedFile, error) {
+	var chartFiles []*loader.BufferedFile
+	for _, url := range urls {
+		buffered, err := downloadTemplate(url)
+		if err != nil {
+			return nil, fmt.Errorf("failed downloading template from %s: %w", url, err)
+		}
+		chartFiles = append(chartFiles, buffered)
 	}
-	return chrt, nil
+	return chartFiles, nil
+}
+
+func downloadTemplate(url string) (*loader.BufferedFile, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed Get for %s: %w", url, err)
+	}
+	defer resp.Body.Close()
+
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read bytes: %w", err)
+	}
+
+	// parse filename from the URL
+	if !strings.Contains(url, "/") {
+		return nil, fmt.Errorf("cannot parse filename from %s", url)
+	}
+	filename := url[strings.LastIndex(url, "/")+1:]
+	name := path.Join("templates", filename)
+
+	bufferedFile := &loader.BufferedFile{
+		Name: name,
+		Data: bytes,
+	}
+
+	return bufferedFile, nil
 }
 
 // GetChart loads a chart from the data directory. The name should be the name of the containing directory.
-func GetChart(name string) (*chart.Chart, error) {
-	return LoadChart(data, path.Join("data", name))
+// Optional: pass list of URLs to download additional template files for the chart.
+func GetChart(name string, urls []string) (*chart.Chart, error) {
+	chartFiles, err := TraverseChart(data, path.Join("data", name))
+	if err != nil {
+		return nil, fmt.Errorf("failed getting chart files for %q: %w", name, err)
+	}
+	if len(urls) > 0 {
+		downloadedFiles, err := downloadTemplates(urls)
+		if err != nil {
+			return nil, fmt.Errorf("failed downloading chart files %q: %w", name, err)
+		}
+		chartFiles = append(chartFiles, downloadedFiles...)
+	}
+	loadedChart, err := loader.LoadFiles(chartFiles)
+	if err != nil {
+		return nil, fmt.Errorf("failed loading chart %q: %w", name, err)
+	}
+	return loadedChart, nil
 }
 
 // MustGetChart loads a chart from the data directory. Unlike GetChart, it panics if an error is encountered.
-func MustGetChart(name string) *chart.Chart {
-	chrt, err := GetChart(name)
+func MustGetChart(name string, urls []string) *chart.Chart {
+	chrt, err := GetChart(name, urls)
 	if err != nil {
 		panic(err)
 	}

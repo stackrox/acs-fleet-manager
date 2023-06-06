@@ -8,19 +8,14 @@ import (
 	"strings"
 
 	"github.com/caarlos0/env/v6"
-	"github.com/stackrox/rox/pkg/utils"
-
 	"github.com/pkg/errors"
+	"github.com/stackrox/rox/pkg/utils"
 )
 
 // Auth will handle adding authentication information to HTTP requests.
 type Auth interface {
 	// AddAuth will add authentication information to the request, e.g. in the form of the Authorization header.
 	AddAuth(req *http.Request) error
-
-	// RetrieveIDToken will return the ID token, if available.
-	// If the ID token cannot be retrieved, an error will be returned.
-	RetrieveIDToken() (string, error)
 }
 
 type authFactory interface {
