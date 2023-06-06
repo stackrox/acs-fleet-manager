@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// MustGetDefinedString attempts to get a non-empty string flag from the provided flag set or panic
+// MustGetDefinedString attempts to get a non-empty string flag from the provided flag set or os.Exits
 func MustGetDefinedString(flagName string, flags *pflag.FlagSet) string {
 	flagVal := MustGetString(flagName, flags)
 	if flagVal == "" {
@@ -17,7 +17,7 @@ func MustGetDefinedString(flagName string, flags *pflag.FlagSet) string {
 	return flagVal
 }
 
-// MustGetString attempts to get a string flag from the provided flag set or panic
+// MustGetString attempts to get a string flag from the provided flag set or os.Exits
 func MustGetString(flagName string, flags *pflag.FlagSet) string {
 	flagVal, err := flags.GetString(flagName)
 	if err != nil {
@@ -26,7 +26,7 @@ func MustGetString(flagName string, flags *pflag.FlagSet) string {
 	return flagVal
 }
 
-// MustGetBool attempts to get a boolean flag from the provided flag set or panic
+// MustGetBool attempts to get a boolean flag from the provided flag set or os.Exits
 func MustGetBool(flagName string, flags *pflag.FlagSet) bool {
 	flagVal, err := flags.GetBool(flagName)
 	if err != nil {

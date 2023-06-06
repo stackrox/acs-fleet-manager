@@ -17,11 +17,11 @@ func main() {
 	}
 	rootCmd.PersistentFlags().Bool("debug", false, "use debug output")
 
-	setupSubCommands(rootCmd)
-
 	// This is used to recover from panics during initialization and glog.Fatal calls
 	// use the --debug flag to print stacktrace otherwise only the panic msg will be printed
 	defer recoverFromCLIPanic(rootCmd)
+
+	setupSubCommands(rootCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Printf("Error executing command: %s", err)

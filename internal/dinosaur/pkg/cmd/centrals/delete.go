@@ -5,9 +5,9 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/cliflags"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
-	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 )
 
 // NewDeleteCommand command for deleting centrals.
@@ -21,12 +21,13 @@ func NewDeleteCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(FlagID, "", "Central ID")
+	cmd.Flags().String(FlagID, "", "Central ID (required)")
+	cliflags.MarkFlagRequired(FlagID, cmd)
 	return cmd
 }
 
 func runDelete(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
-	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
+	id := cliflags.MustGetDefinedString(FlagID, cmd)
 
 	const async = true
 	resp, err := client.PublicAPI().DeleteCentralById(cmd.Context(), id, async)
