@@ -18,7 +18,7 @@ func main() {
 	}
 	rootCmd.PersistentFlags().Bool("debug", false, "use debug output")
 
-	// This is used to recover from panics during initialization and glog.Fatal calls
+	// This is used to recover from panics during initialization and command execution
 	// use the --debug flag to print stacktrace otherwise only the panic msg will be printed
 	defer recoverFromCLIPanic(rootCmd)
 
