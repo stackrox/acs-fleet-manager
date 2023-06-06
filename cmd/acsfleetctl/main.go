@@ -26,6 +26,7 @@ func main() {
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Printf("Error executing command: %s", err)
+		os.Exit(1)
 	}
 
 }
