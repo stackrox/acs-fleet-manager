@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"runtime/debug"
 
 	"github.com/spf13/cobra"
@@ -41,6 +42,8 @@ func recoverFromCLIPanic(rootCmd *cobra.Command) {
 		if dbg {
 			fmt.Println(string(debug.Stack()))
 		}
+
+		os.Exit(1)
 	}
 }
 
