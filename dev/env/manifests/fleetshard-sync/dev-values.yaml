@@ -1,0 +1,70 @@
+# Default values for rhacs-terraform.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+fleetshardSync:
+  image: "quay.io/app-sre/acs-fleet-manager:59142fe"
+  # Can be either OCM, RHSSO, STATIC_TOKEN. When choosing RHSSO, make sure the clientId/secret is set. By default, uses RHSSO.
+  authType: "RHSSO"
+  # OCM refresh token, only required in combination with authType=OCM.
+  ocmToken: ""
+  fleetManagerEndpoint: ""
+  clusterId: "1234567890abcdef1234567890abcdef"
+  clusterName: ""
+  environment: ""
+  # Flag controlling whether tenant's sso.redhat.com auth provider will be initialised by fleetshard-sync.
+  # Currently this functionality is supported only when fleetshard-sync is deployed in the same k8s cluster as tenant.
+  createAuthProvider: true
+  # Static token, only required in combination with authType=STATIC_TOKEN. A sample static token can be found
+  # within Bitwarden (ACS Fleet* static token).
+  staticToken: ""
+  # Red Hat SSO secrets, only required in combination with authType=RHSSO. The client credentials can be found within
+  # Bitwarden (ACS RH SSO Fleet* serviceaccount).
+  redHatSSO:
+    clientId: ""
+    clientSecret: ""
+    endpoint: "https://sso.redhat.com"
+    realm: "redhat-external"
+  egressProxy:
+    image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0"
+  managedDB:
+    enabled: true
+    subnetGroup: ""
+    securityGroup: ""
+    performanceInsights: true
+  aws:
+    region: "us-east-1"  # TODO(2023-05-01): Remove the default value here as we now set it explicitly
+    roleARN: ""
+  telemetry:
+    storage:
+      endpoint: ""
+      # API key to push telemetry data to a remote backend. Leaving it empty disables telemetry.
+      key: ""
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+acsOperator:
+  enabled: false
+  values:
+    operator:
+      resources:
+        limits:
+          cpu: 2
+          memory: 1Gi
+        requests:
+          cpu: 1
+          memory: 200Mi
+
+cloudwatch:
+  enabled: false
+
+observability:
+  enabled: false
+
+logging:
+  enabled: false
