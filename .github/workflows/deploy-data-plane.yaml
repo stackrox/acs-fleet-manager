@@ -43,7 +43,7 @@ jobs:
   deploy-external-secrets:
     name: Deploy external-secrets operator to ${{ inputs.acs_environment }}
     runs-on: ubuntu-latest
-    if: inputs.github_environment != 'dev'
+    if: inputs.github_environment != 'development'
     environment: ${{ inputs.github_environment }}
     permissions:
       id-token: write
@@ -62,6 +62,8 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
       - name: Deploy external-secrets operator to ${{ inputs.acs_environment }}
         working-directory: ./deploy/helm/external-secrets
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
           set -euo pipefail
           # shellcheck disable=SC2043
@@ -97,6 +99,8 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
       - name: Run terraforming on ${{ inputs.deploy_clusters }}
         working-directory: ./dp-terraform/helm/rhacs-terraform
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
           set -euo pipefail
           # shellcheck disable=SC2043
