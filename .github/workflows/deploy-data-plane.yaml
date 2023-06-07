@@ -40,27 +40,9 @@ env:
   AWS_AUTH_HELPER: none
 
 jobs:
-  deploy-external-secrets:
-    name: Deploy external-secrets operator to ${{ inputs.acs_environment }}
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.github_environment }}
-    steps:
-      - name: Deploy external-secrets operator to ${{ inputs.acs_environment }}
-        working-directory: ./deploy/helm/external-secrets
-        run: |
-          set -euo pipefail
-          # shellcheck disable=SC2043
-          for cluster in ${{ inputs.deploy_clusters }}
-          do
-            echo "Deploying external-secrets to ${cluster}"
-            ./deploy.sh ${{ inputs.acs_environment }} "${cluster}"
-            echo "External Secrets deployment on ${cluster} succeeded"
-          done
-
   terraform:
     name: Re-terraform ${{ inputs.acs_environment }} clusters
     runs-on: ubuntu-latest
-    needs: deploy-external-secrets
     permissions:
       id-token: write
       contents: read
@@ -79,6 +61,18 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+      # We need to deploy the external-secrets operator BEFORE the actual terraforming to create the necessary CRDs on the clusters
+      - name: Deploy external-secrets operator to ${{ inputs.acs_environment }}
+        working-directory: ./deploy/helm/external-secrets
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC2043
+          for cluster in ${{ inputs.deploy_clusters }}
+          do
+            echo "Deploying external-secrets to ${cluster}"
+            ./deploy.sh ${{ inputs.acs_environment }} "${cluster}"
+            echo "External Secrets deployment on ${cluster} succeeded"
+          done
       - name: Run terraforming on ${{ inputs.deploy_clusters }}
         working-directory: ./dp-terraform/helm/rhacs-terraform
         run: |
