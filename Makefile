@@ -241,7 +241,7 @@ help:
 all: openapi/generate binary
 .PHONY: all
 
-# Set git hook path to .githooks/
+# Install pre-commit hooks
 .PHONY: setup/git/hooks
 setup/git/hooks:
 	-git config --unset-all core.hooksPath
