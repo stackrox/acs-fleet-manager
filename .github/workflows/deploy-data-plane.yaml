@@ -79,6 +79,8 @@ jobs:
       id-token: write
       contents: read
     environment: ${{ inputs.github_environment }}
+    # We need to deploy the external-secrets operator BEFORE the actual terraforming to create the necessary CRDs on the clusters
+    needs: deploy-external-secrets
     steps:
       - name: Set up Go 1.20
         uses: actions/setup-go@v3
@@ -108,8 +110,6 @@ jobs:
   deploy-probe:
     name: Deploy blackbox monitoring probe service to ${{ inputs.acs_environment }}
     runs-on: ubuntu-latest
-    # We need to deploy the external-secrets operator BEFORE the actual terraforming to create the necessary CRDs on the clusters
-    needs: deploy-external-secrets
     permissions:
       id-token: write
       contents: read
