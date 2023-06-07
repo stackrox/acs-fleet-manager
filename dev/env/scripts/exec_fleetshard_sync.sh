@@ -23,7 +23,7 @@ init_chamber
 CLUSTER_NAME="cluster-acs-dev-dp-01"
 ARGS="$ARGS"
 
-#chamber exec fleetshard-sync -b secretsmanager -- sh -c "$ARGS"
+chamber exec fleetshard-sync -b secretsmanager -- sh -c "$ARGS"
 
 helm_args=(
     "--set fleetshardSync.managedDB.enabled=${MANAGED_DB_ENABLED}"
@@ -37,7 +37,7 @@ if [[ "${MANAGED_DB_ENABLED}" -eq "true" ]]; then
     )
 fi
 
-helm upgrade --install ${GITROOT}/dp-terraform/helm/rhacs-terraform \
+helm upgrade --install --dry-run ${GITROOT}/dp-terraform/helm/rhacs-terraform \
     --namespace "$ACSMS_NAMESPACE" \
     --set fleetshardSync.clusterid="${CLUSTER_ID:-$(chamber read ${CLUSTER_NAME} ID -q -b ssm)}" \
     --set fleetshardSync.clusterName="${CLUSTER_NAME}" \
@@ -48,7 +48,8 @@ helm upgrade --install ${GITROOT}/dp-terraform/helm/rhacs-terraform \
     --set fleetshardSync.aws.roleARN="${FLEETSHARD_SYNC_AWS_ROLE_ARN:-$(chamber read fleetshard-sync AWS_ROLE_ARN -q -b ssm)}" \
     --set fleetshardSync.fleetManagerEndpoint="http://fleet-manager:8000" \
     --set fleetshardSync.redHatSSO.clientId="${RHSSO_SERVICE_ACCOUNT_CLIENT_ID}" \
-    --set fleetshardSync.redHatSSO.clientSecret="${RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET}"
+    --set fleetshardSync.redHatSSO.clientSecret="${RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET}" \
+    helm_args "${array[@]}"
 
 #    --set fleetshardSync.resources.limits.cpu="" \
 #    --set fleetshardSync.resources.limits.memory="" \
