@@ -83,6 +83,11 @@ jobs:
     environment: ${{ inputs.github_environment }}
     # We need to deploy the external-secrets operator BEFORE the actual terraforming to create the necessary CRDs on the clusters
     needs: deploy-external-secrets
+    # Run this job if deploy-external-secrets is skipped
+    # see: https://github.com/actions/runner/issues/491
+    if: |
+      always() &&
+      needs.deploy-external-secrets.result == 'success' || needs.deploy-external-secrets.result == 'skipped'
     steps:
       - name: Set up Go 1.20
         uses: actions/setup-go@v3
