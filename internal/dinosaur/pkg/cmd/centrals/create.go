@@ -7,9 +7,9 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/cliflags"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 )
 
 // NewCreateCommand creates a new command for creating centrals.
@@ -30,16 +30,16 @@ func NewCreateCommand() *cobra.Command {
 	cmd.Flags().String(FlagClusterID, "000", "Central request cluster ID")
 	cmd.Flags().Bool(FlagMultiAZ, true, "Whether Central request should be Multi AZ or not")
 	cmd.Flags().String(FlagOrgID, "", "OCM org id")
-	cliflags.MarkFlagRequired(FlagName, cmd)
-	cliflags.MarkFlagRequired(FlagRegion, cmd)
-	cliflags.MarkFlagRequired(FlagProvider, cmd)
+	flags.MarkFlagRequired(FlagName, cmd)
+	flags.MarkFlagRequired(FlagRegion, cmd)
+	flags.MarkFlagRequired(FlagProvider, cmd)
 	return cmd
 }
 
 func runCreate(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
-	name := cliflags.MustGetDefinedString(FlagName, cmd)
-	region := cliflags.MustGetDefinedString(FlagRegion, cmd)
-	provider := cliflags.MustGetDefinedString(FlagProvider, cmd)
+	name := flags.MustGetDefinedString(FlagName, cmd.Flags())
+	region := flags.MustGetDefinedString(FlagRegion, cmd.Flags())
+	provider := flags.MustGetDefinedString(FlagProvider, cmd.Flags())
 
 	request := public.CentralRequestPayload{
 		Region:        region,
