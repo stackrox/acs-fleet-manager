@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/cliflags"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/cmd/fleetmanagerclient"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
-	"github.com/stackrox/acs-fleet-manager/pkg/flags"
 )
 
 // NewCreateCommand creates a new command for creating centrals.
@@ -17,8 +18,8 @@ func NewCreateCommand() *cobra.Command {
 		Use:   "create",
 		Short: "Create a new central request",
 		Long:  "Create a new central request.",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCreate(fleetmanagerclient.AuthenticatedClientWithOCM(), cmd, args)
+		Run: func(cmd *cobra.Command, args []string) {
+			runCreate(fleetmanagerclient.AuthenticatedClientWithOCM(), cmd, args)
 		},
 	}
 
@@ -29,16 +30,16 @@ func NewCreateCommand() *cobra.Command {
 	cmd.Flags().String(FlagClusterID, "000", "Central request cluster ID")
 	cmd.Flags().Bool(FlagMultiAZ, true, "Whether Central request should be Multi AZ or not")
 	cmd.Flags().String(FlagOrgID, "", "OCM org id")
-	flags.MarkFlagRequired(FlagName, cmd)
-	flags.MarkFlagRequired(FlagRegion, cmd)
-	flags.MarkFlagRequired(FlagProvider, cmd)
+	cliflags.MarkFlagRequired(FlagName, cmd)
+	cliflags.MarkFlagRequired(FlagRegion, cmd)
+	cliflags.MarkFlagRequired(FlagProvider, cmd)
 	return cmd
 }
 
-func runCreate(client *fleetmanager.Client, cmd *cobra.Command, _ []string) error {
-	name := flags.MustGetDefinedString(FlagName, cmd.Flags())
-	region := flags.MustGetDefinedString(FlagRegion, cmd.Flags())
-	provider := flags.MustGetDefinedString(FlagProvider, cmd.Flags())
+func runCreate(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
+	name := cliflags.MustGetDefinedString(FlagName, cmd)
+	region := cliflags.MustGetDefinedString(FlagRegion, cmd)
+	provider := cliflags.MustGetDefinedString(FlagProvider, cmd)
 
 	request := public.CentralRequestPayload{
 		Region:        region,
@@ -50,14 +51,14 @@ func runCreate(client *fleetmanager.Client, cmd *cobra.Command, _ []string) erro
 	const async = true
 	centralRequest, _, err := client.PublicAPI().CreateCentral(cmd.Context(), async, request)
 	if err != nil {
-		return fmt.Errorf(apiErrorMsg, "create", err)
+		glog.Errorf(apiErrorMsg, "create", err)
+		return
 	}
 
 	centralJSON, err := json.Marshal(centralRequest)
 	if err != nil {
-		return fmt.Errorf("Failed to marshal Central: %s", err)
+		glog.Errorf("Failed to marshal Central: %s", err)
+		return
 	}
 	fmt.Println(string(centralJSON))
-
-	return nil
 }
