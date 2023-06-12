@@ -51,7 +51,7 @@ var serviceAccount = &unstructured.Unstructured{
 		"kind":       "ServiceAccount",
 		"apiVersion": "v1",
 		"metadata": map[string]interface{}{
-			"name":      "rhacs-operator-manager",
+			"name":      "rhacs-operator-controller-manager",
 			"namespace": operatorNamespace,
 		},
 	},
