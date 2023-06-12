@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"sync/atomic"
 
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -27,6 +26,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -55,7 +55,8 @@ const (
 	dbUserTypeCentral    = "central"
 	dbCentralUserName    = "rhacs_central"
 
-	centralDbSecretName = "central-db-password" // pragma: allowlist secret
+	centralDbSecretName       = "central-db-password" // pragma: allowlist secret
+	centralDeletePollInterval = 5 * time.Second
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -741,26 +742,41 @@ func (r *CentralReconciler) getDBPasswordFromSecret(ctx context.Context, central
 }
 
 func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central *v1alpha1.Central) (bool, error) {
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: central.GetNamespace(), Name: central.GetName()}, central)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return true, nil
+	centralKey := ctrlClient.ObjectKey{Namespace: central.GetNamespace(), Name: central.GetName()}
+
+	if err := wait.PollUntilContextCancel(ctx, centralDeletePollInterval, true, func(ctx context.Context) (bool, error) {
+		var centralToDelete v1alpha1.Central
+
+		if err := r.client.Get(ctx, centralKey, &centralToDelete); err != nil {
+			if apiErrors.IsNotFound(err) {
+				glog.Infof("Central CR %s is deleted", centralKey.String())
+				return true, nil
+			}
+			return false, errors.Wrapf(err, "delete central CR %v", centralKey)
 		}
 
-		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
-	}
+		// avoid being stuck in a deprovisioning state due to the pause reconcile annotation
+		if err := r.disablePauseReconcileIfPresent(ctx, central); err != nil {
+			return false, err
+		}
 
-	// avoid being stuck in a deprovisioning state due to the pause reconcile annotation
-	err = r.disablePauseReconcileIfPresent(ctx, central)
-	if err != nil {
-		return false, err
-	}
+		if centralToDelete.DeletionTimestamp == nil {
+			glog.Infof("Marking Central CR %s for deletion", centralKey.String())
+			if err := r.client.Delete(ctx, central); err != nil {
+				if apiErrors.IsNotFound(err) {
+					glog.Infof("Central CR %s is deleted", centralKey.String())
+					return true, nil
+				}
+				return false, errors.Wrapf(err, "delete central CR %v", centralKey)
+			}
+		}
 
-	if err := r.client.Delete(ctx, central); err != nil {
-		return false, errors.Wrapf(err, "delete central CR %s/%s", central.GetNamespace(), central.GetName())
+		glog.Infof("Waiting for Central CR %s to be deleted", centralKey.String())
+		return false, nil
+	}); err != nil {
+		return false, errors.Wrapf(err, "waiting for central CR %v to be deleted", centralKey)
 	}
-	glog.Infof("Central CR %s/%s is marked for deletion", central.GetNamespace(), central.GetName())
-	return false, nil
+	return true, nil
 }
 
 func (r *CentralReconciler) disablePauseReconcileIfPresent(ctx context.Context, central *v1alpha1.Central) error {
