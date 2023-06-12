@@ -27,10 +27,6 @@ const (
 	statusRejected   centralStatus = "rejected"
 	statusDeleted    centralStatus = "deleted"
 	statusUnknown    centralStatus = "unknown"
-
-	// TODO: Renaming these dinosaurs will require a DB migration step
-	dinosaurOperatorUpdating string = "DinosaurOperatorUpdating"
-	dinosaurUpdating         string = "DinosaurUpdating"
 )
 
 // DataPlaneCentralService ...
@@ -101,7 +97,6 @@ func (d *dataPlaneCentralService) UpdateDataPlaneCentralService(ctx context.Cont
 			log.Error(errors.Wrapf(e, "Error updating central %s status", ks.CentralClusterID))
 		}
 
-		e = d.setCentralRequestVersionFields(dinosaur, ks)
 		if e != nil {
 			log.Error(errors.Wrapf(e, "Error updating central '%s' version fields", ks.CentralClusterID))
 		}
@@ -133,70 +128,6 @@ func (d *dataPlaneCentralService) setCentralClusterReady(centralRequest *dbapi.C
 		metrics.IncreaseCentralSuccessOperationsCountMetric(constants2.CentralOperationCreate)
 		metrics.IncreaseCentralTotalOperationsCountMetric(constants2.CentralOperationCreate)
 	}
-	return nil
-}
-
-func (d *dataPlaneCentralService) setCentralRequestVersionFields(centralRequest *dbapi.CentralRequest, status *dbapi.DataPlaneCentralStatus) *serviceError.ServiceError {
-	needsUpdate := false
-	prevActualDinosaurVersion := status.CentralVersion
-	if status.CentralVersion != "" && status.CentralVersion != centralRequest.ActualCentralVersion {
-		logger.Logger.Infof("Updating Central version for Central ID '%s' from '%s' to '%s'", centralRequest.ID, prevActualDinosaurVersion, status.CentralVersion)
-		centralRequest.ActualCentralVersion = status.CentralVersion
-		needsUpdate = true
-	}
-
-	prevActualDinosaurOperatorVersion := status.CentralOperatorVersion
-	if status.CentralOperatorVersion != "" && status.CentralOperatorVersion != centralRequest.ActualCentralOperatorVersion {
-		logger.Logger.Infof("Updating Central operator version for Central ID '%s' from '%s' to '%s'", centralRequest.ID, prevActualDinosaurOperatorVersion, status.CentralOperatorVersion)
-		centralRequest.ActualCentralOperatorVersion = status.CentralOperatorVersion
-		needsUpdate = true
-	}
-
-	readyCondition, found := status.GetReadyCondition()
-	if found {
-		// TODO is this really correct? What happens if there is a DinosaurOperatorUpdating reason
-		// but the 'status' is false? What does that mean and how should we behave?
-		prevDinosaurOperatorUpgrading := centralRequest.CentralOperatorUpgrading
-		dinosaurOperatorUpdatingReasonIsSet := readyCondition.Reason == dinosaurOperatorUpdating
-		if dinosaurOperatorUpdatingReasonIsSet && !prevDinosaurOperatorUpgrading {
-			logger.Logger.Infof("Central operator version for Central ID '%s' upgrade state changed from %t to %t", centralRequest.ID, prevDinosaurOperatorUpgrading, dinosaurOperatorUpdatingReasonIsSet)
-			centralRequest.CentralOperatorUpgrading = true
-			needsUpdate = true
-		}
-		if !dinosaurOperatorUpdatingReasonIsSet && prevDinosaurOperatorUpgrading {
-			logger.Logger.Infof("Central operator version for Central ID '%s' upgrade state changed from %t to %t", centralRequest.ID, prevDinosaurOperatorUpgrading, dinosaurOperatorUpdatingReasonIsSet)
-			centralRequest.CentralOperatorUpgrading = false
-			needsUpdate = true
-		}
-
-		prevDinosaurUpgrading := centralRequest.CentralUpgrading
-		dinosaurUpdatingReasonIsSet := readyCondition.Reason == dinosaurUpdating
-		if dinosaurUpdatingReasonIsSet && !prevDinosaurUpgrading {
-			logger.Logger.Infof("Central version for Central ID '%s' upgrade state changed from %t to %t", centralRequest.ID, prevDinosaurUpgrading, dinosaurUpdatingReasonIsSet)
-			centralRequest.CentralUpgrading = true
-			needsUpdate = true
-		}
-		if !dinosaurUpdatingReasonIsSet && prevDinosaurUpgrading {
-			logger.Logger.Infof("Central version for Central ID '%s' upgrade state changed from %t to %t", centralRequest.ID, prevDinosaurUpgrading, dinosaurUpdatingReasonIsSet)
-			centralRequest.CentralUpgrading = false
-			needsUpdate = true
-		}
-
-	}
-
-	if needsUpdate {
-		versionFields := map[string]interface{}{
-			"actual_central_operator_version": centralRequest.ActualCentralOperatorVersion,
-			"actual_central_version":          centralRequest.ActualCentralVersion,
-			"central_operator_upgrading":      centralRequest.CentralOperatorUpgrading,
-			"central_upgrading":               centralRequest.CentralUpgrading,
-		}
-
-		if err := d.dinosaurService.Updates(centralRequest, versionFields); err != nil {
-			return serviceError.NewWithCause(err.Code, err, "failed to update actual version fields for central cluster %s", centralRequest.ID)
-		}
-	}
-
 	return nil
 }
 

@@ -105,6 +105,24 @@ type DinosaurService interface {
 	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	ListComponentVersions() ([]DinosaurComponentVersions, error)
+	Upgrade(id string, image string) *errors.ServiceError
+}
+
+func (k *dinosaurService) Upgrade(id string, image string) *errors.ServiceError {
+	// TODO: Set new CRD for upgrade
+	centralRequest, err := k.Get(context.Background(), id)
+	if err != nil {
+		return err
+	}
+
+	centralRequest.OperatorImage = image
+
+	err = k.Update(centralRequest)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -122,10 +140,11 @@ type dinosaurService struct {
 	dataplaneClusterConfig   *config.DataplaneClusterConfig
 	clusterPlacementStrategy ClusterPlacementStrategy
 	amsClient                ocm.AMSClient
+	centralDefaultVersion    CentralDefaultVersionService
 }
 
 // NewDinosaurService ...
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient) *dinosaurService {
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, centralDefaultVersionService CentralDefaultVersionService) *dinosaurService {
 	return &dinosaurService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
@@ -138,6 +157,7 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		dataplaneClusterConfig:   dataplaneClusterConfig,
 		clusterPlacementStrategy: clusterPlacementStrategy,
 		amsClient:                amsClient,
+		centralDefaultVersion:    centralDefaultVersionService,
 	}
 }
 
@@ -247,6 +267,13 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	dbConn := k.connectionFactory.New()
 	dinosaurRequest.Status = dinosaurConstants.CentralRequestStatusAccepted.String()
 	dinosaurRequest.SubscriptionID = subscriptionID
+
+	defaultVersion, versionErr := k.centralDefaultVersion.GetDefaultVersion()
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, versionErr, "failed to receive central default image")
+	}
+	dinosaurRequest.OperatorImage = defaultVersion
+
 	glog.Infof("Central request %s has been assigned the subscription %s.", dinosaurRequest.ID, subscriptionID)
 	// Persist the QuotaType to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a dinosaur A is created, at the time of creation the quota-type was ams. At some point in the future
@@ -289,10 +316,11 @@ func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequ
 		Meta: api.Meta{
 			ID: centralRequest.ID,
 		},
-		Host:        centralRequest.Host,
-		PlacementID: api.NewID(),
-		Status:      dinosaurConstants.CentralRequestStatusPreparing.String(),
-		Namespace:   centralRequest.Namespace,
+		Host:          centralRequest.Host,
+		PlacementID:   api.NewID(),
+		Status:        dinosaurConstants.CentralRequestStatusPreparing.String(),
+		Namespace:     centralRequest.Namespace,
+		OperatorImage: centralRequest.OperatorImage,
 	}
 	if err := k.Update(updatedDinosaurRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update central request")

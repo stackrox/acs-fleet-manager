@@ -14,19 +14,19 @@ var _ TelemetryAuth = &TelemetryAuthMock{}
 
 // TelemetryAuthMock is a mock implementation of TelemetryAuth.
 //
-//	func TestSomethingThatUsesTelemetryAuth(t *testing.T) {
+// 	func TestSomethingThatUsesTelemetryAuth(t *testing.T) {
 //
-//		// make and configure a mocked TelemetryAuth
-//		mockedTelemetryAuth := &TelemetryAuthMock{
-//			getUserFromContextFunc: func(ctx context.Context) (string, error) {
-//				panic("mock out the getUserFromContext method")
-//			},
-//		}
+// 		// make and configure a mocked TelemetryAuth
+// 		mockedTelemetryAuth := &TelemetryAuthMock{
+// 			getUserFromContextFunc: func(ctx context.Context) (string, error) {
+// 				panic("mock out the getUserFromContext method")
+// 			},
+// 		}
 //
-//		// use mockedTelemetryAuth in code that requires TelemetryAuth
-//		// and then make assertions.
+// 		// use mockedTelemetryAuth in code that requires TelemetryAuth
+// 		// and then make assertions.
 //
-//	}
+// 	}
 type TelemetryAuthMock struct {
 	// getUserFromContextFunc mocks the getUserFromContext method.
 	getUserFromContextFunc func(ctx context.Context) (string, error)
@@ -60,8 +60,7 @@ func (mock *TelemetryAuthMock) getUserFromContext(ctx context.Context) (string, 
 
 // getUserFromContextCalls gets all the calls that were made to getUserFromContext.
 // Check the length with:
-//
-//	len(mockedTelemetryAuth.getUserFromContextCalls())
+//     len(mockedTelemetryAuth.getUserFromContextCalls())
 func (mock *TelemetryAuthMock) getUserFromContextCalls() []struct {
 	Ctx context.Context
 } {

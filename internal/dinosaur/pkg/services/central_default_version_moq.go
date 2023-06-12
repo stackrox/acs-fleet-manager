@@ -13,28 +13,28 @@ var _ CentralDefaultVersionService = &CentralDefaultVersionServiceMock{}
 
 // CentralDefaultVersionServiceMock is a mock implementation of CentralDefaultVersionService.
 //
-//	func TestSomethingThatUsesCentralDefaultVersionService(t *testing.T) {
+// 	func TestSomethingThatUsesCentralDefaultVersionService(t *testing.T) {
 //
-//		// make and configure a mocked CentralDefaultVersionService
-//		mockedCentralDefaultVersionService := &CentralDefaultVersionServiceMock{
-//			GetDefaultVersionFunc: func() (string, error) {
-//				panic("mock out the GetDefaultVersion method")
-//			},
-//			SetDefaultVersionFunc: func(s string) error {
-//				panic("mock out the SetDefaultVersion method")
-//			},
-//			StartFunc: func()  {
-//				panic("mock out the Start method")
-//			},
-//			StopFunc: func()  {
-//				panic("mock out the Stop method")
-//			},
-//		}
+// 		// make and configure a mocked CentralDefaultVersionService
+// 		mockedCentralDefaultVersionService := &CentralDefaultVersionServiceMock{
+// 			GetDefaultVersionFunc: func() (string, error) {
+// 				panic("mock out the GetDefaultVersion method")
+// 			},
+// 			SetDefaultVersionFunc: func(s string) error {
+// 				panic("mock out the SetDefaultVersion method")
+// 			},
+// 			StartFunc: func()  {
+// 				panic("mock out the Start method")
+// 			},
+// 			StopFunc: func()  {
+// 				panic("mock out the Stop method")
+// 			},
+// 		}
 //
-//		// use mockedCentralDefaultVersionService in code that requires CentralDefaultVersionService
-//		// and then make assertions.
+// 		// use mockedCentralDefaultVersionService in code that requires CentralDefaultVersionService
+// 		// and then make assertions.
 //
-//	}
+// 	}
 type CentralDefaultVersionServiceMock struct {
 	// GetDefaultVersionFunc mocks the GetDefaultVersion method.
 	GetDefaultVersionFunc func() (string, error)
@@ -86,8 +86,7 @@ func (mock *CentralDefaultVersionServiceMock) GetDefaultVersion() (string, error
 
 // GetDefaultVersionCalls gets all the calls that were made to GetDefaultVersion.
 // Check the length with:
-//
-//	len(mockedCentralDefaultVersionService.GetDefaultVersionCalls())
+//     len(mockedCentralDefaultVersionService.GetDefaultVersionCalls())
 func (mock *CentralDefaultVersionServiceMock) GetDefaultVersionCalls() []struct {
 } {
 	var calls []struct {
@@ -116,8 +115,7 @@ func (mock *CentralDefaultVersionServiceMock) SetDefaultVersion(s string) error 
 
 // SetDefaultVersionCalls gets all the calls that were made to SetDefaultVersion.
 // Check the length with:
-//
-//	len(mockedCentralDefaultVersionService.SetDefaultVersionCalls())
+//     len(mockedCentralDefaultVersionService.SetDefaultVersionCalls())
 func (mock *CentralDefaultVersionServiceMock) SetDefaultVersionCalls() []struct {
 	S string
 } {
@@ -145,8 +143,7 @@ func (mock *CentralDefaultVersionServiceMock) Start() {
 
 // StartCalls gets all the calls that were made to Start.
 // Check the length with:
-//
-//	len(mockedCentralDefaultVersionService.StartCalls())
+//     len(mockedCentralDefaultVersionService.StartCalls())
 func (mock *CentralDefaultVersionServiceMock) StartCalls() []struct {
 } {
 	var calls []struct {
@@ -172,8 +169,7 @@ func (mock *CentralDefaultVersionServiceMock) Stop() {
 
 // StopCalls gets all the calls that were made to Stop.
 // Check the length with:
-//
-//	len(mockedCentralDefaultVersionService.StopCalls())
+//     len(mockedCentralDefaultVersionService.StopCalls())
 func (mock *CentralDefaultVersionServiceMock) StopCalls() []struct {
 } {
 	var calls []struct {

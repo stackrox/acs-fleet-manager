@@ -19,13 +19,14 @@ var readyCentralCountCache int32
 // ReadyDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type ReadyDinosaurManager struct {
 	workers.BaseWorker
-	dinosaurService services.DinosaurService
-	iamService      sso.IAMService
-	iamConfig       *iam.IAMConfig
+	dinosaurService              services.DinosaurService
+	iamService                   sso.IAMService
+	iamConfig                    *iam.IAMConfig
+	centralDefaultVersionService services.CentralDefaultVersionService
 }
 
 // NewReadyDinosaurManager creates a new dinosaur manager
-func NewReadyDinosaurManager(dinosaurService services.DinosaurService, iamService sso.IAMService, iamConfig *iam.IAMConfig) *ReadyDinosaurManager {
+func NewReadyDinosaurManager(dinosaurService services.DinosaurService, iamService sso.IAMService, iamConfig *iam.IAMConfig, centralDefaultVersionService services.CentralDefaultVersionService) *ReadyDinosaurManager {
 	metrics.InitReconcilerMetricsForType(readyCentralWorkerType)
 	return &ReadyDinosaurManager{
 		BaseWorker: workers.BaseWorker{
@@ -33,9 +34,10 @@ func NewReadyDinosaurManager(dinosaurService services.DinosaurService, iamServic
 			WorkerType: readyCentralWorkerType,
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService: dinosaurService,
-		iamService:      iamService,
-		iamConfig:       iamConfig,
+		dinosaurService:              dinosaurService,
+		iamService:                   iamService,
+		iamConfig:                    iamConfig,
+		centralDefaultVersionService: centralDefaultVersionService,
 	}
 }
 
@@ -59,6 +61,20 @@ func (k *ReadyDinosaurManager) Reconcile() []error {
 	}
 	readyCentralCountCache = int32(len(readyCentrals))
 	logger.InfoChangedInt32(&readyCentralCountCache, "ready centrals count = %d", readyCentralCountCache)
+
+	for _, readyCentral := range readyCentrals {
+		if readyCentral.OperatorImage == "" || readyCentral.OperatorImage == "" {
+			version, err := k.centralDefaultVersionService.GetDefaultVersion()
+			if err != nil {
+				encounteredErrors = append(encounteredErrors, err)
+			}
+			readyCentral.OperatorImage = version
+			serviceErr := k.dinosaurService.Update(readyCentral)
+			if serviceErr != nil {
+				encounteredErrors = append(encounteredErrors, serviceErr.AsError())
+			}
+		}
+	}
 
 	return encounteredErrors
 }
