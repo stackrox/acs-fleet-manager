@@ -14,7 +14,6 @@ func main() {
 		Use:  "acsfleetctl",
 		Long: "acsfleetctl is a CLI used to interact with the ACSCS fleet-manager API",
 	}
-	rootCmd.PersistentFlags().Bool("debug", false, "use debug output")
 
 	setupSubCommands(rootCmd)
 
