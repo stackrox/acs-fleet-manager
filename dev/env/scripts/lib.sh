@@ -290,7 +290,7 @@ inject_feature_flags_from_env() {
     local deployment="$2"
 
     flags=$(printenv | grep -e "RHACS_*")
-    for flag in "$flags"
+    for flag in $flags
     do
         $KUBECTL -n "$namespace" set env "deployment/$deployment" --all "$flag"
     done
