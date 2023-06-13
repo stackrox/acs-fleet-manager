@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
@@ -21,13 +22,14 @@ func NewAdminCentralsSetDefaultVersionCommand(client *fleetmanager.Client) *cobr
 	return cmd
 }
 
-func runSetDefaultVersion(client *fleetmanager.Client, cmd *cobra.Command, _ []string) {
-	fmt.Println("das ist der test")
-	// defaultVersion, _, err := client.AdminAPI().SetCentralDefaultVersion(cmd.Context(), private.CentralDefaultVersion{})
-	// if err != nil {
-	// 	fmt.Fprintf(cmd.ErrOrStderr(), "error calling fleet-manager API: %v\n", err)
-	// 	return
-	// }
+func runSetDefaultVersion(client *fleetmanager.Client, cmd *cobra.Command, args []string) {
+	version := args[0]
 
-	// printJSON(cmd.OutOrStdout(), &defaultVersion)
+	_, err := client.AdminAPI().SetCentralDefaultVersion(cmd.Context(), private.CentralDefaultVersion{})
+	if err != nil {
+		fmt.Fprintf(cmd.ErrOrStderr(), "error calling fleet-manager API: %v\n", err)
+		return
+	}
+
+	fmt.Fprintf(cmd.OutOrStdout(), "Central Default Version set to: %s\n", version)
 }
