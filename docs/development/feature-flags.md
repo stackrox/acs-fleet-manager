@@ -3,7 +3,7 @@
 Feature Flags can be added to the `pkg/features/list.go` file.
 All feature flags must be prefixed with `RHACS_`.
 
-Example in `list.go`: 
+Example in `list.go`:
 ```
 TargetedOperatorUpgrades = registerFeature("Upgrade Central instances targetedly via fleet-manager API", "RHACS_TARGETED_OPERATOR_UPGRADES", false)
 ```

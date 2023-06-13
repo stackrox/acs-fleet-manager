@@ -69,11 +69,11 @@ func TestFlags(t *testing.T) {
 	assert.Panics(t, func() {
 		registerFeature("blah", "NOT_ROX_WHATEVER", false)
 	})
-	defaultTrueFeature := registerFeature("default_true", "ROX_DEFAULT_TRUE", true)
+	defaultTrueFeature := registerFeature("default_true", "RHACS_DEFAULT_TRUE", true)
 	for _, test := range defaultTrueCases {
 		testFlagEnabled(t, defaultTrueFeature, test, true)
 	}
-	defaultFalseFeature := registerFeature("default_false", "ROX_DEFAULT_FALSE", false)
+	defaultFalseFeature := registerFeature("default_false", "RHACS_DEFAULT_FALSE", false)
 	for _, test := range defaultFalseCases {
 		testFlagEnabled(t, defaultFalseFeature, test, false)
 	}

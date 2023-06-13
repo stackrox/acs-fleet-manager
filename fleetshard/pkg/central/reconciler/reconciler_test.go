@@ -4,7 +4,6 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"testing"
 	"time"
 
@@ -23,6 +22,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
