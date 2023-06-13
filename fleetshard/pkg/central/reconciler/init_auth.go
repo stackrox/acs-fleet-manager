@@ -126,7 +126,7 @@ func existsRHSSOAuthProvider(ctx context.Context, central *private.ManagedCentra
 
 // createRHSSOAuthProvider initialises sso.redhat.com auth provider in a deployed Central instance.
 func createRHSSOAuthProvider(ctx context.Context, central *private.ManagedCentral, client ctrlClient.Client) error {
-	pass, err := getAdminPassword(ctx, *central, client)
+	pass, err := getAdminPassword(ctx, central, client)
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func getHTTPSServicePort(service *core.Service) (int32, error) {
 	return 0, errors.Errorf("no `https` port is present in %s/%s service", service.Namespace, service.Name)
 }
 
-func getAdminPassword(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (string, error) {
+func getAdminPassword(ctx context.Context, central *private.ManagedCentral, client ctrlClient.Client) (string, error) {
 	// pragma: allowlist nextline secret
 	secretRef := ctrlClient.ObjectKey{
 		Name:      centralHtpasswdSecretName,
