@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"testing"
 	"time"
 
@@ -170,11 +171,11 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 
 func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	t.Setenv(features.TargetedOperatorUpgrades.EnvVar(), "true")
 
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc,
 		CentralReconcilerOptions{
-			UseRoutes:                         true,
-			FeatureFlagUpgradeOperatorEnabled: true,
+			UseRoutes: true,
 		})
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"sync/atomic"
 	"time"
 
@@ -63,14 +64,13 @@ const (
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
-	UseRoutes                         bool
-	WantsAuthProvider                 bool
-	EgressProxyImage                  string
-	ManagedDBEnabled                  bool
-	Telemetry                         config.Telemetry
-	ClusterName                       string
-	Environment                       string
-	FeatureFlagUpgradeOperatorEnabled bool
+	UseRoutes         bool
+	WantsAuthProvider bool
+	EgressProxyImage  string
+	ManagedDBEnabled  bool
+	Telemetry         config.Telemetry
+	ClusterName       string
+	Environment       string
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -93,8 +93,6 @@ type CentralReconciler struct {
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
 	managedDBInitFunc           postgres.CentralDBInitFunc
-
-	featureFlagUpgradeOperatorEnabled bool
 
 	resourcesChart *chart.Chart
 }
@@ -213,7 +211,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		},
 	}
 
-	if r.featureFlagUpgradeOperatorEnabled {
+	if features.TargetedOperatorUpgrades.Enabled() {
 		labels := central.ObjectMeta.Labels
 		labels[operatorVersionKey] = defaultOperatorVersion
 		central.ObjectMeta.Labels = labels
@@ -985,8 +983,6 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		telemetry:         opts.Telemetry,
 		clusterName:       opts.ClusterName,
 		environment:       opts.Environment,
-
-		featureFlagUpgradeOperatorEnabled: opts.FeatureFlagUpgradeOperatorEnabled,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,

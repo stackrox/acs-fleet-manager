@@ -285,6 +285,17 @@ inject_ips() {
     $KUBECTL -n "$namespace" patch sa "$service_account" -p "\"imagePullSecrets\": [{\"name\": \"${secret_name}\" }]"
 }
 
+inject_feature_flags_from_env() {
+    local namespace="$1"
+    local deployment="$2"
+
+    flags=$(printenv | grep -e "RHACS_*")
+    for flag in "$flags"
+    do
+        $KUBECTL -n "$namespace" set env "deployment/$deployment" --all "$flag"
+    done
+}
+
 is_local_cluster() {
     local cluster_type=${1:-}
     if [[ "$cluster_type" == "minikube" || "$cluster_type" == "colima" || "$cluster_type" == "rancher-desktop" ]]; then
