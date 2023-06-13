@@ -656,6 +656,34 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 	return status, nil
 }
 
+func (r *CentralReconciler) ensureCentralAuditLogNotifierSecretCleaned(ctx context.Context, remoteCentralNamespace string) error {
+	secret := &corev1.Secret{}
+	secretKey := ctrlClient.ObjectKey{
+		Namespace: remoteCentralNamespace,
+		Name:      sensibleDeclarativeConfigSecretName,
+	}
+	err := r.client.Get(ctx, secretKey, secret)
+	if err != nil {
+		return err
+	}
+
+	canDeleteSecret := false
+	if len(secret.Data) <= 0 {
+		canDeleteSecret = true
+	} else {
+		delete(secret.Data, auditLogNotifierKey)
+		if len(secret.StringData) > 0 {
+			delete(secret.StringData, auditLogNotifierKey)
+		}
+
+		canDeleteSecret = len(secret.Data) <= 0 && len(secret.StringData) <= 0
+	}
+	if canDeleteSecret {
+		return r.client.Delete(ctx, secret)
+	}
+	return r.client.Update(ctx, secret)
+}
+
 func ensureDeclarativeConfigurationEnabled(envVars []corev1.EnvVar) []corev1.EnvVar {
 	activated := "true"
 	needsDeclarativeConfigEnvVar := true
@@ -740,6 +768,11 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 		return false, err
 	}
 	globalDeleted = globalDeleted && centralDeleted
+
+	err = r.ensureCentralAuditLogNotifierSecretCleaned(ctx, central.GetNamespace())
+	if err != nil {
+		return false, err
+	}
 
 	if r.managedDBEnabled {
 		// skip Snapshot for remoteCentral created by probe
