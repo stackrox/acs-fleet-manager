@@ -4,7 +4,6 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"time"
 
 	"github.com/golang/glog"
@@ -19,6 +18,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/concurrency"
