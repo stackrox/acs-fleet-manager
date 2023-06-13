@@ -190,14 +190,16 @@ func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
 }
 
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
+	t.Setenv("AWS_ACCESS_KEY", "")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "")
+	t.Setenv("AWS_REGION", "us-east-1")
+	t.Setenv("AWS_ROLE_ARN", "arn:aws:iam::012456789:role/fake_role")
+	t.Setenv("AWS_WEB_IDENTITY_TOKEN_FILE", "/var/run/secrets/tokens/aws-token")
+
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
 	managedDBProvisioningClient, err := awsclient.NewRDSClient(
 		&config.Config{
-			AWS: config.AWS{
-				Region:  "us-east-1",
-				RoleARN: "arn:aws:iam::012456789:role/fake_role",
-			},
 			ManagedDB: config.ManagedDB{
 				SecurityGroup: "security-group",
 				SubnetGroup:   "db-group",
