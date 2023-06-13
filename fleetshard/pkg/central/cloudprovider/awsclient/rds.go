@@ -23,7 +23,6 @@ import (
 const (
 	dbAvailableStatus = "available"
 	dbDeletingStatus  = "deleting"
-	dbBackingUpStatus = "backing-up"
 	dbUser            = "rhacs_master"
 	dbPrefix          = "rhacs-"
 	dbInstanceSuffix  = "-db-instance"
@@ -215,7 +214,7 @@ func (r *RDS) ensureClusterDeleted(clusterID string, skipFinalSnapshot bool) err
 		return nil
 	}
 
-	if clusterStatus != dbDeletingStatus && clusterStatus != dbBackingUpStatus {
+	if clusterStatus != dbDeletingStatus {
 		glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
 		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, skipFinalSnapshot))
 		if err != nil {
@@ -223,6 +222,7 @@ func (r *RDS) ensureClusterDeleted(clusterID string, skipFinalSnapshot bool) err
 				// This assumes that if a final snapshot exists, a deletion for the RDS cluster was already triggered
 				// and we can move on with deprovisioning,
 				if awsErr.Code() == rds.ErrCodeDBClusterSnapshotAlreadyExistsFault {
+					glog.Infof("Final DB backup is in progress for DB cluster: %s", clusterID)
 					return nil
 				}
 			}
