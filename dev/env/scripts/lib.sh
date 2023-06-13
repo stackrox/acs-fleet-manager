@@ -292,7 +292,7 @@ inject_exported_env_vars() {
     flags=$(printenv | grep -e "RHACS_*")
     for flag in $flags
     do
-        $KUBECTL -n "$namespace" set env "deployment/$deployment" --all "$flag"
+        $KUBECTL -n "$namespace" set env "deployment/$deployment" "$flag"
     done
 }
 
