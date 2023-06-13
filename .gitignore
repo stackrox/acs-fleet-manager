@@ -33,7 +33,7 @@
 /fleet-manager
 cmd/fleet-manager/fleet-manager
 /fleetshard-sync
-
+/acsfleetctl
 # Ignore generated templates
 /templates/*-template.json
 
