@@ -80,7 +80,7 @@ var (
 	}
 )
 
-func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (bool, error) {
+func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, central *private.ManagedCentral) (bool, error) {
 	deployment := &appsv1.Deployment{}
 	err := client.Get(ctx,
 		ctrlClient.ObjectKey{Name: "central", Namespace: central.Metadata.Namespace},
@@ -97,7 +97,7 @@ func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, cen
 	return false, nil
 }
 
-func existsRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error) {
+func existsRHSSOAuthProvider(ctx context.Context, central *private.ManagedCentral, client ctrlClient.Client) (bool, error) {
 	ready, err := isCentralDeploymentReady(ctx, client, central)
 	if !ready || err != nil {
 		return false, err
@@ -110,7 +110,7 @@ func existsRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 		return false, err
 	}
 
-	centralClient := centralClientPkg.NewCentralClientNoAuth(central, address)
+	centralClient := centralClientPkg.NewCentralClientNoAuth(*central, address)
 	authProvidersResp, err := centralClient.GetLoginAuthProviders(ctx)
 	if err != nil {
 		return false, errors.Wrap(err, "sending GetLoginAuthProviders request to central")
@@ -125,8 +125,8 @@ func existsRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 }
 
 // createRHSSOAuthProvider initialises sso.redhat.com auth provider in a deployed Central instance.
-func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) error {
-	pass, err := getAdminPassword(ctx, central, client)
+func createRHSSOAuthProvider(ctx context.Context, central *private.ManagedCentral, client ctrlClient.Client) error {
+	pass, err := getAdminPassword(ctx, *central, client)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 		return err
 	}
 
-	centralClient := centralClientPkg.NewCentralClient(central, address, pass)
+	centralClient := centralClientPkg.NewCentralClient(*central, address, pass)
 
 	authProviderRequest := createAuthProviderRequest(central)
 	authProviderResp, err := centralClient.SendAuthProviderRequest(ctx, authProviderRequest)
@@ -161,7 +161,7 @@ func createRHSSOAuthProvider(ctx context.Context, central private.ManagedCentral
 	return nil
 }
 
-func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProvider {
+func createAuthProviderRequest(central *private.ManagedCentral) *storage.AuthProvider {
 	request := &storage.AuthProvider{
 		Name:       authProviderName(central),
 		Type:       oidcType,
@@ -204,7 +204,7 @@ func createAuthProviderRequest(central private.ManagedCentral) *storage.AuthProv
 }
 
 // authProviderName deduces auth provider name from issuer URL.
-func authProviderName(central private.ManagedCentral) (name string) {
+func authProviderName(central *private.ManagedCentral) (name string) {
 	switch {
 	case strings.Contains(central.Spec.Auth.Issuer, "sso.stage.redhat"):
 		name = "Red Hat SSO (stage)"
@@ -220,7 +220,7 @@ func authProviderName(central private.ManagedCentral) (name string) {
 }
 
 // TODO: ROX-11644: doesn't work when fleetshard-sync deployed outside of Central's cluster
-func getServiceAddress(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (string, error) {
+func getServiceAddress(ctx context.Context, central *private.ManagedCentral, client ctrlClient.Client) (string, error) {
 	service := &core.Service{}
 	err := client.Get(ctx,
 		ctrlClient.ObjectKey{Name: centralServiceName, Namespace: central.Metadata.Namespace},

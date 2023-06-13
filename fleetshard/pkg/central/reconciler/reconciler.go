@@ -218,7 +218,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		central.ObjectMeta.Labels = labels
 	}
 
-	if err = r.reconcileAuthProviderConfig(ctx, remoteCentral, central); err != nil {
+	if err = r.reconcileAuthProviderConfig(ctx, &remoteCentral, central); err != nil {
 		return nil, err
 	}
 
@@ -263,7 +263,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	// Check whether deployment is ready.
-	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral)
+	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, &remoteCentral)
 	if err != nil {
 		return nil, err
 	}
@@ -292,7 +292,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	return status, nil
 }
 
-func (r *CentralReconciler) reconcileAuthProviderConfig(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) error {
+func (r *CentralReconciler) reconcileAuthProviderConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
@@ -412,7 +412,7 @@ func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context, remoteCen
 	// 2. OR reconciler creator specified auth provider not to be created
 	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
 	if r.wantsAuthProvider && !r.hasAuthProvider && !isRemoteCentralReady(remoteCentral) {
-		err := createRHSSOAuthProvider(ctx, *remoteCentral, r.client)
+		err := createRHSSOAuthProvider(ctx, remoteCentral, r.client)
 		if err != nil {
 			return err
 		}
