@@ -24,8 +24,9 @@ const (
 
 func parseOperatorImages(images []ACSOperatorImage) ([]chartutil.Values, string, error) {
 	if len(images) == 0 {
-		return nil, "", fmt.Errorf("the list of images is empty")
+		return nil, "", nil
 	}
+
 	var operatorImages []chartutil.Values
 	var crdTag string
 	uniqueImages := make(map[string]bool)
