@@ -232,9 +232,9 @@ func TestParseOperatorImages(t *testing.T) {
 				{"repository": operatorRepository, "tag": "3.74.1"},
 			},
 		},
-		"fail if images list is empty": {
+		"do not fail if images list is empty": {
 			images:     []ACSOperatorImage{},
-			shouldFail: true,
+			shouldFail: false,
 		},
 		"should accept images from multiple repositories with the same tag": {
 			images: []ACSOperatorImage{{

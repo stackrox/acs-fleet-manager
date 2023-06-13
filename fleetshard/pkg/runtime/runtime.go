@@ -127,7 +127,6 @@ func (r *Runtime) Start() error {
 		if err != nil {
 			err = errors.Wrapf(err, "Upgrading operator")
 			glog.Error(err)
-			return err
 		}
 	}
 
