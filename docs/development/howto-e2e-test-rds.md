@@ -30,7 +30,6 @@ At the point in time this documentation was written AWS RDS DB creation and dele
     make binary
 
     ./dev/env/scripts/exec_fleetshard_sync.sh
-    # When prompted select your profile for the dev AWS account arn:aws:iam::047735621815:role/047735621815-poweruser
     ```
 
 1. Create a central instance and wait for DB Creation

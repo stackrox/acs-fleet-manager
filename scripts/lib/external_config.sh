@@ -24,6 +24,7 @@ init_chamber() {
     AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-none}"
     case $AWS_AUTH_HELPER in
         aws-saml)
+            AWS_SAML_ROLE="${AWS_SAML_ROLE:-"047735621815-poweruser"}"
             export AWS_PROFILE="saml"
             ensure_tool_installed tools_venv
             # shellcheck source=/dev/null # The script may not exist
@@ -33,7 +34,7 @@ init_chamber() {
                 log "Getting a Kerberos ticket"
                 kinit
             fi
-            aws-saml.py # TODO(ROX-12222): Skip if existing token has not yet expired
+            aws-saml.py --target-role "${AWS_SAML_ROLE}"
         ;;
         none)
             if [[ -z "${AWS_SESSION_TOKEN:-}" ]] || [[ -z "${AWS_ACCESS_KEY_ID:-}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
