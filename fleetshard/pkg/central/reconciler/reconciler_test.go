@@ -22,6 +22,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -170,11 +171,11 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 
 func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	t.Setenv(features.TargetedOperatorUpgrades.EnvVar(), "true")
 
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc,
 		CentralReconcilerOptions{
-			UseRoutes:                         true,
-			FeatureFlagUpgradeOperatorEnabled: true,
+			UseRoutes: true,
 		})
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
