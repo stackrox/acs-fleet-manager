@@ -18,6 +18,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/concurrency"
@@ -112,17 +113,16 @@ func (r *Runtime) Start() error {
 	routesAvailable := r.routesAvailable()
 
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
-		UseRoutes:                         routesAvailable,
-		WantsAuthProvider:                 r.config.CreateAuthProvider,
-		EgressProxyImage:                  r.config.EgressProxyImage,
-		ManagedDBEnabled:                  r.config.ManagedDB.Enabled,
-		Telemetry:                         r.config.Telemetry,
-		ClusterName:                       r.config.ClusterName,
-		Environment:                       r.config.Environment,
-		FeatureFlagUpgradeOperatorEnabled: r.config.FeatureFlagUpgradeOperatorEnabled,
+		UseRoutes:         routesAvailable,
+		WantsAuthProvider: r.config.CreateAuthProvider,
+		EgressProxyImage:  r.config.EgressProxyImage,
+		ManagedDBEnabled:  r.config.ManagedDB.Enabled,
+		Telemetry:         r.config.Telemetry,
+		ClusterName:       r.config.ClusterName,
+		Environment:       r.config.Environment,
 	}
 
-	if r.config.FeatureFlagUpgradeOperatorEnabled {
+	if features.TargetedOperatorUpgrades.Enabled() {
 		err := r.upgradeOperator()
 		if err != nil {
 			err = errors.Wrapf(err, "Upgrading operator")
