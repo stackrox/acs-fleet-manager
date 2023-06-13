@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"reflect"
 	"sync/atomic"
 	"time"
@@ -25,6 +26,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/random"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -59,6 +61,10 @@ const (
 	defaultOperatorVersion    = "rhacs-operator.v3.74.0"
 
 	declarativeConfigurationFeatureFlagName = "ROX_DECLARATIVE_CONFIGURATION"
+
+	auditLogNotifierKey = "rhacs.redhat.com/auditLogNotifier"
+	auditLogEndpoint    = "https://rhacs-vector.rhacs:8888"
+	auditLogTenantIDKey = "tenant_id"
 
 	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
 	dbUserTypeMaster     = "master"
@@ -404,8 +410,65 @@ func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remote
 }
 
 func (r *CentralReconciler) reconcileCentralAuditLogNotifier(ctx context.Context, remoteCentral *private.ManagedCentral) error {
-	return r.ensureSecretExists(ctx, remoteCentral.Metadata.Namespace, "Audit Log Notifier", sensibleDeclarativeConfigSecretName, func(secret *corev1.Secret) {
-		_ = secret
+	return r.ensureSecretExists(ctx, remoteCentral.Metadata.Namespace, "Audit Log Notifier", sensibleDeclarativeConfigSecretName, func(secret *corev1.Secret) error {
+		auditLogNotifierConfig := &declarativeconfig.Notifier{
+			Name: "ACSCS Audit Logs",
+			GenericConfig: &declarativeconfig.GenericConfig{
+				Endpoint:            auditLogEndpoint,
+				SkipTLSVerify:       false,
+				AuditLoggingEnabled: true,
+				ExtraFields: []declarativeconfig.KeyValuePair{
+					{
+						Key:   auditLogTenantIDKey,
+						Value: remoteCentral.Metadata.Namespace,
+					},
+				},
+			},
+		}
+
+		// These two variables drive the logic for secret update
+		// - If foundAuditLogNotifier is false, then the auditLogNotifier configuration is added
+		// to the secret with the hard-coded key.
+		// - If both foundAuditLogNotifier and isAuditLogNotifierContentCorrect are true,
+		// no change needed in the secret
+		// - If foundAuditLogNotifier is true but isAuditLogNotifierContentCorrect is false,
+		// then the secret has to be updated with the correct configuration information
+		var foundAuditLogNotifier bool
+		var isAuditLogNotifierContentCorrect = true
+
+		existingConfigData, foundAuditLogNotifier := secret.Data[auditLogNotifierKey]
+		if foundAuditLogNotifier {
+			configurations, err := declarativeconfig.ConfigurationFromRawBytes(existingConfigData)
+			if err != nil {
+				return fmt.Errorf("getting declarative configuration data for audit log notifier: %w", err)
+			}
+			foundAuditLogNotifier = false
+			for _, configObj := range configurations {
+				notifierObjectConfig, ok := configObj.(*declarativeconfig.Notifier)
+				if !ok || notifierObjectConfig == nil || notifierObjectConfig.Name != auditLogNotifierConfig.Name {
+					continue
+				}
+				foundAuditLogNotifier = true
+				isAuditLogNotifierContentCorrect = reflect.DeepEqual(notifierObjectConfig, auditLogNotifierConfig)
+				break
+			}
+		}
+
+		if foundAuditLogNotifier && isAuditLogNotifierContentCorrect {
+			// Secret content is already correct
+			return nil
+		}
+		if !foundAuditLogNotifier || !isAuditLogNotifierContentCorrect {
+			encodedNotifierCfg, err := yaml.Marshal(auditLogNotifierConfig)
+			if err != nil {
+				return fmt.Errorf("encoding audit log notifier configuration: %w", err)
+			}
+			if secret.Data == nil {
+				secret.Data = make(map[string][]byte, 0)
+			}
+			secret.Data[auditLogNotifierKey] = encodedNotifierCfg
+		}
+		return nil
 	})
 }
 
@@ -872,8 +935,9 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 		}
 		secret.Annotations[dbUserTypeAnnotation] = userType
 	}
-	return r.ensureSecretExists(ctx, remoteCentralNamespace, "Central DB", centralDbSecretName, func(secret *corev1.Secret) {
+	return r.ensureSecretExists(ctx, remoteCentralNamespace, "Central DB", centralDbSecretName, func(secret *corev1.Secret) error {
 		setPasswordFunc(secret, userType, password)
+		return nil
 	})
 }
 
@@ -1197,7 +1261,7 @@ func (r *CentralReconciler) ensureSecretExists(
 	remoteCentralNamespace string,
 	nameForErrors string,
 	actualName string,
-	secretFiller func(secret *corev1.Secret),
+	secretFiller func(secret *corev1.Secret) error,
 ) error {
 	secret := &corev1.Secret{}
 
@@ -1207,7 +1271,10 @@ func (r *CentralReconciler) ensureSecretExists(
 		secret,
 	)
 	if err == nil {
-		secretFiller(secret)
+		err = secretFiller(secret)
+		if err != nil {
+			return fmt.Errorf("updating %s secret content: %w", nameForErrors, err)
+		}
 		err = r.client.Update(ctx, secret)
 		if err != nil {
 			return fmt.Errorf("updating %s secret: %w", nameForErrors, err)
@@ -1232,7 +1299,10 @@ func (r *CentralReconciler) ensureSecretExists(
 		},
 	}
 
-	secretFiller(secret)
+	err = secretFiller(secret)
+	if err != nil {
+		return fmt.Errorf("initializing %s secret payload: %w", nameForErrors, err)
+	}
 	err = r.client.Create(ctx, secret)
 	if err != nil {
 		return fmt.Errorf("creating %s secret: %w", nameForErrors, err)
