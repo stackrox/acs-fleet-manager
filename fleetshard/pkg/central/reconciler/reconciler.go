@@ -58,6 +58,8 @@ const (
 	operatorVersionKey        = "stackrox.io/operator-version"
 	defaultOperatorVersion    = "rhacs-operator.v3.74.0"
 
+	declarativeConfigurationFeatureFlagName = "ROX_DECLARATIVE_CONFIGURATION"
+
 	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
 	dbUserTypeMaster     = "master"
 	dbUserTypeCentral    = "central"
@@ -65,6 +67,8 @@ const (
 
 	centralDbSecretName       = "central-db-password" // pragma: allowlist secret
 	centralDeletePollInterval = 5 * time.Second
+
+	sensibleDeclarativeConfigSecretName = "sensible-declarative-configs" // pragma: allowlist secret
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -161,6 +165,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
+	if err = r.reconcileCentralAuditLogNotifier(ctx, &remoteCentral); err != nil {
+		return nil, err
+	}
+
 	if err = r.reconcileCentral(ctx, &remoteCentral, central); err != nil {
 		return nil, err
 	}
@@ -237,6 +245,9 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	envVars := getProxyEnvVars(remoteCentralNamespace)
 
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
+	// Activate Declarative configuration feature
+	envVars = ensureDeclarativeConfigurationEnabled(envVars)
+
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
@@ -272,6 +283,13 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 					Storage: &v1alpha1.TelemetryStorage{
 						Endpoint: &r.telemetry.StorageEndpoint,
 						Key:      &r.telemetry.StorageKey,
+					},
+				},
+				DeclarativeConfiguration: &v1alpha1.DeclarativeConfiguration{
+					Secrets: []v1alpha1.LocalSecretReference{
+						{
+							Name: sensibleDeclarativeConfigSecretName,
+						},
 					},
 				},
 			},
@@ -383,6 +401,12 @@ func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remote
 		}
 	}
 	return nil
+}
+
+func (r *CentralReconciler) reconcileCentralAuditLogNotifier(ctx context.Context, remoteCentral *private.ManagedCentral) error {
+	return r.ensureSecretExists(ctx, remoteCentral.Metadata.Namespace, "Audit Log Notifier", sensibleDeclarativeConfigSecretName, func(secret *corev1.Secret) {
+		_ = secret
+	})
 }
 
 func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
@@ -566,6 +590,40 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 	}
 
 	return status, nil
+}
+
+func ensureDeclarativeConfigurationEnabled(envVars []corev1.EnvVar) []corev1.EnvVar {
+	activated := "true"
+	needsDeclarativeConfigEnvVar := true
+	hasWrongDeclarativeConfigEnvVar := false
+	for _, envVariable := range envVars {
+		if envVariable.Name == declarativeConfigurationFeatureFlagName {
+			needsDeclarativeConfigEnvVar = false
+			if envVariable.Value != activated {
+				hasWrongDeclarativeConfigEnvVar = true
+			}
+			break
+		}
+	}
+	if needsDeclarativeConfigEnvVar {
+		return append(envVars, corev1.EnvVar{
+			Name:  declarativeConfigurationFeatureFlagName,
+			Value: activated,
+		})
+	}
+	if hasWrongDeclarativeConfigEnvVar {
+		clonedVars := make([]corev1.EnvVar, 0, len(envVars))
+		for _, envVariable := range envVars {
+			if envVariable.Name != declarativeConfigurationFeatureFlagName {
+				clonedVars = append(clonedVars, envVariable)
+			}
+			clonedVars = append(clonedVars, corev1.EnvVar{
+				Name:  declarativeConfigurationFeatureFlagName,
+				Value: activated,
+			})
+		}
+	}
+	return envVars
 }
 
 func isRemoteCentralProvisioning(remoteCentral private.ManagedCentral) bool {
@@ -807,7 +865,6 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 }
 
 func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, remoteCentralNamespace, userType, password string) error {
-	secret := &corev1.Secret{}
 	setPasswordFunc := func(secret *corev1.Secret, userType, password string) {
 		secret.Data = map[string][]byte{"password": []byte(password)}
 		if secret.Annotations == nil {
@@ -815,40 +872,9 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 		}
 		secret.Annotations[dbUserTypeAnnotation] = userType
 	}
-
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
-	if err == nil {
+	return r.ensureSecretExists(ctx, remoteCentralNamespace, "Central DB", centralDbSecretName, func(secret *corev1.Secret) {
 		setPasswordFunc(secret, userType, password)
-		err = r.client.Update(ctx, secret)
-		if err != nil {
-			return fmt.Errorf("updating Central DB secret: %w", err)
-		}
-
-		return nil
-	}
-
-	if !apiErrors.IsNotFound(err) {
-		return fmt.Errorf("getting Central DB secret: %w", err)
-	}
-
-	// create secret if it does not exist
-	secret = &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralDbSecretName,
-			Namespace: remoteCentralNamespace,
-			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
-			Annotations: map[string]string{
-				managedServicesAnnotation: "true",
-			},
-		},
-	}
-
-	setPasswordFunc(secret, userType, password)
-	err = r.client.Create(ctx, secret)
-	if err != nil {
-		return fmt.Errorf("creating Central DB secret: %w", err)
-	}
-	return nil
+	})
 }
 
 func (r *CentralReconciler) centralDBSecretExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
@@ -1165,6 +1191,54 @@ func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile string) 
 }
 
 var resourcesChart = charts.MustGetChart("tenant-resources", nil)
+
+func (r *CentralReconciler) ensureSecretExists(
+	ctx context.Context,
+	remoteCentralNamespace string,
+	nameForErrors string,
+	actualName string,
+	secretFiller func(secret *corev1.Secret),
+) error {
+	secret := &corev1.Secret{}
+
+	err := r.client.Get(
+		ctx,
+		ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: actualName},
+		secret,
+	)
+	if err == nil {
+		secretFiller(secret)
+		err = r.client.Update(ctx, secret)
+		if err != nil {
+			return fmt.Errorf("updating %s secret: %w", nameForErrors, err)
+		}
+
+		return nil
+	}
+
+	if !apiErrors.IsNotFound(err) {
+		return fmt.Errorf("getting %s secret: %w", nameForErrors, err)
+	}
+
+	// create secret if it does not exist
+	secret = &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      actualName,
+			Namespace: remoteCentralNamespace,
+			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
+			Annotations: map[string]string{
+				managedServicesAnnotation: "true",
+			},
+		},
+	}
+
+	secretFiller(secret)
+	err = r.client.Create(ctx, secret)
+	if err != nil {
+		return fmt.Errorf("creating %s secret: %w", nameForErrors, err)
+	}
+	return nil
+}
 
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
