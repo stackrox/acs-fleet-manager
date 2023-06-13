@@ -64,7 +64,7 @@ log "Database is ready."
 # Deploy MS components.
 log "Deploying fleet-manager"
 chamber exec "fleet-manager" -- apply "${MANIFESTS_DIR}/fleet-manager"
-inject_feature_flags_from_env "$ACSMS_NAMESPACE" "fleet-manager"
+inject_exported_env_vars "$ACSMS_NAMESPACE" "fleet-manager"
 
 wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleet-manager" "fleet-manager"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
@@ -73,7 +73,7 @@ fi
 
 log "Deploying fleetshard-sync"
 exec_fleetshard_sync.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
-inject_feature_flags_from_env "$ACSMS_NAMESPACE" "fleetshard-sync"
+inject_exported_env_vars "$ACSMS_NAMESPACE" "fleetshard-sync"
 
 wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then

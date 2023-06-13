@@ -285,7 +285,7 @@ inject_ips() {
     $KUBECTL -n "$namespace" patch sa "$service_account" -p "\"imagePullSecrets\": [{\"name\": \"${secret_name}\" }]"
 }
 
-inject_feature_flags_from_env() {
+inject_exported_env_vars() {
     local namespace="$1"
     local deployment="$2"
 

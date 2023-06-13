@@ -21,7 +21,7 @@ var (
 
 func registerFeature(name, envVar string, defaultValue bool) FeatureFlag {
 	if !strings.HasPrefix(envVar, "RHACS_") {
-		panic(fmt.Sprintf("invalid env var: %s, must start with ROX_", envVar))
+		panic(fmt.Sprintf("invalid env var: %s, must start with RHACS_", envVar))
 	}
 	f := &feature{
 		name:         name,
