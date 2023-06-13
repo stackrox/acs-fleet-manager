@@ -20,6 +20,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/declarativeconfigclone"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -438,7 +439,7 @@ func (r *CentralReconciler) reconcileCentralAuditLogNotifier(ctx context.Context
 
 		existingConfigData, foundAuditLogNotifier := secret.Data[auditLogNotifierKey]
 		if foundAuditLogNotifier {
-			configurations, err := declarativeconfig.ConfigurationFromRawBytes(existingConfigData)
+			configurations, err := declarativeconfigclone.ConfigurationFromRawBytes(existingConfigData)
 			if err != nil {
 				return fmt.Errorf("getting declarative configuration data for audit log notifier: %w", err)
 			}
