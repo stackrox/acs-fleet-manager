@@ -291,7 +291,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
-	if err = r.reconcileCentral(ctx, remoteCentral, central); err != nil {
+	if err = r.reconcileCentral(ctx, &remoteCentral, central); err != nil {
 		return nil, err
 	}
 
@@ -336,7 +336,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	return status, nil
 }
 
-func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) error {
+func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 	remoteCentralName := remoteCentral.Metadata.Name
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
