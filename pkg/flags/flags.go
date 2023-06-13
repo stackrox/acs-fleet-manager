@@ -4,7 +4,7 @@ package flags
 import (
 	"fmt"
 
-	"github.com/golang/glog"
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
@@ -12,7 +12,7 @@ import (
 func MustGetDefinedString(flagName string, flags *pflag.FlagSet) string {
 	flagVal := MustGetString(flagName, flags)
 	if flagVal == "" {
-		glog.Fatal(undefinedValueMessage(flagName))
+		panic(undefinedValueMessage(flagName))
 	}
 	return flagVal
 }
@@ -21,7 +21,7 @@ func MustGetDefinedString(flagName string, flags *pflag.FlagSet) string {
 func MustGetString(flagName string, flags *pflag.FlagSet) string {
 	flagVal, err := flags.GetString(flagName)
 	if err != nil {
-		glog.Fatalf(notFoundMessage(flagName, err))
+		panic(notFoundMessage(flagName, err))
 	}
 	return flagVal
 }
@@ -30,9 +30,16 @@ func MustGetString(flagName string, flags *pflag.FlagSet) string {
 func MustGetBool(flagName string, flags *pflag.FlagSet) bool {
 	flagVal, err := flags.GetBool(flagName)
 	if err != nil {
-		glog.Fatalf(notFoundMessage(flagName, err))
+		panic(notFoundMessage(flagName, err))
 	}
 	return flagVal
+}
+
+// MarkFlagRequired marks the given flag as required, panics if command has no flag with flagName
+func MarkFlagRequired(flagName string, cmd *cobra.Command) {
+	if err := cmd.MarkFlagRequired(flagName); err != nil {
+		panic(err)
+	}
 }
 
 func undefinedValueMessage(flagName string) string {

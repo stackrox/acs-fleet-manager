@@ -295,7 +295,11 @@ probe:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o probe/bin/probe ./probe/cmd/probe
 .PHONY: probe
 
-binary: fleet-manager fleetshard-sync probe
+acsfleetctl:
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o acsfleetctl ./cmd/acsfleetctl
+.PHONY: acsfleetctl
+
+binary: fleet-manager fleetshard-sync probe acsfleetctl
 .PHONY: binary
 
 # Install
