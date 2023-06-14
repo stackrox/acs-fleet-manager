@@ -158,6 +158,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			Annotations: map[string]string{
 				managedServicesAnnotation: "true",
 				orgNameAnnotationKey:      remoteCentral.Spec.Auth.OwnerOrgName,
+				// TODO(ROX-17718): Set reconciler selection label for Central
 			},
 		},
 		Spec: v1alpha1.CentralSpec{
@@ -957,8 +958,7 @@ func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (c
 
 func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
 	return r.wantsAuthProvider == r.hasAuthProvider &&
-		isRemoteCentralReady(remoteCentral) &&
-		remoteCentral.Spec.Versions.ActualVersion == remoteCentral.Spec.Versions.DesiredVersion
+		isRemoteCentralReady(remoteCentral)
 }
 
 func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile string) bool {

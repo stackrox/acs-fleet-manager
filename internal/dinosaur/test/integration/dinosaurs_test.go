@@ -461,19 +461,15 @@ func TestDinosaur_Delete(t *testing.T) {
 		Meta: api.Meta{
 			ID: sampleDinosaurID,
 		},
-		MultiAZ:                       true,
-		Owner:                         owner,
-		Region:                        "test",
-		CloudProvider:                 "test",
-		Name:                          "test-dinosaur",
-		OrganisationID:                orgID,
-		Status:                        constants.CentralRequestStatusReady.String(),
-		ClusterID:                     cluster.ClusterID,
-		ActualCentralVersion:          "2.6.0",
-		DesiredCentralVersion:         "2.6.0",
-		ActualCentralOperatorVersion:  "v.23.0",
-		DesiredCentralOperatorVersion: "v0.23.0",
-		InstanceType:                  types.EVAL.String(),
+		MultiAZ:        true,
+		Owner:          owner,
+		Region:         "test",
+		CloudProvider:  "test",
+		Name:           "test-dinosaur",
+		OrganisationID: orgID,
+		Status:         constants.CentralRequestStatusReady.String(),
+		ClusterID:      cluster.ClusterID,
+		InstanceType:   types.EVAL.String(),
 	}
 
 	if err := db.Create(dinosaur).Error; err != nil {

@@ -25,6 +25,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
@@ -110,34 +111,39 @@ type DinosaurService interface {
 var _ DinosaurService = &dinosaurService{}
 
 type dinosaurService struct {
-	connectionFactory        *db.ConnectionFactory
-	clusterService           ClusterService
-	iamService               sso.IAMService
-	dinosaurConfig           *config.CentralConfig
-	awsConfig                *config.AWSConfig
-	quotaServiceFactory      QuotaServiceFactory
-	mu                       sync.Mutex
-	awsClientFactory         aws.ClientFactory
-	authService              authorization.Authorization
-	dataplaneClusterConfig   *config.DataplaneClusterConfig
-	clusterPlacementStrategy ClusterPlacementStrategy
-	amsClient                ocm.AMSClient
+	connectionFactory            *db.ConnectionFactory
+	clusterService               ClusterService
+	iamService                   sso.IAMService
+	dinosaurConfig               *config.CentralConfig
+	awsConfig                    *config.AWSConfig
+	quotaServiceFactory          QuotaServiceFactory
+	mu                           sync.Mutex
+	awsClientFactory             aws.ClientFactory
+	authService                  authorization.Authorization
+	dataplaneClusterConfig       *config.DataplaneClusterConfig
+	clusterPlacementStrategy     ClusterPlacementStrategy
+	amsClient                    ocm.AMSClient
+	centralDefaultVersionService CentralDefaultVersionService
 }
 
 // NewDinosaurService ...
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient) *dinosaurService {
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService,
+	dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
+	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization,
+	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, centralDefaultVersionService CentralDefaultVersionService) *dinosaurService {
 	return &dinosaurService{
-		connectionFactory:        connectionFactory,
-		clusterService:           clusterService,
-		iamService:               iamService,
-		dinosaurConfig:           dinosaurConfig,
-		awsConfig:                awsConfig,
-		quotaServiceFactory:      quotaServiceFactory,
-		awsClientFactory:         awsClientFactory,
-		authService:              authorizationService,
-		dataplaneClusterConfig:   dataplaneClusterConfig,
-		clusterPlacementStrategy: clusterPlacementStrategy,
-		amsClient:                amsClient,
+		connectionFactory:            connectionFactory,
+		clusterService:               clusterService,
+		iamService:                   iamService,
+		dinosaurConfig:               dinosaurConfig,
+		awsConfig:                    awsConfig,
+		quotaServiceFactory:          quotaServiceFactory,
+		awsClientFactory:             awsClientFactory,
+		authService:                  authorizationService,
+		dataplaneClusterConfig:       dataplaneClusterConfig,
+		clusterPlacementStrategy:     clusterPlacementStrategy,
+		amsClient:                    amsClient,
+		centralDefaultVersionService: centralDefaultVersionService,
 	}
 }
 
@@ -242,6 +248,14 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	subscriptionID, err := k.reserveQuota(dinosaurRequest)
 	if err != nil {
 		return err
+	}
+
+	if features.TargetedOperatorUpgrades.Enabled() {
+		defaultVersion, serviceErr := k.centralDefaultVersionService.GetDefaultVersion()
+		if serviceErr != nil {
+			return err
+		}
+		dinosaurRequest.OperatorImage = defaultVersion
 	}
 
 	dbConn := k.connectionFactory.New()
