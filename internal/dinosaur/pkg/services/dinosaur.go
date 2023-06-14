@@ -65,8 +65,6 @@ type CNameRecordStatus struct {
 type DinosaurService interface {
 	// HasAvailableCapacityInRegion checks if there is capacity in the clusters for a given region
 	HasAvailableCapacityInRegion(dinosaurRequest *dbapi.CentralRequest) (bool, *errors.ServiceError)
-	// AcceptCentralRequest transitions CentralRequest to 'Preparing'.
-	AcceptCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError
 	// PrepareDinosaurRequest transitions CentralRequest to 'Provisioning'.
 	PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	// Get method will retrieve the dinosaurRequest instance that the give ctx has access to from the database.
@@ -220,32 +218,32 @@ func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (s
 }
 
 // RegisterDinosaurJob registers a new job in the dinosaur table
-func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
+func (k *dinosaurService) RegisterDinosaurJob(centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	// we need to pre-populate the ID to be able to reserve the quota
-	dinosaurRequest.ID = api.NewID()
+	centralRequest.ID = api.NewID()
 
-	if hasCapacity, err := k.HasAvailableCapacityInRegion(dinosaurRequest); err != nil {
+	if hasCapacity, err := k.HasAvailableCapacityInRegion(centralRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create central request")
 	} else if !hasCapacity {
-		errorMsg := fmt.Sprintf("Cluster capacity(%d) exhausted in %s region", int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(dinosaurRequest.Region)), dinosaurRequest.Region)
+		errorMsg := fmt.Sprintf("Cluster capacity(%d) exhausted in %s region", int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(centralRequest.Region)), centralRequest.Region)
 		logger.Logger.Warningf(errorMsg)
 		return errors.TooManyDinosaurInstancesReached(errorMsg)
 	}
 
-	instanceType := k.DetectInstanceType(dinosaurRequest)
+	instanceType := k.DetectInstanceType(centralRequest)
 
-	dinosaurRequest.InstanceType = instanceType.String()
+	centralRequest.InstanceType = instanceType.String()
 
-	cluster, e := k.clusterPlacementStrategy.FindCluster(dinosaurRequest)
+	cluster, e := k.clusterPlacementStrategy.FindCluster(centralRequest)
 	if e != nil || cluster == nil {
-		msg := fmt.Sprintf("No available cluster found for '%s' central instance in region: '%s'", dinosaurRequest.InstanceType, dinosaurRequest.Region)
+		msg := fmt.Sprintf("No available cluster found for '%s' central instance in region: '%s'", centralRequest.InstanceType, centralRequest.Region)
 		logger.Logger.Errorf(msg)
-		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", dinosaurRequest.Region, dinosaurRequest.InstanceType))
+		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", centralRequest.Region, centralRequest.InstanceType))
 	}
-	dinosaurRequest.ClusterID = cluster.ClusterID
-	subscriptionID, err := k.reserveQuota(dinosaurRequest)
+	centralRequest.ClusterID = cluster.ClusterID
+	subscriptionID, err := k.reserveQuota(centralRequest)
 	if err != nil {
 		return err
 	}
@@ -255,22 +253,28 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 		if serviceErr != nil {
 			return err
 		}
-		dinosaurRequest.OperatorImage = defaultVersion
+		centralRequest.OperatorImage = defaultVersion
 	}
 
 	dbConn := k.connectionFactory.New()
-	dinosaurRequest.Status = dinosaurConstants.CentralRequestStatusAccepted.String()
-	dinosaurRequest.SubscriptionID = subscriptionID
-	glog.Infof("Central request %s has been assigned the subscription %s.", dinosaurRequest.ID, subscriptionID)
+	centralRequest.Status = dinosaurConstants.CentralRequestStatusAccepted.String()
+	centralRequest.SubscriptionID = subscriptionID
+	glog.Infof("Central request %s has been assigned the subscription %s.", centralRequest.ID, subscriptionID)
 	// Persist the QuotaType to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a dinosaur A is created, at the time of creation the quota-type was ams. At some point in the future
 	// the API is restarted this time changing the --quota-type flag to quota-management-list, when dinosaur A is deleted at this point,
 	// we want to use the correct quota to perform the deletion.
-	dinosaurRequest.QuotaType = k.dinosaurConfig.Quota.Type
-	if err := dbConn.Create(dinosaurRequest).Error; err != nil {
+	centralRequest.QuotaType = k.dinosaurConfig.Quota.Type
+	if err := dbConn.Create(centralRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create central request") // hide the db error to http caller
 	}
-	metrics.UpdateCentralRequestsStatusSinceCreatedMetric(dinosaurConstants.CentralRequestStatusAccepted, dinosaurRequest.ID, dinosaurRequest.ClusterID, time.Since(dinosaurRequest.CreatedAt))
+
+	svcErr := k.acceptCentralRequest(centralRequest)
+	if svcErr != nil {
+		return svcErr
+	}
+
+	metrics.UpdateCentralRequestsStatusSinceCreatedMetric(dinosaurConstants.CentralRequestStatusAccepted, centralRequest.ID, centralRequest.ClusterID, time.Since(centralRequest.CreatedAt))
 	return nil
 }
 
@@ -278,7 +282,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 // require blocking operations (deducing namespace or instance hostname). Upon
 // success, CentralRequest is transitioned to 'Preparing' status and might not
 // be fully prepared yet.
-func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError {
+func (k *dinosaurService) acceptCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	// Set namespace.
 	namespace, formatErr := FormatNamespace(centralRequest.ID)
 	if formatErr != nil {
