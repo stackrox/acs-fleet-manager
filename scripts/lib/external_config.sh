@@ -32,9 +32,13 @@ init_chamber() {
             # ensure a valid kerberos ticket exist
             if ! klist -s >/dev/null 2>&1; then
                 log "Getting a Kerberos ticket"
-                kinit
+                if ! kinit; then
+                    auth_helper_error "kinit failed"
+                fi
             fi
-            aws-saml.py --target-role "${AWS_SAML_ROLE}"
+            if ! aws-saml.py --target-role "${AWS_SAML_ROLE}"; then
+                auth_helper_error "aws-saml.py failed"
+            fi
         ;;
         none)
             if [[ -z "${AWS_SESSION_TOKEN:-}" ]] || [[ -z "${AWS_ACCESS_KEY_ID:-}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
@@ -51,6 +55,10 @@ auth_init_error() {
     die "Error: $1. Choose one of the following options:
            1) SAML (export AWS_AUTH_HELPER=aws-saml)
            2) Unset AWS_AUTH_HELPER and export AWS_SESSION_TOKEN, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY environment variables"
+}
+
+auth_helper_error() {
+    die "Error: $1. Please refer to the troubleshooting section in docs/development/secret-management.md for a possible cause."
 }
 
 # Loads config from the external storage to the environment and applying a prefix to a variable name (if exists).
