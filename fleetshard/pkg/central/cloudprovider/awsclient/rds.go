@@ -9,11 +9,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	awscredentials "github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
-	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
@@ -327,7 +324,7 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 
 // NewRDSClient initializes a new awsclient.RDS
 func NewRDSClient(config *config.Config) (*RDS, error) {
-	rdsClient, err := newRdsClient(config.AWS)
+	rdsClient, err := newRdsClient()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create RDS client: %w", err)
 	}
@@ -432,22 +429,8 @@ func newDeleteCentralDBClusterInput(clusterID string, skipFinalSnapshot bool) *r
 	return input
 }
 
-func newRdsClient(awsConfig config.AWS) (*rds.RDS, error) {
-	cfg := &aws.Config{
-		Region: aws.String(awsConfig.Region),
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create session for STS client: %w", err)
-	}
-	stsClient := sts.New(sess)
-
-	roleProvider := stscreds.NewWebIdentityRoleProviderWithOptions(stsClient, awsConfig.RoleARN, "rds",
-		stscreds.FetchTokenPath(awsConfig.TokenFile))
-
-	cfg.Credentials = awscredentials.NewCredentials(roleProvider)
-
-	sess, err = session.NewSession(cfg)
+func newRdsClient() (*rds.RDS, error) {
+	sess, err := session.NewSession()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create session for RDS client: %w", err)
 	}
