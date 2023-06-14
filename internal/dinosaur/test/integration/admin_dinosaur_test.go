@@ -21,7 +21,6 @@ func TestAdminDinosaur_Get(t *testing.T) {
 	skipNotFullyImplementedYet(t)
 
 	sampleDinosaurID := api.NewID()
-	desiredDinosaurOperatorVersion := "test"
 	type args struct {
 		ctx        func(h *coreTest.Helper) context.Context
 		dinosaurID string
@@ -161,15 +160,14 @@ func TestAdminDinosaur_Get(t *testing.T) {
 	defer tearDown()
 	db := test.TestServices.DBFactory.New()
 	dinosaur := &dbapi.CentralRequest{
-		MultiAZ:                       false,
-		Owner:                         "test-user",
-		Region:                        "test",
-		CloudProvider:                 "test",
-		Name:                          "test-dinosaur",
-		OrganisationID:                "13640203",
-		DesiredCentralOperatorVersion: desiredDinosaurOperatorVersion,
-		Status:                        constants.CentralRequestStatusReady.String(),
-		Namespace:                     fmt.Sprintf("dinosaur-%s", sampleDinosaurID),
+		MultiAZ:        false,
+		Owner:          "test-user",
+		Region:         "test",
+		CloudProvider:  "test",
+		Name:           "test-dinosaur",
+		OrganisationID: "13640203",
+		Status:         constants.CentralRequestStatusReady.String(),
+		Namespace:      fmt.Sprintf("dinosaur-%s", sampleDinosaurID),
 	}
 	dinosaur.ID = sampleDinosaurID
 

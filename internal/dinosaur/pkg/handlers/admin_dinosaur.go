@@ -320,7 +320,6 @@ func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.
 		return fmt.Errorf("updating ScannerSpec within CentralRequest: %w", err)
 	}
 
-	new.DesiredCentralVersion = updateRequest.CentralVersion
 	new.ForceReconcile = updateRequest.ForceReconcile
 
 	*request = new

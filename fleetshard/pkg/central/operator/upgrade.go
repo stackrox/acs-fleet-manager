@@ -69,6 +69,10 @@ type ACSOperatorImage struct {
 
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
 func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []ACSOperatorImage) error {
+	if len(images) == 0 {
+		return nil
+	}
+
 	operatorImages, crdTag, err := parseOperatorImages(images)
 	if err != nil {
 		return fmt.Errorf("failed to parse images: %w", err)

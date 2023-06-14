@@ -208,12 +208,10 @@ components:
         limits:
           $ref: "#/components/schemas/ResourceList"
 
-    ManagedCentralVersions:
+    OperatorVersion:
       type: object
       properties:
-        desiredVersion:
-          type: string
-        actualVersion:
+        operatorImage:
           type: string
 
     ManagedCentral:
@@ -285,8 +283,8 @@ components:
                   properties:
                     host:
                       type: string
-                versions:
-                  $ref: "#/components/schemas/ManagedCentralVersions"
+                operatorVersion:
+                  $ref: "#/components/schemas/OperatorVersion"
                 central:
                   type: object
                   properties:
