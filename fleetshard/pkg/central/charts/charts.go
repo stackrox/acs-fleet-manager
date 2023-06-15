@@ -161,6 +161,9 @@ func DeleteChart(ctx context.Context, client ctrlClient.Client, releaseName stri
 	deleteInProgress := false
 	for _, obj := range objs {
 		key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
+		if key.Namespace == "" && obj.GetKind() == "Service" {
+			key.Namespace = namespace
+		}
 		var out unstructured.Unstructured
 		out.SetGroupVersionKind(obj.GroupVersionKind())
 		err := client.Get(ctx, key, &out)

@@ -5,6 +5,7 @@ import (
 	"embed"
 	"testing"
 
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -105,4 +106,35 @@ func TestGetChartWithDynamicTemplate(t *testing.T) {
 	c, err := GetChart("rhacs-operator", dynamicTemplates)
 	require.NoError(t, err)
 	assert.NotNil(t, c)
+}
+
+func TestDeleteChart(t *testing.T) {
+	chartFiles, err := TraverseChart(testdata, "testdata/test-chart")
+	require.NoError(t, err)
+	chart, err := loader.LoadFiles(chartFiles)
+	require.NoError(t, err)
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	ctx := context.Background()
+
+	chartVals := chartutil.Values{
+		"foo": "bar",
+	}
+	objs, err := RenderToObjects("test-release", testNamespace, chart, chartVals)
+	require.NoError(t, err)
+	obj := objs[0]
+	require.NotEmpty(t, objs)
+
+	err = InstallOrUpdateChart(ctx, obj, fakeClient)
+	require.NoError(t, err)
+
+	deleted, err := DeleteChart(ctx, fakeClient, "test-release", testNamespace, chart, chartVals)
+	require.NoError(t, err)
+	assert.True(t, deleted)
+
+	key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
+	var res unstructured.Unstructured
+	res.SetGroupVersionKind(obj.GroupVersionKind())
+
+	err = fakeClient.Get(ctx, key, &res)
+	assert.True(t, k8sErrors.IsNotFound(err))
 }
