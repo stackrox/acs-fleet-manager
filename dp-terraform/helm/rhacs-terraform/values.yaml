@@ -109,7 +109,7 @@ vector:
               - key: app
                 operator: In
                 values:
-                  - vector
+                  - rhacs-vector
           topologyKey: "topology.kubernetes.io/zone"
   persistence:
     enabled: true

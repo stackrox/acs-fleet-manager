@@ -160,7 +160,7 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" \
   --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" \
-  --set vector.enabled=true \
+  --set vector.enabled=false \
   --set vector.service.annotations.rhacs\\.redhat\\.com/cluster-name="${CLUSTER_NAME}" \
   --set vector.service.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}" \
   --set vector.customConfig.sinks.aws_s3.region="${CLUSTER_REGION}" \
