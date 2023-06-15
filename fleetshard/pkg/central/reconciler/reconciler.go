@@ -29,7 +29,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -831,36 +830,12 @@ func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, rem
 		return false, fmt.Errorf("obtaining values for resources chart: %w", err)
 	}
 
-	objs, err := charts.RenderToObjects(helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
+	deleted, err := charts.DeleteChart(ctx, r.client, helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
 	if err != nil {
-		return false, fmt.Errorf("rendering resources chart: %w", err)
+		return false, fmt.Errorf("failed deleting chart: %w", err)
 	}
 
-	waitForDelete := false
-	for _, obj := range objs {
-		key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
-		if key.Namespace == "" {
-			key.Namespace = remoteCentral.Metadata.Namespace
-		}
-		var out unstructured.Unstructured
-		out.SetGroupVersionKind(obj.GroupVersionKind())
-		err := r.client.Get(ctx, key, &out)
-		if err != nil {
-			if apiErrors.IsNotFound(err) {
-				continue
-			}
-			return false, fmt.Errorf("retrieving object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
-		}
-		if out.GetDeletionTimestamp() != nil {
-			waitForDelete = true
-			continue
-		}
-		err = r.client.Delete(ctx, &out)
-		if err != nil && !apiErrors.IsNotFound(err) {
-			return false, fmt.Errorf("retrieving object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
-		}
-	}
-	return !waitForDelete, nil
+	return deleted, nil
 }
 
 func (r *CentralReconciler) ensureRoutesExist(ctx context.Context, remoteCentral private.ManagedCentral) error {

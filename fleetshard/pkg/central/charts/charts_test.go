@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 )
@@ -105,4 +106,35 @@ func TestGetChartWithDynamicTemplate(t *testing.T) {
 	c, err := GetChart("rhacs-operator", dynamicTemplates)
 	require.NoError(t, err)
 	assert.NotNil(t, c)
+}
+
+func TestDeleteChart(t *testing.T) {
+	chartFiles, err := TraverseChart(testdata, "testdata/test-chart")
+	require.NoError(t, err)
+	chart, err := loader.LoadFiles(chartFiles)
+	require.NoError(t, err)
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	ctx := context.Background()
+
+	chartVals := chartutil.Values{
+		"foo": "bar",
+	}
+	objs, err := RenderToObjects("test-release", testNamespace, chart, chartVals)
+	require.NoError(t, err)
+	obj := objs[0]
+	require.NotEmpty(t, objs)
+
+	err = InstallOrUpdateChart(ctx, obj, fakeClient)
+	require.NoError(t, err)
+
+	deleted, err := DeleteChart(ctx, fakeClient, "test-release", testNamespace, chart, chartVals)
+	require.NoError(t, err)
+	assert.True(t, deleted)
+
+	key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
+	var res unstructured.Unstructured
+	res.SetGroupVersionKind(obj.GroupVersionKind())
+
+	err = fakeClient.Get(ctx, key, &res)
+	assert.True(t, k8sErrors.IsNotFound(err))
 }
