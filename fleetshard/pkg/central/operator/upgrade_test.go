@@ -26,6 +26,20 @@ const (
 	crdURL             = "https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"
 )
 
+var acsOperatorImages1 = []ACSOperatorImage{
+	{
+		Image:      operatorImage1,
+		InstallCRD: false,
+	},
+}
+
+var acsOperatorImages2 = []ACSOperatorImage{
+	{
+		Image:      operatorImage2,
+		InstallCRD: false,
+	},
+}
+
 var securedClusterCRD = &unstructured.Unstructured{
 	Object: map[string]interface{}{
 		"kind":       kindCRDName,
@@ -289,4 +303,73 @@ func TestParseOperatorImages(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDeleteOneVersion(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	u := NewACSOperatorManager(fakeClient, crdURL)
+
+	err := u.InstallOrUpgrade(context.Background(), acsOperatorImages1)
+	require.NoError(t, err)
+	err = u.Delete(context.Background(), acsOperatorImages1)
+	require.NoError(t, err)
+	deployments := &appsv1.DeploymentList{}
+	err = fakeClient.List(context.Background(), deployments)
+	require.NoError(t, err)
+	assert.Len(t, deployments.Items, 0)
+}
+
+func TestDeleteMultipleVersions(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	u := NewACSOperatorManager(fakeClient, crdURL)
+
+	versions := []ACSOperatorImage{
+		{
+			Image:      operatorImage1,
+			InstallCRD: false,
+		},
+		{
+			Image:      operatorImage2,
+			InstallCRD: false,
+		},
+	}
+
+	err := u.InstallOrUpgrade(context.Background(), versions)
+	require.NoError(t, err)
+	err = u.Delete(context.Background(), versions)
+	require.NoError(t, err)
+	deployments := &appsv1.DeploymentList{}
+	err = fakeClient.List(context.Background(), deployments)
+	require.NoError(t, err)
+	assert.Len(t, deployments.Items, 0)
+}
+
+func TestListVersions(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	u := NewACSOperatorManager(fakeClient, crdURL)
+
+	versions, err := u.ListVersions(context.Background())
+	require.NoError(t, err)
+	assert.Empty(t, versions)
+
+	// install operator
+	err = u.InstallOrUpgrade(context.Background(), acsOperatorImages1)
+	require.NoError(t, err)
+	versions, err = u.ListVersions(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, versions, []string{operatorImage1})
+
+	// install another version
+	err = u.InstallOrUpgrade(context.Background(), acsOperatorImages2)
+	require.NoError(t, err)
+	versions, err = u.ListVersions(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, versions, []string{operatorImage1, operatorImage2})
+
+	// delete one version
+	err = u.Delete(context.Background(), acsOperatorImages1)
+	require.NoError(t, err)
+	versions, err = u.ListVersions(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, versions, []string{operatorImage2})
 }

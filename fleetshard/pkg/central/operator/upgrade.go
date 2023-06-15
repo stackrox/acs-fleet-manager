@@ -9,6 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
+	appsv1 "k8s.io/api/apps/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -109,6 +110,62 @@ func (u *ACSOperatorManager) generateCRDTemplateUrls(tag string) []string {
 	centralCrdURL := stackroxWithTag + "platform.stackrox.io_centrals.yaml"
 	securedClusterCrdURL := stackroxWithTag + "platform.stackrox.io_securedclusters.yaml"
 	return []string{centralCrdURL, securedClusterCrdURL}
+}
+
+func toOperatorImage(images []string, crdTag string) []ACSOperatorImage {
+	var operatorImages []ACSOperatorImage
+	for _, img := range images {
+		installCRD := false
+		if crdTag == img {
+			installCRD = true
+		}
+		operatorImages = append(operatorImages, ACSOperatorImage{Image: img, InstallCRD: installCRD})
+	}
+	return operatorImages
+}
+
+// ListVersions returns currently running ACS Operator versions
+func (u *ACSOperatorManager) ListVersions(ctx context.Context) ([]string, error) {
+	deployments := &appsv1.DeploymentList{}
+	labels := map[string]string{"app": "rhacs-operator"}
+	err := u.client.List(ctx, deployments,
+		ctrlClient.InNamespace(operatorNamespace),
+		ctrlClient.MatchingLabels(labels),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed list operator deployments: %w", err)
+	}
+
+	var versions []string
+	for _, dep := range deployments.Items {
+		for _, c := range dep.Spec.Template.Spec.Containers {
+			if c.Name == "manager" {
+				versions = append(versions, c.Image)
+			}
+		}
+	}
+
+	return versions, nil
+}
+
+// Delete removes selected ACS Operator versions from the cluster
+func (u *ACSOperatorManager) Delete(ctx context.Context, images []ACSOperatorImage) error {
+	operatorImages, _, err := parseOperatorImages(images)
+	if err != nil {
+		return fmt.Errorf("failed to parse images: %w", err)
+	}
+	chartVals := chartutil.Values{
+		"operator": chartutil.Values{
+			"deploymentPrefix": operatorDeploymentPrefix + "-",
+			"images":           operatorImages,
+		},
+	}
+
+	_, err = charts.DeleteChart(ctx, u.client, releaseName, operatorNamespace, u.resourcesChart, chartVals)
+	if err != nil {
+		return fmt.Errorf("failed deleting chart: %w", err)
+	}
+	return nil
 }
 
 // NewACSOperatorManager creates a new ACS Operator Manager

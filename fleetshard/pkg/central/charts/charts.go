@@ -18,6 +18,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chartutil"
 )
 
 var (
@@ -148,4 +149,35 @@ func InstallOrUpdateChart(ctx context.Context, obj *unstructured.Unstructured, c
 		}
 	}
 	return nil
+}
+
+// DeleteChart delete chart rendered objects
+func DeleteChart(ctx context.Context, client ctrlClient.Client, releaseName string, namespace string, chart *chart.Chart, chartVals chartutil.Values) (bool, error) {
+	objs, err := RenderToObjects(releaseName, namespace, chart, chartVals)
+	if err != nil {
+		return false, fmt.Errorf("rendering resources chart: %w", err)
+	}
+
+	deleteInProgress := false
+	for _, obj := range objs {
+		key := ctrlClient.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
+		var out unstructured.Unstructured
+		out.SetGroupVersionKind(obj.GroupVersionKind())
+		err := client.Get(ctx, key, &out)
+		if err != nil {
+			if apiErrors.IsNotFound(err) {
+				continue
+			}
+			return false, fmt.Errorf("retrieving object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
+		}
+		if out.GetDeletionTimestamp() != nil {
+			deleteInProgress = true
+			continue
+		}
+		err = client.Delete(ctx, &out)
+		if err != nil && !apiErrors.IsNotFound(err) {
+			return false, fmt.Errorf("retrieving object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
+		}
+	}
+	return !deleteInProgress, nil
 }

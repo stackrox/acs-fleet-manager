@@ -4,6 +4,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/golang/glog"
@@ -44,14 +45,15 @@ var backoff = wait.Backoff{
 
 // Runtime represents the runtime to reconcile all centrals associated with the given cluster.
 type Runtime struct {
-	config            *config.Config
-	client            *fleetmanager.Client
-	clusterID         string
-	reconcilers       reconcilerRegistry
-	k8sClient         ctrlClient.Client
-	dbProvisionClient cloudprovider.DBClient
-	statusResponseCh  chan private.DataPlaneCentralStatus
-	operatorManager   *operator.ACSOperatorManager
+	config             *config.Config
+	client             *fleetmanager.Client
+	clusterID          string
+	reconcilers        reconcilerRegistry
+	k8sClient          ctrlClient.Client
+	dbProvisionClient  cloudprovider.DBClient
+	statusResponseCh   chan private.DataPlaneCentralStatus
+	operatorManager    *operator.ACSOperatorManager
+	operatorReconciler *operator.Reconciler
 }
 
 // NewRuntime creates a new runtime
@@ -89,15 +91,17 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 	}
 
 	operatorManager := operator.NewACSOperatorManager(k8sClient, config.BaseCrdURL)
+	operatorReconciler := operator.NewOperatorReconciler(operatorManager)
 
 	return &Runtime{
-		config:            config,
-		k8sClient:         k8sClient,
-		client:            client,
-		clusterID:         config.ClusterID,
-		dbProvisionClient: dbProvisionClient,
-		reconcilers:       make(reconcilerRegistry),
-		operatorManager:   operatorManager,
+		config:             config,
+		k8sClient:          k8sClient,
+		client:             client,
+		clusterID:          config.ClusterID,
+		dbProvisionClient:  dbProvisionClient,
+		reconcilers:        make(reconcilerRegistry),
+		operatorManager:    operatorManager,
+		operatorReconciler: operatorReconciler,
 	}, nil
 }
 
@@ -129,6 +133,12 @@ func (r *Runtime) Start() error {
 			glog.Error(err)
 		}
 	}
+
+	targetOperators := []string{
+		"quay.io/rhacs-eng/stackrox-operator:4.0.0",
+		"quay.io/rhacs-eng/stackrox-operator:4.0.1",
+	}
+	var actualOperators []string
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		list, _, err := r.client.PrivateAPI().GetCentrals(ctx, r.clusterID)
@@ -166,6 +176,23 @@ func (r *Runtime) Start() error {
 				glog.Warningf("Error getting pause annotation status: %v", err)
 			} else {
 				fleetshardmetrics.MetricsInstance().SetPauseReconcileStatus(central.Id, reconcilePaused)
+			}
+		}
+
+		if features.TargetedOperatorUpgrades.Enabled() {
+			if !reflect.DeepEqual(actualOperators, targetOperators) {
+				go func(versions []string) {
+					ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+					defer cancel()
+
+					// TODO: get CRD tag from Fleet Manager
+					crdTag := ""
+					currentImages, err := r.operatorReconciler.Reconcile(ctx, targetOperators, crdTag)
+					if err != nil {
+						glog.Warningf("Error reconciling ACS Operators: %v", err)
+					}
+					actualOperators = currentImages
+				}(targetOperators)
 			}
 		}
 
