@@ -5,9 +5,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"sync/atomic"
 	"time"
+
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -873,7 +874,7 @@ func (r *CentralReconciler) ensureRoutesExist(ctx context.Context, remoteCentral
 // TODO(ROX-9310): Move re-encrypt route reconciliation to the StackRox operator
 func (r *CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	namespace := remoteCentral.Metadata.Namespace
-	_, err := r.routeService.FindReencryptRoute(ctx, namespace)
+	route, err := r.routeService.FindReencryptRoute(ctx, namespace)
 	if err != nil && !apiErrors.IsNotFound(err) {
 		return fmt.Errorf("retrieving reencrypt route for namespace %q: %w", namespace, err)
 	}
@@ -883,6 +884,13 @@ func (r *CentralReconciler) ensureReencryptRouteExists(ctx context.Context, remo
 		if err != nil {
 			return fmt.Errorf("creating reencrypt route for central %s: %w", remoteCentral.Id, err)
 		}
+
+		return nil
+	}
+
+	err = r.routeService.UpdateReencryptRoute(ctx, route, remoteCentral)
+	if err != nil {
+		return fmt.Errorf("updating reencrypt route for central %s: %w", remoteCentral.Id, err)
 	}
 
 	return nil
@@ -901,7 +909,7 @@ func (r *CentralReconciler) ensureReencryptRouteDeleted(ctx context.Context, nam
 // TODO(ROX-11918): Make hostname configurable on the StackRox operator
 func (r *CentralReconciler) ensurePassthroughRouteExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	namespace := remoteCentral.Metadata.Namespace
-	_, err := r.routeService.FindPassthroughRoute(ctx, namespace)
+	route, err := r.routeService.FindPassthroughRoute(ctx, namespace)
 	if err != nil && !apiErrors.IsNotFound(err) {
 		return fmt.Errorf("retrieving passthrough route for namespace %q: %w", namespace, err)
 	}
@@ -911,6 +919,13 @@ func (r *CentralReconciler) ensurePassthroughRouteExists(ctx context.Context, re
 		if err != nil {
 			return fmt.Errorf("creating passthrough route for central %s: %w", remoteCentral.Id, err)
 		}
+
+		return nil
+	}
+
+	err = r.routeService.UpdatePassthroughRoute(ctx, route, remoteCentral)
+	if err != nil {
+		return fmt.Errorf("updating passthrough route for central %s: %w", remoteCentral.Id, err)
 	}
 
 	return nil
