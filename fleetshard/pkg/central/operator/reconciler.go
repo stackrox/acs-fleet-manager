@@ -53,16 +53,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, targetImages []string, crdTa
 		}
 	}
 
-	if len(installImages) == 0 && len(deleteImages) == 0 {
-		return currentImages, nil
-	}
-
-	updatedImages, err := r.operatorManager.ListVersions(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list operator versions: %w", err)
-	}
-
-	return updatedImages, nil
+	return targetImages, nil
 }
 
 // NewOperatorReconciler creates a new Operator Reconciler instance
