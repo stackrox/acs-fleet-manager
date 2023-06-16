@@ -280,6 +280,10 @@ lint: specinstall
 	spectral lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
 .PHONY: lint
 
+pre-commit:
+	pre-commit run --files $(git --no-pager diff --name-only main)
+.PHONY: pre-commit
+
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 
