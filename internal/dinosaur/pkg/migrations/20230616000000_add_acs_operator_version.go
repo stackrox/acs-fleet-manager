@@ -52,7 +52,7 @@ func addOperatorImageFields() *gormigrate.Migration {
 		Scanner                       api.JSON   `json:"scanner"`
 		OperatorImage                 string     `json:"operator_image"`
 	}
-	migrationID := "20230510000000"
+	migrationID := "20230616000000"
 
 	return &gormigrate.Migration{
 		ID: migrationID,
