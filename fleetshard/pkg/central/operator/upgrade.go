@@ -57,12 +57,6 @@ type ACSOperatorManager struct {
 	resourcesChart *chart.Chart
 }
 
-// ACSOperatorImage operator image representation which tells when to download CRD or skip it
-type ACSOperatorImage struct {
-	Image      string
-	InstallCRD bool
-}
-
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator(s) from helm chart template
 func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []string, crdTag string) error {
 	operatorImages, err := parseOperatorImages(images)
