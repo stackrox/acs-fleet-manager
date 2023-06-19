@@ -179,6 +179,20 @@ func (r *Runtime) Start() error {
 			}
 		}
 
+		if features.TargetedOperatorUpgrades.Enabled() {
+			operatorWithReplicas, err := r.operatorManager.ListVersionsWithReplicas(ctx)
+			if err != nil {
+				glog.Warningf("Error retrieving operator versions with replicas: %v", err)
+			}
+			for image, replicas := range operatorWithReplicas {
+				healthy := true
+				if replicas == 0 {
+					healthy = false
+				}
+				fleetshardmetrics.MetricsInstance().SetOperatorHealthStatus(image, healthy)
+			}
+		}
+
 		r.deleteStaleReconcilers(&list)
 		return r.config.RuntimePollPeriod, nil
 	}, 10*time.Minute, backoff)
