@@ -233,20 +233,13 @@ func (r *Runtime) upgradeOperator() error {
 	ctx := context.Background()
 	// TODO: gather desired operator versions from fleet-manager and update operators based on ticker
 	// TODO: Leave Operator installation before reconciler run until migration
-	operatorImages := []operator.ACSOperatorImage{
-		{
-			Image:      "quay.io/rhacs-eng/stackrox-operator:4.0.0",
-			InstallCRD: false,
-		},
-		{
-			Image:      "quay.io/rhacs-eng/stackrox-operator:4.0.1",
-			InstallCRD: false,
-		},
-	}
+	operatorImages := []string{"quay.io/rhacs-eng/stackrox-operator:4.0.0", "quay.io/rhacs-eng/stackrox-operator:4.0.1"}
+	crdTag := "4.0.1"
+
 	for _, img := range operatorImages {
-		glog.Infof("Installing Operator: %s and download CRD: %t", img.Image, img.InstallCRD)
+		glog.Infof("Installing Operator: %s", img)
 	}
-	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages)
+	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages, crdTag)
 	if err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
 	}

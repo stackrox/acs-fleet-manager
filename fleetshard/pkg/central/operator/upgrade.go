@@ -22,28 +22,24 @@ const (
 	maxOperatorDeploymentNameLength = 63
 )
 
-func parseOperatorImages(images []ACSOperatorImage) ([]chartutil.Values, string, error) {
+func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 	if len(images) == 0 {
-		return nil, "", nil
+		return nil, nil
 	}
 
 	var operatorImages []chartutil.Values
-	var crdTag string
 	uniqueImages := make(map[string]bool)
 	for _, img := range images {
-		if !strings.Contains(img.Image, ":") {
-			return nil, "", fmt.Errorf("failed to parse image %q", img.Image)
+		if !strings.Contains(img, ":") {
+			return nil, fmt.Errorf("failed to parse image %q", img)
 		}
-		strs := strings.Split(img.Image, ":")
+		strs := strings.Split(img, ":")
 		if len(strs) != 2 {
-			return nil, "", fmt.Errorf("failed to split image and tag from %q", img.Image)
+			return nil, fmt.Errorf("failed to split image and tag from %q", img)
 		}
 		repo, tag := strs[0], strs[1]
 		if len(operatorDeploymentPrefix+"-"+tag) > maxOperatorDeploymentNameLength {
-			return nil, "", fmt.Errorf("%s-%s contains more than %d characters and cannot be used as a deployment name", operatorDeploymentPrefix, tag, maxOperatorDeploymentNameLength)
-		}
-		if img.InstallCRD {
-			crdTag = tag
+			return nil, fmt.Errorf("%s-%s contains more than %d characters and cannot be used as a deployment name", operatorDeploymentPrefix, tag, maxOperatorDeploymentNameLength)
 		}
 		if _, used := uniqueImages[repo+tag]; !used {
 			uniqueImages[repo+tag] = true
@@ -51,7 +47,7 @@ func parseOperatorImages(images []ACSOperatorImage) ([]chartutil.Values, string,
 			operatorImages = append(operatorImages, img)
 		}
 	}
-	return operatorImages, crdTag, nil
+	return operatorImages, nil
 }
 
 // ACSOperatorManager keeps data necessary for managing ACS Operator
@@ -67,9 +63,9 @@ type ACSOperatorImage struct {
 	InstallCRD bool
 }
 
-// InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
-func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []ACSOperatorImage) error {
-	operatorImages, crdTag, err := parseOperatorImages(images)
+// InstallOrUpgrade provisions or upgrades an existing ACS Operator(s) from helm chart template
+func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []string, crdTag string) error {
+	operatorImages, err := parseOperatorImages(images)
 	if err != nil {
 		return fmt.Errorf("failed to parse images: %w", err)
 	}
