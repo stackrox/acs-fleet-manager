@@ -94,6 +94,6 @@ graph
         end
     end
 
-    c2s1 <--> acs2central
-    c2s2 <--> acs2central
+    c2s1 <--> acs1egress <--> acs2central
+    c2s2 <--> acs2egress <--> acs2central
 ```
