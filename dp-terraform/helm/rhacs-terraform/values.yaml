@@ -53,6 +53,7 @@ fleetshardSync:
 
 acsOperator:
   enabled: false
+  channel: latest
   source: redhat-operators
   sourceNamespace: openshift-marketplace
   version: v3.70.0
