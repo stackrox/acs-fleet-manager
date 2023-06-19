@@ -47,10 +47,12 @@ graph
                 subgraph acs1
                     acs1central[Central]
                     acs1scanner[Scanner]
+                    acs1egress[egress Proxy]
                 end
                 subgraph acs2
                     acs2central[Central]
                     acs2scanner[Scanner]
+                    acs2egress[egress Proxy]
                 end
             end
             subgraph acscs
@@ -60,10 +62,10 @@ graph
             end
 
             fm<-->fs
-            acs1central-->sso
-            acs1central-->acs1rdsp
-            acs2central-->sso
-            acs2central-->acs2rdsp
+            acs1central-->acs1egress-->sso
+            acs1central-->acs1egress-->acs1rdsp
+            acs2central-->acs2egress-->sso
+            acs2central-->acs2egress-->acs2rdsp
         end
     end
 
