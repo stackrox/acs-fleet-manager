@@ -363,21 +363,33 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		r.hasAuthProvider = true
 	}
 
-	status := readyStatus()
-	// Do not report routes statuses if:
-	// 1. Routes are not used on the cluster
-	// 2. Central request is in status "Ready" - assuming that routes are already reported and saved
-	if r.useRoutes && !isRemoteCentralReady(remoteCentral) {
-		status.Routes, err = r.getRoutesStatuses(ctx, remoteCentralNamespace)
-		if err != nil {
-			return nil, err
-		}
+	status, err := r.collectReconciliationStatus(ctx, &remoteCentral)
+	if err != nil {
+		return nil, err
 	}
 
 	// Setting the last central hash must always be executed as the last step.
 	// defer can't be used for this call because it is also executed after the reconcile failed.
 	if err := r.setLastCentralHash(remoteCentral); err != nil {
 		return nil, errors.Wrapf(err, "setting central reconcilation cache")
+	}
+
+	return status, nil
+}
+
+func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
+
+	status := readyStatus()
+	// Do not report routes statuses if:
+	// 1. Routes are not used on the cluster
+	// 2. Central request is in status "Ready" - assuming that routes are already reported and saved
+	if r.useRoutes && !isRemoteCentralReady(*remoteCentral) {
+		var err error
+		status.Routes, err = r.getRoutesStatuses(ctx, remoteCentralNamespace)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return status, nil
