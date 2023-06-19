@@ -218,22 +218,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		central.ObjectMeta.Labels = labels
 	}
 
-	// Check whether auth provider is actually created and this reconciler just is not aware of that.
-	if r.wantsAuthProvider && !r.hasAuthProvider {
-		exists, err := existsRHSSOAuthProvider(ctx, remoteCentral, r.client)
-		if err != nil {
-			return nil, err
-		}
-		// If sso.redhat.com auth provider exists, there is no need for admin/password login.
-		// We also store whether auth provider exists within reconciler instance to avoid polluting network.
-		if exists {
-			glog.Infof("Auth provider for %s/%s already exists", remoteCentralNamespace, remoteCentralName)
-			r.hasAuthProvider = true
-		}
-	}
-
-	if r.hasAuthProvider {
-		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
+	if err = r.reconcileAuthProviderConfig(ctx, &remoteCentral, central); err != nil {
+		return nil, err
 	}
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
@@ -277,7 +263,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	// Check whether deployment is ready.
-	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral)
+	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, &remoteCentral)
 	if err != nil {
 		return nil, err
 	}
@@ -304,6 +290,31 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	return status, nil
+}
+
+func (r *CentralReconciler) reconcileAuthProviderConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
+
+	// Check whether auth provider is actually created and this reconciler just is not aware of that.
+	if r.wantsAuthProvider && !r.hasAuthProvider {
+		exists, err := existsRHSSOAuthProvider(ctx, remoteCentral, r.client)
+		if err != nil {
+			return err
+		}
+		// If sso.redhat.com auth provider exists, there is no need for admin/password login.
+		// We also store whether auth provider exists within reconciler instance to avoid polluting network.
+		if exists {
+			glog.Infof("Auth provider for %s/%s already exists", remoteCentralNamespace, remoteCentralName)
+			r.hasAuthProvider = true
+		}
+	}
+
+	if r.hasAuthProvider {
+		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
+	}
+
+	return nil
 }
 
 func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (*private.DataPlaneCentralStatus, error) {
@@ -401,7 +412,7 @@ func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context, remoteCen
 	// 2. OR reconciler creator specified auth provider not to be created
 	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
 	if r.wantsAuthProvider && !r.hasAuthProvider && !isRemoteCentralReady(remoteCentral) {
-		err := createRHSSOAuthProvider(ctx, *remoteCentral, r.client)
+		err := createRHSSOAuthProvider(ctx, remoteCentral, r.client)
 		if err != nil {
 			return err
 		}
