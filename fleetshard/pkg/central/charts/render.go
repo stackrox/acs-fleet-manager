@@ -39,7 +39,7 @@ func RenderToObjects(releaseName, namespace string, chrt *chart.Chart, values ch
 			return nil, fmt.Errorf("failed to parse file %s in chart %s: %w", fileName, chrt.Name(), err)
 		}
 		for _, obj := range objs {
-			if namespace != "" {
+			if obj.GetNamespace() == "" && namespace != "" {
 				obj.SetNamespace(namespace)
 			}
 			obj := obj
