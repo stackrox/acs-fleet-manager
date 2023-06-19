@@ -237,14 +237,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
-		deleted, err := r.ensureCentralDeleted(ctx, remoteCentral, central)
-		if err != nil {
-			return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
-		}
-		if deleted {
-			return deletedStatus(), nil
-		}
-		return nil, ErrDeletionInProgress
+		return r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
 	}
 
 	namespaceLabels := map[string]string{
@@ -311,6 +304,20 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	return status, nil
+}
+
+func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (*private.DataPlaneCentralStatus, error) {
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
+
+	deleted, err := r.ensureCentralDeleted(ctx, remoteCentral, central)
+	if err != nil {
+		return nil, errors.Wrapf(err, "delete central %s/%s", remoteCentralNamespace, remoteCentralName)
+	}
+	if deleted {
+		return deletedStatus(), nil
+	}
+	return nil, ErrDeletionInProgress
 }
 
 func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
@@ -452,7 +459,7 @@ func getRouteStatus(ingress *openshiftRouteV1.RouteIngress) private.DataPlaneCen
 	}
 }
 
-func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral private.ManagedCentral, central *v1alpha1.Central) (bool, error) {
+func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (bool, error) {
 	globalDeleted := true
 	if r.useRoutes {
 		reencryptRouteDeleted, err := r.ensureReencryptRouteDeleted(ctx, central.GetNamespace())
@@ -864,8 +871,8 @@ func (r *CentralReconciler) ensureChartResourcesExist(ctx context.Context, remot
 	return nil
 }
 
-func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
-	vals, err := r.chartValues(remoteCentral)
+func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, remoteCentral *private.ManagedCentral) (bool, error) {
+	vals, err := r.chartValues(*remoteCentral)
 	if err != nil {
 		return false, fmt.Errorf("obtaining values for resources chart: %w", err)
 	}
