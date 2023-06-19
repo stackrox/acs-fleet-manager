@@ -291,41 +291,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
-	centralExists := true
-	existingCentral := v1alpha1.Central{}
-	err = r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}, &existingCentral)
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return nil, errors.Wrapf(err, "unable to check the existence of central %s/%s", central.GetNamespace(), central.GetName())
-		}
-		centralExists = false
-	}
-
-	if !centralExists {
-		if central.GetAnnotations() == nil {
-			central.Annotations = map[string]string{}
-		}
-		if err := util.IncrementCentralRevision(central); err != nil {
-			return nil, errors.Wrap(err, "incrementing central's revision")
-		}
-
-		glog.Infof("Creating central %s/%s", central.GetNamespace(), central.GetName())
-		if err := r.client.Create(ctx, central); err != nil {
-			return nil, errors.Wrapf(err, "creating new central %s/%s", remoteCentralNamespace, remoteCentralName)
-		}
-		glog.Infof("Central %s/%s created", central.GetNamespace(), central.GetName())
-	} else {
-		glog.Infof("Update central %s/%s", central.GetNamespace(), central.GetName())
-		existingCentral.Spec = central.Spec
-
-		if err := util.IncrementCentralRevision(&existingCentral); err != nil {
-			return nil, errors.Wrap(err, "incrementing central's revision")
-		}
-		existingCentral.Spec = *central.Spec.DeepCopy()
-
-		if err := r.client.Update(ctx, &existingCentral); err != nil {
-			return nil, errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
-		}
+	if err = r.reconcileCentral(ctx, &remoteCentral, central); err != nil {
+		return nil, err
 	}
 
 	centralTLSSecretFound := true // pragma: allowlist secret
@@ -367,6 +334,50 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	return status, nil
+}
+
+func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+	remoteCentralName := remoteCentral.Metadata.Name
+	remoteCentralNamespace := remoteCentral.Metadata.Namespace
+
+	centralExists := true
+	existingCentral := v1alpha1.Central{}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}, &existingCentral)
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return errors.Wrapf(err, "unable to check the existence of central %s/%s", central.GetNamespace(), central.GetName())
+		}
+		centralExists = false
+	}
+
+	if !centralExists {
+		if central.GetAnnotations() == nil {
+			central.Annotations = map[string]string{}
+		}
+		if err := util.IncrementCentralRevision(central); err != nil {
+			return errors.Wrap(err, "incrementing central's revision")
+		}
+
+		glog.Infof("Creating central %s/%s", central.GetNamespace(), central.GetName())
+		if err := r.client.Create(ctx, central); err != nil {
+			return errors.Wrapf(err, "creating new central %s/%s", remoteCentralNamespace, remoteCentralName)
+		}
+		glog.Infof("Central %s/%s created", central.GetNamespace(), central.GetName())
+	} else {
+		glog.Infof("Update central %s/%s", central.GetNamespace(), central.GetName())
+		existingCentral.Spec = central.Spec
+
+		if err := util.IncrementCentralRevision(&existingCentral); err != nil {
+			return errors.Wrap(err, "incrementing central's revision")
+		}
+		existingCentral.Spec = *central.Spec.DeepCopy()
+
+		if err := r.client.Update(ctx, &existingCentral); err != nil {
+			return errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
+		}
+	}
+
+	return nil
 }
 
 func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context, remoteCentral *private.ManagedCentral) error {
