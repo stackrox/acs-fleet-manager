@@ -263,31 +263,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	if r.managedDBEnabled {
-		centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
-		if err != nil {
-			return nil, fmt.Errorf("getting Central DB connection string: %w", err)
-		}
-
-		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
-			IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
-			ConnectionStringOverride: pointer.String(centralDBConnectionString),
-			PasswordSecret: &v1alpha1.LocalSecretReference{
-				Name: centralDbSecretName,
-			},
-		}
-
-		dbCA, err := postgres.GetDatabaseCACertificates()
-		if err != nil {
-			glog.Warningf("Could not read DB server CA bundle: %v", err)
-		} else {
-			central.Spec.TLS = &v1alpha1.TLSConfig{
-				AdditionalCAs: []v1alpha1.AdditionalCA{
-					{
-						Name:    postgres.CentralDatabaseCACertificateBaseName,
-						Content: string(dbCA),
-					},
-				},
-			}
+		if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
+			return nil, err
 		}
 	}
 
@@ -334,6 +311,37 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	return status, nil
+}
+
+func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+
+	centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
+	if err != nil {
+		return fmt.Errorf("getting Central DB connection string: %w", err)
+	}
+
+	central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
+		IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
+		ConnectionStringOverride: pointer.String(centralDBConnectionString),
+		PasswordSecret: &v1alpha1.LocalSecretReference{
+			Name: centralDbSecretName,
+		},
+	}
+
+	dbCA, err := postgres.GetDatabaseCACertificates()
+	if err != nil {
+		glog.Warningf("Could not read DB server CA bundle: %v", err)
+	} else {
+		central.Spec.TLS = &v1alpha1.TLSConfig{
+			AdditionalCAs: []v1alpha1.AdditionalCA{
+				{
+					Name:    postgres.CentralDatabaseCACertificateBaseName,
+					Content: string(dbCA),
+				},
+			},
+		}
+	}
+	return nil
 }
 
 func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
@@ -567,7 +575,7 @@ func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name str
 	return false, nil
 }
 
-func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral private.ManagedCentral) (string, error) {
+func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral *private.ManagedCentral) (string, error) {
 	centralDBUserExists, err := r.centralDBUserExists(ctx, remoteCentral.Metadata.Namespace)
 	if err != nil {
 		return "", err
@@ -598,7 +606,7 @@ func generateDBPassword() (string, error) {
 	return password, nil
 }
 
-func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Context, remoteCentral private.ManagedCentral) error {
+func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Context, remoteCentral *private.ManagedCentral) error {
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
 	centralDBSecretExists, err := r.centralDBSecretExists(ctx, remoteCentralNamespace)
