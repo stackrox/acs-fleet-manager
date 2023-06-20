@@ -23,8 +23,6 @@ PROBE_IMAGE_NAME="blackbox-monitoring-probe-service"
 PROBE_IMAGE_TAG="$(git rev-parse --short=7 HEAD)"
 PROBE_IMAGE="quay.io/${PROBE_IMAGE_ORG}/${PROBE_IMAGE_NAME}:${PROBE_IMAGE_TAG}"
 
-export AWS_PROFILE="$ENVIRONMENT"
-
 init_chamber
 
 load_external_config probe PROBE_

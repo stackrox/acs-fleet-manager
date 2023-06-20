@@ -1,4 +1,9 @@
+# [Deprecated] Note
+
+To introduce new feature flags please use package `pkg/features/` and add your flag to `list.go`.
+
 # Feature Flags
+
 This lists the feature flags and their sub-configurations to enable/disable and configure features of the Fleet Manager. This set of features can be seen below.
 
   - [Feature Flags](#feature-flags)

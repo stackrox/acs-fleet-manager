@@ -114,6 +114,42 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 		annotations)
 }
 
+// UpdateReencryptRoute updates configuration of the given reencrytp route to match the TLS configuration of remoteCentral.
+func (s *RouteService) UpdateReencryptRoute(ctx context.Context, route *openshiftRouteV1.Route, remoteCentral private.ManagedCentral) error {
+
+	if s.reencryptConfigMatchesCentral(route, remoteCentral) {
+		return nil
+	}
+
+	updatedRoute := route.DeepCopy()
+	updatedRoute.Spec.TLS.Certificate = remoteCentral.Spec.UiEndpoint.Tls.Cert
+	updatedRoute.Spec.TLS.Key = remoteCentral.Spec.UiEndpoint.Tls.Key
+	updatedRoute.Spec.Host = remoteCentral.Spec.UiEndpoint.Host
+
+	if err := s.client.Update(ctx, updatedRoute); err != nil {
+		return errors.Wrapf(err, "updating reencrypt route")
+	}
+
+	return nil
+}
+
+// UpdatePassthroughRoute updates configuration of the given passthrough route to match remoteCentral.
+func (s *RouteService) UpdatePassthroughRoute(ctx context.Context, route *openshiftRouteV1.Route, remoteCentral private.ManagedCentral) error {
+
+	if route.Spec.Host == remoteCentral.Spec.DataEndpoint.Host {
+		return nil
+	}
+
+	updatedRoute := route.DeepCopy()
+	updatedRoute.Spec.Host = remoteCentral.Spec.DataEndpoint.Host
+
+	if err := s.client.Update(ctx, updatedRoute); err != nil {
+		return errors.Wrapf(err, "updating passthrough route")
+	}
+
+	return nil
+}
+
 // CreatePassthroughRoute creates a new managed central passthrough route.
 func (s *RouteService) CreatePassthroughRoute(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	return s.createCentralRoute(ctx,
@@ -164,4 +200,10 @@ func (s *RouteService) findRoute(ctx context.Context, namespace string, routeNam
 		return route, fmt.Errorf("retrieving route %q from Kubernetes: %w", route.GetName(), err)
 	}
 	return route, nil
+}
+
+func (s *RouteService) reencryptConfigMatchesCentral(route *openshiftRouteV1.Route, remoteCentral private.ManagedCentral) bool {
+	return route.Spec.TLS.Certificate == remoteCentral.Spec.UiEndpoint.Tls.Cert &&
+		route.Spec.TLS.Key == remoteCentral.Spec.UiEndpoint.Tls.Key &&
+		route.Spec.Host == remoteCentral.Spec.UiEndpoint.Host
 }

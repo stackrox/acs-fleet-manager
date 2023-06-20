@@ -51,11 +51,18 @@ spec:
               value: "$MANAGED_DB_SUBNET_GROUP"
             - name: MANAGED_DB_PERFORMANCE_INSIGHTS
               value: "$MANAGED_DB_PERFORMANCE_INSIGHTS"
-            - name: AWS_ROLE_ARN
+            - name: AWS_REGION
+              value: "$AWS_REGION"
+            - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   name: fleetshard-sync
-                  key: "aws-role-arn"
+                  key: "aws-access-key-id"
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: fleetshard-sync
+                  key: "aws-secret-access-key"
           image: "${FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent
           name: fleetshard-sync
@@ -65,8 +72,6 @@ spec:
               name: secrets
             - mountPath: /config
               name: config
-            - mountPath: /var/run/secrets/tokens
-              name: aws-token
       restartPolicy: Always
       volumes:
         - name: secrets
@@ -76,9 +81,3 @@ spec:
         - name: config
           configMap:
             name: config
-        - name: aws-token
-          secret:
-            secretName: fleetshard-sync # pragma: allowlist secret
-            items:
-              - key: aws-token
-                path: aws-token

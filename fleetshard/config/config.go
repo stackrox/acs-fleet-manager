@@ -12,34 +12,25 @@ import (
 
 // Config contains this application's runtime configuration.
 type Config struct {
-	FleetManagerEndpoint              string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
-	ClusterID                         string        `env:"CLUSTER_ID"`
-	ClusterName                       string        `env:"CLUSTER_NAME"`
-	Environment                       string        `env:"ENVIRONMENT"`
-	RuntimePollPeriod                 time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
-	AuthType                          string        `env:"AUTH_TYPE" envDefault:"RHSSO"`
-	RHSSOClientID                     string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
-	RHSSOClientSecret                 string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
-	RHSSORealm                        string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
-	RHSSOEndpoint                     string        `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
-	OCMRefreshToken                   string        `env:"OCM_TOKEN"`
-	StaticToken                       string        `env:"STATIC_TOKEN"`
-	CreateAuthProvider                bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
-	MetricsAddress                    string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
-	EgressProxyImage                  string        `env:"EGRESS_PROXY_IMAGE"`
-	FeatureFlagUpgradeOperatorEnabled bool          `env:"FEATURE_FLAG_UPGRADE_OPERATOR_ENABLED" envDefault:"false"`
-	BaseCrdURL                        string        `env:"BASE_CRD_URL" envDefault:"https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"`
+	FleetManagerEndpoint string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
+	ClusterID            string        `env:"CLUSTER_ID"`
+	ClusterName          string        `env:"CLUSTER_NAME"`
+	Environment          string        `env:"ENVIRONMENT"`
+	RuntimePollPeriod    time.Duration `env:"RUNTIME_POLL_PERIOD" envDefault:"5s"`
+	AuthType             string        `env:"AUTH_TYPE" envDefault:"RHSSO"`
+	RHSSOClientID        string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_ID"`
+	RHSSOClientSecret    string        `env:"RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET"`
+	RHSSORealm           string        `env:"RHSSO_REALM" envDefault:"redhat-external"`
+	RHSSOEndpoint        string        `env:"RHSSO_ENDPOINT" envDefault:"https://sso.redhat.com"`
+	OCMRefreshToken      string        `env:"OCM_TOKEN"`
+	StaticToken          string        `env:"STATIC_TOKEN"`
+	CreateAuthProvider   bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
+	MetricsAddress       string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
+	EgressProxyImage     string        `env:"EGRESS_PROXY_IMAGE"`
+	BaseCrdURL           string        `env:"BASE_CRD_URL" envDefault:"https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"`
 
-	AWS       AWS
 	ManagedDB ManagedDB
 	Telemetry Telemetry
-}
-
-// AWS for configuring AWS specific parameters
-type AWS struct {
-	Region    string `env:"AWS_REGION" envDefault:"us-east-1"`
-	RoleARN   string `env:"AWS_ROLE_ARN"`
-	TokenFile string `env:"AWS_STS_TOKEN_FILE" envDefault:"/var/run/secrets/tokens/aws-token"`
 }
 
 // ManagedDB for configuring managed DB specific parameters
@@ -85,9 +76,6 @@ func GetConfig() (*Config, error) {
 func validateManagedDBConfig(c Config, configErrors *errorhelpers.ErrorList) {
 	if !c.ManagedDB.Enabled {
 		return
-	}
-	if c.AWS.RoleARN == "" {
-		configErrors.AddError(errors.New("MANAGED_DB_ENABLED == true and AWS_ROLE_ARN unset in the environment"))
 	}
 	if c.ManagedDB.SecurityGroup == "" {
 		configErrors.AddError(errors.New("MANAGED_DB_ENABLED == true and MANAGED_DB_SECURITY_GROUP unset in the environment"))

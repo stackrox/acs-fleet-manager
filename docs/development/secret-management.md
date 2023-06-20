@@ -37,6 +37,13 @@ Secrets are divided to subgroups per each service. The following services are cu
 
 ## Tips / Examples
 
+### Setup Kerberos
+#### Use macOS Keychain for Kerberos
+macOS users may leverage Keychain to seamlessly refresh the Kerberos ticket. Execute this command once:
+```shell
+kinit --keychain
+```
+Subsequent `kinit` invocations will not require a password.
 ### Write secret
 ```shell
 chamber write -b secretsmanager <service> <KEY> -
@@ -53,4 +60,11 @@ changeme
 ### Print environment
 ```shell
 chamber env -b secretsmanager fleetshard-sync
+```
+
+## Troubleshooting
+#### kinit: krb5_get_init_creds: Error from KDC: CLIENT_NOT_FOUND
+Check if your OS user matches the company User ID. If not, then specify it explicitly:
+```shell
+kinit bob
 ```
