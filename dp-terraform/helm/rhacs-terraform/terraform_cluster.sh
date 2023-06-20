@@ -34,6 +34,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.nonexistent.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
     OPERATOR_USE_UPSTREAM="false"
+    OPERATOR_CHANNEL="stable"
     OPERATOR_VERSION="v4.0.2"
     FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"512Mi"}"
@@ -47,6 +48,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
     OPERATOR_USE_UPSTREAM="false"
+    OPERATOR_CHANNEL="stable"
     OPERATOR_VERSION="v4.0.2"
     FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
@@ -60,6 +62,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
     OPERATOR_USE_UPSTREAM="false"
+    OPERATOR_CHANNEL="stable"
     OPERATOR_VERSION="v4.0.2"
     FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
@@ -116,6 +119,7 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
+  --set acsOperator.channel="${OPERATOR_CHANNEL}" \
   --set acsOperator.version="${OPERATOR_VERSION}" \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
   --set fleetshardSync.image="quay.io/${FLEETSHARD_SYNC_ORG}/${FLEETSHARD_SYNC_IMAGE}:${FLEETSHARD_SYNC_TAG}" \
