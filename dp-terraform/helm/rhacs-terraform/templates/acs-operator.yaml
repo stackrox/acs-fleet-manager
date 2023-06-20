@@ -12,7 +12,7 @@ metadata:
   name: rhacs-operator
   namespace: {{ .Release.Namespace }}
 spec:
-  channel: latest
+  channel: {{ .Values.acsOperator.channel }}
   installPlanApproval: Manual
   name: rhacs-operator
   source: {{ .Values.acsOperator.source }}
