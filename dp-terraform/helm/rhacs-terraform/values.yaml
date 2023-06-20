@@ -35,6 +35,9 @@ fleetshardSync:
   aws:
     region: "us-east-1"  # TODO(2023-05-01): Remove the default value here as we now set it explicitly
     roleARN: ""
+    enableTokenAuth: true
+    accessKeyId: ""
+    secretAccessKey: ""
   telemetry:
     storage:
       endpoint: ""
@@ -50,6 +53,7 @@ fleetshardSync:
 
 acsOperator:
   enabled: false
+  channel: latest
   source: redhat-operators
   sourceNamespace: openshift-marketplace
   version: v3.70.0

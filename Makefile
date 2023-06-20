@@ -241,7 +241,7 @@ help:
 all: openapi/generate binary
 .PHONY: all
 
-# Set git hook path to .githooks/
+# Install pre-commit hooks
 .PHONY: setup/git/hooks
 setup/git/hooks:
 	-git config --unset-all core.hooksPath
@@ -280,6 +280,10 @@ lint: specinstall
 	spectral lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
 .PHONY: lint
 
+pre-commit:
+	pre-commit run --files $(git --no-pager diff --name-only main)
+.PHONY: pre-commit
+
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 
@@ -295,7 +299,11 @@ probe:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o probe/bin/probe ./probe/cmd/probe
 .PHONY: probe
 
-binary: fleet-manager fleetshard-sync probe
+acsfleetctl:
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o acsfleetctl ./cmd/acsfleetctl
+.PHONY: acsfleetctl
+
+binary: fleet-manager fleetshard-sync probe acsfleetctl
 .PHONY: binary
 
 # Install

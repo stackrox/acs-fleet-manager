@@ -22,6 +22,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -170,11 +171,11 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 
 func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	t.Setenv(features.TargetedOperatorUpgrades.EnvVar(), "true")
 
 	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc,
 		CentralReconcilerOptions{
-			UseRoutes:                         true,
-			FeatureFlagUpgradeOperatorEnabled: true,
+			UseRoutes: true,
 		})
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -190,14 +191,16 @@ func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
 }
 
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
+	t.Setenv("AWS_ACCESS_KEY", "")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "")
+	t.Setenv("AWS_REGION", "us-east-1")
+	t.Setenv("AWS_ROLE_ARN", "arn:aws:iam::012456789:role/fake_role")
+	t.Setenv("AWS_WEB_IDENTITY_TOKEN_FILE", "/var/run/secrets/tokens/aws-token")
+
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 
 	managedDBProvisioningClient, err := awsclient.NewRDSClient(
 		&config.Config{
-			AWS: config.AWS{
-				Region:  "us-east-1",
-				RoleARN: "arn:aws:iam::012456789:role/fake_role",
-			},
 			ManagedDB: config.ManagedDB{
 				SecurityGroup: "security-group",
 				SubnetGroup:   "db-group",
@@ -764,6 +767,87 @@ func TestTelemetryOptionsAreSetInCR(t *testing.T) {
 			assert.Equal(t, tc.telemetry.StorageEndpoint, *central.Spec.Central.Telemetry.Storage.Endpoint)
 			require.NotNil(t, central.Spec.Central.Telemetry.Storage.Key)
 			assert.Equal(t, tc.telemetry.StorageKey, *central.Spec.Central.Telemetry.Storage.Key)
+		})
+	}
+}
+
+func TestReconcileUpdatesRoutes(t *testing.T) {
+
+	tt := []struct {
+		testName                string
+		expectedReencryptHost   string
+		expectedPassthroughHost string
+		expectedTLSCert         string
+		expectedTLSKey          string
+	}{
+		{
+			testName:                "should update reencrypt route with TLS cert changes",
+			expectedReencryptHost:   simpleManagedCentral.Spec.UiEndpoint.Host,
+			expectedPassthroughHost: simpleManagedCentral.Spec.DataEndpoint.Host,
+			expectedTLSCert:         "new-tls-cert-data",
+			expectedTLSKey:          simpleManagedCentral.Spec.UiEndpoint.Tls.Key,
+		},
+		{
+			testName:                "should update reencrypt route with TLS key changes",
+			expectedReencryptHost:   simpleManagedCentral.Spec.UiEndpoint.Host,
+			expectedPassthroughHost: simpleManagedCentral.Spec.DataEndpoint.Host,
+			expectedTLSCert:         simpleManagedCentral.Spec.UiEndpoint.Tls.Cert,
+			expectedTLSKey:          "new-tls-key-data",
+		},
+		{
+			testName:                "should update reencrypt route with host name changes",
+			expectedReencryptHost:   "new-hostname.acs.test",
+			expectedPassthroughHost: simpleManagedCentral.Spec.DataEndpoint.Host,
+			expectedTLSCert:         simpleManagedCentral.Spec.UiEndpoint.Tls.Cert,
+			expectedTLSKey:          simpleManagedCentral.Spec.UiEndpoint.Tls.Key,
+		},
+		{
+			testName:                "should update passthrough route with host name changes",
+			expectedReencryptHost:   simpleManagedCentral.Spec.UiEndpoint.Host,
+			expectedPassthroughHost: "new-hostname.acs.test",
+			expectedTLSCert:         simpleManagedCentral.Spec.UiEndpoint.Tls.Cert,
+			expectedTLSKey:          simpleManagedCentral.Spec.UiEndpoint.Tls.Key,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			fakeClient := testutils.NewFakeClientBuilder(t).Build()
+			r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
+			r.routeService = k8s.NewRouteService(fakeClient)
+			central := simpleManagedCentral
+
+			// create the initial reencrypt route
+			_, err := r.Reconcile(context.Background(), central)
+			require.NoError(t, err)
+
+			// test that initial routes were created to make sure we update and not create in the next step
+			reencryptRoute := &openshiftRouteV1.Route{}
+			err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: central.Metadata.Namespace, Name: "managed-central-reencrypt"}, reencryptRoute)
+			require.NoError(t, err)
+			passthroughRoute := &openshiftRouteV1.Route{}
+			err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: central.Metadata.Namespace, Name: "managed-central-passthrough"}, passthroughRoute)
+			require.NoError(t, err)
+
+			central.Spec.UiEndpoint.Host = tc.expectedReencryptHost
+			central.Spec.UiEndpoint.Tls.Cert = tc.expectedTLSCert
+			central.Spec.UiEndpoint.Tls.Key = tc.expectedTLSKey
+			central.Spec.DataEndpoint.Host = tc.expectedPassthroughHost
+
+			// run another reconcile to update the route
+			_, err = r.Reconcile(context.Background(), central)
+			require.NoError(t, err)
+
+			err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: central.Metadata.Namespace, Name: "managed-central-reencrypt"}, reencryptRoute)
+			require.NoError(t, err)
+			err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: central.Metadata.Namespace, Name: "managed-central-passthrough"}, passthroughRoute)
+			require.NoError(t, err)
+
+			require.Equal(t, tc.expectedReencryptHost, reencryptRoute.Spec.Host)
+			require.Equal(t, tc.expectedTLSCert, reencryptRoute.Spec.TLS.Certificate)
+			require.Equal(t, tc.expectedTLSKey, reencryptRoute.Spec.TLS.Key)
+			require.Equal(t, tc.expectedPassthroughHost, passthroughRoute.Spec.Host)
+
 		})
 	}
 }
