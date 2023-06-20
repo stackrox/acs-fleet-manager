@@ -294,11 +294,6 @@ components:
             type: string
           type: object
       type: object
-    OperatorVersion:
-      properties:
-        operatorImage:
-          type: string
-      type: object
     ManagedCentral:
       allOf:
       - $ref: '#/components/schemas/PrivateObjectReference'
@@ -514,8 +509,8 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_uiEndpoint'
         dataEndpoint:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_dataEndpoint'
-        operatorVersion:
-          $ref: '#/components/schemas/OperatorVersion'
+        operatorImage:
+          type: string
         central:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_central'
         scanner:

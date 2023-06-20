@@ -234,7 +234,7 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	var operatorImages []operator.ACSOperatorImage
 	for _, central := range list.Items {
 		operatorImages = append(operatorImages, operator.ACSOperatorImage{
-			Image: central.Spec.OperatorVersion.OperatorImage,
+			Image: central.Spec.OperatorImage,
 			//TODO(ROX-15080): Download CRD on operator upgrades to always install the latest CRD
 			InstallCRD: false,
 		})
