@@ -151,8 +151,8 @@ func InstallOrUpdateChart(ctx context.Context, obj *unstructured.Unstructured, c
 	return nil
 }
 
-// DeleteChart delete chart rendered objects
-func DeleteChart(ctx context.Context, client ctrlClient.Client, releaseName string, namespace string, chart *chart.Chart, chartVals chartutil.Values) (bool, error) {
+// DeleteChartResources delete chart resources from cluster
+func DeleteChartResources(ctx context.Context, client ctrlClient.Client, releaseName string, namespace string, chart *chart.Chart, chartVals chartutil.Values) (bool, error) {
 	objs, err := RenderToObjects(releaseName, namespace, chart, chartVals)
 	if err != nil {
 		return false, fmt.Errorf("rendering resources chart: %w", err)
@@ -166,6 +166,7 @@ func DeleteChart(ctx context.Context, client ctrlClient.Client, releaseName stri
 		err := client.Get(ctx, key, &out)
 		if err != nil {
 			if apiErrors.IsNotFound(err) {
+				glog.Infof("object not found and marked for delete %s/%s", obj.GetNamespace(), obj.GetName())
 				continue
 			}
 			return false, fmt.Errorf("retrieving object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
@@ -176,7 +177,7 @@ func DeleteChart(ctx context.Context, client ctrlClient.Client, releaseName stri
 		}
 		err = client.Delete(ctx, &out)
 		if err != nil && !apiErrors.IsNotFound(err) {
-			return false, fmt.Errorf("retrieving object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
+			return false, fmt.Errorf("deleting object %s/%s of type %v: %w", key.Namespace, key.Name, obj.GroupVersionKind(), err)
 		}
 	}
 	return !deleteInProgress, nil

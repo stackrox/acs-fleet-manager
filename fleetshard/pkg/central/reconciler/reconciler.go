@@ -830,7 +830,7 @@ func (r *CentralReconciler) ensureChartResourcesDeleted(ctx context.Context, rem
 		return false, fmt.Errorf("obtaining values for resources chart: %w", err)
 	}
 
-	deleted, err := charts.DeleteChart(ctx, r.client, helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
+	deleted, err := charts.DeleteChartResources(ctx, r.client, helmReleaseName, remoteCentral.Metadata.Namespace, r.resourcesChart, vals)
 	if err != nil {
 		return false, fmt.Errorf("failed deleting chart: %w", err)
 	}

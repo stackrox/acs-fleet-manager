@@ -57,6 +57,10 @@ func TestInstallOrUpdateChartCreateNew(t *testing.T) {
 	obj := objs[0]
 	require.NotEmpty(t, objs)
 
+	for _, o := range objs {
+		assert.Equal(t, o.GetNamespace(), testNamespace)
+	}
+
 	err = InstallOrUpdateChart(ctx, obj, fakeClient)
 	require.NoError(t, err)
 
@@ -108,7 +112,7 @@ func TestGetChartWithDynamicTemplate(t *testing.T) {
 	assert.NotNil(t, c)
 }
 
-func TestDeleteChart(t *testing.T) {
+func TestDeleteChartResources(t *testing.T) {
 	chartFiles, err := TraverseChart(testdata, "testdata/test-chart")
 	require.NoError(t, err)
 	chart, err := loader.LoadFiles(chartFiles)
@@ -127,7 +131,7 @@ func TestDeleteChart(t *testing.T) {
 	err = InstallOrUpdateChart(ctx, obj, fakeClient)
 	require.NoError(t, err)
 
-	deleted, err := DeleteChart(ctx, fakeClient, "test-release", testNamespace, chart, chartVals)
+	deleted, err := DeleteChartResources(ctx, fakeClient, "test-release", testNamespace, chart, chartVals)
 	require.NoError(t, err)
 	assert.True(t, deleted)
 
@@ -137,4 +141,21 @@ func TestDeleteChart(t *testing.T) {
 
 	err = fakeClient.Get(ctx, key, &res)
 	assert.True(t, k8sErrors.IsNotFound(err))
+}
+
+func TestDeleteChartResourcesNotFound(t *testing.T) {
+	chartFiles, err := TraverseChart(testdata, "testdata/test-chart")
+	require.NoError(t, err)
+	chart, err := loader.LoadFiles(chartFiles)
+	require.NoError(t, err)
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	ctx := context.Background()
+	chartVals := chartutil.Values{
+		"foo": "bar",
+	}
+
+	// return True if resources do not exist
+	deleted, err := DeleteChartResources(ctx, fakeClient, "kek", "wtf", chart, chartVals)
+	assert.True(t, deleted)
+	require.NoError(t, err)
 }
