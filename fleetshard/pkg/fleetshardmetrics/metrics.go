@@ -31,6 +31,7 @@ type Metrics struct {
 	centralDBSnapshotsUsed      prometheus.Gauge
 	centralDBSnapshotsMax       prometheus.Gauge
 	pauseReconcileInstances     *prometheus.GaugeVec
+	operatorsHealthStatus       *prometheus.GaugeVec
 }
 
 // Register registers the metrics with the given prometheus.Registerer
@@ -109,6 +110,16 @@ func (m *Metrics) SetPauseReconcileStatus(instance string, pauseReconcileEnabled
 	}
 
 	m.pauseReconcileInstances.With(prometheus.Labels{"instance": instance}).Set(pauseReconcileValue)
+}
+
+// SetOperatorHealthStatus sets the health status for specific operator image
+func (m *Metrics) SetOperatorHealthStatus(image string, healthy bool) {
+	var healthyVal float64
+	if healthy {
+		healthyVal = 1.0
+	}
+
+	m.operatorsHealthStatus.With(prometheus.Labels{"image": image}).Set(healthyVal)
 }
 
 // MetricsInstance return the global Singleton instance for Metrics

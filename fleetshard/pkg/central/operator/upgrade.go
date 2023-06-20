@@ -9,6 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
+	appsv1 "k8s.io/api/apps/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -102,6 +103,30 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []ACSO
 
 	return nil
 
+}
+
+// ListVersionsWithReplicas returns currently running ACS Operator versions with number of ready replicas
+func (u *ACSOperatorManager) ListVersionsWithReplicas(ctx context.Context) (map[string]int32, error) {
+	deployments := &appsv1.DeploymentList{}
+	labels := map[string]string{"app": "rhacs-operator"}
+	err := u.client.List(ctx, deployments,
+		ctrlClient.InNamespace(operatorNamespace),
+		ctrlClient.MatchingLabels(labels),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed list operator deployments: %w", err)
+	}
+
+	versionWithReplicas := make(map[string]int32)
+	for _, dep := range deployments.Items {
+		for _, c := range dep.Spec.Template.Spec.Containers {
+			if c.Name == "manager" {
+				versionWithReplicas[c.Image] = dep.Status.ReadyReplicas
+			}
+		}
+	}
+
+	return versionWithReplicas, nil
 }
 
 func (u *ACSOperatorManager) generateCRDTemplateUrls(tag string) []string {
