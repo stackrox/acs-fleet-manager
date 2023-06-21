@@ -45,6 +45,7 @@ func getMigrations() []*gormigrate.Migration {
 		addSchedulableToClusters(),
 		addForceReconcileToCentralRequest(),
 		addOperatorImageFields(),
+		removeAvailableOperatorField(),
 	}
 }
 
