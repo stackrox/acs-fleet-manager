@@ -14,6 +14,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -170,6 +171,48 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 			InstallCRD: false,
 		}})
 	require.Errorf(t, err, "zero tags parsed from images")
+
+	deployments := &appsv1.DeploymentList{}
+	err = fakeClient.List(context.Background(), deployments)
+	require.NoError(t, err)
+	assert.Len(t, deployments.Items, 0)
+}
+
+func TestDeleteOperator(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	u := NewACSOperatorManager(fakeClient, crdURL)
+	ctx := context.Background()
+
+	// No error if deployment does not exist
+	err := u.DeleteOperator(ctx, "3.74.1")
+	require.NoError(t, err)
+
+	operatorImages := []ACSOperatorImage{
+		{
+			Image:      operatorImage1,
+			InstallCRD: false,
+		},
+		{
+			Image:      operatorImage2,
+			InstallCRD: false,
+		},
+	}
+	err = u.InstallOrUpgrade(ctx, operatorImages)
+	require.NoError(t, err)
+
+	// delete single operator
+	err = u.DeleteOperator(ctx, "3.74.1")
+	require.NoError(t, err)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	require.True(t, errors.IsNotFound(err))
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
+	require.NoError(t, err)
+
+	// delete another one
+	err = u.DeleteOperator(ctx, "3.74.2")
+	require.NoError(t, err)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
+	require.True(t, errors.IsNotFound(err))
 
 	deployments := &appsv1.DeploymentList{}
 	err = fakeClient.List(context.Background(), deployments)

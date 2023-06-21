@@ -10,6 +10,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -127,6 +128,24 @@ func (u *ACSOperatorManager) ListVersionsWithReplicas(ctx context.Context) (map[
 	}
 
 	return versionWithReplicas, nil
+}
+
+// DeleteOperator removes specified operator deployment from the cluster
+func (u *ACSOperatorManager) DeleteOperator(ctx context.Context, version string) error {
+	depName := operatorDeploymentPrefix + "-" + version
+	dep := &appsv1.Deployment{}
+	err := u.client.Get(ctx, ctrlClient.ObjectKey{Namespace: operatorNamespace, Name: depName}, dep)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("retrieving operator deployment version %s: %w", version, err)
+	}
+	err = u.client.Delete(ctx, dep)
+	if err != nil && !errors.IsNotFound(err) {
+		return fmt.Errorf("deleting operator deployment version %s: %w", version, err)
+	}
+	return nil
 }
 
 func (u *ACSOperatorManager) generateCRDTemplateUrls(tag string) []string {
