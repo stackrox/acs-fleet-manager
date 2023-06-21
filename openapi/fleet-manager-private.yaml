@@ -208,14 +208,6 @@ components:
         limits:
           $ref: "#/components/schemas/ResourceList"
 
-    ManagedCentralVersions:
-      type: object
-      properties:
-        desiredVersion:
-          type: string
-        actualVersion:
-          type: string
-
     ManagedCentral:
       allOf:
         - $ref: "#/components/schemas/PrivateObjectReference"
@@ -285,8 +277,8 @@ components:
                   properties:
                     host:
                       type: string
-                versions:
-                  $ref: "#/components/schemas/ManagedCentralVersions"
+                operatorImage:
+                  type: string
                 central:
                   type: object
                   properties:

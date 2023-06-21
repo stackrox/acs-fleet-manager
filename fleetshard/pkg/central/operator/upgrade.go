@@ -24,10 +24,6 @@ const (
 )
 
 func parseOperatorImages(images []ACSOperatorImage) ([]chartutil.Values, string, error) {
-	if len(images) == 0 {
-		return nil, "", nil
-	}
-
 	var operatorImages []chartutil.Values
 	var crdTag string
 	uniqueImages := make(map[string]bool)
@@ -70,6 +66,10 @@ type ACSOperatorImage struct {
 
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
 func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []ACSOperatorImage) error {
+	if len(images) == 0 {
+		return nil
+	}
+
 	operatorImages, crdTag, err := parseOperatorImages(images)
 	if err != nil {
 		return fmt.Errorf("failed to parse images: %w", err)

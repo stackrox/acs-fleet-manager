@@ -47,23 +47,22 @@ func PresentDinosaurRequestAdminEndpoint(request *dbapi.CentralRequest, _ accoun
 	}
 
 	return &admin.Central{
-		Id:                   request.ID,
-		Kind:                 "CentralRequest",
-		Href:                 fmt.Sprintf("/api/rhacs/v1/centrals/%s", request.ID),
-		Status:               request.Status,
-		CloudProvider:        request.CloudProvider,
-		MultiAz:              request.MultiAZ,
-		Region:               request.Region,
-		Owner:                request.Owner,
-		Name:                 request.Name,
-		Host:                 request.GetUIHost(), // TODO(ROX-11990): Split the Host in Fleet Manager Public API to UI and Data hosts
-		CreatedAt:            request.CreatedAt,
-		UpdatedAt:            request.UpdatedAt,
-		FailedReason:         request.FailedReason,
-		ActualCentralVersion: request.ActualCentralVersion,
-		InstanceType:         request.InstanceType,
-		Central:              adminCentral,
-		Scanner:              adminScanner,
-		ForceReconcile:       request.ForceReconcile,
+		Id:             request.ID,
+		Kind:           "CentralRequest",
+		Href:           fmt.Sprintf("/api/rhacs/v1/centrals/%s", request.ID),
+		Status:         request.Status,
+		CloudProvider:  request.CloudProvider,
+		MultiAz:        request.MultiAZ,
+		Region:         request.Region,
+		Owner:          request.Owner,
+		Name:           request.Name,
+		Host:           request.GetUIHost(), // TODO(ROX-11990): Split the Host in Fleet Manager Public API to UI and Data hosts
+		CreatedAt:      request.CreatedAt,
+		UpdatedAt:      request.UpdatedAt,
+		FailedReason:   request.FailedReason,
+		InstanceType:   request.InstanceType,
+		Central:        adminCentral,
+		Scanner:        adminScanner,
+		ForceReconcile: request.ForceReconcile,
 	}, nil
 }

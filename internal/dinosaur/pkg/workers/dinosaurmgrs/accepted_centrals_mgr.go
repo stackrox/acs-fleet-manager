@@ -2,17 +2,14 @@
 package dinosaurmgrs
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/api"
-
-	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
@@ -103,42 +100,6 @@ func (k *AcceptedCentralManager) reconcileAcceptedCentral(centralRequest *dbapi.
 	}
 
 	centralRequest.ClusterID = cluster.ClusterID
-
-	// Set desired central operator version
-	var selectedCentralOperatorVersion *api.CentralOperatorVersion
-
-	readyCentralOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
-	if err != nil || len(readyCentralOperatorVersions) == 0 {
-		// Central Operator version may not be available at the start (i.e. during upgrade of Central operator).
-		// We need to allow the reconciler to retry getting and setting of the desired Central Operator version for a Central request
-		// until the max retry duration is reached before updating its status to 'failed'.
-		durationSinceCreation := time.Since(centralRequest.CreatedAt)
-		if durationSinceCreation < constants2.AcceptedCentralMaxRetryDuration {
-			glog.V(10).Infof("No available central operator version found for Central '%s' in Cluster ID '%s'", centralRequest.ID, centralRequest.ClusterID)
-			return nil
-		}
-		centralRequest.Status = constants2.CentralRequestStatusFailed.String()
-		if err != nil {
-			err = errors.Wrapf(err, "failed to get desired central operator version %s", centralRequest.ID)
-		} else {
-			err = errors.Errorf("failed to get desired central operator version %s", centralRequest.ID)
-		}
-		centralRequest.FailedReason = err.Error()
-		if err2 := k.centralService.Update(centralRequest); err2 != nil {
-			return errors.Wrapf(err2, "failed to update failed central %s", centralRequest.ID)
-		}
-		return err
-	}
-
-	selectedCentralOperatorVersion = &readyCentralOperatorVersions[len(readyCentralOperatorVersions)-1]
-	centralRequest.DesiredCentralOperatorVersion = selectedCentralOperatorVersion.Version
-
-	// Set desired Dinosaur version
-	if len(selectedCentralOperatorVersion.CentralVersions) == 0 {
-		return fmt.Errorf("failed to get Central version %s", centralRequest.ID)
-	}
-	centralRequest.DesiredCentralVersion = selectedCentralOperatorVersion.CentralVersions[len(selectedCentralOperatorVersion.CentralVersions)-1].Version
-
 	glog.Infof("Central instance with id %s is assigned to cluster with id %s", centralRequest.ID, centralRequest.ClusterID)
 
 	if err := k.centralService.AcceptCentralRequest(centralRequest); err != nil {

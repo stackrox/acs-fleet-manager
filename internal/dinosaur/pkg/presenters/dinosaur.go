@@ -40,7 +40,6 @@ func PresentCentralRequest(request *dbapi.CentralRequest) public.CentralRequest 
 		CreatedAt:      request.CreatedAt,
 		UpdatedAt:      request.UpdatedAt,
 		FailedReason:   request.FailedReason,
-		Version:        request.ActualCentralVersion,
 		InstanceType:   request.InstanceType,
 	}
 

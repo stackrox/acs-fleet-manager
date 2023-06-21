@@ -272,41 +272,14 @@ func (s *CentralOperatorVersion) DeepCopy() *CentralOperatorVersion {
 	return &res
 }
 
-// GetAvailableAndReadyCentralOperatorVersions returns the cluster's list of available
-// and ready versions or an error. An empty list is returned if there are no
-// available and ready versions
-func (cluster *Cluster) GetAvailableAndReadyCentralOperatorVersions() ([]CentralOperatorVersion, error) {
-	centralOperatorVersions, err := cluster.GetAvailableCentralOperatorVersions()
-	if err != nil {
-		return nil, err
-	}
-
-	res := []CentralOperatorVersion{}
-	for _, val := range centralOperatorVersions {
-		if val.Ready {
-			res = append(res, val)
-		}
-	}
-	return res, nil
-}
-
 // GetAvailableCentralOperatorVersions returns the cluster's list of available central operator
 // versions or an error. An empty list is returned if there are no versions.
 // This returns the available versions in the cluster independently on whether
 // they are ready or not. If you want to only get the available and ready
 // versions use the GetAvailableAndReadyCentralOperatorVersions method
 func (cluster *Cluster) GetAvailableCentralOperatorVersions() ([]CentralOperatorVersion, error) {
-	versions := []CentralOperatorVersion{}
-	if cluster.AvailableCentralOperatorVersions == nil {
-		return versions, nil
-	}
-
-	err := json.Unmarshal(cluster.AvailableCentralOperatorVersions, &versions)
-	if err != nil {
-		return nil, fmt.Errorf("getting available central operator versions: %w", err)
-	}
-
-	return versions, nil
+	//TODO(ROX-17760): remove operator version logic from fleet-manager
+	return []CentralOperatorVersion{}, nil
 }
 
 // CentralOperatorVersionsDeepSort returns a sorted copy of the provided CentralOperatorVersions

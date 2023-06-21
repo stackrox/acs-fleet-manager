@@ -84,10 +84,7 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 			DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
 				Host: from.GetDataHost(),
 			},
-			Versions: private.ManagedCentralVersions{
-				DesiredVersion: from.DesiredCentralVersion,
-				ActualVersion:  from.ActualCentralVersion,
-			},
+			OperatorImage: from.OperatorImage,
 			Central: private.ManagedCentralAllOfSpecCentral{
 				InstanceType: from.InstanceType,
 				Resources: private.ResourceRequirements{
