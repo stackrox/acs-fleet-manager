@@ -105,7 +105,6 @@ type DinosaurService interface {
 	ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
-	ListComponentVersions() ([]DinosaurComponentVersions, error)
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -828,28 +827,6 @@ func (k *dinosaurService) CountByStatus(status []dinosaurConstants.CentralStatus
 		}
 	}
 
-	return results, nil
-}
-
-// DinosaurComponentVersions ...
-type DinosaurComponentVersions struct {
-	ID                             string
-	ClusterID                      string
-	DesiredDinosaurOperatorVersion string
-	ActualDinosaurOperatorVersion  string
-	DinosaurOperatorUpgrading      bool
-	DesiredDinosaurVersion         string
-	ActualDinosaurVersion          string
-	DinosaurUpgrading              bool
-}
-
-// ListComponentVersions ...
-func (k *dinosaurService) ListComponentVersions() ([]DinosaurComponentVersions, error) {
-	dbConn := k.connectionFactory.New()
-	var results []DinosaurComponentVersions
-	if err := dbConn.Model(&dbapi.CentralRequest{}).Select("id", "cluster_id", "desired_central_operator_version", "actual_central_operator_version", "central_operator_upgrading", "desired_central_version", "actual_central_version", "central_upgrading").Scan(&results).Error; err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list component versions")
-	}
 	return results, nil
 }
 
