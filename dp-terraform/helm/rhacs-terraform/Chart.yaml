@@ -26,8 +26,15 @@ appVersion: "0.4.0"
 # List of sub-charts and other dependencies
 dependencies:
   - name: cloudwatch
+    version: "0.1.0"
     condition: cloudwatch.enabled
   - name: observability
+    version: "0.1.0"
     condition: observability.enabled
   - name: logging
+    version: "0.1.0"
     condition: logging.enabled
+  - name: vector
+    version: "0.21.1"
+    repository: "https://helm.vector.dev"
+    condition: vector.enabled

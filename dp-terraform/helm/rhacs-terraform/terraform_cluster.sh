@@ -112,6 +112,8 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     OPERATOR_SOURCE="rhacs-operators"
 fi
 
+load_external_config "audit-logs--${CLUSTER_NAME}" VECTOR_
+
 # TODO(ROX-16771): Move this to env-specific values.yaml files
 # TODO(ROX-16645): set acsOperator.enabled to false
 invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
@@ -158,7 +160,14 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" \
-  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}"
+  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" \
+  --set vector.enabled=false \
+  --set vector.service.annotations.rhacs\\.redhat\\.com/cluster-name="${CLUSTER_NAME}" \
+  --set vector.service.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}" \
+  --set vector.customConfig.sinks.aws_s3.region="${CLUSTER_REGION}" \
+  --set vector.customConfig.sinks.aws_s3.bucket="${VECTOR_BUCKET:-}" \
+  --set vector.secrets.generic.aws_access_key_id="${VECTOR_ACCESSKEY:-}" \
+  --set vector.secrets.generic.aws_secret_access_key="${VECTOR_SECRETACCESSKEY:-}"
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs
