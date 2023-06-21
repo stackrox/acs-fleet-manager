@@ -361,22 +361,6 @@ components:
                 type: string
               status:
                 type: string
-        centralOperator:
-          type: array
-          items:
-            type: object
-            properties:
-              ready:
-                type: boolean
-              version:
-                type: string
-              centralVersions:
-                type: array
-                items:
-                  type: string
-            required:
-              - ready
-              - version
     DataPlaneCentralStatus:
       description: "Schema of the status object for a Central"
       type: object
@@ -395,14 +379,6 @@ components:
                 type: string
               status:
                 type: string
-        versions:
-          description: "Version information related to a Central"
-          type: object
-          properties:
-            central:
-              type: string
-            centralOperator:
-              type: string
         routes:
           description: "Routes created for a Central"
           type: array
@@ -492,9 +468,6 @@ components:
             tls:
               cert: ""
               key: ""
-          versions:
-            central: 2.7.0
-            centralOperator: 0.21.2
           central:
             resources:
               requests:
@@ -527,9 +500,6 @@ components:
             message: installing
             status: "False"
             lastTransitionTime: "2018-01-01T00:00:00Z"
-        versions:
-          central: 2.4.1
-          centralOperator: 0.21.2
     400InvalidIdExample:
       value:
         id: "21"
