@@ -25,6 +25,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
@@ -104,40 +105,44 @@ type DinosaurService interface {
 	ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
-	ListComponentVersions() ([]DinosaurComponentVersions, error)
 }
 
 var _ DinosaurService = &dinosaurService{}
 
 type dinosaurService struct {
-	connectionFactory        *db.ConnectionFactory
-	clusterService           ClusterService
-	iamService               sso.IAMService
-	dinosaurConfig           *config.CentralConfig
-	awsConfig                *config.AWSConfig
-	quotaServiceFactory      QuotaServiceFactory
-	mu                       sync.Mutex
-	awsClientFactory         aws.ClientFactory
-	authService              authorization.Authorization
-	dataplaneClusterConfig   *config.DataplaneClusterConfig
-	clusterPlacementStrategy ClusterPlacementStrategy
-	amsClient                ocm.AMSClient
+	connectionFactory            *db.ConnectionFactory
+	clusterService               ClusterService
+	iamService                   sso.IAMService
+	dinosaurConfig               *config.CentralConfig
+	awsConfig                    *config.AWSConfig
+	quotaServiceFactory          QuotaServiceFactory
+	mu                           sync.Mutex
+	awsClientFactory             aws.ClientFactory
+	authService                  authorization.Authorization
+	dataplaneClusterConfig       *config.DataplaneClusterConfig
+	clusterPlacementStrategy     ClusterPlacementStrategy
+	amsClient                    ocm.AMSClient
+	centralDefaultVersionService CentralDefaultVersionService
 }
 
 // NewDinosaurService ...
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient) *dinosaurService {
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService,
+	dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
+	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization,
+	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, centralDefaultVersionService CentralDefaultVersionService) *dinosaurService {
 	return &dinosaurService{
-		connectionFactory:        connectionFactory,
-		clusterService:           clusterService,
-		iamService:               iamService,
-		dinosaurConfig:           dinosaurConfig,
-		awsConfig:                awsConfig,
-		quotaServiceFactory:      quotaServiceFactory,
-		awsClientFactory:         awsClientFactory,
-		authService:              authorizationService,
-		dataplaneClusterConfig:   dataplaneClusterConfig,
-		clusterPlacementStrategy: clusterPlacementStrategy,
-		amsClient:                amsClient,
+		connectionFactory:            connectionFactory,
+		clusterService:               clusterService,
+		iamService:                   iamService,
+		dinosaurConfig:               dinosaurConfig,
+		awsConfig:                    awsConfig,
+		quotaServiceFactory:          quotaServiceFactory,
+		awsClientFactory:             awsClientFactory,
+		authService:                  authorizationService,
+		dataplaneClusterConfig:       dataplaneClusterConfig,
+		clusterPlacementStrategy:     clusterPlacementStrategy,
+		amsClient:                    amsClient,
+		centralDefaultVersionService: centralDefaultVersionService,
 	}
 }
 
@@ -242,6 +247,14 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 	subscriptionID, err := k.reserveQuota(dinosaurRequest)
 	if err != nil {
 		return err
+	}
+
+	if features.TargetedOperatorUpgrades.Enabled() {
+		defaultVersion, serviceErr := k.centralDefaultVersionService.GetDefaultVersion()
+		if serviceErr != nil {
+			return err
+		}
+		dinosaurRequest.OperatorImage = defaultVersion
 	}
 
 	dbConn := k.connectionFactory.New()
@@ -814,28 +827,6 @@ func (k *dinosaurService) CountByStatus(status []dinosaurConstants.CentralStatus
 		}
 	}
 
-	return results, nil
-}
-
-// DinosaurComponentVersions ...
-type DinosaurComponentVersions struct {
-	ID                             string
-	ClusterID                      string
-	DesiredDinosaurOperatorVersion string
-	ActualDinosaurOperatorVersion  string
-	DinosaurOperatorUpgrading      bool
-	DesiredDinosaurVersion         string
-	ActualDinosaurVersion          string
-	DinosaurUpgrading              bool
-}
-
-// ListComponentVersions ...
-func (k *dinosaurService) ListComponentVersions() ([]DinosaurComponentVersions, error) {
-	dbConn := k.connectionFactory.New()
-	var results []DinosaurComponentVersions
-	if err := dbConn.Model(&dbapi.CentralRequest{}).Select("id", "cluster_id", "desired_central_operator_version", "actual_central_operator_version", "central_operator_upgrading", "desired_central_version", "actual_central_version", "central_upgrading").Scan(&results).Error; err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list component versions")
-	}
 	return results, nil
 }
 

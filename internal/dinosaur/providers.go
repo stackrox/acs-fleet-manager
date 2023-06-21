@@ -7,7 +7,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/handlers"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/migrations"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/routes"
@@ -49,8 +48,6 @@ func ConfigProviders() di.Option {
 
 		di.Provide(environments2.Func(ServiceProviders)),
 		di.Provide(migrations.New),
-
-		metrics.ConfigProviders(),
 	)
 }
 

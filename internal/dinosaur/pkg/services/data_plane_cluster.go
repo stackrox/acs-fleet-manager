@@ -3,8 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/goava/di"
@@ -14,7 +12,6 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
-	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
@@ -74,33 +71,10 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 		return errors.BadRequest("Cluster agent with ID '%s' not found", clusterID)
 	}
 
-	// TODO: restore when cluster transition to ready is implemented
-	/*
-		if !d.clusterCanProcessStatusReports(cluster) {
-			glog.V(10).Infof("Cluster with ID '%s' is in '%s' state. Ignoring status report...", clusterID, cluster.Status)
-			return nil
-		}*/
-
-	fleetShardOperatorReady, err := d.isFleetShardOperatorReady(status)
-	if err != nil {
-		return errors.ToServiceError(err)
-	}
-	if !fleetShardOperatorReady {
-		if cluster.Status != api.ClusterWaitingForFleetShardOperator {
-			err := d.ClusterService.UpdateStatus(*cluster, api.ClusterWaitingForFleetShardOperator)
-			if err != nil {
-				return errors.ToServiceError(err)
-			}
-			metrics.UpdateClusterStatusSinceCreatedMetric(*cluster, api.ClusterWaitingForFleetShardOperator)
-		}
-		glog.V(10).Infof("Fleet Shard Operator not ready for Cluster ID '%s", clusterID)
-		return nil
-	}
-
 	// We calculate the status based on the stats received by the Fleet operator
 	// BEFORE performing the scaling actions. If scaling actions are performed later
 	// then it will be reflected on the next data plane cluster status report
-	err = d.setClusterStatus(cluster, status)
+	err := d.setClusterStatus(cluster, status)
 	if err != nil {
 		return errors.ToServiceError(err)
 	}
@@ -109,23 +83,6 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 }
 
 func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) error {
-	prevAvailableDinosaurOperatorVersions, err := cluster.GetAvailableCentralOperatorVersions()
-	if err != nil {
-		return fmt.Errorf("retrieving central operator versions: %w", err)
-	}
-	if len(status.AvailableDinosaurOperatorVersions) > 0 && !reflect.DeepEqual(prevAvailableDinosaurOperatorVersions, status.AvailableDinosaurOperatorVersions) {
-		err := cluster.SetAvailableCentralOperatorVersions(status.AvailableDinosaurOperatorVersions)
-		if err != nil {
-			return fmt.Errorf("updating central operator versions: %w", err)
-		}
-		glog.Infof("Updating Central operator available versions for cluster ID '%s'. From versions '%v' to versions '%v'\n",
-			cluster.ClusterID, prevAvailableDinosaurOperatorVersions, status.AvailableDinosaurOperatorVersions)
-		svcErr := d.ClusterService.Update(*cluster)
-		if svcErr != nil {
-			return fmt.Errorf("updating cluster: %w", svcErr)
-		}
-	}
-
 	if cluster.Status != api.ClusterReady {
 		clusterIsWaitingForFleetShardOperator := cluster.Status == api.ClusterWaitingForFleetShardOperator
 		err := d.ClusterService.UpdateStatus(*cluster, api.ClusterReady)
@@ -146,17 +103,4 @@ func (d *dataPlaneClusterService) clusterCanProcessStatusReports(cluster *api.Cl
 		cluster.Status == api.ClusterComputeNodeScalingUp ||
 		cluster.Status == api.ClusterFull ||
 		cluster.Status == api.ClusterWaitingForFleetShardOperator
-}
-
-func (d *dataPlaneClusterService) isFleetShardOperatorReady(status *dbapi.DataPlaneClusterStatus) (bool, error) {
-	for _, cond := range status.Conditions {
-		if cond.Type == dataPlaneClusterStatusCondReadyName {
-			condVal, err := strconv.ParseBool(cond.Status)
-			if err != nil {
-				return false, fmt.Errorf("parsing data plane cluster condition %q: %w", dataPlaneClusterStatusCondReadyName, err)
-			}
-			return condVal, nil
-		}
-	}
-	return false, nil
 }

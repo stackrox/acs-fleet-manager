@@ -34,7 +34,8 @@ case $ENVIRONMENT in
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.nonexistent.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
     OPERATOR_USE_UPSTREAM="false"
-    OPERATOR_VERSION="v4.0.1"
+    OPERATOR_CHANNEL="stable"
+    OPERATOR_VERSION="v4.0.2"
     FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"512Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"500m"}"
@@ -46,8 +47,9 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
-    OPERATOR_USE_UPSTREAM="true"
-    OPERATOR_VERSION="v4.0.1"
+    OPERATOR_USE_UPSTREAM="false"
+    OPERATOR_CHANNEL="stable"
+    OPERATOR_VERSION="v4.0.2"
     FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
@@ -59,8 +61,9 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
-    OPERATOR_USE_UPSTREAM="true"
-    OPERATOR_VERSION="v4.0.1"
+    OPERATOR_USE_UPSTREAM="false"
+    OPERATOR_CHANNEL="stable"
+    OPERATOR_VERSION="v4.0.2"
     FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
@@ -109,6 +112,9 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     OPERATOR_SOURCE="rhacs-operators"
 fi
 
+# TODO(ROX-14547): Use parameter store value for bucket name.
+# load_external_config "audit-logs--${CLUSTER_NAME}" VECTOR_
+
 # TODO(ROX-16771): Move this to env-specific values.yaml files
 # TODO(ROX-16645): set acsOperator.enabled to false
 invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
@@ -116,6 +122,7 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set acsOperator.enabled=true \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
+  --set acsOperator.channel="${OPERATOR_CHANNEL}" \
   --set acsOperator.version="${OPERATOR_VERSION}" \
   --set acsOperator.upstream="${OPERATOR_USE_UPSTREAM}" \
   --set fleetshardSync.image="quay.io/${FLEETSHARD_SYNC_ORG}/${FLEETSHARD_SYNC_IMAGE}:${FLEETSHARD_SYNC_TAG}" \
@@ -154,7 +161,14 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" \
-  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}"
+  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" \
+  --set vector.enabled=false \
+  --set vector.service.annotations.rhacs\\.redhat\\.com/cluster-name="${CLUSTER_NAME}" \
+  --set vector.service.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}" \
+  --set vector.customConfig.sinks.aws_s3.region="${CLUSTER_REGION}" \
+  --set vector.customConfig.sinks.aws_s3.bucket="${VECTOR_BUCKET:-}" \
+  --set vector.secrets.generic.aws_access_key_id="${VECTOR_ACCESSKEY:-}" \
+  --set vector.secrets.generic.aws_secret_access_key="${VECTOR_SECRETACCESSKEY:-}"
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs

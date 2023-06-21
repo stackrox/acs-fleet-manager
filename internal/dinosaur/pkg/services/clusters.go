@@ -3,8 +3,6 @@ package services
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
@@ -730,35 +728,10 @@ func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
 
 // CheckDinosaurOperatorVersionReady ...
 func (c clusterService) CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error) {
-	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
-	if err != nil {
-		return false, fmt.Errorf("retrieving ready central operator versions: %w", err)
-	}
-	for _, version := range readyDinosaurOperatorVersions {
-		if version.Version == dinosaurOperatorVersion {
-			return true, nil
-		}
-	}
-	return false, nil
+	return true, nil
 }
 
 // IsDinosaurVersionAvailableInCluster ...
 func (c clusterService) IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error) {
-	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyCentralOperatorVersions()
-	if err != nil {
-		return false, fmt.Errorf("retrieving ready central operator versions: %w", err)
-	}
-	for _, version := range readyDinosaurOperatorVersions {
-		if version.Version == dinosaurOperatorVersion {
-			kVvalid := false
-			for _, kversion := range version.CentralVersions {
-				if kversion.Version == dinosaurVersion {
-					kVvalid = true
-					break
-				}
-			}
-			return kVvalid, nil
-		}
-	}
-	return false, nil
+	return true, nil
 }
