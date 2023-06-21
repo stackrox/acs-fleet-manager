@@ -155,7 +155,7 @@ func TestDeleteChartResourcesNotFound(t *testing.T) {
 	}
 
 	// return True if resources do not exist
-	deleted, err := DeleteChartResources(ctx, fakeClient, "kek", "wtf", chart, chartVals)
+	deleted, err := DeleteChartResources(ctx, fakeClient, "test-release", testNamespace, chart, chartVals)
 	assert.True(t, deleted)
 	require.NoError(t, err)
 }
