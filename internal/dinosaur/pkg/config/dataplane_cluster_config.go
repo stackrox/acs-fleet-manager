@@ -99,18 +99,17 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 
 // ManualCluster manual cluster configuration
 type ManualCluster struct {
-	Name                             string                       `yaml:"name"`
-	ClusterID                        string                       `yaml:"cluster_id"`
-	CloudProvider                    string                       `yaml:"cloud_provider"`
-	Region                           string                       `yaml:"region"`
-	MultiAZ                          bool                         `yaml:"multi_az"`
-	Schedulable                      bool                         `yaml:"schedulable"`
-	CentralInstanceLimit             int                          `yaml:"central_instance_limit"`
-	Status                           api.ClusterStatus            `yaml:"status"`
-	ProviderType                     api.ClusterProviderType      `yaml:"provider_type"`
-	ClusterDNS                       string                       `yaml:"cluster_dns"`
-	SupportedInstanceType            string                       `yaml:"supported_instance_type"`
-	AvailableCentralOperatorVersions []api.CentralOperatorVersion `yaml:"available_central_operator_versions"`
+	Name                  string                  `yaml:"name"`
+	ClusterID             string                  `yaml:"cluster_id"`
+	CloudProvider         string                  `yaml:"cloud_provider"`
+	Region                string                  `yaml:"region"`
+	MultiAZ               bool                    `yaml:"multi_az"`
+	Schedulable           bool                    `yaml:"schedulable"`
+	CentralInstanceLimit  int                     `yaml:"central_instance_limit"`
+	Status                api.ClusterStatus       `yaml:"status"`
+	ProviderType          api.ClusterProviderType `yaml:"provider_type"`
+	ClusterDNS            string                  `yaml:"cluster_dns"`
+	SupportedInstanceType string                  `yaml:"supported_instance_type"`
 }
 
 // UnmarshalYAML ...
