@@ -122,20 +122,21 @@ func (r *Runtime) Start() error {
 		Environment:       r.config.Environment,
 	}
 
-	if features.TargetedOperatorUpgrades.Enabled() {
-		err := r.upgradeOperator()
-		if err != nil {
-			err = errors.Wrapf(err, "Upgrading operator")
-			glog.Error(err)
-		}
-	}
-
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
 		list, _, err := r.client.PrivateAPI().GetCentrals(ctx, r.clusterID)
 		if err != nil {
 			err = errors.Wrapf(err, "retrieving list of managed centrals")
 			glog.Error(err)
 			return 0, err
+		}
+
+		if features.TargetedOperatorUpgrades.Enabled() {
+			err := r.upgradeOperator(list)
+			if err != nil {
+				err = errors.Wrapf(err, "Upgrading operator")
+				glog.Error(err)
+				return 0, err
+			}
 		}
 
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
@@ -243,23 +244,18 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 	}
 }
 
-func (r *Runtime) upgradeOperator() error {
+func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
+	var operatorImages []operator.ACSOperatorImage
+	for _, central := range list.Items {
+		operatorImages = append(operatorImages, operator.ACSOperatorImage{
+			Image: central.Spec.OperatorImage,
+			//TODO(ROX-15080): Download CRD on operator upgrades to always install the latest CRD
+			InstallCRD: false,
+		})
+	}
 	ctx := context.Background()
 	// TODO: gather desired operator versions from fleet-manager and update operators based on ticker
 	// TODO: Leave Operator installation before reconciler run until migration
-	operatorImages := []operator.ACSOperatorImage{
-		{
-			Image:      "quay.io/rhacs-eng/stackrox-operator:4.0.0",
-			InstallCRD: false,
-		},
-		{
-			Image:      "quay.io/rhacs-eng/stackrox-operator:4.0.1",
-			InstallCRD: false,
-		},
-	}
-	for _, img := range operatorImages {
-		glog.Infof("Installing Operator: %s and download CRD: %t", img.Image, img.InstallCRD)
-	}
 	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages)
 	if err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
