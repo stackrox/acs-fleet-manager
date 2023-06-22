@@ -16,8 +16,3 @@ clusters:
    provider_type: standalone
    supported_instance_type: "eval,standard"
    cluster_dns: acs-dp-01.ce55.p1.openshiftapps.com
-   available_central_operator_versions:
-    - version: "3.70.0"
-      ready: true
-      central_versions:
-       - version: "3.70.0"
