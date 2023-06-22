@@ -21,8 +21,9 @@ const (
 	kindCRDName        = "CustomResourceDefinition"
 	k8sAPIVersion      = "apiextensions.k8s.io/v1"
 	operatorRepository = "quay.io/rhacs-eng/stackrox-operator"
-	operatorImage1     = "quay.io/rhacs-eng/stackrox-operator:3.74.1"
-	operatorImage2     = "quay.io/rhacs-eng/stackrox-operator:3.74.2"
+	operatorImage1     = "quay.io/rhacs-eng/stackrox-operator:4.0.1"
+	operatorImage2     = "quay.io/rhacs-eng/stackrox-operator:4.0.2"
+	crdTag1            = "4.0.1"
 	crdURL             = "https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"
 )
 
@@ -59,14 +60,14 @@ var serviceAccount = &unstructured.Unstructured{
 
 var operatorDeployment1 = &appsv1.Deployment{
 	ObjectMeta: metav1.ObjectMeta{
-		Name:      "rhacs-operator-manager-3.74.1",
+		Name:      "rhacs-operator-manager-4.0.1",
 		Namespace: operatorNamespace,
 	},
 }
 
 var operatorDeployment2 = &appsv1.Deployment{
 	ObjectMeta: metav1.ObjectMeta{
-		Name:      "rhacs-operator-manager-3.74.2",
+		Name:      "rhacs-operator-manager-4.0.2",
 		Namespace: operatorNamespace,
 	},
 }
@@ -86,12 +87,7 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 
-	err := u.InstallOrUpgrade(context.Background(), []ACSOperatorImage{
-		{
-			Image:      operatorImage1,
-			InstallCRD: true,
-		},
-	})
+	err := u.InstallOrUpgrade(context.Background(), []string{operatorImage1}, crdTag1)
 	require.NoError(t, err)
 
 	// check Secured Cluster CRD exists and correct
@@ -135,17 +131,9 @@ func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 
-	operatorImages := []ACSOperatorImage{
-		{
-			Image:      operatorImage1,
-			InstallCRD: false,
-		},
-		{
-			Image:      operatorImage2,
-			InstallCRD: false,
-		},
-	}
-	err := u.InstallOrUpgrade(context.Background(), operatorImages)
+	operatorImages := []string{operatorImage1, operatorImage2}
+
+	err := u.InstallOrUpgrade(context.Background(), operatorImages, crdTag1)
 	require.NoError(t, err)
 
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
@@ -163,12 +151,8 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 
-	operatorImageWithLongTag := "quay.io/rhacs-eng/stackrox-operator:3.74.1-with-ridiculously-long-tag-version-name"
-	err := u.InstallOrUpgrade(context.Background(), []ACSOperatorImage{
-		{
-			Image:      operatorImageWithLongTag,
-			InstallCRD: false,
-		}})
+	operatorImageWithLongTag := "quay.io/rhacs-eng/stackrox-operator:4.0.1-with-ridiculously-long-tag-version-name"
+	err := u.InstallOrUpgrade(context.Background(), []string{operatorImageWithLongTag}, crdTag1)
 	require.Errorf(t, err, "zero tags parsed from images")
 
 	deployments := &appsv1.DeploymentList{}
@@ -179,102 +163,57 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 
 func TestParseOperatorImages(t *testing.T) {
 	cases := map[string]struct {
-		images             []ACSOperatorImage
-		expected           []map[string]string
-		expectedCrdVersion string
-		shouldFail         bool
+		images     []string
+		expected   []map[string]string
+		shouldFail bool
 	}{
 		"should parse one valid operator image": {
-			images: []ACSOperatorImage{{
-				Image:      operatorImage1,
-				InstallCRD: false,
-			}},
+			images: []string{operatorImage1},
 			expected: []map[string]string{
-				{"repository": operatorRepository, "tag": "3.74.1"},
+				{"repository": operatorRepository, "tag": "4.0.1"},
 			},
 		},
 		"should parse two valid operator images": {
-			images: []ACSOperatorImage{{
-				Image:      operatorImage1,
-				InstallCRD: false,
-			}, {
-				Image:      operatorImage2,
-				InstallCRD: false,
-			}},
+			images: []string{operatorImage1, operatorImage2},
 			expected: []map[string]string{
-				{"repository": operatorRepository, "tag": "3.74.1"},
-				{"repository": operatorRepository, "tag": "3.74.2"},
+				{"repository": operatorRepository, "tag": "4.0.1"},
+				{"repository": operatorRepository, "tag": "4.0.2"},
 			},
-		},
-		"should return correct desired CRD version": {
-			images: []ACSOperatorImage{{
-				Image:      operatorImage1,
-				InstallCRD: false,
-			}, {
-				Image:      operatorImage2,
-				InstallCRD: true,
-			}},
-			expected: []map[string]string{
-				{"repository": operatorRepository, "tag": "3.74.1"},
-				{"repository": operatorRepository, "tag": "3.74.2"},
-			},
-			expectedCrdVersion: "3.74.2",
 		},
 		"should ignore duplicate operator images": {
-			images: []ACSOperatorImage{{
-				Image:      operatorImage1,
-				InstallCRD: false,
-			}, {
-				Image:      operatorImage1,
-				InstallCRD: false,
-			}},
+			images: []string{operatorImage1, operatorImage1},
 			expected: []map[string]string{
-				{"repository": operatorRepository, "tag": "3.74.1"},
+				{"repository": operatorRepository, "tag": "4.0.1"},
 			},
 		},
 		"do not fail if images list is empty": {
-			images:     []ACSOperatorImage{},
+			images:     []string{},
 			shouldFail: false,
 		},
 		"should accept images from multiple repositories with the same tag": {
-			images: []ACSOperatorImage{{
-				Image:      "repo1:tag",
-				InstallCRD: false,
-			}, {
-				Image:      "repo2:tag",
-				InstallCRD: false,
-			}},
+			images: []string{"repo1:tag", "repo2:tag"},
 			expected: []map[string]string{
 				{"repository": "repo1", "tag": "tag"},
 				{"repository": "repo2", "tag": "tag"},
 			},
 		},
 		"fail if image does contain colon": {
-			images: []ACSOperatorImage{{
-				Image:      "quay.io/without-colon-123-tag",
-				InstallCRD: false,
-			}},
+			images:     []string{"quay.io/without-colon-123-tag"},
 			shouldFail: true,
 		},
 		"fail if image contains more than one colon": {
-			images: []ACSOperatorImage{{
-				Image:      "quay.io/image-name:1.2.3:",
-				InstallCRD: false,
-			}},
+			images:     []string{"quay.io/image-name:1.2.3:"},
 			shouldFail: true,
 		},
 		"fail if image tag is too long": {
-			images: []ACSOperatorImage{{
-				Image:      "quay.io/image-name:1.2.3-with-ridiculously-long-tag-version-name",
-				InstallCRD: false,
-			}},
+			images:     []string{"quay.io/image-name:1.2.3-with-ridiculously-long-tag-version-name"},
 			shouldFail: true,
 		},
 	}
 
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			gotImages, gotCrdVersion, err := parseOperatorImages(c.images)
+			gotImages, err := parseOperatorImages(c.images)
 			if c.shouldFail {
 				assert.Error(t, err)
 			} else {
@@ -284,7 +223,6 @@ func TestParseOperatorImages(t *testing.T) {
 					val := chartutil.Values{"repository": m["repository"], "tag": m["tag"]}
 					expectedRepositoryAndTags = append(expectedRepositoryAndTags, val)
 				}
-				assert.Equal(t, c.expectedCrdVersion, gotCrdVersion)
 				assert.Equal(t, expectedRepositoryAndTags, gotImages)
 			}
 		})
