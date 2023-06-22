@@ -137,7 +137,7 @@ func (p *ProbeImpl) createCentral(ctx context.Context) (*public.CentralRequest, 
 	}
 	central, resp, err := p.fleetManagerPublicAPI.CreateCentral(ctx, true, request)
 	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))
-	glog.Infof("creation of central instance requested")
+	glog.Infof("creation of central instance (%s) requested", central.Id)
 	if err != nil {
 		err = errors.WithMessage(err, extractCentralError(resp))
 		return nil, errors.Wrap(err, "creation of central instance failed")
