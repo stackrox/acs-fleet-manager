@@ -26,6 +26,8 @@ const (
 	operatorImage2     = "quay.io/rhacs-eng/stackrox-operator:4.0.2"
 	crdTag1            = "4.0.1"
 	crdURL             = "https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"
+	deploymentName1    = operatorDeploymentPrefix + "-4.0.1"
+	deploymentName2    = operatorDeploymentPrefix + "-4.0.2"
 )
 
 var securedClusterCRD = &unstructured.Unstructured{
@@ -168,24 +170,15 @@ func TestDeleteOperator(t *testing.T) {
 	ctx := context.Background()
 
 	// No error if deployment does not exist
-	err := u.DeleteOperator(ctx, "3.74.1")
+	err := u.Delete(ctx, []string{operatorImage1})
 	require.NoError(t, err)
 
-	operatorImages := []ACSOperatorImage{
-		{
-			Image:      operatorImage1,
-			InstallCRD: false,
-		},
-		{
-			Image:      operatorImage2,
-			InstallCRD: false,
-		},
-	}
-	err = u.InstallOrUpgrade(ctx, operatorImages)
+	operatorImages := []string{operatorImage1, operatorImage2}
+	err = u.InstallOrUpgrade(ctx, operatorImages, crdTag1)
 	require.NoError(t, err)
 
 	// delete single operator
-	err = u.DeleteOperator(ctx, "3.74.1")
+	err = u.Delete(ctx, []string{operatorImage1})
 	require.NoError(t, err)
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.True(t, errors.IsNotFound(err))
@@ -193,10 +186,16 @@ func TestDeleteOperator(t *testing.T) {
 	require.NoError(t, err)
 
 	// delete another one
-	err = u.DeleteOperator(ctx, "3.74.2")
+	err = u.Delete(ctx, []string{operatorImage2})
 	require.NoError(t, err)
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
 	require.True(t, errors.IsNotFound(err))
+
+	// delete multiple versions
+	err = u.InstallOrUpgrade(ctx, operatorImages, crdTag1)
+	require.NoError(t, err)
+	err = u.Delete(ctx, operatorImages)
+	require.NoError(t, err)
 
 	deployments := &appsv1.DeploymentList{}
 	err = fakeClient.List(context.Background(), deployments)
@@ -213,20 +212,20 @@ func TestParseOperatorImages(t *testing.T) {
 		"should parse one valid operator image": {
 			images: []string{operatorImage1},
 			expected: []map[string]string{
-				{"repository": operatorRepository, "tag": "4.0.1"},
+				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1"},
 			},
 		},
 		"should parse two valid operator images": {
 			images: []string{operatorImage1, operatorImage2},
 			expected: []map[string]string{
-				{"repository": operatorRepository, "tag": "4.0.1"},
-				{"repository": operatorRepository, "tag": "4.0.2"},
+				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1"},
+				{"deploymentName": deploymentName2, "repository": operatorRepository, "tag": "4.0.2"},
 			},
 		},
 		"should ignore duplicate operator images": {
 			images: []string{operatorImage1, operatorImage1},
 			expected: []map[string]string{
-				{"repository": operatorRepository, "tag": "4.0.1"},
+				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1"},
 			},
 		},
 		"do not fail if images list is empty": {
@@ -236,8 +235,8 @@ func TestParseOperatorImages(t *testing.T) {
 		"should accept images from multiple repositories with the same tag": {
 			images: []string{"repo1:tag", "repo2:tag"},
 			expected: []map[string]string{
-				{"repository": "repo1", "tag": "tag"},
-				{"repository": "repo2", "tag": "tag"},
+				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo1", "tag": "tag"},
+				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo2", "tag": "tag"},
 			},
 		},
 		"fail if image does contain colon": {
@@ -263,7 +262,7 @@ func TestParseOperatorImages(t *testing.T) {
 				assert.NoError(t, err)
 				var expectedRepositoryAndTags []chartutil.Values
 				for _, m := range c.expected {
-					val := chartutil.Values{"repository": m["repository"], "tag": m["tag"]}
+					val := chartutil.Values{"deploymentName": m["deploymentName"], "repository": m["repository"], "tag": m["tag"]}
 					expectedRepositoryAndTags = append(expectedRepositoryAndTags, val)
 				}
 				assert.Equal(t, expectedRepositoryAndTags, gotImages)

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
+	"golang.org/x/exp/slices"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	appsv1 "k8s.io/api/apps/v1"
@@ -36,12 +37,13 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 			return nil, fmt.Errorf("failed to split image and tag from %q", img)
 		}
 		repo, tag := strs[0], strs[1]
-		if len(operatorDeploymentPrefix+"-"+tag) > maxOperatorDeploymentNameLength {
+		depName := generateDeploymentName(tag)
+		if len(depName) > maxOperatorDeploymentNameLength {
 			return nil, fmt.Errorf("%s-%s contains more than %d characters and cannot be used as a deployment name", operatorDeploymentPrefix, tag, maxOperatorDeploymentNameLength)
 		}
 		if _, used := uniqueImages[repo+tag]; !used {
 			uniqueImages[repo+tag] = true
-			img := chartutil.Values{"repository": repo, "tag": tag}
+			img := chartutil.Values{"deploymentName": depName, "repository": repo, "tag": tag}
 			operatorImages = append(operatorImages, img)
 		}
 	}
@@ -63,8 +65,7 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 	}
 	chartVals := chartutil.Values{
 		"operator": chartutil.Values{
-			"deploymentPrefix": operatorDeploymentPrefix + "-",
-			"images":           operatorImages,
+			"images": operatorImages,
 		},
 	}
 
@@ -116,22 +117,44 @@ func (u *ACSOperatorManager) ListVersionsWithReplicas(ctx context.Context) (map[
 	return versionWithReplicas, nil
 }
 
-// DeleteOperator removes specified operator deployment from the cluster
-func (u *ACSOperatorManager) DeleteOperator(ctx context.Context, version string) error {
-	depName := operatorDeploymentPrefix + "-" + version
-	dep := &appsv1.Deployment{}
-	err := u.client.Get(ctx, ctrlClient.ObjectKey{Namespace: operatorNamespace, Name: depName}, dep)
+// Delete removes specified operator deployment based on images from the cluster
+func (u *ACSOperatorManager) Delete(ctx context.Context, images []string) error {
+	deployments := &appsv1.DeploymentList{}
+	labels := map[string]string{"app": "rhacs-operator"}
+	err := u.client.List(ctx, deployments,
+		ctrlClient.InNamespace(operatorNamespace),
+		ctrlClient.MatchingLabels(labels),
+	)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil
+		return fmt.Errorf("failed list operator deployments: %w", err)
+	}
+
+	var deleteDeps []string
+	for _, dep := range deployments.Items {
+		for _, c := range dep.Spec.Template.Spec.Containers {
+			if c.Name == "manager" && slices.Contains(images, c.Image) {
+				deleteDeps = append(deleteDeps, dep.Name)
+			}
 		}
-		return fmt.Errorf("retrieving operator deployment version %s: %w", version, err)
 	}
-	err = u.client.Delete(ctx, dep)
-	if err != nil && !errors.IsNotFound(err) {
-		return fmt.Errorf("deleting operator deployment version %s: %w", version, err)
+
+	for _, depName := range deleteDeps {
+		dep := &appsv1.Deployment{}
+		err := u.client.Get(ctx, ctrlClient.ObjectKey{Namespace: operatorNamespace, Name: depName}, dep)
+		if err != nil && !errors.IsNotFound(err) {
+			return fmt.Errorf("retrieving operator deployment %s: %w", depName, err)
+		}
+		err = u.client.Delete(ctx, dep)
+		if err != nil && !errors.IsNotFound(err) {
+			return fmt.Errorf("deleting operator deployment %s: %w", depName, err)
+		}
 	}
+
 	return nil
+}
+
+func generateDeploymentName(tag string) string {
+	return operatorDeploymentPrefix + "-" + tag
 }
 
 func (u *ACSOperatorManager) generateCRDTemplateUrls(tag string) []string {
