@@ -20,7 +20,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/declarativeconfigclone"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -658,7 +657,7 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 
 func (r *CentralReconciler) ensureCentralAuditLogNotifierSecretCleaned(ctx context.Context, remoteCentralNamespace string) error {
 	secret := &corev1.Secret{}
-	secretKey := ctrlClient.ObjectKey{
+	secretKey := ctrlClient.ObjectKey{ // pragma: allowlist secret
 		Namespace: remoteCentralNamespace,
 		Name:      sensibleDeclarativeConfigSecretName,
 	}
@@ -667,9 +666,9 @@ func (r *CentralReconciler) ensureCentralAuditLogNotifierSecretCleaned(ctx conte
 		return err
 	}
 
-	canDeleteSecret := false
+	canDeleteSecret := false // pragma: allowlist secret
 	if len(secret.Data) <= 0 {
-		canDeleteSecret = true
+		canDeleteSecret = true // pragma: allowlist secret
 	} else {
 		delete(secret.Data, auditLogNotifierKey)
 		if len(secret.StringData) > 0 {
