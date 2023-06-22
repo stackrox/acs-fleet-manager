@@ -419,6 +419,58 @@ func TestCleanUp(t *testing.T) {
 				},
 			},
 		},
+		{
+			testName:        "clean up orphan",
+			wantErr:         false,
+			numDeleteCalled: 1,
+			mockFMAPI: &fleetmanager.PublicAPIMock{
+				GetCentralsFunc: func(ctx context.Context, localVarOptionals *public.GetCentralsOpts) (public.CentralRequestList, *http.Response, error) {
+					centralItems := []public.CentralRequest{
+						{
+							Id:        "id-42",
+							Name:      "not-probe-42",
+							Owner:     "service-account-client",
+							CreatedAt: time.Date(2000, 0, 0, 0o0, 0, 0, 0, time.UTC),
+						},
+						{
+							Id:        "id-43",
+							Name:      "not-probe-43",
+							Owner:     "service-account-client",
+							CreatedAt: time.Now(),
+						},
+					}
+					centralList := public.CentralRequestList{Items: centralItems}
+					return centralList, nil, nil
+				},
+				DeleteCentralByIdFunc: func(ctx context.Context, id string, async bool) (*http.Response, error) {
+					return nil, nil
+				},
+				GetCentralByIdFunc: func(ctx context.Context, id string) (public.CentralRequest, *http.Response, error) {
+					name := "clean up orphan"
+					numGetCentralByIDCalls[name]++
+					if numGetCentralByIDCalls[name] == 1 {
+						return public.CentralRequest{
+							Id:     "id-42",
+							Name:   "not-probe-42",
+							Owner:  "service-account-client",
+							Status: constants.CentralRequestStatusDeprovision.String(),
+						}, nil, nil
+					} else if numGetCentralByIDCalls[name] == 2 {
+						return public.CentralRequest{
+							Id:     "id-43",
+							Name:   "not-probe-43",
+							Owner:  "service-account-client",
+							Status: constants.CentralRequestStatusReady.String(),
+						}, nil, nil
+					}
+
+					central := public.CentralRequest{}
+					response := makeHTTPResponse(http.StatusNotFound)
+					err := errors.Errorf("%d", http.StatusNotFound)
+					return central, response, err
+				},
+			},
+		},
 	}
 
 	for _, tc := range tt {
