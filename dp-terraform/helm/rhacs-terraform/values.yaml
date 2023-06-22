@@ -96,7 +96,9 @@ logging:
     accessKeyId: ""
     secretAccessKey: ""
 
+# See available parameters in https://github.com/vectordotdev/helm-charts/blob/develop/charts/vector/README.md
 vector:
+  enabled: false
   role: "Aggregator"
   service:
     annotations:
@@ -105,6 +107,8 @@ vector:
       service.beta.openshift.io/serving-cert-secret-name: rhacs-vector-tls-secret
   podLabels:
     app: rhacs-vector
+  serviceAccount:
+    name: audit-logs-aggregator
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -117,7 +121,7 @@ vector:
           topologyKey: "topology.kubernetes.io/zone"
   persistence:
     enabled: true
-    size: 300Mi
+    size: 1Gi
   replicas: 3
   extraVolumes:
     - name: service-tls-secret
@@ -125,11 +129,21 @@ vector:
         sources:
           - secret:
               name: rhacs-vector-tls-secret
+    - name: aws-token
+      projected:
+        sources:
+          - serviceAccountToken:
+              path: aws-token
+              audience: sts.amazonaws.com
   extraVolumeMounts:
     - name: service-tls-secret
       mountPath: /etc/vector/tls
       readOnly: true
+    - name: aws-token
+      mountPath: /var/run/secrets/aws-token
   customConfig:
+    # We have to set it because default "data_dir" is different from mount path defined by enabled "persistence".
+    data_dir: /vector-data-dir
     sources:
       http_server:
         type: "http_server"
@@ -154,26 +168,24 @@ vector:
           enabled: false
         batch:
           timeout_secs: 60
-          max_size: 2621440
+          # 4.5M Bytes
+          max_size: 4718592
         buffer:
           type: disk
-          max_size: 283115520
+          # 900M Bytes (disk is 1Gi)
+          max_size: 943718400
           when_full: block
         encoding:
           codec: "json"
   fullnameOverride: rhacs-vector
   secrets:
     generic:
-      aws_access_key_id: ""
-      aws_secret_access_key: ""
+      aws_role_arn: ""
   env:
-    - name: AWS_ACCESS_KEY_ID
+    - name: AWS_WEB_IDENTITY_TOKEN_FILE
+      value: /var/run/secrets/aws-token/aws-token
+    - name: AWS_ROLE_ARN
       valueFrom:
         secretKeyRef:
           name: rhacs-vector
-          key: aws_access_key_id
-    - name: AWS_SECRET_ACCESS_KEY
-      valueFrom:
-        secretKeyRef:
-          name: rhacs-vector
-          key: aws_secret_access_key
+          key: aws_role_arn

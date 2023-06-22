@@ -93,6 +93,7 @@ else
     "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
 fi
 
+load_external_config "audit-logs/${CLUSTER_NAME}" VECTOR_
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 if [[ "${ENVIRONMENT}" != "dev" ]]; then
     oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
@@ -111,9 +112,6 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
 
     OPERATOR_SOURCE="rhacs-operators"
 fi
-
-# TODO(ROX-14547): Use parameter store value for bucket name.
-# load_external_config "audit-logs--${CLUSTER_NAME}" VECTOR_
 
 # TODO(ROX-16771): Move this to env-specific values.yaml files
 # TODO(ROX-16645): set acsOperator.enabled to false
@@ -167,8 +165,7 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set vector.service.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}" \
   --set vector.customConfig.sinks.aws_s3.region="${CLUSTER_REGION}" \
   --set vector.customConfig.sinks.aws_s3.bucket="${VECTOR_BUCKET:-}" \
-  --set vector.secrets.generic.aws_access_key_id="${VECTOR_ACCESSKEY:-}" \
-  --set vector.secrets.generic.aws_secret_access_key="${VECTOR_SECRETACCESSKEY:-}"
+  --set vector.secrets.generic.aws_role_arn="${VECTOR_ROLE_ARN:-}"
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs
