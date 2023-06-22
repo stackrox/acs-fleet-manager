@@ -245,18 +245,18 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 }
 
 func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
-	var operatorImages []operator.ACSOperatorImage
+	var operatorImages []string
 	for _, central := range list.Items {
-		operatorImages = append(operatorImages, operator.ACSOperatorImage{
-			Image: central.Spec.OperatorImage,
-			//TODO(ROX-15080): Download CRD on operator upgrades to always install the latest CRD
-			InstallCRD: false,
-		})
+		operatorImages = append(operatorImages, central.Spec.OperatorImage)
 	}
 	ctx := context.Background()
-	// TODO: gather desired operator versions from fleet-manager and update operators based on ticker
-	// TODO: Leave Operator installation before reconciler run until migration
-	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages)
+
+	for _, img := range operatorImages {
+		glog.Infof("Installing Operator: %s", img)
+	}
+	//TODO(ROX-15080): Download CRD on operator upgrades to always install the latest CRD
+	crdTag := "4.0.1"
+	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages, crdTag)
 	if err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
 	}

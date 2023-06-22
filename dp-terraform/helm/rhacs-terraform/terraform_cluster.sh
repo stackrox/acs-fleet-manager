@@ -112,7 +112,8 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     OPERATOR_SOURCE="rhacs-operators"
 fi
 
-load_external_config "audit-logs--${CLUSTER_NAME}" VECTOR_
+# TODO(ROX-14547): Use parameter store value for bucket name.
+# load_external_config "audit-logs--${CLUSTER_NAME}" VECTOR_
 
 # TODO(ROX-16771): Move this to env-specific values.yaml files
 # TODO(ROX-16645): set acsOperator.enabled to false
