@@ -430,7 +430,7 @@ func TestCleanUp(t *testing.T) {
 							Id:        "id-42",
 							Name:      "not-probe-42",
 							Owner:     "service-account-client",
-							CreatedAt: time.Date(2000, 0, 0, 0o0, 0, 0, 0, time.UTC),
+							CreatedAt: time.Date(2000, 0, 0, 0, 0, 0, 0, time.UTC),
 						},
 						{
 							Id:        "id-43",
