@@ -3,6 +3,7 @@ package reconciler
 import "github.com/pkg/errors"
 
 var (
+	errInvalidArguments = errors.New("invalid arguments")
 	// ErrBusy returned when reconciliation for the same central is already in progress
 	ErrBusy = errors.New("reconciler still busy")
 	// ErrCentralNotChanged is an error returned when reconciliation runs more than once in a row with equal central

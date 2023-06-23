@@ -14,11 +14,6 @@ data:
         supported_instance_type: "eval,standard"
         cluster_dns: "$CLUSTER_DNS"
         central_instance_limit: 5
-        available_central_operator_versions:
-          - version: "0.1.0"
-            ready: true
-            central_versions:
-              - version: "0.1.0"
   fleetshard-authz-org-ids-development.yaml: |-
     # RH ACS Organization (returned for personal tokens obtained by ocm token).
     - "11009103"
@@ -40,12 +35,6 @@ data:
     # These a sample users used in integration tests
     - denied-test-user1@example.com
     - denied-test-user2@example.com
-  dinosaur-sre-user-list.yaml: |-
-    ---
-    # A list of dinosaur-sre users with cluster-admin permissions for data plane clusters
-    # A dinosaur-sre user is represented in the below list by their Kerboros ID
-    - dinosaur-sre-user-1
-    - dinosaur-sre-user-2
   jwks-file.json: |
     {
       "keys": [

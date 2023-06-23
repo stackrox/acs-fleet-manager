@@ -4,24 +4,25 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
-
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
+	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/concurrency"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -55,7 +56,7 @@ type Runtime struct {
 
 // NewRuntime creates a new runtime
 func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
-	auth, err := fleetmanager.NewAuth(config.AuthType, fleetmanager.Option{
+	authOption := fleetmanager.Option{
 		Sso: fleetmanager.RHSSOOption{
 			ClientID:     config.RHSSOClientID,
 			ClientSecret: config.RHSSOClientSecret, // pragma: allowlist secret
@@ -68,7 +69,8 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		Static: fleetmanager.StaticOption{
 			StaticToken: config.StaticToken,
 		},
-	})
+	}
+	auth, err := fleetmanager.NewAuth(config.AuthType, authOption)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager authentication")
 	}
@@ -80,13 +82,13 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 	}
 	var dbProvisionClient cloudprovider.DBClient
 	if config.ManagedDB.Enabled {
-		dbProvisionClient, err = awsclient.NewRDSClient(config, auth)
+		dbProvisionClient, err = awsclient.NewRDSClient(config)
 		if err != nil {
 			return nil, fmt.Errorf("creating managed DB provisioning client: %v", err)
 		}
 	}
 
-	operatorManager := operator.NewACSOperatorManager(k8sClient)
+	operatorManager := operator.NewACSOperatorManager(k8sClient, config.BaseCrdURL)
 
 	return &Runtime{
 		config:            config,
@@ -111,23 +113,13 @@ func (r *Runtime) Start() error {
 	routesAvailable := r.routesAvailable()
 
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
-		UseRoutes:                         routesAvailable,
-		WantsAuthProvider:                 r.config.CreateAuthProvider,
-		EgressProxyImage:                  r.config.EgressProxyImage,
-		ManagedDBEnabled:                  r.config.ManagedDB.Enabled,
-		Telemetry:                         r.config.Telemetry,
-		ClusterName:                       r.config.ClusterName,
-		Environment:                       r.config.Environment,
-		FeatureFlagUpgradeOperatorEnabled: r.config.FeatureFlagUpgradeOperatorEnabled,
-	}
-
-	if r.config.FeatureFlagUpgradeOperatorEnabled {
-		err := r.upgradeOperator()
-		if err != nil {
-			err = errors.Wrapf(err, "Upgrading operator")
-			glog.Error(err)
-			return err
-		}
+		UseRoutes:         routesAvailable,
+		WantsAuthProvider: r.config.CreateAuthProvider,
+		EgressProxyImage:  r.config.EgressProxyImage,
+		ManagedDBEnabled:  r.config.ManagedDB.Enabled,
+		Telemetry:         r.config.Telemetry,
+		ClusterName:       r.config.ClusterName,
+		Environment:       r.config.Environment,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
@@ -136,6 +128,15 @@ func (r *Runtime) Start() error {
 			err = errors.Wrapf(err, "retrieving list of managed centrals")
 			glog.Error(err)
 			return 0, err
+		}
+
+		if features.TargetedOperatorUpgrades.Enabled() {
+			err := r.upgradeOperator(list)
+			if err != nil {
+				err = errors.Wrapf(err, "Upgrading operator")
+				glog.Error(err)
+				return 0, err
+			}
 		}
 
 		// Start for each Central its own reconciler which can be triggered by sending a central to the receive channel.
@@ -160,6 +161,13 @@ func (r *Runtime) Start() error {
 				fleetshardmetrics.MetricsInstance().IncCentralReconcilations()
 				r.handleReconcileResult(central, status, err)
 			}(reconciler, central)
+
+			reconcilePaused, err := r.isReconcilePaused(ctx, central)
+			if err != nil {
+				glog.Warningf("Error getting pause annotation status: %v", err)
+			} else {
+				fleetshardmetrics.MetricsInstance().SetPauseReconcileStatus(central.Id, reconcilePaused)
+			}
 		}
 
 		fleetshardmetrics.MetricsInstance().SetTotalCentrals(float64(len(r.reconcilers)))
@@ -169,6 +177,20 @@ func (r *Runtime) Start() error {
 				glog.Warningf("Error retrieving account quotas: %v", err)
 			} else {
 				fleetshardmetrics.MetricsInstance().SetDatabaseAccountQuotas(accountQuotas)
+			}
+		}
+
+		if features.TargetedOperatorUpgrades.Enabled() {
+			operatorWithReplicas, err := r.operatorManager.ListVersionsWithReplicas(ctx)
+			if err != nil {
+				glog.Warningf("Error retrieving operator versions with replicas: %v", err)
+			}
+			for image, replicas := range operatorWithReplicas {
+				healthy := true
+				if replicas == 0 {
+					healthy = false
+				}
+				fleetshardmetrics.MetricsInstance().SetOperatorHealthStatus(image, healthy)
 			}
 		}
 
@@ -222,13 +244,19 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 	}
 }
 
-func (r *Runtime) upgradeOperator() error {
+func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
+	var operatorImages []string
+	for _, central := range list.Items {
+		operatorImages = append(operatorImages, central.Spec.OperatorImage)
+	}
 	ctx := context.Background()
-	// TODO: gather desired operator versions from fleet-manager and update operators based on ticker
-	// TODO: Leave Operator installation before reconciler run until migration
-	operatorImages := []string{"quay.io/rhacs-eng/stackrox-operator:3.74.0", "quay.io/rhacs-eng/stackrox-operator:3.74.1"}
-	glog.Infof("Installing Operators: %s", strings.Join(operatorImages, ", "))
-	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages)
+
+	for _, img := range operatorImages {
+		glog.Infof("Installing Operator: %s", img)
+	}
+	//TODO(ROX-15080): Download CRD on operator upgrades to always install the latest CRD
+	crdTag := "4.0.1"
+	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages, crdTag)
 	if err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
 	}
@@ -250,4 +278,33 @@ func (r *Runtime) routesAvailable() bool {
 		return false
 	}
 	return true
+}
+
+func (r *Runtime) isReconcilePaused(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
+	central := &v1alpha1.Central{}
+	err := r.k8sClient.Get(ctx, ctrlClient.ObjectKey{
+		Namespace: remoteCentral.Metadata.Namespace,
+		Name:      remoteCentral.Metadata.Name}, central)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+
+		return false, errors.Wrapf(err, "getting CR for Central: %s", remoteCentral.Id)
+	}
+
+	if central.Annotations == nil {
+		return false, nil
+	}
+
+	value, exists := central.Annotations[centralReconciler.PauseReconcileAnnotation]
+	if !exists {
+		return false, nil
+	}
+
+	if value == "true" {
+		return true, nil
+	}
+
+	return false, nil
 }

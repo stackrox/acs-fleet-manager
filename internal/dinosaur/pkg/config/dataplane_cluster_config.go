@@ -28,12 +28,10 @@ type DataplaneClusterConfig struct {
 	// 'manual' to use OSD Cluster configuration file,
 	// 'auto' to use dynamic scaling
 	// 'none' to disabled scaling all together, useful in testing
-	DataPlaneClusterScalingType string `json:"dataplane_cluster_scaling_type"`
-	DataPlaneClusterConfigFile  string `json:"dataplane_cluster_config_file"`
-	ReadOnlyUserList            userv1.OptionalNames
-	ReadOnlyUserListFile        string
-	// TODO ROX-11294 adjust or drop sre user list
-	SREUsers                              userv1.OptionalNames
+	DataPlaneClusterScalingType           string `json:"dataplane_cluster_scaling_type"`
+	DataPlaneClusterConfigFile            string `json:"dataplane_cluster_config_file"`
+	ReadOnlyUserList                      userv1.OptionalNames
+	ReadOnlyUserListFile                  string
 	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
 	Kubeconfig                            string         `json:"kubeconfig"`
@@ -101,18 +99,17 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 
 // ManualCluster manual cluster configuration
 type ManualCluster struct {
-	Name                             string                       `yaml:"name"`
-	ClusterID                        string                       `yaml:"cluster_id"`
-	CloudProvider                    string                       `yaml:"cloud_provider"`
-	Region                           string                       `yaml:"region"`
-	MultiAZ                          bool                         `yaml:"multi_az"`
-	Schedulable                      bool                         `yaml:"schedulable"`
-	CentralInstanceLimit             int                          `yaml:"central_instance_limit"`
-	Status                           api.ClusterStatus            `yaml:"status"`
-	ProviderType                     api.ClusterProviderType      `yaml:"provider_type"`
-	ClusterDNS                       string                       `yaml:"cluster_dns"`
-	SupportedInstanceType            string                       `yaml:"supported_instance_type"`
-	AvailableCentralOperatorVersions []api.CentralOperatorVersion `yaml:"available_central_operator_versions"`
+	Name                  string                  `yaml:"name"`
+	ClusterID             string                  `yaml:"cluster_id"`
+	CloudProvider         string                  `yaml:"cloud_provider"`
+	Region                string                  `yaml:"region"`
+	MultiAZ               bool                    `yaml:"multi_az"`
+	Schedulable           bool                    `yaml:"schedulable"`
+	CentralInstanceLimit  int                     `yaml:"central_instance_limit"`
+	Status                api.ClusterStatus       `yaml:"status"`
+	ProviderType          api.ClusterProviderType `yaml:"provider_type"`
+	ClusterDNS            string                  `yaml:"cluster_dns"`
+	SupportedInstanceType string                  `yaml:"supported_instance_type"`
 }
 
 // UnmarshalYAML ...
@@ -425,20 +422,6 @@ func readOnlyUserListFile(file string, val *userv1.OptionalNames) error {
 	err = yaml.UnmarshalStrict([]byte(fileContents), val)
 	if err != nil {
 		return fmt.Errorf("reading read-only user list file: %w", err)
-	}
-	return nil
-}
-
-// Read the dinosaur-sre users from the file into the dinosaur-sre user list config
-func readDinosaurSREUserFile(file string, val *userv1.OptionalNames) error {
-	fileContents, err := shared.ReadFile(file)
-	if err != nil {
-		return fmt.Errorf("reading SRE user list file: %w", err)
-	}
-
-	err = yaml.UnmarshalStrict([]byte(fileContents), val)
-	if err != nil {
-		return fmt.Errorf("reading SRE user list file: %w", err)
 	}
 	return nil
 }

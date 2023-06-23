@@ -21,7 +21,8 @@ func NewGetCommand() *cobra.Command {
 			runGet(fleetmanagerclient.AuthenticatedClientWithOCM(), cmd, args)
 		},
 	}
-	cmd.Flags().String(FlagID, "", "Central ID")
+	cmd.Flags().String(FlagID, "", "Central ID (required)")
+	flags.MarkFlagRequired(FlagID, cmd)
 
 	return cmd
 }

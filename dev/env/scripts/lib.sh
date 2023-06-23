@@ -93,7 +93,6 @@ init() {
     export CENTRAL_VERSION="${CENTRAL_VERSION:-$CENTRAL_VERSION_DEFAULT}"
     export SCANNER_VERSION="${SCANNER_VERSION:-$SCANNER_VERSION_DEFAULT}"
     export STACKROX_OPERATOR_NAMESPACE="${STACKROX_OPERATOR_NAMESPACE:-$STACKROX_OPERATOR_NAMESPACE_DEFAULT}"
-    export STACKROX_OPERATOR_IMAGE="${IMAGE_REGISTRY}/stackrox-operator:${STACKROX_OPERATOR_VERSION}"
     export STACKROX_OPERATOR_INDEX_IMAGE="${IMAGE_REGISTRY}/stackrox-operator-index:v${STACKROX_OPERATOR_VERSION}"
     export OPENSHIFT_MARKETPLACE="${OPENSHIFT_MARKETPLACE:-$OPENSHIFT_MARKETPLACE_DEFAULT}"
     export INSTALL_OPERATOR="${INSTALL_OPERATOR:-$INSTALL_OPERATOR_DEFAULT}"
@@ -284,6 +283,17 @@ inject_ips() {
 
     log "Patching ServiceAccount ${namespace}/default to use Quay.io imagePullSecrets"
     $KUBECTL -n "$namespace" patch sa "$service_account" -p "\"imagePullSecrets\": [{\"name\": \"${secret_name}\" }]"
+}
+
+inject_exported_env_vars() {
+    local namespace="$1"
+    local deployment="$2"
+
+    flags=$(printenv | grep -e "RHACS_*")
+    for flag in $flags
+    do
+        $KUBECTL -n "$namespace" set env "deployment/$deployment" "$flag"
+    done
 }
 
 is_local_cluster() {

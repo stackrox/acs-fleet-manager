@@ -109,10 +109,6 @@ CHAMBER_BIN := $(LOCAL_BIN_PATH)/chamber
 $(CHAMBER_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/segmentio/chamber/v2
 
-AWS_VAULT_BIN := $(LOCAL_BIN_PATH)/aws-vault
-$(AWS_VAULT_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
-	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/99designs/aws-vault/v6
-
 GINKGO_BIN := $(LOCAL_BIN_PATH)/ginkgo
 $(GINKGO_BIN): $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/go.sum
 	@cd $(TOOLS_DIR) && GOBIN=${LOCAL_BIN_PATH} $(GO) install github.com/onsi/ginkgo/v2/ginkgo
@@ -245,7 +241,7 @@ help:
 all: openapi/generate binary
 .PHONY: all
 
-# Set git hook path to .githooks/
+# Install pre-commit hooks
 .PHONY: setup/git/hooks
 setup/git/hooks:
 	-git config --unset-all core.hooksPath
@@ -284,6 +280,10 @@ lint: specinstall
 	spectral lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
 .PHONY: lint
 
+pre-commit:
+	pre-commit run --files $(git --no-pager diff --name-only main)
+.PHONY: pre-commit
+
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 
@@ -299,7 +299,11 @@ probe:
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o probe/bin/probe ./probe/cmd/probe
 .PHONY: probe
 
-binary: fleet-manager fleetshard-sync probe
+acsfleetctl:
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o acsfleetctl ./cmd/acsfleetctl
+.PHONY: acsfleetctl
+
+binary: fleet-manager fleetshard-sync probe acsfleetctl
 .PHONY: binary
 
 # Install
@@ -891,7 +895,7 @@ deploy/dev-fast: deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
 deploy/dev-fast/fleet-manager: GOOS=linux
 deploy/dev-fast/fleet-manager: fleet-manager
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(SHORT_IMAGE_REF) -f Dockerfile.hybrid .
-	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF)
+	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleet-manager
 
 deploy/dev-fast/fleetshard-sync: GOOS=linux

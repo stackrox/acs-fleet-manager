@@ -596,17 +596,9 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 	// TODO: Activate dinosaur reconcilation and FleetshardOperatorAddon.Provision
 	// as soon as this components are available
 	dinosaurOperatorIsReady := true
-	// dinosaurOperatorIsReady, err := c.reconcileDinosaurOperator(provisionedCluster)
-	// if err != nil {
-	// 	return err
-	// }
 
 	glog.Infof("Provisioning fleetshard-operator as it is enabled")
 	fleetshardOperatorIsReady := true
-	// fleetshardOperatorIsReady, errs := c.FleetshardOperatorAddon.Provision(provisionedCluster)
-	// if errs != nil {
-	// 	return errs
-	// }
 
 	if dinosaurOperatorIsReady && fleetshardOperatorIsReady {
 		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForFleetShardOperator, provisionedCluster.ClusterID)
@@ -617,16 +609,6 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 		return nil
 	}
 	return nil
-}
-
-// reconcileDinosaurOperator installs the Dinosaur operator on a provisioned clusters
-func (c *ClusterManager) reconcileDinosaurOperator(provisionedCluster api.Cluster) (bool, error) {
-	ready, err := c.ClusterService.InstallDinosaurOperator(&provisionedCluster)
-	if err != nil {
-		return false, err
-	}
-	glog.V(5).Infof("ready status of central operator installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
-	return ready, nil
 }
 
 // reconcileClusterWithConfig reconciles clusters within the dataplane-cluster-configuration file.
@@ -661,12 +643,6 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			Schedulable:           p.Schedulable,
 		}
 
-		if len(p.AvailableCentralOperatorVersions) > 0 {
-			if err := clusterRequest.SetAvailableCentralOperatorVersions(p.AvailableCentralOperatorVersions); err != nil {
-				return []error{errors.Wrapf(err, "Failed to set operator versions for manual cluster %s with config file", p.ClusterID)}
-			}
-		}
-
 		if err := c.ClusterService.RegisterClusterJob(&clusterRequest); err != nil {
 			return []error{errors.Wrapf(err, "Failed to register new cluster %s with config file", p.ClusterID)}
 		}
@@ -690,9 +666,6 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		newCluster.ClusterDNS = manualCluster.ClusterDNS
 		newCluster.SupportedInstanceType = manualCluster.SupportedInstanceType
 		newCluster.Schedulable = manualCluster.Schedulable
-		if err := newCluster.SetAvailableCentralOperatorVersions(manualCluster.AvailableCentralOperatorVersions); err != nil {
-			return []error{errors.Wrapf(err, "Failed to update operator versions for manual cluster %s with config file", manualCluster.ClusterID)}
-		}
 
 		if cmp.Equal(*cluster, newCluster) {
 			continue
@@ -706,15 +679,14 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		// Gorm will not update primitive values if their new value is the same as their default value.
 		// We therefore
 		values := map[string]interface{}{
-			"cloud_provider":                      newCluster.CloudProvider,
-			"region":                              newCluster.Region,
-			"multi_az":                            newCluster.MultiAZ,
-			"status":                              newCluster.Status,
-			"provider_type":                       newCluster.ProviderType,
-			"cluster_dns":                         newCluster.ClusterDNS,
-			"supported_instance_type":             newCluster.SupportedInstanceType,
-			"available_central_operator_versions": newCluster.AvailableCentralOperatorVersions,
-			"schedulable":                         newCluster.Schedulable,
+			"cloud_provider":          newCluster.CloudProvider,
+			"region":                  newCluster.Region,
+			"multi_az":                newCluster.MultiAZ,
+			"status":                  newCluster.Status,
+			"provider_type":           newCluster.ProviderType,
+			"cluster_dns":             newCluster.ClusterDNS,
+			"supported_instance_type": newCluster.SupportedInstanceType,
+			"schedulable":             newCluster.Schedulable,
 		}
 
 		if err := c.ClusterService.Updates(newCluster, values); err != nil {
@@ -996,20 +968,6 @@ func (c *ClusterManager) buildDedicatedReaderClusterRoleBindingResource() *authv
 			Name:       dedicatedReadersRoleBindingName,
 			APIVersion: "rbac.authorization.k8s.io",
 		},
-	}
-}
-
-// buildReadOnlyGroupResource creates a group to which read-only cluster users are added.
-func (c *ClusterManager) buildSREGroupResource() *userv1.Group {
-	return &userv1.Group{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: userv1.SchemeGroupVersion.String(),
-			Kind:       "Group",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: mkSREGroupName,
-		},
-		Users: c.DataplaneClusterConfig.SREUsers,
 	}
 }
 

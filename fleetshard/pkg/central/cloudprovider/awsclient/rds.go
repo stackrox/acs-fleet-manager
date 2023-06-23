@@ -9,22 +9,17 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	awscredentials "github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
-	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 )
 
 const (
 	dbAvailableStatus = "available"
 	dbDeletingStatus  = "deleting"
-	dbBackingUpStatus = "backing-up"
 	dbUser            = "rhacs_master"
 	dbPrefix          = "rhacs-"
 	dbInstanceSuffix  = "-db-instance"
@@ -216,7 +211,7 @@ func (r *RDS) ensureClusterDeleted(clusterID string, skipFinalSnapshot bool) err
 		return nil
 	}
 
-	if clusterStatus != dbDeletingStatus && clusterStatus != dbBackingUpStatus {
+	if clusterStatus != dbDeletingStatus {
 		glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
 		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, skipFinalSnapshot))
 		if err != nil {
@@ -224,6 +219,7 @@ func (r *RDS) ensureClusterDeleted(clusterID string, skipFinalSnapshot bool) err
 				// This assumes that if a final snapshot exists, a deletion for the RDS cluster was already triggered
 				// and we can move on with deprovisioning,
 				if awsErr.Code() == rds.ErrCodeDBClusterSnapshotAlreadyExistsFault {
+					glog.Infof("Final DB backup is in progress for DB cluster: %s", clusterID)
 					return nil
 				}
 			}
@@ -327,8 +323,8 @@ func (r *RDS) waitForInstanceToBeAvailable(ctx context.Context, instanceID strin
 }
 
 // NewRDSClient initializes a new awsclient.RDS
-func NewRDSClient(config *config.Config, auth fleetmanager.Auth) (*RDS, error) {
-	rdsClient, err := newRdsClient(config.AWS, auth)
+func NewRDSClient(config *config.Config) (*RDS, error) {
+	rdsClient, err := newRdsClient()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create RDS client: %w", err)
 	}
@@ -433,22 +429,8 @@ func newDeleteCentralDBClusterInput(clusterID string, skipFinalSnapshot bool) *r
 	return input
 }
 
-func newRdsClient(awsConfig config.AWS, auth fleetmanager.Auth) (*rds.RDS, error) {
-	cfg := &aws.Config{
-		Region: aws.String(awsConfig.Region),
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create session for STS client: %w", err)
-	}
-	stsClient := sts.New(sess)
-
-	roleProvider := stscreds.NewWebIdentityRoleProviderWithOptions(stsClient, awsConfig.RoleARN, "",
-		&tokenFetcher{auth: auth})
-
-	cfg.Credentials = awscredentials.NewCredentials(roleProvider)
-
-	sess, err = session.NewSession(cfg)
+func newRdsClient() (*rds.RDS, error) {
+	sess, err := session.NewSession()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create session for RDS client: %w", err)
 	}
@@ -465,16 +447,4 @@ func getInstanceType(isTestInstance bool) string {
 		return testInstanceTagValue
 	}
 	return regularInstaceTagValue
-}
-
-type tokenFetcher struct {
-	auth fleetmanager.Auth
-}
-
-func (f *tokenFetcher) FetchToken(_ awscredentials.Context) ([]byte, error) {
-	token, err := f.auth.RetrieveIDToken()
-	if err != nil {
-		return nil, fmt.Errorf("retrieving token from token source: %w", err)
-	}
-	return []byte(token), nil
 }

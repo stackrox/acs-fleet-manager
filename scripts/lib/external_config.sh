@@ -24,6 +24,7 @@ init_chamber() {
     AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-none}"
     case $AWS_AUTH_HELPER in
         aws-saml)
+            AWS_SAML_ROLE="${AWS_SAML_ROLE:-"047735621815-poweruser"}"
             export AWS_PROFILE="saml"
             ensure_tool_installed tools_venv
             # shellcheck source=/dev/null # The script may not exist
@@ -31,14 +32,13 @@ init_chamber() {
             # ensure a valid kerberos ticket exist
             if ! klist -s >/dev/null 2>&1; then
                 log "Getting a Kerberos ticket"
-                kinit
+                if ! kinit; then
+                    auth_helper_error "kinit failed"
+                fi
             fi
-            aws-saml.py # TODO(ROX-12222): Skip if existing token has not yet expired
-        ;;
-        aws-vault)
-            export AWS_PROFILE="${AWS_PROFILE:-dev}"
-            ensure_tool_installed aws-vault
-            ensure_aws_profile_exists
+            if ! aws-saml.py --target-role "${AWS_SAML_ROLE}"; then
+                auth_helper_error "aws-saml.py failed"
+            fi
         ;;
         none)
             if [[ -z "${AWS_SESSION_TOKEN:-}" ]] || [[ -z "${AWS_ACCESS_KEY_ID:-}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
@@ -54,52 +54,11 @@ init_chamber() {
 auth_init_error() {
     die "Error: $1. Choose one of the following options:
            1) SAML (export AWS_AUTH_HELPER=aws-saml)
-           2) aws-vault (export AWS_AUTH_HELPER=aws-vault)
-           3) Unset AWS_AUTH_HELPER and export AWS_SESSION_TOKEN, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY environment variables"
+           2) Unset AWS_AUTH_HELPER and export AWS_SESSION_TOKEN, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY environment variables"
 }
 
-ensure_aws_profile_exists() {
-    if ! aws-vault list --credentials | grep -q "^${AWS_PROFILE}$"; then
-        log "Creating profile '$AWS_PROFILE' in AWS Vault"
-        if [[ "$AWS_PROFILE" == "dev" ]]; then
-            # TODO(ROX-12222): Replace with SSO
-            log "Importing dev profile from BitWarden"
-            ensure_bitwarden_session_exists
-            local aws_creds_json
-            aws_creds_json=$(bw get item "23a0e6d6-7b7d-44c8-b8d0-aecc00e1fa0a")
-            AWS_ACCESS_KEY_ID=$(jq '.fields[] | select(.name == "AccessKeyID") | .value' --raw-output <<< "$aws_creds_json") \
-            AWS_SECRET_ACCESS_KEY=$(jq '.fields[] | select(.name == "SecretAccessKey") | .value' --raw-output <<< "$aws_creds_json") \
-                aws-vault add dev --env
-        else
-            # Input the AWS credentials manually
-            aws-vault add "$AWS_PROFILE"
-        fi
-    fi
-}
-
-ensure_bitwarden_session_exists() {
-  # Check if we need to get a new BitWarden CLI Session Key.
-  if [[ -z "${BW_SESSION:-}" ]]; then
-    if bw login --check; then
-      # We don't have a session key but we are logged in, so unlock and store the session.
-      BW_SESSION=$(bw unlock --raw)
-      export BW_SESSION
-    else
-      # We don't have a session key and are not logged in, so log in and store the session.
-      BW_SESSION=$(bw login --raw)
-      export BW_SESSION
-    fi
-  fi
-  bw sync -f
-}
-
-run_chamber() {
-    local args=("$@")
-    if [[ "$AWS_AUTH_HELPER" == "aws-vault" ]]; then
-        aws-vault exec "${AWS_PROFILE}" -- chamber "${args[@]}"
-    else
-        chamber "${args[@]}"
-    fi
+auth_helper_error() {
+    die "Error: $1. Please refer to the troubleshooting section in docs/development/secret-management.md for a possible cause."
 }
 
 # Loads config from the external storage to the environment and applying a prefix to a variable name (if exists).
@@ -108,8 +67,8 @@ load_external_config() {
     local prefix="${2:-}"
     local parameter_store_output
     local secrets_manager_output
-    parameter_store_output=$(run_chamber env "$service")
-    secrets_manager_output=$(run_chamber env "$service" -b secretsmanager)
+    parameter_store_output=$(chamber env "$service")
+    secrets_manager_output=$(chamber env "$service" -b secretsmanager)
     [[ -z "$parameter_store_output" && -z "$secrets_manager_output" ]] && echo "WARNING: no parameters found under '/$service' of this environment"
     eval "$(printf '%s\n%s' "$parameter_store_output" "$secrets_manager_output" | sed -E "s/(^export +)(.*)/readonly ${prefix}\2/")"
 }

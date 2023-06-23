@@ -9,6 +9,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
+	appsv1 "k8s.io/api/apps/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -23,9 +24,6 @@ const (
 )
 
 func parseOperatorImages(images []string) ([]chartutil.Values, error) {
-	if len(images) == 0 {
-		return nil, fmt.Errorf("the list of images is empty")
-	}
 	var operatorImages []chartutil.Values
 	uniqueImages := make(map[string]bool)
 	for _, img := range images {
@@ -52,11 +50,12 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 // ACSOperatorManager keeps data necessary for managing ACS Operator
 type ACSOperatorManager struct {
 	client         ctrlClient.Client
+	crdURL         string
 	resourcesChart *chart.Chart
 }
 
-// InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
-func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []string) error {
+// InstallOrUpgrade provisions or upgrades an existing ACS Operator(s) from helm chart template
+func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []string, crdTag string) error {
 	operatorImages, err := parseOperatorImages(images)
 	if err != nil {
 		return fmt.Errorf("failed to parse images: %w", err)
@@ -68,7 +67,11 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 		},
 	}
 
-	u.resourcesChart = charts.MustGetChart("rhacs-operator")
+	var dynamicTemplatesUrls []string
+	if crdTag != "" {
+		dynamicTemplatesUrls = u.generateCRDTemplateUrls(crdTag)
+	}
+	u.resourcesChart = charts.MustGetChart("rhacs-operator", dynamicTemplatesUrls)
 	objs, err := charts.RenderToObjects(releaseName, operatorNamespace, u.resourcesChart, chartVals)
 	if err != nil {
 		return fmt.Errorf("failed rendering operator chart: %w", err)
@@ -88,9 +91,41 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 
 }
 
+// ListVersionsWithReplicas returns currently running ACS Operator versions with number of ready replicas
+func (u *ACSOperatorManager) ListVersionsWithReplicas(ctx context.Context) (map[string]int32, error) {
+	deployments := &appsv1.DeploymentList{}
+	labels := map[string]string{"app": "rhacs-operator"}
+	err := u.client.List(ctx, deployments,
+		ctrlClient.InNamespace(operatorNamespace),
+		ctrlClient.MatchingLabels(labels),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed list operator deployments: %w", err)
+	}
+
+	versionWithReplicas := make(map[string]int32)
+	for _, dep := range deployments.Items {
+		for _, c := range dep.Spec.Template.Spec.Containers {
+			if c.Name == "manager" {
+				versionWithReplicas[c.Image] = dep.Status.ReadyReplicas
+			}
+		}
+	}
+
+	return versionWithReplicas, nil
+}
+
+func (u *ACSOperatorManager) generateCRDTemplateUrls(tag string) []string {
+	stackroxWithTag := fmt.Sprintf(u.crdURL, tag)
+	centralCrdURL := stackroxWithTag + "platform.stackrox.io_centrals.yaml"
+	securedClusterCrdURL := stackroxWithTag + "platform.stackrox.io_securedclusters.yaml"
+	return []string{centralCrdURL, securedClusterCrdURL}
+}
+
 // NewACSOperatorManager creates a new ACS Operator Manager
-func NewACSOperatorManager(k8sClient ctrlClient.Client) *ACSOperatorManager {
+func NewACSOperatorManager(k8sClient ctrlClient.Client, baseCrdURL string) *ACSOperatorManager {
 	return &ACSOperatorManager{
 		client: k8sClient,
+		crdURL: baseCrdURL,
 	}
 }

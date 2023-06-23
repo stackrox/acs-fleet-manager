@@ -80,6 +80,24 @@ spec:
           value: {{ .Values.fleetshardSync.telemetry.storage.endpoint | quote }}
         - name: TELEMETRY_STORAGE_KEY
           value: {{ .Values.fleetshardSync.telemetry.storage.key | quote }}
+        {{- if .Values.fleetshardSync.aws.enableTokenAuth }}
+        - name: AWS_WEB_IDENTITY_TOKEN_FILE
+          value: "/var/run/secrets/tokens/aws-token"
+        {{- else }}
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: fleetshard-sync
+              key: "aws-access-key-id"
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fleetshard-sync
+              key: "aws-secret-access-key"
+        {{- end }}
+        volumeMounts:
+          - mountPath: /var/run/secrets/tokens
+            name: aws-token
         ports:
         - name: monitoring
           containerPort: 8080
@@ -90,3 +108,10 @@ spec:
           requests:
             cpu: {{ .Values.fleetshardSync.resources.requests.cpu | quote }}
             memory: {{ .Values.fleetshardSync.resources.requests.memory | quote }}
+      volumes:
+        - name: aws-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: aws-token
+                  audience: sts.amazonaws.com

@@ -23,14 +23,16 @@ func NewCreateCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(FlagName, "", "Central request name")
-	cmd.Flags().String(FlagRegion, "us-east-1", "OCM region ID")
-	cmd.Flags().String(FlagProvider, "aws", "OCM provider ID")
+	cmd.Flags().String(FlagName, "", "Central request name (required)")
+	cmd.Flags().String(FlagRegion, "us-east-1", "OCM region ID (required)")
+	cmd.Flags().String(FlagProvider, "aws", "OCM provider ID (required)")
 	cmd.Flags().String(FlagOwner, "test-user", "User name")
 	cmd.Flags().String(FlagClusterID, "000", "Central request cluster ID")
 	cmd.Flags().Bool(FlagMultiAZ, true, "Whether Central request should be Multi AZ or not")
 	cmd.Flags().String(FlagOrgID, "", "OCM org id")
-
+	flags.MarkFlagRequired(FlagName, cmd)
+	flags.MarkFlagRequired(FlagRegion, cmd)
+	flags.MarkFlagRequired(FlagProvider, cmd)
 	return cmd
 }
 
