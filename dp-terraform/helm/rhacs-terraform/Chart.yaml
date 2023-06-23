@@ -38,5 +38,6 @@ dependencies:
     version: "0.21.1"
     repository: "https://helm.vector.dev"
     condition: vector.enabled
-  - name: securedCluster
+  - name: secured-cluster
+    version: "0.1.0"
     condition: securedCluster.enabled
