@@ -37,13 +37,13 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 			return nil, fmt.Errorf("failed to split image and tag from %q", img)
 		}
 		repo, tag := strs[0], strs[1]
-		depName := generateDeploymentName(tag)
-		if len(depName) > maxOperatorDeploymentNameLength {
-			return nil, fmt.Errorf("%s-%s contains more than %d characters and cannot be used as a deployment name", operatorDeploymentPrefix, tag, maxOperatorDeploymentNameLength)
+		deploymentName := generateDeploymentName(tag)
+		if len(deploymentName) > maxOperatorDeploymentNameLength {
+			return nil, fmt.Errorf("%s contains more than %d characters and cannot be used as a deployment name", deploymentName, maxOperatorDeploymentNameLength)
 		}
 		if _, used := uniqueImages[repo+tag]; !used {
 			uniqueImages[repo+tag] = true
-			img := chartutil.Values{"deploymentName": depName, "repository": repo, "tag": tag}
+			img := chartutil.Values{"deploymentName": deploymentName, "repository": repo, "tag": tag}
 			operatorImages = append(operatorImages, img)
 		}
 	}
@@ -130,23 +130,23 @@ func (u *ACSOperatorManager) Delete(ctx context.Context, images []string) error 
 	}
 
 	var deleteDeps []string
-	for _, dep := range deployments.Items {
-		for _, c := range dep.Spec.Template.Spec.Containers {
-			if c.Name == "manager" && slices.Contains(images, c.Image) {
-				deleteDeps = append(deleteDeps, dep.Name)
+	for _, deployment := range deployments.Items {
+		for _, container := range deployment.Spec.Template.Spec.Containers {
+			if container.Name == "manager" && slices.Contains(images, container.Image) {
+				deleteDeps = append(deleteDeps, deployment.Name)
 			}
 		}
 	}
 
-	for _, depName := range deleteDeps {
-		dep := &appsv1.Deployment{}
-		err := u.client.Get(ctx, ctrlClient.ObjectKey{Namespace: operatorNamespace, Name: depName}, dep)
+	for _, deploymentName := range deleteDeps {
+		deployment := &appsv1.Deployment{}
+		err := u.client.Get(ctx, ctrlClient.ObjectKey{Namespace: operatorNamespace, Name: deploymentName}, deployment)
 		if err != nil && !errors.IsNotFound(err) {
-			return fmt.Errorf("retrieving operator deployment %s: %w", depName, err)
+			return fmt.Errorf("retrieving operator deployment %s: %w", deploymentName, err)
 		}
-		err = u.client.Delete(ctx, dep)
+		err = u.client.Delete(ctx, deployment)
 		if err != nil && !errors.IsNotFound(err) {
-			return fmt.Errorf("deleting operator deployment %s: %w", depName, err)
+			return fmt.Errorf("deleting operator deployment %s: %w", deploymentName, err)
 		}
 	}
 

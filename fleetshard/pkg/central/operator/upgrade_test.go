@@ -6,6 +6,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/chartutil"
 
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/stretchr/testify/assert"
@@ -61,19 +62,9 @@ var serviceAccount = &unstructured.Unstructured{
 	},
 }
 
-var operatorDeployment1 = &appsv1.Deployment{
-	ObjectMeta: metav1.ObjectMeta{
-		Name:      "rhacs-operator-manager-4.0.1",
-		Namespace: operatorNamespace,
-	},
-}
+var operatorDeployment1 = createOperatorDeployment(deploymentName1, operatorImage1)
 
-var operatorDeployment2 = &appsv1.Deployment{
-	ObjectMeta: metav1.ObjectMeta{
-		Name:      "rhacs-operator-manager-4.0.2",
-		Namespace: operatorNamespace,
-	},
-}
+var operatorDeployment2 = createOperatorDeployment(deploymentName2, operatorImage2)
 
 var metricService = &unstructured.Unstructured{
 	Object: map[string]interface{}{
@@ -84,6 +75,23 @@ var metricService = &unstructured.Unstructured{
 			"namespace": operatorNamespace,
 		},
 	},
+}
+
+func createOperatorDeployment(name string, image string) *appsv1.Deployment {
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: operatorNamespace,
+			Labels:    map[string]string{"app": "rhacs-operator"},
+		},
+		Spec: appsv1.DeploymentSpec{
+			Template: v1.PodTemplateSpec{
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{{Name: "manager", Image: image}},
+				},
+			},
+		},
+	}
 }
 
 func TestOperatorUpgradeFreshInstall(t *testing.T) {
@@ -164,43 +172,72 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 	assert.Len(t, deployments.Items, 0)
 }
 
-func TestDeleteOperator(t *testing.T) {
+func TestDeleteOperatorNotExist(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 	ctx := context.Background()
 
-	// No error if deployment does not exist
 	err := u.Delete(ctx, []string{operatorImage1})
 	require.NoError(t, err)
+}
 
-	operatorImages := []string{operatorImage1, operatorImage2}
-	err = u.InstallOrUpgrade(ctx, operatorImages, crdTag1)
+func TestDeleteOneOperator(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t, operatorDeployment1, serviceAccount).Build()
+	u := NewACSOperatorManager(fakeClient, crdURL)
+	ctx := context.Background()
+
+	err := fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	require.NoError(t, err)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
 
-	// delete single operator
 	err = u.Delete(ctx, []string{operatorImage1})
+	require.NoError(t, err)
+	// deployment is deleted but service account still persist
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	require.True(t, errors.IsNotFound(err))
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	require.NoError(t, err)
+}
+
+func TestDeleteOneOperatorFromMany(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t, operatorDeployment1, operatorDeployment2, serviceAccount).Build()
+	u := NewACSOperatorManager(fakeClient, crdURL)
+	ctx := context.Background()
+
+	err := u.Delete(ctx, []string{operatorImage1})
 	require.NoError(t, err)
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.True(t, errors.IsNotFound(err))
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
 	require.NoError(t, err)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	require.NoError(t, err)
 
 	// delete another one
 	err = u.Delete(ctx, []string{operatorImage2})
 	require.NoError(t, err)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	require.True(t, errors.IsNotFound(err))
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
 	require.True(t, errors.IsNotFound(err))
-
-	// delete multiple versions
-	err = u.InstallOrUpgrade(ctx, operatorImages, crdTag1)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
-	err = u.Delete(ctx, operatorImages)
-	require.NoError(t, err)
+}
 
+func TestDeleteMultipleOperators(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t, operatorDeployment1, operatorDeployment2, serviceAccount).Build()
+	u := NewACSOperatorManager(fakeClient, crdURL)
+	ctx := context.Background()
+
+	err := u.Delete(ctx, []string{operatorImage1, operatorImage2})
+	require.NoError(t, err)
 	deployments := &appsv1.DeploymentList{}
 	err = fakeClient.List(context.Background(), deployments)
 	require.NoError(t, err)
 	assert.Len(t, deployments.Items, 0)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	require.NoError(t, err)
 }
 
 func TestParseOperatorImages(t *testing.T) {
