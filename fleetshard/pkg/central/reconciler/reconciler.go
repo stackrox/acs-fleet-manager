@@ -4,7 +4,9 @@ package reconciler
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"sync/atomic"
 	"time"
 
@@ -384,10 +386,11 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 
 	centralExists := true
 	existingCentral := v1alpha1.Central{}
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}, &existingCentral)
+	centralKey := ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}
+	err := r.client.Get(ctx, centralKey, &existingCentral)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return errors.Wrapf(err, "unable to check the existence of central %s/%s", central.GetNamespace(), central.GetName())
+			return errors.Wrapf(err, "unable to check the existence of central %v", centralKey)
 		}
 		centralExists = false
 	}
@@ -397,29 +400,62 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 			central.Annotations = map[string]string{}
 		}
 		if err := util.IncrementCentralRevision(central); err != nil {
-			return errors.Wrap(err, "incrementing central's revision")
+			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
 		}
 
-		glog.Infof("Creating central %s/%s", central.GetNamespace(), central.GetName())
+		glog.Infof("Creating Central %v", centralKey)
 		if err := r.client.Create(ctx, central); err != nil {
-			return errors.Wrapf(err, "creating new central %s/%s", remoteCentralNamespace, remoteCentralName)
+			return errors.Wrapf(err, "creating new Central %v", centralKey)
 		}
-		glog.Infof("Central %s/%s created", central.GetNamespace(), central.GetName())
+		glog.Infof("Central %v created", centralKey)
 	} else {
-		glog.Infof("Update central %s/%s", central.GetNamespace(), central.GetName())
-		existingCentral.Spec = central.Spec
+		// perform a dry run to see if the update would change anything.
+		// This would apply the defaults and the mutating webhooks without actually updating the object.
+		// We can then compare the existing object with the object that would be resulting from the update.
+		// This will prevent unnecessary operator reconciliation loops.
 
-		if err := util.IncrementCentralRevision(&existingCentral); err != nil {
-			return errors.Wrap(err, "incrementing central's revision")
+		desiredCentral := existingCentral.DeepCopy()
+		desiredCentral.Spec = *central.Spec.DeepCopy()
+		if err := r.client.Update(ctx, desiredCentral, ctrlClient.DryRunAll); err != nil {
+			return errors.Wrapf(err, "dry-run updating Central %v", centralKey)
 		}
-		existingCentral.Spec = *central.Spec.DeepCopy()
 
-		if err := r.client.Update(ctx, &existingCentral); err != nil {
-			return errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
+		if reflect.DeepEqual(existingCentral.Spec, desiredCentral.Spec) {
+			glog.Infof("Central %v is already up to date.", centralKey)
+			return nil
+		}
+
+		updatedCentral := existingCentral.DeepCopy()
+		updatedCentral.Spec = *central.Spec.DeepCopy()
+		glog.Infof("Detected that Central %v is out of date and needs to be updated", centralKey)
+		printCentralDiff(desiredCentral, &existingCentral)
+
+		if err := util.IncrementCentralRevision(updatedCentral); err != nil {
+			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
+		}
+
+		if err := r.client.Update(ctx, updatedCentral); err != nil {
+			return errors.Wrapf(err, "updating Central %v", centralKey)
 		}
 	}
 
 	return nil
+}
+
+func printCentralDiff(desired, actual *v1alpha1.Central) {
+	desiredBytes, err := json.Marshal(desired.Spec)
+	if err != nil {
+		return
+	}
+	actualBytes, err := json.Marshal(actual.Spec)
+	if err != nil {
+		return
+	}
+	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(desiredBytes, actualBytes, &v1alpha1.CentralSpec{})
+	if err != nil {
+		return
+	}
+	glog.Infof("Central %s/%s diff: %s", desired.Namespace, desired.Name, string(patchBytes))
 }
 
 func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context, remoteCentral *private.ManagedCentral) error {
