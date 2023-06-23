@@ -32,6 +32,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -445,14 +446,17 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 func printCentralDiff(desired, actual *v1alpha1.Central) {
 	desiredBytes, err := json.Marshal(desired.Spec)
 	if err != nil {
+		glog.Warningf("Failed to marshal desired Central %s/%s spec: %v", desired.Namespace, desired.Name, err)
 		return
 	}
 	actualBytes, err := json.Marshal(actual.Spec)
 	if err != nil {
+		glog.Warningf("Failed to marshal actual Central %s/%s spec: %v", desired.Namespace, desired.Name, err)
 		return
 	}
 	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(desiredBytes, actualBytes, &v1alpha1.CentralSpec{})
 	if err != nil {
+		glog.Warningf("Failed to create Central %s/%s patch: %v", desired.Namespace, desired.Name, err)
 		return
 	}
 	glog.Infof("Central %s/%s diff: %s", desired.Namespace, desired.Name, string(patchBytes))
