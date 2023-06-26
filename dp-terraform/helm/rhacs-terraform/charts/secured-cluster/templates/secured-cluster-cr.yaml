@@ -1,0 +1,35 @@
+apiVersion: platform.stackrox.io/v1alpha1
+kind: SecuredCluster
+metadata:
+  name: stackrox-secured-cluster-services
+  annotations:
+    # Add custom resource last.
+    "helm.sh/hook": post-install,post-upgrade
+spec:
+  {{- if .Values.pullSecret }}
+  imagePullSecrets:
+  - name: {{ .Values.pullSecret }}
+  {{- end }}
+  clusterName: {{ required "clusterName is required when secured-cluster is enabled" .Values.clusterName }}
+  centralEndpoint: {{ required "centralEndpoint is required when secured-cluster is enabled" .Values.centralEndpoint }}
+  admissionControl:
+    resources:
+      requests:
+        memory: 100Mi
+        cpu: 100m
+  sensor:
+    resources:
+      requests:
+        memory: 100Mi
+        cpu: 100m
+  perNode:
+    collector:
+      resources:
+        requests:
+          memory: 100Mi
+          cpu: 100m
+    compliance:
+      resources:
+        requests:
+          memory: 100Mi
+          cpu: 100m
