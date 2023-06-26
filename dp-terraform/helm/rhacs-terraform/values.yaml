@@ -178,7 +178,7 @@ vector:
           name: rhacs-vector
           key: aws_secret_access_key
 
-securedCluster:
+secured-cluster:
   enabled: true
   pullSecret: ""
   clusterName: ""
