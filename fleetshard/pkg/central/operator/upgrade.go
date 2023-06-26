@@ -133,12 +133,12 @@ func (u *ACSOperatorManager) Delete(ctx context.Context, images []string) error 
 	for _, deployment := range deployments.Items {
 		for _, container := range deployment.Spec.Template.Spec.Containers {
 			if container.Name == "manager" && slices.Contains(images, container.Image) {
-				deleteDeps = append(deleteDeps, deployment.Name)
+				deleteDeployments = append(deleteDeployments, deployment.Name)
 			}
 		}
 	}
 
-	for _, deploymentName := range deleteDeps {
+	for _, deploymentName := range deleteDeployments {
 		deployment := &appsv1.Deployment{}
 		err := u.client.Get(ctx, ctrlClient.ObjectKey{Namespace: operatorNamespace, Name: deploymentName}, deployment)
 		if err != nil && !errors.IsNotFound(err) {
