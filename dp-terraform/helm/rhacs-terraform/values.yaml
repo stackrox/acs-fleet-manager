@@ -177,3 +177,23 @@ vector:
         secretKeyRef:
           name: rhacs-vector
           key: aws_secret_access_key
+
+secured-cluster:
+  enabled: true
+  pullSecret: ""
+  clusterName: ""
+  centralEndpoint: ""
+  admissionControl:
+    serviceTLS:
+      cert: ""
+      key: ""
+  ca:
+    cert: ""
+  collector:
+    serviceTLS:
+      cert: ""
+      key: ""
+  sensor:
+    serviceTLS:
+      cert: ""
+      key: ""

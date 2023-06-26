@@ -26,6 +26,7 @@ load_external_config fleetshard-sync FLEETSHARD_SYNC_
 load_external_config cloudwatch-exporter CLOUDWATCH_EXPORTER_
 load_external_config logging LOGGING_
 load_external_config observability OBSERVABILITY_
+load_external_config secured-cluster SECURED_CLUSTER_
 
 case $ENVIRONMENT in
   dev)
@@ -168,7 +169,16 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set vector.customConfig.sinks.aws_s3.region="${CLUSTER_REGION}" \
   --set vector.customConfig.sinks.aws_s3.bucket="${VECTOR_BUCKET:-}" \
   --set vector.secrets.generic.aws_access_key_id="${VECTOR_ACCESSKEY:-}" \
-  --set vector.secrets.generic.aws_secret_access_key="${VECTOR_SECRETACCESSKEY:-}"
+  --set vector.secrets.generic.aws_secret_access_key="${VECTOR_SECRETACCESSKEY:-}" \
+  --set secured-cluster.clusterName="${CLUSTER_NAME}" \
+  --set secured-cluster.centralEndpoint="${SECURED_CLUSTER_CENTRAL_ENDPOINT}" \
+  --set secured-cluster.ca.cert="${SECURED_CLUSTER_CA_CERT}" \
+  --set secured-cluster.admissionControl.serviceTLS.cert="${SECURED_CLUSTER_ADMISSION_CONTROL_CERT}" \
+  --set secured-cluster.admissionControl.serviceTLS.key="${SECURED_CLUSTER_ADMISSION_CONTROL_KEY}" \
+  --set secured-cluster.collector.serviceTLS.cert="${SECURED_CLUSTER_COLLECTOR_CERT}" \
+  --set secured-cluster.collector.serviceTLS.key="${SECURED_CLUSTER_COLLECTOR_KEY}" \
+  --set secured-cluster.sensor.serviceTLS.cert="${SECURED_CLUSTER_SENSOR_CERT}" \
+  --set secured-cluster.sensor.serviceTLS.key="${SECURED_CLUSTER_SENSOR_KEY}"
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs

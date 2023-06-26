@@ -1,0 +1,20 @@
+# Optional name of a secret that should be used by the SecuredCluster
+# deployments to pull images
+pullSecret: ""
+
+clusterName: ""
+centralEndpoint: ""
+admissionControl:
+  serviceTLS:
+    cert: ""
+    key: ""
+ca:
+  cert: ""
+collector:
+  serviceTLS:
+    cert: ""
+    key: ""
+sensor:
+  serviceTLS:
+    cert: ""
+    key: ""
