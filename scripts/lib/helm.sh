@@ -9,7 +9,7 @@ function invoke_helm() {
     helm repo add vector "https://helm.vector.dev"
 
     # Build the external dependencies like the vector helm chart bundle.
-    helm dependencies build
+    helm dependencies build "${dir}"
 
     if [[ "${ENVIRONMENT}" == "dev" ]]; then
         # Dev env is special, as there is no real dev cluster. Instead
