@@ -129,7 +129,7 @@ func (u *ACSOperatorManager) Delete(ctx context.Context, images []string) error 
 		return fmt.Errorf("failed list operator deployments: %w", err)
 	}
 
-	var deleteDeps []string
+	var deleteDeployments []string
 	for _, deployment := range deployments.Items {
 		for _, container := range deployment.Spec.Template.Spec.Containers {
 			if container.Name == "manager" && slices.Contains(images, container.Image) {
