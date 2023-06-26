@@ -10,8 +10,8 @@ spec:
   imagePullSecrets:
   - name: {{ .Values.pullSecret }}
   {{- end }}
-  clusterName: {{ required "clusterName is required when securedCluster is enabled" .Values.clusterName }}
-  centralEndpoint: {{ required "centralEndpoint is required when securedCluster is enabled" .Values.centralEndpoint }}
+  clusterName: {{ required "clusterName is required when secured-cluster is enabled" .Values.clusterName }}
+  centralEndpoint: {{ required "centralEndpoint is required when secured-cluster is enabled" .Values.centralEndpoint }}
   admissionControl:
     resources:
       requests:
