@@ -851,3 +851,62 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 		})
 	}
 }
+
+func Test_stringMapNeedsUpdating(t *testing.T) {
+	type tc struct {
+		name    string
+		actual  map[string]string
+		desired map[string]string
+		want    bool
+	}
+	tests := []tc{
+		{
+			name:    "both nil",
+			desired: nil,
+			actual:  nil,
+			want:    false,
+		}, {
+			name:    "both empty",
+			desired: map[string]string{},
+			actual:  map[string]string{},
+			want:    false,
+		}, {
+			name:    "desired nil",
+			desired: nil,
+			actual:  map[string]string{"foo": "bar"},
+			want:    false,
+		}, {
+			name:    "actual nil",
+			desired: map[string]string{"foo": "bar"},
+			actual:  nil,
+			want:    true,
+		}, {
+			name:    "desired empty",
+			desired: map[string]string{},
+			actual:  map[string]string{"foo": "bar"},
+			want:    false,
+		}, {
+			name:    "actual empty",
+			desired: map[string]string{"foo": "bar"},
+			actual:  map[string]string{},
+			want:    true,
+		}, {
+			name:    "desired has more keys",
+			desired: map[string]string{"foo": "bar", "bar": "baz"},
+			actual:  map[string]string{"foo": "bar"},
+			want:    true,
+		}, {
+			name:    "actual has more keys",
+			desired: map[string]string{"foo": "bar"},
+			actual:  map[string]string{"foo": "bar", "bar": "baz"},
+			want:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := stringMapNeedsUpdating(tt.desired, tt.actual)
+			assert.Equal(t, tt.want, got, tt.name)
+		})
+	}
+}

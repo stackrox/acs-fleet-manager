@@ -415,21 +415,39 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 		// We can then compare the existing object with the object that would be resulting from the update.
 		// This will prevent unnecessary operator reconciliation loops.
 
-		desiredCentral := existingCentral.DeepCopy()
-		desiredCentral.Spec = *central.Spec.DeepCopy()
-		if err := r.client.Update(ctx, desiredCentral, ctrlClient.DryRunAll); err != nil {
+		wouldBeCentral := existingCentral.DeepCopy()
+		wouldBeCentral.Spec = *central.Spec.DeepCopy()
+		if err := r.client.Update(ctx, wouldBeCentral, ctrlClient.DryRunAll); err != nil {
 			return errors.Wrapf(err, "dry-run updating Central %v", centralKey)
 		}
 
-		if reflect.DeepEqual(existingCentral.Spec, desiredCentral.Spec) {
+		var shouldUpdate = false
+		if !reflect.DeepEqual(existingCentral.Spec, wouldBeCentral.Spec) {
+			glog.Infof("Detected that Central %v is out of date and needs to be updated", centralKey)
+			shouldUpdate = true
+		}
+
+		// TODO: should labels and annotations be included?
+		// if !shouldUpdate && stringMapNeedsUpdating(central.Annotations, wouldBeCentral.Annotations) {
+		//	glog.Infof("Detected that Central %v annotations are out of date and needs to be updated", centralKey)
+		//	shouldUpdate = true
+		//}
+		//
+		// if !shouldUpdate && stringMapNeedsUpdating(central.Labels, wouldBeCentral.Labels) {
+		//	glog.Infof("Detected that Central %v labels are out of date and needs to be updated", centralKey)
+		//	shouldUpdate = true
+		//}
+
+		if !shouldUpdate {
 			glog.Infof("Central %v is already up to date.", centralKey)
 			return nil
 		}
 
+		glog.Infof("Detected that Central %v is out of date and needs to be updated", centralKey)
+		printCentralDiff(wouldBeCentral, &existingCentral)
+
 		updatedCentral := existingCentral.DeepCopy()
 		updatedCentral.Spec = *central.Spec.DeepCopy()
-		glog.Infof("Detected that Central %v is out of date and needs to be updated", centralKey)
-		printCentralDiff(desiredCentral, &existingCentral)
 
 		if err := util.IncrementCentralRevision(updatedCentral); err != nil {
 			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
@@ -443,7 +461,25 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 	return nil
 }
 
+func stringMapNeedsUpdating(desired, actual map[string]string) bool {
+	if len(desired) == 0 {
+		return false
+	}
+	if actual == nil {
+		return true
+	}
+	for k, v := range desired {
+		if actual[k] != v {
+			return true
+		}
+	}
+	return false
+}
+
 func printCentralDiff(desired, actual *v1alpha1.Central) {
+	if !features.PrintCentralUpdateDiff.Enabled() {
+		return
+	}
 	desiredBytes, err := json.Marshal(desired.Spec)
 	if err != nil {
 		glog.Warningf("Failed to marshal desired Central %s/%s spec: %v", desired.Namespace, desired.Name, err)
