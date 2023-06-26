@@ -40,4 +40,4 @@ dependencies:
     condition: vector.enabled
   - name: secured-cluster
     version: "0.1.0"
-    condition: securedCluster.enabled
+    condition: secured-cluster.enabled
