@@ -107,7 +107,14 @@ func (p *ProbeImpl) cleanupFunc(ctx context.Context) error {
 	success := true
 	for _, central := range centralList.Items {
 		central := central
-		if central.Owner != p.config.ProbeUsername || !strings.HasPrefix(central.Name, p.config.ProbeName) {
+		// Remove all instances that have been created by the probe user.
+		// To avoid intefering with other probe instances, we only remove instances
+		// with the prefix of the current instance or orphaned instances.
+		// An instance is considered orphaned after 24 hours from creation.
+		hasProbeOwner := central.Owner == p.config.ProbeUsername
+		hasProbePrefix := strings.HasPrefix(central.Name, p.config.ProbeName)
+		isOrphan := time.Now().Sub(central.CreatedAt) > 24*time.Hour
+		if !hasProbeOwner || (!hasProbePrefix && !isOrphan) {
 			continue
 		}
 		if err := p.deleteCentral(ctx, &central); err != nil {
