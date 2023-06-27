@@ -415,50 +415,83 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 		// We can then compare the existing object with the object that would be resulting from the update.
 		// This will prevent unnecessary operator reconciliation loops.
 
-		wouldBeCentral := existingCentral.DeepCopy()
-		wouldBeCentral.Spec = *central.Spec.DeepCopy()
-		if err := r.client.Update(ctx, wouldBeCentral, ctrlClient.DryRunAll); err != nil {
-			return errors.Wrapf(err, "dry-run updating Central %v", centralKey)
+		desiredCentral := existingCentral.DeepCopy()
+		desiredCentral.Spec = *central.Spec.DeepCopy()
+		mergeLabelsAndAnnotations(central, desiredCentral)
+
+		requiresUpdate, err := centralNeedsUpdating(ctx, r.client, &existingCentral, desiredCentral)
+		if err != nil {
+			return errors.Wrapf(err, "checking if Central %v needs to be updated", centralKey)
 		}
 
-		var shouldUpdate = false
-		if !reflect.DeepEqual(existingCentral.Spec, wouldBeCentral.Spec) {
-			glog.Infof("Detected that Central %v is out of date and needs to be updated", centralKey)
-			shouldUpdate = true
-		}
-
-		// TODO: should labels and annotations be included?
-		// if !shouldUpdate && stringMapNeedsUpdating(central.Annotations, wouldBeCentral.Annotations) {
-		//	glog.Infof("Detected that Central %v annotations are out of date and needs to be updated", centralKey)
-		//	shouldUpdate = true
-		//}
-		//
-		// if !shouldUpdate && stringMapNeedsUpdating(central.Labels, wouldBeCentral.Labels) {
-		//	glog.Infof("Detected that Central %v labels are out of date and needs to be updated", centralKey)
-		//	shouldUpdate = true
-		//}
-
-		if !shouldUpdate {
-			glog.Infof("Central %v is already up to date.", centralKey)
+		if !requiresUpdate {
+			glog.Infof("Central %v is already up to date", centralKey)
 			return nil
 		}
 
-		glog.Infof("Detected that Central %v is out of date and needs to be updated", centralKey)
-		printCentralDiff(wouldBeCentral, &existingCentral)
-
-		updatedCentral := existingCentral.DeepCopy()
-		updatedCentral.Spec = *central.Spec.DeepCopy()
-
-		if err := util.IncrementCentralRevision(updatedCentral); err != nil {
+		if err := util.IncrementCentralRevision(desiredCentral); err != nil {
 			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
 		}
 
-		if err := r.client.Update(ctx, updatedCentral); err != nil {
+		if err := r.client.Update(ctx, desiredCentral); err != nil {
 			return errors.Wrapf(err, "updating Central %v", centralKey)
 		}
 	}
 
 	return nil
+}
+
+func mergeLabelsAndAnnotations(from, into *v1alpha1.Central) {
+	if into.Annotations == nil {
+		into.Annotations = map[string]string{}
+	}
+	if into.Labels == nil {
+		into.Labels = map[string]string{}
+	}
+	into.Annotations = mergeStringsMap(from.Annotations, into.Annotations)
+	into.Labels = mergeStringsMap(from.Labels, into.Labels)
+}
+
+func mergeStringsMap(from, into map[string]string) map[string]string {
+	var result = map[string]string{}
+	for key, value := range into {
+		result[key] = value
+	}
+	for key, value := range from {
+		result[key] = value
+	}
+	return result
+}
+
+func centralNeedsUpdating(ctx context.Context, client ctrlClient.Client, existing *v1alpha1.Central, desired *v1alpha1.Central) (bool, error) {
+	wouldBeCentral := desired.DeepCopy()
+	centralKey := ctrlClient.ObjectKey{Namespace: existing.Namespace, Name: existing.Name}
+	if err := client.Update(ctx, desired, ctrlClient.DryRunAll); err != nil {
+		return false, errors.Wrapf(err, "dry-run updating Central %v", centralKey)
+	}
+
+	var shouldUpdate = false
+	if !reflect.DeepEqual(existing.Spec, wouldBeCentral.Spec) {
+		glog.Infof("Detected that Central %v is out of date and needs to be updated", centralKey)
+		shouldUpdate = true
+	}
+
+	// TODO: should labels and annotations be included?
+	if !shouldUpdate && stringMapNeedsUpdating(desired.Annotations, existing.Annotations) {
+		glog.Infof("Detected that Central %v annotations are out of date and needs to be updated", centralKey)
+		shouldUpdate = true
+	}
+
+	if !shouldUpdate && stringMapNeedsUpdating(desired.Labels, existing.Labels) {
+		glog.Infof("Detected that Central %v labels are out of date and needs to be updated", centralKey)
+		shouldUpdate = true
+	}
+
+	if shouldUpdate {
+		printCentralDiff(wouldBeCentral, existing)
+	}
+
+	return shouldUpdate, nil
 }
 
 func stringMapNeedsUpdating(desired, actual map[string]string) bool {

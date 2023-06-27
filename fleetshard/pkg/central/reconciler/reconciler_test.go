@@ -4,6 +4,11 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"github.com/stackrox/rox/pkg/utils"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 	"time"
 
@@ -850,6 +855,214 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 
 		})
 	}
+}
+
+func Test_centralNeedsUpdating(t *testing.T) {
+	var scheme = runtime.NewScheme()
+	utils.Must(clientgoscheme.AddToScheme(scheme))
+	utils.Must(v1alpha1.AddToScheme(scheme))
+
+	var central1 *v1alpha1.Central
+	var central2 *v1alpha1.Central
+
+	setup := func() {
+		objectMeta := metav1.ObjectMeta{
+			Name:      "test",
+			Namespace: "test",
+		}
+		centralSpec1 := v1alpha1.CentralSpec{
+			Central: &v1alpha1.CentralComponentSpec{
+				DeploymentSpec: v1alpha1.DeploymentSpec{
+					Resources: &v1.ResourceRequirements{
+						Limits: v1.ResourceList{
+							v1.ResourceCPU: resource.MustParse("1"),
+						},
+					},
+				},
+			},
+		}
+		centralSpec2 := v1alpha1.CentralSpec{
+			Central: &v1alpha1.CentralComponentSpec{
+				DeploymentSpec: v1alpha1.DeploymentSpec{
+					Resources: &v1.ResourceRequirements{
+						Limits: v1.ResourceList{
+							v1.ResourceCPU: resource.MustParse("2"),
+						},
+					},
+				},
+			},
+		}
+		central1 = &v1alpha1.Central{
+			ObjectMeta: objectMeta,
+			Spec:       centralSpec1,
+		}
+		central2 = &v1alpha1.Central{
+			ObjectMeta: objectMeta,
+			Spec:       centralSpec2,
+		}
+	}
+
+	t.Run("when desired is equal to existing Central, no upgrades are required", func(t *testing.T) {
+		setup()
+		existing := central1.DeepCopy()
+		existing.Annotations = map[string]string{"test": "test"}
+		existing.Labels = map[string]string{"test": "test"}
+		desired := central1.DeepCopy()
+		desired.Annotations = map[string]string{"test": "test"}
+		desired.Labels = map[string]string{"test": "test"}
+		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(existing).Build()
+
+		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
+
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+	t.Run("when desired Central spec is different from existing spec, an upgrade is required", func(t *testing.T) {
+		setup()
+		existing := central1.DeepCopy()
+		desired := central2.DeepCopy()
+		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
+
+		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
+
+		require.NoError(t, err)
+		require.True(t, got)
+	})
+	t.Run("when existing central is missing an annotation, an upgrade is required", func(t *testing.T) {
+		setup()
+		existing := central1.DeepCopy()
+		existing.Annotations = map[string]string{"foo": "bar"}
+		desired := central1.DeepCopy()
+		desired.Annotations = map[string]string{"foo": "bar", "bar": "baz"}
+		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
+
+		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
+
+		require.NoError(t, err)
+		require.True(t, got)
+	})
+	t.Run("when existing central is missing a label, an update is required", func(t *testing.T) {
+		setup()
+		existing := central1.DeepCopy()
+		existing.Labels = map[string]string{"foo": "bar"}
+		desired := central1.DeepCopy()
+		desired.Labels = map[string]string{"foo": "bar", "bar": "baz"}
+		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
+
+		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
+
+		require.NoError(t, err)
+		require.True(t, got)
+	})
+	t.Run("when existing central has extra annotations, no upgrade is required", func(t *testing.T) {
+		setup()
+		existing := central1.DeepCopy()
+		existing.Annotations = map[string]string{"foo": "bar", "bar": "baz"}
+		desired := central1.DeepCopy()
+		desired.Annotations = map[string]string{"foo": "bar"}
+		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
+
+		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
+
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+	t.Run("when existing central has extra labels, no upgrade is required", func(t *testing.T) {
+		setup()
+		existing := central1.DeepCopy()
+		existing.Labels = map[string]string{"foo": "bar", "bar": "baz"}
+		desired := central1.DeepCopy()
+		desired.Labels = map[string]string{"foo": "bar"}
+		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
+
+		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
+
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+	t.Run("when existing central is not missing labels, no upgrade is required", func(t *testing.T) {
+		setup()
+		existing := central1.DeepCopy()
+		existing.Labels = map[string]string{"foo": "bar"}
+		desired := central1.DeepCopy()
+		desired.Labels = map[string]string{"foo": "bar"}
+		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
+
+		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
+
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("when existing central is not missing annotations, no upgrade is required", func(t *testing.T) {
+		setup()
+		existing := central1.DeepCopy()
+		existing.Annotations = map[string]string{"foo": "bar"}
+		desired := central1.DeepCopy()
+		desired.Annotations = map[string]string{"foo": "bar"}
+		cli := fake.NewClientBuilder().WithScheme(scheme).WithObjects(central1).Build()
+
+		got, err := centralNeedsUpdating(context.Background(), cli, existing, desired)
+
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+}
+
+func Test_mergeLabelsAndAnnotations(t *testing.T) {
+
+	var from *v1alpha1.Central
+	var into *v1alpha1.Central
+
+	setup := func() {
+		from = &v1alpha1.Central{}
+		into = &v1alpha1.Central{}
+	}
+
+	t.Run("when from annotations is nil", func(t *testing.T) {
+		setup()
+		from.Annotations = nil
+		into.Annotations = map[string]string{"bar": "baz"}
+		mergeLabelsAndAnnotations(from, into)
+		require.Equal(t, map[string]string{"bar": "baz"}, into.Annotations)
+	})
+	t.Run("when from annotations is empty", func(t *testing.T) {
+		setup()
+		from.Annotations = map[string]string{}
+		into.Annotations = map[string]string{"bar": "baz"}
+		mergeLabelsAndAnnotations(from, into)
+		require.Equal(t, map[string]string{"bar": "baz"}, into.Annotations)
+	})
+	t.Run("when from annotations has values", func(t *testing.T) {
+		setup()
+		from.Annotations = map[string]string{"foo": "bar"}
+		into.Annotations = map[string]string{"bar": "baz"}
+		mergeLabelsAndAnnotations(from, into)
+		require.Equal(t, map[string]string{"foo": "bar", "bar": "baz"}, into.Annotations)
+	})
+	t.Run("when from labels is nil", func(t *testing.T) {
+		setup()
+		from.Labels = nil
+		into.Labels = map[string]string{"bar": "baz"}
+		mergeLabelsAndAnnotations(from, into)
+		require.Equal(t, map[string]string{"bar": "baz"}, into.Labels)
+	})
+	t.Run("when from labels is empty", func(t *testing.T) {
+		setup()
+		from.Labels = map[string]string{}
+		into.Labels = map[string]string{"bar": "baz"}
+		mergeLabelsAndAnnotations(from, into)
+		require.Equal(t, map[string]string{"bar": "baz"}, into.Labels)
+	})
+	t.Run("when from labels has values", func(t *testing.T) {
+		setup()
+		from.Labels = map[string]string{"foo": "bar"}
+		into.Labels = map[string]string{"bar": "baz"}
+		mergeLabelsAndAnnotations(from, into)
+		require.Equal(t, map[string]string{"foo": "bar", "bar": "baz"}, into.Labels)
+	})
+
 }
 
 func Test_stringMapNeedsUpdating(t *testing.T) {
