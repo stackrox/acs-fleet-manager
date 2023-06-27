@@ -348,7 +348,6 @@ func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remot
 }
 
 func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
-
 	centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
 	if err != nil {
 		return fmt.Errorf("getting Central DB connection string: %w", err)
@@ -392,29 +391,24 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 		centralExists = false
 	}
 
-	if !centralExists {
-		if central.GetAnnotations() == nil {
-			central.Annotations = map[string]string{}
-		}
-		if err := util.IncrementCentralRevision(central); err != nil {
-			return errors.Wrap(err, "incrementing central's revision")
-		}
+	lastAppliedKubeHash, err := util.MD5SumFromJSONStruct(central)
+	if err != nil {
+		return err
+	}
+	if central.GetAnnotations() == nil {
+		central.Annotations = map[string]string{}
+	}
+	central.Annotation["fleetshard-sync/last-applied"] = lastAppliedKubeHash
 
+	if !centralExists {
 		glog.Infof("Creating central %s/%s", central.GetNamespace(), central.GetName())
 		if err := r.client.Create(ctx, central); err != nil {
 			return errors.Wrapf(err, "creating new central %s/%s", remoteCentralNamespace, remoteCentralName)
 		}
 		glog.Infof("Central %s/%s created", central.GetNamespace(), central.GetName())
-	} else {
+	} else if (existingCentral.Annotations["fleetshard-sync/last-applied"] == lastAppliedKubeHash) || remoteCentral.ForceReconcile == "always" {
 		glog.Infof("Update central %s/%s", central.GetNamespace(), central.GetName())
-		existingCentral.Spec = central.Spec
-
-		if err := util.IncrementCentralRevision(&existingCentral); err != nil {
-			return errors.Wrap(err, "incrementing central's revision")
-		}
-		existingCentral.Spec = *central.Spec.DeepCopy()
-
-		if err := r.client.Update(ctx, &existingCentral); err != nil {
+		if err := r.client.Update(ctx, central); err != nil {
 			return errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
 		}
 	}
