@@ -476,7 +476,6 @@ func centralNeedsUpdating(ctx context.Context, client ctrlClient.Client, existin
 		shouldUpdate = true
 	}
 
-	// TODO: should labels and annotations be included?
 	if !shouldUpdate && stringMapNeedsUpdating(desired.Annotations, existing.Annotations) {
 		glog.Infof("Detected that Central %v annotations are out of date and needs to be updated", centralKey)
 		shouldUpdate = true
