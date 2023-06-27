@@ -210,9 +210,6 @@ components:
             tls:
               cert: ""
               key: ""
-          versions:
-            central: 2.7.0
-            centralOperator: 0.21.2
           central:
             resources:
               requests:
@@ -245,9 +242,6 @@ components:
           message: installing
           status: "False"
           lastTransitionTime: 2018-01-01T00:00:00Z
-        versions:
-          central: 2.4.1
-          centralOperator: 0.21.2
     "400InvalidIdExample":
       value:
         id: "21"
@@ -315,26 +309,11 @@ components:
           type: type
           message: message
           status: status
-        centralOperator:
-        - ready: true
-          centralVersions:
-          - centralVersions
-          - centralVersions
-          version: version
-        - ready: true
-          centralVersions:
-          - centralVersions
-          - centralVersions
-          version: version
       properties:
         conditions:
           description: The cluster data plane conditions
           items:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
-          type: array
-        centralOperator:
-          items:
-            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_centralOperator'
           type: array
       type: object
     DataPlaneCentralStatus:
@@ -347,8 +326,6 @@ components:
           items:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
           type: array
-        versions:
-          $ref: '#/components/schemas/DataPlaneCentralStatus_versions'
         routes:
           description: Routes created for a Central
           items:
@@ -547,32 +524,6 @@ components:
         message:
           type: string
         status:
-          type: string
-    DataPlaneClusterUpdateStatusRequest_centralOperator:
-      example:
-        ready: true
-        centralVersions:
-        - centralVersions
-        - centralVersions
-        version: version
-      properties:
-        ready:
-          type: boolean
-        version:
-          type: string
-        centralVersions:
-          items:
-            type: string
-          type: array
-      required:
-      - ready
-      - version
-    DataPlaneCentralStatus_versions:
-      description: Version information related to a Central
-      properties:
-        central:
-          type: string
-        centralOperator:
           type: string
     DataPlaneCentralStatus_routes:
       properties:

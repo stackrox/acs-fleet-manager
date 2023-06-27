@@ -23,15 +23,3 @@ func ConvertDinosaurRequest(request *dbapi.CentralRequest) []map[string]interfac
 		},
 	}
 }
-
-// ConvertDinosaurRequestList converts a DinosaurRequestList to the response type expected by mocket
-func ConvertDinosaurRequestList(dinosaurList dbapi.CentralList) []map[string]interface{} {
-	var dinosaurRequestList []map[string]interface{}
-
-	for _, dinosaurRequest := range dinosaurList {
-		data := ConvertDinosaurRequest(dinosaurRequest)
-		dinosaurRequestList = append(dinosaurRequestList, data...)
-	}
-
-	return dinosaurRequestList
-}
