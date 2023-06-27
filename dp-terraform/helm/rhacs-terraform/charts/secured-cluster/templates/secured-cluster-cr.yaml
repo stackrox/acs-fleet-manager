@@ -2,9 +2,6 @@ apiVersion: platform.stackrox.io/v1alpha1
 kind: SecuredCluster
 metadata:
   name: stackrox-secured-cluster-services
-  annotations:
-    # Add custom resource last.
-    "helm.sh/hook": post-install,post-upgrade
 spec:
   {{- if .Values.pullSecret }}
   imagePullSecrets:
