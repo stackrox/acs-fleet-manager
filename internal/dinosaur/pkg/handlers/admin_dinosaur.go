@@ -331,9 +331,6 @@ func (h adminCentralHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var centralUpdateReq private.CentralUpdateRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &centralUpdateReq,
-		Validate: []handlers.Validate{
-			ValidateUpdateCentralVersion(&centralUpdateReq),
-		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
