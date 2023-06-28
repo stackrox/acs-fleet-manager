@@ -172,16 +172,16 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 	assert.Len(t, deployments.Items, 0)
 }
 
-func TestDeleteOperatorNotExist(t *testing.T) {
+func TestRemoveUnusedEmpty(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 	ctx := context.Background()
 
-	err := u.Delete(ctx, []string{operatorImage1})
+	err := u.RemoveUnusedOperators(ctx, []string{})
 	require.NoError(t, err)
 }
 
-func TestDeleteOneOperator(t *testing.T) {
+func TestRemoveOneUnusedOperator(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, operatorDeployment1, serviceAccount).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 	ctx := context.Background()
@@ -191,7 +191,7 @@ func TestDeleteOneOperator(t *testing.T) {
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
 
-	err = u.Delete(ctx, []string{operatorImage1})
+	err = u.RemoveUnusedOperators(ctx, []string{operatorImage2})
 	require.NoError(t, err)
 	// deployment is deleted but service account still persist
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
@@ -200,12 +200,12 @@ func TestDeleteOneOperator(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestDeleteOneOperatorFromMany(t *testing.T) {
+func TestRemoveOneUnusedOperatorFromMany(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, operatorDeployment1, operatorDeployment2, serviceAccount).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 	ctx := context.Background()
 
-	err := u.Delete(ctx, []string{operatorImage1})
+	err := u.RemoveUnusedOperators(ctx, []string{operatorImage2})
 	require.NoError(t, err)
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.True(t, errors.IsNotFound(err))
@@ -214,8 +214,8 @@ func TestDeleteOneOperatorFromMany(t *testing.T) {
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
 
-	// delete another one
-	err = u.Delete(ctx, []string{operatorImage2})
+	// remove remaining
+	err = u.RemoveUnusedOperators(ctx, []string{})
 	require.NoError(t, err)
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.True(t, errors.IsNotFound(err))
@@ -225,12 +225,12 @@ func TestDeleteOneOperatorFromMany(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestDeleteMultipleOperators(t *testing.T) {
+func TestRemoveMultipleUnusedOperators(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, operatorDeployment1, operatorDeployment2, serviceAccount).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 	ctx := context.Background()
 
-	err := u.Delete(ctx, []string{operatorImage1, operatorImage2})
+	err := u.RemoveUnusedOperators(ctx, []string{})
 	require.NoError(t, err)
 	deployments := &appsv1.DeploymentList{}
 	err = fakeClient.List(context.Background(), deployments)

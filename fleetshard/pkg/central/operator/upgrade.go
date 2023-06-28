@@ -117,8 +117,8 @@ func (u *ACSOperatorManager) ListVersionsWithReplicas(ctx context.Context) (map[
 	return versionWithReplicas, nil
 }
 
-// Delete removes specified operator deployment based on images from the cluster
-func (u *ACSOperatorManager) Delete(ctx context.Context, images []string) error {
+// RemoveUnusedOperators removes unused operator deployments from the cluster
+func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredImages []string) error {
 	deployments := &appsv1.DeploymentList{}
 	labels := map[string]string{"app": "rhacs-operator"}
 	err := u.client.List(ctx, deployments,
@@ -129,16 +129,16 @@ func (u *ACSOperatorManager) Delete(ctx context.Context, images []string) error 
 		return fmt.Errorf("failed list operator deployments: %w", err)
 	}
 
-	var deleteDeployments []string
+	var unusedDeployments []string
 	for _, deployment := range deployments.Items {
 		for _, container := range deployment.Spec.Template.Spec.Containers {
-			if container.Name == "manager" && slices.Contains(images, container.Image) {
-				deleteDeployments = append(deleteDeployments, deployment.Name)
+			if container.Name == "manager" && !slices.Contains(desiredImages, container.Image) {
+				unusedDeployments = append(unusedDeployments, deployment.Name)
 			}
 		}
 	}
 
-	for _, deploymentName := range deleteDeployments {
+	for _, deploymentName := range unusedDeployments {
 		deployment := &appsv1.Deployment{}
 		err := u.client.Get(ctx, ctrlClient.ObjectKey{Namespace: operatorNamespace, Name: deploymentName}, deployment)
 		if err != nil && !errors.IsNotFound(err) {
