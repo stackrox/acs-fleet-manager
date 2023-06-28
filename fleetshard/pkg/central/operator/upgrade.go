@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	operatorNamespace        = "stackrox-operator"
+	operatorNamespace        = "rhacs"
 	releaseName              = "rhacs-operator"
 	operatorDeploymentPrefix = "rhacs-operator-manager"
 

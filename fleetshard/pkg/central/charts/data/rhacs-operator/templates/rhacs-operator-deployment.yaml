@@ -9,7 +9,7 @@ metadata:
   ## Name field must contain up to 63 characters
   ## https://www.rfc-editor.org/rfc/rfc1123
   name: {{ $.Values.operator.deploymentPrefix | lower }}{{ .tag | lower }}
-  namespace: stackrox-operator
+  namespace: rhacs
 spec:
   replicas: 1
   selector:
