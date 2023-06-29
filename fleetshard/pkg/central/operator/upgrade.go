@@ -117,7 +117,7 @@ func (u *ACSOperatorManager) ListVersionsWithReplicas(ctx context.Context) (map[
 	return versionWithReplicas, nil
 }
 
-// RemoveUnusedOperators removes unused operator deployments from the cluster
+// RemoveUnusedOperators removes unused operator deployments from the cluster. It receives a list of operator images which should be present in the cluster and removes all deployments which do not deploy any of the desired images.
 func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredImages []string) error {
 	deployments := &appsv1.DeploymentList{}
 	labels := map[string]string{"app": "rhacs-operator"}
