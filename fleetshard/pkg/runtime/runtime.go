@@ -245,23 +245,26 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 }
 
 func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
-	var operatorImages []string
+	var desiredOperatorImages []string
 	for _, central := range list.Items {
-		operatorImages = append(operatorImages, central.Spec.OperatorImage)
+		desiredOperatorImages = append(desiredOperatorImages, central.Spec.OperatorImage)
 	}
 	ctx := context.Background()
 
-	for _, img := range operatorImages {
+	for _, img := range desiredOperatorImages {
 		glog.Infof("Installing Operator: %s", img)
 	}
 	//TODO(ROX-15080): Download CRD on operator upgrades to always install the latest CRD
 	crdTag := "4.0.1"
-	err := r.operatorManager.InstallOrUpgrade(ctx, operatorImages, crdTag)
+	err := r.operatorManager.InstallOrUpgrade(ctx, desiredOperatorImages, crdTag)
 	if err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
 	}
 
-	// TODO: delete unused operator versions
+	err = r.operatorManager.RemoveUnusedOperators(ctx, desiredOperatorImages)
+	if err != nil {
+		glog.Warningf("Failed removing unused operators: %v", err)
+	}
 	return nil
 }
 
