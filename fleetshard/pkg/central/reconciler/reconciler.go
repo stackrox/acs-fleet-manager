@@ -4,7 +4,9 @@ package reconciler
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"sync/atomic"
 	"time"
 
@@ -30,6 +32,7 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -384,10 +387,11 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 
 	centralExists := true
 	existingCentral := v1alpha1.Central{}
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}, &existingCentral)
+	centralKey := ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: remoteCentralName}
+	err := r.client.Get(ctx, centralKey, &existingCentral)
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return errors.Wrapf(err, "unable to check the existence of central %s/%s", central.GetNamespace(), central.GetName())
+			return errors.Wrapf(err, "unable to check the existence of central %v", centralKey)
 		}
 		centralExists = false
 	}
@@ -397,29 +401,133 @@ func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral 
 			central.Annotations = map[string]string{}
 		}
 		if err := util.IncrementCentralRevision(central); err != nil {
-			return errors.Wrap(err, "incrementing central's revision")
+			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
 		}
 
-		glog.Infof("Creating central %s/%s", central.GetNamespace(), central.GetName())
+		glog.Infof("Creating Central %v", centralKey)
 		if err := r.client.Create(ctx, central); err != nil {
-			return errors.Wrapf(err, "creating new central %s/%s", remoteCentralNamespace, remoteCentralName)
+			return errors.Wrapf(err, "creating new Central %v", centralKey)
 		}
-		glog.Infof("Central %s/%s created", central.GetNamespace(), central.GetName())
+		glog.Infof("Central %v created", centralKey)
 	} else {
-		glog.Infof("Update central %s/%s", central.GetNamespace(), central.GetName())
-		existingCentral.Spec = central.Spec
+		// perform a dry run to see if the update would change anything.
+		// This would apply the defaults and the mutating webhooks without actually updating the object.
+		// We can then compare the existing object with the object that would be resulting from the update.
+		// This will prevent unnecessary operator reconciliation loops.
 
-		if err := util.IncrementCentralRevision(&existingCentral); err != nil {
-			return errors.Wrap(err, "incrementing central's revision")
+		desiredCentral := existingCentral.DeepCopy()
+		desiredCentral.Spec = *central.Spec.DeepCopy()
+		mergeLabelsAndAnnotations(central, desiredCentral)
+
+		requiresUpdate, err := centralNeedsUpdating(ctx, r.client, &existingCentral, desiredCentral)
+		if err != nil {
+			return errors.Wrapf(err, "checking if Central %v needs to be updated", centralKey)
 		}
-		existingCentral.Spec = *central.Spec.DeepCopy()
 
-		if err := r.client.Update(ctx, &existingCentral); err != nil {
-			return errors.Wrapf(err, "updating central %s/%s", central.GetNamespace(), central.GetName())
+		if !requiresUpdate {
+			glog.Infof("Central %v is already up to date", centralKey)
+			return nil
+		}
+
+		if err := util.IncrementCentralRevision(desiredCentral); err != nil {
+			return errors.Wrapf(err, "incrementing Central %v revision", centralKey)
+		}
+
+		if err := r.client.Update(ctx, desiredCentral); err != nil {
+			return errors.Wrapf(err, "updating Central %v", centralKey)
 		}
 	}
 
 	return nil
+}
+
+func mergeLabelsAndAnnotations(from, into *v1alpha1.Central) {
+	if into.Annotations == nil {
+		into.Annotations = map[string]string{}
+	}
+	if into.Labels == nil {
+		into.Labels = map[string]string{}
+	}
+	into.Annotations = mergeStringsMap(from.Annotations, into.Annotations)
+	into.Labels = mergeStringsMap(from.Labels, into.Labels)
+}
+
+func mergeStringsMap(from, into map[string]string) map[string]string {
+	var result = map[string]string{}
+	for key, value := range into {
+		result[key] = value
+	}
+	for key, value := range from {
+		result[key] = value
+	}
+	return result
+}
+
+func centralNeedsUpdating(ctx context.Context, client ctrlClient.Client, existing *v1alpha1.Central, desired *v1alpha1.Central) (bool, error) {
+	wouldBeCentral := desired.DeepCopy()
+	centralKey := ctrlClient.ObjectKey{Namespace: existing.Namespace, Name: existing.Name}
+	if err := client.Update(ctx, desired, ctrlClient.DryRunAll); err != nil {
+		return false, errors.Wrapf(err, "dry-run updating Central %v", centralKey)
+	}
+
+	var shouldUpdate = false
+	if !reflect.DeepEqual(existing.Spec, wouldBeCentral.Spec) {
+		glog.Infof("Detected that Central %v is out of date and needs to be updated", centralKey)
+		shouldUpdate = true
+	}
+
+	if !shouldUpdate && stringMapNeedsUpdating(desired.Annotations, existing.Annotations) {
+		glog.Infof("Detected that Central %v annotations are out of date and needs to be updated", centralKey)
+		shouldUpdate = true
+	}
+
+	if !shouldUpdate && stringMapNeedsUpdating(desired.Labels, existing.Labels) {
+		glog.Infof("Detected that Central %v labels are out of date and needs to be updated", centralKey)
+		shouldUpdate = true
+	}
+
+	if shouldUpdate {
+		printCentralDiff(wouldBeCentral, existing)
+	}
+
+	return shouldUpdate, nil
+}
+
+func stringMapNeedsUpdating(desired, actual map[string]string) bool {
+	if len(desired) == 0 {
+		return false
+	}
+	if actual == nil {
+		return true
+	}
+	for k, v := range desired {
+		if actual[k] != v {
+			return true
+		}
+	}
+	return false
+}
+
+func printCentralDiff(desired, actual *v1alpha1.Central) {
+	if !features.PrintCentralUpdateDiff.Enabled() {
+		return
+	}
+	desiredBytes, err := json.Marshal(desired.Spec)
+	if err != nil {
+		glog.Warningf("Failed to marshal desired Central %s/%s spec: %v", desired.Namespace, desired.Name, err)
+		return
+	}
+	actualBytes, err := json.Marshal(actual.Spec)
+	if err != nil {
+		glog.Warningf("Failed to marshal actual Central %s/%s spec: %v", desired.Namespace, desired.Name, err)
+		return
+	}
+	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(desiredBytes, actualBytes, &v1alpha1.CentralSpec{})
+	if err != nil {
+		glog.Warningf("Failed to create Central %s/%s patch: %v", desired.Namespace, desired.Name, err)
+		return
+	}
+	glog.Infof("Central %s/%s diff: %s", desired.Namespace, desired.Name, string(patchBytes))
 }
 
 func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context, remoteCentral *private.ManagedCentral) error {
