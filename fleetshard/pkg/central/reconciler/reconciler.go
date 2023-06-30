@@ -235,6 +235,7 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	// Set proxy configuration
 	envVars := getProxyEnvVars(remoteCentralNamespace)
 
+	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
@@ -285,6 +286,7 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 				Monitoring: &v1alpha1.Monitoring{
 					ExposeEndpoint: &monitoringExposeEndpointEnabled,
 				},
+				ScannerComponent: &scannerComponentEnabled,
 			},
 			Customize: &v1alpha1.CustomizeSpec{
 				EnvVars: envVars,
@@ -522,7 +524,7 @@ func printCentralDiff(desired, actual *v1alpha1.Central) {
 		glog.Warningf("Failed to marshal actual Central %s/%s spec: %v", desired.Namespace, desired.Name, err)
 		return
 	}
-	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(desiredBytes, actualBytes, &v1alpha1.CentralSpec{})
+	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(actualBytes, desiredBytes, &v1alpha1.CentralSpec{})
 	if err != nil {
 		glog.Warningf("Failed to create Central %s/%s patch: %v", desired.Namespace, desired.Name, err)
 		return
