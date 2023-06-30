@@ -6,6 +6,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/chartutil"
 
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/stretchr/testify/assert"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -25,6 +27,8 @@ const (
 	operatorImage2     = "quay.io/rhacs-eng/stackrox-operator:4.0.2"
 	crdTag1            = "4.0.1"
 	crdURL             = "https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"
+	deploymentName1    = operatorDeploymentPrefix + "-4.0.1"
+	deploymentName2    = operatorDeploymentPrefix + "-4.0.2"
 )
 
 var securedClusterCRD = &unstructured.Unstructured{
@@ -58,19 +62,9 @@ var serviceAccount = &unstructured.Unstructured{
 	},
 }
 
-var operatorDeployment1 = &appsv1.Deployment{
-	ObjectMeta: metav1.ObjectMeta{
-		Name:      "rhacs-operator-manager-4.0.1",
-		Namespace: operatorNamespace,
-	},
-}
+var operatorDeployment1 = createOperatorDeployment(deploymentName1, operatorImage1)
 
-var operatorDeployment2 = &appsv1.Deployment{
-	ObjectMeta: metav1.ObjectMeta{
-		Name:      "rhacs-operator-manager-4.0.2",
-		Namespace: operatorNamespace,
-	},
-}
+var operatorDeployment2 = createOperatorDeployment(deploymentName2, operatorImage2)
 
 var metricService = &unstructured.Unstructured{
 	Object: map[string]interface{}{
@@ -81,6 +75,23 @@ var metricService = &unstructured.Unstructured{
 			"namespace": operatorNamespace,
 		},
 	},
+}
+
+func createOperatorDeployment(name string, image string) *appsv1.Deployment {
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: operatorNamespace,
+			Labels:    map[string]string{"app": "rhacs-operator"},
+		},
+		Spec: appsv1.DeploymentSpec{
+			Template: v1.PodTemplateSpec{
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{{Name: "manager", Image: image}},
+				},
+			},
+		},
+	}
 }
 
 func TestOperatorUpgradeFreshInstall(t *testing.T) {
@@ -161,6 +172,74 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 	assert.Len(t, deployments.Items, 0)
 }
 
+func TestRemoveUnusedEmpty(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t).Build()
+	u := NewACSOperatorManager(fakeClient, crdURL)
+	ctx := context.Background()
+
+	err := u.RemoveUnusedOperators(ctx, []string{})
+	require.NoError(t, err)
+}
+
+func TestRemoveOneUnusedOperator(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t, operatorDeployment1, serviceAccount).Build()
+	u := NewACSOperatorManager(fakeClient, crdURL)
+	ctx := context.Background()
+
+	err := fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	require.NoError(t, err)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	require.NoError(t, err)
+
+	err = u.RemoveUnusedOperators(ctx, []string{operatorImage2})
+	require.NoError(t, err)
+	// deployment is deleted but service account still persist
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	require.True(t, errors.IsNotFound(err))
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	require.NoError(t, err)
+}
+
+func TestRemoveOneUnusedOperatorFromMany(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t, operatorDeployment1, operatorDeployment2, serviceAccount).Build()
+	u := NewACSOperatorManager(fakeClient, crdURL)
+	ctx := context.Background()
+
+	err := u.RemoveUnusedOperators(ctx, []string{operatorImage2})
+	require.NoError(t, err)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	require.True(t, errors.IsNotFound(err))
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
+	require.NoError(t, err)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	require.NoError(t, err)
+
+	// remove remaining
+	err = u.RemoveUnusedOperators(ctx, []string{})
+	require.NoError(t, err)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	require.True(t, errors.IsNotFound(err))
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
+	require.True(t, errors.IsNotFound(err))
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	require.NoError(t, err)
+}
+
+func TestRemoveMultipleUnusedOperators(t *testing.T) {
+	fakeClient := testutils.NewFakeClientBuilder(t, operatorDeployment1, operatorDeployment2, serviceAccount).Build()
+	u := NewACSOperatorManager(fakeClient, crdURL)
+	ctx := context.Background()
+
+	err := u.RemoveUnusedOperators(ctx, []string{})
+	require.NoError(t, err)
+	deployments := &appsv1.DeploymentList{}
+	err = fakeClient.List(context.Background(), deployments)
+	require.NoError(t, err)
+	assert.Len(t, deployments.Items, 0)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	require.NoError(t, err)
+}
+
 func TestParseOperatorImages(t *testing.T) {
 	cases := map[string]struct {
 		images     []string
@@ -170,20 +249,20 @@ func TestParseOperatorImages(t *testing.T) {
 		"should parse one valid operator image": {
 			images: []string{operatorImage1},
 			expected: []map[string]string{
-				{"repository": operatorRepository, "tag": "4.0.1"},
+				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1"},
 			},
 		},
 		"should parse two valid operator images": {
 			images: []string{operatorImage1, operatorImage2},
 			expected: []map[string]string{
-				{"repository": operatorRepository, "tag": "4.0.1"},
-				{"repository": operatorRepository, "tag": "4.0.2"},
+				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1"},
+				{"deploymentName": deploymentName2, "repository": operatorRepository, "tag": "4.0.2"},
 			},
 		},
 		"should ignore duplicate operator images": {
 			images: []string{operatorImage1, operatorImage1},
 			expected: []map[string]string{
-				{"repository": operatorRepository, "tag": "4.0.1"},
+				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1"},
 			},
 		},
 		"do not fail if images list is empty": {
@@ -193,8 +272,8 @@ func TestParseOperatorImages(t *testing.T) {
 		"should accept images from multiple repositories with the same tag": {
 			images: []string{"repo1:tag", "repo2:tag"},
 			expected: []map[string]string{
-				{"repository": "repo1", "tag": "tag"},
-				{"repository": "repo2", "tag": "tag"},
+				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo1", "tag": "tag"},
+				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo2", "tag": "tag"},
 			},
 		},
 		"fail if image does contain colon": {
@@ -220,7 +299,7 @@ func TestParseOperatorImages(t *testing.T) {
 				assert.NoError(t, err)
 				var expectedRepositoryAndTags []chartutil.Values
 				for _, m := range c.expected {
-					val := chartutil.Values{"repository": m["repository"], "tag": m["tag"]}
+					val := chartutil.Values{"deploymentName": m["deploymentName"], "repository": m["repository"], "tag": m["tag"]}
 					expectedRepositoryAndTags = append(expectedRepositoryAndTags, val)
 				}
 				assert.Equal(t, expectedRepositoryAndTags, gotImages)
