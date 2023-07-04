@@ -26,6 +26,7 @@ load_external_config fleetshard-sync FLEETSHARD_SYNC_
 load_external_config cloudwatch-exporter CLOUDWATCH_EXPORTER_
 load_external_config logging LOGGING_
 load_external_config observability OBSERVABILITY_
+load_external_config secured-cluster SECURED_CLUSTER_
 
 case $ENVIRONMENT in
   dev)
@@ -49,7 +50,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_CHANNEL="stable"
-    OPERATOR_VERSION="v4.0.2"
+    OPERATOR_VERSION="v4.1.0"
     FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
@@ -63,7 +64,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_CHANNEL="stable"
-    OPERATOR_VERSION="v4.0.2"
+    OPERATOR_VERSION="v4.1.0"
     FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
@@ -112,6 +113,9 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
     OPERATOR_SOURCE="rhacs-operators"
 fi
 
+# TODO(ROX-14547): Use parameter store value for bucket name.
+# load_external_config "audit-logs--${CLUSTER_NAME}" VECTOR_
+
 # TODO(ROX-16771): Move this to env-specific values.yaml files
 # TODO(ROX-16645): set acsOperator.enabled to false
 invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
@@ -158,7 +162,23 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" \
-  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}"
+  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" \
+  --set vector.enabled=false \
+  --set vector.service.annotations.rhacs\\.redhat\\.com/cluster-name="${CLUSTER_NAME}" \
+  --set vector.service.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}" \
+  --set vector.customConfig.sinks.aws_s3.region="${CLUSTER_REGION}" \
+  --set vector.customConfig.sinks.aws_s3.bucket="${VECTOR_BUCKET:-}" \
+  --set vector.secrets.generic.aws_access_key_id="${VECTOR_ACCESSKEY:-}" \
+  --set vector.secrets.generic.aws_secret_access_key="${VECTOR_SECRETACCESSKEY:-}" \
+  --set secured-cluster.clusterName="${CLUSTER_NAME}" \
+  --set secured-cluster.centralEndpoint="${SECURED_CLUSTER_CENTRAL_ENDPOINT}" \
+  --set secured-cluster.ca.cert="${SECURED_CLUSTER_CA_CERT}" \
+  --set secured-cluster.admissionControl.serviceTLS.cert="${SECURED_CLUSTER_ADMISSION_CONTROL_CERT}" \
+  --set secured-cluster.admissionControl.serviceTLS.key="${SECURED_CLUSTER_ADMISSION_CONTROL_KEY}" \
+  --set secured-cluster.collector.serviceTLS.cert="${SECURED_CLUSTER_COLLECTOR_CERT}" \
+  --set secured-cluster.collector.serviceTLS.key="${SECURED_CLUSTER_COLLECTOR_KEY}" \
+  --set secured-cluster.sensor.serviceTLS.cert="${SECURED_CLUSTER_SENSOR_CERT}" \
+  --set secured-cluster.sensor.serviceTLS.key="${SECURED_CLUSTER_SENSOR_KEY}"
 
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs

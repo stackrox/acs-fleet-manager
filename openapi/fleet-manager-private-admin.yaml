@@ -395,18 +395,6 @@ components:
               type: string
             failed_reason:
               type: string
-            actual_central_version:
-              type: string
-            actual_central_operator_version:
-              type: string
-            desired_central_version:
-              type: string
-            desired_central_operator_version:
-              type: string
-            central_upgrading:
-              type: boolean
-            central_operator_upgrading:
-              type: boolean
             organisation_id:
               type: string
             subscription_id:
@@ -455,10 +443,6 @@ components:
       type: object
       properties:
         # for now only support updating the following fields. May add more when use cases arise.
-        central_operator_version:
-          type: string
-        central_version:
-          type: string
         central:
           $ref: "fleet-manager.yaml#/components/schemas/CentralSpec"
         scanner:

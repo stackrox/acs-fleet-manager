@@ -14,11 +14,6 @@ data:
         supported_instance_type: "eval,standard"
         cluster_dns: "$CLUSTER_DNS"
         central_instance_limit: 5
-        available_central_operator_versions:
-          - version: "0.1.0"
-            ready: true
-            central_versions:
-              - version: "0.1.0"
   fleetshard-authz-org-ids-development.yaml: |-
     # RH ACS Organization (returned for personal tokens obtained by ocm token).
     - "11009103"

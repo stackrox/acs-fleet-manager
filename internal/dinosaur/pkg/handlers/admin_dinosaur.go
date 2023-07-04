@@ -320,7 +320,6 @@ func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.
 		return fmt.Errorf("updating ScannerSpec within CentralRequest: %w", err)
 	}
 
-	new.DesiredCentralVersion = updateRequest.CentralVersion
 	new.ForceReconcile = updateRequest.ForceReconcile
 
 	*request = new
@@ -332,9 +331,6 @@ func (h adminCentralHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var centralUpdateReq private.CentralUpdateRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &centralUpdateReq,
-		Validate: []handlers.Validate{
-			ValidateUpdateCentralVersion(&centralUpdateReq),
-		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()

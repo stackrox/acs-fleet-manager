@@ -895,7 +895,7 @@ deploy/dev-fast: deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
 deploy/dev-fast/fleet-manager: GOOS=linux
 deploy/dev-fast/fleet-manager: fleet-manager
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(SHORT_IMAGE_REF) -f Dockerfile.hybrid .
-	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF)
+	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleet-manager
 
 deploy/dev-fast/fleetshard-sync: GOOS=linux
