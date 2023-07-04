@@ -10,7 +10,7 @@ graph
 
         subgraph acs-namespace
             acs1central[Central]
-            acs1egress[egress]
+            acs1egress[egress-proxy]
             acs1scanner[Scanner]
         end
 
