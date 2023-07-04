@@ -9,7 +9,10 @@ import (
 )
 
 const (
-	FastReconcilePeriod    = 3 * time.Second
+	// FastReconcilePeriod is used for workers which are blocking provisioning time.
+	FastReconcilePeriod = 3 * time.Second
+	// DefaultReconcilePeriod is used for workers which do not transition states actively or perform
+	// time critical tasks.
 	DefaultReconcilePeriod = 30 * time.Second
 )
 
