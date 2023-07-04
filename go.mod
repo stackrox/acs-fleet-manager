@@ -7,8 +7,7 @@ require (
 	github.com/Nerzal/gocloak/v11 v11.2.0
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware/v2 v2.1.0
-	github.com/aws/aws-sdk-go v1.44.284
-	github.com/blang/semver/v4 v4.0.0
+	github.com/aws/aws-sdk-go v1.44.289
 	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/coreos/go-oidc/v3 v3.6.0
@@ -30,7 +29,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/onsi/ginkgo/v2 v2.10.0
+	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.8
 	github.com/openshift-online/ocm-sdk-go v0.1.344
 	github.com/openshift/api v3.9.1-0.20191201231411-9f834e337466+incompatible
@@ -40,7 +39,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.15.1
 	github.com/prometheus/client_model v0.4.0
-	github.com/prometheus/common v0.43.0
+	github.com/prometheus/common v0.44.0
 	github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt v0.0.0-20230323122535-49460b57cc45
 	github.com/rs/xid v1.5.0
 	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0
@@ -52,9 +51,10 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zgalor/weberr v0.8.2
-	golang.org/x/net v0.10.0
-	golang.org/x/oauth2 v0.8.0
-	golang.org/x/sys v0.8.0
+	golang.org/x/exp v0.0.0-20230124195608-d38c7dcee874
+	golang.org/x/net v0.11.0
+	golang.org/x/oauth2 v0.9.0
+	golang.org/x/sys v0.9.0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.2
@@ -77,6 +77,7 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.2.0 // indirect
+	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/blevesearch/bleve v1.0.14 // indirect
 	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect
 	github.com/blevesearch/mmap-go v1.0.2 // indirect
@@ -171,10 +172,9 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/crypto v0.8.0 // indirect
-	golang.org/x/exp v0.0.0-20230124195608-d38c7dcee874 // indirect
-	golang.org/x/term v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/crypto v0.10.0 // indirect
+	golang.org/x/term v0.9.0 // indirect
+	golang.org/x/text v0.10.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.9.3 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect

@@ -185,9 +185,6 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 			return "", ocmErrors.GeneralError(fmt.Sprintf("Failed to Unmarshal cluster details from file: %v", marshalErr))
 		}
 
-		// ignore certain fields, these should be set by each test if needed
-		cluster.AvailableCentralOperatorVersions = nil
-
 		dbConn := h.DBFactory().New()
 		if err := dbConn.FirstOrCreate(cluster, &api.Cluster{ClusterID: cluster.ClusterID}).Error; err != nil {
 			return "", ocmErrors.GeneralError(fmt.Sprintf("Failed to save cluster details to database: %v", err))
@@ -195,17 +192,6 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 		return cluster.ClusterID, nil
 	}
 	return "", nil
-}
-
-// RemoveClusterFile ...
-func RemoveClusterFile(t *testing.T) {
-	if fileExists(testClusterPath, t) {
-		if err := os.Remove(testClusterPath); err != nil {
-			t.Errorf("failed to delete file %v due to error %v", testClusterPath, err)
-		}
-	} else {
-		t.Logf("cluster file %s does not exist", testClusterPath)
-	}
 }
 
 func getMetrics(t *testing.T) string {

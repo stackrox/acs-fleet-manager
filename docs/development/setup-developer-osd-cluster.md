@@ -242,11 +242,6 @@ clusters:
    provider_type: standalone
    supported_instance_type: "eval,standard"
    cluster_dns: '${OSD_CLUSTER_NAME}.${OSD_CLUSTER_DOMAIN}'
-   available_central_operator_versions:
-     - version: "${RHACS_OPERATOR_CATALOG_VERSION}"
-       ready: true
-       central_versions:
-         - version: "${RHACS_OPERATOR_CATALOG_VERSION}"
 EOF
 ```
 

@@ -12,9 +12,7 @@ package private
 
 // CentralUpdateRequest struct for CentralUpdateRequest
 type CentralUpdateRequest struct {
-	CentralOperatorVersion string      `json:"central_operator_version,omitempty"`
-	CentralVersion         string      `json:"central_version,omitempty"`
-	Central                CentralSpec `json:"central,omitempty"`
-	Scanner                ScannerSpec `json:"scanner,omitempty"`
-	ForceReconcile         string      `json:"force_reconcile,omitempty"`
+	Central        CentralSpec `json:"central,omitempty"`
+	Scanner        ScannerSpec `json:"scanner,omitempty"`
+	ForceReconcile string      `json:"force_reconcile,omitempty"`
 }

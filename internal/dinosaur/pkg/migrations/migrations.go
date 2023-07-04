@@ -2,9 +2,9 @@ package migrations
 
 import (
 	"fmt"
-
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
+	"gorm.io/gorm"
 )
 
 // gormigrate is a wrapper for gorm's migration functions that adds schema versioning and rollback capabilities.
@@ -44,6 +44,8 @@ func getMigrations() []*gormigrate.Migration {
 		dropSkipSchedulingFromClusters(),
 		addSchedulableToClusters(),
 		addForceReconcileToCentralRequest(),
+		addOperatorImageFields(),
+		removeAvailableOperatorField(),
 	}
 }
 
@@ -60,4 +62,18 @@ func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
 		return m, f, fmt.Errorf("assembling database migration: %w", err)
 	}
 	return m, f, nil
+}
+
+func dropIfColumnExists(tx *gorm.DB, dst interface{}, columnName string) error {
+	if tx.Migrator().HasColumn(dst, columnName) {
+		return tx.Migrator().DropColumn(dst, columnName)
+	}
+	return nil
+}
+
+func addColumnIfNotExists(tx *gorm.DB, dst interface{}, columnName string) error {
+	if !tx.Migrator().HasColumn(dst, columnName) {
+		return tx.Migrator().AddColumn(dst, columnName)
+	}
+	return nil
 }

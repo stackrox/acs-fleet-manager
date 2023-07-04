@@ -13,6 +13,5 @@ package private
 // DataPlaneClusterUpdateStatusRequest Schema for the request to update a data plane cluster's status
 type DataPlaneClusterUpdateStatusRequest struct {
 	// The cluster data plane conditions
-	Conditions      []DataPlaneClusterUpdateStatusRequestConditions      `json:"conditions,omitempty"`
-	CentralOperator []DataPlaneClusterUpdateStatusRequestCentralOperator `json:"centralOperator,omitempty"`
+	Conditions []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
 }

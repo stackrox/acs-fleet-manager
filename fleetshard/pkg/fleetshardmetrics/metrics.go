@@ -31,6 +31,7 @@ type Metrics struct {
 	centralDBSnapshotsUsed      prometheus.Gauge
 	centralDBSnapshotsMax       prometheus.Gauge
 	pauseReconcileInstances     *prometheus.GaugeVec
+	operatorsHealthStatus       *prometheus.GaugeVec
 }
 
 // Register registers the metrics with the given prometheus.Registerer
@@ -48,6 +49,7 @@ func (m *Metrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.centralDBSnapshotsUsed)
 	r.MustRegister(m.centralDBSnapshotsMax)
 	r.MustRegister(m.pauseReconcileInstances)
+	r.MustRegister(m.operatorsHealthStatus)
 }
 
 // IncFleetManagerRequests increments the metric counter for fleet-manager requests
@@ -109,6 +111,16 @@ func (m *Metrics) SetPauseReconcileStatus(instance string, pauseReconcileEnabled
 	}
 
 	m.pauseReconcileInstances.With(prometheus.Labels{"instance": instance}).Set(pauseReconcileValue)
+}
+
+// SetOperatorHealthStatus sets the health status for specific operator image
+func (m *Metrics) SetOperatorHealthStatus(image string, healthy bool) {
+	var healthyVal float64
+	if healthy {
+		healthyVal = 1.0
+	}
+
+	m.operatorsHealthStatus.With(prometheus.Labels{"image": image}).Set(healthyVal)
 }
 
 // MetricsInstance return the global Singleton instance for Metrics
@@ -177,6 +189,13 @@ func newMetrics() *Metrics {
 				Help: "The pause-reconcile annotation status of all the instances managed by fleetshard-sync",
 			},
 			[]string{"instance"},
+		),
+		operatorsHealthStatus: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: metricsPrefix + "operator_health_status_images",
+				Help: "The operator health status reports all operators images installed by fleetshard-sync",
+			},
+			[]string{"image"},
 		),
 	}
 }

@@ -62,12 +62,9 @@ type CentralRequest struct {
 	// Scanner schema is defined by dbapi.ScannerSpec.
 	Scanner api.JSON `json:"scanner"`
 
-	DesiredCentralVersion         string `json:"desired_central_version"`
-	ActualCentralVersion          string `json:"actual_central_version"`
-	DesiredCentralOperatorVersion string `json:"desired_central_operator_version"`
-	ActualCentralOperatorVersion  string `json:"actual_central_operator_version"`
-	CentralUpgrading              bool   `json:"central_upgrading"`
-	CentralOperatorUpgrading      bool   `json:"central_operator_upgrading"`
+	// OperatorImage operator image which reconciles the Central instance
+	OperatorImage string `json:"desired_operator_image"`
+
 	// The type of central instance (eval or standard).
 	InstanceType string `json:"instance_type"`
 	// the quota service type for the central, e.g. ams, quota-management-list.

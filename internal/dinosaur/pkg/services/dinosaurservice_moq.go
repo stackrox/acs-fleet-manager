@@ -73,9 +73,6 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			ListCentralsWithoutAuthConfigFunc: func() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the ListCentralsWithoutAuthConfig method")
 //			},
-//			ListComponentVersionsFunc: func() ([]DinosaurComponentVersions, error) {
-//				panic("mock out the ListComponentVersions method")
-//			},
 //			ListDinosaursWithRoutesNotCreatedFunc: func() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the ListDinosaursWithRoutesNotCreated method")
 //			},
@@ -154,9 +151,6 @@ type DinosaurServiceMock struct {
 
 	// ListCentralsWithoutAuthConfigFunc mocks the ListCentralsWithoutAuthConfig method.
 	ListCentralsWithoutAuthConfigFunc func() ([]*dbapi.CentralRequest, *serviceError.ServiceError)
-
-	// ListComponentVersionsFunc mocks the ListComponentVersions method.
-	ListComponentVersionsFunc func() ([]DinosaurComponentVersions, error)
 
 	// ListDinosaursWithRoutesNotCreatedFunc mocks the ListDinosaursWithRoutesNotCreated method.
 	ListDinosaursWithRoutesNotCreatedFunc func() ([]*dbapi.CentralRequest, *serviceError.ServiceError)
@@ -268,9 +262,6 @@ type DinosaurServiceMock struct {
 		// ListCentralsWithoutAuthConfig holds details about calls to the ListCentralsWithoutAuthConfig method.
 		ListCentralsWithoutAuthConfig []struct {
 		}
-		// ListComponentVersions holds details about calls to the ListComponentVersions method.
-		ListComponentVersions []struct {
-		}
 		// ListDinosaursWithRoutesNotCreated holds details about calls to the ListDinosaursWithRoutesNotCreated method.
 		ListDinosaursWithRoutesNotCreated []struct {
 		}
@@ -334,7 +325,6 @@ type DinosaurServiceMock struct {
 	lockListByClusterID                   sync.RWMutex
 	lockListByStatus                      sync.RWMutex
 	lockListCentralsWithoutAuthConfig     sync.RWMutex
-	lockListComponentVersions             sync.RWMutex
 	lockListDinosaursWithRoutesNotCreated sync.RWMutex
 	lockPrepareDinosaurRequest            sync.RWMutex
 	lockRegisterDinosaurDeprovisionJob    sync.RWMutex
@@ -860,33 +850,6 @@ func (mock *DinosaurServiceMock) ListCentralsWithoutAuthConfigCalls() []struct {
 	mock.lockListCentralsWithoutAuthConfig.RLock()
 	calls = mock.calls.ListCentralsWithoutAuthConfig
 	mock.lockListCentralsWithoutAuthConfig.RUnlock()
-	return calls
-}
-
-// ListComponentVersions calls ListComponentVersionsFunc.
-func (mock *DinosaurServiceMock) ListComponentVersions() ([]DinosaurComponentVersions, error) {
-	if mock.ListComponentVersionsFunc == nil {
-		panic("DinosaurServiceMock.ListComponentVersionsFunc: method is nil but DinosaurService.ListComponentVersions was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockListComponentVersions.Lock()
-	mock.calls.ListComponentVersions = append(mock.calls.ListComponentVersions, callInfo)
-	mock.lockListComponentVersions.Unlock()
-	return mock.ListComponentVersionsFunc()
-}
-
-// ListComponentVersionsCalls gets all the calls that were made to ListComponentVersions.
-// Check the length with:
-//
-//	len(mockedDinosaurService.ListComponentVersionsCalls())
-func (mock *DinosaurServiceMock) ListComponentVersionsCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockListComponentVersions.RLock()
-	calls = mock.calls.ListComponentVersions
-	mock.lockListComponentVersions.RUnlock()
 	return calls
 }
 

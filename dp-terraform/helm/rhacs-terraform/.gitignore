@@ -1,0 +1,2 @@
+# Ignore downloaded external Helm bundles, built with `helm dependencies build`.
+*.tgz
