@@ -195,7 +195,7 @@ func newMetrics() *Metrics {
 				Name: metricsPrefix + "operator_health_status",
 				Help: "The operator health status reports all healthy operators installed in a data-plane cluster by fleetshard-sync.",
 			},
-			[]string{"operator-version"},
+			[]string{"operator"},
 		),
 	}
 }
