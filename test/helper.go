@@ -36,7 +36,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/stackrox/acs-fleet-manager/test/mocks"
 )
 
@@ -127,7 +126,6 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	// Set server if provided
 	if httpServer != nil && ocmConfig.MockMode == ocm.MockModeEmulateServer {
-		workers.RepeatInterval = 1 * time.Second
 		fmt.Printf("Setting OCM base URL to %s\n", httpServer.URL)
 		ocmConfig.BaseURL = httpServer.URL
 		ocmConfig.AmsURL = httpServer.URL

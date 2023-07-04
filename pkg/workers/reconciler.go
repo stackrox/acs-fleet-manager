@@ -12,15 +12,6 @@ import (
 	"github.com/golang/glog"
 )
 
-// GetRepeatIntervalInterface sets a custom repeat interval. A worker can implement this interface
-// to configure its repeat interval.
-type GetRepeatIntervalInterface interface {
-	GetRepeatInterval() time.Duration
-}
-
-// RepeatInterval ...
-var RepeatInterval = 30 * time.Second
-
 // Reconciler ...
 type Reconciler struct {
 	di.Inject
@@ -32,12 +23,7 @@ func (r *Reconciler) Start(worker Worker) {
 	worker.GetSyncGroup().Add(1)
 	worker.SetIsRunning(true)
 
-	reconcilePeriod := RepeatInterval
-	if worker.GetReconcilePeriod() == 0 {
-		reconcilePeriod = RepeatInterval
-	}
-
-	ticker := time.NewTicker(reconcilePeriod)
+	ticker := time.NewTicker(worker.GetReconcilePeriod())
 	go func() {
 		// starts reconcile immediately and then on every repeat interval
 		glog.V(1).Infoln(fmt.Sprintf("Initial reconciliation loop for %T [%s]", worker, worker.GetID()))
