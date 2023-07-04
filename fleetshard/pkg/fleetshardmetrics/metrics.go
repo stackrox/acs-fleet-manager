@@ -49,6 +49,7 @@ func (m *Metrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.centralDBSnapshotsUsed)
 	r.MustRegister(m.centralDBSnapshotsMax)
 	r.MustRegister(m.pauseReconcileInstances)
+	r.MustRegister(m.operatorsHealthStatus)
 }
 
 // IncFleetManagerRequests increments the metric counter for fleet-manager requests
@@ -188,6 +189,13 @@ func newMetrics() *Metrics {
 				Help: "The pause-reconcile annotation status of all the instances managed by fleetshard-sync",
 			},
 			[]string{"instance"},
+		),
+		operatorsHealthStatus: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: metricsPrefix + "operator_health_status_images",
+				Help: "The operator health status reports all operators images installed by fleetshard-sync",
+			},
+			[]string{"image"},
 		),
 	}
 }
