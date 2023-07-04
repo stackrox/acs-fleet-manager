@@ -192,10 +192,10 @@ func newMetrics() *Metrics {
 		),
 		operatorsHealthStatus: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
-				Name: metricsPrefix + "operator_health_status",
-				Help: "The operator health status reports all healthy operators installed in a data-plane cluster by fleetshard-sync.",
+				Name: metricsPrefix + "operator_health_status_images",
+				Help: "The operator health status reports all operators images installed by fleetshard-sync",
 			},
-			[]string{"operator"},
+			[]string{"image"},
 		),
 	}
 }
