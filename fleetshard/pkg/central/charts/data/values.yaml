@@ -1,0 +1,5 @@
+operator:
+  images:
+    - repository: quay.io/rhacs-eng/stackrox-operator
+      tag: v4.0.0
+      selectorTag: test123

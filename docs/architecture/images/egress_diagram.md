@@ -19,8 +19,8 @@ graph
         acs1egress-->acs1rdsp
     end
 
-    subgraph Customer Cluster
-        c1s1[Sensor]
+    subgraph Internet
+        c1s1[External Service]
     end
 
     acs1egress-->c1s1
