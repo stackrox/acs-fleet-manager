@@ -41,6 +41,7 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"512Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"500m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"512Mi"}"
+    SECURED_CLUSTER_ENABLED="true"
     ;;
 
   stage)
@@ -55,6 +56,7 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
+    SECURED_CLUSTER_ENABLED="true"
     ;;
 
   prod)
@@ -69,6 +71,7 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
+    SECURED_CLUSTER_ENABLED="false"
     ;;
 
   *)
@@ -170,6 +173,7 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set vector.customConfig.sinks.aws_s3.bucket="${VECTOR_BUCKET:-}" \
   --set vector.secrets.generic.aws_access_key_id="${VECTOR_ACCESSKEY:-}" \
   --set vector.secrets.generic.aws_secret_access_key="${VECTOR_SECRETACCESSKEY:-}" \
+  --set secured-cluster.enabled="${SECURED_CLUSTER_ENABLED}" \
   --set secured-cluster.clusterName="${CLUSTER_NAME}" \
   --set secured-cluster.centralEndpoint="${SECURED_CLUSTER_CENTRAL_ENDPOINT}" \
   --set secured-cluster.ca.cert="${SECURED_CLUSTER_CA_CERT}" \
