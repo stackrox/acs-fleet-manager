@@ -31,9 +31,10 @@ func NewProvisioningDinosaurManager(dinosaurService services.DinosaurService, ob
 	metrics.InitReconcilerMetricsForType(provisioningCentralWorkerType)
 	return &ProvisioningDinosaurManager{
 		BaseWorker: workers.BaseWorker{
-			ID:         uuid.New().String(),
-			WorkerType: provisioningCentralWorkerType,
-			Reconciler: workers.Reconciler{},
+			ID:              uuid.New().String(),
+			WorkerType:      provisioningCentralWorkerType,
+			Reconciler:      workers.Reconciler{},
+			ReconcilePeriod: workers.FastReconcilePeriod,
 		},
 		dinosaurService:       dinosaurService,
 		observatoriumService:  observatoriumService,

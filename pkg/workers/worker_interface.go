@@ -2,9 +2,15 @@ package workers
 
 import (
 	"sync"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
+)
+
+const (
+	FastReconcilePeriod    = 3 * time.Second
+	DefaultReconcilePeriod = 30 * time.Second
 )
 
 // Worker ...
@@ -20,16 +26,18 @@ type Worker interface {
 	GetSyncGroup() *sync.WaitGroup
 	IsRunning() bool
 	SetIsRunning(val bool)
+	GetReconcilePeriod() time.Duration
 }
 
 // BaseWorker ...
 type BaseWorker struct {
-	ID           string
-	WorkerType   string
-	Reconciler   Reconciler
-	isRunning    bool
-	imStop       chan struct{}
-	syncTeardown sync.WaitGroup
+	ID              string
+	WorkerType      string
+	Reconciler      Reconciler
+	isRunning       bool
+	imStop          chan struct{}
+	syncTeardown    sync.WaitGroup
+	ReconcilePeriod time.Duration
 }
 
 // GetID ...
@@ -74,4 +82,12 @@ func (b *BaseWorker) StopWorker(w Worker) {
 	b.Reconciler.Stop(w)
 	metrics.ResetMetricsForCentralManagers()
 	metrics.SetLeaderWorkerMetric(b.WorkerType, false)
+}
+
+// GetReconcilePeriod returns the reconcile period.
+func (b *BaseWorker) GetReconcilePeriod() time.Duration {
+	if b.ReconcilePeriod == 0 {
+		return DefaultReconcilePeriod
+	}
+	return b.ReconcilePeriod
 }
