@@ -24,4 +24,5 @@ graph
     end
 
     acs1egress-->c1s1
+    acs1scanner-->c1s1
 ```
