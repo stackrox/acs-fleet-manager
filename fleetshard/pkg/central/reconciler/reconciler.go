@@ -438,7 +438,7 @@ func (r *CentralReconciler) reconcileCentralAuditLogNotifier(ctx context.Context
 
 		existingConfigData, foundAuditLogNotifier := secret.Data[auditLogNotifierKey]
 		if foundAuditLogNotifier {
-			configurations, err := declarativeconfigclone.ConfigurationFromRawBytes(existingConfigData)
+			configurations, err := declarativeconfig.ConfigurationFromRawBytes(existingConfigData)
 			if err != nil {
 				return fmt.Errorf("getting declarative configuration data for audit log notifier: %w", err)
 			}
