@@ -663,6 +663,9 @@ func (r *CentralReconciler) ensureCentralAuditLogNotifierSecretCleaned(ctx conte
 	}
 	err := r.client.Get(ctx, secretKey, secret)
 	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return nil
+		}
 		return err
 	}
 
