@@ -98,6 +98,7 @@ else
     "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
 fi
 
+load_external_config "audit-logs/${CLUSTER_NAME}" VECTOR_
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 if [[ "${ENVIRONMENT}" != "dev" ]]; then
     oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
@@ -115,9 +116,6 @@ if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
 
     OPERATOR_SOURCE="rhacs-operators"
 fi
-
-# TODO(ROX-14547): Use parameter store value for bucket name.
-# load_external_config "audit-logs--${CLUSTER_NAME}" VECTOR_
 
 # TODO(ROX-16771): Move this to env-specific values.yaml files
 # TODO(ROX-16645): set acsOperator.enabled to false
@@ -169,13 +167,13 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" \
   --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" \
-  --set vector.enabled=false \
-  --set vector.service.annotations.rhacs\\.redhat\\.com/cluster-name="${CLUSTER_NAME}" \
-  --set vector.service.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}" \
-  --set vector.customConfig.sinks.aws_s3.region="${CLUSTER_REGION}" \
-  --set vector.customConfig.sinks.aws_s3.bucket="${VECTOR_BUCKET:-}" \
-  --set vector.secrets.generic.aws_access_key_id="${VECTOR_ACCESSKEY:-}" \
-  --set vector.secrets.generic.aws_secret_access_key="${VECTOR_SECRETACCESSKEY:-}" \
+  --set audit-logs.enabled=true \
+  --set audit-logs.annotations.rhacs\\.redhat\\.com/cluster-name="${CLUSTER_NAME}" \
+  --set audit-logs.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}" \
+  --set audit-logs.customConfig.sinks.aws_cloudwatch_logs.region="${CLUSTER_REGION}" \
+  --set audit-logs.customConfig.sinks.aws_cloudwatch_logs.group_name="${VECTOR_LOG_GROUP_NAME}" \
+  --set audit-logs.secrets.aws_region="${CLUSTER_REGION:-}" \
+  --set audit-logs.secrets.aws_role_arn="${VECTOR_ROLE_ARN:-}" \
   --set secured-cluster.enabled="${SECURED_CLUSTER_ENABLED}" \
   --set secured-cluster.clusterName="${CLUSTER_NAME}" \
   --set secured-cluster.centralEndpoint="${SECURED_CLUSTER_CENTRAL_ENDPOINT}" \
