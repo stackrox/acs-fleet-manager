@@ -62,7 +62,7 @@ const (
 
 	declarativeConfigurationFeatureFlagName = "ROX_DECLARATIVE_CONFIGURATION"
 
-	auditLogNotifierKey = "rhacs.redhat.com/auditLogNotifier"
+	auditLogNotifierKey = "com.redhat.rhacs.auditLogNotifier"
 	auditLogEndpoint    = "https://rhacs-vector.rhacs:8888"
 	auditLogTenantIDKey = "tenant_id"
 
