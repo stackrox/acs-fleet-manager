@@ -98,7 +98,10 @@ else
     "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
 fi
 
+echo "Loading external config: audit-logs/${CLUSTER_NAME}"
 load_external_config "audit-logs/${CLUSTER_NAME}" AUDIT_LOGS_
+
+echo "Loading external config: cluster-${CLUSTER_NAME}"
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 if [[ "${ENVIRONMENT}" != "dev" ]]; then
     oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
