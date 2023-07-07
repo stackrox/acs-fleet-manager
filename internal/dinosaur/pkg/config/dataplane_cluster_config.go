@@ -13,7 +13,7 @@ import (
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )

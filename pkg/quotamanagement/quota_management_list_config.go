@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 // QuotaManagementListConfig ...
