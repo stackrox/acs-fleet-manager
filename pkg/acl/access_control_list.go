@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // DeniedUsers ...

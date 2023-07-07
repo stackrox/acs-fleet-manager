@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var _ environments.ConfigModule = (*AdminRoleAuthZConfig)(nil)
