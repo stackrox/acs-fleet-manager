@@ -98,7 +98,7 @@ else
     "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
 fi
 
-load_external_config "audit-logs/${CLUSTER_NAME}" VECTOR_
+load_external_config "audit-logs/${CLUSTER_NAME}" AUDIT_LOGS_
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 if [[ "${ENVIRONMENT}" != "dev" ]]; then
     oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
@@ -171,9 +171,9 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set audit-logs.annotations.rhacs\\.redhat\\.com/cluster-name="${CLUSTER_NAME}" \
   --set audit-logs.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}" \
   --set audit-logs.customConfig.sinks.aws_cloudwatch_logs.region="${CLUSTER_REGION}" \
-  --set audit-logs.customConfig.sinks.aws_cloudwatch_logs.group_name="${VECTOR_LOG_GROUP_NAME}" \
+  --set audit-logs.customConfig.sinks.aws_cloudwatch_logs.group_name="${AUDIT_LOGS_LOG_GROUP_NAME}" \
   --set audit-logs.secrets.aws_region="${CLUSTER_REGION:-}" \
-  --set audit-logs.secrets.aws_role_arn="${VECTOR_ROLE_ARN:-}" \
+  --set audit-logs.secrets.aws_role_arn="${AUDIT_LOGS_ROLE_ARN:-}" \
   --set secured-cluster.enabled="${SECURED_CLUSTER_ENABLED}" \
   --set secured-cluster.clusterName="${CLUSTER_NAME}" \
   --set secured-cluster.centralEndpoint="${SECURED_CLUSTER_CENTRAL_ENDPOINT}" \
