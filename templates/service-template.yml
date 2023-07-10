@@ -866,7 +866,7 @@ objects:
                         route:
                           cluster: backend
                         typed_per_filter_config:
-                          lua_filter_with_custom_name_1:
+                          lua_security_headers:
                             "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
                             source_code:
                               inline_string: |
@@ -941,6 +941,10 @@ objects:
                   #           cluster_name: limiter
                   #       transport_api_version: V3
 
+                  # This allows Lua scripts to be run during response flow
+                  - name: lua_security_headers
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
                   # This is mandatory in order to have the HTTP routes above.
                   - name: envoy.filters.http.router
 
