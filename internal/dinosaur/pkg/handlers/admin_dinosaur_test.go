@@ -193,6 +193,13 @@ func Test_updateCentralRequest(t *testing.T) {
 			wantErr: func(t *testing.T, err error) {
 				assert.Error(t, err)
 			},
+		}, {
+			name:  "should fail if the resource value is invalid",
+			state: `{"scanner":{"analyzer":{"resources":{"limits":{"cpu":"1","memory":"1"},"requests":{"cpu":"1","memory":"1"}}}}}`,
+			patch: `{"scanner":{"analyzer":{"resources":{"limits":{"cpu":foo}}}}}`,
+			wantErr: func(t *testing.T, err error) {
+				assert.Error(t, err)
+			},
 		},
 	}
 	for _, tt := range tests {
