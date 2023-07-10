@@ -246,15 +246,15 @@ func ValidateScannerAnalyzerScaling(scaling *dbapi.ScannerAnalyzerScaling) error
 	return nil
 }
 
-// ValidateResourceName checks if the given name denotes a supported resource.
-func ValidateResourceName(name string) (corev1.ResourceName, bool) {
-	resourceName := corev1.ResourceName(name)
+// validateResourceName checks if the given name denotes a supported resource.
+func validateResourceName(name corev1.ResourceName) (corev1.ResourceName, bool) {
+	resourceName := name
 	for _, supportedResource := range supportedResources {
 		if supportedResource == resourceName {
 			return resourceName, true
 		}
 	}
-	return corev1.ResourceName(""), false
+	return "", false
 }
 
 // ValidateCentralDefaultVersion validates the given version
