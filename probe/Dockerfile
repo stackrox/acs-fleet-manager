@@ -24,6 +24,8 @@ CMD ["start"]
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.8 as standard
 
+RUN microdnf install shadow-utils
+
 RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user
 USER unprivilegeduser
