@@ -222,7 +222,7 @@ func validateCoreV1Resources(to *corev1.ResourceRequirements) error {
 	return nil
 }
 
-// validateCentralSpec updates the CentralSpec using the non-zero fields from the API's CentralSpec.
+// validateCentralSpec validates the CentralSpec using the non-zero fields from the API's CentralSpec.
 func validateCentralSpec(c *dbapi.CentralSpec) error {
 	err := validateCoreV1Resources(&c.Resources)
 	if err != nil {
@@ -231,25 +231,17 @@ func validateCentralSpec(c *dbapi.CentralSpec) error {
 	return nil
 }
 
-// validateScannerSpec updates the ScannerSpec using the non-zero fields from the API's ScannerSpec.
+// validateScannerSpec validates the ScannerSpec using the non-zero fields from the API's ScannerSpec.
 func validateScannerSpec(s *dbapi.ScannerSpec) error {
 	var err error
 	err = validateCoreV1Resources(&s.Analyzer.Resources)
 	if err != nil {
 		return fmt.Errorf("updating resources within ScannerSpec Analyzer: %w", err)
 	}
-	err = validateScannerAnalyzerScaling(&s.Analyzer.Scaling)
-	if err != nil {
-		return fmt.Errorf("updating scaling configuration within ScannerSpec Analyzer: %w", err)
-	}
 	err = validateCoreV1Resources(&s.Db.Resources)
 	if err != nil {
 		return fmt.Errorf("updating resources within ScannerSpec DB: %w", err)
 	}
-	return nil
-}
-
-func validateScannerAnalyzerScaling(s *dbapi.ScannerAnalyzerScaling) error {
 	return nil
 }
 
@@ -298,6 +290,23 @@ func updateCentralRequest(request *dbapi.CentralRequest, strategicPatch []byte) 
 		return fmt.Errorf("unmarshalling merged CentralRequest: %w", err)
 	}
 
+	if merged.Central == nil {
+		merged.Central = &dbapi.CentralSpec{}
+	}
+
+	if merged.Scanner == nil {
+		merged.Scanner = &dbapi.ScannerSpec{}
+	}
+
+	err = validateCentralSpec(merged.Central)
+	if err != nil {
+		return fmt.Errorf("updating CentralSpec from CentralUpdateRequest: %w", err)
+	}
+	err = validateScannerSpec(merged.Scanner)
+	if err != nil {
+		return fmt.Errorf("updating ScannerSpec from CentralUpdateRequest: %w", err)
+	}
+
 	newCentralBytes, err := json.Marshal(merged.Central)
 	if err != nil {
 		return fmt.Errorf("marshalling CentralSpec: %w", err)
@@ -305,39 +314,6 @@ func updateCentralRequest(request *dbapi.CentralRequest, strategicPatch []byte) 
 	newScannerBytes, err := json.Marshal(merged.Scanner)
 	if err != nil {
 		return fmt.Errorf("marshalling ScannerSpec: %w", err)
-	}
-
-	if string(newCentralBytes) == "null" {
-		var emptyCentral = dbapi.CentralSpec{}
-		newCentralBytes, err = json.Marshal(emptyCentral)
-		if err != nil {
-			return fmt.Errorf("marshalling empty CentralSpec: %w", err)
-		}
-	}
-	if string(newScannerBytes) == "null" {
-		var emptyScanner = dbapi.ScannerSpec{}
-		newScannerBytes, err = json.Marshal(emptyScanner)
-		if err != nil {
-			return fmt.Errorf("marshalling empty ScannerSpec: %w", err)
-		}
-	}
-
-	var newCentral dbapi.CentralSpec
-	if err := json.Unmarshal(newCentralBytes, &newCentral); err != nil {
-		return fmt.Errorf("unmarshalling new CentralSpec: %w", err)
-	}
-	var newScanner dbapi.ScannerSpec
-	if err := json.Unmarshal(newScannerBytes, &newScanner); err != nil {
-		return fmt.Errorf("unmarshalling new ScannerSpec: %w", err)
-	}
-
-	err = validateCentralSpec(&newCentral)
-	if err != nil {
-		return fmt.Errorf("updating CentralSpec from CentralUpdateRequest: %w", err)
-	}
-	err = validateScannerSpec(&newScanner)
-	if err != nil {
-		return fmt.Errorf("updating ScannerSpec from CentralUpdateRequest: %w", err)
 	}
 
 	request.Central = newCentralBytes
