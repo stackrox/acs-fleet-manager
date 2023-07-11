@@ -7,7 +7,7 @@ require (
 	github.com/matryer/moq v0.3.2
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/segmentio/chamber/v2 v2.13.1
-	gotest.tools/gotestsum v1.10.0
+	gotest.tools/gotestsum v1.10.1
 )
 
 require (
