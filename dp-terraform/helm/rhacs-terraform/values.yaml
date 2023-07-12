@@ -50,6 +50,11 @@ fleetshardSync:
     limits:
       cpu: "500m"
       memory: "512Mi"
+  imageCredentials:
+    registry: quay.io
+    username: ""
+    password: ""
+    email: "quayuser@example.com"
 
 acsOperator:
   enabled: false
