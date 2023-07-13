@@ -2,6 +2,7 @@ apiVersion: platform.stackrox.io/v1alpha1
 kind: SecuredCluster
 metadata:
   name: stackrox-secured-cluster-services
+  namespace: {{ include "secured-cluster.namespace" . }}
 spec:
   {{- if .Values.pullSecret }}
   imagePullSecrets:
