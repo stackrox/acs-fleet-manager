@@ -27,6 +27,7 @@ load_external_config cloudwatch-exporter CLOUDWATCH_EXPORTER_
 load_external_config logging LOGGING_
 load_external_config observability OBSERVABILITY_
 load_external_config secured-cluster SECURED_CLUSTER_
+load_external_config quay/rhacs-eng QUAY_
 
 case $ENVIRONMENT in
   dev)
@@ -105,7 +106,6 @@ fi
 OPERATOR_SOURCE="redhat-operators"
 OPERATOR_USE_UPSTREAM="${OPERATOR_USE_UPSTREAM:-false}"
 if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
-    load_external_config quay/rhacs-eng QUAY_
     quay_basic_auth="${QUAY_READ_ONLY_USERNAME}:${QUAY_READ_ONLY_PASSWORD}"
     pull_secret_json="$(mktemp)"
     trap 'rm -f "${pull_secret_json}"' EXIT
@@ -149,6 +149,9 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set fleetshardSync.resources.requests.memory="${FLEETSHARD_SYNC_MEMORY_REQUEST}" \
   --set fleetshardSync.resources.limits.cpu="${FLEETSHARD_SYNC_CPU_LIMIT}" \
   --set fleetshardSync.resources.limits.memory="${FLEETSHARD_SYNC_MEMORY_LIMIT}" \
+  --set fleetshardSync.imageCredentials.registry="quay.io" \
+  --set fleetshardSync.imageCredentials.username="${QUAY_READ_ONLY_USERNAME}" \
+  --set fleetshardSync.imageCredentials.password="${QUAY_READ_ONLY_PASSWORD}" \
   --set cloudwatch.aws.accessKeyId="${CLOUDWATCH_EXPORTER_AWS_ACCESS_KEY_ID:-}" \
   --set cloudwatch.aws.secretAccessKey="${CLOUDWATCH_EXPORTER_AWS_SECRET_ACCESS_KEY:-}" \
   --set cloudwatch.clusterName="${CLUSTER_NAME}" \
