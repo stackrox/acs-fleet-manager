@@ -131,6 +131,7 @@ func (r *Runtime) Start() error {
 		}
 
 		if features.TargetedOperatorUpgrades.Enabled() {
+			glog.Info("Starting operator upgrades")
 			err := r.upgradeOperator(list)
 			if err != nil {
 				err = errors.Wrapf(err, "Upgrading operator")
@@ -249,11 +250,13 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	for _, central := range list.Items {
 		desiredOperatorImages = append(desiredOperatorImages, central.Spec.OperatorImage)
 	}
+
 	ctx := context.Background()
 
 	for _, img := range desiredOperatorImages {
 		glog.Infof("Installing Operator: %s", img)
 	}
+
 	//TODO(ROX-15080): Download CRD on operator upgrades to always install the latest CRD
 	crdTag := "4.0.1"
 	err := r.operatorManager.InstallOrUpgrade(ctx, desiredOperatorImages, crdTag)

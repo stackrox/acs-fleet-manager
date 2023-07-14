@@ -4,6 +4,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
@@ -18,32 +19,42 @@ import (
 const (
 	operatorNamespace        = "rhacs"
 	releaseName              = "rhacs-operator"
-	operatorDeploymentPrefix = "rhacs-operator-manager"
+	operatorDeploymentPrefix = "rhacs-operator"
 
 	// deployment names should contain at most 63 characters
 	// RFC 1035 Label Names: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
 	maxOperatorDeploymentNameLength = 63
 )
 
+func GetRepoAndSHA256FromImage(img string) (string, string, error) {
+	if !strings.Contains(img, ":") {
+		return "", "", fmt.Errorf("failed to parse image %q", img)
+	}
+	strs := strings.Split(img, ":")
+	if len(strs) != 2 {
+		return "", "", fmt.Errorf("failed to split image and tag from %q", img)
+	}
+	repo, tag := strs[0], strs[1]
+
+	return repo, tag, nil
+}
+
 func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 	var operatorImages []chartutil.Values
 	uniqueImages := make(map[string]bool)
 	for _, img := range images {
-		if !strings.Contains(img, ":") {
-			return nil, fmt.Errorf("failed to parse image %q", img)
+		repo, tag, err := GetRepoAndSHA256FromImage(img)
+		if err != nil {
+			return nil, err
 		}
-		strs := strings.Split(img, ":")
-		if len(strs) != 2 {
-			return nil, fmt.Errorf("failed to split image and tag from %q", img)
-		}
-		repo, tag := strs[0], strs[1]
+
 		deploymentName := generateDeploymentName(tag)
 		if len(deploymentName) > maxOperatorDeploymentNameLength {
 			return nil, fmt.Errorf("%s contains more than %d characters and cannot be used as a deployment name", deploymentName, maxOperatorDeploymentNameLength)
 		}
 		if _, used := uniqueImages[repo+tag]; !used {
 			uniqueImages[repo+tag] = true
-			img := chartutil.Values{"deploymentName": deploymentName, "repository": repo, "tag": tag}
+			img := chartutil.Values{"deploymentName": deploymentName, "repository": repo, "tag": tag, "labelSelector": GetValidSelectorTag(tag)}
 			operatorImages = append(operatorImages, img)
 		}
 	}
@@ -57,15 +68,41 @@ type ACSOperatorManager struct {
 	resourcesChart *chart.Chart
 }
 
-// InstallOrUpgrade provisions or upgrades an existing ACS Operator(s) from helm chart template
+// ACSOperatorImage operator image representation which tells when to download CRD or skip it
+type ACSOperatorImage struct {
+	Image      string
+	InstallCRD bool
+}
+
+var urlRegexExp *regexp.Regexp
+
+func init() {
+	var err error
+	urlRegexExp, err = regexp.Compile("/[^a-z0-9\\-_]/g")
+	if err != nil {
+		panic(fmt.Errorf("invalid URL regex, could not be compiled %w", err))
+	}
+}
+
+// GetValidSelectorTag returns a valid selector string which can be used in a kubernetes metadata label.
+func GetValidSelectorTag(tag string) string {
+	return urlRegexExp.ReplaceAllString(tag, "")
+}
+
+// InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
 func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []string, crdTag string) error {
+	if len(images) == 0 {
+		return nil
+	}
+
 	operatorImages, err := parseOperatorImages(images)
 	if err != nil {
 		return fmt.Errorf("failed to parse images: %w", err)
 	}
 	chartVals := chartutil.Values{
 		"operator": chartutil.Values{
-			"images": operatorImages,
+			"images":               operatorImages,
+			"centralLabelSelector": true,
 		},
 	}
 
@@ -73,6 +110,7 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 	if crdTag != "" {
 		dynamicTemplatesUrls = u.generateCRDTemplateUrls(crdTag)
 	}
+
 	u.resourcesChart = charts.MustGetChart("rhacs-operator", dynamicTemplatesUrls)
 	objs, err := charts.RenderToObjects(releaseName, operatorNamespace, u.resourcesChart, chartVals)
 	if err != nil {

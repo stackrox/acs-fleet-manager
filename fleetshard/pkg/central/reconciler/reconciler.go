@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"reflect"
 	"sync/atomic"
 	"time"
@@ -43,7 +44,8 @@ const (
 	FreeStatus int32 = iota
 	BlockedStatus
 
-	PauseReconcileAnnotation = "stackrox.io/pause-reconcile"
+	PauseReconcileAnnotation  = "stackrox.io/pause-reconcile"
+	ReconcileOperatorSelector = "rhacs.redhat.com/version-selector"
 
 	helmReleaseName = "tenant-resources"
 
@@ -54,8 +56,6 @@ const (
 	instanceTypeLabelKey      = "rhacs.redhat.com/instance-type"
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
-	operatorVersionKey        = "stackrox.io/operator-version"
-	defaultOperatorVersion    = "rhacs-operator.v3.74.0"
 
 	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
 	dbUserTypeMaster     = "master"
@@ -235,6 +235,11 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	// Set proxy configuration
 	envVars := getProxyEnvVars(remoteCentralNamespace)
 
+	_, imageSHA256, err := operator.GetRepoAndSHA256FromImage(remoteCentral.Spec.OperatorImage)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid image")
+	}
+
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
@@ -249,7 +254,6 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 			Annotations: map[string]string{
 				managedServicesAnnotation: "true",
 				orgNameAnnotationKey:      remoteCentral.Spec.Auth.OwnerOrgName,
-				// TODO(ROX-17718): Set reconciler selection label for Central
 			},
 		},
 		Spec: v1alpha1.CentralSpec{
@@ -305,9 +309,7 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	}
 
 	if features.TargetedOperatorUpgrades.Enabled() {
-		labels := central.ObjectMeta.Labels
-		labels[operatorVersionKey] = defaultOperatorVersion
-		central.ObjectMeta.Labels = labels
+		central.Labels[ReconcileOperatorSelector] = operator.GetValidSelectorTag(imageSHA256)
 	}
 
 	return central, nil

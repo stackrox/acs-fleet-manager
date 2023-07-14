@@ -183,7 +183,9 @@ func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
 			UseRoutes: true,
 		})
 
-	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	exampleCentral := simpleManagedCentral
+	exampleCentral.Spec.OperatorImage = "quay.io/rhacs-eng/stackrox-operator:4.1.0"
+	status, err := r.Reconcile(context.TODO(), exampleCentral)
 	require.NoError(t, err)
 	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
 	require.True(t, ok)
@@ -192,7 +194,7 @@ func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
-	assert.Equal(t, defaultOperatorVersion, central.ObjectMeta.Labels[operatorVersionKey])
+	assert.Equal(t, "4.1.0", central.ObjectMeta.Labels[ReconcileOperatorSelector])
 }
 
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
