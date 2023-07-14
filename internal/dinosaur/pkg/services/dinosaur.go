@@ -410,6 +410,7 @@ func (k *dinosaurService) Get(ctx context.Context, id string) (*dbapi.CentralReq
 		}
 		return nil, services.HandleGetError(resourceTypeStr, "id", id, err)
 	}
+
 	return &dinosaurRequest, nil
 }
 

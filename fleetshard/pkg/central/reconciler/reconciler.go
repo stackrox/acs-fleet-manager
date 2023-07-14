@@ -235,7 +235,7 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	// Set proxy configuration
 	envVars := getProxyEnvVars(remoteCentralNamespace)
 
-	_, imageSHA256, err := operator.GetRepoAndSHA256FromImage(remoteCentral.Spec.OperatorImage)
+	_, imageSHA256, err := operator.GetRepoAndTagFromImage(remoteCentral.Spec.OperatorImage)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid image")
 	}

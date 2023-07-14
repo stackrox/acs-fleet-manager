@@ -26,7 +26,8 @@ const (
 	maxOperatorDeploymentNameLength = 63
 )
 
-func GetRepoAndSHA256FromImage(img string) (string, string, error) {
+// GetRepoAndTagFromImage returns the repo and image tag
+func GetRepoAndTagFromImage(img string) (string, string, error) {
 	if !strings.Contains(img, ":") {
 		return "", "", fmt.Errorf("failed to parse image %q", img)
 	}
@@ -43,7 +44,7 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 	var operatorImages []chartutil.Values
 	uniqueImages := make(map[string]bool)
 	for _, img := range images {
-		repo, tag, err := GetRepoAndSHA256FromImage(img)
+		repo, tag, err := GetRepoAndTagFromImage(img)
 		if err != nil {
 			return nil, err
 		}
@@ -66,12 +67,6 @@ type ACSOperatorManager struct {
 	client         ctrlClient.Client
 	crdURL         string
 	resourcesChart *chart.Chart
-}
-
-// ACSOperatorImage operator image representation which tells when to download CRD or skip it
-type ACSOperatorImage struct {
-	Image      string
-	InstallCRD bool
 }
 
 var urlRegexExp *regexp.Regexp
