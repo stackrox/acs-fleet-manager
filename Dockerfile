@@ -34,8 +34,8 @@ RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user
 USER unprivilegeduser
 
-COPY --from=build-standard /src/fleet-manager /src/fleetshard-sync /usr/local/bin/
-COPY --from=build /rds_ca /usr/local/share/ca-certificates
+COPY --chown=unprivilegeduser --from=build-standard /src/fleet-manager /src/fleetshard-sync /usr/local/bin/
+COPY --chown=unprivilegeduser --from=build /rds_ca /usr/local/share/ca-certificates
 EXPOSE 8000
 WORKDIR /
 ENTRYPOINT ["/usr/local/bin/fleet-manager", "serve"]
