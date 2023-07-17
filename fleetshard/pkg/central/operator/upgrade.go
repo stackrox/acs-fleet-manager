@@ -24,12 +24,6 @@ const (
 	operatorDeploymentPrefix = "rhacs-operator"
 )
 
-// DeploymentConfig represents operator configuration for deployment
-type DeploymentConfig struct {
-	Image  string
-	GitRef string
-}
-
 func parseOperatorConfigs(operators OperatorConfigs) ([]chartutil.Values, error) {
 	var helmValues []chartutil.Values
 	for _, operator := range operators.Configs {
