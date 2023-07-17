@@ -6,9 +6,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/stackrox/rox/pkg/urlfmt"
 	"gopkg.in/yaml.v2"
+	appsv1 "k8s.io/api/apps/v1"
 	"net/url"
 	"reflect"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -75,6 +78,8 @@ const (
 	centralDeletePollInterval = 5 * time.Second
 
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
+
+	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -92,26 +97,27 @@ type CentralReconcilerOptions struct {
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client            ctrlClient.Client
-	central           private.ManagedCentral
-	status            *int32
-	lastCentralHash   [16]byte
-	useRoutes         bool
-	wantsAuthProvider bool
-	hasAuthProvider   bool
-	Resources         bool
-	routeService      *k8s.RouteService
-	egressProxyImage  string
-	telemetry         config.Telemetry
-	clusterName       string
-	environment       string
-	auditLogging      config.AuditLogging
+	client           ctrlClient.Client
+	central          private.ManagedCentral
+	status           *int32
+	lastCentralHash  [16]byte
+	useRoutes        bool
+	Resources        bool
+	routeService     *k8s.RouteService
+	egressProxyImage string
+	telemetry        config.Telemetry
+	clusterName      string
+	environment      string
+	auditLogging     config.AuditLogging
 
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
 	managedDBInitFunc           postgres.CentralDBInitFunc
 
 	resourcesChart *chart.Chart
+
+	lastAuthProviderConfigHash [16]byte
+	wantsAuthProvider          bool
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -141,10 +147,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	central, err := r.getInstanceConfig(&remoteCentral)
 	if err != nil {
-		return nil, err
-	}
-
-	if err = r.reconcileAuthProviderConfig(ctx, &remoteCentral, central); err != nil {
 		return nil, err
 	}
 
@@ -204,7 +206,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return installingStatus(), nil
 	}
 
-	if err = r.reconcileAuthProvider(ctx, &remoteCentral); err != nil {
+	if err := r.reconcileAuthProviderConfigDeclarative(ctx, &remoteCentral, central); err != nil {
 		return nil, err
 	}
 
@@ -220,6 +222,23 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	return status, nil
+}
+
+func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, central *private.ManagedCentral) (bool, error) {
+	deployment := &appsv1.Deployment{}
+	err := client.Get(ctx,
+		ctrlClient.ObjectKey{Name: "central", Namespace: central.Metadata.Namespace},
+		deployment)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, errors.Wrap(err, "retrieving central deployment resource from Kubernetes")
+	}
+	if deployment.Status.AvailableReplicas > 0 && deployment.Status.UnavailableReplicas == 0 {
+		return true, nil
+	}
+	return false, nil
 }
 
 func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
@@ -353,29 +372,145 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	return central, nil
 }
 
-func (r *CentralReconciler) reconcileAuthProviderConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
-	remoteCentralName := remoteCentral.Metadata.Name
-	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
-	// Check whether auth provider is actually created and this reconciler just is not aware of that.
-	if r.wantsAuthProvider && !r.hasAuthProvider {
-		exists, err := existsRHSSOAuthProvider(ctx, remoteCentral, r.client)
-		if err != nil {
-			return err
-		}
-		// If sso.redhat.com auth provider exists, there is no need for admin/password login.
-		// We also store whether auth provider exists within reconciler instance to avoid polluting network.
-		if exists {
-			glog.Infof("Auth provider for %s/%s already exists", remoteCentralNamespace, remoteCentralName)
-			r.hasAuthProvider = true
-		}
+func (r *CentralReconciler) reconcileAuthProviderConfigDeclarative(ctx context.Context,
+	remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+	if !r.wantsAuthProvider {
+		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(false)
+		return nil
 	}
 
-	if r.hasAuthProvider {
-		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
+	central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
+	return r.ensureSecretExists(ctx, remoteCentral.Metadata.Namespace, sensibleDeclarativeConfigSecretName,
+		func(secret *corev1.Secret) (bool, error) {
+			authProviderConfig := &declarativeconfig.AuthProvider{
+				Name:             authProviderName(remoteCentral),
+				MinimumRoleName:  "None",
+				UIEndpoint:       remoteCentral.Spec.UiEndpoint.Host,
+				ExtraUIEndpoints: []string{"localhost:8443"}, // TODO(dhaus): Check with Ivan whether we actually need this still?
+				Groups: []declarativeconfig.Group{
+					{
+						AttributeKey:   "userid",
+						AttributeValue: remoteCentral.Spec.Auth.OwnerUserId,
+						RoleName:       "Admin",
+					},
+					{
+						AttributeKey:   "groups",
+						AttributeValue: "admin:org:all",
+						RoleName:       "Admin",
+					},
+					{
+						AttributeKey:   "rh_is_org_admin",
+						AttributeValue: "true",
+						RoleName:       "Admin",
+					},
+				},
+				RequiredAttributes: []declarativeconfig.RequiredAttribute{
+					{
+						AttributeKey:   "rh_org_id",
+						AttributeValue: remoteCentral.Spec.Auth.OwnerOrgId,
+					},
+				},
+				ClaimMappings: []declarativeconfig.ClaimMapping{
+					{
+						Path: "realm_access.roles",
+						Name: "groups",
+					},
+					{
+						Path: "org_id",
+						Name: "rh_org_id",
+					},
+					{
+						Path: "is_org_admin",
+						Name: "rh_is_org_admin",
+					},
+				},
+				OIDCConfig: &declarativeconfig.OIDCConfig{
+					Issuer:                    remoteCentral.Spec.Auth.Issuer,
+					CallbackMode:              "post",
+					ClientID:                  remoteCentral.Spec.Auth.ClientId,
+					ClientSecret:              remoteCentral.Spec.Auth.ClientSecret, // pragma: allowlist secret
+					DisableOfflineAccessScope: true,
+				},
+			}
+
+			if secret.Data == nil {
+				secret.Data = map[string][]byte{}
+			}
+
+			authProviderHash, err := util.MD5SumFromJSONStruct(authProviderConfig)
+			if err != nil {
+				return false, fmt.Errorf("creating hash for auth provider config: %w", err)
+			}
+
+			requiresReconciliation, err := checkForAuthConfigReconciliation(secret, authProviderHash)
+			if err != nil {
+				return false, fmt.Errorf("checking whether auth provider config requires reconciliation: %w", err)
+			}
+
+			if !requiresReconciliation {
+				return false, nil
+			}
+
+			authProviderBytes, err := yaml.Marshal(authProviderConfig)
+			if err != nil {
+				return false, fmt.Errorf("marshalling auth provider config: %w", err)
+			}
+			secret.Data[authProviderDeclarativeConfigKey] = authProviderBytes
+			return true, nil
+		})
+}
+
+// authProviderName deduces auth provider name from issuer URL.
+func authProviderName(central *private.ManagedCentral) (name string) {
+	switch {
+	case strings.Contains(central.Spec.Auth.Issuer, "sso.stage.redhat"):
+		name = "Red Hat SSO (stage)"
+	case strings.Contains(central.Spec.Auth.Issuer, "sso.redhat"):
+		name = "Red Hat SSO"
+	default:
+		name = urlfmt.GetServerFromURL(central.Spec.Auth.Issuer)
+	}
+	if name == "" {
+		name = "SSO"
+	}
+	return
+}
+
+// checkForAuthConfigReconciliation reads the auth configuration contained within the given secret and indicates
+// whether the config requires updates based on the given hash.
+// It returns true in case a reconciliation is required.
+func checkForAuthConfigReconciliation(secret *corev1.Secret, existingConfigHash [16]byte) (bool, error) {
+	// Short-circuit if this is the first time we are reconciling the secret after creation.
+	if secret.Data == nil {
+		secret.Data = map[string][]byte{}
+		return true, nil
 	}
 
-	return nil
+	existingAuthProviderBytes, exists := secret.Data[authProviderDeclarativeConfigKey]
+	if !exists {
+		return true, nil
+	}
+
+	configs, err := declarativeconfig.ConfigurationFromRawBytes(existingAuthProviderBytes)
+	if err != nil {
+		return false, fmt.Errorf("unmarshalling existing auth provider config: %w", err)
+	}
+	if len(configs) == 0 {
+		return true, nil
+	}
+
+	// We currently only expect a single auth provider configuration to be stored under the key.
+	authProviderConfig, ok := configs[0].(*declarativeconfig.AuthProvider)
+	if !ok || authProviderConfig == nil {
+		return true, nil
+	}
+
+	hash, err := util.MD5SumFromJSONStruct(authProviderConfig)
+	if err != nil {
+		return false, fmt.Errorf("creating hash for existing auth provider config: %w", err)
+	}
+
+	return !bytes.Equal(hash[:], existingConfigHash[:]), nil
 }
 
 func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (*private.DataPlaneCentralStatus, error) {
@@ -628,22 +763,6 @@ func printCentralDiff(desired, actual *v1alpha1.Central) {
 		return
 	}
 	glog.Infof("Central %s/%s diff: %s", desired.Namespace, desired.Name, string(patchBytes))
-}
-
-func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context, remoteCentral *private.ManagedCentral) error {
-	// Skip auth provider initialisation if:
-	// 1. Auth provider is already created
-	// 2. OR reconciler creator specified auth provider not to be created
-	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
-	if r.wantsAuthProvider && !r.hasAuthProvider && !isRemoteCentralReady(remoteCentral) {
-		err := createRHSSOAuthProvider(ctx, remoteCentral, r.client)
-		if err != nil {
-			return err
-		}
-		r.hasAuthProvider = true
-	}
-
-	return nil
 }
 
 func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
@@ -1233,7 +1352,7 @@ func (r *CentralReconciler) chartValues(_ private.ManagedCentral) (chartutil.Val
 }
 
 func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
-	return r.wantsAuthProvider == r.hasAuthProvider &&
+	return r.lastAuthProviderConfigHash != [16]byte{} &&
 		isRemoteCentralReady(&remoteCentral)
 }
 
