@@ -6,16 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/stackrox/rox/pkg/urlfmt"
 	"gopkg.in/yaml.v2"
-	appsv1 "k8s.io/api/apps/v1"
 	"net/url"
-	"reflect"
-	"strings"
-	"sync/atomic"
-	"time"
-
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 
 	containerImage "github.com/containers/image/docker/reference"
 	"github.com/golang/glog"
@@ -30,7 +22,9 @@ import (
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/random"
 	"helm.sh/helm/v3/pkg/chart"
@@ -44,6 +38,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+
+	"reflect"
+	"sync/atomic"
+	"time"
 )
 
 // FreeStatus ...
@@ -224,23 +222,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	return status, nil
 }
 
-func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, central *private.ManagedCentral) (bool, error) {
-	deployment := &appsv1.Deployment{}
-	err := client.Get(ctx,
-		ctrlClient.ObjectKey{Name: "central", Namespace: central.Metadata.Namespace},
-		deployment)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return false, nil
-		}
-		return false, errors.Wrap(err, "retrieving central deployment resource from Kubernetes")
-	}
-	if deployment.Status.AvailableReplicas > 0 && deployment.Status.UnavailableReplicas == 0 {
-		return true, nil
-	}
-	return false, nil
-}
-
 func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
 	if remoteCentral == nil {
 		return nil, errInvalidArguments
@@ -380,7 +361,7 @@ func (r *CentralReconciler) reconcileAuthProviderConfigDeclarative(ctx context.C
 	}
 
 	central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
-	return r.ensureSecretExists(ctx, remoteCentral.Metadata.Namespace, sensibleDeclarativeConfigSecretName,
+	err := r.ensureSecretExists(ctx, remoteCentral.Metadata.Namespace, sensibleDeclarativeConfigSecretName,
 		func(secret *corev1.Secret) (bool, error) {
 			authProviderConfig := &declarativeconfig.AuthProvider{
 				Name:             authProviderName(remoteCentral),
@@ -458,22 +439,20 @@ func (r *CentralReconciler) reconcileAuthProviderConfigDeclarative(ctx context.C
 			secret.Data[authProviderDeclarativeConfigKey] = authProviderBytes
 			return true, nil
 		})
-}
+	if err != nil {
+		return err
+	}
 
-// authProviderName deduces auth provider name from issuer URL.
-func authProviderName(central *private.ManagedCentral) (name string) {
-	switch {
-	case strings.Contains(central.Spec.Auth.Issuer, "sso.stage.redhat"):
-		name = "Red Hat SSO (stage)"
-	case strings.Contains(central.Spec.Auth.Issuer, "sso.redhat"):
-		name = "Red Hat SSO"
-	default:
-		name = urlfmt.GetServerFromURL(central.Spec.Auth.Issuer)
+	// Since the auth provider is an integral part, we have to verify that it will be created successfully and listed
+	// within the list of available auth providers.
+	authProviderExists := concurrency.WaitInContext(concurrency.NewPoller(func() bool {
+		exists, legacy, _ := hasDefaultAuthProvider(ctx, remoteCentral, r.client)
+		return exists && !legacy
+	}, 5*time.Second), ctx)
+	if authProviderExists {
+		return nil
 	}
-	if name == "" {
-		name = "SSO"
-	}
-	return
+	return errors.New("failed to verify that the auth provider exists within Central API")
 }
 
 // checkForAuthConfigReconciliation reads the auth configuration contained within the given secret and indicates
