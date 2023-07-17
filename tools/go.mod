@@ -6,13 +6,13 @@ require (
 	github.com/go-bindata/go-bindata/v3 v3.1.4-0.20210427095211-26949cc13d95
 	github.com/matryer/moq v0.3.2
 	github.com/onsi/ginkgo/v2 v2.11.0
-	github.com/segmentio/chamber/v2 v2.13.1
+	github.com/segmentio/chamber/v2 v2.13.2
 	gotest.tools/gotestsum v1.10.1
 )
 
 require (
 	github.com/alessio/shellescape v1.4.1 // indirect
-	github.com/aws/aws-sdk-go v1.44.280 // indirect
+	github.com/aws/aws-sdk-go v1.44.298 // indirect
 	github.com/dnephin/pflag v1.0.7 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
