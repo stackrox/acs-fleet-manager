@@ -49,6 +49,7 @@ const (
 
 	helmReleaseName = "tenant-resources"
 
+	centralPVCAnnotationKey   = "platform.stackrox.io/obsolete-central-pvc"
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 	envAnnotationKey          = "rhacs.redhat.com/environment"
 	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
@@ -252,6 +253,7 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 				orgIDLabelKey:         remoteCentral.Spec.Auth.OwnerOrgId,
 			},
 			Annotations: map[string]string{
+				centralPVCAnnotationKey:   "true",
 				managedServicesAnnotation: "true",
 				orgNameAnnotationKey:      remoteCentral.Spec.Auth.OwnerOrgName,
 			},

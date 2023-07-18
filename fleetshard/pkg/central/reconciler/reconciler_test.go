@@ -118,6 +118,7 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, central.Spec.Customize.Labels[orgIDLabelKey])
 	assert.Equal(t, simpleManagedCentral.Spec.Central.InstanceType, central.Spec.Customize.Labels[instanceTypeLabelKey])
 	assert.Equal(t, "1", central.GetAnnotations()[util.RevisionAnnotationKey])
+	assert.Equal(t, "true", central.GetAnnotations()[centralPVCAnnotationKey])
 	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
 
