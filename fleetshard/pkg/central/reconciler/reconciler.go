@@ -238,7 +238,7 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 
 	_, imageSHA256, err := operator.GetRepoAndTagFromImage(remoteCentral.Spec.OperatorImage)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid image")
+		return nil, errors.Wrapf(err, "invalid image: %s", remoteCentral.Spec.OperatorImage)
 	}
 
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled

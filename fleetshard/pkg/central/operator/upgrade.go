@@ -55,7 +55,12 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 		}
 		if _, used := uniqueImages[repo+tag]; !used {
 			uniqueImages[repo+tag] = true
-			img := chartutil.Values{"deploymentName": deploymentName, "repository": repo, "tag": tag, "labelSelector": GetValidSelectorTag(tag)}
+			img := chartutil.Values{
+				"deploymentName": deploymentName,
+				"repository":     repo,
+				"tag":            tag,
+				"labelSelector":  GetValidSelectorTag(tag),
+			}
 			operatorImages = append(operatorImages, img)
 		}
 	}

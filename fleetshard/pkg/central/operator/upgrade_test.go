@@ -162,7 +162,7 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 
-	operatorImageWithLongTag := "quay.io/rhacs-eng/stackrox-operator:4.0.1-with-ridiculously-long-tag-version-name"
+	operatorImageWithLongTag := "quay.io/rhacs-eng/stackrox-operator:4.0.1-with-ridiculously-long-tag-version-name-like-really-long-one"
 	err := u.InstallOrUpgrade(context.Background(), []string{operatorImageWithLongTag}, crdTag1)
 	require.Errorf(t, err, "zero tags parsed from images")
 
@@ -249,20 +249,20 @@ func TestParseOperatorImages(t *testing.T) {
 		"should parse one valid operator image": {
 			images: []string{operatorImage1},
 			expected: []map[string]string{
-				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1"},
+				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1", "labelSelector": "4.0.1"},
 			},
 		},
 		"should parse two valid operator images": {
 			images: []string{operatorImage1, operatorImage2},
 			expected: []map[string]string{
-				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1"},
-				{"deploymentName": deploymentName2, "repository": operatorRepository, "tag": "4.0.2"},
+				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1", "labelSelector": "4.0.1"},
+				{"deploymentName": deploymentName2, "repository": operatorRepository, "tag": "4.0.2", "labelSelector": "4.0.2"},
 			},
 		},
 		"should ignore duplicate operator images": {
 			images: []string{operatorImage1, operatorImage1},
 			expected: []map[string]string{
-				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1"},
+				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1", "labelSelector": "4.0.1"},
 			},
 		},
 		"do not fail if images list is empty": {
@@ -272,8 +272,8 @@ func TestParseOperatorImages(t *testing.T) {
 		"should accept images from multiple repositories with the same tag": {
 			images: []string{"repo1:tag", "repo2:tag"},
 			expected: []map[string]string{
-				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo1", "tag": "tag"},
-				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo2", "tag": "tag"},
+				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo1", "tag": "tag", "labelSelector": "tag"},
+				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo2", "tag": "tag", "labelSelector": "tag"},
 			},
 		},
 		"fail if image does contain colon": {
@@ -285,7 +285,7 @@ func TestParseOperatorImages(t *testing.T) {
 			shouldFail: true,
 		},
 		"fail if image tag is too long": {
-			images:     []string{"quay.io/image-name:1.2.3-with-ridiculously-long-tag-version-name"},
+			images:     []string{"quay.io/image-name:1.2.3-with-ridiculously-long-tag-version-name-like-really-long-one"},
 			shouldFail: true,
 		},
 	}
@@ -299,7 +299,12 @@ func TestParseOperatorImages(t *testing.T) {
 				assert.NoError(t, err)
 				var expectedRepositoryAndTags []chartutil.Values
 				for _, m := range c.expected {
-					val := chartutil.Values{"deploymentName": m["deploymentName"], "repository": m["repository"], "tag": m["tag"]}
+					val := chartutil.Values{
+						"deploymentName": m["deploymentName"],
+						"repository":     m["repository"],
+						"tag":            m["tag"],
+						"labelSelector":  m["labelSelector"],
+					}
 					expectedRepositoryAndTags = append(expectedRepositoryAndTags, val)
 				}
 				assert.Equal(t, expectedRepositoryAndTags, gotImages)

@@ -49,6 +49,8 @@ const (
 	conditionTypeReady        = "Ready"
 	clusterName               = "test-cluster"
 	environment               = "test"
+	operatorVersion           = "4.0.1"
+	operatorImage             = "quay.io/rhacs-eng/stackrox-operator:" + operatorVersion
 )
 
 var simpleManagedCentral = private.ManagedCentral{
@@ -71,6 +73,7 @@ var simpleManagedCentral = private.ManagedCentral{
 		Central: private.ManagedCentralAllOfSpecCentral{
 			InstanceType: "standard",
 		},
+		OperatorImage: operatorImage,
 	},
 }
 
@@ -184,9 +187,7 @@ func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
 			UseRoutes: true,
 		})
 
-	exampleCentral := simpleManagedCentral
-	exampleCentral.Spec.OperatorImage = "quay.io/rhacs-eng/stackrox-operator:4.1.0"
-	status, err := r.Reconcile(context.TODO(), exampleCentral)
+	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
 	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
 	require.True(t, ok)
@@ -195,7 +196,7 @@ func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
-	assert.Equal(t, "4.1.0", central.ObjectMeta.Labels[ReconcileOperatorSelector])
+	assert.Equal(t, operatorVersion, central.ObjectMeta.Labels[ReconcileOperatorSelector])
 }
 
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
