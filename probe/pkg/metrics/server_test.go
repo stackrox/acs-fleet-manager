@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/stretchr/testify/assert"
@@ -15,13 +16,14 @@ import (
 type metricResponse map[string]*io_prometheus_client.MetricFamily
 
 func TestMetricsServerCorrectAddress(t *testing.T) {
-	server := NewMetricsServer(":8081")
+	server := NewMetricsServer(":8081", regionValue)
 	defer server.Close()
 	assert.Equal(t, ":8081", server.Addr)
 }
 
 func TestMetricsServerServesDefaultMetrics(t *testing.T) {
-	metrics := serveMetrics(t, newMetrics())
+	registry := initPrometheus(newMetrics(), regionValue)
+	metrics := serveMetrics(t, registry)
 	assert.Contains(t, metrics, "go_memstats_alloc_bytes", "expected metrics to contain go default metrics but it did not")
 }
 
@@ -35,7 +37,8 @@ func TestMetricsServerServesCustomMetrics(t *testing.T) {
 	customMetrics.SetLastSuccessTimestamp(regionValue)
 	customMetrics.SetLastFailureTimestamp(regionValue)
 	customMetrics.ObserveTotalDuration(time.Minute, regionValue)
-	metrics := serveMetrics(t, customMetrics)
+	registry := initPrometheus(customMetrics, regionValue)
+	metrics := serveMetrics(t, registry)
 
 	expectedKeys := []string{
 		"acs_probe_runs_started_total",
@@ -52,12 +55,12 @@ func TestMetricsServerServesCustomMetrics(t *testing.T) {
 	}
 }
 
-func serveMetrics(t *testing.T, customMetrics *Metrics) metricResponse {
+func serveMetrics(t *testing.T, registry *prometheus.Registry) metricResponse {
 	rec := httptest.NewRecorder()
 	req, err := http.NewRequest(http.MethodGet, "/metrics", nil)
 	require.NoError(t, err, "failed creating metrics requests")
 
-	server := newMetricsServer(":8081", customMetrics)
+	server := newMetricsServer(":8081", registry)
 	defer server.Close()
 	server.Handler.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code, "status code should be OK")
