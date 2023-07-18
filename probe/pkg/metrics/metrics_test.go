@@ -6,11 +6,20 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var regionValue = "us-east-1"
+
+func getMetricSeries(t *testing.T, registry *prometheus.Registry, name string) *io_prometheus_client.Metric {
+	metrics := serveMetrics(t, registry)
+	require.Contains(t, metrics, name)
+	targetMetric := metrics[name]
+	require.NotEmpty(t, targetMetric.Metric)
+	return targetMetric.Metric[0]
+}
 
 func TestCounterIncrements(t *testing.T) {
 	const expectedIncrement = 1.0
@@ -43,15 +52,12 @@ func TestCounterIncrements(t *testing.T) {
 		tc := tc
 		t.Run(tc.metricName, func(t *testing.T) {
 			m := newMetrics()
+			registry := initPrometheus(m, regionValue)
 			tc.callIncrementFunc(m)
 
-			metrics := serveMetrics(t, m)
-			require.Contains(t, metrics, tc.metricName)
-			targetMetric := metrics[tc.metricName]
+			targetSeries := getMetricSeries(t, registry, tc.metricName)
 
 			// Test that the metrics value is 1 after calling the incrementFunc.
-			require.NotEmpty(t, targetMetric.Metric)
-			targetSeries := targetMetric.Metric[0]
 			value := targetSeries.GetCounter().GetValue()
 			assert.Equalf(t, expectedIncrement, value, "metric %s has unexpected value", tc.metricName)
 			label := targetSeries.GetLabel()[0]
@@ -90,16 +96,17 @@ func TestTimestampGauges(t *testing.T) {
 		tc := tc
 		t.Run(tc.metricName, func(t *testing.T) {
 			m := newMetrics()
+			registry := initPrometheus(m, regionValue)
 			lowerBound := time.Now().Unix()
+
+			targetSeries := getMetricSeries(t, registry, tc.metricName)
+			value := int64(targetSeries.GetGauge().GetValue())
+			assert.Zero(t, value)
+
 			tc.callSetTimestampFunc(m)
 
-			metrics := serveMetrics(t, m)
-			require.Contains(t, metrics, tc.metricName)
-			targetMetric := metrics[tc.metricName]
-
-			require.NotEmpty(t, targetMetric.Metric)
-			targetSeries := targetMetric.Metric[0]
-			value := int64(targetSeries.GetGauge().GetValue())
+			targetSeries = getMetricSeries(t, registry, tc.metricName)
+			value = int64(targetSeries.GetGauge().GetValue())
 			assert.GreaterOrEqualf(t, value, lowerBound, "metric %s has unexpected value", tc.metricName)
 			label := targetSeries.GetLabel()[0]
 			assert.Containsf(t, label.GetName(), regionLabelName, "metric %s has unexpected label", tc.metricName)
@@ -126,16 +133,13 @@ func TestHistograms(t *testing.T) {
 		tc := tc
 		t.Run(tc.metricName, func(t *testing.T) {
 			m := newMetrics()
+			registry := initPrometheus(m, regionValue)
 			expectedCount := uint64(2)
 			expectedSum := 480.0
 			tc.callObserveFunc(m)
 
-			metrics := serveMetrics(t, m)
-			require.Contains(t, metrics, tc.metricName)
-			targetMetric := metrics[tc.metricName]
+			targetSeries := getMetricSeries(t, registry, tc.metricName)
 
-			require.NotEmpty(t, targetMetric.Metric)
-			targetSeries := targetMetric.Metric[0]
 			count := targetSeries.GetHistogram().GetSampleCount()
 			sum := targetSeries.GetHistogram().GetSampleSum()
 			assert.Equalf(t, expectedCount, count, "expected metric: %s to have a count of %v", tc.metricName, expectedCount)
