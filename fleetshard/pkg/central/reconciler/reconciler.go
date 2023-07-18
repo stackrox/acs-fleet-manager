@@ -63,7 +63,6 @@ const (
 	declarativeConfigurationFeatureFlagName = "ROX_DECLARATIVE_CONFIGURATION"
 
 	auditLogNotifierKey = "com.redhat.rhacs.auditLogNotifier"
-	auditLogEndpoint    = "https://rhacs-vector.rhacs:8888"
 	auditLogTenantIDKey = "tenant_id"
 
 	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
@@ -108,6 +107,9 @@ type CentralReconciler struct {
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
 	managedDBInitFunc           postgres.CentralDBInitFunc
+
+	auditLogTargetHost string
+	auditLogTargetPort int
 
 	resourcesChart *chart.Chart
 }
@@ -248,7 +250,10 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	}
 
 	// Set proxy configuration
-	envVars := getProxyEnvVars(remoteCentralNamespace)
+	extraDirectTargets := map[string][]int{
+		r.auditLogTargetHost: {r.auditLogTargetPort},
+	}
+	envVars := getProxyEnvVars(remoteCentralNamespace, extraDirectTargets)
 
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
 	// Activate Declarative configuration feature
@@ -410,12 +415,13 @@ func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remote
 }
 
 func (r *CentralReconciler) reconcileCentralAuditLogNotifier(ctx context.Context, remoteCentral *private.ManagedCentral) error {
+	auditLogEndpoint := fmt.Sprintf("https://%s:%d", r.auditLogTargetHost, r.auditLogTargetPort)
 	return r.ensureSecretExists(ctx, remoteCentral.Metadata.Namespace, "Audit Log Notifier", sensibleDeclarativeConfigSecretName, func(secret *corev1.Secret) error {
 		auditLogNotifierConfig := &declarativeconfig.Notifier{
 			Name: "ACSCS Audit Logs",
 			GenericConfig: &declarativeconfig.GenericConfig{
 				Endpoint:            auditLogEndpoint,
-				SkipTLSVerify:       false,
+				SkipTLSVerify:       true,
 				AuditLoggingEnabled: true,
 				ExtraFields: []declarativeconfig.KeyValuePair{
 					{
@@ -1349,7 +1355,7 @@ func (r *CentralReconciler) ensureSecretExists(
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
 	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
-	opts CentralReconcilerOptions,
+	opts CentralReconcilerOptions, auditLogConfig config.AuditLogging,
 ) *CentralReconciler {
 	return &CentralReconciler{
 		client:            k8sClient,
@@ -1366,6 +1372,9 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,
 		managedDBInitFunc:           managedDBInitFunc,
+
+		auditLogTargetHost: auditLogConfig.AuditLogTargetHost,
+		auditLogTargetPort: auditLogConfig.AuditLogTargetPort,
 
 		resourcesChart: resourcesChart,
 	}

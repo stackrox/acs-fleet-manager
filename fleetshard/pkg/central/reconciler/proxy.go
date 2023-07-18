@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func getProxyEnvVars(namespace string) []corev1.EnvVar {
+func getProxyEnvVars(namespace string, additionalDirectTargets map[string][]int) []corev1.EnvVar {
 	var envVars []corev1.EnvVar
 	proxyURL := fmt.Sprintf("http://egress-proxy.%s.svc:3128", namespace)
 	// Use both upper- and lowercase env var names for maximum compatibility.
@@ -32,6 +32,11 @@ func getProxyEnvVars(namespace string) []corev1.EnvVar {
 				fmt.Sprintf("%s.%s:%d", svcName, namespace, port),
 				fmt.Sprintf("%s.%s.svc:%d", svcName, namespace, port),
 			)
+		}
+	}
+	for targetHost, ports := range additionalDirectTargets {
+		for _, port := range ports {
+			noProxyTargets = append(noProxyTargets, fmt.Sprintf("%s:%d", targetHost, port))
 		}
 	}
 	sort.Strings(noProxyTargets) // ensure deterministic output

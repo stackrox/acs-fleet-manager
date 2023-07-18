@@ -31,6 +31,8 @@ type Config struct {
 
 	ManagedDB ManagedDB
 	Telemetry Telemetry
+
+	AuditLogging AuditLogging
 }
 
 // ManagedDB for configuring managed DB specific parameters
@@ -39,6 +41,12 @@ type ManagedDB struct {
 	SecurityGroup       string `env:"MANAGED_DB_SECURITY_GROUP"`
 	SubnetGroup         string `env:"MANAGED_DB_SUBNET_GROUP"`
 	PerformanceInsights bool   `env:"MANAGED_DB_PERFORMANCE_INSIGHTS" envDefault:"false"`
+}
+
+// AuditLogging defines the parameter of the audit logging target.
+type AuditLogging struct {
+	AuditLogTargetHost string `env:"AUDIT_LOG_HOST" envDefault:"audit-logs-aggregator.rhacs-audit-logs"`
+	AuditLogTargetPort int    `env:"AUDIT_LOG_PORT" envDefault:"8888"`
 }
 
 // Telemetry defines parameters for pushing telemetry to a remote storage.
