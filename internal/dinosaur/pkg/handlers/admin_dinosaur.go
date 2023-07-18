@@ -36,6 +36,8 @@ type AdminCentralHandler interface {
 	Update(w http.ResponseWriter, r *http.Request)
 	// Delete a central
 	Delete(w http.ResponseWriter, r *http.Request)
+	// DbDelete deletes a central from the database
+	DbDelete(w http.ResponseWriter, r *http.Request)
 	// SetCentralDefaultVersion sets the default version for a central
 	SetCentralDefaultVersion(w http.ResponseWriter, r *http.Request)
 	// GetCentralDefaultVersion gets the default version for a central
