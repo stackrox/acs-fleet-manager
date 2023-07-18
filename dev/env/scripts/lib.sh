@@ -51,7 +51,7 @@ init() {
 
     kubectl cluster-info  | grep -E "stage|prod|openshiftapps"
     if [[ "$?" -eq 0 ]]; then
-        echo "Executing against prod or staging not allowed. Please check your kubectl conetxt."
+        echo "Executing against prod or staging not allowed. Please check your kubectl context."
         exit 1
     fi
 
