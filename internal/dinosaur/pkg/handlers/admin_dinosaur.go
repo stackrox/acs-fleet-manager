@@ -439,6 +439,10 @@ func (g gitOpsAdminHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "not implemented", http.StatusNotImplemented)
 }
 
+func (g gitOpsAdminHandler) DbDelete(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
 func (g gitOpsAdminHandler) SetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "not implemented", http.StatusNotImplemented)
 }
