@@ -42,6 +42,13 @@ func (m *Metrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.lastFailureTimestamp)
 }
 
+// Init sets initial values for the gauge metrics.
+func (m *Metrics) Init(region string) {
+	m.lastFailureTimestamp.With(prometheus.Labels{regionLabelName: region}).Set(0)
+	m.lastStartedTimestamp.With(prometheus.Labels{regionLabelName: region}).Set(0)
+	m.lastSuccessTimestamp.With(prometheus.Labels{regionLabelName: region}).Set(0)
+}
+
 // IncStartedRuns increments the metric counter for started probe runs.
 func (m *Metrics) IncStartedRuns(region string) {
 	m.startedRuns.With(prometheus.Labels{regionLabelName: region}).Inc()

@@ -2,12 +2,10 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-
-	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
@@ -21,6 +19,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 )
 
 type adminCentralHandler struct {
@@ -192,37 +193,27 @@ func (h adminCentralHandler) DbDelete(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleDelete(w, r, cfg, http.StatusOK)
 }
 
-func updateResourcesList(to *corev1.ResourceList, from map[string]string) error {
-	newResourceList := to.DeepCopy()
-	for name, qty := range from {
-		if qty == "" {
-			continue
-		}
-		resourceName, isSupported := ValidateResourceName(name)
+func validateResourcesList(rl *corev1.ResourceList) error {
+	if rl == nil {
+		return nil
+	}
+	for name := range *rl {
+		_, isSupported := validateResourceName(name)
 		if !isSupported {
 			return fmt.Errorf("resource type %q is not supported", name)
 		}
-		resourceQty, err := resource.ParseQuantity(qty)
-		if err != nil {
-			return fmt.Errorf("parsing %s quantity %q: %w", resourceName, qty, err)
-		}
-		if newResourceList == nil {
-			newResourceList = corev1.ResourceList(make(map[corev1.ResourceName]resource.Quantity))
-		}
-		newResourceList[resourceName] = resourceQty
 	}
-	*to = newResourceList
 	return nil
 }
 
-func updateCoreV1Resources(to *corev1.ResourceRequirements, from private.ResourceRequirements) error {
+func validateCoreV1Resources(to *corev1.ResourceRequirements) error {
 	newResources := to.DeepCopy()
 
-	err := updateResourcesList(&newResources.Limits, from.Limits)
+	err := validateResourcesList(&newResources.Limits)
 	if err != nil {
 		return err
 	}
-	err = updateResourcesList(&newResources.Requests, from.Requests)
+	err = validateResourcesList(&newResources.Requests)
 	if err != nil {
 		return err
 	}
@@ -231,106 +222,111 @@ func updateCoreV1Resources(to *corev1.ResourceRequirements, from private.Resourc
 	return nil
 }
 
-// updateCentralFromPrivateAPI updates the CentralSpec using the non-zero fields from the API's CentralSpec.
-func updateCentralFromPrivateAPI(c *dbapi.CentralSpec, apiCentralSpec *private.CentralSpec) error {
-	err := updateCoreV1Resources(&c.Resources, apiCentralSpec.Resources)
+// validateCentralSpec validates the CentralSpec using the non-zero fields from the API's CentralSpec.
+func validateCentralSpec(c *dbapi.CentralSpec) error {
+	err := validateCoreV1Resources(&c.Resources)
 	if err != nil {
 		return fmt.Errorf("updating resources within CentralSpec: %w", err)
 	}
 	return nil
 }
 
-// updateScannerFromPrivateAPI updates the ScannerSpec using the non-zero fields from the API's ScannerSpec.
-func updateScannerFromPrivateAPI(s *dbapi.ScannerSpec, apiSpec *private.ScannerSpec) error {
+// validateScannerSpec validates the ScannerSpec using the non-zero fields from the API's ScannerSpec.
+func validateScannerSpec(s *dbapi.ScannerSpec) error {
 	var err error
-	new := *s
-
-	err = updateCoreV1Resources(&new.Analyzer.Resources, apiSpec.Analyzer.Resources)
+	err = validateCoreV1Resources(&s.Analyzer.Resources)
 	if err != nil {
 		return fmt.Errorf("updating resources within ScannerSpec Analyzer: %w", err)
 	}
-	err = updateScannerAnalyzerScaling(&new.Analyzer.Scaling, apiSpec.Analyzer.Scaling)
-	if err != nil {
-		return fmt.Errorf("updating scaling configuration within ScannerSpec Analyzer: %w", err)
-	}
-	err = updateCoreV1Resources(&new.Db.Resources, apiSpec.Db.Resources)
+	err = validateCoreV1Resources(&s.Db.Resources)
 	if err != nil {
 		return fmt.Errorf("updating resources within ScannerSpec DB: %w", err)
 	}
-	*s = new
 	return nil
 }
 
-func updateScannerAnalyzerScaling(s *dbapi.ScannerAnalyzerScaling, apiScaling private.ScannerSpecAnalyzerScaling) error {
-	if apiScaling.AutoScaling != "" {
-		s.AutoScaling = apiScaling.AutoScaling
-	}
-	if apiScaling.MaxReplicas > 0 {
-		s.MaxReplicas = apiScaling.MaxReplicas
-	}
-	if apiScaling.MinReplicas > 0 {
-		s.MinReplicas = apiScaling.MinReplicas
-	}
-	if apiScaling.Replicas > 0 {
-		s.Replicas = apiScaling.Replicas
-	}
-	return nil
-}
+func updateCentralRequest(request *dbapi.CentralRequest, strategicPatch []byte) error {
 
-func updateCentralRequest(request *dbapi.CentralRequest, updateRequest *private.CentralUpdateRequest) error {
-	if updateRequest == nil {
-		return nil
-	}
-
-	centralSpec, err := request.GetCentralSpec()
+	var patchMap map[string]interface{}
+	err := json.Unmarshal(strategicPatch, &patchMap)
 	if err != nil {
-		return fmt.Errorf("retrieving CentralSpec from CentralRequest: %w", err)
+		return fmt.Errorf("unmarshalling strategic merge patch: %w", err)
 	}
-	scannerSpec, err := request.GetScannerSpec()
+	// only keep central and scanner keys
+	for k := range patchMap {
+		if k != "central" && k != "scanner" {
+			delete(patchMap, k)
+		}
+	}
+	patchBytes, err := json.Marshal(patchMap)
 	if err != nil {
-		return fmt.Errorf("retrieving ScannerSpec from CentralRequest: %w", err)
+		return fmt.Errorf("marshalling strategic merge patch: %w", err)
 	}
 
-	err = updateCentralFromPrivateAPI(centralSpec, &updateRequest.Central)
+	var centralBytes = "{}"
+	if len(request.Central) > 0 {
+		centralBytes = string(request.Central)
+	}
+	var scannerBytes = "{}"
+	if len(request.Scanner) > 0 {
+		scannerBytes = string(request.Scanner)
+	}
+
+	var originalBytes = fmt.Sprintf("{\"central\":%s,\"scanner\":%s,\"forceReconcile\":\"%s\"}", centralBytes, scannerBytes, request.ForceReconcile)
+
+	type Original struct {
+		Central        *dbapi.CentralSpec `json:"central,omitempty"`
+		Scanner        *dbapi.ScannerSpec `json:"scanner,omitempty"`
+		ForceReconcile string             `json:"forceReconcile,omitempty"`
+	}
+
+	// apply the patch
+	mergedBytes, err := strategicpatch.StrategicMergePatch([]byte(originalBytes), patchBytes, Original{})
+	if err != nil {
+		return fmt.Errorf("applying strategic merge patch: %w", err)
+	}
+	var merged Original
+	if err := json.Unmarshal(mergedBytes, &merged); err != nil {
+		return fmt.Errorf("unmarshalling merged CentralRequest: %w", err)
+	}
+
+	if merged.Central == nil {
+		merged.Central = &dbapi.CentralSpec{}
+	}
+
+	if merged.Scanner == nil {
+		merged.Scanner = &dbapi.ScannerSpec{}
+	}
+
+	err = validateCentralSpec(merged.Central)
 	if err != nil {
 		return fmt.Errorf("updating CentralSpec from CentralUpdateRequest: %w", err)
 	}
-	err = updateScannerFromPrivateAPI(scannerSpec, &updateRequest.Scanner)
+	err = validateScannerSpec(merged.Scanner)
 	if err != nil {
 		return fmt.Errorf("updating ScannerSpec from CentralUpdateRequest: %w", err)
 	}
 
-	err = ValidateScannerAnalyzerScaling(&scannerSpec.Analyzer.Scaling)
+	newCentralBytes, err := json.Marshal(merged.Central)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshalling CentralSpec: %w", err)
+	}
+	newScannerBytes, err := json.Marshal(merged.Scanner)
+	if err != nil {
+		return fmt.Errorf("marshalling ScannerSpec: %w", err)
 	}
 
-	// TODO: We should also validate the resource configuration here. If the configuration is invalid
-	// the operator will not be able to create the Central instance and we could fail early here.
+	request.Central = newCentralBytes
+	request.Scanner = newScannerBytes
+	request.ForceReconcile = merged.ForceReconcile
 
-	new := *request
-
-	err = new.SetCentralSpec(centralSpec)
-	if err != nil {
-		return fmt.Errorf("updating CentralSpec within CentralRequest: %w", err)
-	}
-
-	err = new.SetScannerSpec(scannerSpec)
-	if err != nil {
-		return fmt.Errorf("updating ScannerSpec within CentralRequest: %w", err)
-	}
-
-	new.ForceReconcile = updateRequest.ForceReconcile
-
-	*request = new
 	return nil
+
 }
 
 // Update a Central instance.
 func (h adminCentralHandler) Update(w http.ResponseWriter, r *http.Request) {
-	var centralUpdateReq private.CentralUpdateRequest
 	cfg := &handlers.HandlerConfig{
-		MarshalInto: &centralUpdateReq,
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
@@ -339,7 +335,17 @@ func (h adminCentralHandler) Update(w http.ResponseWriter, r *http.Request) {
 				return nil, svcErr
 			}
 
-			err := updateCentralRequest(centralRequest, &centralUpdateReq)
+			updateBytes, err := io.ReadAll(r.Body)
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Reading request body: %s", err.Error())
+			}
+
+			// unmarshal the update into a private.CentralUpdateRequest to ensure that it is well-formed
+			if err := json.Unmarshal(updateBytes, &private.CentralUpdateRequest{}); err != nil {
+				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Unmarshalling request body: %s", err.Error())
+			}
+
+			err = updateCentralRequest(centralRequest, updateBytes)
 			if err != nil {
 				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Updating CentralRequest: %s", err.Error())
 			}
