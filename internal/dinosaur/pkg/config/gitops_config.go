@@ -11,8 +11,6 @@ import (
 type GitOpsConfig struct {
 	// Default configuration for Central instances.
 	Default GitOpsDefaultConfig `json:"default"`
-	// RolloutGroups are the rollout groups for Central instances.
-	RolloutGroups []GitOpsRolloutGroupConfig `json:"rolloutGroups"`
 	// Overrides are the overrides for Central instances.
 	Overrides []GitOpsInstanceOverride `json:"overrides"`
 }
@@ -22,14 +20,6 @@ type GitOpsDefaultConfig struct {
 	// DefaultCentral is the default Central instance configuration.
 	DefaultCentral v1alpha1.Central `json:"central"`
 	// DefaultOperatorVersion is the default operator version.
-	OperatorVersion string `json:"operatorVersion"`
-}
-
-// GitOpsRolloutGroupConfig represents the configuration for a rollout group.
-type GitOpsRolloutGroupConfig struct {
-	// InstanceIDs are the instance IDs part of the rollout group.
-	InstanceIDs []string `json:"instanceIds"`
-	// OperatorVersion is the operator version for the rollout group.
 	OperatorVersion string `json:"operatorVersion"`
 }
 
@@ -46,7 +36,6 @@ type GitOpsInstanceOverride struct {
 func ValidateGitOpsConfig(config GitOpsConfig) field.ErrorList {
 	var errs field.ErrorList
 	errs = append(errs, validateGitOpsDefaultConfig(field.NewPath("default"), config.Default)...)
-	errs = append(errs, validateGitOpsRolloutGroups(field.NewPath("rolloutGroups"), config.RolloutGroups)...)
 	errs = append(errs, validateGitOpsOverrides(field.NewPath("overrides"), config.Overrides)...)
 	return errs
 }
@@ -57,27 +46,12 @@ func validateGitOpsDefaultConfig(path *field.Path, config GitOpsDefaultConfig) f
 	return errs
 }
 
-func validateGitOpsRolloutGroups(path *field.Path, config []GitOpsRolloutGroupConfig) field.ErrorList {
-	var errs field.ErrorList
-	var seenInstanceIDs = make(map[string]struct{})
-	for i, group := range config {
-		for j, instanceID := range group.InstanceIDs {
-			if _, ok := seenInstanceIDs[instanceID]; ok {
-				errs = append(errs, field.Duplicate(path.Index(i).Child("instanceIds").Index(j), instanceID))
-			}
-			seenInstanceIDs[instanceID] = struct{}{}
-		}
-		errs = append(errs, validateGitOpsRolloutGroupConfig(path.Index(i), group)...)
-	}
-	return errs
-}
-
 func validateGitOpsOverrides(path *field.Path, config []GitOpsInstanceOverride) field.ErrorList {
 	var errs field.ErrorList
 	var seenInstanceIDs = make(map[string]struct{})
 	for i, override := range config {
 		if _, ok := seenInstanceIDs[override.InstanceID]; ok {
-			errs = append(errs, field.Duplicate(path.Index(i), override.InstanceID))
+			errs = append(errs, field.Duplicate(path.Index(i).Child("instanceId"), override.InstanceID))
 		}
 		seenInstanceIDs[override.InstanceID] = struct{}{}
 		errs = append(errs, validateGitOpsInstanceOverride(path.Index(i), override)...)
@@ -89,15 +63,6 @@ func validateGitOpsInstanceOverride(path *field.Path, config GitOpsInstanceOverr
 	var errs field.ErrorList
 	errs = append(errs, validateInstanceID(path.Child("instanceId"), config.InstanceID)...)
 	errs = append(errs, validatePatch(path.Child("patch"), config.Patch)...)
-	return errs
-}
-
-func validateGitOpsRolloutGroupConfig(path *field.Path, config GitOpsRolloutGroupConfig) field.ErrorList {
-	var errs field.ErrorList
-	errs = append(errs, validateOperatorVersion(path.Child("operatorVersion"), config.OperatorVersion)...)
-	for i, instanceID := range config.InstanceIDs {
-		errs = append(errs, validateInstanceID(path.Child("instanceIds").Index(i), instanceID)...)
-	}
 	return errs
 }
 
@@ -114,10 +79,10 @@ func validatePatch(path *field.Path, patch string) field.ErrorList {
 	if len(patch) == 0 {
 		errs = append(errs, field.Required(path, "patch is required"))
 	}
-	// try to unmarshal the patch to validate it
-	var result map[string]interface{}
-	if err := yaml.Unmarshal([]byte(patch), &result); err != nil {
-		errs = append(errs, field.Invalid(path, patch, "invalid patch"))
+	// try to unmarshal the patch into a Central instance to validate it
+	if err := yaml.Unmarshal([]byte(patch), &v1alpha1.Central{}); err != nil {
+		errs = append(errs, field.Invalid(path, patch, "invalid patch: "+err.Error()))
+		return errs
 	}
 	return errs
 }
