@@ -9,6 +9,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"golang.org/x/exp/slices"
+	"golang.org/x/exp/utf8string"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	appsv1 "k8s.io/api/apps/v1"
@@ -26,6 +27,12 @@ const (
 	maxOperatorDeploymentNameLength = 63
 )
 
+// Operator ...
+type Operator struct {
+	image         string
+	labelSelector string
+}
+
 // GetRepoAndTagFromImage returns the repo and image tag
 func GetRepoAndTagFromImage(img string) (string, string, error) {
 	if !strings.Contains(img, ":") {
@@ -38,6 +45,17 @@ func GetRepoAndTagFromImage(img string) (string, string, error) {
 	repo, tag := strs[0], strs[1]
 
 	return repo, tag, nil
+}
+
+func isValidTag(tag string) bool {
+	if len(tag) == 0 {
+		return false
+	}
+	notAllowedStarts := []rune{'.', '-'}
+	if slices.Contains(notAllowedStarts, rune(tag[0])) {
+		return false
+	}
+	return utf8string.NewString(tag).IsASCII()
 }
 
 func parseOperatorImages(images []string) ([]chartutil.Values, error) {
