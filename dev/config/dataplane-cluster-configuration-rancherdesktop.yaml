@@ -28,3 +28,4 @@ clusters:
    provider_type: standalone
    supported_instance_type: "eval,standard"
    cluster_dns: cluster.local
+   multi_az: true

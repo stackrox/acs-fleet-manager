@@ -46,6 +46,8 @@ const (
 	defaultPolling = 1 * time.Second
 	skipRouteMsg   = "route resource is not known to test cluster"
 	skipDNSMsg     = "external DNS is not enabled for this test run"
+
+	declarativeConfigSecretName = "sensible-declarative-configs" // pragma: allowlist secret
 )
 
 var _ = Describe("Central", func() {
@@ -192,6 +194,22 @@ var _ = Describe("Central", func() {
 			Expect(passthroughRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationPassthrough))
 		})
 
+		It("should create the secret containing declarative configurations", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
+
+			Eventually(func() error {
+				secret := &corev1.Secret{}
+				err := k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: declarativeConfigSecretName,
+					Namespace: namespaceName}, secret)
+				if err != nil {
+					return fmt.Errorf("failed finding %s secret: %w", declarativeConfigSecretName, err)
+				}
+				return nil
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+		})
+
 		It("should create AWS Route53 records", func() {
 			if createdCentral == nil {
 				Fail("central not created")
@@ -281,6 +299,19 @@ var _ = Describe("Central", func() {
 				key := ctrlClient.ObjectKey{Namespace: namespaceName, Name: "egress-proxy"}
 				return k8sClient.Get(context.TODO(), key, &egressProxyDeployment)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Satisfy(apiErrors.IsNotFound))
+		})
+
+		It("should delete the secret containing declarative configurations", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
+
+			Eventually(func() bool {
+				secret := &corev1.Secret{}
+				err := k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: declarativeConfigSecretName,
+					Namespace: namespaceName}, secret)
+				return apiErrors.IsNotFound(err)
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
 		})
 
 		It("should remove central namespace", func() {

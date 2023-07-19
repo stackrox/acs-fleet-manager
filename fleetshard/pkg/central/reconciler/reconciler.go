@@ -80,6 +80,9 @@ const (
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
 )
 
+type verifyAuthProviderFunc func(ctx context.Context, central *private.ManagedCentral,
+	client ctrlClient.Client) (bool, bool, error)
+
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
 	UseRoutes         bool
@@ -114,8 +117,9 @@ type CentralReconciler struct {
 
 	resourcesChart *chart.Chart
 
-	lastAuthProviderConfigHash [16]byte
-	wantsAuthProvider          bool
+	wantsAuthProvider      bool
+	hasAuthProvider        bool
+	verifyAuthProviderFunc verifyAuthProviderFunc
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -177,6 +181,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
+	if err := r.reconcileAuthProvider(ctx, &remoteCentral, central); err != nil {
+		return nil, err
+	}
+
 	if err = r.reconcileCentral(ctx, &remoteCentral, central); err != nil {
 		return nil, err
 	}
@@ -204,7 +212,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return installingStatus(), nil
 	}
 
-	if err := r.reconcileAuthProviderConfigDeclarative(ctx, &remoteCentral, central); err != nil {
+	// After the deployment is ready, verify that the auth provider exists.
+	if err := r.ensureAuthProviderExists(ctx, &remoteCentral); err != nil {
 		return nil, err
 	}
 
@@ -218,6 +227,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err := r.setLastCentralHash(remoteCentral); err != nil {
 		return nil, errors.Wrapf(err, "setting central reconcilation cache")
 	}
+
+	glog.Infof("Returning central status %+v", status)
 
 	return status, nil
 }
@@ -299,6 +310,11 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 							Name: sensibleDeclarativeConfigSecretName,
 						},
 					},
+					ConfigMaps: []v1alpha1.LocalConfigMapReference{
+						{
+							Name: "declarative-configs",
+						},
+					},
 				},
 			},
 			Scanner: &v1alpha1.ScannerComponentSpec{
@@ -353,10 +369,11 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	return central, nil
 }
 
-func (r *CentralReconciler) reconcileAuthProviderConfigDeclarative(ctx context.Context,
+func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context,
 	remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 	if !r.wantsAuthProvider {
 		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(false)
+		glog.Info("No auth provider desired, enabling basic authentication.")
 		return nil
 	}
 
@@ -432,6 +449,8 @@ func (r *CentralReconciler) reconcileAuthProviderConfigDeclarative(ctx context.C
 				return false, nil
 			}
 
+			glog.Info("Found changes for auth provider configuration, applying them.")
+
 			authProviderBytes, err := yaml.Marshal(authProviderConfig)
 			if err != nil {
 				return false, fmt.Errorf("marshalling auth provider config: %w", err)
@@ -443,13 +462,24 @@ func (r *CentralReconciler) reconcileAuthProviderConfigDeclarative(ctx context.C
 		return err
 	}
 
+	return nil
+}
+
+func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remoteCentral *private.ManagedCentral) error {
+	// Short-circuit if an auth provider isn't desired.
+	if !r.wantsAuthProvider {
+		return nil
+	}
+
 	// Since the auth provider is an integral part, we have to verify that it will be created successfully and listed
 	// within the list of available auth providers.
+	// This has to be done asynchronously now, since the declarative config will take time to be applied.
 	authProviderExists := concurrency.WaitInContext(concurrency.NewPoller(func() bool {
-		exists, legacy, _ := hasDefaultAuthProvider(ctx, remoteCentral, r.client)
-		return exists && !legacy
+		exists, _, _ := r.verifyAuthProviderFunc(ctx, remoteCentral, r.client)
+		return exists
 	}, 5*time.Second), ctx)
 	if authProviderExists {
+		r.hasAuthProvider = true
 		return nil
 	}
 	return errors.New("failed to verify that the auth provider exists within Central API")
@@ -460,8 +490,7 @@ func (r *CentralReconciler) reconcileAuthProviderConfigDeclarative(ctx context.C
 // It returns true in case a reconciliation is required.
 func checkForAuthConfigReconciliation(secret *corev1.Secret, existingConfigHash [16]byte) (bool, error) {
 	// Short-circuit if this is the first time we are reconciling the secret after creation.
-	if secret.Data == nil {
-		secret.Data = map[string][]byte{}
+	if len(secret.Data) == 0 {
 		return true, nil
 	}
 
@@ -1331,7 +1360,7 @@ func (r *CentralReconciler) chartValues(_ private.ManagedCentral) (chartutil.Val
 }
 
 func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.ManagedCentral) bool {
-	return r.lastAuthProviderConfigHash != [16]byte{} &&
+	return r.wantsAuthProvider == r.hasAuthProvider &&
 		isRemoteCentralReady(&remoteCentral)
 }
 
@@ -1426,6 +1455,8 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,
 		managedDBInitFunc:           managedDBInitFunc,
+
+		verifyAuthProviderFunc: hasDefaultAuthProvider,
 
 		resourcesChart: resourcesChart,
 	}

@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"github.com/golang/glog"
 	"strings"
 
 	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
@@ -107,9 +108,10 @@ func hasDefaultAuthProvider(ctx context.Context, central *private.ManagedCentral
 		name := authProviderName(central)
 		if provider.Type == oidcType {
 			if provider.GetName() == name {
+				glog.Infof("Found our auth provider: %+v", provider)
 				// The auth provider can be considered legacy if it's UUID doesn't match the declarative config one based on
 				// the name.
-				return true, provider.GetId() == declarativeconfig.NewDeclarativeAuthProviderUUID(name).String(), nil
+				return true, provider.GetId() != declarativeconfig.NewDeclarativeAuthProviderUUID(name).String(), nil
 			}
 		}
 	}
