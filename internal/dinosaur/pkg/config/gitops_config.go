@@ -6,8 +6,7 @@ import (
 	field "k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-// GitOpsConfig represents the declarative configuration for Central instances defaults,
-// rollout groups and overrides.
+// GitOpsConfig represents the declarative configuration for Central instances defaults and overrides.
 type GitOpsConfig struct {
 	// Default configuration for Central instances.
 	Default GitOpsDefaultConfig `json:"default"`
