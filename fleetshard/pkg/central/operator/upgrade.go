@@ -25,12 +25,15 @@ const (
 	// deployment names should contain at most 63 characters
 	// RFC 1035 Label Names: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
 	maxOperatorDeploymentNameLength = 63
+
+	maxImageTagLength = 128
 )
 
-// Operator ...
+// Operator represents operator configuration for deployment
 type Operator struct {
 	image         string
 	labelSelector string
+	version       string
 }
 
 // GetRepoAndTagFromImage returns the repo and image tag
@@ -43,12 +46,16 @@ func GetRepoAndTagFromImage(img string) (string, string, error) {
 		return "", "", fmt.Errorf("failed to split image and tag from %q", img)
 	}
 	repo, tag := strs[0], strs[1]
+	if !isValidTag(tag) {
+		return "", "", fmt.Errorf("failed to validate image tag %q", tag)
+	}
 
 	return repo, tag, nil
 }
 
+// See image tag specification: https://docs.docker.com/engine/reference/commandline/tag/#description
 func isValidTag(tag string) bool {
-	if len(tag) == 0 {
+	if len(tag) == 0 || len(tag) > maxImageTagLength {
 		return false
 	}
 	notAllowedStarts := []rune{'.', '-'}
