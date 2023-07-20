@@ -16,6 +16,7 @@ graph
 
         acs1central-->acs1scanner
         acs1central-->acs1egress
+        acs1scanner-->acs1egress
         acs1egress-->acs1rdsp
     end
 
@@ -24,5 +25,5 @@ graph
     end
 
     acs1egress-->c1s1
-    acs1scanner-->c1s1
+    
 ```
