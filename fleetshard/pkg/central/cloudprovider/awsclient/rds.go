@@ -155,8 +155,16 @@ func (r *RDS) ensureDBClusterCreated(clusterID, acsInstanceID, masterPassword st
 	}
 
 	glog.Infof("Initiating provisioning of RDS database cluster %s.", clusterID)
-	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterID, acsInstanceID, masterPassword, r.dbSecurityGroup,
-		r.dbSubnetGroup, r.dataplaneClusterName, isTestInstance))
+	input := &createCentralDBClusterInput{
+		clusterID:            clusterID,
+		acsInstanceID:        acsInstanceID,
+		dbPassword:           masterPassword, // pragma: allowlist secret
+		securityGroup:        r.dbSecurityGroup,
+		subnetGroup:          r.dbSubnetGroup,
+		dataplaneClusterName: r.dataplaneClusterName,
+		isTestInstance:       isTestInstance,
+	}
+	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(input))
 	if err != nil {
 		return fmt.Errorf("creating DB cluster: %w", err)
 	}
@@ -174,8 +182,15 @@ func (r *RDS) ensureDBInstanceCreated(instanceID, clusterID, acsInstanceID strin
 	}
 
 	glog.Infof("Initiating provisioning of RDS database instance %s.", instanceID)
-	_, err = r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(clusterID, instanceID,
-		acsInstanceID, r.dataplaneClusterName, r.performanceInsights, isTestInstance))
+	input := &createCentralDBInstanceInput{
+		clusterID:            clusterID,
+		instanceID:           instanceID,
+		acsInstanceID:        acsInstanceID,
+		dataplaneClusterName: r.dataplaneClusterName,
+		performanceInsights:  r.performanceInsights,
+		isTestInstance:       isTestInstance,
+	}
+	_, err = r.rdsClient.CreateDBInstance(newCreateCentralDBInstanceInput(input))
 	if err != nil {
 		return fmt.Errorf("creating DB instance: %w", err)
 	}
@@ -351,15 +366,25 @@ func getFailoverInstanceID(databaseID string) string {
 	return dbPrefix + databaseID + dbFailoverSuffix
 }
 
-func newCreateCentralDBClusterInput(clusterID, acsInstanceID, dbPassword, securityGroup, subnetGroup, dataplaneClusterName string, isTestInstance bool) *rds.CreateDBClusterInput {
-	input := &rds.CreateDBClusterInput{
-		DBClusterIdentifier: aws.String(clusterID),
+type createCentralDBClusterInput struct {
+	clusterID            string
+	acsInstanceID        string
+	dbPassword           string
+	securityGroup        string
+	subnetGroup          string
+	dataplaneClusterName string
+	isTestInstance       bool
+}
+
+func newCreateCentralDBClusterInput(input *createCentralDBClusterInput) *rds.CreateDBClusterInput {
+	awsInput := &rds.CreateDBClusterInput{
+		DBClusterIdentifier: aws.String(input.clusterID),
 		Engine:              aws.String(dbEngine),
 		EngineVersion:       aws.String(dbEngineVersion),
 		MasterUsername:      aws.String(dbUser),
-		MasterUserPassword:  aws.String(dbPassword),
-		VpcSecurityGroupIds: aws.StringSlice([]string{securityGroup}),
-		DBSubnetGroupName:   aws.String(subnetGroup),
+		MasterUserPassword:  aws.String(input.dbPassword),
+		VpcSecurityGroupIds: aws.StringSlice([]string{input.securityGroup}),
+		DBSubnetGroupName:   aws.String(input.subnetGroup),
 		ServerlessV2ScalingConfiguration: &rds.ServerlessV2ScalingConfiguration{
 			MinCapacity: aws.Float64(dbMinCapacityACU),
 			MaxCapacity: aws.Float64(dbMaxCapacityACU),
@@ -369,50 +394,59 @@ func newCreateCentralDBClusterInput(clusterID, acsInstanceID, dbPassword, securi
 		Tags: []*rds.Tag{
 			{
 				Key:   aws.String(dataplaneClusterNameKey),
-				Value: aws.String(dataplaneClusterName),
+				Value: aws.String(input.dataplaneClusterName),
 			},
 			{
 				Key:   aws.String(instanceTypeTagKey),
-				Value: aws.String(getInstanceType(isTestInstance)),
+				Value: aws.String(getInstanceType(input.isTestInstance)),
 			},
 			{
 				Key:   aws.String(acsInstanceIDKey),
-				Value: aws.String(acsInstanceID),
+				Value: aws.String(input.acsInstanceID),
 			},
 		},
 	}
 
 	// do not export DB logs of internal instances (e.g. Probes)
-	if !isTestInstance {
-		input.EnableCloudwatchLogsExports = aws.StringSlice([]string{"postgresql"})
+	if !input.isTestInstance {
+		awsInput.EnableCloudwatchLogsExports = aws.StringSlice([]string{"postgresql"})
 	}
 
-	return input
+	return awsInput
 }
 
-func newCreateCentralDBInstanceInput(clusterID, instanceID, acsInstanceID, dataplaneClusterName string, performanceInsights bool, isTestInstance bool) *rds.CreateDBInstanceInput {
+type createCentralDBInstanceInput struct {
+	clusterID            string
+	instanceID           string
+	acsInstanceID        string
+	dataplaneClusterName string
+	performanceInsights  bool
+	isTestInstance       bool
+}
+
+func newCreateCentralDBInstanceInput(input *createCentralDBInstanceInput) *rds.CreateDBInstanceInput {
 	return &rds.CreateDBInstanceInput{
 		DBInstanceClass:           aws.String(dbInstanceClass),
-		DBClusterIdentifier:       aws.String(clusterID),
-		DBInstanceIdentifier:      aws.String(instanceID),
+		DBClusterIdentifier:       aws.String(input.clusterID),
+		DBInstanceIdentifier:      aws.String(input.instanceID),
 		Engine:                    aws.String(dbEngine),
 		PubliclyAccessible:        aws.Bool(false),
-		EnablePerformanceInsights: aws.Bool(performanceInsights),
+		EnablePerformanceInsights: aws.Bool(input.performanceInsights),
 		PromotionTier:             aws.Int64(dbInstancePromotionTier),
 		CACertificateIdentifier:   aws.String(dbCACertificateType),
 		AutoMinorVersionUpgrade:   aws.Bool(dbAutoVersionUpgrade),
 		Tags: []*rds.Tag{
 			{
 				Key:   aws.String(dataplaneClusterNameKey),
-				Value: aws.String(dataplaneClusterName),
+				Value: aws.String(input.dataplaneClusterName),
 			},
 			{
 				Key:   aws.String(instanceTypeTagKey),
-				Value: aws.String(getInstanceType(isTestInstance)),
+				Value: aws.String(getInstanceType(input.isTestInstance)),
 			},
 			{
 				Key:   aws.String(acsInstanceIDKey),
-				Value: aws.String(acsInstanceID),
+				Value: aws.String(input.acsInstanceID),
 			},
 		},
 	}
