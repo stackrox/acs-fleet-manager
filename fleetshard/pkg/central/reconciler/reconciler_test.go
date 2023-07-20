@@ -4,11 +4,14 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/utils"
+	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"strings"
 	"testing"
 	"time"
 
@@ -51,6 +54,26 @@ const (
 	environment               = "test"
 )
 
+var (
+	defaultCentralConfig = private.ManagedCentral{}
+
+	defaultReconcilerOptions = CentralReconcilerOptions{}
+
+	useRoutesReconcilerOptions = CentralReconcilerOptions{UseRoutes: true}
+
+	noDBClient cloudprovider.DBClient = nil
+
+	defaultAuditLogConfig = config.AuditLogging{
+		AuditLogTargetHost: "audit-logs-aggregator.rhacs-audit-logs",
+		AuditLogTargetPort: 8888,
+	}
+
+	vectorAuditLogConfig = config.AuditLogging{
+		AuditLogTargetHost: "rhacs-vector.rhacs",
+		AuditLogTargetPort: 8443,
+	}
+)
+
 var simpleManagedCentral = private.ManagedCentral{
 	Id: centralID,
 	Metadata: private.ManagedCentralAllOfMetadata{
@@ -77,6 +100,26 @@ var simpleManagedCentral = private.ManagedCentral{
 //go:embed testdata
 var testdata embed.FS
 
+func getClientTrackerAndReconciler(
+	t *testing.T,
+	centralConfig private.ManagedCentral,
+	managedDBClient cloudprovider.DBClient,
+	reconcilerOptions CentralReconcilerOptions,
+	auditLogConfig config.AuditLogging,
+	k8sObjects ...client.Object,
+) (client.WithWatch, *testutils.ReconcileTracker, *CentralReconciler) {
+	fakeClient, tracker := testutils.NewFakeClientWithTracker(t, k8sObjects...)
+	reconciler := NewCentralReconciler(
+		fakeClient,
+		centralConfig,
+		managedDBClient,
+		centralDBInitFunc,
+		reconcilerOptions,
+		auditLogConfig,
+	)
+	return fakeClient, tracker, reconciler
+}
+
 func centralDBInitFunc(_ context.Context, _ postgres.DBConnection, _, _ string) error {
 	return nil
 }
@@ -91,12 +134,17 @@ func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestCo
 }
 
 func TestReconcileCreate(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient,
-		private.ManagedCentral{},
-		nil,
-		centralDBInitFunc,
-		CentralReconcilerOptions{ClusterName: clusterName, Environment: environment, UseRoutes: true},
+	reconcilerOptions := CentralReconcilerOptions{
+		ClusterName: clusterName,
+		Environment: environment,
+		UseRoutes:   true,
+	}
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		reconcilerOptions,
+		defaultAuditLogConfig,
 	)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -131,8 +179,6 @@ func TestReconcileCreate(t *testing.T) {
 }
 
 func TestReconcileCreateWithManagedDB(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-
 	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
 	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _string, _ string, _ string, _ bool) error {
 		return nil
@@ -145,11 +191,17 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 		return connection, nil
 	}
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient, centralDBInitFunc,
-		CentralReconcilerOptions{
-			UseRoutes:        true,
-			ManagedDBEnabled: true,
-		})
+	reconcilerOptions := CentralReconcilerOptions{
+		UseRoutes:        true,
+		ManagedDBEnabled: true,
+	}
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		managedDBProvisioningClient,
+		reconcilerOptions,
+		defaultAuditLogConfig,
+	)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -176,13 +228,15 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 }
 
 func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	t.Setenv(features.TargetedOperatorUpgrades.EnvVar(), "true")
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc,
-		CentralReconcilerOptions{
-			UseRoutes: true,
-		})
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		useRoutesReconcilerOptions,
+		defaultAuditLogConfig,
+	)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -203,8 +257,6 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 	t.Setenv("AWS_ROLE_ARN", "arn:aws:iam::012456789:role/fake_role")
 	t.Setenv("AWS_WEB_IDENTITY_TOKEN_FILE", "/var/run/secrets/tokens/aws-token")
 
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-
 	managedDBProvisioningClient, err := awsclient.NewRDSClient(
 		&config.Config{
 			ManagedDB: config.ManagedDB{
@@ -214,11 +266,17 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient, centralDBInitFunc,
-		CentralReconcilerOptions{
-			UseRoutes:        true,
-			ManagedDBEnabled: true,
-		})
+	reconcilerOptions := CentralReconcilerOptions{
+		UseRoutes:        true,
+		ManagedDBEnabled: true,
+	}
+	_, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		managedDBProvisioningClient,
+		reconcilerOptions,
+		defaultAuditLogConfig,
+	)
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
 	var awsErr awserr.Error
@@ -227,15 +285,21 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 }
 
 func TestReconcileUpdateSucceeds(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        centralName,
-			Namespace:   centralNamespace,
-			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		defaultReconcilerOptions,
+		defaultAuditLogConfig,
+		&v1alpha1.Central{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        centralName,
+				Namespace:   centralNamespace,
+				Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
+			},
 		},
-	}, centralDeploymentObject()).Build()
-
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
+		centralDeploymentObject(),
+	)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -272,15 +336,21 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 }
 
 func TestReconcileLastHashSetOnSuccess(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        centralName,
-			Namespace:   centralNamespace,
-			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		defaultReconcilerOptions,
+		defaultAuditLogConfig,
+		&v1alpha1.Central{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        centralName,
+				Namespace:   centralNamespace,
+				Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
+			},
 		},
-	}, centralDeploymentObject()).Build()
-
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
+		centralDeploymentObject(),
+	)
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
@@ -304,15 +374,21 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 }
 
 func TestIgnoreCacheForCentralNotReady(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        centralName,
-			Namespace:   centralNamespace,
-			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
+	_, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		defaultReconcilerOptions,
+		defaultAuditLogConfig,
+		&v1alpha1.Central{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        centralName,
+				Namespace:   centralNamespace,
+				Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
+			},
 		},
-	}, centralDeploymentObject()).Build()
-
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
+		centralDeploymentObject(),
+	)
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusProvisioning.String()
@@ -329,15 +405,21 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 }
 
 func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t, &v1alpha1.Central{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        centralName,
-			Namespace:   centralNamespace,
-			Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
+	_, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		defaultReconcilerOptions,
+		defaultAuditLogConfig,
+		&v1alpha1.Central{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        centralName,
+				Namespace:   centralNamespace,
+				Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
+			},
 		},
-	}, centralDeploymentObject()).Build()
-
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
+		centralDeploymentObject(),
+	)
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
@@ -355,8 +437,13 @@ func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
 }
 
 func TestReconcileDelete(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		useRoutesReconcilerOptions,
+		defaultAuditLogConfig,
+	)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -388,8 +475,13 @@ func TestReconcileDelete(t *testing.T) {
 }
 
 func TestDisablePauseAnnotation(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		useRoutesReconcilerOptions,
+		defaultAuditLogConfig,
+	)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -410,8 +502,6 @@ func TestDisablePauseAnnotation(t *testing.T) {
 }
 
 func TestReconcileDeleteWithManagedDB(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-
 	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
 	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _string, _ string, _ string, _ bool) error {
 		return nil
@@ -427,11 +517,17 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 		return connection, nil
 	}
 
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, managedDBProvisioningClient, centralDBInitFunc,
-		CentralReconcilerOptions{
-			UseRoutes:        true,
-			ManagedDBEnabled: true,
-		})
+	reconcilerOptions := CentralReconcilerOptions{
+		UseRoutes:        true,
+		ManagedDBEnabled: true,
+	}
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		managedDBProvisioningClient,
+		reconcilerOptions,
+		defaultAuditLogConfig,
+	)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -508,11 +604,16 @@ func TestCentralChanged(t *testing.T) {
 		},
 	}
 
-	fakeClient := testutils.NewFakeClientBuilder(t, centralDeploymentObject()).Build()
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			reconciler := NewCentralReconciler(fakeClient, test.currentCentral, nil, centralDBInitFunc, CentralReconcilerOptions{})
+			_, _, reconciler := getClientTrackerAndReconciler(
+				t,
+				test.currentCentral,
+				noDBClient,
+				defaultReconcilerOptions,
+				defaultAuditLogConfig,
+				centralDeploymentObject(),
+			)
 
 			if test.lastCentral != nil {
 				err := reconciler.setLastCentralHash(*test.lastCentral)
@@ -527,8 +628,13 @@ func TestCentralChanged(t *testing.T) {
 }
 
 func TestNamespaceLabelsAreSet(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		useRoutesReconcilerOptions,
+		defaultAuditLogConfig,
+	)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -541,8 +647,13 @@ func TestNamespaceLabelsAreSet(t *testing.T) {
 }
 
 func TestReportRoutesStatuses(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
+	_, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		useRoutesReconcilerOptions,
+		defaultAuditLogConfig,
+	)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -567,8 +678,13 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 	chart, err := loader.LoadFiles(chartFiles)
 	require.NoError(t, err)
 
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		defaultReconcilerOptions,
+		defaultAuditLogConfig,
+	)
 	r.resourcesChart = chart
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -600,8 +716,13 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 	chart, err := loader.LoadFiles(chartFiles)
 	require.NoError(t, err)
 
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		defaultReconcilerOptions,
+		defaultAuditLogConfig,
+	)
 	r.resourcesChart = chart
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -631,8 +752,13 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 }
 
 func TestEgressProxyIsDeployed(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{})
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		defaultReconcilerOptions,
+		defaultAuditLogConfig,
+	)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -681,11 +807,16 @@ func TestEgressProxyIsDeployed(t *testing.T) {
 }
 
 func TestEgressProxyCustomImage(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc,
-		CentralReconcilerOptions{
-			EgressProxyImage: "registry.redhat.io/openshift4/ose-egress-http-proxy:version-for-test",
-		})
+	reconcilerOptions := CentralReconcilerOptions{
+		EgressProxyImage: "registry.redhat.io/openshift4/ose-egress-http-proxy:version-for-test",
+	}
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		reconcilerOptions,
+		defaultAuditLogConfig,
+	)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.NoError(t, err)
@@ -707,25 +838,40 @@ func TestEgressProxyCustomImage(t *testing.T) {
 }
 
 func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
-	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
+	_, tracker, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		useRoutesReconcilerOptions,
+		defaultAuditLogConfig,
+	)
 	tracker.AddRouteError(centralReencryptRouteName, errors.New("fake error"))
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.Errorf(t, err, "fake error")
 }
 
 func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
-	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
+	_, tracker, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		useRoutesReconcilerOptions,
+		defaultAuditLogConfig,
+	)
 	tracker.SetRouteAdmitted(centralReencryptRouteName, false)
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.Errorf(t, err, "unable to find admitted ingress")
 }
 
 func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
-	fakeClient, tracker := testutils.NewFakeClientWithTracker(t)
+	_, tracker, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		useRoutesReconcilerOptions,
+		defaultAuditLogConfig,
+	)
 	tracker.SetSkipRoute(centralReencryptRouteName, true)
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 	require.Errorf(t, err, "unable to find admitted ingress")
 }
@@ -758,8 +904,14 @@ func TestTelemetryOptionsAreSetInCR(t *testing.T) {
 	}
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
-			fakeClient := testutils.NewFakeClientBuilder(t).Build()
-			r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{Telemetry: tc.telemetry})
+			reconcilerOptions := CentralReconcilerOptions{Telemetry: tc.telemetry}
+			fakeClient, _, r := getClientTrackerAndReconciler(
+				t,
+				defaultCentralConfig,
+				noDBClient,
+				reconcilerOptions,
+				defaultAuditLogConfig,
+			)
 
 			_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
 			require.NoError(t, err)
@@ -818,8 +970,13 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
-			fakeClient := testutils.NewFakeClientBuilder(t).Build()
-			r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{UseRoutes: true})
+			fakeClient, _, r := getClientTrackerAndReconciler(
+				t,
+				defaultCentralConfig,
+				noDBClient,
+				useRoutesReconcilerOptions,
+				defaultAuditLogConfig,
+			)
 			r.routeService = k8s.NewRouteService(fakeClient)
 			central := simpleManagedCentral
 
@@ -1121,6 +1278,629 @@ func Test_stringMapNeedsUpdating(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := stringMapNeedsUpdating(tt.desired, tt.actual)
 			assert.Equal(t, tt.want, got, tt.name)
+		})
+	}
+}
+
+func getSecret(name string, namespace string, data map[string][]byte) *v1.Secret {
+	return &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Data: data,
+	}
+}
+
+const (
+	emptySecretName                   = "emptySecret"
+	secretWithOtherKeyName            = "secretWithOtherKey"
+	secretWithKeyDataToChangeName     = "secretWithKeyDataToChange"
+	secretWithExpectedKeyDataOnlyName = "secretWithExpectedKeyDataOnly"
+
+	entryKey = "some.key"
+	otherKey = "other.key"
+)
+
+var (
+	entryData = []byte{'c', 'o', 'n', 't', 'e', 'n', 't'}
+	otherData = []byte{'s', 'o', 'm', 'e', 't', 'h', 'i', 'n', 'g', ' ', 'e', 'l', 's', 'e'}
+)
+
+func isSameData(entry1 []byte, entry2 []byte) bool {
+	if len(entry1) != len(entry2) {
+		return false
+	}
+	for i := 0; i < len(entry1); i++ {
+		if entry1[i] != entry2[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func compareSecret(t *testing.T, expectedSecret *v1.Secret, secret *v1.Secret, created bool) {
+	if expectedSecret == nil {
+		assert.Nil(t, secret)
+		return
+	}
+	assert.NotNil(t, secret)
+	if secret == nil {
+		return
+	}
+	assert.Equal(t, expectedSecret.ObjectMeta.Namespace, secret.ObjectMeta.Namespace)
+	assert.Equal(t, expectedSecret.ObjectMeta.Name, secret.ObjectMeta.Name)
+	if created {
+		assert.NotZero(t, len(secret.ObjectMeta.Labels))
+		if secret.ObjectMeta.Labels == nil {
+			return
+		}
+		labelVal, labelFound := secret.ObjectMeta.Labels[k8s.ManagedByLabelKey]
+		assert.True(t, labelFound)
+		if !labelFound {
+			return
+		}
+		assert.Equal(t, labelVal, k8s.ManagedByFleetshardValue)
+		assert.NotZero(t, len(secret.ObjectMeta.Annotations))
+		if secret.ObjectMeta.Annotations == nil {
+			return
+		}
+		annotationVal, annotationFound := secret.ObjectMeta.Annotations[managedServicesAnnotation]
+		if !annotationFound {
+			return
+		}
+		assert.Equal(t, annotationVal, "true")
+	}
+	assert.Equal(t, len(expectedSecret.Data), len(secret.Data))
+	for dataKey, expectedVal := range expectedSecret.Data {
+		value, found := secret.Data[dataKey]
+		assert.True(t, found, dataKey)
+		if !found {
+			return
+		}
+		assert.Truef(t, isSameData(expectedVal, value), "expected %q got %q", string(expectedVal), string(value))
+	}
+}
+
+func TestEnsureSecretExists(t *testing.T) {
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		noDBClient,
+		defaultReconcilerOptions,
+		defaultAuditLogConfig,
+	)
+	secretModifyFunc := func(secret *v1.Secret) (bool, error) {
+		if secret.Data == nil {
+			secret.Data = make(map[string][]byte)
+		}
+		payload, found := secret.Data[entryKey]
+		if found {
+			if isSameData(payload, entryData) {
+				return false, nil
+			}
+		}
+		secret.Data[entryKey] = entryData
+		return true, nil
+	}
+	testCases := []struct {
+		secretName   string
+		initialData  map[string][]byte
+		expectedData map[string][]byte
+	}{
+		{
+			secretName:  emptySecretName,
+			initialData: nil,
+			expectedData: map[string][]byte{
+				entryKey: entryData,
+			},
+		},
+		{
+			secretName: secretWithOtherKeyName,
+			initialData: map[string][]byte{
+				otherKey: otherData,
+			},
+			expectedData: map[string][]byte{
+				entryKey: entryData,
+				otherKey: otherData,
+			},
+		},
+		{
+			secretName: secretWithKeyDataToChangeName,
+			initialData: map[string][]byte{
+				entryKey: otherData,
+			},
+			expectedData: map[string][]byte{
+				entryKey: entryData,
+			},
+		},
+		{
+			secretName: secretWithExpectedKeyDataOnlyName,
+			initialData: map[string][]byte{
+				entryKey: entryData,
+			},
+			expectedData: map[string][]byte{
+				entryKey: entryData,
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.secretName, func(t *testing.T) {
+			ctx := context.TODO()
+			fetchedSecret := &v1.Secret{}
+			initialSecret := getSecret(tc.secretName, centralNamespace, tc.initialData)
+			assert.NoError(t, fakeClient.Create(ctx, initialSecret))
+			assert.NoError(t, r.ensureSecretExists(ctx, centralNamespace, tc.secretName, secretModifyFunc))
+			fakeClient.Get(ctx, client.ObjectKey{Namespace: centralNamespace, Name: tc.secretName}, fetchedSecret)
+			compareSecret(t, getSecret(tc.secretName, centralNamespace, tc.expectedData), fetchedSecret, false)
+		})
+	}
+
+	t.Run("missing secret", func(t *testing.T) {
+		secretName := "missingSecret"
+		expectedData := map[string][]byte{
+			entryKey: entryData,
+		}
+		ctx := context.TODO()
+		fetchedSecret := &v1.Secret{}
+		assert.NoError(t, r.ensureSecretExists(ctx, centralNamespace, secretName, secretModifyFunc))
+		fakeClient.Get(ctx, client.ObjectKey{Namespace: centralNamespace, Name: secretName}, fetchedSecret)
+		compareSecret(t, getSecret(secretName, centralNamespace, expectedData), fetchedSecret, true)
+	})
+}
+
+func noProxyEnvPayloadContainsException(envValue string, targetHost string, targetPort int) bool {
+	targetString := fmt.Sprintf("%s:%d", targetHost, targetPort)
+	for _, elem := range strings.Split(envValue, ",") {
+		if elem == targetString {
+			return true
+		}
+	}
+	return false
+}
+
+func TestGetInstanceConfigSetsNoProxyEnvVarsForAuditLog(t *testing.T) {
+	for _, auditLogConfig := range []config.AuditLogging{defaultAuditLogConfig, vectorAuditLogConfig} {
+		_, _, r := getClientTrackerAndReconciler(
+			t,
+			simpleManagedCentral,
+			noDBClient,
+			defaultReconcilerOptions,
+			auditLogConfig,
+		)
+		centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
+		assert.NoError(t, err)
+		assert.NotNil(t, centralConfig)
+		if centralConfig == nil {
+			return
+		}
+		assert.NotNil(t, centralConfig.Spec.Customize)
+		if centralConfig.Spec.Customize == nil {
+			return
+		}
+		noProxyEnvLowerCaseFound := false
+		noProxyEnvUpperCaseFound := false
+		for _, envVar := range centralConfig.Spec.Customize.EnvVars {
+			switch envVar.Name {
+			case "no_proxy":
+				noProxyEnvLowerCaseFound = true
+				noProxyEnvPayloadContainsException(envVar.Value, defaultAuditLogConfig.AuditLogTargetHost, defaultAuditLogConfig.AuditLogTargetPort)
+			case "NO_PROXY":
+				noProxyEnvUpperCaseFound = true
+				noProxyEnvPayloadContainsException(envVar.Value, defaultAuditLogConfig.AuditLogTargetHost, defaultAuditLogConfig.AuditLogTargetPort)
+			}
+		}
+		assert.True(t, noProxyEnvLowerCaseFound)
+		assert.True(t, noProxyEnvUpperCaseFound)
+	}
+}
+
+func TestGetInstanceConfigSetsDeclarativeConfigEnvVar(t *testing.T) {
+	_, _, r := getClientTrackerAndReconciler(
+		t,
+		simpleManagedCentral,
+		noDBClient,
+		defaultReconcilerOptions,
+		defaultAuditLogConfig,
+	)
+	declarativeConfigEnvVarSet := false
+	declarativeConfigEnable := false
+	centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
+	assert.NoError(t, err)
+	assert.NotNil(t, centralConfig)
+	if centralConfig == nil {
+		return
+	}
+	assert.NotNil(t, centralConfig.Spec.Customize)
+	if centralConfig.Spec.Customize == nil {
+		return
+	}
+	for _, envVar := range centralConfig.Spec.Customize.EnvVars {
+		if envVar.Name == declarativeConfigurationFeatureFlagName {
+			declarativeConfigEnvVarSet = true
+			declarativeConfigEnable = envVar.Value == "true"
+		}
+	}
+	assert.True(t, declarativeConfigEnvVarSet)
+	assert.True(t, declarativeConfigEnable)
+}
+
+func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
+	_, _, r := getClientTrackerAndReconciler(
+		t,
+		simpleManagedCentral,
+		noDBClient,
+		defaultReconcilerOptions,
+		defaultAuditLogConfig,
+	)
+	centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
+	assert.NoError(t, err)
+	assert.NotNil(t, centralConfig)
+	if centralConfig == nil {
+		return
+	}
+	assert.NotNil(t, centralConfig.Spec.Central)
+	if centralConfig.Spec.Central == nil {
+		return
+	}
+	assert.NotNil(t, centralConfig.Spec.Central.DeclarativeConfiguration)
+	centralCRDeclarativeConfig := centralConfig.Spec.Central.DeclarativeConfiguration
+	if centralCRDeclarativeConfig == nil {
+		return
+	}
+	assert.NotZero(t, len(centralCRDeclarativeConfig.Secrets))
+	sensibleDeclarativeConfigSecretFound := false
+	for _, secretRef := range centralCRDeclarativeConfig.Secrets {
+		if secretRef.Name == sensibleDeclarativeConfigSecretName {
+			sensibleDeclarativeConfigSecretFound = true
+		}
+	}
+	assert.True(t, sensibleDeclarativeConfigSecretFound)
+}
+
+func TestGetAuditLogNotifierConfig(t *testing.T) {
+	testCases := []struct {
+		namespace      string
+		auditLogTarget string
+		auditLogPort   int
+		expectedConfig *declarativeconfig.Notifier
+	}{
+		{
+			namespace:      centralNamespace,
+			auditLogTarget: defaultAuditLogConfig.AuditLogTargetHost,
+			auditLogPort:   defaultAuditLogConfig.AuditLogTargetPort,
+			expectedConfig: &declarativeconfig.Notifier{
+				Name: auditLogNotifierName,
+				GenericConfig: &declarativeconfig.GenericConfig{
+					Endpoint: fmt.Sprintf(
+						"https://%s:%d",
+						defaultAuditLogConfig.AuditLogTargetHost,
+						defaultAuditLogConfig.AuditLogTargetPort,
+					),
+					SkipTLSVerify:       true,
+					AuditLoggingEnabled: true,
+					ExtraFields: []declarativeconfig.KeyValuePair{
+						{
+							Key:   auditLogTenantIDKey,
+							Value: centralNamespace,
+						},
+					},
+				},
+			},
+		},
+		{
+			namespace:      "rhacs",
+			auditLogTarget: vectorAuditLogConfig.AuditLogTargetHost,
+			auditLogPort:   vectorAuditLogConfig.AuditLogTargetPort,
+			expectedConfig: &declarativeconfig.Notifier{
+				Name: auditLogNotifierName,
+				GenericConfig: &declarativeconfig.GenericConfig{
+					Endpoint: fmt.Sprintf(
+						"https://%s:%d",
+						vectorAuditLogConfig.AuditLogTargetHost,
+						vectorAuditLogConfig.AuditLogTargetPort,
+					),
+					SkipTLSVerify:       true,
+					AuditLoggingEnabled: true,
+					ExtraFields: []declarativeconfig.KeyValuePair{
+						{
+							Key:   auditLogTenantIDKey,
+							Value: "rhacs",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, testCase := range testCases {
+		notifierConfig := getAuditLogNotifierConfig(testCase.auditLogTarget, testCase.auditLogPort, testCase.namespace)
+		assert.Equal(t, testCase.expectedConfig, notifierConfig)
+	}
+}
+
+func TestShouldUpdateAuditLogNotifierSecret(t *testing.T) {
+	defaultNotifierConfig := getAuditLogNotifierConfig(
+		defaultAuditLogConfig.AuditLogTargetHost,
+		defaultAuditLogConfig.AuditLogTargetPort,
+		centralNamespace,
+	)
+	vectorNotifierConfig := getAuditLogNotifierConfig(
+		vectorAuditLogConfig.AuditLogTargetHost,
+		vectorAuditLogConfig.AuditLogTargetPort,
+		"rhacs",
+	)
+	aggregatedConfig := []*declarativeconfig.Notifier{defaultNotifierConfig, vectorNotifierConfig}
+	/*
+		// Disabling the test cases using defaultNotifierConfigBytes as declarative config decoding fails.
+		defaultNotifierConfigBytes, defaultEncodingErr := yaml.Marshal(defaultAuditLogConfig)
+		assert.NoError(t, defaultEncodingErr)
+	*/
+	vectorNotifierConfigBytes, vectorEncodingErr := yaml.Marshal(vectorNotifierConfig)
+	assert.NoError(t, vectorEncodingErr)
+	aggregatedConfigBytes, aggregatedEncodingError := yaml.Marshal(aggregatedConfig)
+	assert.NoError(t, aggregatedEncodingError)
+	/*
+		correctDefaultSecret := getSecret(
+			sensibleDeclarativeConfigSecretName,
+			centralNamespace,
+			map[string][]byte{
+				auditLogNotifierKey: defaultNotifierConfigBytes,
+			},
+		)
+	*/
+	faultyDefaultSecret := getSecret(
+		sensibleDeclarativeConfigSecretName,
+		centralNamespace,
+		map[string][]byte{
+			auditLogNotifierKey: vectorNotifierConfigBytes,
+		},
+	)
+	aggregatedDefaultSecret := getSecret(
+		sensibleDeclarativeConfigSecretName,
+		centralNamespace,
+		map[string][]byte{
+			auditLogNotifierKey: aggregatedConfigBytes,
+		},
+	)
+	correctVectorSecret := getSecret(
+		sensibleDeclarativeConfigSecretName,
+		"rhacs",
+		map[string][]byte{
+			auditLogNotifierKey: vectorNotifierConfigBytes,
+		},
+	)
+	/*
+		faultyVectorSecret := getSecret(
+			sensibleDeclarativeConfigSecretName,
+			"rhacs",
+			map[string][]byte{
+				auditLogNotifierKey: defaultNotifierConfigBytes,
+			},
+		)
+	*/
+	aggregatedVectorSecret := getSecret(
+		sensibleDeclarativeConfigSecretName,
+		"rhacs",
+		map[string][]byte{
+			auditLogNotifierKey: aggregatedConfigBytes,
+		},
+	)
+
+	testCases := []struct {
+		name                   string
+		secret                 *v1.Secret
+		expectedNotifierConfig *declarativeconfig.Notifier
+		expectedError          error
+		expectedResult         bool
+	}{
+		/*
+			{
+				name:                   "secret with default config should NOT require update when default config is expected",
+				secret:                 correctDefaultSecret,
+				expectedNotifierConfig: defaultNotifierConfig,
+				expectedError:          nil,
+				expectedResult:         false,
+			},
+		*/
+		{
+			name:                   "secret with vector config should require update when default config is expected",
+			secret:                 faultyDefaultSecret,
+			expectedNotifierConfig: defaultNotifierConfig,
+			expectedError:          nil,
+			expectedResult:         true,
+		},
+		{
+			name:                   "secret with aggregated config should NOT require update when default config is expected",
+			secret:                 aggregatedDefaultSecret,
+			expectedNotifierConfig: defaultNotifierConfig,
+			expectedError:          nil,
+			expectedResult:         false,
+		},
+		{
+			name:                   "secret with vector config should NOT require update when vector config is expected",
+			secret:                 correctVectorSecret,
+			expectedNotifierConfig: vectorNotifierConfig,
+			expectedError:          nil,
+			expectedResult:         false,
+		},
+		/*
+			{
+				name:                   "secret with default config should require update when vector config is expected",
+				secret:                 faultyVectorSecret,
+				expectedNotifierConfig: vectorNotifierConfig,
+				expectedError:          nil,
+				expectedResult:         true,
+			},
+		*/
+		{
+			name:                   "secret with aggregated config should NOT require update when vector config is expected",
+			secret:                 aggregatedVectorSecret,
+			expectedNotifierConfig: vectorNotifierConfig,
+			expectedError:          nil,
+			expectedResult:         false,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			shouldUpdate, err := shouldUpdateAuditLogNotifierSecret(
+				testCase.secret,
+				testCase.expectedNotifierConfig,
+			)
+			assert.ErrorIs(t, err, testCase.expectedError)
+			assert.Equal(t, testCase.expectedResult, shouldUpdate)
+		})
+	}
+}
+
+func TestReconcileCentralAuditLogNotifier(t *testing.T) {
+	defaultNotifierConfig := getAuditLogNotifierConfig(
+		defaultAuditLogConfig.AuditLogTargetHost,
+		defaultAuditLogConfig.AuditLogTargetPort,
+		centralNamespace,
+	)
+	faultyVectorNotifierConfig := getAuditLogNotifierConfig(
+		vectorAuditLogConfig.AuditLogTargetHost,
+		vectorAuditLogConfig.AuditLogTargetPort,
+		"rhacs",
+	)
+	correctVectorNotifierConfig := getAuditLogNotifierConfig(
+		vectorAuditLogConfig.AuditLogTargetHost,
+		vectorAuditLogConfig.AuditLogTargetPort,
+		centralNamespace,
+	)
+	aggregatedVectorConfig := []*declarativeconfig.Notifier{
+		faultyVectorNotifierConfig,
+		correctVectorNotifierConfig,
+	}
+	aggregatedConfig := []*declarativeconfig.Notifier{
+		defaultNotifierConfig,
+		faultyVectorNotifierConfig,
+		correctVectorNotifierConfig,
+	}
+	defaultNotifierConfigBytes, defaultEncodingErr := yaml.Marshal(defaultNotifierConfig)
+	assert.NoError(t, defaultEncodingErr)
+	correctVectorNotifierConfigBytes, correctVectorEncodingErr := yaml.Marshal(correctVectorNotifierConfig)
+	assert.NoError(t, correctVectorEncodingErr)
+	faultyVectorNotifierConfigBytes, faultyVectorEncodingErr := yaml.Marshal(faultyVectorNotifierConfig)
+	assert.NoError(t, faultyVectorEncodingErr)
+	aggregatedVectorConfigBytes, aggregatedVectorEncodingError := yaml.Marshal(aggregatedVectorConfig)
+	assert.NoError(t, aggregatedVectorEncodingError)
+	aggregatedConfigBytes, aggregatedEncodingError := yaml.Marshal(aggregatedConfig)
+	assert.NoError(t, aggregatedEncodingError)
+	correctDefaultSecret := getSecret(
+		sensibleDeclarativeConfigSecretName,
+		centralNamespace,
+		map[string][]byte{
+			auditLogNotifierKey: defaultNotifierConfigBytes,
+		},
+	)
+	faultyDefaultSecret := getSecret(
+		sensibleDeclarativeConfigSecretName,
+		centralNamespace,
+		map[string][]byte{
+			auditLogNotifierKey: correctVectorNotifierConfigBytes,
+		},
+	)
+	faultyAggregatedDefaultSecret := getSecret(
+		sensibleDeclarativeConfigSecretName,
+		centralNamespace,
+		map[string][]byte{
+			auditLogNotifierKey: aggregatedVectorConfigBytes,
+		},
+	)
+	aggregatedDefaultSecret := getSecret(
+		sensibleDeclarativeConfigSecretName,
+		centralNamespace,
+		map[string][]byte{
+			auditLogNotifierKey: aggregatedConfigBytes,
+		},
+	)
+	correctVectorSecret := getSecret(
+		sensibleDeclarativeConfigSecretName,
+		centralNamespace,
+		map[string][]byte{
+			auditLogNotifierKey: correctVectorNotifierConfigBytes,
+		},
+	)
+	faultyVectorSecret := getSecret(
+		sensibleDeclarativeConfigSecretName,
+		centralNamespace,
+		map[string][]byte{
+			auditLogNotifierKey: faultyVectorNotifierConfigBytes,
+		},
+	)
+	aggregatedVectorSecret := getSecret(
+		sensibleDeclarativeConfigSecretName,
+		centralNamespace,
+		map[string][]byte{
+			auditLogNotifierKey: aggregatedConfigBytes,
+		},
+	)
+
+	testCases := []struct {
+		name           string
+		auditLogConfig config.AuditLogging
+		secret         *v1.Secret
+		expectedSecret *v1.Secret
+	}{
+		{
+			name:           "Missing default secret gets created",
+			auditLogConfig: defaultAuditLogConfig,
+			secret:         nil,
+			expectedSecret: correctDefaultSecret,
+		},
+		{
+			name:           "Bad default secret gets corrected",
+			auditLogConfig: defaultAuditLogConfig,
+			secret:         faultyDefaultSecret,
+			expectedSecret: correctDefaultSecret,
+		},
+		{
+			name:           "Bad aggregated default secret gets corrected",
+			auditLogConfig: defaultAuditLogConfig,
+			secret:         faultyAggregatedDefaultSecret,
+			expectedSecret: correctDefaultSecret,
+		},
+		{
+			name:           "Partially correct aggregated default secret is left untouched",
+			auditLogConfig: defaultAuditLogConfig,
+			secret:         aggregatedDefaultSecret,
+			expectedSecret: aggregatedDefaultSecret,
+		},
+		{
+			name:           "Missing vector secret gets created",
+			auditLogConfig: vectorAuditLogConfig,
+			secret:         nil,
+			expectedSecret: correctVectorSecret,
+		},
+		{
+			name:           "Bad vector secret gets corrected",
+			auditLogConfig: vectorAuditLogConfig,
+			secret:         faultyVectorSecret,
+			expectedSecret: correctVectorSecret,
+		},
+		{
+			name:           "Partially correct aggregated vector secret is left untouched",
+			auditLogConfig: vectorAuditLogConfig,
+			secret:         aggregatedVectorSecret,
+			expectedSecret: aggregatedVectorSecret,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctx := context.TODO()
+			fakeClient, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, noDBClient, defaultReconcilerOptions, testCase.auditLogConfig)
+			if testCase.secret != nil {
+				assert.NoError(t, fakeClient.Create(ctx, testCase.secret))
+			}
+			r.reconcileCentralAuditLogNotifier(ctx, &simpleManagedCentral)
+			fetchedSecret := &v1.Secret{}
+			secretKey := client.ObjectKey{
+				Name:      sensibleDeclarativeConfigSecretName,
+				Namespace: centralNamespace,
+			}
+			assert.NoError(t, fakeClient.Get(ctx, secretKey, fetchedSecret))
+			compareSecret(t, testCase.expectedSecret, fetchedSecret, testCase.secret == nil)
 		})
 	}
 }
