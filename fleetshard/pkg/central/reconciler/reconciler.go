@@ -684,11 +684,11 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 
 func (r *CentralReconciler) ensureCentralAuditLogNotifierSecretCleaned(ctx context.Context, remoteCentralNamespace string) error {
 	secret := &corev1.Secret{}
-	objectKey := ctrlClient.ObjectKey{
+	secretKey := ctrlClient.ObjectKey{ // pragma: allowlist secret
 		Namespace: remoteCentralNamespace,
 		Name:      sensibleDeclarativeConfigSecretName,
 	}
-	err := r.client.Get(ctx, objectKey, secret)
+	err := r.client.Get(ctx, secretKey, secret)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return nil
@@ -1307,12 +1307,12 @@ func (r *CentralReconciler) ensureSecretExists(
 	secretModifyFunc func(secret *corev1.Secret) (bool, error),
 ) error {
 	secret := &corev1.Secret{}
+	secretKey := ctrlClient.ObjectKey{ // pragma: allowList secret
+		Name:      actualName,
+		Namespace: remoteCentralNamespace,
+	}
 
-	err := r.client.Get(
-		ctx,
-		ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: actualName},
-		secret,
-	)
+	err := r.client.Get(ctx, secretKey, secret)
 	if err != nil && !apiErrors.IsNotFound(err) {
 		return fmt.Errorf("getting %s secret: %w", actualName, err)
 	}

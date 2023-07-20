@@ -1284,7 +1284,7 @@ func Test_stringMapNeedsUpdating(t *testing.T) {
 
 func getSecret(name string, namespace string, data map[string][]byte) *v1.Secret {
 	return &v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{ // pragma: allowlist secret
 			Name:      name,
 			Namespace: namespace,
 		},
@@ -1293,10 +1293,10 @@ func getSecret(name string, namespace string, data map[string][]byte) *v1.Secret
 }
 
 const (
-	emptySecretName                   = "emptySecret"
-	secretWithOtherKeyName            = "secretWithOtherKey"
-	secretWithKeyDataToChangeName     = "secretWithKeyDataToChange"
-	secretWithExpectedKeyDataOnlyName = "secretWithExpectedKeyDataOnly"
+	emptySecretName                   = "emptySecret"                   // pragma: allowList secret
+	secretWithOtherKeyName            = "secretWithOtherKey"            // pragma: allowList secret
+	secretWithKeyDataToChangeName     = "secretWithKeyDataToChange"     // pragma: allowList secret
+	secretWithExpectedKeyDataOnlyName = "secretWithExpectedKeyDataOnly" // pragma: allowList secret
 
 	entryKey = "some.key"
 	otherKey = "other.key"
@@ -1389,14 +1389,14 @@ func TestEnsureSecretExists(t *testing.T) {
 		expectedData map[string][]byte
 	}{
 		{
-			secretName:  emptySecretName,
+			secretName:  emptySecretName, // pragma: allowList secret
 			initialData: nil,
 			expectedData: map[string][]byte{
 				entryKey: entryData,
 			},
 		},
 		{
-			secretName: secretWithOtherKeyName,
+			secretName: secretWithOtherKeyName, // pragma: allowList secret
 			initialData: map[string][]byte{
 				otherKey: otherData,
 			},
@@ -1406,7 +1406,7 @@ func TestEnsureSecretExists(t *testing.T) {
 			},
 		},
 		{
-			secretName: secretWithKeyDataToChangeName,
+			secretName: secretWithKeyDataToChangeName, // pragma: allowList secret
 			initialData: map[string][]byte{
 				entryKey: otherData,
 			},
@@ -1415,7 +1415,7 @@ func TestEnsureSecretExists(t *testing.T) {
 			},
 		},
 		{
-			secretName: secretWithExpectedKeyDataOnlyName,
+			secretName: secretWithExpectedKeyDataOnlyName, // pragma: allowList secret
 			initialData: map[string][]byte{
 				entryKey: entryData,
 			},
@@ -1618,6 +1618,32 @@ func TestGetAuditLogNotifierConfig(t *testing.T) {
 	}
 }
 
+func populateNotifierSecret(
+	t *testing.T,
+	namespace string,
+	payload map[string][]*declarativeconfig.Notifier,
+) *v1.Secret {
+	if len(payload) == 0 {
+		return getSecret(sensibleDeclarativeConfigSecretName, namespace, nil)
+	}
+	secretData := make(map[string][]byte, len(payload))
+	for dataKey, configList := range payload {
+		switch len(configList) {
+		case 0:
+			secretData[dataKey] = nil
+		case 1:
+			encodedBytes, encodingErr := yaml.Marshal(configList[0])
+			assert.NoError(t, encodingErr)
+			secretData[dataKey] = encodedBytes
+		default:
+			encodedBytes, encodingErr := yaml.Marshal(configList)
+			assert.NoError(t, encodingErr)
+			secretData[dataKey] = encodedBytes
+		}
+	}
+	return getSecret(sensibleDeclarativeConfigSecretName, centralNamespace, secretData)
+}
+
 func TestShouldUpdateAuditLogNotifierSecret(t *testing.T) {
 	defaultNotifierConfig := getAuditLogNotifierConfig(
 		defaultAuditLogConfig.AuditLogTargetHost,
@@ -1630,111 +1656,71 @@ func TestShouldUpdateAuditLogNotifierSecret(t *testing.T) {
 		"rhacs",
 	)
 	aggregatedConfig := []*declarativeconfig.Notifier{defaultNotifierConfig, vectorNotifierConfig}
-	/*
-		// Disabling the test cases using defaultNotifierConfigBytes as declarative config decoding fails.
-		defaultNotifierConfigBytes, defaultEncodingErr := yaml.Marshal(defaultAuditLogConfig)
-		assert.NoError(t, defaultEncodingErr)
-	*/
-	vectorNotifierConfigBytes, vectorEncodingErr := yaml.Marshal(vectorNotifierConfig)
-	assert.NoError(t, vectorEncodingErr)
-	aggregatedConfigBytes, aggregatedEncodingError := yaml.Marshal(aggregatedConfig)
-	assert.NoError(t, aggregatedEncodingError)
-	/*
-		correctDefaultSecret := getSecret(
-			sensibleDeclarativeConfigSecretName,
-			centralNamespace,
-			map[string][]byte{
-				auditLogNotifierKey: defaultNotifierConfigBytes,
-			},
-		)
-	*/
-	faultyDefaultSecret := getSecret(
-		sensibleDeclarativeConfigSecretName,
-		centralNamespace,
-		map[string][]byte{
-			auditLogNotifierKey: vectorNotifierConfigBytes,
-		},
-	)
-	aggregatedDefaultSecret := getSecret(
-		sensibleDeclarativeConfigSecretName,
-		centralNamespace,
-		map[string][]byte{
-			auditLogNotifierKey: aggregatedConfigBytes,
-		},
-	)
-	correctVectorSecret := getSecret(
-		sensibleDeclarativeConfigSecretName,
-		"rhacs",
-		map[string][]byte{
-			auditLogNotifierKey: vectorNotifierConfigBytes,
-		},
-	)
-	/*
-		faultyVectorSecret := getSecret(
-			sensibleDeclarativeConfigSecretName,
-			"rhacs",
-			map[string][]byte{
-				auditLogNotifierKey: defaultNotifierConfigBytes,
-			},
-		)
-	*/
-	aggregatedVectorSecret := getSecret(
-		sensibleDeclarativeConfigSecretName,
-		"rhacs",
-		map[string][]byte{
-			auditLogNotifierKey: aggregatedConfigBytes,
-		},
-	)
 
 	testCases := []struct {
 		name                   string
-		secret                 *v1.Secret
+		namespace              string
+		secretData             map[string][]*declarativeconfig.Notifier
 		expectedNotifierConfig *declarativeconfig.Notifier
 		expectedError          error
 		expectedResult         bool
 	}{
-		/*
-			{
-				name:                   "secret with default config should NOT require update when default config is expected",
-				secret:                 correctDefaultSecret,
-				expectedNotifierConfig: defaultNotifierConfig,
-				expectedError:          nil,
-				expectedResult:         false,
-			},
-		*/
 		{
-			name:                   "secret with vector config should require update when default config is expected",
-			secret:                 faultyDefaultSecret,
+			name:      "secret with default config should NOT require update when default config is expected",
+			namespace: centralNamespace,
+			secretData: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {defaultNotifierConfig},
+			},
+			expectedNotifierConfig: defaultNotifierConfig,
+			expectedError:          nil,
+			expectedResult:         false,
+		},
+		{
+			name:      "secret with vector config should require update when default config is expected",
+			namespace: centralNamespace,
+			secretData: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {vectorNotifierConfig},
+			},
 			expectedNotifierConfig: defaultNotifierConfig,
 			expectedError:          nil,
 			expectedResult:         true,
 		},
 		{
-			name:                   "secret with aggregated config should NOT require update when default config is expected",
-			secret:                 aggregatedDefaultSecret,
+			name:      "secret with aggregated config should NOT require update when default config is expected",
+			namespace: centralNamespace,
+			secretData: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: aggregatedConfig,
+			},
 			expectedNotifierConfig: defaultNotifierConfig,
 			expectedError:          nil,
 			expectedResult:         false,
 		},
 		{
-			name:                   "secret with vector config should NOT require update when vector config is expected",
-			secret:                 correctVectorSecret,
+			name:      "secret with vector config should NOT require update when vector config is expected",
+			namespace: "rhacs",
+			secretData: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {vectorNotifierConfig},
+			},
 			expectedNotifierConfig: vectorNotifierConfig,
 			expectedError:          nil,
 			expectedResult:         false,
 		},
-		/*
-			{
-				name:                   "secret with default config should require update when vector config is expected",
-				secret:                 faultyVectorSecret,
-				expectedNotifierConfig: vectorNotifierConfig,
-				expectedError:          nil,
-				expectedResult:         true,
-			},
-		*/
 		{
-			name:                   "secret with aggregated config should NOT require update when vector config is expected",
-			secret:                 aggregatedVectorSecret,
+			name:      "secret with default config should require update when vector config is expected",
+			namespace: "rhacs",
+			secretData: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {defaultNotifierConfig},
+			},
+			expectedNotifierConfig: vectorNotifierConfig,
+			expectedError:          nil,
+			expectedResult:         true,
+		},
+		{
+			name:      "secret with aggregated config should NOT require update when vector config is expected",
+			namespace: "rhacs",
+			secretData: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: aggregatedConfig,
+			},
 			expectedNotifierConfig: vectorNotifierConfig,
 			expectedError:          nil,
 			expectedResult:         false,
@@ -1742,8 +1728,9 @@ func TestShouldUpdateAuditLogNotifierSecret(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			secret := populateNotifierSecret(t, testCase.namespace, testCase.secretData)
 			shouldUpdate, err := shouldUpdateAuditLogNotifierSecret(
-				testCase.secret,
+				secret,
 				testCase.expectedNotifierConfig,
 			)
 			assert.ErrorIs(t, err, testCase.expectedError)
@@ -1768,139 +1755,128 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 		vectorAuditLogConfig.AuditLogTargetPort,
 		centralNamespace,
 	)
-	aggregatedVectorConfig := []*declarativeconfig.Notifier{
-		faultyVectorNotifierConfig,
-		correctVectorNotifierConfig,
-	}
-	aggregatedConfig := []*declarativeconfig.Notifier{
-		defaultNotifierConfig,
-		faultyVectorNotifierConfig,
-		correctVectorNotifierConfig,
-	}
-	defaultNotifierConfigBytes, defaultEncodingErr := yaml.Marshal(defaultNotifierConfig)
-	assert.NoError(t, defaultEncodingErr)
-	correctVectorNotifierConfigBytes, correctVectorEncodingErr := yaml.Marshal(correctVectorNotifierConfig)
-	assert.NoError(t, correctVectorEncodingErr)
-	faultyVectorNotifierConfigBytes, faultyVectorEncodingErr := yaml.Marshal(faultyVectorNotifierConfig)
-	assert.NoError(t, faultyVectorEncodingErr)
-	aggregatedVectorConfigBytes, aggregatedVectorEncodingError := yaml.Marshal(aggregatedVectorConfig)
-	assert.NoError(t, aggregatedVectorEncodingError)
-	aggregatedConfigBytes, aggregatedEncodingError := yaml.Marshal(aggregatedConfig)
-	assert.NoError(t, aggregatedEncodingError)
-	correctDefaultSecret := getSecret(
-		sensibleDeclarativeConfigSecretName,
-		centralNamespace,
-		map[string][]byte{
-			auditLogNotifierKey: defaultNotifierConfigBytes,
-		},
-	)
-	faultyDefaultSecret := getSecret(
-		sensibleDeclarativeConfigSecretName,
-		centralNamespace,
-		map[string][]byte{
-			auditLogNotifierKey: correctVectorNotifierConfigBytes,
-		},
-	)
-	faultyAggregatedDefaultSecret := getSecret(
-		sensibleDeclarativeConfigSecretName,
-		centralNamespace,
-		map[string][]byte{
-			auditLogNotifierKey: aggregatedVectorConfigBytes,
-		},
-	)
-	aggregatedDefaultSecret := getSecret(
-		sensibleDeclarativeConfigSecretName,
-		centralNamespace,
-		map[string][]byte{
-			auditLogNotifierKey: aggregatedConfigBytes,
-		},
-	)
-	correctVectorSecret := getSecret(
-		sensibleDeclarativeConfigSecretName,
-		centralNamespace,
-		map[string][]byte{
-			auditLogNotifierKey: correctVectorNotifierConfigBytes,
-		},
-	)
-	faultyVectorSecret := getSecret(
-		sensibleDeclarativeConfigSecretName,
-		centralNamespace,
-		map[string][]byte{
-			auditLogNotifierKey: faultyVectorNotifierConfigBytes,
-		},
-	)
-	aggregatedVectorSecret := getSecret(
-		sensibleDeclarativeConfigSecretName,
-		centralNamespace,
-		map[string][]byte{
-			auditLogNotifierKey: aggregatedConfigBytes,
-		},
-	)
+
+	const otherSecretKey = "other.secret.key"
 
 	testCases := []struct {
-		name           string
-		auditLogConfig config.AuditLogging
-		secret         *v1.Secret
-		expectedSecret *v1.Secret
+		name                    string
+		auditLogConfig          config.AuditLogging
+		preexistingSecret       bool
+		notifierConfigs         map[string][]*declarativeconfig.Notifier
+		expectedNotifierConfigs map[string][]*declarativeconfig.Notifier
+		secret                  *v1.Secret
+		expectedSecret          *v1.Secret
 	}{
 		{
-			name:           "Missing default secret gets created",
-			auditLogConfig: defaultAuditLogConfig,
-			secret:         nil,
-			expectedSecret: correctDefaultSecret,
+			name:              "Missing default secret gets created",
+			auditLogConfig:    defaultAuditLogConfig,
+			preexistingSecret: false,
+			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {defaultNotifierConfig},
+			},
 		},
 		{
-			name:           "Bad default secret gets corrected",
-			auditLogConfig: defaultAuditLogConfig,
-			secret:         faultyDefaultSecret,
-			expectedSecret: correctDefaultSecret,
+			name:              "Bad default secret gets corrected",
+			auditLogConfig:    defaultAuditLogConfig,
+			preexistingSecret: true,
+			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {correctVectorNotifierConfig},
+			},
+			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {defaultNotifierConfig},
+			},
 		},
 		{
-			name:           "Bad aggregated default secret gets corrected",
-			auditLogConfig: defaultAuditLogConfig,
-			secret:         faultyAggregatedDefaultSecret,
-			expectedSecret: correctDefaultSecret,
+			name:              "Bad aggregated default secret gets corrected",
+			auditLogConfig:    defaultAuditLogConfig,
+			preexistingSecret: true,
+			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
+			},
+			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {defaultNotifierConfig},
+			},
 		},
 		{
-			name:           "Partially correct aggregated default secret is left untouched",
-			auditLogConfig: defaultAuditLogConfig,
-			secret:         aggregatedDefaultSecret,
-			expectedSecret: aggregatedDefaultSecret,
+			name:              "Partially correct aggregated default secret is left untouched",
+			auditLogConfig:    defaultAuditLogConfig,
+			preexistingSecret: true,
+			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {
+					correctVectorNotifierConfig,
+					faultyVectorNotifierConfig,
+					defaultNotifierConfig,
+				},
+			},
+			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {
+					correctVectorNotifierConfig,
+					faultyVectorNotifierConfig,
+					defaultNotifierConfig,
+				},
+			},
 		},
 		{
-			name:           "Missing vector secret gets created",
-			auditLogConfig: vectorAuditLogConfig,
-			secret:         nil,
-			expectedSecret: correctVectorSecret,
+			name:              "Correct default secret with other secret key is left untouched",
+			auditLogConfig:    defaultAuditLogConfig,
+			preexistingSecret: true,
+			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {defaultNotifierConfig},
+				otherSecretKey:      {faultyVectorNotifierConfig},
+			},
+			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {defaultNotifierConfig},
+				otherSecretKey:      {faultyVectorNotifierConfig},
+			},
 		},
 		{
-			name:           "Bad vector secret gets corrected",
-			auditLogConfig: vectorAuditLogConfig,
-			secret:         faultyVectorSecret,
-			expectedSecret: correctVectorSecret,
+			name:              "Missing vector secret gets created",
+			auditLogConfig:    vectorAuditLogConfig,
+			preexistingSecret: false,
+			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {correctVectorNotifierConfig},
+			},
 		},
 		{
-			name:           "Partially correct aggregated vector secret is left untouched",
-			auditLogConfig: vectorAuditLogConfig,
-			secret:         aggregatedVectorSecret,
-			expectedSecret: aggregatedVectorSecret,
+			name:              "Bad vector secret gets corrected",
+			auditLogConfig:    vectorAuditLogConfig,
+			preexistingSecret: true,
+			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {faultyVectorNotifierConfig},
+			},
+			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {correctVectorNotifierConfig},
+			},
+		},
+		{
+			name:              "Partially correct aggregated vector secret is left untouched",
+			auditLogConfig:    vectorAuditLogConfig,
+			preexistingSecret: true,
+			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
+			},
+			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
+			},
 		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			ctx := context.TODO()
 			fakeClient, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, noDBClient, defaultReconcilerOptions, testCase.auditLogConfig)
-			if testCase.secret != nil {
-				assert.NoError(t, fakeClient.Create(ctx, testCase.secret))
+			if testCase.preexistingSecret {
+				secret := populateNotifierSecret(t, centralNamespace, testCase.notifierConfigs)
+				assert.NoError(t, fakeClient.Create(ctx, secret))
 			}
 			r.reconcileCentralAuditLogNotifier(ctx, &simpleManagedCentral)
 			fetchedSecret := &v1.Secret{}
-			secretKey := client.ObjectKey{
+			secretKey := client.ObjectKey{ // pragma: allowList secret
 				Name:      sensibleDeclarativeConfigSecretName,
 				Namespace: centralNamespace,
 			}
 			assert.NoError(t, fakeClient.Get(ctx, secretKey, fetchedSecret))
-			compareSecret(t, testCase.expectedSecret, fetchedSecret, testCase.secret == nil)
+			expectedSecret := populateNotifierSecret(t, centralNamespace, testCase.expectedNotifierConfigs)
+			compareSecret(t, expectedSecret, fetchedSecret, !testCase.preexistingSecret)
 		})
 	}
 }
