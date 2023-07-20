@@ -1293,10 +1293,10 @@ func getSecret(name string, namespace string, data map[string][]byte) *v1.Secret
 }
 
 const (
-	emptySecretName                   = "emptySecret"                   // pragma: allowList secret
-	secretWithOtherKeyName            = "secretWithOtherKey"            // pragma: allowList secret
-	secretWithKeyDataToChangeName     = "secretWithKeyDataToChange"     // pragma: allowList secret
-	secretWithExpectedKeyDataOnlyName = "secretWithExpectedKeyDataOnly" // pragma: allowList secret
+	emptySecretName                   = "emptySecret"                   // pragma: allowlist secret
+	secretWithOtherKeyName            = "secretWithOtherKey"            // pragma: allowlist secret
+	secretWithKeyDataToChangeName     = "secretWithKeyDataToChange"     // pragma: allowlist secret
+	secretWithExpectedKeyDataOnlyName = "secretWithExpectedKeyDataOnly" // pragma: allowlist secret
 
 	entryKey = "some.key"
 	otherKey = "other.key"
@@ -1320,16 +1320,16 @@ func isSameData(entry1 []byte, entry2 []byte) bool {
 }
 
 func compareSecret(t *testing.T, expectedSecret *v1.Secret, secret *v1.Secret, created bool) {
-	if expectedSecret == nil { // pragma: allowList secret
+	if expectedSecret == nil { // pragma: allowlist secret
 		assert.Nil(t, secret)
 		return
 	}
 	assert.NotNil(t, secret)
-	if secret == nil {
+	if secret == nil { // pragma: allowlist secret
 		return
 	}
-	assert.Equal(t, expectedSecret.ObjectMeta.Namespace, secret.ObjectMeta.Namespace)
-	assert.Equal(t, expectedSecret.ObjectMeta.Name, secret.ObjectMeta.Name)
+	assert.Equal(t, expectedSecret.ObjectMeta.Namespace, secret.ObjectMeta.Namespace) // pragma: allowlist secret
+	assert.Equal(t, expectedSecret.ObjectMeta.Name, secret.ObjectMeta.Name)           // pragma: allowlist secret
 	if created {
 		assert.NotZero(t, len(secret.ObjectMeta.Labels))
 		if secret.ObjectMeta.Labels == nil {
@@ -1389,14 +1389,14 @@ func TestEnsureSecretExists(t *testing.T) {
 		expectedData map[string][]byte
 	}{
 		{
-			secretName:  emptySecretName, // pragma: allowList secret
+			secretName:  emptySecretName, // pragma: allowlist secret
 			initialData: nil,
 			expectedData: map[string][]byte{
 				entryKey: entryData,
 			},
 		},
 		{
-			secretName: secretWithOtherKeyName, // pragma: allowList secret
+			secretName: secretWithOtherKeyName, // pragma: allowlist secret
 			initialData: map[string][]byte{
 				otherKey: otherData,
 			},
@@ -1406,7 +1406,7 @@ func TestEnsureSecretExists(t *testing.T) {
 			},
 		},
 		{
-			secretName: secretWithKeyDataToChangeName, // pragma: allowList secret
+			secretName: secretWithKeyDataToChangeName, // pragma: allowlist secret
 			initialData: map[string][]byte{
 				entryKey: otherData,
 			},
@@ -1415,7 +1415,7 @@ func TestEnsureSecretExists(t *testing.T) {
 			},
 		},
 		{
-			secretName: secretWithExpectedKeyDataOnlyName, // pragma: allowList secret
+			secretName: secretWithExpectedKeyDataOnlyName, // pragma: allowlist secret
 			initialData: map[string][]byte{
 				entryKey: entryData,
 			},
@@ -1437,7 +1437,7 @@ func TestEnsureSecretExists(t *testing.T) {
 	}
 
 	t.Run("missing secret", func(t *testing.T) {
-		secretName := "missingSecret" // pragma: allowList secret
+		secretName := "missingSecret" // pragma: allowlist secret
 		expectedData := map[string][]byte{
 			entryKey: entryData,
 		}
@@ -1550,12 +1550,12 @@ func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
 	}
 	assert.NotZero(t, len(centralCRDeclarativeConfig.Secrets))
 	sensibleDeclarativeConfigSecretFound := false
-	for _, secretRef := range centralCRDeclarativeConfig.Secrets { // pragma: allowList secret
-		if secretRef.Name == sensibleDeclarativeConfigSecretName { // pragma: allowList secret
-			sensibleDeclarativeConfigSecretFound = true
+	for _, secretRef := range centralCRDeclarativeConfig.Secrets { // pragma: allowlist secret
+		if secretRef.Name == sensibleDeclarativeConfigSecretName { // pragma: allowlist secret
+			sensibleDeclarativeConfigSecretFound = true // pragma: allowlist secret
 		}
 	}
-	assert.True(t, sensibleDeclarativeConfigSecretFound) // pragma: allowList secret
+	assert.True(t, sensibleDeclarativeConfigSecretFound) // pragma: allowlist secret
 }
 
 func TestGetAuditLogNotifierConfig(t *testing.T) {
@@ -1865,16 +1865,16 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 			ctx := context.TODO()
 			fakeClient, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, noDBClient, defaultReconcilerOptions, testCase.auditLogConfig)
 			if testCase.preexistingSecret {
-				secret := populateNotifierSecret(t, centralNamespace, testCase.notifierConfigs) // pragma: allowList secret
-				assert.NoError(t, fakeClient.Create(ctx, secret))                               // pragma: allowList secret
+				secret := populateNotifierSecret(t, centralNamespace, testCase.notifierConfigs)
+				assert.NoError(t, fakeClient.Create(ctx, secret))
 			}
 			r.reconcileCentralAuditLogNotifier(ctx, &simpleManagedCentral)
 			fetchedSecret := &v1.Secret{}
-			secretKey := client.ObjectKey{ // pragma: allowList secret
+			secretKey := client.ObjectKey{ // pragma: allowlist secret
 				Name:      sensibleDeclarativeConfigSecretName,
 				Namespace: centralNamespace,
 			}
-			assert.NoError(t, fakeClient.Get(ctx, secretKey, fetchedSecret)) // pragma: allowList secret
+			assert.NoError(t, fakeClient.Get(ctx, secretKey, fetchedSecret))
 			expectedSecret := populateNotifierSecret(t, centralNamespace, testCase.expectedNotifierConfigs)
 			compareSecret(t, expectedSecret, fetchedSecret, !testCase.preexistingSecret)
 		})

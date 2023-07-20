@@ -1307,24 +1307,21 @@ func (r *CentralReconciler) ensureSecretExists(
 	secretModifyFunc func(secret *corev1.Secret) (bool, error),
 ) error {
 	secret := &corev1.Secret{}
-	secretKey := ctrlClient.ObjectKey{ // pragma: allowList secret
-		Name:      actualName,
-		Namespace: remoteCentralNamespace,
-	}
+	secretKey := ctrlClient.ObjectKey{Name: actualName, Namespace: remoteCentralNamespace} // pragma: allowlist secret
 
-	err := r.client.Get(ctx, secretKey, secret) // pragma: allowList secret
+	err := r.client.Get(ctx, secretKey, secret) // pragma: allowlist secret
 	if err != nil && !apiErrors.IsNotFound(err) {
 		return fmt.Errorf("getting %s secret: %w", actualName, err)
 	}
 	if err == nil {
-		changed, secretPopulationErr := secretModifyFunc(secret)
-		if secretPopulationErr != nil { // pragma: allowList secret
-			return fmt.Errorf("updating %s secret content: %w", actualName, secretPopulationErr)
+		changed, modificationErr := secretModifyFunc(secret)
+		if modificationErr != nil {
+			return fmt.Errorf("updating %s secret content: %w", actualName, modificationErr)
 		}
 		if !changed {
 			return nil
 		}
-		updateErr := r.client.Update(ctx, secret)
+		updateErr := r.client.Update(ctx, secret) // pragma: allowlist secret
 		if updateErr != nil {
 			return fmt.Errorf("updating %s secret: %w", actualName, updateErr)
 		}
@@ -1334,7 +1331,7 @@ func (r *CentralReconciler) ensureSecretExists(
 
 	// create secret if it does not exist
 	secret = &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{ // pragma: allowlist secret
 			Name:      actualName,
 			Namespace: remoteCentralNamespace,
 			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
@@ -1344,11 +1341,11 @@ func (r *CentralReconciler) ensureSecretExists(
 		},
 	}
 
-	_, secretPopulationErr := secretModifyFunc(secret)
-	if secretPopulationErr != nil {
-		return fmt.Errorf("initializing %s secret payload: %w", actualName, secretPopulationErr)
+	_, modificationErr := secretModifyFunc(secret)
+	if modificationErr != nil {
+		return fmt.Errorf("initializing %s secret payload: %w", actualName, modificationErr)
 	}
-	createErr := r.client.Create(ctx, secret)
+	createErr := r.client.Create(ctx, secret) // pragma: allowlist secret
 	if createErr != nil {
 		return fmt.Errorf("creating %s secret: %w", actualName, createErr)
 	}
