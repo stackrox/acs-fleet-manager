@@ -19,14 +19,15 @@ import (
 )
 
 const (
-	centralServiceName = "central"
-	oidcType           = "oidc"
+	centralDeploymentName = "central"
+	centralServiceName    = "central"
+	oidcType              = "oidc"
 )
 
-func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, central *private.ManagedCentral) (bool, error) {
+func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (bool, error) {
 	deployment := &appsv1.Deployment{}
 	err := client.Get(ctx,
-		ctrlClient.ObjectKey{Name: "central", Namespace: central.Metadata.Namespace},
+		ctrlClient.ObjectKey{Name: centralDeploymentName, Namespace: central.Metadata.Namespace},
 		deployment)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
@@ -34,14 +35,11 @@ func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, cen
 		}
 		return false, errors.Wrap(err, "retrieving central deployment resource from Kubernetes")
 	}
-	if deployment.Status.AvailableReplicas > 0 && deployment.Status.UnavailableReplicas == 0 {
-		return true, nil
-	}
-	return false, nil
+	return deployment.Status.AvailableReplicas > 0 && deployment.Status.UnavailableReplicas == 0, nil
 }
 
 // TODO: ROX-11644: doesn't work when fleetshard-sync deployed outside of Central's cluster
-func getServiceAddress(ctx context.Context, central *private.ManagedCentral, client ctrlClient.Client) (string, error) {
+func getServiceAddress(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (string, error) {
 	service := &core.Service{}
 	err := client.Get(ctx,
 		ctrlClient.ObjectKey{Name: centralServiceName, Namespace: central.Metadata.Namespace},
@@ -67,7 +65,7 @@ func getHTTPSServicePort(service *core.Service) (int32, error) {
 }
 
 // authProviderName deduces auth provider name from issuer URL.
-func authProviderName(central *private.ManagedCentral) (name string) {
+func authProviderName(central private.ManagedCentral) (name string) {
 	switch {
 	case strings.Contains(central.Spec.Auth.Issuer, "sso.stage.redhat"):
 		name = "Red Hat SSO (stage)"
@@ -85,7 +83,7 @@ func authProviderName(central *private.ManagedCentral) (name string) {
 // hasDefaultAuthProvider verifies whether the given central has a default auth provider as well as whether it is
 // a legacy one, i.e. the default auth provider is not created via declarative config.
 // It will return two booleans that indicate whether the auth provider exists and whether it's a legacy one.
-func hasDefaultAuthProvider(ctx context.Context, central *private.ManagedCentral, client ctrlClient.Client) (bool, bool, error) {
+func hasDefaultAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, bool, error) {
 	ready, err := isCentralDeploymentReady(ctx, client, central)
 	if !ready || err != nil {
 		return false, false, err
@@ -98,7 +96,7 @@ func hasDefaultAuthProvider(ctx context.Context, central *private.ManagedCentral
 		return false, false, err
 	}
 
-	centralClient := centralClientPkg.NewCentralClientNoAuth(*central, address)
+	centralClient := centralClientPkg.NewCentralClientNoAuth(central, address)
 	authProvidersResp, err := centralClient.GetLoginAuthProviders(ctx)
 	if err != nil {
 		return false, false, errors.Wrap(err, "sending GetLoginAuthProviders request to central")
@@ -108,7 +106,7 @@ func hasDefaultAuthProvider(ctx context.Context, central *private.ManagedCentral
 		name := authProviderName(central)
 		if provider.Type == oidcType {
 			if provider.GetName() == name {
-				glog.Infof("Found our auth provider: %+v", provider)
+				glog.Infof("Found default auth provider: %+v", provider)
 				// The auth provider can be considered legacy if it's UUID doesn't match the declarative config one based on
 				// the name.
 				return true, provider.GetId() != declarativeconfig.NewDeclarativeAuthProviderUUID(name).String(), nil

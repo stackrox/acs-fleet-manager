@@ -80,7 +80,7 @@ const (
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
 )
 
-type verifyAuthProviderFunc func(ctx context.Context, central *private.ManagedCentral,
+type verifyAuthProviderFunc func(ctx context.Context, central private.ManagedCentral,
 	client ctrlClient.Client) (bool, bool, error)
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -181,7 +181,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if err := r.reconcileAuthProvider(ctx, &remoteCentral, central); err != nil {
+	if err := r.reconcileAuthProvider(ctx, remoteCentral, central); err != nil {
 		return nil, err
 	}
 
@@ -201,7 +201,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	// Check whether deployment is ready.
-	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, &remoteCentral)
+	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	// After the deployment is ready, verify that the auth provider exists.
-	if err := r.ensureAuthProviderExists(ctx, &remoteCentral); err != nil {
+	if err := r.ensureAuthProviderExists(ctx, remoteCentral); err != nil {
 		return nil, err
 	}
 
@@ -370,10 +370,11 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 }
 
 func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context,
-	remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+	remoteCentral private.ManagedCentral, central *v1alpha1.Central) error {
 	if !r.wantsAuthProvider {
 		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(false)
-		glog.Info("No auth provider desired, enabling basic authentication.")
+		glog.Infof("No auth provider desired, enabling basic authentication for Central %s/%s",
+			central.GetNamespace(), central.GetName())
 		return nil
 	}
 
@@ -431,10 +432,6 @@ func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context,
 				},
 			}
 
-			if secret.Data == nil {
-				secret.Data = map[string][]byte{}
-			}
-
 			authProviderHash, err := util.MD5SumFromJSONStruct(authProviderConfig)
 			if err != nil {
 				return false, fmt.Errorf("creating hash for auth provider config: %w", err)
@@ -446,14 +443,21 @@ func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context,
 			}
 
 			if !requiresReconciliation {
+				glog.Infof("Auth provider configuration for Central %s/%s is already up to date.",
+					central.GetNamespace(), central.GetName())
 				return false, nil
 			}
 
-			glog.Info("Found changes for auth provider configuration, applying them.")
+			glog.Infof("Found changes for auth provider configuration for Central %s/%s, applying them.",
+				central.GetNamespace(), central.GetName())
 
 			authProviderBytes, err := yaml.Marshal(authProviderConfig)
 			if err != nil {
 				return false, fmt.Errorf("marshalling auth provider config: %w", err)
+			}
+
+			if secret.Data == nil {
+				secret.Data = map[string][]byte{}
 			}
 			secret.Data[authProviderDeclarativeConfigKey] = authProviderBytes
 			return true, nil
@@ -465,7 +469,7 @@ func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context,
 	return nil
 }
 
-func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remoteCentral *private.ManagedCentral) error {
+func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	// Short-circuit if an auth provider isn't desired.
 	if !r.wantsAuthProvider {
 		return nil
@@ -473,7 +477,7 @@ func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remote
 
 	// Since the auth provider is an integral part, we have to verify that it will be created successfully and listed
 	// within the list of available auth providers.
-	// This has to be done asynchronously now, since the declarative config will take time to be applied.
+	// We try multiple times to verify auth provider since applying of declarative configuration is done asynchronously.
 	authProviderExists := concurrency.WaitInContext(concurrency.NewPoller(func() bool {
 		exists, _, _ := r.verifyAuthProviderFunc(ctx, remoteCentral, r.client)
 		return exists
@@ -482,7 +486,8 @@ func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remote
 		r.hasAuthProvider = true
 		return nil
 	}
-	return errors.New("failed to verify that the auth provider exists within Central API")
+	return fmt.Errorf("failed to verify that the auth provider exists within Central %s/%s",
+		remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 }
 
 // checkForAuthConfigReconciliation reads the auth configuration contained within the given secret and indicates
@@ -508,6 +513,9 @@ func checkForAuthConfigReconciliation(secret *corev1.Secret, existingConfigHash 
 	}
 
 	// We currently only expect a single auth provider configuration to be stored under the key.
+	// This also means that it's potentially possible to declare multiple auth providers here. However, in case an
+	// update is received, the whole bytes under authProviderDeclarativeConfigKey will be overwritten and only a single
+	// auth provider will exist again.
 	authProviderConfig, ok := configs[0].(*declarativeconfig.AuthProvider)
 	if !ok || authProviderConfig == nil {
 		return true, nil

@@ -47,7 +47,8 @@ const (
 	skipRouteMsg   = "route resource is not known to test cluster"
 	skipDNSMsg     = "external DNS is not enabled for this test run"
 
-	declarativeConfigSecretName = "sensible-declarative-configs" // pragma: allowlist secret
+	declarativeConfigSecretName      = "sensible-declarative-configs" // pragma: allowlist secret
+	declarativeConfigAuthProviderKey = "default-sso-auth-provider"
 )
 
 var _ = Describe("Central", func() {
@@ -199,8 +200,9 @@ var _ = Describe("Central", func() {
 				Fail("central not created")
 			}
 
+			secret := &corev1.Secret{}
 			Eventually(func() error {
-				secret := &corev1.Secret{}
+
 				err := k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: declarativeConfigSecretName,
 					Namespace: namespaceName}, secret)
 				if err != nil {
@@ -208,6 +210,8 @@ var _ = Describe("Central", func() {
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+
+			Expect(secret.Data[declarativeConfigAuthProviderKey]).ToNot(BeEmpty())
 		})
 
 		It("should create AWS Route53 records", func() {

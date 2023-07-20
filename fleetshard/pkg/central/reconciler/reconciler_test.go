@@ -393,7 +393,7 @@ func TestReconcileCreateWithDeclarativeAuthProvider(t *testing.T) {
 		WantsAuthProvider: true,
 	})
 	// Force declarative config.
-	r.verifyAuthProviderFunc = func(_ context.Context, _ *private.ManagedCentral, _ client.Client) (bool, bool, error) {
+	r.verifyAuthProviderFunc = func(_ context.Context, _ private.ManagedCentral, _ client.Client) (bool, bool, error) {
 		return true, false, nil
 	}
 
@@ -426,7 +426,7 @@ func TestReconcileCreateWithLegacyAuthProvider(t *testing.T) {
 		WantsAuthProvider: true,
 	})
 	// Legacy auth provider.
-	r.verifyAuthProviderFunc = func(_ context.Context, _ *private.ManagedCentral, _ client.Client) (bool, bool, error) {
+	r.verifyAuthProviderFunc = func(_ context.Context, _ private.ManagedCentral, _ client.Client) (bool, bool, error) {
 		return true, true, nil
 	}
 
