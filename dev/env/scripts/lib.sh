@@ -49,10 +49,10 @@ dump_env() {
 init() {
     set -eu -o pipefail
 
-    kubectl cluster-info  | grep -E "stage|prod|openshiftapps"
-    if [[ "$?" -eq 0 ]]; then
-        echo "Executing against prod or staging not allowed. Please check your kubectl context."
-        exit 1
+    try_kubectl cluster-info  | grep -E "stage|prod|openshiftapps"
+    exit_code="$?"
+    if [[ "$exit_code" -eq 0 ]]; then
+        die "Error: Executing against prod or staging not allowed. Please check your kubectl context."
     fi
 
     # For reading the defaults we need access to the
