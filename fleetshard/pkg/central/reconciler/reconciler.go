@@ -1312,13 +1312,13 @@ func (r *CentralReconciler) ensureSecretExists(
 		Namespace: remoteCentralNamespace,
 	}
 
-	err := r.client.Get(ctx, secretKey, secret)
+	err := r.client.Get(ctx, secretKey, secret) // pragma: allowList secret
 	if err != nil && !apiErrors.IsNotFound(err) {
 		return fmt.Errorf("getting %s secret: %w", actualName, err)
 	}
 	if err == nil {
 		changed, secretPopulationErr := secretModifyFunc(secret)
-		if secretPopulationErr != nil {
+		if secretPopulationErr != nil { // pragma: allowList secret
 			return fmt.Errorf("updating %s secret content: %w", actualName, secretPopulationErr)
 		}
 		if !changed {

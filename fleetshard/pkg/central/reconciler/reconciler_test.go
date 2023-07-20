@@ -1320,7 +1320,7 @@ func isSameData(entry1 []byte, entry2 []byte) bool {
 }
 
 func compareSecret(t *testing.T, expectedSecret *v1.Secret, secret *v1.Secret, created bool) {
-	if expectedSecret == nil {
+	if expectedSecret == nil { // pragma: allowList secret
 		assert.Nil(t, secret)
 		return
 	}
@@ -1437,7 +1437,7 @@ func TestEnsureSecretExists(t *testing.T) {
 	}
 
 	t.Run("missing secret", func(t *testing.T) {
-		secretName := "missingSecret"
+		secretName := "missingSecret" // pragma: allowList secret
 		expectedData := map[string][]byte{
 			entryKey: entryData,
 		}
@@ -1550,12 +1550,12 @@ func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
 	}
 	assert.NotZero(t, len(centralCRDeclarativeConfig.Secrets))
 	sensibleDeclarativeConfigSecretFound := false
-	for _, secretRef := range centralCRDeclarativeConfig.Secrets {
-		if secretRef.Name == sensibleDeclarativeConfigSecretName {
+	for _, secretRef := range centralCRDeclarativeConfig.Secrets { // pragma: allowList secret
+		if secretRef.Name == sensibleDeclarativeConfigSecretName { // pragma: allowList secret
 			sensibleDeclarativeConfigSecretFound = true
 		}
 	}
-	assert.True(t, sensibleDeclarativeConfigSecretFound)
+	assert.True(t, sensibleDeclarativeConfigSecretFound) // pragma: allowList secret
 }
 
 func TestGetAuditLogNotifierConfig(t *testing.T) {
@@ -1756,7 +1756,7 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 		centralNamespace,
 	)
 
-	const otherSecretKey = "other.secret.key"
+	const otherItemKey = "other.item.key"
 
 	testCases := []struct {
 		name                    string
@@ -1822,11 +1822,11 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 			preexistingSecret: true,
 			notifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {defaultNotifierConfig},
-				otherSecretKey:      {faultyVectorNotifierConfig},
+				otherItemKey:        {faultyVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {defaultNotifierConfig},
-				otherSecretKey:      {faultyVectorNotifierConfig},
+				otherItemKey:        {faultyVectorNotifierConfig},
 			},
 		},
 		{
@@ -1865,8 +1865,8 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 			ctx := context.TODO()
 			fakeClient, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, noDBClient, defaultReconcilerOptions, testCase.auditLogConfig)
 			if testCase.preexistingSecret {
-				secret := populateNotifierSecret(t, centralNamespace, testCase.notifierConfigs)
-				assert.NoError(t, fakeClient.Create(ctx, secret))
+				secret := populateNotifierSecret(t, centralNamespace, testCase.notifierConfigs) // pragma: allowList secret
+				assert.NoError(t, fakeClient.Create(ctx, secret))                               // pragma: allowList secret
 			}
 			r.reconcileCentralAuditLogNotifier(ctx, &simpleManagedCentral)
 			fetchedSecret := &v1.Secret{}
@@ -1874,7 +1874,7 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 				Name:      sensibleDeclarativeConfigSecretName,
 				Namespace: centralNamespace,
 			}
-			assert.NoError(t, fakeClient.Get(ctx, secretKey, fetchedSecret))
+			assert.NoError(t, fakeClient.Get(ctx, secretKey, fetchedSecret)) // pragma: allowList secret
 			expectedSecret := populateNotifierSecret(t, centralNamespace, testCase.expectedNotifierConfigs)
 			compareSecret(t, expectedSecret, fetchedSecret, !testCase.preexistingSecret)
 		})
