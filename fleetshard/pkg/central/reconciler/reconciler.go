@@ -310,11 +310,6 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 							Name: sensibleDeclarativeConfigSecretName,
 						},
 					},
-					ConfigMaps: []v1alpha1.LocalConfigMapReference{
-						{
-							Name: "declarative-configs",
-						},
-					},
 				},
 			},
 			Scanner: &v1alpha1.ScannerComponentSpec{
