@@ -775,7 +775,7 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 		return fmt.Errorf("getting DB password from secret: %w", err)
 	}
 
-	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword, remoteCentral.Metadata.Internal)
+	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, remoteCentral.Id, dbMasterPassword, remoteCentral.Metadata.Internal)
 	if err != nil {
 		return fmt.Errorf("provisioning RDS DB: %w", err)
 	}
