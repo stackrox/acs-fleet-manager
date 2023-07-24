@@ -196,7 +196,7 @@ func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
-	assert.Equal(t, operatorImage, central.ObjectMeta.Labels[ReconcileOperatorSelector])
+	assert.Equal(t, operatorVersion, central.ObjectMeta.Labels[ReconcileOperatorSelector])
 }
 
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {

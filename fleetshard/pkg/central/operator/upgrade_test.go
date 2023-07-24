@@ -32,15 +32,13 @@ const (
 )
 
 var operatorConfig1 = DeploymentConfig{
-	Image:         operatorImage1,
-	LabelSelector: "4.0.1",
-	Version:       "4.0.1",
+	Image:  operatorImage1,
+	GitRef: "4.0.1",
 }
 
 var operatorConfig2 = DeploymentConfig{
-	Image:         operatorImage2,
-	LabelSelector: "4.0.2",
-	Version:       "4.0.2",
+	Image:  operatorImage2,
+	GitRef: "4.0.2",
 }
 
 var securedClusterCRD = &unstructured.Unstructured{
@@ -176,9 +174,8 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 
 	longVersionName := "4.0.1-with-ridiculously-long-version-name-like-really-long-one"
 	operatorConfig := DeploymentConfig{
-		Image:         operatorImage1,
-		LabelSelector: "4.0.1",
-		Version:       longVersionName,
+		Image:  operatorImage1,
+		GitRef: longVersionName,
 	}
 	err := u.InstallOrUpgrade(context.Background(), []DeploymentConfig{operatorConfig}, crdTag1)
 	require.Errorf(t, err, "zero tags parsed from images")
@@ -289,35 +286,36 @@ func TestParseOperatorConfigs(t *testing.T) {
 		"should accept images from multiple repositories with the same tag": {
 			operatorConfigs: []DeploymentConfig{
 				{
-					Image:         "repo1:tag",
-					LabelSelector: "label",
-					Version:       "version1",
+					Image:  "repo1:tag",
+					GitRef: "version1",
 				},
 				{
-					Image:         "repo2:tag",
-					LabelSelector: "label",
-					Version:       "version2",
+					Image:  "repo2:tag",
+					GitRef: "version2",
 				}},
 			expected: []map[string]string{
-				{"deploymentName": operatorDeploymentPrefix + "-version1", "repository": "repo1", "tag": "tag", "labelSelector": "label"},
-				{"deploymentName": operatorDeploymentPrefix + "-version2", "repository": "repo2", "tag": "tag", "labelSelector": "label"},
+				{"deploymentName": operatorDeploymentPrefix + "-version1", "repository": "repo1", "tag": "tag", "labelSelector": "version1"},
+				{"deploymentName": operatorDeploymentPrefix + "-version2", "repository": "repo2", "tag": "tag", "labelSelector": "version2"},
 			},
 		},
 		"fail if image does contain colon": {
 			operatorConfigs: []DeploymentConfig{{
-				Image: "quay.io/without-colon-123-tag",
+				Image:  "quay.io/without-colon-123-tag",
+				GitRef: "version1",
 			}},
 			shouldFail: true,
 		},
 		"fail if image contains more than one colon": {
 			operatorConfigs: []DeploymentConfig{{
-				Image: "quay.io/image-name:1.2.3:",
+				Image:  "quay.io/image-name:1.2.3:",
+				GitRef: "version1",
 			}},
 			shouldFail: true,
 		},
 		"fail if image tag is too long": {
 			operatorConfigs: []DeploymentConfig{{
-				Image: "quay.io/image-name:1.2.3-with-ridiculously-long-tag-version-name-like-really-long-one",
+				Image:  "quay.io/image-name:tag",
+				GitRef: "1.2.3-with-ridiculously-long-version-name-like-really-long-one",
 			}},
 			shouldFail: true,
 		},

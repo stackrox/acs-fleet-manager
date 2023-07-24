@@ -306,8 +306,12 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	}
 
 	if features.TargetedOperatorUpgrades.Enabled() {
-		// TODO: set version selector to labelSelector from Spec
-		labelSelector := remoteCentral.Spec.OperatorImage
+		// TODO: use GitRef as a LabelSelector
+		_, tag, err := operator.GetRepoAndTagFromImage(remoteCentral.Spec.OperatorImage)
+		if err != nil {
+			return nil, errors.Wrapf(err, "invalid labelSelector")
+		}
+		labelSelector := tag
 		if !operator.IsValidLabel(labelSelector) {
 			return nil, errors.Wrapf(err, "invalid labelSelector: %s", labelSelector)
 		}

@@ -29,9 +29,8 @@ const (
 
 // DeploymentConfig represents operator configuration for deployment
 type DeploymentConfig struct {
-	Image         string
-	LabelSelector string
-	Version       string
+	Image  string
+	GitRef string
 }
 
 // GetRepoAndTagFromImage returns the repo and image tag
@@ -90,13 +89,12 @@ func parseOperatorConfigs(operators []DeploymentConfig) ([]chartutil.Values, err
 			return nil, err
 		}
 
-		deploymentName := generateDeploymentName(operator.Version)
-		// deployment name has the same requirements as label values
-		if !IsValidLabel(deploymentName) {
-			return nil, fmt.Errorf("deployment name %s is not valid", deploymentName)
+		if !IsValidLabel(operator.GitRef) {
+			return nil, fmt.Errorf("label selector %s is not valid", operator.GitRef)
 		}
-		if !IsValidLabel(operator.LabelSelector) {
-			return nil, fmt.Errorf("label selector %s is not valid", operator.LabelSelector)
+		deploymentName := generateDeploymentName(operator.GitRef)
+		if len(deploymentName) > maxLabelLength {
+			return nil, fmt.Errorf("invalid name: %s. It contains more than %d characters", deploymentName, maxLabelLength)
 		}
 		if _, used := uniqueImages[repo+tag]; !used {
 			uniqueImages[repo+tag] = true
@@ -104,7 +102,7 @@ func parseOperatorConfigs(operators []DeploymentConfig) ([]chartutil.Values, err
 				"deploymentName": deploymentName,
 				"repository":     repo,
 				"tag":            tag,
-				"labelSelector":  operator.LabelSelector,
+				"labelSelector":  operator.GitRef,
 			}
 			operatorImages = append(operatorImages, img)
 		}

@@ -249,11 +249,10 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	var desiredOperators []operator.DeploymentConfig
 	var desiredOperatorImages []string
 	for _, central := range list.Items {
-		// TODO: read LabelSelector and Version from ManagedCentral.Spec
+		// TODO: read GitRef ManagedCentral
 		operatorConfiguration := operator.DeploymentConfig{
-			Image:         central.Spec.OperatorImage,
-			LabelSelector: "4.0.1",
-			Version:       "4.0.1",
+			Image:  central.Spec.OperatorImage,
+			GitRef: "4.0.1",
 		}
 		desiredOperators = append(desiredOperators, operatorConfiguration)
 		desiredOperatorImages = append(desiredOperatorImages, central.Spec.OperatorImage)
@@ -262,7 +261,7 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	ctx := context.Background()
 
 	for _, oper := range desiredOperators {
-		glog.Infof("Installing Operator version: %s", oper.Version)
+		glog.Infof("Installing Operator version: %s", oper.GitRef)
 	}
 
 	//TODO(ROX-15080): Download CRD on operator upgrades to always install the latest CRD
