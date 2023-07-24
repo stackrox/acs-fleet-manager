@@ -82,7 +82,7 @@ spec:
                   containerName: manager
                   resource: limits.memory
                   divisor: '0'
-            {{- if $.Values.operator.centralLabelSelector }}
+            {{- if .labelSelector }}
             - name: CENTRAL_LABEL_SELECTOR
               value: "rhacs.redhat.com/version-selector={{ .labelSelector }}"
             {{- end }}

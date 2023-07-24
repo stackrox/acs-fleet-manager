@@ -129,8 +129,7 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, operators []D
 	}
 	chartVals := chartutil.Values{
 		"operator": chartutil.Values{
-			"images":               operatorImages,
-			"centralLabelSelector": true,
+			"images": operatorImages,
 		},
 	}
 
