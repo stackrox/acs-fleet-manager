@@ -22,18 +22,17 @@ const (
 	releaseName              = "rhacs-operator"
 	operatorDeploymentPrefix = "rhacs-operator"
 
-	// deployment names should contain at most 63 characters
 	// RFC 1035 Label Names: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
-	maxOperatorDeploymentNameLength = 63
+	maxLabelLength = 63
 
 	maxImageTagLength = 128
 )
 
-// Operator represents operator configuration for deployment
-type Operator struct {
-	image         string
-	labelSelector string
-	version       string
+// DeploymentConfig represents operator configuration for deployment
+type DeploymentConfig struct {
+	Image         string
+	LabelSelector string
+	Version       string
 }
 
 // GetRepoAndTagFromImage returns the repo and image tag
@@ -65,18 +64,40 @@ func isValidTag(tag string) bool {
 	return utf8string.NewString(tag).IsASCII()
 }
 
-func parseOperatorImages(images []string) ([]chartutil.Values, error) {
+// IsValidLabel returns true if provided string could be a valid label
+// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
+func IsValidLabel(label string) bool {
+	if len(label) > maxLabelLength {
+		return false
+	}
+	if len(label) > 0 {
+		notAllowedStartOrEnd := []rune{'-', '_', '.'}
+		if slices.Contains(notAllowedStartOrEnd, rune(label[0])) {
+			return false
+		}
+		if slices.Contains(notAllowedStartOrEnd, rune(label[len(label)-1])) {
+			return false
+		}
+	}
+	return utf8string.NewString(label).IsASCII()
+}
+
+func parseOperatorConfigs(operators []DeploymentConfig) ([]chartutil.Values, error) {
 	var operatorImages []chartutil.Values
 	uniqueImages := make(map[string]bool)
-	for _, img := range images {
-		repo, tag, err := GetRepoAndTagFromImage(img)
+	for _, operator := range operators {
+		repo, tag, err := GetRepoAndTagFromImage(operator.Image)
 		if err != nil {
 			return nil, err
 		}
 
 		deploymentName := generateDeploymentName(tag)
-		if len(deploymentName) > maxOperatorDeploymentNameLength {
-			return nil, fmt.Errorf("%s contains more than %d characters and cannot be used as a deployment name", deploymentName, maxOperatorDeploymentNameLength)
+		// deployment name has the same requirements as label values
+		if !IsValidLabel(deploymentName) {
+			return nil, fmt.Errorf("deployment name %s is not valid", deploymentName)
+		}
+		if !IsValidLabel(operator.LabelSelector) {
+			return nil, fmt.Errorf("label selector %s is not valid", operator.LabelSelector)
 		}
 		if _, used := uniqueImages[repo+tag]; !used {
 			uniqueImages[repo+tag] = true
@@ -84,7 +105,7 @@ func parseOperatorImages(images []string) ([]chartutil.Values, error) {
 				"deploymentName": deploymentName,
 				"repository":     repo,
 				"tag":            tag,
-				"labelSelector":  GetValidSelectorTag(tag),
+				"labelSelector":  operator.LabelSelector,
 			}
 			operatorImages = append(operatorImages, img)
 		}
@@ -115,19 +136,18 @@ func GetValidSelectorTag(tag string) string {
 }
 
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
-func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []string, crdTag string) error {
-	if len(images) == 0 {
+func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, operators []DeploymentConfig, crdTag string) error {
+	if len(operators) == 0 {
 		return nil
 	}
 
-	operatorImages, err := parseOperatorImages(images)
+	operatorImages, err := parseOperatorConfigs(operators)
 	if err != nil {
 		return fmt.Errorf("failed to parse images: %w", err)
 	}
 	chartVals := chartutil.Values{
 		"operator": chartutil.Values{
-			"images":               operatorImages,
-			"centralLabelSelector": true,
+			"images": operatorImages,
 		},
 	}
 

@@ -31,6 +31,18 @@ const (
 	deploymentName2    = operatorDeploymentPrefix + "-4.0.2"
 )
 
+var operatorConfig1 = DeploymentConfig{
+	Image:         operatorImage1,
+	LabelSelector: "4.0.1",
+	Version:       "4.0.1",
+}
+
+var operatorConfig2 = DeploymentConfig{
+	Image:         operatorImage2,
+	LabelSelector: "4.0.2",
+	Version:       "4.0.2",
+}
+
 var securedClusterCRD = &unstructured.Unstructured{
 	Object: map[string]interface{}{
 		"kind":       kindCRDName,
@@ -98,7 +110,7 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 
-	err := u.InstallOrUpgrade(context.Background(), []string{operatorImage1}, crdTag1)
+	err := u.InstallOrUpgrade(context.Background(), []DeploymentConfig{operatorConfig1}, crdTag1)
 	require.NoError(t, err)
 
 	// check Secured Cluster CRD exists and correct
@@ -142,9 +154,9 @@ func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 
-	operatorImages := []string{operatorImage1, operatorImage2}
+	operatorConfigs := []DeploymentConfig{operatorConfig1, operatorConfig2}
 
-	err := u.InstallOrUpgrade(context.Background(), operatorImages, crdTag1)
+	err := u.InstallOrUpgrade(context.Background(), operatorConfigs, crdTag1)
 	require.NoError(t, err)
 
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
@@ -163,7 +175,12 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 	u := NewACSOperatorManager(fakeClient, crdURL)
 
 	operatorImageWithLongTag := "quay.io/rhacs-eng/stackrox-operator:4.0.1-with-ridiculously-long-tag-version-name-like-really-long-one"
-	err := u.InstallOrUpgrade(context.Background(), []string{operatorImageWithLongTag}, crdTag1)
+	operatorConfig := DeploymentConfig{
+		Image:         operatorImageWithLongTag,
+		LabelSelector: "4.0.1",
+		Version:       "4.0.1",
+	}
+	err := u.InstallOrUpgrade(context.Background(), []DeploymentConfig{operatorConfig}, crdTag1)
 	require.Errorf(t, err, "zero tags parsed from images")
 
 	deployments := &appsv1.DeploymentList{}
@@ -240,59 +257,75 @@ func TestRemoveMultipleUnusedOperators(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestParseOperatorImages(t *testing.T) {
+func TestParseOperatorConfigs(t *testing.T) {
 	cases := map[string]struct {
-		images     []string
-		expected   []map[string]string
-		shouldFail bool
+		operatorConfigs []DeploymentConfig
+		expected        []map[string]string
+		shouldFail      bool
 	}{
 		"should parse one valid operator image": {
-			images: []string{operatorImage1},
+			operatorConfigs: []DeploymentConfig{operatorConfig1},
 			expected: []map[string]string{
 				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1", "labelSelector": "4.0.1"},
 			},
 		},
 		"should parse two valid operator images": {
-			images: []string{operatorImage1, operatorImage2},
+			operatorConfigs: []DeploymentConfig{operatorConfig1, operatorConfig2},
 			expected: []map[string]string{
 				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1", "labelSelector": "4.0.1"},
 				{"deploymentName": deploymentName2, "repository": operatorRepository, "tag": "4.0.2", "labelSelector": "4.0.2"},
 			},
 		},
-		"should ignore duplicate operator images": {
-			images: []string{operatorImage1, operatorImage1},
+		"should ignore duplicate operator configs": {
+			operatorConfigs: []DeploymentConfig{operatorConfig1, operatorConfig1},
 			expected: []map[string]string{
 				{"deploymentName": deploymentName1, "repository": operatorRepository, "tag": "4.0.1", "labelSelector": "4.0.1"},
 			},
 		},
 		"do not fail if images list is empty": {
-			images:     []string{},
-			shouldFail: false,
+			operatorConfigs: []DeploymentConfig{},
+			shouldFail:      false,
 		},
 		"should accept images from multiple repositories with the same tag": {
-			images: []string{"repo1:tag", "repo2:tag"},
+			operatorConfigs: []DeploymentConfig{
+				{
+					Image:         "repo1:tag",
+					LabelSelector: "label",
+					Version:       "version1",
+				},
+				{
+					Image:         "repo2:tag",
+					LabelSelector: "label",
+					Version:       "version2",
+				}},
 			expected: []map[string]string{
-				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo1", "tag": "tag", "labelSelector": "tag"},
-				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo2", "tag": "tag", "labelSelector": "tag"},
+				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo1", "tag": "tag", "labelSelector": "label"},
+				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo2", "tag": "tag", "labelSelector": "label"},
 			},
 		},
 		"fail if image does contain colon": {
-			images:     []string{"quay.io/without-colon-123-tag"},
+			operatorConfigs: []DeploymentConfig{{
+				Image: "quay.io/without-colon-123-tag",
+			}},
 			shouldFail: true,
 		},
 		"fail if image contains more than one colon": {
-			images:     []string{"quay.io/image-name:1.2.3:"},
+			operatorConfigs: []DeploymentConfig{{
+				Image: "quay.io/image-name:1.2.3:",
+			}},
 			shouldFail: true,
 		},
 		"fail if image tag is too long": {
-			images:     []string{"quay.io/image-name:1.2.3-with-ridiculously-long-tag-version-name-like-really-long-one"},
+			operatorConfigs: []DeploymentConfig{{
+				Image: "quay.io/image-name:1.2.3-with-ridiculously-long-tag-version-name-like-really-long-one",
+			}},
 			shouldFail: true,
 		},
 	}
 
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			gotImages, err := parseOperatorImages(c.images)
+			gotImages, err := parseOperatorConfigs(c.operatorConfigs)
 			if c.shouldFail {
 				assert.Error(t, err)
 			} else {

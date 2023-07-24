@@ -236,11 +236,6 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	// Set proxy configuration
 	envVars := getProxyEnvVars(remoteCentralNamespace)
 
-	_, imageSHA256, err := operator.GetRepoAndTagFromImage(remoteCentral.Spec.OperatorImage)
-	if err != nil {
-		return nil, errors.Wrapf(err, "invalid image: %s", remoteCentral.Spec.OperatorImage)
-	}
-
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
@@ -311,7 +306,12 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	}
 
 	if features.TargetedOperatorUpgrades.Enabled() {
-		central.Labels[ReconcileOperatorSelector] = operator.GetValidSelectorTag(imageSHA256)
+		// TODO: set version selector to labelSelector from Spec
+		labelSelector := remoteCentral.Spec.OperatorImage
+		if !operator.IsValidLabel(labelSelector) {
+			return nil, errors.Wrapf(err, "invalid labelSelector: %s", labelSelector)
+		}
+		central.Labels[ReconcileOperatorSelector] = labelSelector
 	}
 
 	return central, nil
