@@ -1,6 +1,7 @@
 package reconciler
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"fmt"
@@ -61,8 +62,6 @@ var (
 
 	useRoutesReconcilerOptions = CentralReconcilerOptions{UseRoutes: true}
 
-	noDBClient cloudprovider.DBClient = nil
-
 	defaultAuditLogConfig = config.AuditLogging{
 		Enabled:            true,
 		AuditLogTargetHost: "audit-logs-aggregator.rhacs-audit-logs",
@@ -73,6 +72,10 @@ var (
 		Enabled:            true,
 		AuditLogTargetHost: "rhacs-vector.rhacs",
 		AuditLogTargetPort: 8443,
+	}
+
+	disabledAuditLogConfig = config.AuditLogging{
+		Enabled: false,
 	}
 )
 
@@ -142,7 +145,7 @@ func TestReconcileCreate(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		reconcilerOptions,
 	)
 
@@ -231,7 +234,7 @@ func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		useRoutesReconcilerOptions,
 	)
 
@@ -284,7 +287,7 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		defaultReconcilerOptions,
 		&v1alpha1.Central{
 			ObjectMeta: metav1.ObjectMeta{
@@ -334,7 +337,7 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		defaultReconcilerOptions,
 		&v1alpha1.Central{
 			ObjectMeta: metav1.ObjectMeta{
@@ -371,7 +374,7 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 	_, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		defaultReconcilerOptions,
 		&v1alpha1.Central{
 			ObjectMeta: metav1.ObjectMeta{
@@ -401,7 +404,7 @@ func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
 	_, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		defaultReconcilerOptions,
 		&v1alpha1.Central{
 			ObjectMeta: metav1.ObjectMeta{
@@ -432,7 +435,7 @@ func TestReconcileDelete(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		useRoutesReconcilerOptions,
 	)
 
@@ -469,7 +472,7 @@ func TestDisablePauseAnnotation(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		useRoutesReconcilerOptions,
 	)
 
@@ -598,7 +601,7 @@ func TestCentralChanged(t *testing.T) {
 			_, _, reconciler := getClientTrackerAndReconciler(
 				t,
 				test.currentCentral,
-				noDBClient,
+				nil,
 				defaultReconcilerOptions,
 				centralDeploymentObject(),
 			)
@@ -619,7 +622,7 @@ func TestNamespaceLabelsAreSet(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		useRoutesReconcilerOptions,
 	)
 
@@ -637,7 +640,7 @@ func TestReportRoutesStatuses(t *testing.T) {
 	_, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		useRoutesReconcilerOptions,
 	)
 
@@ -667,7 +670,7 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		defaultReconcilerOptions,
 	)
 	r.resourcesChart = chart
@@ -704,7 +707,7 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		defaultReconcilerOptions,
 	)
 	r.resourcesChart = chart
@@ -739,7 +742,7 @@ func TestEgressProxyIsDeployed(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		defaultReconcilerOptions,
 	)
 
@@ -796,7 +799,7 @@ func TestEgressProxyCustomImage(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		reconcilerOptions,
 	)
 
@@ -823,7 +826,7 @@ func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
 	_, tracker, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		useRoutesReconcilerOptions,
 	)
 	tracker.AddRouteError(centralReencryptRouteName, errors.New("fake error"))
@@ -835,7 +838,7 @@ func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
 	_, tracker, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		useRoutesReconcilerOptions,
 	)
 	tracker.SetRouteAdmitted(centralReencryptRouteName, false)
@@ -847,7 +850,7 @@ func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
 	_, tracker, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		useRoutesReconcilerOptions,
 	)
 	tracker.SetSkipRoute(centralReencryptRouteName, true)
@@ -887,7 +890,7 @@ func TestTelemetryOptionsAreSetInCR(t *testing.T) {
 			fakeClient, _, r := getClientTrackerAndReconciler(
 				t,
 				defaultCentralConfig,
-				noDBClient,
+				nil,
 				reconcilerOptions,
 			)
 
@@ -951,7 +954,7 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 			fakeClient, _, r := getClientTrackerAndReconciler(
 				t,
 				defaultCentralConfig,
-				noDBClient,
+				nil,
 				useRoutesReconcilerOptions,
 			)
 			r.routeService = k8s.NewRouteService(fakeClient)
@@ -1280,54 +1283,29 @@ const (
 )
 
 var (
-	entryData = []byte{'c', 'o', 'n', 't', 'e', 'n', 't'}
-	otherData = []byte{'s', 'o', 'm', 'e', 't', 'h', 'i', 'n', 'g', ' ', 'e', 'l', 's', 'e'}
+	entryData = []byte("content")
+	otherData = []byte("something else")
 )
-
-func isSameData(entry1 []byte, entry2 []byte) bool {
-	if len(entry1) != len(entry2) {
-		return false
-	}
-	for i := 0; i < len(entry1); i++ {
-		if entry1[i] != entry2[i] {
-			return false
-		}
-	}
-	return true
-}
 
 func compareSecret(t *testing.T, expectedSecret *v1.Secret, secret *v1.Secret, created bool) {
 	if expectedSecret == nil { // pragma: allowlist secret
 		assert.Nil(t, secret)
 		return
 	}
-	assert.NotNil(t, secret)
-	if secret == nil { // pragma: allowlist secret
-		return
-	}
+	require.NotNil(t, secret)
 	assert.Equal(t, expectedSecret.ObjectMeta.Namespace, secret.ObjectMeta.Namespace) // pragma: allowlist secret
 	assert.Equal(t, expectedSecret.ObjectMeta.Name, secret.ObjectMeta.Name)           // pragma: allowlist secret
 	if created {
-		assert.NotZero(t, len(secret.ObjectMeta.Labels))
-		if secret.ObjectMeta.Labels == nil {
-			return
-		}
+		require.NotZero(t, len(secret.ObjectMeta.Labels))
 		labelVal, labelFound := secret.ObjectMeta.Labels[k8s.ManagedByLabelKey]
-		assert.True(t, labelFound)
-		if !labelFound {
-			return
-		}
+		require.True(t, labelFound)
 		assert.Equal(t, labelVal, k8s.ManagedByFleetshardValue)
-		assert.NotZero(t, len(secret.ObjectMeta.Annotations))
-		if secret.ObjectMeta.Annotations == nil {
-			return
-		}
+		require.NotZero(t, len(secret.ObjectMeta.Annotations))
 		annotationVal, annotationFound := secret.ObjectMeta.Annotations[managedServicesAnnotation]
-		if !annotationFound {
-			return
-		}
+		require.True(t, annotationFound)
 		assert.Equal(t, annotationVal, "true")
 	}
+	assert.Equal(t, expectedSecret.Data, secret.Data)
 	assert.Equal(t, len(expectedSecret.Data), len(secret.Data))
 	for dataKey, expectedVal := range expectedSecret.Data {
 		value, found := secret.Data[dataKey]
@@ -1335,7 +1313,7 @@ func compareSecret(t *testing.T, expectedSecret *v1.Secret, secret *v1.Secret, c
 		if !found {
 			return
 		}
-		assert.Truef(t, isSameData(expectedVal, value), "expected %q got %q", string(expectedVal), string(value))
+		assert.Truef(t, bytes.Equal(expectedVal, value), "expected %q got %q", string(expectedVal), string(value))
 	}
 }
 
@@ -1343,7 +1321,7 @@ func TestEnsureSecretExists(t *testing.T) {
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
-		noDBClient,
+		nil,
 		defaultReconcilerOptions,
 	)
 	secretModifyFunc := func(secret *v1.Secret) (bool, error) {
@@ -1352,7 +1330,7 @@ func TestEnsureSecretExists(t *testing.T) {
 		}
 		payload, found := secret.Data[entryKey]
 		if found {
-			if isSameData(payload, entryData) {
+			if bytes.Equal(payload, entryData) {
 				return false, nil
 			}
 		}
@@ -1425,14 +1403,8 @@ func TestEnsureSecretExists(t *testing.T) {
 	})
 }
 
-func noProxyEnvPayloadContainsException(envValue string, targetHost string, targetPort int) bool {
-	targetString := fmt.Sprintf("%s:%d", targetHost, targetPort)
-	for _, elem := range strings.Split(envValue, ",") {
-		if elem == targetString {
-			return true
-		}
-	}
-	return false
+func noProxyEnvPayloadContainsException(t *testing.T, envValue string, targetHostPort string) {
+	assert.Contains(t, strings.Split(envValue, ","), targetHostPort)
 }
 
 func TestGetInstanceConfigSetsNoProxyEnvVarsForAuditLog(t *testing.T) {
@@ -1443,29 +1415,23 @@ func TestGetInstanceConfigSetsNoProxyEnvVarsForAuditLog(t *testing.T) {
 		_, _, r := getClientTrackerAndReconciler(
 			t,
 			simpleManagedCentral,
-			noDBClient,
+			nil,
 			reconcilerOptions,
 		)
 		centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
 		assert.NoError(t, err)
-		assert.NotNil(t, centralConfig)
-		if centralConfig == nil {
-			return
-		}
-		assert.NotNil(t, centralConfig.Spec.Customize)
-		if centralConfig.Spec.Customize == nil {
-			return
-		}
+		require.NotNil(t, centralConfig)
+		require.NotNil(t, centralConfig.Spec.Customize)
 		noProxyEnvLowerCaseFound := false
 		noProxyEnvUpperCaseFound := false
 		for _, envVar := range centralConfig.Spec.Customize.EnvVars {
 			switch envVar.Name {
 			case "no_proxy":
 				noProxyEnvLowerCaseFound = true
-				noProxyEnvPayloadContainsException(envVar.Value, defaultAuditLogConfig.AuditLogTargetHost, defaultAuditLogConfig.AuditLogTargetPort)
+				noProxyEnvPayloadContainsException(t, envVar.Value, auditLogConfig.Endpoint())
 			case "NO_PROXY":
 				noProxyEnvUpperCaseFound = true
-				noProxyEnvPayloadContainsException(envVar.Value, defaultAuditLogConfig.AuditLogTargetHost, defaultAuditLogConfig.AuditLogTargetPort)
+				noProxyEnvPayloadContainsException(t, envVar.Value, auditLogConfig.Endpoint())
 			}
 		}
 		assert.True(t, noProxyEnvLowerCaseFound)
@@ -1480,18 +1446,15 @@ func TestGetInstanceConfigSetsDeclarativeConfigEnvVar(t *testing.T) {
 	_, _, r := getClientTrackerAndReconciler(
 		t,
 		simpleManagedCentral,
-		noDBClient,
+		nil,
 		reconcilerOptions,
 	)
 	declarativeConfigEnvVarSet := false
 	declarativeConfigEnable := false
 	centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
 	assert.NoError(t, err)
-	assert.NotNil(t, centralConfig)
-	if centralConfig == nil {
-		return
-	}
-	assert.NotNil(t, centralConfig.Spec.Customize)
+	require.NotNil(t, centralConfig)
+	require.NotNil(t, centralConfig.Spec.Customize)
 	if centralConfig.Spec.Customize == nil {
 		return
 	}
@@ -1512,32 +1475,20 @@ func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
 	_, _, r := getClientTrackerAndReconciler(
 		t,
 		simpleManagedCentral,
-		noDBClient,
+		nil,
 		reconcilerOptions,
 	)
 	centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
 	assert.NoError(t, err)
-	assert.NotNil(t, centralConfig)
-	if centralConfig == nil {
-		return
-	}
-	assert.NotNil(t, centralConfig.Spec.Central)
-	if centralConfig.Spec.Central == nil {
-		return
-	}
-	assert.NotNil(t, centralConfig.Spec.Central.DeclarativeConfiguration)
+	require.NotNil(t, centralConfig)
+	require.NotNil(t, centralConfig.Spec.Central)
+	require.NotNil(t, centralConfig.Spec.Central.DeclarativeConfiguration)
 	centralCRDeclarativeConfig := centralConfig.Spec.Central.DeclarativeConfiguration
-	if centralCRDeclarativeConfig == nil {
-		return
-	}
 	assert.NotZero(t, len(centralCRDeclarativeConfig.Secrets))
-	sensibleDeclarativeConfigSecretFound := false                  // pragma: allowlist secret
-	for _, secretRef := range centralCRDeclarativeConfig.Secrets { // pragma: allowlist secret
-		if secretRef.Name == sensibleDeclarativeConfigSecretName { // pragma: allowlist secret
-			sensibleDeclarativeConfigSecretFound = true // pragma: allowlist secret
-		}
+	expectedSecretReference := v1alpha1.LocalSecretReference{ // pragma: allowlist secret
+		Name: sensibleDeclarativeConfigSecretName,
 	}
-	assert.True(t, sensibleDeclarativeConfigSecretFound) // pragma: allowlist secret
+	assert.Contains(t, centralCRDeclarativeConfig.Secrets, expectedSecretReference)
 }
 
 func TestGetAuditLogNotifierConfig(t *testing.T) {
@@ -1741,46 +1692,50 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 	testCases := []struct {
 		name                    string
 		auditLogConfig          config.AuditLogging
-		preexistingSecret       bool
+		preExistingSecret       bool
 		notifierConfigs         map[string][]*declarativeconfig.Notifier
 		expectedNotifierConfigs map[string][]*declarativeconfig.Notifier
 		secret                  *v1.Secret
 		expectedSecret          *v1.Secret
+		postReconcileSecret     bool
 	}{
 		{
 			name:              "Missing default secret gets created",
 			auditLogConfig:    defaultAuditLogConfig,
-			preexistingSecret: false, // pragma: allowlist secret
+			preExistingSecret: false, // pragma: allowlist secret
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {defaultNotifierConfig},
 			},
+			postReconcileSecret: true,
 		},
 		{
 			name:              "Bad default secret gets corrected",
 			auditLogConfig:    defaultAuditLogConfig,
-			preexistingSecret: true, // pragma: allowlist secret
+			preExistingSecret: true, // pragma: allowlist secret
 			notifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {correctVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {defaultNotifierConfig},
 			},
+			postReconcileSecret: true,
 		},
 		{
 			name:              "Bad aggregated default secret gets corrected",
 			auditLogConfig:    defaultAuditLogConfig,
-			preexistingSecret: true, // pragma: allowlist secret
+			preExistingSecret: true, // pragma: allowlist secret
 			notifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {defaultNotifierConfig},
 			},
+			postReconcileSecret: true,
 		},
 		{
 			name:              "Partially correct aggregated default secret is left untouched",
 			auditLogConfig:    defaultAuditLogConfig,
-			preexistingSecret: true, // pragma: allowlist secret
+			preExistingSecret: true, // pragma: allowlist secret
 			notifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {
 					correctVectorNotifierConfig,
@@ -1795,11 +1750,12 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 					defaultNotifierConfig,
 				},
 			},
+			postReconcileSecret: true,
 		},
 		{
 			name:              "Correct default secret with other secret key is left untouched",
 			auditLogConfig:    defaultAuditLogConfig,
-			preexistingSecret: true, // pragma: allowlist secret
+			preExistingSecret: true, // pragma: allowlist secret
 			notifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {defaultNotifierConfig},
 				otherItemKey:        {faultyVectorNotifierConfig},
@@ -1808,36 +1764,60 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 				auditLogNotifierKey: {defaultNotifierConfig},
 				otherItemKey:        {faultyVectorNotifierConfig},
 			},
+			postReconcileSecret: true,
 		},
 		{
 			name:              "Missing vector secret gets created",
 			auditLogConfig:    vectorAuditLogConfig,
-			preexistingSecret: false, // pragma: allowlist secret
+			preExistingSecret: false, // pragma: allowlist secret
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {correctVectorNotifierConfig},
 			},
+			postReconcileSecret: true,
 		},
 		{
 			name:              "Bad vector secret gets corrected",
 			auditLogConfig:    vectorAuditLogConfig,
-			preexistingSecret: true, // pragma: allowlist secret
+			preExistingSecret: true, // pragma: allowlist secret
 			notifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {faultyVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {correctVectorNotifierConfig},
 			},
+			postReconcileSecret: true,
 		},
 		{
 			name:              "Partially correct aggregated vector secret is left untouched",
 			auditLogConfig:    vectorAuditLogConfig,
-			preexistingSecret: true, // pragma: allowlist secret
+			preExistingSecret: true, // pragma: allowlist secret
 			notifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
 			},
+			postReconcileSecret: true,
+		},
+		{
+			name:                "No secret creation when no secret and audit logging disabled",
+			auditLogConfig:      disabledAuditLogConfig,
+			preExistingSecret:   false,
+			postReconcileSecret: false,
+		},
+		{
+			name:              "No secret modification when secret and audit logging disabled",
+			auditLogConfig:    disabledAuditLogConfig,
+			preExistingSecret: true,
+			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {defaultNotifierConfig},
+				otherItemKey:        {faultyVectorNotifierConfig},
+			},
+			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
+				auditLogNotifierKey: {defaultNotifierConfig},
+				otherItemKey:        {faultyVectorNotifierConfig},
+			},
+			postReconcileSecret: true,
 		},
 	}
 	for _, testCase := range testCases {
@@ -1849,12 +1829,12 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 			fakeClient, _, r := getClientTrackerAndReconciler(
 				t,
 				simpleManagedCentral,
-				noDBClient,
+				nil,
 				reconcilerOptions,
 			)
-			if testCase.preexistingSecret {
+			if testCase.preExistingSecret {
 				secret := populateNotifierSecret(t, centralNamespace, testCase.notifierConfigs)
-				assert.NoError(t, fakeClient.Create(ctx, secret))
+				require.NoError(t, fakeClient.Create(ctx, secret))
 			}
 			r.reconcileCentralAuditLogNotifier(ctx, &simpleManagedCentral)
 			fetchedSecret := &v1.Secret{}
@@ -1862,9 +1842,14 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 				Name:      sensibleDeclarativeConfigSecretName,
 				Namespace: centralNamespace,
 			}
-			assert.NoError(t, fakeClient.Get(ctx, secretKey, fetchedSecret))
-			expectedSecret := populateNotifierSecret(t, centralNamespace, testCase.expectedNotifierConfigs)
-			compareSecret(t, expectedSecret, fetchedSecret, !testCase.preexistingSecret)
+			postFetchErr := fakeClient.Get(ctx, secretKey, fetchedSecret)
+			if testCase.postReconcileSecret {
+				assert.NoError(t, postFetchErr)
+				expectedSecret := populateNotifierSecret(t, centralNamespace, testCase.expectedNotifierConfigs)
+				compareSecret(t, expectedSecret, fetchedSecret, !testCase.preExistingSecret)
+			} else {
+				assert.True(t, k8sErrors.IsNotFound(postFetchErr))
+			}
 		})
 	}
 }
