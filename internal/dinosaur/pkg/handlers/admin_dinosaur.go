@@ -24,6 +24,26 @@ import (
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 )
 
+// AdminCentralHandler is the interface for the admin central handler
+type AdminCentralHandler interface {
+	// Create a central
+	Create(w http.ResponseWriter, r *http.Request)
+	// Get a central
+	Get(w http.ResponseWriter, r *http.Request)
+	// List all centrals
+	List(w http.ResponseWriter, r *http.Request)
+	// Update a central
+	Update(w http.ResponseWriter, r *http.Request)
+	// Delete a central
+	Delete(w http.ResponseWriter, r *http.Request)
+	// DbDelete deletes a central from the database
+	DbDelete(w http.ResponseWriter, r *http.Request)
+	// SetCentralDefaultVersion sets the default version for a central
+	SetCentralDefaultVersion(w http.ResponseWriter, r *http.Request)
+	// GetCentralDefaultVersion gets the default version for a central
+	GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request)
+}
+
 type adminCentralHandler struct {
 	service                      services.DinosaurService
 	accountService               account.AccountService
@@ -32,13 +52,15 @@ type adminCentralHandler struct {
 	centralDefaultVersionService services.CentralDefaultVersionService
 }
 
+var _ AdminCentralHandler = (*adminCentralHandler)(nil)
+
 // NewAdminCentralHandler ...
 func NewAdminCentralHandler(
 	service services.DinosaurService,
 	accountService account.AccountService,
 	providerConfig *config.ProviderConfig,
 	telemetry *services.Telemetry,
-	centralDefaultVersionService services.CentralDefaultVersionService) *adminCentralHandler {
+	centralDefaultVersionService services.CentralDefaultVersionService) AdminCentralHandler {
 	return &adminCentralHandler{
 		service:                      service,
 		accountService:               accountService,
@@ -391,4 +413,40 @@ func (h adminCentralHandler) GetCentralDefaultVersion(w http.ResponseWriter, r *
 	}
 
 	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+type gitOpsAdminHandler struct{}
+
+var _ AdminCentralHandler = (*gitOpsAdminHandler)(nil)
+
+func (g gitOpsAdminHandler) Create(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+func (g gitOpsAdminHandler) Get(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+func (g gitOpsAdminHandler) List(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+func (g gitOpsAdminHandler) Update(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+func (g gitOpsAdminHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+func (g gitOpsAdminHandler) DbDelete(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+func (g gitOpsAdminHandler) SetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+func (g gitOpsAdminHandler) GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
 }
