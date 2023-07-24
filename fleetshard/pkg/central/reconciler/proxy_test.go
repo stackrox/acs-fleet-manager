@@ -39,7 +39,7 @@ func testProxyConfiguration(t *testing.T, noProxyURLs []string, proxiedURLs []st
 }
 
 func TestProxyConfiguration(t *testing.T) {
-	for _, envVar := range getProxyEnvVars(testNS, nil) {
+	for _, envVar := range getProxyEnvVars(testNS) {
 		t.Setenv(envVar.Name, envVar.Value)
 	}
 
@@ -67,9 +67,9 @@ func TestProxyConfiguration(t *testing.T) {
 }
 
 func TestProxyConfiguration_IsDeterministic(t *testing.T) {
-	envVars := getProxyEnvVars(testNS, nil)
+	envVars := getProxyEnvVars(testNS)
 	for i := 0; i < 5; i++ {
-		otherEnvVars := getProxyEnvVars(testNS, nil)
+		otherEnvVars := getProxyEnvVars(testNS)
 		assert.Equal(t, envVars, otherEnvVars)
 	}
 }
@@ -78,10 +78,15 @@ var (
 	additionalDirectTargets = map[string][]int{
 		"audit-logs-aggregator.rhacs-audit-logs": {8888},
 	}
+	additionalNoProxyURLs = []url.URL{
+		{
+			Host: "audit-logs-aggregator.rhacs-audit-logs:8888",
+		},
+	}
 )
 
 func TestProxyConfigurationWithAdditionalDirectAccess(t *testing.T) {
-	for _, envVar := range getProxyEnvVars(testNS, additionalDirectTargets) {
+	for _, envVar := range getProxyEnvVars(testNS, additionalNoProxyURLs...) {
 		t.Setenv(envVar.Name, envVar.Value)
 	}
 
@@ -109,9 +114,9 @@ func TestProxyConfigurationWithAdditionalDirectAccess(t *testing.T) {
 }
 
 func TestProxyConfigurationWithAdditionalDirectAccess_IsDeterministic(t *testing.T) {
-	envVars := getProxyEnvVars(testNS, additionalDirectTargets)
+	envVars := getProxyEnvVars(testNS, additionalNoProxyURLs...)
 	for i := 0; i < 5; i++ {
-		otherEnvVars := getProxyEnvVars(testNS, additionalDirectTargets)
+		otherEnvVars := getProxyEnvVars(testNS, additionalNoProxyURLs...)
 		assert.Equal(t, envVars, otherEnvVars)
 	}
 }

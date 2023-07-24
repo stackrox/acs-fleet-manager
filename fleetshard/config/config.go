@@ -2,6 +2,7 @@
 package config
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/stackrox/rox/pkg/errorhelpers"
@@ -29,9 +30,8 @@ type Config struct {
 	EgressProxyImage     string        `env:"EGRESS_PROXY_IMAGE"`
 	BaseCrdURL           string        `env:"BASE_CRD_URL" envDefault:"https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"`
 
-	ManagedDB ManagedDB
-	Telemetry Telemetry
-
+	ManagedDB    ManagedDB
+	Telemetry    Telemetry
 	AuditLogging AuditLogging
 }
 
@@ -45,6 +45,7 @@ type ManagedDB struct {
 
 // AuditLogging defines the parameter of the audit logging target.
 type AuditLogging struct {
+	Enabled            bool   `env:"AUDIT_LOG_ENABLED" envDefault:"false"`
 	AuditLogTargetHost string `env:"AUDIT_LOG_HOST" envDefault:"audit-logs-aggregator.rhacs-audit-logs"`
 	AuditLogTargetPort int    `env:"AUDIT_LOG_PORT" envDefault:"8888"`
 }
@@ -88,4 +89,8 @@ func validateManagedDBConfig(c Config, configErrors *errorhelpers.ErrorList) {
 	if c.ManagedDB.SecurityGroup == "" {
 		configErrors.AddError(errors.New("MANAGED_DB_ENABLED == true and MANAGED_DB_SECURITY_GROUP unset in the environment"))
 	}
+}
+
+func (a *AuditLogging) Endpoint() string {
+	return fmt.Sprintf("%s:%d", a.AuditLogTargetHost, a.AuditLogTargetPort)
 }

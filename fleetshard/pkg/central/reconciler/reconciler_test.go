@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/utils"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -64,11 +64,13 @@ var (
 	noDBClient cloudprovider.DBClient = nil
 
 	defaultAuditLogConfig = config.AuditLogging{
+		Enabled:            true,
 		AuditLogTargetHost: "audit-logs-aggregator.rhacs-audit-logs",
 		AuditLogTargetPort: 8888,
 	}
 
 	vectorAuditLogConfig = config.AuditLogging{
+		Enabled:            true,
 		AuditLogTargetHost: "rhacs-vector.rhacs",
 		AuditLogTargetPort: 8443,
 	}
@@ -105,7 +107,6 @@ func getClientTrackerAndReconciler(
 	centralConfig private.ManagedCentral,
 	managedDBClient cloudprovider.DBClient,
 	reconcilerOptions CentralReconcilerOptions,
-	auditLogConfig config.AuditLogging,
 	k8sObjects ...client.Object,
 ) (client.WithWatch, *testutils.ReconcileTracker, *CentralReconciler) {
 	fakeClient, tracker := testutils.NewFakeClientWithTracker(t, k8sObjects...)
@@ -115,7 +116,6 @@ func getClientTrackerAndReconciler(
 		managedDBClient,
 		centralDBInitFunc,
 		reconcilerOptions,
-		auditLogConfig,
 	)
 	return fakeClient, tracker, reconciler
 }
@@ -144,7 +144,6 @@ func TestReconcileCreate(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		reconcilerOptions,
-		defaultAuditLogConfig,
 	)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -200,7 +199,6 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 		defaultCentralConfig,
 		managedDBProvisioningClient,
 		reconcilerOptions,
-		defaultAuditLogConfig,
 	)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -235,7 +233,6 @@ func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		useRoutesReconcilerOptions,
-		defaultAuditLogConfig,
 	)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -275,7 +272,6 @@ func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
 		defaultCentralConfig,
 		managedDBProvisioningClient,
 		reconcilerOptions,
-		defaultAuditLogConfig,
 	)
 
 	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -290,7 +286,6 @@ func TestReconcileUpdateSucceeds(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		defaultReconcilerOptions,
-		defaultAuditLogConfig,
 		&v1alpha1.Central{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        centralName,
@@ -341,7 +336,6 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		defaultReconcilerOptions,
-		defaultAuditLogConfig,
 		&v1alpha1.Central{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        centralName,
@@ -379,7 +373,6 @@ func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		defaultReconcilerOptions,
-		defaultAuditLogConfig,
 		&v1alpha1.Central{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        centralName,
@@ -410,7 +403,6 @@ func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		defaultReconcilerOptions,
-		defaultAuditLogConfig,
 		&v1alpha1.Central{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        centralName,
@@ -442,7 +434,6 @@ func TestReconcileDelete(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		useRoutesReconcilerOptions,
-		defaultAuditLogConfig,
 	)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -480,7 +471,6 @@ func TestDisablePauseAnnotation(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		useRoutesReconcilerOptions,
-		defaultAuditLogConfig,
 	)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -526,7 +516,6 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 		defaultCentralConfig,
 		managedDBProvisioningClient,
 		reconcilerOptions,
-		defaultAuditLogConfig,
 	)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -611,7 +600,6 @@ func TestCentralChanged(t *testing.T) {
 				test.currentCentral,
 				noDBClient,
 				defaultReconcilerOptions,
-				defaultAuditLogConfig,
 				centralDeploymentObject(),
 			)
 
@@ -633,7 +621,6 @@ func TestNamespaceLabelsAreSet(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		useRoutesReconcilerOptions,
-		defaultAuditLogConfig,
 	)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -652,7 +639,6 @@ func TestReportRoutesStatuses(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		useRoutesReconcilerOptions,
-		defaultAuditLogConfig,
 	)
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -683,7 +669,6 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		defaultReconcilerOptions,
-		defaultAuditLogConfig,
 	)
 	r.resourcesChart = chart
 
@@ -721,7 +706,6 @@ func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		defaultReconcilerOptions,
-		defaultAuditLogConfig,
 	)
 	r.resourcesChart = chart
 
@@ -757,7 +741,6 @@ func TestEgressProxyIsDeployed(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		defaultReconcilerOptions,
-		defaultAuditLogConfig,
 	)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -815,7 +798,6 @@ func TestEgressProxyCustomImage(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		reconcilerOptions,
-		defaultAuditLogConfig,
 	)
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -843,7 +825,6 @@ func TestNoRoutesSentWhenOneNotCreated(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		useRoutesReconcilerOptions,
-		defaultAuditLogConfig,
 	)
 	tracker.AddRouteError(centralReencryptRouteName, errors.New("fake error"))
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -856,7 +837,6 @@ func TestNoRoutesSentWhenOneNotAdmitted(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		useRoutesReconcilerOptions,
-		defaultAuditLogConfig,
 	)
 	tracker.SetRouteAdmitted(centralReencryptRouteName, false)
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -869,7 +849,6 @@ func TestNoRoutesSentWhenOneNotCreatedYet(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		useRoutesReconcilerOptions,
-		defaultAuditLogConfig,
 	)
 	tracker.SetSkipRoute(centralReencryptRouteName, true)
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -910,7 +889,6 @@ func TestTelemetryOptionsAreSetInCR(t *testing.T) {
 				defaultCentralConfig,
 				noDBClient,
 				reconcilerOptions,
-				defaultAuditLogConfig,
 			)
 
 			_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -975,7 +953,6 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 				defaultCentralConfig,
 				noDBClient,
 				useRoutesReconcilerOptions,
-				defaultAuditLogConfig,
 			)
 			r.routeService = k8s.NewRouteService(fakeClient)
 			central := simpleManagedCentral
@@ -1368,7 +1345,6 @@ func TestEnsureSecretExists(t *testing.T) {
 		defaultCentralConfig,
 		noDBClient,
 		defaultReconcilerOptions,
-		defaultAuditLogConfig,
 	)
 	secretModifyFunc := func(secret *v1.Secret) (bool, error) {
 		if secret.Data == nil {
@@ -1461,12 +1437,14 @@ func noProxyEnvPayloadContainsException(envValue string, targetHost string, targ
 
 func TestGetInstanceConfigSetsNoProxyEnvVarsForAuditLog(t *testing.T) {
 	for _, auditLogConfig := range []config.AuditLogging{defaultAuditLogConfig, vectorAuditLogConfig} {
+		reconcilerOptions := CentralReconcilerOptions{
+			AuditLogging: auditLogConfig,
+		}
 		_, _, r := getClientTrackerAndReconciler(
 			t,
 			simpleManagedCentral,
 			noDBClient,
-			defaultReconcilerOptions,
-			auditLogConfig,
+			reconcilerOptions,
 		)
 		centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
 		assert.NoError(t, err)
@@ -1496,12 +1474,14 @@ func TestGetInstanceConfigSetsNoProxyEnvVarsForAuditLog(t *testing.T) {
 }
 
 func TestGetInstanceConfigSetsDeclarativeConfigEnvVar(t *testing.T) {
+	reconcilerOptions := CentralReconcilerOptions{
+		AuditLogging: defaultAuditLogConfig,
+	}
 	_, _, r := getClientTrackerAndReconciler(
 		t,
 		simpleManagedCentral,
 		noDBClient,
-		defaultReconcilerOptions,
-		defaultAuditLogConfig,
+		reconcilerOptions,
 	)
 	declarativeConfigEnvVarSet := false
 	declarativeConfigEnable := false
@@ -1526,12 +1506,14 @@ func TestGetInstanceConfigSetsDeclarativeConfigEnvVar(t *testing.T) {
 }
 
 func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
+	reconcilerOptions := CentralReconcilerOptions{
+		AuditLogging: defaultAuditLogConfig,
+	}
 	_, _, r := getClientTrackerAndReconciler(
 		t,
 		simpleManagedCentral,
 		noDBClient,
-		defaultReconcilerOptions,
-		defaultAuditLogConfig,
+		reconcilerOptions,
 	)
 	centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
 	assert.NoError(t, err)
@@ -1561,12 +1543,14 @@ func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
 func TestGetAuditLogNotifierConfig(t *testing.T) {
 	testCases := []struct {
 		namespace      string
+		auditLogging   config.AuditLogging
 		auditLogTarget string
 		auditLogPort   int
 		expectedConfig *declarativeconfig.Notifier
 	}{
 		{
 			namespace:      centralNamespace,
+			auditLogging:   defaultAuditLogConfig,
 			auditLogTarget: defaultAuditLogConfig.AuditLogTargetHost,
 			auditLogPort:   defaultAuditLogConfig.AuditLogTargetPort,
 			expectedConfig: &declarativeconfig.Notifier{
@@ -1590,6 +1574,7 @@ func TestGetAuditLogNotifierConfig(t *testing.T) {
 		},
 		{
 			namespace:      "rhacs",
+			auditLogging:   vectorAuditLogConfig,
 			auditLogTarget: vectorAuditLogConfig.AuditLogTargetHost,
 			auditLogPort:   vectorAuditLogConfig.AuditLogTargetPort,
 			expectedConfig: &declarativeconfig.Notifier{
@@ -1613,7 +1598,7 @@ func TestGetAuditLogNotifierConfig(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		notifierConfig := getAuditLogNotifierConfig(testCase.auditLogTarget, testCase.auditLogPort, testCase.namespace)
+		notifierConfig := getAuditLogNotifierConfig(testCase.auditLogging, testCase.namespace)
 		assert.Equal(t, testCase.expectedConfig, notifierConfig)
 	}
 }
@@ -1646,13 +1631,11 @@ func populateNotifierSecret(
 
 func TestShouldUpdateAuditLogNotifierSecret(t *testing.T) {
 	defaultNotifierConfig := getAuditLogNotifierConfig(
-		defaultAuditLogConfig.AuditLogTargetHost,
-		defaultAuditLogConfig.AuditLogTargetPort,
+		defaultAuditLogConfig,
 		centralNamespace,
 	)
 	vectorNotifierConfig := getAuditLogNotifierConfig(
-		vectorAuditLogConfig.AuditLogTargetHost,
-		vectorAuditLogConfig.AuditLogTargetPort,
+		vectorAuditLogConfig,
 		"rhacs",
 	)
 	aggregatedConfig := []*declarativeconfig.Notifier{defaultNotifierConfig, vectorNotifierConfig}
@@ -1741,18 +1724,15 @@ func TestShouldUpdateAuditLogNotifierSecret(t *testing.T) {
 
 func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 	defaultNotifierConfig := getAuditLogNotifierConfig(
-		defaultAuditLogConfig.AuditLogTargetHost,
-		defaultAuditLogConfig.AuditLogTargetPort,
+		defaultAuditLogConfig,
 		centralNamespace,
 	)
 	faultyVectorNotifierConfig := getAuditLogNotifierConfig(
-		vectorAuditLogConfig.AuditLogTargetHost,
-		vectorAuditLogConfig.AuditLogTargetPort,
+		vectorAuditLogConfig,
 		"rhacs",
 	)
 	correctVectorNotifierConfig := getAuditLogNotifierConfig(
-		vectorAuditLogConfig.AuditLogTargetHost,
-		vectorAuditLogConfig.AuditLogTargetPort,
+		vectorAuditLogConfig,
 		centralNamespace,
 	)
 
@@ -1863,7 +1843,15 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			ctx := context.TODO()
-			fakeClient, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, noDBClient, defaultReconcilerOptions, testCase.auditLogConfig)
+			reconcilerOptions := CentralReconcilerOptions{
+				AuditLogging: testCase.auditLogConfig,
+			}
+			fakeClient, _, r := getClientTrackerAndReconciler(
+				t,
+				simpleManagedCentral,
+				noDBClient,
+				reconcilerOptions,
+			)
 			if testCase.preexistingSecret {
 				secret := populateNotifierSecret(t, centralNamespace, testCase.notifierConfigs)
 				assert.NoError(t, fakeClient.Create(ctx, secret))

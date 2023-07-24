@@ -6,7 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
+	"net/url"
 	"reflect"
 	"sync/atomic"
 	"time"
@@ -63,7 +64,7 @@ const (
 	declarativeConfigurationFeatureFlagName = "ROX_DECLARATIVE_CONFIGURATION"
 
 	auditLogNotifierKey  = "com.redhat.rhacs.auditLogNotifier"
-	auditLogNotifierName = "ACSCS Audit Logs"
+	auditLogNotifierName = "Platform Audit Logs"
 	auditLogTenantIDKey  = "tenant_id"
 
 	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
@@ -86,6 +87,7 @@ type CentralReconcilerOptions struct {
 	Telemetry         config.Telemetry
 	ClusterName       string
 	Environment       string
+	AuditLogging      config.AuditLogging
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -104,13 +106,11 @@ type CentralReconciler struct {
 	telemetry         config.Telemetry
 	clusterName       string
 	environment       string
+	auditLogging      config.AuditLogging
 
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
 	managedDBInitFunc           postgres.CentralDBInitFunc
-
-	auditLogTargetHost string
-	auditLogTargetPort int
 
 	resourcesChart *chart.Chart
 }
@@ -250,11 +250,16 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 		return nil, errors.Wrap(err, "converting Scanner DB resources")
 	}
 
-	// Set proxy configuration
-	extraDirectTargets := map[string][]int{
-		r.auditLogTargetHost: {r.auditLogTargetPort},
+	var envVars []corev1.EnvVar
+	if r.auditLogging.Enabled {
+		// Set proxy configuration
+		additionalNoProxyURL := url.URL{
+			Host: r.auditLogging.Endpoint(),
+		}
+		envVars = getProxyEnvVars(remoteCentralNamespace, additionalNoProxyURL)
+	} else {
+		envVars = getProxyEnvVars(remoteCentralNamespace)
 	}
-	envVars := getProxyEnvVars(remoteCentralNamespace, extraDirectTargets)
 
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
 	// Activate Declarative configuration feature
@@ -416,15 +421,13 @@ func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remote
 }
 
 func getAuditLogNotifierConfig(
-	auditLogTargetHost string,
-	auditLogTargetPort int,
+	auditLoggingConfig config.AuditLogging,
 	namespace string,
 ) *declarativeconfig.Notifier {
-	auditLogEndpoint := fmt.Sprintf("https://%s:%d", auditLogTargetHost, auditLogTargetPort)
 	return &declarativeconfig.Notifier{
 		Name: auditLogNotifierName,
 		GenericConfig: &declarativeconfig.GenericConfig{
-			Endpoint:            auditLogEndpoint,
+			Endpoint:            fmt.Sprintf("https://%s", auditLoggingConfig.Endpoint()),
 			SkipTLSVerify:       true,
 			AuditLoggingEnabled: true,
 			ExtraFields: []declarativeconfig.KeyValuePair{
@@ -451,7 +454,7 @@ func shouldUpdateAuditLogNotifierSecret(
 		// Check whether configuration exists and needs update.
 		configurations, err := declarativeconfig.ConfigurationFromRawBytes(existingConfigData)
 		if err != nil {
-			return false, fmt.Errorf("getting declarative configuration data for audit log notifier: %w", err)
+			return false, fmt.Errorf("unmarshaling declarative configuration data for audit log notifier: %w", err)
 		}
 		for _, configObj := range configurations {
 			notifierObjectConfig, ok := configObj.(*declarativeconfig.Notifier)
@@ -472,14 +475,16 @@ func shouldUpdateAuditLogNotifierSecret(
 }
 
 func (r *CentralReconciler) reconcileCentralAuditLogNotifier(ctx context.Context, remoteCentral *private.ManagedCentral) error {
+	if !r.auditLogging.Enabled {
+		return nil
+	}
 	return r.ensureSecretExists(
 		ctx,
 		remoteCentral.Metadata.Namespace,
 		sensibleDeclarativeConfigSecretName,
 		func(secret *corev1.Secret) (bool, error) {
 			auditLogNotifierConfig := getAuditLogNotifierConfig(
-				r.auditLogTargetHost,
-				r.auditLogTargetPort,
+				r.auditLogging,
 				remoteCentral.Metadata.Namespace,
 			)
 			if secret.Data == nil {
@@ -491,7 +496,7 @@ func (r *CentralReconciler) reconcileCentralAuditLogNotifier(ctx context.Context
 			}
 			encodedNotifierConfig, marshalErr := yaml.Marshal(auditLogNotifierConfig)
 			if marshalErr != nil {
-				return false, fmt.Errorf("encoding audit log notifier configuration: %w", marshalErr)
+				return false, fmt.Errorf("marshaling audit log notifier configuration: %w", marshalErr)
 			}
 			secret.Data[auditLogNotifierKey] = encodedNotifierConfig
 			return true, nil
@@ -1302,38 +1307,37 @@ var resourcesChart = charts.MustGetChart("tenant-resources", nil)
 
 func (r *CentralReconciler) ensureSecretExists(
 	ctx context.Context,
-	remoteCentralNamespace string,
+	namespace string,
 	actualName string,
 	secretModifyFunc func(secret *corev1.Secret) (bool, error),
 ) error {
 	secret := &corev1.Secret{}
-	secretKey := ctrlClient.ObjectKey{Name: actualName, Namespace: remoteCentralNamespace} // pragma: allowlist secret
+	secretKey := ctrlClient.ObjectKey{Name: actualName, Namespace: namespace} // pragma: allowlist secret
 
 	err := r.client.Get(ctx, secretKey, secret) // pragma: allowlist secret
 	if err != nil && !apiErrors.IsNotFound(err) {
-		return fmt.Errorf("getting %s secret: %w", actualName, err)
+		return fmt.Errorf("getting %s/%s secret: %w", namespace, actualName, err)
 	}
 	if err == nil {
 		changed, modificationErr := secretModifyFunc(secret)
 		if modificationErr != nil {
-			return fmt.Errorf("updating %s secret content: %w", actualName, modificationErr)
+			return fmt.Errorf("updating %s/%s secret content: %w", namespace, actualName, modificationErr)
 		}
 		if !changed {
 			return nil
 		}
-		updateErr := r.client.Update(ctx, secret) // pragma: allowlist secret
-		if updateErr != nil {
-			return fmt.Errorf("updating %s secret: %w", actualName, updateErr)
+		if updateErr := r.client.Update(ctx, secret); updateErr != nil { // pragma: allowlist secret
+			return fmt.Errorf("updating %s/%s secret: %w", namespace, actualName, updateErr)
 		}
 
 		return nil
 	}
 
-	// create secret if it does not exist
+	// Create secret if it does not exist.
 	secret = &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{ // pragma: allowlist secret
 			Name:      actualName,
-			Namespace: remoteCentralNamespace,
+			Namespace: namespace,
 			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
 			Annotations: map[string]string{
 				managedServicesAnnotation: "true",
@@ -1341,13 +1345,11 @@ func (r *CentralReconciler) ensureSecretExists(
 		},
 	}
 
-	_, modificationErr := secretModifyFunc(secret)
-	if modificationErr != nil {
-		return fmt.Errorf("initializing %s secret payload: %w", actualName, modificationErr)
+	if _, modificationErr := secretModifyFunc(secret); modificationErr != nil {
+		return fmt.Errorf("initializing %s/%s secret payload: %w", namespace, actualName, modificationErr)
 	}
-	createErr := r.client.Create(ctx, secret) // pragma: allowlist secret
-	if createErr != nil {
-		return fmt.Errorf("creating %s secret: %w", actualName, createErr)
+	if createErr := r.client.Create(ctx, secret); createErr != nil { // pragma: allowlist secret
+		return fmt.Errorf("creating %s/%s secret: %w", namespace, actualName, createErr)
 	}
 	return nil
 }
@@ -1355,7 +1357,7 @@ func (r *CentralReconciler) ensureSecretExists(
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
 	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
-	opts CentralReconcilerOptions, auditLogConfig config.AuditLogging,
+	opts CentralReconcilerOptions,
 ) *CentralReconciler {
 	return &CentralReconciler{
 		client:            k8sClient,
@@ -1368,13 +1370,11 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		telemetry:         opts.Telemetry,
 		clusterName:       opts.ClusterName,
 		environment:       opts.Environment,
+		auditLogging:      opts.AuditLogging,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,
 		managedDBInitFunc:           managedDBInitFunc,
-
-		auditLogTargetHost: auditLogConfig.AuditLogTargetHost,
-		auditLogTargetPort: auditLogConfig.AuditLogTargetPort,
 
 		resourcesChart: resourcesChart,
 	}

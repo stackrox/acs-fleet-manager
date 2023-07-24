@@ -2,13 +2,14 @@ package reconciler
 
 import (
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 )
 
-func getProxyEnvVars(namespace string, additionalDirectTargets map[string][]int) []corev1.EnvVar {
+func getProxyEnvVars(namespace string, additionalNoProxyTargets ...url.URL) []corev1.EnvVar {
 	var envVars []corev1.EnvVar
 	proxyURL := fmt.Sprintf("http://egress-proxy.%s.svc:3128", namespace)
 	// Use both upper- and lowercase env var names for maximum compatibility.
@@ -34,10 +35,9 @@ func getProxyEnvVars(namespace string, additionalDirectTargets map[string][]int)
 			)
 		}
 	}
-	for targetHost, ports := range additionalDirectTargets {
-		for _, port := range ports {
-			noProxyTargets = append(noProxyTargets, fmt.Sprintf("%s:%d", targetHost, port))
-		}
+	for _, noProxyURL := range additionalNoProxyTargets {
+		noProxyEndPoint := fmt.Sprintf("%s:%s", noProxyURL.Hostname(), noProxyURL.Port())
+		noProxyTargets = append(noProxyTargets, noProxyEndPoint)
 	}
 	sort.Strings(noProxyTargets) // ensure deterministic output
 	noProxyStr := strings.Join(noProxyTargets, ",")

@@ -120,6 +120,7 @@ func (r *Runtime) Start() error {
 		Telemetry:         r.config.Telemetry,
 		ClusterName:       r.config.ClusterName,
 		Environment:       r.config.Environment,
+		AuditLogging:      r.config.AuditLogging,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
@@ -145,7 +146,7 @@ func (r *Runtime) Start() error {
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central,
-					r.dbProvisionClient, postgres.InitializeDatabase, reconcilerOpts, r.config.AuditLogging)
+					r.dbProvisionClient, postgres.InitializeDatabase, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]
