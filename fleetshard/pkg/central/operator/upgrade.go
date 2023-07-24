@@ -4,7 +4,6 @@ package operator
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
@@ -91,7 +90,7 @@ func parseOperatorConfigs(operators []DeploymentConfig) ([]chartutil.Values, err
 			return nil, err
 		}
 
-		deploymentName := generateDeploymentName(tag)
+		deploymentName := generateDeploymentName(operator.Version)
 		// deployment name has the same requirements as label values
 		if !IsValidLabel(deploymentName) {
 			return nil, fmt.Errorf("deployment name %s is not valid", deploymentName)
@@ -118,21 +117,6 @@ type ACSOperatorManager struct {
 	client         ctrlClient.Client
 	crdURL         string
 	resourcesChart *chart.Chart
-}
-
-var urlRegexExp *regexp.Regexp
-
-func init() {
-	var err error
-	urlRegexExp, err = regexp.Compile("/[^a-z0-9\\-_]/g")
-	if err != nil {
-		panic(fmt.Errorf("invalid URL regex, could not be compiled %w", err))
-	}
-}
-
-// GetValidSelectorTag returns a valid selector string which can be used in a kubernetes metadata label.
-func GetValidSelectorTag(tag string) string {
-	return urlRegexExp.ReplaceAllString(tag, "")
 }
 
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
@@ -236,8 +220,8 @@ func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredI
 	return nil
 }
 
-func generateDeploymentName(tag string) string {
-	return operatorDeploymentPrefix + "-" + tag
+func generateDeploymentName(version string) string {
+	return operatorDeploymentPrefix + "-" + version
 }
 
 func (u *ACSOperatorManager) generateCRDTemplateUrls(tag string) []string {

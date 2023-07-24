@@ -174,11 +174,11 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 
-	operatorImageWithLongTag := "quay.io/rhacs-eng/stackrox-operator:4.0.1-with-ridiculously-long-tag-version-name-like-really-long-one"
+	longVersionName := "4.0.1-with-ridiculously-long-version-name-like-really-long-one"
 	operatorConfig := DeploymentConfig{
-		Image:         operatorImageWithLongTag,
+		Image:         operatorImage1,
 		LabelSelector: "4.0.1",
-		Version:       "4.0.1",
+		Version:       longVersionName,
 	}
 	err := u.InstallOrUpgrade(context.Background(), []DeploymentConfig{operatorConfig}, crdTag1)
 	require.Errorf(t, err, "zero tags parsed from images")
@@ -299,8 +299,8 @@ func TestParseOperatorConfigs(t *testing.T) {
 					Version:       "version2",
 				}},
 			expected: []map[string]string{
-				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo1", "tag": "tag", "labelSelector": "label"},
-				{"deploymentName": operatorDeploymentPrefix + "-tag", "repository": "repo2", "tag": "tag", "labelSelector": "label"},
+				{"deploymentName": operatorDeploymentPrefix + "-version1", "repository": "repo1", "tag": "tag", "labelSelector": "label"},
+				{"deploymentName": operatorDeploymentPrefix + "-version2", "repository": "repo2", "tag": "tag", "labelSelector": "label"},
 			},
 		},
 		"fail if image does contain colon": {
