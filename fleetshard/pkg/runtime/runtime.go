@@ -249,7 +249,7 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	var desiredOperators []operator.DeploymentConfig
 	var desiredOperatorImages []string
 	for _, central := range list.Items {
-		// TODO: read GitRef ManagedCentral
+		// TODO: read GitRef ManagedCentral list call
 		operatorConfiguration := operator.DeploymentConfig{
 			Image:  central.Spec.OperatorImage,
 			GitRef: "4.0.1",
