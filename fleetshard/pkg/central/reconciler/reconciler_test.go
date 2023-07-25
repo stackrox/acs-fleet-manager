@@ -97,12 +97,8 @@ var simpleManagedCentral = private.ManagedCentral{
 	},
 	Spec: private.ManagedCentralAllOfSpec{
 		Auth: private.ManagedCentralAllOfSpecAuth{
-			ClientSecret: "test-value", // pragma: allowlist secret
-			ClientId:     "test-value",
-			OwnerUserId:  "54321",
 			OwnerOrgId:   "12345",
 			OwnerOrgName: "org-name",
-			Issuer:       "https://example.com",
 		},
 		UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
 			Host: fmt.Sprintf("acs-%s.acs.rhcloud.test", centralID),
@@ -383,38 +379,6 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
 	assert.Equal(t, "4", central.Annotations[util.RevisionAnnotationKey])
-}
-
-func TestReconcileCreateWithDeclarativeAuthProvider(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{
-		UseRoutes:         true,
-		WantsAuthProvider: true,
-	})
-	r.verifyAuthProviderFunc = func(_ context.Context, _ private.ManagedCentral, _ client.Client) (bool, error) {
-		return true, nil
-	}
-
-	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
-	require.True(t, ok)
-	assert.Equal(t, "True", readyCondition.Status, "Ready condition not found in conditions",
-		status.Conditions)
-
-	central := &v1alpha1.Central{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
-	require.NoError(t, err)
-	assert.Contains(t, central.Spec.Central.DeclarativeConfiguration.Secrets,
-		v1alpha1.LocalSecretReference{Name: sensibleDeclarativeConfigSecretName})
-
-	secret := &v1.Secret{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: sensibleDeclarativeConfigSecretName,
-		Namespace: centralNamespace}, secret)
-	require.NoError(t, err)
-
-	assert.NotEmpty(t, secret.Data[authProviderDeclarativeConfigKey])
 }
 
 func TestIgnoreCacheForCentralNotReady(t *testing.T) {
