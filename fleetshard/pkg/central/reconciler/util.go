@@ -22,10 +22,10 @@ const (
 	oidcType              = "oidc"
 )
 
-func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, central private.ManagedCentral) (bool, error) {
+func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, namespace string) (bool, error) {
 	deployment := &appsv1.Deployment{}
 	err := client.Get(ctx,
-		ctrlClient.ObjectKey{Name: centralDeploymentName, Namespace: central.Metadata.Namespace},
+		ctrlClient.ObjectKey{Name: centralDeploymentName, Namespace: namespace},
 		deployment)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
@@ -37,10 +37,10 @@ func isCentralDeploymentReady(ctx context.Context, client ctrlClient.Client, cen
 }
 
 // TODO: ROX-11644: doesn't work when fleetshard-sync deployed outside of Central's cluster
-func getServiceAddress(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (string, error) {
+func getServiceAddress(ctx context.Context, namespace string, client ctrlClient.Client) (string, error) {
 	service := &core.Service{}
 	err := client.Get(ctx,
-		ctrlClient.ObjectKey{Name: centralServiceName, Namespace: central.Metadata.Namespace},
+		ctrlClient.ObjectKey{Name: centralServiceName, Namespace: namespace},
 		service)
 	if err != nil {
 		return "", errors.Wrapf(err, "getting k8s service for central")
@@ -49,7 +49,7 @@ func getServiceAddress(ctx context.Context, central private.ManagedCentral, clie
 	if err != nil {
 		return "", err
 	}
-	address := fmt.Sprintf("https://%s.%s.svc.cluster.local:%d", centralServiceName, central.Metadata.Namespace, port)
+	address := fmt.Sprintf("https://%s.%s.svc.cluster.local:%d", centralServiceName, namespace, port)
 	return address, nil
 }
 
@@ -81,11 +81,11 @@ func authProviderName(central private.ManagedCentral) (name string) {
 // hasAuthProvider verifies whether the given central has a default auth provider.
 // It will return a boolean that indicates whether the auth provider exists.
 func hasAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error) {
-	ready, err := isCentralDeploymentReady(ctx, client, central)
+	ready, err := isCentralDeploymentReady(ctx, client, central.Metadata.Namespace)
 	if !ready || err != nil {
 		return false, err
 	}
-	address, err := getServiceAddress(ctx, central, client)
+	address, err := getServiceAddress(ctx, central.Metadata.Namespace, client)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return false, nil
