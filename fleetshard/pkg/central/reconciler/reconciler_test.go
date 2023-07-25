@@ -392,9 +392,8 @@ func TestReconcileCreateWithDeclarativeAuthProvider(t *testing.T) {
 		UseRoutes:         true,
 		WantsAuthProvider: true,
 	})
-	// Force declarative config.
-	r.verifyAuthProviderFunc = func(_ context.Context, _ private.ManagedCentral, _ client.Client) (bool, bool, error) {
-		return true, false, nil
+	r.verifyAuthProviderFunc = func(_ context.Context, _ private.ManagedCentral, _ client.Client) (bool, error) {
+		return true, nil
 	}
 
 	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -416,38 +415,6 @@ func TestReconcileCreateWithDeclarativeAuthProvider(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.NotEmpty(t, secret.Data[authProviderDeclarativeConfigKey])
-}
-
-func TestReconcileCreateWithLegacyAuthProvider(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-
-	r := NewCentralReconciler(fakeClient, private.ManagedCentral{}, nil, centralDBInitFunc, CentralReconcilerOptions{
-		UseRoutes:         true,
-		WantsAuthProvider: true,
-	})
-	// Legacy auth provider.
-	r.verifyAuthProviderFunc = func(_ context.Context, _ private.ManagedCentral, _ client.Client) (bool, bool, error) {
-		return true, true, nil
-	}
-
-	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
-	require.True(t, ok)
-	assert.Equal(t, "True", readyCondition.Status, "Ready condition not found in conditions",
-		status.Conditions)
-
-	central := &v1alpha1.Central{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
-	require.NoError(t, err)
-	assert.Contains(t, central.Spec.Central.DeclarativeConfiguration.Secrets,
-		v1alpha1.LocalSecretReference{Name: sensibleDeclarativeConfigSecretName})
-
-	secret := &v1.Secret{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: sensibleDeclarativeConfigSecretName,
-		Namespace: centralNamespace}, secret)
-	require.NoError(t, err)
-	assert.Empty(t, secret.Data[authProviderDeclarativeConfigKey])
 }
 
 func TestIgnoreCacheForCentralNotReady(t *testing.T) {

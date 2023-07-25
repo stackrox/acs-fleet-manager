@@ -3,11 +3,9 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"github.com/golang/glog"
 	"strings"
 
 	centralClientPkg "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
-	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/urlfmt"
 	appsv1 "k8s.io/api/apps/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -80,38 +78,31 @@ func authProviderName(central private.ManagedCentral) (name string) {
 	return
 }
 
-// hasDefaultAuthProvider verifies whether the given central has a default auth provider as well as whether it is
-// a legacy one, i.e. the default auth provider is not created via declarative config.
-// It will return two booleans that indicate whether the auth provider exists and whether it's a legacy one.
-func hasDefaultAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, bool, error) {
+// hasAuthProvider verifies whether the given central has a default auth provider.
+// It will return a boolean that indicates whether the auth provider exists.
+func hasAuthProvider(ctx context.Context, central private.ManagedCentral, client ctrlClient.Client) (bool, error) {
 	ready, err := isCentralDeploymentReady(ctx, client, central)
 	if !ready || err != nil {
-		return false, false, err
+		return false, err
 	}
 	address, err := getServiceAddress(ctx, central, client)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			return false, false, nil
+			return false, nil
 		}
-		return false, false, err
+		return false, err
 	}
 
 	centralClient := centralClientPkg.NewCentralClientNoAuth(central, address)
 	authProvidersResp, err := centralClient.GetLoginAuthProviders(ctx)
 	if err != nil {
-		return false, false, errors.Wrap(err, "sending GetLoginAuthProviders request to central")
+		return false, errors.Wrap(err, "sending GetLoginAuthProviders request to central")
 	}
 
 	for _, provider := range authProvidersResp.AuthProviders {
-		name := authProviderName(central)
-		if provider.Type == oidcType {
-			if provider.GetName() == name {
-				glog.Infof("Found default auth provider: %+v", provider)
-				// The auth provider can be considered legacy if it's UUID doesn't match the declarative config one based on
-				// the name.
-				return true, provider.GetId() != declarativeconfig.NewDeclarativeAuthProviderUUID(name).String(), nil
-			}
+		if provider.Type == oidcType && provider.GetName() == authProviderName(central) {
+			return true, nil
 		}
 	}
-	return false, false, nil
+	return false, nil
 }

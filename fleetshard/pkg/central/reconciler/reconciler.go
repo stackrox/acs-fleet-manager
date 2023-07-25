@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"net/url"
+	"reflect"
+	"sync/atomic"
+	"time"
 
 	containerImage "github.com/containers/image/docker/reference"
 	"github.com/golang/glog"
@@ -38,10 +41,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-
-	"reflect"
-	"sync/atomic"
-	"time"
 )
 
 // FreeStatus ...
@@ -80,8 +79,8 @@ const (
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
 )
 
-type verifyAuthProviderFunc func(ctx context.Context, central private.ManagedCentral,
-	client ctrlClient.Client) (bool, bool, error)
+type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral,
+	client ctrlClient.Client) (bool, error)
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
@@ -119,7 +118,7 @@ type CentralReconciler struct {
 
 	wantsAuthProvider      bool
 	hasAuthProvider        bool
-	verifyAuthProviderFunc verifyAuthProviderFunc
+	verifyAuthProviderFunc verifyAuthProviderExistsFunc
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -380,7 +379,7 @@ func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context,
 				Name:             authProviderName(remoteCentral),
 				MinimumRoleName:  "None",
 				UIEndpoint:       remoteCentral.Spec.UiEndpoint.Host,
-				ExtraUIEndpoints: []string{"localhost:8443"}, // TODO(dhaus): Check with Ivan whether we actually need this still?
+				ExtraUIEndpoints: []string{"localhost:8443"},
 				Groups: []declarativeconfig.Group{
 					{
 						AttributeKey:   "userid",
@@ -474,7 +473,7 @@ func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remote
 	// within the list of available auth providers.
 	// We try multiple times to verify auth provider since applying of declarative configuration is done asynchronously.
 	authProviderExists := concurrency.WaitInContext(concurrency.NewPoller(func() bool {
-		exists, _, _ := r.verifyAuthProviderFunc(ctx, remoteCentral, r.client)
+		exists, _ := r.verifyAuthProviderFunc(ctx, remoteCentral, r.client)
 		return exists
 	}, 5*time.Second), ctx)
 	if authProviderExists {
@@ -1459,7 +1458,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		managedDBProvisioningClient: managedDBProvisioningClient,
 		managedDBInitFunc:           managedDBInitFunc,
 
-		verifyAuthProviderFunc: hasDefaultAuthProvider,
+		verifyAuthProviderFunc: hasAuthProvider,
 
 		resourcesChart: resourcesChart,
 	}
