@@ -22,8 +22,9 @@ type CentralsConfig struct {
 
 // CentralOverride represents the configuration for a Central instance override. The override
 // will be applied on top of the default central instance configuration.
+// See https://github.com/stackrox/stackrox/blob/master/operator/apis/platform/v1alpha1/overlay_types.go
 type CentralOverride struct {
-	// InstanceIDs are the Ceentral instance IDs for the override.
+	// InstanceIDs are the Central instance IDs for the override.
 	InstanceIDs []string `json:"instanceIds"`
 	// Patch is the patch for the override, which will be applied as a strategic merge patch.
 	Patch string `json:"patch"`
