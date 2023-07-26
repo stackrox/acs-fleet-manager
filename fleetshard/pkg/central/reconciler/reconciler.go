@@ -61,8 +61,6 @@ const (
 	operatorVersionKey        = "stackrox.io/operator-version"
 	defaultOperatorVersion    = "rhacs-operator.v3.74.0"
 
-	declarativeConfigurationFeatureFlagName = "ROX_DECLARATIVE_CONFIGURATION"
-
 	auditLogNotifierKey  = "com.redhat.rhacs.auditLogNotifier"
 	auditLogNotifierName = "Platform Audit Logs"
 	auditLogTenantIDKey  = "tenant_id"
@@ -262,8 +260,6 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	}
 
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
-	// Activate Declarative configuration feature
-	envVars = ensureDeclarativeConfigurationEnabled(envVars)
 
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
@@ -428,7 +424,7 @@ func getAuditLogNotifierConfig(
 		Name: auditLogNotifierName,
 		GenericConfig: &declarativeconfig.GenericConfig{
 			Endpoint:            fmt.Sprintf("https://%s", auditLoggingConfig.Endpoint()),
-			SkipTLSVerify:       true,
+			SkipTLSVerify:       auditLoggingConfig.SkipTLSVerify,
 			AuditLoggingEnabled: true,
 			ExtraFields: []declarativeconfig.KeyValuePair{
 				{
@@ -703,34 +699,10 @@ func (r *CentralReconciler) ensureCentralAuditLogNotifierSecretCleaned(ctx conte
 
 	delete(secret.Data, auditLogNotifierKey)
 	delete(secret.StringData, auditLogNotifierKey)
-	if len(secret.Data) <= 0 && len(secret.StringData) <= 0 {
+	if len(secret.Data) == 0 && len(secret.StringData) == 0 {
 		return r.client.Delete(ctx, secret)
 	}
 	return r.client.Update(ctx, secret)
-}
-
-var (
-	declarativeConfigurationEnvVar = corev1.EnvVar{
-		Name:  declarativeConfigurationFeatureFlagName,
-		Value: "true",
-	}
-)
-
-func ensureDeclarativeConfigurationEnabled(envVars []corev1.EnvVar) []corev1.EnvVar {
-	clonedVars := make([]corev1.EnvVar, 0, len(envVars)+1)
-	found := false
-	for _, envVariable := range envVars {
-		if envVariable.Name == declarativeConfigurationFeatureFlagName {
-			clonedVars = append(clonedVars, declarativeConfigurationEnvVar)
-			found = true
-		} else {
-			clonedVars = append(clonedVars, envVariable)
-		}
-	}
-	if !found {
-		clonedVars = append(clonedVars, declarativeConfigurationEnvVar)
-	}
-	return clonedVars
 }
 
 func isRemoteCentralProvisioning(remoteCentral private.ManagedCentral) bool {

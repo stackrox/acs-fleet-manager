@@ -48,6 +48,7 @@ type AuditLogging struct {
 	Enabled            bool   `env:"AUDIT_LOG_ENABLED" envDefault:"false"`
 	AuditLogTargetHost string `env:"AUDIT_LOG_HOST" envDefault:"audit-logs-aggregator.rhacs-audit-logs"`
 	AuditLogTargetPort int    `env:"AUDIT_LOG_PORT" envDefault:"8888"`
+	SkipTLSVerify      bool   `env:"AUDIT_LOG_SKIP_TLS_VERIFY" envDefault:"false"`
 }
 
 // Telemetry defines parameters for pushing telemetry to a remote storage.

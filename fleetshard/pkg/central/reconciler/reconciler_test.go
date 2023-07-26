@@ -1306,15 +1306,6 @@ func compareSecret(t *testing.T, expectedSecret *v1.Secret, secret *v1.Secret, c
 		assert.Equal(t, annotationVal, "true")
 	}
 	assert.Equal(t, expectedSecret.Data, secret.Data)
-	assert.Equal(t, len(expectedSecret.Data), len(secret.Data))
-	for dataKey, expectedVal := range expectedSecret.Data {
-		value, found := secret.Data[dataKey]
-		assert.True(t, found, dataKey)
-		if !found {
-			return
-		}
-		assert.Truef(t, bytes.Equal(expectedVal, value), "expected %q got %q", string(expectedVal), string(value))
-	}
 }
 
 func TestEnsureSecretExists(t *testing.T) {
@@ -1403,14 +1394,27 @@ func TestEnsureSecretExists(t *testing.T) {
 	})
 }
 
-func noProxyEnvPayloadContainsException(t *testing.T, envValue string, targetHostPort string) {
-	assert.Contains(t, strings.Split(envValue, ","), targetHostPort)
-}
-
 func TestGetInstanceConfigSetsNoProxyEnvVarsForAuditLog(t *testing.T) {
-	for _, auditLogConfig := range []config.AuditLogging{defaultAuditLogConfig, vectorAuditLogConfig} {
+	testCases := []struct {
+		auditLoggingConfig config.AuditLogging
+		expectedException  bool
+	}{
+		{
+			auditLoggingConfig: defaultAuditLogConfig,
+			expectedException:  true,
+		},
+		{
+			auditLoggingConfig: vectorAuditLogConfig,
+			expectedException:  true,
+		},
+		{
+			auditLoggingConfig: disabledAuditLogConfig,
+			expectedException:  false,
+		},
+	}
+	for _, testCase := range testCases {
 		reconcilerOptions := CentralReconcilerOptions{
-			AuditLogging: auditLogConfig,
+			AuditLogging: testCase.auditLoggingConfig,
 		}
 		_, _, r := getClientTrackerAndReconciler(
 			t,
@@ -1428,44 +1432,23 @@ func TestGetInstanceConfigSetsNoProxyEnvVarsForAuditLog(t *testing.T) {
 			switch envVar.Name {
 			case "no_proxy":
 				noProxyEnvLowerCaseFound = true
-				noProxyEnvPayloadContainsException(t, envVar.Value, auditLogConfig.Endpoint())
+				if testCase.expectedException {
+					assert.Contains(t, strings.Split(envVar.Value, ","), testCase.auditLoggingConfig.Endpoint())
+				} else {
+					assert.NotContains(t, strings.Split(envVar.Value, ","), testCase.auditLoggingConfig.Endpoint())
+				}
 			case "NO_PROXY":
 				noProxyEnvUpperCaseFound = true
-				noProxyEnvPayloadContainsException(t, envVar.Value, auditLogConfig.Endpoint())
+				if testCase.expectedException {
+					assert.Contains(t, strings.Split(envVar.Value, ","), testCase.auditLoggingConfig.Endpoint())
+				} else {
+					assert.NotContains(t, strings.Split(envVar.Value, ","), testCase.auditLoggingConfig.Endpoint())
+				}
 			}
 		}
 		assert.True(t, noProxyEnvLowerCaseFound)
 		assert.True(t, noProxyEnvUpperCaseFound)
 	}
-}
-
-func TestGetInstanceConfigSetsDeclarativeConfigEnvVar(t *testing.T) {
-	reconcilerOptions := CentralReconcilerOptions{
-		AuditLogging: defaultAuditLogConfig,
-	}
-	_, _, r := getClientTrackerAndReconciler(
-		t,
-		simpleManagedCentral,
-		nil,
-		reconcilerOptions,
-	)
-	declarativeConfigEnvVarSet := false
-	declarativeConfigEnable := false
-	centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
-	assert.NoError(t, err)
-	require.NotNil(t, centralConfig)
-	require.NotNil(t, centralConfig.Spec.Customize)
-	if centralConfig.Spec.Customize == nil {
-		return
-	}
-	for _, envVar := range centralConfig.Spec.Customize.EnvVars {
-		if envVar.Name == declarativeConfigurationFeatureFlagName {
-			declarativeConfigEnvVarSet = true
-			declarativeConfigEnable = envVar.Value == "true"
-		}
-	}
-	assert.True(t, declarativeConfigEnvVarSet)
-	assert.True(t, declarativeConfigEnable)
 }
 
 func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
