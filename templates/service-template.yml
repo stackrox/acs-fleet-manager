@@ -860,6 +860,27 @@ objects:
                       domains:
                       - "*"
                       routes:
+                      - name: acs-fleet-manager-frontend-api-v1
+                        match:
+                          prefix: /api/rhacs/v1
+                        route:
+                          cluster: backend
+                        typed_per_filter_config:
+                          lua_security_headers:
+                            "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                            source_code:
+                              inline_string: |
+                                function envoy_on_response(response_handle)
+                                  csp = "default-src 'none'; script-src 'self'; img-src 'self'; style-src 'self'; connect-src 'self'";
+                                  response_handle:headers():add("Content-Security-Policy", csp);
+                                  response_handle:headers():add("X-Frame-Options", "deny");
+                                  response_handle:headers():add("X-XSS-Protection", "1; mode=block");
+                                  response_handle:headers():add("X-Content-Type-Options", "nosniff");
+                                  response_handle:headers():add("Referrer-Policy", "no-referrer");
+                                  response_handle:headers():add("X-Download-Options", "noopen");
+                                  response_handle:headers():add("X-DNS-Prefetch-Control", "off");
+                                  response_handle:headers():add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+                                end
 
                       # TODO(ROX-11395): enable rate limiting post-MVP
                       # # Route fleet-manager's agent-cluster related endpoints
@@ -920,6 +941,10 @@ objects:
                   #           cluster_name: limiter
                   #       transport_api_version: V3
 
+                  # This allows Lua scripts to be run during response flow
+                  - name: lua_security_headers
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
                   # This is mandatory in order to have the HTTP routes above.
                   - name: envoy.filters.http.router
 
