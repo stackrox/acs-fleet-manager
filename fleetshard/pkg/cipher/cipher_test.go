@@ -24,7 +24,7 @@ func TestDifferentCipherForSamePlaintext(t *testing.T) {
 	key, err := generateKey()
 	require.NoError(t, err, "generating key")
 
-	aes, err := NewAES256Cipher(key)
+	aes, err := NewLocalAES256Cipher(key)
 	require.NoError(t, err, "creating cipher")
 	cipher1, err := aes.Encrypt(plaintext)
 	require.NoError(t, err, "encrypting first plaintext")
@@ -39,7 +39,7 @@ func TestEncryptDecryptMatch(t *testing.T) {
 	key, err := generateKey()
 	require.NoError(t, err, "generating key")
 
-	aes, err := NewAES256Cipher(key)
+	aes, err := NewLocalAES256Cipher(key)
 	require.NoError(t, err, "creating cipher")
 
 	cipher, err := aes.Encrypt(plaintext)

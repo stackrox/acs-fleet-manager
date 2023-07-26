@@ -11,19 +11,21 @@ import (
 
 const keySize = 32
 
+//go:generate moq -out cipher_moq.go . Cipher
+
 // Cipher is the interface used to encrypt and decrypt content
 type Cipher interface {
 	Encrypt(plaintext []byte) ([]byte, error)
 	Decrypt(ciphertext []byte) ([]byte, error)
 }
 
-// AES256Cipher implements encryption and decryption using AES256 GCM
-type AES256Cipher struct {
+// LocalAES256Cipher implements encryption and decryption using AES256 GCM
+type LocalAES256Cipher struct {
 	aesgcm cipher.AEAD
 }
 
-// NewAES256Cipher returns a new Cipher using the given key
-func NewAES256Cipher(key []byte) (Cipher, error) {
+// NewLocalAES256Cipher returns a new Cipher using the given key
+func NewLocalAES256Cipher(key []byte) (Cipher, error) {
 	if len(key) != 32 {
 		return nil, fmt.Errorf("creating AES256Cipher, key does not match required lenght of %d", keySize)
 	}
@@ -38,13 +40,13 @@ func NewAES256Cipher(key []byte) (Cipher, error) {
 		return nil, fmt.Errorf("creating AES GCM cipher %s", err)
 	}
 
-	return AES256Cipher{aesgcm: aesgcm}, nil
+	return LocalAES256Cipher{aesgcm: aesgcm}, nil
 }
 
-var _ Cipher = AES256Cipher{}
+var _ Cipher = LocalAES256Cipher{}
 
 // Encrypt implementes the logic to encrypt plaintext
-func (a AES256Cipher) Encrypt(plaintext []byte) ([]byte, error) {
+func (a LocalAES256Cipher) Encrypt(plaintext []byte) ([]byte, error) {
 
 	nonce := make([]byte, a.aesgcm.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
@@ -61,7 +63,7 @@ func (a AES256Cipher) Encrypt(plaintext []byte) ([]byte, error) {
 
 // Decrypt implements the logic to decrypt ciphertext, it assumes
 // a nonce has been apended to ciphertext at encryption
-func (a AES256Cipher) Decrypt(ciphertext []byte) ([]byte, error) {
+func (a LocalAES256Cipher) Decrypt(ciphertext []byte) ([]byte, error) {
 	nonceIndex := len(ciphertext) - a.aesgcm.NonceSize()
 	cipher, nonce := ciphertext[:nonceIndex], ciphertext[nonceIndex:]
 
