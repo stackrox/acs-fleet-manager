@@ -11,6 +11,7 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -19,9 +20,6 @@ const (
 	operatorNamespace        = "rhacs"
 	releaseName              = "rhacs-operator"
 	operatorDeploymentPrefix = "rhacs-operator"
-
-	// RFC 1035 Label Names: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
-	maxLabelLength = 63
 )
 
 // DeploymentConfig represents operator configuration for deployment
@@ -31,8 +29,7 @@ type DeploymentConfig struct {
 }
 
 func parseOperatorConfigs(operators []DeploymentConfig) ([]chartutil.Values, error) {
-	var operatorImages []chartutil.Values
-	uniqueImages := make(map[string]bool)
+	var helmValues []chartutil.Values
 	for _, operator := range operators {
 		imageReference, err := containerImage.Parse(operator.Image)
 		if err != nil {
@@ -42,21 +39,21 @@ func parseOperatorConfigs(operators []DeploymentConfig) ([]chartutil.Values, err
 		if errs := validation.IsValidLabelValue(operator.GitRef); errs != nil {
 			return nil, fmt.Errorf("label selector %s is not valid: %v", operator.GitRef, errs)
 		}
+
 		deploymentName := generateDeploymentName(operator.GitRef)
-		if len(deploymentName) > maxLabelLength {
-			return nil, fmt.Errorf("invalid name: %s. It contains more than %d characters", deploymentName, maxLabelLength)
+		// validate deploymentName (RFC-1123)
+		// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
+		if errs := apimachineryvalidation.NameIsDNSSubdomain(deploymentName, true); errs != nil {
+			return nil, fmt.Errorf("invalid deploymentName %s: %v", deploymentName, errs)
 		}
-		if _, used := uniqueImages[image]; !used {
-			uniqueImages[image] = true
-			img := chartutil.Values{
-				"deploymentName": deploymentName,
-				"image":          image,
-				"labelSelector":  operator.GitRef,
-			}
-			operatorImages = append(operatorImages, img)
+		operatorValues := chartutil.Values{
+			"deploymentName": deploymentName,
+			"image":          image,
+			"labelSelector":  operator.GitRef,
 		}
+		helmValues = append(helmValues, operatorValues)
 	}
-	return operatorImages, nil
+	return helmValues, nil
 }
 
 // ACSOperatorManager keeps data necessary for managing ACS Operator

@@ -172,7 +172,7 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 
-	longVersionName := "4.0.1-with-ridiculously-long-version-name-like-really-long-one"
+	longVersionName := "4.0.1-with-ridiculously-long-version-name-like-really-long-one-which-has-more-than-63-characters"
 	operatorConfig := DeploymentConfig{
 		Image:  operatorImage1,
 		GitRef: longVersionName,
@@ -186,7 +186,7 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 	assert.Len(t, deployments.Items, 0)
 }
 
-func TestOperatorUpgradeImageWithDigestn(t *testing.T) {
+func TestOperatorUpgradeImageWithDigest(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient, crdURL)
 
@@ -291,12 +291,6 @@ func TestParseOperatorConfigs(t *testing.T) {
 				{"deploymentName": deploymentName2, "image": operatorImage2, "labelSelector": "4.0.2"},
 			},
 		},
-		"should ignore duplicate operator configs": {
-			operatorConfigs: []DeploymentConfig{operatorConfig1, operatorConfig1},
-			expected: []map[string]string{
-				{"deploymentName": deploymentName1, "image": operatorImage1, "labelSelector": "4.0.1"},
-			},
-		},
 		"should parse image with tag and digest": {
 			operatorConfigs: []DeploymentConfig{{
 				Image:  "quay.io/image-with-tag-and-digest:1.2.3@sha256:4ff5cb2dcddaaa2a4b702516870c85177e53ccc3566509c36c2d84b01ef8f783",
@@ -348,7 +342,7 @@ func TestParseOperatorConfigs(t *testing.T) {
 		"fail if GitRef is way too long for the DeploymentName": {
 			operatorConfigs: []DeploymentConfig{{
 				Image:  "quay.io/image-name:tag",
-				GitRef: "1.2.3-with-ridiculously-long-version-name-like-really-long-one",
+				GitRef: "1.2.3-with-ridiculously-long-version-name-like-really-long-one-which-has-more-than-63-characters",
 			}},
 			shouldFail: true,
 		},
