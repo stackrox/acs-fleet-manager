@@ -4,15 +4,14 @@ package operator
 import (
 	"context"
 	"fmt"
-	"strings"
-
+	containerImage "github.com/containers/image/docker/reference"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"golang.org/x/exp/slices"
-	"golang.org/x/exp/utf8string"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/validation"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -23,8 +22,6 @@ const (
 
 	// RFC 1035 Label Names: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
 	maxLabelLength = 63
-
-	maxImageTagLength = 128
 )
 
 // DeploymentConfig represents operator configuration for deployment
@@ -33,75 +30,28 @@ type DeploymentConfig struct {
 	GitRef string
 }
 
-// GetRepoAndTagFromImage returns the repo and image tag
-func GetRepoAndTagFromImage(img string) (string, string, error) {
-	if !strings.Contains(img, ":") {
-		return "", "", fmt.Errorf("failed to parse image %q", img)
-	}
-	strs := strings.Split(img, ":")
-	if len(strs) != 2 {
-		return "", "", fmt.Errorf("failed to split image and tag from %q", img)
-	}
-	repo, tag := strs[0], strs[1]
-	if !isValidTag(tag) {
-		return "", "", fmt.Errorf("failed to validate image tag %q", tag)
-	}
-
-	return repo, tag, nil
-}
-
-// See image tag specification: https://docs.docker.com/engine/reference/commandline/tag/#description
-func isValidTag(tag string) bool {
-	if len(tag) == 0 || len(tag) > maxImageTagLength {
-		return false
-	}
-	notAllowedStarts := []rune{'.', '-'}
-	if slices.Contains(notAllowedStarts, rune(tag[0])) {
-		return false
-	}
-	return utf8string.NewString(tag).IsASCII()
-}
-
-// IsValidLabel returns true if provided string could be a valid label
-// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
-func IsValidLabel(label string) bool {
-	if len(label) > maxLabelLength {
-		return false
-	}
-	if len(label) > 0 {
-		notAllowedStartOrEnd := []rune{'-', '_', '.'}
-		if slices.Contains(notAllowedStartOrEnd, rune(label[0])) {
-			return false
-		}
-		if slices.Contains(notAllowedStartOrEnd, rune(label[len(label)-1])) {
-			return false
-		}
-	}
-	return utf8string.NewString(label).IsASCII()
-}
-
 func parseOperatorConfigs(operators []DeploymentConfig) ([]chartutil.Values, error) {
 	var operatorImages []chartutil.Values
 	uniqueImages := make(map[string]bool)
 	for _, operator := range operators {
-		repo, tag, err := GetRepoAndTagFromImage(operator.Image)
+		imageReference, err := containerImage.Parse(operator.Image)
 		if err != nil {
 			return nil, err
 		}
-
-		if !IsValidLabel(operator.GitRef) {
-			return nil, fmt.Errorf("label selector %s is not valid", operator.GitRef)
+		image := imageReference.String()
+		errs := validation.IsValidLabelValue(operator.GitRef)
+		if errs != nil {
+			return nil, fmt.Errorf("label selector %s is not valid: %v", operator.GitRef, errs)
 		}
 		deploymentName := generateDeploymentName(operator.GitRef)
 		if len(deploymentName) > maxLabelLength {
 			return nil, fmt.Errorf("invalid name: %s. It contains more than %d characters", deploymentName, maxLabelLength)
 		}
-		if _, used := uniqueImages[repo+tag]; !used {
-			uniqueImages[repo+tag] = true
+		if _, used := uniqueImages[image]; !used {
+			uniqueImages[image] = true
 			img := chartutil.Values{
 				"deploymentName": deploymentName,
-				"repository":     repo,
-				"tag":            tag,
+				"image":          image,
 				"labelSelector":  operator.GitRef,
 			}
 			operatorImages = append(operatorImages, img)

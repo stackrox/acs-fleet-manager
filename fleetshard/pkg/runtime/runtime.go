@@ -260,8 +260,8 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 
 	ctx := context.Background()
 
-	for _, oper := range desiredOperators {
-		glog.Infof("Installing Operator version: %s", oper.GitRef)
+	for _, operatorDeployment := range desiredOperators {
+		glog.Infof("Installing Operator version: %s", operatorDeployment.GitRef)
 	}
 
 	//TODO(ROX-15080): Download CRD on operator upgrades to always install the latest CRD

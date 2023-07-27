@@ -86,7 +86,7 @@ spec:
             - name: CENTRAL_LABEL_SELECTOR
               value: "rhacs.redhat.com/version-selector={{ .labelSelector }}"
             {{- end }}
-          image: "{{ .repository }}:{{ .tag }}"
+          image: "{{ .image }}"
           imagePullPolicy: IfNotPresent
           livenessProbe:
             failureThreshold: 3

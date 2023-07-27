@@ -6,13 +6,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"reflect"
 	"sync/atomic"
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 
+	containerImage "github.com/containers/image/docker/reference"
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
@@ -34,6 +34,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -307,15 +308,20 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 
 	if features.TargetedOperatorUpgrades.Enabled() {
 		// TODO: use GitRef as a LabelSelector
-		_, tag, err := operator.GetRepoAndTagFromImage(remoteCentral.Spec.OperatorImage)
+		image, err := containerImage.Parse(remoteCentral.Spec.OperatorImage)
 		if err != nil {
-			return nil, errors.Wrapf(err, "invalid labelSelector")
+			return nil, errors.Wrapf(err, "failed parse labelSelector")
 		}
-		labelSelector := tag
-		if !operator.IsValidLabel(labelSelector) {
-			return nil, errors.Wrapf(err, "invalid labelSelector: %s", labelSelector)
+		var labelSelector string
+		if tagged, ok := image.(containerImage.Tagged); ok {
+			labelSelector = tagged.Tag()
+		}
+		errs := validation.IsValidLabelValue(labelSelector)
+		if errs != nil {
+			return nil, errors.Wrapf(err, "invalid labelSelector %s: %v", labelSelector, errs)
 		}
 		central.Labels[ReconcileOperatorSelector] = labelSelector
+
 	}
 
 	return central, nil
