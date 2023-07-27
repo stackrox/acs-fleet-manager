@@ -73,7 +73,7 @@ const (
 	centralDbSecretName       = "central-db-password" // pragma: allowlist secret
 	centralDeletePollInterval = 5 * time.Second
 
-	sensibleDeclarativeConfigSecretName = "sensible-declarative-configs" // pragma: allowlist secret
+	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
 )
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
@@ -172,7 +172,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
-	if err = r.reconcileCentralAuditLogNotifier(ctx, &remoteCentral); err != nil {
+	if err = r.reconcileDeclarativeConfigurationData(ctx, &remoteCentral); err != nil {
 		return nil, err
 	}
 
@@ -436,66 +436,41 @@ func getAuditLogNotifierConfig(
 	}
 }
 
-func shouldUpdateAuditLogNotifierSecret(
-	secret *corev1.Secret,
-	expectedNotifierConfig *declarativeconfig.Notifier,
-) (bool, error) {
-	auditLogNotifierConfigHash, referenceHashErr := util.MD5SumFromJSONStruct(expectedNotifierConfig)
-	if referenceHashErr != nil {
-		return false, referenceHashErr
+func (r *CentralReconciler) configureAuditLogNotifier(secret *corev1.Secret, namespace string) error {
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
 	}
-
-	existingConfigData := secret.Data[auditLogNotifierKey]
-	if len(existingConfigData) > 0 {
-		// Check whether configuration exists and needs update.
-		configurations, err := declarativeconfig.ConfigurationFromRawBytes(existingConfigData)
-		if err != nil {
-			return false, fmt.Errorf("unmarshaling declarative configuration data for audit log notifier: %w", err)
-		}
-		for _, configObj := range configurations {
-			notifierObjectConfig, ok := configObj.(*declarativeconfig.Notifier)
-			if !ok || notifierObjectConfig == nil || notifierObjectConfig.Name != expectedNotifierConfig.Name {
-				continue
-			}
-			foundConfigHash, hashErr := util.MD5SumFromJSONStruct(notifierObjectConfig)
-			if hashErr != nil {
-				return false, hashErr
-			}
-			if auditLogNotifierConfigHash == foundConfigHash {
-				// The audit log notifier config part of the secret is correct, no need to update the secret.
-				return false, nil
-			}
-		}
+	auditLogNotifierConfig := getAuditLogNotifierConfig(
+		r.auditLogging,
+		namespace,
+	)
+	encodedNotifierConfig, marshalErr := yaml.Marshal(auditLogNotifierConfig)
+	if marshalErr != nil {
+		return fmt.Errorf("marshaling audit log notifier configuration: %w", marshalErr)
 	}
-	return true, nil
+	secret.Data[auditLogNotifierKey] = encodedNotifierConfig
+	return nil
 }
 
-func (r *CentralReconciler) reconcileCentralAuditLogNotifier(ctx context.Context, remoteCentral *private.ManagedCentral) error {
+func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Context, remoteCentral *private.ManagedCentral) error {
 	if !r.auditLogging.Enabled {
+		return nil
+	}
+	namespace := remoteCentral.Metadata.Namespace
+	exists, err := r.checkSecretExists(ctx, namespace, sensibleDeclarativeConfigSecretName)
+	if err != nil {
+		return err
+	}
+	if exists {
 		return nil
 	}
 	return r.ensureSecretExists(
 		ctx,
-		remoteCentral.Metadata.Namespace,
+		namespace,
 		sensibleDeclarativeConfigSecretName,
-		func(secret *corev1.Secret) (bool, error) {
-			auditLogNotifierConfig := getAuditLogNotifierConfig(
-				r.auditLogging,
-				remoteCentral.Metadata.Namespace,
-			)
-			if secret.Data == nil {
-				secret.Data = make(map[string][]byte)
-			}
-			shouldUpdate, err := shouldUpdateAuditLogNotifierSecret(secret, auditLogNotifierConfig)
-			if err != nil || !shouldUpdate {
-				return false, err
-			}
-			encodedNotifierConfig, marshalErr := yaml.Marshal(auditLogNotifierConfig)
-			if marshalErr != nil {
-				return false, fmt.Errorf("marshaling audit log notifier configuration: %w", marshalErr)
-			}
-			secret.Data[auditLogNotifierKey] = encodedNotifierConfig
-			return true, nil
+		func(secret *corev1.Secret) error {
+			r.configureAuditLogNotifier(secret, namespace)
+			return nil
 		},
 	)
 }
@@ -956,24 +931,14 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 		}
 		secret.Annotations[dbUserTypeAnnotation] = userType
 	}
-	return r.ensureSecretExists(ctx, remoteCentralNamespace, centralDbSecretName, func(secret *corev1.Secret) (bool, error) {
+	return r.ensureSecretExists(ctx, remoteCentralNamespace, centralDbSecretName, func(secret *corev1.Secret) error {
 		setPasswordFunc(secret, userType, password)
-		return true, nil
+		return nil
 	})
 }
 
 func (r *CentralReconciler) centralDBSecretExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
-	secret := &corev1.Secret{}
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return false, nil
-		}
-
-		return false, fmt.Errorf("getting central DB secret: %w", err)
-	}
-
-	return true, nil
+	return r.checkSecretExists(ctx, remoteCentralNamespace, centralDbSecretName)
 }
 
 func (r *CentralReconciler) centralDBUserExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
@@ -1277,29 +1242,44 @@ func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile string) 
 
 var resourcesChart = charts.MustGetChart("tenant-resources", nil)
 
+func (r *CentralReconciler) checkSecretExists(
+	ctx context.Context,
+	remoteCentralNamespace string,
+	secretName string,
+) (bool, error) {
+	secret := &corev1.Secret{}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: secretName}, secret)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("getting secret %s/%s: %w", remoteCentralNamespace, secretName, err)
+	}
+
+	return true, nil
+}
+
 func (r *CentralReconciler) ensureSecretExists(
 	ctx context.Context,
 	namespace string,
-	actualName string,
-	secretModifyFunc func(secret *corev1.Secret) (bool, error),
+	secretName string,
+	secretModifyFunc func(secret *corev1.Secret) error,
 ) error {
 	secret := &corev1.Secret{}
-	secretKey := ctrlClient.ObjectKey{Name: actualName, Namespace: namespace} // pragma: allowlist secret
+	secretKey := ctrlClient.ObjectKey{Name: secretName, Namespace: namespace} // pragma: allowlist secret
 
 	err := r.client.Get(ctx, secretKey, secret) // pragma: allowlist secret
 	if err != nil && !apiErrors.IsNotFound(err) {
-		return fmt.Errorf("getting %s/%s secret: %w", namespace, actualName, err)
+		return fmt.Errorf("getting %s/%s secret: %w", namespace, secretName, err)
 	}
 	if err == nil {
-		changed, modificationErr := secretModifyFunc(secret)
+		modificationErr := secretModifyFunc(secret)
 		if modificationErr != nil {
-			return fmt.Errorf("updating %s/%s secret content: %w", namespace, actualName, modificationErr)
-		}
-		if !changed {
-			return nil
+			return fmt.Errorf("updating %s/%s secret content: %w", namespace, secretName, modificationErr)
 		}
 		if updateErr := r.client.Update(ctx, secret); updateErr != nil { // pragma: allowlist secret
-			return fmt.Errorf("updating %s/%s secret: %w", namespace, actualName, updateErr)
+			return fmt.Errorf("updating %s/%s secret: %w", namespace, secretName, updateErr)
 		}
 
 		return nil
@@ -1308,7 +1288,7 @@ func (r *CentralReconciler) ensureSecretExists(
 	// Create secret if it does not exist.
 	secret = &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{ // pragma: allowlist secret
-			Name:      actualName,
+			Name:      secretName,
 			Namespace: namespace,
 			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
 			Annotations: map[string]string{
@@ -1317,11 +1297,11 @@ func (r *CentralReconciler) ensureSecretExists(
 		},
 	}
 
-	if _, modificationErr := secretModifyFunc(secret); modificationErr != nil {
-		return fmt.Errorf("initializing %s/%s secret payload: %w", namespace, actualName, modificationErr)
+	if modificationErr := secretModifyFunc(secret); modificationErr != nil {
+		return fmt.Errorf("initializing %s/%s secret payload: %w", namespace, secretName, modificationErr)
 	}
 	if createErr := r.client.Create(ctx, secret); createErr != nil { // pragma: allowlist secret
-		return fmt.Errorf("creating %s/%s secret: %w", namespace, actualName, createErr)
+		return fmt.Errorf("creating %s/%s secret: %w", namespace, secretName, createErr)
 	}
 	return nil
 }

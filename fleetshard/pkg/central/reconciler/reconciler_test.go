@@ -1317,18 +1317,18 @@ func TestEnsureSecretExists(t *testing.T) {
 		nil,
 		defaultReconcilerOptions,
 	)
-	secretModifyFunc := func(secret *v1.Secret) (bool, error) {
+	secretModifyFunc := func(secret *v1.Secret) error {
 		if secret.Data == nil {
 			secret.Data = make(map[string][]byte)
 		}
 		payload, found := secret.Data[entryKey]
 		if found {
 			if bytes.Equal(payload, entryData) {
-				return false, nil
+				return nil
 			}
 		}
 		secret.Data[entryKey] = entryData
-		return true, nil
+		return nil
 	}
 	testCases := []struct {
 		secretName   string
@@ -1565,100 +1565,7 @@ func populateNotifierSecret(
 	return getSecret(sensibleDeclarativeConfigSecretName, centralNamespace, secretData)
 }
 
-func TestShouldUpdateAuditLogNotifierSecret(t *testing.T) {
-	defaultNotifierConfig := getAuditLogNotifierConfig(
-		defaultAuditLogConfig,
-		centralNamespace,
-	)
-	vectorNotifierConfig := getAuditLogNotifierConfig(
-		vectorAuditLogConfig,
-		"rhacs",
-	)
-	aggregatedConfig := []*declarativeconfig.Notifier{defaultNotifierConfig, vectorNotifierConfig}
-
-	testCases := []struct {
-		name                   string
-		namespace              string
-		secretData             map[string][]*declarativeconfig.Notifier
-		expectedNotifierConfig *declarativeconfig.Notifier
-		expectedError          error
-		expectedResult         bool
-	}{
-		{
-			name:      "secret with default config should NOT require update when default config is expected",
-			namespace: centralNamespace,
-			secretData: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {defaultNotifierConfig},
-			},
-			expectedNotifierConfig: defaultNotifierConfig,
-			expectedError:          nil,
-			expectedResult:         false,
-		},
-		{
-			name:      "secret with vector config should require update when default config is expected",
-			namespace: centralNamespace,
-			secretData: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {vectorNotifierConfig},
-			},
-			expectedNotifierConfig: defaultNotifierConfig,
-			expectedError:          nil,
-			expectedResult:         true,
-		},
-		{
-			name:      "secret with aggregated config should NOT require update when default config is expected",
-			namespace: centralNamespace,
-			secretData: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: aggregatedConfig,
-			},
-			expectedNotifierConfig: defaultNotifierConfig,
-			expectedError:          nil,
-			expectedResult:         false,
-		},
-		{
-			name:      "secret with vector config should NOT require update when vector config is expected",
-			namespace: "rhacs",
-			secretData: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {vectorNotifierConfig},
-			},
-			expectedNotifierConfig: vectorNotifierConfig,
-			expectedError:          nil,
-			expectedResult:         false,
-		},
-		{
-			name:      "secret with default config should require update when vector config is expected",
-			namespace: "rhacs",
-			secretData: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {defaultNotifierConfig},
-			},
-			expectedNotifierConfig: vectorNotifierConfig,
-			expectedError:          nil,
-			expectedResult:         true,
-		},
-		{
-			name:      "secret with aggregated config should NOT require update when vector config is expected",
-			namespace: "rhacs",
-			secretData: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: aggregatedConfig,
-			},
-			expectedNotifierConfig: vectorNotifierConfig,
-			expectedError:          nil,
-			expectedResult:         false,
-		},
-	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			secret := populateNotifierSecret(t, testCase.namespace, testCase.secretData)
-			shouldUpdate, err := shouldUpdateAuditLogNotifierSecret(
-				secret,
-				testCase.expectedNotifierConfig,
-			)
-			assert.ErrorIs(t, err, testCase.expectedError)
-			assert.Equal(t, testCase.expectedResult, shouldUpdate)
-		})
-	}
-}
-
-func TestReconcileCentralAuditLogNotifier(t *testing.T) {
+func TestReconcileDeclarativeConfigurationData(t *testing.T) {
 	defaultNotifierConfig := getAuditLogNotifierConfig(
 		defaultAuditLogConfig,
 		centralNamespace,
@@ -1678,10 +1585,8 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 		name                    string
 		auditLogConfig          config.AuditLogging
 		preExistingSecret       bool
-		notifierConfigs         map[string][]*declarativeconfig.Notifier
+		initialNotifierConfigs  map[string][]*declarativeconfig.Notifier
 		expectedNotifierConfigs map[string][]*declarativeconfig.Notifier
-		secret                  *v1.Secret
-		expectedSecret          *v1.Secret
 		postReconcileSecret     bool
 	}{
 		{
@@ -1694,26 +1599,26 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 			postReconcileSecret: true, // pragma: allowlist secret
 		},
 		{
-			name:              "Bad default secret gets corrected",
+			name:              "Bad default secret is left untouched",
 			auditLogConfig:    defaultAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
-			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {correctVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {defaultNotifierConfig},
+				auditLogNotifierKey: {correctVectorNotifierConfig},
 			},
 			postReconcileSecret: true, // pragma: allowlist secret
 		},
 		{
-			name:              "Bad aggregated default secret gets corrected",
+			name:              "Bad aggregated default secret is left untouched",
 			auditLogConfig:    defaultAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
-			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {defaultNotifierConfig},
+				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
 			},
 			postReconcileSecret: true, // pragma: allowlist secret
 		},
@@ -1721,7 +1626,7 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 			name:              "Partially correct aggregated default secret is left untouched",
 			auditLogConfig:    defaultAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
-			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {
 					correctVectorNotifierConfig,
 					faultyVectorNotifierConfig,
@@ -1741,7 +1646,7 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 			name:              "Correct default secret with other secret key is left untouched",
 			auditLogConfig:    defaultAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
-			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {defaultNotifierConfig},
 				otherItemKey:        {faultyVectorNotifierConfig},
 			},
@@ -1761,14 +1666,14 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 			postReconcileSecret: true, // pragma: allowlist secret
 		},
 		{
-			name:              "Bad vector secret gets corrected",
+			name:              "Bad vector secret is left untouched",
 			auditLogConfig:    vectorAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
-			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {faultyVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {correctVectorNotifierConfig},
+				auditLogNotifierKey: {faultyVectorNotifierConfig},
 			},
 			postReconcileSecret: true, // pragma: allowlist secret
 		},
@@ -1776,7 +1681,7 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 			name:              "Partially correct aggregated vector secret is left untouched",
 			auditLogConfig:    vectorAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
-			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
@@ -1794,7 +1699,7 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 			name:              "No secret modification when secret and audit logging disabled",
 			auditLogConfig:    disabledAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
-			notifierConfigs: map[string][]*declarativeconfig.Notifier{
+			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {defaultNotifierConfig},
 				otherItemKey:        {faultyVectorNotifierConfig},
 			},
@@ -1818,10 +1723,10 @@ func TestReconcileCentralAuditLogNotifier(t *testing.T) {
 				reconcilerOptions,
 			)
 			if testCase.preExistingSecret {
-				secret := populateNotifierSecret(t, centralNamespace, testCase.notifierConfigs)
+				secret := populateNotifierSecret(t, centralNamespace, testCase.initialNotifierConfigs)
 				require.NoError(t, fakeClient.Create(ctx, secret))
 			}
-			r.reconcileCentralAuditLogNotifier(ctx, &simpleManagedCentral)
+			r.reconcileDeclarativeConfigurationData(ctx, &simpleManagedCentral)
 			fetchedSecret := &v1.Secret{}
 			secretKey := client.ObjectKey{ // pragma: allowlist secret
 				Name:      sensibleDeclarativeConfigSecretName,
