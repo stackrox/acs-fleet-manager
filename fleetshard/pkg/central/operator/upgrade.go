@@ -39,8 +39,7 @@ func parseOperatorConfigs(operators []DeploymentConfig) ([]chartutil.Values, err
 			return nil, err
 		}
 		image := imageReference.String()
-		errs := validation.IsValidLabelValue(operator.GitRef)
-		if errs != nil {
+		if errs := validation.IsValidLabelValue(operator.GitRef); errs != nil {
 			return nil, fmt.Errorf("label selector %s is not valid: %v", operator.GitRef, errs)
 		}
 		deploymentName := generateDeploymentName(operator.GitRef)
