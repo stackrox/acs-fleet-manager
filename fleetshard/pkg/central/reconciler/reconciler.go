@@ -437,9 +437,6 @@ func getAuditLogNotifierConfig(
 }
 
 func (r *CentralReconciler) configureAuditLogNotifier(secret *corev1.Secret, namespace string) error {
-	if !r.auditLogging.Enabled {
-		return nil
-	}
 	if secret.Data == nil {
 		secret.Data = make(map[string][]byte)
 	}
@@ -455,66 +452,12 @@ func (r *CentralReconciler) configureAuditLogNotifier(secret *corev1.Secret, nam
 	return nil
 }
 
-func (r *CentralReconciler) isAuditLogNotifierConfigValid(secret *corev1.Secret, namespace string) (bool, error) {
-	if len(secret.Data) == 0 {
-		return false, nil
-	}
-	if !r.auditLogging.Enabled {
-		return true, nil
-	}
-	auditLogNotifierConfig := getAuditLogNotifierConfig(
-		r.auditLogging,
-		namespace,
-	)
-	referenceHash, referenceHashErr := util.MD5SumFromJSONStruct(auditLogNotifierConfig)
-	if referenceHashErr != nil {
-		return false, referenceHashErr
-	}
-	existingConfigData := secret.Data[auditLogNotifierKey]
-	if len(existingConfigData) == 0 {
-		return false, nil
-	}
-	configuration, err := declarativeconfig.ConfigurationFromRawBytes(existingConfigData)
-	if err != nil {
-		return false, fmt.Errorf("unmarshaling declarative configuration data for audit log notifier: %w", err)
-	}
-	foundConfigHash, hashErr := util.MD5SumFromJSONStruct(configuration)
-	if hashErr != nil {
-		return false, hashErr
-	}
-	return foundConfigHash == referenceHash, nil
-}
-
-func (r *CentralReconciler) isDeclarativeConfigurationSecretPayloadValid(
-	secret *corev1.Secret,
-	namespace string,
-) (bool, error) {
-	auditLogPartValid, auditLogPartErr := r.isAuditLogNotifierConfigValid(secret, namespace)
-	if auditLogPartErr != nil || !auditLogPartValid {
-		return false, auditLogPartErr
-	}
-	// TODO: ROX-17335 : Add AuthProvider payload validation here.
-	return true, nil
-}
-
 func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Context, remoteCentral *private.ManagedCentral) error {
-	// TODO: ROX-17335 : Remove this check to enable AuthProvider payload validation here.
 	if !r.auditLogging.Enabled {
 		return nil
 	}
 	namespace := remoteCentral.Metadata.Namespace
-	exists, err := r.checkSecretExists(
-		ctx,
-		namespace,
-		sensibleDeclarativeConfigSecretName,
-		func(secret *corev1.Secret) bool {
-			contentValid, err := r.isDeclarativeConfigurationSecretPayloadValid(secret, namespace)
-			if err != nil {
-				return false
-			}
-			return contentValid
-		},
-	)
+	exists, err := r.checkSecretExists(ctx, namespace, sensibleDeclarativeConfigSecretName)
 	if err != nil {
 		return err
 	}
@@ -994,12 +937,8 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 	})
 }
 
-var (
-	ignoreSecretContent = func(_ *corev1.Secret) bool { return true }
-)
-
 func (r *CentralReconciler) centralDBSecretExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
-	return r.checkSecretExists(ctx, remoteCentralNamespace, centralDbSecretName, ignoreSecretContent)
+	return r.checkSecretExists(ctx, remoteCentralNamespace, centralDbSecretName)
 }
 
 func (r *CentralReconciler) centralDBUserExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
@@ -1307,7 +1246,6 @@ func (r *CentralReconciler) checkSecretExists(
 	ctx context.Context,
 	remoteCentralNamespace string,
 	secretName string,
-	checkContent func(*corev1.Secret) bool,
 ) (bool, error) {
 	secret := &corev1.Secret{}
 	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: secretName}, secret)
@@ -1319,7 +1257,7 @@ func (r *CentralReconciler) checkSecretExists(
 		return false, fmt.Errorf("getting secret %s/%s: %w", remoteCentralNamespace, secretName, err)
 	}
 
-	return checkContent(secret), nil
+	return true, nil
 }
 
 func (r *CentralReconciler) ensureSecretExists(

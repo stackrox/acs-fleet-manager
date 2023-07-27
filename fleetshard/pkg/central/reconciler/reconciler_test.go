@@ -1599,31 +1599,31 @@ func TestReconcileDeclarativeConfigurationData(t *testing.T) {
 			postReconcileSecret: true, // pragma: allowlist secret
 		},
 		{
-			name:              "Bad default secret is erased",
+			name:              "Bad default secret is left untouched",
 			auditLogConfig:    defaultAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
 			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {correctVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {defaultNotifierConfig},
+				auditLogNotifierKey: {correctVectorNotifierConfig},
 			},
 			postReconcileSecret: true, // pragma: allowlist secret
 		},
 		{
-			name:              "Bad aggregated default secret is erased",
+			name:              "Bad aggregated default secret is left untouched",
 			auditLogConfig:    defaultAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
 			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {defaultNotifierConfig},
+				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
 			},
 			postReconcileSecret: true, // pragma: allowlist secret
 		},
 		{
-			name:              "Partially correct aggregated default secret is erased",
+			name:              "Partially correct aggregated default secret is left untouched",
 			auditLogConfig:    defaultAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
 			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
@@ -1634,7 +1634,11 @@ func TestReconcileDeclarativeConfigurationData(t *testing.T) {
 				},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {defaultNotifierConfig},
+				auditLogNotifierKey: {
+					correctVectorNotifierConfig,
+					faultyVectorNotifierConfig,
+					defaultNotifierConfig,
+				},
 			},
 			postReconcileSecret: true, // pragma: allowlist secret
 		},
@@ -1662,26 +1666,26 @@ func TestReconcileDeclarativeConfigurationData(t *testing.T) {
 			postReconcileSecret: true, // pragma: allowlist secret
 		},
 		{
-			name:              "Bad vector secret is erased",
+			name:              "Bad vector secret is left untouched",
 			auditLogConfig:    vectorAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
 			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {faultyVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {correctVectorNotifierConfig},
+				auditLogNotifierKey: {faultyVectorNotifierConfig},
 			},
 			postReconcileSecret: true, // pragma: allowlist secret
 		},
 		{
-			name:              "Partially correct aggregated vector secret is erased",
+			name:              "Partially correct aggregated vector secret is left untouched",
 			auditLogConfig:    vectorAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
 			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
 				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
 			},
 			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {correctVectorNotifierConfig},
+				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
 			},
 			postReconcileSecret: true, // pragma: allowlist secret
 		},
