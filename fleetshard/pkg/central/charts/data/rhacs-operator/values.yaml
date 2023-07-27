@@ -7,10 +7,10 @@ operator:
   # example:
   #   images:
   #   - deploymentName: rhacs-operator-manager-4.0.0
-  #     image: quay.io/rhacs-eng/stackrox-operator:rhacs-operator-manager-4.0.0
+  #     image: quay.io/rhacs-eng/stackrox-operator:4.0.0
   #     labelSelector: 4.0.0
   #   - deploymentName: rhacs-operator-manager-4.0.1
-  #     image: quay.io/rhacs-eng/stackrox-operator:rhacs-operator-manager-4.0.1
+  #     image: quay.io/rhacs-eng/stackrox-operator:4.0.1
   #     labelSelector: 4.0.1
   images: []
   # TODO: add values for resource limits and requests for both proxy and manager container
