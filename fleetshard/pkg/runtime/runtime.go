@@ -131,6 +131,7 @@ func (r *Runtime) Start() error {
 		}
 
 		if features.TargetedOperatorUpgrades.Enabled() {
+			glog.Info("Starting operator upgrades")
 			err := r.upgradeOperator(list)
 			if err != nil {
 				err = errors.Wrapf(err, "Upgrading operator")
@@ -245,18 +246,27 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 }
 
 func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
+	var desiredOperators []operator.DeploymentConfig
 	var desiredOperatorImages []string
 	for _, central := range list.Items {
+		// TODO: read GitRef ManagedCentral list call
+		operatorConfiguration := operator.DeploymentConfig{
+			Image:  central.Spec.OperatorImage,
+			GitRef: "4.0.1",
+		}
+		desiredOperators = append(desiredOperators, operatorConfiguration)
 		desiredOperatorImages = append(desiredOperatorImages, central.Spec.OperatorImage)
 	}
+
 	ctx := context.Background()
 
-	for _, img := range desiredOperatorImages {
-		glog.Infof("Installing Operator: %s", img)
+	for _, operatorDeployment := range desiredOperators {
+		glog.Infof("Installing Operator version: %s", operatorDeployment.GitRef)
 	}
+
 	//TODO(ROX-15080): Download CRD on operator upgrades to always install the latest CRD
 	crdTag := "4.0.1"
-	err := r.operatorManager.InstallOrUpgrade(ctx, desiredOperatorImages, crdTag)
+	err := r.operatorManager.InstallOrUpgrade(ctx, desiredOperators, crdTag)
 	if err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
 	}

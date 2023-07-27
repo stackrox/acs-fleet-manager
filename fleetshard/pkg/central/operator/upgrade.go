@@ -4,50 +4,56 @@ package operator
 import (
 	"context"
 	"fmt"
-	"strings"
-
+	containerImage "github.com/containers/image/docker/reference"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"golang.org/x/exp/slices"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
+	"k8s.io/apimachinery/pkg/util/validation"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	operatorNamespace        = "rhacs"
 	releaseName              = "rhacs-operator"
-	operatorDeploymentPrefix = "rhacs-operator-manager"
-
-	// deployment names should contain at most 63 characters
-	// RFC 1035 Label Names: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
-	maxOperatorDeploymentNameLength = 63
+	operatorDeploymentPrefix = "rhacs-operator"
 )
 
-func parseOperatorImages(images []string) ([]chartutil.Values, error) {
-	var operatorImages []chartutil.Values
-	uniqueImages := make(map[string]bool)
-	for _, img := range images {
-		if !strings.Contains(img, ":") {
-			return nil, fmt.Errorf("failed to parse image %q", img)
+// DeploymentConfig represents operator configuration for deployment
+type DeploymentConfig struct {
+	Image  string
+	GitRef string
+}
+
+func parseOperatorConfigs(operators []DeploymentConfig) ([]chartutil.Values, error) {
+	var helmValues []chartutil.Values
+	for _, operator := range operators {
+		imageReference, err := containerImage.Parse(operator.Image)
+		if err != nil {
+			return nil, err
 		}
-		strs := strings.Split(img, ":")
-		if len(strs) != 2 {
-			return nil, fmt.Errorf("failed to split image and tag from %q", img)
+		image := imageReference.String()
+		if errs := validation.IsValidLabelValue(operator.GitRef); errs != nil {
+			return nil, fmt.Errorf("label selector %s is not valid: %v", operator.GitRef, errs)
 		}
-		repo, tag := strs[0], strs[1]
-		deploymentName := generateDeploymentName(tag)
-		if len(deploymentName) > maxOperatorDeploymentNameLength {
-			return nil, fmt.Errorf("%s contains more than %d characters and cannot be used as a deployment name", deploymentName, maxOperatorDeploymentNameLength)
+
+		deploymentName := generateDeploymentName(operator.GitRef)
+		// validate deploymentName (RFC-1123)
+		// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
+		if errs := apimachineryvalidation.NameIsDNSSubdomain(deploymentName, true); errs != nil {
+			return nil, fmt.Errorf("invalid deploymentName %s: %v", deploymentName, errs)
 		}
-		if _, used := uniqueImages[repo+tag]; !used {
-			uniqueImages[repo+tag] = true
-			img := chartutil.Values{"deploymentName": deploymentName, "repository": repo, "tag": tag}
-			operatorImages = append(operatorImages, img)
+		operatorValues := chartutil.Values{
+			"deploymentName": deploymentName,
+			"image":          image,
+			"labelSelector":  operator.GitRef,
 		}
+		helmValues = append(helmValues, operatorValues)
 	}
-	return operatorImages, nil
+	return helmValues, nil
 }
 
 // ACSOperatorManager keeps data necessary for managing ACS Operator
@@ -57,9 +63,13 @@ type ACSOperatorManager struct {
 	resourcesChart *chart.Chart
 }
 
-// InstallOrUpgrade provisions or upgrades an existing ACS Operator(s) from helm chart template
-func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []string, crdTag string) error {
-	operatorImages, err := parseOperatorImages(images)
+// InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
+func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, operators []DeploymentConfig, crdTag string) error {
+	if len(operators) == 0 {
+		return nil
+	}
+
+	operatorImages, err := parseOperatorConfigs(operators)
 	if err != nil {
 		return fmt.Errorf("failed to parse images: %w", err)
 	}
@@ -73,6 +83,7 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, images []stri
 	if crdTag != "" {
 		dynamicTemplatesUrls = u.generateCRDTemplateUrls(crdTag)
 	}
+
 	u.resourcesChart = charts.MustGetChart("rhacs-operator", dynamicTemplatesUrls)
 	objs, err := charts.RenderToObjects(releaseName, operatorNamespace, u.resourcesChart, chartVals)
 	if err != nil {
@@ -153,8 +164,8 @@ func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredI
 	return nil
 }
 
-func generateDeploymentName(tag string) string {
-	return operatorDeploymentPrefix + "-" + tag
+func generateDeploymentName(version string) string {
+	return operatorDeploymentPrefix + "-" + version
 }
 
 func (u *ACSOperatorManager) generateCRDTemplateUrls(tag string) []string {

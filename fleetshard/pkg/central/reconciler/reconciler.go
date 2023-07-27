@@ -12,6 +12,7 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 
+	containerImage "github.com/containers/image/docker/reference"
 	"github.com/golang/glog"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
@@ -33,6 +34,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -43,7 +45,8 @@ const (
 	FreeStatus int32 = iota
 	BlockedStatus
 
-	PauseReconcileAnnotation = "stackrox.io/pause-reconcile"
+	PauseReconcileAnnotation  = "stackrox.io/pause-reconcile"
+	ReconcileOperatorSelector = "rhacs.redhat.com/version-selector"
 
 	helmReleaseName = "tenant-resources"
 
@@ -55,8 +58,6 @@ const (
 	instanceTypeLabelKey      = "rhacs.redhat.com/instance-type"
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
-	operatorVersionKey        = "stackrox.io/operator-version"
-	defaultOperatorVersion    = "rhacs-operator.v3.74.0"
 
 	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
 	dbUserTypeMaster     = "master"
@@ -251,7 +252,6 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 				centralPVCAnnotationKey:   "true",
 				managedServicesAnnotation: "true",
 				orgNameAnnotationKey:      remoteCentral.Spec.Auth.OwnerOrgName,
-				// TODO(ROX-17718): Set reconciler selection label for Central
 			},
 		},
 		Spec: v1alpha1.CentralSpec{
@@ -307,9 +307,21 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	}
 
 	if features.TargetedOperatorUpgrades.Enabled() {
-		labels := central.ObjectMeta.Labels
-		labels[operatorVersionKey] = defaultOperatorVersion
-		central.ObjectMeta.Labels = labels
+		// TODO: use GitRef as a LabelSelector
+		image, err := containerImage.Parse(remoteCentral.Spec.OperatorImage)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed parse labelSelector")
+		}
+		var labelSelector string
+		if tagged, ok := image.(containerImage.Tagged); ok {
+			labelSelector = tagged.Tag()
+		}
+		errs := validation.IsValidLabelValue(labelSelector)
+		if errs != nil {
+			return nil, errors.Wrapf(err, "invalid labelSelector %s: %v", labelSelector, errs)
+		}
+		central.Labels[ReconcileOperatorSelector] = labelSelector
+
 	}
 
 	return central, nil
