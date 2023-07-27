@@ -38,6 +38,7 @@ func (k kmsCipher) Encrypt(plaintext []byte) ([]byte, error) {
 
 	return encryptOut.CiphertextBlob, nil
 }
+
 func (k kmsCipher) Decrypt(ciphertext []byte) ([]byte, error) {
 	decryptInput := &kms.DecryptInput{
 		KeyId:          &k.keyID,
