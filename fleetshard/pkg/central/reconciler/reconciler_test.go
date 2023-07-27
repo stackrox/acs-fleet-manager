@@ -66,12 +66,14 @@ var (
 		Enabled:            true,
 		AuditLogTargetHost: "audit-logs-aggregator.rhacs-audit-logs",
 		AuditLogTargetPort: 8888,
+		SkipTLSVerify:      true,
 	}
 
 	vectorAuditLogConfig = config.AuditLogging{
 		Enabled:            true,
 		AuditLogTargetHost: "rhacs-vector.rhacs",
 		AuditLogTargetPort: 8443,
+		SkipTLSVerify:      true,
 	}
 
 	disabledAuditLogConfig = config.AuditLogging{
