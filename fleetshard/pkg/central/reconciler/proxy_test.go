@@ -75,9 +75,6 @@ func TestProxyConfiguration_IsDeterministic(t *testing.T) {
 }
 
 var (
-	additionalDirectTargets = map[string][]int{
-		"audit-logs-aggregator.rhacs-audit-logs": {8888},
-	}
 	additionalNoProxyURLs = []url.URL{
 		{
 			Host: "audit-logs-aggregator.rhacs-audit-logs:8888",

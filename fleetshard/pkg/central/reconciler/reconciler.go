@@ -453,18 +453,17 @@ func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Co
 	}
 	namespace := remoteCentral.Metadata.Namespace
 	exists, err := r.checkSecretExists(ctx, namespace, sensibleDeclarativeConfigSecretName)
-	if err != nil {
+	if err != nil || exists {
 		return err
-	}
-	if exists {
-		return nil
 	}
 	return r.ensureSecretExists(
 		ctx,
 		namespace,
 		sensibleDeclarativeConfigSecretName,
 		func(secret *corev1.Secret) error {
-			r.configureAuditLogNotifier(secret, namespace)
+			if err := r.configureAuditLogNotifier(secret, namespace); err != nil {
+				return err
+			}
 			return nil
 		},
 	)
