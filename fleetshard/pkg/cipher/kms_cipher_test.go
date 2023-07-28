@@ -12,7 +12,7 @@ func TestKMSEncryptDecrypt(t *testing.T) {
 		t.Skip("Skip KMS tests. Set RUN_KMS_TESTS=true env variable to enable KMS tests.")
 	}
 
-	keyID := os.Getenv("KMS_KEY_ID")
+	keyID := os.Getenv("SECRET_ENCRYPTION_KEY_ID")
 	require.NotEmpty(t, keyID, "KMS_KEY_ID not set")
 
 	cipher, err := NewKMSCipher(keyID)
