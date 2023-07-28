@@ -46,6 +46,7 @@ type ManagedDB struct {
 // AuditLogging defines the parameter of the audit logging target.
 type AuditLogging struct {
 	Enabled            bool   `env:"AUDIT_LOG_ENABLED" envDefault:"false"`
+	URLScheme          string `env:"AUDIT_LOG_URL_SCHEME" envDefault:"https"`
 	AuditLogTargetHost string `env:"AUDIT_LOG_HOST" envDefault:"audit-logs-aggregator.rhacs-audit-logs"`
 	AuditLogTargetPort int    `env:"AUDIT_LOG_PORT" envDefault:"8888"`
 	SkipTLSVerify      bool   `env:"AUDIT_LOG_SKIP_TLS_VERIFY" envDefault:"false"`
@@ -92,6 +93,9 @@ func validateManagedDBConfig(c Config, configErrors *errorhelpers.ErrorList) {
 	}
 }
 
-func (a *AuditLogging) Endpoint() string {
+func (a *AuditLogging) Endpoint(withScheme bool) string {
+	if withScheme {
+		return fmt.Sprintf("%s://%s:%d", a.URLScheme, a.AuditLogTargetHost, a.AuditLogTargetPort)
+	}
 	return fmt.Sprintf("%s:%d", a.AuditLogTargetHost, a.AuditLogTargetPort)
 }

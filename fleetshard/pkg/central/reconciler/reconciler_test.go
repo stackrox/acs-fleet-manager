@@ -64,6 +64,7 @@ var (
 
 	defaultAuditLogConfig = config.AuditLogging{
 		Enabled:            true,
+		URLScheme:          "https",
 		AuditLogTargetHost: "audit-logs-aggregator.rhacs-audit-logs",
 		AuditLogTargetPort: 8888,
 		SkipTLSVerify:      true,
@@ -71,13 +72,18 @@ var (
 
 	vectorAuditLogConfig = config.AuditLogging{
 		Enabled:            true,
+		URLScheme:          "https",
 		AuditLogTargetHost: "rhacs-vector.rhacs",
 		AuditLogTargetPort: 8443,
 		SkipTLSVerify:      true,
 	}
 
 	disabledAuditLogConfig = config.AuditLogging{
-		Enabled: false,
+		Enabled:            false,
+		URLScheme:          "https",
+		AuditLogTargetHost: "audit-logs-aggregator.rhacs-audit-logs",
+		AuditLogTargetPort: 8888,
+		SkipTLSVerify:      false,
 	}
 )
 
@@ -1399,19 +1405,15 @@ func TestEnsureSecretExists(t *testing.T) {
 func TestGetInstanceConfigSetsNoProxyEnvVarsForAuditLog(t *testing.T) {
 	testCases := []struct {
 		auditLoggingConfig config.AuditLogging
-		expectedException  bool
 	}{
 		{
 			auditLoggingConfig: defaultAuditLogConfig,
-			expectedException:  true,
 		},
 		{
 			auditLoggingConfig: vectorAuditLogConfig,
-			expectedException:  true,
 		},
 		{
 			auditLoggingConfig: disabledAuditLogConfig,
-			expectedException:  false,
 		},
 	}
 	for _, testCase := range testCases {
@@ -1434,18 +1436,10 @@ func TestGetInstanceConfigSetsNoProxyEnvVarsForAuditLog(t *testing.T) {
 			switch envVar.Name {
 			case "no_proxy":
 				noProxyEnvLowerCaseFound = true
-				if testCase.expectedException {
-					assert.Contains(t, strings.Split(envVar.Value, ","), testCase.auditLoggingConfig.Endpoint())
-				} else {
-					assert.NotContains(t, strings.Split(envVar.Value, ","), testCase.auditLoggingConfig.Endpoint())
-				}
+				assert.Contains(t, strings.Split(envVar.Value, ","), testCase.auditLoggingConfig.Endpoint(false))
 			case "NO_PROXY":
 				noProxyEnvUpperCaseFound = true
-				if testCase.expectedException {
-					assert.Contains(t, strings.Split(envVar.Value, ","), testCase.auditLoggingConfig.Endpoint())
-				} else {
-					assert.NotContains(t, strings.Split(envVar.Value, ","), testCase.auditLoggingConfig.Endpoint())
-				}
+				assert.Contains(t, strings.Split(envVar.Value, ","), testCase.auditLoggingConfig.Endpoint(false))
 			}
 		}
 		assert.True(t, noProxyEnvLowerCaseFound)

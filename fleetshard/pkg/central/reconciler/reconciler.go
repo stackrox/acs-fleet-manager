@@ -248,16 +248,11 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 		return nil, errors.Wrap(err, "converting Scanner DB resources")
 	}
 
-	var envVars []corev1.EnvVar
-	if r.auditLogging.Enabled {
-		// Set proxy configuration
-		additionalNoProxyURL := url.URL{
-			Host: r.auditLogging.Endpoint(),
-		}
-		envVars = getProxyEnvVars(remoteCentralNamespace, additionalNoProxyURL)
-	} else {
-		envVars = getProxyEnvVars(remoteCentralNamespace)
+	// Set proxy configuration
+	additionalNoProxyURL := url.URL{
+		Host: r.auditLogging.Endpoint(false),
 	}
+	envVars := getProxyEnvVars(remoteCentralNamespace, additionalNoProxyURL)
 
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
 
@@ -423,7 +418,7 @@ func getAuditLogNotifierConfig(
 	return &declarativeconfig.Notifier{
 		Name: auditLogNotifierName,
 		GenericConfig: &declarativeconfig.GenericConfig{
-			Endpoint:            fmt.Sprintf("https://%s", auditLoggingConfig.Endpoint()),
+			Endpoint:            auditLoggingConfig.Endpoint(true),
 			SkipTLSVerify:       auditLoggingConfig.SkipTLSVerify,
 			AuditLoggingEnabled: true,
 			ExtraFields: []declarativeconfig.KeyValuePair{
@@ -658,12 +653,13 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 	return status, nil
 }
 
-func (r *CentralReconciler) ensureCentralAuditLogNotifierSecretCleaned(ctx context.Context, remoteCentralNamespace string) error {
+func (r *CentralReconciler) ensureDeclarativeConfigurationSecretCleaned(ctx context.Context, remoteCentralNamespace string) error {
 	secret := &corev1.Secret{}
 	secretKey := ctrlClient.ObjectKey{ // pragma: allowlist secret
 		Namespace: remoteCentralNamespace,
 		Name:      sensibleDeclarativeConfigSecretName,
 	}
+
 	err := r.client.Get(ctx, secretKey, secret)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
@@ -672,12 +668,7 @@ func (r *CentralReconciler) ensureCentralAuditLogNotifierSecretCleaned(ctx conte
 		return err
 	}
 
-	delete(secret.Data, auditLogNotifierKey)
-	delete(secret.StringData, auditLogNotifierKey)
-	if len(secret.Data) == 0 && len(secret.StringData) == 0 {
-		return r.client.Delete(ctx, secret)
-	}
-	return r.client.Update(ctx, secret)
+	return r.client.Delete(ctx, secret)
 }
 
 func isRemoteCentralProvisioning(remoteCentral private.ManagedCentral) bool {
@@ -731,9 +722,8 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && centralDeleted
 
-	err = r.ensureCentralAuditLogNotifierSecretCleaned(ctx, central.GetNamespace())
-	if err != nil {
-		return false, err
+	if err := r.ensureDeclarativeConfigurationSecretCleaned(ctx, central.GetNamespace()); err != nil {
+		return false, nil
 	}
 
 	if r.managedDBEnabled {
@@ -1213,7 +1203,7 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 	return false, nil
 }
 
-func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (chartutil.Values, error) {
+func (r *CentralReconciler) chartValues(_ private.ManagedCentral) (chartutil.Values, error) {
 	if r.resourcesChart == nil {
 		return nil, errors.New("resources chart is not set")
 	}
