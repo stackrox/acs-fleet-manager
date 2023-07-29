@@ -13,7 +13,7 @@ func TestKMSEncryptDecrypt(t *testing.T) {
 	}
 
 	keyID := os.Getenv("SECRET_ENCRYPTION_KEY_ID")
-	require.NotEmpty(t, keyID, "KMS_KEY_ID not set")
+	require.NotEmpty(t, keyID, "SECRET_ENCRYPTION_KEY_ID not set")
 
 	cipher, err := NewKMSCipher(keyID)
 	require.NoError(t, err, "creating KMS cipher")
