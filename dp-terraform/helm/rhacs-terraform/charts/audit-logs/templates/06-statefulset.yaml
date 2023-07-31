@@ -1,0 +1,127 @@
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: {{ include "aggregator.fullname" . }}
+  namespace: {{ include "aggregator.namespace" . }}
+  labels:
+    {{- include "aggregator.selectorLabels" . | nindent 4 }}
+  annotations:
+  {{- with .Values.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicas }}
+  podManagementPolicy: OrderedReady
+  selector:
+    matchLabels:
+      {{- include "aggregator.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "aggregator.fullname" . }}
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print .Template.BasePath "/02-configmap.yaml") . | sha256sum }}
+      {{- with .Values.annotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        app: {{ include "aggregator.fullname" . }}
+        {{- include "aggregator.selectorLabels" . | nindent 8 }}
+    spec:
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      serviceAccountName: {{ include "aggregator.fullname" . }}
+      schedulerName: default-scheduler
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - {{ include "aggregator.fullname" . }}
+              topologyKey: topology.kubernetes.io/zone
+      terminationGracePeriodSeconds: 60
+      securityContext: {}
+      containers:
+        - resources: {}
+          terminationMessagePath: /tmp/vector-termination-log
+          name: vector
+          command:
+            - /usr/bin/vector
+          env:
+            - name: AWS_WEB_IDENTITY_TOKEN_FILE
+              value: /var/run/secrets/aws-token/aws-token
+            - name: AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "aggregator.fullname" . }}
+                  key: aws_region
+            - name: AWS_ROLE_ARN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "aggregator.fullname" . }}
+                  key: aws_role_arn
+          ports:
+            - name: http-server
+              containerPort: 8888
+              protocol: TCP
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: config
+              readOnly: true
+              mountPath: /etc/aggregator/
+            - name: service-tls-secret
+              readOnly: true
+              mountPath: /etc/aggregator/tls
+            - name: aws-token
+              mountPath: /var/run/secrets/aws-token
+            {{- if .Values.persistence.enabled }}
+            - name: data
+              mountPath: /aggregator-data-dir
+            {{- end }}
+          terminationMessagePolicy: File
+          image: {{ .Values.image | quote }}
+          args:
+            - '--config-dir'
+            - /etc/aggregator/
+      serviceAccount: audit-logs-aggregator
+      volumes:
+        - name: config
+          projected:
+            sources:
+              - configMap:
+                  name: {{ include "aggregator.fullname" . }}
+            defaultMode: 420
+        - name: service-tls-secret
+          projected:
+            sources:
+              - secret:
+                  name: {{ include "aggregator.fullname" . }}-tls-secret
+            defaultMode: 420
+        - name: aws-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: 'sts.amazonaws.com'
+                  expirationSeconds: 3600
+                  path: aws-token
+            defaultMode: 420
+  {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        {{- if .Values.persistence.storageClassName }}
+        storageClassName: {{ .Values.persistence.storageClassName }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+  {{- end }}
