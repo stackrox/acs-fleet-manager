@@ -29,6 +29,7 @@ fleetshardSync:
     image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0"
   auditLogs:
     enabled: true
+    skipTLSVerify: true
   managedDB:
     enabled: true
     subnetGroup: ""
