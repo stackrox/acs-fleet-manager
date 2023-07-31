@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "aggregator.fullname" . }}
+  namespace: {{ include "aggregator.namespace" . }}
+  labels:
+    {{- include "aggregator.selectorLabels" . | nindent 4 }}
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: {{ include "aggregator.fullname" . }}-tls-secret
+  {{- with .Values.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ipFamilies:
+    - IPv4
+  ports:
+    - name: http-server
+      protocol: TCP
+      port: 8888
+      targetPort: 8888
+  internalTrafficPolicy: Cluster
+  type: ClusterIP
+  ipFamilyPolicy: SingleStack
+  sessionAffinity: None
+  selector:
+    {{- include "aggregator.selectorLabels" . | nindent 4 }}
