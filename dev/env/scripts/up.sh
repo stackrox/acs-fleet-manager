@@ -72,7 +72,7 @@ if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
 fi
 
 log "Deploying fleetshard-sync"
-shard_sync.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
+exec_fleetshard_sync.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
 inject_exported_env_vars "$ACSMS_NAMESPACE" "fleetshard-sync"
 
 wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync"
