@@ -177,6 +177,7 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set audit-logs.customConfig.sinks.aws_cloudwatch_logs.group_name="${AUDIT_LOGS_LOG_GROUP_NAME}" \
   --set audit-logs.secrets.aws_region="${CLUSTER_REGION:-}" \
   --set audit-logs.secrets.aws_role_arn="${AUDIT_LOGS_ROLE_ARN:-}" \
+  --set secured-cluster.enabled="${SECURED_CLUSTER_ENABLED}" \
   --set secured-cluster.clusterName="${CLUSTER_NAME}" \
   --set secured-cluster.centralEndpoint="${SECURED_CLUSTER_CENTRAL_ENDPOINT}" \
   --set secured-cluster.ca.cert="${SECURED_CLUSTER_CA_CERT}" \
