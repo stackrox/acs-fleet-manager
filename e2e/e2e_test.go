@@ -47,7 +47,7 @@ const (
 	skipRouteMsg   = "route resource is not known to test cluster"
 	skipDNSMsg     = "external DNS is not enabled for this test run"
 
-	declarativeConfigSecretName      = "sensible-declarative-configs" // pragma: allowlist secret
+	declarativeConfigSecretName      = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
 	declarativeConfigAuthProviderKey = "default-sso-auth-provider"
 )
 
@@ -206,7 +206,8 @@ var _ = Describe("Central", func() {
 				err := k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: declarativeConfigSecretName,
 					Namespace: namespaceName}, secret)
 				if err != nil {
-					return fmt.Errorf("failed finding %s secret: %w", declarativeConfigSecretName, err)
+					return fmt.Errorf("failed finding %s/%s secret: %w",
+						namespaceName, declarativeConfigSecretName, err)
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
