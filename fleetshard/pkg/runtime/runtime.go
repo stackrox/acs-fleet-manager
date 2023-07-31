@@ -120,6 +120,7 @@ func (r *Runtime) Start() error {
 		Telemetry:         r.config.Telemetry,
 		ClusterName:       r.config.ClusterName,
 		Environment:       r.config.Environment,
+		AuditLogging:      r.config.AuditLogging,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
