@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"net/url"
 	"reflect"
 	"sync/atomic"
@@ -14,6 +13,7 @@ import (
 
 	containerImage "github.com/containers/image/docker/reference"
 	"github.com/golang/glog"
+	"github.com/hashicorp/go-multierror"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -30,6 +30,7 @@ import (
 	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/random"
+	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	corev1 "k8s.io/api/core/v1"
@@ -176,11 +177,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
-	if err = r.reconcileDeclarativeConfigurationData(ctx, &remoteCentral); err != nil {
+	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
 		return nil, err
 	}
 
-	if err := r.reconcileAuthProvider(ctx, remoteCentral, central); err != nil {
+	if err := r.reconcileAdminPasswordGeneration(central); err != nil {
 		return nil, err
 	}
 
@@ -363,103 +364,14 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	return central, nil
 }
 
-func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context,
-	remoteCentral private.ManagedCentral, central *v1alpha1.Central) error {
+func (r *CentralReconciler) reconcileAdminPasswordGeneration(central *v1alpha1.Central) error {
 	if !r.wantsAuthProvider {
 		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(false)
 		glog.Infof("No auth provider desired, enabling basic authentication for Central %s/%s",
 			central.GetNamespace(), central.GetName())
 		return nil
 	}
-
 	central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
-	err := r.ensureSecretExists(ctx, remoteCentral.Metadata.Namespace, sensibleDeclarativeConfigSecretName,
-		func(secret *corev1.Secret) (bool, error) {
-			authProviderConfig := &declarativeconfig.AuthProvider{
-				Name:             authProviderName(remoteCentral),
-				MinimumRoleName:  "None",
-				UIEndpoint:       remoteCentral.Spec.UiEndpoint.Host,
-				ExtraUIEndpoints: []string{"localhost:8443"},
-				Groups: []declarativeconfig.Group{
-					{
-						AttributeKey:   "userid",
-						AttributeValue: remoteCentral.Spec.Auth.OwnerUserId,
-						RoleName:       "Admin",
-					},
-					{
-						AttributeKey:   "groups",
-						AttributeValue: "admin:org:all",
-						RoleName:       "Admin",
-					},
-					{
-						AttributeKey:   "rh_is_org_admin",
-						AttributeValue: "true",
-						RoleName:       "Admin",
-					},
-				},
-				RequiredAttributes: []declarativeconfig.RequiredAttribute{
-					{
-						AttributeKey:   "rh_org_id",
-						AttributeValue: remoteCentral.Spec.Auth.OwnerOrgId,
-					},
-				},
-				ClaimMappings: []declarativeconfig.ClaimMapping{
-					{
-						Path: "realm_access.roles",
-						Name: "groups",
-					},
-					{
-						Path: "org_id",
-						Name: "rh_org_id",
-					},
-					{
-						Path: "is_org_admin",
-						Name: "rh_is_org_admin",
-					},
-				},
-				OIDCConfig: &declarativeconfig.OIDCConfig{
-					Issuer:                    remoteCentral.Spec.Auth.Issuer,
-					CallbackMode:              "post",
-					ClientID:                  remoteCentral.Spec.Auth.ClientId,
-					ClientSecret:              remoteCentral.Spec.Auth.ClientSecret, // pragma: allowlist secret
-					DisableOfflineAccessScope: true,
-				},
-			}
-
-			authProviderHash, err := util.MD5SumFromJSONStruct(authProviderConfig)
-			if err != nil {
-				return false, fmt.Errorf("creating hash for auth provider config: %w", err)
-			}
-
-			requiresReconciliation, err := checkForAuthConfigReconciliation(secret, authProviderHash)
-			if err != nil {
-				return false, fmt.Errorf("checking whether auth provider config requires reconciliation: %w", err)
-			}
-
-			if !requiresReconciliation {
-				glog.Infof("Auth provider configuration for Central %s/%s is already up to date.",
-					central.GetNamespace(), central.GetName())
-				return false, nil
-			}
-
-			glog.Infof("Found changes for auth provider configuration for Central %s/%s, applying them.",
-				central.GetNamespace(), central.GetName())
-
-			authProviderBytes, err := yaml.Marshal(authProviderConfig)
-			if err != nil {
-				return false, fmt.Errorf("marshalling auth provider config: %w", err)
-			}
-
-			if secret.Data == nil {
-				secret.Data = map[string][]byte{}
-			}
-			secret.Data[authProviderDeclarativeConfigKey] = authProviderBytes
-			return true, nil
-		})
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -482,45 +394,6 @@ func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remote
 	}
 	return fmt.Errorf("failed to verify that the auth provider exists within Central %s/%s",
 		remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
-}
-
-// checkForAuthConfigReconciliation reads the auth configuration contained within the given secret and indicates
-// whether the config requires updates based on the given hash.
-// It returns true in case a reconciliation is required.
-func checkForAuthConfigReconciliation(secret *corev1.Secret, existingConfigHash [16]byte) (bool, error) {
-	// Short-circuit if this is the first time we are reconciling the secret after creation.
-	if len(secret.Data) == 0 {
-		return true, nil
-	}
-
-	existingAuthProviderBytes, exists := secret.Data[authProviderDeclarativeConfigKey]
-	if !exists {
-		return true, nil
-	}
-
-	configs, err := declarativeconfig.ConfigurationFromRawBytes(existingAuthProviderBytes)
-	if err != nil {
-		return false, fmt.Errorf("unmarshalling existing auth provider config: %w", err)
-	}
-	if len(configs) == 0 {
-		return true, nil
-	}
-
-	// We currently only expect a single auth provider configuration to be stored under the key.
-	// This also means that it's potentially possible to declare multiple auth providers here. However, in case an
-	// update is received, the whole bytes under authProviderDeclarativeConfigKey will be overwritten and only a single
-	// auth provider will exist again.
-	authProviderConfig, ok := configs[0].(*declarativeconfig.AuthProvider)
-	if !ok || authProviderConfig == nil {
-		return true, nil
-	}
-
-	hash, err := util.MD5SumFromJSONStruct(authProviderConfig)
-	if err != nil {
-		return false, fmt.Errorf("creating hash for existing auth provider config: %w", err)
-	}
-
-	return !bytes.Equal(hash[:], existingConfigHash[:]), nil
 }
 
 func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (*private.DataPlaneCentralStatus, error) {
@@ -589,6 +462,9 @@ func getAuditLogNotifierConfig(
 }
 
 func (r *CentralReconciler) configureAuditLogNotifier(secret *corev1.Secret, namespace string) error {
+	if !r.auditLogging.Enabled {
+		return nil
+	}
 	if secret.Data == nil {
 		secret.Data = make(map[string][]byte)
 	}
@@ -604,24 +480,96 @@ func (r *CentralReconciler) configureAuditLogNotifier(secret *corev1.Secret, nam
 	return nil
 }
 
-func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Context, remoteCentral *private.ManagedCentral) error {
-	if !r.auditLogging.Enabled {
+func getAuthProviderConfig(remoteCentral private.ManagedCentral) *declarativeconfig.AuthProvider {
+	return &declarativeconfig.AuthProvider{
+		Name:             authProviderName(remoteCentral),
+		MinimumRoleName:  "None",
+		UIEndpoint:       remoteCentral.Spec.UiEndpoint.Host,
+		ExtraUIEndpoints: []string{"localhost:8443"},
+		Groups: []declarativeconfig.Group{
+			{
+				AttributeKey:   "userid",
+				AttributeValue: remoteCentral.Spec.Auth.OwnerUserId,
+				RoleName:       "Admin",
+			},
+			{
+				AttributeKey:   "groups",
+				AttributeValue: "admin:org:all",
+				RoleName:       "Admin",
+			},
+			{
+				AttributeKey:   "rh_is_org_admin",
+				AttributeValue: "true",
+				RoleName:       "Admin",
+			},
+		},
+		RequiredAttributes: []declarativeconfig.RequiredAttribute{
+			{
+				AttributeKey:   "rh_org_id",
+				AttributeValue: remoteCentral.Spec.Auth.OwnerOrgId,
+			},
+		},
+		ClaimMappings: []declarativeconfig.ClaimMapping{
+			{
+				Path: "realm_access.roles",
+				Name: "groups",
+			},
+			{
+				Path: "org_id",
+				Name: "rh_org_id",
+			},
+			{
+				Path: "is_org_admin",
+				Name: "rh_is_org_admin",
+			},
+		},
+		OIDCConfig: &declarativeconfig.OIDCConfig{
+			Issuer:                    remoteCentral.Spec.Auth.Issuer,
+			CallbackMode:              "post",
+			ClientID:                  remoteCentral.Spec.Auth.ClientId,
+			ClientSecret:              remoteCentral.Spec.Auth.ClientSecret, // pragma: allowlist secret
+			DisableOfflineAccessScope: true,
+		},
+	}
+}
+
+func (r *CentralReconciler) configureAuthProvider(secret *corev1.Secret, remoteCentral private.ManagedCentral) error {
+	if !r.wantsAuthProvider {
 		return nil
 	}
-	namespace := remoteCentral.Metadata.Namespace
-	exists, err := r.checkSecretExists(ctx, namespace, sensibleDeclarativeConfigSecretName)
-	if err != nil || exists {
-		return err
+
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
 	}
+
+	authProviderConfig := getAuthProviderConfig(remoteCentral)
+
+	rawAuthProviderBytes, err := yaml.Marshal(authProviderConfig)
+	if err != nil {
+		return fmt.Errorf("marshaling auth provider configuration: %w", err)
+	}
+	secret.Data[authProviderDeclarativeConfigKey] = rawAuthProviderBytes
+	return nil
+}
+
+func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Context,
+	remoteCentral private.ManagedCentral) error {
+	namespace := remoteCentral.Metadata.Namespace
 	return r.ensureSecretExists(
 		ctx,
 		namespace,
 		sensibleDeclarativeConfigSecretName,
 		func(secret *corev1.Secret) error {
+			var configErrs *multierror.Error
 			if err := r.configureAuditLogNotifier(secret, namespace); err != nil {
-				return err
+				configErrs = multierror.Append(configErrs, err)
 			}
-			return nil
+			if err := r.configureAuthProvider(secret, remoteCentral); err != nil {
+				configErrs = multierror.Append(configErrs, err)
+			}
+			return errors.Wrapf(configErrs.ErrorOrNil(),
+				"configuring declarative configurations within secret %s/%s",
+				secret.GetNamespace(), secret.GetName())
 		},
 	)
 }
