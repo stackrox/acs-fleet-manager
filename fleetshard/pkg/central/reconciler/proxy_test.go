@@ -11,22 +11,8 @@ import (
 
 const testNS = `acsms-01`
 
-func TestProxyConfiguration(t *testing.T) {
-	for _, envVar := range getProxyEnvVars(testNS) {
-		t.Setenv(envVar.Name, envVar.Value)
-	}
-
+func testProxyConfiguration(t *testing.T, noProxyURLs []string, proxiedURLs []string) {
 	proxyFunc := httpproxy.FromEnvironment().ProxyFunc()
-
-	noProxyURLs := []string{
-		"https://central",
-		"https://central.acsms-01",
-		"https://central.acsms-01.svc",
-		"https://central.acsms-01.svc:443",
-		"https://scanner-db.acsms-01.svc:5432",
-		"https://scanner:8443",
-		"https://scanner.acsms-01:8080",
-	}
 
 	for _, u := range noProxyURLs {
 		parsedURL, err := url.Parse(u)
@@ -37,14 +23,6 @@ func TestProxyConfiguration(t *testing.T) {
 		assert.Nilf(t, proxyURL, "expected URL %s to not be proxied, got: %s", u, proxyURL)
 	}
 
-	proxiedURLs := []string{
-		"https://www.example.com",
-		"https://www.example.com:8443",
-		"http://example.com",
-		"http://example.com:8080",
-		"https://central.acsms-01.svc:8443",
-		"https://scanner.acsms-01.svc",
-	}
 	const expectedProxyURL = "http://egress-proxy.acsms-01.svc:3128"
 
 	for _, u := range proxiedURLs {
@@ -60,10 +38,82 @@ func TestProxyConfiguration(t *testing.T) {
 	}
 }
 
+func TestProxyConfiguration(t *testing.T) {
+	for _, envVar := range getProxyEnvVars(testNS) {
+		t.Setenv(envVar.Name, envVar.Value)
+	}
+
+	noProxyURLs := []string{
+		"https://central",
+		"https://central.acsms-01",
+		"https://central.acsms-01.svc",
+		"https://central.acsms-01.svc:443",
+		"https://scanner-db.acsms-01.svc:5432",
+		"https://scanner:8443",
+		"https://scanner.acsms-01:8080",
+	}
+
+	proxiedURLs := []string{
+		"https://audit-logs-aggregator.rhacs-audit-logs:8888",
+		"https://www.example.com",
+		"https://www.example.com:8443",
+		"http://example.com",
+		"http://example.com:8080",
+		"https://central.acsms-01.svc:8443",
+		"https://scanner.acsms-01.svc",
+	}
+
+	testProxyConfiguration(t, noProxyURLs, proxiedURLs)
+}
+
 func TestProxyConfiguration_IsDeterministic(t *testing.T) {
 	envVars := getProxyEnvVars(testNS)
 	for i := 0; i < 5; i++ {
 		otherEnvVars := getProxyEnvVars(testNS)
+		assert.Equal(t, envVars, otherEnvVars)
+	}
+}
+
+var (
+	additionalNoProxyURLs = []url.URL{
+		{
+			Host: "audit-logs-aggregator.rhacs-audit-logs:8888",
+		},
+	}
+)
+
+func TestProxyConfigurationWithAdditionalDirectAccess(t *testing.T) {
+	for _, envVar := range getProxyEnvVars(testNS, additionalNoProxyURLs...) {
+		t.Setenv(envVar.Name, envVar.Value)
+	}
+
+	noProxyURLs := []string{
+		"https://central",
+		"https://central.acsms-01",
+		"https://central.acsms-01.svc",
+		"https://central.acsms-01.svc:443",
+		"https://scanner-db.acsms-01.svc:5432",
+		"https://scanner:8443",
+		"https://scanner.acsms-01:8080",
+		"https://audit-logs-aggregator.rhacs-audit-logs:8888",
+	}
+
+	proxiedURLs := []string{
+		"https://www.example.com",
+		"https://www.example.com:8443",
+		"http://example.com",
+		"http://example.com:8080",
+		"https://central.acsms-01.svc:8443",
+		"https://scanner.acsms-01.svc",
+	}
+
+	testProxyConfiguration(t, noProxyURLs, proxiedURLs)
+}
+
+func TestProxyConfigurationWithAdditionalDirectAccess_IsDeterministic(t *testing.T) {
+	envVars := getProxyEnvVars(testNS, additionalNoProxyURLs...)
+	for i := 0; i < 5; i++ {
+		otherEnvVars := getProxyEnvVars(testNS, additionalNoProxyURLs...)
 		assert.Equal(t, envVars, otherEnvVars)
 	}
 }

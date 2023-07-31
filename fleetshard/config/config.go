@@ -2,6 +2,7 @@
 package config
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/stackrox/rox/pkg/errorhelpers"
@@ -29,8 +30,9 @@ type Config struct {
 	EgressProxyImage     string        `env:"EGRESS_PROXY_IMAGE"`
 	BaseCrdURL           string        `env:"BASE_CRD_URL" envDefault:"https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"`
 
-	ManagedDB ManagedDB
-	Telemetry Telemetry
+	ManagedDB    ManagedDB
+	Telemetry    Telemetry
+	AuditLogging AuditLogging
 }
 
 // ManagedDB for configuring managed DB specific parameters
@@ -39,6 +41,15 @@ type ManagedDB struct {
 	SecurityGroup       string `env:"MANAGED_DB_SECURITY_GROUP"`
 	SubnetGroup         string `env:"MANAGED_DB_SUBNET_GROUP"`
 	PerformanceInsights bool   `env:"MANAGED_DB_PERFORMANCE_INSIGHTS" envDefault:"false"`
+}
+
+// AuditLogging defines the parameter of the audit logging target.
+type AuditLogging struct {
+	Enabled            bool   `env:"AUDIT_LOG_ENABLED" envDefault:"false"`
+	URLScheme          string `env:"AUDIT_LOG_URL_SCHEME" envDefault:"https"`
+	AuditLogTargetHost string `env:"AUDIT_LOG_HOST" envDefault:"audit-logs-aggregator.rhacs-audit-logs"`
+	AuditLogTargetPort int    `env:"AUDIT_LOG_PORT" envDefault:"8888"`
+	SkipTLSVerify      bool   `env:"AUDIT_LOG_SKIP_TLS_VERIFY" envDefault:"false"`
 }
 
 // Telemetry defines parameters for pushing telemetry to a remote storage.
@@ -80,4 +91,11 @@ func validateManagedDBConfig(c Config, configErrors *errorhelpers.ErrorList) {
 	if c.ManagedDB.SecurityGroup == "" {
 		configErrors.AddError(errors.New("MANAGED_DB_ENABLED == true and MANAGED_DB_SECURITY_GROUP unset in the environment"))
 	}
+}
+
+func (a *AuditLogging) Endpoint(withScheme bool) string {
+	if withScheme {
+		return fmt.Sprintf("%s://%s:%d", a.URLScheme, a.AuditLogTargetHost, a.AuditLogTargetPort)
+	}
+	return fmt.Sprintf("%s:%d", a.AuditLogTargetHost, a.AuditLogTargetPort)
 }
