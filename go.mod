@@ -61,9 +61,9 @@ require (
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.1
 	helm.sh/helm/v3 v3.11.3
-	k8s.io/api v0.26.5
-	k8s.io/apimachinery v0.27.3
-	k8s.io/client-go v0.26.5
+	k8s.io/api v0.27.4
+	k8s.io/apimachinery v0.27.4
+	k8s.io/client-go v0.27.4
 	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
 	sigs.k8s.io/controller-runtime v0.14.6
 	sigs.k8s.io/yaml v1.3.0
