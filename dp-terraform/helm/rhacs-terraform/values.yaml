@@ -27,6 +27,9 @@ fleetshardSync:
     realm: "redhat-external"
   egressProxy:
     image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0"
+  auditLogs:
+    enabled: true
+    skipTLSVerify: true
   managedDB:
     enabled: true
     subnetGroup: ""
@@ -101,87 +104,54 @@ logging:
     accessKeyId: ""
     secretAccessKey: ""
 
-vector:
-  role: "Aggregator"
-  service:
-    annotations:
-      rhacs.redhat.com/cluster-name: ""
-      rhacs.redhat.com/environment: ""
-      service.beta.openshift.io/serving-cert-secret-name: rhacs-vector-tls-secret
-  podLabels:
-    app: rhacs-vector
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-              - key: app
-                operator: In
-                values:
-                  - rhacs-vector
-          topologyKey: "topology.kubernetes.io/zone"
+# See available parameters in charts/audit-logs/values.yaml
+# - enabled flag is used to completely enable/disable logging sub-chart
+audit-logs:
+  enabled: true
+  image: 'registry.redhat.io/openshift-logging/vector-rhel8:v0.21'
+  annotations: {}
+  replicas: 3
   persistence:
     enabled: true
-    size: 300Mi
-  replicas: 3
-  extraVolumes:
-    - name: service-tls-secret
-      projected:
-        sources:
-          - secret:
-              name: rhacs-vector-tls-secret
-  extraVolumeMounts:
-    - name: service-tls-secret
-      mountPath: /etc/vector/tls
-      readOnly: true
+    storageClassName: ""
+    size: 1Gi
   customConfig:
+    data_dir: /aggregator-data-dir
     sources:
       http_server:
-        type: "http_server"
+        type: "http"
         address: "0.0.0.0:8888"
         decoding:
           codec: "json"
         tls:
           enabled: true
           ca_file: "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
-          crt_file: "/etc/vector/tls/tls.crt"
-          key_file: "/etc/vector/tls/tls.key"
+          crt_file: "/etc/aggregator/tls/tls.crt"
+          key_file: "/etc/aggregator/tls/tls.key"
     sinks:
-      aws_s3:
-        type: "aws_s3"
-        region: ""
-        bucket: ""
-        key_prefix: '{{ "{{" }} .tenant_id {{ "}}" }}/%F/'
+      aws_cloudwatch_logs:
+        type: "aws_cloudwatch_logs"
+        group_name: "acs_audit_logs"
+        create_missing_group: false
+        create_missing_stream: true
         inputs: ["http_server"]
+        stream_name: '{{ "{{" }} .tenant_id {{ "}}" }}'
         compression: none
-        filename_extension: "json"
         healthcheck:
-          enabled: false
+          enabled: true
         batch:
           timeout_secs: 60
-          max_size: 2621440
+          # 4.5M Bytes
+          max_size: 4718592
         buffer:
           type: disk
-          max_size: 283115520
+          # 900M Bytes (disk is 1Gi)
+          max_size: 943718400
           when_full: block
         encoding:
           codec: "json"
-  fullnameOverride: rhacs-vector
   secrets:
-    generic:
-      aws_access_key_id: ""
-      aws_secret_access_key: ""
-  env:
-    - name: AWS_ACCESS_KEY_ID
-      valueFrom:
-        secretKeyRef:
-          name: rhacs-vector
-          key: aws_access_key_id
-    - name: AWS_SECRET_ACCESS_KEY
-      valueFrom:
-        secretKeyRef:
-          name: rhacs-vector
-          key: aws_secret_access_key
+    aws_role_arn: ""
 
 secured-cluster:
   enabled: true
