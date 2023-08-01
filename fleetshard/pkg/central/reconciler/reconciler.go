@@ -27,7 +27,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/random"
 	"gopkg.in/yaml.v2"
@@ -212,9 +211,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return installingStatus(), nil
 	}
 
-	// After the deployment is ready, verify that the auth provider exists.
-	if err := r.ensureAuthProviderExists(ctx, remoteCentral); err != nil {
+	exists, err := r.ensureAuthProviderExists(ctx, remoteCentral)
+	if err != nil {
 		return nil, err
+	}
+	if !exists {
+		glog.Infof("Default auth provider for central %s/%s is not yet ready.",
+			central.GetNamespace(), central.GetName())
+		return nil, ErrCentralNotChanged
 	}
 
 	status, err := r.collectReconciliationStatus(ctx, &remoteCentral)
@@ -375,25 +379,22 @@ func (r *CentralReconciler) reconcileAdminPasswordGeneration(central *v1alpha1.C
 	return nil
 }
 
-func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remoteCentral private.ManagedCentral) error {
-	// Short-circuit if an auth provider isn't desired.
+func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
+	// Short-circuit if an auth provider isn't desired or already exists.
 	if !r.wantsAuthProvider {
-		return nil
+		return true, nil
 	}
 
-	// Since the auth provider is an integral part, we have to verify that it will be created successfully and listed
-	// within the list of available auth providers.
-	// We try multiple times to verify auth provider since applying of declarative configuration is done asynchronously.
-	authProviderExists := concurrency.WaitInContext(concurrency.NewPoller(func() bool {
-		exists, _ := r.verifyAuthProviderFunc(ctx, remoteCentral, r.client)
-		return exists
-	}, 5*time.Second), ctx)
-	if authProviderExists {
-		r.hasAuthProvider = true
-		return nil
+	exists, err := r.verifyAuthProviderFunc(ctx, remoteCentral, r.client)
+	if err != nil {
+		return false, errors.Wrapf(err, "failed to verify that the default auth provider exists within "+
+			"Central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 	}
-	return fmt.Errorf("failed to verify that the auth provider exists within Central %s/%s",
-		remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
+	if exists {
+		r.hasAuthProvider = true
+		return true, nil
+	}
+	return false, nil
 }
 
 func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (*private.DataPlaneCentralStatus, error) {
