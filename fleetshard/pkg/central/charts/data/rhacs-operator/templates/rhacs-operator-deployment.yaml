@@ -82,11 +82,11 @@ spec:
                   containerName: manager
                   resource: limits.memory
                   divisor: '0'
-            {{- if $.Values.operator.centralLabelSelector -}}
+            {{- if .labelSelector }}
             - name: CENTRAL_LABEL_SELECTOR
-              value: "rhacs.redhat.com/tag={{ substr 0 64 (lower .tag) }},rhacs.redhat.com/repository={{ substr 0 64 (lower .repository )}}"
+              value: "rhacs.redhat.com/version-selector={{ .labelSelector }}"
             {{- end }}
-          image: "{{ .repository }}:{{ .tag }}"
+          image: "{{ .image }}"
           imagePullPolicy: IfNotPresent
           livenessProbe:
             failureThreshold: 3
