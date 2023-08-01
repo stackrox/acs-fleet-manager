@@ -9,7 +9,7 @@ import (
 
 func TestKMSEncryptDecrypt(t *testing.T) {
 	if os.Getenv("RUN_AWS_INTEGRATION") != "true" {
-		t.Skip("Skip KMS tests. Set RUN_KMS_TESTS=true env variable to enable KMS tests.")
+		t.Skip("Skip KMS tests. Set RUN_AWS_INTEGRATION=true env variable to enable KMS tests.")
 	}
 
 	keyID := os.Getenv("SECRET_ENCRYPTION_KEY_ID")
