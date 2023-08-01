@@ -62,8 +62,8 @@ func getHTTPSServicePort(service *core.Service) (int32, error) {
 	return 0, errors.Errorf("no `https` port is present in %s/%s service", service.Namespace, service.Name)
 }
 
-// authProviderName deduces auth provider name from issuer URL.
-func authProviderName(central private.ManagedCentral) (name string) {
+// AuthProviderName deduces auth provider name from issuer URL.
+func AuthProviderName(central private.ManagedCentral) (name string) {
 	switch {
 	case strings.Contains(central.Spec.Auth.Issuer, "sso.stage.redhat"):
 		name = "Red Hat SSO (stage)"
@@ -100,7 +100,7 @@ func hasAuthProvider(ctx context.Context, central private.ManagedCentral, client
 	}
 
 	for _, provider := range authProvidersResp.AuthProviders {
-		if provider.Type == oidcType && provider.GetName() == authProviderName(central) {
+		if provider.Type == oidcType && provider.GetName() == AuthProviderName(central) {
 			return true, nil
 		}
 	}
