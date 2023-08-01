@@ -130,7 +130,6 @@ audit-logs:
     sinks:
       aws_cloudwatch_logs:
         type: "aws_cloudwatch_logs"
-        region: ""
         group_name: "acs_audit_logs"
         create_missing_group: false
         create_missing_stream: true
@@ -151,7 +150,6 @@ audit-logs:
         encoding:
           codec: "json"
   secrets:
-    aws_region: ""
     aws_role_arn: ""
 
 secured-cluster:
