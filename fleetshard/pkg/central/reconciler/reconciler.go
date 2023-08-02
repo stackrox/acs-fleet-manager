@@ -21,6 +21,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cipher"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -99,18 +100,22 @@ type CentralReconcilerOptions struct {
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client           ctrlClient.Client
-	central          private.ManagedCentral
-	status           *int32
-	lastCentralHash  [16]byte
-	useRoutes        bool
-	Resources        bool
-	routeService     *k8s.RouteService
-	egressProxyImage string
-	telemetry        config.Telemetry
-	clusterName      string
-	environment      string
-	auditLogging     config.AuditLogging
+	client            ctrlClient.Client
+	central           private.ManagedCentral
+	status            *int32
+	lastCentralHash   [16]byte
+	useRoutes         bool
+	wantsAuthProvider bool
+	hasAuthProvider   bool
+	Resources         bool
+	routeService      *k8s.RouteService
+	secretService     *k8s.SecretService
+	secretCipher      cipher.Cipher
+	egressProxyImage  string
+	telemetry         config.Telemetry
+	clusterName       string
+	environment       string
+	auditLogging      config.AuditLogging
 
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
@@ -746,7 +751,61 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 		}
 	}
 
+	// Only report secrets if central is ready to ensure we're not trying to get secrets before they are created
+	if isRemoteCentralReady(remoteCentral) {
+		secrets, err := r.collectSecretsEncrypted(ctx, remoteCentral)
+		if err != nil {
+			return nil, err
+		}
+		status.Secrets = secrets // pragma: allowlist secret
+	}
+
 	return status, nil
+}
+
+func (r *CentralReconciler) collectSecrets(ctx context.Context, remoteCentral *private.ManagedCentral) (map[string]*corev1.Secret, error) {
+	namespace := remoteCentral.Metadata.Namespace
+	secrets, err := r.secretService.CollectSecrets(ctx, namespace)
+	if err != nil {
+		return secrets, errors.Wrapf(err, "collecting secrets for namespace %s", namespace)
+	}
+
+	return secrets, nil
+}
+
+func (r *CentralReconciler) collectSecretsEncrypted(ctx context.Context, remoteCentral *private.ManagedCentral) (map[string]string, error) {
+	secrets, err := r.collectSecrets(ctx, remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedSecrets, err := r.encryptSecrets(secrets)
+	if err != nil {
+		return nil, errors.Wrapf(err, "encrypting secrets for namespace: %s", remoteCentral.Metadata.Namespace)
+	}
+
+	return encryptedSecrets, nil
+}
+
+func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (map[string]string, error) {
+	encryptedSecrets := map[string]string{}
+
+	for key, secret := range secrets { // pragma: allowlist secret
+		secretBytes, err := json.Marshal(secret)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error marshaling secret for encryption: %s", key)
+		}
+
+		encryptedBytes, err := r.secretCipher.Encrypt(secretBytes)
+		if err != nil {
+			return nil, errors.Wrapf(err, "encrypting secret: %s", key)
+		}
+
+		encryptedSecrets[key] = string(encryptedBytes)
+	}
+
+	return encryptedSecrets, nil
+
 }
 
 func (r *CentralReconciler) ensureDeclarativeConfigurationSecretCleaned(ctx context.Context, remoteCentralNamespace string) error {
@@ -1395,6 +1454,7 @@ func (r *CentralReconciler) ensureSecretExists(
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
 	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
+	secretCipher cipher.Cipher,
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
 	return &CentralReconciler{
@@ -1404,6 +1464,8 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		useRoutes:         opts.UseRoutes,
 		wantsAuthProvider: opts.WantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
+		secretService:     k8s.NewSecretService(k8sClient),
+		secretCipher:      secretCipher, // pragma: allowlist secret
 		egressProxyImage:  opts.EgressProxyImage,
 		telemetry:         opts.Telemetry,
 		clusterName:       opts.ClusterName,
