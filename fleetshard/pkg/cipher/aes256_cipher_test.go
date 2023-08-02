@@ -19,7 +19,7 @@ func generateKey() ([]byte, error) {
 
 // TestDifferentCipherForSamePlaintext tests the correct usage of nonce
 // to ensure encrypting the same plaintext twice does not yield the same cipher text
-func TestDifferentCipherForSamePlaintext(t *testing.T) {
+func TestAES256DifferentCipherForSamePlaintext(t *testing.T) {
 	plaintext := []byte("test plaintext")
 	key, err := generateKey()
 	require.NoError(t, err, "generating key")
@@ -34,7 +34,7 @@ func TestDifferentCipherForSamePlaintext(t *testing.T) {
 	require.NotEqual(t, cipher1, cipher2, "encrypting same text twice yields same result")
 }
 
-func TestEncryptDecryptMatch(t *testing.T) {
+func TestAES256EncryptDecryptMatch(t *testing.T) {
 	plaintext := []byte("test plaintext")
 	key, err := generateKey()
 	require.NoError(t, err, "generating key")
