@@ -8,46 +8,83 @@ import (
 )
 
 type kmsCipher struct {
-	keyID string
-	kms   *kms.KMS
+	keyID      string
+	kms        *kms.KMS
+	dateKeyLen int
 }
 
 // NewKMSCipher return a new Cipher using AWS KMS with the given keyId
+// The implementation uses the KMS key ID to generate KMS data keys and encrypt data using
+// those data keys. This is necessary because encrypting via KMS API caps plaintext length to 4096 bytes
 func NewKMSCipher(keyID string) (Cipher, error) {
 	sess, err := session.NewSession()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create session for KMS client %w", err)
 	}
 
-	return kmsCipher{
+	kmsCipher := kmsCipher{
 		keyID: keyID,
 		kms:   kms.New(sess),
-	}, nil
+	}
+
+	dataKeyOut, err := kmsCipher.kms.GenerateDataKey(kmsCipher.dateKeyInput())
+	if err != nil {
+		return nil, fmt.Errorf("intializing KMS data key length: %w", err)
+	}
+
+	kmsCipher.dateKeyLen = len(dataKeyOut.CiphertextBlob)
+
+	return kmsCipher, nil
+}
+
+func (k kmsCipher) dateKeyInput() *kms.GenerateDataKeyInput {
+	keySpec := kms.DataKeySpecAes256
+	return &kms.GenerateDataKeyInput{KeyId: &k.keyID, KeySpec: &keySpec}
 }
 
 func (k kmsCipher) Encrypt(plaintext []byte) ([]byte, error) {
-	encryptInput := &kms.EncryptInput{
-		KeyId:     &k.keyID,
-		Plaintext: plaintext,
-	}
 
-	encryptOut, err := k.kms.Encrypt(encryptInput)
+	dataKeyOut, err := k.kms.GenerateDataKey(k.dateKeyInput())
 	if err != nil {
-		return nil, fmt.Errorf("error encrypting data: %w", err)
+		return nil, fmt.Errorf("creating KMS data key")
 	}
 
-	return encryptOut.CiphertextBlob, nil
+	aesCipher, err := NewAES256Cipher(dataKeyOut.Plaintext)
+	if err != nil {
+		return nil, fmt.Errorf("creating AES256 cipher from KMS data key %w", err)
+	}
+
+	ciphertext, err := aesCipher.Encrypt(plaintext)
+	if err != nil {
+		return nil, fmt.Errorf("encrypting data: %w", err)
+	}
+
+	ciphertext = append(ciphertext, dataKeyOut.CiphertextBlob...)
+
+	return ciphertext, nil
 }
 
 func (k kmsCipher) Decrypt(ciphertext []byte) ([]byte, error) {
-	decryptInput := &kms.DecryptInput{
+	keyIndex := len(ciphertext) - k.dateKeyLen
+	cipher, encryptedKey := ciphertext[:keyIndex], ciphertext[keyIndex:]
+
+	decryptOut, err := k.kms.Decrypt(&kms.DecryptInput{
 		KeyId:          &k.keyID,
-		CiphertextBlob: ciphertext,
+		CiphertextBlob: encryptedKey,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error decrypting data key: %w", err)
 	}
 
-	decryptOut, err := k.kms.Decrypt(decryptInput)
+	aesCipher, err := NewAES256Cipher(decryptOut.Plaintext)
 	if err != nil {
-		return nil, fmt.Errorf("error decrypting data: %w", err)
+		return nil, fmt.Errorf("creating AES256Cipher from data key: %w", err)
 	}
-	return decryptOut.Plaintext, nil
+
+	plaintext, err := aesCipher.Decrypt(cipher)
+	if err != nil {
+		return nil, fmt.Errorf("decrypting ciphertext: %w", err)
+	}
+
+	return plaintext, nil
 }
