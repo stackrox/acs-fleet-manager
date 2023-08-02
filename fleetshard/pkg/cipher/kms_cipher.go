@@ -14,7 +14,7 @@ type kmsCipher struct {
 }
 
 // NewKMSCipher return a new Cipher using AWS KMS with the given keyId
-// The implementation uses the KMS key ID to generate KMS data keys and encrypt data using
+// The implementation uses the KMS keyID to generate KMS data keys and encrypt data using
 // those data keys. This is necessary because encrypting via KMS API caps plaintext length to 4096 bytes
 func NewKMSCipher(keyID string) (Cipher, error) {
 	sess, err := session.NewSession()
