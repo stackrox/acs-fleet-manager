@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"fmt"
+
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"gorm.io/gorm"
@@ -46,6 +47,7 @@ func getMigrations() []*gormigrate.Migration {
 		addForceReconcileToCentralRequest(),
 		addOperatorImageFields(),
 		removeAvailableOperatorField(),
+		addSecretFieldToCentralRequests(),
 	}
 }
 
