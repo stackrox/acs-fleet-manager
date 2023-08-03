@@ -93,7 +93,6 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 						corev1.ResourceMemory.String(): orDefaultQty(central.Resources.Requests[corev1.ResourceMemory], defaults.Central.MemoryRequest).String(),
 					},
 					Limits: map[string]string{
-						corev1.ResourceCPU.String():    orDefaultQty(central.Resources.Limits[corev1.ResourceCPU], defaults.Central.CPULimit).String(),
 						corev1.ResourceMemory.String(): orDefaultQty(central.Resources.Limits[corev1.ResourceMemory], defaults.Central.MemoryLimit).String(),
 					},
 				},
