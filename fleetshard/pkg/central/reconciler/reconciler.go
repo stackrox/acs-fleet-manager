@@ -6,13 +6,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"reflect"
 	"sync/atomic"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
-
+	containerImage "github.com/containers/image/docker/reference"
 	"github.com/golang/glog"
+	"github.com/hashicorp/go-multierror"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -24,8 +25,11 @@ import (
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/random"
+	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	corev1 "k8s.io/api/core/v1"
@@ -33,6 +37,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -43,7 +48,8 @@ const (
 	FreeStatus int32 = iota
 	BlockedStatus
 
-	PauseReconcileAnnotation = "stackrox.io/pause-reconcile"
+	PauseReconcileAnnotation  = "stackrox.io/pause-reconcile"
+	ReconcileOperatorSelector = "rhacs.redhat.com/version-selector"
 
 	helmReleaseName = "tenant-resources"
 
@@ -55,8 +61,10 @@ const (
 	instanceTypeLabelKey      = "rhacs.redhat.com/instance-type"
 	orgIDLabelKey             = "rhacs.redhat.com/org-id"
 	tenantIDLabelKey          = "rhacs.redhat.com/tenant"
-	operatorVersionKey        = "stackrox.io/operator-version"
-	defaultOperatorVersion    = "rhacs-operator.v3.74.0"
+
+	auditLogNotifierKey  = "com.redhat.rhacs.auditLogNotifier"
+	auditLogNotifierName = "Platform Audit Logs"
+	auditLogTenantIDKey  = "tenant_id"
 
 	dbUserTypeAnnotation = "platform.stackrox.io/user-type"
 	dbUserTypeMaster     = "master"
@@ -65,7 +73,14 @@ const (
 
 	centralDbSecretName       = "central-db-password" // pragma: allowlist secret
 	centralDeletePollInterval = 5 * time.Second
+
+	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
+
+	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
 )
+
+type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral,
+	client ctrlClient.Client) (bool, error)
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
@@ -76,30 +91,34 @@ type CentralReconcilerOptions struct {
 	Telemetry         config.Telemetry
 	ClusterName       string
 	Environment       string
+	AuditLogging      config.AuditLogging
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client            ctrlClient.Client
-	central           private.ManagedCentral
-	status            *int32
-	lastCentralHash   [16]byte
-	useRoutes         bool
-	wantsAuthProvider bool
-	hasAuthProvider   bool
-	Resources         bool
-	routeService      *k8s.RouteService
-	egressProxyImage  string
-	telemetry         config.Telemetry
-	clusterName       string
-	environment       string
+	client           ctrlClient.Client
+	central          private.ManagedCentral
+	status           *int32
+	lastCentralHash  [16]byte
+	useRoutes        bool
+	Resources        bool
+	routeService     *k8s.RouteService
+	egressProxyImage string
+	telemetry        config.Telemetry
+	clusterName      string
+	environment      string
+	auditLogging     config.AuditLogging
 
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
 	managedDBInitFunc           postgres.CentralDBInitFunc
 
 	resourcesChart *chart.Chart
+
+	wantsAuthProvider      bool
+	hasAuthProvider        bool
+	verifyAuthProviderFunc verifyAuthProviderExistsFunc
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -132,10 +151,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, err
 	}
 
-	if err = r.reconcileAuthProviderConfig(ctx, &remoteCentral, central); err != nil {
-		return nil, err
-	}
-
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
 		return r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
 	}
@@ -161,6 +176,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
+	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
+		return nil, err
+	}
+
+	if err := r.reconcileAdminPasswordGeneration(central); err != nil {
+		return nil, err
+	}
+
 	if err = r.reconcileCentral(ctx, &remoteCentral, central); err != nil {
 		return nil, err
 	}
@@ -177,7 +200,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	// Check whether deployment is ready.
-	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, &remoteCentral)
+	centralDeploymentReady, err := isCentralDeploymentReady(ctx, r.client, remoteCentral.Metadata.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -188,8 +211,14 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return installingStatus(), nil
 	}
 
-	if err = r.reconcileAuthProvider(ctx, &remoteCentral); err != nil {
+	exists, err := r.ensureAuthProviderExists(ctx, remoteCentral)
+	if err != nil {
 		return nil, err
+	}
+	if !exists {
+		glog.Infof("Default auth provider for central %s/%s is not yet ready.",
+			central.GetNamespace(), central.GetName())
+		return nil, ErrCentralNotChanged
 	}
 
 	status, err := r.collectReconciliationStatus(ctx, &remoteCentral)
@@ -202,6 +231,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err := r.setLastCentralHash(remoteCentral); err != nil {
 		return nil, errors.Wrapf(err, "setting central reconcilation cache")
 	}
+
+	glog.Infof("Returning central status %+v", status)
 
 	return status, nil
 }
@@ -234,9 +265,13 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	}
 
 	// Set proxy configuration
-	envVars := getProxyEnvVars(remoteCentralNamespace)
+	additionalNoProxyURL := url.URL{
+		Host: r.auditLogging.Endpoint(false),
+	}
+	envVars := getProxyEnvVars(remoteCentralNamespace, additionalNoProxyURL)
 
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
+
 	central := &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      remoteCentralName,
@@ -251,7 +286,6 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 				centralPVCAnnotationKey:   "true",
 				managedServicesAnnotation: "true",
 				orgNameAnnotationKey:      remoteCentral.Spec.Auth.OwnerOrgName,
-				// TODO(ROX-17718): Set reconciler selection label for Central
 			},
 		},
 		Spec: v1alpha1.CentralSpec{
@@ -272,6 +306,13 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 					Storage: &v1alpha1.TelemetryStorage{
 						Endpoint: &r.telemetry.StorageEndpoint,
 						Key:      &r.telemetry.StorageKey,
+					},
+				},
+				DeclarativeConfiguration: &v1alpha1.DeclarativeConfiguration{
+					Secrets: []v1alpha1.LocalSecretReference{
+						{
+							Name: sensibleDeclarativeConfigSecretName,
+						},
 					},
 				},
 			},
@@ -307,37 +348,53 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	}
 
 	if features.TargetedOperatorUpgrades.Enabled() {
-		labels := central.ObjectMeta.Labels
-		labels[operatorVersionKey] = defaultOperatorVersion
-		central.ObjectMeta.Labels = labels
+		// TODO: use GitRef as a LabelSelector
+		image, err := containerImage.Parse(remoteCentral.Spec.OperatorImage)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed parse labelSelector")
+		}
+		var labelSelector string
+		if tagged, ok := image.(containerImage.Tagged); ok {
+			labelSelector = tagged.Tag()
+		}
+		errs := validation.IsValidLabelValue(labelSelector)
+		if errs != nil {
+			return nil, errors.Wrapf(err, "invalid labelSelector %s: %v", labelSelector, errs)
+		}
+		central.Labels[ReconcileOperatorSelector] = labelSelector
+
 	}
 
 	return central, nil
 }
 
-func (r *CentralReconciler) reconcileAuthProviderConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
-	remoteCentralName := remoteCentral.Metadata.Name
-	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
-	// Check whether auth provider is actually created and this reconciler just is not aware of that.
-	if r.wantsAuthProvider && !r.hasAuthProvider {
-		exists, err := existsRHSSOAuthProvider(ctx, remoteCentral, r.client)
-		if err != nil {
-			return err
-		}
-		// If sso.redhat.com auth provider exists, there is no need for admin/password login.
-		// We also store whether auth provider exists within reconciler instance to avoid polluting network.
-		if exists {
-			glog.Infof("Auth provider for %s/%s already exists", remoteCentralNamespace, remoteCentralName)
-			r.hasAuthProvider = true
-		}
+func (r *CentralReconciler) reconcileAdminPasswordGeneration(central *v1alpha1.Central) error {
+	if !r.wantsAuthProvider {
+		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(false)
+		glog.Infof("No auth provider desired, enabling basic authentication for Central %s/%s",
+			central.GetNamespace(), central.GetName())
+		return nil
 	}
-
-	if r.hasAuthProvider {
-		central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
-	}
-
+	central.Spec.Central.AdminPasswordGenerationDisabled = pointer.Bool(true)
 	return nil
+}
+
+func (r *CentralReconciler) ensureAuthProviderExists(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
+	// Short-circuit if an auth provider isn't desired or already exists.
+	if !r.wantsAuthProvider {
+		return true, nil
+	}
+
+	exists, err := r.verifyAuthProviderFunc(ctx, remoteCentral, r.client)
+	if err != nil {
+		return false, errors.Wrapf(err, "failed to verify that the default auth provider exists within "+
+			"Central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
+	}
+	if exists {
+		r.hasAuthProvider = true
+		return true, nil
+	}
+	return false, nil
 }
 
 func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) (*private.DataPlaneCentralStatus, error) {
@@ -383,6 +440,139 @@ func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remote
 		}
 	}
 	return nil
+}
+
+func getAuditLogNotifierConfig(
+	auditLoggingConfig config.AuditLogging,
+	namespace string,
+) *declarativeconfig.Notifier {
+	return &declarativeconfig.Notifier{
+		Name: auditLogNotifierName,
+		GenericConfig: &declarativeconfig.GenericConfig{
+			Endpoint:            auditLoggingConfig.Endpoint(true),
+			SkipTLSVerify:       auditLoggingConfig.SkipTLSVerify,
+			AuditLoggingEnabled: true,
+			ExtraFields: []declarativeconfig.KeyValuePair{
+				{
+					Key:   auditLogTenantIDKey,
+					Value: namespace,
+				},
+			},
+		},
+	}
+}
+
+func (r *CentralReconciler) configureAuditLogNotifier(secret *corev1.Secret, namespace string) error {
+	if !r.auditLogging.Enabled {
+		return nil
+	}
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
+	}
+	auditLogNotifierConfig := getAuditLogNotifierConfig(
+		r.auditLogging,
+		namespace,
+	)
+	encodedNotifierConfig, marshalErr := yaml.Marshal(auditLogNotifierConfig)
+	if marshalErr != nil {
+		return fmt.Errorf("marshaling audit log notifier configuration: %w", marshalErr)
+	}
+	secret.Data[auditLogNotifierKey] = encodedNotifierConfig
+	return nil
+}
+
+func getAuthProviderConfig(remoteCentral private.ManagedCentral) *declarativeconfig.AuthProvider {
+	return &declarativeconfig.AuthProvider{
+		Name:             authProviderName(remoteCentral),
+		MinimumRoleName:  "None",
+		UIEndpoint:       remoteCentral.Spec.UiEndpoint.Host,
+		ExtraUIEndpoints: []string{"localhost:8443"},
+		Groups: []declarativeconfig.Group{
+			{
+				AttributeKey:   "userid",
+				AttributeValue: remoteCentral.Spec.Auth.OwnerUserId,
+				RoleName:       "Admin",
+			},
+			{
+				AttributeKey:   "groups",
+				AttributeValue: "admin:org:all",
+				RoleName:       "Admin",
+			},
+			{
+				AttributeKey:   "rh_is_org_admin",
+				AttributeValue: "true",
+				RoleName:       "Admin",
+			},
+		},
+		RequiredAttributes: []declarativeconfig.RequiredAttribute{
+			{
+				AttributeKey:   "rh_org_id",
+				AttributeValue: remoteCentral.Spec.Auth.OwnerOrgId,
+			},
+		},
+		ClaimMappings: []declarativeconfig.ClaimMapping{
+			{
+				Path: "realm_access.roles",
+				Name: "groups",
+			},
+			{
+				Path: "org_id",
+				Name: "rh_org_id",
+			},
+			{
+				Path: "is_org_admin",
+				Name: "rh_is_org_admin",
+			},
+		},
+		OIDCConfig: &declarativeconfig.OIDCConfig{
+			Issuer:                    remoteCentral.Spec.Auth.Issuer,
+			CallbackMode:              "post",
+			ClientID:                  remoteCentral.Spec.Auth.ClientId,
+			ClientSecret:              remoteCentral.Spec.Auth.ClientSecret, // pragma: allowlist secret
+			DisableOfflineAccessScope: true,
+		},
+	}
+}
+
+func (r *CentralReconciler) configureAuthProvider(secret *corev1.Secret, remoteCentral private.ManagedCentral) error {
+	if !r.wantsAuthProvider {
+		return nil
+	}
+
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
+	}
+
+	authProviderConfig := getAuthProviderConfig(remoteCentral)
+
+	rawAuthProviderBytes, err := yaml.Marshal(authProviderConfig)
+	if err != nil {
+		return fmt.Errorf("marshaling auth provider configuration: %w", err)
+	}
+	secret.Data[authProviderDeclarativeConfigKey] = rawAuthProviderBytes
+	return nil
+}
+
+func (r *CentralReconciler) reconcileDeclarativeConfigurationData(ctx context.Context,
+	remoteCentral private.ManagedCentral) error {
+	namespace := remoteCentral.Metadata.Namespace
+	return r.ensureSecretExists(
+		ctx,
+		namespace,
+		sensibleDeclarativeConfigSecretName,
+		func(secret *corev1.Secret) error {
+			var configErrs *multierror.Error
+			if err := r.configureAuditLogNotifier(secret, namespace); err != nil {
+				configErrs = multierror.Append(configErrs, err)
+			}
+			if err := r.configureAuthProvider(secret, remoteCentral); err != nil {
+				configErrs = multierror.Append(configErrs, err)
+			}
+			return errors.Wrapf(configErrs.ErrorOrNil(),
+				"configuring declarative configurations within secret %s/%s",
+				secret.GetNamespace(), secret.GetName())
+		},
+	)
 }
 
 func (r *CentralReconciler) reconcileCentral(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
@@ -534,22 +724,6 @@ func printCentralDiff(desired, actual *v1alpha1.Central) {
 	glog.Infof("Central %s/%s diff: %s", desired.Namespace, desired.Name, string(patchBytes))
 }
 
-func (r *CentralReconciler) reconcileAuthProvider(ctx context.Context, remoteCentral *private.ManagedCentral) error {
-	// Skip auth provider initialisation if:
-	// 1. Auth provider is already created
-	// 2. OR reconciler creator specified auth provider not to be created
-	// 3. OR Central request is in status "Ready" - meaning auth provider should've been initialised earlier
-	if r.wantsAuthProvider && !r.hasAuthProvider && !isRemoteCentralReady(remoteCentral) {
-		err := createRHSSOAuthProvider(ctx, remoteCentral, r.client)
-		if err != nil {
-			return err
-		}
-		r.hasAuthProvider = true
-	}
-
-	return nil
-}
-
 func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, remoteCentral *private.ManagedCentral) (*private.DataPlaneCentralStatus, error) {
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
@@ -566,6 +740,24 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 	}
 
 	return status, nil
+}
+
+func (r *CentralReconciler) ensureDeclarativeConfigurationSecretCleaned(ctx context.Context, remoteCentralNamespace string) error {
+	secret := &corev1.Secret{}
+	secretKey := ctrlClient.ObjectKey{ // pragma: allowlist secret
+		Namespace: remoteCentralNamespace,
+		Name:      sensibleDeclarativeConfigSecretName,
+	}
+
+	err := r.client.Get(ctx, secretKey, secret)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	return r.client.Delete(ctx, secret)
 }
 
 func isRemoteCentralProvisioning(remoteCentral private.ManagedCentral) bool {
@@ -618,6 +810,10 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 		return false, err
 	}
 	globalDeleted = globalDeleted && centralDeleted
+
+	if err := r.ensureDeclarativeConfigurationSecretCleaned(ctx, central.GetNamespace()); err != nil {
+		return false, nil
+	}
 
 	if r.managedDBEnabled {
 		// skip Snapshot for remoteCentral created by probe
@@ -775,7 +971,7 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 		return fmt.Errorf("getting DB password from secret: %w", err)
 	}
 
-	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, dbMasterPassword, remoteCentral.Metadata.Internal)
+	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, remoteCentral.Id, dbMasterPassword, remoteCentral.Metadata.Internal)
 	if err != nil {
 		return fmt.Errorf("provisioning RDS DB: %w", err)
 	}
@@ -807,7 +1003,6 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 }
 
 func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, remoteCentralNamespace, userType, password string) error {
-	secret := &corev1.Secret{}
 	setPasswordFunc := func(secret *corev1.Secret, userType, password string) {
 		secret.Data = map[string][]byte{"password": []byte(password)}
 		if secret.Annotations == nil {
@@ -815,54 +1010,14 @@ func (r *CentralReconciler) ensureCentralDBSecretExists(ctx context.Context, rem
 		}
 		secret.Annotations[dbUserTypeAnnotation] = userType
 	}
-
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
-	if err == nil {
+	return r.ensureSecretExists(ctx, remoteCentralNamespace, centralDbSecretName, func(secret *corev1.Secret) error {
 		setPasswordFunc(secret, userType, password)
-		err = r.client.Update(ctx, secret)
-		if err != nil {
-			return fmt.Errorf("updating Central DB secret: %w", err)
-		}
-
 		return nil
-	}
-
-	if !apiErrors.IsNotFound(err) {
-		return fmt.Errorf("getting Central DB secret: %w", err)
-	}
-
-	// create secret if it does not exist
-	secret = &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      centralDbSecretName,
-			Namespace: remoteCentralNamespace,
-			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
-			Annotations: map[string]string{
-				managedServicesAnnotation: "true",
-			},
-		},
-	}
-
-	setPasswordFunc(secret, userType, password)
-	err = r.client.Create(ctx, secret)
-	if err != nil {
-		return fmt.Errorf("creating Central DB secret: %w", err)
-	}
-	return nil
+	})
 }
 
 func (r *CentralReconciler) centralDBSecretExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
-	secret := &corev1.Secret{}
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbSecretName}, secret)
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return false, nil
-		}
-
-		return false, fmt.Errorf("getting central DB secret: %w", err)
-	}
-
-	return true, nil
+	return r.checkSecretExists(ctx, remoteCentralNamespace, centralDbSecretName)
 }
 
 func (r *CentralReconciler) centralDBUserExists(ctx context.Context, remoteCentralNamespace string) (bool, error) {
@@ -1137,7 +1292,7 @@ func (r *CentralReconciler) ensureRouteDeleted(ctx context.Context, routeSupplie
 	return false, nil
 }
 
-func (r *CentralReconciler) chartValues(remoteCentral private.ManagedCentral) (chartutil.Values, error) {
+func (r *CentralReconciler) chartValues(_ private.ManagedCentral) (chartutil.Values, error) {
 	if r.resourcesChart == nil {
 		return nil, errors.New("resources chart is not set")
 	}
@@ -1166,6 +1321,70 @@ func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile string) 
 
 var resourcesChart = charts.MustGetChart("tenant-resources", nil)
 
+func (r *CentralReconciler) checkSecretExists(
+	ctx context.Context,
+	remoteCentralNamespace string,
+	secretName string,
+) (bool, error) {
+	secret := &corev1.Secret{}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: secretName}, secret)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("getting secret %s/%s: %w", remoteCentralNamespace, secretName, err)
+	}
+
+	return true, nil
+}
+
+func (r *CentralReconciler) ensureSecretExists(
+	ctx context.Context,
+	namespace string,
+	secretName string,
+	secretModifyFunc func(secret *corev1.Secret) error,
+) error {
+	secret := &corev1.Secret{}
+	secretKey := ctrlClient.ObjectKey{Name: secretName, Namespace: namespace} // pragma: allowlist secret
+
+	err := r.client.Get(ctx, secretKey, secret) // pragma: allowlist secret
+	if err != nil && !apiErrors.IsNotFound(err) {
+		return fmt.Errorf("getting %s/%s secret: %w", namespace, secretName, err)
+	}
+	if err == nil {
+		modificationErr := secretModifyFunc(secret)
+		if modificationErr != nil {
+			return fmt.Errorf("updating %s/%s secret content: %w", namespace, secretName, modificationErr)
+		}
+		if updateErr := r.client.Update(ctx, secret); updateErr != nil { // pragma: allowlist secret
+			return fmt.Errorf("updating %s/%s secret: %w", namespace, secretName, updateErr)
+		}
+
+		return nil
+	}
+
+	// Create secret if it does not exist.
+	secret = &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{ // pragma: allowlist secret
+			Name:      secretName,
+			Namespace: namespace,
+			Labels:    map[string]string{k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue},
+			Annotations: map[string]string{
+				managedServicesAnnotation: "true",
+			},
+		},
+	}
+
+	if modificationErr := secretModifyFunc(secret); modificationErr != nil {
+		return fmt.Errorf("initializing %s/%s secret payload: %w", namespace, secretName, modificationErr)
+	}
+	if createErr := r.client.Create(ctx, secret); createErr != nil { // pragma: allowlist secret
+		return fmt.Errorf("creating %s/%s secret: %w", namespace, secretName, createErr)
+	}
+	return nil
+}
+
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
 	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
@@ -1182,10 +1401,13 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		telemetry:         opts.Telemetry,
 		clusterName:       opts.ClusterName,
 		environment:       opts.Environment,
+		auditLogging:      opts.AuditLogging,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,
 		managedDBInitFunc:           managedDBInitFunc,
+
+		verifyAuthProviderFunc: hasAuthProvider,
 
 		resourcesChart: resourcesChart,
 	}

@@ -62,6 +62,10 @@ spec:
           value: {{ .Values.fleetshardSync.redHatSSO.realm }}
         - name: RHSSO_ENDPOINT
           value: {{ .Values.fleetshardSync.redHatSSO.endpoint }}
+        - name: AUDIT_LOG_ENABLED
+          value: {{ .Values.fleetshardSync.auditLogs.enabled | quote }}
+        - name: AUDIT_LOG_SKIP_TLS_VERIFY
+          value: {{ .Values.fleetshardSync.auditLogs.skipTLSVerify | quote }}
         - name: MANAGED_DB_ENABLED
           value: {{ .Values.fleetshardSync.managedDB.enabled | quote }}
         {{- if eq .Values.fleetshardSync.managedDB.enabled true }}

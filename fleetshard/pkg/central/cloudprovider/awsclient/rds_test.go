@@ -99,8 +99,8 @@ func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, clusterID 
 }
 
 func TestRDSProvisioning(t *testing.T) {
-	if os.Getenv("RUN_RDS_TESTS") != "true" {
-		t.Skip("Skip RDS tests. Set RUN_RDS_TESTS=true env variable to enable RDS tests.")
+	if os.Getenv("RUN_AWS_INTEGRATION") != "true" {
+		t.Skip("Skip RDS tests. Set RUN_AWS_INTEGRATION=true env variable to enable RDS tests.")
 	}
 
 	rdsClient, err := newTestRDS()
@@ -129,7 +129,7 @@ func TestRDSProvisioning(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, failoverExists)
 
-	err = rdsClient.EnsureDBProvisioned(ctx, dbID, dbMasterPassword, false)
+	err = rdsClient.EnsureDBProvisioned(ctx, dbID, dbID, dbMasterPassword, false)
 	defer func() {
 		// clean-up AWS resources in case the test fails
 		deleteErr := rdsClient.EnsureDBDeprovisioned(dbID, false)
@@ -179,8 +179,8 @@ func TestRDSProvisioning(t *testing.T) {
 }
 
 func TestGetDBConnection(t *testing.T) {
-	if os.Getenv("RUN_RDS_TESTS") != "true" {
-		t.Skip("Skip RDS tests. Set RUN_RDS_TESTS=true env variable to enable RDS tests.")
+	if os.Getenv("RUN_AWS_INTEGRATION") != "true" {
+		t.Skip("Skip RDS tests. Set RUN_AWS_INTEGRATION=true env variable to enable RDS tests.")
 	}
 
 	rdsClient, err := newTestRDS()
@@ -193,8 +193,8 @@ func TestGetDBConnection(t *testing.T) {
 }
 
 func TestGetAccountQuotas(t *testing.T) {
-	if os.Getenv("RUN_RDS_TESTS") != "true" {
-		t.Skip("Skip RDS tests. Set RUN_RDS_TESTS=true env variable to enable RDS tests.")
+	if os.Getenv("RUN_AWS_INTEGRATION") != "true" {
+		t.Skip("Skip RDS tests. Set RUN_AWS_INTEGRATION=true env variable to enable RDS tests.")
 	}
 
 	rdsClient, err := newTestRDS()

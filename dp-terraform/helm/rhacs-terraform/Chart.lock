@@ -8,11 +8,11 @@ dependencies:
 - name: logging
   repository: ""
   version: 0.1.0
-- name: vector
-  repository: https://helm.vector.dev
-  version: 0.21.1
+- name: audit-logs
+  repository: ""
+  version: 0.1.0
 - name: secured-cluster
   repository: ""
   version: 0.1.0
-digest: sha256:5fbf64564effcead5f874af84029ceb77c4ffba073350de4d72cf81c7a7c1df5
-generated: "2023-06-26T11:06:14.387259+02:00"
+digest: sha256:4b3301d2cdd6907207fb21ad741b6fa1e5302aaff1ce6fe5315cab8519908d61
+generated: "2023-07-06T21:15:28.778426+02:00"

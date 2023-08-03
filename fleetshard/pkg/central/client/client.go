@@ -16,7 +16,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	acsErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/httputil"
 )
 
@@ -139,31 +138,6 @@ func (c *Client) createRequest(ctx context.Context, requestMessage proto.Message
 		return nil, errors.Wrap(err, "failed to create request")
 	}
 	return req, nil
-}
-
-// SendGroupRequest sends a request to create the specified group.
-// It will return an error if any error occurs during request creation or the request returned with a non-successful
-// HTTP status code.
-func (c *Client) SendGroupRequest(ctx context.Context, groupRequest *storage.Group) error {
-	if err := c.SendRequestToCentral(ctx, groupRequest, http.MethodPost, "/v1/groups",
-		nil); err != nil {
-		return errors.Wrapf(err, "failed to create group for central %s/%s",
-			c.central.Metadata.Namespace, c.central.Metadata.Name)
-	}
-	return nil
-}
-
-// SendAuthProviderRequest sends a request to create the specified auth provider and returns the created auth provider.
-// It will return an error if any error occurs during request creation or the request returned with a non-successful
-// HTTP status code.
-func (c *Client) SendAuthProviderRequest(ctx context.Context, authProviderRequest *storage.AuthProvider) (*storage.AuthProvider, error) {
-	var authProviderResponse storage.AuthProvider
-	if err := c.SendRequestToCentral(ctx, authProviderRequest, http.MethodPost, "/v1/authProviders",
-		&authProviderResponse); err != nil {
-		return nil, errors.Wrapf(err, "failed to create auth provider for central %s/%s",
-			c.central.Metadata.Namespace, c.central.Metadata.Name)
-	}
-	return &authProviderResponse, nil
 }
 
 // GetLoginAuthProviders sends a request to retrieve all login auth providers and returns them.
