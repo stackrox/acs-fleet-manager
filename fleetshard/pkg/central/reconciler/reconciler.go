@@ -121,10 +121,7 @@ type CentralReconciler struct {
 	managedDBProvisioningClient cloudprovider.DBClient
 	managedDBInitFunc           postgres.CentralDBInitFunc
 
-	resourcesChart *chart.Chart
-
-	wantsAuthProvider      bool
-	hasAuthProvider        bool
+	resourcesChart         *chart.Chart
 	verifyAuthProviderFunc verifyAuthProviderExistsFunc
 }
 
