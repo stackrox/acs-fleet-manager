@@ -417,6 +417,8 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_metadata_annotations'
         deletionTimestamp:
           type: string
+        secretsStored:
+          type: boolean
     ManagedCentral_allOf_spec_auth:
       properties:
         clientSecret:

@@ -234,6 +234,8 @@ components:
                       type: string
                 deletionTimestamp:
                   type: string
+                secretsStored:
+                  type: boolean
             spec:
               type: object
               properties:

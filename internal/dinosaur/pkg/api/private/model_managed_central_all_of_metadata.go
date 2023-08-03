@@ -17,4 +17,5 @@ type ManagedCentralAllOfMetadata struct {
 	Internal          bool                                   `json:"internal,omitempty"`
 	Annotations       ManagedCentralAllOfMetadataAnnotations `json:"annotations,omitempty"`
 	DeletionTimestamp string                                 `json:"deletionTimestamp,omitempty"`
+	SecretsStored     bool                                   `json:"secretsStored,omitempty"`
 }
