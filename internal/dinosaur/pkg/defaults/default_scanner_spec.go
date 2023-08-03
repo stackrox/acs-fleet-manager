@@ -13,7 +13,6 @@ type AnalyzerDefaults struct {
 	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"100M"`
 	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"5m"`
 	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500M"`
-	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"2"`
 	AutoScaling   string            `env:"AUTOSCALING"    envDefault:"Enabled"`
 	MinReplicas   int32             `env:"MIN_REPLICAS"   envDefault:"1"`
 	Replicas      int32             `env:"REPLICAS"       envDefault:"1"`
@@ -25,7 +24,6 @@ type DbDefaults struct {
 	MemoryRequest resource.Quantity `env:"MEMORY_REQUEST" envDefault:"500M"`
 	CPURequest    resource.Quantity `env:"CPU_REQUEST"    envDefault:"10m"`
 	MemoryLimit   resource.Quantity `env:"MEMORY_LIMIT"   envDefault:"2500M"`
-	CPULimit      resource.Quantity `env:"CPU_LIMIT"      envDefault:"2"`
 }
 
 // ScannerDefaults ...
@@ -58,7 +56,6 @@ func init() {
 			corev1.ResourceMemory: Scanner.Analyzer.MemoryRequest,
 		},
 		Limits: map[corev1.ResourceName]resource.Quantity{
-			corev1.ResourceCPU:    Scanner.Analyzer.CPULimit,
 			corev1.ResourceMemory: Scanner.Analyzer.MemoryLimit,
 		},
 	}
@@ -68,7 +65,6 @@ func init() {
 			corev1.ResourceMemory: Scanner.Db.MemoryRequest,
 		},
 		Limits: map[corev1.ResourceName]resource.Quantity{
-			corev1.ResourceCPU:    Scanner.Db.CPULimit,
 			corev1.ResourceMemory: Scanner.Db.MemoryLimit,
 		},
 	}

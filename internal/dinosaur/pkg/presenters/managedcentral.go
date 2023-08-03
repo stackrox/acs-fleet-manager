@@ -111,7 +111,6 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 							corev1.ResourceMemory.String(): orDefaultQty(scanner.Analyzer.Resources.Requests[corev1.ResourceMemory], defaults.Scanner.Analyzer.MemoryRequest).String(),
 						},
 						Limits: map[string]string{
-							corev1.ResourceCPU.String():    orDefaultQty(scanner.Analyzer.Resources.Limits[corev1.ResourceCPU], defaults.Scanner.Analyzer.CPULimit).String(),
 							corev1.ResourceMemory.String(): orDefaultQty(scanner.Analyzer.Resources.Limits[corev1.ResourceMemory], defaults.Scanner.Analyzer.MemoryLimit).String(),
 						},
 					},
@@ -124,7 +123,6 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 							corev1.ResourceMemory.String(): orDefaultQty(scanner.Db.Resources.Requests[corev1.ResourceMemory], defaults.Scanner.Db.MemoryRequest).String(),
 						},
 						Limits: map[string]string{
-							corev1.ResourceCPU.String():    orDefaultQty(scanner.Db.Resources.Limits[corev1.ResourceCPU], defaults.Scanner.Db.CPULimit).String(),
 							corev1.ResourceMemory.String(): orDefaultQty(scanner.Db.Resources.Limits[corev1.ResourceMemory], defaults.Scanner.Db.MemoryLimit).String(),
 						},
 					},
