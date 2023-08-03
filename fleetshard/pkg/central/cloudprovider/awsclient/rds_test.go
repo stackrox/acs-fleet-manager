@@ -99,8 +99,8 @@ func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, clusterID 
 }
 
 func TestRDSProvisioning(t *testing.T) {
-	if os.Getenv("RUN_RDS_TESTS") != "true" {
-		t.Skip("Skip RDS tests. Set RUN_RDS_TESTS=true env variable to enable RDS tests.")
+	if os.Getenv("RUN_AWS_INTEGRATION") != "true" {
+		t.Skip("Skip RDS tests. Set RUN_AWS_INTEGRATION=true env variable to enable RDS tests.")
 	}
 
 	rdsClient, err := newTestRDS()
@@ -179,8 +179,8 @@ func TestRDSProvisioning(t *testing.T) {
 }
 
 func TestGetDBConnection(t *testing.T) {
-	if os.Getenv("RUN_RDS_TESTS") != "true" {
-		t.Skip("Skip RDS tests. Set RUN_RDS_TESTS=true env variable to enable RDS tests.")
+	if os.Getenv("RUN_AWS_INTEGRATION") != "true" {
+		t.Skip("Skip RDS tests. Set RUN_AWS_INTEGRATION=true env variable to enable RDS tests.")
 	}
 
 	rdsClient, err := newTestRDS()
@@ -193,8 +193,8 @@ func TestGetDBConnection(t *testing.T) {
 }
 
 func TestGetAccountQuotas(t *testing.T) {
-	if os.Getenv("RUN_RDS_TESTS") != "true" {
-		t.Skip("Skip RDS tests. Set RUN_RDS_TESTS=true env variable to enable RDS tests.")
+	if os.Getenv("RUN_AWS_INTEGRATION") != "true" {
+		t.Skip("Skip RDS tests. Set RUN_AWS_INTEGRATION=true env variable to enable RDS tests.")
 	}
 
 	rdsClient, err := newTestRDS()

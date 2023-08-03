@@ -327,12 +327,13 @@ test: $(GOTESTSUM_BIN)
 		$(shell go list ./... | grep -v /test)
 .PHONY: test
 
-# Runs the AWS RDS integration tests.
-test/rds: $(GOTESTSUM_BIN)
-	RUN_RDS_TESTS=true \
-	$(GOTESTSUM_BIN) --junitfile data/results/rds-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -timeout 45m -count=1 \
-		./fleetshard/pkg/central/cloudprovider/awsclient/...
-.PHONY: test/rds
+# Runs the AWS integration tests.
+test/aws: $(GOTESTSUM_BIN)
+	RUN_AWS_INTEGRATION=true \
+	$(GOTESTSUM_BIN) --junitfile data/results/aws-integration-tests.xml --format $(GOTESTSUM_FORMAT) -- -p 1 -v -timeout 45m -count=1 \
+		./fleetshard/pkg/central/cloudprovider/awsclient/... \
+		./fleetshard/pkg/cipher/...
+.PHONY: test/aws
 
 # Runs the integration tests.
 #
