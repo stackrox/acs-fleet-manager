@@ -100,28 +100,29 @@ type CentralReconcilerOptions struct {
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client            ctrlClient.Client
-	central           private.ManagedCentral
-	status            *int32
-	lastCentralHash   [16]byte
-	useRoutes         bool
-	wantsAuthProvider bool
-	hasAuthProvider   bool
-	Resources         bool
-	routeService      *k8s.RouteService
-	secretService     *k8s.SecretService
-	secretCipher      cipher.Cipher
-	egressProxyImage  string
-	telemetry         config.Telemetry
-	clusterName       string
-	environment       string
-	auditLogging      config.AuditLogging
+	client           ctrlClient.Client
+	central          private.ManagedCentral
+	status           *int32
+	lastCentralHash  [16]byte
+	useRoutes        bool
+	Resources        bool
+	routeService     *k8s.RouteService
+	secretService    *k8s.SecretService
+	secretCipher     cipher.Cipher
+	egressProxyImage string
+	telemetry        config.Telemetry
+	clusterName      string
+	environment      string
+	auditLogging     config.AuditLogging
 
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
 	managedDBInitFunc           postgres.CentralDBInitFunc
 
-	resourcesChart         *chart.Chart
+	resourcesChart *chart.Chart
+
+	wantsAuthProvider      bool
+	hasAuthProvider        bool
 	verifyAuthProviderFunc verifyAuthProviderExistsFunc
 }
 
