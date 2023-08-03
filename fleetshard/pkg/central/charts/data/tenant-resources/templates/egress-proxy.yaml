@@ -59,12 +59,9 @@ spec:
           subPath: squid.conf
           readOnly: true
         resources:
-          limits:
-            cpu: {{ .Values.egressProxy.resources.limits.cpu | quote }}
-            memory: {{ .Values.egressProxy.resources.limits.memory | quote }}
-          requests:
-            cpu: {{ .Values.egressProxy.resources.requests.cpu | quote }}
-            memory: {{ .Values.egressProxy.resources.requests.memory | quote }}
+          {{if .Values.egressProxy.resources }}
+          {{ toYaml .Values.egressProxy.resources | nindent 12 }}
+          {{- end }}
       volumes:
       - name: config-volume
         configMap:
