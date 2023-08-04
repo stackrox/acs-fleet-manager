@@ -23,6 +23,7 @@ spec:
   template:
     metadata:
       annotations:
+        trigger-tls-rotation: {{ now | date "2006" | quote }}
         checksum/config: {{ include (print .Template.BasePath "/02-configmap.yaml") . | sha256sum }}
       {{- with .Values.annotations }}
         {{- toYaml . | nindent 8 }}
