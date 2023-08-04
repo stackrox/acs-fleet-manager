@@ -134,7 +134,6 @@ func (r *Runtime) Start() error {
 		}
 
 		if features.TargetedOperatorUpgrades.Enabled() {
-			glog.Info("Starting operator upgrades")
 			err := r.upgradeOperator(list)
 			if err != nil {
 				err = errors.Wrapf(err, "Upgrading operator")
@@ -262,8 +261,10 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	}
 
 	if reflect.DeepEqual(cachedOperatorConfigs, desiredOperatorConfigs) {
+		glog.Infof("Operators are up-to-date")
 		return nil
 	}
+	cachedOperatorConfigs = desiredOperatorConfigs
 
 	ctx := context.Background()
 
