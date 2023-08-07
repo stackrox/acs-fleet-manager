@@ -250,18 +250,21 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	var desiredOperatorConfigs []operator.DeploymentConfig
 	var desiredOperatorImages []string
+	uniqueConfigs := make(map[string]bool)
 	for _, central := range list.Items {
-		// TODO: read GitRef ManagedCentral list call
-		operatorConfiguration := operator.DeploymentConfig{
-			Image:  central.Spec.OperatorImage,
-			GitRef: "4.0.1",
+		if _, alreadyAdded := uniqueConfigs[central.Spec.OperatorImage]; !alreadyAdded {
+			uniqueConfigs[central.Spec.OperatorImage] = true
+			// TODO: read GitRef ManagedCentral list call
+			operatorConfiguration := operator.DeploymentConfig{
+				Image:  central.Spec.OperatorImage,
+				GitRef: "4.0.1",
+			}
+			desiredOperatorConfigs = append(desiredOperatorConfigs, operatorConfiguration)
+			desiredOperatorImages = append(desiredOperatorImages, central.Spec.OperatorImage)
 		}
-		desiredOperatorConfigs = append(desiredOperatorConfigs, operatorConfiguration)
-		desiredOperatorImages = append(desiredOperatorImages, central.Spec.OperatorImage)
 	}
 
 	if reflect.DeepEqual(cachedOperatorConfigs, desiredOperatorConfigs) {
-		glog.Infof("Operators are up-to-date")
 		return nil
 	}
 	cachedOperatorConfigs = desiredOperatorConfigs
