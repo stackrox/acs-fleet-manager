@@ -8,8 +8,8 @@ source "$SCRIPT_DIR/../scripts/lib/external_config.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
-    echo "Known environments: stage integration prod"
-    echo "Cluster typically looks like: acs-{environment}-dp-01"
+    echo "Known environments: integration stage prod"
+    echo "Cluster typically looks like: acs-{env}-dp-01"
     echo "Description:"
     echo "This script will create and configure a ServiceAccount for the data plane continuous deployment."
     echo "It should be safe to run this script many times, it should be idempotent."
@@ -39,12 +39,12 @@ save_cluster_secret() {
 }
 
 case $ENVIRONMENT in
-  stage)
-    EXPECT_OCM_ID="2ECw6PIE06TzjScQXe6QxMMt3Sa"
-    ;;
-
   integration)
     EXPECT_OCM_ID="2QVFzUvsbMGheHhoUDjtG0tpJ08"
+    ;;
+
+  stage)
+    EXPECT_OCM_ID="2ECw6PIE06TzjScQXe6QxMMt3Sa"
     ;;
 
   prod)

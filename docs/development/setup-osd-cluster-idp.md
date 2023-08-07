@@ -16,11 +16,11 @@ The following IdPs will be created:
 - OIDC IdP using auth.redhat.com as backend.
 
 Before executing the script that manages the IdP setup, you have to ensure you are logged in with OCM.
-Based on the environment, you have to choose between `rhacs-managed-service-stage`, `rhacs-managed-service-integration` or `rhacs-managed-service-prod` account.
+Based on the environment, you have to choose between `rhacs-managed-service-integration`, `rhacs-managed-service-stage` or `rhacs-managed-service-prod` account.
 
 Afterwards, you can call the script and adjust the parameters based on your needs:
 ```shell
-AWS_REGION=us-east-1 AWS_SAML_ROLE=<aws_account_id>-poweruser ./dp-terraform/osd-cluster-idp-setup.sh "stage|integration|prod" "cluster-name"
+AWS_REGION=us-east-1 AWS_SAML_ROLE=<aws_account_id>-poweruser ./dp-terraform/osd-cluster-idp-setup.sh "integration|stage|prod" "cluster-name"
 ```
 
 The script will handle the following:

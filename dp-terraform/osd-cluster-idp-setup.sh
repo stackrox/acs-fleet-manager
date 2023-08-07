@@ -8,8 +8,8 @@ source "$SCRIPT_DIR/../scripts/lib/external_config.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
-    echo "Known environments: stage integration prod"
-    echo "Cluster typically looks like: acs-{environment}-dp-01"
+    echo "Known environments: integration stage prod"
+    echo "Cluster typically looks like: acs-{env}-dp-01"
     echo "Description: This script will create identity providers for the OSD cluster:"
     echo "- OIDC provider using auth.redhat.com"
     echo "See additional documentation in docs/development/setup-osd-cluster-idp.md"
@@ -54,12 +54,12 @@ setup_oidc_provider() {
 }
 
 case $ENVIRONMENT in
-  stage)
-    EXPECT_OCM_ID="2ECw6PIE06TzjScQXe6QxMMt3Sa"
-    ;;
-
   integration)
     EXPECT_OCM_ID="2QVFzUvsbMGheHhoUDjtG0tpJ08"
+    ;;
+
+  stage)
+    EXPECT_OCM_ID="2ECw6PIE06TzjScQXe6QxMMt3Sa"
     ;;
 
   prod)

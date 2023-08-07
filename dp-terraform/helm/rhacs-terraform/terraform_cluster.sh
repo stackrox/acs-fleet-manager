@@ -10,8 +10,8 @@ source "$SCRIPT_DIR/../../../scripts/lib/helm.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
-    echo "Known environments: stage prod"
-    echo "Cluster typically looks like: acs-{environment}-dp-01"
+    echo "Known environments: integration stage prod"
+    echo "Cluster typically looks like: acs-{env}-dp-01"
     exit 2
 fi
 
@@ -57,7 +57,7 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
-    SECURED_CLUSTER_ENABLED="true"
+    SECURED_CLUSTER_ENABLED="false"  # TODO(ROX-18908): enable
     ;;
 
   stage)
