@@ -12,10 +12,8 @@ import (
 )
 
 const (
-	// EnvProd is the expected value of the environment variable "ENVIRONMENT" for prod deployments of fleetshard-sync
-	EnvProd = "prod"
-	// EnvStage is the expected value of the environment variable "ENVIRONMENT" for stage deployments of fleetshard-sync
-	EnvStage = "stage"
+	// EnvDev is the expected value of the environment variable "ENVIRONMENT" for dev deployments of fleetshard-sync
+	EnvDev = "dev"
 )
 
 // Config contains this application's runtime configuration.
@@ -126,5 +124,5 @@ func validateSecretEncryptionConfig(c Config, configErrors *errorhelpers.ErrorLi
 }
 
 func isDevEnvironment(c Config) bool {
-	return c.Environment != EnvProd && c.Environment != EnvStage
+	return c.Environment == EnvDev || c.Environment == ""
 }
