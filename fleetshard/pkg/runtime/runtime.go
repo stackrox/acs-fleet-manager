@@ -4,6 +4,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/golang/glog"
@@ -33,6 +34,8 @@ import (
 type reconcilerRegistry map[string]*centralReconciler.CentralReconciler
 
 var reconciledCentralCountCache int32
+
+var cachedOperatorConfigs []operator.DeploymentConfig
 
 var backoff = wait.Backoff{
 	Duration: 1 * time.Second,
@@ -132,7 +135,6 @@ func (r *Runtime) Start() error {
 		}
 
 		if features.TargetedOperatorUpgrades.Enabled() {
-			glog.Info("Starting operator upgrades")
 			err := r.upgradeOperator(list)
 			if err != nil {
 				err = errors.Wrapf(err, "Upgrading operator")
@@ -247,27 +249,36 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 }
 
 func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
-	var desiredOperators []operator.DeploymentConfig
+	var desiredOperatorConfigs []operator.DeploymentConfig
 	var desiredOperatorImages []string
+	uniqueConfigs := make(map[string]bool)
 	for _, central := range list.Items {
-		// TODO: read GitRef ManagedCentral list call
-		operatorConfiguration := operator.DeploymentConfig{
-			Image:  central.Spec.OperatorImage,
-			GitRef: "4.0.1",
+		if _, alreadyAdded := uniqueConfigs[central.Spec.OperatorImage]; !alreadyAdded {
+			uniqueConfigs[central.Spec.OperatorImage] = true
+			// TODO: read GitRef ManagedCentral list call
+			operatorConfiguration := operator.DeploymentConfig{
+				Image:  central.Spec.OperatorImage,
+				GitRef: "4.0.1",
+			}
+			desiredOperatorConfigs = append(desiredOperatorConfigs, operatorConfiguration)
+			desiredOperatorImages = append(desiredOperatorImages, central.Spec.OperatorImage)
 		}
-		desiredOperators = append(desiredOperators, operatorConfiguration)
-		desiredOperatorImages = append(desiredOperatorImages, central.Spec.OperatorImage)
 	}
+
+	if reflect.DeepEqual(cachedOperatorConfigs, desiredOperatorConfigs) {
+		return nil
+	}
+	cachedOperatorConfigs = desiredOperatorConfigs
 
 	ctx := context.Background()
 
-	for _, operatorDeployment := range desiredOperators {
+	for _, operatorDeployment := range desiredOperatorConfigs {
 		glog.Infof("Installing Operator version: %s", operatorDeployment.GitRef)
 	}
 
 	//TODO(ROX-15080): Download CRD on operator upgrades to always install the latest CRD
 	crdTag := "4.0.1"
-	err := r.operatorManager.InstallOrUpgrade(ctx, desiredOperators, crdTag)
+	err := r.operatorManager.InstallOrUpgrade(ctx, desiredOperatorConfigs, crdTag)
 	if err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
 	}
