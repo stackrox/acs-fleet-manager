@@ -2,7 +2,6 @@ package operator
 
 import (
 	"fmt"
-	"github.com/docker/distribution/reference"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"sigs.k8s.io/yaml"
@@ -27,17 +26,6 @@ func GetConfig() OperatorConfigs {
 // Validate validates the operator configuration and can be used in different life-cycle stages like runtime and deploy time.
 func Validate(configs OperatorConfigs) []error {
 	var errors []error
-	for _, config := range configs.Configs {
-		// GitRef is used as a value for label selector, therefore only 63 chars are allowed
-		if len(config.GitRef) > 63 {
-			errors = append(errors, fmt.Errorf("%s: GitRef exceeds 63 chars", config.Image))
-		}
-
-		if _, err := reference.Parse(config.Image); err != nil {
-			errors = append(errors, fmt.Errorf("%s: invalid image: %s", config.Image, err.Error()))
-		}
-	}
-
 	manager := ACSOperatorManager{
 		// TODO: align config URL with fleetshard-sync default
 		DefaultBaseCRDURL: "https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/",

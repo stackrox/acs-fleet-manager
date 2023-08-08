@@ -91,7 +91,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		}
 	}
 
-	operatorManager := operator.NewACSOperatorManager(k8sClient, config.DefaultBaseCrdURL)
+	operatorManager := operator.NewACSOperatorManager(k8sClient, config.DefaultBaseCRDURL)
 
 	return &Runtime{
 		config:            config,

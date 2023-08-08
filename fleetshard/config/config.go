@@ -27,8 +27,8 @@ type Config struct {
 	StaticToken          string        `env:"STATIC_TOKEN"`
 	CreateAuthProvider   bool          `env:"CREATE_AUTH_PROVIDER" envDefault:"false"`
 	MetricsAddress       string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
-	EgressProxyImage     string        `env:"EGRESS_PROXY_IMAGE"`
-	DefaultBaseCrdURL    string        `env:"DEFAULT_BASE_CRD_URL" envDefault:"https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"`
+	EgressProxyImage  string `env:"EGRESS_PROXY_IMAGE"`
+	DefaultBaseCRDURL string `env:"DEFAULT_BASE_CRD_URL" envDefault:"https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"`
 
 	ManagedDB    ManagedDB
 	Telemetry    Telemetry
