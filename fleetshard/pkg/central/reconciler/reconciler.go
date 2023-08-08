@@ -173,6 +173,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
+	if remoteCentral.Metadata.SecretsStored {
+		r.reconcileCentralSecrets(ctx, remoteCentral)
+	}
+
 	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
 		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
 	}
@@ -379,6 +383,10 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	}
 
 	return central, nil
+}
+
+func (r *CentralReconciler) reconcileCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	return errors.New("TODO: not implemented")
 }
 
 func (r *CentralReconciler) reconcileAdminPasswordGeneration(central *v1alpha1.Central) error {
