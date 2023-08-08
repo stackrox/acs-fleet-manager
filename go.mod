@@ -12,6 +12,7 @@ require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/containers/image v3.0.2+incompatible
 	github.com/coreos/go-oidc/v3 v3.6.0
+	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.20.0
 	github.com/ghodss/yaml v1.0.0
@@ -90,7 +91,6 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v23.0.5+incompatible // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
