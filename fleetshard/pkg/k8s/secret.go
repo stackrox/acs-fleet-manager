@@ -3,6 +3,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -29,6 +30,14 @@ type SecretService struct {
 // NewSecretService creates a new instance of SecretService.
 func NewSecretService(client ctrlClient.Client) *SecretService {
 	return &SecretService{client: client}
+}
+
+// GetWatchedSecrets return a sorted list of secrets watched by this package
+func GetWatchedSecrets() []string {
+	secrets := make([]string, len(secretsToWatch))
+	copy(secrets, secretsToWatch)
+	sort.Strings(secrets)
+	return secrets
 }
 
 // CollectSecrets return a map of secret name to secret object for all secrets

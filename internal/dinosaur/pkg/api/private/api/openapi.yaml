@@ -418,7 +418,9 @@ components:
         deletionTimestamp:
           type: string
         secretsStored:
-          type: boolean
+          items:
+            type: string
+          type: array
     ManagedCentral_allOf_spec_auth:
       properties:
         clientSecret:
