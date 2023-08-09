@@ -272,7 +272,8 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	}
 	cachedOperatorConfigs = operators
 
-	//err = r.operatorManager.InstallOrUpgrade(ctx, operator.FromAPIResponse(list.RhacsOperators))
+	// TODO: comment line in to use the API response for production usage after Fleet-Manager implementation is finished
+	// err = r.operatorManager.InstallOrUpgrade(ctx, operator.FromAPIResponse(list.RhacsOperators))
 	err := r.operatorManager.InstallOrUpgrade(ctx, operators)
 	if err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
