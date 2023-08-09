@@ -32,7 +32,6 @@ func Validate(configs OperatorConfigs) []error {
 	}
 
 	// TODO: how to run this locally with the same config as fleet-manager?
-	// TODO: validate helm chart
 	manifests, err := manager.RenderChart(configs)
 	if err != nil {
 		errors = append(errors, fmt.Errorf("could not render operator helm charts, got invalid configuration: %s", err.Error()))
