@@ -10,18 +10,21 @@ import (
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
+	"html/template"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/validation"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 const (
-	operatorNamespace        = "rhacs"
-	releaseName              = "rhacs-operator"
-	operatorDeploymentPrefix = "rhacs-operator"
+	operatorNamespace         = "rhacs"
+	releaseName               = "rhacs-operator"
+	operatorDeploymentPrefix  = "rhacs-operator"
+	defaultCRDBaseURLTemplate = "https://raw.githubusercontent.com/stackrox/stackrox/{{ .GitRef }}/operator/bundle/manifests/"
 )
 
 func parseOperatorConfigs(operators OperatorConfigs) ([]chartutil.Values, error) {
@@ -62,9 +65,8 @@ func parseOperatorConfigs(operators OperatorConfigs) ([]chartutil.Values, error)
 
 // ACSOperatorManager keeps data necessary for managing ACS Operator
 type ACSOperatorManager struct {
-	client            ctrlClient.Client
-	DefaultBaseCRDURL string
-	resourcesChart    *chart.Chart
+	client         ctrlClient.Client
+	resourcesChart *chart.Chart
 }
 
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
@@ -106,7 +108,10 @@ func (u *ACSOperatorManager) RenderChart(operators OperatorConfigs) ([]*unstruct
 
 	var dynamicTemplatesUrls []string
 	if operators.CRD.GitRef != "" {
-		dynamicTemplatesUrls = u.generateCRDTemplateUrls(operators.CRD)
+		dynamicTemplatesUrls, err = u.generateCRDTemplateUrls(operators.CRD)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	u.resourcesChart = charts.MustGetChart("rhacs-operator", dynamicTemplatesUrls)
@@ -181,21 +186,36 @@ func generateDeploymentName(version string) string {
 	return operatorDeploymentPrefix + "-" + version
 }
 
-func (u *ACSOperatorManager) generateCRDTemplateUrls(crdConfig CRDConfig) []string {
-	baseURL := u.DefaultBaseCRDURL
+func (u *ACSOperatorManager) generateCRDTemplateUrls(crdConfig CRDConfig) ([]string, error) {
+	baseURL := defaultCRDBaseURLTemplate
 	if crdConfig.BaseURL != "" {
 		baseURL = crdConfig.BaseURL
 	}
-	stackroxWithTag := fmt.Sprintf(baseURL, crdConfig.GitRef)
-	centralCrdURL := stackroxWithTag + "platform.stackrox.io_centrals.yaml"
-	securedClusterCrdURL := stackroxWithTag + "platform.stackrox.io_securedclusters.yaml"
-	return []string{centralCrdURL, securedClusterCrdURL}
+
+	wr := new(strings.Builder)
+	crdURLTpl, err := template.New("crd_base_url").Parse(baseURL)
+	if err != nil {
+		return []string{}, fmt.Errorf("could not parse CRD base URL: %w", err)
+	}
+
+	err = crdURLTpl.Execute(wr, struct {
+		GitRef string
+	}{
+		GitRef: crdConfig.GitRef,
+	})
+	if err != nil {
+		return []string{}, fmt.Errorf("could not parse CRD base URL: %w", err)
+	}
+
+	//stackroxWithTag := fmt.Sprintf(baseURL, crdConfig.GitRef)
+	centralCrdURL := wr.String() + "platform.stackrox.io_centrals.yaml"
+	securedClusterCrdURL := wr.String() + "platform.stackrox.io_securedclusters.yaml"
+	return []string{centralCrdURL, securedClusterCrdURL}, nil
 }
 
 // NewACSOperatorManager creates a new ACS Operator Manager
-func NewACSOperatorManager(k8sClient ctrlClient.Client, baseCrdURL string) *ACSOperatorManager {
+func NewACSOperatorManager(k8sClient ctrlClient.Client) *ACSOperatorManager {
 	return &ACSOperatorManager{
-		client:            k8sClient,
-		DefaultBaseCRDURL: baseCrdURL,
+		client: k8sClient,
 	}
 }

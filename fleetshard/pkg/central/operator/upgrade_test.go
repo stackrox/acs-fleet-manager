@@ -120,7 +120,7 @@ func getExampleOperatorConfigs(configs ...OperatorConfig) OperatorConfigs {
 
 func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	u := NewACSOperatorManager(fakeClient, crdURL)
+	u := NewACSOperatorManager(fakeClient)
 
 	err := u.InstallOrUpgrade(context.Background(), getExampleOperatorConfigs(operatorConfig1))
 	require.NoError(t, err)
@@ -164,7 +164,7 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 
 func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	u := NewACSOperatorManager(fakeClient, crdURL)
+	u := NewACSOperatorManager(fakeClient)
 
 	err := u.InstallOrUpgrade(context.Background(), getExampleOperatorConfigs(operatorConfig1, operatorConfig2))
 	require.NoError(t, err)
@@ -182,7 +182,7 @@ func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 
 func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	u := NewACSOperatorManager(fakeClient, crdURL)
+	u := NewACSOperatorManager(fakeClient)
 
 	longVersionName := "4.0.1-with-ridiculously-long-version-name-like-really-long-one-which-has-more-than-63-characters"
 	operatorConfig := OperatorConfig{
@@ -201,7 +201,7 @@ func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
 
 func TestOperatorUpgradeImageWithDigest(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	u := NewACSOperatorManager(fakeClient, crdURL)
+	u := NewACSOperatorManager(fakeClient)
 
 	digestedImage := "quay.io/rhacs-eng/stackrox-operator:4.0.1@sha256:232a180dbcbcfa7250917507f3827d88a9ae89bb1cdd8fe3ac4db7b764ebb25a"
 	operatorConfig := OperatorConfig{
@@ -220,7 +220,7 @@ func TestOperatorUpgradeImageWithDigest(t *testing.T) {
 
 func TestRemoveUnusedEmpty(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	u := NewACSOperatorManager(fakeClient, crdURL)
+	u := NewACSOperatorManager(fakeClient)
 	ctx := context.Background()
 
 	err := u.RemoveUnusedOperators(ctx, []string{})
@@ -229,7 +229,7 @@ func TestRemoveUnusedEmpty(t *testing.T) {
 
 func TestRemoveOneUnusedOperator(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, operatorDeployment1, serviceAccount).Build()
-	u := NewACSOperatorManager(fakeClient, crdURL)
+	u := NewACSOperatorManager(fakeClient)
 	ctx := context.Background()
 
 	err := fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
@@ -248,7 +248,7 @@ func TestRemoveOneUnusedOperator(t *testing.T) {
 
 func TestRemoveOneUnusedOperatorFromMany(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, operatorDeployment1, operatorDeployment2, serviceAccount).Build()
-	u := NewACSOperatorManager(fakeClient, crdURL)
+	u := NewACSOperatorManager(fakeClient)
 	ctx := context.Background()
 
 	err := u.RemoveUnusedOperators(ctx, []string{operatorImage2})
@@ -273,7 +273,7 @@ func TestRemoveOneUnusedOperatorFromMany(t *testing.T) {
 
 func TestRemoveMultipleUnusedOperators(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t, operatorDeployment1, operatorDeployment2, serviceAccount).Build()
-	u := NewACSOperatorManager(fakeClient, crdURL)
+	u := NewACSOperatorManager(fakeClient)
 	ctx := context.Background()
 
 	err := u.RemoveUnusedOperators(ctx, []string{})

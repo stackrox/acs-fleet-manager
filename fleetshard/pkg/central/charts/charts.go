@@ -5,6 +5,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"github.com/stackrox/rox/pkg/httputil"
 	"io"
 	"io/fs"
 	"net/http"
@@ -73,6 +74,10 @@ func downloadTemplate(url string) (*loader.BufferedFile, error) {
 		return nil, fmt.Errorf("failed Get for %s: %w", url, err)
 	}
 	defer resp.Body.Close()
+
+	if !httputil.Is2xxStatusCode(resp.StatusCode) {
+		return nil, fmt.Errorf("received bad status code: %d", resp.StatusCode)
+	}
 
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {

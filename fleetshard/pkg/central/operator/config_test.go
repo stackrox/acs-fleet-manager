@@ -9,7 +9,7 @@ import (
 func getExampleConfig() []byte {
 	return []byte(`
 crd:
-  baseURL: https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/
+  baseURL: https://raw.githubusercontent.com/stackrox/stackrox/{{ .GitRef }}/operator/bundle/manifests/
   gitRef: 4.1.1
 operators:
 - gitRef: 4.1.1

@@ -26,12 +26,7 @@ func GetConfig() OperatorConfigs {
 // Validate validates the operator configuration and can be used in different life-cycle stages like runtime and deploy time.
 func Validate(configs OperatorConfigs) []error {
 	var errors []error
-	manager := ACSOperatorManager{
-		// TODO: align config URL with fleetshard-sync default
-		DefaultBaseCRDURL: "https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/",
-	}
-
-	// TODO: how to run this locally with the same config as fleet-manager?
+	manager := ACSOperatorManager{}
 	manifests, err := manager.RenderChart(configs)
 	if err != nil {
 		errors = append(errors, fmt.Errorf("could not render operator helm charts, got invalid configuration: %s", err.Error()))
