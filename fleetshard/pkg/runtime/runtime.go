@@ -261,16 +261,27 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 				GitRef: "4.0.1",
 			}
 			desiredOperatorConfigs = append(desiredOperatorConfigs, operatorConfiguration)
-			desiredOperatorImages = append(desiredOperatorImages, central.Spec.OperatorImage)
 		}
+	}
+	ctx := context.Background()
+
+	if features.UseOperatorsConfigMap.Enabled() {
+		configMapOperators, err := r.operatorManager.ReadOperatorConfigurationFromConfigMap(ctx)
+		if err != nil {
+			glog.Warningf("Failed reading operators configMap: %v", err)
+		}
+
+		desiredOperatorConfigs = configMapOperators
+	}
+
+	for _, operatorConfig := range desiredOperatorConfigs {
+		desiredOperatorImages = append(desiredOperatorImages, operatorConfig.Image)
 	}
 
 	if reflect.DeepEqual(cachedOperatorConfigs, desiredOperatorConfigs) {
 		return nil
 	}
 	cachedOperatorConfigs = desiredOperatorConfigs
-
-	ctx := context.Background()
 
 	for _, operatorDeployment := range desiredOperatorConfigs {
 		glog.Infof("Installing Operator version: %s", operatorDeployment.GitRef)

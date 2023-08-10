@@ -7,9 +7,11 @@ import (
 	containerImage "github.com/containers/image/docker/reference"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"golang.org/x/exp/slices"
+	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -17,7 +19,10 @@ import (
 )
 
 const (
-	operatorNamespace        = "rhacs"
+	// ACSOperatorNamespace default Operator Namespace
+	ACSOperatorNamespace = "rhacs"
+	// ACSOperatorConfigMap name for configMap with operator deployment configurations
+	ACSOperatorConfigMap     = "operator-config"
 	releaseName              = "rhacs-operator"
 	operatorDeploymentPrefix = "rhacs-operator"
 )
@@ -85,14 +90,14 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, operators []D
 	}
 
 	u.resourcesChart = charts.MustGetChart("rhacs-operator", dynamicTemplatesUrls)
-	objs, err := charts.RenderToObjects(releaseName, operatorNamespace, u.resourcesChart, chartVals)
+	objs, err := charts.RenderToObjects(releaseName, ACSOperatorNamespace, u.resourcesChart, chartVals)
 	if err != nil {
 		return fmt.Errorf("failed rendering operator chart: %w", err)
 	}
 
 	for _, obj := range objs {
 		if obj.GetNamespace() == "" {
-			obj.SetNamespace(operatorNamespace)
+			obj.SetNamespace(ACSOperatorNamespace)
 		}
 		err := charts.InstallOrUpdateChart(ctx, obj, u.client)
 		if err != nil {
@@ -109,7 +114,7 @@ func (u *ACSOperatorManager) ListVersionsWithReplicas(ctx context.Context) (map[
 	deployments := &appsv1.DeploymentList{}
 	labels := map[string]string{"app": "rhacs-operator"}
 	err := u.client.List(ctx, deployments,
-		ctrlClient.InNamespace(operatorNamespace),
+		ctrlClient.InNamespace(ACSOperatorNamespace),
 		ctrlClient.MatchingLabels(labels),
 	)
 	if err != nil {
@@ -133,7 +138,7 @@ func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredI
 	deployments := &appsv1.DeploymentList{}
 	labels := map[string]string{"app": "rhacs-operator"}
 	err := u.client.List(ctx, deployments,
-		ctrlClient.InNamespace(operatorNamespace),
+		ctrlClient.InNamespace(ACSOperatorNamespace),
 		ctrlClient.MatchingLabels(labels),
 	)
 	if err != nil {
@@ -151,7 +156,7 @@ func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredI
 
 	for _, deploymentName := range unusedDeployments {
 		deployment := &appsv1.Deployment{}
-		err := u.client.Get(ctx, ctrlClient.ObjectKey{Namespace: operatorNamespace, Name: deploymentName}, deployment)
+		err := u.client.Get(ctx, ctrlClient.ObjectKey{Namespace: ACSOperatorNamespace, Name: deploymentName}, deployment)
 		if err != nil && !errors.IsNotFound(err) {
 			return fmt.Errorf("retrieving operator deployment %s: %w", deploymentName, err)
 		}
@@ -162,6 +167,26 @@ func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredI
 	}
 
 	return nil
+}
+
+// ReadOperatorConfigurationFromConfigMap reads Operator deployment configuration from ConfigMap
+func (u *ACSOperatorManager) ReadOperatorConfigurationFromConfigMap(ctx context.Context) ([]DeploymentConfig, error) {
+	configMap := &v1.ConfigMap{}
+
+	err := u.client.Get(ctx, ctrlClient.ObjectKey{Name: ACSOperatorConfigMap, Namespace: "acsms"}, configMap)
+	if err != nil {
+		return nil, fmt.Errorf("retrieving operators configMap: %v", err)
+	}
+
+	operatorsConfigYAML := configMap.Data["operator-config.yaml"]
+	var configMapOperators []DeploymentConfig
+
+	err = yaml.Unmarshal([]byte(operatorsConfigYAML), &configMapOperators)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling operators configMap: %v", err)
+	}
+
+	return configMapOperators, nil
 }
 
 func generateDeploymentName(version string) string {
