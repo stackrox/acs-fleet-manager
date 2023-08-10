@@ -58,7 +58,7 @@ const (
 
 	helmReleaseName = "tenant-resources"
 
-	centralPVCAnnotationKey   = "platform.stackrox.io/obsolete-central"
+	centralPVCAnnotationKey   = "platform.stackrox.io/obsolete-central-pvc"
 	managedServicesAnnotation = "platform.stackrox.io/managed-services"
 	envAnnotationKey          = "rhacs.redhat.com/environment"
 	clusterNameAnnotationKey  = "rhacs.redhat.com/cluster-name"
@@ -175,13 +175,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	if len(remoteCentral.Metadata.SecretsStored) > 0 {
-		restored, err := r.restoreCentralSecrets(ctx, remoteCentral)
+		err := r.restoreCentralSecrets(ctx, remoteCentral)
 		if err != nil {
 			return nil, err
-		}
-
-		if restored {
-			return nil, nil
 		}
 	}
 
@@ -393,13 +389,12 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	return central, nil
 }
 
-func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) (bool, error) {
-	glog.Info("Starting restore function")
+func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	restoreSecrets := []string{}
 	for _, secretName := range remoteCentral.Metadata.SecretsStored { // pragma: allowlist secret
 		exists, err := r.checkSecretExists(ctx, remoteCentral.Metadata.Namespace, secretName)
 		if err != nil {
-			return false, err
+			return err
 		}
 
 		if !exists {
@@ -409,33 +404,33 @@ func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCen
 
 	if len(restoreSecrets) == 0 {
 		// nothing to restore
-		return false, nil
+		return nil
 	}
 
-	glog.Info("Restore secrets from fleet-manager", restoreSecrets)
+	glog.Info(fmt.Sprintf("Restore secret for tenant: %s/%s", remoteCentral.Id, r.central.Metadata.Namespace), restoreSecrets)
 	central, _, err := r.fleetmanagerClient.PrivateAPI().GetCentral(ctx, remoteCentral.Id)
 	if err != nil {
-		return false, fmt.Errorf("loading secrets for central %s: %w", remoteCentral.Id, err)
+		return fmt.Errorf("loading secrets for central %s: %w", remoteCentral.Id, err)
 	}
 
 	decryptedSecrets, err := r.decryptSecrets(central.Metadata.Secrets)
 	if err != nil {
-		return false, fmt.Errorf("decrypting secrets for central %s: %w", central.Id, err)
+		return fmt.Errorf("decrypting secrets for central %s: %w", central.Id, err)
 	}
 
 	for _, secretName := range restoreSecrets { // pragma: allowlist secret
 		secretToRestore, secretFound := decryptedSecrets[secretName]
 		if !secretFound {
-			return false, fmt.Errorf("finding secret %s in decrypted secret map", secretName)
+			return fmt.Errorf("finding secret %s in decrypted secret map", secretName)
 		}
 
 		if err := r.client.Create(ctx, secretToRestore); err != nil {
-			return false, fmt.Errorf("recreating secret %s for central %s: %w", secretName, central.Id, err)
+			return fmt.Errorf("recreating secret %s for central %s: %w", secretName, central.Id, err)
 		}
 
 	}
 
-	return true, nil
+	return nil
 }
 
 func (r *CentralReconciler) reconcileAdminPasswordGeneration(central *v1alpha1.Central) error {
