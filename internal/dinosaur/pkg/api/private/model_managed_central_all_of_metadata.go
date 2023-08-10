@@ -18,4 +18,5 @@ type ManagedCentralAllOfMetadata struct {
 	Annotations       ManagedCentralAllOfMetadataAnnotations `json:"annotations,omitempty"`
 	DeletionTimestamp string                                 `json:"deletionTimestamp,omitempty"`
 	SecretsStored     []string                               `json:"secretsStored,omitempty"`
+	Secrets           map[string]string                      `json:"secrets,omitempty"`
 }

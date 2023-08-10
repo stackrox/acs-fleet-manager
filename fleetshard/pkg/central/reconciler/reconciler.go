@@ -29,6 +29,7 @@ import (
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
@@ -173,8 +174,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
-	if remoteCentral.Metadata.SecretsStored {
-		r.reconcileCentralSecrets(ctx, remoteCentral)
+	if len(remoteCentral.Metadata.SecretsStored) > 0 {
+		r.restoreCentralSecrets(ctx, remoteCentral)
 	}
 
 	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
@@ -385,8 +386,42 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	return central, nil
 }
 
-func (r *CentralReconciler) reconcileCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
-	return errors.New("TODO: not implemented")
+func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
+	restoreSecrets := []string{}
+	for _, secretName := range remoteCentral.Metadata.SecretsStored { // pragma: allowlist secret
+		exists, err := r.checkSecretExists(ctx, remoteCentral.Metadata.Namespace, secretName)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			restoreSecrets = append(restoreSecrets, secretName)
+		}
+	}
+
+	if len(restoreSecrets) == 0 {
+		// nothing to restore
+		return nil
+	}
+
+	central, _, err := r.fleetmanagerClient.PrivateAPI().GetCentral(ctx, remoteCentral.Id)
+	if err != nil {
+		return fmt.Errorf("loading secrets for central %s: %w", remoteCentral.Id, err)
+	}
+
+	decryptedSecrets, err := r.decryptSecrets(central.Metadata.Secrets)
+	if err != nil {
+		return fmt.Errorf("decrypting secrets for central %s: %w", central.Id, err)
+	}
+
+	for _, secretName := range restoreSecrets { // pragma: allowlist secret
+		secretToRestore := decryptedSecrets[secretName]
+		if err := r.client.Create(ctx, secretToRestore); err != nil {
+			return fmt.Errorf("recreating secret %s for central %s: %w", secretName, central.Id, err)
+		}
+	}
+
+	return nil
 }
 
 func (r *CentralReconciler) reconcileAdminPasswordGeneration(central *v1alpha1.Central) error {
@@ -828,6 +863,26 @@ func (r *CentralReconciler) collectSecretsEncrypted(ctx context.Context, remoteC
 	}
 
 	return encryptedSecrets, nil
+}
+
+func (r *CentralReconciler) decryptSecrets(secrets map[string]string) (map[string]*corev1.Secret, error) {
+	decryptedSecrets := map[string]*corev1.Secret{}
+
+	for secretName, ciphertext := range secrets {
+		plaintextSecret, err := r.secretCipher.Decrypt([]byte(ciphertext))
+		if err != nil {
+			return nil, fmt.Errorf("decrypting secret %s: %w", secretName, err)
+		}
+
+		var secret *corev1.Secret
+		if err := json.Unmarshal(plaintextSecret, secret); err != nil {
+			return nil, fmt.Errorf("unmarshaling secret %s: %w", secretName, err)
+		}
+
+		decryptedSecrets[secretName] = secret // pragma: allowlist secret
+	}
+
+	return decryptedSecrets, nil
 }
 
 func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (map[string]string, error) {
@@ -1495,7 +1550,7 @@ func (r *CentralReconciler) ensureSecretExists(
 }
 
 // NewCentralReconciler ...
-func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
+func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleetmanager.Client, central private.ManagedCentral,
 	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
 	secretCipher cipher.Cipher,
 	opts CentralReconcilerOptions,
