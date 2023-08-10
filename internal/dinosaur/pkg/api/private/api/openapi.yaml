@@ -139,7 +139,7 @@ paths:
           description: Auth token is not valid.
       security:
       - Bearer: []
-      summary: Get the list of ManagedaCentrals for the specified agent cluster
+      summary: Get the list of ManagedCentrals for the specified agent cluster
       tags:
       - Agent Clusters
   /api/rhacs/v1/agent-clusters/{id}:
@@ -500,6 +500,8 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner_db'
     ManagedCentral_allOf_spec:
       properties:
+        centralYAML:
+          type: string
         owners:
           items:
             type: string

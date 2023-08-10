@@ -5,27 +5,27 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
-
-	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 )
 
 type dataPlaneDinosaurHandler struct {
-	service         services.DataPlaneCentralService
-	dinosaurService services.DinosaurService
-	presenter       *presenters.ManagedCentralPresenter
+	service   services.DataPlaneCentralService
+	presenter *presenters.ManagedCentralPresenter
 }
 
 // NewDataPlaneDinosaurHandler ...
-func NewDataPlaneDinosaurHandler(service services.DataPlaneCentralService, dinosaurService services.DinosaurService, presenter *presenters.ManagedCentralPresenter) *dataPlaneDinosaurHandler {
+func NewDataPlaneDinosaurHandler(
+	service services.DataPlaneCentralService,
+	presenter *presenters.ManagedCentralPresenter,
+) *dataPlaneDinosaurHandler {
 	return &dataPlaneDinosaurHandler{
-		service:         service,
-		dinosaurService: dinosaurService,
-		presenter:       presenter,
+		service:   service,
+		presenter: presenter,
 	}
 }
 
@@ -56,7 +56,7 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 			handlers.ValidateLength(&clusterID, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			centralRequests, err := h.dinosaurService.ListByClusterID(clusterID)
+			centralRequests, err := h.service.ListByClusterID(clusterID)
 			if err != nil {
 				return nil, err
 			}
@@ -72,7 +72,10 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 			}
 
 			for i := range centralRequests {
-				converted := h.presenter.PresentManagedCentral(centralRequests[i])
+				converted, err := h.presenter.PresentManagedCentral(centralRequests[i])
+				if err != nil {
+					return nil, errors.GeneralError("failed to convert central request to managed central: %v", err)
+				}
 				managedDinosaurList.Items = append(managedDinosaurList.Items, converted)
 			}
 			return managedDinosaurList, nil

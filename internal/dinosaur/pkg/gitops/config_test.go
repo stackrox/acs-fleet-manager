@@ -24,9 +24,9 @@ func TestValidateGitOpsConfig(t *testing.T) {
 			},
 			yaml: `
 centrals:
-  default: {}
   overrides:
-  - instanceId: id1
+  - instanceIds:
+    - id1
     patch: |
       {}`,
 		}, {
@@ -37,7 +37,6 @@ centrals:
 			},
 			yaml: `
 centrals:
-  default: {}
   overrides:
   - instanceIds:
     - id1
@@ -51,7 +50,6 @@ centrals:
 			},
 			yaml: `
 centrals:
-  default: {}
   overrides:
   - instanceIds:
     - id1

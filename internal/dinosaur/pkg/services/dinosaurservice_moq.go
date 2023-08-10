@@ -64,9 +64,6 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *serviceError.ServiceError) {
 //				panic("mock out the List method")
 //			},
-//			ListByClusterIDFunc: func(clusterID string) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
-//				panic("mock out the ListByClusterID method")
-//			},
 //			ListByStatusFunc: func(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the ListByStatus method")
 //			},
@@ -142,9 +139,6 @@ type DinosaurServiceMock struct {
 
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *serviceError.ServiceError)
-
-	// ListByClusterIDFunc mocks the ListByClusterID method.
-	ListByClusterIDFunc func(clusterID string) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
 
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
@@ -249,11 +243,6 @@ type DinosaurServiceMock struct {
 			// ListArgs is the listArgs argument value.
 			ListArgs *services.ListArguments
 		}
-		// ListByClusterID holds details about calls to the ListByClusterID method.
-		ListByClusterID []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-		}
 		// ListByStatus holds details about calls to the ListByStatus method.
 		ListByStatus []struct {
 			// Status is the status argument value.
@@ -322,7 +311,6 @@ type DinosaurServiceMock struct {
 	lockGetCNAMERecordStatus              sync.RWMutex
 	lockHasAvailableCapacityInRegion      sync.RWMutex
 	lockList                              sync.RWMutex
-	lockListByClusterID                   sync.RWMutex
 	lockListByStatus                      sync.RWMutex
 	lockListCentralsWithoutAuthConfig     sync.RWMutex
 	lockListDinosaursWithRoutesNotCreated sync.RWMutex
@@ -759,38 +747,6 @@ func (mock *DinosaurServiceMock) ListCalls() []struct {
 	mock.lockList.RLock()
 	calls = mock.calls.List
 	mock.lockList.RUnlock()
-	return calls
-}
-
-// ListByClusterID calls ListByClusterIDFunc.
-func (mock *DinosaurServiceMock) ListByClusterID(clusterID string) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
-	if mock.ListByClusterIDFunc == nil {
-		panic("DinosaurServiceMock.ListByClusterIDFunc: method is nil but DinosaurService.ListByClusterID was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-	}{
-		ClusterID: clusterID,
-	}
-	mock.lockListByClusterID.Lock()
-	mock.calls.ListByClusterID = append(mock.calls.ListByClusterID, callInfo)
-	mock.lockListByClusterID.Unlock()
-	return mock.ListByClusterIDFunc(clusterID)
-}
-
-// ListByClusterIDCalls gets all the calls that were made to ListByClusterID.
-// Check the length with:
-//
-//	len(mockedDinosaurService.ListByClusterIDCalls())
-func (mock *DinosaurServiceMock) ListByClusterIDCalls() []struct {
-	ClusterID string
-} {
-	var calls []struct {
-		ClusterID string
-	}
-	mock.lockListByClusterID.RLock()
-	calls = mock.calls.ListByClusterID
-	mock.lockListByClusterID.RUnlock()
 	return calls
 }
 

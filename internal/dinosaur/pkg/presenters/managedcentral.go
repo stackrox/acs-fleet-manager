@@ -2,6 +2,9 @@ package presenters
 
 import (
 	"encoding/json"
+	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
+	"sigs.k8s.io/yaml"
 	"time"
 
 	"github.com/golang/glog"
@@ -16,15 +19,19 @@ import (
 // ManagedCentralPresenter helper service which converts Central DB representation to the private API representation
 type ManagedCentralPresenter struct {
 	centralConfig *config.CentralConfig
+	gitopsService gitops.Service
 }
 
 // NewManagedCentralPresenter creates a new instance of ManagedCentralPresenter
-func NewManagedCentralPresenter(config *config.CentralConfig) *ManagedCentralPresenter {
-	return &ManagedCentralPresenter{centralConfig: config}
+func NewManagedCentralPresenter(config *config.CentralConfig, gitopsService gitops.Service) *ManagedCentralPresenter {
+	return &ManagedCentralPresenter{
+		centralConfig: config,
+		gitopsService: gitopsService,
+	}
 }
 
 // PresentManagedCentral converts DB representation of Central to the private API representation
-func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralRequest) private.ManagedCentral {
+func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralRequest) (private.ManagedCentral, error) {
 	var central dbapi.CentralSpec
 	var scanner dbapi.ScannerSpec
 
@@ -47,6 +54,16 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 			glog.Errorf("Failed to unmarshal Scanner specification for Central request %q/%s: %v", from.Name, from.ClusterID, err)
 			glog.Errorf("Ignoring Scanner specification for Central request %q/%s", from.Name, from.ClusterID)
 		}
+	}
+
+	centralCR, err := c.gitopsService.GetCentral(centralParamsFromRequest(from))
+	if err != nil {
+		return private.ManagedCentral{}, errors.Wrap(err, "failed to apply GitOps overrides to Central")
+	}
+
+	centralYaml, err := yaml.Marshal(centralCR)
+	if err != nil {
+		return private.ManagedCentral{}, errors.Wrap(err, "failed to marshal Central CR")
 	}
 
 	res := private.ManagedCentral{
@@ -132,6 +149,7 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 					},
 				},
 			},
+			CentralYAML: string(centralYaml),
 		},
 		RequestStatus:  from.Status,
 		ForceReconcile: from.ForceReconcile,
@@ -141,7 +159,7 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 		res.Metadata.DeletionTimestamp = from.DeletionTimestamp.Format(time.RFC3339)
 	}
 
-	return res
+	return res, nil
 }
 
 func orDefaultQty(qty resource.Quantity, def resource.Quantity) *resource.Quantity {
@@ -180,4 +198,25 @@ func getSecretNames(from *dbapi.CentralRequest) []string {
 	}
 
 	return secretNames
+}
+
+func centralParamsFromRequest(centralRequest *dbapi.CentralRequest) gitops.CentralParams {
+	return gitops.CentralParams{
+		ID:               centralRequest.ID,
+		Name:             centralRequest.Name,
+		Namespace:        centralRequest.Namespace,
+		Region:           centralRequest.Region,
+		ClusterID:        centralRequest.ClusterID,
+		CloudProvider:    centralRequest.CloudProvider,
+		CloudAccountID:   centralRequest.CloudAccountID,
+		SubscriptionID:   centralRequest.SubscriptionID,
+		Owner:            centralRequest.Owner,
+		OwnerAccountID:   centralRequest.OwnerAccountID,
+		OwnerUserID:      centralRequest.OwnerUserID,
+		Host:             centralRequest.Host,
+		OrganizationID:   centralRequest.OrganisationID,
+		OrganizationName: centralRequest.OrganisationName,
+		InstanceType:     centralRequest.InstanceType,
+		IsInternal:       centralRequest.Internal,
+	}
 }

@@ -12,6 +12,7 @@ package private
 
 // ManagedCentralAllOfSpec struct for ManagedCentralAllOfSpec
 type ManagedCentralAllOfSpec struct {
+	CentralYAML   string                              `json:"centralYAML,omitempty"`
 	Owners        []string                            `json:"owners,omitempty"`
 	Auth          ManagedCentralAllOfSpecAuth         `json:"auth,omitempty"`
 	UiEndpoint    ManagedCentralAllOfSpecUiEndpoint   `json:"uiEndpoint,omitempty"`

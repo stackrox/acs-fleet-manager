@@ -299,7 +299,7 @@ inject_exported_env_vars() {
 
 is_local_cluster() {
     local cluster_type=${1:-}
-    if [[ "$cluster_type" == "minikube" || "$cluster_type" == "colima" || "$cluster_type" == "rancher-desktop" ]]; then
+    if [[ "$cluster_type" == "minikube" || "$cluster_type" == "colima" || "$cluster_type" == "rancher-desktop" || "$cluster_type" == "docker" ]]; then
         return 0
     else
         return 1

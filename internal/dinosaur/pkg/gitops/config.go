@@ -4,7 +4,7 @@ package gitops
 import (
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"gopkg.in/yaml.v2"
-	field "k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // Config represents the gitops configuration
@@ -14,8 +14,6 @@ type Config struct {
 
 // CentralsConfig represents the declarative configuration for Central instances defaults and overrides.
 type CentralsConfig struct {
-	// Default configuration for Central instances.
-	Default v1alpha1.Central `json:"default"`
 	// Overrides are the overrides for Central instances.
 	Overrides []CentralOverride `json:"overrides"`
 }

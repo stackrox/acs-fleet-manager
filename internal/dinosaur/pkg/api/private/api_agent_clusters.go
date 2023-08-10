@@ -27,7 +27,7 @@ var (
 type AgentClustersApiService service
 
 /*
-GetCentrals Get the list of ManagedaCentrals for the specified agent cluster
+GetCentrals Get the list of ManagedCentrals for the specified agent cluster
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
 

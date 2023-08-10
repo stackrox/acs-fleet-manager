@@ -6,6 +6,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/environments"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/handlers"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/migrations"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
@@ -55,13 +56,13 @@ func ConfigProviders() di.Option {
 func ServiceProviders() di.Option {
 	return di.Options(
 		di.Provide(services.NewClusterService),
-		di.Provide(services.NewDinosaurService, di.As(new(services.DinosaurService))),
+		di.Provide(services.NewDinosaurService),
 		di.Provide(services.NewCloudProvidersService),
 		di.Provide(services.NewObservatoriumService),
 		di.Provide(services.NewFleetshardOperatorAddon),
 		di.Provide(services.NewClusterPlacementStrategy),
-		di.Provide(services.NewDataPlaneClusterService, di.As(new(services.DataPlaneClusterService))),
-		di.Provide(services.NewDataPlaneCentralService, di.As(new(services.DataPlaneCentralService))),
+		di.Provide(services.NewDataPlaneClusterService),
+		di.Provide(services.NewDataPlaneCentralService),
 		di.Provide(handlers.NewAuthenticationBuilder),
 		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
 		di.Provide(routes.NewRouteLoader),
@@ -75,6 +76,8 @@ func ServiceProviders() di.Option {
 		di.Provide(dinosaurmgrs.NewReadyDinosaurManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewDinosaurCNAMEManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewCentralAuthConfigManager, di.As(new(workers.Worker))),
+		di.Provide(gitops.NewDefaultConfigProvider),
+		di.Provide(gitops.NewService),
 		di.Provide(presenters.NewManagedCentralPresenter),
 	)
 }

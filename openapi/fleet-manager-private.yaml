@@ -137,7 +137,7 @@ paths:
       security:
         - Bearer: []
       operationId: getCentrals
-      summary: Get the list of ManagedaCentrals for the specified agent cluster
+      summary: Get the list of ManagedCentrals for the specified agent cluster
 
   "/api/rhacs/v1/agent-clusters/{id}":
     get:
@@ -241,6 +241,8 @@ components:
             spec:
               type: object
               properties:
+                centralYAML:
+                  type: string
                 owners:
                   type: array
                   items:

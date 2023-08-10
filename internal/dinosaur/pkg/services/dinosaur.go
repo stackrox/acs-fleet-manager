@@ -11,9 +11,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
-
-	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
 
 	"github.com/golang/glog"
@@ -79,7 +76,6 @@ type DinosaurService interface {
 	// The Dinosaur Request in the database will be updated with a deleted_at timestamp.
 	Delete(centralRequest *dbapi.CentralRequest, force bool) *errors.ServiceError
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError)
-	ListByClusterID(clusterID string) ([]*dbapi.CentralRequest, *errors.ServiceError)
 	RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	ListByStatus(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *errors.ServiceError)
 	// UpdateStatus change the status of the Dinosaur cluster
@@ -112,13 +108,11 @@ var _ DinosaurService = &dinosaurService{}
 type dinosaurService struct {
 	connectionFactory            *db.ConnectionFactory
 	clusterService               ClusterService
-	iamService                   sso.IAMService
 	dinosaurConfig               *config.CentralConfig
 	awsConfig                    *config.AWSConfig
 	quotaServiceFactory          QuotaServiceFactory
 	mu                           sync.Mutex
 	awsClientFactory             aws.ClientFactory
-	authService                  authorization.Authorization
 	dataplaneClusterConfig       *config.DataplaneClusterConfig
 	clusterPlacementStrategy     ClusterPlacementStrategy
 	amsClient                    ocm.AMSClient
@@ -126,19 +120,17 @@ type dinosaurService struct {
 }
 
 // NewDinosaurService ...
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService,
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService,
 	dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
-	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization,
-	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, centralDefaultVersionService CentralDefaultVersionService) *dinosaurService {
+	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory,
+	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, centralDefaultVersionService CentralDefaultVersionService) DinosaurService {
 	return &dinosaurService{
 		connectionFactory:            connectionFactory,
 		clusterService:               clusterService,
-		iamService:                   iamService,
 		dinosaurConfig:               dinosaurConfig,
 		awsConfig:                    awsConfig,
 		quotaServiceFactory:          quotaServiceFactory,
 		awsClientFactory:             awsClientFactory,
-		authService:                  authorizationService,
 		dataplaneClusterConfig:       dataplaneClusterConfig,
 		clusterPlacementStrategy:     clusterPlacementStrategy,
 		amsClient:                    amsClient,
@@ -639,21 +631,6 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 	}
 
 	return dinosaurRequestList, pagingMeta, nil
-}
-
-// ListByClusterID returns a list of CentralRequests with specified clusterID
-func (k *dinosaurService) ListByClusterID(clusterID string) ([]*dbapi.CentralRequest, *errors.ServiceError) {
-	dbConn := k.connectionFactory.New().
-		Where("cluster_id = ?", clusterID).
-		Where("status IN (?)", dinosaurManagedCRStatuses).
-		Where("host != ''")
-
-	var dinosaurRequestList dbapi.CentralList
-	if err := dbConn.Find(&dinosaurRequestList).Error; err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list central requests")
-	}
-
-	return dinosaurRequestList, nil
 }
 
 // Update ...
