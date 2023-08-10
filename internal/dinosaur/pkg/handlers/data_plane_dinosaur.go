@@ -81,3 +81,22 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 
 	handlers.HandleGet(w, r, cfg)
 }
+
+// GetByID...
+func (h *dataPlaneDinosaurHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	centralID := mux.Vars(r)["id"]
+	cfg := &handlers.HandlerConfig{
+		Action: func() (interface{}, *errors.ServiceError) {
+			centralRequest, err := h.dinosaurService.GetByID(centralID)
+			if err != nil {
+				return nil, err
+			}
+
+			converted := h.presenter.PresentManagedCentralWithSecrets(centralRequest)
+
+			return converted, nil
+		},
+	}
+
+	handlers.HandleGet(w, r, cfg)
+}

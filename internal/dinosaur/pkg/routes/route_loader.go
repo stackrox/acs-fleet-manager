@@ -219,6 +219,13 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/centrals", dataPlaneCentralHandler.GetAll).
 		Name(logger.NewLogEvent("list-dataplane-centrals", "list all dataplane centrals").ToString()).
 		Methods(http.MethodGet)
+
+	// /agent-clusters/
+	// used for lazy loading additional data not added to the list requests e.g secrets
+	apiV1DataPlaneRequestsRouter.HandleFunc("/centrals/{id}", dataPlaneCentralHandler.GetByID).
+		Name(logger.NewLogEvent("get-dataplane-central-by-id", "get a single dataplane central").ToString()).
+		Methods(http.MethodGet)
+
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	auth.UseFleetShardAuthorizationMiddleware(apiV1DataPlaneRequestsRouter,
 		s.IAMConfig.RedhatSSORealm.ValidIssuerURI, s.FleetShardAuthZConfig)

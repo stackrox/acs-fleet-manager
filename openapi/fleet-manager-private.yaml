@@ -139,17 +139,12 @@ paths:
       operationId: getCentrals
       summary: Get the list of ManagedaCentrals for the specified agent cluster
 
-  "/api/rhacs/v1/agent-clusters/centrals/{centralID}":
+  "/api/rhacs/v1/agent-clusters/centrals/{id}":
     get:
       tags:
         - Agent Clusters
       parameters:
-        - name: centralID
-          description: The ID of the central request
-          schema:
-            type: string
-          in: path
-          required: true
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
       responses:
         "200":
           description: The ManagedCentrals with centralIdfor the specified agent cluster

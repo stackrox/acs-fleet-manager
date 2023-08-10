@@ -142,18 +142,16 @@ paths:
       summary: Get the list of ManagedaCentrals for the specified agent cluster
       tags:
       - Agent Clusters
-  /api/rhacs/v1/agent-clusters/centrals/{centralID}:
+  /api/rhacs/v1/agent-clusters/centrals/{id}:
     get:
       operationId: getCentral
       parameters:
-      - description: The ID of the central request
-        explode: false
+      - description: The ID of record
         in: path
-        name: centralID
+        name: id
         required: true
         schema:
           type: string
-        style: simple
       responses:
         "200":
           content:

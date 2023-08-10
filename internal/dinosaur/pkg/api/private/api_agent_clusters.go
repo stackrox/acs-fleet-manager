@@ -29,11 +29,11 @@ type AgentClustersApiService service
 /*
 GetCentral Get the ManagedaCentral for the specified agent cluster and centralId
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param centralID The ID of the central request
+  - @param id The ID of record
 
 @return ManagedCentral
 */
-func (a *AgentClustersApiService) GetCentral(ctx _context.Context, centralID string) (ManagedCentral, *_nethttp.Response, error) {
+func (a *AgentClustersApiService) GetCentral(ctx _context.Context, id string) (ManagedCentral, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -44,8 +44,8 @@ func (a *AgentClustersApiService) GetCentral(ctx _context.Context, centralID str
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/agent-clusters/centrals/{centralID}"
-	localVarPath = strings.Replace(localVarPath, "{"+"centralID"+"}", _neturl.QueryEscape(parameterToString(centralID, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/rhacs/v1/agent-clusters/centrals/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
