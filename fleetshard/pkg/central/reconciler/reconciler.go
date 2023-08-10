@@ -415,7 +415,10 @@ func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCen
 	}
 
 	for _, secretName := range restoreSecrets { // pragma: allowlist secret
-		secretToRestore := decryptedSecrets[secretName]
+		secretToRestore, secretFound := decryptedSecrets[secretName]
+		if !secretFound {
+			return fmt.Errorf("finding secret %s in decrypted secret map", secretName)
+		}
 		if err := r.client.Create(ctx, secretToRestore); err != nil {
 			return fmt.Errorf("recreating secret %s for central %s: %w", secretName, central.Id, err)
 		}
@@ -874,12 +877,12 @@ func (r *CentralReconciler) decryptSecrets(secrets map[string]string) (map[strin
 			return nil, fmt.Errorf("decrypting secret %s: %w", secretName, err)
 		}
 
-		var secret *corev1.Secret
-		if err := json.Unmarshal(plaintextSecret, secret); err != nil {
+		var secret corev1.Secret
+		if err := json.Unmarshal(plaintextSecret, &secret); err != nil {
 			return nil, fmt.Errorf("unmarshaling secret %s: %w", secretName, err)
 		}
 
-		decryptedSecrets[secretName] = secret // pragma: allowlist secret
+		decryptedSecrets[secretName] = &secret // pragma: allowlist secret
 	}
 
 	return decryptedSecrets, nil

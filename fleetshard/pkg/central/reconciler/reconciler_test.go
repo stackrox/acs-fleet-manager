@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
@@ -1704,11 +1705,12 @@ func TestReconcileDeclarativeConfigurationData(t *testing.T) {
 
 func TestRestoreCentralSecrets(t *testing.T) {
 	testCases := []struct {
-		name             string
-		buildCentral     func() private.ManagedCentral
-		mockObjects      []client.Object
-		buildFMClient    func() *fleetmanager.Client
-		expectedErrorMsg string
+		name                     string
+		buildCentral             func() private.ManagedCentral
+		mockObjects              []client.Object
+		buildFMClient            func() *fleetmanager.Client
+		expectedErrorMsgContains string
+		expectedObjects          []client.Object
 	}{
 		{
 			name: "no error for SecretsStored not set",
@@ -1729,7 +1731,7 @@ func TestRestoreCentralSecrets(t *testing.T) {
 			},
 		},
 		{
-			name: "return error from fleetmanager",
+			name: "return errors from fleetmanager",
 			buildCentral: func() private.ManagedCentral {
 				newCentral := simpleManagedCentral
 				newCentral.Metadata.SecretsStored = []string{"central-tls", "central-db-password"}
@@ -1745,13 +1747,60 @@ func TestRestoreCentralSecrets(t *testing.T) {
 				}
 				return mockClient.Client()
 			},
-			expectedErrorMsg: "loading secrets for central cb45idheg5ip6dq1jo4g: test error",
+			expectedErrorMsgContains: "loading secrets for central cb45idheg5ip6dq1jo4g: test error",
+		},
+		{
+			// force encrypt error by using non base64 value for central-db-password
+			name: "return errors from decryptSecrets",
+			buildCentral: func() private.ManagedCentral {
+				newCentral := simpleManagedCentral
+				newCentral.Metadata.SecretsStored = []string{"central-tls", "central-db-password"}
+				return newCentral
+			},
+			mockObjects: []client.Object{
+				centralTLSSecretObject(),
+			},
+			buildFMClient: func() *fleetmanager.Client {
+				mockClient := fleetmanager.NewClientMock()
+				mockClient.PrivateAPIMock.GetCentralFunc = func(ctx context.Context, centralID string) (private.ManagedCentral, *http.Response, error) {
+					returnCentral := simpleManagedCentral
+					returnCentral.Metadata.Secrets = map[string]string{"central-db-password": "testpw"}
+					return returnCentral, nil, nil
+				}
+				return mockClient.Client()
+			},
+			expectedErrorMsgContains: "decrypting secrets for central",
+		},
+		{
+			name: "expect secrets to exist after secret restore",
+			buildCentral: func() private.ManagedCentral {
+				newCentral := simpleManagedCentral
+				newCentral.Metadata.SecretsStored = []string{"central-tls", "central-db-password"}
+				return newCentral
+			},
+			buildFMClient: func() *fleetmanager.Client {
+				mockClient := fleetmanager.NewClientMock()
+				mockClient.PrivateAPIMock.GetCentralFunc = func(ctx context.Context, centralID string) (private.ManagedCentral, *http.Response, error) {
+					returnCentral := simpleManagedCentral
+					centralTLS := `{"metadata":{"name":"central-tls","namespace":"rhacs-cb45idheg5ip6dq1jo4g","creationTimestamp":null}}`
+					centralDBPW := `{"metadata":{"name":"central-db-password","namespace":"rhacs-cb45idheg5ip6dq1jo4g","creationTimestamp":null}}`
+					returnCentral.Metadata.Secrets = map[string]string{
+						"central-tls":         base64.StdEncoding.EncodeToString([]byte(centralTLS)),
+						"central-db-password": base64.StdEncoding.EncodeToString([]byte(centralDBPW))}
+					return returnCentral, nil, nil
+				}
+				return mockClient.Client()
+			},
+			expectedObjects: []client.Object{
+				centralTLSSecretObject(),
+				centralDBPasswordSecretObject(),
+			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, nil, defaultReconcilerOptions, tc.mockObjects...)
+			fakeClient, _, r := getClientTrackerAndReconciler(t, simpleManagedCentral, nil, defaultReconcilerOptions, tc.mockObjects...)
 			managedCentral := tc.buildCentral()
 
 			if tc.buildFMClient != nil {
@@ -1760,8 +1809,16 @@ func TestRestoreCentralSecrets(t *testing.T) {
 
 			err := r.restoreCentralSecrets(context.Background(), managedCentral)
 
-			if err != nil {
-				require.EqualError(t, err, tc.expectedErrorMsg)
+			if err != nil && tc.expectedErrorMsgContains != "" {
+				require.Contains(t, err.Error(), tc.expectedErrorMsgContains)
+			} else {
+				require.NoError(t, err)
+			}
+
+			for _, obj := range tc.expectedObjects {
+				s := v1.Secret{}
+				err := fakeClient.Get(context.Background(), client.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}, &s)
+				require.NoErrorf(t, err, "finding expected object %s/%s", obj.GetNamespace(), obj.GetName())
 			}
 
 		})
