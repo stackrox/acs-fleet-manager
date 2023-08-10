@@ -789,6 +789,14 @@ func (r *CentralReconciler) collectSecrets(ctx context.Context, remoteCentral *p
 		return secrets, errors.Wrapf(err, "collecting secrets for namespace %s", namespace)
 	}
 
+	// remove ResourceVersion and owner reference as this is only intended to recreate non-existent
+	// resources instead of updating existing ones, the owner reference might get invalid in case of
+	// central namespace recreation
+	for _, secret := range secrets { // pragma: allowlist secret
+		secret.ObjectMeta.ResourceVersion = ""
+		secret.ObjectMeta.OwnerReferences = []metav1.OwnerReference{}
+	}
+
 	return secrets, nil
 }
 
