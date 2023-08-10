@@ -4,6 +4,7 @@ package reconciler
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -819,7 +820,7 @@ func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (m
 			return nil, errors.Wrapf(err, "encrypting secret: %s", key)
 		}
 
-		encryptedSecrets[key] = string(encryptedBytes)
+		encryptedSecrets[key] = base64.StdEncoding.EncodeToString(encryptedBytes)
 	}
 
 	return encryptedSecrets, nil
