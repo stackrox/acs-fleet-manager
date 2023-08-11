@@ -991,7 +991,12 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 		// skip Snapshot for remoteCentral created by probe
 		skipSnapshot := remoteCentral.Metadata.Internal
 
-		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id, skipSnapshot)
+		databaseID, err := r.getDatabaseID(ctx, remoteCentral.Metadata.Namespace, remoteCentral.Id)
+		if err != nil {
+			return false, fmt.Errorf("getting DB ID: %w", err)
+		}
+
+		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(databaseID, skipSnapshot)
 		if err != nil {
 			if errors.Is(err, cloudprovider.ErrDBBackupInProgress) {
 				glog.Infof("Can not delete Central DB for: %s, backup in progress", remoteCentral.Metadata.Namespace)
@@ -1020,6 +1025,27 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && nsDeleted
 	return globalDeleted, nil
+}
+
+func (r *CentralReconciler) getDatabaseID(ctx context.Context, remoteCentralNamespace, centralID string) (string, error) {
+	// By default the database ID (which is used to name the cloud DB resources) is the same as the central ID,
+	// but this value can be overriden
+	configMap := &corev1.ConfigMap{}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: "central-db-override"}, configMap)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return centralID, nil
+		}
+
+		return centralID, fmt.Errorf("getting central DB ID override ConfigMap: %w", err)
+	}
+
+	overrideValue, exists := configMap.Data["databaseID"]
+	if exists {
+		return overrideValue, nil
+	}
+
+	return centralID, nil
 }
 
 // centralChanged compares the given central to the last central reconciled using a hash
@@ -1158,7 +1184,12 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 		return fmt.Errorf("getting DB password from secret: %w", err)
 	}
 
-	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, remoteCentral.Id, dbMasterPassword, remoteCentral.Metadata.Internal)
+	databaseID, err := r.getDatabaseID(ctx, remoteCentralNamespace, remoteCentral.Id)
+	if err != nil {
+		return fmt.Errorf("getting DB ID: %w", err)
+	}
+
+	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, databaseID, remoteCentral.Id, dbMasterPassword, remoteCentral.Metadata.Internal)
 	if err != nil {
 		return fmt.Errorf("provisioning RDS DB: %w", err)
 	}
