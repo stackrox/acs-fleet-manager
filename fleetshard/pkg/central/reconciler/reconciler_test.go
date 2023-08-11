@@ -1784,9 +1784,14 @@ func TestRestoreCentralSecrets(t *testing.T) {
 					returnCentral := simpleManagedCentral
 					centralTLS := `{"metadata":{"name":"central-tls","namespace":"rhacs-cb45idheg5ip6dq1jo4g","creationTimestamp":null}}`
 					centralDBPW := `{"metadata":{"name":"central-db-password","namespace":"rhacs-cb45idheg5ip6dq1jo4g","creationTimestamp":null}}`
+
+					encode := base64.StdEncoding.EncodeToString
+					// we need to encode twice, once for b64 test cipher used
+					// once for the b64 encoding done to transfer secret data via API
 					returnCentral.Metadata.Secrets = map[string]string{
-						"central-tls":         base64.StdEncoding.EncodeToString([]byte(centralTLS)),
-						"central-db-password": base64.StdEncoding.EncodeToString([]byte(centralDBPW))}
+						"central-tls":         encode([]byte(encode([]byte(centralTLS)))),
+						"central-db-password": encode([]byte(encode([]byte(centralDBPW)))),
+					}
 					return returnCentral, nil, nil
 				}
 				return mockClient.Client()
