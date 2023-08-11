@@ -18,9 +18,6 @@ type GenericOpenAPIError = public.GenericOpenAPIError
 // PrivateError ...
 type PrivateError = private.Error
 
-// WatchEvent ...
-type WatchEvent = private.WatchEvent
-
 // ErrorList ...
 type ErrorList = public.ErrorList
 
