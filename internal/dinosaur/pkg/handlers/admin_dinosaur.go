@@ -180,9 +180,6 @@ func (h adminCentralHandler) List(w http.ResponseWriter, r *http.Request) {
 // Delete ...
 func (h adminCentralHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
-		Validate: []handlers.Validate{
-			handlers.ValidateAsyncEnabled(r, "deleting central requests"),
-		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
@@ -193,6 +190,20 @@ func (h adminCentralHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
+}
+
+func (h adminCentralHandler) Restore(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			ctx := r.Context()
+			err := h.service.Restore(ctx, id)
+			h.telemetry.TrackDeletionRequested(ctx, id, true, err.AsError())
+			return nil, err
+		},
+	}
+
+	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
 // DbDelete implements the endpoint for force-deleting Central tenants in the database in emergency situations requiring manual recovery
