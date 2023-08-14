@@ -265,13 +265,13 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	}
 
 	// Set proxy configuration
-	additionalNoProxyURL := url.URL{
+	auditLoggingURL := url.URL{
 		Host: r.auditLogging.Endpoint(false),
 	}
 	kubernetesURL := url.URL{
 		Host: "https://kubernetes.default.svc:443",
 	}
-	envVars := getProxyEnvVars(remoteCentralNamespace, additionalNoProxyURL, kubernetesURL)
+	envVars := getProxyEnvVars(remoteCentralNamespace, auditLoggingURL, kubernetesURL)
 
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
 
