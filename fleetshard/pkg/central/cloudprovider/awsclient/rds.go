@@ -154,7 +154,13 @@ func (r *RDS) ensureDBClusterCreated(clusterID, acsInstanceID, masterPassword st
 		return nil
 	}
 
+	finalSnapshotID, err := r.getFinalSnapshotIDIfExists(clusterID)
+	if err != nil {
+		return err
+	}
+
 	glog.Infof("Initiating provisioning of RDS database cluster %s.", clusterID)
+
 	input := &createCentralDBClusterInput{
 		clusterID:            clusterID,
 		acsInstanceID:        acsInstanceID,
@@ -164,12 +170,50 @@ func (r *RDS) ensureDBClusterCreated(clusterID, acsInstanceID, masterPassword st
 		dataplaneClusterName: r.dataplaneClusterName,
 		isTestInstance:       isTestInstance,
 	}
-	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(input))
+
+	if finalSnapshotID != "" {
+		return r.restoreDBClusterFromSnapshot(finalSnapshotID, input)
+	}
+
+	return r.createDBCluster(input)
+}
+
+func (r *RDS) restoreDBClusterFromSnapshot(snapshotID string, clusterInput *createCentralDBClusterInput) error {
+	_, err := r.rdsClient.RestoreDBClusterFromSnapshot(newRestoreCentralDBClusterInput(snapshotID, clusterInput))
+	if err != nil {
+		return fmt.Errorf("restoring DB cluster: %w", err)
+	}
+
+	return nil
+}
+
+func (r *RDS) createDBCluster(clusterInput *createCentralDBClusterInput) error {
+	_, err := r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(clusterInput))
 	if err != nil {
 		return fmt.Errorf("creating DB cluster: %w", err)
 	}
 
 	return nil
+}
+
+func (r *RDS) getFinalSnapshotIDIfExists(clusterID string) (string, error) {
+	snapshotsOut, err := r.rdsClient.DescribeDBClusterSnapshots(&rds.DescribeDBClusterSnapshotsInput{
+		DBClusterIdentifier: &clusterID,
+	})
+	if err != nil {
+		return "", fmt.Errorf("checking if final snapshot for clusterID: %s exists: %w", clusterID, err)
+	}
+
+	var mostRecentSnapshotID string
+	var mostRecentSnapshotTime *time.Time
+	for _, snapshot := range snapshotsOut.DBClusterSnapshots {
+		if mostRecentSnapshotTime == nil || mostRecentSnapshotTime.Compare(*snapshot.SnapshotCreateTime) == -1 {
+			mostRecentSnapshotID = *snapshot.DBClusterSnapshotIdentifier
+			mostRecentSnapshotTime = snapshot.SnapshotCreateTime
+		}
+	}
+
+	return mostRecentSnapshotID, nil
 }
 
 func (r *RDS) ensureDBInstanceCreated(instanceID, clusterID, acsInstanceID string, isTestInstance bool) error {
@@ -405,6 +449,42 @@ func newCreateCentralDBClusterInput(input *createCentralDBClusterInput) *rds.Cre
 				Value: aws.String(input.acsInstanceID),
 			},
 		},
+	}
+
+	// do not export DB logs of internal instances (e.g. Probes)
+	if !input.isTestInstance {
+		awsInput.EnableCloudwatchLogsExports = aws.StringSlice([]string{"postgresql"})
+	}
+
+	return awsInput
+}
+
+func newRestoreCentralDBClusterInput(snapshotID string, input *createCentralDBClusterInput) *rds.RestoreDBClusterFromSnapshotInput {
+	awsInput := &rds.RestoreDBClusterFromSnapshotInput{
+		DBClusterIdentifier: aws.String(input.clusterID),
+		Engine:              aws.String(dbEngine),
+		EngineVersion:       aws.String(dbEngineVersion),
+		VpcSecurityGroupIds: aws.StringSlice([]string{input.securityGroup}),
+		DBSubnetGroupName:   aws.String(input.subnetGroup),
+		ServerlessV2ScalingConfiguration: &rds.ServerlessV2ScalingConfiguration{
+			MinCapacity: aws.Float64(dbMinCapacityACU),
+			MaxCapacity: aws.Float64(dbMaxCapacityACU),
+		},
+		Tags: []*rds.Tag{
+			{
+				Key:   aws.String(dataplaneClusterNameKey),
+				Value: aws.String(input.dataplaneClusterName),
+			},
+			{
+				Key:   aws.String(instanceTypeTagKey),
+				Value: aws.String(getInstanceType(input.isTestInstance)),
+			},
+			{
+				Key:   aws.String(acsInstanceIDKey),
+				Value: aws.String(input.acsInstanceID),
+			},
+		},
+		SnapshotIdentifier: &snapshotID,
 	}
 
 	// do not export DB logs of internal instances (e.g. Probes)
