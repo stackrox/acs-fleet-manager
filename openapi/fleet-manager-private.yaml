@@ -340,7 +340,34 @@ components:
               items:
                 allOf:
                   - $ref: "#/components/schemas/ManagedCentral"
+            rhacs_operators:
+              $ref: RHACSOperatorConfigs
 
+    RHACSOperatorConfigs:
+      properties:
+        CRD:
+          type: object
+          properties:
+            baseURL:
+              type: string
+            gitRef:
+              type: string
+        RHACSOperatorConfigs:
+          type: array
+          items:
+            allOf:
+                - $ref: '#/components/schemas/RHACSOperatorConfig'
+
+    RHACSOperatorConfig:
+      description: >-
+        RHACSOperatorConfig defines the configuration of an operator
+      properties:
+        gitRef:
+          type: string
+        image:
+          type: string
+        helmValues:
+          type: string
     DataPlaneClusterUpdateStatusRequest:
       # TODO are there any fields that should be required?
       # TODO are there any fields that should be nullable? (this is, a pointer in the resulting generated Go code)
@@ -420,20 +447,6 @@ components:
                 tag:
                   type: string
 
-    WatchEvent:
-      required:
-        - type
-      type: object
-      properties:
-        type:
-          type: string
-        error:
-          nullable: true
-          $ref: "fleet-manager.yaml#/components/schemas/Error"
-        object:
-          type: object
-          nullable: true
-
   securitySchemes:
     Bearer:
       scheme: bearer
@@ -492,6 +505,15 @@ components:
                   memory: 2500Mi
           db:
             host: dbhost.rhacs-psql-instance
+    RHACSOperatorConfigExample:
+      value:
+        gitRef: 4.1.1
+        image: quay.io/rhacs-eng/stackrox-operator@sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+        helmValues: |
+          operator:
+            resources:
+              limits:
+                cpu: 100m
     DataPlaneCentralStatusRequestExample:
       value:
         conditions:

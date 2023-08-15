@@ -190,16 +190,11 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 			result, err := stream.GetNextEvent()
 			if err != nil {
 				ulog := logger.NewUHCLogger(ctx)
-				operationID := logger.GetOperationID(ctx)
 				// If this is a 400 error, its the user's issue, log as info rather than error
 				if err.HTTPCode >= 400 && err.HTTPCode <= 499 {
 					ulog.Infof(err.Error())
 				} else {
 					ulog.Error(err)
-				}
-				result := compat.WatchEvent{
-					Type:  "error",
-					Error: ConvertToPrivateError(err.AsOpenapiError(operationID, r.RequestURI)),
 				}
 				_ = json.NewEncoder(w).Encode(result)
 				return
