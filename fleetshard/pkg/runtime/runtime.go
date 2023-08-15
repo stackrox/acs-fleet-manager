@@ -4,6 +4,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/golang/glog"
@@ -33,6 +34,8 @@ import (
 type reconcilerRegistry map[string]*centralReconciler.CentralReconciler
 
 var reconciledCentralCountCache int32
+
+var cachedOperatorConfigs operator.OperatorConfigs
 
 var backoff = wait.Backoff{
 	Duration: 1 * time.Second,
@@ -88,7 +91,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		}
 	}
 
-	operatorManager := operator.NewACSOperatorManager(k8sClient, config.BaseCrdURL)
+	operatorManager := operator.NewACSOperatorManager(k8sClient)
 
 	return &Runtime{
 		config:            config,
@@ -132,7 +135,6 @@ func (r *Runtime) Start() error {
 		}
 
 		if features.TargetedOperatorUpgrades.Enabled() {
-			glog.Info("Starting operator upgrades")
 			err := r.upgradeOperator(list)
 			if err != nil {
 				err = errors.Wrapf(err, "Upgrading operator")
@@ -247,27 +249,32 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 }
 
 func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
-	var desiredOperators []operator.DeploymentConfig
-	var desiredOperatorImages []string
-	for _, central := range list.Items {
-		// TODO: read GitRef ManagedCentral list call
-		operatorConfiguration := operator.DeploymentConfig{
-			Image:  central.Spec.OperatorImage,
-			GitRef: "4.0.1",
-		}
-		desiredOperators = append(desiredOperators, operatorConfiguration)
-		desiredOperatorImages = append(desiredOperatorImages, central.Spec.OperatorImage)
-	}
-
 	ctx := context.Background()
-
-	for _, operatorDeployment := range desiredOperators {
+	var desiredOperatorImages []string
+	for _, operatorDeployment := range list.RhacsOperators.RHACSOperatorConfigs {
 		glog.Infof("Installing Operator version: %s", operatorDeployment.GitRef)
+		desiredOperatorImages = append(desiredOperatorImages, operatorDeployment.Image)
 	}
 
-	//TODO(ROX-15080): Download CRD on operator upgrades to always install the latest CRD
-	crdTag := "4.0.1"
-	err := r.operatorManager.InstallOrUpgrade(ctx, desiredOperators, crdTag)
+	// TODO: Replace with list from API request
+	operators := operator.OperatorConfigs{
+		Configs: []operator.OperatorConfig{{
+			Image:  "quay.io/rhacs-eng/stackrox-operator",
+			GitRef: "4.1.0",
+		}},
+		CRD: operator.CRDConfig{
+			GitRef: "4.1.0",
+		},
+	}
+
+	if reflect.DeepEqual(cachedOperatorConfigs, list.RhacsOperators.RHACSOperatorConfigs) {
+		return nil
+	}
+	cachedOperatorConfigs = operators
+
+	// TODO: comment line in to use the API response for production usage after Fleet-Manager implementation is finished
+	// err = r.operatorManager.InstallOrUpgrade(ctx, operator.FromAPIResponse(list.RhacsOperators))
+	err := r.operatorManager.InstallOrUpgrade(ctx, operators)
 	if err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
 	}

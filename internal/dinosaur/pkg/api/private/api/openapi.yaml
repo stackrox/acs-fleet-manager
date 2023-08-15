@@ -234,6 +234,15 @@ components:
                   memory: 2500Mi
           db:
             host: dbhost.rhacs-psql-instance
+    RHACSOperatorConfigExample:
+      value:
+        gitRef: 4.1.1
+        image: quay.io/rhacs-eng/stackrox-operator@sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+        helmValues: |
+          operator:
+            resources:
+              limits:
+                cpu: 100m
     DataPlaneCentralStatusRequestExample:
       value:
         conditions:
@@ -297,6 +306,24 @@ components:
       - $ref: '#/components/schemas/ListReference'
       - $ref: '#/components/schemas/ManagedCentralList_allOf'
       description: A list of ManagedCentral
+    RHACSOperatorConfigs:
+      properties:
+        CRD:
+          $ref: '#/components/schemas/RHACSOperatorConfigs_CRD'
+        RHACSOperatorConfigs:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/RHACSOperatorConfig'
+          type: array
+    RHACSOperatorConfig:
+      description: RHACSOperatorConfig defines the configuration of an operator
+      properties:
+        gitRef:
+          type: string
+        image:
+          type: string
+        helmValues:
+          type: string
     DataPlaneClusterUpdateStatusRequest:
       description: Schema for the request to update a data plane cluster's status
       example:
@@ -350,18 +377,6 @@ components:
       properties:
         spec:
           $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec'
-      type: object
-    WatchEvent:
-      properties:
-        type:
-          type: string
-        error:
-          $ref: '#/components/schemas/Error'
-        object:
-          nullable: true
-          type: object
-      required:
-      - type
       type: object
     Error:
       allOf:
@@ -510,6 +525,14 @@ components:
             allOf:
             - $ref: '#/components/schemas/ManagedCentral'
           type: array
+        rhacs_operators:
+          $ref: '#/components/schemas/RHACSOperatorConfigs'
+    RHACSOperatorConfigs_CRD:
+      properties:
+        baseURL:
+          type: string
+        gitRef:
+          type: string
     DataPlaneClusterUpdateStatusRequest_conditions:
       example:
         reason: reason

@@ -97,8 +97,12 @@ var simpleManagedCentral = private.ManagedCentral{
 	},
 	Spec: private.ManagedCentralAllOfSpec{
 		Auth: private.ManagedCentralAllOfSpecAuth{
+			ClientSecret: "test-value", // pragma: allowlist secret
+			ClientId:     "test-value",
+			OwnerUserId:  "54321",
 			OwnerOrgId:   "12345",
 			OwnerOrgName: "org-name",
+			Issuer:       "https://example.com",
 		},
 		UiEndpoint: private.ManagedCentralAllOfSpecUiEndpoint{
 			Host: fmt.Sprintf("acs-%s.acs.rhcloud.test", centralID),
@@ -1536,10 +1540,10 @@ func TestGetAuditLogNotifierConfig(t *testing.T) {
 	}
 }
 
-func populateNotifierSecret(
+func populateDeclarativeConfigSecrets(
 	t *testing.T,
 	namespace string,
-	payload map[string][]*declarativeconfig.Notifier,
+	payload map[string][]declarativeconfig.Configuration,
 ) *v1.Secret {
 	if len(payload) == 0 {
 		return getSecret(sensibleDeclarativeConfigSecretName, namespace, nil)
@@ -1576,142 +1580,63 @@ func TestReconcileDeclarativeConfigurationData(t *testing.T) {
 		centralNamespace,
 	)
 
+	authProviderConfig := getAuthProviderConfig(simpleManagedCentral)
+
 	const otherItemKey = "other.item.key"
 
 	testCases := []struct {
-		name                    string
-		auditLogConfig          config.AuditLogging
-		preExistingSecret       bool
-		initialNotifierConfigs  map[string][]*declarativeconfig.Notifier
-		expectedNotifierConfigs map[string][]*declarativeconfig.Notifier
-		postReconcileSecret     bool
+		name                       string
+		auditLogConfig             config.AuditLogging
+		preExistingSecret          bool
+		initialDeclarativeConfigs  map[string][]declarativeconfig.Configuration
+		expectedDeclarativeConfigs map[string][]declarativeconfig.Configuration
+		wantsAuthProvider          bool
 	}{
 		{
 			name:              "Missing default secret gets created",
 			auditLogConfig:    defaultAuditLogConfig,
 			preExistingSecret: false, // pragma: allowlist secret
-			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {defaultNotifierConfig},
+			expectedDeclarativeConfigs: map[string][]declarativeconfig.Configuration{
+				auditLogNotifierKey:              {defaultNotifierConfig},
+				authProviderDeclarativeConfigKey: {authProviderConfig},
 			},
-			postReconcileSecret: true, // pragma: allowlist secret
-		},
-		{
-			name:              "Bad default secret is left untouched",
-			auditLogConfig:    defaultAuditLogConfig,
-			preExistingSecret: true, // pragma: allowlist secret
-			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {correctVectorNotifierConfig},
-			},
-			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {correctVectorNotifierConfig},
-			},
-			postReconcileSecret: true, // pragma: allowlist secret
-		},
-		{
-			name:              "Bad aggregated default secret is left untouched",
-			auditLogConfig:    defaultAuditLogConfig,
-			preExistingSecret: true, // pragma: allowlist secret
-			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
-			},
-			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
-			},
-			postReconcileSecret: true, // pragma: allowlist secret
-		},
-		{
-			name:              "Partially correct aggregated default secret is left untouched",
-			auditLogConfig:    defaultAuditLogConfig,
-			preExistingSecret: true, // pragma: allowlist secret
-			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {
-					correctVectorNotifierConfig,
-					faultyVectorNotifierConfig,
-					defaultNotifierConfig,
-				},
-			},
-			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {
-					correctVectorNotifierConfig,
-					faultyVectorNotifierConfig,
-					defaultNotifierConfig,
-				},
-			},
-			postReconcileSecret: true, // pragma: allowlist secret
-		},
-		{
-			name:              "Correct default secret with other secret key is left untouched",
-			auditLogConfig:    defaultAuditLogConfig,
-			preExistingSecret: true, // pragma: allowlist secret
-			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {defaultNotifierConfig},
-				otherItemKey:        {faultyVectorNotifierConfig},
-			},
-			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {defaultNotifierConfig},
-				otherItemKey:        {faultyVectorNotifierConfig},
-			},
-			postReconcileSecret: true, // pragma: allowlist secret
+			wantsAuthProvider: true,
 		},
 		{
 			name:              "Missing vector secret gets created",
 			auditLogConfig:    vectorAuditLogConfig,
 			preExistingSecret: false, // pragma: allowlist secret
-			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
+			expectedDeclarativeConfigs: map[string][]declarativeconfig.Configuration{
 				auditLogNotifierKey: {correctVectorNotifierConfig},
 			},
-			postReconcileSecret: true, // pragma: allowlist secret
 		},
 		{
-			name:              "Bad vector secret is left untouched",
-			auditLogConfig:    vectorAuditLogConfig,
-			preExistingSecret: true, // pragma: allowlist secret
-			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {faultyVectorNotifierConfig},
-			},
-			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {faultyVectorNotifierConfig},
-			},
-			postReconcileSecret: true, // pragma: allowlist secret
+			name:              "Empty secret when audit logging and auth provider creation disabled",
+			auditLogConfig:    disabledAuditLogConfig,
+			preExistingSecret: false, // pragma: allowlist secret
 		},
 		{
-			name:              "Partially correct aggregated vector secret is left untouched",
-			auditLogConfig:    vectorAuditLogConfig,
-			preExistingSecret: true, // pragma: allowlist secret
-			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
-			},
-			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {correctVectorNotifierConfig, faultyVectorNotifierConfig},
-			},
-			postReconcileSecret: true, // pragma: allowlist secret
-		},
-		{
-			name:                "No secret creation when no secret and audit logging disabled",
-			auditLogConfig:      disabledAuditLogConfig,
-			preExistingSecret:   false, // pragma: allowlist secret
-			postReconcileSecret: false, // pragma: allowlist secret
-		},
-		{
-			name:              "No secret modification when secret and audit logging disabled",
+			name:              "No secret modification when audit logging and auth provider creation disabled",
 			auditLogConfig:    disabledAuditLogConfig,
 			preExistingSecret: true, // pragma: allowlist secret
-			initialNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {defaultNotifierConfig},
-				otherItemKey:        {faultyVectorNotifierConfig},
+			initialDeclarativeConfigs: map[string][]declarativeconfig.Configuration{
+				auditLogNotifierKey:              {defaultNotifierConfig},
+				authProviderDeclarativeConfigKey: {authProviderConfig},
+				otherItemKey:                     {faultyVectorNotifierConfig},
 			},
-			expectedNotifierConfigs: map[string][]*declarativeconfig.Notifier{
-				auditLogNotifierKey: {defaultNotifierConfig},
-				otherItemKey:        {faultyVectorNotifierConfig},
+			expectedDeclarativeConfigs: map[string][]declarativeconfig.Configuration{
+				auditLogNotifierKey:              {defaultNotifierConfig},
+				authProviderDeclarativeConfigKey: {authProviderConfig},
+				otherItemKey:                     {faultyVectorNotifierConfig},
 			},
-			postReconcileSecret: true, // pragma: allowlist secret
 		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			ctx := context.TODO()
 			reconcilerOptions := CentralReconcilerOptions{
-				AuditLogging: testCase.auditLogConfig,
+				AuditLogging:      testCase.auditLogConfig,
+				WantsAuthProvider: testCase.wantsAuthProvider,
 			}
 			fakeClient, _, r := getClientTrackerAndReconciler(
 				t,
@@ -1720,23 +1645,19 @@ func TestReconcileDeclarativeConfigurationData(t *testing.T) {
 				reconcilerOptions,
 			)
 			if testCase.preExistingSecret {
-				secret := populateNotifierSecret(t, centralNamespace, testCase.initialNotifierConfigs)
+				secret := populateDeclarativeConfigSecrets(t, centralNamespace, testCase.initialDeclarativeConfigs)
 				require.NoError(t, fakeClient.Create(ctx, secret))
 			}
-			r.reconcileDeclarativeConfigurationData(ctx, &simpleManagedCentral)
+			assert.NoError(t, r.reconcileDeclarativeConfigurationData(ctx, simpleManagedCentral))
 			fetchedSecret := &v1.Secret{}
 			secretKey := client.ObjectKey{ // pragma: allowlist secret
 				Name:      sensibleDeclarativeConfigSecretName,
 				Namespace: centralNamespace,
 			}
 			postFetchErr := fakeClient.Get(ctx, secretKey, fetchedSecret)
-			if testCase.postReconcileSecret {
-				assert.NoError(t, postFetchErr)
-				expectedSecret := populateNotifierSecret(t, centralNamespace, testCase.expectedNotifierConfigs)
-				compareSecret(t, expectedSecret, fetchedSecret, !testCase.preExistingSecret)
-			} else {
-				assert.True(t, k8sErrors.IsNotFound(postFetchErr))
-			}
+			assert.NoError(t, postFetchErr)
+			expectedSecret := populateDeclarativeConfigSecrets(t, centralNamespace, testCase.expectedDeclarativeConfigs)
+			compareSecret(t, expectedSecret, fetchedSecret, !testCase.preExistingSecret)
 		})
 	}
 }
