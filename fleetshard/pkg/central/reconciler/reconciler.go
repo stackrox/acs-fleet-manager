@@ -484,7 +484,6 @@ func (r *CentralReconciler) configureAuditLogNotifier(secret *corev1.Secret, nam
 func getAuthProviderConfig(remoteCentral private.ManagedCentral) *declarativeconfig.AuthProvider {
 	return &declarativeconfig.AuthProvider{
 		Name:             authProviderName(remoteCentral),
-		MinimumRoleName:  "None",
 		UIEndpoint:       remoteCentral.Spec.UiEndpoint.Host,
 		ExtraUIEndpoints: []string{"localhost:8443"},
 		Groups: []declarativeconfig.Group{
