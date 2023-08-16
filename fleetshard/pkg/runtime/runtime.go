@@ -96,7 +96,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 	operatorManager := operator.NewACSOperatorManager(k8sClient)
 	secretCipher, err := cipher.NewCipher(config)
 	if err != nil {
-		return nil, fmt.Errorf("creating secretCipher: %v", err)
+		return nil, fmt.Errorf("creating secretCipher: %w", err)
 	}
 
 	return &Runtime{

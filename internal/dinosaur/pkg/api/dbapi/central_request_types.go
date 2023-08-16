@@ -165,7 +165,7 @@ func (k *CentralRequest) SetRoutes(routes []DataPlaneCentralRoute) error {
 func (k *CentralRequest) SetSecrets(secrets map[string]string) error {
 	r, err := json.Marshal(secrets)
 	if err != nil {
-		return fmt.Errorf("marshalling routes into JSON: %w", err)
+		return fmt.Errorf("marshalling secrets into JSON: %w", err)
 	}
 	k.Secrets = r
 	return nil

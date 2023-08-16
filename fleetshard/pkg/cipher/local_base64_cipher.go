@@ -27,7 +27,7 @@ func (a LocalBase64Cipher) Encrypt(plaintext []byte) ([]byte, error) {
 func (a LocalBase64Cipher) Decrypt(ciphertext []byte) ([]byte, error) {
 	plaintext, err := base64.StdEncoding.DecodeString(string(ciphertext))
 	if err != nil {
-		return nil, fmt.Errorf("decoding base64 string %v", err)
+		return nil, fmt.Errorf("decoding base64 string %w", err)
 	}
 	return plaintext, nil
 }

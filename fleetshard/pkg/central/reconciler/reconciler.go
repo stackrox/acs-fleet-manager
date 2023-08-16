@@ -109,7 +109,7 @@ type CentralReconciler struct {
 	useRoutes        bool
 	Resources        bool
 	routeService     *k8s.RouteService
-	secretService    *k8s.SecretService
+	secretService    *k8s.SecretBackup
 	secretCipher     cipher.Cipher
 	egressProxyImage string
 	telemetry        config.Telemetry
@@ -751,8 +751,8 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 		}
 	}
 
-	// Only report secrets if central is ready to ensure we're not trying to get secrets before they are created
-	// also only report secrets once to don't overwrite initial secrets with possibly corrupted secrets
+	// Only report secrets if Central is ready, to ensure we're not trying to get secrets before they are created.
+	// Only report secrets once. Ensures we don't overwrite initial secrets with corrupted secrets
 	// from the cluster state.
 	if isRemoteCentralReady(remoteCentral) && !r.areSecretsStored(remoteCentral.Metadata.SecretsStored) {
 		secrets, err := r.collectSecretsEncrypted(ctx, remoteCentral)
@@ -786,7 +786,7 @@ func (r *CentralReconciler) collectSecrets(ctx context.Context, remoteCentral *p
 	namespace := remoteCentral.Metadata.Namespace
 	secrets, err := r.secretService.CollectSecrets(ctx, namespace)
 	if err != nil {
-		return secrets, errors.Wrapf(err, "collecting secrets for namespace %s", namespace)
+		return secrets, fmt.Errorf("collecting secrets for namespace %s: %w", namespace, err)
 	}
 
 	// remove ResourceVersion and owner reference as this is only intended to recreate non-existent
@@ -808,7 +808,7 @@ func (r *CentralReconciler) collectSecretsEncrypted(ctx context.Context, remoteC
 
 	encryptedSecrets, err := r.encryptSecrets(secrets)
 	if err != nil {
-		return nil, errors.Wrapf(err, "encrypting secrets for namespace: %s", remoteCentral.Metadata.Namespace)
+		return nil, fmt.Errorf("encrypting secrets for namespace: %s: %w", remoteCentral.Metadata.Namespace, err)
 	}
 
 	return encryptedSecrets, nil
@@ -820,12 +820,12 @@ func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (m
 	for key, secret := range secrets { // pragma: allowlist secret
 		secretBytes, err := json.Marshal(secret)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error marshaling secret for encryption: %s", key)
+			return nil, fmt.Errorf("error marshaling secret for encryption: %s: %w", key, err)
 		}
 
 		encryptedBytes, err := r.secretCipher.Encrypt(secretBytes)
 		if err != nil {
-			return nil, errors.Wrapf(err, "encrypting secret: %s", key)
+			return nil, fmt.Errorf("encrypting secret: %s: %w", key, err)
 		}
 
 		encryptedSecrets[key] = base64.StdEncoding.EncodeToString(encryptedBytes)
@@ -1491,7 +1491,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		useRoutes:         opts.UseRoutes,
 		wantsAuthProvider: opts.WantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
-		secretService:     k8s.NewSecretService(k8sClient),
+		secretService:     k8s.NewSecretBackup(k8sClient),
 		secretCipher:      secretCipher, // pragma: allowlist secret
 		egressProxyImage:  opts.EgressProxyImage,
 		telemetry:         opts.Telemetry,

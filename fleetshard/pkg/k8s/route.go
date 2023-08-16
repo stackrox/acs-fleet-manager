@@ -83,11 +83,11 @@ func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral p
 	namespace := remoteCentral.Metadata.Namespace
 	centralTLSSecret, err := getSecret(ctx, s.client, centralTLSSecretName, namespace)
 	if err != nil {
-		return errors.Wrapf(err, "getting central-tls secret for tenant %s", remoteCentral.Metadata.Name)
+		return fmt.Errorf("getting central-tls secret for tenant %s: %w", remoteCentral.Metadata.Name, err)
 	}
 	centralCA, ok := centralTLSSecret.Data["ca.pem"]
 	if !ok {
-		return errors.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
+		return fmt.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
 	}
 
 	annotations := map[string]string{
