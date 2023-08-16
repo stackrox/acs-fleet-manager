@@ -18,6 +18,8 @@ Usage:
     migrate-authn-z.sh MANDATORY [OPTION]
 MANDATORY:
     --central-list-path     The path to the with list of central instances that should be migrated.
+OPTIONAL:
+    --read-only             Run the migration in read only, i.e. only list groups / auth providers before migrating.
 OPTION:
     --help                  Prints help information.
 Example:
@@ -50,11 +52,16 @@ function migrate_all_centrals() {
     local central_list_path="${1:-}"
     [[ "${central_list_path}" = "" ]] && log "Error: Parameter 'central_list_path' is empty." && usage_exit
 
+    local read_only="${2:-}"
+    if [[ "${read_only}" = "" ]]; then
+        read_only="false"
+    fi
+
     local script_dir
     script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
     local binary_file_path
-    binary_file_path=$(realpath "${script_dir}/../../dataplane-migrators")
+    binary_file_path=$(realpath "${script_dir}/../../dataplane-migrator")
 
     # 1. read CSV file and process central one by one. So that we can log results nicely.
     # Used query:
@@ -75,14 +82,18 @@ function migrate_all_centrals() {
             --id "${csv_id}" \
             --name "${csv_name}" \
             --url "${csv_host}" \
-            --issuer "${csv_issuer}"
+            --issuer "${csv_issuer}" \
+            --skip-confirmation=true \
+            --read-only="${read_only}"
 
         # execute migration
         ${binary_file_path} migrate authn-z \
             --id "${csv_id}" \
             --name "${csv_name}" \
             --url "${csv_host}" \
-            --issuer "${csv_issuer}"
+            --issuer "${csv_issuer}" \
+            --skip-confirmation=true \
+            --read-only="${read_only}"
 
         echo ">>> Done"
     done <"${central_list_path}"
@@ -92,6 +103,7 @@ function migrate_all_centrals() {
 
 function main() {
     local central_list_path=""
+    local read_only="false"
 
     while [[ -n "${1:-}" ]]; do
         case "${1}" in
@@ -101,6 +113,10 @@ function main() {
             ;;
         "--help")
             usage_exit
+            ;;
+        "--read-only")
+            read_only="${2:-}"
+            shift
             ;;
         *)
             log "Error: Unknown parameter: ${1:-}"
@@ -121,7 +137,7 @@ function main() {
     central_list_path=$(realpath "${central_list_path}")
     [[ ! -f "${central_list_path}" ]] && log "Error: File provided in option '--central-list-path' does not exist." && usage_exit
 
-    migrate_all_centrals "${central_list_path}" "{stage}"
+    migrate_all_centrals "${central_list_path}" "${read_only}"
 }
 
 main "$@"

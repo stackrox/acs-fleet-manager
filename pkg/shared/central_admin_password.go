@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
-
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	centralClient "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/client"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
@@ -25,6 +25,12 @@ import (
 
 const (
 	centralHTPasswdSecret = "central-htpasswd" // pragma: allowlist secret
+)
+
+var (
+	// ErrPausedReconciliation is returned when reconciliation is paused, thus admin password cannot be
+	// disabled / enabled properly.
+	ErrPausedReconciliation = errors.New("pause reconciliation is enabled for this instance")
 )
 
 // EnableAdminPassword enables the admin password for the given central instance.
@@ -47,6 +53,10 @@ func EnableAdminPassword(ctx context.Context, centralID, centralName string, cen
 	}
 
 	glog.Infof("Found central CR %s in namespace %s", centralName, centralNamespace)
+
+	if central.GetObjectMeta().GetAnnotations()[reconciler.PauseReconcileAnnotation] == "true" {
+		return "", ErrPausedReconciliation
+	}
 
 	// If admin password generation disabled is not set, the admin password will be generated, hence no need to update
 	// in that case and the default value false.
