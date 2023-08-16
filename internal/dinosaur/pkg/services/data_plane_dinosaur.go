@@ -73,8 +73,7 @@ func (d *dataPlaneCentralService) UpdateDataPlaneCentralService(ctx context.Cont
 		var e *serviceError.ServiceError
 		switch s := getStatus(ks); s {
 		case statusReady:
-			// Only store the routes (and create them) when the Dinosaurs are ready, as by the time they are ready,
-			// the routes should definitely be there.
+			// Persist values only known once central is in statusReady e.g. routes, secrets
 			e = d.persistCentralValues(dinosaur, ks, cluster)
 			if e == nil {
 				e = d.setCentralClusterReady(dinosaur)
