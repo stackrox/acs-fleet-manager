@@ -194,8 +194,9 @@ func (m *migrator) retrieveAuthProviderAndGroups() (string, []*storage.Group, er
 	glog.Info("Filtering out groups that are non-default")
 	var filteredGroups []*storage.Group
 	for _, group := range groups {
-		// ALLOW_MUTATE_FORCE will only be set for groups created imperatively.
-		if group.GetProps().GetTraits().GetMutabilityMode() == storage.Traits_ALLOW_MUTATE_FORCED {
+		// ALLOW_MUTATE_FORCE will only be set for groups created imperatively. We can skip those, since they
+		// will be replaced by the ones created in declarative config.
+		if group.GetProps().GetTraits().GetMutabilityMode() != storage.Traits_ALLOW_MUTATE_FORCED {
 			filteredGroups = append(filteredGroups, group)
 		}
 	}
