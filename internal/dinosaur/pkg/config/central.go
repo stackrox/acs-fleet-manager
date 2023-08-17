@@ -28,6 +28,9 @@ type CentralConfig struct {
 	CentralIDPClientSecret     string `json:"central_idp_client_secret"`
 	CentralIDPClientSecretFile string `json:"central_idp_client_secret_file"`
 	CentralIDPIssuer           string `json:"central_idp_issuer"`
+	// CentralRetentionPeriod configures how long it should be possible to restore a central tenant
+	// that has been deleted via API
+	CentralRetentionPeriodDays int `json:"central_retention_period_days"`
 }
 
 // NewCentralConfig ...
@@ -41,6 +44,7 @@ func NewCentralConfig() *CentralConfig {
 		Quota:                            NewCentralQuotaConfig(),
 		CentralIDPClientSecretFile:       "secrets/central.idp-client-secret", //pragma: allowlist secret
 		CentralIDPIssuer:                 "https://sso.redhat.com/auth/realms/redhat-external",
+		CentralRetentionPeriodDays:       7,
 	}
 }
 
@@ -59,6 +63,7 @@ func (c *CentralConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.CentralIDPClientID, "central-idp-client-id", c.CentralIDPClientID, "OIDC client_id to pass to Central's auth config")
 	fs.StringVar(&c.CentralIDPClientSecretFile, "central-idp-client-secret-file", c.CentralIDPClientSecretFile, "File containing OIDC client_secret to pass to Central's auth config")
 	fs.StringVar(&c.CentralIDPIssuer, "central-idp-issuer", c.CentralIDPIssuer, "OIDC issuer URL to pass to Central's auth config")
+	fs.IntVar(&c.CentralRetentionPeriodDays, "central-retention-period-days", c.CentralRetentionPeriodDays, "The number of days after deletion until central tenants can no longer be restored")
 }
 
 // ReadFiles ...

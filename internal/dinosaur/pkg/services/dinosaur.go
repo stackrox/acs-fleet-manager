@@ -790,10 +790,9 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 	if !centralRequest.DeletedAt.Valid {
 		return errors.BadRequest("CentralRequests not marked as deleted.")
 	}
-	// TODO: pull out and make configurable
-	retentionPeriodDays := 7
+
 	timeSinceDeletion := time.Since(centralRequest.DeletedAt.Time)
-	if timeSinceDeletion.Hours()/24 > float64(retentionPeriodDays) {
+	if timeSinceDeletion.Hours()/24 > float64(k.dinosaurConfig.CentralRetentionPeriodDays) {
 		return errors.BadRequest("CentralRequests retention period already expired")
 	}
 
