@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: operator-config
+  namespace: "$ACSMS_NAMESPACE"
+data:
+  operator-config.yaml: |-
+    - gitref: 4.1.1
+      image: quay.io/rhacs-eng/stackrox-operator:4.1.1

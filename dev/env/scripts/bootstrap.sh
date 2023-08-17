@@ -56,6 +56,10 @@ else
     apply "${MANIFESTS_DIR}/crds"
 fi
 
+if [[ "$RHACS_USE_OPERATORS_CONFIGMAP" == "true" ]]; then
+    apply "${MANIFESTS_DIR}/rhacs-operator/03-operators-config.yaml"
+fi
+
 if is_local_cluster "$CLUSTER_TYPE"; then
     if [[ ("$INSTALL_OPERATOR" == "true" && "$OPERATOR_SOURCE" == "quay") || "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
         if docker_logged_in "quay.io"; then

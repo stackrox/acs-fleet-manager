@@ -139,6 +139,7 @@ init() {
     export IGNORE_REPOSITORY_DIRTINESS=${IGNORE_REPOSITORY_DIRTINESS:-$IGNORE_REPOSITORY_DIRTINESS_DEFAULT}
     export DEBUG_PODS=${DEBUG_PODS:-$DEBUG_PODS_DEFAULT}
     export RHACS_TARGETED_OPERATOR_UPGRADES=${RHACS_TARGETED_OPERATOR_UPGRADES:-$RHACS_TARGETED_OPERATOR_UPGRADES_DEFAULT}
+    export RHACS_USE_OPERATORS_CONFIGMAP=${RHACS_USE_OPERATORS_CONFIGMAP:-$RHACS_USE_OPERATORS_CONFIGMAP_DEFAULT}
 
     local fleet_manager_command="/usr/local/bin/fleet-manager serve --force-leader --api-server-bindaddress=0.0.0.0:8000 --health-check-server-bindaddress=0.0.0.0:8083 --kubeconfig=/secrets/kubeconfig --enable-central-external-certificate=$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE --central-domain-name='$CENTRAL_DOMAIN_NAME'"
     FLEET_MANAGER_CONTAINER_COMMAND_DEFAULT="${fleet_manager_command} || { sleep 120; false; }"
