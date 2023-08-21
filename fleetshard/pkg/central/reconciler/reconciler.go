@@ -269,7 +269,7 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 		Host: r.auditLogging.Endpoint(false),
 	}
 	kubernetesURL := url.URL{
-		Host: "https://kubernetes.default.svc:443",
+		Host: "kubernetes.default.svc.cluster.local.:443",
 	}
 	envVars := getProxyEnvVars(remoteCentralNamespace, auditLoggingURL, kubernetesURL)
 
