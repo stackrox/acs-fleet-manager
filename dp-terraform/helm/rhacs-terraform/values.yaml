@@ -62,6 +62,7 @@ fleetshardSync:
 acsOperator:
   enabled: false
   channel: latest
+  repository: quay.io/rhacs-eng
   source: redhat-operators
   sourceNamespace: openshift-marketplace
   version: v3.70.0

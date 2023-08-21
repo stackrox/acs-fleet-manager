@@ -37,7 +37,7 @@ spec:
   displayName: 'RHACS Development'
   publisher: 'Red Hat ACS'
   sourceType: grpc
-  image: quay.io/rhacs-eng/stackrox-operator-index:{{ .Values.acsOperator.version }}
+  image: "{{ .Values.acsOperator.repository }}/stackrox-operator-index:{{ .Values.acsOperator.version }}"
 ---
 {{- end }}
 {{- end }}
