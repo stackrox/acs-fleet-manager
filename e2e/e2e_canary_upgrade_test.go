@@ -23,7 +23,7 @@ const (
 	namespace = "acsms"
 )
 
-var _ = Describe("Fleetshard-sync Canary Upgrade", func() {
+var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 	BeforeEach(func() {
 		if !runCanaryUpgradeTests {
@@ -83,9 +83,9 @@ var _ = Describe("Fleetshard-sync Canary Upgrade", func() {
 
 		})
 
-		It("should run only the latest operator", func() {
+		It("should delete the removed operator", func() {
 			ctx := context.Background()
-			twoOperatorVersionConfig := `
+			operatorConfig := `
 - gitref: 4.1.2
   image: quay.io/rhacs-eng/stackrox-operator:4.1.2`
 			err := updateOperatorConfig(ctx, twoOperatorVersionConfig)
