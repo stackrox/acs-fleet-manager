@@ -5,5 +5,5 @@ metadata:
   namespace: "$ACSMS_NAMESPACE"
 data:
   operator-config.yaml: |-
-    - gitref: 4.1.1
+    - gitref: 4.0.0
       image: quay.io/rhacs-eng/stackrox-operator:4.1.1
