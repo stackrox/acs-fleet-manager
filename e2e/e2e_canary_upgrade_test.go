@@ -88,7 +88,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 			operatorConfig := `
 - gitref: 4.1.2
   image: quay.io/rhacs-eng/stackrox-operator:4.1.2`
-			err := updateOperatorConfig(ctx, twoOperatorVersionConfig)
+			err := updateOperatorConfig(ctx, operatorConfig)
 			Expect(err).To(BeNil())
 
 			Eventually(validateOperatorDeployment(ctx, "4.1.2", "quay.io/rhacs-eng/stackrox-operator:4.1.2")).
@@ -230,10 +230,7 @@ func getCentralDeployment(ctx context.Context, name string, namespace string) (*
 	deployment := &appsv1.Deployment{}
 	centralKey := ctrlClient.ObjectKey{Namespace: namespace, Name: name}
 	err := k8sClient.Get(ctx, centralKey, deployment)
-	if err != nil {
-		return nil, err
-	}
-	return deployment, nil
+	return deployment, err
 }
 
 func validateOperatorDeployment(ctx context.Context, GitRef string, image string) error {
