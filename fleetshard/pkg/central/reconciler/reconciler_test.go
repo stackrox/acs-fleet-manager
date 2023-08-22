@@ -153,9 +153,10 @@ func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestCo
 
 func TestReconcileCreate(t *testing.T) {
 	reconcilerOptions := CentralReconcilerOptions{
-		ClusterName: clusterName,
-		Environment: environment,
-		UseRoutes:   true,
+		ClusterName:      clusterName,
+		Environment:      environment,
+		ManagedDBEnabled: false,
+		UseRoutes:        true,
 	}
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
@@ -183,7 +184,7 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, central.Spec.Customize.Labels[orgIDLabelKey])
 	assert.Equal(t, simpleManagedCentral.Spec.Central.InstanceType, central.Spec.Customize.Labels[instanceTypeLabelKey])
 	assert.Equal(t, "1", central.GetAnnotations()[util.RevisionAnnotationKey])
-	assert.Equal(t, "true", central.GetAnnotations()[centralPVCAnnotationKey])
+	assert.Equal(t, "false", central.GetAnnotations()[centralPVCAnnotationKey])
 	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
 
@@ -230,6 +231,7 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
+	assert.Equal(t, "true", central.GetAnnotations()[centralPVCAnnotationKey])
 
 	route := &openshiftRouteV1.Route{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
