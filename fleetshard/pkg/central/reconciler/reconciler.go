@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -286,7 +287,7 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 				orgIDLabelKey:         remoteCentral.Spec.Auth.OwnerOrgId,
 			},
 			Annotations: map[string]string{
-				centralPVCAnnotationKey:   "true",
+				centralPVCAnnotationKey:   strconv.FormatBool(r.managedDBEnabled),
 				managedServicesAnnotation: "true",
 				orgNameAnnotationKey:      remoteCentral.Spec.Auth.OwnerOrgName,
 			},
