@@ -265,10 +265,13 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	}
 
 	// Set proxy configuration
-	additionalNoProxyURL := url.URL{
+	auditLoggingURL := url.URL{
 		Host: r.auditLogging.Endpoint(false),
 	}
-	envVars := getProxyEnvVars(remoteCentralNamespace, additionalNoProxyURL)
+	kubernetesURL := url.URL{
+		Host: "kubernetes.default.svc.cluster.local.:443",
+	}
+	envVars := getProxyEnvVars(remoteCentralNamespace, auditLoggingURL, kubernetesURL)
 
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
 
@@ -484,7 +487,6 @@ func (r *CentralReconciler) configureAuditLogNotifier(secret *corev1.Secret, nam
 func getAuthProviderConfig(remoteCentral private.ManagedCentral) *declarativeconfig.AuthProvider {
 	return &declarativeconfig.AuthProvider{
 		Name:             authProviderName(remoteCentral),
-		MinimumRoleName:  "None",
 		UIEndpoint:       remoteCentral.Spec.UiEndpoint.Host,
 		ExtraUIEndpoints: []string{"localhost:8443"},
 		Groups: []declarativeconfig.Group{

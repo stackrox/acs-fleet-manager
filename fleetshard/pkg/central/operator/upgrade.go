@@ -10,12 +10,15 @@ import (
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
+	"html/template"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/validation"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 const (
@@ -23,19 +26,14 @@ const (
 	ACSOperatorNamespace = "rhacs"
 	// ACSOperatorConfigMap name for configMap with operator deployment configurations
 	ACSOperatorConfigMap     = "operator-config"
-	releaseName              = "rhacs-operator"
-	operatorDeploymentPrefix = "rhacs-operator"
+	releaseName               = "rhacs-operator"
+	operatorDeploymentPrefix  = "rhacs-operator"
+	defaultCRDBaseURLTemplate = "https://raw.githubusercontent.com/stackrox/stackrox/{{ .GitRef }}/operator/bundle/manifests/"
 )
 
-// DeploymentConfig represents operator configuration for deployment
-type DeploymentConfig struct {
-	Image  string
-	GitRef string
-}
-
-func parseOperatorConfigs(operators []DeploymentConfig) ([]chartutil.Values, error) {
+func parseOperatorConfigs(operators OperatorConfigs) ([]chartutil.Values, error) {
 	var helmValues []chartutil.Values
-	for _, operator := range operators {
+	for _, operator := range operators.Configs {
 		imageReference, err := containerImage.Parse(operator.Image)
 		if err != nil {
 			return nil, err
@@ -56,6 +54,14 @@ func parseOperatorConfigs(operators []DeploymentConfig) ([]chartutil.Values, err
 			"image":          image,
 			"labelSelector":  operator.GitRef,
 		}
+
+		operatorHelmValues := make(map[string]interface{})
+		err = yaml.Unmarshal([]byte(operator.HelmValues), operatorHelmValues)
+		if err != nil {
+			return nil, fmt.Errorf("Unmarshalling Helm values failed for operator %s: %w.", operator.GitRef, err)
+		}
+
+		chartutil.CoalesceTables(operatorValues, operatorHelmValues)
 		helmValues = append(helmValues, operatorValues)
 	}
 	return helmValues, nil
@@ -64,40 +70,19 @@ func parseOperatorConfigs(operators []DeploymentConfig) ([]chartutil.Values, err
 // ACSOperatorManager keeps data necessary for managing ACS Operator
 type ACSOperatorManager struct {
 	client         ctrlClient.Client
-	crdURL         string
 	resourcesChart *chart.Chart
 }
 
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
-func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, operators []DeploymentConfig, crdTag string) error {
-	if len(operators) == 0 {
-		return nil
-	}
-
-	operatorImages, err := parseOperatorConfigs(operators)
+func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, operators OperatorConfigs) error {
+	objs, err := u.RenderChart(operators)
 	if err != nil {
-		return fmt.Errorf("failed to parse images: %w", err)
-	}
-	chartVals := chartutil.Values{
-		"operator": chartutil.Values{
-			"images": operatorImages,
-		},
-	}
-
-	var dynamicTemplatesUrls []string
-	if crdTag != "" {
-		dynamicTemplatesUrls = u.generateCRDTemplateUrls(crdTag)
-	}
-
-	u.resourcesChart = charts.MustGetChart("rhacs-operator", dynamicTemplatesUrls)
-	objs, err := charts.RenderToObjects(releaseName, ACSOperatorNamespace, u.resourcesChart, chartVals)
-	if err != nil {
-		return fmt.Errorf("failed rendering operator chart: %w", err)
+		return err
 	}
 
 	for _, obj := range objs {
 		if obj.GetNamespace() == "" {
-			obj.SetNamespace(ACSOperatorNamespace)
+			obj.SetNamespace(operatorNamespace)
 		}
 		err := charts.InstallOrUpdateChart(ctx, obj, u.client)
 		if err != nil {
@@ -107,6 +92,38 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, operators []D
 
 	return nil
 
+}
+
+// RenderChart renders the operator helm chart manifests
+func (u *ACSOperatorManager) RenderChart(operators OperatorConfigs) ([]*unstructured.Unstructured, error) {
+	if len(operators.Configs) == 0 {
+		return nil, nil
+	}
+
+	operatorImages, err := parseOperatorConfigs(operators)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse images: %w", err)
+	}
+	chartVals := chartutil.Values{
+		"operator": chartutil.Values{
+			"images": operatorImages,
+		},
+	}
+
+	var dynamicTemplatesUrls []string
+	if operators.CRD.GitRef != "" {
+		dynamicTemplatesUrls, err = u.generateCRDTemplateUrls(operators.CRD)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	u.resourcesChart = charts.MustGetChart("rhacs-operator", dynamicTemplatesUrls)
+	objs, err := charts.RenderToObjects(releaseName, ACSOperatorNamespace, u.resourcesChart, chartVals)
+	if err != nil {
+		return nil, fmt.Errorf("failed rendering operator chart: %w", err)
+	}
+	return objs, nil
 }
 
 // ListVersionsWithReplicas returns currently running ACS Operator versions with number of ready replicas
@@ -193,17 +210,36 @@ func generateDeploymentName(version string) string {
 	return operatorDeploymentPrefix + "-" + version
 }
 
-func (u *ACSOperatorManager) generateCRDTemplateUrls(tag string) []string {
-	stackroxWithTag := fmt.Sprintf(u.crdURL, tag)
-	centralCrdURL := stackroxWithTag + "platform.stackrox.io_centrals.yaml"
-	securedClusterCrdURL := stackroxWithTag + "platform.stackrox.io_securedclusters.yaml"
-	return []string{centralCrdURL, securedClusterCrdURL}
+func (u *ACSOperatorManager) generateCRDTemplateUrls(crdConfig CRDConfig) ([]string, error) {
+	baseURL := defaultCRDBaseURLTemplate
+	if crdConfig.BaseURL != "" {
+		baseURL = crdConfig.BaseURL
+	}
+
+	wr := new(strings.Builder)
+	crdURLTpl, err := template.New("crd_base_url").Parse(baseURL)
+	if err != nil {
+		return []string{}, fmt.Errorf("could not parse CRD base URL: %w", err)
+	}
+
+	err = crdURLTpl.Execute(wr, struct {
+		GitRef string
+	}{
+		GitRef: crdConfig.GitRef,
+	})
+	if err != nil {
+		return []string{}, fmt.Errorf("could not parse CRD base URL: %w", err)
+	}
+
+	//stackroxWithTag := fmt.Sprintf(baseURL, crdConfig.GitRef)
+	centralCrdURL := wr.String() + "platform.stackrox.io_centrals.yaml"
+	securedClusterCrdURL := wr.String() + "platform.stackrox.io_securedclusters.yaml"
+	return []string{centralCrdURL, securedClusterCrdURL}, nil
 }
 
 // NewACSOperatorManager creates a new ACS Operator Manager
-func NewACSOperatorManager(k8sClient ctrlClient.Client, baseCrdURL string) *ACSOperatorManager {
+func NewACSOperatorManager(k8sClient ctrlClient.Client) *ACSOperatorManager {
 	return &ACSOperatorManager{
 		client: k8sClient,
-		crdURL: baseCrdURL,
 	}
 }
