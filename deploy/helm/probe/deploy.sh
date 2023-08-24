@@ -10,7 +10,7 @@ source "$SCRIPT_DIR/../../../scripts/lib/helm.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
-    echo "Known environments: stage prod"
+    echo "Known environments: dev integration stage prod"
     echo "Cluster typically looks like: acs-{environment}-dp-01"
     exit 2
 fi
@@ -46,7 +46,7 @@ case $ENVIRONMENT in
     ;;
 esac
 
-CLUSTER_ENVIRONMENT="$(echo "${CLUSTER_NAME}" | cut -d- -f 2)"
+CLUSTER_ENVIRONMENT="$(echo "${CLUSTER_NAME}" | cut -d- -f 2 | sed 's,^int$,integration,')"
 if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     echo "Cluster ${CLUSTER_NAME} is expected to be in environment ${CLUSTER_ENVIRONMENT}, not ${ENVIRONMENT}" >&2
     exit 2
