@@ -415,7 +415,6 @@ var _ = Describe("Central", func() {
 	Describe("should be deployed and can be force-deleted", func() {
 		var err error
 		var createdCentral *public.CentralRequest
-		var central *public.CentralRequest
 		var namespaceName string
 
 		It("created a central", func() {
@@ -446,7 +445,6 @@ var _ = Describe("Central", func() {
 			Eventually(func() string {
 				return centralStatus(createdCentral.Id, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
-			central = getCentral(createdCentral.Id, client)
 		})
 
 		It("should be deletable in the control-plane database", func() {
@@ -494,7 +492,7 @@ var _ = Describe("Central", func() {
 			if !dnsEnabled {
 				Skip(skipDNSMsg)
 			}
-
+			central := getCentral(createdCentral.Id, client)
 			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
 
 			Eventually(dnsRecordsLoader.LoadDNSRecords).
@@ -505,12 +503,11 @@ var _ = Describe("Central", func() {
 	})
 })
 
-func getCentral(id string, client *fleetmanager.Client) *public.CentralRequest {
+func getCentral(id string, client *fleetmanager.Client) public.CentralRequest {
 	Expect(id).NotTo(BeEmpty())
 	central, _, err := client.PublicAPI().GetCentralById(context.TODO(), id)
-	Expect(err).To(BeNil())
-	Expect(central).ToNot(BeNil())
-	return &central
+	Expect(err).NotTo(HaveOccurred())
+	return central
 }
 
 func centralStatus(id string, client *fleetmanager.Client) string {
