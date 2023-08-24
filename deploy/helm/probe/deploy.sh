@@ -32,6 +32,10 @@ case $ENVIRONMENT in
     FM_ENDPOINT="https://api.fake.openshift.com"
     ;;
 
+  integration)
+    FM_ENDPOINT="https://api.integration.openshift.com"
+    ;;
+
   stage)
     FM_ENDPOINT="https://api.stage.openshift.com"
     ;;
