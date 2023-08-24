@@ -96,7 +96,7 @@ case $ENVIRONMENT in
     ;;
 esac
 
-CLUSTER_ENVIRONMENT="$(echo "${CLUSTER_NAME}" | cut -d- -f 2)"
+CLUSTER_ENVIRONMENT="$(echo "${CLUSTER_NAME}" | cut -d- -f 2 | sed 's,^int$,integration,')"
 if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     echo "Cluster ${CLUSTER_NAME} is expected to be in environment ${CLUSTER_ENVIRONMENT}, not ${ENVIRONMENT}" >&2
     exit 2
