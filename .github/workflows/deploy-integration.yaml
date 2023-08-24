@@ -1,0 +1,16 @@
+name: Deploy Integration Env
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  call-deploy-workflow:
+    uses: ./.github/workflows/deploy-data-plane.yaml
+    secrets: inherit # pragma: allowlist secret
+    with:
+      acs_environment: integration
+      github_environment: integration
+      deploy_clusters: "acs-int-us-01"
+      probe_clusters: "acs-int-us-01"
