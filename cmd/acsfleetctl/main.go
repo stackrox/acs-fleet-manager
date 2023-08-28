@@ -2,6 +2,7 @@
 package main
 
 import (
+	gitopsCmd "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops/cmd"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -26,4 +27,5 @@ func main() {
 func setupSubCommands(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(centrals.NewCentralsCommand())
 	rootCmd.AddCommand(admin.NewAdminCommand())
+	rootCmd.AddCommand(gitopsCmd.NewGitOpsCommand())
 }

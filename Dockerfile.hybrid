@@ -4,6 +4,7 @@ ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /usr/local
 
 COPY \
     fleet-manager \
+    acsfleetctl \
     fleetshard-sync \
     /usr/local/bin/
 

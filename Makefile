@@ -524,7 +524,7 @@ docker/login/internal:
 # Go's cross-compilation capabilities and then copying these binaries into a new Docker image.
 image/build: GOOS=linux
 image/build: IMAGE_REF ?= "$(external_image_registry)/$(image_repository):$(image_tag)"
-image/build: fleet-manager fleetshard-sync
+image/build: fleet-manager fleetshard-sync acsfleetctl
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.hybrid .
 .PHONY: image/build
 
