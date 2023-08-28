@@ -129,7 +129,7 @@ func (k *DeletingDinosaurManager) reconcileDeletingDinosaurs(dinosaur *dbapi.Cen
 			dinosaur.ID)
 	case dbapi.AuthConfigDynamicClientOrigin:
 		if resp, err := k.dynamicAPI.DeleteAcsClient(context.Background(), dinosaur.ClientID); err != nil {
-			if resp.StatusCode == http.StatusNotFound {
+			if resp != nil && resp.StatusCode == http.StatusNotFound {
 				glog.V(7).Infof("dynamic client %s could not be found; will continue as if the client "+
 					"has been deleted", dinosaur.ClientID)
 			} else {
