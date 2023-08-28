@@ -1473,10 +1473,14 @@ func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
 	require.NotNil(t, centralConfig.Spec.Central.DeclarativeConfiguration)
 	centralCRDeclarativeConfig := centralConfig.Spec.Central.DeclarativeConfiguration
 	assert.NotZero(t, len(centralCRDeclarativeConfig.Secrets))
-	expectedSecretReference := v1alpha1.LocalSecretReference{ // pragma: allowlist secret
+	expectedReconciledSecretReference := v1alpha1.LocalSecretReference{ // pragma: allowlist secret
 		Name: sensibleDeclarativeConfigSecretName,
 	}
-	assert.Contains(t, centralCRDeclarativeConfig.Secrets, expectedSecretReference)
+	expectedManualSecretReference := v1alpha1.LocalSecretReference{ // pragma: allowlist secret
+		Name: manualDeclarativeConfigSecretName,
+	}
+	assert.Contains(t, centralCRDeclarativeConfig.Secrets, expectedReconciledSecretReference)
+	assert.Contains(t, centralCRDeclarativeConfig.Secrets, expectedManualSecretReference)
 }
 
 func TestGetAuditLogNotifierConfig(t *testing.T) {
