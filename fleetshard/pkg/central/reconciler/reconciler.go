@@ -76,6 +76,7 @@ const (
 	centralDeletePollInterval = 5 * time.Second
 
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
+	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
 
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
 )
@@ -316,6 +317,9 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 					Secrets: []v1alpha1.LocalSecretReference{
 						{
 							Name: sensibleDeclarativeConfigSecretName,
+						},
+						{
+							Name: manualDeclarativeConfigSecretName,
 						},
 					},
 				},
