@@ -578,7 +578,7 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	assert.Len(t, managedDBProvisioningClient.EnsureDBProvisionedCalls(), 1)
 
 	deletedCentral := simpleManagedCentral
-	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05"
+	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05+00:00"
 
 	// trigger deletion
 	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string, _ string, _ bool) error {
@@ -612,10 +612,6 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	secret := &v1.Secret{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralDbSecretName, Namespace: centralNamespace}, secret)
 	assert.True(t, k8sErrors.IsNotFound(err))
-}
-
-func TestAThing(t *testing.T) {
-	t.Fatal(time.Now().Format(time.RFC3339))
 }
 
 func TestCentralChanged(t *testing.T) {
