@@ -75,6 +75,10 @@ spec:
           value: {{ required "fleetshardSync.managedDB.securityGroup is required when fleetshardSync.managedDB.enabled = true" .Values.fleetshardSync.managedDB.securityGroup }}
         - name: MANAGED_DB_PERFORMANCE_INSIGHTS
           value: {{ .Values.fleetshardSync.managedDB.performanceInsights | quote }}
+        - name: SECRET_ENCRYPTION_TYPE
+          value: {{ .Values.fleetshardSync.secretEncryption.type | quote }}
+        - name: SECRET_ENCRYPTION_KEY_ID
+          value: {{ .Values.fleetshardSync.secretEncryption.keyID | quote }}
         {{- end }}
         - name: AWS_REGION
           value: {{ .Values.fleetshardSync.aws.region }}

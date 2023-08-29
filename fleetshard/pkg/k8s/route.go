@@ -8,8 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -18,13 +16,12 @@ import (
 const (
 	centralReencryptRouteName   = "managed-central-reencrypt"
 	centralPassthroughRouteName = "managed-central-passthrough"
-	centralTLSSecretName        = "central-tls" // pragma: allowlist secret
 
 	centralReencryptTimeoutAnnotationKey   = "haproxy.router.openshift.io/timeout"
 	centralReencryptTimeoutAnnotationValue = "10m"
 )
 
-// ErrCentralTLSSecretNotFound returned when central-tls secret is not found during creation of the reencrypt route
+// ErrCentralTLSSecretNotFound returned when central-tls secret is not found
 var ErrCentralTLSSecretNotFound = errors.New("central-tls secret not found")
 
 // RouteService is responsible for performing read and write operations on the OpenShift Route objects in the cluster.
@@ -83,18 +80,14 @@ func isAdmitted(ingress openshiftRouteV1.RouteIngress) bool {
 
 // CreateReencryptRoute creates a new managed central reencrypt route.
 func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral private.ManagedCentral) error {
-	centralTLSSecret := &v1.Secret{}
 	namespace := remoteCentral.Metadata.Namespace
-	err := s.client.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: centralTLSSecretName}, centralTLSSecret)
+	centralTLSSecret, err := getSecret(ctx, s.client, centralTLSSecretName, namespace)
 	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return ErrCentralTLSSecretNotFound
-		}
-		return errors.Wrapf(err, "get central TLS secret %s/%s", namespace, remoteCentral.Metadata.Name)
+		return fmt.Errorf("getting central-tls secret for tenant %s: %w", remoteCentral.Metadata.Name, err)
 	}
 	centralCA, ok := centralTLSSecret.Data["ca.pem"]
 	if !ok {
-		return errors.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
+		return fmt.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
 	}
 
 	annotations := map[string]string{

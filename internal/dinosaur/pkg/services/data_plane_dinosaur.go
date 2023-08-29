@@ -73,9 +73,8 @@ func (d *dataPlaneCentralService) UpdateDataPlaneCentralService(ctx context.Cont
 		var e *serviceError.ServiceError
 		switch s := getStatus(ks); s {
 		case statusReady:
-			// Only store the routes (and create them) when the Dinosaurs are ready, as by the time they are ready,
-			// the routes should definitely be there.
-			e = d.persistCentralRoutes(dinosaur, ks, cluster)
+			// Persist values only known once central is in statusReady e.g. routes, secrets
+			e = d.persistCentralValues(dinosaur, ks, cluster)
 			if e == nil {
 				e = d.setCentralClusterReady(dinosaur)
 			}
@@ -217,7 +216,23 @@ func (d *dataPlaneCentralService) checkCentralRequestCurrentStatus(centralReques
 	return matchStatus, nil
 }
 
-func (d *dataPlaneCentralService) persistCentralRoutes(centralRequest *dbapi.CentralRequest, centralStatus *dbapi.DataPlaneCentralStatus, cluster *api.Cluster) *serviceError.ServiceError {
+func (d *dataPlaneCentralService) persistCentralValues(centralRequest *dbapi.CentralRequest, centralStatus *dbapi.DataPlaneCentralStatus, cluster *api.Cluster) *serviceError.ServiceError {
+	if err := d.addRoutesToRequest(centralRequest, centralStatus, cluster); err != nil {
+		return err
+	}
+
+	if err := d.addSecretsToRequest(centralRequest, centralStatus, cluster); err != nil {
+		return err
+	}
+
+	if err := d.dinosaurService.Update(centralRequest); err != nil {
+		return serviceError.NewWithCause(err.Code, err, "failed to update routes for central cluster %s", centralRequest.ID)
+	}
+
+	return nil
+}
+
+func (d *dataPlaneCentralService) addRoutesToRequest(centralRequest *dbapi.CentralRequest, centralStatus *dbapi.DataPlaneCentralStatus, cluster *api.Cluster) *serviceError.ServiceError {
 	if centralRequest.Routes != nil {
 		logger.Logger.V(10).Infof("skip persisting routes for Central %s as they are already stored", centralRequest.ID)
 		return nil
@@ -238,9 +253,20 @@ func (d *dataPlaneCentralService) persistCentralRoutes(centralRequest *dbapi.Cen
 		return serviceError.NewWithCause(serviceError.ErrorGeneral, err, "failed to set routes for central %s", centralRequest.ID)
 	}
 
-	if err := d.dinosaurService.Update(centralRequest); err != nil {
-		return serviceError.NewWithCause(err.Code, err, "failed to update routes for central cluster %s", centralRequest.ID)
+	return nil
+}
+
+func (d *dataPlaneCentralService) addSecretsToRequest(centralRequest *dbapi.CentralRequest, centralStatus *dbapi.DataPlaneCentralStatus, cluster *api.Cluster) *serviceError.ServiceError {
+	if centralRequest.Secrets != nil { // pragma: allowlist secret
+		logger.Logger.V(10).Infof("skip persisting secrets for Central %s as they are already stored", centralRequest.ID)
+		return nil
 	}
+	logger.Logger.Infof("store secret information for central %s", centralRequest.ID)
+
+	if err := centralRequest.SetSecrets(centralStatus.Secrets); err != nil {
+		return serviceError.NewWithCause(serviceError.ErrorGeneral, err, "failed to set secrets for central %s", centralRequest.ID)
+	}
+
 	return nil
 }
 

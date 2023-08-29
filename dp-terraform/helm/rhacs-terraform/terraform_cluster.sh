@@ -168,6 +168,8 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set fleetshardSync.imageCredentials.registry="quay.io" \
   --set fleetshardSync.imageCredentials.username="${QUAY_READ_ONLY_USERNAME}" \
   --set fleetshardSync.imageCredentials.password="${QUAY_READ_ONLY_PASSWORD}" \
+  --set fleetshardSync.secretEncryption.type="kms" \
+  --set fleetshardSync.secretEncryption.keyID="${CLUSTER_SECRET_ENCRYPTION_KEY_ID}" \
   --set cloudwatch.aws.accessKeyId="${CLOUDWATCH_EXPORTER_AWS_ACCESS_KEY_ID:-}" \
   --set cloudwatch.aws.secretAccessKey="${CLOUDWATCH_EXPORTER_AWS_SECRET_ACCESS_KEY:-}" \
   --set cloudwatch.clusterName="${CLUSTER_NAME}" \

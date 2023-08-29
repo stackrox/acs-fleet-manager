@@ -16,4 +16,6 @@ type DataPlaneCentralStatus struct {
 	Conditions []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
 	// Routes created for a Central
 	Routes []DataPlaneCentralStatusRoutes `json:"routes,omitempty"`
+	// Map of Secrets created for a Central
+	Secrets map[string]string `json:"secrets,omitempty"`
 }
