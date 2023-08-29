@@ -59,7 +59,8 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 				MasId:          from.ID,
 				MasPlacementId: from.PlacementID,
 			},
-			Internal: from.Internal,
+			Internal:      from.Internal,
+			SecretsStored: getSecretNames(from), // pragma: allowlist secret
 		},
 		Spec: private.ManagedCentralAllOfSpec{
 			Owners: []string{
@@ -162,4 +163,21 @@ func orDefaultInt32(i int32, def int32) int32 {
 		return i
 	}
 	return def
+}
+
+func getSecretNames(from *dbapi.CentralRequest) []string {
+	secrets, err := from.Secrets.Object()
+	if err != nil {
+		glog.Errorf("Failed to get Secrets as JSON object for Central request %q/%s: %v", from.Name, from.ClusterID, err)
+		return []string{}
+	}
+
+	secretNames := make([]string, len(secrets))
+	i := 0
+	for k := range secrets {
+		secretNames[i] = k
+		i++
+	}
+
+	return secretNames
 }
