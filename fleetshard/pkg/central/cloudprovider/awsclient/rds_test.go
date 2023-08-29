@@ -67,14 +67,14 @@ func waitForClusterToBeDeleted(ctx context.Context, rdsClient *RDS, clusterID st
 	}
 }
 
-func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, clusterID string) (bool, error) {
+func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, snapshotID string) (bool, error) {
 
 	ticker := time.NewTicker(awsRetrySeconds * time.Second)
 	for {
 		select {
 		case <-ticker.C:
 			snapshotOut, err := rdsClient.rdsClient.DescribeDBClusterSnapshots(&rds.DescribeDBClusterSnapshotsInput{
-				DBClusterSnapshotIdentifier: getFinalSnapshotID(clusterID),
+				DBClusterSnapshotIdentifier: &snapshotID,
 			})
 
 			if err != nil {
@@ -132,7 +132,7 @@ func TestRDSProvisioning(t *testing.T) {
 	err = rdsClient.EnsureDBProvisioned(ctx, dbID, dbID, dbMasterPassword, false)
 	defer func() {
 		// clean-up AWS resources in case the test fails
-		deleteErr := rdsClient.EnsureDBDeprovisioned(dbID, false)
+		deleteErr := rdsClient.EnsureDBDeprovisioned(dbID, time.Now(), false)
 		assert.NoError(t, deleteErr)
 	}()
 	require.NoError(t, err)
@@ -154,7 +154,8 @@ func TestRDSProvisioning(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, failoverExists)
 
-	err = rdsClient.EnsureDBDeprovisioned(dbID, false)
+	deletedAt := time.Now()
+	err = rdsClient.EnsureDBDeprovisioned(dbID, deletedAt, false)
 	assert.NoError(t, err)
 
 	deleteCtx, deleteCancel := context.WithTimeout(context.TODO(), awsTimeoutMinutes*time.Minute)
@@ -164,16 +165,17 @@ func TestRDSProvisioning(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, clusterDeleted)
 
+	expectedSnapshotID := getFinalSnapshotID(clusterID, deletedAt)
 	// Always attempt to delete the final snapshot if it exists
 	defer func() {
 		_, err := rdsClient.rdsClient.DeleteDBClusterSnapshot(
-			&rds.DeleteDBClusterSnapshotInput{DBClusterSnapshotIdentifier: getFinalSnapshotID(clusterID)},
+			&rds.DeleteDBClusterSnapshotInput{DBClusterSnapshotIdentifier: expectedSnapshotID},
 		)
 
 		assert.NoError(t, err)
 	}()
 
-	snapshotExists, err := waitForFinalSnapshotToExist(deleteCtx, rdsClient, clusterID)
+	snapshotExists, err := waitForFinalSnapshotToExist(deleteCtx, rdsClient, *expectedSnapshotID)
 	require.NoError(t, err)
 	require.True(t, snapshotExists)
 }

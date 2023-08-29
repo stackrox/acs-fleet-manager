@@ -82,7 +82,7 @@ func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, acsInstanceID
 
 // EnsureDBDeprovisioned is a function that initiates the deprovisioning of the RDS database of a Central
 // Unlike EnsureDBProvisioned, this function does not block until the DB is deprovisioned
-func (r *RDS) EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) error {
+func (r *RDS) EnsureDBDeprovisioned(databaseID string, deletedAt time.Time, skipFinalSnapshot bool) error {
 	err := r.ensureInstanceDeleted(getInstanceID(databaseID))
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (r *RDS) EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) e
 		return err
 	}
 
-	err = r.ensureClusterDeleted(getClusterID(databaseID), skipFinalSnapshot)
+	err = r.ensureClusterDeleted(getClusterID(databaseID), deletedAt, skipFinalSnapshot)
 	if err != nil {
 		return err
 	}
@@ -262,7 +262,7 @@ func (r *RDS) ensureInstanceDeleted(instanceID string) error {
 	return nil
 }
 
-func (r *RDS) ensureClusterDeleted(clusterID string, skipFinalSnapshot bool) error {
+func (r *RDS) ensureClusterDeleted(clusterID string, deletedAt time.Time, skipFinalSnapshot bool) error {
 	clusterExists, clusterStatus, err := r.clusterStatus(clusterID)
 	if err != nil {
 		return fmt.Errorf("getting DB cluster status: %w", err)
@@ -273,7 +273,7 @@ func (r *RDS) ensureClusterDeleted(clusterID string, skipFinalSnapshot bool) err
 
 	if clusterStatus != dbDeletingStatus {
 		glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
-		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, skipFinalSnapshot))
+		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, deletedAt, skipFinalSnapshot))
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok {
 				// This assumes that if a final snapshot exists, a deletion for the RDS cluster was already triggered
@@ -539,14 +539,14 @@ func newDeleteCentralDBInstanceInput(instanceID string, skipFinalSnapshot bool) 
 	}
 }
 
-func newDeleteCentralDBClusterInput(clusterID string, skipFinalSnapshot bool) *rds.DeleteDBClusterInput {
+func newDeleteCentralDBClusterInput(clusterID string, deletedAt time.Time, skipFinalSnapshot bool) *rds.DeleteDBClusterInput {
 	input := &rds.DeleteDBClusterInput{
 		DBClusterIdentifier: aws.String(clusterID),
 		SkipFinalSnapshot:   aws.Bool(skipFinalSnapshot),
 	}
 
 	if !skipFinalSnapshot {
-		input.FinalDBSnapshotIdentifier = getFinalSnapshotID(clusterID)
+		input.FinalDBSnapshotIdentifier = getFinalSnapshotID(clusterID, deletedAt)
 	}
 
 	return input
@@ -561,7 +561,7 @@ func newRdsClient() (*rds.RDS, error) {
 	return rds.New(sess), nil
 }
 
-func getFinalSnapshotID(clusterID string) *string {
+func getFinalSnapshotID(clusterID string, deletedAt time.Time) *string {
 	return aws.String(fmt.Sprintf("%s-%s-%v", clusterID, "final", time.Now().Format("20060102-150405")))
 }
 

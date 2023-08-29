@@ -551,7 +551,7 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _string, _ string, _ string, _ bool) error {
 		return nil
 	}
-	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(_ string, _ bool) error {
+	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(_ string, _ time.Time, _ bool) error {
 		return nil
 	}
 	managedDBProvisioningClient.GetDBConnectionFunc = func(_ string) (postgres.DBConnection, error) {
