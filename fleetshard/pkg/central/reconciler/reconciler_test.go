@@ -5,6 +5,10 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/utils"
 	"gopkg.in/yaml.v2"
@@ -12,9 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"strings"
-	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider/awsclient"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cipher"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
@@ -120,6 +122,12 @@ var simpleManagedCentral = private.ManagedCentral{
 //go:embed testdata
 var testdata embed.FS
 
+func createBase64Cipher(t *testing.T) cipher.Cipher {
+	b64Cipher, err := cipher.NewLocalBase64Cipher()
+	require.NoError(t, err, "creating base64 cipher for test")
+	return b64Cipher
+}
+
 func getClientTrackerAndReconciler(
 	t *testing.T,
 	centralConfig private.ManagedCentral,
@@ -133,6 +141,7 @@ func getClientTrackerAndReconciler(
 		centralConfig,
 		managedDBClient,
 		centralDBInitFunc,
+		createBase64Cipher(t),
 		reconcilerOptions,
 	)
 	return fakeClient, tracker, reconciler
@@ -140,6 +149,24 @@ func getClientTrackerAndReconciler(
 
 func centralDBInitFunc(_ context.Context, _ postgres.DBConnection, _, _ string) error {
 	return nil
+}
+
+func centralTLSSecretObject() *v1.Secret {
+	return &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "central-tls",
+			Namespace: centralNamespace,
+		},
+	}
+}
+
+func centralDBPasswordSecretObject() *v1.Secret {
+	return &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "central-db-password",
+			Namespace: centralNamespace,
+		},
+	}
 }
 
 func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestConditions, conditionType string) (*private.DataPlaneClusterUpdateStatusRequestConditions, bool) {
@@ -153,9 +180,10 @@ func conditionForType(conditions []private.DataPlaneClusterUpdateStatusRequestCo
 
 func TestReconcileCreate(t *testing.T) {
 	reconcilerOptions := CentralReconcilerOptions{
-		ClusterName: clusterName,
-		Environment: environment,
-		UseRoutes:   true,
+		ClusterName:      clusterName,
+		Environment:      environment,
+		ManagedDBEnabled: false,
+		UseRoutes:        true,
 	}
 	fakeClient, _, r := getClientTrackerAndReconciler(
 		t,
@@ -183,7 +211,7 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, central.Spec.Customize.Labels[orgIDLabelKey])
 	assert.Equal(t, simpleManagedCentral.Spec.Central.InstanceType, central.Spec.Customize.Labels[instanceTypeLabelKey])
 	assert.Equal(t, "1", central.GetAnnotations()[util.RevisionAnnotationKey])
-	assert.Equal(t, "true", central.GetAnnotations()[centralPVCAnnotationKey])
+	assert.Equal(t, "false", central.GetAnnotations()[centralPVCAnnotationKey])
 	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
 
@@ -230,6 +258,7 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
+	assert.Equal(t, "true", central.GetAnnotations()[centralPVCAnnotationKey])
 
 	route := &openshiftRouteV1.Route{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
@@ -362,6 +391,8 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 			},
 		},
 		centralDeploymentObject(),
+		centralTLSSecretObject(),
+		centralDBPasswordSecretObject(),
 	)
 
 	managedCentral := simpleManagedCentral
@@ -429,6 +460,8 @@ func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
 			},
 		},
 		centralDeploymentObject(),
+		centralTLSSecretObject(),
+		centralDBPasswordSecretObject(),
 	)
 
 	managedCentral := simpleManagedCentral
@@ -1471,10 +1504,14 @@ func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
 	require.NotNil(t, centralConfig.Spec.Central.DeclarativeConfiguration)
 	centralCRDeclarativeConfig := centralConfig.Spec.Central.DeclarativeConfiguration
 	assert.NotZero(t, len(centralCRDeclarativeConfig.Secrets))
-	expectedSecretReference := v1alpha1.LocalSecretReference{ // pragma: allowlist secret
+	expectedReconciledSecretReference := v1alpha1.LocalSecretReference{ // pragma: allowlist secret
 		Name: sensibleDeclarativeConfigSecretName,
 	}
-	assert.Contains(t, centralCRDeclarativeConfig.Secrets, expectedSecretReference)
+	expectedManualSecretReference := v1alpha1.LocalSecretReference{ // pragma: allowlist secret
+		Name: manualDeclarativeConfigSecretName,
+	}
+	assert.Contains(t, centralCRDeclarativeConfig.Secrets, expectedReconciledSecretReference)
+	assert.Contains(t, centralCRDeclarativeConfig.Secrets, expectedManualSecretReference)
 }
 
 func TestGetAuditLogNotifierConfig(t *testing.T) {

@@ -10,6 +10,7 @@ type DataPlaneCentralStatus struct {
 	Conditions       []DataPlaneCentralStatusCondition
 	// Going to ignore the rest of fields (like capacity and versions) for now, until when they are needed
 	Routes                 []DataPlaneCentralRoute
+	Secrets                map[string]string
 	CentralVersion         string
 	CentralOperatorVersion string
 }

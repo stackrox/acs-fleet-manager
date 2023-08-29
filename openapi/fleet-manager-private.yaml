@@ -234,6 +234,10 @@ components:
                       type: string
                 deletionTimestamp:
                   type: string
+                secretsStored:
+                  type: array
+                  items:
+                    type: string
             spec:
               type: object
               properties:
@@ -416,6 +420,12 @@ components:
                 type: string
               router:
                 type: string
+        secrets:
+          description: "Map of Secrets created for a Central"
+          type: object
+          additionalProperties:
+            type: string
+
       example:
         $ref: "#/components/examples/DataPlaneCentralStatusRequestExample"
 

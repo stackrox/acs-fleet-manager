@@ -10,8 +10,8 @@ source "$SCRIPT_DIR/../../../scripts/lib/helm.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
-    echo "Known environments: stage prod"
-    echo "Cluster typically looks like: acs-{environment}-dp-01"
+    echo "Known environments: integration stage prod"
+    echo "Cluster typically looks like: acs-{env}-dp-01"
     exit 2
 fi
 
@@ -43,6 +43,21 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"500m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"512Mi"}"
     SECURED_CLUSTER_ENABLED="true"
+    ;;
+
+  integration)
+    FM_ENDPOINT="https://qj3layty4dynlnz.api.integration.openshift.com"
+    OBSERVABILITY_GITHUB_TAG="master"
+    OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
+    OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
+    OPERATOR_USE_UPSTREAM="false"
+    OPERATOR_CHANNEL="stable"
+    OPERATOR_VERSION="v4.1.0"
+    FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
+    FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
+    FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
+    FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
+    SECURED_CLUSTER_ENABLED="false"  # TODO(ROX-18908): enable
     ;;
 
   stage)
@@ -81,7 +96,7 @@ case $ENVIRONMENT in
     ;;
 esac
 
-CLUSTER_ENVIRONMENT="$(echo "${CLUSTER_NAME}" | cut -d- -f 2)"
+CLUSTER_ENVIRONMENT="$(echo "${CLUSTER_NAME}" | cut -d- -f 2 | sed 's,^int$,integration,')"
 if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
     echo "Cluster ${CLUSTER_NAME} is expected to be in environment ${CLUSTER_ENVIRONMENT}, not ${ENVIRONMENT}" >&2
     exit 2
@@ -153,6 +168,8 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set fleetshardSync.imageCredentials.registry="quay.io" \
   --set fleetshardSync.imageCredentials.username="${QUAY_READ_ONLY_USERNAME}" \
   --set fleetshardSync.imageCredentials.password="${QUAY_READ_ONLY_PASSWORD}" \
+  --set fleetshardSync.secretEncryption.type="kms" \
+  --set fleetshardSync.secretEncryption.keyID="${CLUSTER_SECRET_ENCRYPTION_KEY_ID}" \
   --set cloudwatch.aws.accessKeyId="${CLOUDWATCH_EXPORTER_AWS_ACCESS_KEY_ID:-}" \
   --set cloudwatch.aws.secretAccessKey="${CLOUDWATCH_EXPORTER_AWS_SECRET_ACCESS_KEY:-}" \
   --set cloudwatch.clusterName="${CLUSTER_NAME}" \

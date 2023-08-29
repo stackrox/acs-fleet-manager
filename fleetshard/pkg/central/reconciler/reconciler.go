@@ -4,10 +4,13 @@ package reconciler
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/url"
 	"reflect"
+	"sort"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -20,6 +23,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cipher"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
@@ -75,6 +79,7 @@ const (
 	centralDeletePollInterval = 5 * time.Second
 
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
+	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
 
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
 )
@@ -104,6 +109,8 @@ type CentralReconciler struct {
 	useRoutes        bool
 	Resources        bool
 	routeService     *k8s.RouteService
+	secretBackup     *k8s.SecretBackup
+	secretCipher     cipher.Cipher
 	egressProxyImage string
 	telemetry        config.Telemetry
 	clusterName      string
@@ -265,10 +272,13 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	}
 
 	// Set proxy configuration
-	additionalNoProxyURL := url.URL{
+	auditLoggingURL := url.URL{
 		Host: r.auditLogging.Endpoint(false),
 	}
-	envVars := getProxyEnvVars(remoteCentralNamespace, additionalNoProxyURL)
+	kubernetesURL := url.URL{
+		Host: "kubernetes.default.svc.cluster.local.:443",
+	}
+	envVars := getProxyEnvVars(remoteCentralNamespace, auditLoggingURL, kubernetesURL)
 
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
 
@@ -283,7 +293,7 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 				orgIDLabelKey:         remoteCentral.Spec.Auth.OwnerOrgId,
 			},
 			Annotations: map[string]string{
-				centralPVCAnnotationKey:   "true",
+				centralPVCAnnotationKey:   strconv.FormatBool(r.managedDBEnabled),
 				managedServicesAnnotation: "true",
 				orgNameAnnotationKey:      remoteCentral.Spec.Auth.OwnerOrgName,
 			},
@@ -312,6 +322,9 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 					Secrets: []v1alpha1.LocalSecretReference{
 						{
 							Name: sensibleDeclarativeConfigSecretName,
+						},
+						{
+							Name: manualDeclarativeConfigSecretName,
 						},
 					},
 				},
@@ -738,7 +751,88 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 		}
 	}
 
+	// Only report secrets if Central is ready, to ensure we're not trying to get secrets before they are created.
+	// Only report secrets once. Ensures we don't overwrite initial secrets with corrupted secrets
+	// from the cluster state.
+	if isRemoteCentralReady(remoteCentral) && !r.areSecretsStored(remoteCentral.Metadata.SecretsStored) {
+		secrets, err := r.collectSecretsEncrypted(ctx, remoteCentral)
+		if err != nil {
+			return nil, err
+		}
+		status.Secrets = secrets // pragma: allowlist secret
+	}
+
 	return status, nil
+}
+
+func (r *CentralReconciler) areSecretsStored(secretsStored []string) bool {
+	expectedSecrets := k8s.GetWatchedSecrets()
+	if len(secretsStored) != len(expectedSecrets) {
+		return false
+	}
+
+	sort.Strings(secretsStored)
+
+	for i := 0; i < len(secretsStored); i++ {
+		if secretsStored[i] != expectedSecrets[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (r *CentralReconciler) collectSecrets(ctx context.Context, remoteCentral *private.ManagedCentral) (map[string]*corev1.Secret, error) {
+	namespace := remoteCentral.Metadata.Namespace
+	secrets, err := r.secretBackup.CollectSecrets(ctx, namespace)
+	if err != nil {
+		return secrets, fmt.Errorf("collecting secrets for namespace %s: %w", namespace, err)
+	}
+
+	// remove ResourceVersion and owner reference as this is only intended to recreate non-existent
+	// resources instead of updating existing ones, the owner reference might get invalid in case of
+	// central namespace recreation
+	for _, secret := range secrets { // pragma: allowlist secret
+		secret.ObjectMeta.ResourceVersion = ""
+		secret.ObjectMeta.OwnerReferences = []metav1.OwnerReference{}
+	}
+
+	return secrets, nil
+}
+
+func (r *CentralReconciler) collectSecretsEncrypted(ctx context.Context, remoteCentral *private.ManagedCentral) (map[string]string, error) {
+	secrets, err := r.collectSecrets(ctx, remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedSecrets, err := r.encryptSecrets(secrets)
+	if err != nil {
+		return nil, fmt.Errorf("encrypting secrets for namespace: %s: %w", remoteCentral.Metadata.Namespace, err)
+	}
+
+	return encryptedSecrets, nil
+}
+
+func (r *CentralReconciler) encryptSecrets(secrets map[string]*corev1.Secret) (map[string]string, error) {
+	encryptedSecrets := map[string]string{}
+
+	for key, secret := range secrets { // pragma: allowlist secret
+		secretBytes, err := json.Marshal(secret)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling secret for encryption: %s: %w", key, err)
+		}
+
+		encryptedBytes, err := r.secretCipher.Encrypt(secretBytes)
+		if err != nil {
+			return nil, fmt.Errorf("encrypting secret: %s: %w", key, err)
+		}
+
+		encryptedSecrets[key] = base64.StdEncoding.EncodeToString(encryptedBytes)
+	}
+
+	return encryptedSecrets, nil
+
 }
 
 func (r *CentralReconciler) ensureDeclarativeConfigurationSecretCleaned(ctx context.Context, remoteCentralNamespace string) error {
@@ -1387,6 +1481,7 @@ func (r *CentralReconciler) ensureSecretExists(
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCentral,
 	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
+	secretCipher cipher.Cipher,
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
 	return &CentralReconciler{
@@ -1396,6 +1491,8 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		useRoutes:         opts.UseRoutes,
 		wantsAuthProvider: opts.WantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
+		secretBackup:      k8s.NewSecretBackup(k8sClient),
+		secretCipher:      secretCipher, // pragma: allowlist secret
 		egressProxyImage:  opts.EgressProxyImage,
 		telemetry:         opts.Telemetry,
 		clusterName:       opts.ClusterName,

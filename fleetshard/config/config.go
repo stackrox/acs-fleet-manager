@@ -11,6 +11,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	// EnvDev is the expected value of the environment variable "ENVIRONMENT" for dev deployments of fleetshard-sync
+	EnvDev = "dev"
+)
+
 // Config contains this application's runtime configuration.
 type Config struct {
 	FleetManagerEndpoint string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
@@ -30,9 +35,10 @@ type Config struct {
 	EgressProxyImage     string        `env:"EGRESS_PROXY_IMAGE"`
 	DefaultBaseCRDURL    string        `env:"DEFAULT_BASE_CRD_URL" envDefault:"https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"`
 
-	ManagedDB    ManagedDB
-	Telemetry    Telemetry
-	AuditLogging AuditLogging
+	ManagedDB        ManagedDB
+	Telemetry        Telemetry
+	AuditLogging     AuditLogging
+	SecretEncryption SecretEncryption
 }
 
 // ManagedDB for configuring managed DB specific parameters
@@ -58,6 +64,12 @@ type Telemetry struct {
 	StorageKey      string `env:"TELEMETRY_STORAGE_KEY"`
 }
 
+// SecretEncryption defines paramaters to configure encryption of tenant secrest
+type SecretEncryption struct {
+	Type  string `env:"SECRET_ENCRYPTION_TYPE" envDefault:"local"`
+	KeyID string `env:"SECRET_ENCRYPTION_KEY_ID"`
+}
+
 // GetConfig retrieves the current runtime configuration from the environment and returns it.
 func GetConfig() (*Config, error) {
 	c := Config{}
@@ -76,6 +88,7 @@ func GetConfig() (*Config, error) {
 		configErrors.AddError(errors.New("AUTH_TYPE unset in the environment"))
 	}
 	validateManagedDBConfig(c, &configErrors)
+	validateSecretEncryptionConfig(c, &configErrors)
 
 	cfgErr := configErrors.ToError()
 	if cfgErr != nil {
@@ -98,4 +111,18 @@ func (a *AuditLogging) Endpoint(withScheme bool) string {
 		return fmt.Sprintf("%s://%s:%d", a.URLScheme, a.AuditLogTargetHost, a.AuditLogTargetPort)
 	}
 	return fmt.Sprintf("%s:%d", a.AuditLogTargetHost, a.AuditLogTargetPort)
+}
+
+func validateSecretEncryptionConfig(c Config, configErrors *errorhelpers.ErrorList) {
+	if !isDevEnvironment(c) && c.SecretEncryption.Type == "local" {
+		configErrors.AddError(errors.New("SECRET_ENCRYPTION_TYPE == local not allowed for non dev environments")) // pragma: allowlist secret
+	}
+
+	if c.SecretEncryption.Type == "kms" && c.SecretEncryption.KeyID == "" {
+		configErrors.AddError(errors.New("SECRET_ENCRYPTION_TYPE == kms and SECRET_ENCRYPTION_KEY_ID unset in the environment")) // pragma: allowlist secret
+	}
+}
+
+func isDevEnvironment(c Config) bool {
+	return c.Environment == EnvDev || c.Environment == ""
 }

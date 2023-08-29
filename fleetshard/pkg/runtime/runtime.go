@@ -15,6 +15,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	centralReconciler "github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/reconciler"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cipher"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
@@ -55,6 +56,7 @@ type Runtime struct {
 	dbProvisionClient cloudprovider.DBClient
 	statusResponseCh  chan private.DataPlaneCentralStatus
 	operatorManager   *operator.ACSOperatorManager
+	secretCipher      cipher.Cipher
 }
 
 // NewRuntime creates a new runtime
@@ -92,6 +94,10 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 	}
 
 	operatorManager := operator.NewACSOperatorManager(k8sClient)
+	secretCipher, err := cipher.NewCipher(config)
+	if err != nil {
+		return nil, fmt.Errorf("creating secretCipher: %w", err)
+	}
 
 	return &Runtime{
 		config:            config,
@@ -101,6 +107,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		dbProvisionClient: dbProvisionClient,
 		reconcilers:       make(reconcilerRegistry),
 		operatorManager:   operatorManager,
+		secretCipher:      secretCipher, // pragma: allowlist secret
 	}, nil
 }
 
@@ -149,7 +156,7 @@ func (r *Runtime) Start() error {
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, central,
-					r.dbProvisionClient, postgres.InitializeDatabase, reconcilerOpts)
+					r.dbProvisionClient, postgres.InitializeDatabase, r.secretCipher, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]

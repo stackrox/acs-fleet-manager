@@ -358,6 +358,11 @@ components:
           items:
             $ref: '#/components/schemas/DataPlaneCentralStatus_routes'
           type: array
+        secrets:
+          additionalProperties:
+            type: string
+          description: Map of Secrets created for a Central
+          type: object
       type: object
     DataPlaneCentralStatusUpdateRequest:
       additionalProperties:
@@ -412,6 +417,10 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_metadata_annotations'
         deletionTimestamp:
           type: string
+        secretsStored:
+          items:
+            type: string
+          type: array
     ManagedCentral_allOf_spec_auth:
       properties:
         clientSecret:

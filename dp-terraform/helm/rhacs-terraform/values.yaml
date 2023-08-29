@@ -35,6 +35,9 @@ fleetshardSync:
     subnetGroup: ""
     securityGroup: ""
     performanceInsights: true
+  secretEncryption:
+    type: "" # local or kms
+    keyID: ""
   aws:
     region: "us-east-1" # TODO(2023-05-01): Remove the default value here as we now set it explicitly
     roleARN: ""
@@ -62,6 +65,7 @@ fleetshardSync:
 acsOperator:
   enabled: false
   channel: latest
+  repository: quay.io/rhacs-eng
   source: redhat-operators
   sourceNamespace: openshift-marketplace
   version: v3.70.0

@@ -75,8 +75,11 @@ type CentralRequest struct {
 	RoutesCreated bool `json:"routes_created"`
 	// Namespace is the namespace of the provisioned central instance.
 	// We store this in the database to ensure that old centrals whose namespace contained "owner-<central-id>" information will continue to work.
-	Namespace        string `json:"namespace"`
-	RoutesCreationID string `json:"routes_creation_id"`
+
+	// Secrets stores the encrypted secrets reported for a central tenant
+	Secrets          api.JSON `json:"secrets"`
+	Namespace        string   `json:"namespace"`
+	RoutesCreationID string   `json:"routes_creation_id"`
 	// DeletionTimestamp stores the timestamp of the DELETE api call for the resource.
 	DeletionTimestamp *time.Time `json:"deletionTimestamp"`
 
@@ -155,6 +158,16 @@ func (k *CentralRequest) SetRoutes(routes []DataPlaneCentralRoute) error {
 		return fmt.Errorf("marshalling routes into JSON: %w", err)
 	}
 	k.Routes = r
+	return nil
+}
+
+// SetSecrets sets CentralRequest.Secret field by converting secrets to api.JSON
+func (k *CentralRequest) SetSecrets(secrets map[string]string) error {
+	r, err := json.Marshal(secrets)
+	if err != nil {
+		return fmt.Errorf("marshalling secrets into JSON: %w", err)
+	}
+	k.Secrets = r
 	return nil
 }
 
