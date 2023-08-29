@@ -109,7 +109,7 @@ type CentralReconciler struct {
 	useRoutes        bool
 	Resources        bool
 	routeService     *k8s.RouteService
-	secretService    *k8s.SecretBackup
+	secretBackup     *k8s.SecretBackup
 	secretCipher     cipher.Cipher
 	egressProxyImage string
 	telemetry        config.Telemetry
@@ -784,7 +784,7 @@ func (r *CentralReconciler) areSecretsStored(secretsStored []string) bool {
 
 func (r *CentralReconciler) collectSecrets(ctx context.Context, remoteCentral *private.ManagedCentral) (map[string]*corev1.Secret, error) {
 	namespace := remoteCentral.Metadata.Namespace
-	secrets, err := r.secretService.CollectSecrets(ctx, namespace)
+	secrets, err := r.secretBackup.CollectSecrets(ctx, namespace)
 	if err != nil {
 		return secrets, fmt.Errorf("collecting secrets for namespace %s: %w", namespace, err)
 	}
@@ -1491,7 +1491,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, central private.ManagedCe
 		useRoutes:         opts.UseRoutes,
 		wantsAuthProvider: opts.WantsAuthProvider,
 		routeService:      k8s.NewRouteService(k8sClient),
-		secretService:     k8s.NewSecretBackup(k8sClient),
+		secretBackup:      k8s.NewSecretBackup(k8sClient),
 		secretCipher:      secretCipher, // pragma: allowlist secret
 		egressProxyImage:  opts.EgressProxyImage,
 		telemetry:         opts.Telemetry,
