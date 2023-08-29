@@ -562,7 +562,7 @@ func newRdsClient() (*rds.RDS, error) {
 }
 
 func getFinalSnapshotID(clusterID string, deletedAt time.Time) *string {
-	return aws.String(fmt.Sprintf("%s-%s-%v", clusterID, "final", time.Now().Format("20060102-150405")))
+	return aws.String(fmt.Sprintf("%s-%s-%v", clusterID, "final", deletedAt.Format("20060102-150405")))
 }
 
 func getInstanceType(isTestInstance bool) string {
