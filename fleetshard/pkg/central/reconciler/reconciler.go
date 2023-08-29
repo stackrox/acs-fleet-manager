@@ -103,20 +103,21 @@ type CentralReconcilerOptions struct {
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client           ctrlClient.Client
-	central          private.ManagedCentral
-	status           *int32
-	lastCentralHash  [16]byte
-	useRoutes        bool
-	Resources        bool
-	routeService     *k8s.RouteService
-	secretBackup     *k8s.SecretBackup
-	secretCipher     cipher.Cipher
-	egressProxyImage string
-	telemetry        config.Telemetry
-	clusterName      string
-	environment      string
-	auditLogging     config.AuditLogging
+	client             ctrlClient.Client
+	fleetmanagerClient *fleetmanager.Client
+	central            private.ManagedCentral
+	status             *int32
+	lastCentralHash    [16]byte
+	useRoutes          bool
+	Resources          bool
+	routeService       *k8s.RouteService
+	secretBackup       *k8s.SecretBackup
+	secretCipher       cipher.Cipher
+	egressProxyImage   string
+	telemetry          config.Telemetry
+	clusterName        string
+	environment        string
+	auditLogging       config.AuditLogging
 
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
@@ -1562,19 +1563,20 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
 	return &CentralReconciler{
-		client:            k8sClient,
-		central:           central,
-		status:            pointer.Int32(FreeStatus),
-		useRoutes:         opts.UseRoutes,
-		wantsAuthProvider: opts.WantsAuthProvider,
-		routeService:      k8s.NewRouteService(k8sClient),
-		secretBackup:      k8s.NewSecretBackup(k8sClient),
-		secretCipher:      secretCipher, // pragma: allowlist secret
-		egressProxyImage:  opts.EgressProxyImage,
-		telemetry:         opts.Telemetry,
-		clusterName:       opts.ClusterName,
-		environment:       opts.Environment,
-		auditLogging:      opts.AuditLogging,
+		client:             k8sClient,
+		fleetmanagerClient: fleetmanagerClient,
+		central:            central,
+		status:             pointer.Int32(FreeStatus),
+		useRoutes:          opts.UseRoutes,
+		wantsAuthProvider:  opts.WantsAuthProvider,
+		routeService:       k8s.NewRouteService(k8sClient),
+		secretBackup:       k8s.NewSecretBackup(k8sClient),
+		secretCipher:       secretCipher, // pragma: allowlist secret
+		egressProxyImage:   opts.EgressProxyImage,
+		telemetry:          opts.Telemetry,
+		clusterName:        opts.ClusterName,
+		environment:        opts.Environment,
+		auditLogging:       opts.AuditLogging,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,
