@@ -104,6 +104,11 @@ parameters:
   description: Health check server bind adddress
   value: :8083
 
+- name: DATABASE_SECRET_NAME
+  displayName: Database secret name
+  description: Name of k8s secret that contains credentials for the fleet manager RDS database
+  value: "acs-fleet-manager-rds"
+
 - name: DB_MAX_OPEN_CONNS
   displayName: Maximum Open Database Connections
   description: Maximum number of open database connections per pod
@@ -1013,7 +1018,7 @@ objects:
               secretName: fleet-manager-dataplane-certificate # pragma: allowlist secret
           - name: rds
             secret:
-              secretName: acs-fleet-manager-rds # pragma: allowlist secret
+              secretName: ${DATABASE_SECRET_NAME}
           - name: fleet-manager-providers-config
             configMap:
               name: fleet-manager-providers-config
