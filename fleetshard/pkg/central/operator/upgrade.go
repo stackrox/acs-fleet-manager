@@ -25,7 +25,7 @@ const (
 	// ACSOperatorNamespace default Operator Namespace
 	ACSOperatorNamespace = "rhacs"
 	// ACSOperatorConfigMap name for configMap with operator deployment configurations
-	ACSOperatorConfigMap     = "operator-config"
+	ACSOperatorConfigMap      = "operator-config"
 	releaseName               = "rhacs-operator"
 	operatorDeploymentPrefix  = "rhacs-operator"
 	defaultCRDBaseURLTemplate = "https://raw.githubusercontent.com/stackrox/stackrox/{{ .GitRef }}/operator/bundle/manifests/"
@@ -82,7 +82,7 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, operators Ope
 
 	for _, obj := range objs {
 		if obj.GetNamespace() == "" {
-			obj.SetNamespace(operatorNamespace)
+			obj.SetNamespace(ACSOperatorNamespace)
 		}
 		err := charts.InstallOrUpdateChart(ctx, obj, u.client)
 		if err != nil {
@@ -187,7 +187,7 @@ func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredI
 }
 
 // ReadOperatorConfigurationFromConfigMap reads Operator deployment configuration from ConfigMap
-func (u *ACSOperatorManager) ReadOperatorConfigurationFromConfigMap(ctx context.Context) ([]DeploymentConfig, error) {
+func (u *ACSOperatorManager) ReadOperatorConfigurationFromConfigMap(ctx context.Context) ([]OperatorConfig, error) {
 	configMap := &v1.ConfigMap{}
 
 	err := u.client.Get(ctx, ctrlClient.ObjectKey{Name: ACSOperatorConfigMap, Namespace: "acsms"}, configMap)
@@ -196,7 +196,7 @@ func (u *ACSOperatorManager) ReadOperatorConfigurationFromConfigMap(ctx context.
 	}
 
 	operatorsConfigYAML := configMap.Data["operator-config.yaml"]
-	var configMapOperators []DeploymentConfig
+	var configMapOperators []OperatorConfig
 
 	err = yaml.Unmarshal([]byte(operatorsConfigYAML), &configMapOperators)
 	if err != nil {
