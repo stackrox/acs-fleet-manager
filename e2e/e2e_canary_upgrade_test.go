@@ -11,6 +11,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -45,9 +46,10 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 		It("should deploy single operator", func() {
 			ctx := context.Background()
-			oneOperatorVersionConfig := `
-- gitref: 4.1.1
-  image: quay.io/rhacs-eng/stackrox-operator:4.1.1`
+			oneOperatorVersionConfig := []operator.OperatorConfig{{
+				GitRef: "4.1.1",
+				Image:  "quay.io/rhacs-eng/stackrox-operator:4.1.1",
+			}}
 			err := updateOperatorConfig(ctx, oneOperatorVersionConfig)
 			Expect(err).To(BeNil())
 
@@ -60,11 +62,16 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 		It("should deploy two operators", func() {
 			ctx := context.Background()
-			twoOperatorVersionConfig := `
-- gitref: 4.1.1
-  image: quay.io/rhacs-eng/stackrox-operator:4.1.1
-- gitref: 4.1.2
-  image: quay.io/rhacs-eng/stackrox-operator:4.1.2`
+			twoOperatorVersionConfig := []operator.OperatorConfig{{
+				GitRef: "4.1.1",
+				Image:  "quay.io/rhacs-eng/stackrox-operator:4.1.1",
+			},
+				{
+					GitRef: "4.1.2",
+					Image:  "quay.io/rhacs-eng/stackrox-operator:4.1.2",
+				},
+			}
+
 			err := updateOperatorConfig(ctx, twoOperatorVersionConfig)
 			Expect(err).To(BeNil())
 
@@ -85,9 +92,10 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 		It("should delete the removed operator", func() {
 			ctx := context.Background()
-			operatorConfig := `
-- gitref: 4.1.2
-  image: quay.io/rhacs-eng/stackrox-operator:4.1.2`
+			operatorConfig := []operator.OperatorConfig{{
+				GitRef: "4.1.2",
+				Image:  "quay.io/rhacs-eng/stackrox-operator:4.1.2",
+			}}
 			err := updateOperatorConfig(ctx, operatorConfig)
 			Expect(err).To(BeNil())
 
@@ -130,9 +138,10 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 			centralNamespace, err = services.FormatNamespace(createdCentral.Id)
 
 			ctx := context.Background()
-			oneOperatorVersionConfig := `
-- gitref: 4.0.0
-  image: quay.io/rhacs-eng/stackrox-operator:4.1.1`
+			oneOperatorVersionConfig := []operator.OperatorConfig{{
+				GitRef: "4.0.0",
+				Image:  "quay.io/rhacs-eng/stackrox-operator:4.1.1",
+			}}
 			err = updateOperatorConfig(ctx, oneOperatorVersionConfig)
 			Expect(err).To(BeNil())
 
@@ -160,9 +169,10 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 		It("upgrade central", func() {
 			ctx := context.Background()
-			oneOperatorVersionConfig := `
-- gitref: 4.1.2
-  image: quay.io/rhacs-eng/stackrox-operator:4.1.2`
+			oneOperatorVersionConfig := []operator.OperatorConfig{{
+				GitRef: "4.1.2",
+				Image:  "quay.io/rhacs-eng/stackrox-operator:4.1.2",
+			}}
 			err = updateOperatorConfig(ctx, oneOperatorVersionConfig)
 			Expect(err).To(BeNil())
 
@@ -181,18 +191,22 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 })
 
-func updateOperatorConfig(ctx context.Context, configYAML string) error {
+func updateOperatorConfig(ctx context.Context, operatorConfigs []operator.OperatorConfig) error {
+	configYAML, err := yaml.Marshal(operatorConfigs)
+	if err != nil {
+		return err
+	}
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      operator.ACSOperatorConfigMap,
 		},
 		Data: map[string]string{
-			"operator-config.yaml": configYAML,
+			"operator-config.yaml": string(configYAML),
 		},
 	}
 
-	err := k8sClient.Delete(ctx, configMap)
+	err = k8sClient.Delete(ctx, configMap)
 	if err != nil && !apiErrors.IsNotFound(err) {
 		return err
 	}
