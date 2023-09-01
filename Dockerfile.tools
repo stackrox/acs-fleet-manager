@@ -8,10 +8,16 @@ COPY \
     acsfleetctl \
     /usr/local/bin/
 
-RUN curl -o /usr/bin/kubectl -LO "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
-RUN chmod +x /usr/bin/kubectl
-RUN curl -LO "https://dl.k8s.io/$KUBECTL_VERSION/bin/linux/amd64/kubectl.sha256"
-RUN echo "$(cat kubectl.sha256)  /usr/bin/kubectl" | sha256sum --check
+RUN microdnf install tar gzip
+
+RUN curl -LO https://github.com/instrumenta/kubeval/releases/download/v0.16.1/kubeval-linux-amd64.tar.gz
+RUN curl -LO "https://github.com/instrumenta/kubeval/releases/download/v0.16.1/checksums.txt"
+RUN cat checksums.txt | grep linux-amd64 | sha256sum --check
+RUN tar -xf kubeval-linux-amd64.tar.gz
+
+RUN mv kubeval /usr/bin/kubeval
+RUN chmod +x /usr/bin/kubeval
+RUN rm kubeval-linux-amd64.tar.gz
 
 LABEL name="fleet-manager-tools" \
       vendor="Red Hat" \
