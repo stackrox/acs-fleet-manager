@@ -42,6 +42,8 @@ type AdminCentralHandler interface {
 	SetCentralDefaultVersion(w http.ResponseWriter, r *http.Request)
 	// GetCentralDefaultVersion gets the default version for a central
 	GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request)
+	// Restore restores a tenant that was already marked as deleted
+	Restore(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -198,7 +200,6 @@ func (h adminCentralHandler) Restore(w http.ResponseWriter, r *http.Request) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
 			err := h.service.Restore(ctx, id)
-			h.telemetry.TrackDeletionRequested(ctx, id, true, err.AsError())
 			return nil, err
 		},
 	}
@@ -459,5 +460,9 @@ func (g gitOpsAdminHandler) SetCentralDefaultVersion(w http.ResponseWriter, r *h
 }
 
 func (g gitOpsAdminHandler) GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+func (g gitOpsAdminHandler) Restore(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "not implemented", http.StatusNotImplemented)
 }

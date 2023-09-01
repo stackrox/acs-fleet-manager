@@ -263,7 +263,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminCentralsRouter.HandleFunc("/{id}", adminCentralHandler.Update).
 		Name(logger.NewLogEvent("admin-update-central", "[admin] update central by id").ToString()).
 		Methods(http.MethodPatch)
-	adminCentralsRouter.HandleFunc("/{id}/restore", func(w http.ResponseWriter, r *http.Request) { /*Placeholde*/ }).
+	adminCentralsRouter.HandleFunc("/{id}/restore", adminCentralHandler.Restore).
 		Name(logger.NewLogEvent("admin-restore-central", "[admin] restore central by id").ToString()).
 		Methods(http.MethodPost)
 

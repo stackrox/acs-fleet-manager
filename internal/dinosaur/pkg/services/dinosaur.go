@@ -811,8 +811,10 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 	// use a new central request, so that unset field for columnsToReset will automatically be set to the zero value
 	// this Update only changes columns listed in columnsToReset
 	resetRequest := &dbapi.CentralRequest{}
-	resetRequest.Status = dinosaurConstants.CentralRequestStatusProvisioning.String()
-	if err := dbConn.Model(&centralRequest).Select(columnsToReset).Updates(resetRequest).Error; err != nil {
+	resetRequest.Status = dinosaurConstants.CentralRequestStatusPreparing.String()
+	resetRequest.CreatedAt = time.Now()
+
+	if err := dbConn.Unscoped().Model(&centralRequest).Select(columnsToReset).Updates(resetRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to reset CentralRequest status")
 	}
 
