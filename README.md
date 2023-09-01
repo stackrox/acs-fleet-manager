@@ -133,7 +133,7 @@ To contact the people that created this template go to [zulip](https://bf2.zulip
 - [Deploying fleet manager via Service Delivery](docs/legacy/onboarding-with-service-delivery.md)
 - [Data Plane Setup](docs/legacy/data-plane-osd-cluster-options.md)
 - [Access Control](docs/legacy/access-control.md)
-- [Quota Management](docs/legacy/quota-management-list-configuration.md)
+- [Quota Management](docs/quota/quota.md)
 - [Explanation of JWT token claims used across the fleet-manager](docs/auth/jwt-claims.md)
 
 ## Contributing
