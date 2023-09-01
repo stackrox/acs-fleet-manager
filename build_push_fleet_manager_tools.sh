@@ -29,9 +29,6 @@
 # the built images can be pushed to quay.io.
 # =====================================================================================================================
 
-# The version should be a 7-char hash from git. This is what the deployment process in app-interface expects.
-VERSION=$(git rev-parse --short=7 HEAD)
-
 # Set image repository to default value if it is not passed via env
 IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-rhacs-eng/fleet-manager-tools}"
 
