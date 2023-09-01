@@ -550,13 +550,13 @@ image/build/multi-target/probe:
 .PHONY: image/build/multi-target/probe
 
 image/build/fleet-manager-tools: GOOS=linux
-image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/acs-fleet-manager-tools:$(image_tag)"
+image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/rhacs-eng/fleet-manager-tools:$(image_tag)"
 image/build/fleet-manager-tools: fleet-manager fleetshard-sync acsfleetctl
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.tools .
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) acs-fleet-manager-tools:$(image_tag)
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) fleet-manager-tools:$(image_tag)
 .PHONY: image/build/multi-target/fleet-manager-tools
 
-image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/acs-fleet-manager-tools:$(image_tag)"
+image/push/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/rhacs-eng/fleet-manager-tools:$(image_tag)"
 image/push/fleet-manager-tools: image/build/fleet-manager-tools
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
 	@echo
@@ -565,7 +565,7 @@ image/push/fleet-manager-tools: image/build/fleet-manager-tools
 
 # build binary and image and tag image for local deployment
 image/build/local: GOOS=linux
-image/build/local: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
+image/build/local: IMAGE_REF="$(external_image_registry)/rhacs-eng/$(image_repository):$(image_tag)"
 image/build/local: image/build
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"

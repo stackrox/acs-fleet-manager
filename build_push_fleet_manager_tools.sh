@@ -16,9 +16,7 @@
 #
 
 # =====================================================================================================================
-# This script builds and pushes the ACS Fleet Manager service docker image on AppSRE JenkinsCI.
-# You can find CI configuration in app-interface repository:
-# https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/acs-fleet-manager/cicd/jobs.yaml
+# This script builds and pushes the ACS Fleet Manager tools container image which is used by CI pipelines.
 # In order to work, it needs the following variables defined in the CI/CD configuration of the project:
 #
 # QUAY_USER - The name of the robot account used to push images to
@@ -35,7 +33,7 @@
 VERSION=$(git rev-parse --short=7 HEAD)
 
 # Set image repository to default value if it is not passed via env
-IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/acs-fleet-manager}"
+IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-rhacs-eng/fleet-manager-tools}"
 
 # Set the directory for docker configuration:
 DOCKER_CONFIG="${PWD}/.docker"
@@ -68,16 +66,6 @@ fi
 
 # Push the image:
 echo "Quay.io user and token is set, will push images to $IMAGE_REPOSITORY"
-make \
-  DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_USER="${QUAY_USER}" \
-  QUAY_TOKEN="${QUAY_TOKEN}" \
-  TAG="${VERSION}" \
-  external_image_registry="quay.io" \
-  internal_image_registry="quay.io" \
-  image_repository="${IMAGE_REPOSITORY}" \
-  docker/login/fleet-manager \
-  image/push/fleet-manager
 
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
@@ -88,4 +76,4 @@ make \
   internal_image_registry="quay.io" \
   image_repository="${IMAGE_REPOSITORY}" \
   docker/login/fleet-manager \
-  image/push/fleet-manager
+  image/push/fleet-manager-tools
