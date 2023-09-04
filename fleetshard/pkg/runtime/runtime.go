@@ -259,9 +259,9 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 			glog.Warningf("Failed reading operators configMap: %v", err)
 		}
 
-		if len(configMapOperators) == 0 {
-			glog.Infof("Extracted zero operators from configmap")
-		}
+
+        glog.Infof("Reading operator config map, extracted %d operators from configmap", len(configMapOperators))
+
 
 		desiredOperatorConfigs = configMapOperators
 	} else {
