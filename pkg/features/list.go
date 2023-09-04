@@ -7,6 +7,6 @@ var (
 	// PrintCentralUpdateDiff enables printing the diff of the central update
 	PrintCentralUpdateDiff = registerFeature("Print the diff of the central update", "RHACS_PRINT_CENTRAL_UPDATE_DIFF", false)
 
-	// UseOperatorsConfigMap makes Fleetshard-sync service use ACS Operators configuration from ConfigMap. It is useful for E2E testing
-	UseOperatorsConfigMap = registerFeature("Use ACS Operators configuration from ConfigMap", "RHACS_USE_OPERATORS_CONFIGMAP", false)
+	// StandaloneMode makes Fleetshard-sync service use ACS Operators configuration from ConfigMap
+	StandaloneMode = registerFeature("Use ACS Operators configuration from ConfigMap", "RHACS_STANDALONE_MODE", false)
 )

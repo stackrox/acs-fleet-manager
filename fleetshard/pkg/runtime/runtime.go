@@ -253,15 +253,13 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	var desiredOperatorConfigs []operator.OperatorConfig
 	var desiredOperatorImages []string
 
-	if features.UseOperatorsConfigMap.Enabled() {
-		configMapOperators, err := r.operatorManager.ReadOperatorConfigurationFromConfigMap(ctx)
+	if features.StandaloneMode.Enabled() {
+		configMapOperators, err := r.operatorManager.ReadOperatorConfigFromConfigMap(ctx)
 		if err != nil {
 			glog.Warningf("Failed reading operators configMap: %v", err)
 		}
 
-
-        glog.Infof("Reading operator config map, extracted %d operators from configmap", len(configMapOperators))
-
+		glog.Infof("Reading operator config map, extracted %d operators from configmap", len(configMapOperators))
 
 		desiredOperatorConfigs = configMapOperators
 	} else {

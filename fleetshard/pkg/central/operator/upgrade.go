@@ -186,8 +186,8 @@ func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredI
 	return nil
 }
 
-// ReadOperatorConfigurationFromConfigMap reads Operator deployment configuration from ConfigMap
-func (u *ACSOperatorManager) ReadOperatorConfigurationFromConfigMap(ctx context.Context) ([]OperatorConfig, error) {
+// ReadOperatorConfigFromConfigMap reads Operator deployment configuration from ConfigMap
+func (u *ACSOperatorManager) ReadOperatorConfigFromConfigMap(ctx context.Context) ([]OperatorConfig, error) {
 	configMap := &v1.ConfigMap{}
 
 	err := u.client.Get(ctx, ctrlClient.ObjectKey{Name: ACSOperatorConfigMap, Namespace: "acsms"}, configMap)

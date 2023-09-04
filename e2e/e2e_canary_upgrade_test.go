@@ -10,6 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
@@ -27,7 +28,8 @@ const (
 var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 	BeforeEach(func() {
-		if !runCanaryUpgradeTests {
+
+		if !runCanaryUpgradeTests || !features.StandaloneMode.Enabled() {
 			Skip("Skipping canary upgrade test")
 		}
 	})
@@ -53,14 +55,16 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 			err := updateOperatorConfig(ctx, oneOperatorVersionConfig)
 			Expect(err).To(BeNil())
 
-			Eventually(validateOperatorDeployment(ctx, "4.1.1", "quay.io/rhacs-eng/stackrox-operator:4.1.1")).
-				WithTimeout(waitTimeout).
-				WithPolling(defaultPolling).
-				Should(Succeed())
+			It("should deploy operator with label selector 4.1.1", func() {
+				Eventually(validateOperatorDeployment(ctx, "4.1.1", "quay.io/rhacs-eng/stackrox-operator:4.1.1")).
+					WithTimeout(waitTimeout).
+					WithPolling(defaultPolling).
+					Should(Succeed())
+			})
 
 		})
 
-		It("should deploy two operators", func() {
+		It("should deploy two operators with different versions", func() {
 			ctx := context.Background()
 			twoOperatorVersionConfig := []operator.OperatorConfig{{
 				GitRef: "4.1.1",
@@ -75,19 +79,24 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 			err := updateOperatorConfig(ctx, twoOperatorVersionConfig)
 			Expect(err).To(BeNil())
 
-			Eventually(validateOperatorDeployment(ctx, "4.1.1", "quay.io/rhacs-eng/stackrox-operator:4.1.1")).
-				WithTimeout(waitTimeout).
-				WithPolling(defaultPolling).
-				Should(Succeed())
-			Eventually(validateOperatorDeployment(ctx, "4.1.2", "quay.io/rhacs-eng/stackrox-operator:4.1.2")).
-				WithTimeout(waitTimeout).
-				WithPolling(defaultPolling).
-				Should(Succeed())
-			Eventually(getOperatorDeployments(ctx)).
-				WithTimeout(waitTimeout).
-				WithPolling(defaultPolling).
-				Should(HaveLen(2))
-
+			It("should deploy operator with label selector 4.1.1", func() {
+				Eventually(validateOperatorDeployment(ctx, "4.1.1", "quay.io/rhacs-eng/stackrox-operator:4.1.1")).
+					WithTimeout(waitTimeout).
+					WithPolling(defaultPolling).
+					Should(Succeed())
+			})
+			It("should deploy operator with label selector 4.1.2", func() {
+				Eventually(validateOperatorDeployment(ctx, "4.1.2", "quay.io/rhacs-eng/stackrox-operator:4.1.2")).
+					WithTimeout(waitTimeout).
+					WithPolling(defaultPolling).
+					Should(Succeed())
+			})
+			It("should contain only two operator deployments", func() {
+				Eventually(getOperatorDeployments(ctx)).
+					WithTimeout(waitTimeout).
+					WithPolling(defaultPolling).
+					Should(HaveLen(2))
+			})
 		})
 
 		It("should delete the removed operator", func() {
@@ -99,14 +108,18 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 			err := updateOperatorConfig(ctx, operatorConfig)
 			Expect(err).To(BeNil())
 
-			Eventually(validateOperatorDeployment(ctx, "4.1.2", "quay.io/rhacs-eng/stackrox-operator:4.1.2")).
-				WithTimeout(waitTimeout).
-				WithPolling(defaultPolling).
-				Should(Succeed())
-			Eventually(getOperatorDeployments(ctx)).
-				WithTimeout(waitTimeout).
-				WithPolling(defaultPolling).
-				Should(HaveLen(1))
+			It("should deploy operator with label selector 4.1.2", func() {
+				Eventually(validateOperatorDeployment(ctx, "4.1.2", "quay.io/rhacs-eng/stackrox-operator:4.1.2")).
+					WithTimeout(waitTimeout).
+					WithPolling(defaultPolling).
+					Should(Succeed())
+			})
+			It("should contain only one operator deployments", func() {
+				Eventually(getOperatorDeployments(ctx)).
+					WithTimeout(waitTimeout).
+					WithPolling(defaultPolling).
+					Should(HaveLen(1))
+			})
 
 		})
 
@@ -114,14 +127,10 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 	Describe("should upgrade the central", func() {
 
-		BeforeEach(func() {
-			Skip("Skipping canary upgrade test")
-		})
-
 		var createdCentral *public.CentralRequest
 		var centralNamespace string
 
-		It("create central", func() {
+		It("creates central", func() {
 			centralName := newCentralName()
 			request := public.CentralRequestPayload{
 				CloudProvider: dpCloudProvider,
@@ -139,7 +148,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 			ctx := context.Background()
 			oneOperatorVersionConfig := []operator.OperatorConfig{{
-				GitRef: "4.0.0",
+				GitRef: "4.1.1",
 				Image:  "quay.io/rhacs-eng/stackrox-operator:4.1.1",
 			}}
 			err = updateOperatorConfig(ctx, oneOperatorVersionConfig)
@@ -150,8 +159,8 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 				if err != nil {
 					return fmt.Errorf("failed finding central CR: %v", err)
 				}
-				if centralCR.Labels["rhacs.redhat.com/version-selector"] != "4.0.0" {
-					return fmt.Errorf("wrong version-selector")
+				if centralCR.GetLabels()["rhacs.redhat.com/version-selector"] != "4.1.1" {
+					return fmt.Errorf("central CR does not have 4.1.1 version-selector")
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
@@ -161,7 +170,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 					return fmt.Errorf("failed finding central deployment: %v", err)
 				}
 				if centralDeployment.Spec.Template.Spec.Containers[0].Image == "quay.io/rhacs-eng/main:4.1.1" {
-					return fmt.Errorf("wrong image")
+					return fmt.Errorf("there is no central deployment with 4.1.1 image tag")
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
@@ -182,7 +191,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 					return fmt.Errorf("failed finding central deployment: %v", err)
 				}
 				if centralDeployment.Spec.Template.Spec.Containers[0].Image == "quay.io/rhacs-eng/main:4.1.2" {
-					return fmt.Errorf("wrong image")
+					return fmt.Errorf("there is no central deployment with 4.1.2 image tag")
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
@@ -247,9 +256,9 @@ func getCentralDeployment(ctx context.Context, name string, namespace string) (*
 	return deployment, err
 }
 
-func validateOperatorDeployment(ctx context.Context, GitRef string, image string) error {
-	deploymentName := "rhacs-operator-" + GitRef
-	labelSelectorEnv := "rhacs.redhat.com/version-selector=" + GitRef
+func validateOperatorDeployment(ctx context.Context, gitRef string, image string) error {
+	deploymentName := "rhacs-operator-" + gitRef
+	labelSelectorEnv := "rhacs.redhat.com/version-selector=" + gitRef
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      deploymentName,

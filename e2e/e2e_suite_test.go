@@ -28,7 +28,7 @@ var (
 	dpCloudProvider       = getEnvDefault("DP_CLOUD_PROVIDER", "standalone")
 	dpRegion              = getEnvDefault("DP_REGION", "standalone")
 	authType              = "OCM"
-	fleetManagerEndpoint  = "http://localhost:7000"
+	fleetManagerEndpoint  = "http://localhost:8000"
 	runAuthTests          bool
 	runCentralTests       bool
 	runCanaryUpgradeTests bool
@@ -96,16 +96,16 @@ var _ = BeforeSuite(func() {
 	}
 	GinkgoWriter.Printf("FLEET_MANAGER_ENDPOINT: %q\n", fleetManagerEndpoint)
 
-	runAuthTests = enableTestsGroup("Auth", "RUN_AUTH_E2E")
-	runCentralTests = enableTestsGroup("Central", "RUN_CENTRAL_E2E")
-	runCanaryUpgradeTests = enableTestsGroup("Canary Upgrade", "RUN_CANARY_UPGRADE_E2E")
+	runAuthTests = enableTestsGroup("Auth", "RUN_AUTH_E2E", "false")
+	runCentralTests = enableTestsGroup("Central", "RUN_CENTRAL_E2E", "true")
+	runCanaryUpgradeTests = enableTestsGroup("Canary Upgrade", "RHACS_STANDALONE_MODE", "false")
 })
 
 var _ = AfterSuite(func() {
 })
 
-func enableTestsGroup(testName string, envName string) bool {
-	if val := getEnvDefault(envName, "false"); val == "true" {
+func enableTestsGroup(testName string, envName string, defaultValue string) bool {
+	if val := getEnvDefault(envName, defaultValue); val == "true" {
 		GinkgoWriter.Printf("Executing %s tests", testName)
 		return true
 	} else {
