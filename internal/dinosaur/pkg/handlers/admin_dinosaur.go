@@ -44,6 +44,8 @@ type AdminCentralHandler interface {
 	GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request)
 	// Restore restores a tenant that was already marked as deleted
 	Restore(w http.ResponseWriter, r *http.Request)
+	// RotateSecrets rotates secrets within central
+	RotateSecrets(writer http.ResponseWriter, request *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -427,6 +429,22 @@ func (h adminCentralHandler) GetCentralDefaultVersion(w http.ResponseWriter, r *
 	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
+func (h adminCentralHandler) RotateSecrets(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			ctx := r.Context()
+			centralRequest, err := h.service.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			svcErr := h.service.RotateCentralRHSSOClient(ctx, centralRequest)
+			return nil, svcErr
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
 type gitOpsAdminHandler struct{}
 
 var _ AdminCentralHandler = (*gitOpsAdminHandler)(nil)
@@ -464,5 +482,9 @@ func (g gitOpsAdminHandler) GetCentralDefaultVersion(w http.ResponseWriter, r *h
 }
 
 func (g gitOpsAdminHandler) Restore(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+func (g gitOpsAdminHandler) RotateSecrets(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "not implemented", http.StatusNotImplemented)
 }

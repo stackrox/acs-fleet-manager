@@ -266,6 +266,9 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminCentralsRouter.HandleFunc("/{id}/restore", adminCentralHandler.Restore).
 		Name(logger.NewLogEvent("admin-restore-central", "[admin] restore central by id").ToString()).
 		Methods(http.MethodPost)
+	adminCentralsRouter.HandleFunc("/{id}/rotate-secrets", adminCentralHandler.RotateSecrets).
+		Name(logger.NewLogEvent("admin-rotate-central-secrets", "[admin] rotate central secrets by id").ToString()).
+		Methods(http.MethodPatch)
 
 	adminCreateRouter := adminCentralsRouter.NewRoute().Subrouter()
 	adminCreateRouter.HandleFunc("", adminCentralHandler.Create).Methods(http.MethodPost)

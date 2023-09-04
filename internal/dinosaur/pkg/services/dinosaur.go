@@ -3,6 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
 	"sync"
 	"time"
 
@@ -106,6 +109,7 @@ type DinosaurService interface {
 	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	Restore(ctx context.Context, id string) *errors.ServiceError
+	RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -124,17 +128,19 @@ type dinosaurService struct {
 	clusterPlacementStrategy     ClusterPlacementStrategy
 	amsClient                    ocm.AMSClient
 	centralDefaultVersionService CentralDefaultVersionService
+	iamConfig                    *iam.IAMConfig
 }
 
 // NewDinosaurService ...
 func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService,
-	dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
+	iamConfig *iam.IAMConfig, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
 	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization,
 	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, centralDefaultVersionService CentralDefaultVersionService) *dinosaurService {
 	return &dinosaurService{
 		connectionFactory:            connectionFactory,
 		clusterService:               clusterService,
 		iamService:                   iamService,
+		iamConfig:                    iamConfig,
 		dinosaurConfig:               dinosaurConfig,
 		awsConfig:                    awsConfig,
 		quotaServiceFactory:          quotaServiceFactory,
@@ -145,6 +151,31 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		amsClient:                    amsClient,
 		centralDefaultVersionService: centralDefaultVersionService,
 	}
+}
+
+func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError {
+	realmConfig := k.iamConfig.RedhatSSORealm
+	if k.dinosaurConfig.HasStaticAuth() {
+		return errors.New(errors.ErrorClientRotationNotConfigured, "RHSSO is configured via static configuration")
+	}
+	if !realmConfig.IsConfigured() {
+		return errors.New(errors.ErrorClientRotationNotConfigured, "RHSSO dynamic configuration is not present")
+	}
+	dynamicClientsAPI := dynamicclients.NewDynamicClientsAPI(realmConfig)
+	previousAuthConfig := centralRequest.AuthConfig
+	if err := rhsso.AugmentWithDynamicAuthConfig(ctx, centralRequest, k.iamConfig.RedhatSSORealm, dynamicClientsAPI); err != nil {
+		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to augment auth config")
+
+	}
+	if err := k.Update(centralRequest); err != nil {
+		glog.Warningf("Created new RHSSO dynamic client, but failed to update central record: %s", centralRequest.AuthConfig.ClientID)
+		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to update database record")
+	}
+	if _, err := dynamicClientsAPI.DeleteAcsClient(ctx, previousAuthConfig.ClientID); err != nil {
+		glog.Warningf("Failed to delete RHSSO dynamic client: %s", centralRequest.AuthConfig.ClientID)
+		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to delete previous OIDC client")
+	}
+	return nil
 }
 
 // HasAvailableCapacityInRegion ...

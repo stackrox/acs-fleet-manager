@@ -2,11 +2,9 @@ package dinosaurmgrs
 
 import (
 	"context"
-	"fmt"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
-
-	"github.com/stackrox/rox/pkg/stringutils"
 
 	"github.com/golang/glog"
 	"github.com/google/uuid"
@@ -22,11 +20,7 @@ import (
 	"github.com/stackrox/rox/pkg/ternary"
 )
 
-const (
-	centralAuthConfigManagerWorkerType = "central_auth_config"
-	oidcProviderCallbackPath           = "/sso/providers/oidc/callback"
-	dynamicClientsNameMaxLength        = 50
-)
+const centralAuthConfigManagerWorkerType = "central_auth_config"
 
 // CentralAuthConfigManager updates CentralRequests with auth configuration.
 type CentralAuthConfigManager struct {
@@ -111,7 +105,7 @@ func (k *CentralAuthConfigManager) reconcileCentralRequest(cr *dbapi.CentralRequ
 		err = augmentWithStaticAuthConfig(cr, k.centralConfig)
 	} else {
 		glog.V(7).Infoln("no static config found; attempting to obtain one from the IdP")
-		err = augmentWithDynamicAuthConfig(cr, k.realmConfig, k.dynamicClientsAPIClient)
+		err = rhsso.AugmentWithDynamicAuthConfig(context.Background(), cr, k.realmConfig, k.dynamicClientsAPIClient)
 	}
 	if err != nil {
 		return errors.Wrap(err, "failed to augment central request with auth config")
@@ -134,29 +128,5 @@ func augmentWithStaticAuthConfig(r *dbapi.CentralRequest, centralConfig *config.
 	r.AuthConfig.ClientSecret = centralConfig.CentralIDPClientSecret //pragma: allowlist secret
 	r.AuthConfig.Issuer = centralConfig.CentralIDPIssuer
 
-	return nil
-}
-
-// augmentWithDynamicAuthConfig performs all necessary rituals to obtain auth
-// configuration via RHSSO API.
-func augmentWithDynamicAuthConfig(r *dbapi.CentralRequest, realmConfig *iam.IAMRealmConfig, apiClient *api.AcsTenantsApiService) error {
-	// There is a limit on name length of the dynamic client. To avoid unnecessary errors,
-	// we truncate name here.
-	name := stringutils.Truncate(fmt.Sprintf("acscs-%s", r.Name), dynamicClientsNameMaxLength)
-	orgID := r.OrganisationID
-	redirectURIs := []string{fmt.Sprintf("https://%s%s", r.GetUIHost(), oidcProviderCallbackPath)}
-
-	dynamicClientData, _, err := apiClient.CreateAcsClient(context.Background(), api.AcsClientRequestData{
-		Name:         name,
-		OrgId:        orgID,
-		RedirectUris: redirectURIs,
-	})
-	if err != nil {
-		return errors.Wrapf(err, "failed to create RHSSO dynamic client for %s", r.ID)
-	}
-
-	r.AuthConfig.ClientID = dynamicClientData.ClientId
-	r.AuthConfig.ClientSecret = dynamicClientData.Secret // pragma: allowlist secret
-	r.AuthConfig.Issuer = realmConfig.ValidIssuerURI
 	return nil
 }
