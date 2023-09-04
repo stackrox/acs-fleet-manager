@@ -147,7 +147,7 @@ paths:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       responses:
         "200":
-          description: The ManagedCentrals with centralIdfor the specified agent cluster
+          description: The ManagedCentrals with centralId for the specified agent cluster
           content:
             application/json:
               schema:

@@ -175,11 +175,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
-	if len(remoteCentral.Metadata.SecretsStored) > 0 {
-		err := r.restoreCentralSecrets(ctx, remoteCentral)
-		if err != nil {
-			return nil, err
-		}
+	err = r.restoreCentralSecrets(ctx, remoteCentral)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {

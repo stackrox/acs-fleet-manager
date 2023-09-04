@@ -158,7 +158,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ManagedCentral'
-          description: The ManagedCentrals with centralIdfor the specified agent cluster
+          description: The ManagedCentrals with centralId for the specified agent
+            cluster
         "400":
           content:
             application/json:
