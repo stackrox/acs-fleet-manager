@@ -19,7 +19,7 @@ var _ QuotaServiceFactory = &QuotaServiceFactoryMock{}
 //
 //		// make and configure a mocked QuotaServiceFactory
 //		mockedQuotaServiceFactory := &QuotaServiceFactoryMock{
-//			GetQuotaServiceFunc: func(quoataType api.QuotaType) (QuotaService, *serviceError.ServiceError) {
+//			GetQuotaServiceFunc: func(quotaType api.QuotaType) (QuotaService, *serviceError.ServiceError) {
 //				panic("mock out the GetQuotaService method")
 //			},
 //		}
@@ -30,33 +30,33 @@ var _ QuotaServiceFactory = &QuotaServiceFactoryMock{}
 //	}
 type QuotaServiceFactoryMock struct {
 	// GetQuotaServiceFunc mocks the GetQuotaService method.
-	GetQuotaServiceFunc func(quoataType api.QuotaType) (QuotaService, *serviceError.ServiceError)
+	GetQuotaServiceFunc func(quotaType api.QuotaType) (QuotaService, *serviceError.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// GetQuotaService holds details about calls to the GetQuotaService method.
 		GetQuotaService []struct {
-			// QuoataType is the quoataType argument value.
-			QuoataType api.QuotaType
+			// QuotaType is the quotaType argument value.
+			QuotaType api.QuotaType
 		}
 	}
 	lockGetQuotaService sync.RWMutex
 }
 
 // GetQuotaService calls GetQuotaServiceFunc.
-func (mock *QuotaServiceFactoryMock) GetQuotaService(quoataType api.QuotaType) (QuotaService, *serviceError.ServiceError) {
+func (mock *QuotaServiceFactoryMock) GetQuotaService(quotaType api.QuotaType) (QuotaService, *serviceError.ServiceError) {
 	if mock.GetQuotaServiceFunc == nil {
 		panic("QuotaServiceFactoryMock.GetQuotaServiceFunc: method is nil but QuotaServiceFactory.GetQuotaService was just called")
 	}
 	callInfo := struct {
-		QuoataType api.QuotaType
+		QuotaType api.QuotaType
 	}{
-		QuoataType: quoataType,
+		QuotaType: quotaType,
 	}
 	mock.lockGetQuotaService.Lock()
 	mock.calls.GetQuotaService = append(mock.calls.GetQuotaService, callInfo)
 	mock.lockGetQuotaService.Unlock()
-	return mock.GetQuotaServiceFunc(quoataType)
+	return mock.GetQuotaServiceFunc(quotaType)
 }
 
 // GetQuotaServiceCalls gets all the calls that were made to GetQuotaService.
@@ -64,10 +64,10 @@ func (mock *QuotaServiceFactoryMock) GetQuotaService(quoataType api.QuotaType) (
 //
 //	len(mockedQuotaServiceFactory.GetQuotaServiceCalls())
 func (mock *QuotaServiceFactoryMock) GetQuotaServiceCalls() []struct {
-	QuoataType api.QuotaType
+	QuotaType api.QuotaType
 } {
 	var calls []struct {
-		QuoataType api.QuotaType
+		QuotaType api.QuotaType
 	}
 	mock.lockGetQuotaService.RLock()
 	calls = mock.calls.GetQuotaService

@@ -11,7 +11,7 @@ import (
 
 // DefaultQuotaServiceFactory the default implementation for ProviderFactory
 type DefaultQuotaServiceFactory struct {
-	quoataServiceContainer map[api.QuotaType]services.QuotaService
+	quotaServiceContainer map[api.QuotaType]services.QuotaService
 }
 
 // NewDefaultQuotaServiceFactory ...
@@ -20,22 +20,22 @@ func NewDefaultQuotaServiceFactory(
 	connectionFactory *db.ConnectionFactory,
 	quotaManagementListConfig *quotamanagement.QuotaManagementListConfig,
 ) services.QuotaServiceFactory {
-	quoataServiceContainer := map[api.QuotaType]services.QuotaService{
+	quotaServiceContainer := map[api.QuotaType]services.QuotaService{
 		api.AMSQuotaType:                 &amsQuotaService{amsClient: amsClient},
 		api.QuotaManagementListQuotaType: &QuotaManagementListService{connectionFactory: connectionFactory, quotaManagementList: quotaManagementListConfig},
 	}
-	return &DefaultQuotaServiceFactory{quoataServiceContainer: quoataServiceContainer}
+	return &DefaultQuotaServiceFactory{quotaServiceContainer: quotaServiceContainer}
 }
 
 // GetQuotaService ...
-func (factory *DefaultQuotaServiceFactory) GetQuotaService(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
-	if quoataType == api.UndefinedQuotaType {
-		quoataType = api.QuotaManagementListQuotaType
+func (factory *DefaultQuotaServiceFactory) GetQuotaService(quotaType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
+	if quotaType == api.UndefinedQuotaType {
+		quotaType = api.QuotaManagementListQuotaType
 	}
 
-	quotaService, ok := factory.quoataServiceContainer[quoataType]
+	quotaService, ok := factory.quotaServiceContainer[quotaType]
 	if !ok {
-		return nil, errors.GeneralError("invalid quota service type: %v", quoataType)
+		return nil, errors.GeneralError("invalid quota service type: %v", quotaType)
 	}
 
 	return quotaService, nil
