@@ -74,6 +74,7 @@ func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
 	if err := r.probe.Execute(probeRunCtx); err != nil {
 		metrics.MetricsInstance().IncFailedRuns(r.Config.DataPlaneRegion)
 		metrics.MetricsInstance().SetLastFailureTimestamp(r.Config.DataPlaneRegion)
+		glog.Error("probe run failed", err)
 		return errors.Wrap(err, "probe run failed")
 	}
 	metrics.MetricsInstance().IncSucceededRuns(r.Config.DataPlaneRegion)
