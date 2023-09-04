@@ -434,11 +434,11 @@ func (h adminCentralHandler) RotateSecrets(w http.ResponseWriter, r *http.Reques
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-			centralRequest, err := h.service.Get(ctx, id)
-			if err != nil {
-				return nil, err
+			centralRequest, svcErr := h.service.Get(ctx, id)
+			if svcErr != nil {
+				return nil, svcErr
 			}
-			svcErr := h.service.RotateCentralRHSSOClient(ctx, centralRequest)
+			svcErr = h.service.RotateCentralRHSSOClient(ctx, centralRequest)
 			return nil, svcErr
 		},
 	}

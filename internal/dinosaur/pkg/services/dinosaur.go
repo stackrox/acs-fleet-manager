@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	dynamicClientAPI "github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
 	"sync"
 	"time"
@@ -129,6 +130,7 @@ type dinosaurService struct {
 	amsClient                    ocm.AMSClient
 	centralDefaultVersionService CentralDefaultVersionService
 	iamConfig                    *iam.IAMConfig
+	rhSSODynamicClientsAPI       *dynamicClientAPI.AcsTenantsApiService
 }
 
 // NewDinosaurService ...
@@ -150,6 +152,7 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		clusterPlacementStrategy:     clusterPlacementStrategy,
 		amsClient:                    amsClient,
 		centralDefaultVersionService: centralDefaultVersionService,
+		rhSSODynamicClientsAPI:       dynamicclients.NewDynamicClientsAPI(iamConfig.RedhatSSORealm),
 	}
 }
 
@@ -161,18 +164,18 @@ func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralR
 	if !realmConfig.IsConfigured() {
 		return errors.New(errors.ErrorClientRotationNotConfigured, "RHSSO dynamic configuration is not present")
 	}
-	dynamicClientsAPI := dynamicclients.NewDynamicClientsAPI(realmConfig)
+
 	previousAuthConfig := centralRequest.AuthConfig
-	if err := rhsso.AugmentWithDynamicAuthConfig(ctx, centralRequest, k.iamConfig.RedhatSSORealm, dynamicClientsAPI); err != nil {
+	if err := rhsso.AugmentWithDynamicAuthConfig(ctx, centralRequest, k.iamConfig.RedhatSSORealm, k.rhSSODynamicClientsAPI); err != nil {
 		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to augment auth config")
 
 	}
 	if err := k.Update(centralRequest); err != nil {
-		glog.Warningf("Created new RHSSO dynamic client, but failed to update central record: %s", centralRequest.AuthConfig.ClientID)
+		glog.Errorf("Created new RHSSO dynamic client, but failed to update central record: %s", centralRequest.AuthConfig.ClientID)
 		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to update database record")
 	}
-	if _, err := dynamicClientsAPI.DeleteAcsClient(ctx, previousAuthConfig.ClientID); err != nil {
-		glog.Warningf("Failed to delete RHSSO dynamic client: %s", centralRequest.AuthConfig.ClientID)
+	if _, err := k.rhSSODynamicClientsAPI.DeleteAcsClient(ctx, previousAuthConfig.ClientID); err != nil {
+		glog.Errorf("Failed to delete RHSSO dynamic client: %s", centralRequest.AuthConfig.ClientID)
 		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to delete previous OIDC client")
 	}
 	return nil
