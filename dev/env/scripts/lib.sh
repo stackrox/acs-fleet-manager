@@ -49,6 +49,8 @@ dump_env() {
 init() {
     set -eu -o pipefail
 
+    log "Initializing..."
+
     # For reading the defaults we need access to the
     if [[ -z "${CLUSTER_NAME:-}" ]]; then
         CLUSTER_NAME=$(get_current_cluster_name)
