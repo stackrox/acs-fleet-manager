@@ -1,0 +1,28 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+box FleetShard
+participant FS as "FleetShard"
+end box
+
+box "FleetManager"
+participant FM as "FleetManager"
+participant DC as "Default Central"
+participant DB as "Database"
+participant GitOps as GitOps
+end box
+
+FS -> FM: Poll Centrals
+FM -> DB: List Instances
+FM -> DC: Get Default Central
+FM -> FM: Apply Defaults to List
+FM -> GitOps: Get GitOps Config
+FM -> FM: Apply GitOps Config to List
+FM -> FS: Central List
+FS -> FS: Apply Cluster-Specific Defaults
+FS -> FS: Reconcile
+
+
+@enduml
