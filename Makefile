@@ -604,7 +604,7 @@ test/e2e/probe/run: image/build/multi-target/probe
 test/e2e/probe/run: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
 test/e2e/probe/run:
 	$(DOCKER) run \
-	-e QUOTA_TYPE="OCM" \
+	-e QUOTA_TYPE="ams" \
 	-e AUTH_TYPE="OCM" \
 	-e PROBE_NAME="e2e-probe-$$$$" \
 	-e OCM_USERNAME="${OCM_USERNAME}" \
