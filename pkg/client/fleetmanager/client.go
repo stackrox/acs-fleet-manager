@@ -24,6 +24,7 @@ type PublicAPI interface {
 // PrivateAPI is a wrapper interface for the fleetmanager client private API.
 type PrivateAPI interface {
 	GetDataPlaneClusterAgentConfig(ctx context.Context, id string) (private.DataplaneClusterAgentConfig, *http.Response, error)
+	GetCentral(ctx context.Context, centralID string) (private.ManagedCentral, *http.Response, error)
 	GetCentrals(ctx context.Context, id string) (private.ManagedCentralList, *http.Response, error)
 	UpdateCentralClusterStatus(ctx context.Context, id string, requestBody map[string]private.DataPlaneCentralStatus) (*http.Response, error)
 }
