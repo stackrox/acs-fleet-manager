@@ -15,6 +15,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 const (
@@ -277,7 +278,7 @@ func (r *RDS) ensureClusterDeleted(clusterID string, deletedAt time.Time, skipFi
 
 	if clusterStatus != dbDeletingStatus {
 		glog.Infof("Initiating deprovisioning of RDS database cluster %s.", clusterID)
-		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, deletedAt, skipFinalSnapshot))
+		_, err := r.rdsClient.DeleteDBCluster(newDeleteCentralDBClusterInput(clusterID, skipFinalSnapshot))
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok {
 				// This assumes that if a final snapshot exists, a deletion for the RDS cluster was already triggered
@@ -469,6 +470,7 @@ func newRestoreCentralDBClusterInput(snapshotID string, input *rds.CreateDBClust
 		Engine:                           input.Engine,
 		EngineVersion:                    input.EngineVersion,
 		VpcSecurityGroupIds:              input.VpcSecurityGroupIds,
+		PubliclyAccessible:               input.PubliclyAccessible,
 		DBSubnetGroupName:                input.DBSubnetGroupName,
 		ServerlessV2ScalingConfiguration: input.ServerlessV2ScalingConfiguration,
 		Tags:                             input.Tags,
@@ -494,7 +496,7 @@ func newCreateCentralDBInstanceInput(input *createCentralDBInstanceInput) *rds.C
 		DBClusterIdentifier:       aws.String(input.clusterID),
 		DBInstanceIdentifier:      aws.String(input.instanceID),
 		Engine:                    aws.String(dbEngine),
-		PubliclyAccessible:        aws.Bool(false),
+		PubliclyAccessible:        aws.Bool(true),
 		EnablePerformanceInsights: aws.Bool(input.performanceInsights),
 		PromotionTier:             aws.Int64(dbInstancePromotionTier),
 		CACertificateIdentifier:   aws.String(dbCACertificateType),
@@ -523,14 +525,14 @@ func newDeleteCentralDBInstanceInput(instanceID string, skipFinalSnapshot bool) 
 	}
 }
 
-func newDeleteCentralDBClusterInput(clusterID string, deletedAt time.Time, skipFinalSnapshot bool) *rds.DeleteDBClusterInput {
+func newDeleteCentralDBClusterInput(clusterID string, skipFinalSnapshot bool) *rds.DeleteDBClusterInput {
 	input := &rds.DeleteDBClusterInput{
 		DBClusterIdentifier: aws.String(clusterID),
 		SkipFinalSnapshot:   aws.Bool(skipFinalSnapshot),
 	}
 
 	if !skipFinalSnapshot {
-		input.FinalDBSnapshotIdentifier = getFinalSnapshotID(clusterID, deletedAt)
+		input.FinalDBSnapshotIdentifier = getFinalSnapshotID(clusterID)
 	}
 
 	return input
@@ -545,8 +547,8 @@ func newRdsClient() (*rds.RDS, error) {
 	return rds.New(sess), nil
 }
 
-func getFinalSnapshotID(clusterID string, deletedAt time.Time) *string {
-	return aws.String(fmt.Sprintf("%s-%v-%s", clusterID, deletedAt.Format("20060102-150405"), "final"))
+func getFinalSnapshotID(clusterID string) *string {
+	return aws.String(fmt.Sprintf("%s-%s-%s", clusterID, rand.String(10), "final"))
 }
 
 func getInstanceType(isTestInstance bool) string {
