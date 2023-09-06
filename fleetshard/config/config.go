@@ -19,7 +19,6 @@ const (
 // Config contains this application's runtime configuration.
 type Config struct {
 	FleetManagerEndpoint string        `env:"FLEET_MANAGER_ENDPOINT" envDefault:"http://127.0.0.1:8000"`
-	StartupTimeout       time.Duration `env:"STARTUP_TIMEOUT" envDefault:"300s"`
 	ClusterID            string        `env:"CLUSTER_ID"`
 	ClusterName          string        `env:"CLUSTER_NAME"`
 	Environment          string        `env:"ENVIRONMENT"`

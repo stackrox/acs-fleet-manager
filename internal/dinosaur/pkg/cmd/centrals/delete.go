@@ -17,7 +17,7 @@ func NewDeleteCommand() *cobra.Command {
 		Short: "Delete a central request",
 		Long:  "Delete a central request.",
 		Run: func(cmd *cobra.Command, args []string) {
-			runDelete(fleetmanagerclient.AuthenticatedClientWithOCM(cmd.Context()), cmd, args)
+			runDelete(fleetmanagerclient.AuthenticatedClientWithOCM(), cmd, args)
 		},
 	}
 

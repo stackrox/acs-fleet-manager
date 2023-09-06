@@ -2,7 +2,6 @@
 package fleetmanagerclient
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"sync"
@@ -29,7 +28,7 @@ const (
 
 // AuthenticatedClientWithRHOASToken returns a rest client for fleet-manager API using a static OCM token for authentication.
 // This function should only be used for CLI commands.
-func AuthenticatedClientWithRHOASToken(ctx context.Context) *fleetmanager.Client {
+func AuthenticatedClientWithRHOASToken() *fleetmanager.Client {
 	rhoasToken := os.Getenv(rhoasTokenEnvVar)
 	if rhoasToken == "" {
 		panic(fmt.Sprintf("%s not set. Please set RHOAS token with 'export %s=<token>'", rhoasTokenEnvVar, rhoasTokenEnvVar))
@@ -41,7 +40,7 @@ func AuthenticatedClientWithRHOASToken(ctx context.Context) *fleetmanager.Client
 	}
 
 	singletonRHOASTokenInstance.Do(func() {
-		auth, err := fleetmanager.NewAuth(ctx, fleetmanager.StaticTokenAuthName, fleetmanager.Option{
+		auth, err := fleetmanager.NewAuth(fleetmanager.StaticTokenAuthName, fleetmanager.Option{
 			Static: fleetmanager.StaticOption{
 				StaticToken: rhoasToken,
 			},
@@ -68,7 +67,7 @@ func AuthenticatedClientWithRHOASToken(ctx context.Context) *fleetmanager.Client
 
 // AuthenticatedClientWithOCM returns a rest client to the fleet-manager and receives the OCM refresh token.
 // This function will panic on an error, designed to be used by the fleet-manager CLI.
-func AuthenticatedClientWithOCM(ctx context.Context) *fleetmanager.Client {
+func AuthenticatedClientWithOCM() *fleetmanager.Client {
 	ocmRefreshToken := os.Getenv(ocmRefreshTokenEnvVar)
 	if ocmRefreshToken == "" {
 		panic(fmt.Sprintf("%s not set. Please set OCM token with 'export %s=$(ocm token --refresh)'", ocmRefreshTokenEnvVar, ocmRefreshTokenEnvVar))
@@ -80,7 +79,7 @@ func AuthenticatedClientWithOCM(ctx context.Context) *fleetmanager.Client {
 	}
 
 	singletonOCMRefreshTokenInstance.Do(func() {
-		auth, err := fleetmanager.NewAuth(ctx, fleetmanager.OCMAuthName, fleetmanager.Option{
+		auth, err := fleetmanager.NewAuth(fleetmanager.OCMAuthName, fleetmanager.Option{
 			Ocm: fleetmanager.OCMOption{
 				RefreshToken: ocmRefreshToken,
 			},
