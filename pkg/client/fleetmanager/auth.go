@@ -2,7 +2,6 @@
 package fleetmanager
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"sort"
@@ -21,7 +20,7 @@ type Auth interface {
 
 type authFactory interface {
 	GetName() string
-	CreateAuth(ctx context.Context, o Option) (Auth, error)
+	CreateAuth(o Option) (Auth, error)
 }
 
 // Option for the different Auth types.
@@ -61,18 +60,18 @@ func init() {
 }
 
 // NewAuth will return Auth that can be used to add authentication of a specific AuthType to be added to HTTP requests.
-func NewAuth(ctx context.Context, t string, opt Option) (Auth, error) {
-	return newAuth(ctx, t, opt)
+func NewAuth(t string, opt Option) (Auth, error) {
+	return newAuth(t, opt)
 }
 
-func newAuth(ctx context.Context, t string, opt Option) (Auth, error) {
+func newAuth(t string, opt Option) (Auth, error) {
 	factory, exists := authFactoryRegistry[t]
 	if !exists {
 		return nil, errors.Errorf("invalid auth type found: %q, must be one of [%s]",
 			t, strings.Join(getAllAuthTypes(), ","))
 	}
 
-	auth, err := factory.CreateAuth(ctx, opt)
+	auth, err := factory.CreateAuth(opt)
 	if err != nil {
 		return auth, fmt.Errorf("creating Auth: %w", err)
 	}
@@ -80,18 +79,18 @@ func newAuth(ctx context.Context, t string, opt Option) (Auth, error) {
 }
 
 // NewRHSSOAuth will return Auth that uses RH SSO to provide authentication for HTTP requests.
-func NewRHSSOAuth(ctx context.Context, opt RHSSOOption) (Auth, error) {
-	return newAuth(ctx, rhSSOFactory.GetName(), Option{Sso: opt})
+func NewRHSSOAuth(opt RHSSOOption) (Auth, error) {
+	return newAuth(rhSSOFactory.GetName(), Option{Sso: opt})
 }
 
 // NewOCMAuth will return Auth that uses OCM to provide authentication for HTTP requests.
-func NewOCMAuth(ctx context.Context, opt OCMOption) (Auth, error) {
-	return newAuth(ctx, ocmFactory.GetName(), Option{Ocm: opt})
+func NewOCMAuth(opt OCMOption) (Auth, error) {
+	return newAuth(ocmFactory.GetName(), Option{Ocm: opt})
 }
 
 // NewStaticAuth will return Auth that uses a static token to provide authentication for HTTP requests.
-func NewStaticAuth(ctx context.Context, opt StaticOption) (Auth, error) {
-	return newAuth(ctx, staticTokenFactory.GetName(), Option{Static: opt})
+func NewStaticAuth(opt StaticOption) (Auth, error) {
+	return newAuth(staticTokenFactory.GetName(), Option{Static: opt})
 }
 
 // OptionFromEnv creates an Option struct with populated values from environment variables.

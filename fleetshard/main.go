@@ -2,7 +2,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"os"
 	"os/signal"
@@ -31,9 +30,7 @@ func main() {
 		glog.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), config.StartupTimeout)
-	defer cancel()
-	glog.Infof("Starting application, timeout=%s", config.StartupTimeout)
+	glog.Info("Starting application")
 	glog.Infof("FleetManagerEndpoint: %s", config.FleetManagerEndpoint)
 	glog.Infof("ClusterID: %s", config.ClusterID)
 	glog.Infof("RuntimePollPeriod: %s", config.RuntimePollPeriod.String())
@@ -43,10 +40,7 @@ func main() {
 	glog.Infof("ManagedDB.SecurityGroup: %s", config.ManagedDB.SecurityGroup)
 	glog.Infof("ManagedDB.SubnetGroup: %s", config.ManagedDB.SubnetGroup)
 
-	glog.Info("Creating k8s client...")
-	k8sClient := k8s.CreateClientOrDie()
-	glog.Info("Creating runtime...")
-	runtime, err := runtime.NewRuntime(ctx, config, k8sClient)
+	runtime, err := runtime.NewRuntime(config, k8s.CreateClientOrDie())
 	if err != nil {
 		glog.Fatal(err)
 	}
@@ -58,7 +52,6 @@ func main() {
 		}
 	}()
 
-	glog.Info("Creating metrics server...")
 	metricServer := fleetshardmetrics.NewMetricsServer(config.MetricsAddress)
 	go func() {
 		if err := metricServer.ListenAndServe(); err != nil {
@@ -67,10 +60,8 @@ func main() {
 	}()
 
 	sigs := make(chan os.Signal, 1)
-	notifySignals := []os.Signal{os.Interrupt, unix.SIGTERM}
-	signal.Notify(sigs, notifySignals...)
+	signal.Notify(sigs, os.Interrupt, unix.SIGTERM)
 
-	glog.Infof("Application started. Will shut down gracefully on %s.", notifySignals)
 	sig := <-sigs
 	runtime.Stop()
 	if err := metricServer.Close(); err != nil {
