@@ -282,7 +282,7 @@ func (r *RDS) ensureClusterDeleted(clusterID string, skipFinalSnapshot bool) err
 		return nil
 	}
 
-	if clusterStatus != dbBackingUpStatus {
+	if clusterStatus == dbBackingUpStatus {
 		return cloudprovider.ErrDBBackupInProgress
 	}
 
