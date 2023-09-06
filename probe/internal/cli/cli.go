@@ -28,8 +28,8 @@ type CLI struct {
 }
 
 // New creates a CLI.
-func New(config *config.Config) (*CLI, error) {
-	fleetManagerPublicAPI, err := fleetmanager.New(config)
+func New(ctx context.Context, config *config.Config) (*CLI, error) {
+	fleetManagerPublicAPI, err := fleetmanager.New(ctx, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager client")
 	}
