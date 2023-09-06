@@ -72,7 +72,7 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 
 	Describe("OCM auth type", func() {
 		BeforeEach(func() {
-			auth, err := fleetmanager.NewOCMAuth(context.Background(), authOption.Ocm)
+			auth, err := fleetmanager.NewOCMAuth(authOption.Ocm)
 			Expect(err).ToNot(HaveOccurred())
 			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())
@@ -94,7 +94,7 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 
 	Describe("Static token auth type", func() {
 		BeforeEach(func() {
-			auth, err := fleetmanager.NewStaticAuth(context.Background(), authOption.Static)
+			auth, err := fleetmanager.NewStaticAuth(authOption.Static)
 			Expect(err).ToNot(HaveOccurred())
 			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())
@@ -122,7 +122,7 @@ var _ = Describe("AuthN/Z Fleet* components", func() {
 				Skip("RHSSO_SERVICE_ACCOUNT_CLIENT_ID / RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET not set, cannot initialize auth type")
 			}
 			// Create the auth type for RH SSO.
-			auth, err := fleetmanager.NewRHSSOAuth(context.Background(), rhSSOOpt)
+			auth, err := fleetmanager.NewRHSSOAuth(rhSSOOpt)
 			Expect(err).ToNot(HaveOccurred())
 			fmClient, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
 			Expect(err).ToNot(HaveOccurred())

@@ -1,7 +1,6 @@
 package fleetmanager
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -30,7 +29,7 @@ func (f *staticTokenAuthFactory) GetName() string {
 }
 
 // CreateAuth ...
-func (f *staticTokenAuthFactory) CreateAuth(ctx context.Context, o Option) (Auth, error) {
+func (f *staticTokenAuthFactory) CreateAuth(o Option) (Auth, error) {
 	staticToken := o.Static.StaticToken
 	if staticToken == "" {
 		return nil, errors.New("no static token set")
