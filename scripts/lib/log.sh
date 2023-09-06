@@ -3,7 +3,7 @@
 die() {
     {
         # shellcheck disable=SC2059
-        printf "$*"
+        printf "$(date --iso-8601=ns) $*"
         echo
     } >&2
     exit 1
@@ -11,6 +11,6 @@ die() {
 
 log() {
     # shellcheck disable=SC2059
-    printf "$*"
+    printf "$(date --iso-8601=ns) $*"
     echo
 }

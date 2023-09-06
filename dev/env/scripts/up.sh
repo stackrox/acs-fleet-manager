@@ -81,7 +81,7 @@ if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
 fi
 
 # Sanity check.
-wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync"
+wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync" 500
 # Prerequisite for port-forwarding are pods in ready state.
 wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=fleet-manager" "fleet-manager"
 

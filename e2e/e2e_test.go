@@ -55,13 +55,13 @@ var _ = Describe("Central", func() {
 
 	BeforeEach(func() {
 		option := fleetmanager.OptionFromEnv()
-		auth, err := fleetmanager.NewStaticAuth(fleetmanager.StaticOption{StaticToken: option.Static.StaticToken})
+		auth, err := fleetmanager.NewStaticAuth(context.Background(), fleetmanager.StaticOption{StaticToken: option.Static.StaticToken})
 		Expect(err).ToNot(HaveOccurred())
 		client, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
 		Expect(err).ToNot(HaveOccurred())
 
 		adminStaticToken := os.Getenv("STATIC_TOKEN_ADMIN")
-		adminAuth, err := fleetmanager.NewStaticAuth(fleetmanager.StaticOption{StaticToken: adminStaticToken})
+		adminAuth, err := fleetmanager.NewStaticAuth(context.Background(), fleetmanager.StaticOption{StaticToken: adminStaticToken})
 		Expect(err).ToNot(HaveOccurred())
 		adminClient, err := fleetmanager.NewClient(fleetManagerEndpoint, adminAuth)
 		adminAPI = adminClient.AdminAPI()
