@@ -496,7 +496,7 @@ func newCreateCentralDBInstanceInput(input *createCentralDBInstanceInput) *rds.C
 		DBClusterIdentifier:       aws.String(input.clusterID),
 		DBInstanceIdentifier:      aws.String(input.instanceID),
 		Engine:                    aws.String(dbEngine),
-		PubliclyAccessible:        aws.Bool(true),
+		PubliclyAccessible:        aws.Bool(false),
 		EnablePerformanceInsights: aws.Bool(input.performanceInsights),
 		PromotionTier:             aws.Int64(dbInstancePromotionTier),
 		CACertificateIdentifier:   aws.String(dbCACertificateType),
