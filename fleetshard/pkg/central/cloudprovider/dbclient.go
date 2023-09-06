@@ -3,7 +3,7 @@ package cloudprovider
 
 import (
 	"context"
-	"time"
+	"errors"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 )
@@ -17,7 +17,7 @@ type DBClient interface {
 	EnsureDBProvisioned(ctx context.Context, databaseID, acsInstanceID, passwordSecretName string, isTestInstance bool) error
 	// EnsureDBDeprovisioned is a non-blocking function that makes sure that a managed DB is deprovisioned (more
 	// specifically, that its deletion was initiated)
-	EnsureDBDeprovisioned(databaseID string, deletedAt time.Time, skipFinalSnapshot bool) error
+	EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) error
 	// GetDBConnection returns a postgres.DBConnection struct, which contains the data necessary
 	// to construct a PostgreSQL connection string. It expects that the database was already provisioned.
 	GetDBConnection(databaseID string) (postgres.DBConnection, error)
@@ -38,6 +38,9 @@ const (
 	DBInstances
 	DBSnapshots
 )
+
+// ErrDBBackupInProgress is returned if an action failed because a DB backup is in progress
+var ErrDBBackupInProgress = errors.New("DB Backup in Progress")
 
 // AccountQuotaValue holds quota data for services, as a pair of currently Used out of Max
 type AccountQuotaValue struct {

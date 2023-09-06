@@ -7,7 +7,6 @@ import (
 	"context"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 	"sync"
-	"time"
 )
 
 // Ensure, that DBClientMock does implement DBClient.
@@ -20,7 +19,7 @@ var _ DBClient = &DBClientMock{}
 //
 //		// make and configure a mocked DBClient
 //		mockedDBClient := &DBClientMock{
-//			EnsureDBDeprovisionedFunc: func(databaseID string, deletedAt time.Time, skipFinalSnapshot bool) error {
+//			EnsureDBDeprovisionedFunc: func(databaseID string, skipFinalSnapshot bool) error {
 //				panic("mock out the EnsureDBDeprovisioned method")
 //			},
 //			EnsureDBProvisionedFunc: func(ctx context.Context, databaseID string, acsInstanceID string, passwordSecretName string, isTestInstance bool) error {
@@ -40,7 +39,7 @@ var _ DBClient = &DBClientMock{}
 //	}
 type DBClientMock struct {
 	// EnsureDBDeprovisionedFunc mocks the EnsureDBDeprovisioned method.
-	EnsureDBDeprovisionedFunc func(databaseID string, deletedAt time.Time, skipFinalSnapshot bool) error
+	EnsureDBDeprovisionedFunc func(databaseID string, skipFinalSnapshot bool) error
 
 	// EnsureDBProvisionedFunc mocks the EnsureDBProvisioned method.
 	EnsureDBProvisionedFunc func(ctx context.Context, databaseID string, acsInstanceID string, passwordSecretName string, isTestInstance bool) error
@@ -57,8 +56,6 @@ type DBClientMock struct {
 		EnsureDBDeprovisioned []struct {
 			// DatabaseID is the databaseID argument value.
 			DatabaseID string
-			// DeletedAt is the deletedAt argument value.
-			DeletedAt time.Time
 			// SkipFinalSnapshot is the skipFinalSnapshot argument value.
 			SkipFinalSnapshot bool
 		}
@@ -93,23 +90,21 @@ type DBClientMock struct {
 }
 
 // EnsureDBDeprovisioned calls EnsureDBDeprovisionedFunc.
-func (mock *DBClientMock) EnsureDBDeprovisioned(databaseID string, deletedAt time.Time, skipFinalSnapshot bool) error {
+func (mock *DBClientMock) EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) error {
 	if mock.EnsureDBDeprovisionedFunc == nil {
 		panic("DBClientMock.EnsureDBDeprovisionedFunc: method is nil but DBClient.EnsureDBDeprovisioned was just called")
 	}
 	callInfo := struct {
 		DatabaseID        string
-		DeletedAt         time.Time
 		SkipFinalSnapshot bool
 	}{
 		DatabaseID:        databaseID,
-		DeletedAt:         deletedAt,
 		SkipFinalSnapshot: skipFinalSnapshot,
 	}
 	mock.lockEnsureDBDeprovisioned.Lock()
 	mock.calls.EnsureDBDeprovisioned = append(mock.calls.EnsureDBDeprovisioned, callInfo)
 	mock.lockEnsureDBDeprovisioned.Unlock()
-	return mock.EnsureDBDeprovisionedFunc(databaseID, deletedAt, skipFinalSnapshot)
+	return mock.EnsureDBDeprovisionedFunc(databaseID, skipFinalSnapshot)
 }
 
 // EnsureDBDeprovisionedCalls gets all the calls that were made to EnsureDBDeprovisioned.
@@ -118,12 +113,10 @@ func (mock *DBClientMock) EnsureDBDeprovisioned(databaseID string, deletedAt tim
 //	len(mockedDBClient.EnsureDBDeprovisionedCalls())
 func (mock *DBClientMock) EnsureDBDeprovisionedCalls() []struct {
 	DatabaseID        string
-	DeletedAt         time.Time
 	SkipFinalSnapshot bool
 } {
 	var calls []struct {
 		DatabaseID        string
-		DeletedAt         time.Time
 		SkipFinalSnapshot bool
 	}
 	mock.lockEnsureDBDeprovisioned.RLock()

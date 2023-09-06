@@ -987,13 +987,14 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	if r.managedDBEnabled {
 		// skip Snapshot for remoteCentral created by probe
 		skipSnapshot := remoteCentral.Metadata.Internal
-		deletedAt, err := time.Parse(time.RFC3339, remoteCentral.Metadata.DeletionTimestamp)
-		if err != nil {
-			return false, fmt.Errorf("parsing DeletionTimestamp: %w", err)
-		}
 
-		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id, deletedAt, skipSnapshot)
+		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id, skipSnapshot)
 		if err != nil {
+			if errors.Is(err, cloudprovider.ErrDBBackupInProgress) {
+				glog.Infof("Can not delete Central DB for: %s, backup in progress", remoteCentral.Metadata.Namespace)
+				return false, nil
+			}
+
 			return false, fmt.Errorf("deprovisioning DB: %v", err)
 		}
 

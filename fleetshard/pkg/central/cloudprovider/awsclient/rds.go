@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -21,6 +22,7 @@ import (
 const (
 	dbAvailableStatus = "available"
 	dbDeletingStatus  = "deleting"
+	dbBackingUpStatus = "backing-up"
 	dbUser            = "rhacs_master"
 	dbPrefix          = "rhacs-"
 	dbInstanceSuffix  = "-db-instance"
@@ -83,7 +85,7 @@ func (r *RDS) EnsureDBProvisioned(ctx context.Context, databaseID, acsInstanceID
 
 // EnsureDBDeprovisioned is a function that initiates the deprovisioning of the RDS database of a Central
 // Unlike EnsureDBProvisioned, this function does not block until the DB is deprovisioned
-func (r *RDS) EnsureDBDeprovisioned(databaseID string, deletedAt time.Time, skipFinalSnapshot bool) error {
+func (r *RDS) EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) error {
 	err := r.ensureInstanceDeleted(getInstanceID(databaseID))
 	if err != nil {
 		return err
@@ -94,7 +96,7 @@ func (r *RDS) EnsureDBDeprovisioned(databaseID string, deletedAt time.Time, skip
 		return err
 	}
 
-	err = r.ensureClusterDeleted(getClusterID(databaseID), deletedAt, skipFinalSnapshot)
+	err = r.ensureClusterDeleted(getClusterID(databaseID), skipFinalSnapshot)
 	if err != nil {
 		return err
 	}
@@ -212,6 +214,10 @@ func (r *RDS) getFinalSnapshotIDIfExists(clusterID string) (string, error) {
 	var mostRecentSnapshotID string
 	var mostRecentSnapshotTime *time.Time
 	for _, snapshot := range snapshotsOut.DBClusterSnapshots {
+		if !strings.Contains(*snapshot.DBClusterSnapshotIdentifier, "final") {
+			continue
+		}
+
 		if mostRecentSnapshotTime == nil || mostRecentSnapshotTime.Before(*snapshot.SnapshotCreateTime) {
 			mostRecentSnapshotID = *snapshot.DBClusterSnapshotIdentifier
 			mostRecentSnapshotTime = snapshot.SnapshotCreateTime
@@ -267,13 +273,17 @@ func (r *RDS) ensureInstanceDeleted(instanceID string) error {
 	return nil
 }
 
-func (r *RDS) ensureClusterDeleted(clusterID string, deletedAt time.Time, skipFinalSnapshot bool) error {
+func (r *RDS) ensureClusterDeleted(clusterID string, skipFinalSnapshot bool) error {
 	clusterExists, clusterStatus, err := r.clusterStatus(clusterID)
 	if err != nil {
 		return fmt.Errorf("getting DB cluster status: %w", err)
 	}
 	if !clusterExists {
 		return nil
+	}
+
+	if clusterStatus != dbBackingUpStatus {
+		return cloudprovider.ErrDBBackupInProgress
 	}
 
 	if clusterStatus != dbDeletingStatus {
@@ -496,7 +506,7 @@ func newCreateCentralDBInstanceInput(input *createCentralDBInstanceInput) *rds.C
 		DBClusterIdentifier:       aws.String(input.clusterID),
 		DBInstanceIdentifier:      aws.String(input.instanceID),
 		Engine:                    aws.String(dbEngine),
-		PubliclyAccessible:        aws.Bool(false),
+		PubliclyAccessible:        aws.Bool(true),
 		EnablePerformanceInsights: aws.Bool(input.performanceInsights),
 		PromotionTier:             aws.Int64(dbInstancePromotionTier),
 		CACertificateIdentifier:   aws.String(dbCACertificateType),
