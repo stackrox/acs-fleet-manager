@@ -1152,6 +1152,9 @@ objects:
             - name: fleet-manager-dataplane-cluster-configuration-staging
               mountPath: /config/dataplane-cluster-configuration-staging.yaml
               subPath: dataplane-cluster-configuration-staging.yaml
+            - name: gitops-config
+              mountPath: /config/gitops-config
+              subPath: gitops-config
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
@@ -1185,6 +1188,7 @@ objects:
             command:
             - /usr/local/bin/fleet-manager
             - serve
+            - --gitops-config-file=/config/gitops-config
             - --central-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --central-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-central-external-certificate=${ENABLE_CENTRAL_EXTERNAL_CERTIFICATE}
