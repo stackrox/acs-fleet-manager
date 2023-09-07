@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 
 	"github.com/golang/glog"
@@ -34,7 +35,7 @@ func main() {
 		glog.Fatal(errors.New("unable to start metrics server"))
 	}
 
-	c, err := cli.New(config)
+	c, err := cli.New(context.Background(), config)
 	if err != nil {
 		glog.Fatal(err)
 	}

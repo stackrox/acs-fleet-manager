@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 	"os/signal"
@@ -32,7 +33,9 @@ func main() {
 		glog.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	glog.Info("Starting application")
+	ctx, cancel := context.WithTimeout(context.Background(), config.StartupTimeout)
+	defer cancel()
+	glog.Infof("Starting application, timeout=%s", config.StartupTimeout)
 	glog.Infof("FleetManagerEndpoint: %s", config.FleetManagerEndpoint)
 	glog.Infof("ClusterID: %s", config.ClusterID)
 	glog.Infof("RuntimePollPeriod: %s", config.RuntimePollPeriod.String())
@@ -46,7 +49,7 @@ func main() {
 	k8sClient := k8s.CreateClientOrDie()
 	ctrl.SetLogger(logger.NewKubeAPILogger())
 	glog.Info("Creating runtime...")
-	runtime, err := runtime.NewRuntime(config, k8sClient)
+	runtime, err := runtime.NewRuntime(ctx, config, k8sClient)
 	if err != nil {
 		glog.Fatal(err)
 	}

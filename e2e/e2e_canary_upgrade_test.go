@@ -44,7 +44,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 			Skip("Skipping canary upgrade test")
 		}
 		option := fleetmanager.OptionFromEnv()
-		auth, err := fleetmanager.NewStaticAuth(fleetmanager.StaticOption{StaticToken: option.Static.StaticToken})
+		auth, err := fleetmanager.NewStaticAuth(context.Background(), fleetmanager.StaticOption{StaticToken: option.Static.StaticToken})
 		Expect(err).ToNot(HaveOccurred())
 		client, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
 		Expect(err).ToNot(HaveOccurred())
