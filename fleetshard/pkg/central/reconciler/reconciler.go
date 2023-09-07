@@ -1113,15 +1113,16 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 
 	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(remoteCentral.Id)
 	if err != nil {
-		if errors.Is(err, cloudprovider.ErrDBNotFound) {
-			glog.Infof("expected DB for %s not found, trying to restore...", remoteCentral.Id)
-			// Using no password because we try to restore from backup
-			err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, remoteCentral.Id, "", remoteCentral.Metadata.Internal)
-			if err != nil {
-				return "", fmt.Errorf("trying to restore DB: %w", err)
-			}
+		if !errors.Is(err, cloudprovider.ErrDBNotFound) {
+			return "", fmt.Errorf("getting RDS DB connection data: %w", err)
 		}
-		return "", fmt.Errorf("getting RDS DB connection data: %w", err)
+
+		glog.Infof("expected DB for %s not found, trying to restore...", remoteCentral.Id)
+		// Using no password because we try to restore from backup
+		err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, remoteCentral.Id, "", remoteCentral.Metadata.Internal)
+		if err != nil {
+			return "", fmt.Errorf("trying to restore DB: %w", err)
+		}
 	}
 	return dbConnection.GetConnectionForUserAndDB(dbCentralUserName, postgres.CentralDBName).WithSSLRootCert(postgres.DatabaseCACertificatePathCentral).AsConnectionString(), nil
 }

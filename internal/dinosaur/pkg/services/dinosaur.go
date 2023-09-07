@@ -801,6 +801,7 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 		"Routes",
 		"Status",
 		"RoutesCreated",
+		"RouteCreationID",
 		"DeletedAt",
 		"DeletionTimestamp",
 		"ClientID",
