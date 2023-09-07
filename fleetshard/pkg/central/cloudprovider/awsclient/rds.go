@@ -113,7 +113,7 @@ func (r *RDS) GetDBConnection(databaseID string) (postgres.DBConnection, error) 
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) {
 			if awsErr.Code() == rds.ErrCodeDBClusterNotFoundFault {
-				err = errors.Join(cloudprovider.ErrDBBackupInProgress, err)
+				err = errors.Join(cloudprovider.ErrDBNotFound, err)
 			}
 		}
 
