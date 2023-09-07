@@ -145,7 +145,7 @@ func (p *ProbeImpl) createCentral(ctx context.Context) (*public.CentralRequest, 
 	central, resp, err := p.fleetManagerPublicAPI.CreateCentral(ctx, true, request)
 	defer utils.IgnoreError(closeBodyIfNonEmpty(resp))
 	if central.Id == "" {
-		glog.Infof("creation of central instance requested - got empty response", central.Id)
+		glog.Info("creation of central instance requested - got empty response")
 	} else {
 		glog.Infof("creation of central instance (%s) requested", central.Id)
 	}
