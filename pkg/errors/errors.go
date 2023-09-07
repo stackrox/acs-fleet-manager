@@ -282,7 +282,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorInvalidCloudAccountID, ErrorInvalidCloudAccountIDReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorClientRotationNotConfigured, ErrorClientRotationNotConfiguredReason, http.StatusMethodNotAllowed, nil},
+		ServiceError{ErrorClientRotationNotConfigured, ErrorClientRotationNotConfiguredReason, http.StatusNotFound, nil},
 		ServiceError{ErrorClientRotationFailed, ErrorClientRotationFailedReason, http.StatusInternalServerError, nil},
 	}
 }
