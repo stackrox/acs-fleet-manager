@@ -110,12 +110,10 @@ func (r *RDS) GetDBConnection(databaseID string) (postgres.DBConnection, error) 
 	dbCluster, err := r.describeDBCluster(getClusterID(databaseID))
 
 	if err != nil {
-		// need to preprovision awsErr this way to properly unwrap because
-		// AWS SDK v1 does not provide error types except interfaces
-		awsErr := awserr.New("", "", nil)
+		var awsErr awserr.Error
 		if errors.As(err, &awsErr) {
 			if awsErr.Code() == rds.ErrCodeDBClusterNotFoundFault {
-				err = cloudprovider.ErrDBNotFound
+				err = errors.Join(cloudprovider.ErrDBBackupInProgress, err)
 			}
 		}
 

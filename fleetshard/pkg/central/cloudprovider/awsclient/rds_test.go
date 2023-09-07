@@ -193,6 +193,7 @@ func TestGetDBConnection(t *testing.T) {
 	var awsErr awserr.Error
 	require.ErrorAs(t, err, &awsErr)
 	assert.Equal(t, awsErr.Code(), rds.ErrCodeDBClusterNotFoundFault)
+	require.ErrorIs(t, err, cloudprovider.ErrDBNotFound)
 }
 
 func TestGetAccountQuotas(t *testing.T) {
