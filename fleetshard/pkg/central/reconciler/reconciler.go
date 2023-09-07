@@ -1100,7 +1100,11 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 
 	// If a Central DB user already exists, it means the managed DB was already
 	// provisioned and successfully created (access to a running Postgres instance is a
-	// precondition to create this user)
+	// precondition to create this user) in most cases so we skip calling cloudprovider APIs.
+	// But at least we check the API after some time because the db password is no guarantee the DB
+	// was not deleted by some other process. Using a random time to make sure we don't hit API rate limits
+	// when firing all requests at once
+
 	if !centralDBUserExists {
 		if err := r.ensureManagedCentralDBInitialized(ctx, remoteCentral); err != nil {
 			return "", fmt.Errorf("initializing managed DB: %w", err)
@@ -1109,6 +1113,14 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 
 	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(remoteCentral.Id)
 	if err != nil {
+		if errors.Is(err, cloudprovider.ErrDBNotFound) {
+			glog.Infof("expected DB for %s not found, trying to restore...", remoteCentral.Id)
+			// Using no password because we try to restore from backup
+			err := r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, remoteCentral.Id, "", remoteCentral.Metadata.Internal)
+			if err != nil {
+				return "", fmt.Errorf("trying to restore DB: %w", err)
+			}
+		}
 		return "", fmt.Errorf("getting RDS DB connection data: %w", err)
 	}
 	return dbConnection.GetConnectionForUserAndDB(dbCentralUserName, postgres.CentralDBName).WithSSLRootCert(postgres.DatabaseCACertificatePathCentral).AsConnectionString(), nil
@@ -1567,21 +1579,20 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
 	return &CentralReconciler{
-		client:             k8sClient,
-		fleetmanagerClient: fleetmanagerClient,
-		central:            central,
-		status:             pointer.Int32(FreeStatus),
-		useRoutes:          opts.UseRoutes,
-		wantsAuthProvider:  opts.WantsAuthProvider,
-		routeService:       k8s.NewRouteService(k8sClient),
-		secretBackup:       k8s.NewSecretBackup(k8sClient),
-		secretCipher:       secretCipher, // pragma: allowlist secret
-		egressProxyImage:   opts.EgressProxyImage,
-		telemetry:          opts.Telemetry,
-		clusterName:        opts.ClusterName,
-		environment:        opts.Environment,
-		auditLogging:       opts.AuditLogging,
-
+		client:                      k8sClient,
+		fleetmanagerClient:          fleetmanagerClient,
+		central:                     central,
+		status:                      pointer.Int32(FreeStatus),
+		useRoutes:                   opts.UseRoutes,
+		wantsAuthProvider:           opts.WantsAuthProvider,
+		routeService:                k8s.NewRouteService(k8sClient),
+		secretBackup:                k8s.NewSecretBackup(k8sClient),
+		secretCipher:                secretCipher, // pragma: allowlist secret
+		egressProxyImage:            opts.EgressProxyImage,
+		telemetry:                   opts.Telemetry,
+		clusterName:                 opts.ClusterName,
+		environment:                 opts.Environment,
+		auditLogging:                opts.AuditLogging,
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,
 		managedDBInitFunc:           managedDBInitFunc,

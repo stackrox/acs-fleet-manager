@@ -14,7 +14,7 @@ import (
 type DBClient interface {
 	// EnsureDBProvisioned is a blocking function that makes sure that a database with the given databaseID was provisioned,
 	// using the master password given as parameter
-	EnsureDBProvisioned(ctx context.Context, databaseID, acsInstanceID, passwordSecretName string, isTestInstance bool) error
+	EnsureDBProvisioned(ctx context.Context, databaseID, acsInstanceID, password string, isTestInstance bool) error
 	// EnsureDBDeprovisioned is a non-blocking function that makes sure that a managed DB is deprovisioned (more
 	// specifically, that its deletion was initiated)
 	EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) error
@@ -41,6 +41,9 @@ const (
 
 // ErrDBBackupInProgress is returned if an action failed because a DB backup is in progress
 var ErrDBBackupInProgress = errors.New("DB Backup in Progress")
+
+// ErrDBNotFound is returned if an action failed because a expected DB is not found
+var ErrDBNotFound = errors.New("DB not found")
 
 // AccountQuotaValue holds quota data for services, as a pair of currently Used out of Max
 type AccountQuotaValue struct {

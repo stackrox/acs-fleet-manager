@@ -806,6 +806,7 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 		"ClientID",
 		"ClientOrigin",
 		"ClientSecret",
+		"CreatedAt",
 	}
 
 	// use a new central request, so that unset field for columnsToReset will automatically be set to the zero value

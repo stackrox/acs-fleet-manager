@@ -109,6 +109,13 @@ func (r *RDS) EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) e
 func (r *RDS) GetDBConnection(databaseID string) (postgres.DBConnection, error) {
 	dbCluster, err := r.describeDBCluster(getClusterID(databaseID))
 	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			// This assumes that if a final snapshot exists, a deletion for the RDS cluster was already triggered
+			// and we can move on with deprovisioning,
+			if awsErr.Code() == rds.ErrCodeDBClusterNotFoundFault {
+				err = cloudprovider.ErrDBNotFound
+			}
+		}
 		return postgres.DBConnection{}, err
 	}
 
@@ -506,7 +513,7 @@ func newCreateCentralDBInstanceInput(input *createCentralDBInstanceInput) *rds.C
 		DBClusterIdentifier:       aws.String(input.clusterID),
 		DBInstanceIdentifier:      aws.String(input.instanceID),
 		Engine:                    aws.String(dbEngine),
-		PubliclyAccessible:        aws.Bool(false),
+		PubliclyAccessible:        aws.Bool(true),
 		EnablePerformanceInsights: aws.Bool(input.performanceInsights),
 		PromotionTier:             aws.Int64(dbInstancePromotionTier),
 		CACertificateIdentifier:   aws.String(dbCACertificateType),
