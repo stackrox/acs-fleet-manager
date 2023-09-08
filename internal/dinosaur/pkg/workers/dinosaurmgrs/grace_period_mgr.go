@@ -9,9 +9,7 @@ import (
 	"github.com/pkg/errors"
 	constants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	serviceErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
@@ -20,22 +18,18 @@ import (
 // GracePeriodManager represents a dinosaur manager that manages grace period date.
 type GracePeriodManager struct {
 	workers.BaseWorker
-	dinosaurService         services.DinosaurService
-	accessControlListConfig *acl.AccessControlListConfig
-	dinosaurConfig          *config.CentralConfig
+	dinosaurService services.DinosaurService
 }
 
 // NewGracePeriodManager creates a new grace period manager
-func NewGracePeriodManager(dinosaurService services.DinosaurService, accessControlList *acl.AccessControlListConfig, dinosaur *config.CentralConfig) *DinosaurManager {
+func NewGracePeriodManager(dinosaurService services.DinosaurService) *DinosaurManager {
 	return &DinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "grace_period_worker",
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService:         dinosaurService,
-		accessControlListConfig: accessControlList,
-		dinosaurConfig:          dinosaur,
+		dinosaurService: dinosaurService,
 	}
 }
 
