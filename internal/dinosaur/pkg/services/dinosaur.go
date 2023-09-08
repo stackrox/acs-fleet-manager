@@ -171,11 +171,11 @@ func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralR
 
 	}
 	if err := k.Update(centralRequest); err != nil {
-		glog.Errorf("Created new RHSSO dynamic client, but failed to update central record: %s", centralRequest.AuthConfig.ClientID)
+		glog.Errorf("Created new RHSSO dynamic client, but failed to update central record, client ID is %s", centralRequest.AuthConfig.ClientID)
 		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to update database record")
 	}
 	if _, err := k.rhSSODynamicClientsAPI.DeleteAcsClient(ctx, previousAuthConfig.ClientID); err != nil {
-		glog.Errorf("Failed to delete RHSSO dynamic client: %s", centralRequest.AuthConfig.ClientID)
+		glog.Errorf("Failed to delete RHSSO dynamic client, client ID is %s", centralRequest.AuthConfig.ClientID)
 		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to delete previous OIDC client")
 	}
 	return nil
