@@ -21,7 +21,11 @@ var (
 	rdsCertificateData []byte
 )
 
-const sslMode = "verify-full"
+const (
+	sslMode          = "verify-full"
+	statementTimeout = 1200000
+	clientEncoding   = "UTF8"
+)
 
 // NewDBConnection constructs a new DBConnection struct
 func NewDBConnection(host string, port int, user, database string) (DBConnection, error) {
@@ -61,8 +65,8 @@ func (c DBConnection) WithSSLRootCert(sslrootcert string) DBConnection {
 
 // AsConnectionString returns a string that can be used to connect to a PostgreSQL server. The password is omitted.
 func (c DBConnection) AsConnectionString() string {
-	connectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s",
-		c.host, c.port, c.user, c.database, sslMode)
+	connectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s statement_timeout=%d client_encoding=%s sslmode=%s",
+		c.host, c.port, c.user, c.database, statementTimeout, clientEncoding, sslMode)
 	if c.sslrootcert != "" {
 		connectionString = fmt.Sprintf("%s sslrootcert=%s", connectionString, c.sslrootcert)
 	}
@@ -76,9 +80,10 @@ func (c DBConnection) asConnectionStringWithPassword() string {
 }
 
 // GetConnectionForUser returns a DBConnection struct for the user given as parameter
-func (c DBConnection) GetConnectionForUser(userName string) DBConnection {
-	nonPrivilegedConnection := c
-	nonPrivilegedConnection.user = userName
+func (c DBConnection) GetConnectionForUserAndDB(userName, dbName string) DBConnection {
+	newConnection := c
+	newConnection.user = userName
+	newConnection.database = dbName
 
-	return nonPrivilegedConnection
+	return newConnection
 }

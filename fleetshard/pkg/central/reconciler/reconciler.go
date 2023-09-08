@@ -1105,7 +1105,7 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 	if err != nil {
 		return "", fmt.Errorf("getting RDS DB connection data: %w", err)
 	}
-	return dbConnection.GetConnectionForUser(dbCentralUserName).WithSSLRootCert(postgres.DatabaseCACertificatePathCentral).AsConnectionString(), nil
+	return dbConnection.GetConnectionForUserAndDB(dbCentralUserName, postgres.CentralDBName).WithSSLRootCert(postgres.DatabaseCACertificatePathCentral).AsConnectionString(), nil
 }
 
 func generateDBPassword() (string, error) {
