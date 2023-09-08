@@ -142,7 +142,7 @@ func augmentWithStaticAuthConfig(r *dbapi.CentralRequest, centralConfig *config.
 func augmentWithDynamicAuthConfig(r *dbapi.CentralRequest, realmConfig *iam.IAMRealmConfig, apiClient *api.AcsTenantsApiService) error {
 	// There is a limit on name length of the dynamic client. To avoid unnecessary errors,
 	// we truncate name here.
-	name := stringutils.Truncate(fmt.Sprintf("acsms-%s", r.Name), dynamicClientsNameMaxLength)
+	name := stringutils.Truncate(fmt.Sprintf("acscs-%s", r.Name), dynamicClientsNameMaxLength)
 	orgID := r.OrganisationID
 	redirectURIs := []string{fmt.Sprintf("https://%s%s", r.GetUIHost(), oidcProviderCallbackPath)}
 
