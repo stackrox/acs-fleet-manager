@@ -242,14 +242,14 @@ func (q amsQuotaService) DeleteQuota(subscriptionID string) *errors.ServiceError
 }
 
 // IsQuotaEntitlementActive checks if an organisation has a SKU entitlement and that entitlement is still active in AMS.
-func (q amsQuotaService) IsQuotaEntitlementActive(dinosaur *dbapi.CentralRequest) (bool, error) {
-	org, err := q.amsClient.GetOrganisationFromExternalID(dinosaur.OrganisationID)
+func (q amsQuotaService) IsQuotaEntitlementActive(central *dbapi.CentralRequest) (bool, error) {
+	org, err := q.amsClient.GetOrganisationFromExternalID(central.OrganisationID)
 	if err != nil {
-		return false, errors.OrganisationNotFound(dinosaur.OrganisationID, err)
+		return false, errors.OrganisationNotFound(central.OrganisationID, err)
 	}
 
 	organizationID := org.ID()
-	quotaType := types.DinosaurInstanceType(dinosaur.InstanceType).GetQuotaType()
+	quotaType := types.DinosaurInstanceType(central.InstanceType).GetQuotaType()
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(org.ID(), quotaType.GetResourceName(), quotaType.GetProduct())
 	if err != nil {
 		return false, fmt.Errorf("retrieving quota costs for product %s, organization ID %s, resource type %s: %w", quotaType.GetProduct(), organizationID, quotaType.GetResourceName(), err)
@@ -258,7 +258,7 @@ func (q amsQuotaService) IsQuotaEntitlementActive(dinosaur *dbapi.CentralRequest
 	// SKU not entitled to the organisation
 	if len(quotaCosts) == 0 {
 		glog.Infof("ams quota cost not found for Central instance %q in organisation %q with the following filter: {ResourceName: %q, Product: %q}",
-			dinosaur.ID, organizationID, quotaType.GetResourceName(), quotaType.GetProduct())
+			central.ID, organizationID, quotaType.GetResourceName(), quotaType.GetProduct())
 		return false, nil
 	}
 
