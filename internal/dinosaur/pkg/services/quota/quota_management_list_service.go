@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/quotamanagement"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -101,4 +102,27 @@ func (q QuotaManagementListService) ReserveQuota(_ context.Context, dinosaur *db
 // DeleteQuota ...
 func (q QuotaManagementListService) DeleteQuota(SubscriptionID string) *errors.ServiceError {
 	return nil // NOOP
+}
+
+// Checks if quota used by the given Central instance is granted to the organisation/user and
+// if it is active, not expired, in the quota management list configuration
+// Note that organisation will always take priority over individual accounts to mimic the behaviour of
+// quota allowance checks during Central creation.
+func (q QuotaManagementListService) IsQuotaEntitlementActive(central *dbapi.CentralRequest) (bool, error) {
+
+	if !q.quotaManagementList.EnableInstanceLimitControl {
+		return true, nil
+	}
+
+	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetByID(central.OrganisationID)
+	if orgFound && org.IsUserRegistered(central.Owner) {
+		return org.IsInstanceCountWithinLimit(org.GetMaxAllowedInstances()), nil
+	} else {
+		glog.Infof("user is not registered by organisation, checking quota entitlement for %q as an individual account", central.Owner)
+		account, accountFound := q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(central.Owner)
+		if accountFound {
+			return account.IsInstanceCountWithinLimit(account.GetMaxAllowedInstances()), nil
+		}
+	}
+	return false, nil
 }

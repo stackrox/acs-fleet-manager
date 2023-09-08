@@ -10,6 +10,7 @@ import (
 	"github.com/golang/glog"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -20,7 +21,8 @@ const RHACSMarketplaceQuotaID = "cluster|rhinfra|rhacs|marketplace"
 const awsCloudProvider = "aws"
 
 type amsQuotaService struct {
-	amsClient ocm.AMSClient
+	amsClient     ocm.AMSClient
+	centralConfig *config.CentralConfig
 }
 
 func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder {
@@ -71,13 +73,16 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 
 	var foundUnsupportedBillingModel string
 
+	var supported []*amsv1.QuotaCost
+
 	for _, qc := range quotaCosts {
 		if qc.Allowed() > 0 {
 			for _, rr := range qc.RelatedResources() {
 				if _, isCompatibleBillingModel := supportedAMSBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
-					return true, nil
+					supported = append(supported, qc)
+				} else {
+					foundUnsupportedBillingModel = rr.BillingModel()
 				}
-				foundUnsupportedBillingModel = rr.BillingModel()
 			}
 		}
 	}
@@ -237,4 +242,48 @@ func (q amsQuotaService) DeleteQuota(subscriptionID string) *errors.ServiceError
 		return errors.GeneralError("failed to delete the quota: %v", err)
 	}
 	return nil
+}
+
+// IsQuotaEntitlementActive checks if an organisation has a SKU entitlement and that entitlement is still active in AMS.
+func (q amsQuotaService) IsQuotaEntitlementActive(dinosaur *dbapi.CentralRequest) (bool, error) {
+	org, err := q.amsClient.GetOrganisationFromExternalID(dinosaur.OrganisationID)
+	if err != nil {
+		return false, errors.OrganisationNotFound(dinosaur.OrganisationID, err)
+	}
+
+	organizationID := org.ID()
+	quotaType := types.DinosaurInstanceType(dinosaur.InstanceType).GetQuotaType()
+	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(org.ID(), quotaType.GetResourceName(), quotaType.GetProduct())
+	if err != nil {
+		return false, fmt.Errorf("retrieving quota costs for product %s, organization ID %s, resource type %s: %w", quotaType.GetProduct(), organizationID, quotaType.GetResourceName(), err)
+	}
+
+	// SKU not entitled to the organisation
+	if len(quotaCosts) == 0 {
+		glog.Infof("ams quota cost not found for Central instance %q in organisation %q with the following filter: {ResourceName: %q, Product: %q}",
+			dinosaur.ID, organizationID, quotaType.GetResourceName(), quotaType.GetProduct())
+		return false, nil
+	}
+
+	if len(quotaCosts) > 1 {
+		return false, fmt.Errorf("more than 1 quota cost was returned for organisation %q with the following filter: {ResourceName: %q, Product: %q}",
+			organizationID, quotaType.GetResourceName(), quotaType.GetProduct())
+	}
+
+	// result will always return one quota for the given org, ams related resource billing model, resource and product for rhosak quotas
+	quotaCost := quotaCosts[0]
+
+	// when a SKU entitlement expires in AMS, the allowed value for that quota cost is set back to 0
+	// if the allowed value is 0 and consumed is greater than this, that denotes that the SKU entitlement
+	// has expired and is no longer active.
+	if quotaCost.Consumed() > quotaCost.Allowed() {
+		if quotaCost.Allowed() == 0 {
+			glog.Infof("quota no longer entitled for organisation %q (quotaid: %q, consumed: %q, allowed: %q)",
+				organizationID, quotaCost.QuotaID(), quotaCost.Consumed(), quotaCost.Allowed())
+			return false, nil
+		}
+		glog.Warningf("Organisation %q has exceeded their quota allowance (quotaid: %q, consumed %q, allowed: %q",
+			organizationID, quotaCost.QuotaID(), quotaCost.Consumed(), quotaCost.Allowed())
+	}
+	return true, nil
 }

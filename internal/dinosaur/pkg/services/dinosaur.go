@@ -107,6 +107,12 @@ type DinosaurService interface {
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	Restore(ctx context.Context, id string) *errors.ServiceError
 	RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
+	// IsQuotaEntitlementActive checks if the user/organisation have an active entitlement to the quota
+	// used by the given Central instance.
+	//
+	// It returns true if the user has an active quota entitlement and false if not.
+	// It returns false and an error if it encounters any issues while trying to check the quota entitlement status.
+	IsQuotaEntitlementActive(centralRequest *dbapi.CentralRequest) (bool, error)
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -651,7 +657,7 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 
 	// execute query
 	if err := dbConn.Find(&dinosaurRequestList).Error; err != nil {
-		return dinosaurRequestList, pagingMeta, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to list central requests")
+		return dinosaurRequestList, pagingMeta, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list central requests")
 	}
 
 	return dinosaurRequestList, pagingMeta, nil
@@ -943,4 +949,13 @@ func buildResourceRecordChange(recordName string, clusterIngress string, action 
 	}
 
 	return resourceRecordChange
+}
+
+func (k *dinosaurService) IsQuotaEntitlementActive(centralRequest *dbapi.CentralRequest) (bool, error) {
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.dinosaurConfig.Quota.Type))
+	if factoryErr != nil {
+		return false, factoryErr
+	}
+
+	return quotaService.IsQuotaEntitlementActive(centralRequest)
 }
