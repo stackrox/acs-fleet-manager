@@ -55,6 +55,8 @@ const DinosaurRoutesActionCreate DinosaurRoutesAction = "CREATE"
 // DinosaurRoutesActionDelete ...
 const DinosaurRoutesActionDelete DinosaurRoutesAction = "DELETE"
 
+const gracePeriod = 12 * 24 * time.Hour
+
 // CNameRecordStatus ...
 type CNameRecordStatus struct {
 	ID     *string
@@ -517,30 +519,62 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 	return nil
 }
 
+func (k *dinosaurService) centralWithExpiredGracePeriod(centralRequest *dbapi.CentralRequest, currentTime time.Time) bool {
+	glog.V(10).Infof("Evaluating expiration time of central request '%s' with instance type '%s' and status '%s'",
+		centralRequest.ID, centralRequest.InstanceType, centralRequest.Status)
+	if currentTime.Sub(*centralRequest.GraceFrom) > gracePeriod {
+		glog.V(10).Infof("Central ID '%s' has expired", centralRequest.ID)
+		return true
+	}
+
+	glog.V(10).Infof("Central ID '%s' has not expired", centralRequest.ID)
+
+	return false
+}
+
 // DeprovisionExpiredDinosaurs cleaning up expired dinosaurs
 func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *errors.ServiceError {
 	now := time.Now()
-	dbConn := k.connectionFactory.New().
-		Model(&dbapi.CentralRequest{}).
-		Where("instance_type = ?", types.EVAL.String()).
-		Where("created_at  <=  ?", now.Add(-1*time.Duration(dinosaurAgeInHours)*time.Hour)).
-		Where("status NOT IN (?)", dinosaurDeletionStatuses)
+	var existingCentralRequests []dbapi.CentralRequest
 
-	db := dbConn.Updates(map[string]interface{}{
-		"status":             dinosaurConstants.CentralRequestStatusDeprovision,
-		"deletion_timestamp": now,
-	})
+	dbConn := k.connectionFactory.New().Model(&dbapi.CentralRequest{})
+	db := dbConn.Where("instance_type = ?", types.EVAL.String()).
+		Where("created_at  <=  ?", now.Add(-1*time.Duration(dinosaurAgeInHours)*time.Hour)).
+		Or("grace_from IS NOT NULL").
+		Where("status NOT IN (?)", dinosaurDeletionStatuses).Scan(&existingCentralRequests)
 	err := db.Error
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to deprovision expired centrals")
 	}
 
-	if db.RowsAffected >= 1 {
-		glog.Infof("%v central_request's lifespans are over %d hours and have had their status updated to deprovisioning", db.RowsAffected, dinosaurAgeInHours)
-		var counter int64
-		for ; counter < db.RowsAffected; counter++ {
-			metrics.IncreaseCentralTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
-			metrics.IncreaseCentralSuccessOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
+	var centralsToDeprovisionIDs []string
+
+	for idx := range existingCentralRequests {
+		existingCentralRequest := &existingCentralRequests[idx]
+		shouldBeDeprovisioned := k.centralWithExpiredGracePeriod(existingCentralRequest, now)
+		if shouldBeDeprovisioned {
+			centralsToDeprovisionIDs = append(centralsToDeprovisionIDs, existingCentralRequest.ID)
+		}
+	}
+
+	if len(centralsToDeprovisionIDs) > 0 {
+		glog.V(10).Infof("Central IDs to mark with status %s: %+v", dinosaurConstants.CentralRequestStatusDeprovision, centralsToDeprovisionIDs)
+		db = dbConn.Where("id IN (?)", centralsToDeprovisionIDs).
+			Updates(map[string]interface{}{
+				"status":             dinosaurConstants.CentralRequestStatusDeprovision,
+				"deletion_timestamp": now,
+			})
+		err = db.Error
+		if err != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "unable to deprovision expired centrals")
+		}
+		if db.RowsAffected >= 1 {
+			glog.Infof("%v central_request's lifespans are over %d hours and have had their status updated to deprovisioning", db.RowsAffected, dinosaurAgeInHours)
+			var counter int64 = 0
+			for ; counter < db.RowsAffected; counter++ {
+				metrics.IncreaseCentralTotalOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
+				metrics.IncreaseCentralSuccessOperationsCountMetric(dinosaurConstants.CentralOperationDeprovision)
+			}
 		}
 	}
 
