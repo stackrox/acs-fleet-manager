@@ -1191,7 +1191,6 @@ objects:
             command:
             - /usr/local/bin/fleet-manager
             - serve
-            - --gitops-config-file=/config/gitops-config
             - --central-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --central-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-central-external-certificate=${ENABLE_CENTRAL_EXTERNAL_CERTIFICATE}
