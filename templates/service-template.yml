@@ -1063,6 +1063,9 @@ objects:
           - name: fleet-manager-dataplane-cluster-configuration-staging
             configMap:
               name: fleet-manager-dataplane-cluster-configuration-staging
+          - name: gitops-config
+            configMap:
+              name: gitops-config
           initContainers:
           - name: migration
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
