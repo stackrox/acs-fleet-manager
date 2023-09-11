@@ -1042,9 +1042,11 @@ func (r *CentralReconciler) getDatabaseID(ctx context.Context, remoteCentralName
 
 	overrideValue, exists := configMap.Data["databaseID"]
 	if exists {
+		glog.Infof("The database ID for Central %s is overridden with: %s", centralID, overrideValue)
 		return overrideValue, nil
 	}
 
+	glog.Infof("The central-db-override ConfigMap exists but contains no databaseID field, using default: %s", centralID)
 	return centralID, nil
 }
 
@@ -1136,7 +1138,12 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 		}
 	}
 
-	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(remoteCentral.Id)
+	databaseID, err := r.getDatabaseID(ctx, remoteCentral.Metadata.Namespace, remoteCentral.Id)
+	if err != nil {
+		return "", fmt.Errorf("getting DB ID: %w", err)
+	}
+
+	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(databaseID)
 	if err != nil {
 		if !errors.Is(err, cloudprovider.ErrDBNotFound) {
 			return "", fmt.Errorf("getting RDS DB connection data: %w", err)
@@ -1149,6 +1156,7 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 			return "", fmt.Errorf("trying to restore DB: %w", err)
 		}
 	}
+
 	return dbConnection.GetConnectionForUserAndDB(dbCentralUserName, postgres.CentralDBName).WithSSLRootCert(postgres.DatabaseCACertificatePathCentral).AsConnectionString(), nil
 }
 
@@ -1194,7 +1202,7 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 		return fmt.Errorf("provisioning RDS DB: %w", err)
 	}
 
-	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(remoteCentral.Id)
+	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(databaseID)
 	if err != nil {
 		return fmt.Errorf("getting RDS DB connection data: %w", err)
 	}
