@@ -106,7 +106,6 @@ func (k *GracePeriodManager) updateGraceFromBasedOnQuotaEntitlement(central *dba
 
 	// if quota entitlement is not active and grace_from is not already set, set its value based on the current time and grace period allowance
 	if !isQuotaEntitlementActive && central.GraceFrom == nil {
-		// set grace_from to now + grace period days
 		graceFromTime := time.Now()
 		glog.Infof("quota entitlement for central instance %q is no longer active, updating grace_from to %q", central.ID, graceFromTime.Format(time.RFC1123Z))
 		return k.updateCentralGraceDate(central, &graceFromTime)
