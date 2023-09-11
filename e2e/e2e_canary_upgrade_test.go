@@ -29,7 +29,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 	BeforeEach(func() {
 
-		if !runCanaryUpgradeTests || !features.StandaloneMode.Enabled() {
+		if feature.TargetedUpgrades.Enabled() || !features.StandaloneMode.Enabled() {
 			Skip("Skipping canary upgrade test")
 		}
 	})
