@@ -56,7 +56,7 @@ else
     apply "${MANIFESTS_DIR}/crds"
 fi
 
-if [[ "$RHACS_USE_OPERATORS_CONFIGMAP" == "true" ]]; then
+if [[ "$RHACS_STANDALONE_MODE" == "true" ]]; then
     apply "${MANIFESTS_DIR}/rhacs-operator/03-operators-config.yaml"
 fi
 
