@@ -263,7 +263,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 func (r *CentralReconciler) getInstanceConfigWithGitops(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
 	var central = new(v1alpha1.Central)
 
-	if err := yaml2.Unmarshal([]byte(remoteCentral.Spec.CentralYAML), central); err != nil {
+	if err := yaml2.Unmarshal([]byte(remoteCentral.Spec.CentralCRYAML), central); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal central yaml")
 	}
 	if err := r.applyCentralConfig(remoteCentral, central); err != nil {
