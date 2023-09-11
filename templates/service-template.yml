@@ -1066,6 +1066,7 @@ objects:
           - name: gitops-config
             configMap:
               name: gitops-config
+              optional: true
           initContainers:
           - name: migration
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
