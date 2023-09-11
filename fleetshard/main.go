@@ -40,7 +40,10 @@ func main() {
 	glog.Infof("ManagedDB.SecurityGroup: %s", config.ManagedDB.SecurityGroup)
 	glog.Infof("ManagedDB.SubnetGroup: %s", config.ManagedDB.SubnetGroup)
 
-	runtime, err := runtime.NewRuntime(config, k8s.CreateClientOrDie())
+	glog.Info("Creating k8s client...")
+	k8sClient := k8s.CreateClientOrDie()
+	glog.Info("Creating runtime...")
+	runtime, err := runtime.NewRuntime(config, k8sClient)
 	if err != nil {
 		glog.Fatal(err)
 	}
@@ -52,6 +55,7 @@ func main() {
 		}
 	}()
 
+	glog.Info("Creating metrics server...")
 	metricServer := fleetshardmetrics.NewMetricsServer(config.MetricsAddress)
 	go func() {
 		if err := metricServer.ListenAndServe(); err != nil {
@@ -60,8 +64,10 @@ func main() {
 	}()
 
 	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt, unix.SIGTERM)
+	notifySignals := []os.Signal{os.Interrupt, unix.SIGTERM}
+	signal.Notify(sigs, notifySignals...)
 
+	glog.Infof("Application started. Will shut down gracefully on %s.", notifySignals)
 	sig := <-sigs
 	runtime.Stop()
 	if err := metricServer.Close(); err != nil {

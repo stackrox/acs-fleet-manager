@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
 
 die() {
-    {
-        # shellcheck disable=SC2059
-        printf "$*"
-        echo
-    } >&2
+    log "$@" >&2
     exit 1
 }
 
 log() {
     # shellcheck disable=SC2059
-    printf "$*"
+    printf "$(date "+%Y-%m-%dT%H:%M:%S,%N%:z") $*"
     echo
 }
