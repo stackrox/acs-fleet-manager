@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
@@ -930,4 +931,195 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 			gomega.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
+}
+
+func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
+	type fields struct {
+		amsClient     ocm.Client
+		centralConfig config.CentralConfig
+	}
+
+	defaultCentralConfig := config.CentralConfig{
+		Quota: config.NewCentralQuotaConfig(),
+	}
+
+	standardCentral := &dbapi.CentralRequest{
+		InstanceType: "standard",
+	}
+
+	tests := []struct {
+		name       string
+		fields     fields
+		args       *dbapi.CentralRequest
+		want       bool
+		wantErr    bool
+		wantErrMsg string
+	}{
+		{
+			name: "returns true for single available quota cost",
+			fields: fields{
+				centralConfig: defaultCentralConfig,
+				amsClient: &ocm.ClientMock{
+					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						return []*v1.QuotaCost{
+							makeTestQuotaCost(resourceName, organizationID, 1, 0, t),
+						}, nil
+					},
+				},
+			},
+			args:    standardCentral,
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "returns true for single available quota cost for eval instance",
+			fields: fields{
+				centralConfig: defaultCentralConfig,
+				amsClient: &ocm.ClientMock{
+					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						return []*v1.QuotaCost{
+							makeTestQuotaCost(resourceName, organizationID, 1, 0, t),
+						}, nil
+					},
+				},
+			},
+			args: &dbapi.CentralRequest{
+				InstanceType: "eval",
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "returns false for no quota cost",
+			fields: fields{
+				centralConfig: defaultCentralConfig,
+				amsClient: &ocm.ClientMock{
+					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						return []*v1.QuotaCost{}, nil
+					},
+				},
+			},
+			args:    standardCentral,
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "returns true for several available quota costs",
+			fields: fields{
+				centralConfig: defaultCentralConfig,
+				amsClient: &ocm.ClientMock{
+					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						return []*v1.QuotaCost{
+							makeTestQuotaCost(resourceName, organizationID, 1, 0, t),
+							makeTestQuotaCost(resourceName, organizationID, 1, 0, t),
+						}, nil
+					},
+				},
+			},
+			args:    standardCentral,
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "returns true for one of several available quota costs",
+			fields: fields{
+				centralConfig: defaultCentralConfig,
+				amsClient: &ocm.ClientMock{
+					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						return []*v1.QuotaCost{
+							makeTestQuotaCost(resourceName, organizationID, 1, 0, t),
+							makeTestQuotaCost(resourceName, organizationID, 0, 1, t),
+						}, nil
+					},
+				},
+			},
+			args:    standardCentral,
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "returns true if organisation has exceeded their quota limits but entitlement is still active",
+			fields: fields{
+				centralConfig: defaultCentralConfig,
+				amsClient: &ocm.ClientMock{
+					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						return []*v1.QuotaCost{
+							makeTestQuotaCost(resourceName, organizationID, 1, 3, t),
+							makeTestQuotaCost(resourceName, organizationID, 1, 3, t),
+						}, nil
+					},
+				},
+			},
+			args:    standardCentral,
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "returns false for no quota cost available",
+			fields: fields{
+				centralConfig: defaultCentralConfig,
+				amsClient: &ocm.ClientMock{
+					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						return []*v1.QuotaCost{
+							makeTestQuotaCost(resourceName, organizationID, 0, 1, t),
+							makeTestQuotaCost(resourceName, organizationID, 0, 1, t),
+						}, nil
+					},
+				},
+			},
+			args:    standardCentral,
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "returns an error when it fails to get quota costs from ams",
+			fields: fields{
+				centralConfig: defaultCentralConfig,
+				amsClient: &ocm.ClientMock{
+					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						return nil, fmt.Errorf("failed to get quota cost")
+					},
+				},
+			},
+			args:       standardCentral,
+			want:       false,
+			wantErr:    true,
+			wantErrMsg: "RHACS-MGMT-120: Insufficient quota: failed to get quota cost: error getting quotas for product RHACS",
+		},
+	}
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.fields.amsClient, nil, nil)
+			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
+
+			got, err := quotaService.IsQuotaEntitlementActive(tt.args)
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			if tt.wantErr {
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErrMsg))
+			}
+			g.Expect(got).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
+func makeTestQuotaCost(resourceName string, organizationID string, allowed, consumed int, t *testing.T) *v1.QuotaCost {
+	rrbq := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
+	qcb, err := v1.NewQuotaCost().Allowed(allowed).Consumed(consumed).OrganizationID(organizationID).RelatedResources(rrbq).Build()
+	require.NoError(t, err)
+	return qcb
+}
+
+func makeOrganizationFromExtID(externalId string) (*v1.Organization, error) {
+	org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
+	return org, nil
 }

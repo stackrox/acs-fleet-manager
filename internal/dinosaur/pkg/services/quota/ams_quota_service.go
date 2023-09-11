@@ -254,9 +254,6 @@ func (q amsQuotaService) IsQuotaEntitlementActive(central *dbapi.CentralRequest)
 
 	for _, qc := range quotaCosts {
 		for _, rr := range qc.RelatedResources() {
-			if qc.Consumed() < qc.Allowed() || rr.Cost() == 0 {
-				return true, nil
-			}
 			// When an SKU entitlement expires in AMS, the allowed value for that quota cost is set back to 0.
 			// If the allowed value is 0 and consumed is greater than this, that denotes that the SKU entitlement
 			// has expired and is no longer active.
@@ -264,8 +261,11 @@ func (q amsQuotaService) IsQuotaEntitlementActive(central *dbapi.CentralRequest)
 				glog.Infof("Quota no longer entitled for organisation %q (quotaid: %q, consumed: %q, allowed: %q, billing model: %q, resource: %q)",
 					org.ID, qc.QuotaID(), qc.Consumed(), qc.Allowed(), rr.BillingModel(), rr.ResourceName())
 			} else {
-				glog.Warningf("Organisation %q has exceeded their quota allowance (quotaid: %q, consumed %q, allowed: %q, billing model: %q, resource: %q)",
-					org.ID, qc.QuotaID(), qc.Consumed(), qc.Allowed(), rr.BillingModel(), rr.ResourceName())
+				if qc.Consumed() > qc.Allowed() {
+					glog.Warningf("Organisation %q has exceeded their quota allowance (quotaid: %q, consumed %q, allowed: %q, billing model: %q, resource: %q)",
+						org.ID, qc.QuotaID(), qc.Consumed(), qc.Allowed(), rr.BillingModel(), rr.ResourceName())
+				}
+				return true, nil
 			}
 		}
 	}
