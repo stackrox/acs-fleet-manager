@@ -420,6 +420,36 @@ func TestReconcileLastHashSetOnSuccess(t *testing.T) {
 	assert.Equal(t, "4", central.Annotations[util.RevisionAnnotationKey])
 }
 
+func TestReconcileLastHashSecretsOrderIndependent(t *testing.T) {
+	_, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		nil,
+		defaultReconcilerOptions,
+		&v1alpha1.Central{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        centralName,
+				Namespace:   centralNamespace,
+				Annotations: map[string]string{util.RevisionAnnotationKey: "3"},
+			},
+		},
+		centralDeploymentObject(),
+		centralTLSSecretObject(),
+		centralDBPasswordSecretObject(),
+	)
+
+	managedCentral := simpleManagedCentral
+	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
+	managedCentral.Metadata.SecretsStored = []string{"central-tls", "central-db-password"}
+
+	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)
+	require.NoError(t, err)
+
+	_, err = r.Reconcile(context.TODO(), managedCentral)
+	require.NoError(t, err)
+	assert.Equal(t, expectedHash, r.lastCentralHash, "Order of stored secrets should not impact hash.")
+}
+
 func TestIgnoreCacheForCentralNotReady(t *testing.T) {
 	_, _, r := getClientTrackerAndReconciler(
 		t,
