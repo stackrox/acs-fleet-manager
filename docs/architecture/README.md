@@ -79,7 +79,7 @@ API definition lists:
 
 ### Service Diagram
 
-See [miro ACSMS dashboard](https://miro.com/app/board/uXjVOh7XtrE=/)
+See [miro ACSCS dashboard](https://miro.com/app/board/uXjVOh7XtrE=/)
 
 
 ### Application Success Criteria

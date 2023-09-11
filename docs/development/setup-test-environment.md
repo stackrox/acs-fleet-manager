@@ -1,7 +1,7 @@
-# ACS MS Test Environment
+# ACSCS Test Environment
 
 ## Overview
-The `dev/env` directory contains scripts for bringing up a complete ACS MS test environment on different
+The `dev/env` directory contains scripts for bringing up a complete ACSCS test environment on different
 types of cluster. The following components are set up:
 
 * A Postgres database
@@ -27,7 +27,7 @@ The following scripts exist currently in `dev/env/scripts`:
 * `apply` & `delete`: Convenience scripts for applying and deleting Kubernetes resources supporting environment interpolation.
 * `port-forwarding`: Convenient abstraction layer for kubectl port-forwarding.
 * `bootstrap.sh`: Sets up the basic environment: creates namespaces, injects image-pull-secrets if necessary, installs OLM (if required), installs RHACS operator (if desired), pulls required images, etc.
-* `up.sh`: Brings up the ACS MS environment consisting of the database, `fleet-manager` and `fleetshard-sync`.
+* `up.sh`: Brings up the ACSCS environment consisting of the database, `fleet-manager` and `fleetshard-sync`.
 * `down.sh`: Deletes the resources created by `up.sh`.
 
 The scripts can be configured using environment variables, the most important options being:
