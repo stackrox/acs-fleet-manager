@@ -1,7 +1,6 @@
 package dinosaurmgrs
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/golang/glog"
@@ -119,13 +118,8 @@ func (k *GracePeriodManager) updateGraceFromBasedOnQuotaEntitlement(central *dba
 
 // updates the grace_from field for the given Central instance
 func (k *GracePeriodManager) updateCentralGraceDate(central *dbapi.CentralRequest, graceFromTime *time.Time) error {
-	var graceFrom sql.NullTime
-	if graceFromTime != nil {
-		graceFrom = sql.NullTime{Time: *graceFromTime, Valid: true}
-	}
-
 	if err := k.dinosaurService.Updates(central, map[string]interface{}{
-		"grace_from": graceFrom,
+		"grace_from": graceFromTime,
 	}); err != nil {
 		return err
 	}
