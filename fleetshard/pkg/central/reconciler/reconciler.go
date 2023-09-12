@@ -246,7 +246,9 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "setting central reconcilation cache")
 	}
 
-	glog.Infof("Returning central status %+v", status)
+	logStatus := status
+	logStatus.Secrets = obscureSecrets(status.Secrets)
+	glog.Infof("Returning central status %+v", logStatus)
 
 	return status, nil
 }
@@ -1602,4 +1604,14 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 
 		resourcesChart: resourcesChart,
 	}
+}
+
+func obscureSecrets(secrets map[string]string) map[string]string {
+	obscuredSecrets := make(map[string]string, len(secrets))
+
+	for key := range secrets {
+		obscuredSecrets[key] = "secret-value"
+	}
+
+	return obscuredSecrets
 }
