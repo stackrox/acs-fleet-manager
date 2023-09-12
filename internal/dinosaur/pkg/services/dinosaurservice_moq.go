@@ -61,9 +61,6 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			HasAvailableCapacityInRegionFunc: func(dinosaurRequest *dbapi.CentralRequest) (bool, *serviceError.ServiceError) {
 //				panic("mock out the HasAvailableCapacityInRegion method")
 //			},
-//			IsQuotaEntitlementActiveFunc: func(centralRequest *dbapi.CentralRequest) (bool, error) {
-//				panic("mock out the IsQuotaEntitlementActive method")
-//			},
 //			ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *serviceError.ServiceError) {
 //				panic("mock out the List method")
 //			},
@@ -145,9 +142,6 @@ type DinosaurServiceMock struct {
 
 	// HasAvailableCapacityInRegionFunc mocks the HasAvailableCapacityInRegion method.
 	HasAvailableCapacityInRegionFunc func(dinosaurRequest *dbapi.CentralRequest) (bool, *serviceError.ServiceError)
-
-	// IsQuotaEntitlementActiveFunc mocks the IsQuotaEntitlementActive method.
-	IsQuotaEntitlementActiveFunc func(centralRequest *dbapi.CentralRequest) (bool, error)
 
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *serviceError.ServiceError)
@@ -254,11 +248,6 @@ type DinosaurServiceMock struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
 			DinosaurRequest *dbapi.CentralRequest
 		}
-		// IsQuotaEntitlementActive holds details about calls to the IsQuotaEntitlementActive method.
-		IsQuotaEntitlementActive []struct {
-			// CentralRequest is the centralRequest argument value.
-			CentralRequest *dbapi.CentralRequest
-		}
 		// List holds details about calls to the List method.
 		List []struct {
 			// Ctx is the ctx argument value.
@@ -349,7 +338,6 @@ type DinosaurServiceMock struct {
 	lockGetByID                           sync.RWMutex
 	lockGetCNAMERecordStatus              sync.RWMutex
 	lockHasAvailableCapacityInRegion      sync.RWMutex
-	lockIsQuotaEntitlementActive          sync.RWMutex
 	lockList                              sync.RWMutex
 	lockListByStatus                      sync.RWMutex
 	lockListCentralsWithoutAuthConfig     sync.RWMutex
@@ -753,38 +741,6 @@ func (mock *DinosaurServiceMock) HasAvailableCapacityInRegionCalls() []struct {
 	mock.lockHasAvailableCapacityInRegion.RLock()
 	calls = mock.calls.HasAvailableCapacityInRegion
 	mock.lockHasAvailableCapacityInRegion.RUnlock()
-	return calls
-}
-
-// IsQuotaEntitlementActive calls IsQuotaEntitlementActiveFunc.
-func (mock *DinosaurServiceMock) IsQuotaEntitlementActive(centralRequest *dbapi.CentralRequest) (bool, error) {
-	if mock.IsQuotaEntitlementActiveFunc == nil {
-		panic("DinosaurServiceMock.IsQuotaEntitlementActiveFunc: method is nil but DinosaurService.IsQuotaEntitlementActive was just called")
-	}
-	callInfo := struct {
-		CentralRequest *dbapi.CentralRequest
-	}{
-		CentralRequest: centralRequest,
-	}
-	mock.lockIsQuotaEntitlementActive.Lock()
-	mock.calls.IsQuotaEntitlementActive = append(mock.calls.IsQuotaEntitlementActive, callInfo)
-	mock.lockIsQuotaEntitlementActive.Unlock()
-	return mock.IsQuotaEntitlementActiveFunc(centralRequest)
-}
-
-// IsQuotaEntitlementActiveCalls gets all the calls that were made to IsQuotaEntitlementActive.
-// Check the length with:
-//
-//	len(mockedDinosaurService.IsQuotaEntitlementActiveCalls())
-func (mock *DinosaurServiceMock) IsQuotaEntitlementActiveCalls() []struct {
-	CentralRequest *dbapi.CentralRequest
-} {
-	var calls []struct {
-		CentralRequest *dbapi.CentralRequest
-	}
-	mock.lockIsQuotaEntitlementActive.RLock()
-	calls = mock.calls.IsQuotaEntitlementActive
-	mock.lockIsQuotaEntitlementActive.RUnlock()
 	return calls
 }
 
