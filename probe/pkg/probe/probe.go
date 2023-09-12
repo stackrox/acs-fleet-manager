@@ -78,10 +78,12 @@ func (p *ProbeImpl) Execute(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	glog.Info("central creation succeeded; proceeding with verification")
 
 	if err := p.verifyCentral(ctx, central); err != nil {
 		return err
 	}
+	glog.Info("central verification succeeded; proceeding with deletion")
 
 	return p.deleteCentral(ctx, central)
 }
@@ -188,6 +190,7 @@ func (p *ProbeImpl) deleteCentral(ctx context.Context, centralRequest *public.Ce
 	if err != nil {
 		return errors.Wrapf(err, "central instance %s with status %s could not be deleted", centralRequest.Id, centralRequest.Status)
 	}
+	glog.Info("central deletion succeeded")
 	return nil
 }
 
