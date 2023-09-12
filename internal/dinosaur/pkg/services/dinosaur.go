@@ -6,30 +6,27 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
-	dynamicClientAPI "github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-
+	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/golang/glog"
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
-	"github.com/stackrox/acs-fleet-manager/pkg/services"
-	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
-
-	"github.com/golang/glog"
-
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/aws"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
+	dynamicClientAPI "github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
+	"github.com/stackrox/acs-fleet-manager/pkg/services"
+	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
 )
 
 var (
@@ -519,62 +516,29 @@ func (k *dinosaurService) DeprovisionDinosaurForUsers(users []string) *errors.Se
 	return nil
 }
 
-func (k *dinosaurService) centralWithExpiredGracePeriod(centralRequest *dbapi.CentralRequest, currentTime time.Time) bool {
-	glog.V(10).Infof("Evaluating expiration time of central request '%s' with instance type '%s' and status '%s'",
-		centralRequest.ID, centralRequest.InstanceType, centralRequest.Status)
-	if currentTime.Sub(*centralRequest.GraceFrom) > gracePeriod {
-		glog.V(10).Infof("Central ID '%s' has expired", centralRequest.ID)
-		return true
-	}
-
-	glog.V(10).Infof("Central ID '%s' has not expired", centralRequest.ID)
-
-	return false
-}
-
 // DeprovisionExpiredDinosaurs cleaning up expired dinosaurs
 func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *errors.ServiceError {
 	now := time.Now()
-	var existingCentralRequests []dbapi.CentralRequest
-
 	dbConn := k.connectionFactory.New().
 		Model(&dbapi.CentralRequest{})
 
-	db := dbConn.
-		Where("instance_type = ?", types.EVAL.String()).
-		Where("created_at  <=  ?", now.Add(-1*time.Duration(dinosaurAgeInHours)*time.Hour)).
-		Where("status NOT IN (?)", dinosaurDeletionStatuses).
-		Or("grace_from IS NOT NULL").
-		Scan(&existingCentralRequests)
+	// WHERE ( instance_type = 'eval' AND created_at <= ? OR grace_from IS NOT NULL AND grace_from < ? ) AND status NOT IN ( 'deleting', 'deprovision' )
+	dbConn = dbConn.Where(
+		dbConn.Where("instance_type = ?", types.EVAL.String()).
+			Where("created_at  <=  ?", now.Add(-1*time.Duration(dinosaurAgeInHours)*time.Hour)).
+			Or(dbConn.Where("grace_from IS NOT NULL").
+				Where("grace_from < ", now.Add(-gracePeriod)))).
+		Where("status NOT IN (?)", dinosaurDeletionStatuses)
+
+	db := dbConn.Updates(map[string]interface{}{
+		"status":             dinosaurConstants.CentralRequestStatusDeprovision,
+		"deletion_timestamp": now,
+	})
 	err := db.Error
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to deprovision expired centrals")
 	}
 
-	var centralsToDeprovisionIDs []string
-
-	for idx := range existingCentralRequests {
-		existingCentralRequest := &existingCentralRequests[idx]
-		shouldBeDeprovisioned := k.centralWithExpiredGracePeriod(existingCentralRequest, now)
-		if shouldBeDeprovisioned {
-			centralsToDeprovisionIDs = append(centralsToDeprovisionIDs, existingCentralRequest.ID)
-		}
-	}
-
-	if len(centralsToDeprovisionIDs) == 0 {
-		return nil
-	}
-
-	glog.V(10).Infof("Central IDs to mark with status %s: %+v", dinosaurConstants.CentralRequestStatusDeprovision, centralsToDeprovisionIDs)
-	db = dbConn.Where("id IN (?)", centralsToDeprovisionIDs).
-		Updates(map[string]interface{}{
-			"status":             dinosaurConstants.CentralRequestStatusDeprovision,
-			"deletion_timestamp": now,
-		})
-	err = db.Error
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to deprovision expired centrals")
-	}
 	if db.RowsAffected >= 1 {
 		glog.Infof("%v central_request's lifespans are over %d hours and have had their status updated to deprovisioning", db.RowsAffected, dinosaurAgeInHours)
 		var counter int64
