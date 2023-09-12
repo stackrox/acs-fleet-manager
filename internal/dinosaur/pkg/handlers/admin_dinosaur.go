@@ -45,7 +45,7 @@ type AdminCentralHandler interface {
 	// Restore restores a tenant that was already marked as deleted
 	Restore(w http.ResponseWriter, r *http.Request)
 	// RotateSecrets rotates secrets within central
-	RotateSecrets(writer http.ResponseWriter, request *http.Request)
+	RotateSecrets(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -434,12 +434,12 @@ func (h adminCentralHandler) RotateSecrets(w http.ResponseWriter, r *http.Reques
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-			centralRequest, svcErr := h.service.Get(ctx, id)
-			if svcErr != nil {
-				return nil, svcErr
+			centralRequest, err := h.service.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-			svcErr = h.service.RotateCentralRHSSOClient(ctx, centralRequest)
-			return nil, svcErr
+			err = h.service.RotateCentralRHSSOClient(ctx, centralRequest)
+			return nil, err
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
