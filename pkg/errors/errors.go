@@ -128,9 +128,9 @@ const (
 	ErrorMaxLimitForServiceAccountsReached       ServiceErrorCode = 115
 	ErrorMaxLimitForServiceAccountsReachedReason string           = "Max limit for the service account creation has reached"
 
-	// RHSSO client rotation is not configured for this particular fleet-manager instance
-	ErrorClientRotationNotConfigured       ServiceErrorCode = 116
-	ErrorClientRotationNotConfiguredReason string           = "RHSSO client rotation is not configured"
+	// RHSSO dynamic clients are not configured for this particular fleet-manager instance
+	ErrorDynamicClientsNotUsed       ServiceErrorCode = 116
+	ErrorDynamicClientsNotUsedReason string           = "RHSSO dynamic clients are not used"
 
 	// RHSSO client rotation attempted and failed
 	ErrorClientRotationFailed       ServiceErrorCode = 117
@@ -282,7 +282,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorInvalidCloudAccountID, ErrorInvalidCloudAccountIDReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorClientRotationNotConfigured, ErrorClientRotationNotConfiguredReason, http.StatusNotFound, nil},
+		ServiceError{ErrorDynamicClientsNotUsed, ErrorDynamicClientsNotUsedReason, http.StatusNotFound, nil},
 		ServiceError{ErrorClientRotationFailed, ErrorClientRotationFailedReason, http.StatusInternalServerError, nil},
 	}
 }

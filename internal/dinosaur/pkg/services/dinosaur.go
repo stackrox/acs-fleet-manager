@@ -159,10 +159,10 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	realmConfig := k.iamConfig.RedhatSSORealm
 	if k.dinosaurConfig.HasStaticAuth() {
-		return errors.New(errors.ErrorClientRotationNotConfigured, "RHSSO is configured via static configuration")
+		return errors.New(errors.ErrorDynamicClientsNotUsed, "RHSSO is configured via static configuration")
 	}
 	if !realmConfig.IsConfigured() {
-		return errors.New(errors.ErrorClientRotationNotConfigured, "RHSSO dynamic configuration is not present")
+		return errors.New(errors.ErrorDynamicClientsNotUsed, "RHSSO dynamic configuration is not present")
 	}
 
 	previousAuthConfig := centralRequest.AuthConfig
