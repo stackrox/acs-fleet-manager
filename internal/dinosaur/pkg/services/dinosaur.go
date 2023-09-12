@@ -105,6 +105,7 @@ type DinosaurService interface {
 	ListDinosaursWithRoutesNotCreated() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
+	Restore(ctx context.Context, id string) *errors.ServiceError
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -777,6 +778,49 @@ func (k *dinosaurService) GetCNAMERecordStatus(dinosaurRequest *dbapi.CentralReq
 		ID:     changeOutput.ChangeInfo.Id,
 		Status: changeOutput.ChangeInfo.Status,
 	}, nil
+}
+
+func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.ServiceError {
+	dbConn := k.connectionFactory.New()
+	var centralRequest dbapi.CentralRequest
+	if err := dbConn.Unscoped().Where("id = ?", id).First(&centralRequest).Error; err != nil {
+		return services.HandleGetError("CentralRequest", "id", id, err)
+	}
+
+	if !centralRequest.DeletedAt.Valid {
+		return errors.BadRequest("CentralRequests not marked as deleted.")
+	}
+
+	timeSinceDeletion := time.Since(centralRequest.DeletedAt.Time)
+	if timeSinceDeletion.Hours()/24 > float64(k.dinosaurConfig.CentralRetentionPeriodDays) {
+		return errors.BadRequest("CentralRequests retention period already expired")
+	}
+
+	// Reset all values up to provisioning
+	columnsToReset := []string{
+		"Routes",
+		"Status",
+		"RoutesCreated",
+		"RouteCreationID",
+		"DeletedAt",
+		"DeletionTimestamp",
+		"ClientID",
+		"ClientOrigin",
+		"ClientSecret",
+		"CreatedAt",
+	}
+
+	// use a new central request, so that unset field for columnsToReset will automatically be set to the zero value
+	// this Update only changes columns listed in columnsToReset
+	resetRequest := &dbapi.CentralRequest{}
+	resetRequest.Status = dinosaurConstants.CentralRequestStatusPreparing.String()
+	resetRequest.CreatedAt = time.Now()
+
+	if err := dbConn.Unscoped().Model(&centralRequest).Select(columnsToReset).Updates(resetRequest).Error; err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to reset CentralRequest status")
+	}
+
+	return nil
 }
 
 // DinosaurStatusCount ...

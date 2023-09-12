@@ -578,7 +578,7 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	assert.Len(t, managedDBProvisioningClient.EnsureDBProvisionedCalls(), 1)
 
 	deletedCentral := simpleManagedCentral
-	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05Z07:00"
+	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05+00:00"
 
 	// trigger deletion
 	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string, _ string, _ bool) error {

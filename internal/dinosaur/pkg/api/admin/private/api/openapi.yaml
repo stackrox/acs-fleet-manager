@@ -376,6 +376,49 @@ paths:
       security:
       - Bearer: []
       summary: Update a Central instance by ID
+  /api/rhacs/v1/admin/centrals/{id}/restore:
+    post:
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "201":
+          description: Requests to restore accepted
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Validation error occured
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Central found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Restore a central tenant that was already deleted
   /api/rhacs/v1/admin/centrals/db/{id}:
     delete:
       operationId: deleteDbCentralById

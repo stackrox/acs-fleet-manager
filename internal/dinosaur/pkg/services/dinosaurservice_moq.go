@@ -85,6 +85,9 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			RegisterDinosaurJobFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the RegisterDinosaurJob method")
 //			},
+//			RestoreFunc: func(ctx context.Context, id string) *serviceError.ServiceError {
+//				panic("mock out the Restore method")
+//			},
 //			UpdateFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the Update method")
 //			},
@@ -163,6 +166,9 @@ type DinosaurServiceMock struct {
 
 	// RegisterDinosaurJobFunc mocks the RegisterDinosaurJob method.
 	RegisterDinosaurJobFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
+
+	// RestoreFunc mocks the Restore method.
+	RestoreFunc func(ctx context.Context, id string) *serviceError.ServiceError
 
 	// UpdateFunc mocks the Update method.
 	UpdateFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
@@ -282,6 +288,13 @@ type DinosaurServiceMock struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
 			DinosaurRequest *dbapi.CentralRequest
 		}
+		// Restore holds details about calls to the Restore method.
+		Restore []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+		}
 		// Update holds details about calls to the Update method.
 		Update []struct {
 			// DinosaurRequest is the dinosaurRequest argument value.
@@ -329,6 +342,7 @@ type DinosaurServiceMock struct {
 	lockPrepareDinosaurRequest            sync.RWMutex
 	lockRegisterDinosaurDeprovisionJob    sync.RWMutex
 	lockRegisterDinosaurJob               sync.RWMutex
+	lockRestore                           sync.RWMutex
 	lockUpdate                            sync.RWMutex
 	lockUpdateStatus                      sync.RWMutex
 	lockUpdates                           sync.RWMutex
@@ -977,6 +991,42 @@ func (mock *DinosaurServiceMock) RegisterDinosaurJobCalls() []struct {
 	mock.lockRegisterDinosaurJob.RLock()
 	calls = mock.calls.RegisterDinosaurJob
 	mock.lockRegisterDinosaurJob.RUnlock()
+	return calls
+}
+
+// Restore calls RestoreFunc.
+func (mock *DinosaurServiceMock) Restore(ctx context.Context, id string) *serviceError.ServiceError {
+	if mock.RestoreFunc == nil {
+		panic("DinosaurServiceMock.RestoreFunc: method is nil but DinosaurService.Restore was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		ID  string
+	}{
+		Ctx: ctx,
+		ID:  id,
+	}
+	mock.lockRestore.Lock()
+	mock.calls.Restore = append(mock.calls.Restore, callInfo)
+	mock.lockRestore.Unlock()
+	return mock.RestoreFunc(ctx, id)
+}
+
+// RestoreCalls gets all the calls that were made to Restore.
+// Check the length with:
+//
+//	len(mockedDinosaurService.RestoreCalls())
+func (mock *DinosaurServiceMock) RestoreCalls() []struct {
+	Ctx context.Context
+	ID  string
+} {
+	var calls []struct {
+		Ctx context.Context
+		ID  string
+	}
+	mock.lockRestore.RLock()
+	calls = mock.calls.Restore
+	mock.lockRestore.RUnlock()
 	return calls
 }
 
