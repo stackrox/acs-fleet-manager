@@ -252,21 +252,23 @@ func (q amsQuotaService) IsQuotaEntitlementActive(central *dbapi.CentralRequest)
 		return false, errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, quotaType.GetProduct())
 	}
 
+	// When an SKU entitlement expires in AMS, the allowed value for that quota cost is set back to 0.
+	// If the allowed value is 0 and consumed is greater than this, that denotes that the SKU entitlement
+	// has expired and is no longer active.
 	for _, qc := range quotaCosts {
-		for _, rr := range qc.RelatedResources() {
-			// When an SKU entitlement expires in AMS, the allowed value for that quota cost is set back to 0.
-			// If the allowed value is 0 and consumed is greater than this, that denotes that the SKU entitlement
-			// has expired and is no longer active.
-			if qc.Allowed() == 0 {
-				glog.Infof("Quota no longer entitled for organisation %q (quotaid: %q, consumed: %q, allowed: %q, billing model: %q, resource: %q)",
-					org.ID, qc.QuotaID(), qc.Consumed(), qc.Allowed(), rr.BillingModel(), rr.ResourceName())
-			} else {
-				if qc.Consumed() > qc.Allowed() {
-					glog.Warningf("Organisation %q has exceeded their quota allowance (quotaid: %q, consumed %q, allowed: %q, billing model: %q, resource: %q)",
-						org.ID, qc.QuotaID(), qc.Consumed(), qc.Allowed(), rr.BillingModel(), rr.ResourceName())
-				}
-				return true, nil
+
+		entitled := qc.Allowed() > 0
+		available := qc.Allowed() - qc.Consumed()
+
+		if !entitled {
+			glog.Infof("Quota no longer entitled for organisation %q (quotaid: %q, consumed: %q, allowed: %q)",
+				org.ID, qc.QuotaID(), qc.Consumed(), qc.Allowed())
+		} else {
+			if available < 0 {
+				glog.Warningf("Organisation %q has exceeded their quota allowance (quotaid: %q, consumed %q, allowed: %q)",
+					org.ID, qc.QuotaID(), qc.Consumed(), qc.Allowed())
 			}
+			return true, nil
 		}
 	}
 
