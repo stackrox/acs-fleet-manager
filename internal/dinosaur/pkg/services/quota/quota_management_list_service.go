@@ -109,7 +109,6 @@ func (q QuotaManagementListService) DeleteQuota(SubscriptionID string) *errors.S
 // Note that organisation will always take priority over individual accounts to mimic the behaviour of
 // quota allowance checks during Central creation.
 func (q QuotaManagementListService) IsQuotaEntitlementActive(central *dbapi.CentralRequest) (bool, error) {
-
 	if !q.quotaManagementList.EnableInstanceLimitControl {
 		return true, nil
 	}

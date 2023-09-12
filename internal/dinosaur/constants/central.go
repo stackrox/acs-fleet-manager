@@ -101,6 +101,6 @@ func GetUpdateableStatuses() []string {
 	}
 }
 
-func GetDeletingStatuses() []string {
-	return []string{CentralRequestStatusDeprovision.String(), CentralRequestStatusDeleting.String()}
+func GetDeletingStatuses() []CentralStatus {
+	return []CentralStatus{CentralRequestStatusDeprovision, CentralRequestStatusDeleting}
 }

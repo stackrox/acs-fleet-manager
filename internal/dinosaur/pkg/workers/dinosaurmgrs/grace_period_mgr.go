@@ -10,7 +10,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	serviceErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
@@ -47,10 +46,9 @@ func (k *GracePeriodManager) Reconcile() []error {
 	glog.Infoln("reconciling centrals")
 	var encounteredErrors []error
 
-	// get all centrals and send their statuses to prometheus
-	centrals, err := k.dinosaurService.ListAll()
+	centrals, err := k.dinosaurService.ListByStatus(constants.GetDeletingStatuses()...)
 	if err != nil {
-		encounteredErrors = append(encounteredErrors, err)
+		return append(encounteredErrors, err)
 	}
 
 	// reconciles grace_from field for central instances
@@ -62,6 +60,16 @@ func (k *GracePeriodManager) Reconcile() []error {
 	return encounteredErrors
 }
 
+// TODO: refactor arrays package.
+func contains[T comparable](values []T, s T) bool {
+	for _, v := range values {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
 func (k *GracePeriodManager) reconcileCentralGraceFrom(centrals dbapi.CentralList) serviceErr.ErrorList {
 	glog.Infof("reconciling grace period start date for central instances")
 	var svcErrors serviceErr.ErrorList
@@ -71,14 +79,14 @@ func (k *GracePeriodManager) reconcileCentralGraceFrom(centrals dbapi.CentralLis
 		glog.Infof("reconciling grace_from for central instance %q", central.ID)
 
 		// skip update when Central is marked for deletion or is already being deleted
-		if arrays.Contains(constants.GetDeletingStatuses(), central.Status) {
+		if contains(constants.GetDeletingStatuses(), constants.CentralStatus(central.Status)) {
 			glog.Infof("central %q is in %q state, skipping grace_from reconciliation", central.ID, central.Status)
 			continue
 		}
 
 		glog.Infof("checking quota entitlement status for Central instance %q", central.ID)
-		active, ok := subscriptionStatusByOrg[central.OrganisationID]
-		if !ok {
+		active, exists := subscriptionStatusByOrg[central.OrganisationID]
+		if !exists {
 			isActive, err := k.dinosaurService.IsQuotaEntitlementActive(central)
 			if err != nil {
 				svcErrors = append(svcErrors, errors.Wrapf(err, "failed to get quota entitlement status of central instance %q", central.ID))
@@ -101,27 +109,20 @@ func (k *GracePeriodManager) updateGraceFromBasedOnQuotaEntitlement(central *dba
 	// if quota entitlement is active, ensure grace_from is set to null
 	if isQuotaEntitlementActive && central.GraceFrom != nil {
 		glog.Infof("updating grace start date of central instance %q to NULL", central.ID)
-		return k.updateCentralGraceDate(central, nil)
+		return k.dinosaurService.Updates(central, map[string]interface{}{
+			"grace_from": nil,
+		})
 	}
 
 	// if quota entitlement is not active and grace_from is not already set, set its value based on the current time and grace period allowance
 	if !isQuotaEntitlementActive && central.GraceFrom == nil {
 		graceFromTime := time.Now()
 		glog.Infof("quota entitlement for central instance %q is no longer active, updating grace_from to %q", central.ID, graceFromTime.Format(time.RFC1123Z))
-		return k.updateCentralGraceDate(central, &graceFromTime)
+		return k.dinosaurService.Updates(central, map[string]interface{}{
+			"grace_from": &graceFromTime,
+		})
 	}
 
 	glog.Infof("no grace_from changes needed for central %q, skipping update", central.ID)
-	return nil
-}
-
-// updates the grace_from field for the given Central instance
-func (k *GracePeriodManager) updateCentralGraceDate(central *dbapi.CentralRequest, graceFromTime *time.Time) error {
-	if err := k.dinosaurService.Updates(central, map[string]interface{}{
-		"grace_from": graceFromTime,
-	}); err != nil {
-		return err
-	}
-
 	return nil
 }
