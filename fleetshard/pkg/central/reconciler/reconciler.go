@@ -1027,9 +1027,9 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	return globalDeleted, nil
 }
 
+// getDatabaseID returns the cloud database ID for a central tenant.
+// By default the database ID is equal to the centralID. It can be overridden by a ConfigMap.
 func (r *CentralReconciler) getDatabaseID(ctx context.Context, remoteCentralNamespace, centralID string) (string, error) {
-	// By default the database ID (which is used to name the cloud DB resources) is the same as the central ID,
-	// but this value can be overriden
 	configMap := &corev1.ConfigMap{}
 	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: "central-db-override"}, configMap)
 	if err != nil {
