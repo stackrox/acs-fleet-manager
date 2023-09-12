@@ -672,7 +672,7 @@ func TestReconcileDeleteWithManagedDBOverride(t *testing.T) {
 		UseRoutes:        true,
 		ManagedDBEnabled: true,
 	}
-	fakeClient, _, r := getClientTrackerAndReconciler(
+	_, _, r := getClientTrackerAndReconciler(
 		t,
 		defaultCentralConfig,
 		managedDBProvisioningClient,
