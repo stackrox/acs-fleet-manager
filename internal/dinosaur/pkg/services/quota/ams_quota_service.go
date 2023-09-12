@@ -34,9 +34,9 @@ func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder
 }
 
 var supportedAMSBillingModels = map[string]struct{}{
-	string(amsv1.BillingModelMarketplace):    struct{}{},
-	string(amsv1.BillingModelStandard):       struct{}{},
-	string(amsv1.BillingModelMarketplaceAWS): struct{}{},
+	string(amsv1.BillingModelMarketplace):    {},
+	string(amsv1.BillingModelStandard):       {},
+	string(amsv1.BillingModelMarketplaceAWS): {},
 }
 
 // CheckIfQuotaIsDefinedForInstanceType ...
