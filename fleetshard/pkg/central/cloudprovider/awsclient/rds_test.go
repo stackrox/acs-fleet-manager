@@ -67,31 +67,32 @@ func waitForClusterToBeDeleted(ctx context.Context, rdsClient *RDS, clusterID st
 	}
 }
 
-func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, clusterID string) (bool, error) {
+func waitForFinalSnapshotToExist(ctx context.Context, rdsClient *RDS, clusterID string) (bool, string, error) {
 
 	ticker := time.NewTicker(awsRetrySeconds * time.Second)
 	for {
 		select {
 		case <-ticker.C:
 			snapshotOut, err := rdsClient.rdsClient.DescribeDBClusterSnapshots(&rds.DescribeDBClusterSnapshotsInput{
-				DBClusterSnapshotIdentifier: getFinalSnapshotID(clusterID),
+				DBClusterIdentifier: &clusterID,
 			})
 
 			if err != nil {
 				if awsErr, ok := err.(awserr.Error); ok {
 					if awsErr.Code() != rds.ErrCodeDBClusterSnapshotNotFoundFault {
-						return false, err
+						return false, "", err
 					}
 
 					continue
 				}
 			}
 
-			if snapshotOut != nil {
-				return len(snapshotOut.DBClusterSnapshots) == 1, nil
+			if snapshotOut != nil && len(snapshotOut.DBClusterSnapshots) == 1 {
+				return true, *snapshotOut.DBClusterSnapshots[0].DBClusterSnapshotIdentifier, nil
 			}
+
 		case <-ctx.Done():
-			return false, fmt.Errorf("waiting for final DB snapshot: %w", ctx.Err())
+			return false, "", fmt.Errorf("waiting for final DB snapshot: %w", ctx.Err())
 		}
 
 	}
@@ -164,16 +165,18 @@ func TestRDSProvisioning(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, clusterDeleted)
 
-	// Always attempt to delete the final snapshot if it exists
-	defer func() {
-		_, err := rdsClient.rdsClient.DeleteDBClusterSnapshot(
-			&rds.DeleteDBClusterSnapshotInput{DBClusterSnapshotIdentifier: getFinalSnapshotID(clusterID)},
-		)
+	snapshotExists, snapshotID, err := waitForFinalSnapshotToExist(deleteCtx, rdsClient, clusterID)
 
-		assert.NoError(t, err)
-	}()
+	if snapshotExists {
+		defer func() {
+			_, err := rdsClient.rdsClient.DeleteDBClusterSnapshot(
+				&rds.DeleteDBClusterSnapshotInput{DBClusterSnapshotIdentifier: &snapshotID},
+			)
 
-	snapshotExists, err := waitForFinalSnapshotToExist(deleteCtx, rdsClient, clusterID)
+			assert.NoError(t, err)
+		}()
+	}
+
 	require.NoError(t, err)
 	require.True(t, snapshotExists)
 }
@@ -190,6 +193,7 @@ func TestGetDBConnection(t *testing.T) {
 	var awsErr awserr.Error
 	require.ErrorAs(t, err, &awsErr)
 	assert.Equal(t, awsErr.Code(), rds.ErrCodeDBClusterNotFoundFault)
+	require.ErrorIs(t, err, cloudprovider.ErrDBNotFound)
 }
 
 func TestGetAccountQuotas(t *testing.T) {

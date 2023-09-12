@@ -3,6 +3,7 @@ package cloudprovider
 
 import (
 	"context"
+	"errors"
 
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
 )
@@ -37,6 +38,12 @@ const (
 	DBInstances
 	DBSnapshots
 )
+
+// ErrDBBackupInProgress is returned if an action failed because a DB backup is in progress
+var ErrDBBackupInProgress = errors.New("DB Backup in Progress")
+
+// ErrDBNotFound is returned if an action failed because a expected DB is not found
+var ErrDBNotFound = errors.New("DB not found")
 
 // AccountQuotaValue holds quota data for services, as a pair of currently Used out of Max
 type AccountQuotaValue struct {

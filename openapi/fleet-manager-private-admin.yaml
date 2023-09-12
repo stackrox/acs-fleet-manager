@@ -259,6 +259,45 @@ paths:
             application/json:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
+  '/api/rhacs/v1/admin/centrals/{id}/restore':
+    post:
+      summary: Restore a central tenant that was already deleted
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+      responses:
+        "201":
+          description: Requests to restore accepted
+        "400":
+          description: Validation error occured
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "404":
+          description: No Central found with the specified ID
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+
   '/api/rhacs/v1/admin/centrals/db/{id}':
     delete:
       summary: Delete a Central directly in the Database by ID

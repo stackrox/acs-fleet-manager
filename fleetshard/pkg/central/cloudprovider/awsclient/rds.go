@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -15,11 +16,13 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/cloudprovider"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/postgres"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 const (
 	dbAvailableStatus = "available"
 	dbDeletingStatus  = "deleting"
+	dbBackingUpStatus = "backing-up"
 	dbUser            = "rhacs_master"
 	dbPrefix          = "rhacs-"
 	dbInstanceSuffix  = "-db-instance"
@@ -105,7 +108,15 @@ func (r *RDS) EnsureDBDeprovisioned(databaseID string, skipFinalSnapshot bool) e
 // to construct a PostgreSQL connection string. It expects that the database was already provisioned.
 func (r *RDS) GetDBConnection(databaseID string) (postgres.DBConnection, error) {
 	dbCluster, err := r.describeDBCluster(getClusterID(databaseID))
+
 	if err != nil {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) {
+			if awsErr.Code() == rds.ErrCodeDBClusterNotFoundFault {
+				err = errors.Join(cloudprovider.ErrDBNotFound, err)
+			}
+		}
+
 		return postgres.DBConnection{}, err
 	}
 
@@ -154,7 +165,13 @@ func (r *RDS) ensureDBClusterCreated(clusterID, acsInstanceID, masterPassword st
 		return nil
 	}
 
+	finalSnapshotID, err := r.getFinalSnapshotIDIfExists(clusterID)
+	if err != nil {
+		return err
+	}
+
 	glog.Infof("Initiating provisioning of RDS database cluster %s.", clusterID)
+
 	input := &createCentralDBClusterInput{
 		clusterID:            clusterID,
 		acsInstanceID:        acsInstanceID,
@@ -164,12 +181,58 @@ func (r *RDS) ensureDBClusterCreated(clusterID, acsInstanceID, masterPassword st
 		dataplaneClusterName: r.dataplaneClusterName,
 		isTestInstance:       isTestInstance,
 	}
-	_, err = r.rdsClient.CreateDBCluster(newCreateCentralDBClusterInput(input))
+
+	rdsCreateDBClusterInput := newCreateCentralDBClusterInput(input)
+
+	if finalSnapshotID != "" {
+		glog.Infof("Restoring DB cluster: %s from snasphot: %s", clusterID, finalSnapshotID)
+		return r.restoreDBClusterFromSnapshot(finalSnapshotID, rdsCreateDBClusterInput)
+	}
+
+	return r.createDBCluster(rdsCreateDBClusterInput)
+}
+
+func (r *RDS) restoreDBClusterFromSnapshot(snapshotID string, clusterInput *rds.CreateDBClusterInput) error {
+	_, err := r.rdsClient.RestoreDBClusterFromSnapshot(newRestoreCentralDBClusterInput(snapshotID, clusterInput))
+	if err != nil {
+		return fmt.Errorf("restoring DB cluster: %w", err)
+	}
+
+	return nil
+}
+
+func (r *RDS) createDBCluster(clusterInput *rds.CreateDBClusterInput) error {
+	_, err := r.rdsClient.CreateDBCluster(clusterInput)
 	if err != nil {
 		return fmt.Errorf("creating DB cluster: %w", err)
 	}
 
 	return nil
+}
+
+func (r *RDS) getFinalSnapshotIDIfExists(clusterID string) (string, error) {
+	snapshotsOut, err := r.rdsClient.DescribeDBClusterSnapshots(&rds.DescribeDBClusterSnapshotsInput{
+		DBClusterIdentifier: &clusterID,
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("checking if final snapshot for clusterID: %s exists: %w", clusterID, err)
+	}
+
+	var mostRecentSnapshotID string
+	var mostRecentSnapshotTime *time.Time
+	for _, snapshot := range snapshotsOut.DBClusterSnapshots {
+		if !strings.Contains(*snapshot.DBClusterSnapshotIdentifier, "final") {
+			continue
+		}
+
+		if mostRecentSnapshotTime == nil || mostRecentSnapshotTime.Before(*snapshot.SnapshotCreateTime) {
+			mostRecentSnapshotID = *snapshot.DBClusterSnapshotIdentifier
+			mostRecentSnapshotTime = snapshot.SnapshotCreateTime
+		}
+	}
+
+	return mostRecentSnapshotID, nil
 }
 
 func (r *RDS) ensureDBInstanceCreated(instanceID, clusterID, acsInstanceID string, isTestInstance bool) error {
@@ -225,6 +288,10 @@ func (r *RDS) ensureClusterDeleted(clusterID string, skipFinalSnapshot bool) err
 	}
 	if !clusterExists {
 		return nil
+	}
+
+	if clusterStatus == dbBackingUpStatus {
+		return cloudprovider.ErrDBBackupInProgress
 	}
 
 	if clusterStatus != dbDeletingStatus {
@@ -415,6 +482,23 @@ func newCreateCentralDBClusterInput(input *createCentralDBClusterInput) *rds.Cre
 	return awsInput
 }
 
+func newRestoreCentralDBClusterInput(snapshotID string, input *rds.CreateDBClusterInput) *rds.RestoreDBClusterFromSnapshotInput {
+	restoreInput := &rds.RestoreDBClusterFromSnapshotInput{
+		DBClusterIdentifier:              input.DBClusterIdentifier,
+		Engine:                           input.Engine,
+		EngineVersion:                    input.EngineVersion,
+		VpcSecurityGroupIds:              input.VpcSecurityGroupIds,
+		PubliclyAccessible:               input.PubliclyAccessible,
+		DBSubnetGroupName:                input.DBSubnetGroupName,
+		ServerlessV2ScalingConfiguration: input.ServerlessV2ScalingConfiguration,
+		Tags:                             input.Tags,
+		SnapshotIdentifier:               &snapshotID,
+		EnableCloudwatchLogsExports:      input.EnableCloudwatchLogsExports,
+	}
+
+	return restoreInput
+}
+
 type createCentralDBInstanceInput struct {
 	clusterID            string
 	instanceID           string
@@ -482,7 +566,7 @@ func newRdsClient() (*rds.RDS, error) {
 }
 
 func getFinalSnapshotID(clusterID string) *string {
-	return aws.String(fmt.Sprintf("%s-%s", clusterID, "final"))
+	return aws.String(fmt.Sprintf("%s-%s-%s", clusterID, rand.String(10), "final"))
 }
 
 func getInstanceType(isTestInstance bool) string {

@@ -42,6 +42,8 @@ type AdminCentralHandler interface {
 	SetCentralDefaultVersion(w http.ResponseWriter, r *http.Request)
 	// GetCentralDefaultVersion gets the default version for a central
 	GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request)
+	// Restore restores a tenant that was already marked as deleted
+	Restore(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -180,9 +182,6 @@ func (h adminCentralHandler) List(w http.ResponseWriter, r *http.Request) {
 // Delete ...
 func (h adminCentralHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
-		Validate: []handlers.Validate{
-			handlers.ValidateAsyncEnabled(r, "deleting central requests"),
-		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
@@ -193,6 +192,19 @@ func (h adminCentralHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
+}
+
+func (h adminCentralHandler) Restore(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			ctx := r.Context()
+			err := h.service.Restore(ctx, id)
+			return nil, err
+		},
+	}
+
+	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
 // DbDelete implements the endpoint for force-deleting Central tenants in the database in emergency situations requiring manual recovery
@@ -448,5 +460,9 @@ func (g gitOpsAdminHandler) SetCentralDefaultVersion(w http.ResponseWriter, r *h
 }
 
 func (g gitOpsAdminHandler) GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+func (g gitOpsAdminHandler) Restore(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "not implemented", http.StatusNotImplemented)
 }
