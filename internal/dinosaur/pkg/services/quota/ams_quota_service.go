@@ -33,10 +33,10 @@ func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder
 	return rr
 }
 
-var supportedAMSBillingModels = map[string]struct{}{
-	string(amsv1.BillingModelMarketplace):    {},
-	string(amsv1.BillingModelStandard):       {},
-	string(amsv1.BillingModelMarketplaceAWS): {},
+var supportedAMSBillingModels = map[string]bool{
+	string(amsv1.BillingModelMarketplace):    true,
+	string(amsv1.BillingModelStandard):       true,
+	string(amsv1.BillingModelMarketplaceAWS): true,
 }
 
 // CheckIfQuotaIsDefinedForInstanceType ...
@@ -74,7 +74,7 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 	for _, qc := range quotaCosts {
 		if qc.Allowed() > 0 {
 			for _, rr := range qc.RelatedResources() {
-				if _, isCompatibleBillingModel := supportedAMSBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
+				if supportedAMSBillingModels[rr.BillingModel()] {
 					return true, nil
 				}
 				foundUnsupportedBillingModel = rr.BillingModel()
@@ -239,6 +239,44 @@ func (q amsQuotaService) DeleteQuota(subscriptionID string) *errors.ServiceError
 	return nil
 }
 
+func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel][]*amsv1.QuotaCost, error) {
+	costsMap := make(map[amsv1.BillingModel][]*amsv1.QuotaCost)
+	var foundUnsupportedBillingModel string
+	for _, qc := range quotaCosts {
+		// When an SKU entitlement expires in AMS, the allowed value for that quota cost is set back to 0.
+		// If the allowed value is 0 and consumed is greater than this, that denotes that the SKU entitlement
+		// has expired and is no longer active.
+		if qc.Allowed() == 0 {
+			continue
+		}
+		for _, rr := range qc.RelatedResources() {
+			bm := amsv1.BillingModel(rr.BillingModel())
+			if supportedAMSBillingModels[rr.BillingModel()] {
+				costsMap[bm] = append(costsMap[bm], qc)
+			} else {
+				foundUnsupportedBillingModel = rr.BillingModel()
+			}
+
+		}
+	}
+	if len(costsMap) == 0 && foundUnsupportedBillingModel != "" {
+		return nil, errors.GeneralError("found unsupported allowed billing models, the last one is %s", foundUnsupportedBillingModel)
+	}
+	return costsMap, nil
+}
+
+func cloudAccountIsActive(cloudQuotas []*amsv1.QuotaCost, central *dbapi.CentralRequest) bool {
+	for _, qc := range cloudQuotas {
+		for _, account := range qc.CloudAccounts() {
+			if account.CloudAccountID() == central.CloudAccountID &&
+				account.CloudProviderID() == central.CloudProvider {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // IsQuotaEntitlementActive checks if an organisation has a SKU entitlement and that entitlement is still active in AMS.
 func (q amsQuotaService) IsQuotaEntitlementActive(central *dbapi.CentralRequest) (bool, error) {
 	org, err := q.amsClient.GetOrganisationFromExternalID(central.OrganisationID)
@@ -252,25 +290,30 @@ func (q amsQuotaService) IsQuotaEntitlementActive(central *dbapi.CentralRequest)
 		return false, errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, quotaType.GetProduct())
 	}
 
-	// When an SKU entitlement expires in AMS, the allowed value for that quota cost is set back to 0.
-	// If the allowed value is 0 and consumed is greater than this, that denotes that the SKU entitlement
-	// has expired and is no longer active.
+	quotasMap, err := mapAllowedQuotaCosts(quotaCosts)
+	if err != nil {
+		svcErr := errors.ToServiceError(err)
+		return false, errors.NewWithCause(svcErr.Code, svcErr, "product %s has no allowed billing models", quotaType.GetProduct())
+	}
+
+	isCloudAccount := central.CloudAccountID != "" && central.CloudProvider == awsCloudProvider
+
+	entitled :=
+		// Entitlement is active if there's allowed quota for standard billing model...
+		!isCloudAccount && len(quotasMap[amsv1.BillingModelStandard]) > 0 ||
+			// or there is cloud quota and the original cloud account is still active.
+			cloudAccountIsActive(quotasMap[amsv1.BillingModelMarketplaceAWS], central)
+
+	if !entitled {
+		glog.Infof("Quota no longer entitled for organisation %q", org.ID)
+		return false, nil
+	}
 	for _, qc := range quotaCosts {
-
-		entitled := qc.Allowed() > 0
-		available := qc.Allowed() - qc.Consumed()
-
-		if !entitled {
-			glog.Infof("Quota no longer entitled for organisation %q (quotaid: %q, consumed: %q, allowed: %q)",
+		if qc.Consumed() > qc.Allowed() {
+			glog.Warningf("Organisation %q has exceeded their quota allowance (quotaid: %q, consumed %q, allowed: %q)",
 				org.ID, qc.QuotaID(), qc.Consumed(), qc.Allowed())
-		} else {
-			if available < 0 {
-				glog.Warningf("Organisation %q has exceeded their quota allowance (quotaid: %q, consumed %q, allowed: %q)",
-					org.ID, qc.QuotaID(), qc.Consumed(), qc.Allowed())
-			}
-			return true, nil
 		}
 	}
 
-	return false, nil
+	return true, nil
 }
