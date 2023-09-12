@@ -22,7 +22,7 @@ type DinosaurRoutesCNAMEManager struct {
 var _ workers.Worker = &DinosaurRoutesCNAMEManager{}
 
 // NewDinosaurCNAMEManager ...
-func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConfig *config.CentralConfig) *DinosaurRoutesCNAMEManager {
+func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, dinosaurConfig *config.CentralConfig) *DinosaurRoutesCNAMEManager {
 	metrics.InitReconcilerMetricsForType(centralDNSWorkerType)
 	return &DinosaurRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
@@ -31,7 +31,7 @@ func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConf
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService: dinosaurService,
-		dinosaurConfig:  kafkfConfig,
+		dinosaurConfig:  dinosaurConfig,
 	}
 }
 

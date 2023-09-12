@@ -8,7 +8,9 @@ import (
 	"github.com/pkg/errors"
 	constants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	serviceErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
@@ -16,18 +18,22 @@ import (
 // GracePeriodManager represents a dinosaur manager that manages grace period date.
 type GracePeriodManager struct {
 	workers.BaseWorker
-	dinosaurService services.DinosaurService
+	dinosaurService     services.DinosaurService
+	quotaServiceFactory services.QuotaServiceFactory
+	dinosaurConfig      *config.CentralConfig
 }
 
 // NewGracePeriodManager creates a new grace period manager
-func NewGracePeriodManager(dinosaurService services.DinosaurService) *DinosaurManager {
-	return &DinosaurManager{
+func NewGracePeriodManager(dinosaurService services.DinosaurService, quotaServiceFactory services.QuotaServiceFactory, dinosaur *config.CentralConfig) *GracePeriodManager {
+	return &GracePeriodManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "grace_period_worker",
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService: dinosaurService,
+		dinosaurService:     dinosaurService,
+		quotaServiceFactory: quotaServiceFactory,
+		dinosaurConfig:      dinosaur,
 	}
 }
 
@@ -87,7 +93,13 @@ func (k *GracePeriodManager) reconcileCentralGraceFrom(centrals dbapi.CentralLis
 		glog.Infof("checking quota entitlement status for Central instance %q", central.ID)
 		active, exists := subscriptionStatusByOrg[central.OrganisationID]
 		if !exists {
-			isActive, err := k.dinosaurService.IsQuotaEntitlementActive(central)
+			quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.dinosaurConfig.Quota.Type))
+			if factoryErr != nil {
+				svcErrors = append(svcErrors, factoryErr)
+				continue
+			}
+
+			isActive, err := quotaService.IsQuotaEntitlementActive(central)
 			if err != nil {
 				svcErrors = append(svcErrors, errors.Wrapf(err, "failed to get quota entitlement status of central instance %q", central.ID))
 				continue
