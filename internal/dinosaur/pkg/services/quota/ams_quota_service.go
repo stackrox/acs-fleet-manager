@@ -33,10 +33,10 @@ func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder
 	return rr
 }
 
-var supportedAMSBillingModels = map[string]bool{
-	string(amsv1.BillingModelMarketplace):    true,
-	string(amsv1.BillingModelStandard):       true,
-	string(amsv1.BillingModelMarketplaceAWS): true,
+var supportedAMSBillingModels = map[string]struct{}{
+	string(amsv1.BillingModelMarketplace):    struct{}{},
+	string(amsv1.BillingModelStandard):       struct{}{},
+	string(amsv1.BillingModelMarketplaceAWS): struct{}{},
 }
 
 // CheckIfQuotaIsDefinedForInstanceType ...
@@ -74,7 +74,7 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 	for _, qc := range quotaCosts {
 		if qc.Allowed() > 0 {
 			for _, rr := range qc.RelatedResources() {
-				if supportedAMSBillingModels[rr.BillingModel()] {
+				if _, isCompatibleBillingModel := supportedAMSBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
 					return true, nil
 				}
 				foundUnsupportedBillingModel = rr.BillingModel()
@@ -251,7 +251,7 @@ func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel
 		}
 		for _, rr := range qc.RelatedResources() {
 			bm := amsv1.BillingModel(rr.BillingModel())
-			if supportedAMSBillingModels[rr.BillingModel()] {
+			if _, isCompatibleBillingModel := supportedAMSBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
 				costsMap[bm] = append(costsMap[bm], qc)
 			} else {
 				foundUnsupportedBillingModel = rr.BillingModel()
