@@ -8,10 +8,11 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/lib/pq"
-	stackroxDBClones "github.com/stackrox/rox/migrator/clone/postgres"
 )
 
-const centralDBName = stackroxDBClones.CurrentClone
+// CentralDBName is the name of database that Central uses. Any name would be acceptable, and the value is
+// "central_active" because existing Centrals use it (the name was required to be this one before ACS v4.2.0)
+const CentralDBName = "central_active"
 
 // CentralDBInitFunc is a type for functions that perform initialization on a fresh Central DB.
 // It requires a valid DBConnection of a user with administrative privileges, and the user name and password
@@ -40,12 +41,12 @@ func InitializeDatabase(ctx context.Context, con DBConnection, userName, userPas
 
 	// We have to create the central_active database here, in order to install extensions.
 	// Central won't be able to do it, due to having a limited privileges user.
-	err = createCentralDB(ctx, db, centralDBName, userName, con.user)
+	err = createCentralDB(ctx, db, CentralDBName, userName, con.user)
 	if err != nil {
 		return err
 	}
 
-	con.database = centralDBName // extensions are installed in the newly created DB
+	con.database = CentralDBName // extensions are installed in the newly created DB
 	err = installExtensions(ctx, con)
 	if err != nil {
 		return err

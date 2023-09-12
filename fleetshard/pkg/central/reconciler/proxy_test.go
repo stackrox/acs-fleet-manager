@@ -9,7 +9,7 @@ import (
 	"golang.org/x/net/http/httpproxy"
 )
 
-const testNS = `acsms-01`
+const testNS = `acscs-01`
 
 func testProxyConfiguration(t *testing.T, noProxyURLs []string, proxiedURLs []string) {
 	proxyFunc := httpproxy.FromEnvironment().ProxyFunc()
@@ -23,7 +23,7 @@ func testProxyConfiguration(t *testing.T, noProxyURLs []string, proxiedURLs []st
 		assert.Nilf(t, proxyURL, "expected URL %s to not be proxied, got: %s", u, proxyURL)
 	}
 
-	const expectedProxyURL = "http://egress-proxy.acsms-01.svc:3128"
+	const expectedProxyURL = "http://egress-proxy.acscs-01.svc:3128"
 
 	for _, u := range proxiedURLs {
 		parsedURL, err := url.Parse(u)
@@ -45,12 +45,12 @@ func TestProxyConfiguration(t *testing.T) {
 
 	noProxyURLs := []string{
 		"https://central",
-		"https://central.acsms-01",
-		"https://central.acsms-01.svc",
-		"https://central.acsms-01.svc:443",
-		"https://scanner-db.acsms-01.svc:5432",
+		"https://central.acscs-01",
+		"https://central.acscs-01.svc",
+		"https://central.acscs-01.svc:443",
+		"https://scanner-db.acscs-01.svc:5432",
 		"https://scanner:8443",
-		"https://scanner.acsms-01:8080",
+		"https://scanner.acscs-01:8080",
 	}
 
 	proxiedURLs := []string{
@@ -59,8 +59,8 @@ func TestProxyConfiguration(t *testing.T) {
 		"https://www.example.com:8443",
 		"http://example.com",
 		"http://example.com:8080",
-		"https://central.acsms-01.svc:8443",
-		"https://scanner.acsms-01.svc",
+		"https://central.acscs-01.svc:8443",
+		"https://scanner.acscs-01.svc",
 	}
 
 	testProxyConfiguration(t, noProxyURLs, proxiedURLs)
@@ -89,12 +89,12 @@ func TestProxyConfigurationWithAdditionalDirectAccess(t *testing.T) {
 
 	noProxyURLs := []string{
 		"https://central",
-		"https://central.acsms-01",
-		"https://central.acsms-01.svc",
-		"https://central.acsms-01.svc:443",
-		"https://scanner-db.acsms-01.svc:5432",
+		"https://central.acscs-01",
+		"https://central.acscs-01.svc",
+		"https://central.acscs-01.svc:443",
+		"https://scanner-db.acscs-01.svc:5432",
 		"https://scanner:8443",
-		"https://scanner.acsms-01:8080",
+		"https://scanner.acscs-01:8080",
 		"https://audit-logs-aggregator.rhacs-audit-logs:8888",
 	}
 
@@ -103,8 +103,8 @@ func TestProxyConfigurationWithAdditionalDirectAccess(t *testing.T) {
 		"https://www.example.com:8443",
 		"http://example.com",
 		"http://example.com:8080",
-		"https://central.acsms-01.svc:8443",
-		"https://scanner.acsms-01.svc",
+		"https://central.acscs-01.svc:8443",
+		"https://scanner.acscs-01.svc",
 	}
 
 	testProxyConfiguration(t, noProxyURLs, proxiedURLs)

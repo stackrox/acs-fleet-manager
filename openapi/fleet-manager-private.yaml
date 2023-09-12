@@ -137,7 +137,44 @@ paths:
       security:
         - Bearer: []
       operationId: getCentrals
-      summary: Get the list of ManagedaCentrals for the specified agent cluster
+      summary: Get the list of ManagedCentrals for the specified agent cluster
+
+  "/api/rhacs/v1/agent-clusters/centrals/{id}":
+    get:
+      tags:
+        - Agent Clusters
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+      responses:
+        "200":
+          description: The ManagedCentrals with centralId for the specified agent cluster
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedCentral"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "fleet-manager.yaml#/components/schemas/Error"
+              examples:
+                400InvalidIdExample:
+                  $ref: "#/components/examples/400InvalidIdExample"
+          description: id value is not valid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "fleet-manager.yaml#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "fleet-manager.yaml#/components/examples/404Example"
+          # This is deliberate to hide the endpoints for unauthorised users
+          description: Auth token is not valid.
+      security:
+        - Bearer: []
+      operationId: getCentral
+      summary: Get the ManagedaCentral for the specified agent cluster and centralId
 
   "/api/rhacs/v1/agent-clusters/{id}":
     get:
@@ -234,13 +271,22 @@ components:
                       type: string
                 deletionTimestamp:
                   type: string
+                # Using lazy loading for secrets, secretsStored should always contain
+                # the names of all stored secrets. secrets should only contain secret data
+                # when the ManagedCentral is queried with the TODO: path endpoint
                 secretsStored:
                   type: array
                   items:
                     type: string
+                secrets:
+                  type: object
+                  additionalProperties:
+                    type: string
             spec:
               type: object
               properties:
+                centralCRYAML:
+                  type: string
                 owners:
                   type: array
                   items:

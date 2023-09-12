@@ -10,7 +10,7 @@ We have also provided another implementation based on the [quota-management-list
 
 When it is enabled, the following diagram describes the architecture for quota management service:
 
-![Quota Service Interface](../images/quoata-service.png)
+![Quota Service Interface](../images/quota-service.png)
 
 The `QuotaService` is defined in the [services package](../../internal/dinosaur/pkg/services/quota.go).
 

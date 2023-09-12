@@ -2,6 +2,8 @@ package presenters
 
 import (
 	"encoding/json"
+	"fmt"
+	"sort"
 	"time"
 
 	"github.com/golang/glog"
@@ -144,6 +146,25 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 	return res
 }
 
+// PresentManagedCentralWithSecrets return a private.ManagedCentral including secret data
+func (c *ManagedCentralPresenter) PresentManagedCentralWithSecrets(from *dbapi.CentralRequest) private.ManagedCentral {
+	managedCentral := c.PresentManagedCentral(from)
+	secretInterfaceMap, err := from.Secrets.Object()
+	secretStringMap := make(map[string]string, len(secretInterfaceMap))
+
+	if err != nil {
+		glog.Errorf("Failed to get Secrets for central request as map %q/%s: %v", from.Name, from.ID, err)
+		return managedCentral
+	}
+
+	for k, v := range secretInterfaceMap {
+		secretStringMap[k] = fmt.Sprintf("%v", v)
+	}
+
+	managedCentral.Metadata.Secrets = secretStringMap // pragma: allowlist secret
+	return managedCentral
+}
+
 func orDefaultQty(qty resource.Quantity, def resource.Quantity) *resource.Quantity {
 	if qty != (resource.Quantity{}) {
 		return &qty
@@ -178,6 +199,8 @@ func getSecretNames(from *dbapi.CentralRequest) []string {
 		secretNames[i] = k
 		i++
 	}
+
+	sort.Strings(secretNames)
 
 	return secretNames
 }

@@ -41,7 +41,7 @@ func (r *Runtime) RunLoop(ctx context.Context) error {
 			return errors.Wrap(ctx.Err(), "probe context invalid")
 		case <-ticker.C:
 			if err := r.RunSingle(ctx); err != nil {
-				glog.Warning(err)
+				glog.Error(err)
 			}
 		}
 	}
@@ -74,6 +74,7 @@ func (r *Runtime) RunSingle(ctx context.Context) (errReturn error) {
 	if err := r.probe.Execute(probeRunCtx); err != nil {
 		metrics.MetricsInstance().IncFailedRuns(r.Config.DataPlaneRegion)
 		metrics.MetricsInstance().SetLastFailureTimestamp(r.Config.DataPlaneRegion)
+		glog.Error("probe run failed: ", err)
 		return errors.Wrap(err, "probe run failed")
 	}
 	metrics.MetricsInstance().IncSucceededRuns(r.Config.DataPlaneRegion)

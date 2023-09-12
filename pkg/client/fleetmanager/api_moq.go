@@ -256,6 +256,9 @@ var _ PrivateAPI = &PrivateAPIMock{}
 //
 //		// make and configure a mocked PrivateAPI
 //		mockedPrivateAPI := &PrivateAPIMock{
+//			GetCentralFunc: func(ctx context.Context, centralID string) (private.ManagedCentral, *http.Response, error) {
+//				panic("mock out the GetCentral method")
+//			},
 //			GetCentralsFunc: func(ctx context.Context, id string) (private.ManagedCentralList, *http.Response, error) {
 //				panic("mock out the GetCentrals method")
 //			},
@@ -272,6 +275,9 @@ var _ PrivateAPI = &PrivateAPIMock{}
 //
 //	}
 type PrivateAPIMock struct {
+	// GetCentralFunc mocks the GetCentral method.
+	GetCentralFunc func(ctx context.Context, centralID string) (private.ManagedCentral, *http.Response, error)
+
 	// GetCentralsFunc mocks the GetCentrals method.
 	GetCentralsFunc func(ctx context.Context, id string) (private.ManagedCentralList, *http.Response, error)
 
@@ -283,6 +289,13 @@ type PrivateAPIMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// GetCentral holds details about calls to the GetCentral method.
+		GetCentral []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// CentralID is the centralID argument value.
+			CentralID string
+		}
 		// GetCentrals holds details about calls to the GetCentrals method.
 		GetCentrals []struct {
 			// Ctx is the ctx argument value.
@@ -307,9 +320,46 @@ type PrivateAPIMock struct {
 			RequestBody map[string]private.DataPlaneCentralStatus
 		}
 	}
+	lockGetCentral                     sync.RWMutex
 	lockGetCentrals                    sync.RWMutex
 	lockGetDataPlaneClusterAgentConfig sync.RWMutex
 	lockUpdateCentralClusterStatus     sync.RWMutex
+}
+
+// GetCentral calls GetCentralFunc.
+func (mock *PrivateAPIMock) GetCentral(ctx context.Context, centralID string) (private.ManagedCentral, *http.Response, error) {
+	if mock.GetCentralFunc == nil {
+		panic("PrivateAPIMock.GetCentralFunc: method is nil but PrivateAPI.GetCentral was just called")
+	}
+	callInfo := struct {
+		Ctx       context.Context
+		CentralID string
+	}{
+		Ctx:       ctx,
+		CentralID: centralID,
+	}
+	mock.lockGetCentral.Lock()
+	mock.calls.GetCentral = append(mock.calls.GetCentral, callInfo)
+	mock.lockGetCentral.Unlock()
+	return mock.GetCentralFunc(ctx, centralID)
+}
+
+// GetCentralCalls gets all the calls that were made to GetCentral.
+// Check the length with:
+//
+//	len(mockedPrivateAPI.GetCentralCalls())
+func (mock *PrivateAPIMock) GetCentralCalls() []struct {
+	Ctx       context.Context
+	CentralID string
+} {
+	var calls []struct {
+		Ctx       context.Context
+		CentralID string
+	}
+	mock.lockGetCentral.RLock()
+	calls = mock.calls.GetCentral
+	mock.lockGetCentral.RUnlock()
+	return calls
 }
 
 // GetCentrals calls GetCentralsFunc.

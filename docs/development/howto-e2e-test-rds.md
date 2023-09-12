@@ -25,8 +25,8 @@ At the point in time this documentation was written AWS RDS DB creation and dele
     # Prepare environment
     export AWS_AUTH_HELPER=aws-saml
     export MANAGED_DB_ENABLED=true
-
-    # flip the PublicAcessible flag to true in rds.go line 354
+    export CLUSTER_NAME=local_cluster
+    # flip the PubliclyAccessible flag to true in rds.go line 514
     make binary
 
     ./dev/env/scripts/exec_fleetshard_sync.sh

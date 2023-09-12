@@ -139,7 +139,48 @@ paths:
           description: Auth token is not valid.
       security:
       - Bearer: []
-      summary: Get the list of ManagedaCentrals for the specified agent cluster
+      summary: Get the list of ManagedCentrals for the specified agent cluster
+      tags:
+      - Agent Clusters
+  /api/rhacs/v1/agent-clusters/centrals/{id}:
+    get:
+      operationId: getCentral
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedCentral'
+          description: The ManagedCentrals with centralId for the specified agent
+            cluster
+        "400":
+          content:
+            application/json:
+              examples:
+                "400InvalidIdExample":
+                  $ref: '#/components/examples/400InvalidIdExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: id value is not valid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is not valid.
+      security:
+      - Bearer: []
+      summary: Get the ManagedaCentral for the specified agent cluster and centralId
       tags:
       - Agent Clusters
   /api/rhacs/v1/agent-clusters/{id}:
@@ -421,6 +462,10 @@ components:
           items:
             type: string
           type: array
+        secrets:
+          additionalProperties:
+            type: string
+          type: object
     ManagedCentral_allOf_spec_auth:
       properties:
         clientSecret:
@@ -500,6 +545,8 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner_db'
     ManagedCentral_allOf_spec:
       properties:
+        centralCRYAML:
+          type: string
         owners:
           items:
             type: string
