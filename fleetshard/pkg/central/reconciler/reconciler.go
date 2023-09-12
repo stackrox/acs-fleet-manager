@@ -76,8 +76,9 @@ const (
 	dbUserTypeCentral    = "central"
 	dbCentralUserName    = "rhacs_central"
 
-	centralDbSecretName       = "central-db-password" // pragma: allowlist secret
-	centralDeletePollInterval = 5 * time.Second
+	centralDbSecretName        = "central-db-password" // pragma: allowlist secret
+	centralDbOverrideConfigMap = "central-db-override"
+	centralDeletePollInterval  = 5 * time.Second
 
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
 	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
@@ -1031,7 +1032,7 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 // By default the database ID is equal to the centralID. It can be overridden by a ConfigMap.
 func (r *CentralReconciler) getDatabaseID(ctx context.Context, remoteCentralNamespace, centralID string) (string, error) {
 	configMap := &corev1.ConfigMap{}
-	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: "central-db-override"}, configMap)
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbOverrideConfigMap}, configMap)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return centralID, nil
@@ -1046,7 +1047,7 @@ func (r *CentralReconciler) getDatabaseID(ctx context.Context, remoteCentralName
 		return overrideValue, nil
 	}
 
-	glog.Infof("The central-db-override ConfigMap exists but contains no databaseID field, using default: %s", centralID)
+	glog.Infof("The %s ConfigMap exists but contains no databaseID field, using default: %s", centralDbOverrideConfigMap, centralID)
 	return centralID, nil
 }
 

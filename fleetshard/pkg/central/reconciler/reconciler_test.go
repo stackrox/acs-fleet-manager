@@ -11,17 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stackrox/rox/pkg/declarativeconfig"
-	"github.com/stackrox/rox/pkg/utils"
-	"gopkg.in/yaml.v2"
-	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -38,16 +29,23 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/pkg/declarativeconfig"
+	"github.com/stackrox/rox/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 const (
@@ -578,13 +576,17 @@ func TestDisablePauseAnnotation(t *testing.T) {
 
 func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
-	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _string, _ string, _ string, _ bool) error {
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, databaseID, acsInstanceID, _ string, _ bool) error {
+		require.Equal(t, databaseID, acsInstanceID)
+		require.Equal(t, databaseID, simpleManagedCentral.Id)
 		return nil
 	}
-	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(_ string, _ bool) error {
+	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(databaseID string, _ bool) error {
+		require.Equal(t, databaseID, simpleManagedCentral.Id)
 		return nil
 	}
-	managedDBProvisioningClient.GetDBConnectionFunc = func(_ string) (postgres.DBConnection, error) {
+	managedDBProvisioningClient.GetDBConnectionFunc = func(databaseID string) (postgres.DBConnection, error) {
+		require.Equal(t, databaseID, simpleManagedCentral.Id)
 		connection, err := postgres.NewDBConnection("localhost", 5432, "rhacs", "postgres")
 		if err != nil {
 			return postgres.DBConnection{}, err
@@ -642,6 +644,86 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	secret := &v1.Secret{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralDbSecretName, Namespace: centralNamespace}, secret)
 	assert.True(t, k8sErrors.IsNotFound(err))
+}
+
+func TestReconcileDeleteWithManagedDBOverride(t *testing.T) {
+	dbOverrideId := "override-1234"
+
+	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, databaseID, acsInstanceID, _ string, _ bool) error {
+		require.Equal(t, databaseID, dbOverrideId)
+		require.Equal(t, acsInstanceID, simpleManagedCentral.Id)
+		return nil
+	}
+	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(databaseID string, _ bool) error {
+		require.Equal(t, databaseID, dbOverrideId)
+		return nil
+	}
+	managedDBProvisioningClient.GetDBConnectionFunc = func(databaseID string) (postgres.DBConnection, error) {
+		require.Equal(t, databaseID, dbOverrideId)
+		connection, err := postgres.NewDBConnection("localhost", 5432, "rhacs", "postgres")
+		if err != nil {
+			return postgres.DBConnection{}, err
+		}
+		return connection, nil
+	}
+
+	reconcilerOptions := CentralReconcilerOptions{
+		UseRoutes:        true,
+		ManagedDBEnabled: true,
+	}
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		managedDBProvisioningClient,
+		reconcilerOptions,
+	)
+
+	namespace := &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: simpleManagedCentral.Metadata.Namespace,
+		},
+	}
+	err := r.client.Create(context.TODO(), namespace)
+	require.NoError(t, err)
+
+	dbOverrideConfigMap := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: simpleManagedCentral.Metadata.Namespace,
+			Name:      centralDbOverrideConfigMap,
+		},
+		Data: map[string]string{"databaseID": dbOverrideId},
+	}
+	err = r.client.Create(context.TODO(), dbOverrideConfigMap)
+	require.NoError(t, err)
+
+	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+	assert.Len(t, managedDBProvisioningClient.EnsureDBProvisionedCalls(), 1)
+
+	deletedCentral := simpleManagedCentral
+	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05+00:00"
+
+	// trigger deletion
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string, _ string, _ bool) error {
+		return nil
+	}
+	statusTrigger, err := r.Reconcile(context.TODO(), deletedCentral)
+	require.Error(t, err, ErrDeletionInProgress)
+	require.Nil(t, statusTrigger)
+	assert.Len(t, managedDBProvisioningClient.EnsureDBProvisionedCalls(), 1)
+
+	// deletion completed needs second reconcile to check as deletion is async in a kubernetes cluster
+	statusDeletion, err := r.Reconcile(context.TODO(), deletedCentral)
+	require.NoError(t, err)
+	require.NotNil(t, statusDeletion)
+
+	readyCondition, ok := conditionForType(statusDeletion.Conditions, conditionTypeReady)
+	require.True(t, ok, "Ready condition not found in conditions", statusDeletion.Conditions)
+	assert.Equal(t, "False", readyCondition.Status)
+	assert.Equal(t, "Deleted", readyCondition.Reason)
+
+	assert.Len(t, managedDBProvisioningClient.EnsureDBDeprovisionedCalls(), 2)
 }
 
 func TestCentralChanged(t *testing.T) {
