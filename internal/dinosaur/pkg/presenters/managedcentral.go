@@ -3,6 +3,7 @@ package presenters
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/golang/glog"
@@ -198,6 +199,8 @@ func getSecretNames(from *dbapi.CentralRequest) []string {
 		secretNames[i] = k
 		i++
 	}
+
+	sort.Strings(secretNames)
 
 	return secretNames
 }

@@ -817,15 +817,18 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 }
 
 func (r *CentralReconciler) areSecretsStored(secretsStored []string) bool {
+	secretsStoredSize := len(secretsStored)
 	expectedSecrets := k8s.GetWatchedSecrets()
-	if len(secretsStored) != len(expectedSecrets) {
+	if secretsStoredSize != len(expectedSecrets) {
 		return false
 	}
 
-	sort.Strings(secretsStored)
+	secretsStoredCopy := make([]string, secretsStoredSize)
+	copy(secretsStoredCopy, secretsStored)
+	sort.Strings(secretsStoredCopy)
 
-	for i := 0; i < len(secretsStored); i++ {
-		if secretsStored[i] != expectedSecrets[i] {
+	for i := 0; i < secretsStoredSize; i++ {
+		if secretsStoredCopy[i] != expectedSecrets[i] {
 			return false
 		}
 	}
