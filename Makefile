@@ -6,9 +6,6 @@ TOOLS_DIR := $(PROJECT_PATH)/tools
 .DEFAULT_GOAL := help
 SHELL = bash
 
-# The details of the application:
-binary:=fleet-manager
-
 # The image tag for building and pushing comes from TAG environment variable by default.
 # If there is no TAG env than CI_TAG is used instead.
 # Otherwise image tag is generated based on git tags.
@@ -33,16 +30,13 @@ version:=$(shell date +%s)
 
 ifeq ($(DEBUG_IMAGE),true)
 IMAGE_NAME = fleet-manager-dbg
-PROBE_IMAGE_NAME = probe-dbg
 IMAGE_TARGET = debug
 else
 IMAGE_NAME = fleet-manager
-PROBE_IMAGE_NAME = probe
 IMAGE_TARGET = standard
 endif
 
 SHORT_IMAGE_REF = "$(IMAGE_NAME):$(image_tag)"
-PROBE_SHORT_IMAGE_REF = "$(PROBE_IMAGE_NAME):$(image_tag)"
 
 # Default namespace for local deployments
 NAMESPACE ?= fleet-manager-${USER}
@@ -55,7 +49,6 @@ IMAGE_REGISTRY ?= default-route-openshift-image-registry.apps-crc.testing
 # exist the push fails. This doesn't apply when the image is pushed to a public
 # repository, like `docker.io` or `quay.io`.
 image_repository:=$(NAMESPACE)/$(IMAGE_NAME)
-probe_image_repository:=$(NAMESPACE)/$(PROBE_IMAGE_NAME)
 
 # In the development environment we are pushing the image directly to the image
 # registry inside the development cluster. That registry has a different name
@@ -63,10 +56,6 @@ probe_image_repository:=$(NAMESPACE)/$(PROBE_IMAGE_NAME)
 # inside the cluster. We need the external name to push the image, and the
 # internal name to pull it.
 external_image_registry:= $(IMAGE_REGISTRY)
-internal_image_registry:=image-registry.openshift-image-registry.svc:5000
-
-# Test image name that will be used for PR checks
-test_image:=test/$(IMAGE_NAME)
 
 DOCKER ?= docker
 DOCKER_CONFIG ?= "${HOME}/.docker"
@@ -229,7 +218,6 @@ help:
 	@echo "make observatorium/setup         setup observatorium secrets used by CI"
 	@echo "make observatorium/token-refresher/setup" setup a local observatorium token refresher
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
-	@echo "make image/build/push/internal   build and push image to an openshift cluster image registry."
 	@echo "make deploy/project              deploy the service via templates to an openshift cluster"
 	@echo "make undeploy                    remove the service deployments from an openshift cluster"
 	@echo "make redhatsso/setup             setup sso clientId & clientSecret"
@@ -452,11 +440,6 @@ code/fix:
 	@$(GOFMT) -w `find . -type f -name '*.go' -not -path "./vendor/*"`
 .PHONY: code/fix
 
-run: install
-	fleet-manager migrate
-	fleet-manager serve --public-host-url=${PUBLIC_HOST_URL}
-.PHONY: run
-
 # Run Swagger and host the api docs
 run/docs:
 	$(DOCKER) run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 8082:8080 -e URLS="[ \
@@ -497,11 +480,6 @@ db/psql:
 	@PGPASSWORD=$(shell cat secrets/db.password) psql -h localhost -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)
 .PHONY: db/psql
 
-db/generate/insert/cluster:
-	@read -r id external_id provider region multi_az<<<"$(shell ocm get /api/clusters_mgmt/v1/clusters/${CLUSTER_ID} | jq '.id, .external_id, .cloud_provider.id, .region.id, .multi_az' | tr -d \" | xargs -n2 echo)";\
-	echo -e "Run this command in your database:\n\nINSERT INTO clusters (id, created_at, updated_at, cloud_provider, cluster_id, external_id, multi_az, region, status, provider_type) VALUES ('"$$id"', current_timestamp, current_timestamp, '"$$provider"', '"$$id"', '"$$external_id"', "$$multi_az", '"$$region"', 'cluster_provisioned', 'ocm');";
-.PHONY: db/generate/insert/cluster
-
 # Login to docker
 docker/login: docker/login/fleet-manager
 .PHONY: docker/login
@@ -510,11 +488,6 @@ docker/login/fleet-manager:
 	@docker logout quay.io
 	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_USER}" --password-stdin <<< "${QUAY_TOKEN}" quay.io
 .PHONY: docker/login/fleet-manager
-
-docker/login/probe:
-	@docker logout quay.io
-	@DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) login -u "${QUAY_PROBE_USER}" --password-stdin <<< "${QUAY_PROBE_TOKEN}" quay.io
-.PHONY: docker/login/probe
 
 # Login to the OpenShift internal registry
 docker/login/internal:
@@ -530,24 +503,21 @@ image/build: fleet-manager fleetshard-sync
 .PHONY: image/build
 
 # Build the image using by specifying a specific image target within the Dockerfile.
-image/build/multi-target: image/build/multi-target/fleet-manager image/build/multi-target/probe
+image/build/production: image/build/multi-target/fleet-manager
+.PHONY: image/build/production
+
+# Build the image using by specifying a specific image target within the Dockerfile.
+image/build/multi-target: image/build/multi-target/fleet-manager
 .PHONY: image/build/multi-target
 
 image/build/multi-target/fleet-manager: GOOS=linux
 image/build/multi-target/fleet-manager: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build/multi-target/fleet-manager:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build --target $(IMAGE_TARGET) -t $(IMAGE_REF) .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
 .PHONY: image/build/multi-target/fleet-manager
-
-image/build/multi-target/probe: GOOS=linux
-image/build/multi-target/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
-image/build/multi-target/probe:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build --target $(IMAGE_TARGET) -t $(IMAGE_REF) -f probe/Dockerfile .
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(PROBE_SHORT_IMAGE_REF)
-.PHONY: image/build/multi-target/probe
 
 # build binary and image and tag image for local deployment
 image/build/local: GOOS=linux
@@ -570,49 +540,12 @@ image/push/fleet-manager: image/build/multi-target/fleet-manager
 	@echo "export FLEET_MANAGER_IMAGE=$(IMAGE_REF)"
 .PHONY: image/push/fleet-manager
 
-image/push/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
-image/push/probe: image/build/multi-target/probe
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
-	@echo
-	@echo "Image was pushed as $(IMAGE_REF)."
-.PHONY: image/push/probe
-
 # push the image to the OpenShift internal registry
 image/push/internal: IMAGE_TAG ?= $(image_tag)
 image/push/internal: docker/login/internal
 	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)"
 	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(probe_image_repository):$(IMAGE_TAG)"
 .PHONY: image/push/internal
-
-# build and push the image to an OpenShift cluster's internal registry
-# namespace used in the image repository must exist on the cluster before running this command. Run `make deploy/project` to create the namespace if not available.
-image/build/push/internal: image/build/internal image/push/internal
-.PHONY: image/build/push/internal
-
-# Build the binary and test image
-image/build/test: binary
-	$(DOCKER) build -t "$(test_image)" -f Dockerfile.integration.test .
-.PHONY: image/build/test
-
-# Run the test container
-test/run: image/build/test
-	$(DOCKER) run -u $(shell id -u) --net=host -p 9876:9876 -i "$(test_image)"
-.PHONY: test/run
-
-# Run the probe based e2e test in container
-test/e2e/probe/run: image/build/multi-target/probe
-test/e2e/probe/run: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
-test/e2e/probe/run:
-	$(DOCKER) run \
-	-e QUOTA_TYPE="OCM" \
-	-e AUTH_TYPE="OCM" \
-	-e PROBE_NAME="e2e-probe-$$$$" \
-	-e OCM_USERNAME="${OCM_USERNAME}" \
-	-e OCM_TOKEN="${OCM_TOKEN}" \
-	-e FLEET_MANAGER_ENDPOINT="${FLEET_MANAGER_ENDPOINT}" \
-	--rm $(IMAGE_REF) \
-	run
-.PHONY: test/e2e/probe/run
 
 # Touch all necessary secret files for fleet manager to start up
 secrets/touch:
@@ -762,7 +695,7 @@ deploy/route:
 .PHONY: deploy/route
 
 # deploy service via templates to an OpenShift cluster
-deploy/service: IMAGE_REGISTRY ?= $(internal_image_registry)
+deploy/service: IMAGE_REGISTRY ?= "image-registry.openshift-image-registry.svc:5000"
 deploy/service: IMAGE_REPOSITORY ?= $(image_repository)
 deploy/service: FLEET_MANAGER_ENV ?= "development"
 deploy/service: REPLICAS ?= "1"
@@ -832,8 +765,6 @@ deploy/service: deploy/envoy deploy/route
 		-p CENTRAL_REQUEST_EXPIRATION_TIMEOUT="${CENTRAL_REQUEST_EXPIRATION_TIMEOUT}" \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
-
-
 
 # remove service deployments from an OpenShift cluster
 undeploy: IMAGE_REGISTRY ?= $(internal_image_registry)
