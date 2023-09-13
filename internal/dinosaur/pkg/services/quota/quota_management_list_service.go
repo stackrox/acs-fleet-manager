@@ -115,12 +115,12 @@ func (q QuotaManagementListService) IsQuotaEntitlementActive(central *dbapi.Cent
 
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetByID(central.OrganisationID)
 	if orgFound && org.IsUserRegistered(central.Owner) {
-		return org.IsInstanceCountWithinLimit(org.GetMaxAllowedInstances()), nil
+		return org.GetMaxAllowedInstances() > 0, nil
 	} else {
 		glog.Infof("user is not registered by organisation, checking quota entitlement for %q as an individual account", central.Owner)
 		account, accountFound := q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(central.Owner)
 		if accountFound {
-			return account.IsInstanceCountWithinLimit(account.GetMaxAllowedInstances()), nil
+			return account.GetMaxAllowedInstances() > 0, nil
 		}
 	}
 	return false, nil

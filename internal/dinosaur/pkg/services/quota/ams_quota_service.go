@@ -260,7 +260,7 @@ func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel
 		}
 	}
 	if len(costsMap) == 0 && foundUnsupportedBillingModel != "" {
-		return nil, errors.GeneralError("found unsupported allowed billing models, the last one is %s", foundUnsupportedBillingModel)
+		return nil, errors.GeneralError("found unsupported allowed billing models, the last one is %q", foundUnsupportedBillingModel)
 	}
 	return costsMap, nil
 }
@@ -287,13 +287,13 @@ func (q amsQuotaService) IsQuotaEntitlementActive(central *dbapi.CentralRequest)
 	quotaType := types.DinosaurInstanceType(central.InstanceType).GetQuotaType()
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(org.ID(), quotaType.GetResourceName(), quotaType.GetProduct())
 	if err != nil {
-		return false, errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, quotaType.GetProduct())
+		return false, errors.InsufficientQuotaError("%v: error getting quotas for product %q", err, quotaType.GetProduct())
 	}
 
 	quotasMap, err := mapAllowedQuotaCosts(quotaCosts)
 	if err != nil {
 		svcErr := errors.ToServiceError(err)
-		return false, errors.NewWithCause(svcErr.Code, svcErr, "product %s has no allowed billing models", quotaType.GetProduct())
+		return false, errors.NewWithCause(svcErr.Code, svcErr, "product %q has no allowed billing models", quotaType.GetProduct())
 	}
 
 	isCloudAccount := central.CloudAccountID != "" && central.CloudProvider == awsCloudProvider
