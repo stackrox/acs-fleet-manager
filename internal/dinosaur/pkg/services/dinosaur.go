@@ -522,12 +522,10 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *e
 	dbConn := k.connectionFactory.New().
 		Model(&dbapi.CentralRequest{})
 
-	// WHERE ( instance_type = 'eval' AND created_at <= ? OR grace_from IS NOT NULL AND grace_from < ? ) AND status NOT IN ( 'deleting', 'deprovision' )
-	dbConn = dbConn.Where(
-		dbConn.Where("instance_type = ?", types.EVAL.String()).
-			Where("created_at  <=  ?", now.Add(-1*time.Duration(dinosaurAgeInHours)*time.Hour)).
-			Or(dbConn.Where("grace_from IS NOT NULL").
-				Where("grace_from < ", now.Add(-gracePeriod)))).
+	dbConn = dbConn.Where(dbConn.
+		Where("instance_type = ?", types.EVAL.String()).
+		Where("created_at  <=  ?", now.Add(-1*time.Duration(dinosaurAgeInHours)*time.Hour)).
+		Or("grace_from IS NOT NULL").Where("grace_from < ?", now.Add(-gracePeriod))).
 		Where("status NOT IN (?)", dinosaurDeletionStatuses)
 
 	db := dbConn.Updates(map[string]interface{}{
