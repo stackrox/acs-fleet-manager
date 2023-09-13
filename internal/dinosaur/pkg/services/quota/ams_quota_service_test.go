@@ -1195,7 +1195,7 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 			args:       standardCentral,
 			want:       false,
 			wantErr:    true,
-			wantErrMsg: "RHACS-MGMT-120: Insufficient quota: failed to get quota cost: error getting quotas for product RHACS",
+			wantErrMsg: "RHACS-MGMT-120: Insufficient quota: failed to get quota cost: error getting quotas for product \"RHACS\"",
 		},
 	}
 	for _, testcase := range tests {
