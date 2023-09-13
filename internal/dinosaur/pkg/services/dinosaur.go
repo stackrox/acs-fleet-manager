@@ -3,6 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	dynamicClientAPI "github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
 	"sync"
 	"time"
 
@@ -106,6 +110,7 @@ type DinosaurService interface {
 	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	Restore(ctx context.Context, id string) *errors.ServiceError
+	RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -124,17 +129,20 @@ type dinosaurService struct {
 	clusterPlacementStrategy     ClusterPlacementStrategy
 	amsClient                    ocm.AMSClient
 	centralDefaultVersionService CentralDefaultVersionService
+	iamConfig                    *iam.IAMConfig
+	rhSSODynamicClientsAPI       *dynamicClientAPI.AcsTenantsApiService
 }
 
 // NewDinosaurService ...
 func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService,
-	dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
+	iamConfig *iam.IAMConfig, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
 	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization,
 	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, centralDefaultVersionService CentralDefaultVersionService) *dinosaurService {
 	return &dinosaurService{
 		connectionFactory:            connectionFactory,
 		clusterService:               clusterService,
 		iamService:                   iamService,
+		iamConfig:                    iamConfig,
 		dinosaurConfig:               dinosaurConfig,
 		awsConfig:                    awsConfig,
 		quotaServiceFactory:          quotaServiceFactory,
@@ -144,7 +152,33 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		clusterPlacementStrategy:     clusterPlacementStrategy,
 		amsClient:                    amsClient,
 		centralDefaultVersionService: centralDefaultVersionService,
+		rhSSODynamicClientsAPI:       dynamicclients.NewDynamicClientsAPI(iamConfig.RedhatSSORealm),
 	}
+}
+
+func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError {
+	realmConfig := k.iamConfig.RedhatSSORealm
+	if k.dinosaurConfig.HasStaticAuth() {
+		return errors.New(errors.ErrorDynamicClientsNotUsed, "RHSSO is configured via static configuration")
+	}
+	if !realmConfig.IsConfigured() {
+		return errors.New(errors.ErrorDynamicClientsNotUsed, "RHSSO dynamic client configuration is not present")
+	}
+
+	previousAuthConfig := centralRequest.AuthConfig
+	if err := rhsso.AugmentWithDynamicAuthConfig(ctx, centralRequest, k.iamConfig.RedhatSSORealm, k.rhSSODynamicClientsAPI); err != nil {
+		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to augment auth config")
+
+	}
+	if err := k.Update(centralRequest); err != nil {
+		glog.Errorf("Rotating RHSSO client failed: created new RHSSO dynamic client, but failed to update central record, client ID is %s", centralRequest.AuthConfig.ClientID)
+		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to update database record")
+	}
+	if _, err := k.rhSSODynamicClientsAPI.DeleteAcsClient(ctx, previousAuthConfig.ClientID); err != nil {
+		glog.Errorf("Rotating RHSSO client failed: failed to delete RHSSO dynamic client, client ID is %s", centralRequest.AuthConfig.ClientID)
+		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to delete previous RHSSO dynamic client")
+	}
+	return nil
 }
 
 // HasAvailableCapacityInRegion ...
