@@ -646,6 +646,11 @@ data:
             "options": [
               {
                 "selected": false,
+                "text": "acs-fleet-manager-integration",
+                "value": "acs-fleet-manager-integration"
+              },
+              {
+                "selected": false,
                 "text": "acs-fleet-manager-stage",
                 "value": "acs-fleet-manager-stage"
               },
@@ -655,7 +660,7 @@ data:
                 "value": "acs-fleet-manager-production"
               }
             ],
-            "query": "acs-fleet-manager-stage,acs-fleet-manager-production",
+            "query": "acs-fleet-manager-integration,acs-fleet-manager-stage,acs-fleet-manager-production",
             "skipUrlSync": false,
             "type": "custom"
           }
