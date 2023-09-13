@@ -220,7 +220,6 @@ help:
 	@echo "make openapi/generate            generate openapi modules"
 	@echo "make openapi/validate            validate openapi schema"
 	@echo "make image/build                 build image (hybrid fast build, respecting IGNORE_REPOSITORY_DIRTINESS)"
-	@echo "make image/build/local           build image (hybrid fast build, respecting IGNORE_REPOSITORY_DIRTINESS) for local development"
 	@echo "make image/build/multi-target    build image (containerized, respecting DEBUG_IMAGE and IGNORE_REPOSITORY_DIRTINESS) for local deployment"
 	@echo "make image/push                  push image"
 	@echo "make setup/git/hooks             setup git hooks"
@@ -548,15 +547,6 @@ image/build/multi-target/probe:
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build --target $(IMAGE_TARGET) -t $(IMAGE_REF) -f probe/Dockerfile .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(PROBE_SHORT_IMAGE_REF)
 .PHONY: image/build/multi-target/probe
-
-# build binary and image and tag image for local deployment
-image/build/local: GOOS=linux
-image/build/local: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
-image/build/local: image/build
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
-	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
-	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
-.PHONY: image/build/local
 
 # Build and push the image
 image/push: image/push/fleet-manager image/push/probe
