@@ -2,9 +2,6 @@ package dinosaurmgrs
 
 import (
 	"context"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
-
-	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
 	"github.com/golang/glog"
 	"github.com/google/uuid"
@@ -12,10 +9,12 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 	"github.com/stackrox/rox/pkg/ternary"
 )
