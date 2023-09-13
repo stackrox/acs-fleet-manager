@@ -162,7 +162,7 @@ func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralR
 		return errors.New(errors.ErrorDynamicClientsNotUsed, "RHSSO is configured via static configuration")
 	}
 	if !realmConfig.IsConfigured() {
-		return errors.New(errors.ErrorDynamicClientsNotUsed, "RHSSO dynamic configuration is not present")
+		return errors.New(errors.ErrorDynamicClientsNotUsed, "RHSSO dynamic client configuration is not present")
 	}
 
 	previousAuthConfig := centralRequest.AuthConfig
