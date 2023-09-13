@@ -1,4 +1,4 @@
-export MINIKUBE="${MINIKUBE:-minikube}"
+export KIND="${KIND:-kind}"
 export ENABLE_DB_PORT_FORWARDING_DEFAULT="true"
 export ENABLE_FM_PORT_FORWARDING_DEFAULT="true"
 export OPERATOR_SOURCE_DEFAULT="quay"
@@ -6,4 +6,3 @@ export INHERIT_IMAGEPULLSECRETS_DEFAULT="true" # pragma: allowlist secret
 export INSTALL_OLM_DEFAULT="true"
 export ENABLE_EXTERNAL_CONFIG_DEFAULT="true"
 export AWS_AUTH_HELPER_DEFAULT="aws-saml"
-export IMAGE_REGISTRY=quay.io/rhacs-eng

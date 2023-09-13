@@ -45,8 +45,7 @@ SHORT_IMAGE_REF = "$(IMAGE_NAME):$(image_tag)"
 PROBE_SHORT_IMAGE_REF = "$(PROBE_IMAGE_NAME):$(image_tag)"
 
 # Default namespace for local deployments
-NAMESPACE ?= fleet-manager-${USER}
-IMAGE_REGISTRY ?= default-route-openshift-image-registry.apps-crc.testing
+IMAGE_REGISTRY ?= quay.io/rhacs-eng
 
 # The name of the image repository needs to start with the name of an existing
 # namespace because when the image is pushed to the internal registry of a
@@ -54,7 +53,7 @@ IMAGE_REGISTRY ?= default-route-openshift-image-registry.apps-crc.testing
 # corresponding image stream inside that namespace. If the namespace doesn't
 # exist the push fails. This doesn't apply when the image is pushed to a public
 # repository, like `docker.io` or `quay.io`.
-image_repository:=$(NAMESPACE)/$(IMAGE_NAME)
+image_repository:=$(IMAGE_NAME)
 probe_image_repository:=$(NAMESPACE)/$(PROBE_IMAGE_NAME)
 
 # In the development environment we are pushing the image directly to the image

@@ -82,6 +82,10 @@ ensure_fleet_manager_image_exists() {
             docker_pull "$FLEET_MANAGER_IMAGE"
         fi
 
+        if [[ "${CLUSTER_TYPE}" == "kind" ]]; then
+            kind load docker-image "$FLEET_MANAGER_IMAGE"
+        fi
+
         # Verify that the image is there.
         if ! $DOCKER image inspect "$FLEET_MANAGER_IMAGE" >/dev/null 2>&1; then
             die "Image ${FLEET_MANAGER_IMAGE} not available in cluster, aborting"
