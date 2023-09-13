@@ -565,7 +565,7 @@ image/push/fleet-manager-tools: image/build/fleet-manager-tools
 
 # build binary and image and tag image for local deployment
 image/build/local: GOOS=linux
-image/build/local: IMAGE_REF="$(external_image_registry)/rhacs-eng/$(image_repository):$(image_tag)"
+image/build/local: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build/local: image/build
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
