@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
@@ -934,15 +933,6 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 }
 
 func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
-	type fields struct {
-		amsClient     ocm.Client
-		centralConfig config.CentralConfig
-	}
-
-	defaultCentralConfig := config.CentralConfig{
-		Quota: config.NewCentralQuotaConfig(),
-	}
-
 	standardCentral := &dbapi.CentralRequest{
 		InstanceType: "standard",
 	}
@@ -958,44 +948,34 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 	const consumed = 1
 
 	tests := []struct {
-		name       string
-		fields     fields
-		args       *dbapi.CentralRequest
+		name         string
+		amsClient    ocm.AMSClient
+		getQuotaFunc func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error)
+		central      *dbapi.CentralRequest
+
 		want       bool
 		wantErr    bool
 		wantErrMsg string
 	}{
 		{
 			name: "returns true for single allowed quota cost",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return []*v1.QuotaCost{
-							makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-						}, nil
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+				}, nil
 			},
-			args:    standardCentral,
+			central: standardCentral,
 			want:    true,
 			wantErr: false,
 		},
 		{
 			name: "returns true for single allowed quota cost for eval instance",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return []*v1.QuotaCost{
-							makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-						}, nil
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+				}, nil
 			},
-			args: &dbapi.CentralRequest{
+			central: &dbapi.CentralRequest{
 				InstanceType: "eval",
 			},
 			want:    true,
@@ -1003,177 +983,117 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 		},
 		{
 			name: "returns false for no quota cost",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return []*v1.QuotaCost{}, nil
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{}, nil
 			},
-			args:    standardCentral,
+			central: standardCentral,
 			want:    false,
 			wantErr: false,
 		},
 		{
 			name: "returns true for several allowed quota costs",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return []*v1.QuotaCost{
-							makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-							makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-						}, nil
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+				}, nil
 			},
-			args:    standardCentral,
+			central: standardCentral,
 			want:    true,
 			wantErr: false,
 		},
 		{
 			name: "returns true for one of several allowed quota costs",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return []*v1.QuotaCost{
-							makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-							makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, consumed, t),
-						}, nil
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, consumed, t),
+				}, nil
 			},
-			args:    standardCentral,
+			central: standardCentral,
 			want:    true,
 			wantErr: false,
 		},
 		{
 			name: "returns true if organisation has exceeded their quota limits but entitlement is still active",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return []*v1.QuotaCost{
-							makeStandardTestQuotaCost(resourceName, organizationID, allowed, consumed*2, t),
-							makeStandardTestQuotaCost(resourceName, organizationID, allowed, consumed*3, t),
-						}, nil
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, consumed*2, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, consumed*3, t),
+				}, nil
 			},
-			args:    standardCentral,
+			central: standardCentral,
 			want:    true,
 			wantErr: false,
 		},
 		{
 			name: "returns false for no quota cost allowed",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return []*v1.QuotaCost{
-							makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, consumed, t),
-							makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, consumed, t),
-						}, nil
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, consumed, t),
+				}, nil
 			},
-			args:    standardCentral,
+			central: standardCentral,
 			want:    false,
 			wantErr: false,
 		},
 		{
 			name: "returns false if cloud account has no allowed cost, but standard has",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return []*v1.QuotaCost{
-							makeCloudTestQuotaCost(resourceName, organizationID, not_allowed, consumed, t),
-							makeStandardTestQuotaCost(resourceName, organizationID, allowed, consumed, t),
-						}, nil
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeCloudTestQuotaCost(resourceName, organizationID, not_allowed, consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, consumed, t),
+				}, nil
 			},
-			args:    cloudCentral,
+			central: cloudCentral,
 			want:    false,
 			wantErr: false,
 		},
 		{
 			name: "returns false if standard account has no allowed cost, but cloud has",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return []*v1.QuotaCost{
-							makeCloudTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-							makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, not_consumed, t),
-						}, nil
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeCloudTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, not_consumed, t),
+				}, nil
 			},
-			args:    standardCentral,
+			central: standardCentral,
 			want:    false,
 			wantErr: false,
 		},
 		{
 			name: "returns false if cloud account has no allowed cost, neither standard has",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return []*v1.QuotaCost{
-							makeCloudTestQuotaCost(resourceName, organizationID, not_allowed, not_consumed, t),
-							makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, not_consumed, t),
-						}, nil
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeCloudTestQuotaCost(resourceName, organizationID, not_allowed, not_consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, not_consumed, t),
+				}, nil
 			},
-			args:    cloudCentral,
+			central: cloudCentral,
 			want:    false,
 			wantErr: false,
 		},
 		{
 			name: "returns true if cloud account has allowed cost, and standard has",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return []*v1.QuotaCost{
-							makeCloudTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-							makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-						}, nil
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeCloudTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+				}, nil
 			},
-			args:    cloudCentral,
+			central: cloudCentral,
 			want:    true,
 			wantErr: false,
 		},
 		{
 			name: "returns false if cloud account has no active account",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return []*v1.QuotaCost{
-							makeCloudTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-						}, nil
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return []*v1.QuotaCost{
+					makeCloudTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+				}, nil
 			},
-			args: &dbapi.CentralRequest{
+			central: &dbapi.CentralRequest{
 				InstanceType:   "standard",
 				CloudProvider:  awsCloudProvider,
 				CloudAccountID: "unsubscribedCloudAccountID",
@@ -1183,16 +1103,10 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 		},
 		{
 			name: "returns an error when it fails to get quota costs from ams",
-			fields: fields{
-				centralConfig: defaultCentralConfig,
-				amsClient: &ocm.ClientMock{
-					GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
-					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						return nil, fmt.Errorf("failed to get quota cost")
-					},
-				},
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				return nil, fmt.Errorf("failed to get quota cost")
 			},
-			args:       standardCentral,
+			central:    standardCentral,
 			want:       false,
 			wantErr:    true,
 			wantErrMsg: "RHACS-MGMT-120: Insufficient quota: failed to get quota cost: error getting quotas for product \"RHACS\"",
@@ -1202,10 +1116,16 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.fields.amsClient, nil, nil)
+
+			var amsClient ocm.AMSClient = &ocm.ClientMock{
+				GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
+				GetQuotaCostsForProductFunc:       tt.getQuotaFunc,
+			}
+
+			quotaServiceFactory := NewDefaultQuotaServiceFactory(amsClient, nil, nil)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
 
-			got, err := quotaService.IsQuotaEntitlementActive(tt.args)
+			got, err := quotaService.IsQuotaEntitlementActive(tt.central)
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if tt.wantErr {
 				g.Expect(err.Error()).To(gomega.Equal(tt.wantErrMsg))
