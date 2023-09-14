@@ -549,6 +549,20 @@ image/build/multi-target/probe:
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(PROBE_SHORT_IMAGE_REF)
 .PHONY: image/build/multi-target/probe
 
+image/build/fleet-manager-tools: GOOS=linux
+image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/rhacs-eng/fleet-manager-tools:$(image_tag)"
+image/build/fleet-manager-tools: fleet-manager fleetshard-sync acsfleetctl
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.tools .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) fleet-manager-tools:$(image_tag)
+.PHONY: image/build/multi-target/fleet-manager-tools
+
+image/push/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/rhacs-eng/fleet-manager-tools:$(image_tag)"
+image/push/fleet-manager-tools: image/build/fleet-manager-tools
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
+	@echo
+	@echo "Image fleet-manager tools was pushed as $(IMAGE_REF)."
+.PHONY: image/push/fleet-manager-tools
+
 # build binary and image and tag image for local deployment
 image/build/local: GOOS=linux
 image/build/local: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
