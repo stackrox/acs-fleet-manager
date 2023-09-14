@@ -7,7 +7,6 @@ graph
     end
 
     subgraph Data Plane OSD Cluster
-
         subgraph acs-namespace
             acs1central[Central]
             acs1egress[egress-proxy]
@@ -25,6 +24,4 @@ graph
     end
 
     acs1egress-->c1s1
-    
 ```
-
