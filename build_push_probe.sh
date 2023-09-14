@@ -37,10 +37,20 @@ PROBE_IMAGE_REPOSITORY="${QUAY_PROBE_IMAGE_REPOSITORY:-rhacs-eng/blackbox-monito
 # Set the directory for docker configuration:
 DOCKER_CONFIG="${PWD}/.docker"
 
-QUAY_USER=QUAY_PROBE_USER
-QUAY_TOKEN=QUAY_PROBE_TOKEN
+# Log in to the image registry:
+if [ -z "${QUAY_PROBE_USER}" ]; then
+  echo "The probe service quay.io push user name hasn't been provided."
+  echo "Make sure to set the QUAY_PROBE_USER environment variable."
+  exit 1
+fi
+if [ -z "${QUAY_PROBE_TOKEN}" ]; then
+  echo "The probe service quay.io push token hasn't been provided."
+  echo "Make sure to set the QUAY_PROBE_TOKEN environment variable."
+  exit 1
+fi
 
-./scripts/build_setup.sh
+# Set up the docker config directory
+mkdir -p "${DOCKER_CONFIG}"
 
 # Push the image:
 echo "Quay.io user and token are set, will push images to $PROBE_IMAGE_REPOSITORY."
