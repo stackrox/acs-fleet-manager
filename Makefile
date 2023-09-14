@@ -530,7 +530,7 @@ image/build/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repositor
 image/build/probe:
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f probe/Dockerfile .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(PROBE_SHORT_IMAGE_REF)
-.PHONY: image/build/multi-target/probe
+.PHONY: image/build/probe
 
 # Build and push the image
 image/push: image/push/fleet-manager image/push/probe
