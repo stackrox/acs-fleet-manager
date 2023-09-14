@@ -525,6 +525,9 @@ image/build: GOOS=linux
 image/build: IMAGE_REF ?= "$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build: fleet-manager fleetshard-sync
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.hybrid .
+ifeq ("$(CLUSTER_TYPE)","kind")
+	kind load docker-image $(SHORT_IMAGE_REF)
+endif
 .PHONY: image/build
 
 # Build the image using by specifying a specific image target within the Dockerfile.
@@ -902,18 +905,14 @@ deploy/bootstrap:
 	./dev/env/scripts/bootstrap.sh
 .PHONY: deploy/bootstrap
 
-deploy/dev-fast: GOOS=linux
-deploy/dev-fast: deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
+# Deploy local images fast for development
+deploy/dev-fast: image/build deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
 
-deploy/dev-fast/fleet-manager: GOOS=linux
-deploy/dev-fast/fleet-manager: fleet-manager
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(SHORT_IMAGE_REF) -f Dockerfile.hybrid .
+deploy/dev-fast/fleet-manager: image/build
 	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleet-manager
 
-deploy/dev-fast/fleetshard-sync: GOOS=linux
-deploy/dev-fast/fleetshard-sync: fleetshard-sync
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(SHORT_IMAGE_REF) -f Dockerfile.hybrid .
+deploy/dev-fast/fleetshard-sync: image/build
 	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleetshard-sync
 
