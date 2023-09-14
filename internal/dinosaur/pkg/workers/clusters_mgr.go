@@ -4,8 +4,6 @@ package workers
 import (
 	"fmt"
 	"strings"
-	"sync"
-	"time"
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
@@ -83,18 +81,13 @@ type Worker = workers.Worker
 
 // ClusterManager ...
 type ClusterManager struct {
-	id           string
-	workerType   string
-	isRunning    bool
-	imStop       chan struct{} // a chan used only for cancellation
-	syncTeardown sync.WaitGroup
+	workers.BaseWorker
 	ClusterManagerOptions
 }
 
 // ClusterManagerOptions ...
 type ClusterManagerOptions struct {
 	di.Inject
-	Reconciler                 workers.Reconciler
 	OCMConfig                  *ocm.OCMConfig
 	ObservabilityConfiguration *observatorium.ObservabilityConfiguration
 	DataplaneClusterConfig     *config.DataplaneClusterConfig
@@ -109,58 +102,12 @@ type processor func() []error
 // NewClusterManager creates a new cluster manager
 func NewClusterManager(o ClusterManagerOptions) *ClusterManager {
 	return &ClusterManager{
-		id:                    uuid.New().String(),
-		workerType:            "cluster",
+		BaseWorker: workers.BaseWorker{
+			ID:         uuid.New().String(),
+			WorkerType: "cluster",
+		},
 		ClusterManagerOptions: o,
 	}
-}
-
-// GetStopChan ...
-func (c *ClusterManager) GetStopChan() *chan struct{} {
-	return &c.imStop
-}
-
-// GetSyncGroup ...
-func (c *ClusterManager) GetSyncGroup() *sync.WaitGroup {
-	return &c.syncTeardown
-}
-
-// GetID returns the ID that represents this worker
-func (c *ClusterManager) GetID() string {
-	return c.id
-}
-
-// GetWorkerType ...
-func (c *ClusterManager) GetWorkerType() string {
-	return c.workerType
-}
-
-func (c *ClusterManager) GetRepeatInterval() time.Duration {
-	return workers.DefaultRepeatInterval
-}
-
-// Start initializes the cluster manager to reconcile osd clusters
-func (c *ClusterManager) Start() {
-	metrics.SetLeaderWorkerMetric(c.workerType, true)
-	c.Reconciler.Start(c)
-}
-
-// Stop causes the process for reconciling osd clusters to stop.
-func (c *ClusterManager) Stop() {
-	glog.Infof("Stopping reconciling cluster manager id = %s", c.id)
-	c.Reconciler.Stop(c)
-	metrics.ResetMetricsForClusterManagers()
-	metrics.SetLeaderWorkerMetric(c.workerType, false)
-}
-
-// IsRunning ...
-func (c *ClusterManager) IsRunning() bool {
-	return c.isRunning
-}
-
-// SetIsRunning ...
-func (c *ClusterManager) SetIsRunning(val bool) {
-	c.isRunning = val
 }
 
 // Reconcile ...
