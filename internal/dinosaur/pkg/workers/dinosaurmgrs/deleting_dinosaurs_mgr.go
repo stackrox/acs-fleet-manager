@@ -49,16 +49,6 @@ func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, iamCon
 	}
 }
 
-// Start initializes the dinosaur manager to reconcile dinosaur requests.
-func (k *DeletingDinosaurManager) Start() {
-	k.StartWorker(k)
-}
-
-// Stop causes the process for reconciling dinosaur requests to stop.
-func (k *DeletingDinosaurManager) Stop() {
-	k.StopWorker(k)
-}
-
 // Reconcile reconciles deleting dionosaur requests.
 // It handles:
 //   - freeing up any associated quota with the central

@@ -56,16 +56,6 @@ func NewCentralAuthConfigManager(centralService services.DinosaurService, iamCon
 	}, nil
 }
 
-// Start uses base's Start()
-func (k *CentralAuthConfigManager) Start() {
-	k.StartWorker(k)
-}
-
-// Stop uses base's Stop()
-func (k *CentralAuthConfigManager) Stop() {
-	k.StopWorker(k)
-}
-
 // Reconcile fetches all CentralRequests without auth config from the DB and
 // updates them.
 func (k *CentralAuthConfigManager) Reconcile() []error {

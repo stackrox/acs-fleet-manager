@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
@@ -69,17 +70,21 @@ func (b *BaseWorker) SetIsRunning(val bool) {
 }
 
 // StartWorker ...
-func (b *BaseWorker) StartWorker(w Worker) {
+func (b *BaseWorker) Start() {
 	metrics.SetLeaderWorkerMetric(b.WorkerType, true)
-	b.Reconciler.Start(w)
+	b.Reconciler.Start(b)
 }
 
 // StopWorker ...
-func (b *BaseWorker) StopWorker(w Worker) {
+func (b *BaseWorker) Stop() {
 	glog.Infof("Stopping reconciling worker id = %s", b.ID)
-	b.Reconciler.Stop(w)
+	b.Reconciler.Stop(b)
 	metrics.ResetMetricsForCentralManagers()
 	metrics.SetLeaderWorkerMetric(b.WorkerType, false)
+}
+
+func (*BaseWorker) Reconcile() []error {
+	return []error{errors.NotImplemented("base worker")}
 }
 
 func (b *BaseWorker) GetRepeatInterval() time.Duration {

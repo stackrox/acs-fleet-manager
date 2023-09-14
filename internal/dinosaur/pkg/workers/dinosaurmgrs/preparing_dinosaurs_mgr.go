@@ -42,16 +42,6 @@ func NewPreparingDinosaurManager(dinosaurService services.DinosaurService, centr
 	}
 }
 
-// Start initializes the dinosaur manager to reconcile dinosaur requests
-func (k *PreparingDinosaurManager) Start() {
-	k.StartWorker(k)
-}
-
-// Stop causes the process for reconciling dinosaur requests to stop.
-func (k *PreparingDinosaurManager) Stop() {
-	k.StopWorker(k)
-}
-
 // Reconcile ...
 func (k *PreparingDinosaurManager) Reconcile() []error {
 	var encounteredErrors []error

@@ -35,16 +35,6 @@ func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConf
 	}
 }
 
-// Start ...
-func (k *DinosaurRoutesCNAMEManager) Start() {
-	k.StartWorker(k)
-}
-
-// Stop ...
-func (k *DinosaurRoutesCNAMEManager) Stop() {
-	k.StopWorker(k)
-}
-
 // Reconcile ...
 func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 	var errs []error

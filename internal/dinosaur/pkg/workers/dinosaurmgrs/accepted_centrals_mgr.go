@@ -46,16 +46,6 @@ func NewAcceptedCentralManager(centralService services.DinosaurService, quotaSer
 	}
 }
 
-// Start initializes the manager to reconcile central requests
-func (k *AcceptedCentralManager) Start() {
-	k.StartWorker(k)
-}
-
-// Stop causes the process for reconciling central requests to stop.
-func (k *AcceptedCentralManager) Stop() {
-	k.StopWorker(k)
-}
-
 var acceptedCentralCount int32
 
 // Reconcile ...
