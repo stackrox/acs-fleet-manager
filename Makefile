@@ -46,19 +46,12 @@ PROBE_SHORT_IMAGE_REF = "$(PROBE_IMAGE_NAME):$(image_tag)"
 
 # Default namespace for local deployments
 IMAGE_REGISTRY ?= quay.io/rhacs-eng
-
-# The name of the image repository needs to start with the name of an existing
-# namespace because when the image is pushed to the internal registry of a
-# cluster it will assume that that namespace exists and will try to create a
-# corresponding image stream inside that namespace. If the namespace doesn't
-# exist the push fails. This doesn't apply when the image is pushed to a public
-# repository, like `docker.io` or `quay.io`.
 image_repository:=$(IMAGE_NAME)
-probe_image_repository:=$(NAMESPACE)/$(PROBE_IMAGE_NAME)
+probe_image_repository:=$(PROBE_IMAGE_NAME)
 
 # In the development environment we are pushing the image directly to the image
 # registry inside the development cluster. That registry has a different name
-# when it is accessed from outside the cluster and when it is acessed from
+# when it is accessed from outside the cluster and when it is accessed from
 # inside the cluster. We need the external name to push the image, and the
 # internal name to pull it.
 external_image_registry:= $(IMAGE_REGISTRY)
@@ -601,7 +594,7 @@ image/push/internal: docker/login/internal
 .PHONY: image/push/internal
 
 # build and push the image to an OpenShift cluster's internal registry
-# namespace used in the image repository must exist on the cluster before running this command. Run `make deploy/project` to create the namespace if not available.
+# namespace used in the image repository must exist on the cluster before running this command. Run `make deploy/project` to create the   if not available.
 image/build/push/internal: image/push/internal
 .PHONY: image/build/push/internal
 
