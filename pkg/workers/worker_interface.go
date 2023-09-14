@@ -14,7 +14,7 @@ var DefaultRepeatInterval = 30 * time.Second
 
 // Worker ...
 //
-//go:generate moq -out woker_interface_moq.go . Worker
+//go:generate moq -out worker_interface_moq.go . Worker
 type Worker interface {
 	GetID() string
 	GetWorkerType() string
