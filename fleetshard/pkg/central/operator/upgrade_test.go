@@ -72,7 +72,7 @@ var serviceAccount = &unstructured.Unstructured{
 		"apiVersion": "v1",
 		"metadata": map[string]interface{}{
 			"name":      "rhacs-operator-controller-manager",
-			"namespace": operatorNamespace,
+			"namespace": ACSOperatorNamespace,
 		},
 	},
 }
@@ -87,7 +87,7 @@ var metricService = &unstructured.Unstructured{
 		"apiVersion": "v1",
 		"metadata": map[string]interface{}{
 			"name":      "rhacs-operator-manager-metrics-service",
-			"namespace": operatorNamespace,
+			"namespace": ACSOperatorNamespace,
 		},
 	},
 }
@@ -96,7 +96,7 @@ func createOperatorDeployment(name string, image string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: operatorNamespace,
+			Namespace: ACSOperatorNamespace,
 			Labels:    map[string]string{"app": "rhacs-operator"},
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -126,35 +126,35 @@ func TestOperatorUpgradeFreshInstall(t *testing.T) {
 	require.NoError(t, err)
 
 	// check Secured Cluster CRD exists and correct
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: securedClusterCRD.GetName()}, securedClusterCRD)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: securedClusterCRD.GetName()}, securedClusterCRD)
 	require.NoError(t, err)
 	assert.Equal(t, k8sAPIVersion, securedClusterCRD.GetAPIVersion())
 	assert.NotEmpty(t, securedClusterCRD.Object["metadata"])
 	assert.NotEmpty(t, securedClusterCRD.Object["spec"])
 
 	// check Central CRD exists and correct
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: centralCRD.GetName()}, centralCRD)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: centralCRD.GetName()}, centralCRD)
 	require.NoError(t, err)
 	assert.Equal(t, k8sAPIVersion, centralCRD.GetAPIVersion())
 	assert.NotEmpty(t, centralCRD.Object["metadata"])
 	assert.NotEmpty(t, centralCRD.Object["spec"])
 
 	// check serviceAccount exists
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
 	assert.Equal(t, k8sAPIVersion, centralCRD.GetAPIVersion())
 	assert.NotEmpty(t, centralCRD.Object["metadata"])
 	assert.NotEmpty(t, centralCRD.Object["spec"])
 
 	// check metric service exists
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: metricService.GetName()}, metricService)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: metricService.GetName()}, metricService)
 	require.NoError(t, err)
 	assert.Equal(t, k8sAPIVersion, centralCRD.GetAPIVersion())
 	assert.NotEmpty(t, metricService.Object["metadata"])
 	assert.NotEmpty(t, metricService.Object["spec"])
 
 	// check Operator Deployment exists
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.NoError(t, err)
 	containers := operatorDeployment1.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 2)
@@ -169,12 +169,12 @@ func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 	err := u.InstallOrUpgrade(context.Background(), getExampleOperatorConfigs(operatorConfig1, operatorConfig2))
 	require.NoError(t, err)
 
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.NoError(t, err)
 	managerContainer := operatorDeployment1.Spec.Template.Spec.Containers[1]
 	assert.Equal(t, managerContainer.Image, operatorImage1)
 
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
 	require.NoError(t, err)
 	managerContainer = operatorDeployment2.Spec.Template.Spec.Containers[1]
 	assert.Equal(t, managerContainer.Image, operatorImage2)
@@ -212,7 +212,7 @@ func TestOperatorUpgradeImageWithDigest(t *testing.T) {
 	err := u.InstallOrUpgrade(context.Background(), getExampleOperatorConfigs(operatorConfig))
 	require.NoError(t, err)
 
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.NoError(t, err)
 	managerContainer := operatorDeployment1.Spec.Template.Spec.Containers[1]
 	assert.Equal(t, managerContainer.Image, digestedImage)
@@ -232,17 +232,17 @@ func TestRemoveOneUnusedOperator(t *testing.T) {
 	u := NewACSOperatorManager(fakeClient)
 	ctx := context.Background()
 
-	err := fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	err := fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.NoError(t, err)
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
 
 	err = u.RemoveUnusedOperators(ctx, []string{operatorImage2})
 	require.NoError(t, err)
 	// deployment is deleted but service account still persist
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.True(t, errors.IsNotFound(err))
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
 }
 
@@ -253,21 +253,21 @@ func TestRemoveOneUnusedOperatorFromMany(t *testing.T) {
 
 	err := u.RemoveUnusedOperators(ctx, []string{operatorImage2})
 	require.NoError(t, err)
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.True(t, errors.IsNotFound(err))
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
 	require.NoError(t, err)
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
 
 	// remove remaining
 	err = u.RemoveUnusedOperators(ctx, []string{})
 	require.NoError(t, err)
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.True(t, errors.IsNotFound(err))
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment2.Name}, operatorDeployment2)
 	require.True(t, errors.IsNotFound(err))
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
 }
 
@@ -282,7 +282,7 @@ func TestRemoveMultipleUnusedOperators(t *testing.T) {
 	err = fakeClient.List(context.Background(), deployments)
 	require.NoError(t, err)
 	assert.Len(t, deployments.Items, 0)
-	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: operatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
+	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
 }
 

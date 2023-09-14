@@ -10,6 +10,7 @@ export GITROOT
 source "${GITROOT}/dev/env/scripts/lib.sh"
 
 RUN_AUTH_E2E_DEFAULT="false"
+RUN_CENTRAL_E2E_DEFAULT="true"
 
 if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     # We are running in an OpenShift CI context, configure accordingly.
@@ -39,6 +40,7 @@ if [[ "$SPAWN_LOGGER" == "true" && "$LOG_DIR" == "" ]]; then
 fi
 export LOG_DIR
 export RUN_AUTH_E2E=${RUN_AUTH_E2E:-$RUN_AUTH_E2E_DEFAULT}
+export RUN_CENTRAL_E2E=${RUN_CENTRAL_E2E:-$RUN_CENTRAL_E2E_DEFAULT}
 
 log
 log "** Entrypoint for ACS MS E2E Tests **"

@@ -54,6 +54,10 @@ var _ = Describe("Central", func() {
 	var notes []string
 
 	BeforeEach(func() {
+		if !runCentralTests {
+			Skip("Skipping Central tests")
+		}
+
 		option := fleetmanager.OptionFromEnv()
 		auth, err := fleetmanager.NewStaticAuth(fleetmanager.StaticOption{StaticToken: option.Static.StaticToken})
 		Expect(err).ToNot(HaveOccurred())
