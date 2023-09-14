@@ -1829,3 +1829,279 @@ func TestRestoreCentralSecrets(t *testing.T) {
 		})
 	}
 }
+
+func Test_getCentralConfig_telemetry(t *testing.T) {
+
+	type args struct {
+		isInternal bool
+		storageKey string
+	}
+
+	tcs := []struct {
+		name   string
+		args   args
+		assert func(t *testing.T, c *v1alpha1.Central)
+	}{
+		{
+			name: "should disable telemetry when no storage key is set",
+			args: args{
+				isInternal: false,
+				storageKey: "",
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.False(t, *c.Spec.Central.Telemetry.Enabled)
+			},
+		},
+		{
+			name: "should disable telemetry when managed central is internal",
+			args: args{
+				isInternal: true,
+				storageKey: "foo",
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.False(t, *c.Spec.Central.Telemetry.Enabled)
+			},
+		},
+		{
+			name: "should enable telemetry when storage key is set and managed central is not internal",
+			args: args{
+				isInternal: false,
+				storageKey: "foo",
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.False(t, *c.Spec.Central.Telemetry.Enabled)
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			r := &CentralReconciler{}
+			if tc.args.isInternal {
+				r.telemetry = config.Telemetry{
+					StorageKey: tc.args.storageKey,
+				}
+			}
+			c := &v1alpha1.Central{}
+			mc := &private.ManagedCentral{
+				Metadata: private.ManagedCentralAllOfMetadata{
+					Internal: tc.args.isInternal,
+				},
+			}
+			r.applyTelemetry(mc, c)
+			tc.assert(t, c)
+		})
+	}
+}
+
+func TestReconciler_applyRoutes(t *testing.T) {
+
+	type args struct {
+		useRoutes bool
+	}
+
+	tcs := []struct {
+		name   string
+		args   args
+		assert func(t *testing.T, c *v1alpha1.Central)
+	}{
+		{
+			name: "should DISABLE routes when useRoutes is false",
+			args: args{
+				useRoutes: false,
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.False(t, *c.Spec.Central.Exposure.Route.Enabled)
+			},
+		}, {
+			name: "should ENABLE routes when useRoutes is true",
+			args: args{
+				useRoutes: true,
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.True(t, *c.Spec.Central.Exposure.Route.Enabled)
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			r := &CentralReconciler{
+				useRoutes: tc.args.useRoutes,
+			}
+			c := &v1alpha1.Central{}
+			r.applyRoutes(c)
+			tc.assert(t, c)
+		})
+	}
+}
+
+func TestReconciler_applyProxyConfig(t *testing.T) {
+
+	r := &CentralReconciler{
+		auditLogging: config.AuditLogging{
+			AuditLogTargetHost: "host",
+			AuditLogTargetPort: 9000,
+		},
+	}
+	c := &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "namespace",
+		},
+	}
+	r.applyProxyConfig(c)
+
+	assert.Equal(t, c.Spec.Customize.EnvVars, []v1.EnvVar{
+		{
+			Name:  "http_proxy",
+			Value: "http://egress-proxy.namespace.svc:3128",
+		},
+		{
+			Name:  "HTTP_PROXY",
+			Value: "http://egress-proxy.namespace.svc:3128",
+		},
+		{
+			Name:  "https_proxy",
+			Value: "http://egress-proxy.namespace.svc:3128",
+		},
+		{
+			Name:  "HTTPS_PROXY",
+			Value: "http://egress-proxy.namespace.svc:3128",
+		},
+		{
+			Name:  "all_proxy",
+			Value: "http://egress-proxy.namespace.svc:3128",
+		},
+		{
+			Name:  "ALL_PROXY",
+			Value: "http://egress-proxy.namespace.svc:3128",
+		},
+		{
+			Name:  "no_proxy",
+			Value: "central.namespace.svc:443,central.namespace:443,central:443,host:9000,kubernetes.default.svc.cluster.local.:443,scanner-db.namespace.svc:5432,scanner-db.namespace:5432,scanner-db:5432,scanner.namespace.svc:8080,scanner.namespace.svc:8443,scanner.namespace:8080,scanner.namespace:8443,scanner:8080,scanner:8443",
+		},
+		{
+			Name:  "NO_PROXY",
+			Value: "central.namespace.svc:443,central.namespace:443,central:443,host:9000,kubernetes.default.svc.cluster.local.:443,scanner-db.namespace.svc:5432,scanner-db.namespace:5432,scanner-db:5432,scanner.namespace.svc:8080,scanner.namespace.svc:8443,scanner.namespace:8080,scanner.namespace:8443,scanner:8080,scanner:8443",
+		},
+	})
+}
+
+func TestReconciler_applyDeclarativeConfig(t *testing.T) {
+	r := &CentralReconciler{}
+	c := &v1alpha1.Central{}
+	r.applyDeclarativeConfig(c)
+	assert.Equal(t, c.Spec.Central.DeclarativeConfiguration.Secrets, []v1alpha1.LocalSecretReference{
+		{
+			Name: "cloud-service-sensible-declarative-configs",
+		}, {
+			Name: "cloud-service-manual-declarative-configs",
+		},
+	})
+}
+
+func TestReconciler_applyAnnotations(t *testing.T) {
+	r := &CentralReconciler{
+		environment: "test",
+		clusterName: "test",
+	}
+	c := &v1alpha1.Central{
+		Spec: v1alpha1.CentralSpec{
+			Customize: &v1alpha1.CustomizeSpec{
+				Annotations: map[string]string{
+					"foo": "bar",
+				},
+			},
+		},
+	}
+	r.applyAnnotations(c)
+	assert.Equal(t, map[string]string{
+		"rhacs.redhat.com/environment":  "test",
+		"rhacs.redhat.com/cluster-name": "test",
+		"foo":                           "bar",
+	}, c.Spec.Customize.Annotations)
+}
+
+func TestReconciler_applyLabelSelector_disabledTargetedUpgrades(t *testing.T) {
+	r := &CentralReconciler{}
+	mc := &private.ManagedCentral{}
+	c := &v1alpha1.Central{}
+
+	err := r.applyLabelSelector(mc, c)
+
+	assert.NoError(t, err)
+	assert.Empty(t, c.Labels)
+}
+
+func TestReconciler_applyLabelSelector_enabledTargetedUpgrades(t *testing.T) {
+	r := &CentralReconciler{}
+	mc := &private.ManagedCentral{
+		Spec: private.ManagedCentralAllOfSpec{
+			OperatorImage: "quay.io/rhacs/rhacs-operator:latest",
+		},
+	}
+	c := &v1alpha1.Central{}
+	t.Setenv("RHACS_TARGETED_OPERATOR_UPGRADES", "true")
+
+	err := r.applyLabelSelector(mc, c)
+
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{
+		"rhacs.redhat.com/version-selector": "latest",
+	}, c.Labels)
+}
+
+func TestReconciler_getInstanceConfigWithGitops(t *testing.T) {
+
+	tcs := []struct {
+		name          string
+		yaml          string
+		expectErr     bool
+		expectCentral *v1alpha1.Central
+	}{
+		{
+			name:      "should return error when yaml is invalid",
+			yaml:      "invalid yaml",
+			expectErr: true,
+		}, {
+			name: "should unmashal yaml to central",
+			yaml: `
+apiVersion: platform.stackrox.io/v1alpha1
+kind: Central
+metadata:
+  name: central
+  namespace: rhacs
+spec: {}
+`,
+			expectCentral: &v1alpha1.Central{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Central",
+					APIVersion: "platform.stackrox.io/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "central",
+					Namespace: "rhacs",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			r := &CentralReconciler{}
+			mc := &private.ManagedCentral{
+				Spec: private.ManagedCentralAllOfSpec{
+					CentralCRYAML: tc.yaml,
+				},
+			}
+			c, err := r.getInstanceConfigWithGitops(mc)
+			if tc.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectCentral, c)
+			}
+		})
+	}
+
+}

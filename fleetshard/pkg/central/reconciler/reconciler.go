@@ -169,6 +169,10 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		}
 	}
 
+	if err := r.applyCentralConfig(&remoteCentral, central); err != nil {
+		return nil, err
+	}
+
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
 		return r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
 	}
@@ -262,12 +266,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 func (r *CentralReconciler) getInstanceConfigWithGitops(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
 	var central = new(v1alpha1.Central)
-
 	if err := yaml2.Unmarshal([]byte(remoteCentral.Spec.CentralCRYAML), central); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal central yaml")
-	}
-	if err := r.applyCentralConfig(remoteCentral, central); err != nil {
-		return nil, err
 	}
 	return central, nil
 }
@@ -350,10 +350,6 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 		},
 	}
 
-	if err := r.applyCentralConfig(remoteCentral, central); err != nil {
-		return nil, err
-	}
-
 	return central, nil
 }
 
@@ -423,9 +419,7 @@ func (r *CentralReconciler) applyProxyConfig(central *v1alpha1.Central) {
 	if central.Spec.Customize == nil {
 		central.Spec.Customize = &v1alpha1.CustomizeSpec{}
 	}
-	auditLoggingURL := url.URL{
-		Host: r.auditLogging.Endpoint(false),
-	}
+	auditLoggingURL := url.URL{Host: r.auditLogging.Endpoint(false)}
 	kubernetesURL := url.URL{
 		Host: "kubernetes.default.svc.cluster.local.:443",
 	}
