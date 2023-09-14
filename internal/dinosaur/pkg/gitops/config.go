@@ -3,8 +3,8 @@ package gitops
 
 import (
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"sigs.k8s.io/yaml"
 )
 
 // Config represents the gitops configuration

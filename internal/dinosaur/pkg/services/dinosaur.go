@@ -135,7 +135,6 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 	return &dinosaurService{
 		connectionFactory:            connectionFactory,
 		clusterService:               clusterService,
-		iamService:                   iamService,
 		iamConfig:                    iamConfig,
 		dinosaurConfig:               dinosaurConfig,
 		awsConfig:                    awsConfig,
