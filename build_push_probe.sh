@@ -37,22 +37,22 @@ IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-rhacs-eng/blackbox-monitoring-probe-s
 echo "Quay.io user and token are set, will push images to $IMAGE_REPOSITORY."
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_PROBE_USER="${QUAY_PROBE_USER}" \
-  QUAY_PROBE_TOKEN="${QUAY_PROBE_TOKEN}" \
+  QUAY_PROBE_USER="${QUAY_USER}" \
+  QUAY_PROBE_TOKEN="${QUAY_TOKEN}" \
   TAG="${VERSION}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
+  probe_image_repository="${IMAGE_REPOSITORY}" \
   docker/login/probe \
   image/push/probe
 
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_PROBE_USER="${QUAY_PROBE_USER}" \
-  QUAY_PROBE_TOKEN="${QUAY_PROBE_TOKEN}" \
+  QUAY_PROBE_USER="${QUAY_USER}" \
+  QUAY_PROBE_TOKEN="${QUAY_TOKEN}" \
   TAG="main" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
+  probe_image_repository="${IMAGE_REPOSITORY}" \
   docker/login/probe \
   image/push/probe
