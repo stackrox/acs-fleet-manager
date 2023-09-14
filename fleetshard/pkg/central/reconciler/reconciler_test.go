@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -1470,7 +1471,7 @@ func TestGetInstanceConfigSetsNoProxyEnvVarsForAuditLog(t *testing.T) {
 			nil,
 			reconcilerOptions,
 		)
-		centralConfig, err := r.getLegacyInstanceConfig(&simpleManagedCentral)
+		centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
 		assert.NoError(t, err)
 		require.NotNil(t, centralConfig)
 		require.NotNil(t, centralConfig.Spec.Customize)
@@ -1501,7 +1502,7 @@ func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
 		nil,
 		reconcilerOptions,
 	)
-	centralConfig, err := r.getLegacyInstanceConfig(&simpleManagedCentral)
+	centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
 	assert.NoError(t, err)
 	require.NotNil(t, centralConfig)
 	require.NotNil(t, centralConfig.Spec.Central)
@@ -2104,4 +2105,50 @@ spec: {}
 		})
 	}
 
+}
+
+func TestReconciler_shouldUseGitopsConfig(t *testing.T) {
+	tcs := []struct {
+		name               string
+		managedCentral     *private.ManagedCentral
+		featureFlagEnabled bool
+		expect             bool
+	}{
+		{
+			name: "should return true when centralCRYAML is set and feature flag is enabled",
+			managedCentral: &private.ManagedCentral{
+				Spec: private.ManagedCentralAllOfSpec{
+					CentralCRYAML: "foo",
+				},
+			},
+			featureFlagEnabled: true,
+			expect:             true,
+		}, {
+			name: "should return false when centralCRYAML is set and feature flag is disabled",
+			managedCentral: &private.ManagedCentral{
+				Spec: private.ManagedCentralAllOfSpec{
+					CentralCRYAML: "foo",
+				},
+			},
+			featureFlagEnabled: false,
+			expect:             false,
+		}, {
+			name: "should return false when centralCRYAML is not set and feature flag is enabled",
+			managedCentral: &private.ManagedCentral{
+				Spec: private.ManagedCentralAllOfSpec{
+					CentralCRYAML: "",
+				},
+			},
+			featureFlagEnabled: true,
+			expect:             false,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("RHACS_GITOPS_ENABLED", strconv.FormatBool(tc.featureFlagEnabled))
+			r := &CentralReconciler{}
+			assert.Equal(t, tc.expect, r.shouldUseGitopsConfig(tc.managedCentral))
+		})
+	}
 }

@@ -255,14 +255,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
 	var central *v1alpha1.Central
 	var err error
-	if features.GitOpsCentrals.Enabled() {
-		central, err = r.getInstanceConfigWithGitops(remoteCentral)
-		if err != nil {
+	if r.shouldUseGitopsConfig(remoteCentral) {
+		if central, err = r.getInstanceConfigWithGitops(remoteCentral); err != nil {
 			return nil, err
 		}
 	} else {
-		central, err = r.getLegacyInstanceConfig(remoteCentral)
-		if err != nil {
+		if central, err = r.getLegacyInstanceConfig(remoteCentral); err != nil {
 			return nil, err
 		}
 	}
@@ -270,6 +268,10 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 		return nil, err
 	}
 	return central, nil
+}
+
+func (r *CentralReconciler) shouldUseGitopsConfig(remoteCentral *private.ManagedCentral) bool {
+	return features.GitOpsCentrals.Enabled() && len(remoteCentral.Spec.CentralCRYAML) > 0
 }
 
 func (r *CentralReconciler) getInstanceConfigWithGitops(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
