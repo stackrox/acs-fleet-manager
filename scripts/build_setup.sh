@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+# The version should be a 7-char hash from git. This is what the deployment process in app-interface expects.
+export VERSION=$(git rev-parse --short=7 HEAD)
+
 # Set the directory for docker configuration:
 export DOCKER_CONFIG="${PWD}/.docker"
 
