@@ -525,6 +525,7 @@ image/build: GOOS=linux
 image/build: IMAGE_REF ?= "$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build: fleet-manager fleetshard-sync
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.hybrid .
+	$(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
 ifeq ("$(CLUSTER_TYPE)","kind")
 	kind load docker-image $(SHORT_IMAGE_REF)
 endif
@@ -601,7 +602,7 @@ image/push/internal: docker/login/internal
 
 # build and push the image to an OpenShift cluster's internal registry
 # namespace used in the image repository must exist on the cluster before running this command. Run `make deploy/project` to create the namespace if not available.
-image/build/push/internal: image/build/internal image/push/internal
+image/build/push/internal: image/push/internal
 .PHONY: image/build/push/internal
 
 # Build the binary and test image
