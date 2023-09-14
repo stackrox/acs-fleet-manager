@@ -49,10 +49,14 @@ func (k *GracePeriodManager) Stop() {
 
 // Reconcile ...
 func (k *GracePeriodManager) Reconcile() []error {
-	glog.Infoln("reconciling centrals")
+	glog.Infof("reconciling grace period start date for central instances")
 	var encounteredErrors []error
 
-	centrals, svcErr := k.dinosaurService.ListByStatus(constants.GetDeletingStatuses()...)
+	centrals, svcErr := k.dinosaurService.ListByStatus(
+		constants.CentralRequestStatusAccepted,
+		constants.CentralRequestStatusPreparing,
+		constants.CentralRequestStatusProvisioning,
+		constants.CentralRequestStatusReady)
 	if svcErr != nil {
 		return append(encounteredErrors, svcErr)
 	}
@@ -66,18 +70,7 @@ func (k *GracePeriodManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-// TODO: refactor arrays package.
-func contains[T comparable](values []T, s T) bool {
-	for _, v := range values {
-		if v == s {
-			return true
-		}
-	}
-	return false
-}
-
 func (k *GracePeriodManager) reconcileCentralGraceFrom(centrals dbapi.CentralList) serviceErr.ErrorList {
-	glog.Infof("reconciling grace period start date for central instances")
 	var svcErrors serviceErr.ErrorList
 
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.dinosaurConfig.Quota.Type))
@@ -88,15 +81,6 @@ func (k *GracePeriodManager) reconcileCentralGraceFrom(centrals dbapi.CentralLis
 	subscriptionStatusByOrg := map[string]bool{}
 
 	for _, central := range centrals {
-		glog.Infof("reconciling grace_from for central instance %q", central.ID)
-
-		// skip update when Central is marked for deletion or is already being deleted
-		if contains(constants.GetDeletingStatuses(), constants.CentralStatus(central.Status)) {
-			glog.Infof("central %q is in %q state, skipping grace_from reconciliation", central.ID, central.Status)
-			continue
-		}
-
-		glog.Infof("checking quota entitlement status for Central instance %q", central.ID)
 		active, exists := subscriptionStatusByOrg[central.OrganisationID]
 		if !exists {
 			isActive, err := quotaService.IsQuotaEntitlementActive(central)

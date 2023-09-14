@@ -102,20 +102,4 @@ func TestGracePeriodManager(t *testing.T) {
 		assert.Len(t, dinoSvc.UpdateCalls(), 3)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
-
-	t.Run("skip deleting and deprovision statuses", func(t *testing.T) {
-		centralA := &dbapi.CentralRequest{Status: constants.CentralRequestStatusDeleting.String()}
-		centralB := &dbapi.CentralRequest{Status: constants.CentralRequestStatusDeprovision.String()}
-		dinoSvc := withCentrals(centralA, centralB)
-		quotaSvc, quotaFactory := withEntitlement(false)
-		gpm := NewGracePeriodManager(dinoSvc, quotaFactory, defaultCfg)
-		errs := gpm.Reconcile()
-		require.Empty(t, errs)
-		assert.Nil(t, centralA.GraceFrom)
-		assert.Nil(t, centralB.GraceFrom)
-		assert.Len(t, dinoSvc.ListByStatusCalls(), 1)
-		assert.Empty(t, quotaSvc.IsQuotaEntitlementActiveCalls())
-		assert.Empty(t, dinoSvc.UpdateCalls())
-		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
-	})
 }

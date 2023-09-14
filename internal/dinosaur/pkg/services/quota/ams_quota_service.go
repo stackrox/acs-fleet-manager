@@ -308,12 +308,5 @@ func (q amsQuotaService) IsQuotaEntitlementActive(central *dbapi.CentralRequest)
 		glog.Infof("Quota no longer entitled for organisation %q", org.ID)
 		return false, nil
 	}
-	for _, qc := range quotaCosts {
-		if qc.Consumed() > qc.Allowed() {
-			glog.Warningf("Organisation %q has exceeded their quota allowance (quotaid: %q, consumed %q, allowed: %q)",
-				org.ID, qc.QuotaID(), qc.Consumed(), qc.Allowed())
-		}
-	}
-
 	return true, nil
 }

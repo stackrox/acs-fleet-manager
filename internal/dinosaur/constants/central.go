@@ -90,17 +90,3 @@ func (k CentralStatus) CompareTo(k1 CentralStatus) int {
 		return -1
 	}
 }
-
-// GetUpdateableStatuses ...
-func GetUpdateableStatuses() []string {
-	return []string{
-		CentralRequestStatusPreparing.String(),
-		CentralRequestStatusProvisioning.String(),
-		CentralRequestStatusFailed.String(),
-		CentralRequestStatusReady.String(),
-	}
-}
-
-func GetDeletingStatuses() []CentralStatus {
-	return []CentralStatus{CentralRequestStatusDeprovision, CentralRequestStatusDeleting}
-}
