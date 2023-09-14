@@ -156,20 +156,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
-	var central *v1alpha1.Central
-	if features.GitOpsCentrals.Enabled() {
-		central, err = r.getInstanceConfigWithGitops(&remoteCentral)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		central, err = r.getInstanceConfig(&remoteCentral)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if err := r.applyCentralConfig(&remoteCentral, central); err != nil {
+	central, err := r.getInstanceConfig(&remoteCentral)
+	if err != nil {
 		return nil, err
 	}
 
@@ -264,6 +252,26 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	return status, nil
 }
 
+func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
+	var central *v1alpha1.Central
+	var err error
+	if features.GitOpsCentrals.Enabled() {
+		central, err = r.getInstanceConfigWithGitops(remoteCentral)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		central, err = r.getLegacyInstanceConfig(remoteCentral)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if err := r.applyCentralConfig(remoteCentral, central); err != nil {
+		return nil, err
+	}
+	return central, nil
+}
+
 func (r *CentralReconciler) getInstanceConfigWithGitops(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
 	var central = new(v1alpha1.Central)
 	if err := yaml2.Unmarshal([]byte(remoteCentral.Spec.CentralCRYAML), central); err != nil {
@@ -272,7 +280,7 @@ func (r *CentralReconciler) getInstanceConfigWithGitops(remoteCentral *private.M
 	return central, nil
 }
 
-func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
+func (r *CentralReconciler) getLegacyInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
 	if remoteCentral == nil {
 		return nil, errInvalidArguments
 	}
