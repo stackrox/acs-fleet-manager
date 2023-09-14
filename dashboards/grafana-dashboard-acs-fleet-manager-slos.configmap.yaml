@@ -962,7 +962,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "sum(acs_fleet_manager_worker_central_duration_bucket{namespace=\"$namespace\",jobType=\"central_create\"}) by (le)",
+              "expr": "sum(increase(acs_fleet_manager_worker_central_duration_bucket{namespace=\"$namespace\",jobType=\"central_create\"}[$__range])) by (le)",
               "format": "heatmap",
               "instant": false,
               "interval": "",
@@ -1067,6 +1067,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager SLOs",
       "uid": "T2kek3H9a",
-      "version": 23,
+      "version": 24,
       "weekStart": ""
     }
