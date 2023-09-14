@@ -47,8 +47,6 @@ EOF
 KUBE_CONFIG=$(assemble_kubeconfig | yq e . -o=json - | jq -c . -)
 export KUBE_CONFIG
 
-ensure_fleet_manager_image_exists
-
 # Apply cluster type specific manifests, if any.
 if [[ -d "${MANIFESTS_DIR}/cluster-type-${CLUSTER_TYPE}" ]]; then
     apply "${MANIFESTS_DIR}/cluster-type-${CLUSTER_TYPE}"

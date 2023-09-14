@@ -23,7 +23,6 @@ FLEET_MANAGER_IMAGE=$(make -s -C "$GITROOT" full-image-tag)
 
 # Run the necessary docker actions out of the container
 preload_dependency_images
-ensure_fleet_manager_image_exists
 
 docker build -t acscs-e2e -f "$GITROOT/.openshift-ci/e2e-runtime/Dockerfile" "${GITROOT}"
 
