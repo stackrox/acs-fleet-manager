@@ -31,7 +31,7 @@
 # Set image repository to default value if it is not passed via env
 IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-rhacs-eng/blackbox-monitoring-probe-service}"
 
-./scripts/build_setup.sh
+source ./scripts/build_setup.sh
 
 # Push the image:
 echo "Quay.io user and token are set, will push images to $IMAGE_REPOSITORY."
