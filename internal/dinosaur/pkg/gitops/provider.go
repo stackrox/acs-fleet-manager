@@ -5,19 +5,8 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
-
-var (
-	errorCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "dinosaur_gitops_config_provider_error_total",
-		Help: "Number of errors encountered by the GitOps configuration provider.",
-	}, []string{})
-)
-
-func init() {
-	prometheus.MustRegister(errorCounter)
-}
 
 // ConfigProvider is the interface for GitOps configuration providers.
 type ConfigProvider interface {
@@ -63,7 +52,7 @@ func (p *provider) Get() (Config, error) {
 }
 
 func (p *provider) increaseErrorCount() {
-	errorCounter.WithLabelValues().Inc()
+	metrics.GitopsConfigProviderErrorCounter.WithLabelValues().Inc()
 }
 
 func (p *provider) tryGetLastWorkingConfig(err error) (Config, error) {
