@@ -41,6 +41,7 @@ spec:
           ports:
             - containerPort: 8000
             - containerPort: 8083
+            - containerPort: 8080
           env:
           - name: CENTRAL_CPU_REQUEST
             value: 200m

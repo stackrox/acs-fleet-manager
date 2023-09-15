@@ -687,6 +687,10 @@ var GitopsConfigProviderErrorCounter = prometheus.NewCounterVec(prometheus.Count
 	Help:      "Number of errors encountered by the GitOps configuration provider.",
 }, []string{})
 
+func init() {
+	GitopsConfigProviderErrorCounter.WithLabelValues().Add(0)
+}
+
 // UpdateDatabaseQueryDurationMetric Update the observatorium request duration metric with the following labels:
 //   - status: (i.e. "success" or "failure")
 //   - queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
@@ -711,6 +715,7 @@ func init() {
 	prometheus.MustRegister(centralPerClusterCountMetric)
 	prometheus.MustRegister(clusterStatusCapacityMaxMetric)
 	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
+	prometheus.MustRegister(GitopsConfigProviderErrorCounter)
 
 	// metrics for Centrals
 	prometheus.MustRegister(requestCentralCreationDurationMetric)
