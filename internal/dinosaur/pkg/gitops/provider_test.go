@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -89,7 +90,7 @@ func TestProvider_Get(t *testing.T) {
 			p.reader = tc.reader
 			p.validationFn = tc.validator
 
-			errorCounter.Reset()
+			metrics.GitopsConfigProviderErrorCounter.Reset()
 			_, err := p.Get()
 			if tc.expectError {
 				require.Error(t, err)
@@ -97,7 +98,7 @@ func TestProvider_Get(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			count := testutil.CollectAndCount(errorCounter)
+			count := testutil.CollectAndCount(metrics.GitopsConfigProviderErrorCounter)
 			assert.Equal(t, tc.expectedErrorMetricCount, count)
 
 		})
@@ -107,13 +108,6 @@ func TestProvider_Get(t *testing.T) {
 type mockReader struct {
 	config Config
 	err    error
-}
-
-func NewMockReader(config Config) *mockReader {
-	return &mockReader{
-		config: Config{},
-		err:    nil,
-	}
 }
 
 func (r *mockReader) Read() (Config, error) {
