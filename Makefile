@@ -44,7 +44,6 @@ endif
 SHORT_IMAGE_REF = "$(IMAGE_NAME):$(image_tag)"
 PROBE_SHORT_IMAGE_REF = "$(PROBE_IMAGE_NAME):$(image_tag)"
 
-# Default namespace for local deployments
 IMAGE_REGISTRY ?= quay.io/rhacs-eng
 image_repository:=$(IMAGE_NAME)
 probe_image_repository:=$(PROBE_IMAGE_NAME)
@@ -594,7 +593,7 @@ image/push/internal: docker/login/internal
 .PHONY: image/push/internal
 
 # build and push the image to an OpenShift cluster's internal registry
-# namespace used in the image repository must exist on the cluster before running this command. Run `make deploy/project` to create the   if not available.
+# namespace used in the image repository must exist on the cluster before running this command. Run `make deploy/project` to create the namespace if not available.
 image/build/push/internal: image/push/internal
 .PHONY: image/build/push/internal
 
