@@ -146,8 +146,9 @@ func (a *DefaultApiService) ApiRhacsV1AdminCentralsIdRestorePost(ctx _context.Co
 ApiRhacsV1AdminCentralsIdRotateSecretsPost Rotate RHSSO client of a central tenant
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
+  - @param centralRotateSecretsRequest Options for secret rotation
 */
-func (a *DefaultApiService) ApiRhacsV1AdminCentralsIdRotateSecretsPost(ctx _context.Context, id string) (*_nethttp.Response, error) {
+func (a *DefaultApiService) ApiRhacsV1AdminCentralsIdRotateSecretsPost(ctx _context.Context, id string, centralRotateSecretsRequest CentralRotateSecretsRequest) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
@@ -165,7 +166,7 @@ func (a *DefaultApiService) ApiRhacsV1AdminCentralsIdRotateSecretsPost(ctx _cont
 	localVarFormParams := _neturl.Values{}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -181,6 +182,8 @@ func (a *DefaultApiService) ApiRhacsV1AdminCentralsIdRotateSecretsPost(ctx _cont
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = &centralRotateSecretsRequest
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, err

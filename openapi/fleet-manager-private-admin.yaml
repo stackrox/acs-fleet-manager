@@ -264,6 +264,13 @@ paths:
       summary: Rotate RHSSO client of a central tenant
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
+      requestBody:
+        description: Options for secret rotation
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CentralRotateSecretsRequest'
+        required: true
       responses:
         "200":
           description: RHSSO client successfully rotated
@@ -527,6 +534,12 @@ components:
         version:
           type: string
           example: "quay.io/rhacs-eng/stackrox-operator:3.74.1"
+
+    CentralRotateSecretsRequest:
+      type: object
+      properties:
+        rotate_rhsso_client_credentials:
+          type: boolean
 
   securitySchemes:
     Bearer:

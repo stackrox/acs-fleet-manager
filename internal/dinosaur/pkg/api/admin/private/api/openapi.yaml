@@ -385,6 +385,13 @@ paths:
         required: true
         schema:
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CentralRotateSecretsRequest'
+        description: Options for secret rotation
+        required: true
       responses:
         "200":
           description: RHSSO client successfully rotated
@@ -617,6 +624,13 @@ components:
         version:
           example: quay.io/rhacs-eng/stackrox-operator:3.74.1
           type: string
+      type: object
+    CentralRotateSecretsRequest:
+      example:
+        rotate_rhsso_client_credentials: true
+      properties:
+        rotate_rhsso_client_credentials:
+          type: boolean
       type: object
     Error:
       allOf:
