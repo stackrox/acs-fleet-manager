@@ -23,6 +23,13 @@ func TestValidateGitOpsConfig(t *testing.T) {
 				require.Empty(t, err)
 			},
 			yaml: `
+rhacsOperators:
+  crd:
+    baseURL: https://raw.githubusercontent.com/stackrox/stackrox/{{ .GitRef }}/operator/bundle/manifests/
+    gitRef: 4.1.1
+  operators:
+  - gitRef: 4.1.1
+    image: "quay.io/rhacs-eng/stackrox-operator:4.1.1"
 centrals:
   overrides:
   - instanceIds:
