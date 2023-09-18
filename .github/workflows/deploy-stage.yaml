@@ -3,7 +3,7 @@ name: Deploy Stage Env
 on:
   push:
     branches:
-      - main
+      - stage
 
 jobs:
   call-deploy-workflow:
