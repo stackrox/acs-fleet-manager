@@ -118,7 +118,10 @@ func (u *ACSOperatorManager) RenderChart(operators OperatorConfigs) ([]*unstruct
 		}
 	}
 
-	u.resourcesChart = charts.MustGetChart("rhacs-operator", dynamicTemplatesUrls)
+	u.resourcesChart, err = charts.GetChart("rhacs-operator", dynamicTemplatesUrls)
+	if err != nil {
+		return nil, fmt.Errorf("failed getting chart: %w", err)
+	}
 	objs, err := charts.RenderToObjects(releaseName, ACSOperatorNamespace, u.resourcesChart, chartVals)
 	if err != nil {
 		return nil, fmt.Errorf("failed rendering operator chart: %w", err)
