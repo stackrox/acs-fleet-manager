@@ -23,7 +23,17 @@ type provider struct {
 }
 
 // NewProvider returns a new ConfigProvider.
-func NewProvider(reader Reader) ConfigProvider {
+func NewProvider(module *Module) ConfigProvider {
+
+	var reader Reader
+	if len(module.ConfigPath) > 0 {
+		glog.Infof("Using GitOps configuration from %s", module.ConfigPath)
+		reader = NewFileReader(module.ConfigPath)
+	} else {
+		glog.Infof("Using empty GitOps configuration")
+		reader = NewEmptyReader()
+	}
+
 	return &provider{
 		reader:            reader,
 		lastWorkingConfig: atomic.Pointer[Config]{},

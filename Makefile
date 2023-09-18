@@ -918,6 +918,16 @@ deploy/dev-fast/fleetshard-sync: fleetshard-sync
 	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleetshard-sync
 
+# When making changes to the gitops configuration for development purposes
+# situated here dev/env/manifests/fleet-manager/04-gitops-config.yaml, this
+# target will update the gitops configmap on the dev cluster.
+# It might take a few seconds/minutes for fleet-manager to observe the changes.
+# Changes to the configmap are hot-reloaded
+# See https://kubernetes.io/docs/concepts/configuration/configmap/#mounted-configmaps-are-updated-automatically
+deploy/dev/update-gitops-config:
+	./dev/env/scripts/update_gitops_config.sh
+.PHONY: deploy/dev/update-gitops-config
+
 tag:
 	@echo "$(image_tag)"
 .PHONY: tag
