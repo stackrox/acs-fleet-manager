@@ -1,0 +1,17 @@
+---
+#- A list of clusters for fleet manager
+#- The `cluster_id` field can not be empty
+#- All clusters which are already stored in fleet-manager's DB but are missing in the list will be marked as
+#  'deprovisioning' and will later be deleted.
+#- This list is ordered, any new cluster should be appended at the end.
+clusters:
+ - name: kind
+   cluster_id: 1234567890abcdef1234567890abcdef
+   cloud_provider: standalone
+   region: standalone
+   schedulable: true
+   status: ready
+   provider_type: standalone
+   supported_instance_type: "eval,standard"
+   cluster_dns: kubernetes.docker.internal
+   central_instance_limit: 5
