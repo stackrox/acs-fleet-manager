@@ -44,22 +44,13 @@ endif
 SHORT_IMAGE_REF = "$(IMAGE_NAME):$(image_tag)"
 PROBE_SHORT_IMAGE_REF = "$(PROBE_IMAGE_NAME):$(image_tag)"
 
-# Default namespace for local deployments
-NAMESPACE ?= fleet-manager-${USER}
-IMAGE_REGISTRY ?= default-route-openshift-image-registry.apps-crc.testing
-
-# The name of the image repository needs to start with the name of an existing
-# namespace because when the image is pushed to the internal registry of a
-# cluster it will assume that that namespace exists and will try to create a
-# corresponding image stream inside that namespace. If the namespace doesn't
-# exist the push fails. This doesn't apply when the image is pushed to a public
-# repository, like `docker.io` or `quay.io`.
-image_repository:=$(NAMESPACE)/$(IMAGE_NAME)
-probe_image_repository:=$(NAMESPACE)/$(PROBE_IMAGE_NAME)
+IMAGE_REGISTRY ?= quay.io/rhacs-eng
+image_repository:=$(IMAGE_NAME)
+probe_image_repository:=$(PROBE_IMAGE_NAME)
 
 # In the development environment we are pushing the image directly to the image
 # registry inside the development cluster. That registry has a different name
-# when it is accessed from outside the cluster and when it is acessed from
+# when it is accessed from outside the cluster and when it is accessed from
 # inside the cluster. We need the external name to push the image, and the
 # internal name to pull it.
 external_image_registry:= $(IMAGE_REGISTRY)
@@ -287,19 +278,19 @@ pre-commit:
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 
 fleet-manager:
-	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) ./cmd/fleet-manager
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0 $(GO) build $(GOARGS) ./cmd/fleet-manager
 .PHONY: fleet-manager
 
 fleetshard-sync:
-	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
 .PHONY: fleetshard-sync
 
 probe:
-	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o probe/bin/probe ./probe/cmd/probe
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0 $(GO) build $(GOARGS) -o probe/bin/probe ./probe/cmd/probe
 .PHONY: probe
 
 acsfleetctl:
-	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o acsfleetctl ./cmd/acsfleetctl
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o acsfleetctl ./cmd/acsfleetctl
 .PHONY: acsfleetctl
 
 binary: fleet-manager fleetshard-sync probe acsfleetctl
@@ -526,6 +517,10 @@ image/build: GOOS=linux
 image/build: IMAGE_REF ?= "$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build: fleet-manager fleetshard-sync
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.hybrid .
+	$(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
+ifeq ("$(CLUSTER_TYPE)","kind")
+	kind load docker-image $(SHORT_IMAGE_REF)
+endif
 .PHONY: image/build
 
 # Build the image using by specifying a specific image target within the Dockerfile.
@@ -599,7 +594,7 @@ image/push/internal: docker/login/internal
 
 # build and push the image to an OpenShift cluster's internal registry
 # namespace used in the image repository must exist on the cluster before running this command. Run `make deploy/project` to create the namespace if not available.
-image/build/push/internal: image/build/internal image/push/internal
+image/build/push/internal: image/push/internal
 .PHONY: image/build/push/internal
 
 # Build the binary and test image
@@ -903,18 +898,14 @@ deploy/bootstrap:
 	./dev/env/scripts/bootstrap.sh
 .PHONY: deploy/bootstrap
 
-deploy/dev-fast: GOOS=linux
-deploy/dev-fast: deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
+# Deploy local images fast for development
+deploy/dev-fast: image/build deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
 
-deploy/dev-fast/fleet-manager: GOOS=linux
-deploy/dev-fast/fleet-manager: fleet-manager
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(SHORT_IMAGE_REF) -f Dockerfile.hybrid .
+deploy/dev-fast/fleet-manager: image/build
 	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleet-manager
 
-deploy/dev-fast/fleetshard-sync: GOOS=linux
-deploy/dev-fast/fleetshard-sync: fleetshard-sync
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(SHORT_IMAGE_REF) -f Dockerfile.hybrid .
+deploy/dev-fast/fleetshard-sync: image/build
 	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleetshard-sync
 
