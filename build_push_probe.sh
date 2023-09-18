@@ -28,50 +28,31 @@
 # The machines that run this script need to have access to internet, so that
 # the built images can be pushed to quay.io.
 
-# The version should be a 7-char hash from git. This is what the deployment process in app-interface expects.
-VERSION=$(git rev-parse --short=7 HEAD)
-
 # Set image repository to default value if it is not passed via env
-PROBE_IMAGE_REPOSITORY="${QUAY_PROBE_IMAGE_REPOSITORY:-rhacs-eng/blackbox-monitoring-probe-service}"
+IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-rhacs-eng/blackbox-monitoring-probe-service}"
 
-# Set the directory for docker configuration:
-DOCKER_CONFIG="${PWD}/.docker"
-
-# Log in to the image registry:
-if [ -z "${QUAY_PROBE_USER}" ]; then
-  echo "The probe service quay.io push user name hasn't been provided."
-  echo "Make sure to set the QUAY_PROBE_USER environment variable."
-  exit 1
-fi
-if [ -z "${QUAY_PROBE_TOKEN}" ]; then
-  echo "The probe service quay.io push token hasn't been provided."
-  echo "Make sure to set the QUAY_PROBE_TOKEN environment variable."
-  exit 1
-fi
-
-# Set up the docker config directory
-mkdir -p "${DOCKER_CONFIG}"
+source ./scripts/build_setup.sh
 
 # Push the image:
-echo "Quay.io user and token are set, will push images to $PROBE_IMAGE_REPOSITORY."
+echo "Quay.io user and token are set, will push images to $IMAGE_REPOSITORY."
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_PROBE_USER="${QUAY_PROBE_USER}" \
-  QUAY_PROBE_TOKEN="${QUAY_PROBE_TOKEN}" \
+  QUAY_PROBE_USER="${QUAY_USER}" \
+  QUAY_PROBE_TOKEN="${QUAY_TOKEN}" \
   TAG="${VERSION}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
+  probe_image_repository="${IMAGE_REPOSITORY}" \
   docker/login/probe \
   image/push/probe
 
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
-  QUAY_PROBE_USER="${QUAY_PROBE_USER}" \
-  QUAY_PROBE_TOKEN="${QUAY_PROBE_TOKEN}" \
+  QUAY_PROBE_USER="${QUAY_USER}" \
+  QUAY_PROBE_TOKEN="${QUAY_TOKEN}" \
   TAG="main" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  probe_image_repository="${PROBE_IMAGE_REPOSITORY}" \
+  probe_image_repository="${IMAGE_REPOSITORY}" \
   docker/login/probe \
   image/push/probe

@@ -55,6 +55,8 @@ spec:
               value: "$MANAGED_DB_PERFORMANCE_INSIGHTS"
             - name: AWS_REGION
               value: "$AWS_REGION"
+            - name: RHACS_GITOPS_ENABLED
+              value: "$RHACS_GITOPS_ENABLED"
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:

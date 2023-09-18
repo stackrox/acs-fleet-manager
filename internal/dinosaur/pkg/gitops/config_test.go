@@ -24,20 +24,19 @@ func TestValidateGitOpsConfig(t *testing.T) {
 			},
 			yaml: `
 centrals:
-  default: {}
   overrides:
-  - instanceId: id1
+  - instanceIds:
+    - id1
     patch: |
       {}`,
 		}, {
 			name: "invalid yaml in patch",
 			assert: func(t *testing.T, c *Config, err field.ErrorList) {
 				require.Len(t, err, 1)
-				assert.Equal(t, field.Invalid(field.NewPath("centrals", "overrides").Index(0).Child("patch"), "foo", "invalid patch: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `foo` into v1alpha1.Central"), err[0])
+				assert.Equal(t, field.Invalid(field.NewPath("centrals", "overrides").Index(0).Child("patch"), "foo", "invalid patch: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1alpha1.Central"), err[0])
 			},
 			yaml: `
 centrals:
-  default: {}
   overrides:
   - instanceIds:
     - id1
@@ -47,11 +46,10 @@ centrals:
 			name: "patch contains un-mergeable fields",
 			assert: func(t *testing.T, c *Config, err field.ErrorList) {
 				require.Len(t, err, 1)
-				assert.Equal(t, field.Invalid(field.NewPath("centrals", "overrides").Index(0).Child("patch"), "spec: 123\n", "invalid patch: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!int `123` into v1alpha1.CentralSpec"), err[0])
+				assert.Equal(t, field.Invalid(field.NewPath("centrals", "overrides").Index(0).Child("patch"), "spec: 123\n", "invalid patch: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal number into Go struct field Central.spec of type v1alpha1.CentralSpec"), err[0])
 			},
 			yaml: `
 centrals:
-  default: {}
   overrides:
   - instanceIds:
     - id1
