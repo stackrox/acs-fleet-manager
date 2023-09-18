@@ -525,6 +525,10 @@ objects:
           roles:
             - "acs-general-engineering"
             - "acs-fleet-manager-admin-full"
+        - method: POST
+          roles:
+            - "acs-general-engineering"
+            - "acs-fleet-manager-admin-full"
       admin-authz-roles-prod.yaml: |-
         - method: GET
           roles:
@@ -536,6 +540,9 @@ objects:
             - "acs-fleet-manager-admin-full"
             - "acs-fleet-manager-admin-write"
         - method: DELETE
+          roles:
+            - "acs-fleet-manager-admin-full"
+        - method: POST
           roles:
             - "acs-fleet-manager-admin-full"
   - kind: ConfigMap

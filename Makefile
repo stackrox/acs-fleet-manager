@@ -220,7 +220,6 @@ help:
 	@echo "make openapi/generate            generate openapi modules"
 	@echo "make openapi/validate            validate openapi schema"
 	@echo "make image/build                 build image (hybrid fast build, respecting IGNORE_REPOSITORY_DIRTINESS)"
-	@echo "make image/build/local           build image (hybrid fast build, respecting IGNORE_REPOSITORY_DIRTINESS) for local development"
 	@echo "make image/build/multi-target    build image (containerized, respecting DEBUG_IMAGE and IGNORE_REPOSITORY_DIRTINESS) for local deployment"
 	@echo "make image/push                  push image"
 	@echo "make setup/git/hooks             setup git hooks"
@@ -548,6 +547,20 @@ image/build/multi-target/probe:
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build --target $(IMAGE_TARGET) -t $(IMAGE_REF) -f probe/Dockerfile .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(PROBE_SHORT_IMAGE_REF)
 .PHONY: image/build/multi-target/probe
+
+image/build/fleet-manager-tools: GOOS=linux
+image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/rhacs-eng/fleet-manager-tools:$(image_tag)"
+image/build/fleet-manager-tools: fleet-manager fleetshard-sync acsfleetctl
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.tools .
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) fleet-manager-tools:$(image_tag)
+.PHONY: image/build/multi-target/fleet-manager-tools
+
+image/push/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/rhacs-eng/fleet-manager-tools:$(image_tag)"
+image/push/fleet-manager-tools: image/build/fleet-manager-tools
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
+	@echo
+	@echo "Image fleet-manager tools was pushed as $(IMAGE_REF)."
+.PHONY: image/push/fleet-manager-tools
 
 # build binary and image and tag image for local deployment
 image/build/local: GOOS=linux

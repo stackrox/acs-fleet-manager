@@ -35,7 +35,7 @@ type dataPlaneClusterService struct {
 }
 
 // NewDataPlaneClusterService ...
-func NewDataPlaneClusterService(config dataPlaneClusterService) *dataPlaneClusterService {
+func NewDataPlaneClusterService(config dataPlaneClusterService) DataPlaneClusterService {
 	return &config
 }
 

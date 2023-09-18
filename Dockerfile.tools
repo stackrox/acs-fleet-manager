@@ -1,0 +1,33 @@
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.8
+
+ENV KUBECTL_VERSION=v1.28.1
+
+COPY \
+    fleet-manager \
+    fleetshard-sync \
+    acsfleetctl \
+    /usr/local/bin/
+
+RUN microdnf install tar gzip
+
+# Install kubeval
+RUN curl -LO https://github.com/instrumenta/kubeval/releases/download/v0.16.1/kubeval-linux-amd64.tar.gz
+RUN curl -LO "https://github.com/instrumenta/kubeval/releases/download/v0.16.1/checksums.txt"
+RUN cat checksums.txt | grep linux-amd64 | sha256sum --check
+RUN tar -xf kubeval-linux-amd64.tar.gz
+
+RUN mv kubeval /usr/bin/kubeval
+RUN chmod +x /usr/bin/kubeval
+RUN rm kubeval-linux-amd64.tar.gz
+
+# Install kubeclt
+RUN curl -o /usr/bin/kubectl -LO "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
+RUN chmod +x /usr/bin/kubectl
+RUN curl -LO "https://dl.k8s.io/$KUBECTL_VERSION/bin/linux/amd64/kubectl.sha256"
+RUN echo "$(cat kubectl.sha256)  /usr/bin/kubectl" | sha256sum --check
+
+LABEL name="fleet-manager-tools" \
+      vendor="Red Hat" \
+      version="0.0.1" \
+      summary="FleetManagerTools" \
+      description="RHACS fleet-manager tools used for CI pipelines"

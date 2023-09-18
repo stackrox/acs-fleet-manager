@@ -54,6 +54,11 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
 else
     # We will be running without RHACS operator, but at least install our CRDs.
     apply "${MANIFESTS_DIR}/crds"
+    apply "${MANIFESTS_DIR}/monitoring"
+fi
+
+if [[ "$RHACS_STANDALONE_MODE" == "true" ]]; then
+    apply "${MANIFESTS_DIR}/rhacs-operator/03-operators-config.yaml"
 fi
 
 if is_local_cluster "$CLUSTER_TYPE"; then

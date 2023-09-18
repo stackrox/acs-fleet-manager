@@ -257,27 +257,42 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 
 func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	ctx := context.Background()
+	var desiredOperatorConfigs []operator.OperatorConfig
 	var desiredOperatorImages []string
-	for _, operatorDeployment := range list.RhacsOperators.RHACSOperatorConfigs {
-		glog.Infof("Installing Operator version: %s", operatorDeployment.GitRef)
-		desiredOperatorImages = append(desiredOperatorImages, operatorDeployment.Image)
+
+	if features.StandaloneMode.Enabled() {
+		configMapOperators, err := r.operatorManager.ReadOperatorConfigFromConfigMap(ctx)
+		if err != nil {
+			glog.Warningf("Failed reading operators configMap: %v", err)
+		}
+
+		glog.Infof("Reading operator config map, extracted %d operators from configmap", len(configMapOperators))
+
+		desiredOperatorConfigs = configMapOperators
+	} else {
+		desiredOperatorConfigs = []operator.OperatorConfig{{
+			GitRef: "4.1.0",
+			Image:  "quay.io/rhacs-eng/stackrox-operator",
+		}}
 	}
 
 	// TODO: Replace with list from API request
 	operators := operator.OperatorConfigs{
-		Configs: []operator.OperatorConfig{{
-			Image:  "quay.io/rhacs-eng/stackrox-operator",
-			GitRef: "4.1.0",
-		}},
+		Configs: desiredOperatorConfigs,
 		CRD: operator.CRDConfig{
 			GitRef: "4.1.0",
 		},
 	}
 
-	if reflect.DeepEqual(cachedOperatorConfigs, list.RhacsOperators.RHACSOperatorConfigs) {
+	if reflect.DeepEqual(cachedOperatorConfigs, operators) {
 		return nil
 	}
 	cachedOperatorConfigs = operators
+
+	for _, operatorDeployment := range operators.Configs {
+		glog.Infof("Installing Operator version: %s", operatorDeployment.GitRef)
+		desiredOperatorImages = append(desiredOperatorImages, operatorDeployment.Image)
+	}
 
 	// TODO: comment line in to use the API response for production usage after Fleet-Manager implementation is finished
 	// err = r.operatorManager.InstallOrUpgrade(ctx, operator.FromAPIResponse(list.RhacsOperators))

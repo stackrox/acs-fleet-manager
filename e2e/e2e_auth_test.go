@@ -21,7 +21,7 @@ const (
 var _ = Describe("AuthN/Z Fleet* components", func() {
 
 	BeforeEach(func() {
-		if !runningAuthTests {
+		if !runAuthTests {
 			Skip("Skipping auth test")
 		}
 	})

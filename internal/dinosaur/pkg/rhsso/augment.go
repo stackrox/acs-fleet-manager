@@ -3,6 +3,7 @@ package rhsso
 import (
 	"context"
 	"fmt"
+	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
@@ -28,6 +29,9 @@ func AugmentWithDynamicAuthConfig(ctx context.Context, r *dbapi.CentralRequest, 
 		RedirectUris: redirectURIs,
 	})
 	if err != nil {
+		if apiError, ok := err.(*api.GenericOpenAPIError); ok {
+			glog.Errorf("Error response when creating RHSSO dynamic client: %s", string(apiError.Body()))
+		}
 		return errors.Wrapf(err, "failed to create RHSSO dynamic client for %s", r.ID)
 	}
 
