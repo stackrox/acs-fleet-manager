@@ -62,7 +62,7 @@ case $ENVIRONMENT in
 
   stage)
     FM_ENDPOINT="https://xtr6hh3mg6zc80v.api.stage.openshift.com"
-    OBSERVABILITY_GITHUB_TAG="master"
+    OBSERVABILITY_GITHUB_TAG="stage"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
     OPERATOR_USE_UPSTREAM="false"
