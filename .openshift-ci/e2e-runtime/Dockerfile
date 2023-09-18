@@ -5,7 +5,7 @@ RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
 
 RUN dnf update -y --disablerepo=\* --enablerepo=baseos,appstream && dnf -y install make which git gettext jq gcc && dnf clean all && rm -rf /var/cache/dnf
 
-COPY --from=registry.ci.openshift.org/stolostron/builder:go1.20-linux /usr/local/go /usr/local/go
+COPY --from=registry.ci.openshift.org/openshift/release:golang-1.20 /usr/local/go /usr/local/go
 COPY --from=quay.io/openshift/origin-cli:4.13 /usr/bin/oc /usr/bin
 COPY --from=quay.io/operator-framework/operator-sdk:v1.25 /usr/local/bin/operator-sdk /usr/local/bin
 
