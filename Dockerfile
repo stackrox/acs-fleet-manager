@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/stolostron/builder:go1.20-linux AS build
+FROM registry.ci.openshift.org/openshift/release:golang-1.20 AS build
 
 ENV GOFLAGS="-mod=mod"
 
