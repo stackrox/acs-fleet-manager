@@ -205,6 +205,7 @@ help:
 	@echo "make openapi/generate            generate openapi modules"
 	@echo "make openapi/validate            validate openapi schema"
 	@echo "make image/build                 build fleet-manager and fleetshard-sync container image"
+	@echo "make image/build/local           build fleet-manager and fleetshard-sync binaries locally, this image supports arm64"
 	@echo "make image/push                  push image"
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make secrets/touch               touch all required secret files"
