@@ -96,6 +96,21 @@ type KMSDataKeyGenerator struct {
 	kmsDataKeySpec string
 }
 
+// NewKMSDataKeyGenerator initiates a AWS KMS session and
+// returns a new instance of KMSDataKeyGenerator
+func NewKMSDataKeyGenerator(keyID, keySpec string) (*KMSDataKeyGenerator, error) {
+	sess, err := session.NewSession()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create session for KMS client %w", err)
+	}
+
+	return &KMSDataKeyGenerator{
+		keyID:          keyID,
+		kms:            kms.New(sess),
+		kmsDataKeySpec: keySpec,
+	}, nil
+}
+
 // Generate generates a KMS data key with the KMSDataKeyGenerator configuration
 func (g KMSDataKeyGenerator) Generate() ([]byte, error) {
 	dateKeyOut, err := g.kms.GenerateDataKey(&kms.GenerateDataKeyInput{KeyId: &g.keyID, KeySpec: &g.kmsDataKeySpec})

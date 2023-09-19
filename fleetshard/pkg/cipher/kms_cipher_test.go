@@ -38,7 +38,8 @@ func TestKMSDataKeyGenerator(t *testing.T) {
 
 	keyID := os.Getenv("SECRET_ENCRYPTION_KEY_ID")
 	require.NotEmpty(t, keyID, "SECRET_ENCRYPTION_KEY_ID not set")
-	generator := KMSDataKeyGenerator{keyID: keyID, kmsDataKeySpec: kms.DataKeySpecAes256}
+	generator, err := NewKMSDataKeyGenerator(keyID, kms.DataKeySpecAes256)
+	require.NoError(t, err)
 
 	key, err := generator.Generate()
 	require.NoError(t, err)
