@@ -45,8 +45,8 @@ func TestGracePeriodManager(t *testing.T) {
 	t.Run("no centrals, no problem", func(t *testing.T) {
 		dinoSvc := withCentrals()
 		quotaSvc, quotaFactory := withEntitlement(true)
-		gpm := NewGracePeriodManager(dinoSvc, quotaFactory, defaultCfg)
-		errs := gpm.Reconcile()
+		mgr := NewGracePeriodManager(dinoSvc, quotaFactory, defaultCfg)
+		errs := mgr.Reconcile()
 		require.Empty(t, errs)
 		assert.Len(t, dinoSvc.ListByStatusCalls(), 1)
 		assert.Empty(t, dinoSvc.UpdateCalls())

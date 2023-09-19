@@ -265,12 +265,17 @@ func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel
 	return costsMap, nil
 }
 
-func cloudAccountIsActive(cloudQuotas []*amsv1.QuotaCost, central *dbapi.CentralRequest) bool {
-	for _, qc := range cloudQuotas {
-		for _, account := range qc.CloudAccounts() {
-			if account.CloudAccountID() == central.CloudAccountID &&
-				account.CloudProviderID() == central.CloudProvider {
-				return true
+func cloudAccountIsActive(costsMap map[amsv1.BillingModel][]*amsv1.QuotaCost, central *dbapi.CentralRequest) bool {
+	for model, quotaCosts := range costsMap {
+		if model == amsv1.BillingModelStandard {
+			continue
+		}
+		for _, qc := range quotaCosts {
+			for _, account := range qc.CloudAccounts() {
+				if account.CloudAccountID() == central.CloudAccountID &&
+					account.CloudProviderID() == central.CloudProvider {
+					return true
+				}
 			}
 		}
 	}
@@ -296,13 +301,13 @@ func (q amsQuotaService) IsQuotaEntitlementActive(central *dbapi.CentralRequest)
 		return false, errors.NewWithCause(svcErr.Code, svcErr, "product %q has no allowed billing models", quotaType.GetProduct())
 	}
 
-	isCloudAccount := central.CloudAccountID != "" && central.CloudProvider == awsCloudProvider
+	isCloudAccount := central.CloudAccountID != ""
 
 	entitled :=
 		// Entitlement is active if there's allowed quota for standard billing model...
 		!isCloudAccount && len(quotasMap[amsv1.BillingModelStandard]) > 0 ||
 			// or there is cloud quota and the original cloud account is still active.
-			cloudAccountIsActive(quotasMap[amsv1.BillingModelMarketplaceAWS], central)
+			cloudAccountIsActive(quotasMap, central)
 
 	if !entitled {
 		glog.Infof("Quota no longer entitled for organisation %q", org.ID)
