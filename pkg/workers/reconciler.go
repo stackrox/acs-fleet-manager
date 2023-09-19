@@ -12,9 +12,6 @@ import (
 	"github.com/golang/glog"
 )
 
-// RepeatInterval ...
-var RepeatInterval = 30 * time.Second
-
 // Reconciler ...
 type Reconciler struct {
 	di.Inject
@@ -26,7 +23,7 @@ func (r *Reconciler) Start(worker Worker) {
 	worker.GetSyncGroup().Add(1)
 	worker.SetIsRunning(true)
 
-	ticker := time.NewTicker(RepeatInterval)
+	ticker := time.NewTicker(worker.GetRepeatInterval())
 	go func() {
 		// starts reconcile immediately and then on every repeat interval
 		glog.V(1).Infoln(fmt.Sprintf("Initial reconciliation loop for %T [%s]", worker, worker.GetID()))
