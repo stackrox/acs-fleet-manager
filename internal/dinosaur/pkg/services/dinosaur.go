@@ -52,7 +52,7 @@ const DinosaurRoutesActionCreate DinosaurRoutesAction = "CREATE"
 // DinosaurRoutesActionDelete ...
 const DinosaurRoutesActionDelete DinosaurRoutesAction = "DELETE"
 
-const gracePeriod = 12 * 24 * time.Hour
+const gracePeriod = 14 * 24 * time.Hour
 
 // CNameRecordStatus ...
 type CNameRecordStatus struct {
