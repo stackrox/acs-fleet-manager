@@ -3,12 +3,13 @@ package services
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	dynamicClientAPI "github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
-	"sync"
-	"time"
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -812,7 +813,7 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 		"Routes",
 		"Status",
 		"RoutesCreated",
-		"RouteCreationID",
+		"RoutesCreationID",
 		"DeletedAt",
 		"DeletionTimestamp",
 		"ClientID",
@@ -827,7 +828,7 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 	resetRequest.Status = dinosaurConstants.CentralRequestStatusPreparing.String()
 	resetRequest.CreatedAt = time.Now()
 
-	if err := dbConn.Unscoped().Model(&centralRequest).Select(columnsToReset).Updates(resetRequest).Error; err != nil {
+	if err := dbConn.Unscoped().Model(resetRequest).Select(columnsToReset).Updates(resetRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to reset CentralRequest status")
 	}
 
