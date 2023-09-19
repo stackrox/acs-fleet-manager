@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,4 +29,18 @@ func TestKMSEncryptDecrypt(t *testing.T) {
 
 	require.NotEqual(t, plaintext, string(ciphertextB))
 	require.Equal(t, plaintext, string(decrypted))
+}
+
+func TestKMSDataKeyGenerator(t *testing.T) {
+	if os.Getenv("RUN_AWS_INTEGRATION") != "true" {
+		t.Skip("Skip KMS tests. Set RUN_AWS_INTEGRATION=true env variable to enable KMS tests.")
+	}
+
+	keyID := os.Getenv("SECRET_ENCRYPTION_KEY_ID")
+	require.NotEmpty(t, keyID, "SECRET_ENCRYPTION_KEY_ID not set")
+	generator := KMSDataKeyGenerator{keyID: keyID, kmsDataKeySpec: kms.DataKeySpecAes256}
+
+	key, err := generator.Generate()
+	require.NoError(t, err)
+	require.Equal(t, 32, len(key))
 }
