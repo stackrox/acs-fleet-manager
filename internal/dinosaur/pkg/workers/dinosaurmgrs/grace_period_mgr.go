@@ -37,6 +37,11 @@ func NewGracePeriodManager(dinosaurService services.DinosaurService, quotaServic
 	}
 }
 
+// GetRepeatInterval doesn't need to be frequent for this worker.
+func (*GracePeriodManager) GetRepeatInterval() time.Duration {
+	return 6 * time.Hour
+}
+
 // Start initializes the dinosaur manager to reconcile dinosaur requests
 func (k *GracePeriodManager) Start() {
 	k.StartWorker(k)
@@ -49,7 +54,7 @@ func (k *GracePeriodManager) Stop() {
 
 // Reconcile ...
 func (k *GracePeriodManager) Reconcile() []error {
-	glog.Infof("reconciling grace period start date for central instances")
+	glog.Infoln("reconciling grace period start date for central instances")
 	var encounteredErrors []error
 
 	centrals, svcErr := k.dinosaurService.ListByStatus(
