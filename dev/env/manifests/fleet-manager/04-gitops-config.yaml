@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fleet-manager-gitops-config
+  namespace: "$ACSMS_NAMESPACE"
+data:
+  config.yaml: |
+    centrals:
+      overrides:
+        - instanceIds:
+            - "*"
+          patch: |
+            spec:
+              central:
+                monitoring:
+                  openshift:
+                    enabled: false
+                resources:
+                  limits:
+                    cpu: null
+                    memory: 1Gi
+                  requests:
+                    cpu: 100m
+                    memory: 200Mi
+              scanner:
+                analyzer:
+                  resources:
+                    limits:
+                      cpu: null
+                      memory: 1Gi
+                    requests:
+                      cpu: 100m
+                      memory: 500Mi
+                db:
+                  resources:
+                    limits:
+                      cpu: null
+                      memory: 1Gi
+                    requests:
+                      cpu: 100m
+                      memory: 500Mi

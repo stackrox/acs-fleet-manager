@@ -82,6 +82,9 @@ spec:
               name: secrets
             - mountPath: /config
               name: config
+            - mountPath: /gitops-config
+              name: gitops-config
+              readOnly: true
       restartPolicy: Always
       volumes:
         - name: secrets
@@ -91,3 +94,7 @@ spec:
         - name: config
           configMap:
             name: config
+        - name: gitops-config
+          configMap:
+            name: fleet-manager-gitops-config
+            optional: true

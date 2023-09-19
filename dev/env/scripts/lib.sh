@@ -140,8 +140,9 @@ init() {
     export DEBUG_PODS=${DEBUG_PODS:-$DEBUG_PODS_DEFAULT}
     export RHACS_TARGETED_OPERATOR_UPGRADES=${RHACS_TARGETED_OPERATOR_UPGRADES:-$RHACS_TARGETED_OPERATOR_UPGRADES_DEFAULT}
     export RHACS_STANDALONE_MODE=${RHACS_STANDALONE_MODE:-$RHACS_STANDALONE_MODE_DEFAULT}
+    export RHACS_GITOPS_ENABLED=${RHACS_GITOPS_ENABLED:-$RHACS_GITOPS_ENABLED_DEFAULT}
 
-    local fleet_manager_command="/usr/local/bin/fleet-manager serve --force-leader --api-server-bindaddress=0.0.0.0:8000 --health-check-server-bindaddress=0.0.0.0:8083 --kubeconfig=/secrets/kubeconfig --enable-central-external-certificate=$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE --central-domain-name='$CENTRAL_DOMAIN_NAME'"
+    local fleet_manager_command="/usr/local/bin/fleet-manager serve --force-leader --api-server-bindaddress=0.0.0.0:8000 --health-check-server-bindaddress=0.0.0.0:8083 --kubeconfig=/secrets/kubeconfig --enable-central-external-certificate=$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE --central-domain-name='$CENTRAL_DOMAIN_NAME' --gitops-config-path='/gitops-config/config.yaml'"
     FLEET_MANAGER_CONTAINER_COMMAND_DEFAULT="${fleet_manager_command} || { sleep 120; false; }"
     FLEETSHARD_SYNC_CONTAINER_COMMAND_DEFAULT="/usr/local/bin/fleetshard-sync"
     if [[ "$DEBUG_PODS" == "true" ]]; then
