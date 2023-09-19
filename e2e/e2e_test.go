@@ -17,14 +17,12 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -322,51 +320,13 @@ var _ = Describe("Central", func() {
 		var createdCentral *private.CentralRequest
 		var namespaceName string
 
-		centralResources := private.ResourceRequirements{
-			Requests: map[string]string{
-				corev1.ResourceCPU.String():    "210m",
-				corev1.ResourceMemory.String(): "210M",
-			},
-			Limits: map[string]string{
-				corev1.ResourceCPU.String():    "310m",
-				corev1.ResourceMemory.String(): "310M",
-			},
-		}
-		centralSpec := private.CentralSpec{
-			Resources: centralResources,
-		}
-		scannerResources := private.ResourceRequirements{
-			Requests: map[string]string{
-				corev1.ResourceCPU.String():    "210m",
-				corev1.ResourceMemory.String(): "310M",
-			},
-			Limits: map[string]string{
-				corev1.ResourceCPU.String():    "211m",
-				corev1.ResourceMemory.String(): "311M",
-			},
-		}
-		scannerScaling := private.ScannerSpecAnalyzerScaling{
-			AutoScaling: "Enabled",
-			Replicas:    1,
-			MinReplicas: 1,
-			MaxReplicas: 2,
-		}
-		scannerSpec := private.ScannerSpec{
-			Analyzer: private.ScannerSpecAnalyzer{
-				Resources: scannerResources,
-				Scaling:   scannerScaling,
-			},
-		}
-
-		It("should create central with custom resource configuration", func() {
+		It("should create central", func() {
 			centralName := newCentralName()
 			request := private.CentralRequestPayload{
 				Name:          centralName,
 				MultiAz:       true,
 				CloudProvider: dpCloudProvider,
 				Region:        dpRegion,
-				Central:       centralSpec,
-				Scanner:       scannerSpec,
 			}
 			resp, _, err := adminAPI.CreateCentral(context.TODO(), true, request)
 			Expect(err).To(BeNil())
@@ -389,71 +349,6 @@ var _ = Describe("Central", func() {
 			Eventually(func() error {
 				return k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: createdCentral.Name, Namespace: namespaceName}, central)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
-		})
-
-		It("central resources match configured settings", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			coreV1Resources := central.Spec.Central.DeploymentSpec.Resources
-			expectedResources, err := converters.ConvertAdminPrivateRequirementsToCoreV1(&centralResources)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(*coreV1Resources).To(Equal(expectedResources))
-		})
-
-		It("scanner analyzer resources match configured settings", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			coreV1Resources := central.Spec.Scanner.Analyzer.DeploymentSpec.Resources
-			expectedResources, err := converters.ConvertAdminPrivateRequirementsToCoreV1(&scannerResources)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(*coreV1Resources).To(Equal(expectedResources))
-
-			scaling := central.Spec.Scanner.Analyzer.Scaling
-			expectedScaling, err := converters.ConvertAdminPrivateScalingToV1(&scannerScaling)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(*scaling).To(Equal(expectedScaling))
-		})
-
-		It("resources should be updatable", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			updateReq := private.CentralUpdateRequest{
-				Central: private.CentralSpec{
-					Resources: private.ResourceRequirements{
-						Requests: map[string]string{
-							corev1.ResourceMemory.String(): "199M",
-						},
-						Limits: map[string]string{
-							corev1.ResourceCPU.String(): "315m",
-						},
-					},
-				},
-			}
-			newCentralResources := corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("210m"),
-					corev1.ResourceMemory: resource.MustParse("199M"),
-				},
-				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("315m"),
-					corev1.ResourceMemory: resource.MustParse("310M"),
-				},
-			}
-
-			_, _, err = adminAPI.UpdateCentralById(context.TODO(), centralID, updateReq)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(func() corev1.ResourceRequirements {
-				central := &v1alpha1.Central{}
-				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: createdCentral.Name, Namespace: namespaceName}, central)
-				Expect(err).ToNot(HaveOccurred())
-				if central.Spec.Central == nil || central.Spec.Central.Resources == nil {
-					return corev1.ResourceRequirements{}
-				}
-				return *central.Spec.Central.Resources
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(newCentralResources))
 		})
 
 		It("should transition central's state to ready", func() {

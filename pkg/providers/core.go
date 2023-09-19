@@ -3,6 +3,7 @@ package providers
 
 import (
 	"github.com/goava/di"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
@@ -44,6 +45,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(auth.NewFleetShardAuthZConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(auth.NewAdminAuthZConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(telemetry.NewTelemetryConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(gitops.NewModule, di.As(new(environments.ConfigModule))),
 
 		// Add other core config providers..
 		sentry.ConfigProviders(),
