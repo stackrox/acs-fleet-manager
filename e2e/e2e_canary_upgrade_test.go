@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	namespace = "acsms"
+	namespace = "acscs"
 )
 
 var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {

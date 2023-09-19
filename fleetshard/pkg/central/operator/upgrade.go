@@ -191,7 +191,7 @@ func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredI
 func (u *ACSOperatorManager) ReadOperatorConfigFromConfigMap(ctx context.Context) ([]OperatorConfig, error) {
 	configMap := &v1.ConfigMap{}
 
-	err := u.client.Get(ctx, ctrlClient.ObjectKey{Name: ACSOperatorConfigMap, Namespace: "acsms"}, configMap)
+	err := u.client.Get(ctx, ctrlClient.ObjectKey{Name: ACSOperatorConfigMap, Namespace: "acscs"}, configMap)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving operators configMap: %v", err)
 	}
