@@ -433,13 +433,28 @@ func (h adminCentralHandler) RotateSecrets(w http.ResponseWriter, r *http.Reques
 	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
-			ctx := r.Context()
-			centralRequest, err := h.service.Get(ctx, id)
+			updateBytes, err := io.ReadAll(r.Body)
 			if err != nil {
-				return nil, err
+				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Reading request body: %s", err.Error())
 			}
-			err = h.service.RotateCentralRHSSOClient(ctx, centralRequest)
-			return nil, err
+
+			rotateSecretsRequest := private.CentralRotateSecretsRequest{} // pragma: allowlist secret
+			if err := json.Unmarshal(updateBytes, &rotateSecretsRequest); err != nil {
+				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Unmarshalling request body: %s", err.Error())
+			}
+
+			ctx := r.Context()
+			centralRequest, svcErr := h.service.Get(ctx, id)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+			if rotateSecretsRequest.RotateRhssoClientCredentials {
+				svcErr = h.service.RotateCentralRHSSOClient(ctx, centralRequest)
+				if svcErr != nil {
+					return nil, svcErr
+				}
+			}
+			return nil, nil
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
