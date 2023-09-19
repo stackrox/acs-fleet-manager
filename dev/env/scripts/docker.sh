@@ -56,13 +56,8 @@ ensure_fleet_manager_image_exists() {
             if [[ "$image_available" != "true" || "$FLEET_MANAGER_IMAGE" =~ dirty$ ]]; then
                 # Attempt to build this image.
                 if [[ "$FLEET_MANAGER_IMAGE" == "$(make -s -C "${GITROOT}" full-image-tag)" ]]; then
-                    # Looks like we can build this tag from the current state of the repository.
-                    log "Building image..."
-                    if [[ "$ARCH" == "arm64" ]]; then
-                        make -C "${GITROOT}" image/build/arm64
-                    else
-                        make -C "${GITROOT}" image/build
-                    fi
+                        log "Building standard image..."
+                        make -C "${GITROOT}" image/build/local
                 else
                     die "Cannot find image '${FLEET_MANAGER_IMAGE}' and don't know how to build it"
                 fi

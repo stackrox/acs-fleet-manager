@@ -1,4 +1,4 @@
-# This dockerfile is used for arm64 builds because base images for production are not available with arm64 architecture.
+# This dockerfile is used for local builds to support architectures like arm64.
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.8
 
 RUN microdnf install shadow-utils

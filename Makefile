@@ -515,10 +515,9 @@ image/build:
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
 .PHONY: image/build
 
-# Builds the image for arm64 by using locally build binaries and an arm64 compatible image. Base images do not match production bases images.
-image/build/arm64: DOCKERFILE="Dockerfile.arm64"
-image/build/arm64: GOARCH="arm64"
-image/build/arm64:
+# Builds the binaries locally and copies them into the image. This build is compatible with arm64.
+image/build/local: DOCKERFILE="Dockerfile.local"
+image/build/local:
 	GOARCH=$(GOARCH) GOOS=$(GOOS) $(MAKE) binary
 	$(MAKE) image/build DOCKERFILE=$(DOCKERFILE)
 
