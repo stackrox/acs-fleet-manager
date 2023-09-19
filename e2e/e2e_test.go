@@ -316,8 +316,30 @@ var _ = Describe("Central", func() {
 
 	Describe("should be created and deployed to k8s with admin API", func() {
 		var err error
+		var centralID string
 		var createdCentral *private.CentralRequest
 		var namespaceName string
+
+		It("should create central", func() {
+			centralName := newCentralName()
+			request := private.CentralRequestPayload{
+				Name:          centralName,
+				MultiAz:       true,
+				CloudProvider: dpCloudProvider,
+				Region:        dpRegion,
+			}
+			resp, _, err := adminAPI.CreateCentral(context.TODO(), true, request)
+			Expect(err).To(BeNil())
+			createdCentral = &resp
+			notes = []string{
+				fmt.Sprintf("Central name: %s", createdCentral.Name),
+				fmt.Sprintf("Central ID: %s", createdCentral.Id),
+			}
+			centralID = createdCentral.Id
+			namespaceName, err = services.FormatNamespace(centralID)
+			Expect(err).To(BeNil())
+			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
+		})
 
 		central := &v1alpha1.Central{}
 		It("should create central in its namespace on a managed cluster", func() {
