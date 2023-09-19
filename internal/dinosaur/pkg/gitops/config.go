@@ -11,7 +11,7 @@ import (
 // Config represents the gitops configuration
 type Config struct {
 	Centrals       CentralsConfig           `json:"centrals"`
-	RHACSOperators operator.OperatorConfigs `json:"rhacsOperators""`
+	RHACSOperators operator.OperatorConfigs `json:"rhacsOperators"`
 }
 
 // CentralsConfig represents the declarative configuration for Central instances defaults and overrides.
