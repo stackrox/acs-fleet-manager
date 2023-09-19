@@ -43,6 +43,13 @@ centrals:
 				assert.Equal(t, field.Invalid(field.NewPath("centrals", "overrides").Index(0).Child("patch"), "foo", "invalid patch: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1alpha1.Central"), err[0])
 			},
 			yaml: `
+rhacsOperators:
+  crd:
+    baseURL: https://raw.githubusercontent.com/stackrox/stackrox/{{ .GitRef }}/operator/bundle/manifests/
+    gitRef: 4.1.1
+  operators:
+  - gitRef: 4.1.1
+    image: "quay.io/rhacs-eng/stackrox-operator:4.1.1"
 centrals:
   overrides:
   - instanceIds:
@@ -56,12 +63,35 @@ centrals:
 				assert.Equal(t, field.Invalid(field.NewPath("centrals", "overrides").Index(0).Child("patch"), "spec: 123\n", "invalid patch: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal number into Go struct field Central.spec of type v1alpha1.CentralSpec"), err[0])
 			},
 			yaml: `
+rhacsOperators:
+  crd:
+    baseURL: https://raw.githubusercontent.com/stackrox/stackrox/{{ .GitRef }}/operator/bundle/manifests/
+    gitRef: 4.1.1
+  operators:
+  - gitRef: 4.1.1
+    image: "quay.io/rhacs-eng/stackrox-operator:4.1.1"
+centrals:
+  overrides:
+  - instanceIds:
+    patch: |
+      spec: 123
+`,
+		}, {
+			name: "invalid operator config and central config",
+			assert: func(t *testing.T, c *Config, err field.ErrorList) {
+				require.Len(t, err, 2)
+				assert.Contains(t, err.ToAggregate().Errors()[0].Error(), "cannot unmarshal string into Go value of type v1alpha1.Central", "central config was not validated")
+				assert.Contains(t, err.ToAggregate().Errors()[1].Error(), "operator chart rendering succeed, but no manifests were rendered", "operator config was not validated")
+			},
+			yaml: `
+rhacsOperators:
+  crd:
+    baseURL: invalid
 centrals:
   overrides:
   - instanceIds:
     - id1
-    patch: |
-      spec: 123
+    patch: invalid
 `,
 		},
 	}

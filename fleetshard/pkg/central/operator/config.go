@@ -25,16 +25,19 @@ func GetConfig() OperatorConfigs {
 }
 
 // Validate validates the operator configuration and can be used in different life-cycle stages like runtime and deploy time.
-func Validate(path *field.Path, configs OperatorConfigs) *field.Error {
-	var validateErr *field.Error
+func Validate(path *field.Path, configs OperatorConfigs) field.ErrorList {
 	manager := ACSOperatorManager{}
 	manifests, err := manager.RenderChart(configs)
 	if err != nil {
-		validateErr = field.Forbidden(path, fmt.Sprintf("could not render operator helm charts, got invalid configuration: %s", err.Error()))
+		return field.ErrorList{
+			field.Forbidden(path, fmt.Sprintf("could not render operator helm charts, got invalid configuration: %s", err.Error())),
+		}
 	} else if len(manifests) == 0 {
-		validateErr = field.Forbidden(path, fmt.Sprintf("operator chart rendering succeed, but no manifests were rendered"))
+		return field.ErrorList{
+			field.Forbidden(path, fmt.Sprintf("operator chart rendering succeed, but no manifests were rendered")),
+		}
 	}
-	return validateErr
+	return nil
 }
 
 // CRDConfig represents the crd to be installed in the data-plane cluster. The CRD is downloaded automatically

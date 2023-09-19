@@ -34,7 +34,7 @@ type CentralOverride struct {
 func ValidateConfig(config Config) field.ErrorList {
 	var errs field.ErrorList
 	errs = append(errs, validateCentralsConfig(field.NewPath("centrals"), config.Centrals)...)
-	errs = append(errs, operator.Validate(field.NewPath("rhacsOperators"), config.RHACSOperators))
+	errs = append(errs, operator.Validate(field.NewPath("rhacsOperators"), config.RHACSOperators)...)
 	return errs
 }
 

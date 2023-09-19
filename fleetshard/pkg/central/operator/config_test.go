@@ -36,8 +36,7 @@ func TestValidateShouldSucceed(t *testing.T) {
 	conf, err := parseConfig(getExampleConfig())
 	require.NoError(t, err)
 
-	err = Validate(field.NewPath("rhacsOperator"), conf)
-	require.Nil(t, err)
+	require.Nil(t, Validate(field.NewPath("rhacsOperator"), conf))
 }
 
 func TestGetOperatorConfigFailsValidation(t *testing.T) {
@@ -86,10 +85,10 @@ func TestGetOperatorConfigFailsValidation(t *testing.T) {
 			config, err := parseConfig(getExampleConfig())
 			require.NoError(t, err)
 
-			err = Validate(field.NewPath("rhacsOperator"), testCase.getConfig(t, config))
-			require.NotNil(t, err)
+			errList := Validate(field.NewPath("rhacsOperator"), testCase.getConfig(t, config))
+			require.Len(t, errList, 1)
 			require.NotEmpty(t, testCase.contains)
-			assert.Contains(t, err.Error(), testCase.contains)
+			assert.Contains(t, errList.ToAggregate().Errors()[0].Error(), testCase.contains)
 		})
 	}
 }
