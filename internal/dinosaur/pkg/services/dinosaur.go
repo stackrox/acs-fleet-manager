@@ -161,7 +161,6 @@ func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralR
 	previousAuthConfig := centralRequest.AuthConfig
 	if err := rhsso.AugmentWithDynamicAuthConfig(ctx, centralRequest, k.iamConfig.RedhatSSORealm, k.rhSSODynamicClientsAPI); err != nil {
 		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to augment auth config")
-
 	}
 	if err := k.Update(centralRequest); err != nil {
 		glog.Errorf("Rotating RHSSO client failed: created new RHSSO dynamic client, but failed to update central record, client ID is %s", centralRequest.AuthConfig.ClientID)
