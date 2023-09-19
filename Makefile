@@ -864,12 +864,12 @@ deploy/bootstrap:
 deploy/dev-fast: image/build deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
 
 deploy/dev-fast/fleet-manager: GOOS=linux
-deploy/dev-fast/fleet-manager: image/build
+deploy/dev-fast/fleet-manager: image/build/local
 	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleet-manager
 
 deploy/dev-fast/fleetshard-sync: GOOS=linux
-deploy/dev-fast/fleetshard-sync: image/build
+deploy/dev-fast/fleetshard-sync: image/build/local
 	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
 	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleetshard-sync
 
