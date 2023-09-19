@@ -5,6 +5,7 @@ package workers
 
 import (
 	"sync"
+	"time"
 )
 
 // Ensure, that WorkerMock does implement Worker.
@@ -19,6 +20,9 @@ var _ Worker = &WorkerMock{}
 //		mockedWorker := &WorkerMock{
 //			GetIDFunc: func() string {
 //				panic("mock out the GetID method")
+//			},
+//			GetRepeatIntervalFunc: func() time.Duration {
+//				panic("mock out the GetRepeatInterval method")
 //			},
 //			GetStopChanFunc: func() *chan struct{} {
 //				panic("mock out the GetStopChan method")
@@ -54,6 +58,9 @@ type WorkerMock struct {
 	// GetIDFunc mocks the GetID method.
 	GetIDFunc func() string
 
+	// GetRepeatIntervalFunc mocks the GetRepeatInterval method.
+	GetRepeatIntervalFunc func() time.Duration
+
 	// GetStopChanFunc mocks the GetStopChan method.
 	GetStopChanFunc func() *chan struct{}
 
@@ -83,6 +90,9 @@ type WorkerMock struct {
 		// GetID holds details about calls to the GetID method.
 		GetID []struct {
 		}
+		// GetRepeatInterval holds details about calls to the GetRepeatInterval method.
+		GetRepeatInterval []struct {
+		}
 		// GetStopChan holds details about calls to the GetStopChan method.
 		GetStopChan []struct {
 		}
@@ -110,15 +120,16 @@ type WorkerMock struct {
 		Stop []struct {
 		}
 	}
-	lockGetID         sync.RWMutex
-	lockGetStopChan   sync.RWMutex
-	lockGetSyncGroup  sync.RWMutex
-	lockGetWorkerType sync.RWMutex
-	lockIsRunning     sync.RWMutex
-	lockReconcile     sync.RWMutex
-	lockSetIsRunning  sync.RWMutex
-	lockStart         sync.RWMutex
-	lockStop          sync.RWMutex
+	lockGetID             sync.RWMutex
+	lockGetRepeatInterval sync.RWMutex
+	lockGetStopChan       sync.RWMutex
+	lockGetSyncGroup      sync.RWMutex
+	lockGetWorkerType     sync.RWMutex
+	lockIsRunning         sync.RWMutex
+	lockReconcile         sync.RWMutex
+	lockSetIsRunning      sync.RWMutex
+	lockStart             sync.RWMutex
+	lockStop              sync.RWMutex
 }
 
 // GetID calls GetIDFunc.
@@ -145,6 +156,33 @@ func (mock *WorkerMock) GetIDCalls() []struct {
 	mock.lockGetID.RLock()
 	calls = mock.calls.GetID
 	mock.lockGetID.RUnlock()
+	return calls
+}
+
+// GetRepeatInterval calls GetRepeatIntervalFunc.
+func (mock *WorkerMock) GetRepeatInterval() time.Duration {
+	if mock.GetRepeatIntervalFunc == nil {
+		panic("WorkerMock.GetRepeatIntervalFunc: method is nil but Worker.GetRepeatInterval was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetRepeatInterval.Lock()
+	mock.calls.GetRepeatInterval = append(mock.calls.GetRepeatInterval, callInfo)
+	mock.lockGetRepeatInterval.Unlock()
+	return mock.GetRepeatIntervalFunc()
+}
+
+// GetRepeatIntervalCalls gets all the calls that were made to GetRepeatInterval.
+// Check the length with:
+//
+//	len(mockedWorker.GetRepeatIntervalCalls())
+func (mock *WorkerMock) GetRepeatIntervalCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetRepeatInterval.RLock()
+	calls = mock.calls.GetRepeatInterval
+	mock.lockGetRepeatInterval.RUnlock()
 	return calls
 }
 
