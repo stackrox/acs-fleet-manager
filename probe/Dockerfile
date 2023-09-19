@@ -9,18 +9,7 @@ COPY go.*  ./
 RUN go mod download
 COPY . ./
 
-FROM build as build-debug
-RUN GOARGS="-gcflags 'all=-N -l'" make probe
-
-FROM build as build-standard
 RUN make probe
-
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.8 as debug
-COPY --from=build-debug /go/bin/dlv /src/probe/bin /stackrox/
-COPY --from=build-debug /src /src
-EXPOSE 7070
-ENTRYPOINT [ "/stackrox/dlv" , "--listen=:40000", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/stackrox/probe"]
-CMD ["start"]
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.8 as standard
 
@@ -30,7 +19,7 @@ RUN useradd -u 1001 unprivilegeduser
 # Switch to non-root user
 USER unprivilegeduser
 
-COPY --from=build-standard /src/probe/bin /stackrox/
+COPY --from=build /src/probe/bin /stackrox/
 EXPOSE 7070
 ENTRYPOINT ["/stackrox/probe"]
 CMD ["start"]
