@@ -76,24 +76,19 @@ type AMSClient Client
 type ClusterManagementClient Client
 
 // NewOCMConnection ...
-func NewOCMConnection(ocmConfig *OCMConfig, BaseURL string) (*sdkClient.Connection, func(), error) {
+func NewOCMConnection(ocmConfig *OCMConfig, baseURL string) (*sdkClient.Connection, func(), error) {
 	if ocmConfig.EnableMock && ocmConfig.MockMode != MockModeEmulateServer {
 		return nil, func() {}, nil
 	}
 
-	builder := sdkClient.NewConnectionBuilder().
-		URL(BaseURL).
-		MetricsSubsystem("api_outbound")
-
+	builder := getBaseConnectionBuilder(baseURL)
 	if !ocmConfig.EnableMock {
 		// Create a logger that has the debug level enabled:
-		logger, err := sdkClient.NewGoLoggerBuilder().
-			Debug(ocmConfig.Debug).
-			Build()
+		var err error
+		builder, err = addLoggerToConnectionBuilder(ocmConfig.Debug, builder)
 		if err != nil {
-			return nil, nil, fmt.Errorf("creating logger for OCM client connection: %w", err)
+			return nil, nil, err
 		}
-		builder = builder.Logger(logger)
 	}
 
 	if ocmConfig.ClientID != "" && ocmConfig.ClientSecret != "" {
@@ -111,6 +106,23 @@ func NewOCMConnection(ocmConfig *OCMConfig, BaseURL string) (*sdkClient.Connecti
 	return connection, func() {
 		_ = connection.Close()
 	}, nil
+}
+
+func getBaseConnectionBuilder(baseURL string) *sdkClient.ConnectionBuilder {
+	return sdkClient.NewConnectionBuilder().
+		URL(baseURL).
+		MetricsSubsystem("api_outbound")
+}
+
+func addLoggerToConnectionBuilder(isDebugEnabled bool, builder *sdkClient.ConnectionBuilder) (*sdkClient.ConnectionBuilder, error) {
+	logger, err := sdkClient.NewGoLoggerBuilder().
+		Debug(isDebugEnabled).
+		Build()
+	if err != nil {
+		return nil, fmt.Errorf("creating logger for OCM client connection: %w", err)
+	}
+	builder = builder.Logger(logger)
+	return builder, nil
 }
 
 // NewClient ...
@@ -747,11 +759,20 @@ func (c *client) GetCustomerCloudAccounts(organizationID string, quotaIDs []stri
 
 // GetCurrentAccount returns the account information of the current authenticated user
 func (c *client) GetCurrentAccount(overrideAuthToken string) (*amsv1.Account, error) {
-	currentAccountClient := c.connection.AccountsMgmt().V1().CurrentAccount()
-	request := currentAccountClient.Get()
-	if overrideAuthToken != "" {
-		request = request.Header("Authorization", fmt.Sprintf("Bearer %s", overrideAuthToken))
+	connectionBuilder, err := addLoggerToConnectionBuilder(c.connection.Logger().DebugEnabled(),
+		getBaseConnectionBuilder(c.connection.URL()))
+	if err != nil {
+		// TODO
+		return nil, err
 	}
+	connectionBuilder = connectionBuilder.Tokens(overrideAuthToken)
+	modifiedConnection, err := connectionBuilder.Build()
+	if err != nil {
+		// TODO
+		return nil, err
+	}
+	currentAccountClient := modifiedConnection.AccountsMgmt().V1().CurrentAccount()
+	request := currentAccountClient.Get()
 	response, err := request.Send()
 	if err != nil {
 		return nil, err

@@ -1,6 +1,7 @@
 package quota
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -370,7 +371,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 				Owner:          "username",
 				OrganisationID: "org-id",
 			}
-			_, err := quotaService.ReserveQuota(nil, dinosaur, tt.args.instanceType)
+			_, err := quotaService.ReserveQuota(context.Background(), dinosaur, tt.args.instanceType)
 			gomega.Expect(tt.wantErr).To(gomega.Equal(err))
 		})
 	}
