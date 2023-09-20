@@ -16,7 +16,7 @@ data:
           image: "quay.io/rhacs-eng/stackrox-operator:4.1.0"
     centrals:
       overrides:
-        # Set label for all centrals to 4.1.1
+        # Set label for all centrals to 4.1.0
         - instanceIds: ["*"]
           patch: |
             metadata:
