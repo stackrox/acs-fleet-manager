@@ -2,7 +2,6 @@ package operator
 
 import (
 	"fmt"
-	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
@@ -17,24 +16,11 @@ func parseConfig(content []byte) (OperatorConfigs, error) {
 	return out, nil
 }
 
-// GetConfig returns the rhacs operator configurations
-func GetConfig() OperatorConfigs {
-	// TODO: Read config from GitOps configuration
-	glog.Error("Reading RHACS Operator GitOps configuration not implemented yet")
-	return OperatorConfigs{}
-}
-
 // Validate validates the operator configuration and can be used in different life-cycle stages like runtime and deploy time.
 func Validate(path *field.Path, configs OperatorConfigs) field.ErrorList {
-	manager := ACSOperatorManager{}
-	manifests, err := manager.RenderChart(configs)
-	if err != nil {
+	if _, err := RenderChart(configs); err != nil {
 		return field.ErrorList{
 			field.Forbidden(path, fmt.Sprintf("could not render operator helm charts, got invalid configuration: %s", err.Error())),
-		}
-	} else if len(manifests) == 0 {
-		return field.ErrorList{
-			field.Forbidden(path, fmt.Sprintf("operator chart rendering succeed, but no manifests were rendered")),
 		}
 	}
 	return nil

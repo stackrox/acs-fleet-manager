@@ -8,7 +8,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v2"
-	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"html/template"
 	appsv1 "k8s.io/api/apps/v1"
@@ -69,13 +68,12 @@ func parseOperatorConfigs(operators OperatorConfigs) ([]chartutil.Values, error)
 
 // ACSOperatorManager keeps data necessary for managing ACS Operator
 type ACSOperatorManager struct {
-	client         ctrlClient.Client
-	resourcesChart *chart.Chart
+	client ctrlClient.Client
 }
 
 // InstallOrUpgrade provisions or upgrades an existing ACS Operator from helm chart template
 func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, operators OperatorConfigs) error {
-	objs, err := u.RenderChart(operators)
+	objs, err := RenderChart(operators)
 	if err != nil {
 		return err
 	}
@@ -95,7 +93,7 @@ func (u *ACSOperatorManager) InstallOrUpgrade(ctx context.Context, operators Ope
 }
 
 // RenderChart renders the operator helm chart manifests
-func (u *ACSOperatorManager) RenderChart(operators OperatorConfigs) ([]*unstructured.Unstructured, error) {
+func RenderChart(operators OperatorConfigs) ([]*unstructured.Unstructured, error) {
 	if len(operators.Configs) == 0 {
 		return nil, nil
 	}
@@ -112,17 +110,17 @@ func (u *ACSOperatorManager) RenderChart(operators OperatorConfigs) ([]*unstruct
 
 	var dynamicTemplatesUrls []string
 	if operators.CRD.GitRef != "" {
-		dynamicTemplatesUrls, err = u.generateCRDTemplateUrls(operators.CRD)
+		dynamicTemplatesUrls, err = generateCRDTemplateUrls(operators.CRD)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	u.resourcesChart, err = charts.GetChart("rhacs-operator", dynamicTemplatesUrls)
+	resourcesChart, err := charts.GetChart("rhacs-operator", dynamicTemplatesUrls)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting chart: %w", err)
 	}
-	objs, err := charts.RenderToObjects(releaseName, ACSOperatorNamespace, u.resourcesChart, chartVals)
+	objs, err := charts.RenderToObjects(releaseName, ACSOperatorNamespace, resourcesChart, chartVals)
 	if err != nil {
 		return nil, fmt.Errorf("failed rendering operator chart: %w", err)
 	}
@@ -213,7 +211,7 @@ func generateDeploymentName(version string) string {
 	return operatorDeploymentPrefix + "-" + version
 }
 
-func (u *ACSOperatorManager) generateCRDTemplateUrls(crdConfig CRDConfig) ([]string, error) {
+func generateCRDTemplateUrls(crdConfig CRDConfig) ([]string, error) {
 	baseURL := defaultCRDBaseURLTemplate
 	if crdConfig.BaseURL != "" {
 		baseURL = crdConfig.BaseURL
