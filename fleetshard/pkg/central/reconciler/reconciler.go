@@ -372,7 +372,7 @@ func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCen
 	r.applyProxyConfig(central)
 	r.applyDeclarativeConfig(central)
 	r.applyAnnotations(central)
-	return r.applyLabelSelector(remoteCentral, central)
+	return nil
 }
 
 func (r *CentralReconciler) applyLabelSelector(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
