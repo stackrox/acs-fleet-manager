@@ -852,7 +852,10 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 				},
 			},
 			args: args{
-				dinosaurRequest:      &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1"},
+				dinosaurRequest: &dbapi.CentralRequest{OrganisationID: "dinosaur-org-1",
+					CloudProvider:  awsCloudProvider,
+					CloudAccountID: "cloudAccountID",
+				},
 				dinosaurInstanceType: types.STANDARD,
 			},
 			want:    true,
