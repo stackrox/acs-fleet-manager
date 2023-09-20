@@ -96,6 +96,7 @@ func ServiceProviders() di.Option {
 			return sso.NewIAMService(c)
 		}),
 		di.Provide(services.NewTelemetryAuth),
+		di.Provide(func() workers.BaseWorker { return workers.BaseWorker{} }),
 
 		// Types registered as a BootService are started when the env is started
 		di.Provide(server.NewAPIServer, di.As(new(environments.BootService))),

@@ -69,13 +69,13 @@ func (b *BaseWorker) SetIsRunning(val bool) {
 	b.isRunning = val
 }
 
-// StartWorker ...
+// Start ...
 func (b *BaseWorker) Start() {
 	metrics.SetLeaderWorkerMetric(b.WorkerType, true)
 	b.Reconciler.Start(b)
 }
 
-// StopWorker ...
+// Stop ...
 func (b *BaseWorker) Stop() {
 	glog.Infof("Stopping reconciling worker id = %s", b.ID)
 	b.Reconciler.Stop(b)
