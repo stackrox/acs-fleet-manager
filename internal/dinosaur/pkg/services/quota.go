@@ -17,9 +17,4 @@ type QuotaService interface {
 	ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError)
 	// DeleteQuota deletes a reserved quota
 	DeleteQuota(subscriptionID string) *errors.ServiceError
-	// IsQuotaEntitlementActive checks if the user/organisation have an active entitlement to the quota used by the
-	// given Central instance.
-	// It returns true if the user has an active quota entitlement and false if not.
-	// It returns false and an error if it encounters any issues while trying to check the quota entitlement status
-	IsQuotaEntitlementActive(dinosaur *dbapi.CentralRequest) (bool, error)
 }

@@ -9,6 +9,7 @@ import (
 	constants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	serviceErr "github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -88,7 +89,7 @@ func (k *GracePeriodManager) reconcileCentralGraceFrom(centrals dbapi.CentralLis
 	for _, central := range centrals {
 		active, exists := subscriptionStatusByOrg[central.OrganisationID]
 		if !exists {
-			isActive, err := quotaService.IsQuotaEntitlementActive(central)
+			isActive, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(central, types.DinosaurInstanceType(central.InstanceType))
 			if err != nil {
 				svcErrors = append(svcErrors, errors.Wrapf(err, "failed to get quota entitlement status of central instance %q", central.ID))
 				continue

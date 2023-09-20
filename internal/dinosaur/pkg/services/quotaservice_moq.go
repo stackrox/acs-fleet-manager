@@ -27,9 +27,6 @@ var _ QuotaService = &QuotaServiceMock{}
 //			DeleteQuotaFunc: func(subscriptionID string) *serviceError.ServiceError {
 //				panic("mock out the DeleteQuota method")
 //			},
-//			IsQuotaEntitlementActiveFunc: func(dinosaur *dbapi.CentralRequest) (bool, error) {
-//				panic("mock out the IsQuotaEntitlementActive method")
-//			},
 //			ReserveQuotaFunc: func(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError) {
 //				panic("mock out the ReserveQuota method")
 //			},
@@ -45,9 +42,6 @@ type QuotaServiceMock struct {
 
 	// DeleteQuotaFunc mocks the DeleteQuota method.
 	DeleteQuotaFunc func(subscriptionID string) *serviceError.ServiceError
-
-	// IsQuotaEntitlementActiveFunc mocks the IsQuotaEntitlementActive method.
-	IsQuotaEntitlementActiveFunc func(dinosaur *dbapi.CentralRequest) (bool, error)
 
 	// ReserveQuotaFunc mocks the ReserveQuota method.
 	ReserveQuotaFunc func(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError)
@@ -66,11 +60,6 @@ type QuotaServiceMock struct {
 			// SubscriptionID is the subscriptionID argument value.
 			SubscriptionID string
 		}
-		// IsQuotaEntitlementActive holds details about calls to the IsQuotaEntitlementActive method.
-		IsQuotaEntitlementActive []struct {
-			// Dinosaur is the dinosaur argument value.
-			Dinosaur *dbapi.CentralRequest
-		}
 		// ReserveQuota holds details about calls to the ReserveQuota method.
 		ReserveQuota []struct {
 			// Ctx is the ctx argument value.
@@ -83,7 +72,6 @@ type QuotaServiceMock struct {
 	}
 	lockCheckIfQuotaIsDefinedForInstanceType sync.RWMutex
 	lockDeleteQuota                          sync.RWMutex
-	lockIsQuotaEntitlementActive             sync.RWMutex
 	lockReserveQuota                         sync.RWMutex
 }
 
@@ -152,38 +140,6 @@ func (mock *QuotaServiceMock) DeleteQuotaCalls() []struct {
 	mock.lockDeleteQuota.RLock()
 	calls = mock.calls.DeleteQuota
 	mock.lockDeleteQuota.RUnlock()
-	return calls
-}
-
-// IsQuotaEntitlementActive calls IsQuotaEntitlementActiveFunc.
-func (mock *QuotaServiceMock) IsQuotaEntitlementActive(dinosaur *dbapi.CentralRequest) (bool, error) {
-	if mock.IsQuotaEntitlementActiveFunc == nil {
-		panic("QuotaServiceMock.IsQuotaEntitlementActiveFunc: method is nil but QuotaService.IsQuotaEntitlementActive was just called")
-	}
-	callInfo := struct {
-		Dinosaur *dbapi.CentralRequest
-	}{
-		Dinosaur: dinosaur,
-	}
-	mock.lockIsQuotaEntitlementActive.Lock()
-	mock.calls.IsQuotaEntitlementActive = append(mock.calls.IsQuotaEntitlementActive, callInfo)
-	mock.lockIsQuotaEntitlementActive.Unlock()
-	return mock.IsQuotaEntitlementActiveFunc(dinosaur)
-}
-
-// IsQuotaEntitlementActiveCalls gets all the calls that were made to IsQuotaEntitlementActive.
-// Check the length with:
-//
-//	len(mockedQuotaService.IsQuotaEntitlementActiveCalls())
-func (mock *QuotaServiceMock) IsQuotaEntitlementActiveCalls() []struct {
-	Dinosaur *dbapi.CentralRequest
-} {
-	var calls []struct {
-		Dinosaur *dbapi.CentralRequest
-	}
-	mock.lockIsQuotaEntitlementActive.RLock()
-	calls = mock.calls.IsQuotaEntitlementActive
-	mock.lockIsQuotaEntitlementActive.RUnlock()
 	return calls
 }
 

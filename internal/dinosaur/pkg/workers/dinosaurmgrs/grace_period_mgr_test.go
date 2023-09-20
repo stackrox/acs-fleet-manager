@@ -10,6 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -18,7 +19,7 @@ import (
 func TestGracePeriodManager(t *testing.T) {
 	withEntitlement := func(e bool) (*services.QuotaServiceMock, *services.QuotaServiceFactoryMock) {
 		qs := &services.QuotaServiceMock{
-			IsQuotaEntitlementActiveFunc: func(dinosaur *dbapi.CentralRequest) (bool, error) {
+			CheckIfQuotaIsDefinedForInstanceTypeFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 				return e, nil
 			},
 		}
@@ -50,7 +51,7 @@ func TestGracePeriodManager(t *testing.T) {
 		require.Empty(t, errs)
 		assert.Len(t, dinoSvc.ListByStatusCalls(), 1)
 		assert.Empty(t, dinoSvc.UpdateCalls())
-		assert.Empty(t, quotaSvc.IsQuotaEntitlementActiveCalls())
+		assert.Empty(t, quotaSvc.CheckIfQuotaIsDefinedForInstanceTypeCalls())
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
 
@@ -64,7 +65,7 @@ func TestGracePeriodManager(t *testing.T) {
 		require.Empty(t, errs)
 		assert.Nil(t, central.GraceFrom)
 		assert.Len(t, dinoSvc.ListByStatusCalls(), 1)
-		assert.Len(t, quotaSvc.IsQuotaEntitlementActiveCalls(), 1)
+		assert.Len(t, quotaSvc.CheckIfQuotaIsDefinedForInstanceTypeCalls(), 1)
 		assert.Len(t, dinoSvc.UpdateCalls(), 1)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
@@ -80,7 +81,7 @@ func TestGracePeriodManager(t *testing.T) {
 		require.NotNil(t, central.GraceFrom)
 		assert.Less(t, now, *central.GraceFrom)
 		assert.Len(t, dinoSvc.ListByStatusCalls(), 1)
-		assert.Len(t, quotaSvc.IsQuotaEntitlementActiveCalls(), 1)
+		assert.Len(t, quotaSvc.CheckIfQuotaIsDefinedForInstanceTypeCalls(), 1)
 		assert.Len(t, dinoSvc.UpdateCalls(), 1)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
@@ -98,7 +99,7 @@ func TestGracePeriodManager(t *testing.T) {
 		assert.Nil(t, centralA.GraceFrom)
 		assert.Nil(t, centralB.GraceFrom)
 		assert.Len(t, dinoSvc.ListByStatusCalls(), 1)
-		assert.Len(t, quotaSvc.IsQuotaEntitlementActiveCalls(), 2)
+		assert.Len(t, quotaSvc.CheckIfQuotaIsDefinedForInstanceTypeCalls(), 2)
 		assert.Len(t, dinoSvc.UpdateCalls(), 3)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})

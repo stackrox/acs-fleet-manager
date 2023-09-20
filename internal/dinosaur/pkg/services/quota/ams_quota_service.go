@@ -3,12 +3,11 @@ package quota
 
 import (
 	"context"
-	"fmt"
-	"github.com/openshift-online/ocm-sdk-go/authentication"
 	"time"
 
 	"github.com/golang/glog"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	"github.com/openshift-online/ocm-sdk-go/authentication"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
@@ -46,47 +45,31 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.Ce
 		return false, errors.OrganisationNotFound(dinosaur.OrganisationID, err)
 	}
 
-	hasQuota, err := q.hasConfiguredQuotaCost(org.ID(), instanceType.GetQuotaType())
+	quotaType := instanceType.GetQuotaType()
+	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(org.ID(), quotaType.GetResourceName(), quotaType.GetProduct())
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("failed to get assigned quota of type %v for organization with external id %v and id %v", instanceType.GetQuotaType(), dinosaur.OrganisationID, org.ID()))
+		return false, errors.InsufficientQuotaError("%v: error getting quotas for product %q", err, quotaType.GetProduct())
 	}
 
-	return hasQuota, nil
-}
-
-// hasConfiguredQuotaCost returns true if the given organizationID has at least
-// one AMS QuotaCost that complies with the following conditions:
-//   - Matches the given input quotaType
-//   - Contains at least one AMS RelatedResources whose billing model is one
-//     of the supported Billing Models specified in supportedAMSBillingModels
-//   - Has an "Allowed" value greater than 0
-//
-// An error is returned if the given organizationID has a QuotaCost
-// with an unsupported billing model and there are no supported billing models
-func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType ocm.DinosaurQuotaType) (bool, error) {
-	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(organizationID, quotaType.GetResourceName(), quotaType.GetProduct())
+	quotasMap, err := mapAllowedQuotaCosts(quotaCosts)
 	if err != nil {
-		return false, fmt.Errorf("retrieving quota costs for product %s, organization ID %s, resource type %s: %w", quotaType.GetProduct(), organizationID, quotaType.GetResourceName(), err)
+		svcErr := errors.ToServiceError(err)
+		return false, errors.NewWithCause(svcErr.Code, svcErr, "product %q has no allowed billing models", quotaType.GetProduct())
 	}
 
-	var foundUnsupportedBillingModel string
+	isCloudAccount := dinosaur.CloudAccountID != ""
 
-	for _, qc := range quotaCosts {
-		if qc.Allowed() > 0 {
-			for _, rr := range qc.RelatedResources() {
-				if _, isCompatibleBillingModel := supportedAMSBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
-					return true, nil
-				}
-				foundUnsupportedBillingModel = rr.BillingModel()
-			}
-		}
+	entitled :=
+		// Entitlement is active if there's allowed quota for standard billing model...
+		!isCloudAccount && len(quotasMap[amsv1.BillingModelStandard]) > 0 ||
+			// or there is cloud quota and the original cloud account is still active.
+			cloudAccountIsActive(quotasMap, dinosaur)
+
+	if !entitled {
+		glog.Infof("Quota no longer entitled for organisation %q", org.ID)
+		return false, nil
 	}
-
-	if foundUnsupportedBillingModel != "" {
-		return false, errors.GeneralError("Product %s only has unsupported allowed billing models. Last one found: %s", quotaType.GetProduct(), foundUnsupportedBillingModel)
-	}
-
-	return false, nil
+	return true, nil
 }
 
 // selectBillingModelFromDinosaurInstanceType select the billing model of a
@@ -280,38 +263,4 @@ func cloudAccountIsActive(costsMap map[amsv1.BillingModel][]*amsv1.QuotaCost, ce
 		}
 	}
 	return false
-}
-
-// IsQuotaEntitlementActive checks if an organisation has a SKU entitlement and that entitlement is still active in AMS.
-func (q amsQuotaService) IsQuotaEntitlementActive(central *dbapi.CentralRequest) (bool, error) {
-	org, err := q.amsClient.GetOrganisationFromExternalID(central.OrganisationID)
-	if err != nil {
-		return false, errors.OrganisationNotFound(central.OrganisationID, err)
-	}
-
-	quotaType := types.DinosaurInstanceType(central.InstanceType).GetQuotaType()
-	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(org.ID(), quotaType.GetResourceName(), quotaType.GetProduct())
-	if err != nil {
-		return false, errors.InsufficientQuotaError("%v: error getting quotas for product %q", err, quotaType.GetProduct())
-	}
-
-	quotasMap, err := mapAllowedQuotaCosts(quotaCosts)
-	if err != nil {
-		svcErr := errors.ToServiceError(err)
-		return false, errors.NewWithCause(svcErr.Code, svcErr, "product %q has no allowed billing models", quotaType.GetProduct())
-	}
-
-	isCloudAccount := central.CloudAccountID != ""
-
-	entitled :=
-		// Entitlement is active if there's allowed quota for standard billing model...
-		!isCloudAccount && len(quotasMap[amsv1.BillingModelStandard]) > 0 ||
-			// or there is cloud quota and the original cloud account is still active.
-			cloudAccountIsActive(quotasMap, central)
-
-	if !entitled {
-		glog.Infof("Quota no longer entitled for organisation %q", org.ID)
-		return false, nil
-	}
-	return true, nil
 }
