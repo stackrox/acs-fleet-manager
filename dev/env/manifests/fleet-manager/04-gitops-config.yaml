@@ -5,8 +5,23 @@ metadata:
   namespace: "$ACSMS_NAMESPACE"
 data:
   config.yaml: |
+    rhacsOperators:
+      crd:
+        baseURL: https://raw.githubusercontent.com/stackrox/stackrox/{{ .GitRef }}/operator/bundle/manifests/
+        gitRef: 4.1.1
+      operators:
+        - gitRef: 4.1.1
+          image: "quay.io/rhacs-eng/stackrox-operator:4.1.1"
+        - gitRef: 4.1.0
+          image: "quay.io/rhacs-eng/stackrox-operator:4.1.0"
     centrals:
       overrides:
+        # Set label for all centrals to 4.1.1
+        - instanceIds: ["*"]
+          patch: |
+            metadata:
+              annotations:
+                rhacs.redhat.com/version-selector: "4.1.0"
         - instanceIds:
             - "*"
           patch: |
