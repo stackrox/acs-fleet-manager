@@ -2112,35 +2112,6 @@ func TestReconciler_applyAnnotations(t *testing.T) {
 	}, c.Spec.Customize.Annotations)
 }
 
-func TestReconciler_applyLabelSelector_disabledTargetedUpgrades(t *testing.T) {
-	r := &CentralReconciler{}
-	mc := &private.ManagedCentral{}
-	c := &v1alpha1.Central{}
-
-	err := r.applyLabelSelector(mc, c)
-
-	assert.NoError(t, err)
-	assert.Empty(t, c.Labels)
-}
-
-func TestReconciler_applyLabelSelector_enabledTargetedUpgrades(t *testing.T) {
-	r := &CentralReconciler{}
-	mc := &private.ManagedCentral{
-		Spec: private.ManagedCentralAllOfSpec{
-			OperatorImage: "quay.io/rhacs/rhacs-operator:latest",
-		},
-	}
-	c := &v1alpha1.Central{}
-	t.Setenv("RHACS_TARGETED_OPERATOR_UPGRADES", "true")
-
-	err := r.applyLabelSelector(mc, c)
-
-	assert.NoError(t, err)
-	assert.Equal(t, map[string]string{
-		"rhacs.redhat.com/version-selector": "latest",
-	}, c.Labels)
-}
-
 func TestReconciler_getInstanceConfigWithGitops(t *testing.T) {
 
 	tcs := []struct {
