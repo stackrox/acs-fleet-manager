@@ -147,12 +147,12 @@ func (s *RouteService) configureReencryptRoute(ctx context.Context, route *opens
 	annotatedRoute.Spec.Host = remoteCentral.Spec.UiEndpoint.Host
 
 	namespace := remoteCentral.Metadata.Namespace
-	centralTLSSecret, secretRetrievalErr := getSecret(ctx, s.client, centralTLSSecretName, namespace)
-	if secretRetrievalErr != nil {
+	centralTLSSecret, retrievalErr := getSecret(ctx, s.client, centralTLSSecretName, namespace)
+	if retrievalErr != nil {
 		wrappedErr := fmt.Errorf(
 			"getting central-tls secret for tenant %s: %w",
 			remoteCentral.Metadata.Name,
-			secretRetrievalErr,
+			retrievalErr,
 		)
 		return nil, wrappedErr
 	}
