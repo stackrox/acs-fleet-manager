@@ -82,11 +82,11 @@ type Worker = workers.Worker
 // ClusterManager ...
 type ClusterManager struct {
 	workers.BaseWorker
-	ClusterManagerOptions
+	clusterManagerOptions
 }
 
-// ClusterManagerOptions ...
-type ClusterManagerOptions struct {
+// clusterManagerOptions ...
+type clusterManagerOptions struct {
 	di.Inject
 	OCMConfig                  *ocm.OCMConfig
 	ObservabilityConfiguration *observatorium.ObservabilityConfiguration
@@ -100,13 +100,13 @@ type ClusterManagerOptions struct {
 type processor func() []error
 
 // NewClusterManager creates a new cluster manager
-func NewClusterManager(o ClusterManagerOptions) *ClusterManager {
+func NewClusterManager(o clusterManagerOptions) *ClusterManager {
 	return &ClusterManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "cluster",
 		},
-		ClusterManagerOptions: o,
+		clusterManagerOptions: o,
 	}
 }
 
