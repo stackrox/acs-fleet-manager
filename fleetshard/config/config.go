@@ -45,6 +45,7 @@ type Config struct {
 	Telemetry             Telemetry
 	AuditLogging          AuditLogging
 	SecretEncryption      SecretEncryption
+	RouteParameters       RouteConfig
 }
 
 // ManagedDB for configuring managed DB specific parameters
@@ -70,10 +71,18 @@ type Telemetry struct {
 	StorageKey      string `env:"TELEMETRY_STORAGE_KEY"`
 }
 
-// SecretEncryption defines paramaters to configure encryption of tenant secrest
+// SecretEncryption defines parameters to configure encryption of tenant secrets.
 type SecretEncryption struct {
 	Type  string `env:"SECRET_ENCRYPTION_TYPE" envDefault:"local"`
 	KeyID string `env:"SECRET_ENCRYPTION_KEY_ID"`
+}
+
+// RouteConfig defines parameters to configure routes.
+type RouteConfig struct {
+	ThrottlingEnabled bool `env:"ROUTE_ENABLE_THROTTLING" envDefault:"true"`
+	ConcurrentTCP     int  `env:"ROUTE_CONCURRENT_TCP_CONNECTIONS" envDefault:"32"`
+	RateHTTP          int  `env:"ROUTE_HTTP_REQUEST_RATE" envDefault:"128"`
+	RateTCP           int  `env:"ROUTE_TCP_NEW_CONNECTION_RATE" envDefault:"16"`
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.

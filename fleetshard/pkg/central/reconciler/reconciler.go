@@ -100,6 +100,7 @@ type CentralReconcilerOptions struct {
 	Environment           string
 	AuditLogging          config.AuditLogging
 	TenantImagePullSecret string
+	RouteParameters       config.RouteConfig
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -1676,7 +1677,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		status:                 pointer.Int32(FreeStatus),
 		useRoutes:              opts.UseRoutes,
 		wantsAuthProvider:      opts.WantsAuthProvider,
-		routeService:           k8s.NewRouteService(k8sClient),
+		routeService:           k8s.NewRouteService(k8sClient, &opts.RouteParameters),
 		secretBackup:           k8s.NewSecretBackup(k8sClient, opts.ManagedDBEnabled),
 		secretCipher:           secretCipher, // pragma: allowlist secret
 		egressProxyImage:       opts.EgressProxyImage,

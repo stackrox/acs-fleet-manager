@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -46,6 +47,14 @@ var (
 
 const defaultTimeout = 5 * time.Minute
 
+var (
+	routeConfig = &config.RouteConfig{
+		ConcurrentTCP: 32,
+		RateHTTP:      128,
+		RateTCP:       16,
+	}
+)
+
 func getWaitTimeout() time.Duration {
 	timeoutStr, ok := os.LookupEnv("WAIT_TIMEOUT")
 	if ok {
@@ -77,7 +86,7 @@ func TestE2E(t *testing.T) {
 // TODO: Deploy fleet-manager, fleetshard-sync and database into a cluster
 var _ = BeforeSuite(func() {
 	k8sClient = k8s.CreateClientOrDie()
-	routeService = k8s.NewRouteService(k8sClient)
+	routeService = k8s.NewRouteService(k8sClient, routeConfig)
 	var err error
 	routesEnabled, err = k8s.IsRoutesResourceEnabled(k8sClient)
 	Expect(err).ToNot(HaveOccurred())

@@ -3,10 +3,10 @@ package k8s
 import (
 	"context"
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/testutils"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/rox/pkg/uuid"
@@ -14,11 +14,23 @@ import (
 	"github.com/stretchr/testify/require"
 	coreV1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
+	enabledLabelValue  = "true"
+	disabledLabelValue = "false"
+
+	baseConcurrentTCPStrVal = "32"
+	baseRateHTTPStrVal      = "128"
+	baseRateTCPStrVal       = "16"
+
+	updatedConcurrentTCPStrVal = "16"
+	updatedRateHTTPStrVal      = "512"
+	updatedRateTCPStrVal       = "8"
+
 	testNamespace           = "test-namespace"
 	testTargetHost          = "target-host"
 	testTargetReEncryptHost = "target-re-encrypt-host"
@@ -68,9 +80,7 @@ var (
 		},
 		Spec: passThroughRouteSpec,
 	}
-)
 
-var (
 	passThroughRouteExtractors = map[string]routeFieldExtractor{
 		"name":                          extractRouteObjectMetaName,
 		"namespace":                     extractRouteObjectMetaNamespace,
@@ -81,13 +91,29 @@ var (
 		"spec \"to\" kind":              extractRouteSpecToKind,
 		"spec \"to\" name":              extractRouteSpecToName,
 		"spec TLS termination":          extractRouteSpecTLSTermination,
+)
+
+var (
+	baseRouteParameters = &config.RouteConfig{
+		ThrottlingEnabled: true,
+		ConcurrentTCP:     32,
+		RateHTTP:          128,
+		RateTCP:           16,
+	}
+
+	updatedRouteParameters = &config.RouteConfig{
+		ThrottlingEnabled: false,
+		ConcurrentTCP:     16,
+		RateHTTP:          512,
+		RateTCP:           8,
 	}
 )
 
 func TestPassThroughRouteLifecycle(t *testing.T) {
+	const testNamespace = "test-namespace"
 	client := testutils.NewFakeClientBuilder(t).Build()
-	baseRouteService := NewRouteService(client)
-	updateRouteService := NewRouteService(client)
+	baseRouteService := NewRouteService(client, baseRouteParameters)
+	updateRouteService := NewRouteService(client, updatedRouteParameters)
 
 	// Test configuration
 	ctx := context.Background()
@@ -234,8 +260,8 @@ var (
 func TestReEncryptRouteLifecycle(t *testing.T) {
 	const testNamespace = "test-namespace"
 	client := testutils.NewFakeClientBuilder(t).Build()
-	baseRouteService := NewRouteService(client)
-	updateRouteService := NewRouteService(client)
+	baseRouteService := NewRouteService(client, baseRouteParameters)
+	updateRouteService := NewRouteService(client, updatedRouteParameters)
 
 	// Test configuration
 	ctx := context.Background()
