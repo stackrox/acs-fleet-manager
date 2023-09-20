@@ -842,7 +842,8 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 						panic("unexpected error")
 					}
 					rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHACSProduct)).ResourceName(resourceName).Cost(1)
-					qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
+					cloudAccount := v1.NewCloudAccount().CloudAccountID("cloudAccountID").CloudProviderID(awsCloudProvider)
+					qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(2).OrganizationID(organizationID).RelatedResources(rrbq2).CloudAccounts(cloudAccount).Build()
 					if err != nil {
 						panic("unexpected error")
 					}
@@ -932,7 +933,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 	}
 }
 
-func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
+func Test_amsQuotaService_CheckQuotaEntitlement(t *testing.T) {
 	standardCentral := &dbapi.CentralRequest{
 		InstanceType: "standard",
 	}
@@ -1111,6 +1112,19 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 			wantErr:    true,
 			wantErrMsg: "RHACS-MGMT-120: Insufficient quota: failed to get quota cost: error getting quotas for product \"RHACS\"",
 		},
+		{
+			name: "returns an error when it fails to get quota costs from ams",
+			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+				rrbq := v1.NewRelatedResource().BillingModel("unsupported").Product(product).ResourceName(resourceName).Cost(1)
+				qcb, err := v1.NewQuotaCost().Allowed(allowed).Consumed(not_consumed).OrganizationID(organizationID).RelatedResources(rrbq).Build()
+				require.NoError(t, err)
+				return []*v1.QuotaCost{qcb}, nil
+			},
+			central:    standardCentral,
+			want:       false,
+			wantErr:    true,
+			wantErrMsg: "RHACS-MGMT-9: product \"RHACS\" has no allowed billing models\n caused by: RHACS-MGMT-9: found unsupported allowed billing models [\"unsupported\"]",
+		},
 	}
 	for _, testcase := range tests {
 		tt := testcase
@@ -1125,10 +1139,10 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 			quotaServiceFactory := NewDefaultQuotaServiceFactory(amsClient, nil, nil)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
 
-			got, err := quotaService.IsQuotaEntitlementActive(tt.central)
+			got, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.central, types.DinosaurInstanceType(tt.central.InstanceType))
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if tt.wantErr {
-				g.Expect(err.Error()).To(gomega.Equal(tt.wantErrMsg))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErrMsg), err.Error())
 			}
 			g.Expect(got).To(gomega.Equal(tt.want))
 		})

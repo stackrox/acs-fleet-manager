@@ -224,7 +224,7 @@ func (q amsQuotaService) DeleteQuota(subscriptionID string) *errors.ServiceError
 
 func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel][]*amsv1.QuotaCost, error) {
 	costsMap := make(map[amsv1.BillingModel][]*amsv1.QuotaCost)
-	var foundUnsupportedBillingModel string
+	var foundUnsupportedBillingModels []string
 	for _, qc := range quotaCosts {
 		// When an SKU entitlement expires in AMS, the allowed value for that quota cost is set back to 0.
 		// If the allowed value is 0 and consumed is greater than this, that denotes that the SKU entitlement
@@ -237,13 +237,13 @@ func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel
 			if _, isCompatibleBillingModel := supportedAMSBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
 				costsMap[bm] = append(costsMap[bm], qc)
 			} else {
-				foundUnsupportedBillingModel = rr.BillingModel()
+				foundUnsupportedBillingModels = append(foundUnsupportedBillingModels, rr.BillingModel())
 			}
 
 		}
 	}
-	if len(costsMap) == 0 && foundUnsupportedBillingModel != "" {
-		return nil, errors.GeneralError("found unsupported allowed billing models, the last one is %q", foundUnsupportedBillingModel)
+	if len(costsMap) == 0 && len(foundUnsupportedBillingModels) > 0 {
+		return nil, errors.GeneralError("found unsupported allowed billing models %q", foundUnsupportedBillingModels)
 	}
 	return costsMap, nil
 }
