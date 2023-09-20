@@ -933,7 +933,7 @@ func (mock *DinosaurServiceMock) RegisterDinosaurDeprovisionJobCalls() []struct 
 }
 
 // RegisterDinosaurJob calls RegisterDinosaurJobFunc.
-func (mock *DinosaurServiceMock) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+func (mock *DinosaurServiceMock) RegisterDinosaurJob(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 	if mock.RegisterDinosaurJobFunc == nil {
 		panic("DinosaurServiceMock.RegisterDinosaurJobFunc: method is nil but DinosaurService.RegisterDinosaurJob was just called")
 	}

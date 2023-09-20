@@ -4,6 +4,7 @@
 package services
 
 import (
+	"context"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -141,7 +142,7 @@ func (mock *QuotaServiceMock) DeleteQuotaCalls() []struct {
 }
 
 // ReserveQuota calls ReserveQuotaFunc.
-func (mock *QuotaServiceMock) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError) {
+func (mock *QuotaServiceMock) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError) {
 	if mock.ReserveQuotaFunc == nil {
 		panic("QuotaServiceMock.ReserveQuotaFunc: method is nil but QuotaService.ReserveQuota was just called")
 	}

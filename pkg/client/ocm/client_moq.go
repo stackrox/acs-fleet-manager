@@ -424,6 +424,11 @@ type ClientMock struct {
 	lockUpdateSyncSet                 sync.RWMutex
 }
 
+func (mock *ClientMock) GetCurrentAccount(overrideAuthToken string) (*amsv1.Account, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 // ClusterAuthorization calls ClusterAuthorizationFunc.
 func (mock *ClientMock) ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error) {
 	if mock.ClusterAuthorizationFunc == nil {

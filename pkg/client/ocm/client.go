@@ -59,6 +59,8 @@ type Client interface {
 	Connection() *sdkClient.Connection
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 	GetCustomerCloudAccounts(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error)
+	// GetCurrentAccount returns the account information of the current authenticated user
+	GetCurrentAccount(overrideAuthToken string) (*amsv1.Account, error)
 }
 
 var _ Client = &client{}
@@ -741,4 +743,20 @@ func (c *client) GetCustomerCloudAccounts(organizationID string, quotaIDs []stri
 	})
 
 	return res, nil
+}
+
+// GetCurrentAccount returns the account information of the current authenticated user
+func (c *client) GetCurrentAccount(overrideAuthToken string) (*amsv1.Account, error) {
+	currentAccountClient := c.connection.AccountsMgmt().V1().CurrentAccount()
+	request := currentAccountClient.Get()
+	if overrideAuthToken != "" {
+		request = request.Header("Authorization", fmt.Sprintf("Bearer %s", overrideAuthToken))
+	}
+	response, err := request.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	currentAccount := response.Body()
+	return currentAccount, nil
 }

@@ -2,7 +2,9 @@
 package quota
 
 import (
+	"context"
 	"fmt"
+	"github.com/openshift-online/ocm-sdk-go/authentication"
 
 	"github.com/golang/glog"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -127,7 +129,7 @@ func (q amsQuotaService) selectBillingModelFromDinosaurInstanceType(orgID, cloud
 }
 
 // ReserveQuota ...
-func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
+func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
 	dinosaurID := dinosaur.ID
 
 	rr := newBaseQuotaReservedResourceResourceBuilder()
@@ -167,6 +169,17 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 	cb, err := requestBuilder.Build()
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
+	}
+
+	userToken, err := authentication.TokenFromContext(ctx)
+	if err != nil {
+		// TODO
+		return "", errors.FailedClusterAuthorization(err)
+	}
+	_, err = q.amsClient.GetCurrentAccount(userToken.Raw)
+	if err != nil {
+		// TODO
+		return "", errors.FailedClusterAuthorization(err)
 	}
 
 	resp, err := q.amsClient.ClusterAuthorization(cb)
