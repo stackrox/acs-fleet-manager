@@ -28,7 +28,6 @@ import (
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"github.com/stackrox/rox/pkg/declarativeconfig"
 	"github.com/stackrox/rox/pkg/utils"
@@ -273,28 +272,6 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	password, ok := secret.Data["password"]
 	require.True(t, ok)
 	assert.NotEmpty(t, password)
-}
-
-func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
-	t.Setenv(features.TargetedOperatorUpgrades.EnvVar(), "true")
-
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		useRoutesReconcilerOptions,
-	)
-
-	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
-	require.True(t, ok)
-	assert.Equal(t, "True", readyCondition.Status, "Ready condition not found in conditions", status.Conditions)
-
-	central := &v1alpha1.Central{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
-	require.NoError(t, err)
-	assert.Equal(t, operatorVersion, central.ObjectMeta.Labels[ReconcileOperatorSelector])
 }
 
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
