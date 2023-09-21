@@ -265,10 +265,16 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 		if err != nil {
 			glog.Warningf("Failed reading operators configMap: %v", err)
 		}
-
 		glog.Infof("Reading operator config map, extracted %d operators from configmap", len(configMapOperators))
-
 		desiredOperatorConfigs = configMapOperators
+	} else if features.TargetedOperatorUpgrades.Enabled() {
+		for _, operatorConfig := range list.RhacsOperators.RHACSOperatorConfigs {
+			desiredOperatorConfigs = append(desiredOperatorConfigs, operator.OperatorConfig{
+				Image:      operatorConfig.Image,
+				GitRef:     operatorConfig.GitRef,
+				HelmValues: operatorConfig.HelmValues,
+			})
+		}
 	} else {
 		desiredOperatorConfigs = []operator.OperatorConfig{{
 			GitRef: "4.1.0",
@@ -276,9 +282,9 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 		}}
 	}
 
-	// TODO: Replace with list from API request
 	operators := operator.OperatorConfigs{
 		Configs: desiredOperatorConfigs,
+		// TODO: How to get that value?
 		CRD: operator.CRDConfig{
 			GitRef: "4.1.0",
 		},

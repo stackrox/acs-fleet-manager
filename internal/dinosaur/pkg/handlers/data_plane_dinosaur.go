@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"net/http"
 
@@ -14,9 +14,10 @@ import (
 )
 
 type dataPlaneDinosaurHandler struct {
-	service         services.DataPlaneCentralService
-	dinosaurService services.DinosaurService
-	presenter       *presenters.ManagedCentralPresenter
+	service              services.DataPlaneCentralService
+	dinosaurService      services.DinosaurService
+	presenter            *presenters.ManagedCentralPresenter
+	gitopsConfigProvider gitops.ConfigProvider
 }
 
 // NewDataPlaneDinosaurHandler ...
@@ -24,11 +25,13 @@ func NewDataPlaneDinosaurHandler(
 	service services.DataPlaneCentralService,
 	dinosaurService services.DinosaurService,
 	presenter *presenters.ManagedCentralPresenter,
+	gitopsConfigProvider gitops.ConfigProvider,
 ) *dataPlaneDinosaurHandler {
 	return &dataPlaneDinosaurHandler{
-		service:         service,
-		dinosaurService: dinosaurService,
-		presenter:       presenter,
+		service:              service,
+		dinosaurService:      dinosaurService,
+		presenter:            presenter,
+		gitopsConfigProvider: gitopsConfigProvider,
 	}
 }
 
@@ -69,9 +72,12 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 				Items: []private.ManagedCentral{},
 			}
 
-			// TODO: check that the correct GitOps configuration is added to the response
 			if features.TargetedOperatorUpgrades.Enabled() {
-				managedDinosaurList.RhacsOperators = operator.GetConfig().ToAPIResponse()
+				gitopsConfig, err := h.gitopsConfigProvider.Get()
+				if err != nil {
+					return nil, errors.GeneralError("failed to get GitOps configuration: %v", err)
+				}
+				managedDinosaurList.RhacsOperators = gitopsConfig.RHACSOperators.ToAPIResponse()
 			}
 
 			for i := range centralRequests {
