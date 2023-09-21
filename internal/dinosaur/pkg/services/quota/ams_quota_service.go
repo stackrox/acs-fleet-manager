@@ -58,12 +58,11 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.Ce
 	}
 
 	isCloudAccount := dinosaur.CloudAccountID != ""
+	standardAccountIsActive := !isCloudAccount && len(quotasMap[amsv1.BillingModelStandard]) > 0
 
-	entitled :=
-		// Entitlement is active if there's allowed quota for standard billing model...
-		!isCloudAccount && len(quotasMap[amsv1.BillingModelStandard]) > 0 ||
-			// or there is cloud quota and the original cloud account is still active.
-			cloudAccountIsActive(quotasMap, dinosaur)
+	// Entitlement is active if there's allowed quota for standard billing model
+	// or there is cloud quota and the original cloud account is still active.
+	entitled := standardAccountIsActive || cloudAccountIsActive(quotasMap, dinosaur)
 
 	if !entitled {
 		glog.Infof("Quota no longer entitled for organisation %q", org.ID)

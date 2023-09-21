@@ -4,6 +4,7 @@ package ocm
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/openshift-online/ocm-sdk-go/logging"
 
@@ -64,7 +65,8 @@ type Client interface {
 var _ Client = &client{}
 
 type client struct {
-	connection *sdkClient.Connection
+	connection     *sdkClient.Connection
+	quotaCostCache Cache[string, *amsv1.QuotaCostListResponse]
 }
 
 // AMSClient ...
@@ -124,7 +126,10 @@ func getLogger(isDebugEnabled bool) (*logging.GoLogger, error) {
 
 // NewClient ...
 func NewClient(connection *sdkClient.Connection) Client {
-	return &client{connection: connection}
+	return &client{
+		connection:     connection,
+		quotaCostCache: NewCache[string, *amsv1.QuotaCostListResponse](1 * time.Minute),
+	}
 }
 
 // NewMockClient returns a new OCM client with stubbed responses.
@@ -627,12 +632,16 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 	}
 
 	var res []*amsv1.QuotaCost
-	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
-	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
+	quotaCostList, ok := c.quotaCostCache.Get(organizationID)
+	if !ok {
+		organizationClient := c.connection.AccountsMgmt().V1().Organizations()
+		quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
 
-	quotaCostList, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Parameter("fetchCloudAccounts", true).Send()
-	if err != nil {
-		return nil, fmt.Errorf("retrieving relatedResources from the QuotaCosts service: %w", err)
+		qcl, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Parameter("fetchCloudAccounts", true).Send()
+		if err != nil {
+			return nil, fmt.Errorf("retrieving relatedResources from the QuotaCosts service: %w", err)
+		}
+		quotaCostList = c.quotaCostCache.Add(organizationID, qcl)
 	}
 
 	quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {

@@ -84,18 +84,11 @@ func (k *GracePeriodManager) reconcileCentralGraceFrom(centrals dbapi.CentralLis
 		return append(svcErrors, factoryErr)
 	}
 
-	subscriptionStatusByOrg := map[string]bool{}
-
 	for _, central := range centrals {
-		active, exists := subscriptionStatusByOrg[central.OrganisationID]
-		if !exists {
-			isActive, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(central, types.DinosaurInstanceType(central.InstanceType))
-			if err != nil {
-				svcErrors = append(svcErrors, errors.Wrapf(err, "failed to get quota entitlement status of central instance %q", central.ID))
-				continue
-			}
-			subscriptionStatusByOrg[central.OrganisationID] = isActive
-			active = isActive
+		active, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(central, types.DinosaurInstanceType(central.InstanceType))
+		if err != nil {
+			svcErrors = append(svcErrors, errors.Wrapf(err, "failed to get quota entitlement status of central instance %q", central.ID))
+			continue
 		}
 
 		if err := k.updateGraceFromBasedOnQuotaEntitlement(central, active); err != nil {
@@ -122,7 +115,5 @@ func (k *GracePeriodManager) updateGraceFromBasedOnQuotaEntitlement(central *dba
 		glog.Infof("quota entitlement for central instance %q is no longer active, updating grace_from to %q", central.ID, now.Format(time.RFC1123Z))
 		return k.dinosaurService.Update(central)
 	}
-
-	glog.Infof("no grace_from changes needed for central %q, skipping update", central.ID)
 	return nil
 }
