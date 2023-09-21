@@ -27,7 +27,7 @@ var _ QuotaService = &QuotaServiceMock{}
 //			DeleteQuotaFunc: func(subscriptionID string) *serviceError.ServiceError {
 //				panic("mock out the DeleteQuota method")
 //			},
-//			ReserveQuotaFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError) {
+//			ReserveQuotaFunc: func(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError) {
 //				panic("mock out the ReserveQuota method")
 //			},
 //		}
@@ -44,7 +44,7 @@ type QuotaServiceMock struct {
 	DeleteQuotaFunc func(subscriptionID string) *serviceError.ServiceError
 
 	// ReserveQuotaFunc mocks the ReserveQuota method.
-	ReserveQuotaFunc func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError)
+	ReserveQuotaFunc func(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *serviceError.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -62,6 +62,8 @@ type QuotaServiceMock struct {
 		}
 		// ReserveQuota holds details about calls to the ReserveQuota method.
 		ReserveQuota []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// Dinosaur is the dinosaur argument value.
 			Dinosaur *dbapi.CentralRequest
 			// InstanceType is the instanceType argument value.
@@ -147,16 +149,18 @@ func (mock *QuotaServiceMock) ReserveQuota(ctx context.Context, dinosaur *dbapi.
 		panic("QuotaServiceMock.ReserveQuotaFunc: method is nil but QuotaService.ReserveQuota was just called")
 	}
 	callInfo := struct {
+		Ctx          context.Context
 		Dinosaur     *dbapi.CentralRequest
 		InstanceType types.DinosaurInstanceType
 	}{
+		Ctx:          ctx,
 		Dinosaur:     dinosaur,
 		InstanceType: instanceType,
 	}
 	mock.lockReserveQuota.Lock()
 	mock.calls.ReserveQuota = append(mock.calls.ReserveQuota, callInfo)
 	mock.lockReserveQuota.Unlock()
-	return mock.ReserveQuotaFunc(dinosaur, instanceType)
+	return mock.ReserveQuotaFunc(ctx, dinosaur, instanceType)
 }
 
 // ReserveQuotaCalls gets all the calls that were made to ReserveQuota.
@@ -164,10 +168,12 @@ func (mock *QuotaServiceMock) ReserveQuota(ctx context.Context, dinosaur *dbapi.
 //
 //	len(mockedQuotaService.ReserveQuotaCalls())
 func (mock *QuotaServiceMock) ReserveQuotaCalls() []struct {
+	Ctx          context.Context
 	Dinosaur     *dbapi.CentralRequest
 	InstanceType types.DinosaurInstanceType
 } {
 	var calls []struct {
+		Ctx          context.Context
 		Dinosaur     *dbapi.CentralRequest
 		InstanceType types.DinosaurInstanceType
 	}
