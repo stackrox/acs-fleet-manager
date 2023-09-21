@@ -81,7 +81,7 @@ type DinosaurService interface {
 	// The Dinosaur Request in the database will be updated with a deleted_at timestamp.
 	Delete(centralRequest *dbapi.CentralRequest, force bool) *errors.ServiceError
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError)
-	RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
+	RegisterDinosaurJob(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	ListByStatus(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *errors.ServiceError)
 	// UpdateStatus change the status of the Dinosaur cluster
 	// The returned boolean is to be used to know if the update has been tried or not. An update is not tried if the
@@ -214,7 +214,7 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralReque
 }
 
 // reserveQuota - reserves quota for the given dinosaur request. If a RHACS quota has been assigned, it will try to reserve RHACS quota, otherwise it will try with RHACSTrial
-func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (subscriptionID string, err *errors.ServiceError) {
+func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) (subscriptionID string, err *errors.ServiceError) {
 	if dinosaurRequest.InstanceType == types.EVAL.String() {
 		if !k.dinosaurConfig.Quota.AllowEvaluatorInstance {
 			return "", errors.NewWithCause(errors.ErrorForbidden, err, "central eval instances are not allowed")
@@ -241,12 +241,12 @@ func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (s
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
-	subscriptionID, err = quotaService.ReserveQuota(dinosaurRequest, types.DinosaurInstanceType(dinosaurRequest.InstanceType))
+	subscriptionID, err = quotaService.ReserveQuota(ctx, dinosaurRequest, types.DinosaurInstanceType(dinosaurRequest.InstanceType))
 	return subscriptionID, err
 }
 
 // RegisterDinosaurJob registers a new job in the dinosaur table
-func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
+func (k *dinosaurService) RegisterDinosaurJob(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	// we need to pre-populate the ID to be able to reserve the quota
@@ -271,7 +271,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", dinosaurRequest.Region, dinosaurRequest.InstanceType))
 	}
 	dinosaurRequest.ClusterID = cluster.ClusterID
-	subscriptionID, err := k.reserveQuota(dinosaurRequest)
+	subscriptionID, err := k.reserveQuota(ctx, dinosaurRequest)
 	if err != nil {
 		return err
 	}

@@ -107,7 +107,7 @@ func (h adminCentralHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateScannerSpec(ctx, &centralRequest, &convCentral),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			svcErr := h.service.RegisterDinosaurJob(&convCentral)
+			svcErr := h.service.RegisterDinosaurJob(ctx, &convCentral)
 			h.telemetry.RegisterTenant(ctx, &convCentral, true, svcErr.AsError())
 
 			if svcErr != nil {
