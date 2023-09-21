@@ -42,4 +42,18 @@ func TestCache(t *testing.T) {
 		assert.Equal(t, "", a)
 		assert.False(t, ok)
 	})
+
+	t.Run("cleanup", func(t *testing.T) {
+		c := NewCache[string, string](0)
+		c.Add("a", "ay")
+		c.Add("b", "bee")
+		a, ok := c.Get("a")
+		assert.Equal(t, "", a)
+		assert.False(t, ok)
+
+		b, ok := c.Get("b")
+		assert.Equal(t, "bee", b)
+		assert.False(t, ok)
+	})
+
 }

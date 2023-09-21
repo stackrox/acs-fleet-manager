@@ -5,42 +5,54 @@ import (
 	"time"
 )
 
+// Cache provides methods to store and get values from a cache.
 type Cache[K comparable, V any] interface {
-	Add(k K, v V) V
-	Get(k K) (V, bool)
+	Add(key K, value V) V
+	Get(key K) (V, bool)
 }
 
 type cacheImpl[K comparable, V any] struct {
-	age time.Duration
-	mux sync.Mutex
-	m   map[K]V
-	ts  map[K]time.Time
+	age  time.Duration
+	mux  sync.Mutex
+	data map[K]V
+	ts   map[K]time.Time
 }
 
+// NewCache constructs a key-value cache that stores values up to age period.
 func NewCache[K comparable, V any](age time.Duration) *cacheImpl[K, V] {
 	return &cacheImpl[K, V]{
-		age: age,
-		m:   make(map[K]V),
-		ts:  make(map[K]time.Time),
+		age:  age,
+		data: make(map[K]V),
+		ts:   make(map[K]time.Time),
 	}
 }
 
-func (c *cacheImpl[K, V]) Add(k K, v V) V {
+// Add a value to the cache. Cleans the cache up from expired data.
+// Returns the provided value.
+func (c *cacheImpl[K, V]) Add(key K, value V) V {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	c.m[k] = v
-	c.ts[k] = time.Now()
-	return v
+	for k, ts := range c.ts {
+		if time.Since(ts) > c.age {
+			delete(c.data, k)
+			delete(c.ts, k)
+		}
+	}
+	c.data[key] = value
+	c.ts[key] = time.Now()
+	return value
 }
 
-func (c *cacheImpl[K, V]) Get(k K) (V, bool) {
+// Get the value from the cache. Removes the value from the cache if expired.
+// Returns the value and whether it exists in the cache.
+func (c *cacheImpl[K, V]) Get(key K) (V, bool) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	v, ok := c.m[k]
-	if ok && time.Since(c.ts[k]) > c.age {
-		delete(c.m, k)
-		delete(c.ts, k)
+	value, ok := c.data[key]
+	if ok && time.Since(c.ts[key]) > c.age {
+		delete(c.data, key)
+		delete(c.ts, key)
 		ok = false
 	}
-	return v, ok
+	return value, ok
 }
