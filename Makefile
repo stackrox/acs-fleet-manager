@@ -517,6 +517,7 @@ image/build:
 .PHONY: image/build
 
 # Builds the binaries locally and copies them into the image. This build is compatible with arm64.
+image/build/local: GOOS=linux
 image/build/local: DOCKERFILE="Dockerfile.local"
 image/build/local:
 	GOARCH=$(GOARCH) GOOS=$(GOOS) $(MAKE) binary

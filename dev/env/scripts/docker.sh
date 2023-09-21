@@ -56,7 +56,7 @@ ensure_fleet_manager_image_exists() {
             if [[ "$image_available" != "true" || "$FLEET_MANAGER_IMAGE" =~ dirty$ ]]; then
                 # Attempt to build this image.
                 if [[ "$FLEET_MANAGER_IMAGE" == "$(make -s -C "${GITROOT}" full-image-tag)" ]]; then
-                        log "Building standard image..."
+                        log "Building local image..."
                         make -C "${GITROOT}" image/build/local
                 else
                     die "Cannot find image '${FLEET_MANAGER_IMAGE}' and don't know how to build it"
