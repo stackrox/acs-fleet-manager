@@ -24,12 +24,6 @@ func parseConfig(content []byte) (OperatorConfigs, error) {
 	return out, nil
 }
 
-// CRDConfig represents the crd to be installed in the data-plane cluster. The CRD is downloaded automatically
-// from the base URL.
-type CRDConfig struct {
-	URLs []string `json:"urls,omitempty"`
-}
-
 // OperatorConfigs represents all operators and the CRD which should be installed in a data-plane cluster.
 type OperatorConfigs struct {
 	CRDURLs []string         `json:"crdUrls"`
