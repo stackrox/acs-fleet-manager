@@ -59,8 +59,8 @@ type Client interface {
 	Connection() *sdkClient.Connection
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 	GetCustomerCloudAccounts(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error)
-	// GetCurrentAccount returns the account information of the current authenticated user
-	GetCurrentAccount(overrideAuthToken string) (*amsv1.Account, error)
+	// GetCurrentAccount returns the account information of the user to whom belongs the token
+	GetCurrentAccount(userToken string) (*amsv1.Account, error)
 }
 
 var _ Client = &client{}
@@ -757,25 +757,22 @@ func (c *client) GetCustomerCloudAccounts(organizationID string, quotaIDs []stri
 	return res, nil
 }
 
-// GetCurrentAccount returns the account information of the current authenticated user
-func (c *client) GetCurrentAccount(overrideAuthToken string) (*amsv1.Account, error) {
+// GetCurrentAccount returns the account information of the user to whom belongs the token
+func (c *client) GetCurrentAccount(userToken string) (*amsv1.Account, error) {
 	connectionBuilder, err := addLoggerToConnectionBuilder(c.connection.Logger().DebugEnabled(),
 		getBaseConnectionBuilder(c.connection.URL()))
 	if err != nil {
-		// TODO
-		return nil, err
+		return nil, fmt.Errorf("couldn't create modified OCM connection: %w", err)
 	}
-	connectionBuilder = connectionBuilder.Tokens(overrideAuthToken)
+	connectionBuilder = connectionBuilder.Tokens(userToken)
 	modifiedConnection, err := connectionBuilder.Build()
 	if err != nil {
-		// TODO
-		return nil, err
+		return nil, fmt.Errorf("couldn't build modified OCM connection: %w", err)
 	}
-	currentAccountClient := modifiedConnection.AccountsMgmt().V1().CurrentAccount()
-	request := currentAccountClient.Get()
-	response, err := request.Send()
+	defer modifiedConnection.Close()
+	response, err := modifiedConnection.AccountsMgmt().V1().CurrentAccount().Get().Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unsuccessful call to current account endpoint: %w", err)
 	}
 
 	currentAccount := response.Body()

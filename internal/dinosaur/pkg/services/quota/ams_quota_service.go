@@ -171,16 +171,11 @@ func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.Centr
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
 	}
 
-	userToken, err := authentication.TokenFromContext(ctx)
-	if err != nil {
-		// TODO
-		return "", errors.FailedClusterAuthorization(err)
-	}
-	_, err = q.amsClient.GetCurrentAccount(userToken.Raw)
-	if err != nil {
-		// TODO
-		return "", errors.FailedClusterAuthorization(err)
-	}
+	// The reason to call /current_account here is how AMS functions.
+	// In case customer just created the account, AMS might miss information about their quota.
+	// Calling /current_account endpoint results in this data being populated.
+	// Since this is a non-requirement for successful quota reservation, errors are logged but ignored here.
+	q.callCurrentAccount(ctx)
 
 	resp, err := q.amsClient.ClusterAuthorization(cb)
 	if err != nil {
@@ -191,6 +186,21 @@ func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.Centr
 		return resp.Subscription().ID(), nil
 	}
 	return "", errors.InsufficientQuotaError("Insufficient Quota")
+}
+
+func (q amsQuotaService) callCurrentAccount(ctx context.Context) {
+	userToken, err := authentication.TokenFromContext(ctx)
+	if err != nil {
+		glog.Warningf("Couldn't extract user token from context: %w", err)
+		return
+	}
+	if userToken == nil {
+		return
+	}
+	_, err = q.amsClient.GetCurrentAccount(userToken.Raw)
+	if err != nil {
+		glog.Warningf("Call to  current account endpoint was unsuccessful: %w", err)
+	}
 }
 
 func (q amsQuotaService) verifyCloudAccountInAMS(dinosaur *dbapi.CentralRequest, orgID string) *errors.ServiceError {
