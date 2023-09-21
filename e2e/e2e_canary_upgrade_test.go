@@ -3,6 +3,9 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
@@ -17,7 +20,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -27,7 +29,7 @@ const (
 
 func operatorConfigForVersion(version string) operator.OperatorConfig {
 	return operator.OperatorConfig{
-		"name":                 fmt.Sprintf("rhacs-operator-%s", version),
+		"deploymentName":       fmt.Sprintf("rhacs-operator-%s", strings.ReplaceAll(version, ".", "-")),
 		"image":                fmt.Sprintf("quay.io/rhacs-eng/stackrox-operator:%s", version),
 		"centralLabelSelector": fmt.Sprintf("rhacs.redhat.com/version-selector=%s", version),
 	}

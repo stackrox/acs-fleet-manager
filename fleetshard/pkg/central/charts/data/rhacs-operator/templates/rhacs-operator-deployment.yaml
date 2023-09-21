@@ -91,11 +91,11 @@ spec:
               value: "{{ .securedClusterLabelSelector }}"
             {{- end }}
             {{- if .disableCentralReconciler }}
-            - name: CENTRAL_RECONCILER_DISABLED
+            - name: DISABLE_CENTRAL_RECONCILER
               value: "true"
             {{- end }}
             {{- if .disableSecuredClusterReconciler }}
-            - name: SECURE_CLUSTER_RECONCILER_DISABLED
+            - name: DISABLE_SECURED_CLUSTER_RECONCILER
               value: "true"
             {{- end }}
           image: "{{ .image }}"
