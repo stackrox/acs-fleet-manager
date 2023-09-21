@@ -267,15 +267,10 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 		}
 		glog.Infof("Reading operator config map, extracted %d operators from configmap", len(configMapOperators))
 		desiredOperatorConfigs = configMapOperators
-	} else if features.TargetedOperatorUpgrades.Enabled() {
+	} else {
 		for _, operatorConfig := range list.RhacsOperators.RHACSOperatorConfigs {
 			desiredOperatorConfigs = append(desiredOperatorConfigs, operatorConfig)
 		}
-	} else {
-		desiredOperatorConfigs = []operator.OperatorConfig{{
-			"deploymentName": "rhacs-operator",
-			"image":          "quay.io/rhacs-eng/stackrox-operator:4.1.0",
-		}}
 	}
 
 	operators := operator.OperatorConfigs{
