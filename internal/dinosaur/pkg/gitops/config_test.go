@@ -24,12 +24,12 @@ func TestValidateGitOpsConfig(t *testing.T) {
 			},
 			yaml: `
 rhacsOperators:
-  crd:
-    baseURL: https://raw.githubusercontent.com/stackrox/stackrox/{{ .GitRef }}/operator/bundle/manifests/
-    gitRef: 4.1.1
+  crdURls:
+    - https://raw.githubusercontent.com/stackrox/stackrox/4.1.2/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml
   operators:
-  - gitRef: 4.1.1
-    image: "quay.io/rhacs-eng/stackrox-operator:4.1.1"
+    - image: "quay.io/rhacs-eng/stackrox-operator:4.1.1"
+      deploymentName: "stackrox-operator"
+      centralLabelSelector: "app.kubernetes.io/name=central"
 centrals:
   overrides:
   - instanceIds:
@@ -43,13 +43,6 @@ centrals:
 				assert.Equal(t, field.Invalid(field.NewPath("centrals", "overrides").Index(0).Child("patch"), "foo", "invalid patch: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1alpha1.Central"), err[0])
 			},
 			yaml: `
-rhacsOperators:
-  crd:
-    baseURL: https://raw.githubusercontent.com/stackrox/stackrox/{{ .GitRef }}/operator/bundle/manifests/
-    gitRef: 4.1.1
-  operators:
-  - gitRef: 4.1.1
-    image: "quay.io/rhacs-eng/stackrox-operator:4.1.1"
 centrals:
   overrides:
   - instanceIds:
@@ -63,13 +56,6 @@ centrals:
 				assert.Equal(t, field.Invalid(field.NewPath("centrals", "overrides").Index(0).Child("patch"), "spec: 123\n", "invalid patch: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal number into Go struct field Central.spec of type v1alpha1.CentralSpec"), err[0])
 			},
 			yaml: `
-rhacsOperators:
-  crd:
-    baseURL: https://raw.githubusercontent.com/stackrox/stackrox/{{ .GitRef }}/operator/bundle/manifests/
-    gitRef: 4.1.1
-  operators:
-  - gitRef: 4.1.1
-    image: "quay.io/rhacs-eng/stackrox-operator:4.1.1"
 centrals:
   overrides:
   - instanceIds:
@@ -83,9 +69,6 @@ centrals:
 				assert.Contains(t, err.ToAggregate().Errors()[0].Error(), "cannot unmarshal string into Go value of type v1alpha1.Central", "central config was not validated")
 			},
 			yaml: `
-rhacsOperators:
-  crd:
-    baseURL: invalid
 centrals:
   overrides:
   - instanceIds:
