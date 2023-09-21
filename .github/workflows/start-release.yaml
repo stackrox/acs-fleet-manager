@@ -1,0 +1,45 @@
+name: Start release
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Commit to merge into the stage branch (branch name, tag name or SHA)'
+        required: true
+        default: 'main'
+        type: string
+      release_version:
+        description: 'Release version in the format YYYY-MM-DD.N'
+        required: true
+        default: 'YYYY-MM-DD.1'
+        type: string
+
+jobs:
+  prepare-stage-pr:
+    runs-on: ubuntu-latest
+    name: Prepare stage PR
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    # action-create-branch does not accept symbolic refs, so we need to parse it here.
+    - name: Canonicalize the commit ID
+      run: |
+        echo "commit_hash=$(git rev-parse --verify --quiet 'remotes/origin/${{ inputs.commit }}' || git rev-parse --verify --quiet '${{ inputs.commit }}')" >> "$GITHUB_ENV"
+
+    - name: Create Release Candidate branch
+      uses: peterjgrainger/action-create-branch@v2.3.0
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      with:
+        branch: 'rc-${{ inputs.release_version }}'
+        sha: '${{ env.commit_hash }}'
+
+    - name: Open a pull request
+      uses: tretuna/sync-branches@1.4.0
+      with:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        FROM_BRANCH: 'rc-${{ inputs.release_version }}'
+        TO_BRANCH: 'stage'
