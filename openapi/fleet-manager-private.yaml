@@ -395,29 +395,15 @@ components:
 
     RHACSOperatorConfigs:
       properties:
-        CRD:
-          type: object
-          properties:
-            baseURL:
-              type: string
-            gitRef:
+        CrdUrls:
+          type: array
+          items:
               type: string
         RHACSOperatorConfigs:
           type: array
           items:
-            allOf:
-                - $ref: '#/components/schemas/RHACSOperatorConfig'
+            type: object
 
-    RHACSOperatorConfig:
-      description: >-
-        RHACSOperatorConfig defines the configuration of an operator
-      properties:
-        gitRef:
-          type: string
-        image:
-          type: string
-        helmValues:
-          type: string
     DataPlaneClusterUpdateStatusRequest:
       # TODO are there any fields that should be required?
       # TODO are there any fields that should be nullable? (this is, a pointer in the resulting generated Go code)
