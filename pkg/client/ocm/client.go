@@ -3,6 +3,7 @@ package ocm
 
 import (
 	"fmt"
+	"github.com/openshift-online/ocm-sdk-go/logging"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -84,11 +85,11 @@ func NewOCMConnection(ocmConfig *OCMConfig, baseURL string) (*sdkClient.Connecti
 	builder := getBaseConnectionBuilder(baseURL)
 	if !ocmConfig.EnableMock {
 		// Create a logger that has the debug level enabled:
-		var err error
-		builder, err = addLoggerToConnectionBuilder(ocmConfig.Debug, builder)
+		logger, err := getLogger(ocmConfig.Debug)
 		if err != nil {
 			return nil, nil, err
 		}
+		builder = builder.Logger(logger)
 	}
 
 	if ocmConfig.ClientID != "" && ocmConfig.ClientSecret != "" {
@@ -114,15 +115,14 @@ func getBaseConnectionBuilder(baseURL string) *sdkClient.ConnectionBuilder {
 		MetricsSubsystem("api_outbound")
 }
 
-func addLoggerToConnectionBuilder(isDebugEnabled bool, builder *sdkClient.ConnectionBuilder) (*sdkClient.ConnectionBuilder, error) {
+func getLogger(isDebugEnabled bool) (*logging.GoLogger, error) {
 	logger, err := sdkClient.NewGoLoggerBuilder().
 		Debug(isDebugEnabled).
 		Build()
 	if err != nil {
 		return nil, fmt.Errorf("creating logger for OCM client connection: %w", err)
 	}
-	builder = builder.Logger(logger)
-	return builder, nil
+	return logger, nil
 }
 
 // NewClient ...
@@ -759,13 +759,14 @@ func (c *client) GetCustomerCloudAccounts(organizationID string, quotaIDs []stri
 
 // GetCurrentAccount returns the account information of the user to whom belongs the token
 func (c *client) GetCurrentAccount(userToken string) (*amsv1.Account, error) {
-	connectionBuilder, err := addLoggerToConnectionBuilder(c.connection.Logger().DebugEnabled(),
-		getBaseConnectionBuilder(c.connection.URL()))
+	logger, err := getLogger(c.connection.Logger().DebugEnabled())
 	if err != nil {
-		return nil, fmt.Errorf("couldn't create modified OCM connection: %w", err)
+		return nil, fmt.Errorf("couldn't create logger for modified OCM connection: %w", err)
 	}
-	connectionBuilder = connectionBuilder.Tokens(userToken)
-	modifiedConnection, err := connectionBuilder.Build()
+	modifiedConnection, err := getBaseConnectionBuilder(c.connection.URL()).
+		Logger(logger).
+		Tokens(userToken).
+		Build()
 	if err != nil {
 		return nil, fmt.Errorf("couldn't build modified OCM connection: %w", err)
 	}
