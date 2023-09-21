@@ -1,0 +1,18 @@
+name: Create PR to merge stage into production
+on:
+  push:
+    branches:
+      - stage
+
+jobs:
+  prepare-prod-pr:
+    runs-on: ubuntu-latest
+    name: Prepare production PR
+    steps:
+
+    - name: Open a pull request
+      uses: tretuna/sync-branches@1.4.0
+      with:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        FROM_BRANCH: 'stage'
+        TO_BRANCH: 'production'
