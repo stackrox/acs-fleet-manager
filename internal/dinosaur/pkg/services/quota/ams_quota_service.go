@@ -2,7 +2,9 @@
 package quota
 
 import (
+	"context"
 	"fmt"
+	"github.com/openshift-online/ocm-sdk-go/authentication"
 
 	"github.com/golang/glog"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -127,10 +129,15 @@ func (q amsQuotaService) selectBillingModelFromDinosaurInstanceType(orgID, cloud
 }
 
 // ReserveQuota ...
-func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
+func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
 	dinosaurID := dinosaur.ID
-
 	rr := newBaseQuotaReservedResourceResourceBuilder()
+
+	// The reason to call /current_account here is how AMS functions.
+	// In case customer just created the account, AMS might miss information about their quota.
+	// Calling /current_account endpoint results in this data being populated.
+	// Since this is a non-requirement for successful quota reservation, errors are logged but ignored here.
+	q.callCurrentAccount(ctx)
 
 	org, err := q.amsClient.GetOrganisationFromExternalID(dinosaur.OrganisationID)
 	if err != nil {
@@ -178,6 +185,21 @@ func (q amsQuotaService) ReserveQuota(dinosaur *dbapi.CentralRequest, instanceTy
 		return resp.Subscription().ID(), nil
 	}
 	return "", errors.InsufficientQuotaError("Insufficient Quota")
+}
+
+func (q amsQuotaService) callCurrentAccount(ctx context.Context) {
+	userToken, err := authentication.TokenFromContext(ctx)
+	if err != nil {
+		glog.Warningf("Couldn't extract user token from context: %w", err)
+		return
+	}
+	if userToken == nil {
+		return
+	}
+	_, err = q.amsClient.GetCurrentAccount(userToken.Raw)
+	if err != nil {
+		glog.Warningf("Call to  current account endpoint was unsuccessful: %w", err)
+	}
 }
 
 func (q amsQuotaService) verifyCloudAccountInAMS(dinosaur *dbapi.CentralRequest, orgID string) *errors.ServiceError {

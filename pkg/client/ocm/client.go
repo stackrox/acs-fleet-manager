@@ -3,6 +3,7 @@ package ocm
 
 import (
 	"fmt"
+	"github.com/openshift-online/ocm-sdk-go/logging"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -59,6 +60,8 @@ type Client interface {
 	Connection() *sdkClient.Connection
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 	GetCustomerCloudAccounts(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error)
+	// GetCurrentAccount returns the account information of the user to whom belongs the token
+	GetCurrentAccount(userToken string) (*amsv1.Account, error)
 }
 
 var _ Client = &client{}
@@ -74,22 +77,17 @@ type AMSClient Client
 type ClusterManagementClient Client
 
 // NewOCMConnection ...
-func NewOCMConnection(ocmConfig *OCMConfig, BaseURL string) (*sdkClient.Connection, func(), error) {
+func NewOCMConnection(ocmConfig *OCMConfig, baseURL string) (*sdkClient.Connection, func(), error) {
 	if ocmConfig.EnableMock && ocmConfig.MockMode != MockModeEmulateServer {
 		return nil, func() {}, nil
 	}
 
-	builder := sdkClient.NewConnectionBuilder().
-		URL(BaseURL).
-		MetricsSubsystem("api_outbound")
-
+	builder := getBaseConnectionBuilder(baseURL)
 	if !ocmConfig.EnableMock {
 		// Create a logger that has the debug level enabled:
-		logger, err := sdkClient.NewGoLoggerBuilder().
-			Debug(ocmConfig.Debug).
-			Build()
+		logger, err := getLogger(ocmConfig.Debug)
 		if err != nil {
-			return nil, nil, fmt.Errorf("creating logger for OCM client connection: %w", err)
+			return nil, nil, err
 		}
 		builder = builder.Logger(logger)
 	}
@@ -109,6 +107,22 @@ func NewOCMConnection(ocmConfig *OCMConfig, BaseURL string) (*sdkClient.Connecti
 	return connection, func() {
 		_ = connection.Close()
 	}, nil
+}
+
+func getBaseConnectionBuilder(baseURL string) *sdkClient.ConnectionBuilder {
+	return sdkClient.NewConnectionBuilder().
+		URL(baseURL).
+		MetricsSubsystem("api_outbound")
+}
+
+func getLogger(isDebugEnabled bool) (*logging.GoLogger, error) {
+	logger, err := sdkClient.NewGoLoggerBuilder().
+		Debug(isDebugEnabled).
+		Build()
+	if err != nil {
+		return nil, fmt.Errorf("creating logger for OCM client connection: %w", err)
+	}
+	return logger, nil
 }
 
 // NewClient ...
@@ -741,4 +755,27 @@ func (c *client) GetCustomerCloudAccounts(organizationID string, quotaIDs []stri
 	})
 
 	return res, nil
+}
+
+// GetCurrentAccount returns the account information of the user to whom belongs the token
+func (c *client) GetCurrentAccount(userToken string) (*amsv1.Account, error) {
+	logger, err := getLogger(c.connection.Logger().DebugEnabled())
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create logger for modified OCM connection: %w", err)
+	}
+	modifiedConnection, err := getBaseConnectionBuilder(c.connection.URL()).
+		Logger(logger).
+		Tokens(userToken).
+		Build()
+	if err != nil {
+		return nil, fmt.Errorf("couldn't build modified OCM connection: %w", err)
+	}
+	defer modifiedConnection.Close()
+	response, err := modifiedConnection.AccountsMgmt().V1().CurrentAccount().Get().Send()
+	if err != nil {
+		return nil, fmt.Errorf("unsuccessful call to current account endpoint: %w", err)
+	}
+
+	currentAccount := response.Body()
+	return currentAccount, nil
 }

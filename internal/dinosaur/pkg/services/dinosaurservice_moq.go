@@ -79,7 +79,7 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			RegisterDinosaurDeprovisionJobFunc: func(ctx context.Context, id string) *serviceError.ServiceError {
 //				panic("mock out the RegisterDinosaurDeprovisionJob method")
 //			},
-//			RegisterDinosaurJobFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+//			RegisterDinosaurJobFunc: func(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the RegisterDinosaurJob method")
 //			},
 //			RestoreFunc: func(ctx context.Context, id string) *serviceError.ServiceError {
@@ -162,7 +162,7 @@ type DinosaurServiceMock struct {
 	RegisterDinosaurDeprovisionJobFunc func(ctx context.Context, id string) *serviceError.ServiceError
 
 	// RegisterDinosaurJobFunc mocks the RegisterDinosaurJob method.
-	RegisterDinosaurJobFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
+	RegisterDinosaurJobFunc func(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// RestoreFunc mocks the Restore method.
 	RestoreFunc func(ctx context.Context, id string) *serviceError.ServiceError
@@ -280,6 +280,8 @@ type DinosaurServiceMock struct {
 		}
 		// RegisterDinosaurJob holds details about calls to the RegisterDinosaurJob method.
 		RegisterDinosaurJob []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// DinosaurRequest is the dinosaurRequest argument value.
 			DinosaurRequest *dbapi.CentralRequest
 		}
@@ -933,19 +935,21 @@ func (mock *DinosaurServiceMock) RegisterDinosaurDeprovisionJobCalls() []struct 
 }
 
 // RegisterDinosaurJob calls RegisterDinosaurJobFunc.
-func (mock *DinosaurServiceMock) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+func (mock *DinosaurServiceMock) RegisterDinosaurJob(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 	if mock.RegisterDinosaurJobFunc == nil {
 		panic("DinosaurServiceMock.RegisterDinosaurJobFunc: method is nil but DinosaurService.RegisterDinosaurJob was just called")
 	}
 	callInfo := struct {
+		Ctx             context.Context
 		DinosaurRequest *dbapi.CentralRequest
 	}{
+		Ctx:             ctx,
 		DinosaurRequest: dinosaurRequest,
 	}
 	mock.lockRegisterDinosaurJob.Lock()
 	mock.calls.RegisterDinosaurJob = append(mock.calls.RegisterDinosaurJob, callInfo)
 	mock.lockRegisterDinosaurJob.Unlock()
-	return mock.RegisterDinosaurJobFunc(dinosaurRequest)
+	return mock.RegisterDinosaurJobFunc(ctx, dinosaurRequest)
 }
 
 // RegisterDinosaurJobCalls gets all the calls that were made to RegisterDinosaurJob.
@@ -953,9 +957,11 @@ func (mock *DinosaurServiceMock) RegisterDinosaurJob(dinosaurRequest *dbapi.Cent
 //
 //	len(mockedDinosaurService.RegisterDinosaurJobCalls())
 func (mock *DinosaurServiceMock) RegisterDinosaurJobCalls() []struct {
+	Ctx             context.Context
 	DinosaurRequest *dbapi.CentralRequest
 } {
 	var calls []struct {
+		Ctx             context.Context
 		DinosaurRequest *dbapi.CentralRequest
 	}
 	mock.lockRegisterDinosaurJob.RLock()
