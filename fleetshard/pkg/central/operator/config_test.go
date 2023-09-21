@@ -32,17 +32,11 @@ func TestGetOperatorConfig(t *testing.T) {
 	assert.Equal(t, "quay.io/rhacs-eng/stackrox-operator:4.1.1", conf.Configs[0].Image)
 }
 
-func TestValidateShouldSucceed(t *testing.T) {
-	conf, err := parseConfig(getExampleConfig())
-	require.NoError(t, err)
-
-	require.Nil(t, Validate(field.NewPath("rhacsOperator"), conf))
-}
-
 func TestGetOperatorConfigFailsValidation(t *testing.T) {
 	testCases := map[string]struct {
 		getConfig func(*testing.T, OperatorConfigs) OperatorConfigs
 		contains  string
+		success   bool
 	}{
 		"should fail with invalid baseURL not able to download CRD": {
 			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
@@ -78,6 +72,19 @@ func TestGetOperatorConfigFailsValidation(t *testing.T) {
 			},
 			contains: "Unmarshalling Helm values failed for operator 4.0.0",
 		},
+		"validate should succeed with example config": {
+			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
+				return config
+			},
+			success: true,
+		},
+		"should succeed with empty operator configs": {
+			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
+				config.Configs = []OperatorConfig{}
+				return config
+			},
+			success: true,
+		},
 	}
 
 	for key, testCase := range testCases {
@@ -86,9 +93,13 @@ func TestGetOperatorConfigFailsValidation(t *testing.T) {
 			require.NoError(t, err)
 
 			errList := Validate(field.NewPath("rhacsOperator"), testCase.getConfig(t, config))
-			require.Len(t, errList, 1)
-			require.NotEmpty(t, testCase.contains)
-			assert.Contains(t, errList.ToAggregate().Errors()[0].Error(), testCase.contains)
+			if testCase.contains != "" {
+				require.Len(t, errList, 1)
+				require.NotEmpty(t, testCase.contains)
+				assert.Contains(t, errList.ToAggregate().Errors()[0].Error(), testCase.contains)
+			} else {
+				require.Nil(t, errList)
+			}
 		})
 	}
 }

@@ -18,9 +18,14 @@ func parseConfig(content []byte) (OperatorConfigs, error) {
 
 // Validate validates the operator configuration and can be used in different life-cycle stages like runtime and deploy time.
 func Validate(path *field.Path, configs OperatorConfigs) field.ErrorList {
-	if _, err := RenderChart(configs); err != nil {
+	manifests, err := RenderChart(configs)
+	if err != nil {
 		return field.ErrorList{
 			field.Forbidden(path, fmt.Sprintf("could not render operator helm charts, got invalid configuration: %s", err.Error())),
+		}
+	} else if len(configs.Configs) > 0 && len(manifests) == 0 {
+		return field.ErrorList{
+			field.Forbidden(path, fmt.Sprintf("operator chart rendering succeed, but no manifests were rendered")),
 		}
 	}
 	return nil
