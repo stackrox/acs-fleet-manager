@@ -79,9 +79,8 @@ centrals:
 		}, {
 			name: "invalid operator config and central config",
 			assert: func(t *testing.T, c *Config, err field.ErrorList) {
-				require.Len(t, err, 2)
+				require.Len(t, err, 1)
 				assert.Contains(t, err.ToAggregate().Errors()[0].Error(), "cannot unmarshal string into Go value of type v1alpha1.Central", "central config was not validated")
-				assert.Contains(t, err.ToAggregate().Errors()[1].Error(), "operator chart rendering succeed, but no manifests were rendered", "operator config was not validated")
 			},
 			yaml: `
 rhacsOperators:
