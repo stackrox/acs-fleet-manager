@@ -131,8 +131,13 @@ func (q amsQuotaService) selectBillingModelFromDinosaurInstanceType(orgID, cloud
 // ReserveQuota ...
 func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError) {
 	dinosaurID := dinosaur.ID
-
 	rr := newBaseQuotaReservedResourceResourceBuilder()
+
+	// The reason to call /current_account here is how AMS functions.
+	// In case customer just created the account, AMS might miss information about their quota.
+	// Calling /current_account endpoint results in this data being populated.
+	// Since this is a non-requirement for successful quota reservation, errors are logged but ignored here.
+	q.callCurrentAccount(ctx)
 
 	org, err := q.amsClient.GetOrganisationFromExternalID(dinosaur.OrganisationID)
 	if err != nil {
@@ -170,12 +175,6 @@ func (q amsQuotaService) ReserveQuota(ctx context.Context, dinosaur *dbapi.Centr
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
 	}
-
-	// The reason to call /current_account here is how AMS functions.
-	// In case customer just created the account, AMS might miss information about their quota.
-	// Calling /current_account endpoint results in this data being populated.
-	// Since this is a non-requirement for successful quota reservation, errors are logged but ignored here.
-	q.callCurrentAccount(ctx)
 
 	resp, err := q.amsClient.ClusterAuthorization(cb)
 	if err != nil {
