@@ -273,8 +273,8 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 		}
 	} else {
 		desiredOperatorConfigs = []operator.OperatorConfig{{
-			"name":  "rhacs-operator",
-			"image": "quay.io/rhacs-eng/stackrox-operator:4.1.0",
+			"deploymentName": "rhacs-operator",
+			"image":          "quay.io/rhacs-eng/stackrox-operator:4.1.0",
 		}}
 	}
 
