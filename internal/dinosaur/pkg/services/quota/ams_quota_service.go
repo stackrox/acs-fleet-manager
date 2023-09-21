@@ -39,10 +39,10 @@ var supportedAMSBillingModels = map[string]struct{}{
 }
 
 // CheckIfQuotaIsDefinedForInstanceType ...
-func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
-	org, err := q.amsClient.GetOrganisationFromExternalID(dinosaur.OrganisationID)
+func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(central *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+	org, err := q.amsClient.GetOrganisationFromExternalID(central.OrganisationID)
 	if err != nil {
-		return false, errors.OrganisationNotFound(dinosaur.OrganisationID, err)
+		return false, errors.OrganisationNotFound(central.OrganisationID, err)
 	}
 
 	quotaType := instanceType.GetQuotaType()
@@ -57,12 +57,12 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.Ce
 		return false, errors.NewWithCause(svcErr.Code, svcErr, "product %q has no allowed billing models", quotaType.GetProduct())
 	}
 
-	isCloudAccount := dinosaur.CloudAccountID != ""
+	isCloudAccount := central.CloudAccountID != ""
 	standardAccountIsActive := !isCloudAccount && len(quotasMap[amsv1.BillingModelStandard]) > 0
 
 	// Entitlement is active if there's allowed quota for standard billing model
 	// or there is cloud quota and the original cloud account is still active.
-	entitled := standardAccountIsActive || cloudAccountIsActive(quotasMap, dinosaur)
+	entitled := standardAccountIsActive || cloudAccountIsActive(quotasMap, central)
 
 	if !entitled {
 		glog.Infof("Quota no longer entitled for organisation %q", org.ID)

@@ -16,13 +16,13 @@ const centralDNSWorkerType = "dinosaur_dns"
 type DinosaurRoutesCNAMEManager struct {
 	workers.BaseWorker
 	dinosaurService services.DinosaurService
-	dinosaurConfig  *config.CentralConfig
+	centralConfig   *config.CentralConfig
 }
 
 var _ workers.Worker = &DinosaurRoutesCNAMEManager{}
 
 // NewDinosaurCNAMEManager ...
-func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, dinosaurConfig *config.CentralConfig) *DinosaurRoutesCNAMEManager {
+func NewDinosaurCNAMEManager(centralService services.DinosaurService, centralConfig *config.CentralConfig) *DinosaurRoutesCNAMEManager {
 	metrics.InitReconcilerMetricsForType(centralDNSWorkerType)
 	return &DinosaurRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
@@ -30,8 +30,8 @@ func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, dinosaurC
 			WorkerType: centralDNSWorkerType,
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService: dinosaurService,
-		dinosaurConfig:  dinosaurConfig,
+		dinosaurService: centralService,
+		centralConfig:   centralConfig,
 	}
 }
 
@@ -58,7 +58,7 @@ func (k *DinosaurRoutesCNAMEManager) Reconcile() []error {
 	}
 
 	for _, dinosaur := range dinosaurs {
-		if k.dinosaurConfig.EnableCentralExternalCertificate {
+		if k.centralConfig.EnableCentralExternalCertificate {
 			if dinosaur.RoutesCreationID == "" {
 				glog.Infof("creating CNAME records for central %s", dinosaur.ID)
 

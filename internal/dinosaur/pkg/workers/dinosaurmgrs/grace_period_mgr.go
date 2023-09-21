@@ -16,25 +16,25 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
-// GracePeriodManager represents a dinosaur manager that manages grace period date.
+// GracePeriodManager represents a central manager that manages grace period date.
 type GracePeriodManager struct {
 	workers.BaseWorker
-	dinosaurService     services.DinosaurService
+	centralService      services.DinosaurService
 	quotaServiceFactory services.QuotaServiceFactory
-	dinosaurConfig      *config.CentralConfig
+	centralConfig       *config.CentralConfig
 }
 
 // NewGracePeriodManager creates a new grace period manager
-func NewGracePeriodManager(dinosaurService services.DinosaurService, quotaServiceFactory services.QuotaServiceFactory, dinosaur *config.CentralConfig) *GracePeriodManager {
+func NewGracePeriodManager(centralService services.DinosaurService, quotaServiceFactory services.QuotaServiceFactory, centralConfig *config.CentralConfig) *GracePeriodManager {
 	return &GracePeriodManager{
 		BaseWorker: workers.BaseWorker{
 			ID:         uuid.New().String(),
 			WorkerType: "grace_period_worker",
 			Reconciler: workers.Reconciler{},
 		},
-		dinosaurService:     dinosaurService,
+		centralService:      centralService,
 		quotaServiceFactory: quotaServiceFactory,
-		dinosaurConfig:      dinosaur,
+		centralConfig:       centralConfig,
 	}
 }
 
@@ -43,12 +43,12 @@ func (*GracePeriodManager) GetRepeatInterval() time.Duration {
 	return 6 * time.Hour
 }
 
-// Start initializes the dinosaur manager to reconcile dinosaur requests
+// Start initializes the central manager to reconcile central requests
 func (k *GracePeriodManager) Start() {
 	k.StartWorker(k)
 }
 
-// Stop causes the process for reconciling dinosaur requests to stop.
+// Stop causes the process for reconciling central requests to stop.
 func (k *GracePeriodManager) Stop() {
 	k.StopWorker(k)
 }
@@ -58,7 +58,7 @@ func (k *GracePeriodManager) Reconcile() []error {
 	glog.Infoln("reconciling grace period start date for central instances")
 	var encounteredErrors []error
 
-	centrals, svcErr := k.dinosaurService.ListByStatus(
+	centrals, svcErr := k.centralService.ListByStatus(
 		constants.CentralRequestStatusAccepted,
 		constants.CentralRequestStatusPreparing,
 		constants.CentralRequestStatusProvisioning,
@@ -79,7 +79,7 @@ func (k *GracePeriodManager) Reconcile() []error {
 func (k *GracePeriodManager) reconcileCentralGraceFrom(centrals dbapi.CentralList) serviceErr.ErrorList {
 	var svcErrors serviceErr.ErrorList
 
-	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.dinosaurConfig.Quota.Type))
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.centralConfig.Quota.Type))
 	if factoryErr != nil {
 		return append(svcErrors, factoryErr)
 	}
@@ -105,7 +105,7 @@ func (k *GracePeriodManager) updateGraceFromBasedOnQuotaEntitlement(central *dba
 	if isQuotaEntitlementActive && central.GraceFrom != nil {
 		central.GraceFrom = nil
 		glog.Infof("updating grace start date of central instance %q to NULL", central.ID)
-		return k.dinosaurService.Update(central)
+		return k.centralService.Update(central)
 	}
 
 	// if quota entitlement is not active and grace_from is not already set, set its value based on the current time and grace period allowance
@@ -113,7 +113,7 @@ func (k *GracePeriodManager) updateGraceFromBasedOnQuotaEntitlement(central *dba
 		now := time.Now()
 		central.GraceFrom = &now
 		glog.Infof("quota entitlement for central instance %q is no longer active, updating grace_from to %q", central.ID, now.Format(time.RFC1123Z))
-		return k.dinosaurService.Update(central)
+		return k.centralService.Update(central)
 	}
 	return nil
 }

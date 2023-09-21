@@ -651,7 +651,7 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 
 	// execute query
 	if err := dbConn.Find(&dinosaurRequestList).Error; err != nil {
-		return dinosaurRequestList, pagingMeta, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list central requests")
+		return dinosaurRequestList, pagingMeta, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to list central requests")
 	}
 
 	return dinosaurRequestList, pagingMeta, nil
