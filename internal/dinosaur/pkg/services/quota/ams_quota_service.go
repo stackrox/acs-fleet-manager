@@ -196,9 +196,11 @@ func (q amsQuotaService) callCurrentAccount(ctx context.Context) {
 	if userToken == nil {
 		return
 	}
-	_, err = q.amsClient.GetCurrentAccount(userToken.Raw)
+	acc, err := q.amsClient.GetCurrentAccount(userToken.Raw)
 	if err != nil {
 		glog.Warningf("Call to  current account endpoint was unsuccessful: %w", err)
+	} else {
+		glog.Infof("Successful call to current account endpoint, caller's email: %s", acc.Email())
 	}
 }
 
