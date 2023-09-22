@@ -144,6 +144,7 @@ func getClientTrackerAndReconciler(
 		managedDBClient,
 		centralDBInitFunc,
 		createBase64Cipher(t),
+		cipher.AES256KeyGenerator{},
 		reconcilerOptions,
 	)
 	return fakeClient, tracker, reconciler
@@ -345,10 +346,11 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:         pointer.Int32(0),
-		client:         fakeClient,
-		central:        private.ManagedCentral{},
-		resourcesChart: resourcesChart,
+		status:                 pointer.Int32(0),
+		client:                 fakeClient,
+		central:                private.ManagedCentral{},
+		resourcesChart:         resourcesChart,
+		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 	}
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)

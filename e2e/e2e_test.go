@@ -123,6 +123,18 @@ var _ = Describe("Central", func() {
 			Expect(tenantLabelFound).To(BeTrue())
 		})
 
+		It("should generate a central-encryption-key secret", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
+
+			Eventually(func() error {
+				keySecret := &corev1.Secret{}
+				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: "central-encryption-key", Namespace: namespaceName}, keySecret)
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+
+		})
+
 		It("should create central in its namespace on a managed cluster", func() {
 			if createdCentral == nil {
 				Fail("central not created")
