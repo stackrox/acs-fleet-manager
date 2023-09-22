@@ -1202,7 +1202,8 @@ func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) e
 		return fmt.Errorf("generating encryption key: %w", err)
 	}
 
-	secret.Data = map[string][]byte{"encryptionKey": encryptionKey}
+	b64Key := base64.StdEncoding.EncodeToString(encryptionKey)
+	secret.Data = map[string][]byte{"encryptionKey": []byte(b64Key)}
 	return nil
 }
 
