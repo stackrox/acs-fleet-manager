@@ -862,7 +862,7 @@ deploy/bootstrap:
 .PHONY: deploy/bootstrap
 
 # Deploy local images fast for development
-deploy/dev-fast: image/build deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
+deploy/dev-fast: image/build/local deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
 
 deploy/dev-fast/fleet-manager: GOOS=linux
 deploy/dev-fast/fleet-manager: image/build/local
