@@ -11,19 +11,23 @@ type Cache[K comparable, V any] interface {
 	Get(key K) (V, bool)
 }
 
+type record[V any] struct {
+	value V
+	ts    time.Time
+}
+
 type cacheImpl[K comparable, V any] struct {
-	age  time.Duration
-	mux  sync.Mutex
-	data map[K]V
-	ts   map[K]time.Time
+	age         time.Duration
+	mux         sync.Mutex
+	data        map[K]record[V]
+	lastCleanUp time.Time
 }
 
 // NewCache constructs a key-value cache that stores values up to age period.
 func NewCache[K comparable, V any](age time.Duration) *cacheImpl[K, V] {
 	return &cacheImpl[K, V]{
 		age:  age,
-		data: make(map[K]V),
-		ts:   make(map[K]time.Time),
+		data: make(map[K]record[V]),
 	}
 }
 
@@ -32,14 +36,15 @@ func NewCache[K comparable, V any](age time.Duration) *cacheImpl[K, V] {
 func (c *cacheImpl[K, V]) Add(key K, value V) V {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	for k, ts := range c.ts {
-		if time.Since(ts) > c.age {
-			delete(c.data, k)
-			delete(c.ts, k)
+	if time.Since(c.lastCleanUp) > c.age {
+		for k, r := range c.data {
+			if time.Since(r.ts) > c.age {
+				delete(c.data, k)
+			}
 		}
+		c.lastCleanUp = time.Now()
 	}
-	c.data[key] = value
-	c.ts[key] = time.Now()
+	c.data[key] = record[V]{value, time.Now()}
 	return value
 }
 
@@ -48,11 +53,10 @@ func (c *cacheImpl[K, V]) Add(key K, value V) V {
 func (c *cacheImpl[K, V]) Get(key K) (V, bool) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	value, ok := c.data[key]
-	if ok && time.Since(c.ts[key]) > c.age {
+	rec, ok := c.data[key]
+	if ok && time.Since(rec.ts) > c.age {
 		delete(c.data, key)
-		delete(c.ts, key)
 		ok = false
 	}
-	return value, ok
+	return rec.value, ok
 }
