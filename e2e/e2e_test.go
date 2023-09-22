@@ -265,18 +265,21 @@ var _ = Describe("Central", func() {
 				Fail("central not created")
 			}
 
-			expectedSecrets := []string{"central-tls", "central-db-password", "central-encryption-key"}
+			// We don't expect central-db-password secret here, because it will not be created in case of
+			// running with disabled managed DB
+			expectedSecrets := []string{"central-tls", "central-encryption-key"}
 			secretsStored := []string{}
 			Eventually(func() error {
-				res, _, err := client.PrivateAPI().GetCentral(context.Background(), createdCentral.Id)
+				privateCentral, _, err := client.PrivateAPI().GetCentral(context.Background(), createdCentral.Id)
 				if err != nil {
 					return err
 				}
 
-				if len(res.Metadata.SecretsStored) != len(expectedSecrets) {
-					return fmt.Errorf("unexpected number of secrets, want: %d, got: %d", len(expectedSecrets), len(res.Metadata.SecretsStored))
+				if len(privateCentral.Metadata.SecretsStored) != len(expectedSecrets) {
+					return fmt.Errorf("unexpected number of secrets, want: %d, got: %d", len(expectedSecrets), len(privateCentral.Metadata.SecretsStored))
 				}
 
+				secretsStored = privateCentral.Metadata.SecretsStored // pragma: allowlist secret
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 

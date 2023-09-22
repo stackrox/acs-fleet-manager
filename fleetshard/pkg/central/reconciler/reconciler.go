@@ -880,7 +880,7 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 
 func (r *CentralReconciler) areSecretsStored(secretsStored []string) bool {
 	secretsStoredSize := len(secretsStored)
-	expectedSecrets := k8s.GetWatchedSecrets()
+	expectedSecrets := r.secretBackup.GetWatchedSecrets()
 	if secretsStoredSize != len(expectedSecrets) {
 		return false
 	}
@@ -1701,6 +1701,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 	secretCipher cipher.Cipher, encryptionKeyGenerator cipher.KeyGenerator,
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
+
 	return &CentralReconciler{
 		client:                 k8sClient,
 		fleetmanagerClient:     fleetmanagerClient,
@@ -1709,7 +1710,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		useRoutes:              opts.UseRoutes,
 		wantsAuthProvider:      opts.WantsAuthProvider,
 		routeService:           k8s.NewRouteService(k8sClient),
-		secretBackup:           k8s.NewSecretBackup(k8sClient),
+		secretBackup:           k8s.NewSecretBackup(k8sClient, opts.ManagedDBEnabled),
 		secretCipher:           secretCipher, // pragma: allowlist secret
 		egressProxyImage:       opts.EgressProxyImage,
 		telemetry:              opts.Telemetry,
