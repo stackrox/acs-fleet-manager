@@ -30,6 +30,7 @@ rhacsOperators:
     - image: "quay.io/rhacs-eng/stackrox-operator:4.1.1"
       deploymentName: "stackrox-operator"
       centralLabelSelector: "app.kubernetes.io/name=central"
+      securedClusterLabelSelector: "app.kubernetes.io/name=securedCluster"
 centrals:
   overrides:
   - instanceIds:
