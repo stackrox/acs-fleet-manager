@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
+	"time"
 
 	"github.com/golang/glog"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -196,11 +197,11 @@ func (q amsQuotaService) callCurrentAccount(ctx context.Context) {
 	if userToken == nil {
 		return
 	}
-	acc, err := q.amsClient.GetCurrentAccount(userToken.Raw)
+	status, acc, err := q.amsClient.GetCurrentAccount(userToken.Raw)
 	if err != nil {
-		glog.Warningf("Call to  current account endpoint was unsuccessful: %w", err)
+		glog.Warningf("Failed to query current account (%v): %w", status, err)
 	} else {
-		glog.Infof("Successful call to current account endpoint, caller's email: %s", acc.Email())
+		glog.Infof("Succeeded to query current account (%v): <%s> created at %v, belongs to %q created at %v", status, acc.Email(), acc.CreatedAt().Format(time.RFC3339), acc.Organization().Name(), acc.Organization().CreatedAt().Format(time.RFC3339))
 	}
 }
 
