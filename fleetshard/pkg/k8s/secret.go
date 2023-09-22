@@ -49,7 +49,7 @@ func (s *SecretBackup) GetWatchedSecrets() []string {
 // watched by SecretServices
 func (s *SecretBackup) CollectSecrets(ctx context.Context, namespace string) (map[string]*corev1.Secret, error) {
 	secrets := map[string]*corev1.Secret{}
-	for _, secretname := range defaultSecretsToWatch { // pragma: allowlist secret
+	for _, secretname := range s.secretsToWatch { // pragma: allowlist secret
 		secret, err := getSecret(ctx, s.client, secretname, namespace)
 		if err != nil {
 			return nil, err
