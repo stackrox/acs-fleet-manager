@@ -11,13 +11,15 @@ import (
 )
 
 const (
-	centralTLSSecretName        = "central-tls"         // pragma: allowlist secret
-	centralDBPasswordSecretName = "central-db-password" // pragma: allowlist secret
+	centralTLSSecretName           = "central-tls"            // pragma: allowlist secret
+	centralDBPasswordSecretName    = "central-db-password"    // pragma: allowlist secret
+	centralEncryptionKeySecretName = "central-encryption-key" // pragma: allowlist secret
 )
 
 var secretsToWatch = []string{
 	centralTLSSecretName,
 	centralDBPasswordSecretName,
+	centralEncryptionKeySecretName,
 }
 
 // SecretBackup is responsible for reading secrets to Backup for a tenant.

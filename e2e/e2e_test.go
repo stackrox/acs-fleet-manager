@@ -260,6 +260,29 @@ var _ = Describe("Central", func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
+		It("should backup important secrets in FM database", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
+
+			expectedSecrets := []string{"central-tls", "central-db-password", "central-encryption-key"}
+			secretsStored := []string{}
+			Eventually(func() error {
+				res, _, err := client.PrivateAPI().GetCentral(context.Background(), createdCentral.Id)
+				if err != nil {
+					return err
+				}
+
+				if len(res.Metadata.SecretsStored) != len(expectedSecrets) {
+					return fmt.Errorf("unexpected number of secrets, want: %d, got: %d", len(expectedSecrets), len(res.Metadata.SecretsStored))
+				}
+
+				return nil
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+
+			Expect(secretsStored).Should(ContainElements(expectedSecrets))
+		})
+
 		// TODO(ROX-11368): Add test to eventually reach ready state
 		// TODO(ROX-11368): create test to check that Central and Scanner are healthy
 		// TODO(ROX-11368): Create test to check Central is correctly exposed
