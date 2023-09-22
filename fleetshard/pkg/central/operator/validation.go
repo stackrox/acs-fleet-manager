@@ -53,7 +53,13 @@ func validateCRDURL(path *field.Path, urlStr string) field.ErrorList {
 
 func validateOperatorConfigs(path *field.Path, configs []OperatorConfig) field.ErrorList {
 	var errs field.ErrorList
+	seenDeploymentNames := make(map[string]struct{})
 	for i, config := range configs {
+		// Check that each deployment name is unique
+		if _, ok := seenDeploymentNames[config.GetDeploymentName()]; ok {
+			errs = append(errs, field.Duplicate(path.Index(i).Child("deploymentName"), config.GetDeploymentName()))
+		}
+		seenDeploymentNames[config.GetDeploymentName()] = struct{}{}
 		errs = append(errs, validateOperatorConfig(path.Index(i), config)...)
 	}
 	return errs
@@ -61,13 +67,30 @@ func validateOperatorConfigs(path *field.Path, configs []OperatorConfig) field.E
 
 func validateOperatorConfig(path *field.Path, config OperatorConfig) field.ErrorList {
 	var errs field.ErrorList
-
 	errs = append(errs, validateDeploymentName(path.Child(keyDeploymentName), config[keyDeploymentName])...)
 	errs = append(errs, validateImage(path.Child(keyImage), config[keyImage])...)
-	errs = append(errs, validateDisableCentralReconciler(path.Child(keyDisableCentralReconciler), config[keyDisableCentralReconciler])...)
-	errs = append(errs, validateDisableSecuredClusterReconciler(path.Child(keyDisableSecuredClusterReconciler), config[keyDisableSecuredClusterReconciler])...)
+	errs = append(errs, validateCentralReconcilerEnabled(path.Child(keyCentralReconcilerEnabled), config[keyCentralReconcilerEnabled])...)
+	errs = append(errs, validateSecuredClusterReconcilerEnabled(path.Child(keySecuredClusterReconcilerEnabled), config[keySecuredClusterReconcilerEnabled])...)
 	errs = append(errs, validateLabelSelector(path.Child(keyCentralLabelSelector), config[keyCentralLabelSelector])...)
 	errs = append(errs, validateLabelSelector(path.Child(keySecuredClusterSelector), config[keySecuredClusterSelector])...)
+	errs = append(errs, validateHasCentralSelectorOrReconcilerDisabled(path, config)...)
+	errs = append(errs, validateHasSecuredClusterSelectorOrReconcilerDisabled(path, config)...)
+	return errs
+}
+
+func validateHasCentralSelectorOrReconcilerDisabled(path *field.Path, config OperatorConfig) field.ErrorList {
+	var errs field.ErrorList
+	if len(config.GetCentralLabelSelector()) == 0 && !config.GetCentralReconcilerEnabled() {
+		errs = append(errs, field.Invalid(path, nil, "central label selector must be specified or central reconciler must be disabled"))
+	}
+	return errs
+}
+
+func validateHasSecuredClusterSelectorOrReconcilerDisabled(path *field.Path, config OperatorConfig) field.ErrorList {
+	var errs field.ErrorList
+	if len(config.GetSecuredClusterLabelSelector()) == 0 && !config.GetSecuredClusterReconcilerEnabled() {
+		errs = append(errs, field.Invalid(path, nil, "secured cluster label selector must be specified or secured cluster reconciler must be disabled"))
+	}
 	return errs
 }
 
@@ -106,26 +129,26 @@ func validateImage(path *field.Path, imageIntf interface{}) field.ErrorList {
 	return errs
 }
 
-func validateDisableCentralReconciler(path *field.Path, disableCentralReconcilerIntf interface{}) field.ErrorList {
+func validateCentralReconcilerEnabled(path *field.Path, centralReconcilerEnabledIntf interface{}) field.ErrorList {
 	var errs field.ErrorList
-	if disableCentralReconcilerIntf == nil {
+	if centralReconcilerEnabledIntf == nil {
 		return nil
 	}
-	disableCentralReconciler, ok := disableCentralReconcilerIntf.(bool)
+	centralReconcilerEnabled, ok := centralReconcilerEnabledIntf.(bool)
 	if !ok {
-		errs = append(errs, field.Invalid(path, disableCentralReconciler, "disableCentralReconciler must be a boolean"))
+		errs = append(errs, field.Invalid(path, centralReconcilerEnabled, "centralReconcilerEnabled must be a boolean"))
 	}
 	return errs
 }
 
-func validateDisableSecuredClusterReconciler(path *field.Path, disableSecuredClusterReconcilerIntf interface{}) field.ErrorList {
+func validateSecuredClusterReconcilerEnabled(path *field.Path, securedClusterReconcilerEnabledIntf interface{}) field.ErrorList {
 	var errs field.ErrorList
-	if disableSecuredClusterReconcilerIntf == nil {
+	if securedClusterReconcilerEnabledIntf == nil {
 		return nil
 	}
-	disableSecuredClusterReconciler, ok := disableSecuredClusterReconcilerIntf.(bool)
+	securedClusterReconcilerEnabled, ok := securedClusterReconcilerEnabledIntf.(bool)
 	if !ok {
-		errs = append(errs, field.Invalid(path, disableSecuredClusterReconciler, "disableSecuredClusterReconciler must be a boolean"))
+		errs = append(errs, field.Invalid(path, securedClusterReconcilerEnabled, "securedClusterReconcilerEnabled must be a boolean"))
 	}
 	return errs
 }

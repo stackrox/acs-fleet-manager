@@ -9,8 +9,8 @@ import (
 const (
 	keyDeploymentName                  = "deploymentName"
 	keyImage                           = "image"
-	keyDisableCentralReconciler        = "disableCentralReconciler"
-	keyDisableSecuredClusterReconciler = "disableSecuredClusterReconciler"
+	keyCentralReconcilerEnabled        = "centralReconcilerEnabled"
+	keySecuredClusterReconcilerEnabled = "securedClusterReconcilerEnabled"
 	keyCentralLabelSelector            = "centralLabelSelector"
 	keySecuredClusterSelector          = "securedClusterLabelSelector"
 )
@@ -53,14 +53,24 @@ func (o OperatorConfig) GetSecuredClusterLabelSelector() string {
 	return o.getString(keySecuredClusterSelector)
 }
 
-// GetDisableCentralReconciler returns true if the central reconciler should be disabled.
-func (o OperatorConfig) GetDisableCentralReconciler() bool {
-	return o.getBool(keyDisableCentralReconciler)
+// GetCentralReconcilerEnabled returns true if the central reconciler should be disabled.
+func (o OperatorConfig) GetCentralReconcilerEnabled() bool {
+	return o.getBool(keyCentralReconcilerEnabled)
 }
 
-// GetDisableSecuredClusterReconciler returns true if the secured cluster reconciler should be disabled.
-func (o OperatorConfig) GetDisableSecuredClusterReconciler() bool {
-	return o.getBool(keyDisableSecuredClusterReconciler)
+// SetCentralReconcilerEnabled sets the central reconciler enabled flag.
+func (o OperatorConfig) SetCentralReconcilerEnabled(enabled bool) {
+	o[keyCentralReconcilerEnabled] = enabled
+}
+
+// GetSecuredClusterReconcilerEnabled returns true if the secured cluster reconciler should be disabled.
+func (o OperatorConfig) GetSecuredClusterReconcilerEnabled() bool {
+	return o.getBool(keySecuredClusterReconcilerEnabled)
+}
+
+// SetSecuredClusterReconcilerEnabled sets the secured cluster reconciler enabled flag.
+func (o OperatorConfig) SetSecuredClusterReconcilerEnabled(enabled bool) {
+	o[keySecuredClusterReconcilerEnabled] = enabled
 }
 
 func (o OperatorConfig) getString(key string) string {

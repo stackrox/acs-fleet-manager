@@ -90,13 +90,13 @@ spec:
             - name: SECURED_CLUSTER_LABEL_SELECTOR
               value: "{{ .securedClusterLabelSelector }}"
             {{- end }}
-            {{- if .disableCentralReconciler }}
-            - name: DISABLE_CENTRAL_RECONCILER
-              value: "true"
+            {{- if eq .centralReconcilerEnabled false }}
+            - name: CENTRAL_RECONCILER_ENABLED
+              value: "false"
             {{- end }}
-            {{- if .disableSecuredClusterReconciler }}
-            - name: DISABLE_SECURED_CLUSTER_RECONCILER
-              value: "true"
+            {{- if eq .securedClusterReconcilerEnabled false }}
+            - name: SECURED_CLUSTER_RECONCILER_ENABLED
+              value: "false"
             {{- end }}
           image: "{{ .image }}"
           imagePullPolicy: IfNotPresent

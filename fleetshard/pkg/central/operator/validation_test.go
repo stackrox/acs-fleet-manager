@@ -59,6 +59,73 @@ func TestGetOperatorConfigFailsValidation(t *testing.T) {
 			},
 			contains: "invalid image",
 		},
+		"should fail with duplicate deployment names image": {
+			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
+				cfg1 := validOperatorConfig()
+				cfg1[keyDeploymentName] = "duplicate"
+				cfg2 := validOperatorConfig()
+				cfg2[keyDeploymentName] = "duplicate"
+				config.Configs = []OperatorConfig{cfg1, cfg2}
+				return config
+			},
+			contains: "rhacsOperator.operators[1].deploymentName: Duplicate value",
+		},
+		"should fail if central selector is empty but reconciler is not disabled": {
+			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
+				cfg := validOperatorConfig()
+				cfg[keyCentralLabelSelector] = ""
+				cfg[keyCentralReconcilerEnabled] = false
+				config.Configs = []OperatorConfig{cfg}
+				return config
+			},
+			contains: "central label selector must be specified or central reconciler must be disabled",
+		},
+		"should fail if secured cluster selector is empty but reconciler is not disabled": {
+			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
+				cfg := validOperatorConfig()
+				cfg[keySecuredClusterSelector] = ""
+				cfg[keySecuredClusterReconcilerEnabled] = false
+				config.Configs = []OperatorConfig{cfg}
+				return config
+			},
+			contains: "secured cluster label selector must be specified or secured cluster reconciler must be disabled",
+		},
+		"valid if central label selector is not specified and reconciler is disabled": {
+			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
+				cfg := validOperatorConfig()
+				cfg[keyCentralLabelSelector] = ""
+				cfg[keyCentralReconcilerEnabled] = true
+				config.Configs = []OperatorConfig{cfg}
+				return config
+			},
+		},
+		"valid if secured cluster label selector is not specified and reconciler is disabled": {
+			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
+				cfg := validOperatorConfig()
+				cfg[keySecuredClusterSelector] = ""
+				cfg[keySecuredClusterReconcilerEnabled] = true
+				config.Configs = []OperatorConfig{cfg}
+				return config
+			},
+		},
+		"valid if central label selector is specified and reconciler is not disabled": {
+			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
+				cfg := validOperatorConfig()
+				cfg[keyCentralLabelSelector] = "app.kubernetes.io/name=central"
+				cfg[keyCentralReconcilerEnabled] = false
+				config.Configs = []OperatorConfig{cfg}
+				return config
+			},
+		},
+		"valid if secured cluster label selector is specified and reconciler is not disabled": {
+			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
+				cfg := validOperatorConfig()
+				cfg[keySecuredClusterSelector] = "app.kubernetes.io/name=securedCluster"
+				cfg[keySecuredClusterReconcilerEnabled] = false
+				config.Configs = []OperatorConfig{cfg}
+				return config
+			},
+		},
 		"validate should succeed with example config": {
 			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
 				return config

@@ -11,16 +11,16 @@ operator:
   #     image: quay.io/rhacs-eng/stackrox-operator:4.0.0
   #     centralLabelSelector: 4.0.0
   #     securedClusterLabelSelector: 4.0.0
-  #     disableCentralReconciler: false
-  #     disableSecuredClusterReconciler: false
+  #     centralReconcilerEnabled: true
+  #     securedClusterReconcilerEnabled: true
   #     ...other helm values
   #
   #   - deploymentName: rhacs-operator-manager-4-0-1
   #     image: quay.io/rhacs-eng/stackrox-operator:4.0.1
   #     centralLabelSelector: 4.0.1
   #     securedClusterLabelSelector: 4.0.0
-  #     disableCentralReconciler: false
-  #     disableSecuredClusterReconciler: false
+  #     centralReconcilerEnabled: false
+  #     securedClusterReconcilerEnabled: false
   #     ...other helm values
   #
   images: []

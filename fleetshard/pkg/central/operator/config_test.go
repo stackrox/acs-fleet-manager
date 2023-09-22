@@ -17,8 +17,8 @@ operators:
   labelSelector: "app.kubernetes.io/name=stackrox-operator"
   centralLabelSelector: "app.kubernetes.io/name=central"
   securedClusterLabelSelector: "app.kubernetes.io/name=securedCluster"
-  disableCentralReconciler: true
-  disableSecuredClusterReconciler: true
+  centralReconcilerEnabled: true
+  securedClusterReconcilerEnabled: true
 `)
 }
 
@@ -44,6 +44,6 @@ func TestGetOperatorConfig(t *testing.T) {
 	assert.Equal(t, "quay.io/rhacs-eng/stackrox-operator:4.1.1", operatorConfig.GetImage())
 	assert.Equal(t, "app.kubernetes.io/name=central", operatorConfig.GetCentralLabelSelector())
 	assert.Equal(t, "app.kubernetes.io/name=securedCluster", operatorConfig.GetSecuredClusterLabelSelector())
-	assert.True(t, operatorConfig.GetDisableCentralReconciler())
-	assert.True(t, operatorConfig.GetDisableSecuredClusterReconciler())
+	assert.True(t, operatorConfig.GetCentralReconcilerEnabled())
+	assert.True(t, operatorConfig.GetSecuredClusterReconcilerEnabled())
 }
