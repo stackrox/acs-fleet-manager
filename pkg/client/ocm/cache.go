@@ -36,9 +36,10 @@ func NewCache[K comparable, V any](age time.Duration) *cacheImpl[K, V] {
 func (c *cacheImpl[K, V]) Add(key K, value V) V {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	if time.Since(c.lastCleanUp) > c.age {
+	now := time.Now()
+	if now.Sub(c.lastCleanUp) > c.age {
 		for k, r := range c.data {
-			if time.Since(r.ts) > c.age {
+			if now.Sub(r.ts) > c.age {
 				delete(c.data, k)
 			}
 		}
