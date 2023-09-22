@@ -80,7 +80,7 @@ func validateOperatorConfig(path *field.Path, config OperatorConfig) field.Error
 
 func validateHasCentralSelectorOrReconcilerDisabled(path *field.Path, config OperatorConfig) field.ErrorList {
 	var errs field.ErrorList
-	if len(config.GetCentralLabelSelector()) == 0 && !config.GetCentralReconcilerEnabled() {
+	if len(config.GetCentralLabelSelector()) == 0 && config.GetCentralReconcilerEnabled() {
 		errs = append(errs, field.Invalid(path, nil, "central label selector must be specified or central reconciler must be disabled"))
 	}
 	return errs
@@ -88,7 +88,7 @@ func validateHasCentralSelectorOrReconcilerDisabled(path *field.Path, config Ope
 
 func validateHasSecuredClusterSelectorOrReconcilerDisabled(path *field.Path, config OperatorConfig) field.ErrorList {
 	var errs field.ErrorList
-	if len(config.GetSecuredClusterLabelSelector()) == 0 && !config.GetSecuredClusterReconcilerEnabled() {
+	if len(config.GetSecuredClusterLabelSelector()) == 0 && config.GetSecuredClusterReconcilerEnabled() {
 		errs = append(errs, field.Invalid(path, nil, "secured cluster label selector must be specified or secured cluster reconciler must be disabled"))
 	}
 	return errs

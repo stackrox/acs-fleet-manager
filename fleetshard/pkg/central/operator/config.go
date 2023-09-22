@@ -58,19 +58,9 @@ func (o OperatorConfig) GetCentralReconcilerEnabled() bool {
 	return o.getBool(keyCentralReconcilerEnabled)
 }
 
-// SetCentralReconcilerEnabled sets the central reconciler enabled flag.
-func (o OperatorConfig) SetCentralReconcilerEnabled(enabled bool) {
-	o[keyCentralReconcilerEnabled] = enabled
-}
-
 // GetSecuredClusterReconcilerEnabled returns true if the secured cluster reconciler should be disabled.
 func (o OperatorConfig) GetSecuredClusterReconcilerEnabled() bool {
 	return o.getBool(keySecuredClusterReconcilerEnabled)
-}
-
-// SetSecuredClusterReconcilerEnabled sets the secured cluster reconciler enabled flag.
-func (o OperatorConfig) SetSecuredClusterReconcilerEnabled(enabled bool) {
-	o[keySecuredClusterReconcilerEnabled] = enabled
 }
 
 func (o OperatorConfig) getString(key string) string {

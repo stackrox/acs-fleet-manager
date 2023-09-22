@@ -74,7 +74,7 @@ func TestGetOperatorConfigFailsValidation(t *testing.T) {
 			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
 				cfg := validOperatorConfig()
 				cfg[keyCentralLabelSelector] = ""
-				cfg[keyCentralReconcilerEnabled] = false
+				cfg[keyCentralReconcilerEnabled] = true
 				config.Configs = []OperatorConfig{cfg}
 				return config
 			},
@@ -84,7 +84,7 @@ func TestGetOperatorConfigFailsValidation(t *testing.T) {
 			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
 				cfg := validOperatorConfig()
 				cfg[keySecuredClusterSelector] = ""
-				cfg[keySecuredClusterReconcilerEnabled] = false
+				cfg[keySecuredClusterReconcilerEnabled] = true
 				config.Configs = []OperatorConfig{cfg}
 				return config
 			},
@@ -94,7 +94,7 @@ func TestGetOperatorConfigFailsValidation(t *testing.T) {
 			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
 				cfg := validOperatorConfig()
 				cfg[keyCentralLabelSelector] = ""
-				cfg[keyCentralReconcilerEnabled] = true
+				cfg[keyCentralReconcilerEnabled] = false
 				config.Configs = []OperatorConfig{cfg}
 				return config
 			},
@@ -103,7 +103,7 @@ func TestGetOperatorConfigFailsValidation(t *testing.T) {
 			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
 				cfg := validOperatorConfig()
 				cfg[keySecuredClusterSelector] = ""
-				cfg[keySecuredClusterReconcilerEnabled] = true
+				cfg[keySecuredClusterReconcilerEnabled] = false
 				config.Configs = []OperatorConfig{cfg}
 				return config
 			},
