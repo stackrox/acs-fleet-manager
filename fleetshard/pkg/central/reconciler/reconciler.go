@@ -246,7 +246,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "setting central reconcilation cache")
 	}
 
-	logStatus := status
+	logStatus := *status
 	logStatus.Secrets = obscureSecrets(status.Secrets)
 	glog.Infof("Returning central status %+v", logStatus)
 
