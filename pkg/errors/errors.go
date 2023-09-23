@@ -137,9 +137,9 @@ const (
 	ErrorRegionNotSupported       ServiceErrorCode = 31
 	ErrorRegionNotSupportedReason string           = "Region not supported"
 
-	// Invalid dinosaur cluster name
-	ErrorMalformedDinosaurClusterName       ServiceErrorCode = 32
-	ErrorMalformedDinosaurClusterNameReason string           = "Central cluster name is invalid"
+	// Invalid central instance name
+	ErrorMalformedCentralInstanceName       ServiceErrorCode = 32
+	ErrorMalformedCentralInstanceNameReason string           = "Central instance name is invalid"
 
 	// Minimum field length validation
 	ErrorMinimumFieldLength       ServiceErrorCode = 33
@@ -247,7 +247,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorInstanceTypeNotSupported, ErrorInstanceTypeNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMalformedDinosaurClusterName, ErrorMalformedDinosaurClusterNameReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorMalformedCentralInstanceName, ErrorMalformedCentralInstanceNameReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason, http.StatusBadRequest, nil},
@@ -617,7 +617,7 @@ func ProviderNotSupported(reason string, values ...interface{}) *ServiceError {
 
 // MalformedDinosaurClusterName ...
 func MalformedDinosaurClusterName(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorMalformedDinosaurClusterName, reason, values...)
+	return New(ErrorMalformedCentralInstanceName, reason, values...)
 }
 
 // InstancePlanNotSupported ...
