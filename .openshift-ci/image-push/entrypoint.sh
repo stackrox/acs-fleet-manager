@@ -41,7 +41,7 @@ if [[ -z "$QUAY_RHACS_ENG_RW_PASSWORD" ]]; then
 fi
 
 log
-log "** Entrypoint for ACS MS Image Push **"
+log "** Entrypoint for ACSCS Image Push **"
 log
 
 registry_host=$(echo "$IMAGE_PUSH_REGISTRY" | cut -d / -f 1)

@@ -244,4 +244,4 @@ data:
 kind: ConfigMap
 metadata:
   name: config
-  namespace: "$ACSMS_NAMESPACE"
+  namespace: "$ACSCS_NAMESPACE"
