@@ -61,7 +61,7 @@ type Client interface {
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 	GetCustomerCloudAccounts(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error)
 	// GetCurrentAccount returns the account information of the user to whom belongs the token
-	GetCurrentAccount(userToken string) (*amsv1.Account, error)
+	GetCurrentAccount(userToken string) (int, *amsv1.Account, error)
 }
 
 var _ Client = &client{}
@@ -758,24 +758,24 @@ func (c *client) GetCustomerCloudAccounts(organizationID string, quotaIDs []stri
 }
 
 // GetCurrentAccount returns the account information of the user to whom belongs the token
-func (c *client) GetCurrentAccount(userToken string) (*amsv1.Account, error) {
+func (c *client) GetCurrentAccount(userToken string) (int, *amsv1.Account, error) {
 	logger, err := getLogger(c.connection.Logger().DebugEnabled())
 	if err != nil {
-		return nil, fmt.Errorf("couldn't create logger for modified OCM connection: %w", err)
+		return 0, nil, fmt.Errorf("couldn't create logger for modified OCM connection: %w", err)
 	}
 	modifiedConnection, err := getBaseConnectionBuilder(c.connection.URL()).
 		Logger(logger).
 		Tokens(userToken).
 		Build()
 	if err != nil {
-		return nil, fmt.Errorf("couldn't build modified OCM connection: %w", err)
+		return 0, nil, fmt.Errorf("couldn't build modified OCM connection: %w", err)
 	}
 	defer modifiedConnection.Close()
 	response, err := modifiedConnection.AccountsMgmt().V1().CurrentAccount().Get().Send()
 	if err != nil {
-		return nil, fmt.Errorf("unsuccessful call to current account endpoint: %w", err)
+		return response.Status(), nil, fmt.Errorf("unsuccessful call to current account endpoint: %w", err)
 	}
 
 	currentAccount := response.Body()
-	return currentAccount, nil
+	return response.Status(), currentAccount, nil
 }
