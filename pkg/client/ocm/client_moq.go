@@ -71,7 +71,7 @@ var _ Client = &ClientMock{}
 //			GetClusterStatusFunc: func(id string) (*clustersmgmtv1.ClusterStatus, error) {
 //				panic("mock out the GetClusterStatus method")
 //			},
-//			GetCurrentAccountFunc: func(userToken string) (*amsv1.Account, error) {
+//			GetCurrentAccountFunc: func(userToken string) (int, *amsv1.Account, error) {
 //				panic("mock out the GetCurrentAccount method")
 //			},
 //			GetCustomerCloudAccountsFunc: func(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error) {
@@ -172,7 +172,7 @@ type ClientMock struct {
 	GetClusterStatusFunc func(id string) (*clustersmgmtv1.ClusterStatus, error)
 
 	// GetCurrentAccountFunc mocks the GetCurrentAccount method.
-	GetCurrentAccountFunc func(userToken string) (*amsv1.Account, error)
+	GetCurrentAccountFunc func(userToken string) (int, *amsv1.Account, error)
 
 	// GetCustomerCloudAccountsFunc mocks the GetCustomerCloudAccounts method.
 	GetCustomerCloudAccountsFunc func(organizationID string, quotaIDs []string) ([]*amsv1.CloudAccount, error)
@@ -999,7 +999,7 @@ func (mock *ClientMock) GetClusterStatusCalls() []struct {
 }
 
 // GetCurrentAccount calls GetCurrentAccountFunc.
-func (mock *ClientMock) GetCurrentAccount(userToken string) (*amsv1.Account, error) {
+func (mock *ClientMock) GetCurrentAccount(userToken string) (int, *amsv1.Account, error) {
 	if mock.GetCurrentAccountFunc == nil {
 		panic("ClientMock.GetCurrentAccountFunc: method is nil but Client.GetCurrentAccount was just called")
 	}
