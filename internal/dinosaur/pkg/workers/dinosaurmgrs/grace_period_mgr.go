@@ -84,14 +84,27 @@ func (k *GracePeriodManager) reconcileCentralGraceFrom(centrals dbapi.CentralLis
 		return append(svcErrors, factoryErr)
 	}
 
+	type quotaCostCacheKey struct {
+		orgID          string
+		cloudAccountID string
+		instanceType   string
+	}
+
+	quotaCostCache := make(map[quotaCostCacheKey]bool)
 	for _, central := range centrals {
-		active, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(central, types.DinosaurInstanceType(central.InstanceType))
-		if err != nil {
-			svcErrors = append(svcErrors, errors.Wrapf(err, "failed to get quota entitlement status of central instance %q", central.ID))
-			continue
+		key := quotaCostCacheKey{central.OrganisationID, central.CloudAccountID, central.InstanceType}
+		defined, inCache := quotaCostCache[key]
+		if !inCache {
+			var svcErr *serviceErr.ServiceError
+			defined, svcErr = quotaService.CheckIfQuotaIsDefinedForInstanceType(central, types.DinosaurInstanceType(central.InstanceType))
+			if svcErr != nil {
+				svcErrors = append(svcErrors, errors.Wrapf(svcErr, "failed to get quota entitlement status of central instance %q", central.ID))
+				continue
+			}
+			quotaCostCache[key] = defined
 		}
 
-		if err := k.updateGraceFromBasedOnQuotaEntitlement(central, active); err != nil {
+		if err := k.updateGraceFromBasedOnQuotaEntitlement(central, defined); err != nil {
 			svcErrors = append(svcErrors, errors.Wrapf(err, "failed to update grace_from value based on quota entitlement for central instance %q", central.ID))
 		}
 	}

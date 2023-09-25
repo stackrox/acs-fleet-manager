@@ -85,4 +85,24 @@ func TestGracePeriodManager(t *testing.T) {
 		assert.Len(t, centralService.UpdateCalls(), 1)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
+
+	t.Run("quota cost cache in use", func(t *testing.T) {
+		now := time.Now()
+		centralA := &dbapi.CentralRequest{GraceFrom: &now, OrganisationID: "one"}
+		centralB := &dbapi.CentralRequest{GraceFrom: &now, OrganisationID: "one"}
+		centralC := &dbapi.CentralRequest{GraceFrom: &now, OrganisationID: "another"}
+		centralD := &dbapi.CentralRequest{GraceFrom: &now, OrganisationID: "another"}
+		centralE := &dbapi.CentralRequest{GraceFrom: &now, OrganisationID: "another", CloudAccountID: "Zeus"}
+		centralService := withCentrals(centralA, centralB, centralC, centralD, centralE)
+		quotaSvc, quotaFactory := withEntitlement(true)
+		gpm := NewGracePeriodManager(centralService, quotaFactory, defaultCfg)
+		errs := gpm.Reconcile()
+		require.Empty(t, errs)
+		assert.Nil(t, centralA.GraceFrom)
+		assert.Nil(t, centralB.GraceFrom)
+		assert.Len(t, centralService.ListByStatusCalls(), 1)
+		assert.Len(t, quotaSvc.CheckIfQuotaIsDefinedForInstanceTypeCalls(), 3)
+		assert.Len(t, centralService.UpdateCalls(), 5)
+		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
+	})
 }

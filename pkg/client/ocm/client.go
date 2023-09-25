@@ -4,18 +4,14 @@ package ocm
 import (
 	"fmt"
 	"net/http"
-	"time"
-
-	"github.com/openshift-online/ocm-sdk-go/logging"
-
-	"github.com/pkg/errors"
-	pkgerrors "github.com/pkg/errors"
 
 	"github.com/golang/glog"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/openshift-online/ocm-sdk-go/logging"
+	pkgerrors "github.com/pkg/errors"
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
@@ -65,8 +61,7 @@ type Client interface {
 var _ Client = &client{}
 
 type client struct {
-	connection     *sdkClient.Connection
-	quotaCostCache Cache[string, *amsv1.QuotaCostListResponse]
+	connection *sdkClient.Connection
 }
 
 // AMSClient ...
@@ -96,7 +91,7 @@ func NewOCMConnection(ocmConfig *OCMConfig, baseURL string) (*sdkClient.Connecti
 	} else if ocmConfig.SelfToken != "" {
 		builder = builder.Tokens(ocmConfig.SelfToken)
 	} else {
-		return nil, nil, fmt.Errorf("Can't build OCM client connection. No Client/Secret or Token has been provided.")
+		return nil, nil, pkgerrors.New("Can't build OCM client connection. No Client/Secret or Token has been provided.")
 	}
 
 	connection, err := builder.Build()
@@ -126,10 +121,7 @@ func getLogger(isDebugEnabled bool) (*logging.GoLogger, error) {
 
 // NewClient ...
 func NewClient(connection *sdkClient.Connection) Client {
-	return &client{
-		connection:     connection,
-		quotaCostCache: NewCache[string, *amsv1.QuotaCostListResponse](1 * time.Minute),
-	}
+	return &client{connection: connection}
 }
 
 // NewMockClient returns a new OCM client with stubbed responses.
@@ -140,7 +132,7 @@ func NewMockClient() Client {
 				ID("12345678").
 				Name("stubbed-name").
 				Build()
-			return org, errors.Wrap(err, "failed to build organisation")
+			return org, pkgerrors.Wrap(err, "failed to build organisation")
 		},
 	}
 }
@@ -632,27 +624,29 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 	}
 
 	var res []*amsv1.QuotaCost
-	quotaCostList, ok := c.quotaCostCache.Get(organizationID)
-	if !ok {
-		organizationClient := c.connection.AccountsMgmt().V1().Organizations()
-		quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
-
-		qcl, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Parameter("fetchCloudAccounts", true).Send()
+	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
+	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
+	const pageSize = 100
+	req := quotaCostClient.List().Parameter("fetchRelatedResources", true).Parameter("fetchCloudAccounts", true).Size(pageSize)
+	for page := 1; ; page++ {
+		quotaCostList, err := req.Page(page).Send()
 		if err != nil {
 			return nil, fmt.Errorf("retrieving relatedResources from the QuotaCosts service: %w", err)
 		}
-		quotaCostList = c.quotaCostCache.Add(organizationID, qcl)
-	}
 
-	quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {
-		relatedResourcesList := qc.RelatedResources()
-		for _, relatedResource := range relatedResourcesList {
-			if relatedResource.ResourceName() == resourceName && relatedResource.Product() == product {
-				res = append(res, qc)
+		quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {
+			relatedResourcesList := qc.RelatedResources()
+			for _, relatedResource := range relatedResourcesList {
+				if relatedResource.ResourceName() == resourceName && relatedResource.Product() == product {
+					res = append(res, qc)
+				}
 			}
+			return true
+		})
+		if quotaCostList.Size() < pageSize {
+			break
 		}
-		return true
-	})
+	}
 
 	return res, nil
 }
