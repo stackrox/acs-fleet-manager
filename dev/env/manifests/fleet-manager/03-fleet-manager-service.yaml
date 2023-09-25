@@ -4,7 +4,7 @@ metadata:
   labels:
     application: fleet-manager
   name: fleet-manager
-  namespace: "$ACSMS_NAMESPACE"
+  namespace: "$ACSCS_NAMESPACE"
 spec:
   ports:
     - name: "8000"

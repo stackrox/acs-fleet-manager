@@ -57,7 +57,7 @@ DOCKER ?= docker
 DOCKER_CONFIG ?= "${HOME}/.docker"
 
 # Default Variables
-ACSMS_NAMESPACE ?= acsms
+ACSCS_NAMESPACE ?= acscs
 ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
@@ -866,13 +866,13 @@ deploy/dev-fast: image/build/local deploy/dev-fast/fleet-manager deploy/dev-fast
 
 deploy/dev-fast/fleet-manager: GOOS=linux
 deploy/dev-fast/fleet-manager: image/build/local
-	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
-	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleet-manager
+	kubectl -n $(ACSCS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
+	kubectl -n $(ACSCS_NAMESPACE) delete pod -l application=fleet-manager
 
 deploy/dev-fast/fleetshard-sync: GOOS=linux
 deploy/dev-fast/fleetshard-sync: image/build/local
-	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
-	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleetshard-sync
+	kubectl -n $(ACSCS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
+	kubectl -n $(ACSCS_NAMESPACE) delete pod -l application=fleetshard-sync
 
 # When making changes to the gitops configuration for development purposes
 # situated here dev/env/manifests/fleet-manager/04-gitops-config.yaml, this

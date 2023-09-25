@@ -4,7 +4,7 @@ metadata:
   labels:
     application: db
   name: "$DATABASE_HOST"
-  namespace: "$ACSMS_NAMESPACE"
+  namespace: "$ACSCS_NAMESPACE"
 spec:
   replicas: 1
   selector:

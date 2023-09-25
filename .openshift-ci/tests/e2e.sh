@@ -43,7 +43,7 @@ export RUN_AUTH_E2E=${RUN_AUTH_E2E:-$RUN_AUTH_E2E_DEFAULT}
 export RUN_CENTRAL_E2E=${RUN_CENTRAL_E2E:-$RUN_CENTRAL_E2E_DEFAULT}
 
 log
-log "** Entrypoint for ACS MS E2E Tests **"
+log "** Entrypoint for ACSCS E2E Tests **"
 log
 
 log "Cluster type: ${CLUSTER_TYPE}"
@@ -97,7 +97,7 @@ if [[ "$SPAWN_LOGGER" == "true" ]]; then
     apply "${MANIFESTS_DIR}/rhacs-operator/00-namespace.yaml"
     sleep 2
     log "Spawning logger, log directory is ${LOG_DIR}"
-    stern -n "$ACSMS_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >"${LOG_DIR}/namespace-${ACSMS_NAMESPACE}.txt" 2>&1 &
+    stern -n "$ACSCS_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >"${LOG_DIR}/namespace-${ACSCS_NAMESPACE}.txt" 2>&1 &
     stern -n "$STACKROX_OPERATOR_NAMESPACE" '.*' --color=never --template '[{{.ContainerName}}] {{.Message}}{{"\n"}}' >"${LOG_DIR}/namespace-${STACKROX_OPERATOR_NAMESPACE}.txt" 2>&1 &
 fi
 
@@ -137,10 +137,10 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
         log
     fi
 
-    log "** BEGIN ACSMS PODS **"
-    $KUBECTL -n "$ACSMS_NAMESPACE" get pods || true
-    $KUBECTL -n "$ACSMS_NAMESPACE" describe pods || true
-    log "** END ACSMS PODS **"
+    log "** BEGIN ACSCS PODS **"
+    $KUBECTL -n "$ACSCS_NAMESPACE" get pods || true
+    $KUBECTL -n "$ACSCS_NAMESPACE" describe pods || true
+    log "** END ACSCS PODS **"
     log
 
     log "** BEGIN OPERATOR STATE **"
