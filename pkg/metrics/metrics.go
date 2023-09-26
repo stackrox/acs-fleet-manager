@@ -72,6 +72,9 @@ const (
 	// ClusterStatusCapacityUsed - metric name for the current number of instances
 	ClusterStatusCapacityUsed = "cluster_status_capacity_used"
 
+	// GitopsConfigProviderErrorCount - metric name for the number of errors encountered while fetching GitOps config
+	GitopsConfigProviderErrorCount = "gitops_config_provider_error_count"
+
 	LabelStatusCode = "code"
 	LabelMethod     = "method"
 	LabelPath       = "path"
@@ -677,6 +680,17 @@ var databaseQueryDurationMetric = prometheus.NewHistogramVec(
 	DatabaseMetricsLabels,
 )
 
+// GitopsConfigProviderErrorCounter counts the number of errors encountered by the GitOps configuration provider.
+var GitopsConfigProviderErrorCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+	Subsystem: FleetManager,
+	Name:      GitopsConfigProviderErrorCount,
+	Help:      "Number of errors encountered by the GitOps configuration provider.",
+}, []string{})
+
+func init() {
+	GitopsConfigProviderErrorCounter.WithLabelValues().Add(0)
+}
+
 // UpdateDatabaseQueryDurationMetric Update the observatorium request duration metric with the following labels:
 //   - status: (i.e. "success" or "failure")
 //   - queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
@@ -701,6 +715,7 @@ func init() {
 	prometheus.MustRegister(centralPerClusterCountMetric)
 	prometheus.MustRegister(clusterStatusCapacityMaxMetric)
 	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
+	prometheus.MustRegister(GitopsConfigProviderErrorCounter)
 
 	// metrics for Centrals
 	prometheus.MustRegister(requestCentralCreationDurationMetric)
@@ -769,6 +784,7 @@ func Reset() {
 	centralPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
+	GitopsConfigProviderErrorCounter.Reset()
 
 	requestCentralCreationDurationMetric.Reset()
 	centralOperationsSuccessCountMetric.Reset()

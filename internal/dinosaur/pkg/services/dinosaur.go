@@ -6,14 +6,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
+	dynamicClientAPI "github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
+
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
-
-	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
 
 	"github.com/golang/glog"
@@ -79,8 +81,7 @@ type DinosaurService interface {
 	// The Dinosaur Request in the database will be updated with a deleted_at timestamp.
 	Delete(centralRequest *dbapi.CentralRequest, force bool) *errors.ServiceError
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *errors.ServiceError)
-	ListByClusterID(clusterID string) ([]*dbapi.CentralRequest, *errors.ServiceError)
-	RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
+	RegisterDinosaurJob(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	ListByStatus(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *errors.ServiceError)
 	// UpdateStatus change the status of the Dinosaur cluster
 	// The returned boolean is to be used to know if the update has been tried or not. An update is not tried if the
@@ -106,6 +107,7 @@ type DinosaurService interface {
 	ListCentralsWithoutAuthConfig() ([]*dbapi.CentralRequest, *errors.ServiceError)
 	VerifyAndUpdateDinosaurAdmin(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	Restore(ctx context.Context, id string) *errors.ServiceError
+	RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError
 }
 
 var _ DinosaurService = &dinosaurService{}
@@ -113,38 +115,62 @@ var _ DinosaurService = &dinosaurService{}
 type dinosaurService struct {
 	connectionFactory            *db.ConnectionFactory
 	clusterService               ClusterService
-	iamService                   sso.IAMService
 	dinosaurConfig               *config.CentralConfig
 	awsConfig                    *config.AWSConfig
 	quotaServiceFactory          QuotaServiceFactory
 	mu                           sync.Mutex
 	awsClientFactory             aws.ClientFactory
-	authService                  authorization.Authorization
 	dataplaneClusterConfig       *config.DataplaneClusterConfig
 	clusterPlacementStrategy     ClusterPlacementStrategy
 	amsClient                    ocm.AMSClient
 	centralDefaultVersionService CentralDefaultVersionService
+	iamConfig                    *iam.IAMConfig
+	rhSSODynamicClientsAPI       *dynamicClientAPI.AcsTenantsApiService
 }
 
 // NewDinosaurService ...
-func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, iamService sso.IAMService,
-	dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
-	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization,
-	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, centralDefaultVersionService CentralDefaultVersionService) *dinosaurService {
+func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService,
+	iamConfig *iam.IAMConfig, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
+	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory,
+	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, centralDefaultVersionService CentralDefaultVersionService) DinosaurService {
 	return &dinosaurService{
 		connectionFactory:            connectionFactory,
 		clusterService:               clusterService,
-		iamService:                   iamService,
+		iamConfig:                    iamConfig,
 		dinosaurConfig:               dinosaurConfig,
 		awsConfig:                    awsConfig,
 		quotaServiceFactory:          quotaServiceFactory,
 		awsClientFactory:             awsClientFactory,
-		authService:                  authorizationService,
 		dataplaneClusterConfig:       dataplaneClusterConfig,
 		clusterPlacementStrategy:     clusterPlacementStrategy,
 		amsClient:                    amsClient,
 		centralDefaultVersionService: centralDefaultVersionService,
+		rhSSODynamicClientsAPI:       dynamicclients.NewDynamicClientsAPI(iamConfig.RedhatSSORealm),
 	}
+}
+
+func (k *dinosaurService) RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *errors.ServiceError {
+	realmConfig := k.iamConfig.RedhatSSORealm
+	if k.dinosaurConfig.HasStaticAuth() {
+		return errors.New(errors.ErrorDynamicClientsNotUsed, "RHSSO is configured via static configuration")
+	}
+	if !realmConfig.IsConfigured() {
+		return errors.New(errors.ErrorDynamicClientsNotUsed, "RHSSO dynamic client configuration is not present")
+	}
+
+	previousAuthConfig := centralRequest.AuthConfig
+	if err := rhsso.AugmentWithDynamicAuthConfig(ctx, centralRequest, k.iamConfig.RedhatSSORealm, k.rhSSODynamicClientsAPI); err != nil {
+		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to augment auth config")
+	}
+	if err := k.Update(centralRequest); err != nil {
+		glog.Errorf("Rotating RHSSO client failed: created new RHSSO dynamic client, but failed to update central record, client ID is %s", centralRequest.AuthConfig.ClientID)
+		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to update database record")
+	}
+	if _, err := k.rhSSODynamicClientsAPI.DeleteAcsClient(ctx, previousAuthConfig.ClientID); err != nil {
+		glog.Errorf("Rotating RHSSO client failed: failed to delete RHSSO dynamic client, client ID is %s", centralRequest.AuthConfig.ClientID)
+		return errors.NewWithCause(errors.ErrorClientRotationFailed, err, "failed to delete previous RHSSO dynamic client")
+	}
+	return nil
 }
 
 // HasAvailableCapacityInRegion ...
@@ -188,7 +214,7 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralReque
 }
 
 // reserveQuota - reserves quota for the given dinosaur request. If a RHACS quota has been assigned, it will try to reserve RHACS quota, otherwise it will try with RHACSTrial
-func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (subscriptionID string, err *errors.ServiceError) {
+func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) (subscriptionID string, err *errors.ServiceError) {
 	if dinosaurRequest.InstanceType == types.EVAL.String() {
 		if !k.dinosaurConfig.Quota.AllowEvaluatorInstance {
 			return "", errors.NewWithCause(errors.ErrorForbidden, err, "central eval instances are not allowed")
@@ -215,12 +241,12 @@ func (k *dinosaurService) reserveQuota(dinosaurRequest *dbapi.CentralRequest) (s
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
-	subscriptionID, err = quotaService.ReserveQuota(dinosaurRequest, types.DinosaurInstanceType(dinosaurRequest.InstanceType))
+	subscriptionID, err = quotaService.ReserveQuota(ctx, dinosaurRequest, types.DinosaurInstanceType(dinosaurRequest.InstanceType))
 	return subscriptionID, err
 }
 
 // RegisterDinosaurJob registers a new job in the dinosaur table
-func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
+func (k *dinosaurService) RegisterDinosaurJob(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	// we need to pre-populate the ID to be able to reserve the quota
@@ -245,7 +271,7 @@ func (k *dinosaurService) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequ
 		return errors.TooManyDinosaurInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", dinosaurRequest.Region, dinosaurRequest.InstanceType))
 	}
 	dinosaurRequest.ClusterID = cluster.ClusterID
-	subscriptionID, err := k.reserveQuota(dinosaurRequest)
+	subscriptionID, err := k.reserveQuota(ctx, dinosaurRequest)
 	if err != nil {
 		return err
 	}
@@ -642,21 +668,6 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 	return dinosaurRequestList, pagingMeta, nil
 }
 
-// ListByClusterID returns a list of CentralRequests with specified clusterID
-func (k *dinosaurService) ListByClusterID(clusterID string) ([]*dbapi.CentralRequest, *errors.ServiceError) {
-	dbConn := k.connectionFactory.New().
-		Where("cluster_id = ?", clusterID).
-		Where("status IN (?)", dinosaurManagedCRStatuses).
-		Where("host != ''")
-
-	var dinosaurRequestList dbapi.CentralList
-	if err := dbConn.Find(&dinosaurRequestList).Error; err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list central requests")
-	}
-
-	return dinosaurRequestList, nil
-}
-
 // Update ...
 func (k *dinosaurService) Update(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
@@ -801,7 +812,7 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 		"Routes",
 		"Status",
 		"RoutesCreated",
-		"RouteCreationID",
+		"RoutesCreationID",
 		"DeletedAt",
 		"DeletionTimestamp",
 		"ClientID",
@@ -813,10 +824,11 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 	// use a new central request, so that unset field for columnsToReset will automatically be set to the zero value
 	// this Update only changes columns listed in columnsToReset
 	resetRequest := &dbapi.CentralRequest{}
+	resetRequest.ID = centralRequest.ID
 	resetRequest.Status = dinosaurConstants.CentralRequestStatusPreparing.String()
 	resetRequest.CreatedAt = time.Now()
 
-	if err := dbConn.Unscoped().Model(&centralRequest).Select(columnsToReset).Updates(resetRequest).Error; err != nil {
+	if err := dbConn.Unscoped().Model(resetRequest).Select(columnsToReset).Updates(resetRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to reset CentralRequest status")
 	}
 

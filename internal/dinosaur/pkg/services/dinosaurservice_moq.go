@@ -64,9 +64,6 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *serviceError.ServiceError) {
 //				panic("mock out the List method")
 //			},
-//			ListByClusterIDFunc: func(clusterID string) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
-//				panic("mock out the ListByClusterID method")
-//			},
 //			ListByStatusFunc: func(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the ListByStatus method")
 //			},
@@ -82,11 +79,14 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			RegisterDinosaurDeprovisionJobFunc: func(ctx context.Context, id string) *serviceError.ServiceError {
 //				panic("mock out the RegisterDinosaurDeprovisionJob method")
 //			},
-//			RegisterDinosaurJobFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+//			RegisterDinosaurJobFunc: func(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the RegisterDinosaurJob method")
 //			},
 //			RestoreFunc: func(ctx context.Context, id string) *serviceError.ServiceError {
 //				panic("mock out the Restore method")
+//			},
+//			RotateCentralRHSSOClientFunc: func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+//				panic("mock out the RotateCentralRHSSOClient method")
 //			},
 //			UpdateFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 //				panic("mock out the Update method")
@@ -146,9 +146,6 @@ type DinosaurServiceMock struct {
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context, listArgs *services.ListArguments) (dbapi.CentralList, *api.PagingMeta, *serviceError.ServiceError)
 
-	// ListByClusterIDFunc mocks the ListByClusterID method.
-	ListByClusterIDFunc func(clusterID string) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
-
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError)
 
@@ -165,10 +162,13 @@ type DinosaurServiceMock struct {
 	RegisterDinosaurDeprovisionJobFunc func(ctx context.Context, id string) *serviceError.ServiceError
 
 	// RegisterDinosaurJobFunc mocks the RegisterDinosaurJob method.
-	RegisterDinosaurJobFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
+	RegisterDinosaurJobFunc func(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// RestoreFunc mocks the Restore method.
 	RestoreFunc func(ctx context.Context, id string) *serviceError.ServiceError
+
+	// RotateCentralRHSSOClientFunc mocks the RotateCentralRHSSOClient method.
+	RotateCentralRHSSOClientFunc func(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// UpdateFunc mocks the Update method.
 	UpdateFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
@@ -255,11 +255,6 @@ type DinosaurServiceMock struct {
 			// ListArgs is the listArgs argument value.
 			ListArgs *services.ListArguments
 		}
-		// ListByClusterID holds details about calls to the ListByClusterID method.
-		ListByClusterID []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-		}
 		// ListByStatus holds details about calls to the ListByStatus method.
 		ListByStatus []struct {
 			// Status is the status argument value.
@@ -285,6 +280,8 @@ type DinosaurServiceMock struct {
 		}
 		// RegisterDinosaurJob holds details about calls to the RegisterDinosaurJob method.
 		RegisterDinosaurJob []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// DinosaurRequest is the dinosaurRequest argument value.
 			DinosaurRequest *dbapi.CentralRequest
 		}
@@ -294,6 +291,13 @@ type DinosaurServiceMock struct {
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+		}
+		// RotateCentralRHSSOClient holds details about calls to the RotateCentralRHSSOClient method.
+		RotateCentralRHSSOClient []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// CentralRequest is the centralRequest argument value.
+			CentralRequest *dbapi.CentralRequest
 		}
 		// Update holds details about calls to the Update method.
 		Update []struct {
@@ -335,7 +339,6 @@ type DinosaurServiceMock struct {
 	lockGetCNAMERecordStatus              sync.RWMutex
 	lockHasAvailableCapacityInRegion      sync.RWMutex
 	lockList                              sync.RWMutex
-	lockListByClusterID                   sync.RWMutex
 	lockListByStatus                      sync.RWMutex
 	lockListCentralsWithoutAuthConfig     sync.RWMutex
 	lockListDinosaursWithRoutesNotCreated sync.RWMutex
@@ -343,6 +346,7 @@ type DinosaurServiceMock struct {
 	lockRegisterDinosaurDeprovisionJob    sync.RWMutex
 	lockRegisterDinosaurJob               sync.RWMutex
 	lockRestore                           sync.RWMutex
+	lockRotateCentralRHSSOClient          sync.RWMutex
 	lockUpdate                            sync.RWMutex
 	lockUpdateStatus                      sync.RWMutex
 	lockUpdates                           sync.RWMutex
@@ -776,38 +780,6 @@ func (mock *DinosaurServiceMock) ListCalls() []struct {
 	return calls
 }
 
-// ListByClusterID calls ListByClusterIDFunc.
-func (mock *DinosaurServiceMock) ListByClusterID(clusterID string) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
-	if mock.ListByClusterIDFunc == nil {
-		panic("DinosaurServiceMock.ListByClusterIDFunc: method is nil but DinosaurService.ListByClusterID was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-	}{
-		ClusterID: clusterID,
-	}
-	mock.lockListByClusterID.Lock()
-	mock.calls.ListByClusterID = append(mock.calls.ListByClusterID, callInfo)
-	mock.lockListByClusterID.Unlock()
-	return mock.ListByClusterIDFunc(clusterID)
-}
-
-// ListByClusterIDCalls gets all the calls that were made to ListByClusterID.
-// Check the length with:
-//
-//	len(mockedDinosaurService.ListByClusterIDCalls())
-func (mock *DinosaurServiceMock) ListByClusterIDCalls() []struct {
-	ClusterID string
-} {
-	var calls []struct {
-		ClusterID string
-	}
-	mock.lockListByClusterID.RLock()
-	calls = mock.calls.ListByClusterID
-	mock.lockListByClusterID.RUnlock()
-	return calls
-}
-
 // ListByStatus calls ListByStatusFunc.
 func (mock *DinosaurServiceMock) ListByStatus(status ...dinosaurConstants.CentralStatus) ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 	if mock.ListByStatusFunc == nil {
@@ -963,19 +935,21 @@ func (mock *DinosaurServiceMock) RegisterDinosaurDeprovisionJobCalls() []struct 
 }
 
 // RegisterDinosaurJob calls RegisterDinosaurJobFunc.
-func (mock *DinosaurServiceMock) RegisterDinosaurJob(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+func (mock *DinosaurServiceMock) RegisterDinosaurJob(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
 	if mock.RegisterDinosaurJobFunc == nil {
 		panic("DinosaurServiceMock.RegisterDinosaurJobFunc: method is nil but DinosaurService.RegisterDinosaurJob was just called")
 	}
 	callInfo := struct {
+		Ctx             context.Context
 		DinosaurRequest *dbapi.CentralRequest
 	}{
+		Ctx:             ctx,
 		DinosaurRequest: dinosaurRequest,
 	}
 	mock.lockRegisterDinosaurJob.Lock()
 	mock.calls.RegisterDinosaurJob = append(mock.calls.RegisterDinosaurJob, callInfo)
 	mock.lockRegisterDinosaurJob.Unlock()
-	return mock.RegisterDinosaurJobFunc(dinosaurRequest)
+	return mock.RegisterDinosaurJobFunc(ctx, dinosaurRequest)
 }
 
 // RegisterDinosaurJobCalls gets all the calls that were made to RegisterDinosaurJob.
@@ -983,9 +957,11 @@ func (mock *DinosaurServiceMock) RegisterDinosaurJob(dinosaurRequest *dbapi.Cent
 //
 //	len(mockedDinosaurService.RegisterDinosaurJobCalls())
 func (mock *DinosaurServiceMock) RegisterDinosaurJobCalls() []struct {
+	Ctx             context.Context
 	DinosaurRequest *dbapi.CentralRequest
 } {
 	var calls []struct {
+		Ctx             context.Context
 		DinosaurRequest *dbapi.CentralRequest
 	}
 	mock.lockRegisterDinosaurJob.RLock()
@@ -1027,6 +1003,42 @@ func (mock *DinosaurServiceMock) RestoreCalls() []struct {
 	mock.lockRestore.RLock()
 	calls = mock.calls.Restore
 	mock.lockRestore.RUnlock()
+	return calls
+}
+
+// RotateCentralRHSSOClient calls RotateCentralRHSSOClientFunc.
+func (mock *DinosaurServiceMock) RotateCentralRHSSOClient(ctx context.Context, centralRequest *dbapi.CentralRequest) *serviceError.ServiceError {
+	if mock.RotateCentralRHSSOClientFunc == nil {
+		panic("DinosaurServiceMock.RotateCentralRHSSOClientFunc: method is nil but DinosaurService.RotateCentralRHSSOClient was just called")
+	}
+	callInfo := struct {
+		Ctx            context.Context
+		CentralRequest *dbapi.CentralRequest
+	}{
+		Ctx:            ctx,
+		CentralRequest: centralRequest,
+	}
+	mock.lockRotateCentralRHSSOClient.Lock()
+	mock.calls.RotateCentralRHSSOClient = append(mock.calls.RotateCentralRHSSOClient, callInfo)
+	mock.lockRotateCentralRHSSOClient.Unlock()
+	return mock.RotateCentralRHSSOClientFunc(ctx, centralRequest)
+}
+
+// RotateCentralRHSSOClientCalls gets all the calls that were made to RotateCentralRHSSOClient.
+// Check the length with:
+//
+//	len(mockedDinosaurService.RotateCentralRHSSOClientCalls())
+func (mock *DinosaurServiceMock) RotateCentralRHSSOClientCalls() []struct {
+	Ctx            context.Context
+	CentralRequest *dbapi.CentralRequest
+} {
+	var calls []struct {
+		Ctx            context.Context
+		CentralRequest *dbapi.CentralRequest
+	}
+	mock.lockRotateCentralRHSSOClient.RLock()
+	calls = mock.calls.RotateCentralRHSSOClient
+	mock.lockRotateCentralRHSSOClient.RUnlock()
 	return calls
 }
 

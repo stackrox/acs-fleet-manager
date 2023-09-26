@@ -4,7 +4,7 @@ metadata:
   labels:
     application: fleet-manager
   name: fleet-manager
-  namespace: "$ACSMS_NAMESPACE"
+  namespace: "$ACSCS_NAMESPACE"
 spec:
   ports:
     - name: "8000"
@@ -13,6 +13,9 @@ spec:
     - name: healthcheck
       port: 8083
       targetPort: 8083
+    - name: metrics
+      port: 8080
+      targetPort: 8080
   selector:
     application: fleet-manager
 status:

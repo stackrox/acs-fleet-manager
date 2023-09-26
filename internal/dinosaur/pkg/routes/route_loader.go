@@ -5,35 +5,31 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
-
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
-
-	"github.com/stackrox/acs-fleet-manager/pkg/logger"
-
-	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
-
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
-
 	"github.com/goava/di"
 	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	pkgerrors "github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/generated"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/handlers"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/routes"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	coreHandlers "github.com/stackrox/acs-fleet-manager/pkg/handlers"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
@@ -64,6 +60,7 @@ type options struct {
 	AdminRoleAuthZConfig        *auth.AdminRoleAuthZConfig
 
 	ManagedCentralPresenter *presenters.ManagedCentralPresenter
+	GitopsProvider          gitops.ConfigProvider
 }
 
 // NewRouteLoader ...
@@ -205,7 +202,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	// /agent-clusters/{id}
 	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
-	dataPlaneCentralHandler := handlers.NewDataPlaneDinosaurHandler(s.DataPlaneCentralService, s.Central, s.ManagedCentralPresenter)
+	dataPlaneCentralHandler := handlers.NewDataPlaneDinosaurHandler(s.DataPlaneCentralService, s.Central, s.ManagedCentralPresenter, s.GitopsProvider)
 	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).
 		Name(logger.NewLogEvent("get-dataplane-cluster-config", "get dataplane cluster config by id").ToString()).
@@ -265,6 +262,9 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		Methods(http.MethodPatch)
 	adminCentralsRouter.HandleFunc("/{id}/restore", adminCentralHandler.Restore).
 		Name(logger.NewLogEvent("admin-restore-central", "[admin] restore central by id").ToString()).
+		Methods(http.MethodPost)
+	adminCentralsRouter.HandleFunc("/{id}/rotate-secrets", adminCentralHandler.RotateSecrets).
+		Name(logger.NewLogEvent("admin-rotate-central-secrets", "[admin] rotate central secrets by id").ToString()).
 		Methods(http.MethodPost)
 
 	adminCreateRouter := adminCentralsRouter.NewRoute().Subrouter()

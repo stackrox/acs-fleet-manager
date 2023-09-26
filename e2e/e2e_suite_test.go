@@ -18,18 +18,20 @@ import (
 )
 
 var (
-	cfg                  *rest.Config
-	k8sClient            client.Client
-	routeService         *k8s.RouteService
-	dnsEnabled           bool
-	routesEnabled        bool
-	route53Client        *route53.Route53
-	waitTimeout          = getWaitTimeout()
-	dpCloudProvider      = getEnvDefault("DP_CLOUD_PROVIDER", "standalone")
-	dpRegion             = getEnvDefault("DP_REGION", "standalone")
-	authType             = "OCM"
-	fleetManagerEndpoint = "http://localhost:8000"
-	runningAuthTests     bool
+	cfg                   *rest.Config
+	k8sClient             client.Client
+	routeService          *k8s.RouteService
+	dnsEnabled            bool
+	routesEnabled         bool
+	route53Client         *route53.Route53
+	waitTimeout           = getWaitTimeout()
+	dpCloudProvider       = getEnvDefault("DP_CLOUD_PROVIDER", "standalone")
+	dpRegion              = getEnvDefault("DP_REGION", "standalone")
+	authType              = "OCM"
+	fleetManagerEndpoint  = "http://localhost:8000"
+	runAuthTests          bool
+	runCentralTests       bool
+	runCanaryUpgradeTests bool
 )
 
 const defaultTimeout = 5 * time.Minute
@@ -94,16 +96,23 @@ var _ = BeforeSuite(func() {
 	}
 	GinkgoWriter.Printf("FLEET_MANAGER_ENDPOINT: %q\n", fleetManagerEndpoint)
 
-	if val := getEnvDefault("RUN_AUTH_E2E", "false"); val == "true" {
-		runningAuthTests = true
-		GinkgoWriter.Printf("Executing auth tests")
-	} else {
-		GinkgoWriter.Printf("Skipping auth tests. If you want to run the auth tests, set RUN_AUTH_E2E=true")
-	}
+	runAuthTests = enableTestsGroup("Auth", "RUN_AUTH_E2E", "false")
+	runCentralTests = enableTestsGroup("Central", "RUN_CENTRAL_E2E", "true")
+	runCanaryUpgradeTests = enableTestsGroup("Canary Upgrade", "RHACS_STANDALONE_MODE", "false")
 })
 
 var _ = AfterSuite(func() {
 })
+
+func enableTestsGroup(testName string, envName string, defaultValue string) bool {
+	if val := getEnvDefault(envName, defaultValue); val == "true" {
+		GinkgoWriter.Printf("Executing %s tests", testName)
+		return true
+	} else {
+		GinkgoWriter.Printf("Skipping %s tests. Set %s=true to run these tests", testName, envName)
+	}
+	return false
+}
 
 func isDNSEnabled(routesEnabled bool) (bool, string, string) {
 	accessKey := os.Getenv("ROUTE53_ACCESS_KEY")

@@ -525,6 +525,10 @@ objects:
           roles:
             - "acs-general-engineering"
             - "acs-fleet-manager-admin-full"
+        - method: POST
+          roles:
+            - "acs-general-engineering"
+            - "acs-fleet-manager-admin-full"
       admin-authz-roles-prod.yaml: |-
         - method: GET
           roles:
@@ -536,6 +540,9 @@ objects:
             - "acs-fleet-manager-admin-full"
             - "acs-fleet-manager-admin-write"
         - method: DELETE
+          roles:
+            - "acs-fleet-manager-admin-full"
+        - method: POST
           roles:
             - "acs-fleet-manager-admin-full"
   - kind: ConfigMap
@@ -1063,6 +1070,10 @@ objects:
           - name: fleet-manager-dataplane-cluster-configuration-staging
             configMap:
               name: fleet-manager-dataplane-cluster-configuration-staging
+          - name: gitops-config
+            configMap:
+              name: gitops-config
+              optional: true
           initContainers:
           - name: migration
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
@@ -1152,6 +1163,9 @@ objects:
             - name: fleet-manager-dataplane-cluster-configuration-staging
               mountPath: /config/dataplane-cluster-configuration-staging.yaml
               subPath: dataplane-cluster-configuration-staging.yaml
+            - name: gitops-config
+              mountPath: /config/gitops-config
+              subPath: gitops-config
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"

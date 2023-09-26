@@ -962,7 +962,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "sum(acs_fleet_manager_worker_central_duration_bucket{namespace=\"$namespace\",jobType=\"central_create\"}) by (le)",
+              "expr": "sum(increase(acs_fleet_manager_worker_central_duration_bucket{namespace=\"$namespace\",jobType=\"central_create\"}[$__range])) by (le)",
               "format": "heatmap",
               "instant": false,
               "interval": "",
@@ -1014,6 +1014,11 @@ data:
             "options": [
               {
                 "selected": false,
+                "text": "acs-fleet-manager-integration",
+                "value": "acs-fleet-manager-integration"
+              },
+              {
+                "selected": false,
                 "text": "acs-fleet-manager-stage",
                 "value": "acs-fleet-manager-stage"
               },
@@ -1023,7 +1028,7 @@ data:
                 "value": "acs-fleet-manager-production"
               }
             ],
-            "query": "acs-fleet-manager-stage,acs-fleet-manager-production",
+            "query": "acs-fleet-manager-integration,acs-fleet-manager-stage,acs-fleet-manager-production",
             "queryValue": "",
             "skipUrlSync": false,
             "type": "custom"
@@ -1062,6 +1067,6 @@ data:
       "timezone": "",
       "title": "ACS Fleet Manager SLOs",
       "uid": "T2kek3H9a",
-      "version": 23,
+      "version": 24,
       "weekStart": ""
     }

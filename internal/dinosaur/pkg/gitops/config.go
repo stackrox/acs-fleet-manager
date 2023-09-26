@@ -2,20 +2,20 @@
 package gitops
 
 import (
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	"gopkg.in/yaml.v2"
-	field "k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"sigs.k8s.io/yaml"
 )
 
 // Config represents the gitops configuration
 type Config struct {
-	Centrals CentralsConfig `json:"centrals"`
+	Centrals       CentralsConfig           `json:"centrals"`
+	RHACSOperators operator.OperatorConfigs `json:"rhacsOperators"`
 }
 
 // CentralsConfig represents the declarative configuration for Central instances defaults and overrides.
 type CentralsConfig struct {
-	// Default configuration for Central instances.
-	Default v1alpha1.Central `json:"default"`
 	// Overrides are the overrides for Central instances.
 	Overrides []CentralOverride `json:"overrides"`
 }
@@ -34,6 +34,7 @@ type CentralOverride struct {
 func ValidateConfig(config Config) field.ErrorList {
 	var errs field.ErrorList
 	errs = append(errs, validateCentralsConfig(field.NewPath("centrals"), config.Centrals)...)
+	errs = append(errs, operator.Validate(field.NewPath("rhacsOperators"), config.RHACSOperators)...)
 	return errs
 }
 

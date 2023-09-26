@@ -2,8 +2,8 @@ package operator
 
 import (
 	"fmt"
-	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 )
 
@@ -16,25 +16,19 @@ func parseConfig(content []byte) (OperatorConfigs, error) {
 	return out, nil
 }
 
-// GetConfig returns the rhacs operator configurations
-func GetConfig() OperatorConfigs {
-	// TODO: Read config from GitOps configuration
-	glog.Error("Reading RHACS Operator GitOps configuration not implemented yet")
-	return OperatorConfigs{}
-}
-
 // Validate validates the operator configuration and can be used in different life-cycle stages like runtime and deploy time.
-func Validate(configs OperatorConfigs) []error {
-	var errors []error
-	manager := ACSOperatorManager{}
-	manifests, err := manager.RenderChart(configs)
+func Validate(path *field.Path, configs OperatorConfigs) field.ErrorList {
+	manifests, err := RenderChart(configs)
 	if err != nil {
-		errors = append(errors, fmt.Errorf("could not render operator helm charts, got invalid configuration: %s", err.Error()))
-	} else if len(manifests) == 0 {
-		errors = append(errors, fmt.Errorf("operator chart rendering succeed, but no manifests rendered"))
+		return field.ErrorList{
+			field.Forbidden(path, fmt.Sprintf("could not render operator helm charts, got invalid configuration: %s", err.Error())),
+		}
+	} else if len(configs.Configs) > 0 && len(manifests) == 0 {
+		return field.ErrorList{
+			field.Forbidden(path, fmt.Sprintf("operator chart rendering succeed, but no manifests were rendered")),
+		}
 	}
-
-	return errors
+	return nil
 }
 
 // CRDConfig represents the crd to be installed in the data-plane cluster. The CRD is downloaded automatically

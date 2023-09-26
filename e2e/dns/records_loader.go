@@ -22,7 +22,7 @@ type RecordsLoader struct {
 }
 
 // NewRecordsLoader creates a new instance of RecordsLoader
-func NewRecordsLoader(route53Client *route53.Route53, central *public.CentralRequest) *RecordsLoader {
+func NewRecordsLoader(route53Client *route53.Route53, central public.CentralRequest) *RecordsLoader {
 	rhacsZone, err := getHostedZone(route53Client, central)
 	Expect(err).ToNot(HaveOccurred())
 
@@ -67,7 +67,7 @@ loading:
 	return result
 }
 
-func getHostedZone(route53Client *route53.Route53, central *public.CentralRequest) (*route53.HostedZone, error) {
+func getHostedZone(route53Client *route53.Route53, central public.CentralRequest) (*route53.HostedZone, error) {
 	hostedZones, err := route53Client.ListHostedZones(&route53.ListHostedZonesInput{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list hosted zones: %w", err)
@@ -84,7 +84,8 @@ func getHostedZone(route53Client *route53.Route53, central *public.CentralReques
 	}
 
 	if rhacsZone == nil {
-		return nil, fmt.Errorf("failed to find Route53 hosted zone for Central UI URL %v", central.CentralUIURL)
+		return nil, fmt.Errorf("failed to find Route53 hosted zone for Central [id: %v, status: %v, UI URL: %v]",
+			central.Id, central.Status, central.CentralUIURL)
 	}
 
 	return rhacsZone, nil
@@ -94,7 +95,7 @@ func removeLastChar(s string) string {
 	return s[:len(s)-1]
 }
 
-func getCentralDomainNamesSorted(central *public.CentralRequest) []string {
+func getCentralDomainNamesSorted(central public.CentralRequest) []string {
 	uiURL, err := url.Parse(central.CentralUIURL)
 	Expect(err).ToNot(HaveOccurred())
 	dataHost, _, err := net.SplitHostPort(central.CentralDataURL)

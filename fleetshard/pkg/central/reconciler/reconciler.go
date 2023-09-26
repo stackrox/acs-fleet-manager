@@ -14,7 +14,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	containerImage "github.com/containers/image/docker/reference"
 	"github.com/golang/glog"
 	"github.com/hashicorp/go-multierror"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -42,10 +41,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	yaml2 "sigs.k8s.io/yaml"
 )
 
 // FreeStatus ...
@@ -76,8 +75,9 @@ const (
 	dbUserTypeCentral    = "central"
 	dbCentralUserName    = "rhacs_central"
 
-	centralDbSecretName       = "central-db-password" // pragma: allowlist secret
-	centralDeletePollInterval = 5 * time.Second
+	centralDbSecretName        = "central-db-password" // pragma: allowlist secret
+	centralDbOverrideConfigMap = "central-db-override"
+	centralDeletePollInterval  = 5 * time.Second
 
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
 	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
@@ -246,12 +246,44 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "setting central reconcilation cache")
 	}
 
-	glog.Infof("Returning central status %+v", status)
+	logStatus := *status
+	logStatus.Secrets = obscureSecrets(status.Secrets)
+	glog.Infof("Returning central status %+v", logStatus)
 
 	return status, nil
 }
 
 func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
+	var central *v1alpha1.Central
+	var err error
+	if r.shouldUseGitopsConfig(remoteCentral) {
+		if central, err = r.getInstanceConfigWithGitops(remoteCentral); err != nil {
+			return nil, err
+		}
+	} else {
+		if central, err = r.getLegacyInstanceConfig(remoteCentral); err != nil {
+			return nil, err
+		}
+	}
+	if err := r.applyCentralConfig(remoteCentral, central); err != nil {
+		return nil, err
+	}
+	return central, nil
+}
+
+func (r *CentralReconciler) shouldUseGitopsConfig(remoteCentral *private.ManagedCentral) bool {
+	return features.GitOpsCentrals.Enabled() && len(remoteCentral.Spec.CentralCRYAML) > 0
+}
+
+func (r *CentralReconciler) getInstanceConfigWithGitops(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
+	var central = new(v1alpha1.Central)
+	if err := yaml2.Unmarshal([]byte(remoteCentral.Spec.CentralCRYAML), central); err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal central yaml")
+	}
+	return central, nil
+}
+
+func (r *CentralReconciler) getLegacyInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
 	if remoteCentral == nil {
 		return nil, errInvalidArguments
 	}
@@ -260,10 +292,6 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
 	monitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
-	// Telemetry will only be enabled if the storage key is set _and_ the central is not an "internal" central created
-	// from internal clients such as probe service or others.
-	telemetryEnabled := r.telemetry.StorageKey != "" && !remoteCentral.Metadata.Internal
-
 	centralResources, err := converters.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Central.Resources)
 	if err != nil {
 		return nil, errors.Wrap(err, "converting Central resources")
@@ -277,15 +305,6 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 	if err != nil {
 		return nil, errors.Wrap(err, "converting Scanner DB resources")
 	}
-
-	// Set proxy configuration
-	auditLoggingURL := url.URL{
-		Host: r.auditLogging.Endpoint(false),
-	}
-	kubernetesURL := url.URL{
-		Host: "kubernetes.default.svc.cluster.local.:443",
-	}
-	envVars := getProxyEnvVars(remoteCentralNamespace, auditLoggingURL, kubernetesURL)
 
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
 
@@ -307,33 +326,11 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 		},
 		Spec: v1alpha1.CentralSpec{
 			Central: &v1alpha1.CentralComponentSpec{
-				Exposure: &v1alpha1.Exposure{
-					Route: &v1alpha1.ExposureRoute{
-						Enabled: pointer.Bool(r.useRoutes),
-					},
-				},
 				Monitoring: &v1alpha1.Monitoring{
 					ExposeEndpoint: &monitoringExposeEndpointEnabled,
 				},
 				DeploymentSpec: v1alpha1.DeploymentSpec{
 					Resources: &centralResources,
-				},
-				Telemetry: &v1alpha1.Telemetry{
-					Enabled: pointer.Bool(telemetryEnabled),
-					Storage: &v1alpha1.TelemetryStorage{
-						Endpoint: &r.telemetry.StorageEndpoint,
-						Key:      &r.telemetry.StorageKey,
-					},
-				},
-				DeclarativeConfiguration: &v1alpha1.DeclarativeConfiguration{
-					Secrets: []v1alpha1.LocalSecretReference{
-						{
-							Name: sensibleDeclarativeConfigSecretName,
-						},
-						{
-							Name: manualDeclarativeConfigSecretName,
-						},
-					},
 				},
 			},
 			Scanner: &v1alpha1.ScannerComponentSpec{
@@ -352,11 +349,8 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 				ScannerComponent: &scannerComponentEnabled,
 			},
 			Customize: &v1alpha1.CustomizeSpec{
-				EnvVars: envVars,
 				Annotations: map[string]string{
-					envAnnotationKey:         r.environment,
-					clusterNameAnnotationKey: r.clusterName,
-					orgNameAnnotationKey:     remoteCentral.Spec.Auth.OwnerOrgName,
+					orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
 				},
 				Labels: map[string]string{
 					orgIDLabelKey:        remoteCentral.Spec.Auth.OwnerOrgId,
@@ -367,25 +361,86 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 		},
 	}
 
-	if features.TargetedOperatorUpgrades.Enabled() {
-		// TODO: use GitRef as a LabelSelector
-		image, err := containerImage.Parse(remoteCentral.Spec.OperatorImage)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed parse labelSelector")
-		}
-		var labelSelector string
-		if tagged, ok := image.(containerImage.Tagged); ok {
-			labelSelector = tagged.Tag()
-		}
-		errs := validation.IsValidLabelValue(labelSelector)
-		if errs != nil {
-			return nil, errors.Wrapf(err, "invalid labelSelector %s: %v", labelSelector, errs)
-		}
-		central.Labels[ReconcileOperatorSelector] = labelSelector
+	return central, nil
+}
 
+func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+	r.applyTelemetry(remoteCentral, central)
+	r.applyRoutes(central)
+	r.applyProxyConfig(central)
+	r.applyDeclarativeConfig(central)
+	r.applyAnnotations(central)
+	return nil
+}
+
+func (r *CentralReconciler) applyAnnotations(central *v1alpha1.Central) {
+	if central.Spec.Customize == nil {
+		central.Spec.Customize = &v1alpha1.CustomizeSpec{}
+	}
+	if central.Spec.Customize.Annotations == nil {
+		central.Spec.Customize.Annotations = map[string]string{}
+	}
+	central.Spec.Customize.Annotations[envAnnotationKey] = r.environment
+	central.Spec.Customize.Annotations[clusterNameAnnotationKey] = r.clusterName
+}
+
+func (r *CentralReconciler) applyDeclarativeConfig(central *v1alpha1.Central) {
+	if central.Spec.Central == nil {
+		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
+	}
+	declarativeConfig := &v1alpha1.DeclarativeConfiguration{
+		Secrets: []v1alpha1.LocalSecretReference{
+			{
+				Name: sensibleDeclarativeConfigSecretName,
+			},
+			{
+				Name: manualDeclarativeConfigSecretName,
+			},
+		},
 	}
 
-	return central, nil
+	central.Spec.Central.DeclarativeConfiguration = declarativeConfig
+}
+
+func (r *CentralReconciler) applyProxyConfig(central *v1alpha1.Central) {
+	if central.Spec.Customize == nil {
+		central.Spec.Customize = &v1alpha1.CustomizeSpec{}
+	}
+	auditLoggingURL := url.URL{Host: r.auditLogging.Endpoint(false)}
+	kubernetesURL := url.URL{
+		Host: "kubernetes.default.svc.cluster.local.:443",
+	}
+	envVars := getProxyEnvVars(central.Namespace, auditLoggingURL, kubernetesURL)
+	central.Spec.Customize.EnvVars = append(central.Spec.Customize.EnvVars, envVars...)
+}
+
+func (r *CentralReconciler) applyRoutes(central *v1alpha1.Central) {
+	if central.Spec.Central == nil {
+		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
+	}
+	exposure := &v1alpha1.Exposure{
+		Route: &v1alpha1.ExposureRoute{
+			Enabled: pointer.Bool(r.useRoutes),
+		},
+	}
+	central.Spec.Central.Exposure = exposure
+}
+
+func (r *CentralReconciler) applyTelemetry(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) {
+	if central.Spec.Central == nil {
+		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
+	}
+	// Telemetry will only be enabled if the storage key is set _and_ the central is not an "internal" central created
+	// from internal clients such as probe service or others.
+	telemetryEnabled := r.telemetry.StorageKey != "" && !remoteCentral.Metadata.Internal
+	telemetry := &v1alpha1.Telemetry{
+		Enabled: pointer.Bool(telemetryEnabled),
+		Storage: &v1alpha1.TelemetryStorage{
+			Endpoint: &r.telemetry.StorageEndpoint,
+			Key:      &r.telemetry.StorageKey,
+		},
+	}
+	central.Spec.Central.Telemetry = telemetry
 }
 
 func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
@@ -991,7 +1046,12 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 		// skip Snapshot for remoteCentral created by probe
 		skipSnapshot := remoteCentral.Metadata.Internal
 
-		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(remoteCentral.Id, skipSnapshot)
+		databaseID, err := r.getDatabaseID(ctx, remoteCentral.Metadata.Namespace, remoteCentral.Id)
+		if err != nil {
+			return false, fmt.Errorf("getting DB ID: %w", err)
+		}
+
+		err = r.managedDBProvisioningClient.EnsureDBDeprovisioned(databaseID, skipSnapshot)
 		if err != nil {
 			if errors.Is(err, cloudprovider.ErrDBBackupInProgress) {
 				glog.Infof("Can not delete Central DB for: %s, backup in progress", remoteCentral.Metadata.Namespace)
@@ -1020,6 +1080,29 @@ func (r *CentralReconciler) ensureCentralDeleted(ctx context.Context, remoteCent
 	}
 	globalDeleted = globalDeleted && nsDeleted
 	return globalDeleted, nil
+}
+
+// getDatabaseID returns the cloud database ID for a central tenant.
+// By default the database ID is equal to the centralID. It can be overridden by a ConfigMap.
+func (r *CentralReconciler) getDatabaseID(ctx context.Context, remoteCentralNamespace, centralID string) (string, error) {
+	configMap := &corev1.ConfigMap{}
+	err := r.client.Get(ctx, ctrlClient.ObjectKey{Namespace: remoteCentralNamespace, Name: centralDbOverrideConfigMap}, configMap)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return centralID, nil
+		}
+
+		return centralID, fmt.Errorf("getting central DB ID override ConfigMap: %w", err)
+	}
+
+	overrideValue, exists := configMap.Data["databaseID"]
+	if exists {
+		glog.Infof("The database ID for Central %s is overridden with: %s", centralID, overrideValue)
+		return overrideValue, nil
+	}
+
+	glog.Infof("The %s ConfigMap exists but contains no databaseID field, using default: %s", centralDbOverrideConfigMap, centralID)
+	return centralID, nil
 }
 
 // centralChanged compares the given central to the last central reconciled using a hash
@@ -1110,7 +1193,12 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 		}
 	}
 
-	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(remoteCentral.Id)
+	databaseID, err := r.getDatabaseID(ctx, remoteCentral.Metadata.Namespace, remoteCentral.Id)
+	if err != nil {
+		return "", fmt.Errorf("getting DB ID: %w", err)
+	}
+
+	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(databaseID)
 	if err != nil {
 		if !errors.Is(err, cloudprovider.ErrDBNotFound) {
 			return "", fmt.Errorf("getting RDS DB connection data: %w", err)
@@ -1123,6 +1211,7 @@ func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, re
 			return "", fmt.Errorf("trying to restore DB: %w", err)
 		}
 	}
+
 	return dbConnection.GetConnectionForUserAndDB(dbCentralUserName, postgres.CentralDBName).WithSSLRootCert(postgres.DatabaseCACertificatePathCentral).AsConnectionString(), nil
 }
 
@@ -1158,12 +1247,17 @@ func (r *CentralReconciler) ensureManagedCentralDBInitialized(ctx context.Contex
 		return fmt.Errorf("getting DB password from secret: %w", err)
 	}
 
-	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, remoteCentral.Id, remoteCentral.Id, dbMasterPassword, remoteCentral.Metadata.Internal)
+	databaseID, err := r.getDatabaseID(ctx, remoteCentralNamespace, remoteCentral.Id)
+	if err != nil {
+		return fmt.Errorf("getting DB ID: %w", err)
+	}
+
+	err = r.managedDBProvisioningClient.EnsureDBProvisioned(ctx, databaseID, remoteCentral.Id, dbMasterPassword, remoteCentral.Metadata.Internal)
 	if err != nil {
 		return fmt.Errorf("provisioning RDS DB: %w", err)
 	}
 
-	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(remoteCentral.Id)
+	dbConnection, err := r.managedDBProvisioningClient.GetDBConnection(databaseID)
 	if err != nil {
 		return fmt.Errorf("getting RDS DB connection data: %w", err)
 	}
@@ -1602,4 +1696,14 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 
 		resourcesChart: resourcesChart,
 	}
+}
+
+func obscureSecrets(secrets map[string]string) map[string]string {
+	obscuredSecrets := make(map[string]string, len(secrets))
+
+	for key := range secrets {
+		obscuredSecrets[key] = "secret-value"
+	}
+
+	return obscuredSecrets
 }

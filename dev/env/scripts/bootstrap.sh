@@ -10,10 +10,10 @@ source "${GITROOT}/dev/env/scripts/docker.sh"
 init
 
 cat <<EOF
-** Preparing ACS MS Test Environment **
+** Preparing ACSCS Test Environment **
 
 Image: ${FLEET_MANAGER_IMAGE}
-Namespace: ${ACSMS_NAMESPACE}
+Namespace: ${ACSCS_NAMESPACE}
 Inheriting ImagePullSecrets for Quay.io: ${INHERIT_IMAGEPULLSECRETS}
 Installing RHACS Operator: ${INSTALL_OPERATOR}
 Operator Source: ${OPERATOR_SOURCE}
@@ -32,7 +32,7 @@ fi
 
 # Create Namespaces.
 apply "${MANIFESTS_DIR}/shared"
-wait_for_default_service_account "$ACSMS_NAMESPACE"
+wait_for_default_service_account "$ACSCS_NAMESPACE"
 
 apply "${MANIFESTS_DIR}/rhacs-operator/00-namespace.yaml"
 wait_for_default_service_account "$STACKROX_OPERATOR_NAMESPACE"
@@ -40,7 +40,7 @@ wait_for_default_service_account "$STACKROX_OPERATOR_NAMESPACE"
 # pragma: allowlist nextline secret
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
     create-imagepullsecrets
-    inject_ips "$ACSMS_NAMESPACE" "default" "quay-ips"
+    inject_ips "$ACSCS_NAMESPACE" "default" "quay-ips"
     inject_ips "$STACKROX_OPERATOR_NAMESPACE" "default" "quay-ips"
 fi
 
@@ -54,6 +54,11 @@ if [[ "$INSTALL_OPERATOR" == "true" ]]; then
 else
     # We will be running without RHACS operator, but at least install our CRDs.
     apply "${MANIFESTS_DIR}/crds"
+    apply "${MANIFESTS_DIR}/monitoring"
+fi
+
+if [[ "$RHACS_STANDALONE_MODE" == "true" ]]; then
+    apply "${MANIFESTS_DIR}/rhacs-operator/03-operators-config.yaml"
 fi
 
 if is_local_cluster "$CLUSTER_TYPE"; then

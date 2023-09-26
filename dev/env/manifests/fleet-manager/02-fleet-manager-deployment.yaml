@@ -4,7 +4,7 @@ metadata:
   labels:
     application: fleet-manager
   name: fleet-manager
-  namespace: "$ACSMS_NAMESPACE"
+  namespace: "$ACSCS_NAMESPACE"
 spec:
   replicas: 1
   selector:
@@ -41,6 +41,7 @@ spec:
           ports:
             - containerPort: 8000
             - containerPort: 8083
+            - containerPort: 8080
           env:
           - name: CENTRAL_CPU_REQUEST
             value: 200m
@@ -81,6 +82,9 @@ spec:
               name: secrets
             - mountPath: /config
               name: config
+            - mountPath: /gitops-config
+              name: gitops-config
+              readOnly: true
       restartPolicy: Always
       volumes:
         - name: secrets
@@ -90,3 +94,7 @@ spec:
         - name: config
           configMap:
             name: config
+        - name: gitops-config
+          configMap:
+            name: fleet-manager-gitops-config
+            optional: true

@@ -30,18 +30,17 @@ fi
 
 cat <<EOF
 
-** Bringing up ACS MS **
+** Bringing up ACSCS **
 
 Image: ${fleet_manager_image_info}
 Cluster Name: ${CLUSTER_NAME}
 Cluster Type: ${CLUSTER_TYPE}
-Namespace: ${ACSMS_NAMESPACE}
+Namespace: ${ACSCS_NAMESPACE}
 
 Inheriting ImagePullSecrets for Quay.io: ${INHERIT_IMAGEPULLSECRETS}
 Installing RHACS Operator: ${INSTALL_OPERATOR}
 Enable External Config: ${ENABLE_EXTERNAL_CONFIG}
 AWS Auth Helper: ${AWS_AUTH_HELPER:-none}
-Debugging Mode: ${DEBUG_PODS}
 
 EOF
 
@@ -58,32 +57,37 @@ fi
 # Deploy database.
 log "Deploying database"
 apply "${MANIFESTS_DIR}/db"
-wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=db" "db"
+wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=db" "db"
 log "Database is ready."
 
 # Deploy MS components.
 log "Deploying fleet-manager"
 chamber exec "fleet-manager" -- apply "${MANIFESTS_DIR}/fleet-manager"
-inject_exported_env_vars "$ACSMS_NAMESPACE" "fleet-manager"
+inject_exported_env_vars "$ACSCS_NAMESPACE" "fleet-manager"
 
-wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleet-manager" "fleet-manager"
+wait_for_container_to_appear "$ACSCS_NAMESPACE" "application=fleet-manager" "fleet-manager"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
-    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l application=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
+    $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
+fi
+
+if [[ "$RHACS_STANDALONE_MODE" == "true" ]]; then
+    log "Updating operator configmap"
+    apply "${MANIFESTS_DIR}/rhacs-operator/03-operators-config.yaml"
 fi
 
 log "Deploying fleetshard-sync"
 exec_fleetshard_sync.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
-inject_exported_env_vars "$ACSMS_NAMESPACE" "fleetshard-sync"
+inject_exported_env_vars "$ACSCS_NAMESPACE" "fleetshard-sync"
 
-wait_for_container_to_appear "$ACSMS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync"
+wait_for_container_to_appear "$ACSCS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync"
 if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
-    $KUBECTL -n "$ACSMS_NAMESPACE" logs -l application=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
+    $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=fleetshard-sync --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleetshard-sync_fleetshard-sync.txt" 2>&1 &
 fi
 
 # Sanity check.
-wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync" 500
+wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleetshard-sync" "fleetshard-sync" 500
 # Prerequisite for port-forwarding are pods in ready state.
-wait_for_container_to_become_ready "$ACSMS_NAMESPACE" "application=fleet-manager" "fleet-manager"
+wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleet-manager" "fleet-manager"
 
 if [[ "$ENABLE_FM_PORT_FORWARDING" == "true" ]]; then
     port-forwarding start fleet-manager 8000 8000

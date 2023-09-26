@@ -44,6 +44,8 @@ type AdminCentralHandler interface {
 	GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request)
 	// Restore restores a tenant that was already marked as deleted
 	Restore(w http.ResponseWriter, r *http.Request)
+	// RotateSecrets rotates secrets within central
+	RotateSecrets(w http.ResponseWriter, r *http.Request)
 }
 
 type adminCentralHandler struct {
@@ -105,7 +107,7 @@ func (h adminCentralHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateScannerSpec(ctx, &centralRequest, &convCentral),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			svcErr := h.service.RegisterDinosaurJob(&convCentral)
+			svcErr := h.service.RegisterDinosaurJob(ctx, &convCentral)
 			h.telemetry.RegisterTenant(ctx, &convCentral, true, svcErr.AsError())
 
 			if svcErr != nil {
@@ -427,42 +429,33 @@ func (h adminCentralHandler) GetCentralDefaultVersion(w http.ResponseWriter, r *
 	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
-type gitOpsAdminHandler struct{}
+func (h adminCentralHandler) RotateSecrets(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			updateBytes, err := io.ReadAll(r.Body)
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Reading request body: %s", err.Error())
+			}
 
-var _ AdminCentralHandler = (*gitOpsAdminHandler)(nil)
+			rotateSecretsRequest := private.CentralRotateSecretsRequest{} // pragma: allowlist secret
+			if err := json.Unmarshal(updateBytes, &rotateSecretsRequest); err != nil {
+				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Unmarshalling request body: %s", err.Error())
+			}
 
-func (g gitOpsAdminHandler) Create(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
-}
-
-func (g gitOpsAdminHandler) Get(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
-}
-
-func (g gitOpsAdminHandler) List(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
-}
-
-func (g gitOpsAdminHandler) Update(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
-}
-
-func (g gitOpsAdminHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
-}
-
-func (g gitOpsAdminHandler) DbDelete(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
-}
-
-func (g gitOpsAdminHandler) SetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
-}
-
-func (g gitOpsAdminHandler) GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
-}
-
-func (g gitOpsAdminHandler) Restore(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+			ctx := r.Context()
+			centralRequest, svcErr := h.service.Get(ctx, id)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+			if rotateSecretsRequest.RotateRhssoClientCredentials {
+				svcErr = h.service.RotateCentralRHSSOClient(ctx, centralRequest)
+				if svcErr != nil {
+					return nil, svcErr
+				}
+			}
+			return nil, nil
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
 }

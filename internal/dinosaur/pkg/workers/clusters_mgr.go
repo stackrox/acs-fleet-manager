@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
@@ -132,6 +133,10 @@ func (c *ClusterManager) GetID() string {
 // GetWorkerType ...
 func (c *ClusterManager) GetWorkerType() string {
 	return c.workerType
+}
+
+func (c *ClusterManager) GetRepeatInterval() time.Duration {
+	return workers.DefaultRepeatInterval
 }
 
 // Start initializes the cluster manager to reconcile osd clusters

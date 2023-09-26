@@ -92,22 +92,6 @@ const (
 	ErrorSyncActionNotSupported       ServiceErrorCode = 103
 	ErrorSyncActionNotSupportedReason string           = "Synchronous action is not supported, use async=true parameter"
 
-	// Failed to create sso client - an internal error incurred when calling iam server
-	ErrorFailedToCreateSSOClient       ServiceErrorCode = 106
-	ErrorFailedToCreateSSOClientReason string           = "Failed to create central client in the mas sso"
-
-	// Failed to get sso client secret  - an internal error incurred when calling iam server
-	ErrorFailedToGetSSOClientSecret       ServiceErrorCode = 107
-	ErrorFailedToGetSSOClientSecretReason string           = "Failed to get central client secret from the mas sso"
-
-	// Failed to get sso client - an internal error incurred when calling iam server
-	ErrorFailedToGetSSOClient       ServiceErrorCode = 108
-	ErrorFailedToGetSSOClientReason string           = "Failed to get central client from the mas sso"
-
-	// Failed to delete sso client - an internal error incurred when calling iam server
-	ErrorFailedToDeleteSSOClient       ServiceErrorCode = 109
-	ErrorFailedToDeleteSSOClientReason string           = "Failed to delete central client from the mas sso"
-
 	// Failed to create service account, after validating user's request, but failed at the server end
 	// it is an internal server error
 	ErrorFailedToCreateServiceAccount       ServiceErrorCode = 110
@@ -128,6 +112,14 @@ const (
 	ErrorMaxLimitForServiceAccountsReached       ServiceErrorCode = 115
 	ErrorMaxLimitForServiceAccountsReachedReason string           = "Max limit for the service account creation has reached"
 
+	// RHSSO dynamic clients are not configured for this particular fleet-manager instance
+	ErrorDynamicClientsNotUsed       ServiceErrorCode = 116
+	ErrorDynamicClientsNotUsedReason string           = "RHSSO dynamic clients are not used"
+
+	// RHSSO client rotation attempted and failed
+	ErrorClientRotationFailed       ServiceErrorCode = 117
+	ErrorClientRotationFailedReason string           = "RHSSO client rotation failed"
+
 	// Insufficient quota
 	ErrorInsufficientQuota       ServiceErrorCode = 120
 	ErrorInsufficientQuotaReason string           = "Insufficient quota"
@@ -145,9 +137,9 @@ const (
 	ErrorRegionNotSupported       ServiceErrorCode = 31
 	ErrorRegionNotSupportedReason string           = "Region not supported"
 
-	// Invalid dinosaur cluster name
-	ErrorMalformedDinosaurClusterName       ServiceErrorCode = 32
-	ErrorMalformedDinosaurClusterNameReason string           = "Central cluster name is invalid"
+	// Invalid central instance name
+	ErrorMalformedCentralInstanceName       ServiceErrorCode = 32
+	ErrorMalformedCentralInstanceNameReason string           = "Central instance name is invalid"
 
 	// Minimum field length validation
 	ErrorMinimumFieldLength       ServiceErrorCode = 33
@@ -155,15 +147,15 @@ const (
 
 	// Maximum field length validation
 	ErrorMaximumFieldLength       ServiceErrorCode = 34
-	ErrorMaximumFieldLengthReason string           = "Maximum field length has been depassed"
+	ErrorMaximumFieldLengthReason string           = "Maximum field length has been surpassed"
 
 	// Only MultiAZ is supported
 	ErrorOnlyMultiAZSupported       ServiceErrorCode = 35
 	ErrorOnlyMultiAZSupportedReason string           = "Only multiAZ Centrals are supported, use multi_az=true"
 
-	// Dinosaur cluster name must be unique
-	ErrorDuplicateDinosaurClusterName       ServiceErrorCode = 36
-	ErrorDuplicateDinosaurClusterNameReason string           = "Central cluster name is already used"
+	// Central instance name must be unique
+	ErrorDuplicateCentralInstanceName       ServiceErrorCode = 36
+	ErrorDuplicateCentralInstanceNameReason string           = "Central instance name is already used"
 
 	// A generic field validation error when validating API requests input
 	ErrorFieldValidationError       ServiceErrorCode = 37
@@ -248,10 +240,6 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorBadRequest, ErrorBadRequestReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorFailedToParseSearch, ErrorFailedToParseSearchReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorFailedToCreateSSOClient, ErrorFailedToCreateSSOClientReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToGetSSOClientSecret, ErrorFailedToGetSSOClientSecretReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToGetSSOClient, ErrorFailedToGetSSOClientReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToDeleteSSOClient, ErrorFailedToDeleteSSOClientReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorFailedToCreateServiceAccount, ErrorFailedToCreateServiceAccountReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorFailedToGetServiceAccount, ErrorFailedToGetServiceAccountReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorServiceAccountNotFound, ErrorServiceAccountNotFoundReason, http.StatusNotFound, nil},
@@ -259,11 +247,11 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorInstanceTypeNotSupported, ErrorInstanceTypeNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMalformedDinosaurClusterName, ErrorMalformedDinosaurClusterNameReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorMalformedCentralInstanceName, ErrorMalformedCentralInstanceNameReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorDuplicateDinosaurClusterName, ErrorDuplicateDinosaurClusterNameReason, http.StatusConflict, nil},
+		ServiceError{ErrorDuplicateCentralInstanceName, ErrorDuplicateCentralInstanceNameReason, http.StatusConflict, nil},
 		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusForbidden, nil},
@@ -274,6 +262,8 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorInvalidCloudAccountID, ErrorInvalidCloudAccountIDReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorDynamicClientsNotUsed, ErrorDynamicClientsNotUsedReason, http.StatusNotFound, nil},
+		ServiceError{ErrorClientRotationFailed, ErrorClientRotationFailedReason, http.StatusInternalServerError, nil},
 	}
 }
 
@@ -418,11 +408,6 @@ func (e *ServiceError) IsForbidden() bool {
 	return e.Code == Forbidden("").Code
 }
 
-// IsFailedToCreateSSOClient ...
-func (e *ServiceError) IsFailedToCreateSSOClient() bool {
-	return e.Code == FailedToCreateSSOClient("").Code
-}
-
 // IsClientErrorClass ...
 func (e *ServiceError) IsClientErrorClass() bool {
 	return e.HTTPCode >= http.StatusBadRequest && e.HTTPCode < http.StatusInternalServerError
@@ -431,21 +416,6 @@ func (e *ServiceError) IsClientErrorClass() bool {
 // IsServerErrorClass ...
 func (e *ServiceError) IsServerErrorClass() bool {
 	return e.HTTPCode >= http.StatusInternalServerError
-}
-
-// IsFailedToGetSSOClientSecret ...
-func (e *ServiceError) IsFailedToGetSSOClientSecret() bool {
-	return e.Code == FailedToGetSSOClientSecret("").Code
-}
-
-// IsFailedToGetSSOClient ...
-func (e *ServiceError) IsFailedToGetSSOClient() bool {
-	return e.Code == FailedToGetSSOClient("").Code
-}
-
-// IsFailedToDeleteSSOClient ...
-func (e *ServiceError) IsFailedToDeleteSSOClient() bool {
-	return e.Code == FailedToDeleteSSOClient("").Code
 }
 
 // IsFailedToCreateServiceAccount ...
@@ -605,26 +575,6 @@ func NotMultiAzActionNotSupported() *ServiceError {
 	return New(ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason)
 }
 
-// FailedToCreateSSOClient ...
-func FailedToCreateSSOClient(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorFailedToCreateSSOClient, reason, values...)
-}
-
-// FailedToGetSSOClientSecret ...
-func FailedToGetSSOClientSecret(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorFailedToGetSSOClientSecret, reason, values...)
-}
-
-// FailedToGetSSOClient ...
-func FailedToGetSSOClient(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorFailedToGetSSOClient, reason, values...)
-}
-
-// FailedToDeleteSSOClient ...
-func FailedToDeleteSSOClient(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorFailedToDeleteSSOClient, reason, values...)
-}
-
 // FailedToCreateServiceAccount ...
 func FailedToCreateServiceAccount(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToCreateServiceAccount, reason, values...)
@@ -667,7 +617,7 @@ func ProviderNotSupported(reason string, values ...interface{}) *ServiceError {
 
 // MalformedDinosaurClusterName ...
 func MalformedDinosaurClusterName(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorMalformedDinosaurClusterName, reason, values...)
+	return New(ErrorMalformedCentralInstanceName, reason, values...)
 }
 
 // InstancePlanNotSupported ...
@@ -692,7 +642,7 @@ func MalformedServiceAccountID(reason string, values ...interface{}) *ServiceErr
 
 // DuplicateDinosaurClusterName ...
 func DuplicateDinosaurClusterName() *ServiceError {
-	return New(ErrorDuplicateDinosaurClusterName, ErrorDuplicateDinosaurClusterNameReason)
+	return New(ErrorDuplicateCentralInstanceName, ErrorDuplicateCentralInstanceNameReason)
 }
 
 // MinimumFieldLengthNotReached ...

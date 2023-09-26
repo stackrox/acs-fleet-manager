@@ -1,31 +1,37 @@
 package handlers
 
 import (
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
-
-	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 )
 
 type dataPlaneDinosaurHandler struct {
-	service         services.DataPlaneCentralService
-	dinosaurService services.DinosaurService
-	presenter       *presenters.ManagedCentralPresenter
+	service              services.DataPlaneCentralService
+	dinosaurService      services.DinosaurService
+	presenter            *presenters.ManagedCentralPresenter
+	gitopsConfigProvider gitops.ConfigProvider
 }
 
 // NewDataPlaneDinosaurHandler ...
-func NewDataPlaneDinosaurHandler(service services.DataPlaneCentralService, dinosaurService services.DinosaurService, presenter *presenters.ManagedCentralPresenter) *dataPlaneDinosaurHandler {
+func NewDataPlaneDinosaurHandler(
+	service services.DataPlaneCentralService,
+	dinosaurService services.DinosaurService,
+	presenter *presenters.ManagedCentralPresenter,
+	gitopsConfigProvider gitops.ConfigProvider,
+) *dataPlaneDinosaurHandler {
 	return &dataPlaneDinosaurHandler{
-		service:         service,
-		dinosaurService: dinosaurService,
-		presenter:       presenter,
+		service:              service,
+		dinosaurService:      dinosaurService,
+		presenter:            presenter,
+		gitopsConfigProvider: gitopsConfigProvider,
 	}
 }
 
@@ -56,7 +62,7 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 			handlers.ValidateLength(&clusterID, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			centralRequests, err := h.dinosaurService.ListByClusterID(clusterID)
+			centralRequests, err := h.service.ListByClusterID(clusterID)
 			if err != nil {
 				return nil, err
 			}
@@ -66,13 +72,19 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 				Items: []private.ManagedCentral{},
 			}
 
-			// TODO: check that the correct GitOps configuration is added to the response
 			if features.TargetedOperatorUpgrades.Enabled() {
-				managedDinosaurList.RhacsOperators = operator.GetConfig().ToAPIResponse()
+				gitopsConfig, err := h.gitopsConfigProvider.Get()
+				if err != nil {
+					return nil, errors.GeneralError("failed to get GitOps configuration: %v", err)
+				}
+				managedDinosaurList.RhacsOperators = gitopsConfig.RHACSOperators.ToAPIResponse()
 			}
 
 			for i := range centralRequests {
-				converted := h.presenter.PresentManagedCentral(centralRequests[i])
+				converted, err := h.presenter.PresentManagedCentral(centralRequests[i])
+				if err != nil {
+					return nil, errors.GeneralError("failed to convert central request to managed central: %v", err)
+				}
 				managedDinosaurList.Items = append(managedDinosaurList.Items, converted)
 			}
 			return managedDinosaurList, nil
@@ -87,12 +99,15 @@ func (h *dataPlaneDinosaurHandler) GetByID(w http.ResponseWriter, r *http.Reques
 	centralID := mux.Vars(r)["id"]
 	cfg := &handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
-			centralRequest, err := h.dinosaurService.GetByID(centralID)
-			if err != nil {
-				return nil, err
+			centralRequest, svcErr := h.dinosaurService.GetByID(centralID)
+			if svcErr != nil {
+				return nil, svcErr
 			}
 
-			converted := h.presenter.PresentManagedCentralWithSecrets(centralRequest)
+			converted, err := h.presenter.PresentManagedCentralWithSecrets(centralRequest)
+			if err != nil {
+				return nil, errors.GeneralError("failed to convert central request to managed central: %v", err)
+			}
 
 			return converted, nil
 		},

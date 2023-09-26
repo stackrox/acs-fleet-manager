@@ -7,21 +7,13 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/stackrox/rox/pkg/declarativeconfig"
-	"github.com/stackrox/rox/pkg/utils"
-	"gopkg.in/yaml.v2"
-	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -36,18 +28,24 @@ import (
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	"github.com/stackrox/rox/pkg/declarativeconfig"
+	"github.com/stackrox/rox/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 const (
@@ -274,28 +272,6 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	password, ok := secret.Data["password"]
 	require.True(t, ok)
 	assert.NotEmpty(t, password)
-}
-
-func TestReconcileCreateWithLabelOperatorVersion(t *testing.T) {
-	t.Setenv(features.TargetedOperatorUpgrades.EnvVar(), "true")
-
-	fakeClient, _, r := getClientTrackerAndReconciler(
-		t,
-		defaultCentralConfig,
-		nil,
-		useRoutesReconcilerOptions,
-	)
-
-	status, err := r.Reconcile(context.TODO(), simpleManagedCentral)
-	require.NoError(t, err)
-	readyCondition, ok := conditionForType(status.Conditions, conditionTypeReady)
-	require.True(t, ok)
-	assert.Equal(t, "True", readyCondition.Status, "Ready condition not found in conditions", status.Conditions)
-
-	central := &v1alpha1.Central{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
-	require.NoError(t, err)
-	assert.Equal(t, operatorVersion, central.ObjectMeta.Labels[ReconcileOperatorSelector])
 }
 
 func TestReconcileCreateWithManagedDBNoCredentials(t *testing.T) {
@@ -578,13 +554,17 @@ func TestDisablePauseAnnotation(t *testing.T) {
 
 func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
-	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _string, _ string, _ string, _ bool) error {
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, databaseID, acsInstanceID, _ string, _ bool) error {
+		require.Equal(t, databaseID, acsInstanceID)
+		require.Equal(t, databaseID, simpleManagedCentral.Id)
 		return nil
 	}
-	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(_ string, _ bool) error {
+	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(databaseID string, _ bool) error {
+		require.Equal(t, databaseID, simpleManagedCentral.Id)
 		return nil
 	}
-	managedDBProvisioningClient.GetDBConnectionFunc = func(_ string) (postgres.DBConnection, error) {
+	managedDBProvisioningClient.GetDBConnectionFunc = func(databaseID string) (postgres.DBConnection, error) {
+		require.Equal(t, databaseID, simpleManagedCentral.Id)
 		connection, err := postgres.NewDBConnection("localhost", 5432, "rhacs", "postgres")
 		if err != nil {
 			return postgres.DBConnection{}, err
@@ -642,6 +622,86 @@ func TestReconcileDeleteWithManagedDB(t *testing.T) {
 	secret := &v1.Secret{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralDbSecretName, Namespace: centralNamespace}, secret)
 	assert.True(t, k8sErrors.IsNotFound(err))
+}
+
+func TestReconcileDeleteWithManagedDBOverride(t *testing.T) {
+	dbOverrideId := "override-1234"
+
+	managedDBProvisioningClient := &cloudprovider.DBClientMock{}
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, databaseID, acsInstanceID, _ string, _ bool) error {
+		require.Equal(t, databaseID, dbOverrideId)
+		require.Equal(t, acsInstanceID, simpleManagedCentral.Id)
+		return nil
+	}
+	managedDBProvisioningClient.EnsureDBDeprovisionedFunc = func(databaseID string, _ bool) error {
+		require.Equal(t, databaseID, dbOverrideId)
+		return nil
+	}
+	managedDBProvisioningClient.GetDBConnectionFunc = func(databaseID string) (postgres.DBConnection, error) {
+		require.Equal(t, databaseID, dbOverrideId)
+		connection, err := postgres.NewDBConnection("localhost", 5432, "rhacs", "postgres")
+		if err != nil {
+			return postgres.DBConnection{}, err
+		}
+		return connection, nil
+	}
+
+	reconcilerOptions := CentralReconcilerOptions{
+		UseRoutes:        true,
+		ManagedDBEnabled: true,
+	}
+	_, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		managedDBProvisioningClient,
+		reconcilerOptions,
+	)
+
+	namespace := &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: simpleManagedCentral.Metadata.Namespace,
+		},
+	}
+	err := r.client.Create(context.TODO(), namespace)
+	require.NoError(t, err)
+
+	dbOverrideConfigMap := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: simpleManagedCentral.Metadata.Namespace,
+			Name:      centralDbOverrideConfigMap,
+		},
+		Data: map[string]string{"databaseID": dbOverrideId},
+	}
+	err = r.client.Create(context.TODO(), dbOverrideConfigMap)
+	require.NoError(t, err)
+
+	_, err = r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+	assert.Len(t, managedDBProvisioningClient.EnsureDBProvisionedCalls(), 1)
+
+	deletedCentral := simpleManagedCentral
+	deletedCentral.Metadata.DeletionTimestamp = "2006-01-02T15:04:05+00:00"
+
+	// trigger deletion
+	managedDBProvisioningClient.EnsureDBProvisionedFunc = func(_ context.Context, _ string, _ string, _ string, _ bool) error {
+		return nil
+	}
+	statusTrigger, err := r.Reconcile(context.TODO(), deletedCentral)
+	require.Error(t, err, ErrDeletionInProgress)
+	require.Nil(t, statusTrigger)
+	assert.Len(t, managedDBProvisioningClient.EnsureDBProvisionedCalls(), 1)
+
+	// deletion completed needs second reconcile to check as deletion is async in a kubernetes cluster
+	statusDeletion, err := r.Reconcile(context.TODO(), deletedCentral)
+	require.NoError(t, err)
+	require.NotNil(t, statusDeletion)
+
+	readyCondition, ok := conditionForType(statusDeletion.Conditions, conditionTypeReady)
+	require.True(t, ok, "Ready condition not found in conditions", statusDeletion.Conditions)
+	assert.Equal(t, "False", readyCondition.Status)
+	assert.Equal(t, "Deleted", readyCondition.Reason)
+
+	assert.Len(t, managedDBProvisioningClient.EnsureDBDeprovisionedCalls(), 2)
 }
 
 func TestCentralChanged(t *testing.T) {
@@ -1856,6 +1916,299 @@ func TestRestoreCentralSecrets(t *testing.T) {
 				require.NoErrorf(t, err, "finding expected object %s/%s", obj.GetNamespace(), obj.GetName())
 			}
 
+		})
+	}
+}
+
+func Test_getCentralConfig_telemetry(t *testing.T) {
+
+	type args struct {
+		isInternal bool
+		storageKey string
+	}
+
+	tcs := []struct {
+		name   string
+		args   args
+		assert func(t *testing.T, c *v1alpha1.Central)
+	}{
+		{
+			name: "should disable telemetry when no storage key is set",
+			args: args{
+				isInternal: false,
+				storageKey: "",
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.False(t, *c.Spec.Central.Telemetry.Enabled)
+			},
+		},
+		{
+			name: "should disable telemetry when managed central is internal",
+			args: args{
+				isInternal: true,
+				storageKey: "foo",
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.False(t, *c.Spec.Central.Telemetry.Enabled)
+			},
+		},
+		{
+			name: "should enable telemetry when storage key is set and managed central is not internal",
+			args: args{
+				isInternal: false,
+				storageKey: "foo",
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.False(t, *c.Spec.Central.Telemetry.Enabled)
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			r := &CentralReconciler{}
+			if tc.args.isInternal {
+				r.telemetry = config.Telemetry{
+					StorageKey: tc.args.storageKey,
+				}
+			}
+			c := &v1alpha1.Central{}
+			mc := &private.ManagedCentral{
+				Metadata: private.ManagedCentralAllOfMetadata{
+					Internal: tc.args.isInternal,
+				},
+			}
+			r.applyTelemetry(mc, c)
+			tc.assert(t, c)
+		})
+	}
+}
+
+func TestReconciler_applyRoutes(t *testing.T) {
+
+	type args struct {
+		useRoutes bool
+	}
+
+	tcs := []struct {
+		name   string
+		args   args
+		assert func(t *testing.T, c *v1alpha1.Central)
+	}{
+		{
+			name: "should DISABLE routes when useRoutes is false",
+			args: args{
+				useRoutes: false,
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.False(t, *c.Spec.Central.Exposure.Route.Enabled)
+			},
+		}, {
+			name: "should ENABLE routes when useRoutes is true",
+			args: args{
+				useRoutes: true,
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.True(t, *c.Spec.Central.Exposure.Route.Enabled)
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			r := &CentralReconciler{
+				useRoutes: tc.args.useRoutes,
+			}
+			c := &v1alpha1.Central{}
+			r.applyRoutes(c)
+			tc.assert(t, c)
+		})
+	}
+}
+
+func TestReconciler_applyProxyConfig(t *testing.T) {
+
+	r := &CentralReconciler{
+		auditLogging: config.AuditLogging{
+			AuditLogTargetHost: "host",
+			AuditLogTargetPort: 9000,
+		},
+	}
+	c := &v1alpha1.Central{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "namespace",
+		},
+	}
+	r.applyProxyConfig(c)
+
+	assert.Equal(t, c.Spec.Customize.EnvVars, []v1.EnvVar{
+		{
+			Name:  "http_proxy",
+			Value: "http://egress-proxy.namespace.svc:3128",
+		},
+		{
+			Name:  "HTTP_PROXY",
+			Value: "http://egress-proxy.namespace.svc:3128",
+		},
+		{
+			Name:  "https_proxy",
+			Value: "http://egress-proxy.namespace.svc:3128",
+		},
+		{
+			Name:  "HTTPS_PROXY",
+			Value: "http://egress-proxy.namespace.svc:3128",
+		},
+		{
+			Name:  "all_proxy",
+			Value: "http://egress-proxy.namespace.svc:3128",
+		},
+		{
+			Name:  "ALL_PROXY",
+			Value: "http://egress-proxy.namespace.svc:3128",
+		},
+		{
+			Name:  "no_proxy",
+			Value: "central.namespace.svc:443,central.namespace:443,central:443,host:9000,kubernetes.default.svc.cluster.local.:443,scanner-db.namespace.svc:5432,scanner-db.namespace:5432,scanner-db:5432,scanner.namespace.svc:8080,scanner.namespace.svc:8443,scanner.namespace:8080,scanner.namespace:8443,scanner:8080,scanner:8443",
+		},
+		{
+			Name:  "NO_PROXY",
+			Value: "central.namespace.svc:443,central.namespace:443,central:443,host:9000,kubernetes.default.svc.cluster.local.:443,scanner-db.namespace.svc:5432,scanner-db.namespace:5432,scanner-db:5432,scanner.namespace.svc:8080,scanner.namespace.svc:8443,scanner.namespace:8080,scanner.namespace:8443,scanner:8080,scanner:8443",
+		},
+	})
+}
+
+func TestReconciler_applyDeclarativeConfig(t *testing.T) {
+	r := &CentralReconciler{}
+	c := &v1alpha1.Central{}
+	r.applyDeclarativeConfig(c)
+	assert.Equal(t, c.Spec.Central.DeclarativeConfiguration.Secrets, []v1alpha1.LocalSecretReference{
+		{
+			Name: "cloud-service-sensible-declarative-configs",
+		}, {
+			Name: "cloud-service-manual-declarative-configs",
+		},
+	})
+}
+
+func TestReconciler_applyAnnotations(t *testing.T) {
+	r := &CentralReconciler{
+		environment: "test",
+		clusterName: "test",
+	}
+	c := &v1alpha1.Central{
+		Spec: v1alpha1.CentralSpec{
+			Customize: &v1alpha1.CustomizeSpec{
+				Annotations: map[string]string{
+					"foo": "bar",
+				},
+			},
+		},
+	}
+	r.applyAnnotations(c)
+	assert.Equal(t, map[string]string{
+		"rhacs.redhat.com/environment":  "test",
+		"rhacs.redhat.com/cluster-name": "test",
+		"foo":                           "bar",
+	}, c.Spec.Customize.Annotations)
+}
+
+func TestReconciler_getInstanceConfigWithGitops(t *testing.T) {
+
+	tcs := []struct {
+		name          string
+		yaml          string
+		expectErr     bool
+		expectCentral *v1alpha1.Central
+	}{
+		{
+			name:      "should return error when yaml is invalid",
+			yaml:      "invalid yaml",
+			expectErr: true,
+		}, {
+			name: "should unmashal yaml to central",
+			yaml: `
+apiVersion: platform.stackrox.io/v1alpha1
+kind: Central
+metadata:
+  name: central
+  namespace: rhacs
+spec: {}
+`,
+			expectCentral: &v1alpha1.Central{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Central",
+					APIVersion: "platform.stackrox.io/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "central",
+					Namespace: "rhacs",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			r := &CentralReconciler{}
+			mc := &private.ManagedCentral{
+				Spec: private.ManagedCentralAllOfSpec{
+					CentralCRYAML: tc.yaml,
+				},
+			}
+			c, err := r.getInstanceConfigWithGitops(mc)
+			if tc.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectCentral, c)
+			}
+		})
+	}
+
+}
+
+func TestReconciler_shouldUseGitopsConfig(t *testing.T) {
+	tcs := []struct {
+		name               string
+		managedCentral     *private.ManagedCentral
+		featureFlagEnabled bool
+		expect             bool
+	}{
+		{
+			name: "should return true when centralCRYAML is set and feature flag is enabled",
+			managedCentral: &private.ManagedCentral{
+				Spec: private.ManagedCentralAllOfSpec{
+					CentralCRYAML: "foo",
+				},
+			},
+			featureFlagEnabled: true,
+			expect:             true,
+		}, {
+			name: "should return false when centralCRYAML is set and feature flag is disabled",
+			managedCentral: &private.ManagedCentral{
+				Spec: private.ManagedCentralAllOfSpec{
+					CentralCRYAML: "foo",
+				},
+			},
+			featureFlagEnabled: false,
+			expect:             false,
+		}, {
+			name: "should return false when centralCRYAML is not set and feature flag is enabled",
+			managedCentral: &private.ManagedCentral{
+				Spec: private.ManagedCentralAllOfSpec{
+					CentralCRYAML: "",
+				},
+			},
+			featureFlagEnabled: true,
+			expect:             false,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("RHACS_GITOPS_ENABLED", strconv.FormatBool(tc.featureFlagEnabled))
+			r := &CentralReconciler{}
+			assert.Equal(t, tc.expect, r.shouldUseGitopsConfig(tc.managedCentral))
 		})
 	}
 }
