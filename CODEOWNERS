@@ -1,0 +1,10 @@
+# As of 2023-09-26 the Helm chart is being migrated to an Addon (Plug-n-Play Package).
+# Now that we are rolling out the Addon to our data plane clusters, the Helm chart
+# and package in the managed-tenants-bundle repository must be kept in sync.
+# To ensure this is done, we are semi-locking the helm chart directory.
+# Contact people: ebenshet@, ykovalev@, jmalsam@, mhess@
+# Contact channels: #acs-team-draco, #epic-acs-cs-addon
+# Tickets: https://issues.redhat.com/browse/ROX-11551
+#          https://issues.redhat.com/browse/ROX-17339
+# Addon code: https://gitlab.cee.redhat.com/service/managed-tenants-bundles/-/tree/main/addons/acs-fleetshard
+/dp-terraform/helm/ ebenshet@redhat.com ykovalev@redhat.com jmalsam@redhat.com mhess@redhat.com
