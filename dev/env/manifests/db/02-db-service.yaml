@@ -4,7 +4,7 @@ metadata:
   labels:
     application: db
   name: db
-  namespace: "$ACSMS_NAMESPACE"
+  namespace: "$ACSCS_NAMESPACE"
 spec:
   ports:
     - name: "5432"

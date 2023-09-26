@@ -31,35 +31,20 @@ GINKGO_FLAGS ?= -v
 # cluster will not pull the new image from the internal registry:
 version:=$(shell date +%s)
 
-ifeq ($(DEBUG_IMAGE),true)
-IMAGE_NAME = fleet-manager-dbg
-PROBE_IMAGE_NAME = probe-dbg
-IMAGE_TARGET = debug
-else
 IMAGE_NAME = fleet-manager
 PROBE_IMAGE_NAME = probe
 IMAGE_TARGET = standard
-endif
 
 SHORT_IMAGE_REF = "$(IMAGE_NAME):$(image_tag)"
 PROBE_SHORT_IMAGE_REF = "$(PROBE_IMAGE_NAME):$(image_tag)"
 
-# Default namespace for local deployments
-NAMESPACE ?= fleet-manager-${USER}
-IMAGE_REGISTRY ?= default-route-openshift-image-registry.apps-crc.testing
-
-# The name of the image repository needs to start with the name of an existing
-# namespace because when the image is pushed to the internal registry of a
-# cluster it will assume that that namespace exists and will try to create a
-# corresponding image stream inside that namespace. If the namespace doesn't
-# exist the push fails. This doesn't apply when the image is pushed to a public
-# repository, like `docker.io` or `quay.io`.
-image_repository:=$(NAMESPACE)/$(IMAGE_NAME)
-probe_image_repository:=$(NAMESPACE)/$(PROBE_IMAGE_NAME)
+IMAGE_REGISTRY ?= quay.io/rhacs-eng
+image_repository:=$(IMAGE_NAME)
+probe_image_repository:=$(PROBE_IMAGE_NAME)
 
 # In the development environment we are pushing the image directly to the image
 # registry inside the development cluster. That registry has a different name
-# when it is accessed from outside the cluster and when it is acessed from
+# when it is accessed from outside the cluster and when it is accessed from
 # inside the cluster. We need the external name to push the image, and the
 # internal name to pull it.
 external_image_registry:= $(IMAGE_REGISTRY)
@@ -72,7 +57,7 @@ DOCKER ?= docker
 DOCKER_CONFIG ?= "${HOME}/.docker"
 
 # Default Variables
-ACSMS_NAMESPACE ?= acsms
+ACSCS_NAMESPACE ?= acscs
 ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
@@ -219,8 +204,8 @@ help:
 	@echo "make generate                    generate go and openapi modules"
 	@echo "make openapi/generate            generate openapi modules"
 	@echo "make openapi/validate            validate openapi schema"
-	@echo "make image/build                 build image (hybrid fast build, respecting IGNORE_REPOSITORY_DIRTINESS)"
-	@echo "make image/build/multi-target    build image (containerized, respecting DEBUG_IMAGE and IGNORE_REPOSITORY_DIRTINESS) for local deployment"
+	@echo "make image/build                 build fleet-manager and fleetshard-sync container image"
+	@echo "make image/build/local           build fleet-manager and fleetshard-sync binaries locally, this image supports arm64"
 	@echo "make image/push                  push image"
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make secrets/touch               touch all required secret files"
@@ -287,19 +272,19 @@ pre-commit:
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 
 fleet-manager:
-	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) ./cmd/fleet-manager
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0 $(GO) build $(GOARGS) ./cmd/fleet-manager
 .PHONY: fleet-manager
 
 fleetshard-sync:
-	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o fleetshard-sync ./fleetshard
 .PHONY: fleetshard-sync
 
 probe:
-	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o probe/bin/probe ./probe/cmd/probe
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0 $(GO) build $(GOARGS) -o probe/bin/probe ./probe/cmd/probe
 .PHONY: probe
 
 acsfleetctl:
-	GOOS="$(GOOS)" GOARCH="$(GOARCH)" $(GO) build $(GOARGS) -o acsfleetctl ./cmd/acsfleetctl
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0  $(GO) build $(GOARGS) -o acsfleetctl ./cmd/acsfleetctl
 .PHONY: acsfleetctl
 
 binary: fleet-manager fleetshard-sync probe acsfleetctl
@@ -520,33 +505,30 @@ docker/login/internal:
 	$(DOCKER) login -u kubeadmin --password-stdin <<< $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
 .PHONY: docker/login/internal
 
-# Build the image in a hybrid fashion, i.e. building binaries directly on the host leveraging
-# Go's cross-compilation capabilities and then copying these binaries into a new Docker image.
-image/build: GOOS=linux
-image/build: IMAGE_REF ?= "$(external_image_registry)/$(image_repository):$(image_tag)"
-image/build: fleet-manager fleetshard-sync
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.hybrid .
-.PHONY: image/build
-
 # Build the image using by specifying a specific image target within the Dockerfile.
-image/build/multi-target: image/build/multi-target/fleet-manager image/build/multi-target/probe
-.PHONY: image/build/multi-target
-
-image/build/multi-target/fleet-manager: GOOS=linux
-image/build/multi-target/fleet-manager: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
-image/build/multi-target/fleet-manager:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build --target $(IMAGE_TARGET) -t $(IMAGE_REF) .
+image/build: GOOS=linux
+image/build: DOCKERFILE="Dockerfile"
+image/build: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
+image/build:
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f $(DOCKERFILE) .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
-.PHONY: image/build/multi-target/fleet-manager
+.PHONY: image/build
 
-image/build/multi-target/probe: GOOS=linux
-image/build/multi-target/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
-image/build/multi-target/probe:
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build --target $(IMAGE_TARGET) -t $(IMAGE_REF) -f probe/Dockerfile .
+# Builds the binaries locally and copies them into the image. This build is compatible with arm64.
+image/build/local: GOOS=linux
+image/build/local: DOCKERFILE="Dockerfile.local"
+image/build/local:
+	GOARCH=$(GOARCH) GOOS=$(GOOS) $(MAKE) binary
+	$(MAKE) image/build DOCKERFILE=$(DOCKERFILE)
+
+image/build/probe: GOOS=linux
+image/build/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
+image/build/probe:
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f probe/Dockerfile .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(PROBE_SHORT_IMAGE_REF)
-.PHONY: image/build/multi-target/probe
+.PHONY: image/build/probe
 
 image/build/fleet-manager-tools: GOOS=linux
 image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/rhacs-eng/fleet-manager-tools:$(image_tag)"
@@ -562,21 +544,12 @@ image/push/fleet-manager-tools: image/build/fleet-manager-tools
 	@echo "Image fleet-manager tools was pushed as $(IMAGE_REF)."
 .PHONY: image/push/fleet-manager-tools
 
-# build binary and image and tag image for local deployment
-image/build/local: GOOS=linux
-image/build/local: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
-image/build/local: image/build
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
-	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
-	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
-.PHONY: image/build/local
-
 # Build and push the image
 image/push: image/push/fleet-manager image/push/probe
 .PHONY: image/push
 
 image/push/fleet-manager: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
-image/push/fleet-manager: image/build/multi-target/fleet-manager
+image/push/fleet-manager: image/build
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
 	@echo
 	@echo "Image was pushed as $(IMAGE_REF). You might want to"
@@ -584,7 +557,7 @@ image/push/fleet-manager: image/build/multi-target/fleet-manager
 .PHONY: image/push/fleet-manager
 
 image/push/probe: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
-image/push/probe: image/build/multi-target/probe
+image/push/probe: image/build/probe
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
 	@echo
 	@echo "Image was pushed as $(IMAGE_REF)."
@@ -597,23 +570,8 @@ image/push/internal: docker/login/internal
 	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(probe_image_repository):$(IMAGE_TAG)"
 .PHONY: image/push/internal
 
-# build and push the image to an OpenShift cluster's internal registry
-# namespace used in the image repository must exist on the cluster before running this command. Run `make deploy/project` to create the namespace if not available.
-image/build/push/internal: image/build/internal image/push/internal
-.PHONY: image/build/push/internal
-
-# Build the binary and test image
-image/build/test: binary
-	$(DOCKER) build -t "$(test_image)" -f Dockerfile.integration.test .
-.PHONY: image/build/test
-
-# Run the test container
-test/run: image/build/test
-	$(DOCKER) run -u $(shell id -u) --net=host -p 9876:9876 -i "$(test_image)"
-.PHONY: test/run
-
 # Run the probe based e2e test in container
-test/e2e/probe/run: image/build/multi-target/probe
+test/e2e/probe/run: image/build/probe
 test/e2e/probe/run: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
 test/e2e/probe/run:
 	$(DOCKER) run \
@@ -903,20 +861,28 @@ deploy/bootstrap:
 	./dev/env/scripts/bootstrap.sh
 .PHONY: deploy/bootstrap
 
-deploy/dev-fast: GOOS=linux
-deploy/dev-fast: deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
+# Deploy local images fast for development
+deploy/dev-fast: image/build/local deploy/dev-fast/fleet-manager deploy/dev-fast/fleetshard-sync
 
 deploy/dev-fast/fleet-manager: GOOS=linux
-deploy/dev-fast/fleet-manager: fleet-manager
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(SHORT_IMAGE_REF) -f Dockerfile.hybrid .
-	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
-	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleet-manager
+deploy/dev-fast/fleet-manager: image/build/local
+	kubectl -n $(ACSCS_NAMESPACE) set image deploy/fleet-manager fleet-manager=$(SHORT_IMAGE_REF) db-migrate=$(SHORT_IMAGE_REF)
+	kubectl -n $(ACSCS_NAMESPACE) delete pod -l application=fleet-manager
 
 deploy/dev-fast/fleetshard-sync: GOOS=linux
-deploy/dev-fast/fleetshard-sync: fleetshard-sync
-	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(SHORT_IMAGE_REF) -f Dockerfile.hybrid .
-	kubectl -n $(ACSMS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
-	kubectl -n $(ACSMS_NAMESPACE) delete pod -l application=fleetshard-sync
+deploy/dev-fast/fleetshard-sync: image/build/local
+	kubectl -n $(ACSCS_NAMESPACE) set image deploy/fleetshard-sync fleetshard-sync=$(SHORT_IMAGE_REF)
+	kubectl -n $(ACSCS_NAMESPACE) delete pod -l application=fleetshard-sync
+
+# When making changes to the gitops configuration for development purposes
+# situated here dev/env/manifests/fleet-manager/04-gitops-config.yaml, this
+# target will update the gitops configmap on the dev cluster.
+# It might take a few seconds/minutes for fleet-manager to observe the changes.
+# Changes to the configmap are hot-reloaded
+# See https://kubernetes.io/docs/concepts/configuration/configmap/#mounted-configmaps-are-updated-automatically
+deploy/dev/update-gitops-config:
+	./dev/env/scripts/update_gitops_config.sh
+.PHONY: deploy/dev/update-gitops-config
 
 tag:
 	@echo "$(image_tag)"

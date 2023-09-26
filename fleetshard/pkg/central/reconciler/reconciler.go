@@ -14,7 +14,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	containerImage "github.com/containers/image/docker/reference"
 	"github.com/golang/glog"
 	"github.com/hashicorp/go-multierror"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
@@ -42,7 +41,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -248,7 +246,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "setting central reconcilation cache")
 	}
 
-	logStatus := status
+	logStatus := *status
 	logStatus.Secrets = obscureSecrets(status.Secrets)
 	glog.Infof("Returning central status %+v", logStatus)
 
@@ -372,30 +370,6 @@ func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCen
 	r.applyProxyConfig(central)
 	r.applyDeclarativeConfig(central)
 	r.applyAnnotations(central)
-	return r.applyLabelSelector(remoteCentral, central)
-}
-
-func (r *CentralReconciler) applyLabelSelector(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
-	// apply label selector
-	if features.TargetedOperatorUpgrades.Enabled() {
-		// TODO: use GitRef as a LabelSelector
-		image, err := containerImage.Parse(remoteCentral.Spec.OperatorImage)
-		if err != nil {
-			return errors.Wrapf(err, "failed parse labelSelector")
-		}
-		var labelSelector string
-		if tagged, ok := image.(containerImage.Tagged); ok {
-			labelSelector = tagged.Tag()
-		}
-		errs := validation.IsValidLabelValue(labelSelector)
-		if errs != nil {
-			return errors.Wrapf(err, "invalid labelSelector %s: %v", labelSelector, errs)
-		}
-		if central.Labels == nil {
-			central.Labels = map[string]string{}
-		}
-		central.Labels[ReconcileOperatorSelector] = labelSelector
-	}
 	return nil
 }
 

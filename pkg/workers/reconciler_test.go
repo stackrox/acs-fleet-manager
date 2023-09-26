@@ -36,6 +36,9 @@ func TestReconciler_Wakeup(t *testing.T) {
 			reconcileChan <- time.Now()
 			return errors
 		},
+		GetRepeatIntervalFunc: func() time.Duration {
+			return DefaultRepeatInterval
+		},
 	}
 
 	waitForReconcile := func(d time.Duration) (timeout bool) {
