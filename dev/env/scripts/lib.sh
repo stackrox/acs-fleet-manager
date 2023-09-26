@@ -81,7 +81,7 @@ init() {
     export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-$AWS_AUTH_HELPER_DEFAULT}"
 
     export KUBECTL=${KUBECTL:-$KUBECTL_DEFAULT}
-    export ACSMS_NAMESPACE="${ACSMS_NAMESPACE:-$ACSMS_NAMESPACE_DEFAULT}"
+    export ACSCS_NAMESPACE="${ACSCS_NAMESPACE:-$ACSCS_NAMESPACE_DEFAULT}"
     export CLUSTER_ID=${CLUSTER_ID:-$CLUSTER_ID_DEFAULT}
     export CLUSTER_DNS=${CLUSTER_DNS:-$CLUSTER_DNS_DEFAULT}
     export DOCKER=${DOCKER:-$DOCKER_DEFAULT}
@@ -137,18 +137,13 @@ init() {
     export CENTRAL_DOMAIN_NAME=${CENTRAL_DOMAIN_NAME:-$CENTRAL_DOMAIN_NAME_DEFAULT}
     export FLEET_MANAGER_IMAGE=${FLEET_MANAGER_IMAGE:-$FLEET_MANAGER_IMAGE_DEFAULT}
     export IGNORE_REPOSITORY_DIRTINESS=${IGNORE_REPOSITORY_DIRTINESS:-$IGNORE_REPOSITORY_DIRTINESS_DEFAULT}
-    export DEBUG_PODS=${DEBUG_PODS:-$DEBUG_PODS_DEFAULT}
     export RHACS_TARGETED_OPERATOR_UPGRADES=${RHACS_TARGETED_OPERATOR_UPGRADES:-$RHACS_TARGETED_OPERATOR_UPGRADES_DEFAULT}
     export RHACS_STANDALONE_MODE=${RHACS_STANDALONE_MODE:-$RHACS_STANDALONE_MODE_DEFAULT}
+    export RHACS_GITOPS_ENABLED=${RHACS_GITOPS_ENABLED:-$RHACS_GITOPS_ENABLED_DEFAULT}
 
-    local fleet_manager_command="/usr/local/bin/fleet-manager serve --force-leader --api-server-bindaddress=0.0.0.0:8000 --health-check-server-bindaddress=0.0.0.0:8083 --kubeconfig=/secrets/kubeconfig --enable-central-external-certificate=$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE --central-domain-name='$CENTRAL_DOMAIN_NAME'"
+    local fleet_manager_command="/usr/local/bin/fleet-manager serve --force-leader --api-server-bindaddress=0.0.0.0:8000 --health-check-server-bindaddress=0.0.0.0:8083 --kubeconfig=/secrets/kubeconfig --enable-central-external-certificate=$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE --central-domain-name='$CENTRAL_DOMAIN_NAME' --gitops-config-path='/gitops-config/config.yaml'"
     FLEET_MANAGER_CONTAINER_COMMAND_DEFAULT="${fleet_manager_command} || { sleep 120; false; }"
     FLEETSHARD_SYNC_CONTAINER_COMMAND_DEFAULT="/usr/local/bin/fleetshard-sync"
-    if [[ "$DEBUG_PODS" == "true" ]]; then
-        FLEET_MANAGER_CONTAINER_COMMAND_DEFAULT="/usr/local/bin/dlv --listen=:40000 --headless=true --api-version=2 --continue --accept-multiclient exec -- ${fleet_manager_command}"
-        FLEETSHARD_SYNC_CONTAINER_COMMAND_DEFAULT="/usr/local/bin/dlv --listen=:40000 --headless=true --api-version=2 --continue --accept-multiclient exec /usr/local/bin/fleetshard-sync"
-        export DEBUG_IMAGE="true" # Propagate to the Makefile
-    fi
     export FLEET_MANAGER_CONTAINER_COMMAND=${FLEET_MANAGER_CONTAINER_COMMAND:-$FLEET_MANAGER_CONTAINER_COMMAND_DEFAULT}
     export FLEETSHARD_SYNC_CONTAINER_COMMAND=${FLEETSHARD_SYNC_CONTAINER_COMMAND:-$FLEETSHARD_SYNC_CONTAINER_COMMAND_DEFAULT}
 
@@ -300,7 +295,7 @@ inject_exported_env_vars() {
 
 is_local_cluster() {
     local cluster_type=${1:-}
-    if [[ "$cluster_type" == "minikube" || "$cluster_type" == "colima" || "$cluster_type" == "rancher-desktop" || "$cluster_type" == "docker" ]]; then
+    if [[ "$cluster_type" == "minikube" || "$cluster_type" == "colima" || "$cluster_type" == "rancher-desktop" || "$cluster_type" == "docker" || "$cluster_type" == "kind" ]]; then
         return 0
     else
         return 1

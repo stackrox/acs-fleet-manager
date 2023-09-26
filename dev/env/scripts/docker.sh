@@ -56,21 +56,8 @@ ensure_fleet_manager_image_exists() {
             if [[ "$image_available" != "true" || "$FLEET_MANAGER_IMAGE" =~ dirty$ ]]; then
                 # Attempt to build this image.
                 if [[ "$FLEET_MANAGER_IMAGE" == "$(make -s -C "${GITROOT}" full-image-tag)" ]]; then
-                    # Looks like we can build this tag from the current state of the repository.
-                    if [[ "$DEBUG_PODS" == "true" ]]; then
-                        log "Building image with debugging support..."
-                        make -C "${GITROOT}" image/build/multi-target
-                    else
-                        # We *could* also use image/build/multi-target, because that
-                        # target also supports building of standard (i.e. non-debug) images.
-                        # But until there is a reliable and portable caching mechanism for dockerized
-                        # Go projects, this would be regression in terms of build performance.
-                        # Hence we don't use the image/build/multi-target target here, but the
-                        # older `image/build/local` target, which uses a hybrid building
-                        # approach and is much faster.
-                        log "Building standard image..."
+                        log "Building local image..."
                         make -C "${GITROOT}" image/build/local
-                    fi
                 else
                     die "Cannot find image '${FLEET_MANAGER_IMAGE}' and don't know how to build it"
                 fi
@@ -80,6 +67,10 @@ ensure_fleet_manager_image_exists() {
         else
             log "Trying to pull image '${FLEET_MANAGER_IMAGE}'..."
             docker_pull "$FLEET_MANAGER_IMAGE"
+        fi
+
+        if [[ "${CLUSTER_TYPE}" == "kind" ]]; then
+            kind load docker-image "$FLEET_MANAGER_IMAGE"
         fi
 
         # Verify that the image is there.

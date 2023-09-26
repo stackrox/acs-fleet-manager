@@ -32,6 +32,7 @@ spec:
       annotations:
         config-hash: {{ .Files.Get "config/squid.conf" | sha256sum | quote }}
     spec:
+      automountServiceAccountToken: false
       podAntiAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
