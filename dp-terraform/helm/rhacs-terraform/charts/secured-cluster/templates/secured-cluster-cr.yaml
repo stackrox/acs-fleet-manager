@@ -3,6 +3,8 @@ kind: SecuredCluster
 metadata:
   name: stackrox-secured-cluster-services
   namespace: {{ include "secured-cluster.namespace" . }}
+  labels:
+    rhacs.redhat.com/selector: dogfooding
 spec:
   {{- if .Values.pullSecret }}
   imagePullSecrets:
