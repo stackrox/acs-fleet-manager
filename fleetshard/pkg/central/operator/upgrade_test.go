@@ -2,9 +2,9 @@ package operator
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
-
-	"helm.sh/helm/v3/pkg/chartutil"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,31 +20,24 @@ import (
 )
 
 const (
-	kindCRDName        = "CustomResourceDefinition"
-	k8sAPIVersion      = "apiextensions.k8s.io/v1"
-	operatorRepository = "quay.io/rhacs-eng/stackrox-operator"
-	operatorImage1     = "quay.io/rhacs-eng/stackrox-operator:4.0.1"
-	operatorImage2     = "quay.io/rhacs-eng/stackrox-operator:4.0.2"
-	crdURL             = "https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"
-	deploymentName1    = operatorDeploymentPrefix + "-4.0.1"
-	deploymentName2    = operatorDeploymentPrefix + "-4.0.2"
+	kindCRDName     = "CustomResourceDefinition"
+	k8sAPIVersion   = "apiextensions.k8s.io/v1"
+	operatorImage1  = "quay.io/rhacs-eng/stackrox-operator:4.0.1"
+	operatorImage2  = "quay.io/rhacs-eng/stackrox-operator:4.0.2"
+	deploymentName1 = operatorDeploymentPrefix + "-4-0-1"
+	deploymentName2 = operatorDeploymentPrefix + "-4-0-2"
 )
 
-var crdTag1 = OperatorConfigs{
-	CRD: CRDConfig{
-		GitRef: "4.0.1",
-	},
+func operatorConfigForVersion(version string) OperatorConfig {
+	return OperatorConfig{
+		"image":          fmt.Sprintf("quay.io/rhacs-eng/stackrox-operator:%s", version),
+		"deploymentName": "rhacs-operator-" + strings.ReplaceAll(version, ".", "-"),
+	}
 }
 
-var operatorConfig1 = OperatorConfig{
-	Image:  operatorImage1,
-	GitRef: "4.0.1",
-}
+var operatorConfig1 = operatorConfigForVersion("4.0.1")
 
-var operatorConfig2 = OperatorConfig{
-	Image:  operatorImage2,
-	GitRef: "4.0.2",
-}
+var operatorConfig2 = operatorConfigForVersion("4.0.2")
 
 var securedClusterCRD = &unstructured.Unstructured{
 	Object: map[string]interface{}{
@@ -111,8 +104,9 @@ func createOperatorDeployment(name string, image string) *appsv1.Deployment {
 
 func getExampleOperatorConfigs(configs ...OperatorConfig) OperatorConfigs {
 	return OperatorConfigs{
-		CRD: CRDConfig{
-			GitRef: "4.0.1",
+		CRDURLs: []string{
+			"https://raw.githubusercontent.com/stackrox/stackrox/4.1.2/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
+			"https://raw.githubusercontent.com/stackrox/stackrox/4.1.2/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
 		},
 		Configs: configs,
 	}
@@ -180,34 +174,13 @@ func TestOperatorUpgradeMultipleVersions(t *testing.T) {
 	assert.Equal(t, managerContainer.Image, operatorImage2)
 }
 
-func TestOperatorUpgradeDoNotInstallLongTagVersion(t *testing.T) {
-	fakeClient := testutils.NewFakeClientBuilder(t).Build()
-	u := NewACSOperatorManager(fakeClient)
-
-	longVersionName := "4.0.1-with-ridiculously-long-version-name-like-really-long-one-which-has-more-than-63-characters"
-	operatorConfig := OperatorConfig{
-		Image:  operatorImage1,
-		GitRef: longVersionName,
-	}
-
-	err := u.InstallOrUpgrade(context.Background(), getExampleOperatorConfigs(operatorConfig))
-	require.Errorf(t, err, "zero tags parsed from images")
-
-	deployments := &appsv1.DeploymentList{}
-	err = fakeClient.List(context.Background(), deployments)
-	require.NoError(t, err)
-	assert.Len(t, deployments.Items, 0)
-}
-
 func TestOperatorUpgradeImageWithDigest(t *testing.T) {
 	fakeClient := testutils.NewFakeClientBuilder(t).Build()
 	u := NewACSOperatorManager(fakeClient)
 
 	digestedImage := "quay.io/rhacs-eng/stackrox-operator:4.0.1@sha256:232a180dbcbcfa7250917507f3827d88a9ae89bb1cdd8fe3ac4db7b764ebb25a"
-	operatorConfig := OperatorConfig{
-		Image:  digestedImage,
-		GitRef: "4.0.1",
-	}
+	operatorConfig := operatorConfigForVersion("4.0.1")
+	operatorConfig["image"] = digestedImage
 
 	err := u.InstallOrUpgrade(context.Background(), getExampleOperatorConfigs(operatorConfig))
 	require.NoError(t, err)
@@ -284,97 +257,4 @@ func TestRemoveMultipleUnusedOperators(t *testing.T) {
 	assert.Len(t, deployments.Items, 0)
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
-}
-
-func TestParseOperatorConfigs(t *testing.T) {
-	cases := map[string]struct {
-		operatorConfigs OperatorConfigs
-		expected        []map[string]string
-		shouldFail      bool
-	}{
-		"should parse one valid operator image": {
-			operatorConfigs: getExampleOperatorConfigs(operatorConfig1),
-			expected: []map[string]string{
-				{"deploymentName": deploymentName1, "image": operatorImage1, "labelSelector": "4.0.1"},
-			},
-		},
-		"should parse two valid operator images": {
-			operatorConfigs: getExampleOperatorConfigs(operatorConfig1, operatorConfig2),
-			expected: []map[string]string{
-				{"deploymentName": deploymentName1, "image": operatorImage1, "labelSelector": "4.0.1"},
-				{"deploymentName": deploymentName2, "image": operatorImage2, "labelSelector": "4.0.2"},
-			},
-		},
-		"should parse image with tag and digest": {
-			operatorConfigs: getExampleOperatorConfigs(OperatorConfig{
-				Image:  "quay.io/image-with-tag-and-digest:1.2.3@sha256:4ff5cb2dcddaaa2a4b702516870c85177e53ccc3566509c36c2d84b01ef8f783",
-				GitRef: "version1",
-			}),
-			expected: []map[string]string{
-				{
-					"deploymentName": operatorDeploymentPrefix + "-version1",
-					"image":          "quay.io/image-with-tag-and-digest:1.2.3@sha256:4ff5cb2dcddaaa2a4b702516870c85177e53ccc3566509c36c2d84b01ef8f783",
-					"labelSelector":  "version1",
-				},
-			},
-		},
-		"should parse image without tag": {
-			operatorConfigs: getExampleOperatorConfigs(OperatorConfig{
-				Image:  "quay.io/image-without-tag",
-				GitRef: "version1",
-			}),
-			expected: []map[string]string{
-				{"deploymentName": operatorDeploymentPrefix + "-version1", "image": "quay.io/image-without-tag", "labelSelector": "version1"},
-			},
-		},
-		"do not fail if images list is empty": {
-			operatorConfigs: getExampleOperatorConfigs(),
-			shouldFail:      false,
-		},
-		"should accept images from multiple repositories with the same tag": {
-			operatorConfigs: getExampleOperatorConfigs(
-				OperatorConfig{Image: "repo1:tag", GitRef: "version1"},
-				OperatorConfig{Image: "repo2:tag", GitRef: "version2"},
-			),
-			expected: []map[string]string{
-				{"deploymentName": operatorDeploymentPrefix + "-version1", "image": "repo1:tag", "labelSelector": "version1"},
-				{"deploymentName": operatorDeploymentPrefix + "-version2", "image": "repo2:tag", "labelSelector": "version2"},
-			},
-		},
-		"fail if image contains more than one colon": {
-			operatorConfigs: getExampleOperatorConfigs(OperatorConfig{
-				Image:  "quay.io/image-name:1.2.3:",
-				GitRef: "version1",
-			}),
-			shouldFail: true,
-		},
-		"fail if GitRef is way too long for the DeploymentName": {
-			operatorConfigs: getExampleOperatorConfigs(OperatorConfig{
-				Image:  "quay.io/image-name:tag",
-				GitRef: "1.2.3-with-ridiculously-long-version-name-like-really-long-one-which-has-more-than-63-characters",
-			}),
-			shouldFail: true,
-		},
-	}
-
-	for name, c := range cases {
-		t.Run(name, func(t *testing.T) {
-			gotImages, err := parseOperatorConfigs(c.operatorConfigs)
-			if c.shouldFail {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				var expectedRepositoryAndTags []chartutil.Values
-				for _, m := range c.expected {
-					val := chartutil.Values{
-						"deploymentName": m["deploymentName"],
-						"image":          m["image"],
-						"labelSelector":  m["labelSelector"],
-					}
-					expectedRepositoryAndTags = append(expectedRepositoryAndTags, val)
-				}
-				assert.Equal(t, expectedRepositoryAndTags, gotImages)
-			}
-		})
-	}
 }

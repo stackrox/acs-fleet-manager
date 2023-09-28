@@ -3,15 +3,26 @@
 # Declare variables to be passed into your templates.
 
 operator:
-  # Each item in images should contain `deploymentName`, `image` and `labelSelector` keys
+  # Each item in images should contain `deploymentName`, `image` and `centralLabelSelector` keys
   # example:
   #   images:
-  #   - deploymentName: rhacs-operator-manager-4.0.0
+  #
+  #   - deploymentName: rhacs-operator-manager-4-0-0
   #     image: quay.io/rhacs-eng/stackrox-operator:4.0.0
-  #     labelSelector: 4.0.0
-  #   - deploymentName: rhacs-operator-manager-4.0.1
+  #     centralLabelSelector: 4.0.0
+  #     securedClusterLabelSelector: 4.0.0
+  #     centralReconcilerEnabled: true
+  #     securedClusterReconcilerEnabled: true
+  #     ...other helm values
+  #
+  #   - deploymentName: rhacs-operator-manager-4-0-1
   #     image: quay.io/rhacs-eng/stackrox-operator:4.0.1
-  #     labelSelector: 4.0.1
+  #     centralLabelSelector: 4.0.1
+  #     securedClusterLabelSelector: 4.0.0
+  #     centralReconcilerEnabled: false
+  #     securedClusterReconcilerEnabled: false
+  #     ...other helm values
+  #
   images: []
   # TODO: add values for resource limits and requests for both proxy and manager container
   # TODO: add value for kube-rbac-proxy image

@@ -52,8 +52,7 @@ const (
 	FreeStatus int32 = iota
 	BlockedStatus
 
-	PauseReconcileAnnotation  = "stackrox.io/pause-reconcile"
-	ReconcileOperatorSelector = "rhacs.redhat.com/version-selector"
+	PauseReconcileAnnotation = "stackrox.io/pause-reconcile"
 
 	helmReleaseName = "tenant-resources"
 
