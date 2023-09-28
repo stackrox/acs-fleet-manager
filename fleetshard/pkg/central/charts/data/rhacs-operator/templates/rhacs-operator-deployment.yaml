@@ -82,9 +82,21 @@ spec:
                   containerName: manager
                   resource: limits.memory
                   divisor: '0'
-            {{- if .labelSelector }}
+            {{- if .centralLabelSelector }}
             - name: CENTRAL_LABEL_SELECTOR
-              value: "rhacs.redhat.com/version-selector={{ .labelSelector }}"
+              value: "{{ .centralLabelSelector }}"
+            {{- end }}
+            {{- if .securedClusterLabelSelector }}
+            - name: SECURED_CLUSTER_LABEL_SELECTOR
+              value: "{{ .securedClusterLabelSelector }}"
+            {{- end }}
+            {{- if eq .centralReconcilerEnabled false }}
+            - name: CENTRAL_RECONCILER_ENABLED
+              value: "false"
+            {{- end }}
+            {{- if eq .securedClusterReconcilerEnabled false }}
+            - name: SECURED_CLUSTER_RECONCILER_ENABLED
+              value: "false"
             {{- end }}
           image: "{{ .image }}"
           imagePullPolicy: IfNotPresent

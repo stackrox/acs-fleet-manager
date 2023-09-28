@@ -267,27 +267,14 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 		}
 		glog.Infof("Reading operator config map, extracted %d operators from configmap", len(configMapOperators))
 		desiredOperatorConfigs = configMapOperators
-	} else if features.TargetedOperatorUpgrades.Enabled() {
-		for _, operatorConfig := range list.RhacsOperators.RHACSOperatorConfigs {
-			desiredOperatorConfigs = append(desiredOperatorConfigs, operator.OperatorConfig{
-				Image:      operatorConfig.Image,
-				GitRef:     operatorConfig.GitRef,
-				HelmValues: operatorConfig.HelmValues,
-			})
-		}
 	} else {
-		desiredOperatorConfigs = []operator.OperatorConfig{{
-			GitRef: "4.1.0",
-			Image:  "quay.io/rhacs-eng/stackrox-operator",
-		}}
+		for _, operatorConfig := range list.RhacsOperators.RHACSOperatorConfigs {
+			desiredOperatorConfigs = append(desiredOperatorConfigs, operatorConfig)
+		}
 	}
 
 	operators := operator.OperatorConfigs{
 		Configs: desiredOperatorConfigs,
-		// TODO: How to get that value?
-		CRD: operator.CRDConfig{
-			GitRef: "4.1.0",
-		},
 	}
 
 	if reflect.DeepEqual(cachedOperatorConfigs, operators) {
@@ -296,8 +283,8 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	cachedOperatorConfigs = operators
 
 	for _, operatorDeployment := range operators.Configs {
-		glog.Infof("Installing Operator version: %s", operatorDeployment.GitRef)
-		desiredOperatorImages = append(desiredOperatorImages, operatorDeployment.Image)
+		glog.Infof("Installing Operator: %s", operatorDeployment.GetImage())
+		desiredOperatorImages = append(desiredOperatorImages, operatorDeployment.GetImage())
 	}
 
 	// TODO: comment line in to use the API response for production usage after Fleet-Manager implementation is finished
@@ -307,6 +294,7 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
 	}
 
+	// TODO: Is this needed? Wouldn't helm take care of cleanup?
 	err = r.operatorManager.RemoveUnusedOperators(ctx, desiredOperatorImages)
 	if err != nil {
 		glog.Warningf("Failed removing unused operators: %v", err)
