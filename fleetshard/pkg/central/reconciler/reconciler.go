@@ -78,6 +78,8 @@ const (
 	centralDbOverrideConfigMap = "central-db-override"
 	centralDeletePollInterval  = 5 * time.Second
 
+	centralEncryptionKeySecretName = "central-encryption-key" // pragma: allowlist secret
+
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
 	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
 
@@ -102,21 +104,22 @@ type CentralReconcilerOptions struct {
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client             ctrlClient.Client
-	fleetmanagerClient *fleetmanager.Client
-	central            private.ManagedCentral
-	status             *int32
-	lastCentralHash    [16]byte
-	useRoutes          bool
-	Resources          bool
-	routeService       *k8s.RouteService
-	secretBackup       *k8s.SecretBackup
-	secretCipher       cipher.Cipher
-	egressProxyImage   string
-	telemetry          config.Telemetry
-	clusterName        string
-	environment        string
-	auditLogging       config.AuditLogging
+	client                 ctrlClient.Client
+	fleetmanagerClient     *fleetmanager.Client
+	central                private.ManagedCentral
+	status                 *int32
+	lastCentralHash        [16]byte
+	useRoutes              bool
+	Resources              bool
+	routeService           *k8s.RouteService
+	secretBackup           *k8s.SecretBackup
+	secretCipher           cipher.Cipher
+	egressProxyImage       string
+	telemetry              config.Telemetry
+	clusterName            string
+	environment            string
+	auditLogging           config.AuditLogging
+	encryptionKeyGenerator cipher.KeyGenerator
 
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
@@ -175,6 +178,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 
 	err = r.restoreCentralSecrets(ctx, remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.ensureEncryptionKeySecretExists(ctx, remoteCentralNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -1177,6 +1185,28 @@ func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name str
 	return false, nil
 }
 
+func (r *CentralReconciler) ensureEncryptionKeySecretExists(ctx context.Context, remoteCentralNamespace string) error {
+	return r.ensureSecretExists(ctx, remoteCentralNamespace, centralEncryptionKeySecretName, r.populateEncryptionKeySecret)
+}
+
+func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) error {
+	if secret.Data != nil {
+		if _, ok := secret.Data["encryptionKey"]; ok {
+			// secret already populated with encryption key skip operation
+			return nil
+		}
+	}
+
+	encryptionKey, err := r.encryptionKeyGenerator.Generate()
+	if err != nil {
+		return fmt.Errorf("generating encryption key: %w", err)
+	}
+
+	b64Key := base64.StdEncoding.EncodeToString(encryptionKey)
+	secret.Data = map[string][]byte{"encryptionKey": []byte(b64Key)}
+	return nil
+}
+
 func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral *private.ManagedCentral) (string, error) {
 	centralDBUserExists, err := r.centralDBUserExists(ctx, remoteCentral.Metadata.Namespace)
 	if err != nil {
@@ -1668,24 +1698,25 @@ func (r *CentralReconciler) ensureSecretExists(
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleetmanager.Client, central private.ManagedCentral,
 	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
-	secretCipher cipher.Cipher,
+	secretCipher cipher.Cipher, encryptionKeyGenerator cipher.KeyGenerator,
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
 	return &CentralReconciler{
-		client:             k8sClient,
-		fleetmanagerClient: fleetmanagerClient,
-		central:            central,
-		status:             pointer.Int32(FreeStatus),
-		useRoutes:          opts.UseRoutes,
-		wantsAuthProvider:  opts.WantsAuthProvider,
-		routeService:       k8s.NewRouteService(k8sClient),
-		secretBackup:       k8s.NewSecretBackup(k8sClient),
-		secretCipher:       secretCipher, // pragma: allowlist secret
-		egressProxyImage:   opts.EgressProxyImage,
-		telemetry:          opts.Telemetry,
-		clusterName:        opts.ClusterName,
-		environment:        opts.Environment,
-		auditLogging:       opts.AuditLogging,
+		client:                 k8sClient,
+		fleetmanagerClient:     fleetmanagerClient,
+		central:                central,
+		status:                 pointer.Int32(FreeStatus),
+		useRoutes:              opts.UseRoutes,
+		wantsAuthProvider:      opts.WantsAuthProvider,
+		routeService:           k8s.NewRouteService(k8sClient),
+		secretBackup:           k8s.NewSecretBackup(k8sClient),
+		secretCipher:           secretCipher, // pragma: allowlist secret
+		egressProxyImage:       opts.EgressProxyImage,
+		telemetry:              opts.Telemetry,
+		clusterName:            opts.ClusterName,
+		environment:            opts.Environment,
+		auditLogging:           opts.AuditLogging,
+		encryptionKeyGenerator: encryptionKeyGenerator,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,
