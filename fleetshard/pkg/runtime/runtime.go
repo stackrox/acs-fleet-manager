@@ -48,15 +48,16 @@ var backoff = wait.Backoff{
 
 // Runtime represents the runtime to reconcile all centrals associated with the given cluster.
 type Runtime struct {
-	config            *config.Config
-	client            *fleetmanager.Client
-	clusterID         string
-	reconcilers       reconcilerRegistry
-	k8sClient         ctrlClient.Client
-	dbProvisionClient cloudprovider.DBClient
-	statusResponseCh  chan private.DataPlaneCentralStatus
-	operatorManager   *operator.ACSOperatorManager
-	secretCipher      cipher.Cipher
+	config                 *config.Config
+	client                 *fleetmanager.Client
+	clusterID              string
+	reconcilers            reconcilerRegistry
+	k8sClient              ctrlClient.Client
+	dbProvisionClient      cloudprovider.DBClient
+	statusResponseCh       chan private.DataPlaneCentralStatus
+	operatorManager        *operator.ACSOperatorManager
+	secretCipher           cipher.Cipher
+	encryptionKeyGenerator cipher.KeyGenerator
 }
 
 // NewRuntime creates a new runtime
@@ -99,15 +100,21 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		return nil, fmt.Errorf("creating secretCipher: %w", err)
 	}
 
+	encryptionKeyGen, err := cipher.NewKeyGenerator(config)
+	if err != nil {
+		return nil, fmt.Errorf("creating encryption KeyGenerator: %w", err)
+	}
+
 	return &Runtime{
-		config:            config,
-		k8sClient:         k8sClient,
-		client:            client,
-		clusterID:         config.ClusterID,
-		dbProvisionClient: dbProvisionClient,
-		reconcilers:       make(reconcilerRegistry),
-		operatorManager:   operatorManager,
-		secretCipher:      secretCipher, // pragma: allowlist secret
+		config:                 config,
+		k8sClient:              k8sClient,
+		client:                 client,
+		clusterID:              config.ClusterID,
+		dbProvisionClient:      dbProvisionClient,
+		reconcilers:            make(reconcilerRegistry),
+		operatorManager:        operatorManager,
+		secretCipher:           secretCipher, // pragma: allowlist secret
+		encryptionKeyGenerator: encryptionKeyGen,
 	}, nil
 }
 
@@ -156,7 +163,7 @@ func (r *Runtime) Start() error {
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, r.client, central,
-					r.dbProvisionClient, postgres.InitializeDatabase, r.secretCipher, reconcilerOpts)
+					r.dbProvisionClient, postgres.InitializeDatabase, r.secretCipher, r.encryptionKeyGenerator, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]
