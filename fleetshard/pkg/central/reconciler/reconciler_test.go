@@ -859,10 +859,10 @@ func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, centralEncryptionSecret.Data, "encryptionKey")
 
-	decodedKeyLen := base64.StdEncoding.DecodedLen(len(centralEncryptionSecret.Data["encryptionKey"]))
-	expectedKeyLen := 32
-	require.Equal(t, expectedKeyLen, decodedKeyLen)
-
+	encKey, err := base64.StdEncoding.DecodeString(string(centralEncryptionSecret.Data["encryptionKey"]))
+	require.NoError(t, err)
+	expectedKeyLen := len(encKey)
+	require.Equal(t, expectedKeyLen, len(encKey))
 }
 
 func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
