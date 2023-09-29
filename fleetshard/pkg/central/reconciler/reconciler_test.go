@@ -842,6 +842,29 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 	assert.True(t, k8sErrors.IsNotFound(err))
 }
 
+func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		nil,
+		defaultReconcilerOptions,
+	)
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+
+	var centralEncryptionSecret v1.Secret
+	key := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: centralEncryptionKeySecretName}
+	err = fakeClient.Get(context.TODO(), key, &centralEncryptionSecret)
+	require.NoError(t, err)
+	require.Contains(t, centralEncryptionSecret.Data, "encryptionKey")
+
+	decodedKeyLen := base64.StdEncoding.DecodedLen(len(centralEncryptionSecret.Data["encryptionKey"]))
+	expectedKeyLen := 32
+	require.Equal(t, expectedKeyLen, decodedKeyLen)
+
+}
+
 func TestChartResourcesAreAddedAndUpdated(t *testing.T) {
 	chartFiles, err := charts.TraverseChart(testdata, "testdata/tenant-resources")
 	require.NoError(t, err)
