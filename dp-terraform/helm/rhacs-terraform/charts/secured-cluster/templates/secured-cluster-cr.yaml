@@ -4,6 +4,9 @@ metadata:
   name: stackrox-secured-cluster-services
   namespace: {{ include "secured-cluster.namespace" . }}
   labels:
+    # Only one ACS Operator should reconcile a single CR instance.
+    # Label selector mechanism helps to specify which ACS Operator should reconcile the instance.
+    # The dogfooding instance has to be reconciled only by operator with `rhacs.redhat.com/selector=dogfooding` label selector.
     rhacs.redhat.com/selector: dogfooding
 spec:
   {{- if .Values.pullSecret }}
