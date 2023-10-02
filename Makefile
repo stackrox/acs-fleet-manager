@@ -514,6 +514,10 @@ image/build:
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
+ifeq ("$(CLUSTER_TYPE)","kind")
+	@echo "Loading image into kind"
+	kind load docker-image $(SHORT_IMAGE_REF)
+endif
 .PHONY: image/build
 
 # Builds the binaries locally and copies them into the image. This build is compatible with arm64.
