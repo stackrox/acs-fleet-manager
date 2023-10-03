@@ -51,18 +51,18 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(central *dbapi.Cen
 		return false, errors.InsufficientQuotaError("%v: error getting quotas for product %q", err, quotaType.GetProduct())
 	}
 
-	quotasMap, err := mapAllowedQuotaCosts(quotaCosts)
+	quotaCostsByModel, err := mapAllowedQuotaCosts(quotaCosts)
 	if err != nil {
 		svcErr := errors.ToServiceError(err)
 		return false, errors.NewWithCause(svcErr.Code, svcErr, "product %q has no allowed billing models", quotaType.GetProduct())
 	}
 
 	isCloudAccount := central.CloudAccountID != ""
-	standardAccountIsActive := !isCloudAccount && len(quotasMap[amsv1.BillingModelStandard]) > 0
+	standardAccountIsActive := !isCloudAccount && len(quotaCostsByModel[amsv1.BillingModelStandard]) > 0
 
 	// Entitlement is active if there's allowed quota for standard billing model
 	// or there is cloud quota and the original cloud account is still active.
-	entitled := standardAccountIsActive || cloudAccountIsActive(quotasMap, central)
+	entitled := standardAccountIsActive || cloudAccountIsActive(quotaCostsByModel, central)
 
 	if !entitled {
 		glog.Infof("Quota no longer entitled for organisation %q", org.ID)
@@ -242,7 +242,7 @@ func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel
 		}
 	}
 	if len(costsMap) == 0 && len(foundUnsupportedBillingModels) > 0 {
-		return nil, errors.GeneralError("found unsupported allowed billing models %q", foundUnsupportedBillingModels)
+		return nil, errors.GeneralError("found only unsupported billing models %q", foundUnsupportedBillingModels)
 	}
 	return costsMap, nil
 }
