@@ -26,6 +26,10 @@ docker_pull() {
         log "Pulling image ${image_ref}"
         $DOCKER pull "$image_ref"
     fi
+    if [[ "$CLUSTER_TYPE" == "kind" ]]; then
+        log "Load image $image_ref to kind"
+        $KIND load docker-image "$image_ref"
+    fi
 }
 
 docker_logged_in() {

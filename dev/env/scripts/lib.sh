@@ -85,6 +85,7 @@ init() {
     export CLUSTER_ID=${CLUSTER_ID:-$CLUSTER_ID_DEFAULT}
     export CLUSTER_DNS=${CLUSTER_DNS:-$CLUSTER_DNS_DEFAULT}
     export DOCKER=${DOCKER:-$DOCKER_DEFAULT}
+    export KIND=${KIND:-$KIND_DEFAULT}
     export IMAGE_REGISTRY="${IMAGE_REGISTRY:-$IMAGE_REGISTRY_DEFAULT}"
     IMAGE_REGISTRY_HOST=$(if [[ "$IMAGE_REGISTRY" =~ ^[^/]*\.[^/]*/ ]]; then echo "$IMAGE_REGISTRY" | cut -d / -f 1; fi)
     export IMAGE_REGISTRY_HOST
