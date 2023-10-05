@@ -267,17 +267,8 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	var desiredOperatorConfigs []operator.OperatorConfig
 	var desiredOperatorImages []string
 
-	if features.StandaloneMode.Enabled() {
-		configMapOperators, err := r.operatorManager.ReadOperatorConfigFromConfigMap(ctx)
-		if err != nil {
-			glog.Warningf("Failed reading operators configMap: %v", err)
-		}
-		glog.Infof("Reading operator config map, extracted %d operators from configmap", len(configMapOperators))
-		desiredOperatorConfigs = configMapOperators
-	} else {
-		for _, operatorConfig := range list.RhacsOperators.RHACSOperatorConfigs {
-			desiredOperatorConfigs = append(desiredOperatorConfigs, operatorConfig)
-		}
+	for _, operatorConfig := range list.RhacsOperators.RHACSOperatorConfigs {
+		desiredOperatorConfigs = append(desiredOperatorConfigs, operatorConfig)
 	}
 
 	operators := operator.OperatorConfigs{

@@ -38,7 +38,7 @@ func operatorConfigForVersion(version string) operator.OperatorConfig {
 var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 	BeforeEach(func() {
-		if !features.TargetedOperatorUpgrades.Enabled() || !features.StandaloneMode.Enabled() {
+		if !features.TargetedOperatorUpgrades.Enabled() {
 			Skip("Skipping canary upgrade test")
 		}
 	})
