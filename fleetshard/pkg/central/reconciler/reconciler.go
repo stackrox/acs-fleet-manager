@@ -1191,7 +1191,7 @@ func (r *CentralReconciler) ensureEncryptionKeySecretExists(ctx context.Context,
 
 func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) error {
 	if secret.Data != nil {
-		if _, ok := secret.Data["encryptionKey"]; ok {
+		if _, ok := secret.Data["encryption-key"]; ok {
 			// secret already populated with encryption key skip operation
 			return nil
 		}
@@ -1203,7 +1203,7 @@ func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) e
 	}
 
 	b64Key := base64.StdEncoding.EncodeToString(encryptionKey)
-	secret.Data = map[string][]byte{"encryptionKey": []byte(b64Key)}
+	secret.Data = map[string][]byte{"encryption-key": []byte(b64Key)}
 	return nil
 }
 

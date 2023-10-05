@@ -857,9 +857,9 @@ func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
 	key := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: centralEncryptionKeySecretName}
 	err = fakeClient.Get(context.TODO(), key, &centralEncryptionSecret)
 	require.NoError(t, err)
-	require.Contains(t, centralEncryptionSecret.Data, "encryptionKey")
+	require.Contains(t, centralEncryptionSecret.Data, "encryption-key")
 
-	encKey, err := base64.StdEncoding.DecodeString(string(centralEncryptionSecret.Data["encryptionKey"]))
+	encKey, err := base64.StdEncoding.DecodeString(string(centralEncryptionSecret.Data["encryption-key"]))
 	require.NoError(t, err)
 	expectedKeyLen := len(encKey)
 	require.Equal(t, expectedKeyLen, len(encKey))
