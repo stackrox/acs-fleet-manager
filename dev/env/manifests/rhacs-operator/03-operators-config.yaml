@@ -7,3 +7,5 @@ data:
   operator-config.yaml: |-
     - gitref: 4.1.1
       image: quay.io/rhacs-eng/stackrox-operator:4.1.1
+      deploymentName: rhacs-operator-4.1.1
+      centralLabelSelector: "rhacs.redhat.com/version-selector=4.1.1"

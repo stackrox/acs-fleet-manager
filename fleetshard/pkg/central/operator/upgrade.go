@@ -61,10 +61,12 @@ func RenderChart(operators OperatorConfigs) ([]*unstructured.Unstructured, error
 			"images": valuesArr,
 		},
 	}
+
 	resourcesChart, err := charts.GetChart("rhacs-operator", operators.CRDURLs)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting chart: %w", err)
 	}
+
 	objs, err := charts.RenderToObjects(releaseName, ACSOperatorNamespace, resourcesChart, chartVals)
 	if err != nil {
 		return nil, fmt.Errorf("failed rendering operator chart: %w", err)
