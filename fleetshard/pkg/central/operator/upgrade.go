@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
 	"golang.org/x/exp/slices"
-	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chartutil"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -132,26 +130,6 @@ func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredI
 	}
 
 	return nil
-}
-
-// ReadOperatorConfigFromConfigMap reads Operator deployment configuration from ConfigMap
-func (u *ACSOperatorManager) ReadOperatorConfigFromConfigMap(ctx context.Context) ([]OperatorConfig, error) {
-	configMap := &v1.ConfigMap{}
-
-	err := u.client.Get(ctx, ctrlClient.ObjectKey{Name: ACSOperatorConfigMap, Namespace: "acscs"}, configMap)
-	if err != nil {
-		return nil, fmt.Errorf("retrieving operators configMap: %v", err)
-	}
-
-	operatorsConfigYAML := configMap.Data["operator-config.yaml"]
-	var configMapOperators []OperatorConfig
-
-	err = yaml.Unmarshal([]byte(operatorsConfigYAML), &configMapOperators)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshalling operators configMap: %v", err)
-	}
-
-	return configMapOperators, nil
 }
 
 // NewACSOperatorManager creates a new ACS Operator Manager
