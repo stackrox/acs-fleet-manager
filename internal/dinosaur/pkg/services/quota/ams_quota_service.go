@@ -3,6 +3,7 @@ package quota
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/golang/glog"
@@ -48,7 +49,9 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(central *dbapi.Cen
 	quotaType := instanceType.GetQuotaType()
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(org.ID(), quotaType.GetResourceName(), quotaType.GetProduct())
 	if err != nil {
-		return false, errors.InsufficientQuotaError("%v: error getting quotas for product %q", err, quotaType.GetProduct())
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf(
+			"failed to get assigned quota of type %q for organization with external id %q and id %q",
+			string(quotaType), central.OrganisationID, org.ID()))
 	}
 
 	quotaCostsByModel, err := mapAllowedQuotaCosts(quotaCosts)
