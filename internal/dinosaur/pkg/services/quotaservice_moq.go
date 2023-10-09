@@ -71,8 +71,8 @@ type QuotaServiceMock struct {
 		}
 	}
 	lockIsQuotaActive sync.RWMutex
-	lockDeleteQuota                          sync.RWMutex
-	lockReserveQuota                         sync.RWMutex
+	lockDeleteQuota   sync.RWMutex
+	lockReserveQuota  sync.RWMutex
 }
 
 // IsQuotaActive calls IsQuotaActiveFunc.
