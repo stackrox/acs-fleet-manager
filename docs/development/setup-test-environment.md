@@ -57,7 +57,7 @@ The scripts can be configured using environment variables, the most important op
 ### Full lifecycle
 The primary way for executing the e2e test suite is by calling
 ```shell
-$ ./.openshift-ci/test/e2e.sh
+$ ./.openshift-ci/tests/e2e.sh
 ```
 This will trigger the FULL test lifecycle including the cluster bootstrap, building the image (unless `FLEET_MANAGER_IMAGE` points to a specific image tag), deploying it and running E2E tests.
 
