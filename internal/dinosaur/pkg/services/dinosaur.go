@@ -196,7 +196,7 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralReque
 		return types.EVAL
 	}
 
-	hasQuota, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(dinosaurRequest, types.STANDARD)
+	hasQuota, err := quotaService.IsQuotaActive(dinosaurRequest, types.STANDARD)
 	if err != nil {
 		glog.Error(errors.NewWithCause(errors.ErrorGeneral, err, "unable to check quota"))
 		return types.EVAL

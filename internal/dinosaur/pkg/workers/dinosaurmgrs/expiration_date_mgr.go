@@ -89,18 +89,18 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 	quotaCostCache := make(map[quotaCostCacheKey]bool)
 	for _, central := range centrals {
 		key := quotaCostCacheKey{central.OrganisationID, central.CloudAccountID, central.InstanceType}
-		defined, inCache := quotaCostCache[key]
+		active, inCache := quotaCostCache[key]
 		if !inCache {
 			var svcErr *serviceErr.ServiceError
-			defined, svcErr = quotaService.CheckIfQuotaIsDefinedForInstanceType(central, types.DinosaurInstanceType(central.InstanceType))
+			active, svcErr = quotaService.IsQuotaActive(central, types.DinosaurInstanceType(central.InstanceType))
 			if svcErr != nil {
 				svcErrors = append(svcErrors, errors.Wrapf(svcErr, "failed to get quota entitlement status of central instance %q", central.ID))
 				continue
 			}
-			quotaCostCache[key] = defined
+			quotaCostCache[key] = active
 		}
 
-		if err := k.updateExpiredAtBasedOnQuotaEntitlement(central, defined); err != nil {
+		if err := k.updateExpiredAtBasedOnQuotaEntitlement(central, active); err != nil {
 			svcErrors = append(svcErrors, errors.Wrapf(err, "failed to update expired_at value based on quota entitlement for central instance %q", central.ID))
 		}
 	}

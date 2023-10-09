@@ -39,8 +39,8 @@ var supportedAMSBillingModels = map[string]struct{}{
 	string(amsv1.BillingModelMarketplaceAWS): {},
 }
 
-// CheckIfQuotaIsDefinedForInstanceType ...
-func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(central *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+// IsQuotaActive ...
+func (q amsQuotaService) IsQuotaActive(central *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 	org, err := q.amsClient.GetOrganisationFromExternalID(central.OrganisationID)
 	if err != nil {
 		return false, errors.OrganisationNotFound(central.OrganisationID, err)

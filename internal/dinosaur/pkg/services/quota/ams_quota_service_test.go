@@ -196,12 +196,12 @@ func Test_AMSCheckQuota(t *testing.T) {
 				},
 				Owner: tt.args.owner,
 			}
-			sq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(dinosaur, types.STANDARD)
+			standard_active, err := quotaService.IsQuotaActive(dinosaur, types.STANDARD)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
-			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(dinosaur, types.EVAL)
+			eval_active, err := quotaService.IsQuotaActive(dinosaur, types.EVAL)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
-			gomega.Expect(sq).To(gomega.Equal(tt.args.hasStandardQuota))
-			gomega.Expect(eq).To(gomega.Equal(tt.args.hasEvalQuota))
+			gomega.Expect(standard_active).To(gomega.Equal(tt.args.hasStandardQuota))
+			gomega.Expect(eval_active).To(gomega.Equal(tt.args.hasEvalQuota))
 
 			_, err = quotaService.ReserveQuota(emptyCtx, dinosaur, tt.args.dinosaurInstanceType)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
@@ -749,7 +749,7 @@ func Test_Delete_Quota(t *testing.T) {
 	}
 }
 
-func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
+func Test_amsQuotaService_IsQuotaActive(t *testing.T) {
 	type args struct {
 		dinosaurRequest      *dbapi.CentralRequest
 		dinosaurInstanceType types.DinosaurInstanceType
@@ -929,7 +929,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.ocmClient, nil, nil)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
-			res, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.args.dinosaurRequest, tt.args.dinosaurInstanceType)
+			res, err := quotaService.IsQuotaActive(tt.args.dinosaurRequest, tt.args.dinosaurInstanceType)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			gomega.Expect(res).To(gomega.Equal(tt.want))
 		})
@@ -1142,7 +1142,7 @@ func Test_amsQuotaService_CheckQuotaEntitlement(t *testing.T) {
 			quotaServiceFactory := NewDefaultQuotaServiceFactory(amsClient, nil, nil)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
 
-			got, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.central, types.DinosaurInstanceType(tt.central.InstanceType))
+			got, err := quotaService.IsQuotaActive(tt.central, types.DinosaurInstanceType(tt.central.InstanceType))
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if tt.wantErr {
 				g.Expect(err.Error()).To(gomega.Equal(tt.wantErrMsg), err.Error())

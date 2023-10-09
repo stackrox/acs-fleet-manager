@@ -149,7 +149,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 				Owner:          "username",
 				OrganisationID: "org-id",
 			}
-			allowed, _ := quotaService.CheckIfQuotaIsDefinedForInstanceType(dinosaur, tt.args.instanceType)
+			allowed, _ := quotaService.IsQuotaActive(dinosaur, tt.args.instanceType)
 			gomega.Expect(tt.want).To(gomega.Equal(allowed))
 		})
 	}

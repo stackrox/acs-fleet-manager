@@ -21,8 +21,8 @@ var _ QuotaService = &QuotaServiceMock{}
 //
 //		// make and configure a mocked QuotaService
 //		mockedQuotaService := &QuotaServiceMock{
-//			CheckIfQuotaIsDefinedForInstanceTypeFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *serviceError.ServiceError) {
-//				panic("mock out the CheckIfQuotaIsDefinedForInstanceType method")
+//			IsQuotaActiveFunc: func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *serviceError.ServiceError) {
+//				panic("mock out the IsQuotaActive method")
 //			},
 //			DeleteQuotaFunc: func(subscriptionID string) *serviceError.ServiceError {
 //				panic("mock out the DeleteQuota method")
@@ -37,8 +37,8 @@ var _ QuotaService = &QuotaServiceMock{}
 //
 //	}
 type QuotaServiceMock struct {
-	// CheckIfQuotaIsDefinedForInstanceTypeFunc mocks the CheckIfQuotaIsDefinedForInstanceType method.
-	CheckIfQuotaIsDefinedForInstanceTypeFunc func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *serviceError.ServiceError)
+	// IsQuotaActiveFunc mocks the IsQuotaActive method.
+	IsQuotaActiveFunc func(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *serviceError.ServiceError)
 
 	// DeleteQuotaFunc mocks the DeleteQuota method.
 	DeleteQuotaFunc func(subscriptionID string) *serviceError.ServiceError
@@ -48,8 +48,8 @@ type QuotaServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// CheckIfQuotaIsDefinedForInstanceType holds details about calls to the CheckIfQuotaIsDefinedForInstanceType method.
-		CheckIfQuotaIsDefinedForInstanceType []struct {
+		// IsQuotaActive holds details about calls to the IsQuotaActive method.
+		IsQuotaActive []struct {
 			// Dinosaur is the dinosaur argument value.
 			Dinosaur *dbapi.CentralRequest
 			// InstanceType is the instanceType argument value.
@@ -70,15 +70,15 @@ type QuotaServiceMock struct {
 			InstanceType types.DinosaurInstanceType
 		}
 	}
-	lockCheckIfQuotaIsDefinedForInstanceType sync.RWMutex
+	lockIsQuotaActive sync.RWMutex
 	lockDeleteQuota                          sync.RWMutex
 	lockReserveQuota                         sync.RWMutex
 }
 
-// CheckIfQuotaIsDefinedForInstanceType calls CheckIfQuotaIsDefinedForInstanceTypeFunc.
-func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *serviceError.ServiceError) {
-	if mock.CheckIfQuotaIsDefinedForInstanceTypeFunc == nil {
-		panic("QuotaServiceMock.CheckIfQuotaIsDefinedForInstanceTypeFunc: method is nil but QuotaService.CheckIfQuotaIsDefinedForInstanceType was just called")
+// IsQuotaActive calls IsQuotaActiveFunc.
+func (mock *QuotaServiceMock) IsQuotaActive(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *serviceError.ServiceError) {
+	if mock.IsQuotaActiveFunc == nil {
+		panic("QuotaServiceMock.IsQuotaActiveFunc: method is nil but QuotaService.IsQuotaActive was just called")
 	}
 	callInfo := struct {
 		Dinosaur     *dbapi.CentralRequest
@@ -87,17 +87,17 @@ func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceType(dinosaur *dba
 		Dinosaur:     dinosaur,
 		InstanceType: instanceType,
 	}
-	mock.lockCheckIfQuotaIsDefinedForInstanceType.Lock()
-	mock.calls.CheckIfQuotaIsDefinedForInstanceType = append(mock.calls.CheckIfQuotaIsDefinedForInstanceType, callInfo)
-	mock.lockCheckIfQuotaIsDefinedForInstanceType.Unlock()
-	return mock.CheckIfQuotaIsDefinedForInstanceTypeFunc(dinosaur, instanceType)
+	mock.lockIsQuotaActive.Lock()
+	mock.calls.IsQuotaActive = append(mock.calls.IsQuotaActive, callInfo)
+	mock.lockIsQuotaActive.Unlock()
+	return mock.IsQuotaActiveFunc(dinosaur, instanceType)
 }
 
-// CheckIfQuotaIsDefinedForInstanceTypeCalls gets all the calls that were made to CheckIfQuotaIsDefinedForInstanceType.
+// IsQuotaActiveCalls gets all the calls that were made to IsQuotaActive.
 // Check the length with:
 //
-//	len(mockedQuotaService.CheckIfQuotaIsDefinedForInstanceTypeCalls())
-func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceTypeCalls() []struct {
+//	len(mockedQuotaService.IsQuotaActiveCalls())
+func (mock *QuotaServiceMock) IsQuotaActiveCalls() []struct {
 	Dinosaur     *dbapi.CentralRequest
 	InstanceType types.DinosaurInstanceType
 } {
@@ -105,9 +105,9 @@ func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceTypeCalls() []stru
 		Dinosaur     *dbapi.CentralRequest
 		InstanceType types.DinosaurInstanceType
 	}
-	mock.lockCheckIfQuotaIsDefinedForInstanceType.RLock()
-	calls = mock.calls.CheckIfQuotaIsDefinedForInstanceType
-	mock.lockCheckIfQuotaIsDefinedForInstanceType.RUnlock()
+	mock.lockIsQuotaActive.RLock()
+	calls = mock.calls.IsQuotaActive
+	mock.lockIsQuotaActive.RUnlock()
 	return calls
 }
 
