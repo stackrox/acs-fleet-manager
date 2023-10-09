@@ -279,7 +279,7 @@ inject_ips() {
     local service_account="$2"
     local secret_name="$3"
 
-    log "Patching ServiceAccount ${namespace}/default to use Quay.io imagePullSecrets"
+    log "Patching ServiceAccount ${namespace}/${service_account} to use Quay.io imagePullSecrets"
     $KUBECTL -n "$namespace" patch sa "$service_account" -p "\"imagePullSecrets\": [{\"name\": \"${secret_name}\" }]"
 }
 
