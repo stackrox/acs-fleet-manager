@@ -3,8 +3,10 @@ package main
 
 import (
 	"flag"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"os"
 	"os/signal"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
@@ -42,6 +44,7 @@ func main() {
 
 	glog.Info("Creating k8s client...")
 	k8sClient := k8s.CreateClientOrDie()
+	ctrl.SetLogger(logger.NewKubeAPILogger())
 	glog.Info("Creating runtime...")
 	runtime, err := runtime.NewRuntime(config, k8sClient)
 	if err != nil {
