@@ -1,3 +1,8 @@
+// Kube controller-runtime client uses structured logr.Logger under the hood.
+// ACSCS services use glog unstructured logging.
+// This file contains a wrapper which helps to send structured logr.Logger logs to glog logSink.
+// This wrapper can be removed once ACSCS service move to structured logging instead of glog
+
 package logger
 
 import (
