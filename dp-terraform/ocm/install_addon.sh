@@ -177,7 +177,7 @@ ocm post "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons" << EOF
             { "id": "fleetshardSyncResourcesLimitsMemory", "value": "${FLEETSHARD_SYNC_MEMORY_LIMIT}" },
             { "id": "fleetshardSyncResourcesRequestsCpu", "value": "${FLEETSHARD_SYNC_CPU_REQUEST}" },
             { "id": "fleetshardSyncResourcesRequestsMemory", "value": "${FLEETSHARD_SYNC_MEMORY_REQUEST}" },
-            { "id": "fleetshardSyncSecretEncryptionKeyID", "value": "${CLUSTER_SECRET_ENCRYPTION_KEY_ID}" },
+            { "id": "fleetshardSyncSecretEncryptionKeyId", "value": "${CLUSTER_SECRET_ENCRYPTION_KEY_ID}" },
             { "id": "fleetshardSyncSecretEncryptionType", "value": "kms" },
             { "id": "fleetshardSyncTelemetryStorageEndpoint", "value": "${FLEETSHARD_SYNC_TELEMETRY_STORAGE_ENDPOINT:-}" },
             { "id": "fleetshardSyncTelemetryStorageKey", "value": "${FLEETSHARD_SYNC_TELEMETRY_STORAGE_KEY:-}" },
@@ -194,7 +194,7 @@ ocm post "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons" << EOF
             { "id": "observabilityObservatoriumMetricsClientId", "value": "${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" },
             { "id": "observabilityObservatoriumMetricsSecret", "value": "${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" },
             { "id": "observabilityObservatoriumRedHatSsoAuthServerUrl", "value": "https://sso.redhat.com/auth/" },
-            { "id": "observabilityObservatoriumRedHatSsoRealm", "value": "redhat-external" }
+            { "id": "observabilityObservatoriumRedHatSsoRealm", "value": "redhat-external" },
             { "id": "observabilityOperatorVersion", "value": "${OBSERVABILITY_OPERATOR_VERSION}" },
             { "id": "observabilityPagerdutyKey", "value": "${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" },
             { "id": "securedClusterAdmissionControlServiceTlsCert", "value": "${SECURED_CLUSTER_ADMISSION_CONTROL_CERT}" },
