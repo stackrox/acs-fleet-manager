@@ -639,6 +639,7 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 			for _, relatedResource := range relatedResourcesList {
 				if relatedResource.ResourceName() == resourceName && relatedResource.Product() == product {
 					res = append(res, qc)
+					break
 				}
 			}
 			return true

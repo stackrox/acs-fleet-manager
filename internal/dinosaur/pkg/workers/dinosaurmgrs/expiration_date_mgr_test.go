@@ -46,7 +46,7 @@ func TestGracePeriodManager(t *testing.T) {
 	t.Run("no centrals, no problem", func(t *testing.T) {
 		centralService := withCentrals()
 		quotaSvc, quotaFactory := withEntitlement(true)
-		mgr := NewGracePeriodManager(centralService, quotaFactory, defaultCfg)
+		mgr := NewExpirationDateManager(centralService, quotaFactory, defaultCfg)
 		errs := mgr.Reconcile()
 		require.Empty(t, errs)
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
@@ -55,31 +55,31 @@ func TestGracePeriodManager(t *testing.T) {
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
 
-	t.Run("unset grace", func(t *testing.T) {
+	t.Run("unset expired_at", func(t *testing.T) {
 		now := time.Now()
-		central := &dbapi.CentralRequest{GraceFrom: &now}
+		central := &dbapi.CentralRequest{ExpiredAt: &now}
 		centralService := withCentrals(central)
 		quotaSvc, quotaFactory := withEntitlement(true)
-		gpm := NewGracePeriodManager(centralService, quotaFactory, defaultCfg)
+		gpm := NewExpirationDateManager(centralService, quotaFactory, defaultCfg)
 		errs := gpm.Reconcile()
 		require.Empty(t, errs)
-		assert.Nil(t, central.GraceFrom)
+		assert.Nil(t, central.ExpiredAt)
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
 		assert.Len(t, quotaSvc.CheckIfQuotaIsDefinedForInstanceTypeCalls(), 1)
 		assert.Len(t, centralService.UpdateCalls(), 1)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
 
-	t.Run("set grace", func(t *testing.T) {
+	t.Run("set expired_at", func(t *testing.T) {
 		now := time.Now()
 		central := &dbapi.CentralRequest{}
 		centralService := withCentrals(central)
 		quotaSvc, quotaFactory := withEntitlement(false)
-		gpm := NewGracePeriodManager(centralService, quotaFactory, defaultCfg)
+		gpm := NewExpirationDateManager(centralService, quotaFactory, defaultCfg)
 		errs := gpm.Reconcile()
 		require.Empty(t, errs)
-		require.NotNil(t, central.GraceFrom)
-		assert.Less(t, now, *central.GraceFrom)
+		require.NotNil(t, central.ExpiredAt)
+		assert.Less(t, now, *central.ExpiredAt)
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
 		assert.Len(t, quotaSvc.CheckIfQuotaIsDefinedForInstanceTypeCalls(), 1)
 		assert.Len(t, centralService.UpdateCalls(), 1)
@@ -88,18 +88,18 @@ func TestGracePeriodManager(t *testing.T) {
 
 	t.Run("quota cost cache in use", func(t *testing.T) {
 		now := time.Now()
-		centralA := &dbapi.CentralRequest{GraceFrom: &now, OrganisationID: "one"}
-		centralB := &dbapi.CentralRequest{GraceFrom: &now, OrganisationID: "one"}
-		centralC := &dbapi.CentralRequest{GraceFrom: &now, OrganisationID: "another"}
-		centralD := &dbapi.CentralRequest{GraceFrom: &now, OrganisationID: "another"}
-		centralE := &dbapi.CentralRequest{GraceFrom: &now, OrganisationID: "another", CloudAccountID: "Zeus"}
+		centralA := &dbapi.CentralRequest{ExpiredAt: &now, OrganisationID: "one"}
+		centralB := &dbapi.CentralRequest{ExpiredAt: &now, OrganisationID: "one"}
+		centralC := &dbapi.CentralRequest{ExpiredAt: &now, OrganisationID: "another"}
+		centralD := &dbapi.CentralRequest{ExpiredAt: &now, OrganisationID: "another"}
+		centralE := &dbapi.CentralRequest{ExpiredAt: &now, OrganisationID: "another", CloudAccountID: "Zeus"}
 		centralService := withCentrals(centralA, centralB, centralC, centralD, centralE)
 		quotaSvc, quotaFactory := withEntitlement(true)
-		gpm := NewGracePeriodManager(centralService, quotaFactory, defaultCfg)
+		gpm := NewExpirationDateManager(centralService, quotaFactory, defaultCfg)
 		errs := gpm.Reconcile()
 		require.Empty(t, errs)
-		assert.Nil(t, centralA.GraceFrom)
-		assert.Nil(t, centralB.GraceFrom)
+		assert.Nil(t, centralA.ExpiredAt)
+		assert.Nil(t, centralB.ExpiredAt)
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
 		assert.Len(t, quotaSvc.CheckIfQuotaIsDefinedForInstanceTypeCalls(), 3)
 		assert.Len(t, centralService.UpdateCalls(), 5)

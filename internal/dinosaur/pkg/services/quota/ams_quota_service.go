@@ -54,10 +54,9 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(central *dbapi.Cen
 			string(quotaType), central.OrganisationID, org.ID()))
 	}
 
-	quotaCostsByModel, err := mapAllowedQuotaCosts(quotaCosts)
-	if err != nil {
-		svcErr := errors.ToServiceError(err)
-		return false, errors.NewWithCause(svcErr.Code, svcErr, "product %q has no allowed billing models", quotaType.GetProduct())
+	quotaCostsByModel, unsupportedModels := mapAllowedQuotaCosts(quotaCosts)
+	if len(quotaCostsByModel) == 0 && len(unsupportedModels) > 0 {
+		return false, errors.GeneralError("found only unsupported billing models %q for product %q", unsupportedModels, quotaType.GetProduct())
 	}
 
 	isCloudAccount := central.CloudAccountID != ""
@@ -224,7 +223,7 @@ func (q amsQuotaService) DeleteQuota(subscriptionID string) *errors.ServiceError
 	return nil
 }
 
-func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel][]*amsv1.QuotaCost, error) {
+func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel][]*amsv1.QuotaCost, []string) {
 	costsMap := make(map[amsv1.BillingModel][]*amsv1.QuotaCost)
 	var foundUnsupportedBillingModels []string
 	for _, qc := range quotaCosts {
@@ -244,10 +243,7 @@ func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel
 
 		}
 	}
-	if len(costsMap) == 0 && len(foundUnsupportedBillingModels) > 0 {
-		return nil, errors.GeneralError("found only unsupported billing models %q", foundUnsupportedBillingModels)
-	}
-	return costsMap, nil
+	return costsMap, foundUnsupportedBillingModels
 }
 
 func cloudAccountIsActive(costsMap map[amsv1.BillingModel][]*amsv1.QuotaCost, central *dbapi.CentralRequest) bool {

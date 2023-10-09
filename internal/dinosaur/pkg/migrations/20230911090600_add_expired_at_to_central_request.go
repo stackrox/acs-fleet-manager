@@ -13,20 +13,20 @@ import (
 	"gorm.io/gorm"
 )
 
-func addGraceFromFieldToCentralRequests() *gormigrate.Migration {
+func addExpiredAtFieldToCentralRequests() *gormigrate.Migration {
 	type CentralRequest struct {
 		db.Model
-		GraceFrom *time.Time `json:"grace_from"`
+		ExpiredAt *time.Time `json:"expired_at"`
 	}
 	migrationID := "20230911090600"
 
 	return &gormigrate.Migration{
 		ID: migrationID,
 		Migrate: func(tx *gorm.DB) error {
-			return addColumnIfNotExists(tx, &CentralRequest{}, "grace_from")
+			return addColumnIfNotExists(tx, &CentralRequest{}, "expired_at")
 		},
 		Rollback: func(tx *gorm.DB) error {
-			return tx.Migrator().DropColumn(&CentralRequest{}, "grace_from")
+			return tx.Migrator().DropColumn(&CentralRequest{}, "expired_at")
 		},
 	}
 }

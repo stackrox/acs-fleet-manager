@@ -90,9 +90,9 @@ type CentralRequest struct {
 	// one time reconcilation or to stop from reconciling always.
 	ForceReconcile string `json:"force_reconcile"`
 
-	// GraceFrom contains the timestamp of when a Central instance expired the quota allowance.
+	// ExpiredAt contains the timestamp of when a Central instance expired the quota allowance.
 	// After a grace period, the Central instance will be marked for deletion, its status will be set to 'deprovision'.
-	GraceFrom *time.Time `json:"grace_from"`
+	ExpiredAt *time.Time `json:"expired_at"`
 }
 
 // CentralList ...

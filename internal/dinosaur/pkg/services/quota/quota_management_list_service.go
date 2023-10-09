@@ -24,18 +24,21 @@ func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(dinosau
 	orgID := dinosaur.OrganisationID
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetByID(orgID)
 	userIsRegistered := false
+	allowed := false
 	if orgFound && org.IsUserRegistered(username) {
-		userIsRegistered = org.GetMaxAllowedInstances() > 0
+		userIsRegistered = true
+		allowed = org.GetMaxAllowedInstances() > 0
 	} else {
 		user, userFound := q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(username)
-		userIsRegistered = userFound && user.GetMaxAllowedInstances() > 0
+		userIsRegistered = userFound
+		allowed = user.GetMaxAllowedInstances() > 0
 	}
 
-	// allow user defined in quota list to create standard instances
-	if userIsRegistered && instanceType == types.STANDARD {
-		return true, nil
-	} else if !userIsRegistered && instanceType == types.EVAL { // allow user who are not in quota list to create eval instances
-		return true, nil
+	// allow user defined in quota list to create standard instances, and
+	// allow user who are not in quota list to create eval instances.
+	if userIsRegistered && instanceType == types.STANDARD ||
+		!userIsRegistered && instanceType == types.EVAL {
+		return allowed, nil
 	}
 
 	return false, nil
