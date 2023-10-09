@@ -154,13 +154,17 @@ ocm post "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons" << EOF
     "parameters": {
         "items": [
             { "id": "acscsEnvironment", "value": "${ENVIRONMENT}" },
+            { "id": "auditLogsLogGroupName", "value": "${AUDIT_LOGS_LOG_GROUP_NAME}" },
+            { "id": "auditLogsRoleArn", "value": "${AUDIT_LOGS_ROLE_ARN:-}" },
             { "id": "cloudwatchAwsAccessKeyId", "value": "${CLOUDWATCH_EXPORTER_AWS_ACCESS_KEY_ID:-}" },
             { "id": "cloudwatchAwsSecretAccessKey", "value": "${CLOUDWATCH_EXPORTER_AWS_SECRET_ACCESS_KEY:-}" },
             { "id": "fleetshardSyncAuthType", "value": "RHSSO" },
             { "id": "fleetshardSyncAwsRegion", "value": "${CLUSTER_REGION}" },
             { "id": "fleetshardSyncAwsRoleArn", "value": "${FLEETSHARD_SYNC_AWS_ROLE_ARN}" },
-            { "id": "fleetshardSyncCreateAuthProvider", "value": "true" },
             { "id": "fleetshardSyncFleetManagerEndpoint", "value": "${FM_ENDPOINT}" },
+            { "id": "fleetshardSyncImageCredentialsPassword", "value": "${QUAY_READ_ONLY_PASSWORD}" },
+            { "id": "fleetshardSyncImageCredentialsRegistry", "value": "quay.io" },
+            { "id": "fleetshardSyncImageCredentialsUsername", "value": "${QUAY_READ_ONLY_USERNAME}" },
             { "id": "fleetshardSyncManagedDbEnabled", "value": "true" },
             { "id": "fleetshardSyncManagedDbPerformanceInsights", "value": "true" },
             { "id": "fleetshardSyncManagedDbSecurityGroup", "value": "${CLUSTER_MANAGED_DB_SECURITY_GROUP}" },
@@ -169,6 +173,12 @@ ocm post "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons" << EOF
             { "id": "fleetshardSyncRedHatSsoClientSecret", "value": "${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET}" },
             { "id": "fleetshardSyncRedHatSsoEndpoint", "value": "https://sso.redhat.com" },
             { "id": "fleetshardSyncRedHatSsoRealm", "value": "redhat-external" },
+            { "id": "fleetshardSyncResourcesLimitsCpu", "value": "${FLEETSHARD_SYNC_CPU_LIMIT}" },
+            { "id": "fleetshardSyncResourcesLimitsMemory", "value": "${FLEETSHARD_SYNC_MEMORY_LIMIT}" },
+            { "id": "fleetshardSyncResourcesRequestsCpu", "value": "${FLEETSHARD_SYNC_CPU_REQUEST}" },
+            { "id": "fleetshardSyncResourcesRequestsMemory", "value": "${FLEETSHARD_SYNC_MEMORY_REQUEST}" },
+            { "id": "fleetshardSyncSecretEncryptionKeyID", "value": "${CLUSTER_SECRET_ENCRYPTION_KEY_ID}" },
+            { "id": "fleetshardSyncSecretEncryptionType", "value": "kms" },
             { "id": "fleetshardSyncTelemetryStorageEndpoint", "value": "${FLEETSHARD_SYNC_TELEMETRY_STORAGE_ENDPOINT:-}" },
             { "id": "fleetshardSyncTelemetryStorageKey", "value": "${FLEETSHARD_SYNC_TELEMETRY_STORAGE_KEY:-}" },
             { "id": "loggingAwsAccessKeyId", "value": "${LOGGING_AWS_ACCESS_KEY_ID}" },
@@ -187,6 +197,15 @@ ocm post "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons" << EOF
             { "id": "observabilityObservatoriumRedHatSsoRealm", "value": "redhat-external" }
             { "id": "observabilityOperatorVersion", "value": "${OBSERVABILITY_OPERATOR_VERSION}" },
             { "id": "observabilityPagerdutyKey", "value": "${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" },
+            { "id": "securedClusterAdmissionControlServiceTlsCert", "value": "${SECURED_CLUSTER_ADMISSION_CONTROL_CERT}" },
+            { "id": "securedClusterAdmissionControlServiceTlsKey", "value": "${SECURED_CLUSTER_ADMISSION_CONTROL_KEY}" },
+            { "id": "securedClusterCaCert", "value": "${SECURED_CLUSTER_CA_CERT}" },
+            { "id": "securedClusterCentralEndpoint", "value": "${SECURED_CLUSTER_CENTRAL_ENDPOINT}" },
+            { "id": "securedClusterCollectorServiceTlsCert", "value": "${SECURED_CLUSTER_COLLECTOR_CERT}" },
+            { "id": "securedClusterCollectorServiceTlsKey", "value": "${SECURED_CLUSTER_COLLECTOR_KEY}" },
+            { "id": "securedClusterEnabled", "value": "${SECURED_CLUSTER_ENABLED}" },
+            { "id": "securedClusterSensorServiceTlsCert", "value": "${SECURED_CLUSTER_SENSOR_CERT}" },
+            { "id": "securedClusterSensorServiceTlsKey", "value": "${SECURED_CLUSTER_SENSOR_KEY}" }
         ]
     }
 }
