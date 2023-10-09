@@ -1113,10 +1113,10 @@ func Test_amsQuotaService_CheckQuotaEntitlement(t *testing.T) {
 			central:    standardCentral,
 			want:       false,
 			wantErr:    true,
-			wantErrMsg: "RHACS-MGMT-120: Insufficient quota: failed to get quota cost: error getting quotas for product \"RHACS\"",
+			wantErrMsg: "RHACS-MGMT-9: failed to get assigned quota of type \"standard\" for organization with external id \"\" and id \"fake-org-id-\"\n caused by: failed to get quota cost",
 		},
 		{
-			name: "returns an error when it fails to get quota costs from ams",
+			name: "returns an error when it finds only unsupported billing models",
 			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 				rrbq := v1.NewRelatedResource().BillingModel("unsupported").Product(product).ResourceName(resourceName).Cost(1)
 				qcb, err := v1.NewQuotaCost().Allowed(allowed).Consumed(not_consumed).OrganizationID(organizationID).RelatedResources(rrbq).Build()
@@ -1126,7 +1126,7 @@ func Test_amsQuotaService_CheckQuotaEntitlement(t *testing.T) {
 			central:    standardCentral,
 			want:       false,
 			wantErr:    true,
-			wantErrMsg: "RHACS-MGMT-9: product \"RHACS\" has no allowed billing models\n caused by: RHACS-MGMT-9: found unsupported allowed billing models [\"unsupported\"]",
+			wantErrMsg: "RHACS-MGMT-9: found only unsupported billing models [\"unsupported\"] for product \"RHACS\"",
 		},
 	}
 	for _, testcase := range tests {
