@@ -11,12 +11,14 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/runtime"
+	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"golang.org/x/sys/unix"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func main() {
 	// This is needed to make `glog` believe that the flags have already been parsed, otherwise
-	// every log messages is prefixed by an error message stating the the flags haven't been
+	// every log messages is prefixed by an error message stating the flags haven't been
 	// parsed.
 	_ = flag.CommandLine.Parse([]string{})
 
@@ -42,6 +44,7 @@ func main() {
 
 	glog.Info("Creating k8s client...")
 	k8sClient := k8s.CreateClientOrDie()
+	ctrl.SetLogger(logger.NewKubeAPILogger())
 	glog.Info("Creating runtime...")
 	runtime, err := runtime.NewRuntime(config, k8sClient)
 	if err != nil {
@@ -75,5 +78,5 @@ func main() {
 	}
 
 	glog.Infof("Caught %s signal", sig)
-	glog.Info("fleetshard application has been stopped")
+	glog.Info("Fleetshard-sync application has been stopped")
 }
