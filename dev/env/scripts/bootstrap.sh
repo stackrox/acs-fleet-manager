@@ -52,8 +52,10 @@ fi
 if [[ "$INSTALL_OPERATOR" == "true" ]]; then
     install_operator.sh
 else
-    # We will be running without RHACS operator, but at least install our CRDs.
-    apply "${MANIFESTS_DIR}/crds"
+    if [[ "$RHACS_TARGETED_OPERATOR_UPGRADES" != "true" ]]; then
+        # We will be running without RHACS operator, but at least install our CRDs.
+        apply "${MANIFESTS_DIR}/crds"
+    fi
     apply "${MANIFESTS_DIR}/monitoring"
 fi
 
