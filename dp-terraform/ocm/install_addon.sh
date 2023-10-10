@@ -9,7 +9,7 @@ source "$SCRIPT_DIR/../../scripts/lib/external_config.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
-    echo "Known environments: integration stage prod"
+    echo "Known environments: dev integration stage prod"
     echo "Cluster typically looks like: acs-{env}-dp-01"
     exit 2
 fi
@@ -171,12 +171,16 @@ OCM_PAYLOAD=$(cat << EOF
 EOF
 )
 
+# Check whether the addon is installed on a cluster
+# If installed, using the idempotent patch command to update the parameters of the existing installation.
+# Otherwise, use post endpoint to install.
 if ! GET_ADDON_BODY=$(ocm get "/api/clusters_mgmt/v1/clusters/$CLUSTER_ID/addons/acs-fleetshard" 2>&1); then
     result=$(jq -r '.kind + ":" + .id' <<< "$GET_ADDON_BODY")
     if [[ "$result" != "Error:404" ]]; then
         echo 1>&2 "Unknown OCM error: $result"
         exit 1
     fi
+    # Install the addon for the first time
     OCM_COMMAND="post"
     OCM_ENDPOINT="/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons"
     OCM_PAYLOAD=$(jq '. + {addon: { id: "acs-fleetshard" }}' <<< "$OCM_PAYLOAD")
@@ -186,4 +190,5 @@ echo "Running 'ocm $OCM_COMMAND' to install the addon"
 
 OCM_RESPONSE=$(ocm "$OCM_COMMAND" "$OCM_ENDPOINT" <<< "$OCM_PAYLOAD")
 
+# Filtering sensitive fields
 jq "{ kind, id, addon, addon_version, state, operator_version, csv_name, creation_timestamp, updated_timestamp }" <<< "$OCM_RESPONSE"
