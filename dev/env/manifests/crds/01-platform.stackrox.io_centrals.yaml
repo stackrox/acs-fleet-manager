@@ -2,8 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.10.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.12.1
   name: centrals.platform.stackrox.io
 spec:
   group: platform.stackrox.io
@@ -59,22 +58,32 @@ spec:
                         - name
                       type: object
                     db:
-                      description: 'NOTE: Central DB is in Technology Preview. Settings
-                      for Central DB, which is responsible for data persistence.'
+                      description: Settings for Central DB, which is responsible for
+                        data persistence.
                       properties:
+                        configOverride:
+                          description: Config map containing postgresql.conf and pg_hba.conf
+                            that will be used if modifications need to be applied.
+                          properties:
+                            name:
+                              description: The name of the referenced config map.
+                              type: string
+                          required:
+                            - name
+                          type: object
                         connectionString:
-                          description: Specify a connection string that corresponds
-                            to an existing database. If set, the operator will not manage
-                            Central DB. When using this option, you must explicitly
-                            set a password secret; automatically generating a password
-                            will not be supported.
+                          description: 'NOTE: Connecting to an external database is
+                          in Technology Preview. Specify a connection string that
+                          corresponds to an external database. If set, the operator
+                          will not manage Central DB. When using this option, you
+                          must explicitly set a password secret; automatically generating
+                          a password will not be supported.'
                           type: string
                         isEnabled:
                           default: Default
-                          description: Specify whether central-db is enabled, Default
-                            configures central to use rocksdb. If IsEnabled the operator
-                            will provision the Central DB or use an external DB if a
-                            connection string is provided.
+                          description: Deprecated field. It is no longer necessary to
+                            specify it. This field will be removed in a future release.
+                            Central is configured to use PostgreSQL by default.
                           enum:
                             - Default
                             - Enabled
@@ -87,8 +96,9 @@ spec:
                           type: object
                         passwordSecret:
                           description: Specify a secret that contains the password in
-                            the "password" data item. If omitted, the operator will
-                            auto-generate a DB password and store it in the "password"
+                            the "password" data item. This can only be used when specifying
+                            a connection string manually. When omitted, the operator
+                            will auto-generate a DB password and store it in the "password"
                             item in the "central-db-password" secret.
                           properties:
                             name:
@@ -145,6 +155,28 @@ spec:
                             an overview of default resource requirements and a sizing
                             guide.
                           properties:
+                            claims:
+                              description: "Claims lists the names of resources, defined
+                              in spec.resourceClaims, that are used by this container.
+                              \n This is an alpha field and requires enabling the
+                              DynamicResourceAllocation feature gate. \n This field
+                              is immutable. It can only be set for containers."
+                              items:
+                                description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                                properties:
+                                  name:
+                                    description: Name must match the name of one entry
+                                      in pod.spec.resourceClaims of the Pod where this
+                                      field is used. It makes that resource available
+                                      inside a container.
+                                    type: string
+                                required:
+                                  - name
+                                type: object
+                              type: array
+                              x-kubernetes-list-map-keys:
+                                - name
+                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -166,7 +198,7 @@ spec:
                               compute resources required. If Requests is omitted for
                               a container, it defaults to Limits if that is explicitly
                               specified, otherwise to an implementation-defined value.
-                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                              Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                               type: object
                           type: object
                         tolerations:
@@ -210,6 +242,37 @@ spec:
                                   matches to. If the operator is Exists, the value should
                                   be empty, otherwise just a regular string.
                                 type: string
+                            type: object
+                          type: array
+                      type: object
+                    declarativeConfiguration:
+                      description: Configures resources within Central in a declarative
+                        manner.
+                      properties:
+                        configMaps:
+                          description: List of config maps containing declarative configuration.
+                          items:
+                            description: LocalConfigMapReference is a reference to a
+                              config map within the same namespace.
+                            properties:
+                              name:
+                                description: The name of the referenced config map.
+                                type: string
+                            required:
+                              - name
+                            type: object
+                          type: array
+                        secrets:
+                          description: List of secrets containing declarative configuration.
+                          items:
+                            description: LocalSecretReference is a reference to a secret
+                              within the same namespace.
+                            properties:
+                              name:
+                                description: The name of the referenced secret.
+                                type: string
+                            required:
+                              - name
                             type: object
                           type: array
                       type: object
@@ -296,6 +359,19 @@ spec:
                       description: If you want this component to only run on specific
                         nodes, you can configure a node selector here.
                       type: object
+                    notifierSecretsEncryption:
+                      description: Configures the encryption of notifier secrets stored
+                        in the Central DB.
+                      properties:
+                        enabled:
+                          default: false
+                          description: Enables the encryption of notifier secrets stored
+                            in the Central DB. An encryption key must be provided in
+                            a secret called `central-encryption-key` in the Central
+                            namespace, with the key stored in the `encryption-key` data
+                            field.
+                          type: boolean
+                      type: object
                     persistence:
                       description: Configures how Central should store its persistent
                         data. You can choose between using a persistent volume claim
@@ -341,6 +417,28 @@ spec:
                         this component. Please consult the documentation for an overview
                         of default resource requirements and a sizing guide.
                       properties:
+                        claims:
+                          description: "Claims lists the names of resources, defined
+                          in spec.resourceClaims, that are used by this container.
+                          \n This is an alpha field and requires enabling the DynamicResourceAllocation
+                          feature gate. \n This field is immutable. It can only be
+                          set for containers."
+                          items:
+                            description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                            properties:
+                              name:
+                                description: Name must match the name of one entry in
+                                  pod.spec.resourceClaims of the Pod where this field
+                                  is used. It makes that resource available inside a
+                                  container.
+                                type: string
+                            required:
+                              - name
+                            type: object
+                          type: array
+                          x-kubernetes-list-map-keys:
+                            - name
+                          x-kubernetes-list-type: map
                         limits:
                           additionalProperties:
                             anyOf:
@@ -361,7 +459,29 @@ spec:
                           description: 'Requests describes the minimum amount of compute
                           resources required. If Requests is omitted for a container,
                           it defaults to Limits if that is explicitly specified, otherwise
-                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                          to an implementation-defined value. Requests cannot exceed
+                          Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                          type: object
+                      type: object
+                    telemetry:
+                      description: Configures telemetry settings for Central. If enabled,
+                        Central transmits telemetry and diagnostic data to a remote
+                        storage backend.
+                      properties:
+                        enabled:
+                          default: true
+                          description: Specifies if Telemetry is enabled.
+                          type: boolean
+                        storage:
+                          description: Defines the telemetry storage backend for Central.
+                          properties:
+                            endpoint:
+                              description: Storage API endpoint.
+                              type: string
+                            key:
+                              description: Storage API key. If not set, telemetry is
+                                disabled.
+                              type: string
                           type: object
                       type: object
                     tolerations:
@@ -573,6 +693,75 @@ spec:
                         interfere with other workloads.
                       type: boolean
                   type: object
+                monitoring:
+                  description: Monitoring configuration.
+                  properties:
+                    openshift:
+                      description: OpenShiftMonitoring defines settings related to OpenShift
+                        Monitoring
+                      properties:
+                        enabled:
+                          default: true
+                          type: boolean
+                      required:
+                        - enabled
+                      type: object
+                  type: object
+                overlays:
+                  description: Overlays
+                  items:
+                    description: "K8sObjectOverlay is an overlay that applies a set
+                    of patches to a resource. It targets a resource by its API version,
+                    kind, and name, and applies a list of patches to this resource.
+                    \n # Examples \n ## Adding an annotation to a resource \n apiVersion:
+                    v1 kind: ServiceAccount name: central patches: - path: metadata.annotations.eks\\.amazonaws\\.com/role-arn
+                    value: \"\\\"arn:aws:iam:1234:role\\\"\" \n ## Adding an environment
+                    variable to a deployment \n apiVersion: apps/v1 kind: Deployment
+                    name: central patches: - path: spec.template.spec.containers[name:central].env[-1]
+                    value: | name: MY_ENV_VAR value: value \n ## Adding an ingress
+                    to a network policy \n apiVersion: networking.k8s.io/v1 kind:
+                    NetworkPolicy name: allow-ext-to-central patches: - path: spec.ingress[-1]
+                    value: | ports: - port: 999 protocol: TCP \n ## Changing the value
+                    of a configMap \n apiVersion: v1 kind: ConfigMap name: central-endpoints
+                    patches: - path: data value: | endpoints.yaml: | disableDefault:
+                    false \n ## Adding a container to a deployment \n apiVersion:
+                    apps/v1 kind: Deployment name: central patches: - path: spec.template.spec.containers[-1]
+                    value: | name: nginx image: nginx ports: - containerPort: 8000
+                    name: http protocol: TCP"
+                    properties:
+                      apiVersion:
+                        description: Resource API version.
+                        type: string
+                      kind:
+                        description: Resource kind.
+                        type: string
+                      name:
+                        description: Name of resource.
+                        type: string
+                      patches:
+                        description: List of patches to apply to resource.
+                        items:
+                          description: K8sObjectOverlayPatch defines a patch to apply
+                            to a resource.
+                          properties:
+                            path:
+                              description: Path of the form a.[key1:value1].b.[:value2]
+                                Where [key1:value1] is a selector for a key-value pair
+                                to identify a list element and [:value] is a value selector
+                                to identify a list element in a leaf list. All path
+                                intermediate nodes must exist.
+                              type: string
+                            value:
+                              description: Value to add, delete or replace. For add,
+                                the path should be a new leaf. For delete, value should
+                                be unset. For replace, path should reference an existing
+                                node. All values are strings but are converted into
+                                appropriate type based on schema.
+                              type: string
+                          type: object
+                        type: array
+                    type: object
+                  type: array
                 scanner:
                   description: Settings for the Scanner component, which is responsible
                     for vulnerability scanning of container images.
@@ -593,6 +782,28 @@ spec:
                             an overview of default resource requirements and a sizing
                             guide.
                           properties:
+                            claims:
+                              description: "Claims lists the names of resources, defined
+                              in spec.resourceClaims, that are used by this container.
+                              \n This is an alpha field and requires enabling the
+                              DynamicResourceAllocation feature gate. \n This field
+                              is immutable. It can only be set for containers."
+                              items:
+                                description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                                properties:
+                                  name:
+                                    description: Name must match the name of one entry
+                                      in pod.spec.resourceClaims of the Pod where this
+                                      field is used. It makes that resource available
+                                      inside a container.
+                                    type: string
+                                required:
+                                  - name
+                                type: object
+                              type: array
+                              x-kubernetes-list-map-keys:
+                                - name
+                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -614,7 +825,7 @@ spec:
                               compute resources required. If Requests is omitted for
                               a container, it defaults to Limits if that is explicitly
                               specified, otherwise to an implementation-defined value.
-                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                              Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                               type: object
                           type: object
                         scaling:
@@ -709,6 +920,28 @@ spec:
                             an overview of default resource requirements and a sizing
                             guide.
                           properties:
+                            claims:
+                              description: "Claims lists the names of resources, defined
+                              in spec.resourceClaims, that are used by this container.
+                              \n This is an alpha field and requires enabling the
+                              DynamicResourceAllocation feature gate. \n This field
+                              is immutable. It can only be set for containers."
+                              items:
+                                description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                                properties:
+                                  name:
+                                    description: Name must match the name of one entry
+                                      in pod.spec.resourceClaims of the Pod where this
+                                      field is used. It makes that resource available
+                                      inside a container.
+                                    type: string
+                                required:
+                                  - name
+                                type: object
+                              type: array
+                              x-kubernetes-list-map-keys:
+                                - name
+                              x-kubernetes-list-type: map
                             limits:
                               additionalProperties:
                                 anyOf:
@@ -730,7 +963,7 @@ spec:
                               compute resources required. If Requests is omitted for
                               a container, it defaults to Limits if that is explicitly
                               specified, otherwise to an implementation-defined value.
-                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                              Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                               type: object
                           type: object
                         tolerations:
@@ -792,11 +1025,10 @@ spec:
                           type: string
                       type: object
                     scannerComponent:
-                      default: Enabled
                       description: If you do not want to deploy the Red Hat Advanced
                         Cluster Security Scanner, you can disable it here (not recommended).
-                        If you do so, all the settings in this section will have no
-                        effect.
+                        By default, the scanner is enabled. If you do so, all the settings
+                        in this section will have no effect.
                       enum:
                         - Enabled
                         - Disabled
@@ -889,9 +1121,3 @@ spec:
       storage: true
       subresources:
         status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
