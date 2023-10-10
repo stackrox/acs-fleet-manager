@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-
-#TODO(kovayur): enable and review all shellcheck exclusions (SC2034)
-#set -euo pipefail
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -36,11 +34,6 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.nonexistent.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
-    OPERATOR_USE_UPSTREAM="false"
-    # shellcheck disable=SC2034
-    OPERATOR_CHANNEL="stable"
-    # shellcheck disable=SC2034
-    OPERATOR_VERSION="v4.2.0"
     FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"512Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"500m"}"
@@ -53,16 +46,10 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
-    OPERATOR_USE_UPSTREAM="false"
-    # shellcheck disable=SC2034
-    OPERATOR_CHANNEL="stable"
-    # shellcheck disable=SC2034
-    OPERATOR_VERSION="v4.2.0"
     FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
-    # shellcheck disable=SC2034
     SECURED_CLUSTER_ENABLED="false"  # TODO(ROX-18908): enable
     ;;
 
@@ -71,16 +58,10 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="stage"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
-    OPERATOR_USE_UPSTREAM="false"
-    # shellcheck disable=SC2034
-    OPERATOR_CHANNEL="stable"
-    # shellcheck disable=SC2034
-    OPERATOR_VERSION="v4.2.0"
     FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
-    # shellcheck disable=SC2034
     SECURED_CLUSTER_ENABLED="true"
     ;;
 
@@ -89,16 +70,10 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
-    OPERATOR_USE_UPSTREAM="false"
-    # shellcheck disable=SC2034
-    OPERATOR_CHANNEL="stable"
-    # shellcheck disable=SC2034
-    OPERATOR_VERSION="v4.2.0"
     FLEETSHARD_SYNC_CPU_REQUEST="${FLEETSHARD_SYNC_CPU_REQUEST:-"200m"}"
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
-    # shellcheck disable=SC2034
     SECURED_CLUSTER_ENABLED="true"
     ;;
 
@@ -131,30 +106,14 @@ load_external_config "audit-logs/${CLUSTER_NAME}" AUDIT_LOGS_
 echo "Loading external config: cluster-${CLUSTER_NAME}"
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 
-OPERATOR_SOURCE="redhat-operators"
-OPERATOR_USE_UPSTREAM="${OPERATOR_USE_UPSTREAM:-false}"
-if [[ "${OPERATOR_USE_UPSTREAM}" == "true" ]]; then
-    oc login --token="${CLUSTER_ROBOT_OC_TOKEN}" --server="$CLUSTER_URL"
-
-    quay_basic_auth="${QUAY_READ_ONLY_USERNAME}:${QUAY_READ_ONLY_PASSWORD}"
-    pull_secret_json="$(mktemp)"
-    trap 'rm -f "${pull_secret_json}"' EXIT
-    oc get secret/pull-secret -n openshift-config --template='{{index .data ".dockerconfigjson" | base64decode}}' > "${pull_secret_json}"
-    oc registry login --registry="quay.io/rhacs-eng" --auth-basic="${quay_basic_auth}" --to="${pull_secret_json}" --skip-check
-    oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson="${pull_secret_json}"
-    # shellcheck disable=SC2034
-    OPERATOR_SOURCE="rhacs-operators"
-fi
-
-ocm post "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons" << EOF
+OCM_COMMAND="patch"
+OCM_ENDPOINT="/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons/acs-fleetshard"
+OCM_PAYLOAD=$(cat << EOF
 {
-    "addon": {
-        "id":"acs-fleetshard"
-    },
     "parameters": {
         "items": [
             { "id": "acscsEnvironment", "value": "${ENVIRONMENT}" },
-            { "id": "auditLogsLogGroupName", "value": "${AUDIT_LOGS_LOG_GROUP_NAME}" },
+            { "id": "auditLogsLogGroupName", "value": "${AUDIT_LOGS_LOG_GROUP_NAME:-}" },
             { "id": "auditLogsRoleArn", "value": "${AUDIT_LOGS_ROLE_ARN:-}" },
             { "id": "cloudwatchAwsAccessKeyId", "value": "${CLOUDWATCH_EXPORTER_AWS_ACCESS_KEY_ID:-}" },
             { "id": "cloudwatchAwsSecretAccessKey", "value": "${CLOUDWATCH_EXPORTER_AWS_SECRET_ACCESS_KEY:-}" },
@@ -210,3 +169,21 @@ ocm post "/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons" << EOF
     }
 }
 EOF
+)
+
+if ! GET_ADDON_BODY=$(ocm get "/api/clusters_mgmt/v1/clusters/$CLUSTER_ID/addons/acs-fleetshard" 2>&1); then
+    result=$(jq -r '.kind + ":" + .id' <<< "$GET_ADDON_BODY")
+    if [[ "$result" != "Error:404" ]]; then
+        echo 1>&2 "Unknown OCM error: $result"
+        exit 1
+    fi
+    OCM_COMMAND="post"
+    OCM_ENDPOINT="/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons"
+    OCM_PAYLOAD=$(jq '. + {addon: { id: "acs-fleetshard" }}' <<< "$OCM_PAYLOAD")
+fi
+
+echo "Running 'ocm $OCM_COMMAND' to install the addon"
+
+OCM_RESPONSE=$(ocm "$OCM_COMMAND" "$OCM_ENDPOINT" <<< "$OCM_PAYLOAD")
+
+jq "{ kind, id, addon, addon_version, state, operator_version, csv_name, creation_timestamp, updated_timestamp }" <<< "$OCM_RESPONSE"
