@@ -74,10 +74,9 @@ if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
 
     # Apparently we potentially have to wait longer than the default of 60s sometimes...
     wait_for_resource_to_appear "$STACKROX_OPERATOR_NAMESPACE" "serviceaccount" "rhacs-operator-controller-manager" 180
+    sleep 10 # Wait for ServiceAccount created by OLM to settle, otherwise the patching below might have no effect.
     inject_ips "$STACKROX_OPERATOR_NAMESPACE" "rhacs-operator-controller-manager" "quay-ips"
-
-    # Wait for rhacs-operator pods to be created. Possibly the imagePullSecrets were not picked up yet, which is why we respawn them:
-    sleep 2
+    # Possibly the imagePullSecrets were not picked up yet, which is why we respawn them:
     $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" delete pod -l app=rhacs-operator
 elif [[ "$OPERATOR_SOURCE" == "marketplace" ]]; then
     apply "${MANIFESTS_DIR}"/rhacs-operator/marketplace/*.yaml
