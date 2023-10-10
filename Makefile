@@ -354,7 +354,7 @@ test/e2e: $(GINKGO_BIN)
 		--race --trace \
 		--json-report=e2e-report.json \
 		--timeout=$(TEST_TIMEOUT) \
-		--slow-spec-threshold=5m \
+		--poll-progress-after=5m \
 		 ./e2e/...
 .PHONY: test/e2e
 
