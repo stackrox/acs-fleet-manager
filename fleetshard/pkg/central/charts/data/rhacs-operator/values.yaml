@@ -1,28 +1,41 @@
-# Default values for rhacs-operator.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 operator:
-  # Each item in images should contain `deploymentName`, `image` and `centralLabelSelector` keys
-  # example:
-  #   images:
+  # Each item in this list will install an operator deployment.
+  # images:
   #
+  #     # The name of the deployment. This should be unique
+  #     # across all deployments.
+  #     # The name can contain up to 63 characters. https://www.rfc-editor.org/rfc/rfc1123
+  #     # Required: true
   #   - deploymentName: rhacs-operator-manager-4-0-0
-  #     image: quay.io/rhacs-eng/stackrox-operator:4.0.0
-  #     centralLabelSelector: 4.0.0
-  #     securedClusterLabelSelector: 4.0.0
-  #     centralReconcilerEnabled: true
-  #     securedClusterReconcilerEnabled: true
-  #     ...other helm values
   #
-  #   - deploymentName: rhacs-operator-manager-4-0-1
-  #     image: quay.io/rhacs-eng/stackrox-operator:4.0.1
-  #     centralLabelSelector: 4.0.1
-  #     securedClusterLabelSelector: 4.0.0
-  #     centralReconcilerEnabled: false
-  #     securedClusterReconcilerEnabled: false
-  #     ...other helm values
+  #     # This is the image to use for the deployment
+  #     # Required: true
+  #     image: quay.io/rhacs-eng/stackrox-operator:4.0.0
+  #
+  #     # The central label selector is used to select Central CRs to reconcile.
+  #     # If the Central CR matches this label selector, it will be reconciled.
+  #     # If left empty, all Central CRs will be reconciled.
+  #     # Default: ''
+  #     centralLabelSelector: "my.custom.label=4.0.0"
+  #
+  #     # The SecuredCluster label selector is used to select secured cluster CRs to reconcile.
+  #     # If the SecuredCluster CR matches this label selector, it will be reconciled.
+  #     # If left empty, all SecuredCluster CRs will be reconciled.
+  #     # Default: ''
+  #     securedClusterLabelSelector: "my.custom.label=4.0.0"
+  #
+  #     # If false, the central reconciler will be disabled altogether.
+  #     # This is useful if this specific operator is only
+  #     # supposed to reconcile securedCluster CRs.
+  #     # Default: true
+  #     centralReconcilerEnabled: true
+  #
+  #     # If false, the secured cluster reconciler will be disabled altogether.
+  #     # This is useful if this specific operator is only
+  #     # supposed to reconcile central CRs.
+  #     # Default: true
+  #     securedClusterReconcilerEnabled: true
   #
   images: []
-  # TODO: add values for resource limits and requests for both proxy and manager container
+  # TODO: add values + modify template for overriding resource limits and requests for both proxy and manager container
   # TODO: add value for kube-rbac-proxy image
