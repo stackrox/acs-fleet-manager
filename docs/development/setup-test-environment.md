@@ -138,6 +138,11 @@ $ colima start -c 4 -d 60 -m 16 -k
 
 and that the `colima` CLI is in `PATH` (if not, export `DOCKER=/path/to/bin/colima nerdctl -- -n k8s.io` accordingly).
 
+Depending on several factors it might even be necessary to increase the cluster resources even further, e.g.:
+```shell
+$ colima start -c 6 -m 16 -d 60 -k
+```
+
 ### CRC
 
 CRC needs a lot of resources and so does a Central tenant. At least the following resource settings were required to make the test succeed on CRC.
