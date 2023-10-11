@@ -165,19 +165,19 @@ func Test_updateCentralRequest(t *testing.T) {
 			patch:       `{"scanner":{"analyzer":{"resources":{"limits":null}}}}`,
 			wantScanner: `{"analyzer":{"resources":{"requests":{"cpu":"1","memory":"1"}},"scaling":{}},"db":{"resources":{}}}`,
 		}, {
-			name:               "replacing forceReconcile",
-			state:              `{"forceReconcile":"foo"}`,
-			patch:              `{"forceReconcile":"bar"}`,
+			name:               "replacing force_reconcile",
+			state:              `{"force_reconcile":"foo"}`,
+			patch:              `{"force_reconcile":"bar"}`,
 			wantForceReconcile: "bar",
 		}, {
-			name:               "unsetting forceReconcile",
-			state:              `{"forceReconcile":"foo"}`,
-			patch:              `{"forceReconcile":null}`,
+			name:               "unsetting force_reconcile",
+			state:              `{"force_reconcile":"foo"}`,
+			patch:              `{"force_reconcile":null}`,
 			wantForceReconcile: "",
 		}, {
-			name:               "setting forceReconcile to empty string",
-			state:              `{"forceReconcile":"foo"}`,
-			patch:              `{"forceReconcile":""}`,
+			name:               "setting force_reconcile to empty string",
+			state:              `{"force_reconcile":"foo"}`,
+			patch:              `{"force_reconcile":""}`,
 			wantForceReconcile: "",
 		}, {
 			name:  "should fail if the patch is invalid json",
@@ -217,6 +217,8 @@ func Test_updateCentralRequest(t *testing.T) {
 				if len(tt.wantCentral) > 0 {
 					assert.Equal(t, string(tt.wantCentral), string(request.Central))
 				}
+
+				assert.Equal(t, tt.wantForceReconcile, request.ForceReconcile)
 			}
 		})
 	}
