@@ -291,7 +291,7 @@ var _ = Describe("Central", func() {
 				Fail("central not created")
 			}
 
-			_, _, err := client.AdminAPI().UpdateCentralById(
+			_, _, err := adminAPI.UpdateCentralById(
 				context.Background(),
 				createdCentral.Id,
 				private.CentralUpdateRequest{ForceReconcile: "true"})
