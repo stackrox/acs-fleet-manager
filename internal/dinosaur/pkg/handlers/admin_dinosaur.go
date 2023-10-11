@@ -288,12 +288,7 @@ func updateCentralRequest(request *dbapi.CentralRequest, strategicPatch []byte) 
 	if err != nil {
 		return fmt.Errorf("unmarshalling strategic merge patch: %w", err)
 	}
-	// only keep central and scanner keys
-	for k := range patchMap {
-		if k != "central" && k != "scanner" {
-			delete(patchMap, k)
-		}
-	}
+
 	patchBytes, err := json.Marshal(patchMap)
 	if err != nil {
 		return fmt.Errorf("marshalling strategic merge patch: %w", err)
@@ -308,12 +303,12 @@ func updateCentralRequest(request *dbapi.CentralRequest, strategicPatch []byte) 
 		scannerBytes = string(request.Scanner)
 	}
 
-	var originalBytes = fmt.Sprintf("{\"central\":%s,\"scanner\":%s,\"forceReconcile\":\"%s\"}", centralBytes, scannerBytes, request.ForceReconcile)
+	var originalBytes = fmt.Sprintf("{\"central\":%s,\"scanner\":%s,\"force_reconcile\":\"%s\"}", centralBytes, scannerBytes, request.ForceReconcile)
 
 	type Original struct {
 		Central        *dbapi.CentralSpec `json:"central,omitempty"`
 		Scanner        *dbapi.ScannerSpec `json:"scanner,omitempty"`
-		ForceReconcile string             `json:"forceReconcile,omitempty"`
+		ForceReconcile string             `json:"force_reconcile,omitempty"`
 	}
 
 	// apply the patch
