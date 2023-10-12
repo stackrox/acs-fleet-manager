@@ -94,8 +94,10 @@ spec:
             - name: CENTRAL_RECONCILER_ENABLED
               value: "false"
             {{- end }}
-            {{- if eq .securedClusterReconcilerEnabled false }}
             - name: SECURED_CLUSTER_RECONCILER_ENABLED
+            {{- if eq .securedClusterReconcilerEnabled true }}
+              value: "true"
+            {{ else }}
               value: "false"
             {{- end }}
           image: "{{ .image }}"
