@@ -7,6 +7,12 @@ source "${GITROOT}/dev/env/scripts/lib.sh"
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/docker.sh"
 
+init
+
+if [[ "$RHACS_TARGETED_OPERATOR_UPGRADES" == "true" ]]; then
+  exit 0
+fi
+
 if [[ "$INSTALL_OLM" == "true" ]]; then
     if ! command -v operator-sdk >/dev/null 2>&1; then
         die "Error: Unable to install OLM, operator-sdk executable is not found"
