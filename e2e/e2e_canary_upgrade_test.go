@@ -11,29 +11,24 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 const (
-	namespace = "acscs"
+	namespace              = "acscs"
+	gitopsConfigmapName    = "fleet-manager-gitops-config"
+	gitopsConfigmapDataKey = "config.yaml"
 )
-
-func operatorConfigForVersion(version string) operator.OperatorConfig {
-	return operator.OperatorConfig{
-		"deploymentName":       fmt.Sprintf("rhacs-operator-%s", strings.ReplaceAll(version, ".", "-")),
-		"image":                fmt.Sprintf("quay.io/rhacs-eng/stackrox-operator:%s", version),
-		"centralLabelSelector": fmt.Sprintf("rhacs.redhat.com/version-selector=%s", version),
-	}
-}
 
 var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
@@ -53,77 +48,78 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 	client, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
 	Expect(err).ToNot(HaveOccurred())
 
-	operatorConfig1 := operatorConfigForVersion("4.1.1")
-	operatorConfig2 := operatorConfigForVersion("4.1.2")
+	operatorConfig1 := operatorConfigForVersion("4.2.1-rc.3")
+	operatorConfig2 := operatorConfigForVersion("4.2.1")
 
 	Describe("should run ACS operators", func() {
+		ctx := context.Background()
+		var gitops gitops.Config
 
-		It("should deploy single operator", func() {
-			ctx := context.Background()
-			operatorConfigs := []operator.OperatorConfig{operatorConfig1}
-			err := updateOperatorConfig(ctx, operatorConfigs)
-			Expect(err).To(BeNil())
-
-			It("should contain one operator deployment", func() {
-				Eventually(getOperatorDeployments(ctx)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(HaveLen(1))
-			})
-			It("should deploy operator with label selector 4.1.1", func() {
-				Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(Succeed())
-			})
+		It("get gitops configmap", func() {
+			gitops, err = getGitopsConfig(ctx)
+			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("should deploy two operators with different versions", func() {
-			ctx := context.Background()
-			operatorConfigs := []operator.OperatorConfig{operatorConfig1, operatorConfig2}
+		It("should deploy one operator", func() {
+			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
+			err = updateGitopsConfig(ctx, gitops)
+			Expect(err).ToNot(HaveOccurred())
+			Eventually(getOperatorDeployments(ctx)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(HaveLen(1))
+		})
+		It("should run operator with central label selector "+operatorConfig1.GetCentralLabelSelector(), func() {
+			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+		})
 
-			err := updateOperatorConfig(ctx, operatorConfigs)
-			Expect(err).To(BeNil())
+		It("should deploy two operators", func() {
+			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1, operatorConfig2}
+			err = updateGitopsConfig(ctx, gitops)
+			Expect(err).ToNot(HaveOccurred())
+		})
 
-			It("should contain only two operator deployments", func() {
-				Eventually(getOperatorDeployments(ctx)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(HaveLen(2))
-			})
-			It("should deploy operator with label selector 4.1.1", func() {
-				Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(Succeed())
-			})
-			It("should deploy operator with label selector 4.1.2", func() {
-				Eventually(operatorMatchesConfig(ctx, operatorConfig2)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(Succeed())
-			})
+		It("should contain only two operator deployments", func() {
+			Eventually(getOperatorDeployments(ctx)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(HaveLen(2))
+		})
+		It("should deploy operator with label selector 4.1.1", func() {
+			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+		})
+		It("should deploy operator with label selector 4.1.2", func() {
+			Eventually(operatorMatchesConfig(ctx, operatorConfig2)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
 		It("should delete the removed operator", func() {
-			ctx := context.Background()
 			operatorConfigs := []operator.OperatorConfig{operatorConfig1}
 			err := updateOperatorConfig(ctx, operatorConfigs)
 			Expect(err).To(BeNil())
 
-			It("should contain only one operator deployments", func() {
-				Eventually(getOperatorDeployments(ctx)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(HaveLen(1))
-			})
+		})
 
-			It("should deploy operator with label selector 4.1.2", func() {
-				Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(Succeed())
-			})
+		It("should contain only one operator deployments", func() {
+			Eventually(getOperatorDeployments(ctx)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(HaveLen(1))
+		})
+
+		It("should deploy operator with label selector 4.1.2", func() {
+			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 	})
 
@@ -198,6 +194,54 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 	})
 
 })
+
+func getGitopsConfig(ctx context.Context) (gitops.Config, error) {
+	var gitopsConfig gitops.Config
+	configmap := &v1.ConfigMap{}
+
+	err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Namespace: namespace, Name: gitopsConfigmapName}, configmap)
+	if err != nil {
+		return gitops.Config{}, err
+	}
+
+	configmapData := []byte(configmap.Data[gitopsConfigmapDataKey])
+	if err := yaml.Unmarshal(configmapData, &gitopsConfig); err != nil {
+		return gitops.Config{}, err
+	}
+
+	return gitopsConfig, nil
+}
+
+func updateGitopsConfig(ctx context.Context, config gitops.Config) error {
+	configYAML, err := yaml.Marshal(config)
+	if err != nil {
+		return err
+	}
+	configMap := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      gitopsConfigmapName,
+		},
+		Data: map[string]string{
+			gitopsConfigmapDataKey: string(configYAML),
+		},
+	}
+
+	err = k8sClient.Update(ctx, configMap)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func operatorConfigForVersion(version string) operator.OperatorConfig {
+	return operator.OperatorConfig{
+		"deploymentName":       fmt.Sprintf("rhacs-operator-%s", strings.ReplaceAll(version, ".", "-")),
+		"image":                fmt.Sprintf("quay.io/rhacs-eng/stackrox-operator:%s", version),
+		"centralLabelSelector": fmt.Sprintf("rhacs.redhat.com/version-selector=%s", version),
+	}
+}
 
 func updateOperatorConfig(ctx context.Context, operatorConfigs []operator.OperatorConfig) error {
 	configYAML, err := yaml.Marshal(operatorConfigs)
