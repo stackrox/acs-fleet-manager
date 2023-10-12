@@ -71,6 +71,8 @@ spec:
             value: 200m
           - name: SCANNER_DB_MEMORY_LIMIT
             value: 200M
+          - name: RHACS_GITOPS_ENABLED
+            value: "true"
           readinessProbe:
             httpGet:
               path: /healthcheck
