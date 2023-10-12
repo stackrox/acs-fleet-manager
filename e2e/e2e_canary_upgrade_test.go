@@ -52,10 +52,6 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 	operatorConfig2 := operatorConfigForVersion(operatorVersion2)
 
 	Describe("should run ACS operators", func() {
-		// TODO remove this!!!!
-		BeforeEach(func() {
-			Skip("Skipping operator upgrade test")
-		})
 
 		ctx := context.Background()
 		var gitops gitops.Config
