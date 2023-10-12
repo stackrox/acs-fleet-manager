@@ -286,6 +286,22 @@ var _ = Describe("Central", func() {
 			Expect(secretsStored).Should(ContainElements(expectedSecrets))
 		})
 
+		It("should set ForceReconcile through admin API", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
+
+			_, _, err := adminAPI.UpdateCentralById(
+				context.Background(),
+				createdCentral.Id,
+				private.CentralUpdateRequest{ForceReconcile: "true"})
+
+			Expect(err).To(BeNil())
+
+			privateCentral, _, err := client.PrivateAPI().GetCentral(context.Background(), createdCentral.Id)
+			Expect(err).To(BeNil())
+			Expect(privateCentral.ForceReconcile).To(Equal("true"))
+		})
 		// TODO(ROX-11368): Add test to eventually reach ready state
 		// TODO(ROX-11368): create test to check that Central and Scanner are healthy
 		// TODO(ROX-11368): Create test to check Central is correctly exposed
