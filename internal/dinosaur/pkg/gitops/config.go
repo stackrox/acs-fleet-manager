@@ -3,9 +3,7 @@ package gitops
 
 import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/yaml"
 )
 
 // Config represents the gitops configuration
@@ -31,48 +29,51 @@ type CentralOverride struct {
 }
 
 // ValidateConfig validates the GitOps configuration.
-func ValidateConfig(config Config) field.ErrorList {
+func (c *Config) ValidateConfig() field.ErrorList {
 	var errs field.ErrorList
-	errs = append(errs, validateCentralsConfig(field.NewPath("centrals"), config.Centrals)...)
-	errs = append(errs, operator.Validate(field.NewPath("rhacsOperators"), config.RHACSOperators)...)
+	errs = append(errs, c.validateCentralsConfig(field.NewPath("centrals"), c.Centrals)...)
+	errs = append(errs, operator.Validate(field.NewPath("rhacsOperators"), c.RHACSOperators)...)
 	return errs
 }
 
-func validateCentralsConfig(path *field.Path, config CentralsConfig) field.ErrorList {
+func (c *Config) validateCentralsConfig(path *field.Path, config CentralsConfig) field.ErrorList {
 	var errs field.ErrorList
-	errs = append(errs, validateCentralOverrides(path.Child("overrides"), config.Overrides)...)
+	errs = append(errs, c.validateCentralOverrides(path.Child("overrides"), config.Overrides)...)
 	return errs
 }
 
-func validateCentralOverrides(path *field.Path, config []CentralOverride) field.ErrorList {
+func (c *Config) validateCentralOverrides(path *field.Path, config []CentralOverride) field.ErrorList {
 	var errs field.ErrorList
 	for i, override := range config {
-		errs = append(errs, validateCentralOverride(path.Index(i), override)...)
+		errs = append(errs, c.validateCentralOverride(path.Index(i), override)...)
 	}
 	return errs
 }
 
-func validateCentralOverride(path *field.Path, config CentralOverride) field.ErrorList {
+func (c *Config) validateCentralOverride(path *field.Path, config CentralOverride) field.ErrorList {
 	var errs field.ErrorList
-	errs = append(errs, validateInstanceIDs(path.Child("instanceIds"), config.InstanceIDs)...)
-	errs = append(errs, validatePatch(path.Child("patch"), config.Patch)...)
+	errs = append(errs, c.validateInstanceIDs(path.Child("instanceIds"), config.InstanceIDs)...)
+	errs = append(errs, c.validatePatch(path.Child("patch"), config.Patch)...)
 	return errs
 }
 
-func validatePatch(path *field.Path, patch string) field.ErrorList {
+func (c *Config) validatePatch(path *field.Path, patch string) field.ErrorList {
 	var errs field.ErrorList
 	if len(patch) == 0 {
 		errs = append(errs, field.Required(path, "patch is required"))
 	}
-	// try to unmarshal the patch into a Central instance to validate it
-	if err := yaml.Unmarshal([]byte(patch), &v1alpha1.Central{}); err != nil {
+
+	params := CentralParams{Name: "central-test-patch"}
+	gitopsService := NewService(NewProviderWithReader(NewStaticReader(*c)))
+	_, err := gitopsService.GetCentral(params)
+	if err != nil {
 		errs = append(errs, field.Invalid(path, patch, "invalid patch: "+err.Error()))
-		return errs
 	}
+
 	return errs
 }
 
-func validateInstanceIDs(path *field.Path, instanceIDs []string) field.ErrorList {
+func (c *Config) validateInstanceIDs(path *field.Path, instanceIDs []string) field.ErrorList {
 	var errs field.ErrorList
 	var seenInstanceIDs = make(map[string]struct{})
 	for i, instanceID := range instanceIDs {
@@ -80,12 +81,12 @@ func validateInstanceIDs(path *field.Path, instanceIDs []string) field.ErrorList
 			errs = append(errs, field.Duplicate(path, instanceID))
 		}
 		seenInstanceIDs[instanceID] = struct{}{}
-		errs = append(errs, validateInstanceID(path.Index(i), instanceID)...)
+		errs = append(errs, c.validateInstanceID(path.Index(i), instanceID)...)
 	}
 	return errs
 }
 
-func validateInstanceID(path *field.Path, instanceID string) field.ErrorList {
+func (c *Config) validateInstanceID(path *field.Path, instanceID string) field.ErrorList {
 	var errs field.ErrorList
 	if len(instanceID) == 0 {
 		errs = append(errs, field.Required(path, "instance ID is required"))

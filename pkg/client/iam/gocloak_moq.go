@@ -589,7 +589,7 @@ var _ GoCloak = &GoCloakMock{}
 //			ImportIdentityProviderConfigFunc: func(ctx context.Context, token string, realm string, fromURL string, providerID string) (map[string]string, error) {
 //				panic("mock out the ImportIdentityProviderConfig method")
 //			},
-//			ImportIdentityProviderConfigFromFileFunc: func(ctx context.Context, token string, realm string, providerID string, fileName string, fileBody io.Reader) (map[string]string, error) {
+//			ImportIdentityProviderConfigFromFileFunc: func(ctx context.Context, token string, realm string, providerID string, fileName string, fileBody io.reader) (map[string]string, error) {
 //				panic("mock out the ImportIdentityProviderConfigFromFile method")
 //			},
 //			LoginFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string) (*gocloak.JWT, error) {

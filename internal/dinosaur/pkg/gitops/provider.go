@@ -25,7 +25,6 @@ type provider struct {
 
 // NewProvider returns a new ConfigProvider.
 func NewProvider() ConfigProvider {
-
 	var reader Reader
 	if features.GitOpsCentrals.Enabled() {
 		reader = NewFileReader(configPath)
@@ -37,7 +36,18 @@ func NewProvider() ConfigProvider {
 		reader:            reader,
 		lastWorkingConfig: atomic.Pointer[Config]{},
 		validationFn: func(config Config) error {
-			return ValidateConfig(config).ToAggregate()
+			return config.ValidateConfig().ToAggregate()
+		},
+	}
+}
+
+// NewProviderWithReader returns a provider with a custom reader
+func NewProviderWithReader(reader Reader) ConfigProvider {
+	return &provider{
+		reader:            reader,
+		lastWorkingConfig: atomic.Pointer[Config]{},
+		validationFn: func(config Config) error {
+			return config.ValidateConfig().ToAggregate()
 		},
 	}
 }

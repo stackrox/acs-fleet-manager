@@ -45,14 +45,14 @@ func TestProvider_Get(t *testing.T) {
 			expectedErrorMetricCount: 0,
 			expectError:              false,
 		}, {
-			name:                     "Reader fails without last working config",
+			name:                     "reader fails without last working config",
 			hasLastWorkingConfig:     false,
 			reader:                   failingReader,
 			validator:                successfulValidation,
 			expectedErrorMetricCount: 1,
 			expectError:              true,
 		}, {
-			name:                     "Reader fails with last working config",
+			name:                     "reader fails with last working config",
 			hasLastWorkingConfig:     true,
 			reader:                   failingReader,
 			validator:                successfulValidation,
