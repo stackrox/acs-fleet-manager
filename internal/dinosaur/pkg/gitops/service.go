@@ -39,7 +39,7 @@ func (s *service) GetCentral(params CentralParams) (v1alpha1.Central, error) {
 	if err != nil {
 		return v1alpha1.Central{}, errors.Wrap(err, "failed to get GitOps configuration")
 	}
-	return applyConfigToCentral(cfg, central, params)
+	return s.applyConfigToCentral(cfg, central, params)
 }
 
 // CentralParams represents the parameters for a Central instance.
@@ -79,7 +79,7 @@ type CentralParams struct {
 }
 
 // applyConfigToCentral will apply the given GitOps configuration to the given Central instance.
-func applyConfigToCentral(config Config, central v1alpha1.Central, ctx CentralParams) (v1alpha1.Central, error) {
+func (s *service) applyConfigToCentral(config Config, central v1alpha1.Central, ctx CentralParams) (v1alpha1.Central, error) {
 	var overrides []CentralOverride
 	for _, override := range config.Centrals.Overrides {
 		if !shouldApplyCentralOverride(override, ctx) {
