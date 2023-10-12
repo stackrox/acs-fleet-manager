@@ -31,22 +31,23 @@ const (
 )
 
 var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
+	var client *fleetmanager.Client
+	var err error
 
 	BeforeEach(func() {
 		if !features.TargetedOperatorUpgrades.Enabled() {
 			Skip("Skipping canary upgrade test")
 		}
+		option := fleetmanager.OptionFromEnv()
+		auth, err := fleetmanager.NewStaticAuth(fleetmanager.StaticOption{StaticToken: option.Static.StaticToken})
+		Expect(err).ToNot(HaveOccurred())
+		client, err = fleetmanager.NewClient(fleetManagerEndpoint, auth)
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	if fmEndpointEnv := os.Getenv("FLEET_MANAGER_ENDPOINT"); fmEndpointEnv != "" {
 		fleetManagerEndpoint = fmEndpointEnv
 	}
-
-	option := fleetmanager.OptionFromEnv()
-	auth, err := fleetmanager.NewStaticAuth(fleetmanager.StaticOption{StaticToken: option.Static.StaticToken})
-	Expect(err).ToNot(HaveOccurred())
-	client, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
-	Expect(err).ToNot(HaveOccurred())
 
 	operatorConfig1 := operatorConfigForVersion(operatorVersion1)
 	operatorConfig2 := operatorConfigForVersion(operatorVersion2)

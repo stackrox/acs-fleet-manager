@@ -1164,8 +1164,7 @@ objects:
               mountPath: /config/dataplane-cluster-configuration-staging.yaml
               subPath: dataplane-cluster-configuration-staging.yaml
             - name: gitops-config
-              mountPath: /config/gitops-config
-              subPath: gitops-config
+              mountPath: /gitops-config
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
