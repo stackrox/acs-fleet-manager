@@ -48,8 +48,12 @@ func (f *rhSSOAuthFactory) CreateAuth(ctx context.Context, o Option) (Auth, erro
 		TokenURL:     provider.Endpoint().TokenURL,
 		Scopes:       []string{"openid"},
 	}
+	// This context is used to retrieve tokens at points in time that are arbitrarily
+	// far in the future. Current OAuth2 API does not allow bounding the time of an individual
+	// token retrieval. https://github.com/golang/oauth2/issues/262
+	tokenCtx := context.Background()
 	return &rhSSOAuth{
-		tokenSource: cfg.TokenSource(ctx),
+		tokenSource: cfg.TokenSource(tokenCtx),
 	}, nil
 }
 
