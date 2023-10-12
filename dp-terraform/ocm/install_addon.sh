@@ -110,6 +110,9 @@ OCM_COMMAND="patch"
 OCM_ENDPOINT="/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons/acs-fleetshard"
 OCM_PAYLOAD=$(cat << EOF
 {
+    "addon_version": {
+        "id": "0.2.0"
+    },
     "parameters": {
         "items": [
             { "id": "acscsEnvironment", "value": "${ENVIRONMENT}" },
@@ -118,6 +121,7 @@ OCM_PAYLOAD=$(cat << EOF
             { "id": "cloudwatchAwsAccessKeyId", "value": "${CLOUDWATCH_EXPORTER_AWS_ACCESS_KEY_ID:-}" },
             { "id": "cloudwatchAwsSecretAccessKey", "value": "${CLOUDWATCH_EXPORTER_AWS_SECRET_ACCESS_KEY:-}" },
             { "id": "fleetshardSyncAuthType", "value": "RHSSO" },
+            { "id": "fleetshardSyncImageTag", "value": "quay.io/${FLEETSHARD_SYNC_ORG}/${FLEETSHARD_SYNC_IMAGE}:${FLEETSHARD_SYNC_TAG}" },
             { "id": "fleetshardSyncAwsRegion", "value": "${CLUSTER_REGION}" },
             { "id": "fleetshardSyncAwsRoleArn", "value": "${FLEETSHARD_SYNC_AWS_ROLE_ARN}" },
             { "id": "fleetshardSyncFleetManagerEndpoint", "value": "${FM_ENDPOINT}" },
