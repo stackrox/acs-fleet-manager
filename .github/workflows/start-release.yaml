@@ -32,7 +32,7 @@ jobs:
     - name: Create Release Candidate branch
       uses: peterjgrainger/action-create-branch@v2.3.0
       env:
-        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        GITHUB_TOKEN: ${{secrets.ROX_BOT_PAT}}
       with:
         branch: 'rc-${{ inputs.release_version }}'
         sha: '${{ env.commit_hash }}'
@@ -40,6 +40,6 @@ jobs:
     - name: Open a pull request
       uses: tretuna/sync-branches@1.4.0
       with:
-        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        GITHUB_TOKEN: ${{secrets.ROX_BOT_PAT}}
         FROM_BRANCH: 'rc-${{ inputs.release_version }}'
         TO_BRANCH: 'stage'
