@@ -68,6 +68,10 @@ spec:
           value: {{ .Values.fleetshardSync.auditLogs.skipTLSVerify | quote }}
         - name: MANAGED_DB_ENABLED
           value: {{ .Values.fleetshardSync.managedDB.enabled | quote }}
+        - name: RHACS_GITOPS_ENABLED
+          value: "true"
+        - name: RHACS_TARGETED_OPERATOR_UPGRADES
+          value: "true"
         {{- if eq .Values.fleetshardSync.managedDB.enabled true }}
         - name: MANAGED_DB_SUBNET_GROUP
           value: {{ required "fleetshardSync.managedDB.subnetGroup is required when fleetshardSync.managedDB.enabled = true" .Values.fleetshardSync.managedDB.subnetGroup }}
