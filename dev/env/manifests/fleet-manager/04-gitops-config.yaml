@@ -17,19 +17,12 @@ data:
           image: "quay.io/rhacs-eng/stackrox-operator:4.2.1-rc.3"
           centralLabelSelector: "rhacs.redhat.com/version-selector=4.2.1-rc.3"
           securedClusterReconcilerEnabled: false
-          resources:
-            requests:
-              cpu: 100m
-              memory: 200Mi
 
         - deploymentName: "rhacs-operator-4-2-1"
           image: "quay.io/rhacs-eng/stackrox-operator:4.2.1"
           centralLabelSelector: "rhacs.redhat.com/version-selector=4.2.1"
           securedClusterReconcilerEnabled: false
-          resources:
-            requests:
-              cpu: 100m
-              memory: 200Mi
+
     centrals:
       overrides:
         # Set label for all centrals to 4.2.1
