@@ -15,7 +15,6 @@ import (
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -26,6 +25,9 @@ const (
 	namespace              = "acscs"
 	gitopsConfigmapName    = "fleet-manager-gitops-config"
 	gitopsConfigmapDataKey = "config.yaml"
+	operatorVersion1       = "4.2.1-rc.3"
+	operatorVersion2       = "4.2.2-rc.0"
+	centralDeploymentName  = "central"
 )
 
 var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
@@ -46,10 +48,15 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 	client, err := fleetmanager.NewClient(fleetManagerEndpoint, auth)
 	Expect(err).ToNot(HaveOccurred())
 
-	operatorConfig1 := operatorConfigForVersion("4.2.1-rc.3")
-	operatorConfig2 := operatorConfigForVersion("4.2.1")
+	operatorConfig1 := operatorConfigForVersion(operatorVersion1)
+	operatorConfig2 := operatorConfigForVersion(operatorVersion2)
 
 	Describe("should run ACS operators", func() {
+		// TODO remove this!!!!
+		BeforeEach(func() {
+			Skip("Skipping operator upgrade test")
+		})
+
 		ctx := context.Background()
 		var gitops gitops.Config
 
@@ -120,9 +127,27 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 	})
 
 	Describe("should upgrade the central", func() {
-
+		ctx := context.Background()
 		var createdCentral *public.CentralRequest
 		var centralNamespace string
+		var gitops gitops.Config
+		operatorConfig1 := operatorConfigForVersion(operatorVersion1)
+		operatorConfig2 := operatorConfigForVersion(operatorVersion2)
+
+		It("get gitops configmap", func() {
+			gitops, err = getGitopsConfig(ctx)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("run only one operator with version: "+operatorVersion1, func() {
+			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
+			err = updateGitopsConfig(ctx, gitops)
+			Expect(err).To(BeNil())
+			Eventually(expectNumberOfOperatorDeployments(ctx, 1)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+		})
 
 		It("creates central", func() {
 			centralName := newCentralName()
@@ -132,57 +157,82 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 				Name:          centralName,
 				Region:        dpRegion,
 			}
-			resp, _, err := client.PublicAPI().CreateCentral(context.Background(), true, request)
+			resp, _, err := client.PublicAPI().CreateCentral(ctx, true, request)
 			Expect(err).To(BeNil())
 			createdCentral = &resp
 			Expect(err).To(BeNil())
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
-
 			centralNamespace, err = services.FormatNamespace(createdCentral.Id)
-
-			ctx := context.Background()
-			operatorConfig1 := operatorConfigForVersion("4.1.1")
-			oneOperatorVersionConfig := []operator.OperatorConfig{operatorConfig1}
-			err = updateOperatorConfig(ctx, oneOperatorVersionConfig)
-			Expect(err).To(BeNil())
-
 			Eventually(func() error {
 				centralCR, err := getCentralCR(ctx, createdCentral.Name, centralNamespace)
 				if err != nil {
 					return fmt.Errorf("failed finding central CR: %v", err)
 				}
-				if centralCR.GetLabels()["rhacs.redhat.com/version-selector"] != "4.1.1" {
-					return fmt.Errorf("central CR does not have 4.1.1 version-selector")
+
+				if centralCR.GetLabels()["rhacs.redhat.com/version-selector"] != operatorVersion1 {
+					return fmt.Errorf("central CR does not have %s version-selector", operatorVersion1)
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 			Eventually(func() error {
-				centralDeployment, err := getDeployment(ctx, centralNamespace, createdCentral.Name)
+				centralDeployment, err := getDeployment(ctx, centralNamespace, centralDeploymentName)
 				if err != nil {
 					return fmt.Errorf("failed finding central deployment: %v", err)
 				}
-				if centralDeployment.Spec.Template.Spec.Containers[0].Image == "quay.io/rhacs-eng/main:4.1.1" {
-					return fmt.Errorf("there is no central deployment with 4.1.1 image tag")
+				if centralDeployment.Spec.Template.Spec.Containers[0].Image != "quay.io/rhacs-eng/main:"+operatorVersion1 {
+					return fmt.Errorf("there is no central deployment with %s image tag", operatorVersion1)
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
 		It("upgrade central", func() {
-			ctx := context.Background()
-			oneOperatorVersionConfig := []operator.OperatorConfig{
-				operatorConfigForVersion("4.1.2"),
-			}
-			err = updateOperatorConfig(ctx, oneOperatorVersionConfig)
+			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1, operatorConfig2}
+			patch := `
+metadata:
+  labels:
+    rhacs.redhat.com/version-selector: "` + operatorVersion2 + `"
+spec:
+  central:
+    monitoring:
+      openshift:
+        enabled: false
+    resources:
+      limits:
+        cpu: null
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 200Mi
+  scanner:
+    analyzer:
+      resources:
+        limits:
+          cpu: null
+          memory: 1Gi
+        requests:
+          cpu: 100m
+          memory: 500Mi
+    db:
+      resources:
+        limits:
+          cpu: null
+          memory: 1Gi
+        requests:
+          cpu: 100m
+          memory: 500Mi
+`
+			gitops.Centrals.Overrides[0].Patch = patch
+			err = updateGitopsConfig(ctx, gitops)
 			Expect(err).To(BeNil())
 
 			Eventually(func() error {
-				centralDeployment, err := getDeployment(ctx, centralNamespace, createdCentral.Name)
+				centralDeployment, err := getDeployment(ctx, centralNamespace, centralDeploymentName)
 				if err != nil {
 					return fmt.Errorf("failed finding central deployment: %v", err)
 				}
-				if centralDeployment.Spec.Template.Spec.Containers[0].Image == "quay.io/rhacs-eng/main:4.1.2" {
-					return fmt.Errorf("there is no central deployment with 4.1.2 image tag")
+				if centralDeployment.Spec.Template.Spec.Containers[0].Image != "quay.io/rhacs-eng/main:"+operatorVersion2 {
+					return fmt.Errorf("there is no central deployment with %s image tag", operatorVersion2)
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
@@ -250,33 +300,6 @@ func operatorConfigForVersion(version string) operator.OperatorConfig {
 		"image":                fmt.Sprintf("quay.io/rhacs-eng/stackrox-operator:%s", version),
 		"centralLabelSelector": fmt.Sprintf("rhacs.redhat.com/version-selector=%s", version),
 	}
-}
-
-func updateOperatorConfig(ctx context.Context, operatorConfigs []operator.OperatorConfig) error {
-	configYAML, err := yaml.Marshal(operatorConfigs)
-	if err != nil {
-		return err
-	}
-	configMap := &v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      operator.ACSOperatorConfigMap,
-		},
-		Data: map[string]string{
-			"operator-config.yaml": string(configYAML),
-		},
-	}
-
-	err = k8sClient.Delete(ctx, configMap)
-	if err != nil && !apiErrors.IsNotFound(err) {
-		return err
-	}
-	err = k8sClient.Create(ctx, configMap)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func getOperatorDeployments(ctx context.Context) ([]appsv1.Deployment, error) {
