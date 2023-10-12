@@ -36,13 +36,12 @@ spec:
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app.kubernetes.io/component
-                operator: In
-                values:
-                - egress-proxy
-            topologyKey: kubernetes.io/hostname
+            - podAffinityTerm:
+                topologyKey: "kubernetes.io/hostname"
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: egress-proxy
+              weight: 100
       containers:
       - name: egress-proxy
         image: {{ .Values.egressProxy.image }}
