@@ -98,7 +98,7 @@ var _ = BeforeSuite(func() {
 
 	runAuthTests = enableTestsGroup("Auth", "RUN_AUTH_E2E", "false")
 	runCentralTests = enableTestsGroup("Central", "RUN_CENTRAL_E2E", "true")
-	runCanaryUpgradeTests = enableTestsGroup("Canary Upgrade", "RHACS_STANDALONE_MODE", "false")
+	runCanaryUpgradeTests = enableTestsGroup("CanaryUpgrade", "RUN_CANARY_UPGRADE_E2E", "true")
 })
 
 var _ = AfterSuite(func() {

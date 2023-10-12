@@ -196,7 +196,7 @@ func TestRemoveUnusedEmpty(t *testing.T) {
 	u := NewACSOperatorManager(fakeClient)
 	ctx := context.Background()
 
-	err := u.RemoveUnusedOperators(ctx, []string{})
+	err := u.RemoveUnusedOperators(ctx, []OperatorConfig{})
 	require.NoError(t, err)
 }
 
@@ -210,7 +210,10 @@ func TestRemoveOneUnusedOperator(t *testing.T) {
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: serviceAccount.GetName()}, serviceAccount)
 	require.NoError(t, err)
 
-	err = u.RemoveUnusedOperators(ctx, []string{operatorImage2})
+	err = u.RemoveUnusedOperators(ctx, []OperatorConfig{{
+		"deploymentName": deploymentName2,
+		"image":          operatorImage2,
+	}})
 	require.NoError(t, err)
 	// deployment is deleted but service account still persist
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
@@ -224,7 +227,10 @@ func TestRemoveOneUnusedOperatorFromMany(t *testing.T) {
 	u := NewACSOperatorManager(fakeClient)
 	ctx := context.Background()
 
-	err := u.RemoveUnusedOperators(ctx, []string{operatorImage2})
+	err := u.RemoveUnusedOperators(ctx, []OperatorConfig{{
+		"deploymentName": deploymentName2,
+		"image":          operatorImage2,
+	}})
 	require.NoError(t, err)
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.True(t, errors.IsNotFound(err))
@@ -234,7 +240,7 @@ func TestRemoveOneUnusedOperatorFromMany(t *testing.T) {
 	require.NoError(t, err)
 
 	// remove remaining
-	err = u.RemoveUnusedOperators(ctx, []string{})
+	err = u.RemoveUnusedOperators(ctx, []OperatorConfig{})
 	require.NoError(t, err)
 	err = fakeClient.Get(context.Background(), client.ObjectKey{Namespace: ACSOperatorNamespace, Name: operatorDeployment1.Name}, operatorDeployment1)
 	require.True(t, errors.IsNotFound(err))
@@ -249,7 +255,7 @@ func TestRemoveMultipleUnusedOperators(t *testing.T) {
 	u := NewACSOperatorManager(fakeClient)
 	ctx := context.Background()
 
-	err := u.RemoveUnusedOperators(ctx, []string{})
+	err := u.RemoveUnusedOperators(ctx, []OperatorConfig{})
 	require.NoError(t, err)
 	deployments := &appsv1.DeploymentList{}
 	err = fakeClient.List(context.Background(), deployments)

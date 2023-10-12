@@ -69,11 +69,6 @@ if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
     $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
 fi
 
-if [[ "$RHACS_STANDALONE_MODE" == "true" ]]; then
-    log "Updating operator configmap"
-    apply "${MANIFESTS_DIR}/rhacs-operator/03-operators-config.yaml"
-fi
-
 log "Deploying fleetshard-sync"
 TENANT_IMAGE_PULL_SECRET=""
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then # pragma: allowlist secret
