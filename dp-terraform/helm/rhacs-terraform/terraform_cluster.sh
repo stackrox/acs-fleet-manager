@@ -35,6 +35,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.nonexistent.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
+    OPERATOR_ENABLED="true"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_CHANNEL="stable"
     OPERATOR_VERSION="v4.0.2"
@@ -50,6 +51,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
+    OPERATOR_ENABLED="false"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_CHANNEL="stable"
     OPERATOR_VERSION="v4.1.0"
@@ -65,6 +67,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="stage"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
+    OPERATOR_ENABLED="true"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_CHANNEL="stable"
     OPERATOR_VERSION="v4.1.0"
@@ -80,6 +83,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
+    OPERATOR_ENABLED="true"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_CHANNEL="stable"
     OPERATOR_VERSION="v4.1.0"
@@ -139,7 +143,7 @@ fi
 # TODO(ROX-16645): set acsOperator.enabled to false
 invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --namespace rhacs \
-  --set acsOperator.enabled=true \
+  --set acsOperator.enabled="${OPERATOR_ENABLED}" \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
   --set acsOperator.channel="${OPERATOR_CHANNEL}" \
