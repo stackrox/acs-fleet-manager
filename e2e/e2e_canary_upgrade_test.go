@@ -57,67 +57,57 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 	operatorConfig2 := operatorConfigForVersion("4.1.2")
 
 	Describe("should run ACS operators", func() {
+		ctx := context.Background()
 
-		It("should deploy single operator", func() {
-			ctx := context.Background()
+		It("should deploy one operator with label selector 4.1.1", func() {
 			operatorConfigs := []operator.OperatorConfig{operatorConfig1}
 			err := updateOperatorConfig(ctx, operatorConfigs)
-			Expect(err).To(BeNil())
 
-			It("should contain one operator deployment", func() {
-				Eventually(getOperatorDeployments(ctx)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(HaveLen(1))
-			})
-			It("should deploy operator with label selector 4.1.1", func() {
-				Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(Succeed())
-			})
+			Expect(err).To(BeNil())
+			Eventually(getOperatorDeployments(ctx)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(HaveLen(1))
+
+			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
-		It("should deploy two operators with different versions", func() {
-			ctx := context.Background()
+		It("should deploy 2 operators with label selectors 4.1.1 and 4.1.2", func() {
 			operatorConfigs := []operator.OperatorConfig{operatorConfig1, operatorConfig2}
-
 			err := updateOperatorConfig(ctx, operatorConfigs)
 			Expect(err).To(BeNil())
 
-			It("should contain only two operator deployments", func() {
-				Eventually(getOperatorDeployments(ctx)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(HaveLen(2))
-			})
-			It("should deploy operator with label selector 4.1.1", func() {
-				Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(Succeed())
-			})
-			It("should deploy operator with label selector 4.1.2", func() {
-				Eventually(operatorMatchesConfig(ctx, operatorConfig2)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(Succeed())
-			})
+			Eventually(getOperatorDeployments(ctx)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(HaveLen(2))
+
+			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+
+			Eventually(operatorMatchesConfig(ctx, operatorConfig2)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
 		It("should delete the removed operator", func() {
-			ctx := context.Background()
 			operatorConfigs := []operator.OperatorConfig{operatorConfig1}
 			err := updateOperatorConfig(ctx, operatorConfigs)
 			Expect(err).To(BeNil())
 
-			It("should contain only one operator deployments", func() {
-				Eventually(getOperatorDeployments(ctx)).
-					WithTimeout(waitTimeout).
-					WithPolling(defaultPolling).
-					Should(HaveLen(1))
-			})
+			// check only one operator is exist
+			Eventually(getOperatorDeployments(ctx)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(HaveLen(1))
 
+			// check operator only 4.1.2 operator is left
 			It("should deploy operator with label selector 4.1.2", func() {
 				Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
 					WithTimeout(waitTimeout).
@@ -128,7 +118,6 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 	})
 
 	Describe("should upgrade the central", func() {
-
 		var createdCentral *public.CentralRequest
 		var centralNamespace string
 
@@ -164,6 +153,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+
 			Eventually(func() error {
 				centralDeployment, err := getDeployment(ctx, centralNamespace, createdCentral.Name)
 				if err != nil {
