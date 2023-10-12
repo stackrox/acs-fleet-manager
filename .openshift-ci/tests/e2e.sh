@@ -9,8 +9,11 @@ export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 
-RUN_AUTH_E2E_DEFAULT="false"
-RUN_CENTRAL_E2E_DEFAULT="true"
+export RUN_AUTH_E2E="false"
+export RUN_CENTRAL_E2E="true"
+# TODO: Enable gitops and tragted upgrades in e2e tests
+export RHACS_GITOPS_ENABLED="true"
+export RHACS_TARGETED_OPERATOR_UPGRADES="true"
 
 if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     # We are running in an OpenShift CI context, configure accordingly.
@@ -29,7 +32,7 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
     export GINKGO_FLAGS="--no-color -v"
     # When running in OpenShift CI, ensure we also run the auth E2E tests.
-    RUN_AUTH_E2E_DEFAULT="true"
+    export RUN_AUTH_E2E_DEFAULT="true"
 fi
 
 init
@@ -39,8 +42,6 @@ if [[ "$SPAWN_LOGGER" == "true" && "$LOG_DIR" == "" ]]; then
     LOG_DIR=$(mktemp -d)
 fi
 export LOG_DIR
-export RUN_AUTH_E2E=${RUN_AUTH_E2E:-$RUN_AUTH_E2E_DEFAULT}
-export RUN_CENTRAL_E2E=${RUN_CENTRAL_E2E:-$RUN_CENTRAL_E2E_DEFAULT}
 
 log
 log "** Entrypoint for ACSCS E2E Tests **"

@@ -70,11 +70,6 @@ if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
     $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
 fi
 
-if [[ "$RHACS_STANDALONE_MODE" == "true" ]]; then
-    log "Updating operator configmap"
-    apply "${MANIFESTS_DIR}/rhacs-operator/03-operators-config.yaml"
-fi
-
 log "Deploying fleetshard-sync"
 exec_fleetshard_sync.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
 inject_exported_env_vars "$ACSCS_NAMESPACE" "fleetshard-sync"
