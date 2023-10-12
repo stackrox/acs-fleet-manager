@@ -1168,33 +1168,10 @@ objects:
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
-
-              - name: CENTRAL_CPU_REQUEST
-                value: "${CENTRAL_CPU_REQUEST}"
-              - name: CENTRAL_MEMORY_REQUEST
-                value: "${CENTRAL_MEMORY_REQUEST}"
-              - name: CENTRAL_CPU_LIMIT
-                value: "${CENTRAL_CPU_LIMIT}"
-              - name: CENTRAL_MEMORY_LIMIT
-                value: "${CENTRAL_MEMORY_LIMIT}"
-
-              - name: SCANNER_ANALYZER_CPU_REQUEST
-                value: "${SCANNER_ANALYZER_CPU_REQUEST}"
-              - name: SCANNER_ANALYZER_MEMORY_REQUEST
-                value: "${SCANNER_ANALYZER_MEMORY_REQUEST}"
-              - name: SCANNER_ANALYZER_CPU_LIMIT
-                value: "${SCANNER_ANALYZER_CPU_LIMIT}"
-              - name: SCANNER_ANALYZER_MEMORY_LIMIT
-                value: "${SCANNER_ANALYZER_MEMORY_LIMIT}"
-
-              - name: SCANNER_DB_CPU_REQUEST
-                value: "${SCANNER_DB_CPU_REQUEST}"
-              - name: SCANNER_DB_MEMORY_REQUEST
-                value: "${SCANNER_DB_MEMORY_REQUEST}"
-              - name: SCANNER_DB_CPU_LIMIT
-                value: "${SCANNER_DB_CPU_LIMIT}"
-              - name: SCANNER_DB_MEMORY_LIMIT
-                value: "${SCANNER_DB_MEMORY_LIMIT}"
+              - name: RHACS_GITOPS_ENABLED
+                value: "true"
+              - name: RHACS_TARGETED_OPERATOR_UPGRADES
+                value: "true"
             command:
             - /usr/local/bin/fleet-manager
             - serve
