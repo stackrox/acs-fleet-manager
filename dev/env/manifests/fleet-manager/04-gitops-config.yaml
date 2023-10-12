@@ -50,8 +50,8 @@ data:
                     enabled: false
                 resources:
                   limits:
-                    cpu: null
-                    memory: 1Gi
+                    cpu: 200m
+                    memory: 300Mi
                   requests:
                     cpu: 100m
                     memory: 200Mi
@@ -59,16 +59,19 @@ data:
                 analyzer:
                   resources:
                     limits:
-                      cpu: null
-                      memory: 1Gi
+                      cpu: 200m
+                      memory: 300M
                     requests:
-                      cpu: 100m
-                      memory: 500Mi
+                      cpu: 200m
+                      memory: 300Mi
+                  scaling:
+                    autoScaling: "Disabled"
+                    replicas: 1
                 db:
                   resources:
                     limits:
-                      cpu: null
-                      memory: 1Gi
+                      cpu: 200m
+                      memory: 200m
                     requests:
-                      cpu: 100m
-                      memory: 500Mi
+                      cpu: 200m
+                      memory: 200Mi
