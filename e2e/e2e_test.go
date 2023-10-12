@@ -161,9 +161,14 @@ var _ = Describe("Central", func() {
 			if createdCentral == nil {
 				Fail("central not created")
 			}
-			Eventually(func() string {
+
+			success := Eventually(func() string {
 				return centralStatus(createdCentral.Id, client)
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
+
+			if !success {
+				Fail("Central could not get to ready state")
+			}
 		})
 
 		It("should create central routes", func() {
