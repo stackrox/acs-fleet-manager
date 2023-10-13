@@ -12,4 +12,3 @@ Config Definition: https://github.com/openshift/release/tree/master/ci-operator/
 - View the `Environment`, copy the `KUBECONFIG` path, open the Pod's `Terminal` view in the UI and run `cat <KUBECONFIG_PATH>`
 - Copy KUBECONFIG content and create the KUBECONFIG locally
 - Run `export KUBECONFIG=/local/path/to/kubeconfig`
-- 
