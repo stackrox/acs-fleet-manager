@@ -23,7 +23,7 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
         secret_value="$(cat "$cred")"
         case "$secret_name" in
         "IMAGE_PUSH_REGISTRY")
-            echo "IMAGE_PUSH_REGISTRY=${secret_value}"
+            log "Got secret IMAGE_PUSH_REGISTRY=${secret_value}"
             ;;
         *)
             log "Got secret ${secret_name}"
