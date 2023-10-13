@@ -63,30 +63,16 @@ func validatePatch(path *field.Path, patch string) field.ErrorList {
 		errs = append(errs, field.Required(path, "patch is required"))
 		return errs
 	}
-
-	var dummyParams = createDummyCentralParams()
-	dummyConfig := Config{
-		Centrals: CentralsConfig{
-			Overrides: []CentralOverride{
-				{
-					Patch:       patch,
-					InstanceIDs: []string{"*"},
-				},
-			},
-		},
-	}
-
-	if _, err := renderCentral(dummyParams, dummyConfig); err != nil {
+	if err := tryRenderDummyCentralWithPatch(patch); err != nil {
 		errs = append(errs, field.Invalid(path, patch, "invalid patch: "+err.Error()))
 	}
 	return errs
 }
 
-// createDummyCentralParams will return a generic CentralParams so that
-// the patch template can be rendered. We test that the patch is valid
-// by running it with dummy values.
-func createDummyCentralParams() CentralParams {
-	return CentralParams{
+// tryRenderDummyCentralWithPatch renders a dummy Central instance with the given patch.
+// useful to test that a patch is valid.
+func tryRenderDummyCentralWithPatch(patch string) error {
+	var dummyParams = CentralParams{
 		ID:               "id",
 		Name:             "name",
 		Namespace:        "namespace",
@@ -104,6 +90,20 @@ func createDummyCentralParams() CentralParams {
 		InstanceType:     "instanceType",
 		IsInternal:       false,
 	}
+	dummyConfig := Config{
+		Centrals: CentralsConfig{
+			Overrides: []CentralOverride{
+				{
+					Patch:       patch,
+					InstanceIDs: []string{"*"},
+				},
+			},
+		},
+	}
+	if _, err := renderCentral(dummyParams, dummyConfig); err != nil {
+		return err
+	}
+	return nil
 }
 
 func validateInstanceIDs(path *field.Path, instanceIDs []string) field.ErrorList {
