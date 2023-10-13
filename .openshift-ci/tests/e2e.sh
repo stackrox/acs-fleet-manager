@@ -31,7 +31,7 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
     export GINKGO_FLAGS="--no-color -v"
     # When running in OpenShift CI, ensure we also run the auth E2E tests.
-    export RUN_AUTH_E2E_DEFAULT="true"
+    export RUN_AUTH_E2E="true"
 fi
 
 init
