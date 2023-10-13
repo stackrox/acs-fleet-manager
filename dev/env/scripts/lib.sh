@@ -67,7 +67,7 @@ init() {
         export PATH="$GITROOT/dev/env/scripts:${PATH}"
     fi
 
-    available_cluster_types=$(find "${GITROOT}/dev/env/defaults" -maxdepth 1 -type d -name "cluster-type-*" -print0 | xargs -0 -n1 basename | cut -d - -f 3 | paste -sd "," -)
+    available_cluster_types=$(find "${GITROOT}/dev/env/defaults" -maxdepth 1 -type d -name "cluster-type-*" -print0 | xargs -0 -n1 basename | sed -e 's/^cluster-type-//;' | sort | paste -sd "," -)
 
     export CLUSTER_TYPE="${CLUSTER_TYPE:-$CLUSTER_TYPE_DEFAULT}"
     if [[ -z "$CLUSTER_TYPE" ]]; then
