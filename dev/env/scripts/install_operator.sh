@@ -7,8 +7,6 @@ source "${GITROOT}/dev/env/scripts/lib.sh"
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/docker.sh"
 
-init
-
 if [[ "$RHACS_TARGETED_OPERATOR_UPGRADES" == "true" ]]; then
   exit 0
 fi
@@ -24,20 +22,25 @@ if [[ "$INSTALL_OLM" == "true" ]]; then
     else
         log "OLM already installed..."
     fi
+else
+    log "Skipping installation of OLM"
 fi
 
-    log "Installing operator"
+log "Installing operator"
+apply "${MANIFESTS_DIR}"/rhacs-operator/*.yaml # This installs the operator-group.
 
-    apply "${MANIFESTS_DIR}"/rhacs-operator/*.yaml # This installs the operator-group.
+if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
+    apply "${MANIFESTS_DIR}"/rhacs-operator/quay/01-catalogsource.yaml
+else
+    log "Skipping installation of RHACS Operator CatalogSource"
+fi
 
-    if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
-        apply "${MANIFESTS_DIR}"/rhacs-operator/quay/01-catalogsource.yaml
-    fi
-
-    # pragma: allowlist nextline secret
-    if [[ "$OPERATOR_SOURCE" == "quay" && "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
-        inject_ips "$STACKROX_OPERATOR_NAMESPACE" "stackrox-operator-test-index" "quay-ips"
-    fi
+# pragma: allowlist nextline secret
+if [[ "$OPERATOR_SOURCE" == "quay" && "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
+    inject_ips "$STACKROX_OPERATOR_NAMESPACE" "stackrox-operator-test-index" "quay-ips"
+else
+    log "Skipping injection of ImagePullSecrets into ${STACKROX_OPERATOR_NAMESPACE}/stackrox-operator-test-index"
+fi
 
 if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
     # Need to wait with the subscription creation until the catalog source has been updated,
@@ -74,16 +77,24 @@ if [[ "$OPERATOR_SOURCE" == "quay" ]]; then
     fi
 
     # This creates the subscription.
+    log "Installing RHACS Operator Subscription"
     apply "${MANIFESTS_DIR}"/rhacs-operator/quay/*.yaml
 
     # Apparently we potentially have to wait longer than the default of 60s sometimes...
     wait_for_resource_to_appear "$STACKROX_OPERATOR_NAMESPACE" "serviceaccount" "rhacs-operator-controller-manager" 180
     sleep 10 # Wait for ServiceAccount created by OLM to settle, otherwise the patching below might have no effect.
+
     inject_ips "$STACKROX_OPERATOR_NAMESPACE" "rhacs-operator-controller-manager" "quay-ips"
     # Possibly the imagePullSecrets were not picked up yet, which is why we respawn them:
+
+    log "Restarting RHACS Operator pod to pick up imagePullSecrets"
     $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" delete pod -l app=rhacs-operator
+
 elif [[ "$OPERATOR_SOURCE" == "marketplace" ]]; then
+    log "Installing RHACS Operator from Marketplace"
     apply "${MANIFESTS_DIR}"/rhacs-operator/marketplace/*.yaml
+else
+    log "Skipping installation of RHACS Operator"
 fi
 
 wait_for_container_to_become_ready "$STACKROX_OPERATOR_NAMESPACE" "app=rhacs-operator" "manager" 900

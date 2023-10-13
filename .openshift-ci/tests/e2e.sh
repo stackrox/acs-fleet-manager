@@ -17,12 +17,20 @@ export RHACS_TARGETED_OPERATOR_UPGRADES="true"
 if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     # We are running in an OpenShift CI context, configure accordingly.
     log "Executing in OpenShift CI context"
+
     log "Retrieving secrets from Vault mount"
     shopt -s nullglob
     for cred in /var/run/rhacs-ms-e2e-tests/[A-Z]*; do
         secret_name="$(basename "$cred")"
         secret_value="$(cat "$cred")"
-        log "Got secret ${secret_name}"
+        case "$secret_name" in
+        "IMAGE_PUSH_REGISTRY")
+            log "Got secret IMAGE_PUSH_REGISTRY=${secret_value}"
+            ;;
+        *)
+            log "Got secret ${secret_name}"
+            ;;
+        esac
         export "${secret_name}"="${secret_value}"
     done
     export STATIC_TOKEN="${FLEET_STATIC_TOKEN:-}"
@@ -35,6 +43,8 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export QUAY_USER="${IMAGE_PUSH_USERNAME}"
     export QUAY_TOKEN="${IMAGE_PUSH_PASSWORD}"
     export INHERIT_IMAGEPULLSECRETS="true"
+else
+    log "Executing in local context"
 fi
 
 init
@@ -72,6 +82,8 @@ if [[ "$RUN_AUTH_E2E" == "true" ]]; then
     export OCM_TOKEN
 
     # The RH SSO secrets are correctly set up within vault, the tests will be skipped if they are empty.
+else
+    log "Skipping setup of authentication related environment variables for auth E2E tests because RUN_AUTH_E2E is not set to true"
 fi
 
 if [[ -z "$STATIC_TOKEN" ]]; then
@@ -85,6 +97,7 @@ fi
 log
 
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then # pragma: allowlist secret
+    log "INHERIT_IMAGEPULLSECRETS is true, verifying that QUAY_USER and QUAY_TOKEN are set"
     if [[ -z "${QUAY_USER:-}" ]]; then
         die "QUAY_USER needs to be set"
     fi
