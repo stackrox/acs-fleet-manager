@@ -11,7 +11,6 @@ source "${GITROOT}/dev/env/scripts/lib.sh"
 
 export RUN_AUTH_E2E="false"
 export RUN_CENTRAL_E2E="true"
-# TODO: Enable gitops and tragted upgrades in e2e tests
 export RHACS_GITOPS_ENABLED="true"
 export RHACS_TARGETED_OPERATOR_UPGRADES="true"
 
