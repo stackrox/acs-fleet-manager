@@ -10,7 +10,7 @@ source "${GITROOT}/dev/env/scripts/docker.sh"
 init
 
 cat <<EOF
-** Preparing ACSCS Test Environment **
+** Preparing ACSCS Environment **
 
 Image: ${FLEET_MANAGER_IMAGE}
 Namespace: ${ACSCS_NAMESPACE}
@@ -30,7 +30,6 @@ Output:
 ${kc_output:-(no output)}"
 fi
 
-# Create Namespaces.
 apply "${MANIFESTS_DIR}/shared"
 wait_for_default_service_account "$ACSCS_NAMESPACE"
 
@@ -42,14 +41,19 @@ if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then
     create-imagepullsecrets
     inject_ips "$ACSCS_NAMESPACE" "default" "quay-ips"
     inject_ips "$STACKROX_OPERATOR_NAMESPACE" "default" "quay-ips"
+else
+    log "Skipping creation of ImagePullSecrets because INHERIT_IMAGEPULLSECRETS is not true"
 fi
 
 if [[ "$INSTALL_OPENSHIFT_ROUTER" == "true" ]]; then
     log "Installing OpenShift Router"
     apply "${MANIFESTS_DIR}/openshift-router"
+else
+    log "Skipping installation of OpenShift Router"
 fi
 
 if [[ "$INSTALL_OPERATOR" == "true" ]]; then
+    log "Installing RHACS Operator"
     install_operator.sh
 else
     # We will be running without RHACS operator, but at least install our CRDs.
@@ -58,6 +62,7 @@ else
 fi
 
 if [[ "$RHACS_STANDALONE_MODE" == "true" ]]; then
+    log "Updating operator configmap to enable standalone mode"
     apply "${MANIFESTS_DIR}/rhacs-operator/03-operators-config.yaml"
 fi
 
