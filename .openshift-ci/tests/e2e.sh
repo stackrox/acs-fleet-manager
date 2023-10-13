@@ -43,6 +43,7 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export INHERIT_IMAGEPULLSECRETS="true" # pragma: allowlist secret
 else
     log "Executing in local context"
+    log "Something"
 fi
 
 init
