@@ -6,7 +6,6 @@ GITROOT="$(git rev-parse --show-toplevel)"
 export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
-init
 
 apply_res() {
     local path="$1"
