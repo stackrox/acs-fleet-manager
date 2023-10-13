@@ -82,7 +82,7 @@ type RouteConfig struct {
 	ThrottlingEnabled bool `env:"ROUTE_ENABLE_THROTTLING" envDefault:"true"`
 	ConcurrentTCP     int  `env:"ROUTE_CONCURRENT_TCP_CONNECTIONS" envDefault:"512"`
 	RateHTTP          int  `env:"ROUTE_HTTP_REQUEST_RATE" envDefault:"32768"`
-	RateTCP           int  `env:"ROUTE_TCP_NEW_CONNECTION_RATE" envDefault:"256"`
+	RateTCP           int  `env:"ROUTE_TCP_NEW_CONNECTION_RATE" envDefault:"512"`
 }
 
 // GetConfig retrieves the current runtime configuration from the environment and returns it.
