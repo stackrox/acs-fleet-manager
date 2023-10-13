@@ -25,8 +25,8 @@ const (
 	namespace              = "acscs"
 	gitopsConfigmapName    = "fleet-manager-gitops-config"
 	gitopsConfigmapDataKey = "config.yaml"
-	operatorVersion1       = "4.2.1-rc.3"
-	operatorVersion2       = "4.2.2-rc.0"
+	operatorVersion1       = "4.2.2-rc.0"
+	operatorVersion2       = "4.2.0-366-g069902f3f9"
 	centralDeploymentName  = "central"
 )
 
