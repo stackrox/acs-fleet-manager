@@ -293,7 +293,7 @@ func updateGitopsConfig(ctx context.Context, config gitops.Config) error {
 
 func operatorConfigForVersion(version string) operator.OperatorConfig {
 	return operator.OperatorConfig{
-		"deploymentName":       fmt.Sprintf("rhacs-operator-%s", version),
+		"deploymentName":       fmt.Sprintf("stackrox-operator-%s", version),
 		"image":                fmt.Sprintf("quay.io/rhacs-eng/stackrox-operator:%s", version),
 		"centralLabelSelector": fmt.Sprintf("rhacs.redhat.com/version-selector=%s", version),
 	}
@@ -301,7 +301,7 @@ func operatorConfigForVersion(version string) operator.OperatorConfig {
 
 func getOperatorDeployments(ctx context.Context) ([]appsv1.Deployment, error) {
 	deployments := appsv1.DeploymentList{}
-	labels := map[string]string{"app": "rhacs-operator"}
+	labels := map[string]string{"app": "stackrox-operator"}
 	err := k8sClient.List(ctx, &deployments,
 		ctrlClient.InNamespace(operator.ACSOperatorNamespace),
 		ctrlClient.MatchingLabels(labels))

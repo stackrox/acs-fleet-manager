@@ -50,7 +50,7 @@ data:
                   resources:
                     limits:
                       cpu: 200m
-                      memory: 300M
+                      memory: 300Mi
                     requests:
                       cpu: 200m
                       memory: 300Mi
@@ -61,7 +61,7 @@ data:
                   resources:
                     limits:
                       cpu: 200m
-                      memory: 200m
+                      memory: 200Mi
                     requests:
                       cpu: 200m
                       memory: 200Mi
