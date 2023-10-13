@@ -40,8 +40,6 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export GINKGO_FLAGS="--no-color -v"
     # When running in OpenShift CI, ensure we also run the auth E2E tests.
     RUN_AUTH_E2E_DEFAULT="true"
-    export QUAY_USER="${IMAGE_PUSH_USERNAME}"
-    export QUAY_TOKEN="${IMAGE_PUSH_PASSWORD}"
     export INHERIT_IMAGEPULLSECRETS="true" # pragma: allowlist secret
 else
     log "Executing in local context"
