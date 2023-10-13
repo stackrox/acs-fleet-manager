@@ -36,11 +36,11 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export STATIC_TOKEN="${FLEET_STATIC_TOKEN:-}"
     export STATIC_TOKEN_ADMIN="${FLEET_STATIC_TOKEN_ADMIN:-}"
     export CLUSTER_TYPE="openshift-ci"
-    export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
+    export GOARGS="-mod=mod" # For some reason we need this in the official base images.
     export GINKGO_FLAGS="--no-color -v"
     # When running in OpenShift CI, ensure we also run the auth E2E tests.
     RUN_AUTH_E2E_DEFAULT="true"
-    export INHERIT_IMAGEPULLSECRETS="true"
+    export INHERIT_IMAGEPULLSECRETS="true" # pragma: allowlist secret
 else
     log "Executing in local context"
 fi
