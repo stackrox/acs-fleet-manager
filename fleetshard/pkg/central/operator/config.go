@@ -97,3 +97,15 @@ func (o OperatorConfigs) ToAPIResponse() private.RhacsOperatorConfigs {
 	}
 	return apiConfigs
 }
+
+func FromAPIResponse(config private.RhacsOperatorConfigs) OperatorConfigs {
+	var operatorConfigs []OperatorConfig
+	for _, apiConfig := range config.RHACSOperatorConfigs {
+		operatorConfigs = append(operatorConfigs, apiConfig)
+	}
+
+	return OperatorConfigs{
+		Configs: operatorConfigs,
+		CRDURLs: config.CrdUrls,
+	}
+}

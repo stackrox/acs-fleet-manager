@@ -13,12 +13,12 @@ data:
 
       operators:
 
-        - deploymentName: "stackrox-operator-4.2.0-366-g069902f3f9"
+        - deploymentName: "rhacs-operator-4.2.0-366-g069902f3f9"
           image: "quay.io/rhacs-eng/stackrox-operator:4.2.0-366-g069902f3f9"
           centralLabelSelector: "rhacs.redhat.com/version-selector=4.2.0-366-g069902f3f9"
           securedClusterReconcilerEnabled: false
 
-        - deploymentName: "stackrox-operator-4.2.2-rc.0"
+        - deploymentName: "rhacs-operator-4.2.2-rc.0"
           image: "quay.io/rhacs-eng/stackrox-operator:4.2.2-rc.0"
           centralLabelSelector: "rhacs.redhat.com/version-selector=4.2.2-rc.0"
           securedClusterReconcilerEnabled: false

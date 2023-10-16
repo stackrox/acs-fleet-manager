@@ -4,13 +4,15 @@ package operator
 import (
 	"context"
 	"fmt"
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/charts"
-	"golang.org/x/exp/slices"
 	"helm.sh/helm/v3/pkg/chartutil"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 const (
@@ -97,7 +99,7 @@ func (u *ACSOperatorManager) ListVersionsWithReplicas(ctx context.Context) (map[
 }
 
 // RemoveUnusedOperators removes unused operator deployments from the cluster. It receives a list of operator images which should be present in the cluster and removes all deployments which do not deploy any of the desired images.
-func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredImages []string) error {
+func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, operatorConfigs []OperatorConfig) error {
 	deployments := &appsv1.DeploymentList{}
 	labels := map[string]string{"app": "rhacs-operator"}
 	err := u.client.List(ctx, deployments,
@@ -110,18 +112,27 @@ func (u *ACSOperatorManager) RemoveUnusedOperators(ctx context.Context, desiredI
 
 	var unusedDeployments []string
 	for _, deployment := range deployments.Items {
-		for _, container := range deployment.Spec.Template.Spec.Containers {
-			if container.Name == "manager" && !slices.Contains(desiredImages, container.Image) {
-				unusedDeployments = append(unusedDeployments, deployment.Name)
+		found := false
+		for _, expectedOperator := range operatorConfigs {
+			if expectedOperator.GetDeploymentName() == deployment.GetName() {
+				found = true
 			}
+		}
+		if !found {
+			unusedDeployments = append(unusedDeployments, deployment.GetName())
 		}
 	}
 
+	if len(unusedDeployments) > 0 {
+		glog.Infof("Detected %d unused deployments: %s.", len(unusedDeployments), strings.Join(unusedDeployments, ", "))
+	}
+
 	for _, deploymentName := range unusedDeployments {
-		deployment := &appsv1.Deployment{}
-		err := u.client.Get(ctx, ctrlClient.ObjectKey{Namespace: ACSOperatorNamespace, Name: deploymentName}, deployment)
-		if err != nil && !errors.IsNotFound(err) {
-			return fmt.Errorf("retrieving operator deployment %s: %w", deploymentName, err)
+		deployment := &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      deploymentName,
+				Namespace: ACSOperatorNamespace,
+			},
 		}
 		err = u.client.Delete(ctx, deployment)
 		if err != nil && !errors.IsNotFound(err) {

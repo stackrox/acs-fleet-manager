@@ -18,19 +18,20 @@ import (
 )
 
 var (
-	cfg                  *rest.Config
-	k8sClient            client.Client
-	routeService         *k8s.RouteService
-	dnsEnabled           bool
-	routesEnabled        bool
-	route53Client        *route53.Route53
-	waitTimeout          = getWaitTimeout()
-	dpCloudProvider      = getEnvDefault("DP_CLOUD_PROVIDER", "standalone")
-	dpRegion             = getEnvDefault("DP_REGION", "standalone")
-	authType             = "OCM"
-	fleetManagerEndpoint = "http://localhost:8000"
-	runAuthTests         bool
-	runCentralTests      bool
+	cfg                   *rest.Config
+	k8sClient             client.Client
+	routeService          *k8s.RouteService
+	dnsEnabled            bool
+	routesEnabled         bool
+	route53Client         *route53.Route53
+	waitTimeout           = getWaitTimeout()
+	dpCloudProvider       = getEnvDefault("DP_CLOUD_PROVIDER", "standalone")
+	dpRegion              = getEnvDefault("DP_REGION", "standalone")
+	authType              = "OCM"
+	fleetManagerEndpoint  = "http://localhost:8000"
+	runAuthTests          bool
+	runCentralTests       bool
+	runCanaryUpgradeTests bool
 )
 
 const defaultTimeout = 5 * time.Minute
@@ -97,6 +98,7 @@ var _ = BeforeSuite(func() {
 
 	runAuthTests = enableTestsGroup("Auth", "RUN_AUTH_E2E", "false")
 	runCentralTests = enableTestsGroup("Central", "RUN_CENTRAL_E2E", "true")
+	runCanaryUpgradeTests = enableTestsGroup("CanaryUpgrade", "RUN_CANARY_UPGRADE_E2E", "true")
 })
 
 var _ = AfterSuite(func() {

@@ -4,7 +4,7 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"reflect"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"time"
 
 	"github.com/golang/glog"
@@ -36,7 +36,7 @@ type reconcilerRegistry map[string]*centralReconciler.CentralReconciler
 
 var reconciledCentralCountCache int32
 
-var cachedOperatorConfigs operator.OperatorConfigs
+var lastOperatorHash [16]byte
 
 var backoff = wait.Backoff{
 	Duration: 1 * time.Second,
@@ -264,39 +264,27 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 
 func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	ctx := context.Background()
-	var desiredOperatorConfigs []operator.OperatorConfig
-	var desiredOperatorImages []string
+	operators := operator.FromAPIResponse(list.RhacsOperators)
 
-	for _, operatorConfig := range list.RhacsOperators.RHACSOperatorConfigs {
-		desiredOperatorConfigs = append(desiredOperatorConfigs, operatorConfig)
+	err := r.operatorManager.RemoveUnusedOperators(ctx, operators.Configs)
+	if err != nil {
+		glog.Warningf("Failed removing unused operators: %v", err)
 	}
 
-	operators := operator.OperatorConfigs{
-		Configs: desiredOperatorConfigs,
+	operatorHash, err := util.MD5SumFromJSONStruct(operators)
+	if err != nil {
+		return fmt.Errorf("Creating MD5 operatorHash for operator. %w", err)
 	}
-
-	if reflect.DeepEqual(cachedOperatorConfigs, operators) {
+	if lastOperatorHash == operatorHash {
 		return nil
 	}
-	cachedOperatorConfigs = operators
+	lastOperatorHash = operatorHash
 
-	for _, operatorDeployment := range operators.Configs {
-		glog.Infof("Installing Operator: %s", operatorDeployment.GetImage())
-		desiredOperatorImages = append(desiredOperatorImages, operatorDeployment.GetImage())
-	}
-
-	// TODO: comment line in to use the API response for production usage after Fleet-Manager implementation is finished
-	// err = r.operatorManager.InstallOrUpgrade(ctx, operator.FromAPIResponse(list.RhacsOperators))
-	err := r.operatorManager.InstallOrUpgrade(ctx, operators)
+	err = r.operatorManager.InstallOrUpgrade(ctx, operators)
 	if err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
 	}
 
-	// TODO: Is this needed? Wouldn't helm take care of cleanup?
-	err = r.operatorManager.RemoveUnusedOperators(ctx, desiredOperatorImages)
-	if err != nil {
-		glog.Warningf("Failed removing unused operators: %v", err)
-	}
 	return nil
 }
 
