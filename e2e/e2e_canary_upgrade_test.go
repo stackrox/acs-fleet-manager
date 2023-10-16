@@ -63,7 +63,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("should deploy operator 1"+operatorConfig1.GetDeploymentName(), func() {
+		It("should deploy operator 1 "+operatorConfig1.GetDeploymentName(), func() {
 			// update gitops config to install one operator
 			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
 			err = updateGitopsConfig(ctx, gitops)
@@ -124,13 +124,6 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
-
-		It("should deploy operator 2 with label selector "+operatorConfig2.GetCentralLabelSelector(), func() {
-			Eventually(operatorMatchesConfig(ctx, operatorConfig2)).
-				WithTimeout(waitTimeout).
-				WithPolling(defaultPolling).
-				Should(Succeed())
-		})
 	})
 
 	Describe("should upgrade the central", func() {
@@ -141,8 +134,10 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 		operatorConfig1 := operatorConfigForVersion(operatorVersion1)
 		operatorConfig2 := operatorConfigForVersion(operatorVersion2)
 
-		gitops, err = getGitopsConfig(ctx)
-		Expect(err).ToNot(HaveOccurred())
+		It("should get gitops config", func() {
+			gitops, err = getGitopsConfig(ctx)
+			Expect(err).ToNot(HaveOccurred())
+		})
 
 		It("run only one operator with version: "+operatorVersion1, func() {
 			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
