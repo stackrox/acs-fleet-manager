@@ -3,9 +3,7 @@ package gitops
 
 import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/yaml"
 )
 
 // Config represents the gitops configuration
@@ -63,13 +61,49 @@ func validatePatch(path *field.Path, patch string) field.ErrorList {
 	var errs field.ErrorList
 	if len(patch) == 0 {
 		errs = append(errs, field.Required(path, "patch is required"))
-	}
-	// try to unmarshal the patch into a Central instance to validate it
-	if err := yaml.Unmarshal([]byte(patch), &v1alpha1.Central{}); err != nil {
-		errs = append(errs, field.Invalid(path, patch, "invalid patch: "+err.Error()))
 		return errs
 	}
+	if err := tryRenderDummyCentralWithPatch(patch); err != nil {
+		errs = append(errs, field.Invalid(path, patch, "invalid patch: "+err.Error()))
+	}
 	return errs
+}
+
+// tryRenderDummyCentralWithPatch renders a dummy Central instance with the given patch.
+// useful to test that a patch is valid.
+func tryRenderDummyCentralWithPatch(patch string) error {
+	var dummyParams = CentralParams{
+		ID:               "id",
+		Name:             "name",
+		Namespace:        "namespace",
+		Region:           "region",
+		ClusterID:        "clusterId",
+		CloudProvider:    "cloudProvider",
+		CloudAccountID:   "cloudAccountId",
+		SubscriptionID:   "subscriptionId",
+		Owner:            "owner",
+		OwnerAccountID:   "ownerAccountId",
+		OwnerUserID:      "ownerUserId",
+		Host:             "host",
+		OrganizationID:   "organizationId",
+		OrganizationName: "organizationName",
+		InstanceType:     "instanceType",
+		IsInternal:       false,
+	}
+	dummyConfig := Config{
+		Centrals: CentralsConfig{
+			Overrides: []CentralOverride{
+				{
+					Patch:       patch,
+					InstanceIDs: []string{"*"},
+				},
+			},
+		},
+	}
+	if _, err := renderCentral(dummyParams, dummyConfig); err != nil {
+		return err
+	}
+	return nil
 }
 
 func validateInstanceIDs(path *field.Path, instanceIDs []string) field.ErrorList {
