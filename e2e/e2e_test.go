@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/e2e/dns"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -265,9 +266,8 @@ var _ = Describe("Central", func() {
 				Fail("central not created")
 			}
 
-			// We don't expect central-db-password secret here, because it will not be created in case of
-			// running with disabled managed DB
-			expectedSecrets := []string{"central-tls", "central-encryption-key"}
+			// e2e test run without managedDB enabled so this is set to false here
+			expectedSecrets := k8s.NewSecretBackup(k8sClient, false).GetWatchedSecrets()
 			secretsStored := []string{}
 			Eventually(func() error {
 				privateCentral, _, err := client.PrivateAPI().GetCentral(context.Background(), createdCentral.Id)
@@ -302,9 +302,66 @@ var _ = Describe("Central", func() {
 			Expect(err).To(BeNil())
 			Expect(privateCentral.ForceReconcile).To(Equal("true"))
 		})
+
 		// TODO(ROX-11368): Add test to eventually reach ready state
 		// TODO(ROX-11368): create test to check that Central and Scanner are healthy
 		// TODO(ROX-11368): Create test to check Central is correctly exposed
+
+		It("should restore secrets and deployment on namespace delete", func() {
+			if createdCentral == nil {
+				Fail("central not created")
+			}
+
+			previousNamespace := corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: namespaceName,
+				},
+			}
+
+			err := k8sClient.Get(context.Background(), ctrlClient.ObjectKeyFromObject(&previousNamespace), &previousNamespace)
+			Expect(err).To(BeNil())
+
+			// Using managedDB false here because e2e don't run with managed postgresql
+			secretBackup := k8s.NewSecretBackup(k8sClient, false)
+			expectedSecrets, err := secretBackup.CollectSecrets(context.Background(), namespaceName)
+			Expect(err).To(BeNil())
+
+			previousCreationTime := previousNamespace.CreationTimestamp
+			err = k8sClient.Delete(context.Background(), &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespaceName}})
+			Expect(err).To(BeNil())
+
+			Eventually(func() error {
+				newNamespace := corev1.Namespace{}
+				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, &newNamespace)
+				if err != nil {
+					return err
+				}
+
+				if previousCreationTime.Equal(&newNamespace.CreationTimestamp) {
+					return fmt.Errorf("namespace found but was not yet deleted")
+				}
+
+				return nil
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+
+			actualSecrets := map[string]*corev1.Secret{}
+			Eventually(func() error {
+				secrets, err := secretBackup.CollectSecrets(context.Background(), namespaceName)
+				if err != nil {
+					return err
+				}
+				actualSecrets = secrets // pragma: allowlist secret
+				return nil
+			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+
+			Expect(actualSecrets).ToNot(BeEmpty())
+			Expect(len(actualSecrets)).To(Equal(len(expectedSecrets)))
+			for secretName := range expectedSecrets { // pragma: allowlist secret
+				actualData := actualSecrets[secretName].StringData
+				expectedData := expectedSecrets[secretName].StringData
+				Expect(actualData).To(Equal(expectedData))
+			}
+		})
 
 		It("should transition central to deprovisioning state", func() {
 			if createdCentral == nil {
