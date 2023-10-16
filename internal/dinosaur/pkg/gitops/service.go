@@ -27,6 +27,22 @@ func NewService(configProvider ConfigProvider) Service {
 
 // GetCentral returns a Central instance with the given parameters.
 func (s *service) GetCentral(params CentralParams) (v1alpha1.Central, error) {
+	cfg, err := s.configProvider.Get()
+	if err != nil {
+		return v1alpha1.Central{}, errors.Wrap(err, "failed to get GitOps configuration")
+	}
+	return renderCentral(params, cfg)
+}
+
+func renderCentral(params CentralParams, config Config) (v1alpha1.Central, error) {
+	central, err := renderDefaultCentral(params)
+	if err != nil {
+		return v1alpha1.Central{}, errors.Wrap(err, "failed to get default Central instance")
+	}
+	return applyConfigToCentral(config, central, params)
+}
+
+func renderDefaultCentral(params CentralParams) (v1alpha1.Central, error) {
 	wr := new(strings.Builder)
 	if err := defaultTemplate.Execute(wr, params); err != nil {
 		return v1alpha1.Central{}, errors.Wrap(err, "failed to render default template")
@@ -35,11 +51,7 @@ func (s *service) GetCentral(params CentralParams) (v1alpha1.Central, error) {
 	if err := yaml.Unmarshal([]byte(wr.String()), &central); err != nil {
 		return v1alpha1.Central{}, errors.Wrap(err, "failed to unmarshal default central")
 	}
-	cfg, err := s.configProvider.Get()
-	if err != nil {
-		return v1alpha1.Central{}, errors.Wrap(err, "failed to get GitOps configuration")
-	}
-	return applyConfigToCentral(cfg, central, params)
+	return central, nil
 }
 
 // CentralParams represents the parameters for a Central instance.
