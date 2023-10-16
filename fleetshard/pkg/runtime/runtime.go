@@ -4,7 +4,6 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/golang/glog"
@@ -35,8 +34,6 @@ import (
 type reconcilerRegistry map[string]*centralReconciler.CentralReconciler
 
 var reconciledCentralCountCache int32
-
-var cachedOperatorConfigs operator.OperatorConfigs
 
 var backoff = wait.Backoff{
 	Duration: 1 * time.Second,
@@ -265,37 +262,14 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	ctx := context.Background()
 	var desiredOperatorConfigs []operator.OperatorConfig
-	var desiredOperatorImages []string
-
 	for _, operatorConfig := range list.RhacsOperators.RHACSOperatorConfigs {
 		desiredOperatorConfigs = append(desiredOperatorConfigs, operatorConfig)
 	}
-
-	operators := operator.OperatorConfigs{
-		Configs: desiredOperatorConfigs,
+	for _, cfg := range desiredOperatorConfigs {
+		glog.Infof("installing operator %s with image %s", cfg.GetDeploymentName(), cfg.GetImage())
 	}
-
-	if reflect.DeepEqual(cachedOperatorConfigs, operators) {
-		return nil
-	}
-	cachedOperatorConfigs = operators
-
-	for _, operatorDeployment := range operators.Configs {
-		glog.Infof("Installing Operator: %s", operatorDeployment.GetImage())
-		desiredOperatorImages = append(desiredOperatorImages, operatorDeployment.GetImage())
-	}
-
-	// TODO: comment line in to use the API response for production usage after Fleet-Manager implementation is finished
-	// err = r.operatorManager.InstallOrUpgrade(ctx, operator.FromAPIResponse(list.RhacsOperators))
-	err := r.operatorManager.InstallOrUpgrade(ctx, operators)
-	if err != nil {
+	if err := r.operatorManager.InstallOrUpgrade(ctx, operator.OperatorConfigs{Configs: desiredOperatorConfigs}); err != nil {
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
-	}
-
-	// TODO: Is this needed? Wouldn't helm take care of cleanup?
-	err = r.operatorManager.RemoveUnusedOperators(ctx, desiredOperatorImages)
-	if err != nil {
-		glog.Warningf("Failed removing unused operators: %v", err)
 	}
 	return nil
 }

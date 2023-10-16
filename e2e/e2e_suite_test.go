@@ -13,13 +13,13 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
-	"k8s.io/client-go/rest"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
-	cfg                   *rest.Config
 	k8sClient             client.Client
+	k8sClientSet          kubernetes.Interface
 	routeService          *k8s.RouteService
 	dnsEnabled            bool
 	routesEnabled         bool
@@ -67,6 +67,7 @@ func TestE2E(t *testing.T) {
 // TODO: Deploy fleet-manager, fleetshard-sync and database into a cluster
 var _ = BeforeSuite(func() {
 	k8sClient = k8s.CreateClientOrDie()
+	k8sClientSet = k8s.CreateClientSetOrDie()
 	routeService = k8s.NewRouteService(k8sClient)
 	var err error
 	routesEnabled, err = k8s.IsRoutesResourceEnabled(k8sClient)

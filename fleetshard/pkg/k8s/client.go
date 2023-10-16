@@ -8,6 +8,7 @@ import (
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -17,6 +18,22 @@ var routesGVK = schema.GroupVersionResource{
 	Group:    "route.openshift.io",
 	Version:  "v1",
 	Resource: "routes",
+}
+
+// CreateClientSetOrDie creates a new kubernetes clientset or dies
+func CreateClientSetOrDie() kubernetes.Interface {
+	config, err := ctrl.GetConfig()
+	if err != nil {
+		glog.Fatal("failed to get k8s client config", err)
+	}
+
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		glog.Fatal("failed to create k8s client", err)
+	}
+
+	glog.Infof("Connected to k8s cluster: %s", config.Host)
+	return clientSet
 }
 
 // CreateClientOrDie creates a new kubernetes client or dies
