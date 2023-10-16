@@ -187,6 +187,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 		})
 
 		It("upgrade central", func() {
+			Skip("Re-enable once https://github.com/stackrox/stackrox/pull/8156 is released with ACS/StackRox 4.3")
 			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1, operatorConfig2}
 			patch := `
 metadata:
