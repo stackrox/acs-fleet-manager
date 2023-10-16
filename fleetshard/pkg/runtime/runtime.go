@@ -61,7 +61,7 @@ type Runtime struct {
 }
 
 // NewRuntime creates a new runtime
-func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
+func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
 	authOption := fleetmanager.Option{
 		Sso: fleetmanager.RHSSOOption{
 			ClientID:     config.RHSSOClientID,
@@ -76,7 +76,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 			StaticToken: config.StaticToken,
 		},
 	}
-	auth, err := fleetmanager.NewAuth(config.AuthType, authOption)
+	auth, err := fleetmanager.NewAuth(ctx, config.AuthType, authOption)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager authentication")
 	}
