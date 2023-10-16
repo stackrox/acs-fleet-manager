@@ -63,7 +63,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("should deploy one operator"+operatorConfig1.GetDeploymentName(), func() {
+		It("should deploy operator 1"+operatorConfig1.GetDeploymentName(), func() {
 			// update gitops config to install one operator
 			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
 			err = updateGitopsConfig(ctx, gitops)
@@ -74,7 +74,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 				Should(Succeed())
 		})
 
-		It("should run operator with central label selector "+operatorConfig1.GetCentralLabelSelector(), func() {
+		It("should run operator 1 with central label selector "+operatorConfig1.GetCentralLabelSelector(), func() {
 			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -93,21 +93,21 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 				Should(Succeed())
 		})
 
-		It("should deploy operator with label selector "+operatorConfig1.GetCentralLabelSelector(), func() {
+		It("should deploy operator 1 with label selector "+operatorConfig1.GetCentralLabelSelector(), func() {
 			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
 
-		It("should deploy operator with label selector "+operatorConfig2.GetCentralLabelSelector(), func() {
+		It("should deploy operator 2 with label selector "+operatorConfig2.GetCentralLabelSelector(), func() {
 			Eventually(operatorMatchesConfig(ctx, operatorConfig2)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
 
-		It("should delete the removed operator "+operatorConfig2.GetDeploymentName(), func() {
+		It("should delete operator 2 and only run operator 1", func() {
 			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
 			err = updateGitopsConfig(ctx, gitops)
 			Expect(err).ToNot(HaveOccurred())
@@ -118,16 +118,21 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 				Should(Succeed())
 		})
 
-		It("should deploy operator with label selector "+operatorConfig1.GetCentralLabelSelector(), func() {
+		It("should deploy operator 1 with label selector "+operatorConfig1.GetCentralLabelSelector(), func() {
 			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+		})
+
+		It("should deploy operator 2 with label selector "+operatorConfig2.GetCentralLabelSelector(), func() {
+			Eventually(operatorMatchesConfig(ctx, operatorConfig2)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
 	})
 
-	// TODO: remove here to execute all tests
-	return
 	Describe("should upgrade the central", func() {
 		ctx := context.Background()
 		var createdCentral *public.CentralRequest
@@ -266,7 +271,7 @@ func expectNumberOfOperatorDeployments(ctx context.Context, n int, expectedDeplo
 			return fmt.Errorf("Expected deployments %s not found. Got '%s'. %w", expectedDeploymentNames, strings.Join(names, ","), err)
 		}
 
-		return nil
+		return err
 	}
 }
 
@@ -401,13 +406,17 @@ func validateOperatorDeployment(deployment *appsv1.Deployment, assertions ...ope
 	return nil
 }
 
-func operatorMatchesConfig(ctx context.Context, config operator.OperatorConfig) error {
-	deploy, err := getDeployment(ctx, operator.ACSOperatorNamespace, config.GetDeploymentName())
-	if err != nil {
-		return err
+func operatorMatchesConfig(ctx context.Context, config operator.OperatorConfig) func() error {
+	return func() error {
+		deploy, err := getDeployment(ctx, operator.ACSOperatorNamespace, config.GetDeploymentName())
+		if err != nil {
+			println("Got err", err.Error(), config.GetDeploymentName())
+			return err
+		}
+
+		return validateOperatorDeployment(deploy,
+			operatorHasImage(config.GetImage()),
+			operatorHasCentralLabelSelector(config.GetCentralLabelSelector()),
+		)
 	}
-	return validateOperatorDeployment(deploy,
-		operatorHasImage(config.GetImage()),
-		operatorHasCentralLabelSelector(config.GetCentralLabelSelector()),
-	)
 }

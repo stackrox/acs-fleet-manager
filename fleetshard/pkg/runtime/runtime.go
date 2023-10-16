@@ -282,6 +282,7 @@ func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 
 	err = r.operatorManager.InstallOrUpgrade(ctx, operators)
 	if err != nil {
+		lastOperatorHash = [16]byte{}
 		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
 	}
 
