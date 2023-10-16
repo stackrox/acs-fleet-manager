@@ -24,7 +24,7 @@ func NewListCommand() *cobra.Command {
 		Short: "lists all managed central requests",
 		Long:  "lists all managed central requests",
 		Run: func(cmd *cobra.Command, args []string) {
-			runList(fleetmanagerclient.AuthenticatedClientWithOCM(), cmd, args)
+			runList(fleetmanagerclient.AuthenticatedClientWithOCM(cmd.Context()), cmd, args)
 		},
 	}
 	cmd.Flags().String(FlagOwner, "test-user", "Username")
