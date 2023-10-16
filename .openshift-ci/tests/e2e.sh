@@ -102,6 +102,10 @@ if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then # pragma: allowlist secret
     if [[ -z "${QUAY_TOKEN:-}" ]]; then
         die "QUAY_TOKEN needs to be set"
     fi
+
+    if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
+        ${GITROOT}/scripts/add-global-pull-secret.sh "$QUAY_USER" "$QUAY_TOKEN"
+    fi
 fi
 
 # Configuration specific to this e2e test suite:
