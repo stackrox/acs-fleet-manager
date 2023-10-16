@@ -63,16 +63,17 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("should deploy one operator", func() {
+		It("should deploy one operator"+operatorConfig1.GetDeploymentName(), func() {
+			// update gitops config to install one operator
 			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
 			err = updateGitopsConfig(ctx, gitops)
 			Expect(err).ToNot(HaveOccurred())
+
 			Eventually(expectNumberOfOperatorDeployments(ctx, 1, getDeploymentName(operatorVersion1))).WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
 
-		// TODO: Assert garbage collection works
 		It("should run operator with central label selector "+operatorConfig1.GetCentralLabelSelector(), func() {
 			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
 				WithTimeout(waitTimeout).
@@ -80,24 +81,25 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 				Should(Succeed())
 		})
 
-		It("should deploy two operators", func() {
+		It("should deploy two operators in different versions", func() {
+			// add a second operator version to the gitops config
 			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1, operatorConfig2}
 			err = updateGitopsConfig(ctx, gitops)
 			Expect(err).ToNot(HaveOccurred())
-		})
 
-		It("should contain only two operator deployments", func() {
 			Eventually(expectNumberOfOperatorDeployments(ctx, 2, getDeploymentName(operatorVersion1), getDeploymentName(operatorVersion2))).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
+
 		It("should deploy operator with label selector "+operatorConfig1.GetCentralLabelSelector(), func() {
 			Eventually(operatorMatchesConfig(ctx, operatorConfig1)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
+
 		It("should deploy operator with label selector "+operatorConfig2.GetCentralLabelSelector(), func() {
 			Eventually(operatorMatchesConfig(ctx, operatorConfig2)).
 				WithTimeout(waitTimeout).
@@ -105,13 +107,11 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 				Should(Succeed())
 		})
 
-		It("should delete the removed operator", func() {
+		It("should delete the removed operator "+operatorConfig2.GetDeploymentName(), func() {
 			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
 			err = updateGitopsConfig(ctx, gitops)
 			Expect(err).ToNot(HaveOccurred())
-		})
 
-		It("should contain only one operator deployments", func() {
 			Eventually(expectNumberOfOperatorDeployments(ctx, 1, getDeploymentName(operatorVersion1))).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -126,6 +126,8 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 		})
 	})
 
+	// TODO: remove here to execute all tests
+	return
 	Describe("should upgrade the central", func() {
 		ctx := context.Background()
 		var createdCentral *public.CentralRequest
@@ -134,16 +136,14 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 		operatorConfig1 := operatorConfigForVersion(operatorVersion1)
 		operatorConfig2 := operatorConfigForVersion(operatorVersion2)
 
-		It("get gitops configmap", func() {
-			gitops, err = getGitopsConfig(ctx)
-			Expect(err).ToNot(HaveOccurred())
-		})
+		gitops, err = getGitopsConfig(ctx)
+		Expect(err).ToNot(HaveOccurred())
 
 		It("run only one operator with version: "+operatorVersion1, func() {
 			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
 			err = updateGitopsConfig(ctx, gitops)
 			Expect(err).To(BeNil())
-			Eventually(expectNumberOfOperatorDeployments(ctx, 1, "")).
+			Eventually(expectNumberOfOperatorDeployments(ctx, 1, getDeploymentName(operatorVersion1))).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())

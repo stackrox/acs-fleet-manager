@@ -17,9 +17,7 @@ import (
 
 const (
 	// ACSOperatorNamespace default Operator Namespace
-	ACSOperatorNamespace = "rhacs"
-	// ACSOperatorConfigMap name for configMap with operator deployment configurations
-	ACSOperatorConfigMap     = "operator-config"
+	ACSOperatorNamespace     = "rhacs"
 	releaseName              = "rhacs-operator"
 	operatorDeploymentPrefix = "rhacs-operator"
 )
