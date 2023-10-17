@@ -2,10 +2,11 @@ package gitops
 
 import (
 	"context"
-	// embed needed for embedding the default central template
-	_ "embed"
 	"os"
 	"sync"
+
+	// embed needed for embedding the default central template
+	_ "embed"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -13,6 +14,7 @@ import (
 	"github.com/stackrox/rox/pkg/k8scfgwatch"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/yaml"
 )
 
@@ -121,14 +123,33 @@ const (
 // NewReader returns a new gitops Reader. Will
 // return an empty reader if GitOps is not enabled.
 // Otherwise returns a ConfigMap reader.
-func NewReader(k8sInterface kubernetes.Interface) Reader {
+func NewReader() Reader {
 	if !features.GitOpsCentrals.Enabled() {
 		return NewEmptyReader()
 	}
+
+	restConfig, err := rest.InClusterConfig()
+	if err != nil {
+		glog.Errorf("failed to get in-cluster config: %v", err)
+		return NewEmptyReader()
+	}
+
+	k8sInterface, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		glog.Errorf("failed to create kubernetes client: %v", err)
+		return NewEmptyReader()
+	}
+
+	ns := os.Getenv("POD_NAMESPACE")
+	if ns == "" {
+		glog.Errorf("failed to get POD_NAMESPACE env var")
+		return NewEmptyReader()
+	}
+
 	cmName := os.Getenv(configMapNameEnvVar)
 	if cmName == "" {
 		cmName = defaultConfigMapName
 	}
-	ns := os.Getenv("POD_NAMESPACE")
+
 	return NewConfigMapReader(context.Background(), ns, cmName, configMapKey, k8sInterface)
 }

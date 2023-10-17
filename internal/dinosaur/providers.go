@@ -17,7 +17,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/workers/dinosaurmgrs"
 	observatoriumClient "github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	environments2 "github.com/stackrox/acs-fleet-manager/pkg/environments"
-	"github.com/stackrox/acs-fleet-manager/pkg/k8s"
 	"github.com/stackrox/acs-fleet-manager/pkg/providers"
 )
 
@@ -77,7 +76,6 @@ func ServiceProviders() di.Option {
 		di.Provide(dinosaurmgrs.NewReadyDinosaurManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewDinosaurCNAMEManager, di.As(new(workers.Worker))),
 		di.Provide(dinosaurmgrs.NewCentralAuthConfigManager, di.As(new(workers.Worker))),
-		di.Provide(k8s.NewKubernetesInterface),
 		di.Provide(gitops.NewReader),
 		di.Provide(gitops.NewProvider),
 		di.Provide(gitops.NewService),
