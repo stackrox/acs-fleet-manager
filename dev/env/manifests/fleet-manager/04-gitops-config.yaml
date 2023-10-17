@@ -40,8 +40,8 @@ data:
                     enabled: false
                 resources:
                   limits:
-                    cpu: 200m
-                    memory: 300Mi
+                    cpu: 500m
+                    memory: 1Gi
                   requests:
                     cpu: 100m
                     memory: 200Mi
@@ -49,8 +49,8 @@ data:
                 analyzer:
                   resources:
                     limits:
-                      cpu: 200m
-                      memory: 300Mi
+                      cpu: 500m
+                      memory: 1Gi
                     requests:
                       cpu: 200m
                       memory: 300Mi
@@ -60,8 +60,8 @@ data:
                 db:
                   resources:
                     limits:
-                      cpu: 200m
-                      memory: 200Mi
+                      cpu: 500m
+                      memory: 1Gi
                     requests:
                       cpu: 200m
                       memory: 200Mi
