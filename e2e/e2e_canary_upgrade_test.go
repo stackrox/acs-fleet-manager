@@ -39,11 +39,26 @@ var (
 		"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
 		"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
 	}
+	originalGitOps gitops.Config
 )
 
 var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 	var client *fleetmanager.Client
 	var err error
+
+	BeforeAll(func() {
+		originalGitOps, err = getGitopsConfig(context.Background())
+		if err != nil {
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		DeferCleanup(func() {
+			err := putGitopsConfig(context.Background(), originalGitOps)
+			if err != nil {
+				Expect(err).ToNot(HaveOccurred())
+			}
+		})
+	})
 
 	BeforeEach(func() {
 		if !features.TargetedOperatorUpgrades.Enabled() || !runCanaryUpgradeTests {
