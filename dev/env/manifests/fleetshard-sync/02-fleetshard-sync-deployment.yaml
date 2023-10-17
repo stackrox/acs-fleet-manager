@@ -42,7 +42,7 @@ spec:
                   key: "rhsso-service-account-client-secret"
                   optional: false
             - name: RUNTIME_POLL_PERIOD
-              value: 10s
+              value: 2s
             - name: AUDIT_LOG_ENABLED
               value: "$AUDIT_LOG_ENABLED"
             - name: MANAGED_DB_ENABLED
