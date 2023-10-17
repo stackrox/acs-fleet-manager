@@ -492,7 +492,6 @@ spec:
     db:
       resources:
         limits:
-          cpu: 2000m
           memory: 3000Mi
         requests:
           cpu: 100m
