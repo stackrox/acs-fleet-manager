@@ -236,6 +236,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, err
 	}
+
 	if !centralDeploymentReady || !centralTLSSecretFound {
 		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
