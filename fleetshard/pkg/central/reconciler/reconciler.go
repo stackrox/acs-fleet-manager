@@ -196,7 +196,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			return nil, err
 		}
 	} else {
-		var enabled = v1alpha1.CentralDBEnabledTrue
+		var enabled = v1alpha1.CentralDBEnabledDefault
 		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
 			IsEnabled: &enabled,
 		}
