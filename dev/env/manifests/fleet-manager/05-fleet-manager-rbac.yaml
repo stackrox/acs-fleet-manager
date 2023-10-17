@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fleet-manager
+  namespace: "$ACSCS_NAMESPACE"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: fleetmanager-role
+  namespace: "$ACSCS_NAMESPACE"
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+    resourceNames:
+      - fleet-manager-gitops-config
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: fleetmanager-rolebinding
+  namespace: "$ACSCS_NAMESPACE"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: fleetmanager-role
+subjects:
+  - kind: ServiceAccount
+    name: fleet-manager
+    namespace: "$ACSCS_NAMESPACE"

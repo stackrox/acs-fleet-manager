@@ -5,7 +5,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
@@ -24,15 +23,7 @@ type provider struct {
 }
 
 // NewProvider returns a new ConfigProvider.
-func NewProvider() ConfigProvider {
-
-	var reader Reader
-	if features.GitOpsCentrals.Enabled() {
-		reader = NewFileReader(configPath)
-	} else {
-		reader = NewEmptyReader()
-	}
-
+func NewProvider(reader Reader) ConfigProvider {
 	return &provider{
 		reader:            reader,
 		lastWorkingConfig: atomic.Pointer[Config]{},
