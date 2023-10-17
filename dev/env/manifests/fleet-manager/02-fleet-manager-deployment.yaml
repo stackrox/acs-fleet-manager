@@ -17,6 +17,7 @@ spec:
       labels:
         application: fleet-manager
     spec:
+      serviceAccountName: fleet-manager
       initContainers:
         - name: db-migrate
           image: "$FLEET_MANAGER_IMAGE"
@@ -47,6 +48,12 @@ spec:
             value: "$RHACS_GITOPS_ENABLED"
           - name: RHACS_TARGETED_OPERATOR_UPGRADES
             value: "true"
+          - name: RHACS_GITOPS_CONFIGMAP_NAME
+            value: fleet-manager-gitops-config
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
           readinessProbe:
             httpGet:
               path: /healthcheck

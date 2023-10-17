@@ -1,11 +1,20 @@
 package gitops
 
 import (
+	"context"
+	"os"
+	"sync"
+
 	// embed needed for embedding the default central template
 	_ "embed"
-	"os"
 
+	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
+	"github.com/stackrox/rox/pkg/k8scfgwatch"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/yaml"
 )
 
@@ -65,4 +74,82 @@ func NewEmptyReader() Reader {
 // Read implements Reader.Read
 func (r *emptyReader) Read() (Config, error) {
 	return Config{}, nil
+}
+
+type configMapReader struct {
+	name      string
+	key       string
+	client    kubernetes.Interface
+	lock      sync.RWMutex
+	val       Config
+	namespace string
+}
+
+// NewConfigMapReader returns a new configMapReader.
+func NewConfigMapReader(ctx context.Context, namespace, name, key string, client kubernetes.Interface) Reader {
+	r := &configMapReader{
+		namespace: namespace,
+		name:      name,
+		key:       key,
+		client:    client,
+	}
+	watcher := k8scfgwatch.NewConfigMapWatcher(r.client, func(configMap *corev1.ConfigMap) {
+		glog.Infof("received new GitOps configuration")
+		var config Config
+		if err := yaml.Unmarshal([]byte(configMap.Data[r.key]), &config); err != nil {
+			glog.Errorf("failed to unmarshal GitOps configuration: %v", err)
+			return
+		}
+		r.lock.Lock()
+		defer r.lock.Unlock()
+		r.val = config
+	})
+	watcher.Watch(ctx, namespace, name)
+	return r
+}
+
+func (r *configMapReader) Read() (Config, error) {
+	r.lock.RLock()
+	defer r.lock.RUnlock()
+	return r.val, nil
+}
+
+const (
+	defaultConfigMapName = "fleet-manager-gitops-config"
+	configMapNameEnvVar  = "RHACS_GITOPS_CONFIGMAP_NAME"
+	configMapKey         = "config.yaml"
+)
+
+// NewReader returns a new gitops Reader. Will
+// return an empty reader if GitOps is not enabled.
+// Otherwise returns a ConfigMap reader.
+func NewReader() Reader {
+	if !features.GitOpsCentrals.Enabled() {
+		return NewEmptyReader()
+	}
+
+	restConfig, err := rest.InClusterConfig()
+	if err != nil {
+		glog.Errorf("failed to get in-cluster config: %v", err)
+		return NewEmptyReader()
+	}
+
+	k8sInterface, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		glog.Errorf("failed to create kubernetes client: %v", err)
+		return NewEmptyReader()
+	}
+
+	ns := os.Getenv("POD_NAMESPACE")
+	if ns == "" {
+		glog.Errorf("failed to get POD_NAMESPACE env var")
+		return NewEmptyReader()
+	}
+
+	cmName := os.Getenv(configMapNameEnvVar)
+	if cmName == "" {
+		cmName = defaultConfigMapName
+	}
+
+	return NewConfigMapReader(context.Background(), ns, cmName, configMapKey, k8sInterface)
 }
