@@ -52,6 +52,12 @@ var _ = Describe("Central", func() {
 	var adminAPI fleetmanager.AdminAPI
 	var notes []string
 
+	BeforeAll(func() {
+		if err := restoreDefaultGitopsConfig(); err != nil {
+			Fail(fmt.Sprintf("Failed to restore default GitOps config: %s", err))
+		}
+	})
+
 	BeforeEach(func() {
 		if !runCentralTests {
 			Skip("Skipping Central tests")
@@ -67,8 +73,8 @@ var _ = Describe("Central", func() {
 		adminAuth, err := fleetmanager.NewStaticAuth(context.Background(), fleetmanager.StaticOption{StaticToken: adminStaticToken})
 		Expect(err).ToNot(HaveOccurred())
 		adminClient, err := fleetmanager.NewClient(fleetManagerEndpoint, adminAuth)
-		adminAPI = adminClient.AdminAPI()
 		Expect(err).ToNot(HaveOccurred())
+		adminAPI = adminClient.AdminAPI()
 
 		GinkgoWriter.Printf("Current time: %s\n", time.Now().String())
 		printNotes(notes)
@@ -324,16 +330,18 @@ var _ = Describe("Central", func() {
 			}
 
 			err := k8sClient.Get(context.Background(), ctrlClient.ObjectKeyFromObject(&previousNamespace), &previousNamespace)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			// Using managedDB false here because e2e don't run with managed postgresql
 			secretBackup := k8s.NewSecretBackup(k8sClient, false)
 			expectedSecrets, err := secretBackup.CollectSecrets(context.Background(), namespaceName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			previousCreationTime := previousNamespace.CreationTimestamp
 			err = k8sClient.Delete(context.Background(), &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespaceName}})
-			Expect(err).To(BeNil())
+			if !apiErrors.IsNotFound(err) {
+				Expect(err).ToNot(HaveOccurred())
+			}
 
 			Eventually(func() error {
 				newNamespace := corev1.Namespace{}
@@ -341,11 +349,9 @@ var _ = Describe("Central", func() {
 				if err != nil {
 					return err
 				}
-
 				if previousCreationTime.Equal(&newNamespace.CreationTimestamp) {
 					return fmt.Errorf("namespace found but was not yet deleted")
 				}
-
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 

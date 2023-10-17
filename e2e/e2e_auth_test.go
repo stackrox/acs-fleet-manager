@@ -20,6 +20,12 @@ const (
 
 var _ = Describe("AuthN/Z Fleet* components", func() {
 
+	BeforeAll(func() {
+		if err := restoreDefaultGitopsConfig(); err != nil {
+			Fail(fmt.Sprintf("Failed to restore default GitOps config: %s", err))
+		}
+	})
+
 	BeforeEach(func() {
 		if !runAuthTests {
 			Skip("Skipping auth test")

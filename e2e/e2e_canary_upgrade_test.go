@@ -187,7 +187,6 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 				if err != nil {
 					return fmt.Errorf("failed finding central CR: %v", err)
 				}
-
 				if centralCR.GetLabels()["rhacs.redhat.com/version-selector"] != operatorVersion1 {
 					return fmt.Errorf("central CR does not have %s version-selector", operatorVersion1)
 				}
@@ -505,4 +504,81 @@ func centralLabelPatch(key, value string) string {
 metadata:
   labels:
     ` + key + `: "` + value + `"`)
+}
+
+func restoreDefaultGitopsConfig() error {
+	cfg := gitops.Config{
+		RHACSOperators: operator.OperatorConfigs{
+			CRDURLs: []string{
+				"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
+				"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
+			},
+			Configs: []operator.OperatorConfig{
+				{
+					"deploymentName":                  "rhacs-operator-4.2.2-rc.0",
+					"image":                           "quay.io/rhacs-eng/stackrox-operator:4.2.2-rc.0",
+					"centralLabelSelector":            "rhacs.redhat.com/version-selector=4.2.2-rc.0",
+					"securedClusterReconcilerEnabled": false,
+				},
+			},
+		},
+		Centrals: gitops.CentralsConfig{
+			Overrides: []gitops.CentralOverride{
+				{
+					InstanceIDs: []string{"*"},
+					Patch: `
+metadata:
+  labels:
+    rhacs.redhat.com/version-selector: "4.2.2-rc.0"`,
+				}, {
+					InstanceIDs: []string{"*"},
+					Patch: `
+spec:
+  monitoring:
+    openshift:
+      enabled: false
+  central:
+    db:
+      resources:
+        limits:
+          cpu: null
+          memory: 1Gi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+    resources:
+      limits:
+        cpu: null
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 100Mi
+  scanner:
+   	analyzer:
+   	  resources:
+   	    limits:
+   	      cpu: null
+   	      memory: 2Gi
+   	    requests:
+   	      cpu: 100m
+   	      memory: 100Mi
+   	  scaling:
+   	    autoScaling: "Disabled"
+   	    replicas: 1
+    db:
+      resources:
+        limits:
+          cpu: null
+          memory: 3Gi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+`,
+				},
+			},
+		},
+	}
+
+	return putGitopsConfig(context.Background(), cfg)
+
 }
