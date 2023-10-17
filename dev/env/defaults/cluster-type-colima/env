@@ -10,5 +10,4 @@ else
   export DOCKER_DEFAULT="colima nerdctl -- -n k8s.io" # When nerdctl and docker can be used
 fi
 
-export ENABLE_EXTERNAL_CONFIG_DEFAULT="true"
 export AWS_AUTH_HELPER_DEFAULT="aws-saml"

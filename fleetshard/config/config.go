@@ -2,6 +2,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -34,11 +35,15 @@ type Config struct {
 	MetricsAddress       string        `env:"FLEETSHARD_METRICS_ADDRESS" envDefault:":8080"`
 	EgressProxyImage     string        `env:"EGRESS_PROXY_IMAGE"`
 	DefaultBaseCRDURL    string        `env:"DEFAULT_BASE_CRD_URL" envDefault:"https://raw.githubusercontent.com/stackrox/stackrox/%s/operator/bundle/manifests/"`
-
-	ManagedDB        ManagedDB
-	Telemetry        Telemetry
-	AuditLogging     AuditLogging
-	SecretEncryption SecretEncryption
+	// TenantImagePullSecret can be used to inject a Kubernetes image pull secret into tenant namespaces.
+	// If it is empty, nothing is injected (for example, it is not required when running on OpenShift).
+	// It is however required in some situations (such as remote GKE clusters) when central images need to fetched from a private Quay registry.
+	// It needs to given as Docker Config JSON object.
+	TenantImagePullSecret string `env:"TENANT_IMAGE_PULL_SECRET"`
+	ManagedDB             ManagedDB
+	Telemetry             Telemetry
+	AuditLogging          AuditLogging
+	SecretEncryption      SecretEncryption
 }
 
 // ManagedDB for configuring managed DB specific parameters
@@ -89,6 +94,7 @@ func GetConfig() (*Config, error) {
 	}
 	validateManagedDBConfig(c, &configErrors)
 	validateSecretEncryptionConfig(c, &configErrors)
+	validateTenantImagePullSecrets(c, &configErrors)
 
 	cfgErr := configErrors.ToError()
 	if cfgErr != nil {
@@ -120,6 +126,27 @@ func validateSecretEncryptionConfig(c Config, configErrors *errorhelpers.ErrorLi
 
 	if c.SecretEncryption.Type == "kms" && c.SecretEncryption.KeyID == "" {
 		configErrors.AddError(errors.New("SECRET_ENCRYPTION_TYPE == kms and SECRET_ENCRYPTION_KEY_ID unset in the environment")) // pragma: allowlist secret
+	}
+}
+
+func validateTenantImagePullSecrets(c Config, configErrors *errorhelpers.ErrorList) {
+	if c.TenantImagePullSecret == "" {
+		return
+	}
+
+	type dockerConfig struct {
+		Auths map[string]map[string]string `json:"auths,omitempty"`
+	}
+
+	var cfg dockerConfig
+
+	if err := json.Unmarshal([]byte(c.TenantImagePullSecret), &cfg); err != nil {
+		configErrors.AddError(errors.Wrapf(err, "invalid tenant image pull secret JSON"))
+		return
+	}
+
+	if cfg.Auths == nil || len(cfg.Auths) == 0 {
+		configErrors.AddError(errors.New("invalid tenant image pull secret"))
 	}
 }
 

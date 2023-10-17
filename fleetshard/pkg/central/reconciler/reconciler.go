@@ -84,6 +84,8 @@ const (
 	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
 
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
+
+	tenantImagePullSecretName = "stackrox" // pragma: allowlist secret
 )
 
 type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral,
@@ -91,14 +93,15 @@ type verifyAuthProviderExistsFunc func(ctx context.Context, central private.Mana
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
-	UseRoutes         bool
-	WantsAuthProvider bool
-	EgressProxyImage  string
-	ManagedDBEnabled  bool
-	Telemetry         config.Telemetry
-	ClusterName       string
-	Environment       string
-	AuditLogging      config.AuditLogging
+	UseRoutes             bool
+	WantsAuthProvider     bool
+	EgressProxyImage      string
+	ManagedDBEnabled      bool
+	Telemetry             config.Telemetry
+	ClusterName           string
+	Environment           string
+	AuditLogging          config.AuditLogging
+	TenantImagePullSecret string
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -130,6 +133,7 @@ type CentralReconciler struct {
 	wantsAuthProvider      bool
 	hasAuthProvider        bool
 	verifyAuthProviderFunc verifyAuthProviderExistsFunc
+	tenantImagePullSecret  []byte
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -175,6 +179,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 	if err := r.ensureNamespaceExists(remoteCentralNamespace, namespaceLabels, namespaceAnnotations); err != nil {
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
+	}
+
+	if len(r.tenantImagePullSecret) > 0 {
+		err = r.ensureImagePullSecretConfigured(ctx, remoteCentralNamespace, tenantImagePullSecretName, r.tenantImagePullSecret)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = r.restoreCentralSecrets(ctx, remoteCentral)
@@ -1146,6 +1157,38 @@ func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error)
 	return namespace, nil
 }
 
+func (r *CentralReconciler) getSecret(namespaceName string, secretName string) (*corev1.Secret, error) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespaceName,
+		},
+	}
+	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Namespace: namespaceName, Name: secretName}, secret)
+	if err != nil {
+		return nil, errors.Wrapf(err, "retrieving secret %s/%s", namespaceName, secretName)
+	}
+	return secret, nil
+}
+
+func (r *CentralReconciler) createImagePullSecret(ctx context.Context, namespaceName string, secretName string, imagePullSecretJSON []byte) error {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespaceName,
+			Name:      secretName,
+		},
+		Type: "kubernetes.io/dockerconfigjson",
+		Data: map[string][]byte{
+			".dockerconfigjson": imagePullSecretJSON,
+		},
+	}
+
+	if err := r.client.Create(ctx, secret); err != nil {
+		return errors.Wrapf(err, "creating image pull secret %s/%s", namespaceName, secretName)
+	}
+
+	return nil
+}
+
 func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace) error {
 	err := r.client.Create(ctx, namespace)
 	if err != nil {
@@ -1165,6 +1208,22 @@ func (r *CentralReconciler) ensureNamespaceExists(name string, labels map[string
 		return fmt.Errorf("getting namespace %s: %w", name, err)
 	}
 	return nil
+}
+
+func (r *CentralReconciler) ensureImagePullSecretConfigured(ctx context.Context, namespaceName string, secretName string, imagePullSecret []byte) error {
+	// Ensure that the secret exists.
+	_, err := r.getSecret(namespaceName, secretName)
+	if err == nil {
+		// Secret exists already.
+		return nil
+	}
+	if !apiErrors.IsNotFound(err) {
+		// Unexpected error.
+		return errors.Wrapf(err, "retrieving secret %s/%s", namespaceName, secretName)
+	}
+	// We have an IsNotFound error.
+	glog.Infof("Creating image pull secret %s/%s", namespaceName, secretName)
+	return r.createImagePullSecret(ctx, namespaceName, secretName, imagePullSecret)
 }
 
 func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name string) (bool, error) {
@@ -1701,7 +1760,6 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 	secretCipher cipher.Cipher, encryptionKeyGenerator cipher.KeyGenerator,
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
-
 	return &CentralReconciler{
 		client:                 k8sClient,
 		fleetmanagerClient:     fleetmanagerClient,
@@ -1724,6 +1782,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		managedDBInitFunc:           managedDBInitFunc,
 
 		verifyAuthProviderFunc: hasAuthProvider,
+		tenantImagePullSecret:  []byte(opts.TenantImagePullSecret),
 
 		resourcesChart: resourcesChart,
 	}
