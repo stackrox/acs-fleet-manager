@@ -195,7 +195,7 @@ else
     log
 fi
 
-if [[ "$FINAL_TEAR_DOWN" == "true" ]]; then
+if [[ "$FINAL_TEAR_DOWN" == "true" && "${OPENSHIFT_CI:-}" != "true" ]]; then
     down.sh
     delete "${MANIFESTS_DIR}/rhacs-operator" || true
 fi
