@@ -195,6 +195,11 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
 			return nil, err
 		}
+	} else {
+		var enabled = v1alpha1.CentralDBEnabledTrue
+		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
+			IsEnabled: &enabled,
+		}
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
