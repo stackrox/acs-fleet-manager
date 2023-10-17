@@ -3,6 +3,9 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/central/operator"
@@ -16,11 +19,10 @@ import (
 	"golang.org/x/exp/slices"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	errors2 "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
-	"strings"
 )
 
 const (
@@ -30,6 +32,13 @@ const (
 	operatorVersion1       = "4.2.2-rc.0"
 	operatorVersion2       = "4.2.0-366-g069902f3f9"
 	centralDeploymentName  = "central"
+)
+
+var (
+	crdUrls = []string{
+		"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
+		"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
+	}
 )
 
 var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
@@ -56,17 +65,15 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 	Describe("should run ACS operators", func() {
 		ctx := context.Background()
-		var gitops gitops.Config
-
-		It("get gitops configmap", func() {
-			gitops, err = getGitopsConfig(ctx)
-			Expect(err).ToNot(HaveOccurred())
-		})
 
 		It("should deploy operator 1 "+operatorConfig1.GetDeploymentName(), func() {
 			// update gitops config to install one operator
-			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
-			err = updateGitopsConfig(ctx, gitops)
+			err = putGitopsConfig(ctx, gitops.Config{
+				RHACSOperators: operator.OperatorConfigs{
+					CRDURLs: crdUrls,
+					Configs: []operator.OperatorConfig{operatorConfig1},
+				},
+			})
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(expectNumberOfOperatorDeployments(ctx, 1, getDeploymentName(operatorVersion1))).WithTimeout(waitTimeout).
@@ -83,8 +90,12 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 		It("should deploy two operators in different versions", func() {
 			// add a second operator version to the gitops config
-			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1, operatorConfig2}
-			err = updateGitopsConfig(ctx, gitops)
+			err = putGitopsConfig(ctx, gitops.Config{
+				RHACSOperators: operator.OperatorConfigs{
+					CRDURLs: crdUrls,
+					Configs: []operator.OperatorConfig{operatorConfig1, operatorConfig2},
+				},
+			})
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(expectNumberOfOperatorDeployments(ctx, 2, getDeploymentName(operatorVersion1), getDeploymentName(operatorVersion2))).
@@ -108,8 +119,12 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 		})
 
 		It("should delete operator 2 and only run operator 1", func() {
-			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
-			err = updateGitopsConfig(ctx, gitops)
+			err = putGitopsConfig(ctx, gitops.Config{
+				RHACSOperators: operator.OperatorConfigs{
+					CRDURLs: crdUrls,
+					Configs: []operator.OperatorConfig{operatorConfig1},
+				},
+			})
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(expectNumberOfOperatorDeployments(ctx, 1, getDeploymentName(operatorVersion1))).
@@ -130,18 +145,22 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 		ctx := context.Background()
 		var createdCentral *public.CentralRequest
 		var centralNamespace string
-		var gitops gitops.Config
 		operatorConfig1 := operatorConfigForVersion(operatorVersion1)
 		operatorConfig2 := operatorConfigForVersion(operatorVersion2)
 
-		It("should get gitops config", func() {
-			gitops, err = getGitopsConfig(ctx)
-			Expect(err).ToNot(HaveOccurred())
-		})
-
 		It("run only one operator with version: "+operatorVersion1, func() {
-			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1}
-			err = updateGitopsConfig(ctx, gitops)
+			err = putGitopsConfig(ctx, gitops.Config{
+				RHACSOperators: operator.OperatorConfigs{
+					CRDURLs: crdUrls,
+					Configs: []operator.OperatorConfig{operatorConfig1},
+				},
+				Centrals: gitops.CentralsConfig{
+					Overrides: []gitops.CentralOverride{
+						overrideAllCentralsToBeReconciledByOperator(operatorConfig1),
+						overrideAllCentralsToUseMinimalResources(),
+					},
+				},
+			})
 			Expect(err).To(BeNil())
 			Eventually(expectNumberOfOperatorDeployments(ctx, 1, getDeploymentName(operatorVersion1))).
 				WithTimeout(waitTimeout).
@@ -188,43 +207,18 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 
 		It("upgrade central", func() {
 			Skip("Re-enable once https://github.com/stackrox/stackrox/pull/8156 is released with ACS/StackRox 4.3")
-			gitops.RHACSOperators.Configs = []operator.OperatorConfig{operatorConfig1, operatorConfig2}
-			patch := `
-metadata:
-  labels:
-    rhacs.redhat.com/version-selector: "` + operatorVersion2 + `"
-spec:
-  central:
-    monitoring:
-      openshift:
-        enabled: false
-    resources:
-      limits:
-        cpu: null
-        memory: 1Gi
-      requests:
-        cpu: 100m
-        memory: 200Mi
-  scanner:
-    analyzer:
-      resources:
-        limits:
-          cpu: null
-          memory: 1Gi
-        requests:
-          cpu: 100m
-          memory: 500Mi
-    db:
-      resources:
-        limits:
-          cpu: null
-          memory: 1Gi
-        requests:
-          cpu: 100m
-          memory: 500Mi
-`
-			gitops.Centrals.Overrides[0].Patch = patch
-			err = updateGitopsConfig(ctx, gitops)
+			err = putGitopsConfig(ctx, gitops.Config{
+				RHACSOperators: operator.OperatorConfigs{
+					CRDURLs: crdUrls,
+					Configs: []operator.OperatorConfig{operatorConfig1, operatorConfig2},
+				},
+				Centrals: gitops.CentralsConfig{
+					Overrides: []gitops.CentralOverride{
+						overrideAllCentralsToBeReconciledByOperator(operatorConfig2),
+						overrideAllCentralsToUseMinimalResources(),
+					},
+				},
+			})
 			Expect(err).To(BeNil())
 
 			Eventually(func() error {
@@ -288,7 +282,7 @@ func getGitopsConfig(ctx context.Context) (gitops.Config, error) {
 	return gitopsConfig, nil
 }
 
-func updateGitopsConfig(ctx context.Context, config gitops.Config) error {
+func putGitopsConfig(ctx context.Context, config gitops.Config) error {
 	configYAML, err := yaml.Marshal(config)
 	if err != nil {
 		return err
@@ -303,12 +297,15 @@ func updateGitopsConfig(ctx context.Context, config gitops.Config) error {
 		},
 	}
 
-	err = k8sClient.Update(ctx, configMap)
-	if err != nil {
-		return err
+	if err := k8sClient.Update(ctx, configMap); err != nil {
+		if !errors2.IsNotFound(err) {
+			return err
+		}
+	} else {
+		return nil
 	}
 
-	return nil
+	return k8sClient.Create(ctx, configMap)
 }
 
 func operatorConfigForVersion(version string) operator.OperatorConfig {
@@ -415,4 +412,97 @@ func operatorMatchesConfig(ctx context.Context, config operator.OperatorConfig) 
 			operatorHasCentralLabelSelector(config.GetCentralLabelSelector()),
 		)
 	}
+}
+
+func getLabelAndVersionFromOperatorConfig(operatorConfig operator.OperatorConfig) (string, string, error) {
+	selector := operatorConfig.GetCentralLabelSelector()
+	selectorParts := strings.Split(selector, "=")
+	if len(selectorParts) != 2 {
+		return "", "", fmt.Errorf("invalid selector %s", selector)
+	}
+	versionLabelKey := selectorParts[0]
+	versionLabelValue := selectorParts[1]
+	return versionLabelKey, versionLabelValue, nil
+}
+
+func overrideAllCentralsToBeReconciledByOperator(operatorConfig operator.OperatorConfig) gitops.CentralOverride {
+	return overrideAllCentralsWithPatch(reconciledByOperatorPatch(operatorConfig))
+}
+
+func overrideAllCentralsToUseMinimalResources() gitops.CentralOverride {
+	return overrideAllCentralsWithPatch(minimalCentralResourcesPatch())
+}
+
+func overrideOneCentralToBeReconciledByOperator(central *public.CentralRequest, operatorConfig operator.OperatorConfig) gitops.CentralOverride {
+	return gitops.CentralOverride{
+		InstanceIDs: []string{central.Id},
+		Patch:       reconciledByOperatorPatch(operatorConfig),
+	}
+}
+
+func overrideAllCentralsWithPatch(patch string) gitops.CentralOverride {
+	return gitops.CentralOverride{
+		InstanceIDs: []string{"*"},
+		Patch:       patch,
+	}
+}
+
+func reconciledByOperatorPatch(operatorConfig operator.OperatorConfig) string {
+	key, value, err := getLabelAndVersionFromOperatorConfig(operatorConfig)
+	if err != nil {
+		panic(err)
+	}
+	return centralLabelPatch(key, value)
+}
+
+func minimalCentralResourcesPatch() string {
+	return `
+spec:
+  monitoring:
+    openshift:
+      enabled: false
+  central:
+    db:
+      resources:
+        limits:
+          cpu: 500m
+          memory: 500Mi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 500Mi
+      requests:
+        cpu: 100m
+        memory: 100Mi
+  scanner:
+    analyzer:
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1000Mi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+      scaling:
+        autoScaling: "Disabled"
+        replicas: 1
+    db:
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1000Mi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+`
+}
+
+func centralLabelPatch(key, value string) string {
+	return fmt.Sprintf(`
+metadata:
+  labels:
+    ` + key + `: "` + value + `"`)
 }
