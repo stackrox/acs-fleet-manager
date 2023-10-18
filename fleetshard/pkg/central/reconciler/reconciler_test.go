@@ -1585,7 +1585,7 @@ func TestGetInstanceConfigSetsNoProxyEnvVarsForAuditLog(t *testing.T) {
 			nil,
 			reconcilerOptions,
 		)
-		centralConfig, err := r.getInstanceConfig(context.Background(), &simpleManagedCentral)
+		centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
 		assert.NoError(t, err)
 		require.NotNil(t, centralConfig)
 		require.NotNil(t, centralConfig.Spec.Customize)
@@ -1616,7 +1616,7 @@ func TestGetInstanceConfigSetsDeclarativeConfigSecretInCentralCR(t *testing.T) {
 		nil,
 		reconcilerOptions,
 	)
-	centralConfig, err := r.getInstanceConfig(context.Background(), &simpleManagedCentral)
+	centralConfig, err := r.getInstanceConfig(&simpleManagedCentral)
 	assert.NoError(t, err)
 	require.NotNil(t, centralConfig)
 	require.NotNil(t, centralConfig.Spec.Central)
