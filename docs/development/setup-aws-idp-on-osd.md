@@ -54,7 +54,7 @@ S3 bucket name has the following pattern: `<osdClusterName>-<randomAlphanumeric>
     ```
 1. Change the cluster authentication
     ```shell
-    oc apply -f ./dev-dp-idp/manifests/cluster-authentication-02-config.yaml
+    oc apply -f ./$OUTPUT_DIR/manifests/cluster-authentication-02-config.yaml
     ```
 1. Make sure that the cluster authentication has an appropriate url pointing to the S3 bucket
     ```shell
