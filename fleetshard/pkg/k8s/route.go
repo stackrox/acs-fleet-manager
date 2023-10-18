@@ -24,6 +24,8 @@ const (
 	centralReencryptTimeoutAnnotationKey   = routeAnnotationKeyRoot + "timeout"
 	centralReencryptTimeoutAnnotationValue = "10m"
 
+	// Documentation for the route annotations to configure DDoS protection:
+	// https://docs.openshift.com/container-platform/4.13/networking/routes/route-configuration.html#nw-route-specific-annotations_route-configuration
 	rateLimitConnectionAnnotationKeyRoot = routeAnnotationKeyRoot + "rate-limit-connections"
 
 	enableRateLimitAnnotationKey      = rateLimitConnectionAnnotationKeyRoot
@@ -49,6 +51,23 @@ func NewRouteService(client ctrlClient.Client, routeConfig *config.RouteConfig) 
 		client:      client,
 		routeConfig: routeConfig,
 	}
+}
+
+func routeConfigAsAnnotationMap(routeConfig *config.RouteConfig) map[string]string {
+	asAnnotationMap := make(map[string]string)
+	asAnnotationMap[enableRateLimitAnnotationKey] = boolAsString(routeConfig.ThrottlingEnabled)
+	asAnnotationMap[concurrentConnectionAnnotationKey] = intAsString(routeConfig.ConcurrentTCP)
+	asAnnotationMap[rateHTTPAnnotationKey] = intAsString(routeConfig.RateHTTP)
+	asAnnotationMap[rateTCPAnnotationKey] = intAsString(routeConfig.RateTCP)
+	return asAnnotationMap
+}
+
+func boolAsString(boolValue bool) string {
+	return fmt.Sprintf("%t", boolValue)
+}
+
+func intAsString(intValue int) string {
+	return fmt.Sprintf("%d", intValue)
 }
 
 // FindReencryptRoute returns central reencrypt route or error if not found.
@@ -100,21 +119,11 @@ func (s *RouteService) hasExpectedTrafficLimitAnnotations(route *openshiftRouteV
 	if route.ObjectMeta.Annotations == nil {
 		return false
 	}
-	throttlingEnabledSetting := fmt.Sprintf("%t", s.routeConfig.ThrottlingEnabled)
-	if route.ObjectMeta.Annotations[enableRateLimitAnnotationKey] != throttlingEnabledSetting {
-		return false
-	}
-	concurrentConnectionLimit := fmt.Sprintf("%d", s.routeConfig.ConcurrentTCP)
-	if route.ObjectMeta.Annotations[concurrentConnectionAnnotationKey] != concurrentConnectionLimit {
-		return false
-	}
-	requestThroughputLimit := fmt.Sprintf("%d", s.routeConfig.RateHTTP)
-	if route.ObjectMeta.Annotations[rateHTTPAnnotationKey] != requestThroughputLimit {
-		return false
-	}
-	newConnectionThroughputLimit := fmt.Sprintf("%d", s.routeConfig.RateTCP)
-	if route.ObjectMeta.Annotations[rateTCPAnnotationKey] != newConnectionThroughputLimit {
-		return false
+	configAsAnnotations := routeConfigAsAnnotationMap(s.routeConfig)
+	for k, v := range configAsAnnotations {
+		if route.ObjectMeta.Annotations[k] != v {
+			return false
+		}
 	}
 	return true
 }
@@ -123,14 +132,10 @@ func (s *RouteService) annotateRouteWithTrafficLimiters(route *openshiftRouteV1.
 	if route.ObjectMeta.Annotations == nil {
 		route.ObjectMeta.Annotations = make(map[string]string)
 	}
-	throttlingEnabledSetting := fmt.Sprintf("%t", s.routeConfig.ThrottlingEnabled)
-	route.ObjectMeta.Annotations[enableRateLimitAnnotationKey] = throttlingEnabledSetting
-	concurrentConnectionLimit := fmt.Sprintf("%d", s.routeConfig.ConcurrentTCP)
-	route.ObjectMeta.Annotations[concurrentConnectionAnnotationKey] = concurrentConnectionLimit
-	requestThroughputLimit := fmt.Sprintf("%d", s.routeConfig.RateHTTP)
-	route.ObjectMeta.Annotations[rateHTTPAnnotationKey] = requestThroughputLimit
-	newConnectionThroughputLimit := fmt.Sprintf("%d", s.routeConfig.RateTCP)
-	route.ObjectMeta.Annotations[rateTCPAnnotationKey] = newConnectionThroughputLimit
+	configAsAnnotations := routeConfigAsAnnotationMap(s.routeConfig)
+	for k, v := range configAsAnnotations {
+		route.ObjectMeta.Annotations[k] = v
+	}
 	return route, nil
 }
 

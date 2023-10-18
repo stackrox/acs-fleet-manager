@@ -42,6 +42,22 @@ const (
 )
 
 var (
+	baseRouteParameters = &config.RouteConfig{
+		ThrottlingEnabled: true,
+		ConcurrentTCP:     32,
+		RateHTTP:          128,
+		RateTCP:           16,
+	}
+
+	updatedRouteParameters = &config.RouteConfig{
+		ThrottlingEnabled: false,
+		ConcurrentTCP:     16,
+		RateHTTP:          512,
+		RateTCP:           8,
+	}
+)
+
+var (
 	passThroughRouteSpec = openshiftRouteV1.RouteSpec{
 		Host: testTargetHost,
 		Port: &openshiftRouteV1.RoutePort{
@@ -66,6 +82,12 @@ var (
 			Labels: map[string]string{
 				ManagedByLabelKey: ManagedByFleetshardValue,
 			},
+			Annotations: map[string]string{
+				enableRateLimitAnnotationKey:      enabledLabelValue,
+				concurrentConnectionAnnotationKey: baseConcurrentTCPStrVal,
+				rateHTTPAnnotationKey:             baseRateHTTPStrVal,
+				rateTCPAnnotationKey:              baseRateTCPStrVal,
+			},
 		},
 		Spec: passThroughRouteSpec,
 	}
@@ -77,40 +99,36 @@ var (
 			Labels: map[string]string{
 				ManagedByLabelKey: ManagedByFleetshardValue,
 			},
+			Annotations: map[string]string{
+				enableRateLimitAnnotationKey:      disabledLabelValue,
+				concurrentConnectionAnnotationKey: updatedConcurrentTCPStrVal,
+				rateHTTPAnnotationKey:             updatedRateHTTPStrVal,
+				rateTCPAnnotationKey:              updatedRateTCPStrVal,
+			},
 		},
 		Spec: passThroughRouteSpec,
 	}
+)
 
+var (
 	passThroughRouteExtractors = map[string]routeFieldExtractor{
-		"name":                          extractRouteObjectMetaName,
-		"namespace":                     extractRouteObjectMetaNamespace,
-		"\"managed-by\" label":          extractRouteManagedByLabel,
+		"name":                                  extractRouteObjectMetaName,
+		"namespace":                             extractRouteObjectMetaNamespace,
+		"\"managed-by\" label":                  extractRouteManagedByLabel,
+		"\"rate-limit-connections\" annotation": extractRouteEnableRateLimitAnnotation,
+		"\"rate-limit-connections.concurrent-tcp\" annotation": extractRouteConcurrentConnectionsAnnotation,
+		"\"rate-limit-connections.rate-http\" annotation":      extractRouteRateHTTPAnnotation,
+		"\"rate-limit-connections.rate-tcp\" annotation":       extractRouteRateTCPAnnotation,
 		"spec host":                     extractRouteSpecHost,
 		"spec target port type":         extractRouteSpecTargetPortType,
 		"spec target port string value": extractRouteSpecTargetPortStrVal,
 		"spec \"to\" kind":              extractRouteSpecToKind,
 		"spec \"to\" name":              extractRouteSpecToName,
 		"spec TLS termination":          extractRouteSpecTLSTermination,
-)
-
-var (
-	baseRouteParameters = &config.RouteConfig{
-		ThrottlingEnabled: true,
-		ConcurrentTCP:     32,
-		RateHTTP:          128,
-		RateTCP:           16,
-	}
-
-	updatedRouteParameters = &config.RouteConfig{
-		ThrottlingEnabled: false,
-		ConcurrentTCP:     16,
-		RateHTTP:          512,
-		RateTCP:           8,
 	}
 )
 
 func TestPassThroughRouteLifecycle(t *testing.T) {
-	const testNamespace = "test-namespace"
 	client := testutils.NewFakeClientBuilder(t).Build()
 	baseRouteService := NewRouteService(client, baseRouteParameters)
 	updateRouteService := NewRouteService(client, updatedRouteParameters)
@@ -220,6 +238,10 @@ var (
 				ManagedByLabelKey: ManagedByFleetshardValue,
 			},
 			Annotations: map[string]string{
+				enableRateLimitAnnotationKey:         enabledLabelValue,
+				concurrentConnectionAnnotationKey:    baseConcurrentTCPStrVal,
+				rateHTTPAnnotationKey:                baseRateHTTPStrVal,
+				rateTCPAnnotationKey:                 baseRateTCPStrVal,
 				centralReencryptTimeoutAnnotationKey: centralReencryptTimeoutAnnotationValue,
 			},
 		},
@@ -234,6 +256,10 @@ var (
 				ManagedByLabelKey: ManagedByFleetshardValue,
 			},
 			Annotations: map[string]string{
+				enableRateLimitAnnotationKey:         disabledLabelValue,
+				concurrentConnectionAnnotationKey:    updatedConcurrentTCPStrVal,
+				rateHTTPAnnotationKey:                updatedRateHTTPStrVal,
+				rateTCPAnnotationKey:                 updatedRateTCPStrVal,
 				centralReencryptTimeoutAnnotationKey: centralReencryptTimeoutAnnotationValue,
 			},
 		},
@@ -241,19 +267,23 @@ var (
 	}
 
 	reEncryptRouteExtractors = map[string]routeFieldExtractor{
-		"name":                                extractRouteObjectMetaName,
-		"namespace":                           extractRouteObjectMetaNamespace,
-		"\"managed-by\" label":                extractRouteManagedByLabel,
-		"\"timeout\" annotation":              extractRouteReEncryptTimeoutAnnotation,
-		"spec host":                           extractRouteSpecHost,
-		"spec target port type":               extractRouteSpecTargetPortType,
-		"spec target port string value":       extractRouteSpecTargetPortStrVal,
-		"spec \"to\" kind":                    extractRouteSpecToKind,
-		"spec \"to\" name":                    extractRouteSpecToName,
-		"spec TLS termination":                extractRouteSpecTLSTermination,
-		"spec TLS destination CA certificate": extractRouteSpecTLSDestinationCACertificate,
-		"spec TLS key":                        extractRouteSpecTLSKey,
-		"spec TLS certificate":                extractRouteSpecTLSCertificate,
+		"name":                                  extractRouteObjectMetaName,
+		"namespace":                             extractRouteObjectMetaNamespace,
+		"\"managed-by\" label":                  extractRouteManagedByLabel,
+		"\"rate-limit-connections\" annotation": extractRouteEnableRateLimitAnnotation,
+		"\"rate-limit-connections.concurrent-tcp\" annotation": extractRouteConcurrentConnectionsAnnotation,
+		"\"rate-limit-connections.rate-http\" annotation":      extractRouteRateHTTPAnnotation,
+		"\"rate-limit-connections.rate-tcp\" annotation":       extractRouteRateTCPAnnotation,
+		"\"timeout\" annotation":                               extractRouteReEncryptTimeoutAnnotation,
+		"spec host":                                            extractRouteSpecHost,
+		"spec target port type":                                extractRouteSpecTargetPortType,
+		"spec target port string value":                        extractRouteSpecTargetPortStrVal,
+		"spec \"to\" kind":                                     extractRouteSpecToKind,
+		"spec \"to\" name":                                     extractRouteSpecToName,
+		"spec TLS termination":                                 extractRouteSpecTLSTermination,
+		"spec TLS destination CA certificate":                  extractRouteSpecTLSDestinationCACertificate,
+		"spec TLS key":                                         extractRouteSpecTLSKey,
+		"spec TLS certificate":                                 extractRouteSpecTLSCertificate,
 	}
 )
 
@@ -364,6 +394,34 @@ func extractRouteManagedByLabel(route *openshiftRouteV1.Route) string {
 		return ""
 	}
 	return route.ObjectMeta.Labels[ManagedByLabelKey]
+}
+
+func extractRouteEnableRateLimitAnnotation(route *openshiftRouteV1.Route) string {
+	if route.ObjectMeta.Annotations == nil {
+		return ""
+	}
+	return route.ObjectMeta.Annotations[enableRateLimitAnnotationKey]
+}
+
+func extractRouteConcurrentConnectionsAnnotation(route *openshiftRouteV1.Route) string {
+	if route.ObjectMeta.Annotations == nil {
+		return ""
+	}
+	return route.ObjectMeta.Annotations[concurrentConnectionAnnotationKey]
+}
+
+func extractRouteRateHTTPAnnotation(route *openshiftRouteV1.Route) string {
+	if route.ObjectMeta.Annotations == nil {
+		return ""
+	}
+	return route.ObjectMeta.Annotations[rateHTTPAnnotationKey]
+}
+
+func extractRouteRateTCPAnnotation(route *openshiftRouteV1.Route) string {
+	if route.ObjectMeta.Annotations == nil {
+		return ""
+	}
+	return route.ObjectMeta.Annotations[rateTCPAnnotationKey]
 }
 
 func extractRouteReEncryptTimeoutAnnotation(route *openshiftRouteV1.Route) string {
