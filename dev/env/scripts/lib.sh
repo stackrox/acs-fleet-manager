@@ -6,6 +6,10 @@ export GITROOT=${GITROOT:-$GITROOT_DEFAULT}
 # shellcheck source=/dev/null
 source "$GITROOT/scripts/lib/log.sh"
 
+if ! command -v bootstrap.sh >/dev/null 2>&1; then
+    export PATH="$GITROOT/dev/env/scripts:${PATH}"
+fi
+
 try_kubectl() {
     local kubectl
     if command -v kubectl >/dev/null 2>&1; then
@@ -62,10 +66,6 @@ init() {
         # shellcheck source=/dev/null
         source "$env_file"
     done
-
-    if ! command -v bootstrap.sh >/dev/null 2>&1; then
-        export PATH="$GITROOT/dev/env/scripts:${PATH}"
-    fi
 
     available_cluster_types=$(find "${GITROOT}/dev/env/defaults" -maxdepth 1 -type d -name "cluster-type-*" -print0 | xargs -0 -n1 basename | sed -e 's/^cluster-type-//;' | sort | paste -sd "," -)
 
