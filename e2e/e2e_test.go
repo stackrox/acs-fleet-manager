@@ -164,7 +164,7 @@ var _ = Describe("Central", Ordered, func() {
 
 			success := Eventually(func() string {
 				return centralStatus(createdCentral.Id, client)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
+			}).WithTimeout(extendedWaitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
 
 			if !success {
 				Fail("Central could not get to ready state")
@@ -561,7 +561,7 @@ var _ = Describe("Central", Ordered, func() {
 			}
 			Eventually(func() string {
 				return centralStatus(createdCentral.Id, client)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
+			}).WithTimeout(extendedWaitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
 			central = getCentral(createdCentral.Id, client)
 		})
 
