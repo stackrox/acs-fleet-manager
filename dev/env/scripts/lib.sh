@@ -361,7 +361,10 @@ inject_exported_env_vars() {
     local namespace="$1"
     local deployment="$2"
 
-    flags=$(printenv | grep -e "RHACS_*")
+    # Retrieve all environment variables prefixed with RHACS_ except those which also carry the _DEFAULT suffix
+    # (these are variables used for the defaulting logic of the development tooling and are not expected to end
+    # up in the pod specs).
+    flags=$(printenv | grep -e '^RHACS_' | grep -v '^RHACS_[^=]*_DEFAULT=')
     for flag in $flags
     do
         $KUBECTL -n "$namespace" set env "deployment/$deployment" "$flag"
