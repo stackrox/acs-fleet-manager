@@ -49,4 +49,6 @@ else
     fi
 fi
 
+sleep 30m
+
 exit $FAIL
