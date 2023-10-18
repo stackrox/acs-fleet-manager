@@ -191,16 +191,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
 	}
 
-	if r.managedDBEnabled {
-		if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
-			return nil, err
-		}
-	} else {
-		var enabled = v1alpha1.CentralDBEnabledDefault
-		if central.Spec.Central.DB == nil {
-			central.Spec.Central.DB = &v1alpha1.CentralDBSpec{}
-		}
-		central.Spec.Central.DB.IsEnabled = &enabled
+	if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
+		return nil, err
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
@@ -544,6 +536,18 @@ func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remot
 }
 
 func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+
+	if !r.managedDBEnabled {
+		var enabled = v1alpha1.CentralDBEnabledDefault
+		if central.Spec.Central == nil {
+			central.Spec.Central = &v1alpha1.CentralComponentSpec{}
+		}
+		if central.Spec.Central.DB == nil {
+			central.Spec.Central.DB = &v1alpha1.CentralDBSpec{}
+		}
+		central.Spec.Central.DB.IsEnabled = &enabled
+		return nil
+	}
 
 	centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
 	if err != nil {
