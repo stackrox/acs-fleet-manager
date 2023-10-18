@@ -61,7 +61,7 @@ data:
                   resources:
                     limits:
                       cpu: null
-                      memory: 3Gi
+                      memory: null
                     requests:
                       cpu: 200m
                       memory: 200Mi
