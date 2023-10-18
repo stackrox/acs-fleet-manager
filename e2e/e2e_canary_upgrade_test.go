@@ -51,13 +51,13 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 		if err != nil {
 			Expect(err).ToNot(HaveOccurred())
 		}
+	})
 
-		DeferCleanup(func() {
-			err := putGitopsConfig(context.Background(), originalGitOps)
-			if err != nil {
-				Expect(err).ToNot(HaveOccurred())
-			}
-		})
+	AfterAll(func() {
+		err := putGitopsConfig(context.Background(), originalGitOps)
+		if err != nil {
+			Expect(err).ToNot(HaveOccurred())
+		}
 	})
 
 	BeforeEach(func() {
