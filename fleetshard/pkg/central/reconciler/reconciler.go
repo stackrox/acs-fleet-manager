@@ -195,6 +195,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
 			return nil, err
 		}
+	} else {
+		var enabled = v1alpha1.CentralDBEnabledDefault
+		if central.Spec.Central.DB == nil {
+			central.Spec.Central.DB = &v1alpha1.CentralDBSpec{}
+		}
+		central.Spec.Central.DB.IsEnabled = &enabled
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
@@ -545,13 +551,14 @@ func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remote
 		return fmt.Errorf("getting Central DB connection string: %w", err)
 	}
 
-	central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
-		IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
-		ConnectionStringOverride: pointer.String(centralDBConnectionString),
-		PasswordSecret: &v1alpha1.LocalSecretReference{
-			Name: centralDbSecretName,
-		},
+	if central.Spec.Central.DB == nil {
+		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{}
 	}
+	central.Spec.Central.DB.ConnectionStringOverride = pointer.String(centralDBConnectionString)
+	central.Spec.Central.DB.PasswordSecret = &v1alpha1.LocalSecretReference{
+		Name: centralDbSecretName,
+	}
+	central.Spec.Central.DB.IsEnabled = v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue)
 
 	dbCA, err := postgres.GetDatabaseCACertificates()
 	if err != nil {
