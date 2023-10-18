@@ -84,12 +84,12 @@ wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleetshard-sy
 # Prerequisite for port-forwarding are pods in ready state.
 wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleet-manager" "fleet-manager"
 
-if [[ "$ENABLE_FM_PORT_FORWARDING" == "true" ]]; then
-    port-forwarding start fleet-manager 8000 8000
+if [[ "$ENABLE_FM_PORT_FORWARDING" == "true" && "$CLUSTER_TYPE" != "openshift-ci" ]]; then
+    port-forwarding start fleet-manager 8000 8000 &
 fi
 
-if [[ "$ENABLE_DB_PORT_FORWARDING" == "true" ]]; then
-    port-forwarding start db 5432 5432
+if [[ "$ENABLE_DB_PORT_FORWARDING" == "true" && "$CLUSTER_TYPE" != "openshift-ci" ]]; then
+    port-forwarding start db 5432 5432 &
 fi
 
 log

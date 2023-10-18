@@ -43,6 +43,29 @@ start)
     echo $! >"${pid_file}"
     ;;
 
+start-recover)
+  local_port="$1"
+  shift
+
+  # Starts port-forwarding to a service and is able to restart
+  err_file="/tmp/err_port_forward${service_name}"
+  rm "$err_file" || true
+  $KUBECTL -n "$ACSCS_NAMESPACE" port-forward svc/"${service_name}" "${local_port}:${service_port}" 2>"$err_file" >/dev/null &
+
+  while true
+  do
+    content=$(cat "$err_file" | xargs)
+    if [[ ! -z "$content" ]]; then
+      killall kubectl
+      rm "$err_file"
+      sleep 1
+      echo "Starting port-fowarding again"
+      $KUBECTL -n "$ACSCS_NAMESPACE" port-forward svc/"${service_name}" "${local_port}:${service_port}" 2>"$err_file" >/dev/null &
+    fi
+    sleep 1
+  done
+  ;;
+
 stop)
 
     if [[ -f "${pid_file}" ]]; then

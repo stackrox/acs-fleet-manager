@@ -4,6 +4,8 @@ GITROOT="$(git rev-parse --show-toplevel)"
 export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
+# shellcheck source=/dev/null
+source "${GITROOT}/scripts/lib/external_config.sh"
 
 bootstrap.sh
 
@@ -30,6 +32,10 @@ if [[ "$SKIP_TESTS" == "true" ]]; then
     log "Skipping tests"
 else
     log "Next: Executing e2e tests"
+
+    echo "Start port-forwarding"
+    port-forwarding start-recover fleet-manager 8000 8000 &
+    port-forwarding start-recover db 5432 5432 &
 
     T0=$(date "+%s")
     if ! make test/e2e; then
