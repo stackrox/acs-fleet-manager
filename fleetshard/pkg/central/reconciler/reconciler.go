@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"net/url"
 	"reflect"
 	"sort"
@@ -558,7 +559,20 @@ func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remote
 	central.Spec.Central.DB.PasswordSecret = &v1alpha1.LocalSecretReference{
 		Name: centralDbSecretName,
 	}
+	limitResources := corev1.ResourceList{
+		corev1.ResourceCPU:    resource.MustParse("1000m"),
+		corev1.ResourceMemory: resource.MustParse("5Gi"),
+	}
+	requestResources := corev1.ResourceList{
+		corev1.ResourceCPU:    resource.MustParse("500m"),
+		corev1.ResourceMemory: resource.MustParse("5Gi"),
+	}
 	central.Spec.Central.DB.IsEnabled = v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue)
+	resources := &corev1.ResourceRequirements{
+		Limits:   limitResources,
+		Requests: requestResources,
+	}
+	central.Spec.Central.DB.Resources = resources
 
 	dbCA, err := postgres.GetDatabaseCACertificates()
 	if err != nil {

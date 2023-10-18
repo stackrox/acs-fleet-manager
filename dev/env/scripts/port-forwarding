@@ -54,8 +54,7 @@ start-recover)
 
   while true
   do
-    content=$(cat "$err_file" | xargs)
-    if [[ ! -z "$content" ]]; then
+    if [[ -s "$err_file" ]]; then
       killall kubectl
       rm "$err_file"
       sleep 1
