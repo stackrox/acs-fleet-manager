@@ -42,7 +42,7 @@ var (
 	originalGitOps gitops.Config
 )
 
-var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
+var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 	var client *fleetmanager.Client
 	var err error
 
@@ -156,7 +156,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 		})
 	})
 
-	Describe("should upgrade the central", func() {
+	Describe("should upgrade the central", Ordered, func() {
 		ctx := context.Background()
 		var createdCentral *public.CentralRequest
 		var centralNamespace string
