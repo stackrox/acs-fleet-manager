@@ -55,8 +55,8 @@ data:
                 db:
                   resources:
                     limits:
-                      cpu: 10000m
-                      memory: 20Gi
+                      cpu: 500m
+                      memory: 10Gi
                     requests:
                       cpu: 200m
                       memory: 200Mi
