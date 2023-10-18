@@ -507,7 +507,8 @@ spec:
     db:
       resources:
         limits:
-          memory: 3000Mi
+          cpu: null
+          memory: null
         requests:
           cpu: 100m
           memory: 100Mi
