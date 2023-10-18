@@ -106,8 +106,11 @@ load_external_config "audit-logs/${CLUSTER_NAME}" AUDIT_LOGS_
 echo "Loading external config: cluster-${CLUSTER_NAME}"
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 
+# Allows to load an external cluster config (e.g. acs-dev-dp-01) and apply it to a different cluster with override
+OCM_CLUSTER_ID="${OVERRIDE_CLUSTER_ID:-${CLUSTER_ID}}"
+
 OCM_COMMAND="patch"
-OCM_ENDPOINT="/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons/acs-fleetshard"
+OCM_ENDPOINT="/api/clusters_mgmt/v1/clusters/${OCM_CLUSTER_ID}/addons/acs-fleetshard"
 OCM_PAYLOAD=$(cat << EOF
 {
     "addon_version": {
@@ -178,7 +181,7 @@ EOF
 # Check whether the addon is installed on a cluster
 # If installed, using the idempotent patch command to update the parameters of the existing installation.
 # Otherwise, use post endpoint to install.
-if ! GET_ADDON_BODY=$(ocm get "/api/clusters_mgmt/v1/clusters/$CLUSTER_ID/addons/acs-fleetshard" 2>&1); then
+if ! GET_ADDON_BODY=$(ocm get "/api/clusters_mgmt/v1/clusters/$OCM_CLUSTER_ID/addons/acs-fleetshard" 2>&1); then
     result=$(jq -r '.kind + ":" + .id' <<< "$GET_ADDON_BODY")
     if [[ "$result" != "Error:404" ]]; then
         echo 1>&2 "Unknown OCM error: $result"
@@ -186,7 +189,7 @@ if ! GET_ADDON_BODY=$(ocm get "/api/clusters_mgmt/v1/clusters/$CLUSTER_ID/addons
     fi
     # Install the addon for the first time
     OCM_COMMAND="post"
-    OCM_ENDPOINT="/api/clusters_mgmt/v1/clusters/${CLUSTER_ID}/addons"
+    OCM_ENDPOINT="/api/clusters_mgmt/v1/clusters/${OCM_CLUSTER_ID}/addons"
     OCM_PAYLOAD=$(jq '. + {addon: { id: "acs-fleetshard" }}' <<< "$OCM_PAYLOAD")
 fi
 
