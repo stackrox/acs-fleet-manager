@@ -25,6 +25,7 @@ var (
 	routesEnabled         bool
 	route53Client         *route53.Route53
 	waitTimeout           = getWaitTimeout()
+	extendedWaitTimeout   = getWaitTimeout() * 3
 	dpCloudProvider       = getEnvDefault("DP_CLOUD_PROVIDER", "standalone")
 	dpRegion              = getEnvDefault("DP_REGION", "standalone")
 	authType              = "OCM"
