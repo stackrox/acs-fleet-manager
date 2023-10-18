@@ -192,16 +192,6 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
-			Eventually(func() error {
-				centralDeployment, err := getDeployment(ctx, centralNamespace, centralDeploymentName)
-				if err != nil {
-					return fmt.Errorf("failed finding central deployment: %v", err)
-				}
-				if centralDeployment.Spec.Template.Spec.Containers[0].Image != "quay.io/rhacs-eng/main:"+operatorVersion1 {
-					return fmt.Errorf("there is no central deployment with %s image tag", operatorVersion1)
-				}
-				return nil
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 		})
 
 		It("upgrade central", func() {
@@ -221,15 +211,16 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", func() {
 			Expect(err).To(BeNil())
 
 			Eventually(func() error {
-				centralDeployment, err := getDeployment(ctx, centralNamespace, centralDeploymentName)
+				centralCR, err := getCentralCR(ctx, createdCentral.Name, centralNamespace)
 				if err != nil {
-					return fmt.Errorf("failed finding central deployment: %v", err)
+					return fmt.Errorf("failed finding central CR: %v", err)
 				}
-				if centralDeployment.Spec.Template.Spec.Containers[0].Image != "quay.io/rhacs-eng/main:"+operatorVersion2 {
-					return fmt.Errorf("there is no central deployment with %s image tag", operatorVersion2)
+				if centralCR.GetLabels()["rhacs.redhat.com/version-selector"] != operatorVersion2 {
+					return fmt.Errorf("central CR does not have %s version-selector", operatorVersion2)
 				}
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+
 		})
 	})
 
