@@ -6,6 +6,7 @@ TOOLS_DIR := $(PROJECT_PATH)/tools
 .DEFAULT_GOAL := help
 SHELL = bash
 
+# TODO
 # The details of the application:
 binary:=fleet-manager
 
