@@ -545,17 +545,17 @@ spec:
         cpu: 100m
         memory: 100Mi
   scanner:
-   	analyzer:
-   	  resources:
-   	    limits:
-   	      cpu: null
-   	      memory: 2Gi
-   	    requests:
-   	      cpu: 100m
-   	      memory: 100Mi
-   	  scaling:
-   	    autoScaling: "Disabled"
-   	    replicas: 1
+     analyzer:
+       resources:
+         limits:
+           cpu: null
+           memory: 2Gi
+         requests:
+           cpu: 100m
+           memory: 100Mi
+       scaling:
+         autoScaling: "Disabled"
+         replicas: 1
     db:
       resources:
         limits:
