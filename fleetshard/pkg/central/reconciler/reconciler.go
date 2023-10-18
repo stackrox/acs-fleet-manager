@@ -157,7 +157,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
 
-	central, err := r.getInstanceConfig(&remoteCentral)
+	central, err := r.getInstanceConfig(ctx, &remoteCentral)
 	if err != nil {
 		return nil, err
 	}
@@ -189,18 +189,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	if err := r.ensureChartResourcesExist(ctx, remoteCentral); err != nil {
 		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
-	}
-
-	if r.managedDBEnabled {
-		if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
-			return nil, err
-		}
-	} else {
-		var enabled = v1alpha1.CentralDBEnabledDefault
-		if central.Spec.Central.DB == nil {
-			central.Spec.Central.DB = &v1alpha1.CentralDBSpec{}
-		}
-		central.Spec.Central.DB.IsEnabled = &enabled
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
@@ -238,13 +226,12 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return installingStatus(), nil
 	}
 
-	exists, err := r.ensureAuthProviderExists(ctx, remoteCentral)
+	authProviderExists, err := r.ensureAuthProviderExists(ctx, remoteCentral)
 	if err != nil {
 		return nil, err
 	}
-	if !exists {
-		glog.Infof("Default auth provider for central %s/%s is not yet ready.",
-			central.GetNamespace(), central.GetName())
+	if !authProviderExists {
+		glog.Infof("Default auth provider for central %s/%s is not yet ready.", central.GetNamespace(), central.GetName())
 		return nil, ErrCentralNotChanged
 	}
 
@@ -266,7 +253,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	return status, nil
 }
 
-func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
+func (r *CentralReconciler) getInstanceConfig(ctx context.Context, remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
 	var central *v1alpha1.Central
 	var err error
 	if r.shouldUseGitopsConfig(remoteCentral) {
@@ -278,7 +265,7 @@ func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCent
 			return nil, err
 		}
 	}
-	if err := r.applyCentralConfig(remoteCentral, central); err != nil {
+	if err := r.applyCentralConfig(ctx, remoteCentral, central); err != nil {
 		return nil, err
 	}
 	return central, nil
@@ -377,13 +364,13 @@ func (r *CentralReconciler) getLegacyInstanceConfig(remoteCentral *private.Manag
 	return central, nil
 }
 
-func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+func (r *CentralReconciler) applyCentralConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 	r.applyTelemetry(remoteCentral, central)
 	r.applyRoutes(central)
 	r.applyProxyConfig(central)
 	r.applyDeclarativeConfig(central)
 	r.applyAnnotations(central)
-	return nil
+	return r.applyCentralDB(ctx, remoteCentral, central)
 }
 
 func (r *CentralReconciler) applyAnnotations(central *v1alpha1.Central) {
@@ -454,6 +441,47 @@ func (r *CentralReconciler) applyTelemetry(remoteCentral *private.ManagedCentral
 		},
 	}
 	central.Spec.Central.Telemetry = telemetry
+}
+
+func (r *CentralReconciler) applyCentralDB(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
+
+	if central.Spec.Central == nil {
+		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
+	}
+	if central.Spec.Central.DB == nil {
+		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{}
+	}
+
+	if !r.managedDBEnabled {
+		var enabled = v1alpha1.CentralDBEnabledDefault
+		central.Spec.Central.DB.IsEnabled = &enabled
+		return nil
+	}
+
+	centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
+	if err != nil {
+		return fmt.Errorf("getting Central DB connection string: %w", err)
+	}
+
+	central.Spec.Central.DB.ConnectionStringOverride = pointer.String(centralDBConnectionString)
+	central.Spec.Central.DB.PasswordSecret = &v1alpha1.LocalSecretReference{Name: centralDbSecretName}
+	central.Spec.Central.DB.IsEnabled = v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue)
+
+	dbCA, err := postgres.GetDatabaseCACertificates()
+	if err != nil {
+		glog.Warningf("Could not read DB server CA bundle: %v", err)
+	} else {
+		if central.Spec.TLS == nil {
+			central.Spec.TLS = &v1alpha1.TLSConfig{}
+		}
+		central.Spec.TLS.AdditionalCAs = append(central.Spec.TLS.AdditionalCAs,
+			v1alpha1.AdditionalCA{
+				Name:    postgres.CentralDatabaseCACertificateBaseName,
+				Content: string(dbCA),
+			},
+		)
+	}
+	return nil
 }
 
 func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {
@@ -563,14 +591,15 @@ func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remote
 	if err != nil {
 		glog.Warningf("Could not read DB server CA bundle: %v", err)
 	} else {
-		central.Spec.TLS = &v1alpha1.TLSConfig{
-			AdditionalCAs: []v1alpha1.AdditionalCA{
-				{
-					Name:    postgres.CentralDatabaseCACertificateBaseName,
-					Content: string(dbCA),
-				},
-			},
+		if central.Spec.TLS == nil {
+			central.Spec.TLS = &v1alpha1.TLSConfig{}
 		}
+		central.Spec.TLS.AdditionalCAs = append(central.Spec.TLS.AdditionalCAs,
+			v1alpha1.AdditionalCA{
+				Name:    postgres.CentralDatabaseCACertificateBaseName,
+				Content: string(dbCA),
+			},
+		)
 	}
 	return nil
 }
