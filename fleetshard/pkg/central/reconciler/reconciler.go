@@ -197,11 +197,20 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			return nil, err
 		}
 	} else {
-		var enabled = v1alpha1.CentralDBEnabledDefault
-		if central.Spec.Central.DB == nil {
-			central.Spec.Central.DB = &v1alpha1.CentralDBSpec{}
+		limitResources := corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("1000m"),
+			corev1.ResourceMemory: resource.MustParse("5Gi"),
 		}
-		central.Spec.Central.DB.IsEnabled = &enabled
+		requestResources := corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("500m"),
+			corev1.ResourceMemory: resource.MustParse("5Gi"),
+		}
+		central.Spec.Central.DB.IsEnabled = v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue)
+		resources := &corev1.ResourceRequirements{
+			Limits:   limitResources,
+			Requests: requestResources,
+		}
+		central.Spec.Central.DB.Resources = resources
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
