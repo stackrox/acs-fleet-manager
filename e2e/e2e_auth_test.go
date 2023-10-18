@@ -18,7 +18,7 @@ const (
 	adminAPI    = "admin"
 )
 
-var _ = Describe("AuthN/Z Fleet* components", func() {
+var _ = Describe("AuthN/Z Fleet* components", Ordered, func() {
 
 	BeforeEach(func() {
 		if !runAuthTests {

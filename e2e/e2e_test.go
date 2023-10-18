@@ -47,7 +47,7 @@ const (
 	skipDNSMsg     = "external DNS is not enabled for this test run"
 )
 
-var _ = Describe("Central", func() {
+var _ = Describe("Central", Ordered, func() {
 	var client *fleetmanager.Client
 	var adminAPI fleetmanager.AdminAPI
 	var notes []string
