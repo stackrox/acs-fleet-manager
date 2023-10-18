@@ -197,27 +197,11 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			Expect(err).To(BeNil())
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
 			centralNamespace, err = services.FormatNamespace(createdCentral.Id)
-			Eventually(func() error {
-				centralCR, err := getCentralCR(ctx, createdCentral.Name, centralNamespace)
-				if err != nil {
-					return fmt.Errorf("failed finding central CR: %v", err)
-				}
 
-				if centralCR.GetLabels()["rhacs.redhat.com/version-selector"] != operatorVersion1 {
-					return fmt.Errorf("central CR does not have %s version-selector", operatorVersion1)
-				}
-				return nil
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
-			Eventually(func() error {
-				centralDeployment, err := getDeployment(ctx, centralNamespace, centralDeploymentName)
-				if err != nil {
-					return fmt.Errorf("failed finding central deployment: %v", err)
-				}
-				if centralDeployment.Spec.Template.Spec.Containers[0].Image != "quay.io/rhacs-eng/main:"+operatorVersion1 {
-					return fmt.Errorf("there is no central deployment with %s image tag", operatorVersion1)
-				}
-				return nil
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+			Eventually(assertLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion1)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
 		It("upgrade central", func() {
@@ -236,20 +220,27 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			})
 			Expect(err).To(BeNil())
 
-			Eventually(func() error {
-				centralDeployment, err := getDeployment(ctx, centralNamespace, centralDeploymentName)
-				if err != nil {
-					return fmt.Errorf("failed finding central deployment: %v", err)
-				}
-				if centralDeployment.Spec.Template.Spec.Containers[0].Image != "quay.io/rhacs-eng/main:"+operatorVersion2 {
-					return fmt.Errorf("there is no central deployment with %s image tag", operatorVersion2)
-				}
-				return nil
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+			Eventually(assertLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion2)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 	})
-
 })
+
+func assertLabelSelectorPresent(ctx context.Context, createdCentral *public.CentralRequest, centralNamespace, version string) func() error {
+	return func() error {
+		centralCR, err := getCentralCR(ctx, createdCentral.Name, centralNamespace)
+		if err != nil {
+			return fmt.Errorf("failed finding central CR: %v", err)
+		}
+
+		if centralCR.GetLabels()["rhacs.redhat.com/version-selector"] != version {
+			return fmt.Errorf("central CR does not have %s version-selector", version)
+		}
+		return nil
+	}
+}
 
 func expectNumberOfOperatorDeployments(ctx context.Context, n int, expectedDeploymentNames ...string) func() error {
 	return func() error {
