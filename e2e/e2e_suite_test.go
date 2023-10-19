@@ -307,13 +307,6 @@ func assertPassthroughRouteExist(ctx context.Context, namespace string, route *o
 	}
 }
 
-func deleteCentralRequest(ctx context.Context, client *fleetmanager.Client, centralRequestID string) func() error {
-	return func() error {
-		_, err := client.PublicAPI().DeleteCentralById(ctx, centralRequestID, true)
-		return err
-	}
-}
-
 func SkipIf(condition bool, message string) {
 	if condition {
 		Skip(message, 1)
