@@ -1,0 +1,37 @@
+name: Setup OCM CLI
+description: "Setup OCM command line tool"
+inputs:
+  version:
+    description: "ocm version"
+    default: v0.1.70
+runs:
+  using: "composite"
+  steps:
+    - name: Setup external binaries cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.local/bin
+        key: ocm-${{ inputs.version }}
+    - name: Ensure OCM CLI is installed
+      run: |
+        INSTALL_DIR=${HOME}/.local/bin
+        if [[ -f ${INSTALL_DIR}/ocm ]]; then
+          echo "OCM already installed in ${INSTALL_DIR}/ocm"
+        else
+          echo "Installing ocm in ${INSTALL_DIR}/ocm"
+          mkdir -p ${INSTALL_DIR}
+          DOWNLOAD_URL="https://github.com/openshift-online/ocm-cli/releases/download/${{ inputs.version }}/ocm-linux-amd64"
+          curl -sL "${DOWNLOAD_URL}" > ${INSTALL_DIR}/ocm
+          chmod +x ${INSTALL_DIR}/ocm
+        fi
+
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        echo "OCM version: $(ocm version)"
+      shell: bash
+    - name: OCM login
+      env:
+        SA_CLIENT_ID: ${{ secrets.OCM_SERVICE_ACCOUNT_CLIENT_ID }}
+        SA_CLIENT_SECRET: ${{ secrets.OCM_SERVICE_ACCOUNT_CLIENT_SECRET }}
+      run: |
+        ocm login --client-id "${SA_CLIENT_ID}" --client-secret "${SA_CLIENT_SECRET}"
+      shell: bash
