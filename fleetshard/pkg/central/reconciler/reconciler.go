@@ -154,7 +154,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 
 	changed, err := r.centralChanged(remoteCentral)
 	if err != nil {
-		return nil, errors.Wrapf(err, "checking if central changed")
+		return nil, errors.Wrap(err, "checking if central changed")
 	}
 	needsReconcile := r.needsReconcile(changed, remoteCentral, central)
 
@@ -226,7 +226,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			if errors.Is(err, k8s.ErrCentralTLSSecretNotFound) {
 				centralTLSSecretFound = false // pragma: allowlist secret
 			} else {
-				return nil, errors.Wrapf(err, "updating routes")
+				return nil, errors.Wrap(err, "updating routes")
 			}
 		}
 	}
@@ -262,7 +262,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// Setting the last central hash must always be executed as the last step.
 	// defer can't be used for this call because it is also executed after the reconcile failed.
 	if err := r.setLastCentralHash(remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "setting central reconcilation cache")
+		return nil, errors.Wrap(err, "setting central reconcilation cache")
 	}
 
 	logStatus := *status
