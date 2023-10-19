@@ -426,15 +426,19 @@ var _ = Describe("Central", Ordered, func() {
 				fmt.Sprintf("Central ID: %s", centralRequestID),
 			}
 			namespaceName, err = services.FormatNamespace(centralRequestID)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(resp.Status).To(Equal(statusAccepted))
 		})
+
+		var readyCentralRequest public.CentralRequest
 
 		It("should transition central's state to ready", func() {
 			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
 				WithTimeout(extendedWaitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
+			Expect(obtainCentralRequest(ctx, client, centralRequestID, &readyCentralRequest)).
+				To(Succeed())
 		})
 
 		It("should be deletable in the control-plane database", func() {
@@ -469,10 +473,7 @@ var _ = Describe("Central", Ordered, func() {
 
 		It("should delete external DNS entries", func() {
 			SkipIf(!dnsEnabled, skipDNSMsg)
-			var centralRequest public.CentralRequest
-			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
-				To(Succeed())
-			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
+			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, readyCentralRequest)
 			Eventually(dnsRecordsLoader.LoadDNSRecords).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
