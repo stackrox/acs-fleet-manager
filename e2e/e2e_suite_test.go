@@ -167,15 +167,13 @@ func assertCentralRequestAccepted(ctx context.Context, client *fleetmanager.Clie
 	return assertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusAccepted.String())
 }
 
-func obtainCentralRequest(ctx context.Context, client *fleetmanager.Client, id string, request *public.CentralRequest) func() error {
-	return func() error {
-		centralRequest, _, err := client.PublicAPI().GetCentralById(ctx, id)
-		if err != nil {
-			return err
-		}
-		*request = centralRequest
-		return nil
+func obtainCentralRequest(ctx context.Context, client *fleetmanager.Client, id string, request *public.CentralRequest) error {
+	centralRequest, _, err := client.PublicAPI().GetCentralById(ctx, id)
+	if err != nil {
+		return err
 	}
+	*request = centralRequest
+	return nil
 }
 
 func assertStoredSecrets(ctx context.Context, client *fleetmanager.Client, centralRequestID string, expected []string) func() error {
