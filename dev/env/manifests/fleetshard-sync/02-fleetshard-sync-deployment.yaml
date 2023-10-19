@@ -69,6 +69,8 @@ spec:
                   key: "aws-secret-access-key"
             - name: RHACS_TARGETED_OPERATOR_UPGRADES
               value: "true"
+            - name: RHACS_PRINT_CENTRAL_UPDATE_DIFF
+              value: "true"
           image: "${FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent
           name: fleetshard-sync

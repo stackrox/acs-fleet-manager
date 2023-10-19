@@ -191,10 +191,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
 	}
 
-	if r.managedDBEnabled {
-		if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
-			return nil, err
-		}
+	if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
+		return nil, err
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
@@ -540,17 +538,26 @@ func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remot
 
 func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 
+	if central.Spec.Central == nil {
+		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
+	}
+	if central.Spec.Central.DB == nil {
+		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{}
+	}
+	central.Spec.Central.DB.IsEnabled = v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue)
+
+	if !r.managedDBEnabled {
+		return nil
+	}
+
 	centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
 	if err != nil {
 		return fmt.Errorf("getting Central DB connection string: %w", err)
 	}
 
-	central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
-		IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
-		ConnectionStringOverride: pointer.String(centralDBConnectionString),
-		PasswordSecret: &v1alpha1.LocalSecretReference{
-			Name: centralDbSecretName,
-		},
+	central.Spec.Central.DB.ConnectionStringOverride = pointer.String(centralDBConnectionString)
+	central.Spec.Central.DB.PasswordSecret = &v1alpha1.LocalSecretReference{
+		Name: centralDbSecretName,
 	}
 
 	dbCA, err := postgres.GetDatabaseCACertificates()

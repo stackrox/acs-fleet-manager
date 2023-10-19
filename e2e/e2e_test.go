@@ -346,6 +346,7 @@ var _ = Describe("Central", Ordered, func() {
 				fmt.Sprintf("Central ID: %s", resp.Id),
 			}
 			centralRequestID = resp.Id
+			centralRequestName = resp.Name
 			namespaceName, err = services.FormatNamespace(centralRequestID)
 			Expect(err).To(BeNil())
 			Expect(resp.Status).To(Equal(statusAccepted))
