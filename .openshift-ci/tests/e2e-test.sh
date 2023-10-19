@@ -34,8 +34,8 @@ else
     log "Next: Executing e2e tests"
 
     echo "Start port-forwarding"
-    port-forwarding start-recover fleet-manager 8000 8000 &
-    port-forwarding start-recover db 5432 5432 &
+    port-forwarding start fleet-manager 8000 8000 &
+    port-forwarding start db 5432 5432 &
 
     T0=$(date "+%s")
     if ! make test/e2e; then
