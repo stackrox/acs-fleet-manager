@@ -453,12 +453,23 @@ func overrideAllCentralsWithPatch(patch string) gitops.CentralOverride {
 	}
 }
 
+func overrideCentralWithPatch(centralID, patch string) gitops.CentralOverride {
+	return gitops.CentralOverride{
+		InstanceIDs: []string{centralID},
+		Patch:       patch,
+	}
+}
+
 func reconciledByOperatorPatch(operatorConfig operator.OperatorConfig) string {
 	key, value, err := getLabelAndVersionFromOperatorConfig(operatorConfig)
 	if err != nil {
 		panic(err)
 	}
 	return centralLabelPatch(key, value)
+}
+
+func forceReconcilePatch() string {
+	return centralLabelPatch("rhacs.redhat.com/force-reconcile", "true")
 }
 
 func minimalCentralResourcesPatch() string {
@@ -511,4 +522,82 @@ func centralLabelPatch(key, value string) string {
 metadata:
   labels:
     ` + key + `: "` + value + `"`)
+}
+
+func defaultGitopsConfig() gitops.Config {
+	return gitops.Config{
+		RHACSOperators: operator.OperatorConfigs{
+			CRDURLs: []string{
+				"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
+				"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
+			},
+			Configs: []operator.OperatorConfig{
+				{
+					"deploymentName":                  "rhacs-operator-4.2.2-rc.0",
+					"image":                           "quay.io/rhacs-eng/stackrox-operator:4.2.2-rc.0",
+					"centralLabelSelector":            "rhacs.redhat.com/version-selector=4.2.2-rc.0",
+					"securedClusterReconcilerEnabled": false,
+				},
+			},
+		},
+		Centrals: gitops.CentralsConfig{
+			Overrides: []gitops.CentralOverride{
+				{
+					InstanceIDs: []string{"*"},
+					Patch: `
+metadata:
+  labels:
+    rhacs.redhat.com/version-selector: "4.2.2-rc.0"`,
+				}, {
+					InstanceIDs: []string{"*"},
+					Patch: `
+spec:
+  monitoring:
+    openshift:
+      enabled: false
+  central:
+    db:
+      resources:
+        limits:
+          cpu: null
+          memory: 1Gi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+    resources:
+      limits:
+        cpu: null
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 100Mi
+  scanner:
+     analyzer:
+       resources:
+         limits:
+           cpu: null
+           memory: 2Gi
+         requests:
+           cpu: 100m
+           memory: 100Mi
+       scaling:
+         autoScaling: "Disabled"
+         replicas: 1
+    db:
+      resources:
+        limits:
+          cpu: null
+          memory: 3Gi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+`,
+				},
+			},
+		},
+	}
+}
+
+func restoreDefaultGitopsConfig() error {
+	return putGitopsConfig(context.Background(), defaultGitopsConfig())
 }
