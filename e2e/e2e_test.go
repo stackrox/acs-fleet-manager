@@ -44,6 +44,10 @@ const (
 	skipDNSMsg     = "external DNS is not enabled for this test run"
 )
 
+var (
+	statusAccepted = constants.CentralRequestStatusAccepted.String()
+)
+
 var _ = Describe("Central", Ordered, func() {
 	var client *fleetmanager.Client
 	var adminAPI fleetmanager.AdminAPI
@@ -51,7 +55,7 @@ var _ = Describe("Central", Ordered, func() {
 	var ctx = context.Background()
 
 	BeforeEach(func() {
-		Expect(restoreDefaultGitopsConfig).To(Succeed())
+		Expect(restoreDefaultGitopsConfig()).To(Succeed())
 	})
 
 	BeforeEach(func() {
@@ -97,12 +101,11 @@ var _ = Describe("Central", Ordered, func() {
 			printNotes(notes)
 			namespaceName, err = services.FormatNamespace(centralRequestID)
 			Expect(err).To(BeNil())
-			Expect(resp.Status).To(Equal(constants.CentralRequestStatusAccepted.String()))
+			Expect(resp.Status).To(Equal(statusAccepted))
 		})
 
 		It("should transition central request state to provisioning", func() {
-			provisioning := constants.CentralRequestStatusProvisioning.String()
-			Eventually(assertCentralRequestStatus(ctx, client, centralRequestID, provisioning)).
+			Eventually(assertCentralRequestProvisioning(ctx, client, centralRequestID)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -145,7 +148,7 @@ var _ = Describe("Central", Ordered, func() {
 		It("should transition central request state to ready", func() {
 			Expect(obtainCentralRequest(ctx, client, centralRequestID, &public.CentralRequest{})).
 				To(Succeed())
-			Eventually(assertCentralRequestStatus(ctx, client, centralRequestID, constants.CentralRequestStatusReady.String())).
+			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -229,7 +232,7 @@ var _ = Describe("Central", Ordered, func() {
 				Should(Succeed())
 		})
 
-		It("should set ForceReconcile through admin API", func() {
+		It("should set ForceReconcile through gitops", func() {
 			cfg := defaultGitopsConfig()
 			cfg.Centrals.Overrides = append(cfg.Centrals.Overrides, overrideCentralWithPatch(centralRequestID, forceReconcilePatch()))
 			Expect(putGitopsConfig(ctx, cfg)).To(Succeed())
@@ -241,11 +244,12 @@ var _ = Describe("Central", Ordered, func() {
 
 		It("should restore secrets and deployment on namespace delete", func() {
 			previousNamespace := corev1.Namespace{}
-			Expect(assertNamespaceExists(ctx, &previousNamespace, namespaceName)).To(Succeed())
+			Expect(assertNamespaceExists(ctx, &previousNamespace, namespaceName)).
+				To(Succeed())
 
 			// Using managedDB false here because e2e don't run with managed postgresql
 			secretBackup := k8s.NewSecretBackup(k8sClient, false)
-			expectedSecrets, err := secretBackup.CollectSecrets(context.Background(), namespaceName)
+			expectedSecrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
 			Expect(err).To(BeNil())
 
 			previousCreationTime := previousNamespace.CreationTimestamp
@@ -254,8 +258,7 @@ var _ = Describe("Central", Ordered, func() {
 
 			Eventually(func() error {
 				newNamespace := corev1.Namespace{}
-				err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: namespaceName}, &newNamespace)
-				if err != nil {
+				if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: namespaceName}, &newNamespace); err != nil {
 					return err
 				}
 				if previousCreationTime.Equal(&newNamespace.CreationTimestamp) {
@@ -265,13 +268,9 @@ var _ = Describe("Central", Ordered, func() {
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
 			actualSecrets := map[string]*corev1.Secret{}
-			Eventually(func() error {
-				secrets, err := secretBackup.CollectSecrets(context.Background(), namespaceName)
-				if err != nil {
-					return err
-				}
-				actualSecrets = secrets // pragma: allowlist secret
-				return nil
+			Eventually(func() (err error) {
+				actualSecrets, err = secretBackup.CollectSecrets(ctx, namespaceName) // pragma: allowlist secret
+				return err
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
 			Expect(actualSecrets).ToNot(BeEmpty())
@@ -286,14 +285,13 @@ var _ = Describe("Central", Ordered, func() {
 		It("should transition central to deprovisioning state", func() {
 			Expect(deleteCentralByID(ctx, client, centralRequestID)).
 				To(Succeed())
-			deprovisioning := constants.CentralRequestStatusDeprovision.String()
-			Eventually(assertCentralRequestStatus(ctx, client, centralRequestID, deprovisioning)).
+			Eventually(assertCentralRequestDeprovisioning(ctx, client, centralRequestID)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
 
-		It("should delete central CR", func() {
+		It("should delete Central CR", func() {
 			Eventually(assertCentralCRDeleted(ctx, namespaceName, centralRequestName)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -327,7 +325,7 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should restore the default gitops config", func() {
-			Expect(restoreDefaultGitopsConfig).To(Succeed())
+			Expect(restoreDefaultGitopsConfig()).To(Succeed())
 		})
 	})
 
@@ -344,7 +342,7 @@ var _ = Describe("Central", Ordered, func() {
 				CloudProvider: dpCloudProvider,
 				Region:        dpRegion,
 			}
-			resp, _, err := adminAPI.CreateCentral(context.TODO(), true, request)
+			resp, _, err := adminAPI.CreateCentral(ctx, true, request)
 			Expect(err).To(BeNil())
 			notes = []string{
 				fmt.Sprintf("Central name: %s", resp.Name),
@@ -353,7 +351,7 @@ var _ = Describe("Central", Ordered, func() {
 			centralRequestID = resp.Id
 			namespaceName, err = services.FormatNamespace(centralRequestID)
 			Expect(err).To(BeNil())
-			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(resp.Status))
+			Expect(resp.Status).To(Equal(statusAccepted))
 		})
 
 		It("should create central in its namespace on a managed cluster", func() {
@@ -364,16 +362,16 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should transition central's state to ready", func() {
-			Eventually(assertCentralRequestStatus(ctx, client, centralRequestID, constants.CentralRequestStatusReady.String())).
+			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
 
 		It("should transition central to deprovisioning state when deleting", func() {
-			_, err := client.PublicAPI().DeleteCentralById(context.TODO(), centralRequestID, true)
-			Expect(err).NotTo(HaveOccurred())
-			Eventually(assertCentralRequestStatus(ctx, client, centralRequestID, constants.CentralRequestStatusDeprovision.String())).
+			Expect(deleteCentralRequest(ctx, client, centralRequestID)).
+				To(Succeed())
+			Eventually(assertCentralRequestDeprovisioning(ctx, client, centralRequestID)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -431,11 +429,11 @@ var _ = Describe("Central", Ordered, func() {
 			}
 			namespaceName, err = services.FormatNamespace(centralRequestID)
 			Expect(err).To(BeNil())
-			Expect(resp.Status).To(Equal(constants.CentralRequestStatusAccepted.String()))
+			Expect(resp.Status).To(Equal(statusAccepted))
 		})
 
 		It("should transition central's state to ready", func() {
-			Eventually(assertCentralRequestStatus(ctx, client, centralRequestID, constants.CentralRequestStatusReady.String())).
+			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
 				WithTimeout(extendedWaitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
