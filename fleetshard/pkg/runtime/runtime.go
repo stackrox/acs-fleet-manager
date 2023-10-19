@@ -4,7 +4,6 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"time"
 
 	"github.com/golang/glog"
@@ -18,6 +17,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cipher"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"

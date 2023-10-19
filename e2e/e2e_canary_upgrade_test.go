@@ -16,11 +16,11 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	"golang.org/x/exp/slices"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	errors2 "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -38,8 +38,10 @@ var (
 		"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_securedclusters.yaml",
 		"https://raw.githubusercontent.com/stackrox/stackrox/4.2.1/operator/bundle/manifests/platform.stackrox.io_centrals.yaml",
 	}
-	operatorConfig1 = operatorConfigForVersion(operatorVersion1)
-	operatorConfig2 = operatorConfigForVersion(operatorVersion2)
+	operatorConfig1         = operatorConfigForVersion(operatorVersion1)
+	operatorConfig2         = operatorConfigForVersion(operatorVersion2)
+	operator1DeploymentName = getDeploymentName(operatorVersion1)
+	operator2DeploymentName = getDeploymentName(operatorVersion2)
 )
 
 var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
@@ -71,7 +73,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 
 	Describe("should run ACS operators", Ordered, func() {
 
-		It("should deploy operator 1 "+operatorConfig1.GetDeploymentName(), func() {
+		It("should deploy operator 1 "+operator1DeploymentName, func() {
 			// update gitops config to install one operator
 			config := gitops.Config{
 				RHACSOperators: operator.OperatorConfigs{
@@ -80,7 +82,8 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				},
 			}
 			Expect(putGitopsConfig(ctx, config)).To(Succeed())
-			Eventually(operatorDeploymentCountAssertion(ctx, 1, getDeploymentName(operatorVersion1))).WithTimeout(waitTimeout).
+			Eventually(assertDeployedOperators(ctx, operator1DeploymentName)).
+				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
 		})
@@ -101,7 +104,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				},
 			}
 			Expect(putGitopsConfig(ctx, config)).To(Succeed())
-			Eventually(operatorDeploymentCountAssertion(ctx, 2, getDeploymentName(operatorVersion1), getDeploymentName(operatorVersion2))).
+			Eventually(assertDeployedOperators(ctx, operator1DeploymentName, operator2DeploymentName)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -129,7 +132,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				},
 			}
 			Expect(putGitopsConfig(ctx, config)).To(Succeed())
-			Eventually(operatorDeploymentCountAssertion(ctx, 1, getDeploymentName(operatorVersion1))).
+			Eventually(assertDeployedOperators(ctx, operator1DeploymentName)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -162,7 +165,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				},
 			}
 			Expect(putGitopsConfig(ctx, config)).To(Succeed())
-			Eventually(operatorDeploymentCountAssertion(ctx, 1, getDeploymentName(operatorVersion1))).
+			Eventually(assertDeployedOperators(ctx, operator1DeploymentName)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -183,7 +186,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
 			centralNamespace, err = services.FormatNamespace(createdCentral.Id)
 
-			Eventually(assertLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion1)).
+			Eventually(assertCentralLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion1)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -204,7 +207,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 				},
 			}
 			Expect(putGitopsConfig(ctx, config)).To(Succeed())
-			Eventually(assertLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion2)).
+			Eventually(assertCentralLabelSelectorPresent(ctx, createdCentral, centralNamespace, operatorVersion2)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
@@ -212,7 +215,7 @@ var _ = Describe("Fleetshard-sync Targeted Upgrade", Ordered, func() {
 	})
 })
 
-func assertLabelSelectorPresent(ctx context.Context, createdCentral *public.CentralRequest, centralNamespace, version string) func() error {
+func assertCentralLabelSelectorPresent(ctx context.Context, createdCentral *public.CentralRequest, centralNamespace, version string) func() error {
 	return func() error {
 		var centralCR v1alpha1.Central
 		if err := assertCentralCRExists(ctx, &centralCR, centralNamespace, createdCentral.Name)(); err != nil {
@@ -228,32 +231,28 @@ func assertLabelSelectorPresent(ctx context.Context, createdCentral *public.Cent
 	}
 }
 
-func operatorDeploymentCountAssertion(ctx context.Context, n int, expectedDeploymentNames ...string) func() error {
+func assertDeployedOperators(ctx context.Context, expectedDeploymentNames ...string) func() error {
 	return func() error {
-		var err error
 		deployments, err := getOperatorDeployments(ctx)
 		if err != nil {
 			return err
 		}
-		if len(deployments) != n {
-			err = fmt.Errorf("expected %d operator deployment, got %d", n, len(deployments))
-		}
-
-		found := false
-		var names []string
+		wantSet := sets.NewString(expectedDeploymentNames...)
+		actualSet := sets.NewString()
 		for _, deployment := range deployments {
-			if slices.Contains(expectedDeploymentNames, deployment.GetName()) {
-				found = true
-				continue
-			}
-			names = append(names, deployment.GetName())
+			actualSet.Insert(deployment.GetName())
 		}
-
-		if !found {
-			return fmt.Errorf("Expected deployments %s not found. Got '%s'. %w", expectedDeploymentNames, strings.Join(names, ","), err)
+		extraSet := actualSet.Difference(wantSet)
+		missingSet := wantSet.Difference(actualSet)
+		if !actualSet.Equal(wantSet) {
+			return fmt.Errorf("expected deployments %v. actual deployments %v. extra deployments: %v. missing deployments: %v",
+				expectedDeploymentNames,
+				actualSet.List(),
+				extraSet.List(),
+				missingSet.List(),
+			)
 		}
-
-		return err
+		return nil
 	}
 }
 
@@ -271,7 +270,6 @@ func putGitopsConfig(ctx context.Context, config gitops.Config) error {
 			gitopsConfigmapDataKey: string(configYAML),
 		},
 	}
-
 	if err := k8sClient.Update(ctx, configMap); err != nil {
 		if !errors2.IsNotFound(err) {
 			return err
@@ -279,7 +277,6 @@ func putGitopsConfig(ctx context.Context, config gitops.Config) error {
 	} else {
 		return nil
 	}
-
 	return k8sClient.Create(ctx, configMap)
 }
 
@@ -530,17 +527,17 @@ spec:
         cpu: 100m
         memory: 100Mi
   scanner:
-     analyzer:
-       resources:
-         limits:
-           cpu: null
-           memory: 2Gi
-         requests:
-           cpu: 100m
-           memory: 100Mi
-       scaling:
-         autoScaling: "Disabled"
-         replicas: 1
+    analyzer:
+      resources:
+        limits:
+          cpu: null
+          memory: 2Gi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+      scaling:
+        autoScaling: "Disabled"
+        replicas: 1
     db:
       resources:
         limits:
