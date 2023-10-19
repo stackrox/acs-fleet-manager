@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -12,14 +13,21 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
+	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
 	cfg                   *rest.Config
-	k8sClient             client.Client
+	k8sClient             ctrlClient.Client
 	routeService          *k8s.RouteService
 	dnsEnabled            bool
 	routesEnabled         bool
@@ -122,4 +130,167 @@ func isDNSEnabled(routesEnabled bool) (bool, string, string) {
 		secretKey != "" &&
 		enableExternal != "" && routesEnabled
 	return dnsEnabled, accessKey, secretKey
+}
+
+func assertCentralRequestStatus(ctx context.Context, client *fleetmanager.Client, id string, status string) func() error {
+	return func() error {
+		centralRequest, _, err := client.PublicAPI().GetCentralById(ctx, id)
+		if err != nil {
+			return err
+		}
+		if centralRequest.Status != status {
+			return fmt.Errorf("expected centralRequest status %s, got %s", status, centralRequest.Status)
+		}
+		return nil
+	}
+}
+
+func obtainCentralRequest(ctx context.Context, client *fleetmanager.Client, id string, request *public.CentralRequest) func() error {
+	return func() error {
+		centralRequest, _, err := client.PublicAPI().GetCentralById(ctx, id)
+		if err != nil {
+			return err
+		}
+		*request = centralRequest
+		return nil
+	}
+}
+
+func assertStoredSecrets(ctx context.Context, client *fleetmanager.Client, centralRequestID string, expected []string) func() error {
+	return func() error {
+		privateCentral, _, err := client.PrivateAPI().GetCentral(ctx, centralRequestID)
+		if err != nil {
+			return err
+		}
+		if len(privateCentral.Metadata.SecretsStored) != len(expected) {
+			return fmt.Errorf("unexpected number of secrets, want: %d, got: %d", len(expected), len(privateCentral.Metadata.SecretsStored))
+		}
+		Expect(privateCentral.Metadata.SecretsStored).Should(ContainElements(expected)) // pragma: allowlist secret
+		return nil
+	}
+}
+
+func assertCentralCRExists(ctx context.Context, central *v1alpha1.Central, namespace, name string) func() error {
+	return assertObjectExists(ctx, central, namespace, name)
+}
+
+func assertSecretExists(ctx context.Context, secret *v1.Secret, namespace, name string) func() error {
+	return assertObjectExists(ctx, secret, namespace, name)
+}
+
+func assertNamespaceExists(ctx context.Context, ns *v1.Namespace, name string) func() error {
+	return assertObjectExists(ctx, ns, "", name)
+}
+
+func assertObjectExists(ctx context.Context, obj ctrlClient.Object, namespace, name string) func() error {
+	return func() error {
+		key := ctrlClient.ObjectKey{Name: name, Namespace: namespace}
+		err := k8sClient.Get(ctx, key, obj)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func deleteCentralByID(ctx context.Context, client *fleetmanager.Client, id string) func() error {
+	return func() error {
+		_, err := client.PublicAPI().DeleteCentralById(ctx, id, true)
+		return err
+	}
+}
+
+func assertCentralCRDeleted(ctx context.Context, namespace, name string) func() error {
+	central := &v1alpha1.Central{}
+	return assertObjectDeleted(ctx, central, namespace, name)
+}
+
+func assertDeploymentDeleted(ctx context.Context, namespace, name string) func() error {
+	deployment := &appsv1.Deployment{}
+	return assertObjectDeleted(ctx, deployment, namespace, name)
+}
+
+func assertNamespaceDeleted(ctx context.Context, name string) func() error {
+	ns := &v1.Namespace{}
+	return assertObjectDeleted(ctx, ns, "", name)
+}
+
+func assertObjectDeleted(ctx context.Context, obj ctrlClient.Object, namespace, name string) func() error {
+	return func() error {
+		key := ctrlClient.ObjectKey{Name: name, Namespace: namespace}
+		err := k8sClient.Get(ctx, key, obj)
+		if err != nil {
+			if apiErrors.IsNotFound(err) {
+				return nil
+			}
+			return err
+		}
+		return fmt.Errorf("%s %s/%s still exists", obj.GetObjectKind().GroupVersionKind().Kind, namespace, name)
+	}
+}
+
+func assertDeploymentHealthyReplicas(ctx context.Context, namespace, name string, replicas int32) func() error {
+	return func() error {
+		deployment := &appsv1.Deployment{}
+		key := ctrlClient.ObjectKey{Name: name, Namespace: namespace}
+		err := k8sClient.Get(ctx, key, deployment)
+		if err != nil {
+			return err
+		}
+		if *deployment.Spec.Replicas != replicas {
+			return fmt.Errorf("expected deployment %s/%s replicas %d, got %d. ready=%d. unavailable=%d", namespace, name, replicas, *deployment.Spec.Replicas, deployment.Status.ReadyReplicas, deployment.Status.UnavailableReplicas)
+		}
+		if deployment.Status.ReadyReplicas != replicas {
+			return fmt.Errorf("expected deployment %s/%s ready replicas %d, got %d. ready=%d. unavailable=%d", namespace, name, replicas, deployment.Status.ReadyReplicas, deployment.Status.ReadyReplicas, deployment.Status.UnavailableReplicas)
+		}
+		return nil
+	}
+}
+
+func assertReencryptIngressRouteExist(ctx context.Context, namespace string, route *openshiftRouteV1.RouteIngress) func() error {
+	return func() error {
+		reencryptIngress, err := routeService.FindReencryptIngress(ctx, namespace)
+		if err != nil {
+			return fmt.Errorf("failed finding reencrypt ingress in namespace %s: %v", namespace, err)
+		}
+		if reencryptIngress == nil {
+			return fmt.Errorf("reencrypt ingress in namespace %s not found", namespace)
+		}
+		*route = *reencryptIngress
+		return nil
+	}
+}
+
+func assertReencryptRouteExist(ctx context.Context, namespace string, route *openshiftRouteV1.Route) func() error {
+	return func() error {
+		reencryptRoute, err := routeService.FindReencryptRoute(ctx, namespace)
+		if err != nil {
+			return fmt.Errorf("failed finding reencrypt route: %v", err)
+		}
+		if reencryptRoute == nil {
+			return fmt.Errorf("reencrypt route in namespace %s not found", namespace)
+		}
+		*route = *reencryptRoute
+		return nil
+	}
+}
+
+func assertPassthroughRouteExist(ctx context.Context, namespace string, route *openshiftRouteV1.Route) func() error {
+	return func() error {
+		passthroughRoute, err := routeService.FindPassthroughRoute(ctx, namespace)
+		if err != nil {
+			return fmt.Errorf("failed finding passthrough route in namespace %s: %v", namespace, err)
+		}
+		if passthroughRoute == nil {
+			return fmt.Errorf("passthrough route not found in namespace %s", namespace)
+		}
+		*route = *passthroughRoute
+		return nil
+	}
+}
+
+func SkipIf(condition bool, message string) {
+	if condition {
+		Skip(message, 1)
+	}
 }
