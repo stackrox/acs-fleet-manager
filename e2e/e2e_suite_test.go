@@ -15,6 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
@@ -146,6 +147,26 @@ func assertCentralRequestStatus(ctx context.Context, client *fleetmanager.Client
 	}
 }
 
+func assertCentralRequestReady(ctx context.Context, client *fleetmanager.Client, id string) func() error {
+	return assertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusReady.String())
+}
+
+func assertCentralRequestProvisioning(ctx context.Context, client *fleetmanager.Client, id string) func() error {
+	return assertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusProvisioning.String())
+}
+
+func assertCentralRequestDeprovisioning(ctx context.Context, client *fleetmanager.Client, id string) func() error {
+	return assertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusDeprovision.String())
+}
+
+func assertCentralRequestDeleting(ctx context.Context, client *fleetmanager.Client, id string) func() error {
+	return assertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusDeleting.String())
+}
+
+func assertCentralRequestAccepted(ctx context.Context, client *fleetmanager.Client, id string) func() error {
+	return assertCentralRequestStatus(ctx, client, id, constants.CentralRequestStatusAccepted.String())
+}
+
 func obtainCentralRequest(ctx context.Context, client *fleetmanager.Client, id string, request *public.CentralRequest) func() error {
 	return func() error {
 		centralRequest, _, err := client.PublicAPI().GetCentralById(ctx, id)
@@ -226,7 +247,7 @@ func assertObjectDeleted(ctx context.Context, obj ctrlClient.Object, namespace, 
 			}
 			return err
 		}
-		return fmt.Errorf("%s %s/%s still exists", obj.GetObjectKind().GroupVersionKind().Kind, namespace, name)
+		return fmt.Errorf("%T %s/%s still exists", obj, namespace, name)
 	}
 }
 
@@ -287,6 +308,13 @@ func assertPassthroughRouteExist(ctx context.Context, namespace string, route *o
 		}
 		*route = *passthroughRoute
 		return nil
+	}
+}
+
+func deleteCentralRequest(ctx context.Context, client *fleetmanager.Client, centralRequestID string) func() error {
+	return func() error {
+		_, err := client.PublicAPI().DeleteCentralById(ctx, centralRequestID, true)
+		return err
 	}
 }
 
