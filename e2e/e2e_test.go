@@ -23,6 +23,7 @@ import (
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func newCentralName() string {
@@ -239,18 +240,8 @@ var _ = Describe("Central", Ordered, func() {
 		// TODO(ROX-11368): Create test to check Central is correctly exposed
 
 		It("should restore secrets and deployment on namespace delete", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-
-			previousNamespace := corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: namespaceName,
-				},
-			}
-
-			err := k8sClient.Get(context.Background(), ctrlClient.ObjectKeyFromObject(&previousNamespace), &previousNamespace)
-			Expect(err).To(BeNil())
+			previousNamespace := corev1.Namespace{}
+			Expect(assertNamespaceExists(ctx, &previousNamespace, namespaceName)).To(Succeed())
 
 			// Using managedDB false here because e2e don't run with managed postgresql
 			secretBackup := k8s.NewSecretBackup(k8sClient, false)
@@ -258,20 +249,18 @@ var _ = Describe("Central", Ordered, func() {
 			Expect(err).To(BeNil())
 
 			previousCreationTime := previousNamespace.CreationTimestamp
-			err = k8sClient.Delete(context.Background(), &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespaceName}})
-			Expect(err).To(BeNil())
+			Expect(k8sClient.Delete(ctx, &previousNamespace)).
+				NotTo(HaveOccurred())
 
 			Eventually(func() error {
 				newNamespace := corev1.Namespace{}
-				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, &newNamespace)
+				err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: namespaceName}, &newNamespace)
 				if err != nil {
 					return err
 				}
-
 				if previousCreationTime.Equal(&newNamespace.CreationTimestamp) {
 					return fmt.Errorf("namespace found but was not yet deleted")
 				}
-
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
