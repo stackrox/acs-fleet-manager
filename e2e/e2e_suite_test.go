@@ -213,11 +213,9 @@ func assertObjectExists(ctx context.Context, obj ctrlClient.Object, namespace, n
 	}
 }
 
-func deleteCentralByID(ctx context.Context, client *fleetmanager.Client, id string) func() error {
-	return func() error {
-		_, err := client.PublicAPI().DeleteCentralById(ctx, id, true)
-		return err
-	}
+func deleteCentralByID(ctx context.Context, client *fleetmanager.Client, id string) error {
+	_, err := client.PublicAPI().DeleteCentralById(ctx, id, true)
+	return err
 }
 
 func assertCentralCRDeleted(ctx context.Context, namespace, name string) func() error {
