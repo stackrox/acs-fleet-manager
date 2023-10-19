@@ -33,10 +33,6 @@ if [[ "$SKIP_TESTS" == "true" ]]; then
 else
     log "Next: Executing e2e tests"
 
-    echo "Start port-forwarding"
-    port-forwarding start fleet-manager 8000 8000 &
-    port-forwarding start db 5432 5432 &
-
     T0=$(date "+%s")
     if ! make test/e2e; then
         FAIL=1
@@ -52,8 +48,6 @@ else
         log
         log "** E2E TESTS FAILED ($DELTA seconds) **"
         log
-        echo "Sleep for 30 Minutes for debugging"
-        sleep 30m
     fi
 fi
 
