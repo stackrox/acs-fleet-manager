@@ -1685,11 +1685,14 @@ func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.Managed
 }
 
 func (r *CentralReconciler) needsReconcile(changed bool, remoteCentral private.ManagedCentral, central *v1alpha1.Central) bool {
+	if changed {
+		return true
+	}
 	if r.shouldUseGitopsConfig(&remoteCentral) {
 		forceReconcile, ok := central.Labels["rhacs.redhat.com/force-reconcile"]
 		return ok && forceReconcile == "true"
 	}
-	return changed || remoteCentral.ForceReconcile == "always"
+	return remoteCentral.ForceReconcile == "always"
 }
 
 var resourcesChart = charts.MustGetChart("tenant-resources", nil)

@@ -146,8 +146,6 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should transition central request state to ready", func() {
-			Expect(obtainCentralRequest(ctx, client, centralRequestID, &public.CentralRequest{})).
-				To(Succeed())
 			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -249,7 +247,7 @@ var _ = Describe("Central", Ordered, func() {
 			// Using managedDB false here because e2e don't run with managed postgresql
 			secretBackup := k8s.NewSecretBackup(k8sClient, false)
 			expectedSecrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			previousCreationTime := previousNamespace.CreationTimestamp
 			Expect(k8sClient.Delete(ctx, &previousNamespace)).
