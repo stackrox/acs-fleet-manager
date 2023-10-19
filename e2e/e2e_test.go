@@ -241,7 +241,7 @@ var _ = Describe("Central", Ordered, func() {
 
 		It("should restore secrets and deployment on namespace delete", func() {
 			previousNamespace := corev1.Namespace{}
-			Expect(assertNamespaceExists(ctx, &previousNamespace, namespaceName)).
+			Expect(assertNamespaceExists(ctx, &previousNamespace, namespaceName)()).
 				To(Succeed())
 
 			// Using managedDB false here because e2e don't run with managed postgresql
