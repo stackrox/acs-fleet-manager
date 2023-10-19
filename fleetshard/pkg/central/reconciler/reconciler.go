@@ -147,11 +147,16 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
+	central, err := r.getInstanceConfig(&remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+
 	changed, err := r.centralChanged(remoteCentral)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checking if central changed")
 	}
-	needsReconcile := r.needsReconcile(changed, remoteCentral.ForceReconcile)
+	needsReconcile := r.needsReconcile(changed, remoteCentral, central)
 
 	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
 		return nil, ErrCentralNotChanged
@@ -160,11 +165,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	glog.Infof("Start reconcile central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
-	central, err := r.getInstanceConfig(&remoteCentral)
-	if err != nil {
-		return nil, err
-	}
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
 		return r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
@@ -1130,7 +1130,6 @@ func (r *CentralReconciler) centralChanged(central private.ManagedCentral) (bool
 	if err != nil {
 		return true, errors.Wrap(err, "hashing central")
 	}
-
 	return !bytes.Equal(r.lastCentralHash[:], currentHash[:]), nil
 }
 
@@ -1685,8 +1684,12 @@ func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.Managed
 		isRemoteCentralReady(&remoteCentral)
 }
 
-func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile string) bool {
-	return changed || forceReconcile == "always"
+func (r *CentralReconciler) needsReconcile(changed bool, remoteCentral private.ManagedCentral, central *v1alpha1.Central) bool {
+	if r.shouldUseGitopsConfig(&remoteCentral) {
+		forceReconcile, ok := central.Labels["rhacs.redhat.com/force-reconcile"]
+		return ok && forceReconcile == "true"
+	}
+	return changed || remoteCentral.ForceReconcile == "always"
 }
 
 var resourcesChart = charts.MustGetChart("tenant-resources", nil)
