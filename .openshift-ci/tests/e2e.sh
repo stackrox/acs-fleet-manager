@@ -11,8 +11,9 @@ source "${GITROOT}/dev/env/scripts/lib.sh"
 
 export RUN_AUTH_E2E_DEFAULT="false"
 export RUN_CENTRAL_E2E_DEFAULT="true"
-export RHACS_GITOPS_ENABLED="false"
-export RHACS_TARGETED_OPERATOR_UPGRADES="false"
+export RHACS_GITOPS_ENABLED="true"
+export RHACS_TARGETED_OPERATOR_UPGRADES="true"
+export RUN_CANARY_UPGRADE_E2E="false"
 
 if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     # We are running in an OpenShift CI context, configure accordingly.
