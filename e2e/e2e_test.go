@@ -367,7 +367,7 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should transition central to deprovisioning state when deleting", func() {
-			Expect(deleteCentralRequest(ctx, client, centralRequestID)).
+			Expect(deleteCentralByID(ctx, client, centralRequestID)).
 				To(Succeed())
 			Eventually(assertCentralRequestDeprovisioning(ctx, client, centralRequestID)).
 				WithTimeout(waitTimeout).
