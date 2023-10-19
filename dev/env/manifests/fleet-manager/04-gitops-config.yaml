@@ -42,8 +42,9 @@ data:
                     memory: 200Mi
                 db:
                   resources:
-                    cpu: 100m
-                    memory: 200Mi
+                    requests:
+                      cpu: 100m
+                      memory: 200Mi
               scanner:
                 analyzer:
                   resources:
