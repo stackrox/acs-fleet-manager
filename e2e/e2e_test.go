@@ -224,9 +224,8 @@ var _ = Describe("Central", Ordered, func() {
 		})
 
 		It("should backup important secrets in FM database", func() {
-			// We don't expect central-db-password secret here, because it will not be created in case of
-			// running with disabled managed DB
-			Eventually(assertStoredSecrets(ctx, client, centralRequestID, []string{"central-tls", "central-encryption-key"})).
+			expectedSecrets := k8s.NewSecretBackup(k8sClient, false).GetWatchedSecrets()
+			Eventually(assertStoredSecrets(ctx, client, centralRequestID, expectedSecrets)).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(Succeed())
