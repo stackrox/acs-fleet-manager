@@ -9,11 +9,14 @@ export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 
+echo "ARTIFACT DIR: $ARTIFACT_DIR"
+mkdir -p "$ARTIFACT_DIR/rhacs" || true
+
 export RUN_AUTH_E2E_DEFAULT="false"
 export RUN_CENTRAL_E2E_DEFAULT="true"
 export RHACS_GITOPS_ENABLED="true"
 export RHACS_TARGETED_OPERATOR_UPGRADES="true"
-export RUN_CANARY_UPGRADE_E2E="false"
+export RUN_CANARY_UPGRADE_E2E="true"
 
 if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     # We are running in an OpenShift CI context, configure accordingly.
@@ -145,6 +148,7 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
             log
             log "== BEGIN LOG ${logfile_basename} =="
             cat "${logfile}"
+            cat "${logfile}" > "$ARTIFACT_DIR/rhacs/${logfile}" || true
             log "== END LOG ${logfile_basename} =="
             log
         done
