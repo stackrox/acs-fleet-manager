@@ -12,6 +12,9 @@ source "${GITROOT}/dev/env/scripts/lib.sh"
 RUN_AUTH_E2E_DEFAULT="false"
 RUN_CENTRAL_E2E_DEFAULT="true"
 
+echo "ARTIFACT DIR: $ARTIFACT_DIR"
+mkdir -p "$ARTIFACT_DIR/rhacs" || true
+
 if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     # We are running in an OpenShift CI context, configure accordingly.
     log "Executing in OpenShift CI context"
@@ -140,6 +143,8 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
             logfile_basename=$(basename "$logfile")
             log
             log "== BEGIN LOG ${logfile_basename} =="
+            echo "Write log to $ARTIFACT_DIR/rhacs/${logfile}"
+            cat "${logfile}" > "$ARTIFACT_DIR/rhacs/${logfile}" || true
             cat "${logfile}"
             log "== END LOG ${logfile_basename} =="
             log
