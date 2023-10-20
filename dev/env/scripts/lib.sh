@@ -6,6 +6,11 @@ export GITROOT=${GITROOT:-$GITROOT_DEFAULT}
 # shellcheck source=/dev/null
 source "$GITROOT/scripts/lib/log.sh"
 
+# export scripts if not in path
+if ! command -v bootstrap.sh >/dev/null 2>&1; then
+    export PATH="$GITROOT/dev/env/scripts:${PATH}"
+fi
+
 try_kubectl() {
     local kubectl
     if command -v kubectl >/dev/null 2>&1; then
@@ -231,6 +236,7 @@ RHACS_TARGETED_OPERATOR_UPGRADES: ${RHACS_TARGETED_OPERATOR_UPGRADES}
 RHACS_GITOPS_ENABLED: ${RHACS_GITOPS_ENABLED}
 FLEET_MANAGER_CONTAINER_COMMAND: ${FLEET_MANAGER_CONTAINER_COMMAND}
 FLEETSHARD_SYNC_CONTAINER_COMMAND: ${FLEETSHARD_SYNC_CONTAINER_COMMAND}
+PATH: ${PATH}
 EOF
 }
 
@@ -238,7 +244,7 @@ wait_for_container_to_appear() {
     local namespace="$1"
     local pod_selector="$2"
     local container_name="$3"
-    local seconds="${4:-120}" # Default to 120 seconds waiting time.
+    local seconds="${4:-150}" # Default to 150 seconds waiting time.
 
     log "Waiting for container ${container_name} within pod ${pod_selector} in namespace ${namespace} to appear..."
     for _ in $(seq "$seconds"); do
@@ -277,8 +283,11 @@ wait_for_container_to_become_ready() {
 
     log "Waiting for pod ${pod_selector} within namespace ${namespace} to become ready..."
     wait_for_container_to_appear "$namespace" "$pod_selector" "$container_name" || return 1
-    if $KUBECTL -n "$namespace" wait --timeout="$timeout" --for=condition=ready pod -l "$pod_selector" 2>/dev/null >&2; then
-        log "Container $container_name for pod ${pod_selector} is ready."
+
+    $KUBECTL -n "$namespace" wait --timeout="$timeout" --for=condition=ready pod -l "$pod_selector"
+    local exit_code="$?"
+    if [[ exit_code -eq 0 ]]; then
+        log "Container ${container_name} within namespace ${namespace} is ready."
         sleep 2
         return 0
     fi
