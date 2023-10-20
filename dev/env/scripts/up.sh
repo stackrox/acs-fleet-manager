@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 ## This script takes care of deploying Managed Service components.
-
 GITROOT="$(git rev-parse --show-toplevel)"
 export GITROOT
 # shellcheck source=/dev/null
@@ -76,6 +75,12 @@ if [[ "$RHACS_STANDALONE_MODE" == "true" ]]; then
 fi
 
 log "Deploying fleetshard-sync"
+TENANT_IMAGE_PULL_SECRET=""
+if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then # pragma: allowlist secret
+    TENANT_IMAGE_PULL_SECRET=$($KUBECTL -n "$ACSCS_NAMESPACE" get secret quay-ips -o jsonpath="{.data['\.dockerconfigjson']}" | base64 -d)
+fi
+export TENANT_IMAGE_PULL_SECRET
+
 exec_fleetshard_sync.sh apply "${MANIFESTS_DIR}/fleetshard-sync"
 inject_exported_env_vars "$ACSCS_NAMESPACE" "fleetshard-sync"
 
