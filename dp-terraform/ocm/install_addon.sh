@@ -106,6 +106,11 @@ load_external_config "audit-logs/${CLUSTER_NAME}" AUDIT_LOGS_
 echo "Loading external config: cluster-${CLUSTER_NAME}"
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 
+# Replace all the line breaks with \n
+escape_linebreaks() {
+    <<<"$1" sed '$ ! s/$/\\n/' | tr -d '\n'
+}
+
 # Allows to load an external cluster config (e.g. acs-dev-dp-01) and apply it to a different cluster with override
 OCM_CLUSTER_ID="${OVERRIDE_CLUSTER_ID:-${CLUSTER_ID}}"
 
@@ -163,15 +168,15 @@ OCM_PAYLOAD=$(cat << EOF
             { "id": "observabilityObservatoriumRedHatSsoRealm", "value": "redhat-external" },
             { "id": "observabilityOperatorVersion", "value": "${OBSERVABILITY_OPERATOR_VERSION}" },
             { "id": "observabilityPagerdutyKey", "value": "${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" },
-            { "id": "securedClusterAdmissionControlServiceTlsCert", "value": "${SECURED_CLUSTER_ADMISSION_CONTROL_CERT}" },
-            { "id": "securedClusterAdmissionControlServiceTlsKey", "value": "${SECURED_CLUSTER_ADMISSION_CONTROL_KEY}" },
-            { "id": "securedClusterCaCert", "value": "${SECURED_CLUSTER_CA_CERT}" },
-            { "id": "securedClusterCentralEndpoint", "value": "${SECURED_CLUSTER_CENTRAL_ENDPOINT}" },
-            { "id": "securedClusterCollectorServiceTlsCert", "value": "${SECURED_CLUSTER_COLLECTOR_CERT}" },
-            { "id": "securedClusterCollectorServiceTlsKey", "value": "${SECURED_CLUSTER_COLLECTOR_KEY}" },
-            { "id": "securedClusterEnabled", "value": "${SECURED_CLUSTER_ENABLED}" },
-            { "id": "securedClusterSensorServiceTlsCert", "value": "${SECURED_CLUSTER_SENSOR_CERT}" },
-            { "id": "securedClusterSensorServiceTlsKey", "value": "${SECURED_CLUSTER_SENSOR_KEY}" }
+            { "id": "securedClusterAdmissionControlServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_ADMISSION_CONTROL_CERT}")" },
+            { "id": "securedClusterAdmissionControlServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_ADMISSION_CONTROL_KEY}")" },
+            { "id": "securedClusterCaCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_CA_CERT}")" },
+            { "id": "securedClusterCentralEndpoint", "value": "$(escape_linebreaks "${SECURED_CLUSTER_CENTRAL_ENDPOINT}")" },
+            { "id": "securedClusterCollectorServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_COLLECTOR_CERT}")" },
+            { "id": "securedClusterCollectorServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_COLLECTOR_KEY}")" },
+            { "id": "securedClusterEnabled", "value": "$(escape_linebreaks "${SECURED_CLUSTER_ENABLED}")" },
+            { "id": "securedClusterSensorServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_SENSOR_CERT}")" },
+            { "id": "securedClusterSensorServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_SENSOR_KEY}")" }
         ]
     }
 }
