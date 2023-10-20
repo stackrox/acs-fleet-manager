@@ -147,8 +147,9 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
             logfile_basename=$(basename "$logfile")
             log
             log "== BEGIN LOG ${logfile_basename} =="
-            cat "${logfile}"
+            echo "Write log to $ARTIFACT_DIR/rhacs/${logfile}"
             cat "${logfile}" > "$ARTIFACT_DIR/rhacs/${logfile}" || true
+            cat "${logfile}"
             log "== END LOG ${logfile_basename} =="
             log
         done
