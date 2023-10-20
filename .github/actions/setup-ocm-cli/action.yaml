@@ -4,6 +4,12 @@ inputs:
   version:
     description: "ocm version"
     default: v0.1.70
+  client_id:
+    description: "service account client id"
+    required: true
+  client_secret:
+    description: "service account client secret"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -30,8 +36,8 @@ runs:
       shell: bash
     - name: OCM login
       env:
-        SA_CLIENT_ID: ${{ secrets.OCM_SERVICE_ACCOUNT_CLIENT_ID }}
-        SA_CLIENT_SECRET: ${{ secrets.OCM_SERVICE_ACCOUNT_CLIENT_SECRET }}
+        CLIENT_ID: ${{ inputs.client_id }}
+        CLIENT_SECRET: ${{ inputs.client_secret }}
       run: |
-        ocm login --client-id "${SA_CLIENT_ID}" --client-secret "${SA_CLIENT_SECRET}"
+        ocm login --client-id "${CLIENT_ID}" --client-secret "${CLIENT_SECRET}"
       shell: bash

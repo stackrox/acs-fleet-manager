@@ -9,6 +9,10 @@ on:
         required: true
       AWS_ACCOUNT_ID:
         required: true
+      OCM_SERVICE_ACCOUNT_CLIENT_ID:
+        required: true
+      OCM_SERVICE_ACCOUNT_CLIENT_SECRET:
+        required: true
     inputs:
       acs_environment:
         description: 'Name of the ACS environment.'
@@ -53,6 +57,9 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
       - name: Setup ocm CLI
         uses: ./.github/actions/setup-ocm-cli
+        with:
+          client_id: ${{ secrets.OCM_SERVICE_ACCOUNT_CLIENT_ID }}
+          client_secret: ${{ secrets.OCM_SERVICE_ACCOUNT_CLIENT_SECRET }}
       - name: Install the addon on ${{ inputs.deploy_clusters }}
         working-directory: ./dp-terraform/ocm
         run: |
