@@ -90,10 +90,7 @@ ensure_fleet_manager_image_exists() {
 }
 
 is_local_deploy() {
-    if [[ "$CLUSTER_TYPE" == "openshift-ci" \
-        || "$CLUSTER_TYPE" == "infra-openshift" \
-        || "$CLUSTER_TYPE" == "gke" \
-        ]]; then
+    if [[ "$CLUSTER_TYPE" == "openshift-ci" || "$CLUSTER_TYPE" == "infra-openshift" ]]; then
         return 1
     fi
     if is_running_inside_docker; then

@@ -16,4 +16,3 @@ if [[ -z "${CLUSTER_DNS:-}" ]]; then
 fi
 export CLUSTER_DNS_DEFAULT
 export INSTALL_OPENSHIFT_ROUTER_DEFAULT="false"
-export ENABLE_EXTERNAL_CONFIG_DEFAULT="false"
