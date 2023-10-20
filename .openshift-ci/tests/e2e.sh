@@ -41,6 +41,7 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     # When running in OpenShift CI, ensure we also run the auth E2E tests.
     RUN_AUTH_E2E_DEFAULT="true"
     export INHERIT_IMAGEPULLSECRETS="true" # pragma: allowlist secret
+    export ENABLE_FM_PORT_FORWARDING=true
 else
     log "Executing in local context"
 fi
@@ -196,12 +197,5 @@ else
     log "** TESTS FAILED **"
     log
 fi
-
-log "Stopping fleet-manager port-forwarding..."
-port-forwarding stop db 5432 || true
-port-forwarding stop fleet-manager 8000 || true
-
-log "Killing oc processes forcefully"
-pkill -9 oc || true
 
 exit $FAIL
