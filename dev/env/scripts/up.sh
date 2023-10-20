@@ -69,11 +69,6 @@ if [[ "$SPAWN_LOGGER" == "true" && -n "${LOG_DIR:-}" ]]; then
     $KUBECTL -n "$ACSCS_NAMESPACE" logs -l application=fleet-manager --all-containers --pod-running-timeout=1m --since=1m --tail=100 -f >"${LOG_DIR}/pod-logs_fleet-manager.txt" 2>&1 &
 fi
 
-if [[ "$RHACS_STANDALONE_MODE" == "true" ]]; then
-    log "Updating operator configmap"
-    apply "${MANIFESTS_DIR}/rhacs-operator/03-operators-config.yaml"
-fi
-
 log "Deploying fleetshard-sync"
 TENANT_IMAGE_PULL_SECRET=""
 if [[ "$INHERIT_IMAGEPULLSECRETS" == "true" ]]; then # pragma: allowlist secret
@@ -95,11 +90,17 @@ wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleetshard-sy
 wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleet-manager" "fleet-manager"
 
 if [[ "$ENABLE_FM_PORT_FORWARDING" == "true" ]]; then
+    log "Starting port-forwarding for fleet-manager"
     port-forwarding start fleet-manager 8000 8000
+else
+    log "Skipping port-forwarding for fleet-manager"
 fi
 
 if [[ "$ENABLE_DB_PORT_FORWARDING" == "true" ]]; then
+    log "Starting port-forwarding for db"
     port-forwarding start db 5432 5432
+else
+    log "Skipping port-forwarding for db"
 fi
 
 log

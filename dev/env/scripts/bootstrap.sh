@@ -30,6 +30,7 @@ Output:
 ${kc_output:-(no output)}"
 fi
 
+# Create Namespaces.
 apply "${MANIFESTS_DIR}/shared"
 wait_for_default_service_account "$ACSCS_NAMESPACE"
 
@@ -59,11 +60,6 @@ else
     # We will be running without RHACS operator, but at least install our CRDs.
     apply "${MANIFESTS_DIR}/crds"
     apply "${MANIFESTS_DIR}/monitoring"
-fi
-
-if [[ "$RHACS_STANDALONE_MODE" == "true" ]]; then
-    log "Updating operator configmap to enable standalone mode"
-    apply "${MANIFESTS_DIR}/rhacs-operator/03-operators-config.yaml"
 fi
 
 if is_local_cluster "$CLUSTER_TYPE"; then

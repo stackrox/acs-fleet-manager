@@ -21,12 +21,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/yaml"
 )
 
 func newCentralName() string {
@@ -47,15 +44,22 @@ const (
 	skipDNSMsg     = "external DNS is not enabled for this test run"
 )
 
-var _ = Describe("Central", func() {
+var (
+	statusAccepted = constants.CentralRequestStatusAccepted.String()
+)
+
+var _ = Describe("Central", Ordered, func() {
 	var client *fleetmanager.Client
 	var adminAPI fleetmanager.AdminAPI
 	var notes []string
+	var ctx = context.Background()
 
 	BeforeEach(func() {
-		if !runCentralTests {
-			Skip("Skipping Central tests")
-		}
+		Expect(restoreDefaultGitopsConfig()).To(Succeed())
+	})
+
+	BeforeEach(func() {
+		SkipIf(!runCentralTests, "Skipping Central tests")
 
 		option := fleetmanager.OptionFromEnv()
 		auth, err := fleetmanager.NewStaticAuth(context.Background(), fleetmanager.StaticOption{StaticToken: option.Static.StaticToken})
@@ -67,165 +71,133 @@ var _ = Describe("Central", func() {
 		adminAuth, err := fleetmanager.NewStaticAuth(context.Background(), fleetmanager.StaticOption{StaticToken: adminStaticToken})
 		Expect(err).ToNot(HaveOccurred())
 		adminClient, err := fleetmanager.NewClient(fleetManagerEndpoint, adminAuth)
-		adminAPI = adminClient.AdminAPI()
 		Expect(err).ToNot(HaveOccurred())
+		adminAPI = adminClient.AdminAPI()
 
 		GinkgoWriter.Printf("Current time: %s\n", time.Now().String())
 		printNotes(notes)
 	})
 
-	Describe("should be created and deployed to k8s", func() {
-		var err error
-		var createdCentral *public.CentralRequest
+	Describe("should be created and deployed to k8s", Ordered, func() {
+
+		var centralRequestID string
+		var centralRequestName string
 		var namespaceName string
 
-		It("created a central", func() {
-			centralName := newCentralName()
-			request := public.CentralRequestPayload{
+		BeforeAll(func() {
+			resp, _, err := client.PublicAPI().CreateCentral(ctx, true, public.CentralRequestPayload{
 				CloudProvider: dpCloudProvider,
 				MultiAz:       true,
-				Name:          centralName,
+				Name:          newCentralName(),
 				Region:        dpRegion,
-			}
-			resp, _, err := client.PublicAPI().CreateCentral(context.Background(), true, request)
+			})
 			Expect(err).To(BeNil())
-			createdCentral = &resp
+			centralRequestID = resp.Id
+			centralRequestName = resp.Name
 			notes = []string{
-				fmt.Sprintf("Central name: %s", createdCentral.Name),
-				fmt.Sprintf("Central ID: %s", createdCentral.Id),
+				fmt.Sprintf("Central name: %s", resp.Name),
+				fmt.Sprintf("Central ID: %s", resp.Id),
 			}
 			printNotes(notes)
-			namespaceName, err = services.FormatNamespace(createdCentral.Id)
+			namespaceName, err = services.FormatNamespace(centralRequestID)
 			Expect(err).To(BeNil())
-			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
+			Expect(resp.Status).To(Equal(statusAccepted))
 		})
 
-		It("should transition central's state to provisioning", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() string {
-				return centralStatus(createdCentral.Id, client)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusProvisioning.String()))
+		It("should transition central request state to provisioning", func() {
+			Eventually(assertCentralRequestProvisioning(ctx, client, centralRequestID)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
-		ns := &corev1.Namespace{}
 		It("should create central namespace", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() error {
-				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
-		})
-
-		It("tenant namespace is labelled as a tenant namespace", func() {
+			var ns corev1.Namespace
+			Eventually(assertNamespaceExists(ctx, &ns, namespaceName)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 			_, tenantLabelFound := ns.Labels["rhacs.redhat.com/tenant"]
 			Expect(tenantLabelFound).To(BeTrue())
 		})
 
 		It("should generate a central-encryption-key secret", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-
-			Eventually(func() error {
-				keySecret := &corev1.Secret{}
-				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: "central-encryption-key", Namespace: namespaceName}, keySecret)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
-
+			Eventually(assertSecretExists(ctx, &corev1.Secret{}, namespaceName, "central-encryption-key")).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
-		It("should create central in its namespace on a managed cluster", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() error {
-				central := &v1alpha1.Central{}
-				return k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: createdCentral.Name, Namespace: namespaceName}, central)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+		It("should create central CR in its namespace on a managed cluster", func() {
+			Eventually(assertCentralCRExists(ctx, &v1alpha1.Central{}, namespaceName, centralRequestName)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
+		// TODO: possible flake. Maybe this test will be executed after the routes are created
 		It("should not expose URLs until the routes are created", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			if !routesEnabled {
-				Skip(skipRouteMsg)
-			}
-			Expect(createdCentral.CentralUIURL).To(BeEmpty())
-			Expect(createdCentral.CentralDataURL).To(BeEmpty())
+			SkipIf(!routesEnabled, skipRouteMsg)
+			var centralRequest public.CentralRequest
+			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
+				To(Succeed())
+			Expect(centralRequest.CentralUIURL).To(BeEmpty())
+			Expect(centralRequest.CentralDataURL).To(BeEmpty())
 		})
 
-		It("should transition central's state to ready", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() string {
-				return centralStatus(createdCentral.Id, client)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
+		It("should transition central request state to ready", func() {
+			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
-		It("should create central routes", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			if !routesEnabled {
-				Skip(skipRouteMsg)
-			}
+		It("should have created central routes", func() {
+			SkipIf(!routesEnabled, skipRouteMsg)
 
-			central := getCentral(createdCentral.Id, client)
+			var centralRequest public.CentralRequest
+			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
+				To(Succeed())
 
-			var reencryptRoute *openshiftRouteV1.Route
-			Eventually(func() error {
-				reencryptRoute, err = routeService.FindReencryptRoute(context.Background(), namespaceName)
-				if err != nil {
-					return fmt.Errorf("failed finding reencrypt route: %v", err)
-				}
-				return nil
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+			var reencryptRoute openshiftRouteV1.Route
+			Eventually(assertReencryptRouteExist(ctx, namespaceName, &reencryptRoute)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 
-			centralUIURL, err := url.Parse(central.CentralUIURL)
+			centralUIURL, err := url.Parse(centralRequest.CentralUIURL)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(centralUIURL.Scheme).To(Equal("https"))
 			Expect(reencryptRoute.Spec.Host).To(Equal(centralUIURL.Host))
 			Expect(reencryptRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationReencrypt))
 
-			var passthroughRoute *openshiftRouteV1.Route
-			Eventually(func() error {
-				passthroughRoute, err = routeService.FindPassthroughRoute(context.Background(), namespaceName)
-				if err != nil {
-					return fmt.Errorf("failed finding passthrough route: %v", err)
-				}
-				return nil
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+			var passthroughRoute openshiftRouteV1.Route
+			Eventually(assertPassthroughRouteExist(ctx, namespaceName, &passthroughRoute)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 
-			centralDataHost, centralDataPort, err := net.SplitHostPort(central.CentralDataURL)
+			centralDataHost, centralDataPort, err := net.SplitHostPort(centralRequest.CentralDataURL)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(passthroughRoute.Spec.Host).To(Equal(centralDataHost))
 			Expect(centralDataPort).To(Equal("443"))
 			Expect(passthroughRoute.Spec.TLS.Termination).To(Equal(openshiftRouteV1.TLSTerminationPassthrough))
 		})
 
-		It("should create AWS Route53 records", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			if !dnsEnabled {
-				Skip(skipDNSMsg)
-			}
+		It("should have created AWS Route53 records", func() {
+			SkipIf(!dnsEnabled, skipDNSMsg)
 
-			central := getCentral(createdCentral.Id, client)
-			var reencryptIngress *openshiftRouteV1.RouteIngress
-			Eventually(func() error {
-				reencryptIngress, err = routeService.FindReencryptIngress(context.Background(), namespaceName)
-				if err != nil {
-					return fmt.Errorf("failed finding reencrypt ingress: %v", err)
-				}
-				return nil
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
-			Expect(err).ToNot(HaveOccurred())
-			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
+			var centralRequest public.CentralRequest
+			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
+				To(Succeed())
+
+			var reencryptIngress openshiftRouteV1.RouteIngress
+			Eventually(assertReencryptIngressRouteExist(ctx, namespaceName, &reencryptIngress)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+
+			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
 
 			Eventually(dnsRecordsLoader.LoadDNSRecords).
 				WithTimeout(waitTimeout).
@@ -243,64 +215,24 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should spin up an egress proxy with three healthy replicas", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			var expected int32 = 3
-			Eventually(func() error {
-				var egressProxyDeployment appsv1.Deployment
-				key := ctrlClient.ObjectKey{Namespace: namespaceName, Name: "egress-proxy"}
-				if err := k8sClient.Get(context.TODO(), key, &egressProxyDeployment); err != nil {
-					return err
-				}
-				if egressProxyDeployment.Status.ReadyReplicas < expected {
-					statusBytes, _ := yaml.Marshal(&egressProxyDeployment.Status)
-					return fmt.Errorf("egress proxy only has %d/%d ready replicas (and %d unavailable ones), expected %d. full status: %s", egressProxyDeployment.Status.ReadyReplicas, egressProxyDeployment.Status.Replicas, egressProxyDeployment.Status.UnavailableReplicas, expected, statusBytes)
-				}
-				return nil
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+			Eventually(assertDeploymentHealthyReplicas(ctx, namespaceName, "egress-proxy", 3)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
 		It("should backup important secrets in FM database", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-
-			// e2e test run without managedDB enabled so this is set to false here
 			expectedSecrets := k8s.NewSecretBackup(k8sClient, false).GetWatchedSecrets()
-			secretsStored := []string{}
-			Eventually(func() error {
-				privateCentral, _, err := client.PrivateAPI().GetCentral(context.Background(), createdCentral.Id)
-				if err != nil {
-					return err
-				}
-
-				if len(privateCentral.Metadata.SecretsStored) != len(expectedSecrets) {
-					return fmt.Errorf("unexpected number of secrets, want: %d, got: %d", len(expectedSecrets), len(privateCentral.Metadata.SecretsStored))
-				}
-
-				secretsStored = privateCentral.Metadata.SecretsStored // pragma: allowlist secret
-				return nil
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
-
-			Expect(secretsStored).Should(ContainElements(expectedSecrets))
+			Eventually(assertStoredSecrets(ctx, client, centralRequestID, expectedSecrets)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
-		It("should set ForceReconcile through admin API", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-
-			_, _, err := adminAPI.UpdateCentralById(
-				context.Background(),
-				createdCentral.Id,
-				private.CentralUpdateRequest{ForceReconcile: "true"})
-
-			Expect(err).To(BeNil())
-
-			privateCentral, _, err := client.PrivateAPI().GetCentral(context.Background(), createdCentral.Id)
-			Expect(err).To(BeNil())
-			Expect(privateCentral.ForceReconcile).To(Equal("true"))
+		It("should set ForceReconcile through gitops", func() {
+			cfg := defaultGitopsConfig()
+			cfg.Centrals.Overrides = append(cfg.Centrals.Overrides, overrideCentralWithPatch(centralRequestID, forceReconcilePatch()))
+			Expect(putGitopsConfig(ctx, cfg)).To(Succeed())
 		})
 
 		// TODO(ROX-11368): Add test to eventually reach ready state
@@ -308,50 +240,34 @@ var _ = Describe("Central", func() {
 		// TODO(ROX-11368): Create test to check Central is correctly exposed
 
 		It("should restore secrets and deployment on namespace delete", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-
-			previousNamespace := corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: namespaceName,
-				},
-			}
-
-			err := k8sClient.Get(context.Background(), ctrlClient.ObjectKeyFromObject(&previousNamespace), &previousNamespace)
-			Expect(err).To(BeNil())
+			previousNamespace := corev1.Namespace{}
+			Expect(assertNamespaceExists(ctx, &previousNamespace, namespaceName)()).
+				To(Succeed())
 
 			// Using managedDB false here because e2e don't run with managed postgresql
 			secretBackup := k8s.NewSecretBackup(k8sClient, false)
-			expectedSecrets, err := secretBackup.CollectSecrets(context.Background(), namespaceName)
-			Expect(err).To(BeNil())
+			expectedSecrets, err := secretBackup.CollectSecrets(ctx, namespaceName)
+			Expect(err).ToNot(HaveOccurred())
 
 			previousCreationTime := previousNamespace.CreationTimestamp
-			err = k8sClient.Delete(context.Background(), &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespaceName}})
-			Expect(err).To(BeNil())
+			Expect(k8sClient.Delete(ctx, &previousNamespace)).
+				NotTo(HaveOccurred())
 
 			Eventually(func() error {
 				newNamespace := corev1.Namespace{}
-				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, &newNamespace)
-				if err != nil {
+				if err := k8sClient.Get(ctx, ctrlClient.ObjectKey{Name: namespaceName}, &newNamespace); err != nil {
 					return err
 				}
-
 				if previousCreationTime.Equal(&newNamespace.CreationTimestamp) {
 					return fmt.Errorf("namespace found but was not yet deleted")
 				}
-
 				return nil
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
 			actualSecrets := map[string]*corev1.Secret{}
-			Eventually(func() error {
-				secrets, err := secretBackup.CollectSecrets(context.Background(), namespaceName)
-				if err != nil {
-					return err
-				}
-				actualSecrets = secrets // pragma: allowlist secret
-				return nil
+			Eventually(func() (err error) {
+				actualSecrets, err = secretBackup.CollectSecrets(ctx, namespaceName) // pragma: allowlist secret
+				return err
 			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
 
 			Expect(actualSecrets).ToNot(BeEmpty())
@@ -364,74 +280,58 @@ var _ = Describe("Central", func() {
 		})
 
 		It("should transition central to deprovisioning state", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			_, err = client.PublicAPI().DeleteCentralById(context.TODO(), createdCentral.Id, true)
-			Expect(err).To(Succeed())
-			Eventually(func() string {
-				return centralStatus(createdCentral.Id, client)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusDeprovision.String()))
+			Expect(deleteCentralByID(ctx, client, centralRequestID)).
+				To(Succeed())
+			Eventually(assertCentralRequestDeprovisioning(ctx, client, centralRequestID)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
-		It("should delete central CR", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() bool {
-				central := &v1alpha1.Central{}
-				err := k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: createdCentral.Name, Namespace: namespaceName}, central)
-				return apiErrors.IsNotFound(err)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
+		It("should delete Central CR", func() {
+			Eventually(assertCentralCRDeleted(ctx, namespaceName, centralRequestName)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
 		It("should delete the egress proxy", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() error {
-				var egressProxyDeployment appsv1.Deployment
-				key := ctrlClient.ObjectKey{Namespace: namespaceName, Name: "egress-proxy"}
-				return k8sClient.Get(context.TODO(), key, &egressProxyDeployment)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Satisfy(apiErrors.IsNotFound))
+			Eventually(assertDeploymentDeleted(ctx, namespaceName, "egress-proxy")).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
 		It("should remove central namespace", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() bool {
-				ns := &corev1.Namespace{}
-				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
-				return apiErrors.IsNotFound(err)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
+			Eventually(assertNamespaceDeleted(ctx, namespaceName)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
 		It("should delete external DNS entries", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			if !dnsEnabled {
-				Skip(skipDNSMsg)
-			}
-
-			central := getCentral(createdCentral.Id, client)
-			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
-
+			SkipIf(!dnsEnabled, skipDNSMsg)
+			var centralRequest public.CentralRequest
+			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
+				To(Succeed())
+			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
 			Eventually(dnsRecordsLoader.LoadDNSRecords).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
 				Should(BeEmpty(), "Started at %s", time.Now())
 		})
+
+		It("should restore the default gitops config", func() {
+			Expect(restoreDefaultGitopsConfig()).To(Succeed())
+		})
 	})
 
-	Describe("should be created and deployed to k8s with admin API", func() {
-		var err error
-		var centralID string
-		var createdCentral *private.CentralRequest
+	Describe("should be created and deployed to k8s with admin API", Ordered, func() {
+		var centralRequestID string
+		var centralRequestName string
 		var namespaceName string
 
-		It("should create central", func() {
+		BeforeAll(func() {
 			centralName := newCentralName()
 			request := private.CentralRequestPayload{
 				Name:          centralName,
@@ -439,82 +339,62 @@ var _ = Describe("Central", func() {
 				CloudProvider: dpCloudProvider,
 				Region:        dpRegion,
 			}
-			resp, _, err := adminAPI.CreateCentral(context.TODO(), true, request)
+			resp, _, err := adminAPI.CreateCentral(ctx, true, request)
 			Expect(err).To(BeNil())
-			createdCentral = &resp
 			notes = []string{
-				fmt.Sprintf("Central name: %s", createdCentral.Name),
-				fmt.Sprintf("Central ID: %s", createdCentral.Id),
+				fmt.Sprintf("Central name: %s", resp.Name),
+				fmt.Sprintf("Central ID: %s", resp.Id),
 			}
-			centralID = createdCentral.Id
-			namespaceName, err = services.FormatNamespace(centralID)
+			centralRequestID = resp.Id
+			centralRequestName = resp.Name
+			namespaceName, err = services.FormatNamespace(centralRequestID)
 			Expect(err).To(BeNil())
-			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
+			Expect(resp.Status).To(Equal(statusAccepted))
 		})
 
-		central := &v1alpha1.Central{}
 		It("should create central in its namespace on a managed cluster", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() error {
-				return k8sClient.Get(context.TODO(), ctrlClient.ObjectKey{Name: createdCentral.Name, Namespace: namespaceName}, central)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Succeed())
+			Eventually(assertCentralCRExists(ctx, &v1alpha1.Central{}, namespaceName, centralRequestName)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
 		It("should transition central's state to ready", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() string {
-				return centralStatus(createdCentral.Id, client)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
+			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
-		It("should transition central to deprovisioning state", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			_, err = client.PublicAPI().DeleteCentralById(context.TODO(), createdCentral.Id, true)
-			Expect(err).To(Succeed())
-			Eventually(func() string {
-				return centralStatus(createdCentral.Id, client)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusDeprovision.String()))
+		It("should transition central to deprovisioning state when deleting", func() {
+			Expect(deleteCentralByID(ctx, client, centralRequestID)).
+				To(Succeed())
+			Eventually(assertCentralRequestDeprovisioning(ctx, client, centralRequestID)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
 		It("should delete central CR", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() bool {
-				central := &v1alpha1.Central{}
-				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: createdCentral.Name, Namespace: namespaceName}, central)
-				return apiErrors.IsNotFound(err)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
+			Eventually(assertCentralCRDeleted(ctx, namespaceName, centralRequestName)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
 		It("should remove central namespace", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() bool {
-				ns := &corev1.Namespace{}
-				err := k8sClient.Get(context.Background(), ctrlClient.ObjectKey{Name: namespaceName}, ns)
-				return apiErrors.IsNotFound(err)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(BeTrue())
+			Eventually(assertNamespaceDeleted(ctx, namespaceName)).
+				WithTimeout(waitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
 		})
 
 		It("should delete external DNS entries", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			if !dnsEnabled {
-				Skip(skipDNSMsg)
-			}
-
-			central := getCentral(createdCentral.Id, client)
-			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
-
+			SkipIf(!dnsEnabled, skipDNSMsg)
+			var centralRequest public.CentralRequest
+			Expect(obtainCentralRequest(ctx, client, centralRequestID, &centralRequest)).
+				To(Succeed())
+			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, centralRequest)
 			Eventually(dnsRecordsLoader.LoadDNSRecords).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -523,13 +403,12 @@ var _ = Describe("Central", func() {
 
 	})
 
-	Describe("should be deployed and can be force-deleted", func() {
-		var err error
-		var createdCentral *public.CentralRequest
-		var central public.CentralRequest
+	Describe("should be deployed and can be force-deleted", Ordered, func() {
+		var centralRequestID string
+		var centralRequestName string
 		var namespaceName string
 
-		It("created a central", func() {
+		BeforeAll(func() {
 			centralName := newCentralName()
 			request := public.CentralRequestPayload{
 				Name:          centralName,
@@ -538,55 +417,50 @@ var _ = Describe("Central", func() {
 				Region:        dpRegion,
 			}
 
-			resp, _, err := client.PublicAPI().CreateCentral(context.TODO(), true, request)
+			resp, _, err := client.PublicAPI().CreateCentral(ctx, true, request)
 			Expect(err).To(BeNil())
-			createdCentral = &resp
+			centralRequestID = resp.Id
+			centralRequestName = resp.Name
 			notes = []string{
-				fmt.Sprintf("Central name: %s", createdCentral.Name),
-				fmt.Sprintf("Central ID: %s", createdCentral.Id),
+				fmt.Sprintf("Central name: %s", centralRequestName),
+				fmt.Sprintf("Central ID: %s", centralRequestID),
 			}
-			namespaceName, err = services.FormatNamespace(createdCentral.Id)
-			Expect(err).To(BeNil())
-			Expect(constants.CentralRequestStatusAccepted.String()).To(Equal(createdCentral.Status))
+			namespaceName, err = services.FormatNamespace(centralRequestID)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(resp.Status).To(Equal(statusAccepted))
 		})
 
+		var readyCentralRequest public.CentralRequest
+
 		It("should transition central's state to ready", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			Eventually(func() string {
-				return centralStatus(createdCentral.Id, client)
-			}).WithTimeout(waitTimeout).WithPolling(defaultPolling).Should(Equal(constants.CentralRequestStatusReady.String()))
-			central = getCentral(createdCentral.Id, client)
+			Eventually(assertCentralRequestReady(ctx, client, centralRequestID)).
+				WithTimeout(extendedWaitTimeout).
+				WithPolling(defaultPolling).
+				Should(Succeed())
+			Expect(obtainCentralRequest(ctx, client, centralRequestID, &readyCentralRequest)).
+				To(Succeed())
 		})
 
 		It("should be deletable in the control-plane database", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			_, err = adminAPI.DeleteDbCentralById(context.TODO(), createdCentral.Id)
+			_, err := adminAPI.DeleteDbCentralById(ctx, centralRequestID)
 			Expect(err).ToNot(HaveOccurred())
-			_, err = adminAPI.DeleteDbCentralById(context.TODO(), createdCentral.Id)
+			_, err = adminAPI.DeleteDbCentralById(ctx, centralRequestID)
 			Expect(err).To(HaveOccurred())
-			central, _, err := client.PublicAPI().GetCentralById(context.TODO(), createdCentral.Id)
+			central, _, err := client.PublicAPI().GetCentralById(ctx, centralRequestID)
 			Expect(err).To(HaveOccurred())
 			Expect(central.Id).To(BeEmpty())
 		})
 
 		// Cleaning up on data-plane side because we have skipped the regular deletion workflow taking care of this.
 		It("can be cleaned up manually", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
 			// (1) Delete the Central CR.
 			centralRef := &v1alpha1.Central{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      createdCentral.Name,
+					Name:      centralRequestName,
 					Namespace: namespaceName,
 				},
 			}
-			err = k8sClient.Delete(context.TODO(), centralRef)
-			Expect(err).ToNot(HaveOccurred())
+			Expect(k8sClient.Delete(ctx, centralRef)).ToNot(HaveOccurred())
 
 			// (2) Delete the namespace and everything in it.
 			namespace := &corev1.Namespace{
@@ -594,19 +468,12 @@ var _ = Describe("Central", func() {
 					Name: namespaceName,
 				},
 			}
-			err = k8sClient.Delete(context.TODO(), namespace)
-			Expect(err).ToNot(HaveOccurred())
+			Expect(k8sClient.Delete(ctx, namespace)).ToNot(HaveOccurred())
 		})
 
 		It("should delete external DNS entries", func() {
-			if createdCentral == nil {
-				Fail("central not created")
-			}
-			if !dnsEnabled {
-				Skip(skipDNSMsg)
-			}
-			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, central)
-
+			SkipIf(!dnsEnabled, skipDNSMsg)
+			dnsRecordsLoader := dns.NewRecordsLoader(route53Client, readyCentralRequest)
 			Eventually(dnsRecordsLoader.LoadDNSRecords).
 				WithTimeout(waitTimeout).
 				WithPolling(defaultPolling).
@@ -614,17 +481,6 @@ var _ = Describe("Central", func() {
 		})
 	})
 })
-
-func getCentral(id string, client *fleetmanager.Client) public.CentralRequest {
-	Expect(id).NotTo(BeEmpty())
-	central, _, err := client.PublicAPI().GetCentralById(context.TODO(), id)
-	Expect(err).NotTo(HaveOccurred())
-	return central
-}
-
-func centralStatus(id string, client *fleetmanager.Client) string {
-	return getCentral(id, client).Status
-}
 
 func printNotes(notes []string) {
 	for _, note := range notes {

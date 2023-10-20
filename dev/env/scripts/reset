@@ -22,4 +22,6 @@ apply "${GITROOT}/dev/env/manifests/rhacs-operator/00-namespace.yaml"
 log "Apply default gitops..."
 apply "${GITROOT}/dev/env/manifests/fleet-manager/04-gitops-config.yaml"
 
+$KUBECTL -n acscs delete pod -l application=fleetshard-sync
+
 log "Resetting complete."
