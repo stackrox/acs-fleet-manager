@@ -51,5 +51,13 @@ else
     fi
 fi
 
+
+log "Stopping fleet-manager port-forwarding..."
+port-forwarding stop db 5432 || true
+port-forwarding stop fleet-manager 8000 || true
+
+log "Killing oc processes forcefully"
+pkill -9 oc || true
+
 log "** Exiting with status code $FAIL **"
 exit $FAIL

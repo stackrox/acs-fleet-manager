@@ -90,10 +90,12 @@ wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleetshard-sy
 wait_for_container_to_become_ready "$ACSCS_NAMESPACE" "application=fleet-manager" "fleet-manager"
 
 if [[ "$ENABLE_FM_PORT_FORWARDING" == "true" ]]; then
+    echo "Exposing fleet-manager on port 8000"
     port-forwarding start fleet-manager 8000 8000
 fi
 
 if [[ "$ENABLE_DB_PORT_FORWARDING" == "true" ]]; then
+    echo "Exposing fleet-manager database on port 5432"
     port-forwarding start db 5432 5432
 fi
 
