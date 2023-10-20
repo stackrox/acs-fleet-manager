@@ -67,11 +67,6 @@ spec:
                 secretKeyRef:
                   name: fleetshard-sync
                   key: "aws-secret-access-key"
-            - name: TENANT_IMAGE_PULL_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: fleetshard-sync
-                  key: "tenant-image-pull-secret"
           image: "${FLEET_MANAGER_IMAGE}"
           imagePullPolicy: IfNotPresent
           name: fleetshard-sync

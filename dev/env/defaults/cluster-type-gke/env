@@ -1,8 +1,0 @@
-export OPENSHIFT_MARKETPLACE_DEFAULT="false"
-export KUBECTL_DEFAULT="kubectl"
-export OPERATOR_SOURCE_DEFAULT="quay"
-export INHERIT_IMAGEPULLSECRETS_DEFAULT="true" # pragma: allowlist secret
-export INSTALL_OLM_DEFAULT="true"
-export ENABLE_FM_PORT_FORWARDING_DEFAULT="true"
-export INSTALL_OPENSHIFT_ROUTER_DEFAULT="true"
-export AWS_AUTH_HELPER_DEFAULT="aws-saml"
