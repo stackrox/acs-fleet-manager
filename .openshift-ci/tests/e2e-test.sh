@@ -51,4 +51,5 @@ else
     fi
 fi
 
+log "** Exiting with status code $FAIL **"
 exit $FAIL
