@@ -46,7 +46,10 @@ else
         log
         log "** E2E TESTS FAILED ($DELTA seconds) **"
         log
+        echo "Sleep for 30 Minutes for debugging"
+        sleep 30m
     fi
 fi
 
+log "** Exiting with status code $FAIL **"
 exit $FAIL

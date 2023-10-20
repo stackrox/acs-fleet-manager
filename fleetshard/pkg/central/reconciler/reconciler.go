@@ -147,11 +147,16 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
+	central, err := r.getInstanceConfig(&remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+
 	changed, err := r.centralChanged(remoteCentral)
 	if err != nil {
-		return nil, errors.Wrapf(err, "checking if central changed")
+		return nil, errors.Wrap(err, "checking if central changed")
 	}
-	needsReconcile := r.needsReconcile(changed, remoteCentral.ForceReconcile)
+	needsReconcile := r.needsReconcile(changed, remoteCentral, central)
 
 	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
 		return nil, ErrCentralNotChanged
@@ -160,11 +165,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	glog.Infof("Start reconcile central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
-	central, err := r.getInstanceConfig(&remoteCentral)
-	if err != nil {
-		return nil, err
-	}
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
 		return r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
@@ -202,10 +202,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
 	}
 
-	if r.managedDBEnabled {
-		if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
-			return nil, err
-		}
+	if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
+		return nil, err
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
@@ -226,7 +224,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			if errors.Is(err, k8s.ErrCentralTLSSecretNotFound) {
 				centralTLSSecretFound = false // pragma: allowlist secret
 			} else {
-				return nil, errors.Wrapf(err, "updating routes")
+				return nil, errors.Wrap(err, "updating routes")
 			}
 		}
 	}
@@ -236,6 +234,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, err
 	}
+
 	if !centralDeploymentReady || !centralTLSSecretFound {
 		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
@@ -261,7 +260,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// Setting the last central hash must always be executed as the last step.
 	// defer can't be used for this call because it is also executed after the reconcile failed.
 	if err := r.setLastCentralHash(remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "setting central reconcilation cache")
+		return nil, errors.Wrap(err, "setting central reconcilation cache")
 	}
 
 	logStatus := *status
@@ -550,17 +549,26 @@ func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remot
 
 func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 
+	if central.Spec.Central == nil {
+		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
+	}
+	if central.Spec.Central.DB == nil {
+		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{}
+	}
+	central.Spec.Central.DB.IsEnabled = v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue)
+
+	if !r.managedDBEnabled {
+		return nil
+	}
+
 	centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
 	if err != nil {
 		return fmt.Errorf("getting Central DB connection string: %w", err)
 	}
 
-	central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
-		IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
-		ConnectionStringOverride: pointer.String(centralDBConnectionString),
-		PasswordSecret: &v1alpha1.LocalSecretReference{
-			Name: centralDbSecretName,
-		},
+	central.Spec.Central.DB.ConnectionStringOverride = pointer.String(centralDBConnectionString)
+	central.Spec.Central.DB.PasswordSecret = &v1alpha1.LocalSecretReference{
+		Name: centralDbSecretName,
 	}
 
 	dbCA, err := postgres.GetDatabaseCACertificates()
@@ -1129,7 +1137,6 @@ func (r *CentralReconciler) centralChanged(central private.ManagedCentral) (bool
 	if err != nil {
 		return true, errors.Wrap(err, "hashing central")
 	}
-
 	return !bytes.Equal(r.lastCentralHash[:], currentHash[:]), nil
 }
 
@@ -1684,8 +1691,15 @@ func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.Managed
 		isRemoteCentralReady(&remoteCentral)
 }
 
-func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile string) bool {
-	return changed || forceReconcile == "always"
+func (r *CentralReconciler) needsReconcile(changed bool, remoteCentral private.ManagedCentral, central *v1alpha1.Central) bool {
+	if changed {
+		return true
+	}
+	if r.shouldUseGitopsConfig(&remoteCentral) {
+		forceReconcile, ok := central.Labels["rhacs.redhat.com/force-reconcile"]
+		return ok && forceReconcile == "true"
+	}
+	return remoteCentral.ForceReconcile == "always"
 }
 
 var resourcesChart = charts.MustGetChart("tenant-resources", nil)

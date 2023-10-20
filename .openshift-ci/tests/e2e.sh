@@ -9,8 +9,10 @@ export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
 
-RUN_AUTH_E2E_DEFAULT="false"
-RUN_CENTRAL_E2E_DEFAULT="true"
+export RUN_AUTH_E2E_DEFAULT="false"
+export RUN_CENTRAL_E2E_DEFAULT="true"
+export RHACS_GITOPS_ENABLED="true"
+export RHACS_TARGETED_OPERATOR_UPGRADES="true"
 
 if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     # We are running in an OpenShift CI context, configure accordingly.
@@ -34,10 +36,11 @@ if [[ "${OPENSHIFT_CI:-}" == "true" ]]; then
     export STATIC_TOKEN="${FLEET_STATIC_TOKEN:-}"
     export STATIC_TOKEN_ADMIN="${FLEET_STATIC_TOKEN_ADMIN:-}"
     export CLUSTER_TYPE="openshift-ci"
-    export GOARGS="-mod=mod" # For some reason we need this in the offical base images.
+    export GOARGS="-mod=mod" # For some reason we need this in the official base images.
     export GINKGO_FLAGS="--no-color -v"
     # When running in OpenShift CI, ensure we also run the auth E2E tests.
     RUN_AUTH_E2E_DEFAULT="true"
+    export INHERIT_IMAGEPULLSECRETS="true" # pragma: allowlist secret
 else
     log "Executing in local context"
 fi
@@ -120,6 +123,7 @@ if ! "${GITROOT}/.openshift-ci/tests/e2e-test.sh"; then
 fi
 
 # Terminate loggers.
+log "Terminating loggers"
 for p in $(jobs -pr); do
     log "Terminating background process ${p}"
     kill "$p" || true
@@ -130,6 +134,7 @@ log "=========="
 log
 
 if [[ "$DUMP_LOGS" == "true" ]]; then
+    log "Dumping logs"
     if [[ "$SPAWN_LOGGER" == "true" ]]; then
         log
         log "** BEGIN LOGS **"
@@ -158,6 +163,7 @@ if [[ "$DUMP_LOGS" == "true" ]]; then
 
     log "** BEGIN OPERATOR STATE **"
     $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get pods || true
+    $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get pods -o yaml || true
     $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" describe pods || true
     $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" get subscriptions || true
     $KUBECTL -n "$STACKROX_OPERATOR_NAMESPACE" describe subscriptions || true
@@ -191,9 +197,11 @@ else
     log
 fi
 
-if [[ "$FINAL_TEAR_DOWN" == "true" ]]; then
-    down.sh
-    delete "${MANIFESTS_DIR}/rhacs-operator" || true
-fi
+log "Stopping fleet-manager port-forwarding..."
+port-forwarding stop db 5432 || true
+port-forwarding stop fleet-manager 8000 || true
+
+log "Killing oc processes forcefully"
+pkill -9 oc || true
 
 exit $FAIL

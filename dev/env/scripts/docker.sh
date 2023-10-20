@@ -115,5 +115,11 @@ preload_dependency_images() {
         docker_pull "${IMAGE_REGISTRY}/main:${CENTRAL_VERSION}"
         docker_pull "${IMAGE_REGISTRY}/central-db:${CENTRAL_VERSION}"
     fi
+
+    if [[ "$CLUSTER_TYPE"  == "kind" ]]; then
+        log "Ensuring operator images exist from dev GitOps config"
+        ensure_operator_image_exists.sh
+    fi
+
     log "Images preloaded"
 }
