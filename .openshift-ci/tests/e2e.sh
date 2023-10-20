@@ -123,6 +123,7 @@ if ! "${GITROOT}/.openshift-ci/tests/e2e-test.sh"; then
 fi
 
 # Terminate loggers.
+log "Terminating loggers"
 for p in $(jobs -pr); do
     log "Terminating background process ${p}"
     kill "$p" || true
@@ -133,6 +134,7 @@ log "=========="
 log
 
 if [[ "$DUMP_LOGS" == "true" ]]; then
+    log "Dumping logs"
     if [[ "$SPAWN_LOGGER" == "true" ]]; then
         log
         log "** BEGIN LOGS **"
@@ -195,9 +197,11 @@ else
     log
 fi
 
-if [[ "$FINAL_TEAR_DOWN" == "true" && "${OPENSHIFT_CI:-}" != "true" ]]; then
-    down.sh
-    delete "${MANIFESTS_DIR}/rhacs-operator" || true
-fi
+log "Stopping fleet-manager port-forwarding..."
+port-forwarding stop db 5432 || true
+port-forwarding stop fleet-manager 8000 || true
+
+log "Killing oc processes forcefully"
+pkill -9 oc || true
 
 exit $FAIL
