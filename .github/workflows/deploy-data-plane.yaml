@@ -9,6 +9,10 @@ on:
         required: true
       AWS_ACCOUNT_ID:
         required: true
+      OCM_SERVICE_ACCOUNT_CLIENT_ID:
+        required: false
+      OCM_SERVICE_ACCOUNT_CLIENT_SECRET:
+        required: false
     inputs:
       acs_environment:
         description: 'Name of the ACS environment.'
@@ -31,7 +35,10 @@ on:
         type: boolean
         default: false
         required: false
-
+      deploy_method:
+        type: string
+        description: 'How to terraform the cluster. Possible options: helm (default), addon'
+        default: helm
 env:
   HELM_DRY_RUN: ${{ inputs.dry_run }}
   # Credentials are populated by explicit `configure-aws-credentials` jobs in
@@ -47,6 +54,7 @@ jobs:
       id-token: write
       contents: read
     environment: ${{ inputs.github_environment }}
+    if: inputs.deploy_method == 'helm'
     steps:
       - name: Set up Go 1.20
         uses: actions/setup-go@v3
@@ -71,6 +79,45 @@ jobs:
             echo "Running script terraform_cluster.sh on ${cluster}"
             ./terraform_cluster.sh ${{ inputs.acs_environment }} "${cluster}"
             echo "Script terraform_cluster.sh on ${cluster} succeeded"
+          done
+
+  install-addon:
+    name: Install the addon on ${{ inputs.acs_environment }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: ${{ inputs.github_environment }}
+    if: inputs.deploy_method == 'addon'
+    steps:
+      - name: Set up Go 1.20
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.20"
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Critical for correct image detection in deploy script
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+      - name: Setup ocm CLI
+        uses: ./.github/actions/setup-ocm-cli
+        with:
+          client_id: ${{ secrets.OCM_SERVICE_ACCOUNT_CLIENT_ID }}
+          client_secret: ${{ secrets.OCM_SERVICE_ACCOUNT_CLIENT_SECRET }}
+      - name: Install the addon on ${{ inputs.deploy_clusters }}
+        working-directory: ./dp-terraform/ocm
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC2043
+          for cluster in ${{ inputs.deploy_clusters }}
+          do
+            echo "Running script terraform_cluster.sh on ${cluster}"
+            ./install_addon.sh ${{ inputs.acs_environment }} "${cluster}"
+            echo "Script install_addon.sh on ${cluster} succeeded"
           done
 
   deploy-probe:

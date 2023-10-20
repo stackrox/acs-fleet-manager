@@ -14,11 +14,4 @@ jobs:
       github_environment: integration
       deploy_clusters: "acs-int-us-01"
       probe_clusters: "acs-int-us-01"
-
-  install-addon-workflow:
-    uses: ./.github/workflows/deploy-fleetshard-addon.yaml
-    secrets: inherit # pragma: allowlist secret
-    with:
-      acs_environment: integration
-      github_environment: integration
-      deploy_clusters: "acs-int-us-01"
+      deploy_method: addon
