@@ -35,7 +35,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.nonexistent.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
-    OPERATOR_ENABLED="true"
+    OPERATOR_ENABLED="false"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_CHANNEL="stable"
     OPERATOR_VERSION="v4.0.2"
