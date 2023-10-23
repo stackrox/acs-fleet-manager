@@ -171,10 +171,10 @@ OCM_PAYLOAD=$(cat << EOF
             { "id": "securedClusterAdmissionControlServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_ADMISSION_CONTROL_CERT}")" },
             { "id": "securedClusterAdmissionControlServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_ADMISSION_CONTROL_KEY}")" },
             { "id": "securedClusterCaCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_CA_CERT}")" },
-            { "id": "securedClusterCentralEndpoint", "value": "$(escape_linebreaks "${SECURED_CLUSTER_CENTRAL_ENDPOINT}")" },
+            { "id": "securedClusterCentralEndpoint", "value": "${SECURED_CLUSTER_CENTRAL_ENDPOINT}" },
             { "id": "securedClusterCollectorServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_COLLECTOR_CERT}")" },
             { "id": "securedClusterCollectorServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_COLLECTOR_KEY}")" },
-            { "id": "securedClusterEnabled", "value": "$(escape_linebreaks "${SECURED_CLUSTER_ENABLED}")" },
+            { "id": "securedClusterEnabled", "value": "${SECURED_CLUSTER_ENABLED}" },
             { "id": "securedClusterSensorServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_SENSOR_CERT}")" },
             { "id": "securedClusterSensorServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_SENSOR_KEY}")" }
         ]
