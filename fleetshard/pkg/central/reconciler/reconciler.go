@@ -350,6 +350,9 @@ func (r *CentralReconciler) getLegacyInstanceConfig(remoteCentral *private.Manag
 				DeploymentSpec: v1alpha1.DeploymentSpec{
 					Resources: &centralResources,
 				},
+				NotifierSecretsEncryption: &v1alpha1.NotifierSecretsEncryption{
+					Enabled: pointer.Bool(true),
+				},
 			},
 			Scanner: &v1alpha1.ScannerComponentSpec{
 				Analyzer: &v1alpha1.ScannerAnalyzerComponent{
