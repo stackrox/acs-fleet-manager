@@ -563,6 +563,10 @@ image/push/internal: docker/login/internal
 	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(probe_image_repository):$(IMAGE_TAG)"
 .PHONY: image/push/internal
 
+image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
+image/build/fleetshard-operator:
+TODO implement me
+
 # Run the probe based e2e test in container
 test/e2e/probe/run: image/build/probe
 test/e2e/probe/run: IMAGE_REF="$(external_image_registry)/$(probe_image_repository):$(image_tag)"
