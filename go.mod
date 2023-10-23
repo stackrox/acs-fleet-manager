@@ -15,7 +15,7 @@ require (
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.20.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-gormigrate/gormigrate/v2 v2.1.0
+	github.com/go-gormigrate/gormigrate/v2 v2.1.1
 	github.com/go-logr/logr v1.2.4
 	github.com/go-resty/resty/v2 v2.10.0
 	github.com/goava/di v1.11.1
@@ -53,7 +53,6 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zgalor/weberr v0.8.2
-	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea
 	golang.org/x/net v0.17.0
 	golang.org/x/oauth2 v0.12.0
 	golang.org/x/sys v0.13.0
@@ -159,6 +158,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea // indirect
 	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
