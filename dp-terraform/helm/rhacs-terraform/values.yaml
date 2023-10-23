@@ -61,7 +61,10 @@ fleetshardSync:
     username: ""
     password: ""
     email: "quayuser@example.com"
-
+  gitops:
+    enabled: false
+  targetedOperatorUpgrades:
+    enabled: false
 acsOperator:
   enabled: false
   channel: latest

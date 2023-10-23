@@ -159,6 +159,8 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set fleetshardSync.managedDB.performanceInsights=true \
   --set fleetshardSync.aws.region="${CLUSTER_REGION}" \
   --set fleetshardSync.aws.roleARN="${FLEETSHARD_SYNC_AWS_ROLE_ARN}" \
+  --set fleetshardSync.gitops.enabled="${RHACS_GITOPS_ENABLED:-}" \
+  --set fleetshardSync.targetedOperatorUpgrades.enabled="${RHACS_TARGETED_OPERATOR_UPGRADES:-}" \
   --set fleetshardSync.telemetry.storage.endpoint="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_ENDPOINT:-}" \
   --set fleetshardSync.telemetry.storage.key="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_KEY:-}" \
   --set fleetshardSync.resources.requests.cpu="${FLEETSHARD_SYNC_CPU_REQUEST}" \
