@@ -3,8 +3,16 @@ package operator
 import (
 	"fmt"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
+)
+
+const (
+	keyDeploymentName                  = "deploymentName"
+	keyImage                           = "image"
+	keyCentralReconcilerEnabled        = "centralReconcilerEnabled"
+	keySecuredClusterReconcilerEnabled = "securedClusterReconcilerEnabled"
+	keyCentralLabelSelector            = "centralLabelSelector"
+	keySecuredClusterSelector          = "securedClusterLabelSelector"
 )
 
 func parseConfig(content []byte) (OperatorConfigs, error) {
@@ -16,82 +24,88 @@ func parseConfig(content []byte) (OperatorConfigs, error) {
 	return out, nil
 }
 
-// Validate validates the operator configuration and can be used in different life-cycle stages like runtime and deploy time.
-func Validate(path *field.Path, configs OperatorConfigs) field.ErrorList {
-	manifests, err := RenderChart(configs)
-	if err != nil {
-		return field.ErrorList{
-			field.Forbidden(path, fmt.Sprintf("could not render operator helm charts, got invalid configuration: %s", err.Error())),
-		}
-	} else if len(configs.Configs) > 0 && len(manifests) == 0 {
-		return field.ErrorList{
-			field.Forbidden(path, fmt.Sprintf("operator chart rendering succeed, but no manifests were rendered")),
-		}
-	}
-	return nil
-}
-
-// CRDConfig represents the crd to be installed in the data-plane cluster. The CRD is downloaded automatically
-// from the base URL. It takes a GitRef to resolve a GitHub link to the CRD definition.
-type CRDConfig struct {
-	BaseURL string `json:"baseURL,omitempty"`
-	GitRef  string `json:"gitRef"`
-}
-
 // OperatorConfigs represents all operators and the CRD which should be installed in a data-plane cluster.
 type OperatorConfigs struct {
-	CRD     CRDConfig        `json:"crd"`
+	CRDURLs []string         `json:"crdUrls"`
 	Configs []OperatorConfig `json:"operators"`
 }
 
 // OperatorConfig represents the configuration of an operator.
-type OperatorConfig struct {
-	Image      string `json:"image"`
-	GitRef     string `json:"gitRef"`
-	HelmValues string `json:"helmValues,omitempty"`
+type OperatorConfig map[string]interface{}
+
+// GetDeploymentName returns the deployment name of the operator.
+func (o OperatorConfig) GetDeploymentName() string {
+	return o.getString(keyDeploymentName)
+}
+
+// GetImage returns the image of the operator.
+func (o OperatorConfig) GetImage() string {
+	return o.getString(keyImage)
+}
+
+// GetCentralLabelSelector returns the central label selector.
+func (o OperatorConfig) GetCentralLabelSelector() string {
+	return o.getString(keyCentralLabelSelector)
+}
+
+// GetSecuredClusterLabelSelector returns the secured cluster label selector.
+func (o OperatorConfig) GetSecuredClusterLabelSelector() string {
+	return o.getString(keySecuredClusterSelector)
+}
+
+// GetCentralReconcilerEnabled returns true if the central reconciler should be disabled.
+func (o OperatorConfig) GetCentralReconcilerEnabled() bool {
+	return o.getBool(keyCentralReconcilerEnabled)
+}
+
+// GetSecuredClusterReconcilerEnabled returns true if the secured cluster reconciler should be disabled.
+func (o OperatorConfig) GetSecuredClusterReconcilerEnabled() bool {
+	return o.getBool(keySecuredClusterReconcilerEnabled)
+}
+
+func (o OperatorConfig) getString(key string) string {
+	valIntf, ok := o[key]
+	if !ok {
+		return ""
+	}
+	val, ok := valIntf.(string)
+	if !ok {
+		return ""
+	}
+	return val
+}
+
+func (o OperatorConfig) getBool(key string) bool {
+	valIntf, ok := o[key]
+	if !ok {
+		return false
+	}
+	val, ok := valIntf.(bool)
+	if !ok {
+		return false
+	}
+	return val
 }
 
 // ToAPIResponse transforms the config to an private API response.
 func (o OperatorConfigs) ToAPIResponse() private.RhacsOperatorConfigs {
 	apiConfigs := private.RhacsOperatorConfigs{
-		CRD: private.RhacsOperatorConfigsCrd{
-			GitRef:  o.CRD.GitRef,
-			BaseURL: o.CRD.BaseURL,
-		},
+		CrdUrls: o.CRDURLs,
 	}
-
 	for _, config := range o.Configs {
-		apiConfigs.RHACSOperatorConfigs = append(apiConfigs.RHACSOperatorConfigs, config.ToAPIResponse())
+		apiConfigs.RHACSOperatorConfigs = append(apiConfigs.RHACSOperatorConfigs, config)
 	}
 	return apiConfigs
 }
 
-// ToAPIResponse converts the internal OperatorConfig to the openapi generated private.RhacsOperatorConfig type.
-func (o OperatorConfig) ToAPIResponse() private.RhacsOperatorConfig {
-	return private.RhacsOperatorConfig{
-		Image:      o.Image,
-		GitRef:     o.GitRef,
-		HelmValues: o.HelmValues,
-	}
-}
-
-// FromAPIResponse converts an openapi generated model to the internal OperatorConfigs type
 func FromAPIResponse(config private.RhacsOperatorConfigs) OperatorConfigs {
 	var operatorConfigs []OperatorConfig
 	for _, apiConfig := range config.RHACSOperatorConfigs {
-		config := OperatorConfig{
-			Image:      apiConfig.Image,
-			GitRef:     apiConfig.GitRef,
-			HelmValues: apiConfig.HelmValues,
-		}
-		operatorConfigs = append(operatorConfigs, config)
+		operatorConfigs = append(operatorConfigs, apiConfig)
 	}
 
 	return OperatorConfigs{
 		Configs: operatorConfigs,
-		CRD: CRDConfig{
-			GitRef:  config.CRD.GitRef,
-			BaseURL: config.CRD.BaseURL,
-		},
+		CRDURLs: config.CrdUrls,
 	}
 }

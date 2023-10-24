@@ -354,7 +354,7 @@ test/e2e: $(GINKGO_BIN)
 		--race --trace \
 		--json-report=e2e-report.json \
 		--timeout=$(TEST_TIMEOUT) \
-		--slow-spec-threshold=5m \
+		--poll-progress-after=5m \
 		 ./e2e/...
 .PHONY: test/e2e
 
@@ -514,6 +514,10 @@ image/build:
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) $(SHORT_IMAGE_REF)
 	@echo "New image tag: $(SHORT_IMAGE_REF). You might want to"
 	@echo "export FLEET_MANAGER_IMAGE=$(SHORT_IMAGE_REF)"
+ifeq ("$(CLUSTER_TYPE)","kind")
+	@echo "Loading image into kind"
+	kind load docker-image $(SHORT_IMAGE_REF)
+endif
 .PHONY: image/build
 
 # Builds the binaries locally and copies them into the image. This build is compatible with arm64.
@@ -891,12 +895,3 @@ tag:
 full-image-tag:
 	@echo "$(IMAGE_NAME):$(image_tag)"
 .PHONY: full-image-tag
-
-release_date="$(shell date '+%Y-%m-%d')"
-release_commit="$(shell git rev-parse --short=7 HEAD)"
-tag_count="$(shell git tag -l $(release_date)* | wc -l | xargs)" # use xargs to remove unnecessary whitespace
-start_rev=1
-rev="$(shell expr $(tag_count) + $(start_rev))"
-release-version:
-	@echo "$(release_date).$(rev).$(release_commit)"
-.PHONY: release-version

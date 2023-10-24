@@ -4,7 +4,6 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/golang/glog"
@@ -18,6 +17,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/cipher"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/fleetshardmetrics"
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/k8s"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
@@ -36,7 +36,7 @@ type reconcilerRegistry map[string]*centralReconciler.CentralReconciler
 
 var reconciledCentralCountCache int32
 
-var cachedOperatorConfigs operator.OperatorConfigs
+var lastOperatorHash [16]byte
 
 var backoff = wait.Backoff{
 	Duration: 1 * time.Second,
@@ -48,19 +48,20 @@ var backoff = wait.Backoff{
 
 // Runtime represents the runtime to reconcile all centrals associated with the given cluster.
 type Runtime struct {
-	config            *config.Config
-	client            *fleetmanager.Client
-	clusterID         string
-	reconcilers       reconcilerRegistry
-	k8sClient         ctrlClient.Client
-	dbProvisionClient cloudprovider.DBClient
-	statusResponseCh  chan private.DataPlaneCentralStatus
-	operatorManager   *operator.ACSOperatorManager
-	secretCipher      cipher.Cipher
+	config                 *config.Config
+	client                 *fleetmanager.Client
+	clusterID              string
+	reconcilers            reconcilerRegistry
+	k8sClient              ctrlClient.Client
+	dbProvisionClient      cloudprovider.DBClient
+	statusResponseCh       chan private.DataPlaneCentralStatus
+	operatorManager        *operator.ACSOperatorManager
+	secretCipher           cipher.Cipher
+	encryptionKeyGenerator cipher.KeyGenerator
 }
 
 // NewRuntime creates a new runtime
-func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
+func NewRuntime(ctx context.Context, config *config.Config, k8sClient ctrlClient.Client) (*Runtime, error) {
 	authOption := fleetmanager.Option{
 		Sso: fleetmanager.RHSSOOption{
 			ClientID:     config.RHSSOClientID,
@@ -75,7 +76,7 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 			StaticToken: config.StaticToken,
 		},
 	}
-	auth, err := fleetmanager.NewAuth(config.AuthType, authOption)
+	auth, err := fleetmanager.NewAuth(ctx, config.AuthType, authOption)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fleet manager authentication")
 	}
@@ -99,15 +100,21 @@ func NewRuntime(config *config.Config, k8sClient ctrlClient.Client) (*Runtime, e
 		return nil, fmt.Errorf("creating secretCipher: %w", err)
 	}
 
+	encryptionKeyGen, err := cipher.NewKeyGenerator(config)
+	if err != nil {
+		return nil, fmt.Errorf("creating encryption KeyGenerator: %w", err)
+	}
+
 	return &Runtime{
-		config:            config,
-		k8sClient:         k8sClient,
-		client:            client,
-		clusterID:         config.ClusterID,
-		dbProvisionClient: dbProvisionClient,
-		reconcilers:       make(reconcilerRegistry),
-		operatorManager:   operatorManager,
-		secretCipher:      secretCipher, // pragma: allowlist secret
+		config:                 config,
+		k8sClient:              k8sClient,
+		client:                 client,
+		clusterID:              config.ClusterID,
+		dbProvisionClient:      dbProvisionClient,
+		reconcilers:            make(reconcilerRegistry),
+		operatorManager:        operatorManager,
+		secretCipher:           secretCipher, // pragma: allowlist secret
+		encryptionKeyGenerator: encryptionKeyGen,
 	}, nil
 }
 
@@ -123,14 +130,15 @@ func (r *Runtime) Start() error {
 	routesAvailable := r.routesAvailable()
 
 	reconcilerOpts := centralReconciler.CentralReconcilerOptions{
-		UseRoutes:         routesAvailable,
-		WantsAuthProvider: r.config.CreateAuthProvider,
-		EgressProxyImage:  r.config.EgressProxyImage,
-		ManagedDBEnabled:  r.config.ManagedDB.Enabled,
-		Telemetry:         r.config.Telemetry,
-		ClusterName:       r.config.ClusterName,
-		Environment:       r.config.Environment,
-		AuditLogging:      r.config.AuditLogging,
+		UseRoutes:             routesAvailable,
+		WantsAuthProvider:     r.config.CreateAuthProvider,
+		EgressProxyImage:      r.config.EgressProxyImage,
+		ManagedDBEnabled:      r.config.ManagedDB.Enabled,
+		Telemetry:             r.config.Telemetry,
+		ClusterName:           r.config.ClusterName,
+		Environment:           r.config.Environment,
+		AuditLogging:          r.config.AuditLogging,
+		TenantImagePullSecret: r.config.TenantImagePullSecret, // pragma: allowlist secret
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {
@@ -156,7 +164,7 @@ func (r *Runtime) Start() error {
 		for _, central := range list.Items {
 			if _, ok := r.reconcilers[central.Id]; !ok {
 				r.reconcilers[central.Id] = centralReconciler.NewCentralReconciler(r.k8sClient, r.client, central,
-					r.dbProvisionClient, postgres.InitializeDatabase, r.secretCipher, reconcilerOpts)
+					r.dbProvisionClient, postgres.InitializeDatabase, r.secretCipher, r.encryptionKeyGenerator, reconcilerOpts)
 			}
 
 			reconciler := r.reconcilers[central.Id]
@@ -257,60 +265,28 @@ func (r *Runtime) deleteStaleReconcilers(list *private.ManagedCentralList) {
 
 func (r *Runtime) upgradeOperator(list private.ManagedCentralList) error {
 	ctx := context.Background()
-	var desiredOperatorConfigs []operator.OperatorConfig
-	var desiredOperatorImages []string
+	operators := operator.FromAPIResponse(list.RhacsOperators)
 
-	if features.StandaloneMode.Enabled() {
-		configMapOperators, err := r.operatorManager.ReadOperatorConfigFromConfigMap(ctx)
-		if err != nil {
-			glog.Warningf("Failed reading operators configMap: %v", err)
-		}
-		glog.Infof("Reading operator config map, extracted %d operators from configmap", len(configMapOperators))
-		desiredOperatorConfigs = configMapOperators
-	} else if features.TargetedOperatorUpgrades.Enabled() {
-		for _, operatorConfig := range list.RhacsOperators.RHACSOperatorConfigs {
-			desiredOperatorConfigs = append(desiredOperatorConfigs, operator.OperatorConfig{
-				Image:      operatorConfig.Image,
-				GitRef:     operatorConfig.GitRef,
-				HelmValues: operatorConfig.HelmValues,
-			})
-		}
-	} else {
-		desiredOperatorConfigs = []operator.OperatorConfig{{
-			GitRef: "4.1.0",
-			Image:  "quay.io/rhacs-eng/stackrox-operator",
-		}}
-	}
-
-	operators := operator.OperatorConfigs{
-		Configs: desiredOperatorConfigs,
-		// TODO: How to get that value?
-		CRD: operator.CRDConfig{
-			GitRef: "4.1.0",
-		},
-	}
-
-	if reflect.DeepEqual(cachedOperatorConfigs, operators) {
-		return nil
-	}
-	cachedOperatorConfigs = operators
-
-	for _, operatorDeployment := range operators.Configs {
-		glog.Infof("Installing Operator version: %s", operatorDeployment.GitRef)
-		desiredOperatorImages = append(desiredOperatorImages, operatorDeployment.Image)
-	}
-
-	// TODO: comment line in to use the API response for production usage after Fleet-Manager implementation is finished
-	// err = r.operatorManager.InstallOrUpgrade(ctx, operator.FromAPIResponse(list.RhacsOperators))
-	err := r.operatorManager.InstallOrUpgrade(ctx, operators)
-	if err != nil {
-		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
-	}
-
-	err = r.operatorManager.RemoveUnusedOperators(ctx, desiredOperatorImages)
+	err := r.operatorManager.RemoveUnusedOperators(ctx, operators.Configs)
 	if err != nil {
 		glog.Warningf("Failed removing unused operators: %v", err)
 	}
+
+	operatorHash, err := util.MD5SumFromJSONStruct(operators)
+	if err != nil {
+		return fmt.Errorf("Creating MD5 operatorHash for operator. %w", err)
+	}
+	if lastOperatorHash == operatorHash {
+		return nil
+	}
+	lastOperatorHash = operatorHash
+
+	err = r.operatorManager.InstallOrUpgrade(ctx, operators)
+	if err != nil {
+		lastOperatorHash = [16]byte{}
+		return fmt.Errorf("ensuring initial operator installation failed: %w", err)
+	}
+
 	return nil
 }
 

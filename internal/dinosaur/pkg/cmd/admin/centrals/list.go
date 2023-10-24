@@ -19,7 +19,7 @@ func NewAdminCentralsListCommand() *cobra.Command {
 		Short: "lists all managed central requests",
 		Long:  "lists all managed central requests",
 		Run: func(cmd *cobra.Command, args []string) {
-			runList(fleetmanagerclient.AuthenticatedClientWithRHOASToken(), cmd, args)
+			runList(fleetmanagerclient.AuthenticatedClientWithRHOASToken(cmd.Context()), cmd, args)
 		},
 	}
 	return cmd
