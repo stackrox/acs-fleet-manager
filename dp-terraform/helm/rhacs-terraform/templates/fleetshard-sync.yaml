@@ -103,6 +103,10 @@ spec:
               name: fleetshard-sync
               key: "aws-secret-access-key"
         {{- end }}
+        - name: RHACS_GITOPS_ENABLED
+          value: {{ .Values.fleetshardSync.gitops.enabled | quote }}
+        - name: RHACS_TARGETED_OPERATOR_UPGRADES
+          value: {{ .Values.fleetshardSync.targetedOperatorUpgrades.enabled | quote }}
         volumeMounts:
           - mountPath: /var/run/secrets/tokens
             name: aws-token

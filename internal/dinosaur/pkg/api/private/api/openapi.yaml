@@ -349,22 +349,14 @@ components:
       description: A list of ManagedCentral
     RHACSOperatorConfigs:
       properties:
-        CRD:
-          $ref: '#/components/schemas/RHACSOperatorConfigs_CRD'
+        CrdUrls:
+          items:
+            type: string
+          type: array
         RHACSOperatorConfigs:
           items:
-            allOf:
-            - $ref: '#/components/schemas/RHACSOperatorConfig'
+            type: object
           type: array
-    RHACSOperatorConfig:
-      description: RHACSOperatorConfig defines the configuration of an operator
-      properties:
-        gitRef:
-          type: string
-        image:
-          type: string
-        helmValues:
-          type: string
     DataPlaneClusterUpdateStatusRequest:
       description: Schema for the request to update a data plane cluster's status
       example:
@@ -583,12 +575,6 @@ components:
           type: array
         rhacs_operators:
           $ref: '#/components/schemas/RHACSOperatorConfigs'
-    RHACSOperatorConfigs_CRD:
-      properties:
-        baseURL:
-          type: string
-        gitRef:
-          type: string
     DataPlaneClusterUpdateStatusRequest_conditions:
       example:
         reason: reason

@@ -147,7 +147,7 @@ func InstallOrUpdateChart(ctx context.Context, obj *unstructured.Unstructured, c
 			return fmt.Errorf("failed to retrieve object %s/%s of type %s %w", key.Namespace, key.Name, obj.GetKind(), err)
 		}
 		err = client.Create(ctx, obj)
-		glog.Infof("Creating object %s/%s", obj.GetNamespace(), obj.GetName())
+		glog.Infof("Creating object %s/%s %s/%s", obj.GetAPIVersion(), obj.GetKind(), obj.GetNamespace(), obj.GetName())
 		if err != nil && !apiErrors.IsAlreadyExists(err) {
 			return fmt.Errorf("failed to create object %s/%s of type %s: %w", key.Namespace, key.Name, obj.GetKind(), err)
 		}

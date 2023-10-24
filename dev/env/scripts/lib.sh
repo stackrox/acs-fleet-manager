@@ -6,6 +6,11 @@ export GITROOT=${GITROOT:-$GITROOT_DEFAULT}
 # shellcheck source=/dev/null
 source "$GITROOT/scripts/lib/log.sh"
 
+# export scripts if not in path
+if ! command -v bootstrap.sh >/dev/null 2>&1; then
+    export PATH="$GITROOT/dev/env/scripts:${PATH}"
+fi
+
 try_kubectl() {
     local kubectl
     if command -v kubectl >/dev/null 2>&1; then
@@ -67,9 +72,13 @@ init() {
         export PATH="$GITROOT/dev/env/scripts:${PATH}"
     fi
 
+    available_cluster_types=$(find "${GITROOT}/dev/env/defaults" -maxdepth 1 -type d -name "cluster-type-*" -print0 | xargs -0 -n1 basename | sed -e 's/^cluster-type-//;' | sort | paste -sd "," -)
+
     export CLUSTER_TYPE="${CLUSTER_TYPE:-$CLUSTER_TYPE_DEFAULT}"
     if [[ -z "$CLUSTER_TYPE" ]]; then
-        die "Error: CLUSTER_TYPE not set and could not be figured out. Please make sure that it is initialized properly."
+        die "Error: CLUSTER_TYPE not set and could not be figured out. Please make sure that it is initialized properly. Available cluster types: ${available_cluster_types}"
+    elif [[ ! "$available_cluster_types" =~ (^|,)"$CLUSTER_TYPE"($|,) ]]; then
+        die "Error: CLUSTER_TYPE '${CLUSTER_TYPE}' is not supported. Available cluster types: ${available_cluster_types}"
     fi
 
     for env_file in "${GITROOT}/dev/env/defaults/cluster-type-${CLUSTER_TYPE}/"*; do
@@ -85,6 +94,7 @@ init() {
     export CLUSTER_ID=${CLUSTER_ID:-$CLUSTER_ID_DEFAULT}
     export CLUSTER_DNS=${CLUSTER_DNS:-$CLUSTER_DNS_DEFAULT}
     export DOCKER=${DOCKER:-$DOCKER_DEFAULT}
+    export KIND=${KIND:-$KIND_DEFAULT}
     export IMAGE_REGISTRY="${IMAGE_REGISTRY:-$IMAGE_REGISTRY_DEFAULT}"
     IMAGE_REGISTRY_HOST=$(if [[ "$IMAGE_REGISTRY" =~ ^[^/]*\.[^/]*/ ]]; then echo "$IMAGE_REGISTRY" | cut -d / -f 1; fi)
     export IMAGE_REGISTRY_HOST
@@ -138,10 +148,9 @@ init() {
     export FLEET_MANAGER_IMAGE=${FLEET_MANAGER_IMAGE:-$FLEET_MANAGER_IMAGE_DEFAULT}
     export IGNORE_REPOSITORY_DIRTINESS=${IGNORE_REPOSITORY_DIRTINESS:-$IGNORE_REPOSITORY_DIRTINESS_DEFAULT}
     export RHACS_TARGETED_OPERATOR_UPGRADES=${RHACS_TARGETED_OPERATOR_UPGRADES:-$RHACS_TARGETED_OPERATOR_UPGRADES_DEFAULT}
-    export RHACS_STANDALONE_MODE=${RHACS_STANDALONE_MODE:-$RHACS_STANDALONE_MODE_DEFAULT}
     export RHACS_GITOPS_ENABLED=${RHACS_GITOPS_ENABLED:-$RHACS_GITOPS_ENABLED_DEFAULT}
 
-    local fleet_manager_command="/usr/local/bin/fleet-manager serve --force-leader --api-server-bindaddress=0.0.0.0:8000 --health-check-server-bindaddress=0.0.0.0:8083 --kubeconfig=/secrets/kubeconfig --enable-central-external-certificate=$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE --central-domain-name='$CENTRAL_DOMAIN_NAME' --gitops-config-path='/gitops-config/config.yaml'"
+    local fleet_manager_command="/usr/local/bin/fleet-manager serve --force-leader --api-server-bindaddress=0.0.0.0:8000 --health-check-server-bindaddress=0.0.0.0:8083 --kubeconfig=/secrets/kubeconfig --enable-central-external-certificate=$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE --central-domain-name='$CENTRAL_DOMAIN_NAME'"
     FLEET_MANAGER_CONTAINER_COMMAND_DEFAULT="${fleet_manager_command} || { sleep 120; false; }"
     FLEETSHARD_SYNC_CONTAINER_COMMAND_DEFAULT="/usr/local/bin/fleetshard-sync"
     export FLEET_MANAGER_CONTAINER_COMMAND=${FLEET_MANAGER_CONTAINER_COMMAND:-$FLEET_MANAGER_CONTAINER_COMMAND_DEFAULT}
@@ -149,6 +158,7 @@ init() {
 
     if [[ "$FLEET_MANAGER_IMAGE" == "" ]]; then
         FLEET_MANAGER_IMAGE=$(make -s -C "$GITROOT" full-image-tag)
+        log "FLEET_MANAGER_IMAGE not set, using ${FLEET_MANAGER_IMAGE}"
     fi
 
     if [[ "$ENABLE_CENTRAL_EXTERNAL_CERTIFICATE" != "false" && ("$ROUTE53_ACCESS_KEY" == "" || "$ROUTE53_SECRET_ACCESS_KEY" == "") ]]; then
@@ -159,13 +169,82 @@ init() {
     if [[ "$CLUSTER_TYPE" == "minikube" ]]; then
         eval "$(minikube docker-env)"
     fi
+
+    cat <<EOF
+** Environment **
+CLUSTER_TYPE: ${CLUSTER_TYPE}
+CLUSTER_NAME: ${CLUSTER_NAME}
+ENABLE_EXTERNAL_CONFIG: ${ENABLE_EXTERNAL_CONFIG}
+AWS_AUTH_HELPER: ${AWS_AUTH_HELPER}
+KUBECTL: ${KUBECTL}
+ACSCS_NAMESPACE: ${ACSCS_NAMESPACE}
+CLUSTER_ID: ${CLUSTER_ID}
+CLUSTER_DNS: ${CLUSTER_DNS}
+DOCKER: ${DOCKER}
+KIND: ${KIND}
+IMAGE_REGISTRY: ${IMAGE_REGISTRY}
+IMAGE_REGISTRY_HOST: ${IMAGE_REGISTRY_HOST}
+STACKROX_OPERATOR_CHANNEL: ${STACKROX_OPERATOR_CHANNEL}
+STACKROX_OPERATOR_VERSION: ${STACKROX_OPERATOR_VERSION}
+CENTRAL_VERSION: ${CENTRAL_VERSION}
+SCANNER_VERSION: ${SCANNER_VERSION}
+STACKROX_OPERATOR_NAMESPACE: ${STACKROX_OPERATOR_NAMESPACE}
+STACKROX_OPERATOR_INDEX_IMAGE: ${STACKROX_OPERATOR_INDEX_IMAGE}
+OPENSHIFT_MARKETPLACE: ${OPENSHIFT_MARKETPLACE}
+INSTALL_OPERATOR: ${INSTALL_OPERATOR}
+INSTALL_OPENSHIFT_ROUTER: ${INSTALL_OPENSHIFT_ROUTER}
+DATABASE_HOST: ${DATABASE_HOST}
+DATABASE_PORT: ${DATABASE_PORT}
+DATABASE_NAME: ${DATABASE_NAME}
+DATABASE_USER: ${DATABASE_USER}
+DATABASE_PASSWORD: ********
+DATABASE_TLS_CERT: ${DATABASE_TLS_CERT}
+OCM_SERVICE_CLIENT_ID: ${OCM_SERVICE_CLIENT_ID}
+OCM_SERVICE_CLIENT_SECRET: ********
+OCM_SERVICE_TOKEN: ********
+SENTRY_KEY: ********
+AWS_ACCESS_KEY: ********
+AWS_ACCOUNT_ID: ${AWS_ACCOUNT_ID}
+AWS_SECRET_ACCESS_KEY: ********
+SSO_CLIENT_ID: ${SSO_CLIENT_ID}
+SSO_CLIENT_SECRET: ********
+OSD_IDP_SSO_CLIENT_ID: ${OSD_IDP_SSO_CLIENT_ID}
+OSD_IDP_SSO_CLIENT_SECRET: ********
+ROUTE53_ACCESS_KEY: ********
+ROUTE53_SECRET_ACCESS_KEY: ********
+OBSERVABILITY_CONFIG_ACCESS_TOKEN: ********
+IMAGE_PULL_DOCKER_CONFIG: ${IMAGE_PULL_DOCKER_CONFIG}
+INHERIT_IMAGEPULLSECRETS: ${INHERIT_IMAGEPULLSECRETS}
+SPAWN_LOGGER: ${SPAWN_LOGGER}
+DUMP_LOGS: ${DUMP_LOGS}
+OPERATOR_SOURCE: ${OPERATOR_SOURCE}
+INSTALL_OLM: ${INSTALL_OLM}
+ENABLE_DB_PORT_FORWARDING: ${ENABLE_DB_PORT_FORWARDING}
+ENABLE_FM_PORT_FORWARDING: ${ENABLE_FM_PORT_FORWARDING}
+FINAL_TEAR_DOWN: ${FINAL_TEAR_DOWN}
+FLEET_MANAGER_RESOURCES: ${FLEET_MANAGER_RESOURCES}
+FLEETSHARD_SYNC_RESOURCES: ${FLEETSHARD_SYNC_RESOURCES}
+DB_RESOURCES: ${DB_RESOURCES}
+RHACS_OPERATOR_RESOURCES: ${RHACS_OPERATOR_RESOURCES}
+DOCKER_CONFIG: ${DOCKER_CONFIG}
+SKIP_TESTS: ${SKIP_TESTS}
+ENABLE_CENTRAL_EXTERNAL_CERTIFICATE: ${ENABLE_CENTRAL_EXTERNAL_CERTIFICATE}
+CENTRAL_DOMAIN_NAME: ${CENTRAL_DOMAIN_NAME}
+FLEET_MANAGER_IMAGE: ${FLEET_MANAGER_IMAGE}
+IGNORE_REPOSITORY_DIRTINESS: ${IGNORE_REPOSITORY_DIRTINESS}
+RHACS_TARGETED_OPERATOR_UPGRADES: ${RHACS_TARGETED_OPERATOR_UPGRADES}
+RHACS_GITOPS_ENABLED: ${RHACS_GITOPS_ENABLED}
+FLEET_MANAGER_CONTAINER_COMMAND: ${FLEET_MANAGER_CONTAINER_COMMAND}
+FLEETSHARD_SYNC_CONTAINER_COMMAND: ${FLEETSHARD_SYNC_CONTAINER_COMMAND}
+PATH: ${PATH}
+EOF
 }
 
 wait_for_container_to_appear() {
     local namespace="$1"
     local pod_selector="$2"
     local container_name="$3"
-    local seconds="${4:-120}" # Default to 120 seconds waiting time.
+    local seconds="${4:-150}" # Default to 150 seconds waiting time.
 
     log "Waiting for container ${container_name} within pod ${pod_selector} in namespace ${namespace} to appear..."
     for _ in $(seq "$seconds"); do
@@ -204,8 +283,11 @@ wait_for_container_to_become_ready() {
 
     log "Waiting for pod ${pod_selector} within namespace ${namespace} to become ready..."
     wait_for_container_to_appear "$namespace" "$pod_selector" "$container_name" || return 1
-    if $KUBECTL -n "$namespace" wait --timeout="$timeout" --for=condition=ready pod -l "$pod_selector" 2>/dev/null >&2; then
-        log "Container $container_name for pod ${pod_selector} is ready."
+
+    $KUBECTL -n "$namespace" wait --timeout="$timeout" --for=condition=ready pod -l "$pod_selector"
+    local exit_code="$?"
+    if [[ exit_code -eq 0 ]]; then
+        log "Container ${container_name} within namespace ${namespace} is ready."
         sleep 2
         return 0
     fi
@@ -278,7 +360,7 @@ inject_ips() {
     local service_account="$2"
     local secret_name="$3"
 
-    log "Patching ServiceAccount ${namespace}/default to use Quay.io imagePullSecrets"
+    log "Patching ServiceAccount ${namespace}/${service_account} to use Quay.io imagePullSecrets"
     $KUBECTL -n "$namespace" patch sa "$service_account" -p "\"imagePullSecrets\": [{\"name\": \"${secret_name}\" }]"
 }
 
@@ -286,7 +368,10 @@ inject_exported_env_vars() {
     local namespace="$1"
     local deployment="$2"
 
-    flags=$(printenv | grep -e "RHACS_*")
+    # Retrieve all environment variables prefixed with RHACS_ except those which also carry the _DEFAULT suffix
+    # (these are variables used for the defaulting logic of the development tooling and are not expected to end
+    # up in the pod specs).
+    flags=$(printenv | grep -e '^RHACS_' | grep -v '^RHACS_[^=]*_DEFAULT=')
     for flag in $flags
     do
         $KUBECTL -n "$namespace" set env "deployment/$deployment" "$flag"

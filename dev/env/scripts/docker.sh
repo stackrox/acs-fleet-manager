@@ -26,6 +26,10 @@ docker_pull() {
         log "Pulling image ${image_ref}"
         $DOCKER pull "$image_ref"
     fi
+    if [[ "$CLUSTER_TYPE" == "kind" ]]; then
+        log "Load image $image_ref to kind"
+        $KIND load docker-image "$image_ref"
+    fi
 }
 
 docker_logged_in() {
@@ -86,7 +90,10 @@ ensure_fleet_manager_image_exists() {
 }
 
 is_local_deploy() {
-    if [[ "$CLUSTER_TYPE" == "openshift-ci" || "$CLUSTER_TYPE" == "infra-openshift" ]]; then
+    if [[ "$CLUSTER_TYPE" == "openshift-ci" \
+        || "$CLUSTER_TYPE" == "infra-openshift" \
+        || "$CLUSTER_TYPE" == "gke" \
+        ]]; then
         return 1
     fi
     if is_running_inside_docker; then
@@ -108,5 +115,11 @@ preload_dependency_images() {
         docker_pull "${IMAGE_REGISTRY}/main:${CENTRAL_VERSION}"
         docker_pull "${IMAGE_REGISTRY}/central-db:${CENTRAL_VERSION}"
     fi
+
+    if [[ "$CLUSTER_TYPE"  == "kind" ]]; then
+        log "Ensuring operator images exist from dev GitOps config"
+        ensure_operator_image_exists.sh
+    fi
+
     log "Images preloaded"
 }

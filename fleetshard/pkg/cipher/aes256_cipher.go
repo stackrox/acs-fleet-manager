@@ -65,3 +65,20 @@ func (a AES256Cipher) Decrypt(ciphertext []byte) ([]byte, error) {
 
 	return plaintext, nil
 }
+
+// AES256KeyGenerator implements the KeyGenerator interface for AES256 keys
+type AES256KeyGenerator struct{}
+
+// Generate generates a Key compatible for AES256 ciphers
+func (g AES256KeyGenerator) Generate() ([]byte, error) {
+	return generateAESKey(32)
+}
+
+func generateAESKey(size int) ([]byte, error) {
+	key := make([]byte, size)
+	if _, err := io.ReadFull(rand.Reader, key); err != nil {
+		return nil, fmt.Errorf("generating random bytes for AES key: %w", err)
+	}
+
+	return key, nil
+}

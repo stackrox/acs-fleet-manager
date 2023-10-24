@@ -144,6 +144,7 @@ func getClientTrackerAndReconciler(
 		managedDBClient,
 		centralDBInitFunc,
 		createBase64Cipher(t),
+		cipher.AES256KeyGenerator{},
 		reconcilerOptions,
 	)
 	return fakeClient, tracker, reconciler
@@ -345,10 +346,11 @@ func TestReconcileLastHashNotUpdatedOnError(t *testing.T) {
 	}, centralDeploymentObject()).Build()
 
 	r := CentralReconciler{
-		status:         pointer.Int32(0),
-		client:         fakeClient,
-		central:        private.ManagedCentral{},
-		resourcesChart: resourcesChart,
+		status:                 pointer.Int32(0),
+		client:                 fakeClient,
+		central:                private.ManagedCentral{},
+		resourcesChart:         resourcesChart,
+		encryptionKeyGenerator: cipher.AES256KeyGenerator{},
 	}
 
 	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
@@ -838,6 +840,29 @@ func TestChartResourcesAreAddedAndRemoved(t *testing.T) {
 
 	err = fakeClient.Get(context.TODO(), dummySvcKey, &dummySvc)
 	assert.True(t, k8sErrors.IsNotFound(err))
+}
+
+func TestCentralEncryptionKeyIsGenerated(t *testing.T) {
+	fakeClient, _, r := getClientTrackerAndReconciler(
+		t,
+		defaultCentralConfig,
+		nil,
+		defaultReconcilerOptions,
+	)
+
+	_, err := r.Reconcile(context.TODO(), simpleManagedCentral)
+	require.NoError(t, err)
+
+	var centralEncryptionSecret v1.Secret
+	key := client.ObjectKey{Namespace: simpleManagedCentral.Metadata.Namespace, Name: centralEncryptionKeySecretName}
+	err = fakeClient.Get(context.TODO(), key, &centralEncryptionSecret)
+	require.NoError(t, err)
+	require.Contains(t, centralEncryptionSecret.Data, "encryption-key")
+
+	encKey, err := base64.StdEncoding.DecodeString(string(centralEncryptionSecret.Data["encryption-key"]))
+	require.NoError(t, err)
+	expectedKeyLen := len(encKey)
+	require.Equal(t, expectedKeyLen, len(encKey))
 }
 
 func TestChartResourcesAreAddedAndUpdated(t *testing.T) {

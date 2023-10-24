@@ -464,6 +464,16 @@ parameters:
   description: List of user agents from internal clients
   value: "fleet-manager-probe-service"
 
+- name: RHACS_GITOPS_ENABLED
+  displayName: RHACS Gitops enabled
+  description: Whether to enable configuration of Centrals through gitops be enabled
+  value: "false"
+
+- name: RHACS_TARGETED_OPERATOR_UPGRADES
+  displayName: RHACS Targeted Operator Upgrades
+  description: Whether to enable targeted operator upgrades
+  value: "false"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -1164,8 +1174,7 @@ objects:
               mountPath: /config/dataplane-cluster-configuration-staging.yaml
               subPath: dataplane-cluster-configuration-staging.yaml
             - name: gitops-config
-              mountPath: /config/gitops-config
-              subPath: gitops-config
+              mountPath: /gitops-config
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
@@ -1196,6 +1205,10 @@ objects:
                 value: "${SCANNER_DB_CPU_LIMIT}"
               - name: SCANNER_DB_MEMORY_LIMIT
                 value: "${SCANNER_DB_MEMORY_LIMIT}"
+              - name: RHACS_GITOPS_ENABLED
+                value: "${RHACS_GITOPS_ENABLED}"
+              - name: RHACS_TARGETED_OPERATOR_UPGRADES
+                value: "${RHACS_TARGETED_OPERATOR_UPGRADES}"
             command:
             - /usr/local/bin/fleet-manager
             - serve

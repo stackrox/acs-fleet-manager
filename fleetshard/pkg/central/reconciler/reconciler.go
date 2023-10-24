@@ -52,8 +52,7 @@ const (
 	FreeStatus int32 = iota
 	BlockedStatus
 
-	PauseReconcileAnnotation  = "stackrox.io/pause-reconcile"
-	ReconcileOperatorSelector = "rhacs.redhat.com/version-selector"
+	PauseReconcileAnnotation = "stackrox.io/pause-reconcile"
 
 	helmReleaseName = "tenant-resources"
 
@@ -79,10 +78,14 @@ const (
 	centralDbOverrideConfigMap = "central-db-override"
 	centralDeletePollInterval  = 5 * time.Second
 
+	centralEncryptionKeySecretName = "central-encryption-key" // pragma: allowlist secret
+
 	sensibleDeclarativeConfigSecretName = "cloud-service-sensible-declarative-configs" // pragma: allowlist secret
 	manualDeclarativeConfigSecretName   = "cloud-service-manual-declarative-configs"   // pragma: allowlist secret
 
 	authProviderDeclarativeConfigKey = "default-sso-auth-provider"
+
+	tenantImagePullSecretName = "stackrox" // pragma: allowlist secret
 )
 
 type verifyAuthProviderExistsFunc func(ctx context.Context, central private.ManagedCentral,
@@ -90,34 +93,36 @@ type verifyAuthProviderExistsFunc func(ctx context.Context, central private.Mana
 
 // CentralReconcilerOptions are the static options for creating a reconciler.
 type CentralReconcilerOptions struct {
-	UseRoutes         bool
-	WantsAuthProvider bool
-	EgressProxyImage  string
-	ManagedDBEnabled  bool
-	Telemetry         config.Telemetry
-	ClusterName       string
-	Environment       string
-	AuditLogging      config.AuditLogging
+	UseRoutes             bool
+	WantsAuthProvider     bool
+	EgressProxyImage      string
+	ManagedDBEnabled      bool
+	Telemetry             config.Telemetry
+	ClusterName           string
+	Environment           string
+	AuditLogging          config.AuditLogging
+	TenantImagePullSecret string
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
 // in its Reconcile function.
 type CentralReconciler struct {
-	client             ctrlClient.Client
-	fleetmanagerClient *fleetmanager.Client
-	central            private.ManagedCentral
-	status             *int32
-	lastCentralHash    [16]byte
-	useRoutes          bool
-	Resources          bool
-	routeService       *k8s.RouteService
-	secretBackup       *k8s.SecretBackup
-	secretCipher       cipher.Cipher
-	egressProxyImage   string
-	telemetry          config.Telemetry
-	clusterName        string
-	environment        string
-	auditLogging       config.AuditLogging
+	client                 ctrlClient.Client
+	fleetmanagerClient     *fleetmanager.Client
+	central                private.ManagedCentral
+	status                 *int32
+	lastCentralHash        [16]byte
+	useRoutes              bool
+	Resources              bool
+	routeService           *k8s.RouteService
+	secretBackup           *k8s.SecretBackup
+	secretCipher           cipher.Cipher
+	egressProxyImage       string
+	telemetry              config.Telemetry
+	clusterName            string
+	environment            string
+	auditLogging           config.AuditLogging
+	encryptionKeyGenerator cipher.KeyGenerator
 
 	managedDBEnabled            bool
 	managedDBProvisioningClient cloudprovider.DBClient
@@ -128,6 +133,7 @@ type CentralReconciler struct {
 	wantsAuthProvider      bool
 	hasAuthProvider        bool
 	verifyAuthProviderFunc verifyAuthProviderExistsFunc
+	tenantImagePullSecret  []byte
 }
 
 // Reconcile takes a private.ManagedCentral and tries to install it into the cluster managed by the fleet-shard.
@@ -141,11 +147,16 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	}
 	defer atomic.StoreInt32(r.status, FreeStatus)
 
+	central, err := r.getInstanceConfig(&remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+
 	changed, err := r.centralChanged(remoteCentral)
 	if err != nil {
-		return nil, errors.Wrapf(err, "checking if central changed")
+		return nil, errors.Wrap(err, "checking if central changed")
 	}
-	needsReconcile := r.needsReconcile(changed, remoteCentral.ForceReconcile)
+	needsReconcile := r.needsReconcile(changed, remoteCentral, central)
 
 	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
 		return nil, ErrCentralNotChanged
@@ -154,11 +165,6 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	glog.Infof("Start reconcile central %s/%s", remoteCentral.Metadata.Namespace, remoteCentral.Metadata.Name)
 
 	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
-	central, err := r.getInstanceConfig(&remoteCentral)
-	if err != nil {
-		return nil, err
-	}
 
 	if remoteCentral.Metadata.DeletionTimestamp != "" {
 		return r.reconcileInstanceDeletion(ctx, &remoteCentral, central)
@@ -175,7 +181,19 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to ensure that namespace %s exists", remoteCentralNamespace)
 	}
 
+	if len(r.tenantImagePullSecret) > 0 {
+		err = r.ensureImagePullSecretConfigured(ctx, remoteCentralNamespace, tenantImagePullSecretName, r.tenantImagePullSecret)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	err = r.restoreCentralSecrets(ctx, remoteCentral)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.ensureEncryptionKeySecretExists(ctx, remoteCentralNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -184,10 +202,8 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 		return nil, errors.Wrapf(err, "unable to install chart resource for central %s/%s", central.GetNamespace(), central.GetName())
 	}
 
-	if r.managedDBEnabled {
-		if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
-			return nil, err
-		}
+	if err = r.reconcileCentralDBConfig(ctx, &remoteCentral, central); err != nil {
+		return nil, err
 	}
 
 	if err = r.reconcileDeclarativeConfigurationData(ctx, remoteCentral); err != nil {
@@ -208,7 +224,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 			if errors.Is(err, k8s.ErrCentralTLSSecretNotFound) {
 				centralTLSSecretFound = false // pragma: allowlist secret
 			} else {
-				return nil, errors.Wrapf(err, "updating routes")
+				return nil, errors.Wrap(err, "updating routes")
 			}
 		}
 	}
@@ -218,6 +234,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, err
 	}
+
 	if !centralDeploymentReady || !centralTLSSecretFound {
 		if isRemoteCentralProvisioning(remoteCentral) && !needsReconcile { // no changes detected, wait until central become ready
 			return nil, ErrCentralNotChanged
@@ -243,7 +260,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	// Setting the last central hash must always be executed as the last step.
 	// defer can't be used for this call because it is also executed after the reconcile failed.
 	if err := r.setLastCentralHash(remoteCentral); err != nil {
-		return nil, errors.Wrapf(err, "setting central reconcilation cache")
+		return nil, errors.Wrap(err, "setting central reconcilation cache")
 	}
 
 	logStatus := *status
@@ -532,17 +549,26 @@ func (r *CentralReconciler) reconcileInstanceDeletion(ctx context.Context, remot
 
 func (r *CentralReconciler) reconcileCentralDBConfig(ctx context.Context, remoteCentral *private.ManagedCentral, central *v1alpha1.Central) error {
 
+	if central.Spec.Central == nil {
+		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
+	}
+	if central.Spec.Central.DB == nil {
+		central.Spec.Central.DB = &v1alpha1.CentralDBSpec{}
+	}
+	central.Spec.Central.DB.IsEnabled = v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue)
+
+	if !r.managedDBEnabled {
+		return nil
+	}
+
 	centralDBConnectionString, err := r.getCentralDBConnectionString(ctx, remoteCentral)
 	if err != nil {
 		return fmt.Errorf("getting Central DB connection string: %w", err)
 	}
 
-	central.Spec.Central.DB = &v1alpha1.CentralDBSpec{
-		IsEnabled:                v1alpha1.CentralDBEnabledPtr(v1alpha1.CentralDBEnabledTrue),
-		ConnectionStringOverride: pointer.String(centralDBConnectionString),
-		PasswordSecret: &v1alpha1.LocalSecretReference{
-			Name: centralDbSecretName,
-		},
+	central.Spec.Central.DB.ConnectionStringOverride = pointer.String(centralDBConnectionString)
+	central.Spec.Central.DB.PasswordSecret = &v1alpha1.LocalSecretReference{
+		Name: centralDbSecretName,
 	}
 
 	dbCA, err := postgres.GetDatabaseCACertificates()
@@ -873,7 +899,7 @@ func (r *CentralReconciler) collectReconciliationStatus(ctx context.Context, rem
 
 func (r *CentralReconciler) areSecretsStored(secretsStored []string) bool {
 	secretsStoredSize := len(secretsStored)
-	expectedSecrets := k8s.GetWatchedSecrets()
+	expectedSecrets := r.secretBackup.GetWatchedSecrets()
 	if secretsStoredSize != len(expectedSecrets) {
 		return false
 	}
@@ -1111,7 +1137,6 @@ func (r *CentralReconciler) centralChanged(central private.ManagedCentral) (bool
 	if err != nil {
 		return true, errors.Wrap(err, "hashing central")
 	}
-
 	return !bytes.Equal(r.lastCentralHash[:], currentHash[:]), nil
 }
 
@@ -1139,6 +1164,38 @@ func (r *CentralReconciler) getNamespace(name string) (*corev1.Namespace, error)
 	return namespace, nil
 }
 
+func (r *CentralReconciler) getSecret(namespaceName string, secretName string) (*corev1.Secret, error) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespaceName,
+		},
+	}
+	err := r.client.Get(context.Background(), ctrlClient.ObjectKey{Namespace: namespaceName, Name: secretName}, secret)
+	if err != nil {
+		return nil, errors.Wrapf(err, "retrieving secret %s/%s", namespaceName, secretName)
+	}
+	return secret, nil
+}
+
+func (r *CentralReconciler) createImagePullSecret(ctx context.Context, namespaceName string, secretName string, imagePullSecretJSON []byte) error {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespaceName,
+			Name:      secretName,
+		},
+		Type: "kubernetes.io/dockerconfigjson",
+		Data: map[string][]byte{
+			".dockerconfigjson": imagePullSecretJSON,
+		},
+	}
+
+	if err := r.client.Create(ctx, secret); err != nil {
+		return errors.Wrapf(err, "creating image pull secret %s/%s", namespaceName, secretName)
+	}
+
+	return nil
+}
+
 func (r *CentralReconciler) createTenantNamespace(ctx context.Context, namespace *corev1.Namespace) error {
 	err := r.client.Create(ctx, namespace)
 	if err != nil {
@@ -1160,6 +1217,22 @@ func (r *CentralReconciler) ensureNamespaceExists(name string, labels map[string
 	return nil
 }
 
+func (r *CentralReconciler) ensureImagePullSecretConfigured(ctx context.Context, namespaceName string, secretName string, imagePullSecret []byte) error {
+	// Ensure that the secret exists.
+	_, err := r.getSecret(namespaceName, secretName)
+	if err == nil {
+		// Secret exists already.
+		return nil
+	}
+	if !apiErrors.IsNotFound(err) {
+		// Unexpected error.
+		return errors.Wrapf(err, "retrieving secret %s/%s", namespaceName, secretName)
+	}
+	// We have an IsNotFound error.
+	glog.Infof("Creating image pull secret %s/%s", namespaceName, secretName)
+	return r.createImagePullSecret(ctx, namespaceName, secretName, imagePullSecret)
+}
+
 func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name string) (bool, error) {
 	namespace, err := r.getNamespace(name)
 	if err != nil {
@@ -1176,6 +1249,28 @@ func (r *CentralReconciler) ensureNamespaceDeleted(ctx context.Context, name str
 	}
 	glog.Infof("Central namespace %s is marked for deletion", name)
 	return false, nil
+}
+
+func (r *CentralReconciler) ensureEncryptionKeySecretExists(ctx context.Context, remoteCentralNamespace string) error {
+	return r.ensureSecretExists(ctx, remoteCentralNamespace, centralEncryptionKeySecretName, r.populateEncryptionKeySecret)
+}
+
+func (r *CentralReconciler) populateEncryptionKeySecret(secret *corev1.Secret) error {
+	if secret.Data != nil {
+		if _, ok := secret.Data["encryption-key"]; ok {
+			// secret already populated with encryption key skip operation
+			return nil
+		}
+	}
+
+	encryptionKey, err := r.encryptionKeyGenerator.Generate()
+	if err != nil {
+		return fmt.Errorf("generating encryption key: %w", err)
+	}
+
+	b64Key := base64.StdEncoding.EncodeToString(encryptionKey)
+	secret.Data = map[string][]byte{"encryption-key": []byte(b64Key)}
+	return nil
 }
 
 func (r *CentralReconciler) getCentralDBConnectionString(ctx context.Context, remoteCentral *private.ManagedCentral) (string, error) {
@@ -1596,8 +1691,15 @@ func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.Managed
 		isRemoteCentralReady(&remoteCentral)
 }
 
-func (r *CentralReconciler) needsReconcile(changed bool, forceReconcile string) bool {
-	return changed || forceReconcile == "always"
+func (r *CentralReconciler) needsReconcile(changed bool, remoteCentral private.ManagedCentral, central *v1alpha1.Central) bool {
+	if changed {
+		return true
+	}
+	if r.shouldUseGitopsConfig(&remoteCentral) {
+		forceReconcile, ok := central.Labels["rhacs.redhat.com/force-reconcile"]
+		return ok && forceReconcile == "true"
+	}
+	return remoteCentral.ForceReconcile == "always"
 }
 
 var resourcesChart = charts.MustGetChart("tenant-resources", nil)
@@ -1669,30 +1771,32 @@ func (r *CentralReconciler) ensureSecretExists(
 // NewCentralReconciler ...
 func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleetmanager.Client, central private.ManagedCentral,
 	managedDBProvisioningClient cloudprovider.DBClient, managedDBInitFunc postgres.CentralDBInitFunc,
-	secretCipher cipher.Cipher,
+	secretCipher cipher.Cipher, encryptionKeyGenerator cipher.KeyGenerator,
 	opts CentralReconcilerOptions,
 ) *CentralReconciler {
 	return &CentralReconciler{
-		client:             k8sClient,
-		fleetmanagerClient: fleetmanagerClient,
-		central:            central,
-		status:             pointer.Int32(FreeStatus),
-		useRoutes:          opts.UseRoutes,
-		wantsAuthProvider:  opts.WantsAuthProvider,
-		routeService:       k8s.NewRouteService(k8sClient),
-		secretBackup:       k8s.NewSecretBackup(k8sClient),
-		secretCipher:       secretCipher, // pragma: allowlist secret
-		egressProxyImage:   opts.EgressProxyImage,
-		telemetry:          opts.Telemetry,
-		clusterName:        opts.ClusterName,
-		environment:        opts.Environment,
-		auditLogging:       opts.AuditLogging,
+		client:                 k8sClient,
+		fleetmanagerClient:     fleetmanagerClient,
+		central:                central,
+		status:                 pointer.Int32(FreeStatus),
+		useRoutes:              opts.UseRoutes,
+		wantsAuthProvider:      opts.WantsAuthProvider,
+		routeService:           k8s.NewRouteService(k8sClient),
+		secretBackup:           k8s.NewSecretBackup(k8sClient, opts.ManagedDBEnabled),
+		secretCipher:           secretCipher, // pragma: allowlist secret
+		egressProxyImage:       opts.EgressProxyImage,
+		telemetry:              opts.Telemetry,
+		clusterName:            opts.ClusterName,
+		environment:            opts.Environment,
+		auditLogging:           opts.AuditLogging,
+		encryptionKeyGenerator: encryptionKeyGenerator,
 
 		managedDBEnabled:            opts.ManagedDBEnabled,
 		managedDBProvisioningClient: managedDBProvisioningClient,
 		managedDBInitFunc:           managedDBInitFunc,
 
 		verifyAuthProviderFunc: hasAuthProvider,
+		tenantImagePullSecret:  []byte(opts.TenantImagePullSecret),
 
 		resourcesChart: resourcesChart,
 	}

@@ -1,6 +1,7 @@
 package fleetmanager
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -34,7 +35,7 @@ func (f *ocmAuthFactory) GetName() string {
 }
 
 // CreateAuth ...
-func (f *ocmAuthFactory) CreateAuth(o Option) (Auth, error) {
+func (f *ocmAuthFactory) CreateAuth(ctx context.Context, o Option) (Auth, error) {
 	initialToken := o.Ocm.RefreshToken
 	if initialToken == "" {
 		return nil, errors.New("empty ocm token")
@@ -53,11 +54,11 @@ func (f *ocmAuthFactory) CreateAuth(o Option) (Auth, error) {
 	}
 
 	// Check if the connection can be established and tokens can be retrieved.
-	conn, err := builder.Build()
+	conn, err := builder.BuildContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("creating connection: %w", err)
 	}
-	_, _, err = conn.Tokens()
+	_, _, err = conn.TokensContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving tokens: %w", err)
 	}

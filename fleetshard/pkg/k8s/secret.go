@@ -11,29 +11,36 @@ import (
 )
 
 const (
-	centralTLSSecretName        = "central-tls"         // pragma: allowlist secret
-	centralDBPasswordSecretName = "central-db-password" // pragma: allowlist secret
+	centralTLSSecretName           = "central-tls"            // pragma: allowlist secret
+	centralDBPasswordSecretName    = "central-db-password"    // pragma: allowlist secret
+	centralEncryptionKeySecretName = "central-encryption-key" // pragma: allowlist secret
 )
 
-var secretsToWatch = []string{
+var defaultSecretsToWatch = []string{
 	centralTLSSecretName,
-	centralDBPasswordSecretName,
+	centralEncryptionKeySecretName,
 }
 
 // SecretBackup is responsible for reading secrets to Backup for a tenant.
 type SecretBackup struct {
-	client ctrlClient.Client
+	client         ctrlClient.Client
+	secretsToWatch []string
 }
 
 // NewSecretBackup creates a new instance of SecretService.
-func NewSecretBackup(client ctrlClient.Client) *SecretBackup {
-	return &SecretBackup{client: client}
+func NewSecretBackup(client ctrlClient.Client, managedDB bool) *SecretBackup {
+	secretsToWatch := defaultSecretsToWatch // pragma: allowlist secret
+	if managedDB {
+		secretsToWatch = append(secretsToWatch, centralDBPasswordSecretName)
+	}
+
+	return &SecretBackup{client: client, secretsToWatch: secretsToWatch} // pragma: allowlist secret
 }
 
 // GetWatchedSecrets return a sorted list of secrets watched by this package
-func GetWatchedSecrets() []string {
-	secrets := make([]string, len(secretsToWatch))
-	copy(secrets, secretsToWatch)
+func (s *SecretBackup) GetWatchedSecrets() []string {
+	secrets := make([]string, len(s.secretsToWatch))
+	copy(secrets, s.secretsToWatch)
 	sort.Strings(secrets)
 	return secrets
 }
@@ -42,7 +49,7 @@ func GetWatchedSecrets() []string {
 // watched by SecretServices
 func (s *SecretBackup) CollectSecrets(ctx context.Context, namespace string) (map[string]*corev1.Secret, error) {
 	secrets := map[string]*corev1.Secret{}
-	for _, secretname := range secretsToWatch { // pragma: allowlist secret
+	for _, secretname := range s.secretsToWatch { // pragma: allowlist secret
 		secret, err := getSecret(ctx, s.client, secretname, namespace)
 		if err != nil {
 			return nil, err

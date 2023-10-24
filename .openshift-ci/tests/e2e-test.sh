@@ -4,13 +4,16 @@ GITROOT="$(git rev-parse --show-toplevel)"
 export GITROOT
 # shellcheck source=/dev/null
 source "${GITROOT}/dev/env/scripts/lib.sh"
-init
 
 bootstrap.sh
+
+log "Setting up e2e test environment"
 
 if [[ "$CLUSTER_TYPE" != "openshift-ci" ]]; then
     log "Cleaning up left-over resource (if any)"
     down.sh 2>/dev/null
+else
+    log "Skipping cleanup of left-over resources because CLUSTER_TYPE is openshift-ci"
 fi
 
 up.sh
@@ -46,4 +49,5 @@ else
     fi
 fi
 
+log "** Exiting with status code $FAIL **"
 exit $FAIL

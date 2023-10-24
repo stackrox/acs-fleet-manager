@@ -35,6 +35,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.nonexistent.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
+    OPERATOR_ENABLED="false"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_CHANNEL="stable"
     OPERATOR_VERSION="v4.0.2"
@@ -43,6 +44,8 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"500m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"512Mi"}"
     SECURED_CLUSTER_ENABLED="true"
+    RHACS_GITOPS_ENABLED="true"
+    RHACS_TARGETED_OPERATOR_UPGRADES="true"
     ;;
 
   integration)
@@ -50,6 +53,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="master"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
+    OPERATOR_ENABLED="false"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_CHANNEL="stable"
     OPERATOR_VERSION="v4.1.0"
@@ -57,7 +61,9 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
-    SECURED_CLUSTER_ENABLED="false"  # TODO(ROX-18908): enable
+    SECURED_CLUSTER_ENABLED="true"
+    RHACS_GITOPS_ENABLED="true"
+    RHACS_TARGETED_OPERATOR_UPGRADES="true"
     ;;
 
   stage)
@@ -65,6 +71,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="stage"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.stage.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
+    OPERATOR_ENABLED="false"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_CHANNEL="stable"
     OPERATOR_VERSION="v4.1.0"
@@ -73,6 +80,8 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
     SECURED_CLUSTER_ENABLED="true"
+    RHACS_GITOPS_ENABLED="true"
+    RHACS_TARGETED_OPERATOR_UPGRADES="true"
     ;;
 
   prod)
@@ -80,6 +89,7 @@ case $ENVIRONMENT in
     OBSERVABILITY_GITHUB_TAG="production"
     OBSERVABILITY_OBSERVATORIUM_GATEWAY="https://observatorium-mst.api.openshift.com"
     OBSERVABILITY_OPERATOR_VERSION="v4.2.1"
+    OPERATOR_ENABLED="false"
     OPERATOR_USE_UPSTREAM="false"
     OPERATOR_CHANNEL="stable"
     OPERATOR_VERSION="v4.1.0"
@@ -88,6 +98,8 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
     SECURED_CLUSTER_ENABLED="true"
+    RHACS_GITOPS_ENABLED="true"
+    RHACS_TARGETED_OPERATOR_UPGRADES="true"
     ;;
 
   *)
@@ -139,7 +151,7 @@ fi
 # TODO(ROX-16645): set acsOperator.enabled to false
 invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --namespace rhacs \
-  --set acsOperator.enabled=true \
+  --set acsOperator.enabled="${OPERATOR_ENABLED}" \
   --set acsOperator.source="${OPERATOR_SOURCE}" \
   --set acsOperator.sourceNamespace=openshift-marketplace \
   --set acsOperator.channel="${OPERATOR_CHANNEL}" \
@@ -159,6 +171,8 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set fleetshardSync.managedDB.performanceInsights=true \
   --set fleetshardSync.aws.region="${CLUSTER_REGION}" \
   --set fleetshardSync.aws.roleARN="${FLEETSHARD_SYNC_AWS_ROLE_ARN}" \
+  --set fleetshardSync.gitops.enabled="${RHACS_GITOPS_ENABLED:-}" \
+  --set fleetshardSync.targetedOperatorUpgrades.enabled="${RHACS_TARGETED_OPERATOR_UPGRADES:-}" \
   --set fleetshardSync.telemetry.storage.endpoint="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_ENDPOINT:-}" \
   --set fleetshardSync.telemetry.storage.key="${FLEETSHARD_SYNC_TELEMETRY_STORAGE_KEY:-}" \
   --set fleetshardSync.resources.requests.cpu="${FLEETSHARD_SYNC_CPU_REQUEST}" \

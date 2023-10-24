@@ -5,6 +5,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
@@ -23,14 +24,12 @@ type provider struct {
 }
 
 // NewProvider returns a new ConfigProvider.
-func NewProvider(module *Module) ConfigProvider {
+func NewProvider() ConfigProvider {
 
 	var reader Reader
-	if len(module.ConfigPath) > 0 {
-		glog.Infof("Using GitOps configuration from %s", module.ConfigPath)
-		reader = NewFileReader(module.ConfigPath)
+	if features.GitOpsCentrals.Enabled() {
+		reader = NewFileReader(configPath)
 	} else {
-		glog.Infof("Using empty GitOps configuration")
 		reader = NewEmptyReader()
 	}
 

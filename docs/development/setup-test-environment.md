@@ -57,7 +57,7 @@ The scripts can be configured using environment variables, the most important op
 ### Full lifecycle
 The primary way for executing the e2e test suite is by calling
 ```shell
-$ ./.openshift-ci/test/e2e.sh
+$ ./.openshift-ci/tests/e2e.sh
 ```
 This will trigger the FULL test lifecycle including the cluster bootstrap, building the image (unless `FLEET_MANAGER_IMAGE` points to a specific image tag), deploying it and running E2E tests.
 
@@ -137,6 +137,11 @@ $ colima start -c 4 -d 60 -m 16 -k
 ```
 
 and that the `colima` CLI is in `PATH` (if not, export `DOCKER=/path/to/bin/colima nerdctl -- -n k8s.io` accordingly).
+
+Depending on several factors it might even be necessary to increase the cluster resources even further, e.g.:
+```shell
+$ colima start -c 6 -m 16 -d 60 -k
+```
 
 ### CRC
 
