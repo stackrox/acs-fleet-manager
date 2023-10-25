@@ -1,6 +1,7 @@
 package gitops
 
 import (
+	"reflect"
 	"sync/atomic"
 
 	"github.com/golang/glog"
@@ -49,6 +50,12 @@ func (p *provider) Get() (Config, error) {
 	if err != nil {
 		p.increaseErrorCount()
 		return p.tryGetLastWorkingConfig(errors.Wrap(err, "failed to read GitOps configuration"))
+	}
+	lastWorkingConfig := p.lastWorkingConfig.Load()
+	if lastWorkingConfig != nil {
+		if reflect.DeepEqual(cfg, *lastWorkingConfig) {
+			return cfg, nil
+		}
 	}
 	// Validate the config
 	if err := p.validationFn(cfg); err != nil {
