@@ -767,11 +767,9 @@ func OrganisationNameInvalid(externalID string, name string) *ServiceError {
 // FailedClusterAuthorization converts the error to a ServiceError and returns a reason and hint for the user.
 func FailedClusterAuthorization(err error) *ServiceError {
 	svcErr := ToServiceError(err)
-	reason := "failed to reserve quota"
-	// Visiting the OpenShift page in console registers the user and their organisation with OCM.
-	// See https://issues.redhat.com/browse/SDB-3194 for more context.
+	reason := "failed to use ACSCS subscription"
 	if svcErr.Is404() || svcErr.IsForbidden() {
-		reason += " - visit https://console.redhat.com/openshift and try again. If that does not help and you are new customer of ACSCS, wait for 30 minutes and try again."
+		reason += " - you might not have RedhatManagedCluster permission. Please contact your administrator."
 	}
 	return NewWithCause(svcErr.Code, svcErr, reason)
 }
