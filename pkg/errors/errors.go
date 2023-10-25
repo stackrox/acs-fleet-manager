@@ -768,7 +768,7 @@ func OrganisationNameInvalid(externalID string, name string) *ServiceError {
 func FailedClusterAuthorization(err error) *ServiceError {
 	svcErr := ToServiceError(err)
 	reason := "failed to use ACSCS subscription"
-	if svcErr.Is404() || svcErr.IsForbidden() {
+	if svcErr.IsForbidden() {
 		reason += " - you might not have RedhatManagedCluster permission. Please contact your administrator."
 	}
 	return NewWithCause(svcErr.Code, svcErr, reason)
