@@ -1475,13 +1475,13 @@ func (r *CentralReconciler) ensureCentralCRDeleted(ctx context.Context, central 
 		}
 
 		// avoid being stuck in a deprovisioning state due to the pause reconcile annotation
-		if err := r.disablePauseReconcileIfPresent(ctx, central); err != nil {
+		if err := r.disablePauseReconcileIfPresent(ctx, &centralToDelete); err != nil {
 			return false, err
 		}
 
 		if centralToDelete.GetDeletionTimestamp() == nil {
 			glog.Infof("Marking Central CR %v for deletion", centralKey)
-			if err := r.client.Delete(ctx, central); err != nil {
+			if err := r.client.Delete(ctx, &centralToDelete); err != nil {
 				if apiErrors.IsNotFound(err) {
 					return true, nil
 				}
