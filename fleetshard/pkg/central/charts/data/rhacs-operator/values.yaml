@@ -1,4 +1,21 @@
 operator:
+  # default values for resources. These values will be used if there is no gitops overrides
+  resources:
+    limits:
+      cpu: "2"
+      memory: "1Gi"
+    requests:
+      cpu: "1"
+      memory: "200Mi"
+  rbac:
+    resources:
+      limits:
+        cpu: "2"
+        memory: "1Gi"
+      requests:
+        cpu: "1"
+        memory: "200Mi"
+
   # Each item in this list will install an operator deployment.
   # images:
   #
@@ -37,5 +54,4 @@ operator:
   #     securedClusterReconcilerEnabled: true
   #
   images: []
-  # TODO: add values + modify template for overriding resource limits and requests for both proxy and manager container
   # TODO: add value for kube-rbac-proxy image
