@@ -469,12 +469,12 @@ func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
 	managedCentral.Spec.CentralCRYAML = `
 metadata:
-	name: ` + centralName + `
-	namespace: ` + centralNamespace + `
+  name: ` + centralName + `
+  namespace: ` + centralNamespace + `
   annotations:
-		stackrox.io/force-reconcile: "true"
+    stackrox.io/force-reconcile: "true"
 spec:
-	central: {}
+  central: {}
 `
 
 	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)
