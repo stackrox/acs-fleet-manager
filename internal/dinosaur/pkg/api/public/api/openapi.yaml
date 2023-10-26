@@ -1261,21 +1261,6 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ErrorList_allOf'
-    ResourceList:
-      additionalProperties:
-        type: string
-      type: object
-    ResourceRequirements:
-      properties:
-        requests:
-          additionalProperties:
-            type: string
-          type: object
-        limits:
-          additionalProperties:
-            type: string
-          type: object
-      type: object
     CentralRequest:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'

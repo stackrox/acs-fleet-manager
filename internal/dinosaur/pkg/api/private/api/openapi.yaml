@@ -323,21 +323,6 @@ components:
         kind:
           type: string
       type: object
-    ResourceList:
-      additionalProperties:
-        type: string
-      type: object
-    ResourceRequirements:
-      properties:
-        requests:
-          additionalProperties:
-            type: string
-          type: object
-        limits:
-          additionalProperties:
-            type: string
-          type: object
-      type: object
     ManagedCentral:
       allOf:
       - $ref: '#/components/schemas/PrivateObjectReference'

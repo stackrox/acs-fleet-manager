@@ -624,17 +624,6 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/Error"
-    ResourceList:
-      type: object
-      additionalProperties:
-        type: string
-    ResourceRequirements:
-      type: object
-      properties:
-        requests:
-          $ref: "#/components/schemas/ResourceList"
-        limits:
-          $ref: "#/components/schemas/ResourceList"
     CentralRequest:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"

@@ -232,19 +232,6 @@ components:
         kind:
           type: string
 
-    ResourceList:
-      type: object
-      additionalProperties:
-        type: string
-
-    ResourceRequirements:
-      type: object
-      properties:
-        requests:
-          $ref: "#/components/schemas/ResourceList"
-        limits:
-          $ref: "#/components/schemas/ResourceList"
-
     ManagedCentral:
       allOf:
         - $ref: "#/components/schemas/PrivateObjectReference"
