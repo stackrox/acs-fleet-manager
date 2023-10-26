@@ -17,7 +17,7 @@ func removeCentralAndScannerOverrides() *gormigrate.Migration {
 		ForceReconcile string   `json:"force_reconcile"`
 		Central        api.JSON `json:"central"`
 		Scanner        api.JSON `json:"scanner"`
-		OperatorImage  api.JSON `json:"operator_image"`
+		OperatorImage  string   `json:"operator_image"`
 	}
 
 	migrationID := "20231026000000"
@@ -37,7 +37,16 @@ func removeCentralAndScannerOverrides() *gormigrate.Migration {
 			return dropIfColumnExists(tx, &CentralRequest{}, "operator_image")
 		},
 		Rollback: func(tx *gorm.DB) error {
-			return nil
+			if err := addColumnIfNotExists(tx, &CentralRequest{}, "force_reconcile"); err != nil {
+				return err
+			}
+			if err := addColumnIfNotExists(tx, &CentralRequest{}, "central"); err != nil {
+				return err
+			}
+			if err := addColumnIfNotExists(tx, &CentralRequest{}, "scanner"); err != nil {
+				return err
+			}
+			return addColumnIfNotExists(tx, &CentralRequest{}, "operator_image")
 		},
 	}
 }
