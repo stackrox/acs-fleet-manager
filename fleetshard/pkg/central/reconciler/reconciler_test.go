@@ -471,10 +471,8 @@ func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
 metadata:
   name: ` + centralName + `
   namespace: ` + centralNamespace + `
-  annotations:
-    stackrox.io/force-reconcile: "true"
-spec:
-  central: {}
+  labels:
+    rhacs.redhat.com/force-reconcile: "true"
 `
 
 	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)

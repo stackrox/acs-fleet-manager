@@ -154,7 +154,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, errors.Wrap(err, "checking if central changed")
 	}
-	needsReconcile := r.needsReconcile(changed, remoteCentral, central)
+	needsReconcile := r.needsReconcile(changed, central)
 
 	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
 		return nil, ErrCentralNotChanged
@@ -1589,7 +1589,7 @@ func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.Managed
 		isRemoteCentralReady(&remoteCentral)
 }
 
-func (r *CentralReconciler) needsReconcile(changed bool, remoteCentral private.ManagedCentral, central *v1alpha1.Central) bool {
+func (r *CentralReconciler) needsReconcile(changed bool, central *v1alpha1.Central) bool {
 	if changed {
 		return true
 	}
