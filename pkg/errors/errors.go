@@ -769,7 +769,7 @@ func FailedClusterAuthorization(err error) *ServiceError {
 	svcErr := ToServiceError(err)
 	reason := "failed to use ACSCS subscription"
 	if svcErr.IsForbidden() {
-		reason += " - you might not have RedhatManagedCluster permission. Please contact your administrator."
+		reason += " - please contact your administrator to ensure that your Red Hat account has the RedhatManagedCluster permission."
 	}
 	return NewWithCause(svcErr.Code, svcErr, reason)
 }
