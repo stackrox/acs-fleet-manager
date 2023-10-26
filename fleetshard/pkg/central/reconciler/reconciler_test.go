@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -111,9 +110,7 @@ var simpleManagedCentral = private.ManagedCentral{
 		DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
 			Host: fmt.Sprintf("acs-data-%s.acs.rhcloud.test", centralID),
 		},
-		Central: private.ManagedCentralAllOfSpecCentral{
-			InstanceType: "standard",
-		},
+		InstanceType: "standard",
 	},
 }
 
@@ -209,7 +206,7 @@ func TestReconcileCreate(t *testing.T) {
 	assert.Equal(t, clusterName, central.Spec.Customize.Annotations[clusterNameAnnotationKey])
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgName, central.Spec.Customize.Annotations[orgNameAnnotationKey])
 	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, central.Spec.Customize.Labels[orgIDLabelKey])
-	assert.Equal(t, simpleManagedCentral.Spec.Central.InstanceType, central.Spec.Customize.Labels[instanceTypeLabelKey])
+	assert.Equal(t, simpleManagedCentral.Spec.InstanceType, central.Spec.Customize.Labels[instanceTypeLabelKey])
 	assert.Equal(t, "1", central.GetAnnotations()[util.RevisionAnnotationKey])
 	assert.Equal(t, "false", central.GetAnnotations()[centralPVCAnnotationKey])
 	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
@@ -475,7 +472,15 @@ func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
-	managedCentral.ForceReconcile = "always"
+	managedCentral.Spec.CentralCRYAML = `
+metadata:
+	name: ` + centralName + `
+	namespace: ` + centralNamespace + `
+  annotations:
+		stackrox.io/force-reconcile: "true"
+spec:
+	central: {}
+`
 
 	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)
 	require.NoError(t, err)
@@ -2134,7 +2139,7 @@ func TestReconciler_applyAnnotations(t *testing.T) {
 	}, c.Spec.Customize.Annotations)
 }
 
-func TestReconciler_getInstanceConfigWithGitops(t *testing.T) {
+func TestReconciler_getInstanceConfig(t *testing.T) {
 
 	tcs := []struct {
 		name          string
@@ -2177,7 +2182,7 @@ spec: {}
 					CentralCRYAML: tc.yaml,
 				},
 			}
-			c, err := r.getInstanceConfigWithGitops(mc)
+			c, err := r.getInstanceConfig(mc)
 			if tc.expectErr {
 				assert.Error(t, err)
 			} else {
@@ -2187,50 +2192,4 @@ spec: {}
 		})
 	}
 
-}
-
-func TestReconciler_shouldUseGitopsConfig(t *testing.T) {
-	tcs := []struct {
-		name               string
-		managedCentral     *private.ManagedCentral
-		featureFlagEnabled bool
-		expect             bool
-	}{
-		{
-			name: "should return true when centralCRYAML is set and feature flag is enabled",
-			managedCentral: &private.ManagedCentral{
-				Spec: private.ManagedCentralAllOfSpec{
-					CentralCRYAML: "foo",
-				},
-			},
-			featureFlagEnabled: true,
-			expect:             true,
-		}, {
-			name: "should return false when centralCRYAML is set and feature flag is disabled",
-			managedCentral: &private.ManagedCentral{
-				Spec: private.ManagedCentralAllOfSpec{
-					CentralCRYAML: "foo",
-				},
-			},
-			featureFlagEnabled: false,
-			expect:             false,
-		}, {
-			name: "should return false when centralCRYAML is not set and feature flag is enabled",
-			managedCentral: &private.ManagedCentral{
-				Spec: private.ManagedCentralAllOfSpec{
-					CentralCRYAML: "",
-				},
-			},
-			featureFlagEnabled: true,
-			expect:             false,
-		},
-	}
-
-	for _, tc := range tcs {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Setenv("RHACS_GITOPS_ENABLED", strconv.FormatBool(tc.featureFlagEnabled))
-			r := &CentralReconciler{}
-			assert.Equal(t, tc.expect, r.shouldUseGitopsConfig(tc.managedCentral))
-		})
-	}
 }

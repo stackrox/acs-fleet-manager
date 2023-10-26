@@ -41,20 +41,6 @@ func ConvertAdminPrivateScalingToV1(scaling *adminPrivate.ScannerSpecAnalyzerSca
 	}, nil
 }
 
-// ConvertPrivateScalingToV1 converts private API Scanner Scaling configuration into v1alpha1 Scanner Scaling configuration.
-func ConvertPrivateScalingToV1(scaling *private.ManagedCentralAllOfSpecScannerAnalyzerScaling) v1alpha1.ScannerAnalyzerScaling {
-	if scaling == nil {
-		return v1alpha1.ScannerAnalyzerScaling{}
-	}
-	autoScaling := scaling.AutoScaling
-	return v1alpha1.ScannerAnalyzerScaling{
-		AutoScaling: (*v1alpha1.AutoScalingPolicy)(&autoScaling), // TODO: validate.
-		Replicas:    &scaling.Replicas,
-		MinReplicas: &scaling.MinReplicas,
-		MaxReplicas: &scaling.MaxReplicas,
-	}
-}
-
 // ConvertScalingToPublic converts the internal dbapi ScannerAnalyzerScaling model into the ScannerSpecAnalyzerScaling model from the public API.
 func ConvertScalingToPublic(from *dbapi.ScannerAnalyzerScaling) public.ScannerSpecAnalyzerScaling {
 	return public.ScannerSpecAnalyzerScaling{
@@ -110,42 +96,6 @@ func ConvertCoreV1ResourceRequirementsToAdmin(v1Resources *corev1.ResourceRequir
 
 // ConvertPublicResourceRequirementsToCoreV1 converts public API ResourceRequirements into corev1 ResourceRequirements.
 func ConvertPublicResourceRequirementsToCoreV1(res *public.ResourceRequirements) (corev1.ResourceRequirements, error) {
-	requests, err := apiResourcesToCoreV1(res.Requests)
-	if err != nil {
-		return corev1.ResourceRequirements{}, err
-	}
-
-	limits, err := apiResourcesToCoreV1(res.Limits)
-	if err != nil {
-		return corev1.ResourceRequirements{}, err
-	}
-
-	return corev1.ResourceRequirements{
-		Limits:   limits,
-		Requests: requests,
-	}, nil
-}
-
-// ConvertPrivateResourceRequirementsToCoreV1 converts private API ResourceRequirements into corev1 ResourceRequirements.
-func ConvertPrivateResourceRequirementsToCoreV1(res *private.ResourceRequirements) (corev1.ResourceRequirements, error) {
-	requests, err := apiResourcesToCoreV1(res.Requests)
-	if err != nil {
-		return corev1.ResourceRequirements{}, err
-	}
-
-	limits, err := apiResourcesToCoreV1(res.Limits)
-	if err != nil {
-		return corev1.ResourceRequirements{}, err
-	}
-
-	return corev1.ResourceRequirements{
-		Limits:   limits,
-		Requests: requests,
-	}, nil
-}
-
-// ConvertAdminPrivateRequirementsToCoreV1 converts admin API ResourceRequirements into corev1 ResourceRequirements.
-func ConvertAdminPrivateRequirementsToCoreV1(res *adminPrivate.ResourceRequirements) (corev1.ResourceRequirements, error) {
 	requests, err := apiResourcesToCoreV1(res.Requests)
 	if err != nil {
 		return corev1.ResourceRequirements{}, err
