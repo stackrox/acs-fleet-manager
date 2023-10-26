@@ -33,15 +33,15 @@ spec:
         config-hash: {{ .Files.Get "config/squid.conf" | sha256sum | quote }}
     spec:
       automountServiceAccountToken: false
-      podAntiAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-            - key: app.kubernetes.io/component
-              operator: In
-              values:
-              - egress-proxy
-          topologyKey: kubernetes.io/hostname
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                topologyKey: "kubernetes.io/hostname"
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: egress-proxy
+              weight: 100
       containers:
       - name: egress-proxy
         image: {{ .Values.egressProxy.image }}

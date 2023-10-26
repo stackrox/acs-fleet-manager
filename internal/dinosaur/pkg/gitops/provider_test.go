@@ -1,6 +1,8 @@
 package gitops
 
 import (
+	"os"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 
@@ -125,3 +127,53 @@ func (r *mockReader) WillSucceed() *mockReader {
 }
 
 var _ Reader = &mockReader{}
+
+func TestProviderGet_ValidationNotCalledTwiceForSameConfig(t *testing.T) {
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "config.yaml")
+	err := os.WriteFile(tmpFile, []byte(`
+rhacsOperators:
+  crdUrls: []
+  operators: []
+centrals:
+  overrides:
+    - instanceIds: ["*"]
+`), 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := NewFileReader(tmpFile)
+	validationFnCalls := 0
+	p := &provider{
+		reader:            r,
+		lastWorkingConfig: atomic.Pointer[Config]{},
+		validationFn: func(config Config) error {
+			validationFnCalls++
+			return nil
+		},
+	}
+	_, err = p.Get()
+	require.NoError(t, err)
+	assert.Equal(t, 1, validationFnCalls)
+	_, err = p.Get()
+	require.NoError(t, err)
+	assert.Equal(t, 1, validationFnCalls)
+
+	err = os.WriteFile(tmpFile, []byte(`
+rhacsOperators:
+  crdUrls: []
+  operators: []
+centrals:
+  overrides: []
+`), 0644)
+	require.NoError(t, err)
+
+	_, err = p.Get()
+	require.NoError(t, err)
+	assert.Equal(t, 2, validationFnCalls)
+
+	_, err = p.Get()
+	require.NoError(t, err)
+	assert.Equal(t, 2, validationFnCalls)
+
+}

@@ -12,6 +12,6 @@ package private
 
 // RhacsOperatorConfigs struct for RhacsOperatorConfigs
 type RhacsOperatorConfigs struct {
-	CRD                  RhacsOperatorConfigsCrd `json:"CRD,omitempty"`
-	RHACSOperatorConfigs []RhacsOperatorConfig   `json:"RHACSOperatorConfigs,omitempty"`
+	CrdUrls              []string                 `json:"CrdUrls,omitempty"`
+	RHACSOperatorConfigs []map[string]interface{} `json:"RHACSOperatorConfigs,omitempty"`
 }

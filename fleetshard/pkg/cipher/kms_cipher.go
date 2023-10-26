@@ -88,3 +88,35 @@ func (k kmsCipher) Decrypt(ciphertext []byte) ([]byte, error) {
 
 	return plaintext, nil
 }
+
+// KMSDataKeyGenerator implements KeyGenerator using AWS KMS
+type KMSDataKeyGenerator struct {
+	keyID          string
+	kms            *kms.KMS
+	kmsDataKeySpec string
+}
+
+// NewKMSDataKeyGenerator initiates a AWS KMS session and
+// returns a new instance of KMSDataKeyGenerator
+func NewKMSDataKeyGenerator(keyID, keySpec string) (*KMSDataKeyGenerator, error) {
+	sess, err := session.NewSession()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create session for KMS client %w", err)
+	}
+
+	return &KMSDataKeyGenerator{
+		keyID:          keyID,
+		kms:            kms.New(sess),
+		kmsDataKeySpec: keySpec,
+	}, nil
+}
+
+// Generate generates a KMS data key with the KMSDataKeyGenerator configuration
+func (g KMSDataKeyGenerator) Generate() ([]byte, error) {
+	dateKeyOut, err := g.kms.GenerateDataKey(&kms.GenerateDataKeyInput{KeyId: &g.keyID, KeySpec: &g.kmsDataKeySpec})
+	if err != nil {
+		return nil, fmt.Errorf("generating kms data key: %w", err)
+	}
+
+	return dateKeyOut.Plaintext, nil
+}

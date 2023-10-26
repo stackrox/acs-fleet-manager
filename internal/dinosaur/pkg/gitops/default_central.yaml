@@ -15,8 +15,6 @@ spec:
     # exposure: {} -- managed by fleetshard-sync
     monitoring:
       exposeEndpoint: Enabled
-      openshift:
-        enabled: false
     resources:
       limits:
         cpu: "4"
@@ -25,6 +23,13 @@ spec:
         cpu: "2"
         memory: 4Gi
     # telemetry: {} -- managed by fleetshard-sync
+  customize:
+    annotations:
+      rhacs.redhat.com/org-name: "{{ .OrganizationName }}"
+    labels:
+      rhacs.redhat.com/instance-type: "{{ .InstanceType }}"
+      rhacs.redhat.com/org-id: "{{ .OrganizationID }}"
+      rhacs.redhat.com/tenant: "{{ .ID }}"
   scanner:
     analyzer:
       resources:

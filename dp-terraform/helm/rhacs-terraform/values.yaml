@@ -26,7 +26,7 @@ fleetshardSync:
     endpoint: "https://sso.redhat.com"
     realm: "redhat-external"
   egressProxy:
-    image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0"
+    image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0-202310101543.p0.gf1330f6.assembly.stream"
   auditLogs:
     enabled: true
     skipTLSVerify: true
@@ -61,7 +61,10 @@ fleetshardSync:
     username: ""
     password: ""
     email: "quayuser@example.com"
-
+  gitops:
+    enabled: false
+  targetedOperatorUpgrades:
+    enabled: false
 acsOperator:
   enabled: false
   channel: latest

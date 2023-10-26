@@ -1,7 +1,7 @@
 approvers:
   - SimonBaeumer
   - kovayur
-  - mtesseract
+  - mclasmeier
   - porridge
   - johannes94
   - ebensh
@@ -10,10 +10,11 @@ approvers:
   - mtodor
   - ivan-degtiarenko
   - vladbologa
+  - ludydoo
 reviewers:
   - SimonBaeumer
   - kovayur
-  - mtesseract
+  - mclasmeier
   - porridge
   - johannes94
   - ebensh
@@ -22,3 +23,4 @@ reviewers:
   - mtodor
   - ivan-degtiarenko
   - vladbologa
+  - ludydoo

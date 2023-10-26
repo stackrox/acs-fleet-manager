@@ -19,7 +19,7 @@ func NewCreateCommand() *cobra.Command {
 		Short: "Create a new central request",
 		Long:  "Create a new central request.",
 		Run: func(cmd *cobra.Command, args []string) {
-			runCreate(fleetmanagerclient.AuthenticatedClientWithOCM(), cmd, args)
+			runCreate(fleetmanagerclient.AuthenticatedClientWithOCM(cmd.Context()), cmd, args)
 		},
 	}
 

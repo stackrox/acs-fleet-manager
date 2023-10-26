@@ -1,27 +1,16 @@
 package cipher
 
 import (
-	"crypto/rand"
-	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-func generateKey() ([]byte, error) {
-	key := make([]byte, 32)
-	if _, err := io.ReadFull(rand.Reader, key); err != nil {
-		return nil, err
-	}
-
-	return key, nil
-}
-
 // TestDifferentCipherForSamePlaintext tests the correct usage of nonce
 // to ensure encrypting the same plaintext twice does not yield the same cipher text
 func TestAES256DifferentCipherForSamePlaintext(t *testing.T) {
 	plaintext := []byte("test plaintext")
-	key, err := generateKey()
+	key, err := generateAESKey(32)
 	require.NoError(t, err, "generating key")
 
 	aes, err := NewAES256Cipher(key)
@@ -36,7 +25,7 @@ func TestAES256DifferentCipherForSamePlaintext(t *testing.T) {
 
 func TestAES256EncryptDecryptMatch(t *testing.T) {
 	plaintext := []byte("test plaintext")
-	key, err := generateKey()
+	key, err := generateAESKey(32)
 	require.NoError(t, err, "generating key")
 
 	aes, err := NewAES256Cipher(key)
@@ -49,4 +38,12 @@ func TestAES256EncryptDecryptMatch(t *testing.T) {
 	require.NoError(t, err, "decrypting ciphertext")
 
 	require.Equal(t, string(plaintext), string(decrypted), "decrypted string does not match plaintext")
+}
+
+func TestAES256Generator(t *testing.T) {
+	generator := AES256KeyGenerator{}
+
+	key, err := generator.Generate()
+	require.NoError(t, err)
+	require.Equal(t, 32, len(key))
 }

@@ -1,10 +1,12 @@
 package gitops
 
 import (
+	"reflect"
 	"sync/atomic"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
 
@@ -23,14 +25,12 @@ type provider struct {
 }
 
 // NewProvider returns a new ConfigProvider.
-func NewProvider(module *Module) ConfigProvider {
+func NewProvider() ConfigProvider {
 
 	var reader Reader
-	if len(module.ConfigPath) > 0 {
-		glog.Infof("Using GitOps configuration from %s", module.ConfigPath)
-		reader = NewFileReader(module.ConfigPath)
+	if features.GitOpsCentrals.Enabled() {
+		reader = NewFileReader(configPath)
 	} else {
-		glog.Infof("Using empty GitOps configuration")
 		reader = NewEmptyReader()
 	}
 
@@ -50,6 +50,12 @@ func (p *provider) Get() (Config, error) {
 	if err != nil {
 		p.increaseErrorCount()
 		return p.tryGetLastWorkingConfig(errors.Wrap(err, "failed to read GitOps configuration"))
+	}
+	lastWorkingConfig := p.lastWorkingConfig.Load()
+	if lastWorkingConfig != nil {
+		if reflect.DeepEqual(cfg, *lastWorkingConfig) {
+			return cfg, nil
+		}
 	}
 	// Validate the config
 	if err := p.validationFn(cfg); err != nil {
