@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -255,22 +254,4 @@ func validateResourceName(name corev1.ResourceName) (corev1.ResourceName, bool) 
 		}
 	}
 	return "", false
-}
-
-// ValidateCentralDefaultVersion validates the given version
-func ValidateCentralDefaultVersion(version *private.CentralDefaultVersion) handlers.Validate {
-	return validateCentralVersionString(version.Version)
-}
-
-func validateCentralVersionString(version string) handlers.Validate {
-	return func() *errors.ServiceError {
-
-		err := services.ValidateCentralVersionString(version)
-		if err != nil {
-			return errors.Validation("validating central version string: %s", err)
-		}
-
-		return nil
-	}
-
 }

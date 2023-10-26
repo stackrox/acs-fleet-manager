@@ -56,8 +56,6 @@ const (
 	conditionTypeReady        = "Ready"
 	clusterName               = "test-cluster"
 	environment               = "test"
-	operatorVersion           = "4.0.1"
-	operatorImage             = "quay.io/rhacs-eng/stackrox-operator:" + operatorVersion
 )
 
 var (
@@ -116,7 +114,6 @@ var simpleManagedCentral = private.ManagedCentral{
 		Central: private.ManagedCentralAllOfSpecCentral{
 			InstanceType: "standard",
 		},
-		OperatorImage: operatorImage,
 	},
 }
 

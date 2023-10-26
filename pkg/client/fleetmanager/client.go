@@ -33,7 +33,6 @@ type PrivateAPI interface {
 type AdminAPI interface {
 	GetCentrals(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error)
 	CreateCentral(ctx context.Context, async bool, centralRequestPayload admin.CentralRequestPayload) (admin.CentralRequest, *http.Response, error)
-	UpdateCentralById(ctx context.Context, id string, centralUpdateRequest admin.CentralUpdateRequest) (admin.Central, *http.Response, error)
 	DeleteDbCentralById(ctx context.Context, id string) (*http.Response, error)
 }
 

@@ -164,57 +164,6 @@ paths:
             application/json:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
-    patch:
-      summary: Update a Central instance by ID
-      parameters:
-        - $ref: "fleet-manager.yaml#/components/parameters/id"
-      security:
-        - Bearer: []
-      operationId: updateCentralById
-      requestBody:
-        description: Central update data
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CentralUpdateRequest'
-        required: true
-      responses:
-        "200":
-          description: Central updated by ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Central'
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: 'fleet-manager.yaml#/components/schemas/Error'
-        "401":
-          description: Auth token is invalid
-          content:
-            application/json:
-              schema:
-                $ref: 'fleet-manager.yaml#/components/schemas/Error'
-        "403":
-          description: User is not authorised to access the service
-          content:
-            application/json:
-              schema:
-                $ref: 'fleet-manager.yaml#/components/schemas/Error'
-        "404":
-          description: No Central found with the specified ID
-          content:
-            application/json:
-              schema:
-                $ref: 'fleet-manager.yaml#/components/schemas/Error'
-        "500":
-          description: Unexpected error occurred
-          content:
-            application/json:
-              schema:
-                $ref: 'fleet-manager.yaml#/components/schemas/Error'
     delete:
       summary: Delete a Central by ID
       parameters:
@@ -362,70 +311,6 @@ paths:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "404":
           description: No Central found with the specified ID
-          content:
-            application/json:
-              schema:
-                $ref: 'fleet-manager.yaml#/components/schemas/Error'
-        "500":
-          description: Unexpected error occurred
-          content:
-            application/json:
-              schema:
-                $ref: 'fleet-manager.yaml#/components/schemas/Error'
-  '/api/rhacs/v1/admin/centrals/default-version':
-    post:
-      summary: Set the central default version
-      operationId: setCentralDefaultVersion
-      security:
-        - Bearer: []
-      requestBody:
-        description: Central version data
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CentralDefaultVersion"
-        required: true
-      responses:
-        "200":
-          description: Central default version set to new value
-        "401":
-          description: Auth token is invalid
-          content:
-            application/json:
-              schema:
-                $ref: 'fleet-manager.yaml#/components/schemas/Error'
-        "403":
-          description: User is not authorised to access the service
-          content:
-            application/json:
-              schema:
-                $ref: 'fleet-manager.yaml#/components/schemas/Error'
-        "500":
-          description: Unexpected error occurred
-          content:
-            application/json:
-              schema:
-                $ref: 'fleet-manager.yaml#/components/schemas/Error'
-    get:
-      summary: Get the current central default version
-      operationId: getCentralDefaultVersion
-      security:
-        - Bearer: []
-      responses:
-        "200":
-          description: Return current central default version
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CentralDefaultVersion'
-        "401":
-          description: Auth token is invalid
-          content:
-            application/json:
-              schema:
-                $ref: 'fleet-manager.yaml#/components/schemas/Error'
-        "403":
-          description: User is not authorised to access the service
           content:
             application/json:
               schema:
