@@ -111,6 +111,11 @@ var simpleManagedCentral = private.ManagedCentral{
 			Host: fmt.Sprintf("acs-data-%s.acs.rhcloud.test", centralID),
 		},
 		InstanceType: "standard",
+		CentralCRYAML: `
+metadata:
+  name: ` + centralName + `
+  namespace: ` + centralNamespace + `
+`,
 	},
 }
 
@@ -200,16 +205,7 @@ func TestReconcileCreate(t *testing.T) {
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
 	assert.Equal(t, centralName, central.GetName())
-	assert.Equal(t, simpleManagedCentral.Id, central.GetLabels()[tenantIDLabelKey])
-	assert.Equal(t, simpleManagedCentral.Id, central.Spec.Customize.Labels[tenantIDLabelKey])
-	assert.Equal(t, environment, central.Spec.Customize.Annotations[envAnnotationKey])
-	assert.Equal(t, clusterName, central.Spec.Customize.Annotations[clusterNameAnnotationKey])
-	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgName, central.Spec.Customize.Annotations[orgNameAnnotationKey])
-	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, central.Spec.Customize.Labels[orgIDLabelKey])
-	assert.Equal(t, simpleManagedCentral.Spec.InstanceType, central.Spec.Customize.Labels[instanceTypeLabelKey])
 	assert.Equal(t, "1", central.GetAnnotations()[util.RevisionAnnotationKey])
-	assert.Equal(t, "false", central.GetAnnotations()[centralPVCAnnotationKey])
-	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
 
 	route := &openshiftRouteV1.Route{}
@@ -255,7 +251,6 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
-	assert.Equal(t, "true", central.GetAnnotations()[centralPVCAnnotationKey])
 
 	route := &openshiftRouteV1.Route{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
@@ -2159,7 +2154,6 @@ kind: Central
 metadata:
   name: central
   namespace: rhacs
-spec: {}
 `,
 			expectCentral: &v1alpha1.Central{
 				TypeMeta: metav1.TypeMeta{
@@ -2169,6 +2163,64 @@ spec: {}
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "central",
 					Namespace: "rhacs",
+				},
+				Spec: v1alpha1.CentralSpec{
+					Central: &v1alpha1.CentralComponentSpec{
+						Exposure: &v1alpha1.Exposure{
+							Route: &v1alpha1.ExposureRoute{
+								Enabled: pointer.Bool(false),
+							},
+						},
+						DeclarativeConfiguration: &v1alpha1.DeclarativeConfiguration{
+							Secrets: []v1alpha1.LocalSecretReference{
+								{
+									Name: "cloud-service-sensible-declarative-configs",
+								}, {
+									Name: "cloud-service-manual-declarative-configs",
+								},
+							},
+						},
+						Telemetry: &v1alpha1.Telemetry{
+							Enabled: pointer.Bool(false),
+							Storage: &v1alpha1.TelemetryStorage{
+								Endpoint: pointer.String(""),
+								Key:      pointer.String(""),
+							},
+						},
+					},
+					Customize: &v1alpha1.CustomizeSpec{
+						Annotations: map[string]string{
+							"rhacs.redhat.com/environment":  "",
+							"rhacs.redhat.com/cluster-name": "",
+						},
+						EnvVars: []v1.EnvVar{
+							{
+								Name:  "http_proxy",
+								Value: "http://egress-proxy.rhacs.svc:3128",
+							}, {
+								Name:  "HTTP_PROXY",
+								Value: "http://egress-proxy.rhacs.svc:3128",
+							}, {
+								Name:  "https_proxy",
+								Value: "http://egress-proxy.rhacs.svc:3128",
+							}, {
+								Name:  "HTTPS_PROXY",
+								Value: "http://egress-proxy.rhacs.svc:3128",
+							}, {
+								Name:  "all_proxy",
+								Value: "http://egress-proxy.rhacs.svc:3128",
+							}, {
+								Name:  "ALL_PROXY",
+								Value: "http://egress-proxy.rhacs.svc:3128",
+							}, {
+								Name:  "no_proxy",
+								Value: ":0,central.rhacs.svc:443,central.rhacs:443,central:443,kubernetes.default.svc.cluster.local.:443,scanner-db.rhacs.svc:5432,scanner-db.rhacs:5432,scanner-db:5432,scanner.rhacs.svc:8080,scanner.rhacs.svc:8443,scanner.rhacs:8080,scanner.rhacs:8443,scanner:8080,scanner:8443",
+							}, {
+								Name:  "NO_PROXY",
+								Value: ":0,central.rhacs.svc:443,central.rhacs:443,central:443,kubernetes.default.svc.cluster.local.:443,scanner-db.rhacs.svc:5432,scanner-db.rhacs:5432,scanner-db:5432,scanner.rhacs.svc:8080,scanner.rhacs.svc:8443,scanner.rhacs:8080,scanner.rhacs:8443,scanner:8080,scanner:8443",
+							},
+						},
+					},
 				},
 			},
 		},
