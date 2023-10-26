@@ -385,12 +385,6 @@ components:
               type: string
             namespace:
               type: string
-            central:
-              $ref: "fleet-manager.yaml#/components/schemas/CentralSpec"
-            scanner:
-              $ref: "fleet-manager.yaml#/components/schemas/ScannerSpec"
-            force_reconcile:
-              type: string
     CentralList:
       allOf:
         - $ref: "fleet-manager.yaml#/components/schemas/List"
@@ -401,24 +395,6 @@ components:
               items:
                 allOf:
                   - $ref: "#/components/schemas/Central"
-
-    CentralUpdateRequest:
-      type: object
-      properties:
-        # for now only support updating the following fields. May add more when use cases arise.
-        central:
-          $ref: "fleet-manager.yaml#/components/schemas/CentralSpec"
-        scanner:
-          $ref: "fleet-manager.yaml#/components/schemas/ScannerSpec"
-        force_reconcile:
-          type: string
-
-    CentralDefaultVersion:
-      type: object
-      properties:
-        version:
-          type: string
-          example: "quay.io/rhacs-eng/stackrox-operator:3.74.1"
 
     CentralRotateSecretsRequest:
       type: object

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -12,11 +11,9 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
-
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
+	corev1 "k8s.io/api/core/v1"
 )
 
 var (
@@ -116,133 +113,6 @@ func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.
 
 		return nil
 	}
-}
-
-func validateQuantity(qty string, path string) *errors.ServiceError {
-	if qty == "" {
-		return nil
-	}
-	_, err := resource.ParseQuantity(qty)
-	if err != nil {
-		return errors.Validation("invalid resources: failed to parse quantity %q at %s due to: %v", qty, path, err)
-	}
-	return nil
-}
-
-// ValidateCentralSpec ...
-func ValidateCentralSpec(ctx context.Context, centralRequestPayload *public.CentralRequestPayload, dbCentral *dbapi.CentralRequest) handlers.Validate {
-	return func() *errors.ServiceError {
-		// Validate Central resources.
-		err := validateResourceList(centralRequestPayload.Central.Resources.Requests, "central.resources.requests")
-		if err != nil {
-			return errors.Validation("invalid resource requests for Central: %v", err)
-		}
-		err = validateResourceList(centralRequestPayload.Central.Resources.Limits, "central.resources.limits")
-		if err != nil {
-			return errors.Validation("invalid resource limits for Central: %v", err)
-		}
-
-		central, err := json.Marshal(centralRequestPayload.Central)
-		if err != nil {
-			return errors.Validation("marshaling Central spec failed: %v", err)
-		}
-
-		if err := json.Unmarshal(central, &dbapi.CentralSpec{}); err != nil {
-			return errors.Validation("invalid value as Central spec: %v", err)
-		}
-
-		dbCentral.Central = central
-		return nil
-	}
-}
-
-func validateResourceList(resources map[string]string, path string) error {
-	for name, qty := range resources {
-		resourceName := corev1.ResourceName(name)
-		if resourceName != corev1.ResourceCPU && resourceName != corev1.ResourceMemory {
-			return errors.Validation("unsupported resource type %q in %s", name, path)
-		}
-		if qty == "" {
-			continue
-		}
-		_, err := resource.ParseQuantity(qty)
-		if err != nil {
-			return errors.Validation("invalid resources: failed to parse quantity %q at %s.%s due to: %v", qty, path, name, err)
-		}
-	}
-	return nil
-}
-
-// ValidateScannerSpec ...
-func ValidateScannerSpec(ctx context.Context, centralRequestPayload *public.CentralRequestPayload, dbCentral *dbapi.CentralRequest) handlers.Validate {
-	return func() *errors.ServiceError {
-		// Validate Scanner Analyzer resources and scaling settings.
-		err := validateResourceList(centralRequestPayload.Scanner.Analyzer.Resources.Requests, "scanner.analyzer.resources.requests")
-		if err != nil {
-			return errors.Validation("invalid resource requests for Scanner Analyzer: %v", err)
-		}
-		err = validateResourceList(centralRequestPayload.Scanner.Analyzer.Resources.Limits, "scanner.analyzer.resources.limits")
-		if err != nil {
-			return errors.Validation("invalid resource limits for Scanner Analyzer: %v", err)
-		}
-
-		if centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "" &&
-			centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "Enabled" &&
-			centralRequestPayload.Scanner.Analyzer.Scaling.AutoScaling != "Disabled" {
-			return errors.Validation("invalid AutoScaling setting at Scanner.Analyzer.Scaling.AutoScaling, expected 'Enabled' or 'Disabled'")
-		}
-
-		// Validate Scanner DB resources.
-		err = validateResourceList(centralRequestPayload.Scanner.Db.Resources.Requests, "scanner.db.resources.requests")
-		if err != nil {
-			return errors.Validation("invalid resource requests for Scanner DB: %v", err)
-		}
-		err = validateResourceList(centralRequestPayload.Scanner.Analyzer.Resources.Limits, "scanner.db.resources.limits")
-		if err != nil {
-			return errors.Validation("invalid resource limits for Scanner DB: %v", err)
-		}
-
-		// Marshal ScannerSpec into byte string.
-		scanner, err := json.Marshal(centralRequestPayload.Scanner)
-		if err != nil {
-			return errors.Validation("marshaling Scanner spec failed: %v", err)
-		}
-
-		if err := json.Unmarshal(scanner, &dbapi.ScannerSpec{}); err != nil {
-			return errors.Validation("invalid value as Scanner spec: %v", err)
-		}
-
-		dbCentral.Scanner = scanner
-		return nil
-	}
-}
-
-// ValidateScannerAnalyzerScaling validates the provided Scanner Analyzer Scaling configuration.
-func ValidateScannerAnalyzerScaling(scaling *dbapi.ScannerAnalyzerScaling) error {
-	if scaling == nil {
-		return nil
-	}
-
-	if scaling.AutoScaling != "Enabled" && scaling.AutoScaling != "Disabled" {
-		return fmt.Errorf("invalid scaling configuration: unknown AutoScaling %q, must be 'Enabled' or 'Disabled'", scaling.AutoScaling)
-	}
-	if scaling.MinReplicas <= 0 {
-		return fmt.Errorf("invalid scaling configuration: MinReplicas (%v) must be positive", scaling.MinReplicas)
-	}
-	if scaling.Replicas <= 0 {
-		return fmt.Errorf("invalid scaling configuration: Replicas (%v) must be positive", scaling.Replicas)
-	}
-	if scaling.MaxReplicas <= 0 {
-		return fmt.Errorf("invalid scaling configuration: MaxReplicas (%v) must be positive", scaling.MaxReplicas)
-	}
-	if scaling.Replicas < scaling.MinReplicas {
-		return fmt.Errorf("invalid scaling configuration: Replicas (%v) < MinReplicas (%v)", scaling.Replicas, scaling.MinReplicas)
-	}
-	if scaling.Replicas > scaling.MaxReplicas {
-		return fmt.Errorf("invalid scaling configuration: Replicas (%v) > MaxReplicas (%v)", scaling.Replicas, scaling.MaxReplicas)
-	}
-
-	return nil
 }
 
 // validateResourceName checks if the given name denotes a supported resource.

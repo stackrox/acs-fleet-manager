@@ -695,41 +695,6 @@ components:
               items:
                 allOf:
                   - $ref: "#/components/schemas/CentralRequest"
-    CentralSpec:
-      type: object
-      properties:
-        resources:
-          $ref: "#/components/schemas/ResourceRequirements"
-    ScannerSpec:
-      type: object
-      properties:
-        analyzer:
-          type: object
-          properties:
-            resources:
-              $ref: "#/components/schemas/ResourceRequirements"
-            scaling:
-              type: object
-              properties:
-                autoScaling:
-                  type: string
-                replicas:
-                  type: integer
-                  format: int32
-                  minimum: 1
-                minReplicas:
-                  type: integer
-                  format: int32
-                  minimum: 1
-                maxReplicas:
-                  type: integer
-                  format: int32
-                  minimum: 1
-        db:
-          type: object
-          properties:
-            resources:
-              $ref: "#/components/schemas/ResourceRequirements"
     VersionMetadata:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
@@ -785,10 +750,6 @@ components:
         region:
           description: The region where the Central component cluster will be created in
           type: string
-        central:
-          $ref: "#/components/schemas/CentralSpec"
-        scanner:
-          $ref: "#/components/schemas/ScannerSpec"
     CloudProviderList:
       allOf:
         - $ref: "#/components/schemas/List"

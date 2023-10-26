@@ -12,8 +12,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/defaults"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -67,20 +65,7 @@ func NewAdminCentralHandler(
 
 // Create ...
 func (h adminCentralHandler) Create(w http.ResponseWriter, r *http.Request) {
-	centralRequest := public.CentralRequestPayload{
-		Central: public.CentralSpec{
-			Resources: converters.ConvertCoreV1ResourceRequirementsToPublic(&defaults.CentralResources),
-		},
-		Scanner: public.ScannerSpec{
-			Analyzer: public.ScannerSpecAnalyzer{
-				Resources: converters.ConvertCoreV1ResourceRequirementsToPublic(&defaults.ScannerAnalyzerResources),
-				Scaling:   converters.ConvertScalingToPublic(&dbapi.DefaultScannerAnalyzerScaling),
-			},
-			Db: public.ScannerSpecDb{
-				Resources: converters.ConvertCoreV1ResourceRequirementsToPublic(&defaults.ScannerDbResources),
-			},
-		},
-	}
+	centralRequest := public.CentralRequestPayload{}
 	ctx := r.Context()
 	convCentral := dbapi.CentralRequest{}
 
@@ -94,8 +79,6 @@ func (h adminCentralHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateDinosaurClaims(ctx, &centralRequest, &convCentral),
 			ValidateCloudProvider(&h.service, &convCentral, h.providerConfig, "creating central requests"),
 			handlers.ValidateMultiAZEnabled(&centralRequest.MultiAz, "creating central requests"),
-			ValidateCentralSpec(ctx, &centralRequest, &convCentral),
-			ValidateScannerSpec(ctx, &centralRequest, &convCentral),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(ctx, &convCentral)
