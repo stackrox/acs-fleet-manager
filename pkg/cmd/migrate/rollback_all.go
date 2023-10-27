@@ -14,6 +14,7 @@ func NewRollbackAll(env *environments.Env) *cobra.Command {
 		Short: "rollback all migrations",
 		Long:  "rollback all migrations",
 		Run: func(cmd *cobra.Command, args []string) {
+
 			env.MustInvoke(func(migrations []*db.Migration) {
 				glog.Infoln("Rolling back all applied migrations")
 				for _, migration := range migrations {

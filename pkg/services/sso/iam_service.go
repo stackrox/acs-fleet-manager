@@ -6,6 +6,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/serviceaccounts"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"sync"
 )
 
 // Provider ...
@@ -29,8 +30,20 @@ type IAMService interface {
 	DeRegisterAcsFleetshardOperatorServiceAccount(agentClusterID string) *errors.ServiceError
 }
 
+var (
+	onceIAMService sync.Once
+	iamService     IAMService
+)
+
+func SingletonIAMService() IAMService {
+	onceIAMService.Do(func() {
+		iamService = newIAMService(iam.GetIAMConfig())
+	})
+	return iamService
+}
+
 // NewIAMService ...
-func NewIAMService(config *iam.IAMConfig) IAMService {
+func newIAMService(config *iam.IAMConfig) IAMService {
 	return &redhatssoService{
 		serviceAccountsAPI: serviceaccounts.NewServiceAccountsAPI(config.RedhatSSORealm),
 	}

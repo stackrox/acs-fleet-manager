@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 
 	"github.com/goava/di"
@@ -49,20 +48,18 @@ var _ Server = &APIServer{}
 // ServerOptions ...
 type ServerOptions struct {
 	di.Inject
-	ServerConfig    *ServerConfig
-	IAMConfig       *iam.IAMConfig
-	SentryConfig    *sentry.Config
 	RouteLoaders    []environments.RouteLoader
 	Env             *environments.Env
 	ReadyConditions []APIServerReadyCondition `di:"optional"`
 }
 
 // NewAPIServer ...
+// TODO: Remove ServerOptions from DI container to create singleton
 func NewAPIServer(options ServerOptions) *APIServer {
 	s := &APIServer{
 		httpServer:      nil,
-		serverConfig:    options.ServerConfig,
-		sentryTimeout:   options.SentryConfig.Timeout,
+		serverConfig:    GetServerConfig(),
+		sentryTimeout:   sentry.GetConfig().Timeout,
 		readyConditions: options.ReadyConditions,
 	}
 
@@ -80,7 +77,7 @@ func NewAPIServer(options ServerOptions) *APIServer {
 	sentryhttpOptions := sentryhttp.Options{
 		Repanic:         true,
 		WaitForDelivery: false,
-		Timeout:         options.SentryConfig.Timeout,
+		Timeout:         sentry.GetConfig().Timeout,
 	}
 	sentryMW := sentryhttp.New(sentryhttpOptions)
 	mainRouter.Use(sentryMW.Handle)
@@ -92,7 +89,7 @@ func NewAPIServer(options ServerOptions) *APIServer {
 	mainRouter.Use(logging.RequestLoggingMiddleware)
 
 	for _, loader := range options.RouteLoaders {
-		check(loader.AddRoutes(mainRouter), "error adding routes", options.SentryConfig.Timeout)
+		check(loader.AddRoutes(mainRouter), "error adding routes", sentry.GetConfig().Timeout)
 	}
 
 	// referring to the router as type http.Handler allows us to add middleware via more handlers
@@ -102,7 +99,7 @@ func NewAPIServer(options ServerOptions) *APIServer {
 
 	var err error
 	mainHandler, err = builder.Next(mainHandler).Build()
-	check(err, "Unable to create authentication handler", options.SentryConfig.Timeout)
+	check(err, "Unable to create authentication handler", sentry.GetConfig().Timeout)
 
 	mainHandler = gorillahandlers.CORS(
 		gorillahandlers.AllowedMethods([]string{
@@ -121,7 +118,7 @@ func NewAPIServer(options ServerOptions) *APIServer {
 	mainHandler = removeTrailingSlash(mainHandler)
 
 	s.httpServer = &http.Server{
-		Addr:    options.ServerConfig.BindAddress,
+		Addr:    GetServerConfig().BindAddress,
 		Handler: mainHandler,
 	}
 

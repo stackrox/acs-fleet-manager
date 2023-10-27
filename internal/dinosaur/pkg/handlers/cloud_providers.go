@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
@@ -22,6 +23,22 @@ type cloudProvidersHandler struct {
 	service            services.CloudProvidersService
 	cache              *cache.Cache
 	supportedProviders config.ProviderList
+}
+
+var (
+	onceCloudProviderHandler     sync.Once
+	cloudProviderHandlerInstance *cloudProvidersHandler
+)
+
+// SingletonCloudProviderHandler returns the cloudPorivderHandler
+func SingletonCloudProviderHandler() *cloudProvidersHandler {
+	onceCloudProviderHandler.Do(func() {
+		cloudProviderHandlerInstance = NewCloudProviderHandler(
+			services.SingletonCloudProviderService(),
+			config.GetProviderConfig(),
+		)
+	})
+	return cloudProviderHandlerInstance
 }
 
 // NewCloudProviderHandler ...

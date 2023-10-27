@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services/quota"
 
@@ -14,6 +15,19 @@ import (
 
 type cloudAccountsHandler struct {
 	client ocm.AMSClient
+}
+
+var (
+	onceCloudAccountsHandler    sync.Once
+	cloudAccountHandlerInstance *cloudAccountsHandler
+)
+
+// SingletonCloudAccountsHandler returns the cloudAccountsHandler
+func SingletonCloudAccountsHandler() *cloudAccountsHandler {
+	onceCloudAccountsHandler.Do(func() {
+		cloudAccountHandlerInstance = NewCloudAccountsHandler(ocm.SingletonAMSClient())
+	})
+	return cloudAccountHandlerInstance
 }
 
 // NewCloudAccountsHandler ...

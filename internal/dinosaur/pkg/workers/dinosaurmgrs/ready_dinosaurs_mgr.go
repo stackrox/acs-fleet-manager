@@ -5,11 +5,10 @@ import (
 	"github.com/pkg/errors"
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
+	"sync"
 )
 
 const readyCentralWorkerType = "ready_dinosaur"
@@ -20,12 +19,23 @@ var readyCentralCountCache int32
 type ReadyDinosaurManager struct {
 	workers.BaseWorker
 	dinosaurService services.DinosaurService
-	iamService      sso.IAMService
-	iamConfig       *iam.IAMConfig
+}
+
+var (
+	onceReadyManager sync.Once
+	readyManager     *ReadyDinosaurManager
+)
+
+// SingletonReadyManager returns the ReadyDinosaurManager
+func SingletonReadyManager() *ReadyDinosaurManager {
+	onceReadyManager.Do(func() {
+		readyManager = NewReadyDinosaurManager(services.SingletonDinosaurService())
+	})
+	return readyManager
 }
 
 // NewReadyDinosaurManager creates a new dinosaur manager
-func NewReadyDinosaurManager(dinosaurService services.DinosaurService, iamService sso.IAMService, iamConfig *iam.IAMConfig) *ReadyDinosaurManager {
+func NewReadyDinosaurManager(dinosaurService services.DinosaurService) *ReadyDinosaurManager {
 	metrics.InitReconcilerMetricsForType(readyCentralWorkerType)
 	return &ReadyDinosaurManager{
 		BaseWorker: workers.BaseWorker{
@@ -34,8 +44,6 @@ func NewReadyDinosaurManager(dinosaurService services.DinosaurService, iamServic
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService: dinosaurService,
-		iamService:      iamService,
-		iamConfig:       iamConfig,
 	}
 }
 

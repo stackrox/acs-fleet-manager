@@ -19,7 +19,8 @@ type Migration struct {
 }
 
 // NewMigration ...
-func NewMigration(dbConfig *DatabaseConfig, gormOptions *gormigrate.Options, migrations []*gormigrate.Migration) (*Migration, func(), error) {
+func NewMigration(gormOptions *gormigrate.Options, migrations []*gormigrate.Migration) (*Migration, func(), error) {
+	dbConfig := GetDatabaseConfig()
 	err := dbConfig.ReadFiles()
 	if err != nil {
 		return nil, nil, err

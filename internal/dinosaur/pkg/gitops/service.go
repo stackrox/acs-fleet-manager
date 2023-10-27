@@ -3,6 +3,7 @@ package gitops
 import (
 	"encoding/json"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -18,6 +19,19 @@ type Service interface {
 
 type service struct {
 	configProvider ConfigProvider
+}
+
+var (
+	onceGitOpsService      sync.Once
+	gitOpsServiceSingleton Service
+)
+
+// SingletonGitOpsService returns the Service
+func SingletonGitOpsService() Service {
+	onceGitOpsService.Do(func() {
+		gitOpsServiceSingleton = NewService(GetConfigProvider())
+	})
+	return gitOpsServiceSingleton
 }
 
 // NewService returns a new Service.

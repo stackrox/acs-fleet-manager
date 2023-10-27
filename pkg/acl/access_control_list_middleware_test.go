@@ -26,7 +26,7 @@ const (
 )
 
 var env *environments.Env
-var serverConfig *server.ServerConfig
+var serverConfig = server.GetServerConfig()
 
 func TestMain(m *testing.M) {
 	var err error
@@ -36,7 +36,6 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)
 	}
-	env.MustResolveAll(&serverConfig)
 	os.Exit(m.Run())
 }
 

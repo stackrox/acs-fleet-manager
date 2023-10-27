@@ -3,6 +3,7 @@ package config
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -25,15 +26,23 @@ type AWSConfig struct {
 	Route53SecretAccessKeyFile string `json:"route53_secret_access_key_file"`
 }
 
-// NewAWSConfig ...
-func NewAWSConfig() *AWSConfig {
-	return &AWSConfig{
-		AccountIDFile:              "secrets/aws.accountid",
-		AccessKeyFile:              "secrets/aws.accesskey",
-		SecretAccessKeyFile:        "secrets/aws.secretaccesskey", // pragma: allowlist secret
-		Route53AccessKeyFile:       "secrets/aws.route53accesskey",
-		Route53SecretAccessKeyFile: "secrets/aws.route53secretaccesskey", // pragma: allowlist secret
-	}
+var (
+	onceAWSConfig     sync.Once
+	awsConfigInstance *AWSConfig
+)
+
+// GetAWSConfig returns the AWSConfig
+func GetAWSConfig() *AWSConfig {
+	onceAWSConfig.Do(func() {
+		awsConfigInstance = &AWSConfig{
+			AccountIDFile:              "secrets/aws.accountid",
+			AccessKeyFile:              "secrets/aws.accesskey",
+			SecretAccessKeyFile:        "secrets/aws.secretaccesskey", // pragma: allowlist secret
+			Route53AccessKeyFile:       "secrets/aws.route53accesskey",
+			Route53SecretAccessKeyFile: "secrets/aws.route53secretaccesskey", // pragma: allowlist secret
+		}
+	})
+	return awsConfigInstance
 }
 
 // AddFlags ...

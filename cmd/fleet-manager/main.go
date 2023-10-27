@@ -3,6 +3,7 @@ package main
 
 import (
 	"flag"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/migrate"
 	"github.com/stackrox/acs-fleet-manager/pkg/cmd/serve"
@@ -10,6 +11,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
+	environmentsDino "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
@@ -39,7 +41,7 @@ func main() {
 		Long: "fleet-manager is a service that exposes a Rest API to manage ACS Central instances.",
 	}
 
-	err = env.AddFlags(rootCmd.PersistentFlags())
+	err = env.AddFlags(rootCmd.PersistentFlags(), config.GetConfigs(), environmentsDino.GetEnvironmentLoader(env.Name))
 	if err != nil {
 		glog.Fatalf("Unable to add global flags: %s", err.Error())
 	}

@@ -53,9 +53,9 @@ func getMigrations() []*gormigrate.Migration {
 }
 
 // New ...
-func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
+func New() (*db.Migration, func(), error) {
 	migrations := getMigrations()
-	m, f, err := db.NewMigration(dbConfig, &gormigrate.Options{
+	m, f, err := db.NewMigration(&gormigrate.Options{
 		TableName:      "migrations",
 		IDColumnName:   "id",
 		IDColumnSize:   255,

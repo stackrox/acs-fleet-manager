@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
@@ -26,6 +27,23 @@ type HealthCheckServer struct {
 	serverConfig      *ServerConfig
 	sentryTimeout     time.Duration
 	healthCheckConfig *HealthCheckConfig
+}
+
+var (
+	onceHealthCheckServer sync.Once
+	healthCheckServer     *HealthCheckServer
+)
+
+// SingletonHealthCheckServer returns the HealtCheckServer
+func SingletonHealthCheckServer() *HealthCheckServer {
+	onceHealthCheckServer.Do(func() {
+		healthCheckServer = NewHealthCheckServer(
+			GetHealthCheckConfig(),
+			GetServerConfig(),
+			sentry.GetConfig(),
+		)
+	})
+	return healthCheckServer
 }
 
 // NewHealthCheckServer ...

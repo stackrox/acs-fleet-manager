@@ -7,6 +7,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
+	"sync"
 
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
@@ -64,11 +65,19 @@ type ClusterService interface {
 	// Delete will delete the cluster from the provider
 	Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
-	ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
-	// Install the dinosaur operator in a given cluster
-	InstallDinosaurOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
-	CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error)
-	IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error)
+}
+
+var (
+	clusterServiceInstance ClusterService
+	onceClusterService     sync.Once
+)
+
+// SingletonClusterService returns a ClusterService
+func SingletonClusterService() ClusterService {
+	onceClusterService.Do(func() {
+		clusterServiceInstance = NewClusterService(db.SingletonConnectionFactory(), clusters.SingletonProviderFactory())
+	})
+	return clusterServiceInstance
 }
 
 type clusterService struct {
@@ -704,19 +713,6 @@ func (c clusterService) ApplyResources(cluster *api.Cluster, resources types.Res
 	return nil
 }
 
-// InstallDinosaurOperator ...
-func (c clusterService) InstallDinosaurOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
-	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-	ready, err := p.InstallDinosaurOperator(buildClusterSpec(cluster))
-	if err != nil {
-		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install central for cluster %s", cluster.ClusterID)
-	}
-	return ready, nil
-}
-
 func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
 	return &types.ClusterSpec{
 		InternalID:     cluster.ClusterID,
@@ -724,14 +720,4 @@ func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
 		Status:         cluster.Status,
 		AdditionalInfo: cluster.ClusterSpec,
 	}
-}
-
-// CheckDinosaurOperatorVersionReady ...
-func (c clusterService) CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error) {
-	return true, nil
-}
-
-// IsDinosaurVersionAvailableInCluster ...
-func (c clusterService) IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error) {
-	return true, nil
 }

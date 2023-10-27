@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang/glog"
@@ -38,6 +39,23 @@ type dataPlaneCentralService struct {
 	dinosaurService   DinosaurService
 	clusterService    ClusterService
 	connectionFactory *db.ConnectionFactory
+}
+
+var (
+	onceDataPlanceCentralService sync.Once
+	dataPlaneCentralServer       DataPlaneCentralService
+)
+
+// SingletonDataPlaneCentralService returns the DataPlaneCentralService
+func SingletonDataPlaneCentralService() DataPlaneCentralService {
+	onceDataPlanceCentralService.Do(func() {
+		dataPlaneCentralServer = NewDataPlaneCentralService(
+			SingletonDinosaurService(),
+			SingletonClusterService(),
+			db.SingletonConnectionFactory(),
+		)
+	})
+	return dataPlaneCentralServer
 }
 
 // NewDataPlaneCentralService ...

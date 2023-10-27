@@ -4,6 +4,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
@@ -18,6 +19,24 @@ type dataPlaneDinosaurHandler struct {
 	dinosaurService      services.DinosaurService
 	presenter            *presenters.ManagedCentralPresenter
 	gitopsConfigProvider gitops.ConfigProvider
+}
+
+var (
+	dataPlaneDinosaurHandlerInstance *dataPlaneDinosaurHandler
+	onceDataPlaneDinosaurHandler     sync.Once
+)
+
+// SingleDataPlaneDinosaurHandler returns the dataPlanceDinosaurHandler
+func SingleDataPlaneDinosaurHandler() *dataPlaneDinosaurHandler {
+	onceDataPlaneDinosaurHandler.Do(func() {
+		dataPlaneDinosaurHandlerInstance = NewDataPlaneDinosaurHandler(
+			services.SingletonDataPlaneCentralService(),
+			services.SingletonDinosaurService(),
+			presenters.SingletonManagedCentralPresenter(),
+			gitops.GetConfigProvider(),
+		)
+	})
+	return dataPlaneDinosaurHandlerInstance
 }
 
 // NewDataPlaneDinosaurHandler ...

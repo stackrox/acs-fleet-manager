@@ -3,6 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services/quota"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"sync"
 	"time"
 
@@ -116,7 +119,7 @@ type dinosaurService struct {
 	clusterService           ClusterService
 	dinosaurConfig           *config.CentralConfig
 	awsConfig                *config.AWSConfig
-	quotaServiceFactory      QuotaServiceFactory
+	quotaServiceFactory      quota.QuotaServiceFactory
 	mu                       sync.Mutex
 	awsClientFactory         aws.ClientFactory
 	dataplaneClusterConfig   *config.DataplaneClusterConfig
@@ -126,10 +129,35 @@ type dinosaurService struct {
 	rhSSODynamicClientsAPI   *dynamicClientAPI.AcsTenantsApiService
 }
 
+var (
+	onceDinosaurService      sync.Once
+	dinosaurServiceSingleton DinosaurService
+)
+
+// SingletonDinosaurService returns the DinosaurService
+func SingletonDinosaurService() DinosaurService {
+	onceDinosaurService.Do(func() {
+		dinosaurServiceSingleton = NewDinosaurService(
+			db.SingletonConnectionFactory(),
+			NewClusterService(db.SingletonConnectionFactory(), clusters.SingletonProviderFactory()),
+			iam.GetIAMConfig(),
+			config.GetCentralConfig(),
+			config.GetDataplaneClusterConfig(),
+			config.GetAWSConfig(),
+			quota.SingletonDefaultQuotaServiceFactory(),
+			aws.NewDefaultClientFactory(),
+			NewClusterPlacementStrategy(),
+			ocm.SingletonAMSClient(),
+		)
+	})
+
+	return dinosaurServiceSingleton
+}
+
 // NewDinosaurService ...
 func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService,
 	iamConfig *iam.IAMConfig, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
-	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory,
+	quotaServiceFactory quota.QuotaServiceFactory, awsClientFactory aws.ClientFactory,
 	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient) DinosaurService {
 	return &dinosaurService{
 		connectionFactory:        connectionFactory,
@@ -212,7 +240,8 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralReque
 
 // reserveQuota - reserves quota for the given dinosaur request. If a RHACS quota has been assigned, it will try to reserve RHACS quota, otherwise it will try with RHACSTrial
 func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) (subscriptionID string, err *errors.ServiceError) {
-	if dinosaurRequest.InstanceType == types.EVAL.String() {
+	if dinosaurRequest.InstanceType == types.EVAL.String() &&
+		(environments.GetEnvironmentStrFromEnv() != environments.TestingEnv && environments.GetEnvironmentStrFromEnv() != environments.DevelopmentEnv) {
 		if !k.dinosaurConfig.Quota.AllowEvaluatorInstance {
 			return "", errors.NewWithCause(errors.ErrorForbidden, err, "central eval instances are not allowed")
 		}

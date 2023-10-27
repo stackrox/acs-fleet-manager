@@ -1,6 +1,7 @@
 package dinosaurmgrs
 
 import (
+	"sync"
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -20,6 +21,22 @@ import (
 )
 
 const preparingCentralWorkerType = "preparing_dinosaur"
+
+var (
+	oncePreparingManager sync.Once
+	preparingManager     *PreparingDinosaurManager
+)
+
+// SingletonPreparingDinosaurManager returns the PreparingDinosaurManager
+func SingletonPreparingDinosaurManager() *PreparingDinosaurManager {
+	oncePreparingManager.Do(func() {
+		preparingManager = NewPreparingDinosaurManager(
+			services.SingletonDinosaurService(),
+			config.GetCentralRequestConfig(),
+		)
+	})
+	return preparingManager
+}
 
 // PreparingDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type PreparingDinosaurManager struct {

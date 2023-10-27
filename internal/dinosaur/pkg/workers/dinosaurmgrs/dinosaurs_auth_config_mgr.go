@@ -2,6 +2,7 @@ package dinosaurmgrs
 
 import (
 	"context"
+	"sync"
 
 	"github.com/golang/glog"
 	"github.com/google/uuid"
@@ -31,6 +32,27 @@ type CentralAuthConfigManager struct {
 }
 
 var _ workers.Worker = (*CentralAuthConfigManager)(nil)
+
+var (
+	onceCentralAuthConfigManager sync.Once
+	centralAuthConfigManager     *CentralAuthConfigManager
+)
+
+// SingletonCentralAuthConfigManager returns the CentralAuthConfigManager
+func SingletonCentralAuthConfigManager() *CentralAuthConfigManager {
+	onceCentralAuthConfigManager.Do(func() {
+		var err error
+		centralAuthConfigManager, err = NewCentralAuthConfigManager(
+			services.SingletonDinosaurService(),
+			iam.GetIAMConfig(),
+			config.GetCentralConfig(),
+		)
+		if err != nil {
+			glog.Error(err)
+		}
+	})
+	return centralAuthConfigManager
+}
 
 // NewCentralAuthConfigManager creates an instance of this worker.
 // In case this function fails, fleet-manager will fail on the startup.

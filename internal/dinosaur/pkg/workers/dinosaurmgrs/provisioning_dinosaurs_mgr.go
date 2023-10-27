@@ -1,6 +1,7 @@
 package dinosaurmgrs
 
 import (
+	"sync"
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -24,6 +25,23 @@ type ProvisioningDinosaurManager struct {
 	dinosaurService       services.DinosaurService
 	observatoriumService  services.ObservatoriumService
 	centralRequestTimeout time.Duration
+}
+
+var (
+	onceProvisioningManager sync.Once
+	provisioningManager     *ProvisioningDinosaurManager
+)
+
+// SingletonProvisioningDinosaurManager returns ProvisioningDinosaurManager
+func SingletonProvisioningDinosaurManager() *ProvisioningDinosaurManager {
+	onceProvisioningManager.Do(func() {
+		provisioningManager = NewProvisioningDinosaurManager(
+			services.SingletonDinosaurService(),
+			services.SingletonObservatoriumService(),
+			config.GetCentralRequestConfig(),
+		)
+	})
+	return provisioningManager
 }
 
 // NewProvisioningDinosaurManager creates a new dinosaur manager

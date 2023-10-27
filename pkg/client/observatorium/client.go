@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang/glog"
@@ -33,6 +34,19 @@ type Client struct {
 	Config     *ClientConfiguration
 	connection pV1.API
 	Service    APIObservatoriumService
+}
+
+var (
+	onceObservatoriumClient sync.Once
+	observatoriumClient     *Client
+)
+
+func SingletonObservatoriumClient() *Client {
+	onceObservatoriumClient.Do(func() {
+		observatoriumClient, _ = NewObservatoriumClient(GetObservabilityConfigurationConfig())
+	})
+
+	return observatoriumClient
 }
 
 // NewObservatoriumClient ...

@@ -3,6 +3,7 @@ package routes
 
 import (
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/pkg/client/telemetry"
 	"net/http"
 
 	"github.com/goava/di"
@@ -11,9 +12,7 @@ import (
 	pkgerrors "github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/generated"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/handlers"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/routes"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
@@ -29,14 +28,12 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/authorization"
-	"github.com/stackrox/acs-fleet-manager/pkg/services/sso"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
 
 type options struct {
 	di.Inject
 	ServerConfig         *server.ServerConfig
-	OCMConfig            *ocm.OCMConfig
 	ProviderConfig       *config.ProviderConfig
 	IAMConfig            *iam.IAMConfig
 	CentralRequestConfig *config.CentralRequestConfig
@@ -45,7 +42,6 @@ type options struct {
 	Central                 services.DinosaurService
 	CloudProviders          services.CloudProvidersService
 	Observatorium           services.ObservatoriumService
-	IAM                     sso.IAMService
 	DataPlaneCluster        services.DataPlaneClusterService
 	DataPlaneCentralService services.DataPlaneCentralService
 	AccountService          account.AccountService
@@ -57,14 +53,32 @@ type options struct {
 	AccessControlListConfig     *acl.AccessControlListConfig
 	FleetShardAuthZConfig       *auth.FleetShardAuthZConfig
 	AdminRoleAuthZConfig        *auth.AdminRoleAuthZConfig
-
-	ManagedCentralPresenter *presenters.ManagedCentralPresenter
-	GitopsProvider          gitops.ConfigProvider
 }
 
 // NewRouteLoader ...
-func NewRouteLoader(s options) environments.RouteLoader {
-	return &s
+func NewRouteLoader() environments.RouteLoader {
+	return &options{
+		ServerConfig:         server.GetServerConfig(),
+		ProviderConfig:       config.GetProviderConfig(),
+		IAMConfig:            iam.GetIAMConfig(),
+		CentralRequestConfig: config.GetCentralRequestConfig(),
+
+		AMSClient:               ocm.SingletonAMSClient(),
+		Central:                 services.SingletonDinosaurService(),
+		CloudProviders:          services.SingletonCloudProviderService(),
+		Observatorium:           services.SingletonObservatoriumService(),
+		DataPlaneCluster:        services.NewDataPlaneClusterService(),
+		DataPlaneCentralService: services.SingletonDataPlaneCentralService(),
+		AccountService:          account.NewAccount(),
+		AuthService:             authorization.NewAuthorization(),
+		DB:                      db.SingletonConnectionFactory(),
+		Telemetry:               services.NewTelemetry(services.GetTelemetryAuth(), telemetry.GetTelemetryConfig()),
+
+		AccessControlListMiddleware: acl.NewAccessControlListMiddleware(acl.GetAccessControlListConfig()),
+		AccessControlListConfig:     acl.GetAccessControlListConfig(),
+		FleetShardAuthZConfig:       auth.GetFleetShardAuthZConfig(),
+		AdminRoleAuthZConfig:        auth.GetAdminAuthZConfig(),
+	}
 }
 
 // AddRoutes ...
@@ -84,13 +98,12 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}
 
-	centralHandler := handlers.NewDinosaurHandler(s.Central, s.ProviderConfig, s.AuthService, s.Telemetry,
-		s.CentralRequestConfig)
-	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
-	errorsHandler := coreHandlers.NewErrorsHandler()
-	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
-	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Central, s.AccessControlListConfig)
-	cloudAccountsHandler := handlers.NewCloudAccountsHandler(s.AMSClient)
+	centralHandler := handlers.SingletonDinosaurHandler()
+	cloudProvidersHandler := handlers.SingletonCloudProviderHandler()
+	errorsHandler := coreHandlers.SingletonErrorsHandler()
+	metricsHandler := handlers.SingletonMetricsHandler()
+	serviceStatusHandler := handlers.SingletonServiceStatusHandler()
+	cloudAccountsHandler := handlers.SingletonCloudAccountsHandler()
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
@@ -200,8 +213,8 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
 
 	// /agent-clusters/{id}
-	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
-	dataPlaneCentralHandler := handlers.NewDataPlaneDinosaurHandler(s.DataPlaneCentralService, s.Central, s.ManagedCentralPresenter, s.GitopsProvider)
+	dataPlaneClusterHandler := handlers.SingletonDataPlaneClusetrHandler()
+	dataPlaneCentralHandler := handlers.SingleDataPlaneDinosaurHandler()
 	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).
 		Name(logger.NewLogEvent("get-dataplane-cluster-config", "get dataplane cluster config by id").ToString()).

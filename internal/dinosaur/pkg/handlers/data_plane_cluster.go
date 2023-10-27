@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
@@ -16,10 +17,23 @@ type dataPlaneClusterHandler struct {
 	service services.DataPlaneClusterService
 }
 
+var (
+	onceDataPlaneClusterHandler     sync.Once
+	dataPlaneClusterHandlerInstance *dataPlaneClusterHandler
+)
+
+// SingletonDataPlaneClusetrHandler returns the dataPlaneCluterHandler
+func SingletonDataPlaneClusetrHandler() *dataPlaneClusterHandler {
+	onceDataPlaneClusterHandler.Do(func() {
+		dataPlaneClusterHandlerInstance = NewDataPlaneClusterHandler()
+	})
+	return dataPlaneClusterHandlerInstance
+}
+
 // NewDataPlaneClusterHandler ...
-func NewDataPlaneClusterHandler(service services.DataPlaneClusterService) *dataPlaneClusterHandler {
+func NewDataPlaneClusterHandler() *dataPlaneClusterHandler {
 	return &dataPlaneClusterHandler{
-		service: service,
+		service: services.NewDataPlaneClusterService(),
 	}
 }
 

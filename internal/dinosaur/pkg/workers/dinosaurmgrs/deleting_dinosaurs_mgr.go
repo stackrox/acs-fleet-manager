@@ -2,7 +2,9 @@ package dinosaurmgrs
 
 import (
 	"context"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services/quota"
 	"net/http"
+	"sync"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 
@@ -28,13 +30,30 @@ type DeletingDinosaurManager struct {
 	workers.BaseWorker
 	dinosaurService     services.DinosaurService
 	iamConfig           *iam.IAMConfig
-	quotaServiceFactory services.QuotaServiceFactory
+	quotaServiceFactory quota.QuotaServiceFactory
 	dynamicAPI          *dynamicClientAPI.AcsTenantsApiService
+}
+
+var (
+	onceDeletingManager     sync.Once
+	deletingDinosaurManager *DeletingDinosaurManager
+)
+
+// SingletonDeletingDinosaurManager returns the DeletingDinosaurManager
+func SingletonDeletingDinosaurManager() *DeletingDinosaurManager {
+	onceDeletingManager.Do(func() {
+		deletingDinosaurManager = NewDeletingDinosaurManager(
+			services.SingletonDinosaurService(),
+			iam.GetIAMConfig(),
+			quota.SingletonDefaultQuotaServiceFactory(),
+		)
+	})
+	return deletingDinosaurManager
 }
 
 // NewDeletingDinosaurManager creates a new dinosaur manager.
 func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, iamConfig *iam.IAMConfig,
-	quotaServiceFactory services.QuotaServiceFactory) *DeletingDinosaurManager {
+	quotaServiceFactory quota.QuotaServiceFactory) *DeletingDinosaurManager {
 	metrics.InitReconcilerMetricsForType(deletingCentralWorkerType)
 	return &DeletingDinosaurManager{
 		BaseWorker: workers.BaseWorker{

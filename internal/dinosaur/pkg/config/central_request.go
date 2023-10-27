@@ -1,9 +1,15 @@
 package config
 
 import (
+	"sync"
 	"time"
 
 	"github.com/spf13/pflag"
+)
+
+var (
+	onceCentralRequestConfig sync.Once
+	centralRequestConfig     *CentralRequestConfig
 )
 
 // CentralRequestConfig holds all configuration for CentralRequests, e.g. expiration timeouts.
@@ -12,12 +18,15 @@ type CentralRequestConfig struct {
 	InternalUserAgents []string      `json:"internal_user_agents"`
 }
 
-// NewCentralRequestConfig creates a new CentralRequestConfig with default values.
-func NewCentralRequestConfig() *CentralRequestConfig {
-	return &CentralRequestConfig{
-		ExpirationTimeout:  60 * time.Minute,
-		InternalUserAgents: []string{"fleet-manager-probe-service"},
-	}
+// GetCentralRequestConfig creates a new CentralRequestConfig with default values.
+func GetCentralRequestConfig() *CentralRequestConfig {
+	onceCentralRequestConfig.Do(func() {
+		centralRequestConfig = &CentralRequestConfig{
+			ExpirationTimeout:  60 * time.Minute,
+			InternalUserAgents: []string{"fleet-manager-probe-service"},
+		}
+	})
+	return centralRequestConfig
 }
 
 // AddFlags adds flags for all configuration settings within CentralRequestConfig to the flag set.

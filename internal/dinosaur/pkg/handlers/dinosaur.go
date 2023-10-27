@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/shared/utils/arrays"
 
@@ -25,6 +26,25 @@ type dinosaurHandler struct {
 	authService          authorization.Authorization
 	telemetry            *services.Telemetry
 	centralRequestConfig *config.CentralRequestConfig
+}
+
+var (
+	onceDinsosaurHandler    sync.Once
+	dinsoaurHandlerInstance *dinosaurHandler
+)
+
+// SingletonDinosaurHandler returns the dinosaurHandler
+func SingletonDinosaurHandler() *dinosaurHandler {
+	onceDinsosaurHandler.Do(func() {
+		dinsoaurHandlerInstance = NewDinosaurHandler(
+			services.SingletonDinosaurService(),
+			config.GetProviderConfig(),
+			authorization.NewAuthorization(),
+			services.SingletonTelemetry(),
+			config.GetCentralRequestConfig(),
+		)
+	})
+	return dinsoaurHandlerInstance
 }
 
 // NewDinosaurHandler ...

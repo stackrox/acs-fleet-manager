@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -24,6 +25,19 @@ import (
 
 type metricsHandler struct {
 	service services.ObservatoriumService
+}
+
+var (
+	onceMetricsHandler     sync.Once
+	metricsHandlerInstance *metricsHandler
+)
+
+// SingletonMetricsHandler returns the metricsHandler
+func SingletonMetricsHandler() *metricsHandler {
+	onceMetricsHandler.Do(func() {
+		metricsHandlerInstance = NewMetricsHandler(services.SingletonObservatoriumService())
+	})
+	return metricsHandlerInstance
 }
 
 // NewMetricsHandler ...

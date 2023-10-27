@@ -2,6 +2,7 @@ package ocm
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -34,21 +35,29 @@ type OCMConfig struct {
 	FleetshardAddonID      string `json:"fleetshard_addon_id"`
 }
 
-// NewOCMConfig ...
-func NewOCMConfig() *OCMConfig {
-	return &OCMConfig{
-		BaseURL:                "https://api-integration.6943.hive-integration.openshiftapps.com",
-		AmsURL:                 "https://api.stage.openshift.com",
-		TokenURL:               "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
-		ClientIDFile:           "secrets/ocm-service.clientId",
-		ClientSecretFile:       "secrets/ocm-service.clientSecret", // pragma: allowlist secret
-		SelfTokenFile:          "secrets/ocm-service.token",
-		Debug:                  false,
-		EnableMock:             false,
-		MockMode:               MockModeStubServer,
-		CentralOperatorAddonID: centralOperatorAddonID,
-		FleetshardAddonID:      fleetshardAddonID,
-	}
+var (
+	onceOCMConfig      sync.Once
+	ocmConfigSingleton *OCMConfig
+)
+
+// GetOCMConfig returns the OCMConfig
+func GetOCMConfig() *OCMConfig {
+	onceOCMConfig.Do(func() {
+		ocmConfigSingleton = &OCMConfig{
+			BaseURL:                "https://api-integration.6943.hive-integration.openshiftapps.com",
+			AmsURL:                 "https://api.stage.openshift.com",
+			TokenURL:               "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
+			ClientIDFile:           "secrets/ocm-service.clientId",
+			ClientSecretFile:       "secrets/ocm-service.clientSecret", // pragma: allowlist secret
+			SelfTokenFile:          "secrets/ocm-service.token",
+			Debug:                  false,
+			EnableMock:             false,
+			MockMode:               MockModeStubServer,
+			CentralOperatorAddonID: centralOperatorAddonID,
+			FleetshardAddonID:      fleetshardAddonID,
+		}
+	})
+	return ocmConfigSingleton
 }
 
 // AddFlags ...

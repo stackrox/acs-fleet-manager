@@ -8,6 +8,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
+	"sync"
 )
 
 const centralDNSWorkerType = "dinosaur_dns"
@@ -21,8 +22,24 @@ type DinosaurRoutesCNAMEManager struct {
 
 var _ workers.Worker = &DinosaurRoutesCNAMEManager{}
 
+var (
+	onceCNAMEManager sync.Once
+	cnameManager     *DinosaurRoutesCNAMEManager
+)
+
+// SingletonDinosaurCNAMEManager returns the DinosaurRoutesCNAMEManager
+func SingletonDinosaurCNAMEManager() *DinosaurRoutesCNAMEManager {
+	onceCNAMEManager.Do(func() {
+		cnameManager = NewDinosaurCNAMEManager(
+			services.SingletonDinosaurService(),
+			config.GetCentralConfig(),
+		)
+	})
+	return cnameManager
+}
+
 // NewDinosaurCNAMEManager ...
-func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConfig *config.CentralConfig) *DinosaurRoutesCNAMEManager {
+func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, centralConfig *config.CentralConfig) *DinosaurRoutesCNAMEManager {
 	metrics.InitReconcilerMetricsForType(centralDNSWorkerType)
 	return &DinosaurRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
@@ -31,7 +48,7 @@ func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConf
 			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService: dinosaurService,
-		dinosaurConfig:  kafkfConfig,
+		dinosaurConfig:  centralConfig,
 	}
 }
 

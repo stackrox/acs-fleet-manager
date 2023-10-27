@@ -76,9 +76,9 @@ func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, tearDown := test.NewDinosaurHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 1)})
-	})
+	dpConfig := config.SingletonDataplaneClusterConfig()
+	dpConfig.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockDinosaurClusterName, 1)})
+	h, client, tearDown := test.NewDinosaurHelper(t, ocmServer)
 	defer tearDown()
 
 	// setup pre-requisites to performing requests
@@ -245,7 +245,7 @@ func TestDinosaur_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := test.NewAPIClient(h)
+			client := test.NewAPIClient()
 			resp, err := client.DefaultApi.DeleteCentralById(tt.args.ctx, tt.args.dinosaurID, tt.args.async)
 			tt.verifyResponse(resp, err)
 		})

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/golang/glog"
@@ -15,6 +16,23 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 )
+
+var (
+	onceMetricsServer sync.Once
+	metricsServer     *MetricsServer
+)
+
+// SingletonMetricsServer returns the MetricsServer
+func SingletonMetricsServer() *MetricsServer {
+	onceMetricsServer.Do(func() {
+		metricsServer = NewMetricsServer(
+			GetMetricsConfig(),
+			GetServerConfig(),
+			sentry.GetConfig(),
+		)
+	})
+	return metricsServer
+}
 
 // NewMetricsServer ...
 func NewMetricsServer(metricsConfig *MetricsConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config) *MetricsServer {

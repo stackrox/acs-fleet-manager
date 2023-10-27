@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -30,12 +31,20 @@ type AdminRoleAuthZConfig struct {
 	RolesConfig     RoleConfig
 }
 
-// NewAdminAuthZConfig creates a default AdminRoleAuthZConfig which is enabled and uses the production configuration.
-func NewAdminAuthZConfig() *AdminRoleAuthZConfig {
-	return &AdminRoleAuthZConfig{
-		Enabled:         true,
-		RolesConfigFile: "config/admin-authz-roles-prod.yaml",
-	}
+var (
+	onceAdminAuthZConfig sync.Once
+	adminAuthZConfig     *AdminRoleAuthZConfig
+)
+
+// GetAdminAuthZConfig creates a default AdminRoleAuthZConfig which is enabled and uses the production configuration.
+func GetAdminAuthZConfig() *AdminRoleAuthZConfig {
+	onceAdminAuthZConfig.Do(func() {
+		adminAuthZConfig = &AdminRoleAuthZConfig{
+			Enabled:         true,
+			RolesConfigFile: "config/admin-authz-roles-prod.yaml",
+		}
+	})
+	return adminAuthZConfig
 }
 
 // AddFlags adds required flags for the role authZ configuration.

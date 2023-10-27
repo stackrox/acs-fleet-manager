@@ -1,6 +1,9 @@
 package config
 
-import "github.com/spf13/pflag"
+import (
+	"github.com/spf13/pflag"
+	"sync"
+)
 
 // FleetshardConfig ...
 type FleetshardConfig struct {
@@ -8,12 +11,20 @@ type FleetshardConfig struct {
 	ResyncInterval string `json:"resync_interval"`
 }
 
-// NewFleetshardConfig ...
-func NewFleetshardConfig() *FleetshardConfig {
-	return &FleetshardConfig{
-		PollInterval:   "15s",
-		ResyncInterval: "60s",
-	}
+var (
+	onceFleetshardConfig     sync.Once
+	fleetshardConfigInstance *FleetshardConfig
+)
+
+// GetFleetshardConfig returns the FleetshardConfig
+func GetFleetshardConfig() *FleetshardConfig {
+	onceFleetshardConfig.Do(func() {
+		fleetshardConfigInstance = &FleetshardConfig{
+			PollInterval:   "15s",
+			ResyncInterval: "60s",
+		}
+	})
+	return fleetshardConfigInstance
 }
 
 // AddFlags ...

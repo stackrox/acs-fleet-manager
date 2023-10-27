@@ -15,7 +15,6 @@ import (
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 
-	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 
@@ -33,6 +32,7 @@ import (
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/rs/xid"
 
+	environmentsDino "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
@@ -92,12 +92,6 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 		T: t,
 	}
 
-	if configurationHook != nil {
-		envProviders = append(envProviders, di.ProvideValue(environments.BeforeCreateServicesHook{
-			Func: configurationHook,
-		}))
-	}
-
 	var err error
 	env, err := environments.New(envName, envProviders...)
 	if err != nil {
@@ -107,12 +101,9 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	parseCommandLineFlags(env)
 
-	var ocmConfig *ocm.OCMConfig
-	var serverConfig *server.ServerConfig
-	var iamConfig *iam.IAMConfig
-	var centralConfig *config.CentralConfig
-
-	env.MustResolveAll(&ocmConfig, &serverConfig, &iamConfig, &centralConfig)
+	ocmConfig := ocm.GetOCMConfig()
+	serverConfig := server.GetServerConfig()
+	centralConfig := config.GetCentralConfig()
 
 	db.DinosaurAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set dinosaurs lease as expired so that a new leader is elected for each of the leases
 
@@ -148,7 +139,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	}
 
 	// loads the config files and create the services...
-	err = env.CreateServices()
+	err = env.CreateServices(config.GetConfigs(), environmentsDino.GetEnvironmentLoader(env.Name))
 	if err != nil {
 		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
 	}
@@ -166,7 +157,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 func parseCommandLineFlags(env *environments.Env) {
 	commandLine := pflag.NewFlagSet("test", pflag.PanicOnError)
-	err := env.AddFlags(commandLine)
+	err := env.AddFlags(commandLine, config.GetConfigs(), environmentsDino.GetEnvironmentLoader(env.Name))
 	if err != nil {
 		glog.Fatalf("Unable to add environment flags: %s", err.Error())
 	}
@@ -206,9 +197,7 @@ func (helper *Helper) NewUUID() string {
 
 // RestURL ...
 func (helper *Helper) RestURL(path string) string {
-	var serverConfig *server.ServerConfig
-	helper.Env.MustResolveAll(&serverConfig)
-
+	serverConfig := server.GetServerConfig()
 	protocol := "http"
 	if serverConfig.EnableHTTPS {
 		protocol = "https"
@@ -218,15 +207,13 @@ func (helper *Helper) RestURL(path string) string {
 
 // MetricsURL ...
 func (helper *Helper) MetricsURL(path string) string {
-	var metricsConfig *server.MetricsConfig
-	helper.Env.MustResolveAll(&metricsConfig)
+	metricsConfig := server.GetMetricsConfig()
 	return fmt.Sprintf("http://%s%s", metricsConfig.BindAddress, path)
 }
 
 // HealthCheckURL ...
 func (helper *Helper) HealthCheckURL(path string) string {
-	var healthCheckConfig *server.HealthCheckConfig
-	helper.Env.MustResolveAll(&healthCheckConfig)
+	healthCheckConfig := server.GetHealthCheckConfig()
 	return fmt.Sprintf("http://%s%s", healthCheckConfig.BindAddress, path)
 }
 
@@ -321,7 +308,7 @@ func (helper *Helper) Count(table string) int64 {
 
 // DBFactory ...
 func (helper *Helper) DBFactory() (connectionFactory *db.ConnectionFactory) {
-	helper.Env.MustResolveAll(&connectionFactory)
+	connectionFactory = db.SingletonConnectionFactory()
 	return
 }
 

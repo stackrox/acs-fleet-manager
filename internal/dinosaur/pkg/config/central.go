@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -30,19 +31,27 @@ type CentralConfig struct {
 	CentralRetentionPeriodDays int `json:"central_retention_period_days"`
 }
 
-// NewCentralConfig ...
-func NewCentralConfig() *CentralConfig {
-	return &CentralConfig{
-		CentralTLSCertFile:               "secrets/central-tls.crt",
-		CentralTLSKeyFile:                "secrets/central-tls.key",
-		EnableCentralExternalCertificate: false,
-		CentralDomainName:                "rhacs-dev.com",
-		CentralLifespan:                  NewCentralLifespanConfig(),
-		Quota:                            NewCentralQuotaConfig(),
-		CentralIDPClientSecretFile:       "secrets/central.idp-client-secret", //pragma: allowlist secret
-		CentralIDPIssuer:                 "https://sso.redhat.com/auth/realms/redhat-external",
-		CentralRetentionPeriodDays:       7,
-	}
+var (
+	onceCentralConfig sync.Once
+	centralConfig     *CentralConfig
+)
+
+// GetCentralConfig returns the CentralConfig
+func GetCentralConfig() *CentralConfig {
+	onceCentralConfig.Do(func() {
+		centralConfig = &CentralConfig{
+			CentralTLSCertFile:               "secrets/central-tls.crt",
+			CentralTLSKeyFile:                "secrets/central-tls.key",
+			EnableCentralExternalCertificate: false,
+			CentralDomainName:                "rhacs-dev.com",
+			CentralLifespan:                  NewCentralLifespanConfig(),
+			Quota:                            NewCentralQuotaConfig(),
+			CentralIDPClientSecretFile:       "secrets/central.idp-client-secret", //pragma: allowlist secret
+			CentralIDPIssuer:                 "https://sso.redhat.com/auth/realms/redhat-external",
+			CentralRetentionPeriodDays:       7,
+		}
+	})
+	return centralConfig
 }
 
 // AddFlags ...

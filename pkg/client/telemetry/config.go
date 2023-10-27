@@ -3,6 +3,7 @@ package telemetry
 
 import (
 	"os"
+	"sync"
 
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
@@ -38,18 +39,27 @@ type TelemetryConfigImpl struct {
 
 var _ TelemetryConfig = &TelemetryConfigImpl{}
 
-// NewTelemetryConfig creates a new telemetry configuration.
-func NewTelemetryConfig() TelemetryConfig {
-	// HOSTNAME is set to the pod name by K8s.
-	clientID := getEnv("HOSTNAME", "fleet-manager")
-	return &TelemetryConfigImpl{
-		Config: phonehome.Config{
-			ClientID:   clientID,
-			ClientName: "ACS Fleet Manager",
-			BatchSize:  1, // This makes Group and Track to not go in one batch.
-		},
-		StorageKeyFile: "secrets/telemetry.storageKey",
-	}
+var (
+	onceTelemetryConfig sync.Once
+	telemetryConfig     TelemetryConfig
+)
+
+// GetTelemetryConfig creates a new telemetry configuration.
+func GetTelemetryConfig() TelemetryConfig {
+	onceTelemetryConfig.Do(func() {
+		clientID := getEnv("HOSTNAME", "fleet-manager")
+
+		// HOSTNAME is set to the pod name by K8s.
+		telemetryConfig = &TelemetryConfigImpl{
+			Config: phonehome.Config{
+				ClientID:   clientID,
+				ClientName: "ACS Fleet Manager",
+				BatchSize:  1, // This makes Group and Track to not go in one batch.
+			},
+			StorageKeyFile: "secrets/telemetry.storageKey",
+		}
+	})
+	return telemetryConfig
 }
 
 // AddFlags adds telemetry CLI flags.
