@@ -1261,26 +1261,6 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ErrorList_allOf'
-    ResourceList:
-      additionalProperties:
-        type: string
-      type: object
-    ResourceRequirements:
-      example:
-        requests:
-          key: requests
-        limits:
-          key: limits
-      properties:
-        requests:
-          additionalProperties:
-            type: string
-          type: object
-        limits:
-          additionalProperties:
-            type: string
-          type: object
-      type: object
     CentralRequest:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -1289,42 +1269,6 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/CentralRequestList_allOf'
-    CentralSpec:
-      example:
-        resources:
-          requests:
-            key: requests
-          limits:
-            key: limits
-      properties:
-        resources:
-          $ref: '#/components/schemas/ResourceRequirements'
-      type: object
-    ScannerSpec:
-      example:
-        analyzer:
-          scaling:
-            maxReplicas: 1
-            autoScaling: autoScaling
-            minReplicas: 1
-            replicas: 1
-          resources:
-            requests:
-              key: requests
-            limits:
-              key: limits
-        db:
-          resources:
-            requests:
-              key: requests
-            limits:
-              key: limits
-      properties:
-        analyzer:
-          $ref: '#/components/schemas/ScannerSpec_analyzer'
-        db:
-          $ref: '#/components/schemas/ScannerSpec_db'
-      type: object
     VersionMetadata:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -1342,32 +1286,8 @@ components:
       description: Schema for the request body sent to /centrals POST
       example:
         cloud_account_id: cloud_account_id
-        central:
-          resources:
-            requests:
-              key: requests
-            limits:
-              key: limits
         multi_az: true
         name: name
-        scanner:
-          analyzer:
-            scaling:
-              maxReplicas: 1
-              autoScaling: autoScaling
-              minReplicas: 1
-              replicas: 1
-            resources:
-              requests:
-                key: requests
-              limits:
-                key: limits
-          db:
-            resources:
-              requests:
-                key: requests
-              limits:
-                key: limits
         cloud_provider: cloud_provider
         region: region
       properties:
@@ -1390,10 +1310,6 @@ components:
           description: The region where the Central component cluster will be created
             in
           type: string
-        central:
-          $ref: '#/components/schemas/CentralSpec'
-        scanner:
-          $ref: '#/components/schemas/ScannerSpec'
       required:
       - name
       type: object
@@ -1579,54 +1495,6 @@ components:
             allOf:
             - $ref: '#/components/schemas/CentralRequest'
           type: array
-    ScannerSpec_analyzer_scaling:
-      example:
-        maxReplicas: 1
-        autoScaling: autoScaling
-        minReplicas: 1
-        replicas: 1
-      properties:
-        autoScaling:
-          type: string
-        replicas:
-          format: int32
-          minimum: 1
-          type: integer
-        minReplicas:
-          format: int32
-          minimum: 1
-          type: integer
-        maxReplicas:
-          format: int32
-          minimum: 1
-          type: integer
-    ScannerSpec_analyzer:
-      example:
-        scaling:
-          maxReplicas: 1
-          autoScaling: autoScaling
-          minReplicas: 1
-          replicas: 1
-        resources:
-          requests:
-            key: requests
-          limits:
-            key: limits
-      properties:
-        resources:
-          $ref: '#/components/schemas/ResourceRequirements'
-        scaling:
-          $ref: '#/components/schemas/ScannerSpec_analyzer_scaling'
-    ScannerSpec_db:
-      example:
-        resources:
-          requests:
-            key: requests
-          limits:
-            key: limits
-      properties:
-        resources:
-          $ref: '#/components/schemas/ResourceRequirements'
     VersionMetadata_allOf:
       example: '{"kind":"APIVersion","id":"v1","href":"/api/rhacs/v1","collections":[{"id":"centrals","href":"/api/rhacs/v1/centrals","kind":"CentralList"}]}'
       properties:

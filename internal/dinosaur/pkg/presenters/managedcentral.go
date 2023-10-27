@@ -1,7 +1,6 @@
 package presenters
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 	"time"
@@ -11,9 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/defaults"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/yaml"
 )
@@ -34,29 +31,6 @@ func NewManagedCentralPresenter(config *config.CentralConfig, gitopsService gito
 
 // PresentManagedCentral converts DB representation of Central to the private API representation
 func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralRequest) (private.ManagedCentral, error) {
-	var central dbapi.CentralSpec
-	var scanner dbapi.ScannerSpec
-
-	if len(from.Central) > 0 {
-		err := json.Unmarshal(from.Central, &central)
-		if err != nil {
-			// In case of a JSON unmarshaling problem we don't interrupt the complete workflow, instead we drop the resources
-			// specification as a way of defensive programing.
-			// TOOD: return error?
-			glog.Errorf("Failed to unmarshal Central specification for Central request %q/%s: %v", from.Name, from.ClusterID, err)
-			glog.Errorf("Ignoring Central specification for Central request %q/%s", from.Name, from.ClusterID)
-		}
-	}
-	if len(from.Scanner) > 0 {
-		err := json.Unmarshal(from.Scanner, &scanner)
-		if err != nil {
-			// In case of a JSON unmarshaling problem we don't interrupt the complete workflow, instead we drop the resources
-			// specification as a way of defensive programing.
-			// TOOD: return error?
-			glog.Errorf("Failed to unmarshal Scanner specification for Central request %q/%s: %v", from.Name, from.ClusterID, err)
-			glog.Errorf("Ignoring Scanner specification for Central request %q/%s", from.Name, from.ClusterID)
-		}
-	}
 
 	centralCR, err := c.gitopsService.GetCentral(centralParamsFromRequest(from))
 	if err != nil {
@@ -104,57 +78,10 @@ func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralReque
 			DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
 				Host: from.GetDataHost(),
 			},
-			OperatorImage: from.OperatorImage,
-			Central: private.ManagedCentralAllOfSpecCentral{
-				InstanceType: from.InstanceType,
-				Resources: private.ResourceRequirements{
-					Requests: map[string]string{
-						corev1.ResourceCPU.String():    orDefaultQty(central.Resources.Requests[corev1.ResourceCPU], defaults.Central.CPURequest).String(),
-						corev1.ResourceMemory.String(): orDefaultQty(central.Resources.Requests[corev1.ResourceMemory], defaults.Central.MemoryRequest).String(),
-					},
-					Limits: map[string]string{
-						corev1.ResourceCPU.String():    orDefaultQty(central.Resources.Limits[corev1.ResourceCPU], defaults.Central.CPULimit).String(),
-						corev1.ResourceMemory.String(): orDefaultQty(central.Resources.Limits[corev1.ResourceMemory], defaults.Central.MemoryLimit).String(),
-					},
-				},
-			},
-			Scanner: private.ManagedCentralAllOfSpecScanner{
-				Analyzer: private.ManagedCentralAllOfSpecScannerAnalyzer{
-					Scaling: private.ManagedCentralAllOfSpecScannerAnalyzerScaling{
-						AutoScaling: orDefaultString(scanner.Analyzer.Scaling.AutoScaling, defaults.Scanner.Analyzer.AutoScaling),
-						Replicas:    orDefaultInt32(scanner.Analyzer.Scaling.Replicas, defaults.Scanner.Analyzer.Replicas),
-						MinReplicas: orDefaultInt32(scanner.Analyzer.Scaling.MinReplicas, defaults.Scanner.Analyzer.MinReplicas),
-						MaxReplicas: orDefaultInt32(scanner.Analyzer.Scaling.MaxReplicas, defaults.Scanner.Analyzer.MaxReplicas),
-					},
-					Resources: private.ResourceRequirements{
-						Requests: map[string]string{
-							corev1.ResourceCPU.String():    orDefaultQty(scanner.Analyzer.Resources.Requests[corev1.ResourceCPU], defaults.Scanner.Analyzer.CPURequest).String(),
-							corev1.ResourceMemory.String(): orDefaultQty(scanner.Analyzer.Resources.Requests[corev1.ResourceMemory], defaults.Scanner.Analyzer.MemoryRequest).String(),
-						},
-						Limits: map[string]string{
-							corev1.ResourceCPU.String():    orDefaultQty(scanner.Analyzer.Resources.Limits[corev1.ResourceCPU], defaults.Scanner.Analyzer.CPULimit).String(),
-							corev1.ResourceMemory.String(): orDefaultQty(scanner.Analyzer.Resources.Limits[corev1.ResourceMemory], defaults.Scanner.Analyzer.MemoryLimit).String(),
-						},
-					},
-				},
-				Db: private.ManagedCentralAllOfSpecScannerDb{
-					Host: "dbhost.rhacs-psql-instance",
-					Resources: private.ResourceRequirements{
-						Requests: map[string]string{
-							corev1.ResourceCPU.String():    orDefaultQty(scanner.Db.Resources.Requests[corev1.ResourceCPU], defaults.Scanner.Db.CPURequest).String(),
-							corev1.ResourceMemory.String(): orDefaultQty(scanner.Db.Resources.Requests[corev1.ResourceMemory], defaults.Scanner.Db.MemoryRequest).String(),
-						},
-						Limits: map[string]string{
-							corev1.ResourceCPU.String():    orDefaultQty(scanner.Db.Resources.Limits[corev1.ResourceCPU], defaults.Scanner.Db.CPULimit).String(),
-							corev1.ResourceMemory.String(): orDefaultQty(scanner.Db.Resources.Limits[corev1.ResourceMemory], defaults.Scanner.Db.MemoryLimit).String(),
-						},
-					},
-				},
-			},
 			CentralCRYAML: string(centralYaml),
+			InstanceType:  from.InstanceType,
 		},
-		RequestStatus:  from.Status,
-		ForceReconcile: from.ForceReconcile,
+		RequestStatus: from.Status,
 	}
 
 	if from.DeletionTimestamp != nil {
