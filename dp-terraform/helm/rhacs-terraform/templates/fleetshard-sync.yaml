@@ -87,7 +87,10 @@ spec:
         - name: TELEMETRY_STORAGE_ENDPOINT
           value: {{ .Values.fleetshardSync.telemetry.storage.endpoint | quote }}
         - name: TELEMETRY_STORAGE_KEY
-          value: {{ .Values.fleetshardSync.telemetry.storage.key | quote }}
+          valueFrom:
+            secretKeyRef:
+              name: fleetshard-sync
+              key: "telemetry-storage-key"
         {{- if .Values.fleetshardSync.aws.enableTokenAuth }}
         - name: AWS_WEB_IDENTITY_TOKEN_FILE
           value: "/var/run/secrets/tokens/aws-token"
