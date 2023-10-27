@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
@@ -16,6 +17,22 @@ import (
 type serviceStatusHandler struct {
 	dinosaurService   services.DinosaurService
 	accessControlList *acl.AccessControlListConfig
+}
+
+var (
+	onceServiceStatusHandler     sync.Once
+	serviceStatusHandlerInstance *serviceStatusHandler
+)
+
+// SingletonServiceStatusHandler the serviceStatusHandler
+func SingletonServiceStatusHandler() *serviceStatusHandler {
+	onceServiceStatusHandler.Do(func() {
+		serviceStatusHandlerInstance = NewServiceStatusHandler(
+			services.SingletonDinosaurService(),
+			acl.GetAccessControlListConfig(),
+		)
+	})
+	return serviceStatusHandlerInstance
 }
 
 // NewServiceStatusHandler ...

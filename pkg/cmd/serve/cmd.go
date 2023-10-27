@@ -3,12 +3,14 @@ package serve
 
 import (
 	"context"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	environmentsDino "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
@@ -19,7 +21,7 @@ func NewServeCommand(env *environments.Env) *cobra.Command {
 		Short: "Serve the fleet-manager",
 		Long:  "Serve the Dinosaur Service Fleet Manager.",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			err := env.CreateServices()
+			err := env.CreateServices(config.GetConfigs(), environmentsDino.GetEnvironmentLoader(env.Name))
 			if err != nil {
 				glog.Fatalf("Unable to initialize environment: %s", err.Error())
 			}

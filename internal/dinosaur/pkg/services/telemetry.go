@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/golang/glog"
@@ -29,9 +30,17 @@ type TelemetryAuth interface {
 // TelemetryAuthImpl is the default telemetry auth implementation.
 type TelemetryAuthImpl struct{}
 
-// NewTelemetryAuth creates a new telemetry auth.
-func NewTelemetryAuth() TelemetryAuth {
-	return &TelemetryAuthImpl{}
+var (
+	onceTelemetryAuth sync.Once
+	telemetryAuth     TelemetryAuth
+)
+
+// GetTelemetryAuth creates a new telemetry auth.
+func GetTelemetryAuth() TelemetryAuth {
+	onceTelemetryAuth.Do(func() {
+		telemetryAuth = &TelemetryAuthImpl{}
+	})
+	return telemetryAuth
 }
 
 func (t *TelemetryAuthImpl) getUserFromContext(ctx context.Context) (string, error) {
@@ -50,6 +59,22 @@ func (t *TelemetryAuthImpl) getUserFromContext(ctx context.Context) (string, err
 type Telemetry struct {
 	auth   TelemetryAuth
 	config telemetry.TelemetryConfig
+}
+
+var (
+	onceTelemetry      sync.Once
+	telemetrySingleton *Telemetry
+)
+
+// SingletonTelemetry returns the Telemetry
+func SingletonTelemetry() *Telemetry {
+	onceTelemetry.Do(func() {
+		telemetrySingleton = NewTelemetry(
+			GetTelemetryAuth(),
+			telemetry.GetTelemetryConfig(),
+		)
+	})
+	return telemetrySingleton
 }
 
 // NewTelemetry creates a new telemetry service instance.

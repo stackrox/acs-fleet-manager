@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"sync"
 
 	"github.com/golang/glog"
 	mocket "github.com/selvatico/go-mocket"
@@ -24,6 +25,19 @@ var gormConfig = &gorm.Config{
 	AllowGlobalUpdate: false, // change it to true to allow updates without the WHERE clause
 	QueryFields:       true,
 	Logger:            customLoggerWithMetricsCollector{},
+}
+
+var (
+	onceFactory       sync.Once
+	connectionFactory *ConnectionFactory
+)
+
+// SingletonConnectionFactory returns
+func SingletonConnectionFactory() *ConnectionFactory {
+	onceFactory.Do(func() {
+		connectionFactory, _ = NewConnectionFactory(GetDatabaseConfig())
+	})
+	return connectionFactory
 }
 
 // NewConnectionFactory will initialize a singleton ConnectionFactory as needed and return the same instance.
@@ -105,7 +119,7 @@ func (f *ConnectionFactory) CheckConnection() error {
 
 // close will close the connection to the database.
 // THIS MUST **NOT** BE CALLED UNTIL THE SERVER/PROCESS IS EXITING!!
-// This should only ever be called once for the entire duration of the application and only at the end.
+// This should only ever be called onceDbConfig for the entire duration of the application and only at the end.
 func (f *ConnectionFactory) close() error {
 	sqlDB, sqlDBErr := f.DB.DB()
 	if sqlDBErr != nil {

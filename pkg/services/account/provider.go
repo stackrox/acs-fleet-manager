@@ -22,7 +22,8 @@ func ServiceProviders() di.Option {
 }
 
 // NewAccount ...
-func NewAccount(ocmConfig *ocm.OCMConfig) AccountService {
+func NewAccount() AccountService {
+	ocmConfig := ocm.GetOCMConfig()
 	if ocmConfig.EnableMock {
 		return NewMockAccountService()
 	}

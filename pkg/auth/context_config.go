@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/spf13/pflag"
+	"sync"
 )
 
 var (
@@ -23,12 +24,20 @@ var (
 	alternateTenantUserIDClaim = "rh-user-id"
 )
 
+var (
+	onceContextConfig sync.Once
+	contextConfig     *ContextConfig
+)
+
 // ContextConfig ...
 type ContextConfig struct{}
 
-// NewContextConfig ...
-func NewContextConfig() *ContextConfig {
-	return &ContextConfig{}
+// GetContextConfig ...
+func GetContextConfig() *ContextConfig {
+	onceContextConfig.Do(func() {
+		contextConfig = &ContextConfig{}
+	})
+	return contextConfig
 }
 
 // AddFlags ...

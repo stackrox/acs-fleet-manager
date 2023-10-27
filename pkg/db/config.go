@@ -3,6 +3,7 @@ package db
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 
@@ -30,21 +31,29 @@ type DatabaseConfig struct {
 	PasswordFile       string `json:"password_file"`
 }
 
-// NewDatabaseConfig ...
-func NewDatabaseConfig() *DatabaseConfig {
-	return &DatabaseConfig{
-		Dialect:            "postgres",
-		SSLMode:            "disable",
-		Debug:              false,
-		MaxOpenConnections: 50,
+var (
+	onceDbConfig sync.Once
+	dbConfig     *DatabaseConfig
+)
 
-		HostFile:           "secrets/db.host",
-		PortFile:           "secrets/db.port",
-		UsernameFile:       "secrets/db.user",
-		PasswordFile:       "secrets/db.password", // pragma: allowlist secret
-		NameFile:           "secrets/db.name",
-		DatabaseCaCertFile: "secrets/db.ca_cert",
-	}
+// GetDatabaseConfig returns DatabaseConfig
+func GetDatabaseConfig() *DatabaseConfig {
+	onceDbConfig.Do(func() {
+		dbConfig = &DatabaseConfig{
+			Dialect:            "postgres",
+			SSLMode:            "disable",
+			Debug:              false,
+			MaxOpenConnections: 50,
+
+			HostFile:           "secrets/db.host",
+			PortFile:           "secrets/db.port",
+			UsernameFile:       "secrets/db.user",
+			PasswordFile:       "secrets/db.password", // pragma: allowlist secret
+			NameFile:           "secrets/db.name",
+			DatabaseCaCertFile: "secrets/db.ca_cert",
+		}
+	})
+	return dbConfig
 }
 
 // AddFlags ...

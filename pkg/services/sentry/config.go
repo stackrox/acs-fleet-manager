@@ -3,6 +3,7 @@ package sentry
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -22,16 +23,24 @@ type Config struct {
 	KeyFile string `json:"key_file"`
 }
 
-// NewConfig ...
-func NewConfig() *Config {
-	return &Config{
-		Enabled: false,
-		Key:     "",
-		URL:     "sentry.autom8.in",
-		Project: "8", // 8 is the dev project, this might change
-		Debug:   false,
-		KeyFile: "secrets/sentry.key",
-	}
+var (
+	onceConfig sync.Once
+	config     *Config
+)
+
+// GetConfig ...
+func GetConfig() *Config {
+	onceConfig.Do(func() {
+		config = &Config{
+			Enabled: false,
+			Key:     "",
+			URL:     "sentry.autom8.in",
+			Project: "8", // 8 is the dev project, this might change
+			Debug:   false,
+			KeyFile: "secrets/sentry.key",
+		}
+	})
+	return config
 }
 
 // AddFlags ...

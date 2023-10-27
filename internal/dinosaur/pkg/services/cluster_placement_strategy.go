@@ -18,8 +18,8 @@ type ClusterPlacementStrategy interface {
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the
 // placement configuration. An appropriate ClusterPlacementStrategy implementation
 // is returned based on the received parameters content
-func NewClusterPlacementStrategy(clusterService ClusterService) ClusterPlacementStrategy {
-	return &FirstReadyPlacementStrategy{clusterService: clusterService}
+func NewClusterPlacementStrategy() ClusterPlacementStrategy {
+	return &FirstReadyPlacementStrategy{clusterService: SingletonClusterService()}
 }
 
 var _ ClusterPlacementStrategy = (*FirstReadyPlacementStrategy)(nil)

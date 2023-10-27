@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang/glog"
@@ -98,8 +99,21 @@ func (c *IAMRealmConfig) validateConfiguration() error {
 	return nil
 }
 
+var (
+	onceIAMConfig sync.Once
+	iamConfig     *IAMConfig
+)
+
+// GetIAMConfig gets the IAMConfig
+func GetIAMConfig() *IAMConfig {
+	onceIAMConfig.Do(func() {
+		iamConfig = newIAMConfig()
+	})
+	return iamConfig
+}
+
 // NewIAMConfig ...
-func NewIAMConfig() *IAMConfig {
+func newIAMConfig() *IAMConfig {
 	kc := &IAMConfig{
 		SsoBaseURL:            "https://sso.redhat.com",
 		Debug:                 false,

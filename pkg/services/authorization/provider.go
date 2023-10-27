@@ -22,7 +22,8 @@ func ServiceProviders() di.Option {
 }
 
 // NewAuthorization ...
-func NewAuthorization(ocmConfig *ocm.OCMConfig) Authorization {
+func NewAuthorization() Authorization {
+	ocmConfig := ocm.GetOCMConfig()
 	if ocmConfig.EnableMock {
 		return NewMockAuthorization()
 	}

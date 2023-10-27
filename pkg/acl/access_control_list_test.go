@@ -138,7 +138,7 @@ func Test_ReadFiles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			aclConfig := NewAccessControlListConfig()
+			aclConfig := GetAccessControlListConfig()
 			aclConfig.DenyList = *tt.args.deniedUsers
 			aclConfig.EnableDenyList = tt.args.enableDenyList
 			aclConfig.DenyListConfigFile = tt.args.file

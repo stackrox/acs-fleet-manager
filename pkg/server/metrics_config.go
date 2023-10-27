@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/spf13/pflag"
+	"sync"
 )
 
 // MetricsConfig ...
@@ -10,12 +11,20 @@ type MetricsConfig struct {
 	EnableHTTPS bool   `json:"enable_https"`
 }
 
-// NewMetricsConfig ...
-func NewMetricsConfig() *MetricsConfig {
-	return &MetricsConfig{
-		BindAddress: "localhost:8080",
-		EnableHTTPS: false,
-	}
+var (
+	onceMetricsConfig sync.Once
+	metricsConfig     *MetricsConfig
+)
+
+// GetMetricsConfig ...
+func GetMetricsConfig() *MetricsConfig {
+	onceMetricsConfig.Do(func() {
+		metricsConfig = &MetricsConfig{
+			BindAddress: "localhost:8080",
+			EnableHTTPS: false,
+		}
+	})
+	return metricsConfig
 }
 
 // AddFlags ...

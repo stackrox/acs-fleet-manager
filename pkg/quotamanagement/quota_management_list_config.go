@@ -3,6 +3,7 @@ package quotamanagement
 import (
 	"fmt"
 	"io/fs"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -18,12 +19,20 @@ type QuotaManagementListConfig struct {
 	EnableInstanceLimitControl bool
 }
 
-// NewQuotaManagementListConfig ...
-func NewQuotaManagementListConfig() *QuotaManagementListConfig {
-	return &QuotaManagementListConfig{
-		QuotaListConfigFile:        "config/quota-management-list-configuration.yaml",
-		EnableInstanceLimitControl: false,
-	}
+var (
+	onceQuotaManagementListConfig sync.Once
+	quotaManagementListConfig     *QuotaManagementListConfig
+)
+
+// GetQuotaManagementListConfig ...
+func GetQuotaManagementListConfig() *QuotaManagementListConfig {
+	onceQuotaManagementListConfig.Do(func() {
+		quotaManagementListConfig = &QuotaManagementListConfig{
+			QuotaListConfigFile:        "config/quota-management-list-configuration.yaml",
+			EnableInstanceLimitControl: false,
+		}
+	})
+	return quotaManagementListConfig
 }
 
 // AddFlags ...

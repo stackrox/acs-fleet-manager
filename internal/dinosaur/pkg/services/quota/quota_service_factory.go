@@ -1,4 +1,4 @@
-package services
+package quota
 
 import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"

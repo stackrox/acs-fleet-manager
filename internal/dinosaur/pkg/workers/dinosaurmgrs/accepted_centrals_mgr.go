@@ -2,6 +2,8 @@
 package dinosaurmgrs
 
 import (
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services/quota"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,14 +25,32 @@ const acceptedCentralWorkerType = "accepted_dinosaur"
 type AcceptedCentralManager struct {
 	workers.BaseWorker
 	centralService         services.DinosaurService
-	quotaServiceFactory    services.QuotaServiceFactory
+	quotaServiceFactory    quota.QuotaServiceFactory
 	clusterPlmtStrategy    services.ClusterPlacementStrategy
 	dataPlaneClusterConfig *config.DataplaneClusterConfig
 	centralRequestTimeout  time.Duration
 }
 
+var (
+	onceAcceptedManager    sync.Once
+	acceptedCentralManager *AcceptedCentralManager
+)
+
+// SingletonAcceptedCentralManager returns AcceptedCentralManager
+func SingletonAcceptedCentralManager() *AcceptedCentralManager {
+	onceAcceptedManager.Do(func() {
+		acceptedCentralManager = NewAcceptedCentralManager(
+			services.SingletonDinosaurService(),
+			quota.SingletonDefaultQuotaServiceFactory(),
+			config.SingletonDataplaneClusterConfig(),
+			config.GetCentralRequestConfig(),
+		)
+	})
+	return acceptedCentralManager
+}
+
 // NewAcceptedCentralManager creates a new manager
-func NewAcceptedCentralManager(centralService services.DinosaurService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, dataPlaneClusterConfig *config.DataplaneClusterConfig, centralRequestConfig *config.CentralRequestConfig) *AcceptedCentralManager {
+func NewAcceptedCentralManager(centralService services.DinosaurService, quotaServiceFactory quota.QuotaServiceFactory, dataPlaneClusterConfig *config.DataplaneClusterConfig, centralRequestConfig *config.CentralRequestConfig) *AcceptedCentralManager {
 	metrics.InitReconcilerMetricsForType(acceptedCentralWorkerType)
 	return &AcceptedCentralManager{
 		BaseWorker: workers.BaseWorker{
@@ -40,7 +60,7 @@ func NewAcceptedCentralManager(centralService services.DinosaurService, quotaSer
 		},
 		centralService:         centralService,
 		quotaServiceFactory:    quotaServiceFactory,
-		clusterPlmtStrategy:    clusterPlmtStrategy,
+		clusterPlmtStrategy:    services.NewClusterPlacementStrategy(),
 		dataPlaneClusterConfig: dataPlaneClusterConfig,
 		centralRequestTimeout:  centralRequestConfig.ExpirationTimeout,
 	}

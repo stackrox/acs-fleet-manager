@@ -12,8 +12,6 @@ import (
 	"github.com/goava/di"
 	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur"
-	adminprivate "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/admin/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
@@ -61,54 +59,28 @@ func NewDinosaurHelper(t *testing.T, server *httptest.Server) (*test.Helper, *pu
 
 // NewDinosaurHelperWithHooks ...
 func NewDinosaurHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
-	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, dinosaur.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
-		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, dinosaurConfig *config.CentralConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, fleetshardConfig *config.FleetshardConfig, ocmConfig *ocm.OCMConfig) {
-			dinosaurConfig.CentralLifespan.EnableDeletionOfExpiredCentral = true
-			observabilityConfiguration.EnableMock = true
-			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
-			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
+	dpConfig := config.SingletonDataplaneClusterConfig()
+	dpConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
+	dpConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
 
-			// Integration tests require a valid OCM client. This requires OCM service account credentials to be set.
-			ocmConfig.EnableMock = false
-			ocmConfig.ReadFiles()
-		},
-	}))
+	centralConfig := config.GetCentralConfig()
+	centralConfig.CentralLifespan.EnableDeletionOfExpiredCentral = true
+	observabilityConfig := observatorium.GetObservabilityConfigurationConfig()
+	observabilityConfig.EnableMock = true
+
+	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, dinosaur.ConfigProviders())
 	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
 		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
 	}
-	return h, NewAPIClient(h), teardown
+	return h, NewAPIClient(), teardown
 }
 
 // NewAPIClient ...
-func NewAPIClient(helper *test.Helper) *public.APIClient {
-	var serverConfig *server.ServerConfig
-	helper.Env.MustResolveAll(&serverConfig)
-
+func NewAPIClient() *public.APIClient {
+	serverConfig := server.GetServerConfig()
 	openapiConfig := public.NewConfiguration()
 	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
 	client := public.NewAPIClient(openapiConfig)
-	return client
-}
-
-// NewPrivateAPIClient ...
-func NewPrivateAPIClient(helper *test.Helper) *private.APIClient {
-	var serverConfig *server.ServerConfig
-	helper.Env.MustResolveAll(&serverConfig)
-
-	openapiConfig := private.NewConfiguration()
-	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
-	client := private.NewAPIClient(openapiConfig)
-	return client
-}
-
-// NewAdminPrivateAPIClient ...
-func NewAdminPrivateAPIClient(helper *test.Helper) *adminprivate.APIClient {
-	var serverConfig *server.ServerConfig
-	helper.Env.MustResolveAll(&serverConfig)
-
-	openapiConfig := adminprivate.NewConfiguration()
-	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
-	client := adminprivate.NewAPIClient(openapiConfig)
 	return client
 }
 

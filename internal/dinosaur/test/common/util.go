@@ -50,8 +50,8 @@ func GetOSDClusterIDAndWaitForStatus(h *test.Helper, t *testing.T, expectedStatu
 func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterStatus) (string, *ocmErrors.ServiceError) {
 	var foundCluster *api.Cluster
 	var err *ocmErrors.ServiceError
-	var clusterService services.ClusterService
 	var ocmConfig ocm.OCMConfig
+	clusterService := services.SingletonClusterService()
 	h.Env.MustResolveAll(&clusterService)
 
 	// get cluster details from persisted cluster file
@@ -65,7 +65,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 
 	// get cluster details from database when running against an emulated server and the cluster in cluster file doesn't exist
 	if foundCluster == nil && ocmConfig.MockMode == ocm.MockModeEmulateServer {
-		foundCluster, err = findFirstValidCluster(h)
+		foundCluster, err = findFirstValidCluster()
 		if err != nil {
 			return "", err
 		}
@@ -88,7 +88,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 			IntervalAndTimeout(1*time.Second, 5*time.Minute).
 			RetryLogMessage("Waiting for ID to be assigned to the new cluster").
 			OnRetry(func(attempt int, maxRetries int) (bool, error) {
-				c, findErr := findFirstValidCluster(h)
+				c, findErr := findFirstValidCluster()
 				if findErr != nil {
 					return false, findErr
 				}
@@ -119,10 +119,8 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	return foundCluster.ClusterID, nil
 }
 
-func findFirstValidCluster(h *test.Helper) (*api.Cluster, *ocmErrors.ServiceError) {
-	var clusterService services.ClusterService
-	h.Env.MustResolveAll(&clusterService)
-
+func findFirstValidCluster() (*api.Cluster, *ocmErrors.ServiceError) {
+	clusterService := services.SingletonClusterService()
 	foundClusters, svcErr := clusterService.FindAllClusters(services.FindClusterCriteria{
 		Region:   mocks.MockCluster.Region().ID(),
 		Provider: mocks.MockCluster.CloudProvider().ID(),
@@ -195,7 +193,7 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 }
 
 func getMetrics(t *testing.T) string {
-	metricsConfig := server.NewMetricsConfig()
+	metricsConfig := server.GetMetricsConfig()
 	metricsAddress := metricsConfig.BindAddress
 	var metricsURL string
 	if metricsConfig.EnableHTTPS {

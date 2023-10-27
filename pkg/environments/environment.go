@@ -2,9 +2,9 @@ package environments
 
 import (
 	"context"
-	goerrors "errors"
 	"flag"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 	"os"
 
 	"github.com/goava/di"
@@ -64,26 +64,15 @@ func GetEnvironmentStrFromEnv() string {
 	return envStr
 }
 
-// AddFlags is used allow command command line flags to modify the values of types in
+// AddFlags is used allow command  line flags to modify the values of types in
 // the Env.ConfigContainer.  All types in Env.ConfigContainer that implement the ConfigModule
 // interface invoked with ConfigModule.AddFlags.
 //
 // Then flag defaults will set by getting defaults for the Env.Name by looking up a EnvLoader
 // tagged with that name in the  Env.ConfigContainer.
-func (env *Env) AddFlags(flags *pflag.FlagSet) error {
-
+func (env *Env) AddFlags(flags *pflag.FlagSet, modules []ConfigModule, namedEnv EnvLoader) error {
 	flags.AddGoFlagSet(flag.CommandLine)
 
-	var namedEnv EnvLoader
-	err := env.ConfigContainer.Resolve(&namedEnv, di.Tags{"env": env.Name})
-	if err != nil {
-		return errors.Errorf("unsupported environment %q", env.Name)
-	}
-
-	modules := []ConfigModule{}
-	if err := env.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
-		return fmt.Errorf("adding flags: %w", err)
-	}
 	for i := range modules {
 		modules[i].AddFlags(flags)
 	}
@@ -104,18 +93,14 @@ func (env *Env) AddFlags(flags *pflag.FlagSet) error {
 // 5) The Env.ServiceContainer is created
 // 6) All ServiceValidator.Validate functions - used to validate the configuration or service types (TODO: replace with a AfterCreateServicesHook??)
 // 7) All AfterCreateServicesHook.Func functions - a hook that is called after the service container is created.
-func (env *Env) CreateServices() error {
-
+func (env *Env) CreateServices(modules []ConfigModule, namedEnv EnvLoader) error {
 	glog.Infof("Initializing %s environment", env.Name)
 
 	// Read in all config files
-	modules := []ConfigModule{}
-	if err := env.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
-		return fmt.Errorf("creating services: %w", err)
-	}
 	for i := range modules {
 		err := modules[i].ReadFiles()
 		if err != nil {
+			modules[i].ReadFiles()
 			err = errors.Errorf("unable to read configuration files: %s", err)
 			glog.Error(err)
 			sentryGo.CaptureException(err)
@@ -124,12 +109,7 @@ func (env *Env) CreateServices() error {
 	}
 
 	// Allow named env to customize the configuration.
-	var namedEnv EnvLoader
-	err := env.ConfigContainer.Resolve(&namedEnv, di.Tags{"env": env.Name})
-	if err != nil {
-		return errors.Errorf("unsupported environment %q", env.Name)
-	}
-	err = namedEnv.ModifyConfiguration(env)
+	err := namedEnv.ModifyConfiguration(env)
 	if err != nil {
 		return fmt.Errorf("modifying configuration: %w", err)
 	}
@@ -139,19 +119,11 @@ func (env *Env) CreateServices() error {
 
 	type injections struct {
 		di.Inject
-		ServiceInjections         []ServiceProvider
-		BeforeCreateServicesHooks []BeforeCreateServicesHook `optional:"true"`
-		AfterCreateServicesHooks  []AfterCreateServicesHook  `optional:"true"`
+		ServiceInjections []ServiceProvider
 	}
 	in := injections{}
 	if err := env.ConfigContainer.Resolve(&in); err != nil {
 		return fmt.Errorf("creating services: %w", err)
-	}
-
-	// Right before we create the services, run the any before create service hooks
-	// to allow for post config file loading customization.
-	for _, hook := range in.BeforeCreateServicesHooks {
-		env.MustInvoke(hook.Func)
 	}
 
 	// Lets build a list of providers that will be used to create the service container.
@@ -185,10 +157,10 @@ func (env *Env) CreateServices() error {
 		}
 	}
 
-	for _, hook := range in.AfterCreateServicesHooks {
-		env.MustInvoke(hook.Func)
+	err = sentry.Initialize(env.Name)
+	if err != nil {
+		return err
 	}
-
 	return nil
 }
 

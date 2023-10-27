@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -13,6 +14,19 @@ var _ ObservatoriumService = &observatoriumService{}
 type observatoriumService struct {
 	observatorium   *observatorium.Client
 	dinosaurService DinosaurService
+}
+
+var (
+	onceObservatoriumService      sync.Once
+	observatoriumServiceSingleton ObservatoriumService
+)
+
+// SingletonObservatoriumService returns the ObservatoriumService
+func SingletonObservatoriumService() ObservatoriumService {
+	onceObservatoriumService.Do(func() {
+		observatoriumServiceSingleton = NewObservatoriumService(observatorium.SingletonObservatoriumClient(), SingletonDinosaurService())
+	})
+	return observatoriumServiceSingleton
 }
 
 // NewObservatoriumService ...

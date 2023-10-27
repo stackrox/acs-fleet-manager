@@ -2,6 +2,7 @@ package gitops
 
 import (
 	"reflect"
+	"sync"
 	"sync/atomic"
 
 	"github.com/golang/glog"
@@ -24,23 +25,30 @@ type provider struct {
 	validationFn      validationFn
 }
 
-// NewProvider returns a new ConfigProvider.
-func NewProvider() ConfigProvider {
+var (
+	configProviderInstance ConfigProvider
+	onceConfigProvider     sync.Once
+)
 
-	var reader Reader
-	if features.GitOpsCentrals.Enabled() {
-		reader = NewFileReader(configPath)
-	} else {
-		reader = NewEmptyReader()
-	}
+// GetConfigProvider returns a new ConfigProvider.
+func GetConfigProvider() ConfigProvider {
+	onceConfigProvider.Do(func() {
+		var reader Reader
+		if features.GitOpsCentrals.Enabled() {
+			reader = NewFileReader(configPath)
+		} else {
+			reader = NewEmptyReader()
+		}
 
-	return &provider{
-		reader:            reader,
-		lastWorkingConfig: atomic.Pointer[Config]{},
-		validationFn: func(config Config) error {
-			return ValidateConfig(config).ToAggregate()
-		},
-	}
+		configProviderInstance = &provider{
+			reader:            reader,
+			lastWorkingConfig: atomic.Pointer[Config]{},
+			validationFn: func(config Config) error {
+				return ValidateConfig(config).ToAggregate()
+			},
+		}
+	})
+	return configProviderInstance
 }
 
 // Get implements ConfigProvider.Get

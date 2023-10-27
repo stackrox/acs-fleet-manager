@@ -53,9 +53,8 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 // The environment is expected to be modified as needed
 func (b IntegrationEnvLoader) ModifyConfiguration(env *environments.Env) error {
 	// Support a one-off env to allow enabling db debug in testing
-	var databaseConfig *db.DatabaseConfig
-	var observabilityConfiguration *observatorium.ObservabilityConfiguration
-	env.MustResolveAll(&databaseConfig, &observabilityConfiguration)
+	databaseConfig := db.GetDatabaseConfig()
+	observabilityConfiguration := observatorium.GetObservabilityConfigurationConfig()
 
 	if os.Getenv("DB_DEBUG") == "true" {
 		databaseConfig.Debug = true

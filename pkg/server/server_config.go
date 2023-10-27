@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
+	"sync"
 )
 
 // ServerConfig ...
@@ -22,18 +23,26 @@ type ServerConfig struct {
 	ForceLeader           bool   `json:"force_leader"`
 }
 
-// NewServerConfig ...
-func NewServerConfig() *ServerConfig {
-	return &ServerConfig{
-		BindAddress:    "localhost:8000",
-		EnableHTTPS:    false,
-		JwksURL:        "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
-		JwksFile:       "config/jwks-file.json",
-		TokenIssuerURL: "https://sso.redhat.com/auth/realms/redhat-external",
-		HTTPSCertFile:  "",
-		HTTPSKeyFile:   "",
-		PublicHostURL:  "http://localhost",
-	}
+var (
+	onceServerConfig sync.Once
+	serverConfig     *ServerConfig
+)
+
+// GetServerConfig ...
+func GetServerConfig() *ServerConfig {
+	onceServerConfig.Do(func() {
+		serverConfig = &ServerConfig{
+			BindAddress:    "localhost:8000",
+			EnableHTTPS:    false,
+			JwksURL:        "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
+			JwksFile:       "config/jwks-file.json",
+			TokenIssuerURL: "https://sso.redhat.com/auth/realms/redhat-external",
+			HTTPSCertFile:  "",
+			HTTPSKeyFile:   "",
+			PublicHostURL:  "http://localhost",
+		}
+	})
+	return serverConfig
 }
 
 // AddFlags ...

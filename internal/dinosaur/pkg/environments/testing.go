@@ -28,8 +28,7 @@ func (t TestingEnvLoader) Defaults() map[string]string {
 func (t TestingEnvLoader) ModifyConfiguration(env *environments.Env) error {
 	// Support a one-off env to allow enabling db debug in testing
 
-	var databaseConfig *db.DatabaseConfig
-	env.MustResolveAll(&databaseConfig)
+	databaseConfig := db.GetDatabaseConfig()
 
 	if os.Getenv("DB_DEBUG") == "true" {
 		databaseConfig.Debug = true

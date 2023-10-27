@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/spf13/pflag"
+	"sync"
 )
 
 // HealthCheckConfig ...
@@ -10,12 +11,20 @@ type HealthCheckConfig struct {
 	EnableHTTPS bool   `json:"enable_https"`
 }
 
-// NewHealthCheckConfig ...
-func NewHealthCheckConfig() *HealthCheckConfig {
-	return &HealthCheckConfig{
-		BindAddress: "localhost:8083",
-		EnableHTTPS: false,
-	}
+var (
+	onceHealthCheckConfig sync.Once
+	healthCheckConfig     *HealthCheckConfig
+)
+
+// GetHealthCheckConfig ...
+func GetHealthCheckConfig() *HealthCheckConfig {
+	onceHealthCheckConfig.Do(func() {
+		healthCheckConfig = &HealthCheckConfig{
+			BindAddress: "localhost:8083",
+			EnableHTTPS: false,
+		}
+	})
+	return healthCheckConfig
 }
 
 // AddFlags ...

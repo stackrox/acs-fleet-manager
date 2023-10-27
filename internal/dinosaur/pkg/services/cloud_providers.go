@@ -4,6 +4,7 @@ package services
 import (
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
@@ -31,6 +32,19 @@ type CloudProvidersService interface {
 	GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError)
 	ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError)
 	ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError)
+}
+
+var (
+	onceCloudProviderService sync.Once
+	cloudProviderService     CloudProvidersService
+)
+
+// SingletonCloudProviderService returns the CloudProvidersService
+func SingletonCloudProviderService() CloudProvidersService {
+	onceCloudProviderService.Do(func() {
+		cloudProviderService = NewCloudProvidersService(clusters.SingletonProviderFactory(), db.SingletonConnectionFactory())
+	})
+	return cloudProviderService
 }
 
 // NewCloudProvidersService ...

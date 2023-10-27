@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"sync"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
@@ -18,6 +19,22 @@ import (
 type DataMigration struct {
 	connectionFactory *db.ConnectionFactory
 	amsClient         ocm.AMSClient
+}
+
+var (
+	onceDataMigration     sync.Once
+	dataMigrationInstance *DataMigration
+)
+
+// SingletonDataMigration returns the DataMigration
+func SingletonDataMigration() *DataMigration {
+	onceDataMigration.Do(func() {
+		dataMigrationInstance = NewDataMigration(
+			db.SingletonConnectionFactory(),
+			ocm.SingletonAMSClient(),
+		)
+	})
+	return dataMigrationInstance
 }
 
 // NewDataMigration creates a new migration service instance.

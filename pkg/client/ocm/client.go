@@ -3,18 +3,16 @@ package ocm
 
 import (
 	"fmt"
-	"github.com/openshift-online/ocm-sdk-go/logging"
-	"net/http"
-
-	"github.com/pkg/errors"
-	pkgerrors "github.com/pkg/errors"
-
 	"github.com/golang/glog"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/openshift-online/ocm-sdk-go/logging"
+	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	serviceErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
+	"net/http"
 )
 
 // TermsSitecode ...

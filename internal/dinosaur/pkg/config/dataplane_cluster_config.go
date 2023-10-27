@@ -5,9 +5,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/constants"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 
 	userv1 "github.com/openshift/api/user/v1"
@@ -36,8 +36,19 @@ type DataplaneClusterConfig struct {
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
 	Kubeconfig                            string         `json:"kubeconfig"`
 	RawKubernetesConfig                   *clientcmdapi.Config
-	CentralOperatorOLMConfig              OperatorInstallationConfig `json:"dinosaur_operator_olm_config"`
-	FleetshardOperatorOLMConfig           OperatorInstallationConfig `json:"fleetshard_operator_olm_config"`
+}
+
+var (
+	onceDataplaneConfig sync.Once
+	dataplaneConfig     *DataplaneClusterConfig
+)
+
+// SingletonDataplaneClusterConfig returns the DataplaneClusterConfig
+func SingletonDataplaneClusterConfig() *DataplaneClusterConfig {
+	onceDataplaneConfig.Do(func() {
+		dataplaneConfig = GetDataplaneClusterConfig()
+	})
+	return dataplaneConfig
 }
 
 // OperatorInstallationConfig ...
@@ -67,34 +78,28 @@ func getDefaultKubeconfig() string {
 	return filepath.Join(homeDir, ".kube", "config")
 }
 
-// NewDataplaneClusterConfig ...
-func NewDataplaneClusterConfig() *DataplaneClusterConfig {
-	return &DataplaneClusterConfig{
-		OpenshiftVersion:                      "",
-		ComputeMachineType:                    "m5.2xlarge",
-		ImagePullDockerConfigContent:          "",
-		ImagePullDockerConfigFile:             "secrets/image-pull.dockerconfigjson",
-		DataPlaneClusterConfigFile:            "config/dataplane-cluster-configuration.yaml",
-		ReadOnlyUserListFile:                  "config/read-only-user-list.yaml",
-		DataPlaneClusterScalingType:           ManualScaling,
-		ClusterConfig:                         &ClusterConfig{},
-		EnableReadyDataPlaneClustersReconcile: true,
-		Kubeconfig:                            getDefaultKubeconfig(),
-		CentralOperatorOLMConfig: OperatorInstallationConfig{
-			IndexImage:             "quay.io/osd-addons/managed-central:production-82b42db",
-			CatalogSourceNamespace: "openshift-marketplace",
-			Namespace:              constants.CentralOperatorNamespace,
-			SubscriptionChannel:    "alpha",
-			Package:                "managed-central",
-		},
-		FleetshardOperatorOLMConfig: OperatorInstallationConfig{
-			IndexImage:             "quay.io/osd-addons/fleetshard-operator:production-82b42db",
-			CatalogSourceNamespace: "openshift-marketplace",
-			Namespace:              constants.FleetShardOperatorNamespace,
-			SubscriptionChannel:    "alpha",
-			Package:                "fleetshard-operator",
-		},
-	}
+var (
+	onceDataplanceClusterConfig sync.Once
+	dataplaneClusterConfig      *DataplaneClusterConfig
+)
+
+// GetDataplaneClusterConfig ...
+func GetDataplaneClusterConfig() *DataplaneClusterConfig {
+	onceDataplanceClusterConfig.Do(func() {
+		dataplaneClusterConfig = &DataplaneClusterConfig{
+			OpenshiftVersion:                      "",
+			ComputeMachineType:                    "m5.2xlarge",
+			ImagePullDockerConfigContent:          "",
+			ImagePullDockerConfigFile:             "secrets/image-pull.dockerconfigjson",
+			DataPlaneClusterConfigFile:            "config/dataplane-cluster-configuration.yaml",
+			ReadOnlyUserListFile:                  "config/read-only-user-list.yaml",
+			DataPlaneClusterScalingType:           ManualScaling,
+			ClusterConfig:                         &ClusterConfig{},
+			EnableReadyDataPlaneClustersReconcile: true,
+			Kubeconfig:                            getDefaultKubeconfig(),
+		}
+	})
+	return dataplaneClusterConfig
 }
 
 // ManualCluster manual cluster configuration
@@ -304,16 +309,6 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")
 	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
 	c.addKubeconfigFlag(fs)
-	fs.StringVar(&c.CentralOperatorOLMConfig.CatalogSourceNamespace, "central-operator-cs-namespace", c.CentralOperatorOLMConfig.CatalogSourceNamespace, "Central operator catalog source namespace.")
-	fs.StringVar(&c.CentralOperatorOLMConfig.IndexImage, "central-operator-index-image", c.CentralOperatorOLMConfig.IndexImage, "Central operator index image")
-	fs.StringVar(&c.CentralOperatorOLMConfig.Namespace, "central-operator-namespace", c.CentralOperatorOLMConfig.Namespace, "Central operator namespace")
-	fs.StringVar(&c.CentralOperatorOLMConfig.Package, "central-operator-package", c.CentralOperatorOLMConfig.Package, "Central operator package")
-	fs.StringVar(&c.CentralOperatorOLMConfig.SubscriptionChannel, "central-operator-sub-channel", c.CentralOperatorOLMConfig.SubscriptionChannel, "Central operator subscription channel")
-	fs.StringVar(&c.FleetshardOperatorOLMConfig.CatalogSourceNamespace, "fleetshard-operator-cs-namespace", c.FleetshardOperatorOLMConfig.CatalogSourceNamespace, "fleetshard operator catalog source namespace.")
-	fs.StringVar(&c.FleetshardOperatorOLMConfig.IndexImage, "fleetshard-operator-index-image", c.FleetshardOperatorOLMConfig.IndexImage, "fleetshard operator index image")
-	fs.StringVar(&c.FleetshardOperatorOLMConfig.Namespace, "fleetshard-operator-namespace", c.FleetshardOperatorOLMConfig.Namespace, "fleetshard operator namespace")
-	fs.StringVar(&c.FleetshardOperatorOLMConfig.Package, "fleetshard-operator-package", c.FleetshardOperatorOLMConfig.Package, "fleetshard operator package")
-	fs.StringVar(&c.FleetshardOperatorOLMConfig.SubscriptionChannel, "fleetshard-operator-sub-channel", c.FleetshardOperatorOLMConfig.SubscriptionChannel, "fleetshard operator subscription channel")
 }
 
 // ReadFiles ...

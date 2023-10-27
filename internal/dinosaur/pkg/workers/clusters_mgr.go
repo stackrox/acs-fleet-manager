@@ -93,7 +93,6 @@ type ClusterManager struct {
 
 // ClusterManagerOptions ...
 type ClusterManagerOptions struct {
-	di.Inject
 	Reconciler                 workers.Reconciler
 	OCMConfig                  *ocm.OCMConfig
 	ObservabilityConfiguration *observatorium.ObservabilityConfiguration
@@ -101,17 +100,29 @@ type ClusterManagerOptions struct {
 	SupportedProviders         *config.ProviderConfig
 	ClusterService             services.ClusterService
 	CloudProvidersService      services.CloudProvidersService
-	FleetshardOperatorAddon    services.FleetshardOperatorAddon
+}
+
+// ClusterManagerOptions ...
+type ClusterManagerOptionsDI struct {
+	di.Inject
+	Reconciler workers.Reconciler
 }
 
 type processor func() []error
 
 // NewClusterManager creates a new cluster manager
-func NewClusterManager(o ClusterManagerOptions) *ClusterManager {
+func NewClusterManager(o ClusterManagerOptionsDI) *ClusterManager {
 	return &ClusterManager{
-		id:                    uuid.New().String(),
-		workerType:            "cluster",
-		ClusterManagerOptions: o,
+		id:         uuid.New().String(),
+		workerType: "cluster",
+		ClusterManagerOptions: ClusterManagerOptions{
+			Reconciler:                 o.Reconciler,
+			OCMConfig:                  ocm.GetOCMConfig(),
+			ObservabilityConfiguration: observatorium.GetObservabilityConfigurationConfig(),
+			DataplaneClusterConfig:     config.SingletonDataplaneClusterConfig(),
+			ClusterService:             services.SingletonClusterService(),
+			CloudProvidersService:      services.SingletonCloudProviderService(),
+		},
 	}
 }
 
@@ -561,15 +572,6 @@ func (c *ClusterManager) reconcileClusterDNS(cluster api.Cluster) error {
 	_, dnsErr := c.ClusterService.GetClusterDNS(cluster.ClusterID)
 	if dnsErr != nil {
 		return errors.WithMessagef(dnsErr, "failed to reconcile cluster %s: GetClusterDNS %s", cluster.ClusterID, dnsErr.Error())
-	}
-
-	return nil
-}
-
-func (c *ClusterManager) reconcileClusterResources(cluster api.Cluster) error {
-	resourceSet := c.buildResourceSet()
-	if err := c.ClusterService.ApplyResources(&cluster, resourceSet); err != nil {
-		return errors.Wrapf(err, "failed to apply resources for cluster %s", cluster.ClusterID)
 	}
 
 	return nil

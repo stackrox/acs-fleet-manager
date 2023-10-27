@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -26,12 +27,20 @@ type FleetShardAuthZConfig struct {
 	AllowedOrgIDsFile string
 }
 
-// NewFleetShardAuthZConfig ...
-func NewFleetShardAuthZConfig() *FleetShardAuthZConfig {
-	return &FleetShardAuthZConfig{
-		Enabled:           true,
-		AllowedOrgIDsFile: "config/fleetshard-authz-org-ids-prod.yaml",
-	}
+var (
+	fleetshardAuthZConfig     *FleetShardAuthZConfig
+	onceFleetshardAuthZConfig sync.Once
+)
+
+// GetFleetShardAuthZConfig ...
+func GetFleetShardAuthZConfig() *FleetShardAuthZConfig {
+	onceFleetshardAuthZConfig.Do(func() {
+		fleetshardAuthZConfig = &FleetShardAuthZConfig{
+			Enabled:           true,
+			AllowedOrgIDsFile: "config/fleetshard-authz-org-ids-prod.yaml",
+		}
+	})
+	return fleetshardAuthZConfig
 }
 
 // AddFlags ...

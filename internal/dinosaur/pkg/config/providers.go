@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -112,11 +113,19 @@ type ProviderConfig struct {
 	ProvidersConfigFile string                `json:"providers_config_file"`
 }
 
-// NewSupportedProvidersConfig ...
-func NewSupportedProvidersConfig() *ProviderConfig {
-	return &ProviderConfig{
-		ProvidersConfigFile: "config/provider-configuration.yaml",
-	}
+var (
+	onceProvidersConfigs  sync.Once
+	provderConfigInstance *ProviderConfig
+)
+
+// GetProviderConfig ...
+func GetProviderConfig() *ProviderConfig {
+	onceProvidersConfigs.Do(func() {
+		provderConfigInstance = &ProviderConfig{
+			ProvidersConfigFile: "config/provider-configuration.yaml",
+		}
+	})
+	return provderConfigInstance
 }
 
 var _ environments.ServiceValidator = &ProviderConfig{}

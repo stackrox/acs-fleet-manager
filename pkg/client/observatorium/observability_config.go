@@ -2,6 +2,7 @@ package observatorium
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -39,28 +40,36 @@ type ObservabilityConfiguration struct {
 	ObservabilityConfigAccessTokenFile string `json:"observability_config_access_token_file"`
 }
 
-// NewObservabilityConfigurationConfig ...
-func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
-	return &ObservabilityConfiguration{
-		Timeout:                            240 * time.Second,
-		Debug:                              true, // TODO: false
-		EnableMock:                         false,
-		Insecure:                           true, // TODO: false
-		ObservabilityConfigRepo:            "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents",
-		ObservabilityConfigChannel:         "resources", // Pointing to resources as the individual directories for prod and staging are no longer needed
-		ObservabilityConfigAccessToken:     "",
-		ObservabilityConfigAccessTokenFile: "secrets/observability-config-access.token",
-		ObservabilityConfigTag:             "main",
-		MetricsClientIDFile:                "secrets/rhsso-metrics.clientId",
-		MetricsSecretFile:                  "secrets/rhsso-metrics.clientSecret", // pragma: allowlist secret
-		LogsClientIDFile:                   "secrets/rhsso-logs.clientId",
-		LogsSecretFile:                     "secrets/rhsso-logs.clientSecret", // pragma: allowlist secret
-		RedHatSSOTenant:                    "",
-		RedHatSSOAuthServerURL:             "",
-		RedHatSSORealm:                     "",
-		RedHatSSOTokenRefresherURL:         "",
-		RedHatSSOGatewayURL:                "",
-	}
+var (
+	onceObservabilityConfig sync.Once
+	observabilityConfig     *ObservabilityConfiguration
+)
+
+// GetObservabilityConfigurationConfig ...
+func GetObservabilityConfigurationConfig() *ObservabilityConfiguration {
+	onceObservabilityConfig.Do(func() {
+		observabilityConfig = &ObservabilityConfiguration{
+			Timeout:                            240 * time.Second,
+			Debug:                              true, // TODO: false
+			EnableMock:                         false,
+			Insecure:                           true, // TODO: false
+			ObservabilityConfigRepo:            "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents",
+			ObservabilityConfigChannel:         "resources", // Pointing to resources as the individual directories for prod and staging are no longer needed
+			ObservabilityConfigAccessToken:     "",
+			ObservabilityConfigAccessTokenFile: "secrets/observability-config-access.token",
+			ObservabilityConfigTag:             "main",
+			MetricsClientIDFile:                "secrets/rhsso-metrics.clientId",
+			MetricsSecretFile:                  "secrets/rhsso-metrics.clientSecret", // pragma: allowlist secret
+			LogsClientIDFile:                   "secrets/rhsso-logs.clientId",
+			LogsSecretFile:                     "secrets/rhsso-logs.clientSecret", // pragma: allowlist secret
+			RedHatSSOTenant:                    "",
+			RedHatSSOAuthServerURL:             "",
+			RedHatSSORealm:                     "",
+			RedHatSSOTokenRefresherURL:         "",
+			RedHatSSOGatewayURL:                "",
+		}
+	})
+	return observabilityConfig
 }
 
 // AddFlags ...

@@ -3,6 +3,7 @@ package presenters
 import (
 	"fmt"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/golang/glog"
@@ -21,8 +22,21 @@ type ManagedCentralPresenter struct {
 	gitopsService gitops.Service
 }
 
+var (
+	onceManagedCentralPresenter sync.Once
+	managedCentralPresenter     *ManagedCentralPresenter
+)
+
+// SingletonManagedCentralPresenter returns the ManagedCentralPresenter
+func SingletonManagedCentralPresenter() *ManagedCentralPresenter {
+	onceManagedCentralPresenter.Do(func() {
+		managedCentralPresenter = newManagedCentralPresenter(config.GetCentralConfig(), gitops.SingletonGitOpsService())
+	})
+	return managedCentralPresenter
+}
+
 // NewManagedCentralPresenter creates a new instance of ManagedCentralPresenter
-func NewManagedCentralPresenter(config *config.CentralConfig, gitopsService gitops.Service) *ManagedCentralPresenter {
+func newManagedCentralPresenter(config *config.CentralConfig, gitopsService gitops.Service) *ManagedCentralPresenter {
 	return &ManagedCentralPresenter{
 		centralConfig: config,
 		gitopsService: gitopsService,

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/goava/di"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
@@ -27,7 +26,6 @@ var _ DataPlaneClusterService = &dataPlaneClusterService{}
 const dataPlaneClusterStatusCondReadyName = "Ready"
 
 type dataPlaneClusterService struct {
-	di.Inject
 	ClusterService         ClusterService
 	CentralConfig          *config.CentralConfig
 	ObservabilityConfig    *observatorium.ObservabilityConfiguration
@@ -35,8 +33,13 @@ type dataPlaneClusterService struct {
 }
 
 // NewDataPlaneClusterService ...
-func NewDataPlaneClusterService(config dataPlaneClusterService) DataPlaneClusterService {
-	return &config
+func NewDataPlaneClusterService() DataPlaneClusterService {
+	return &dataPlaneClusterService{
+		ClusterService:         SingletonClusterService(),
+		CentralConfig:          config.GetCentralConfig(),
+		ObservabilityConfig:    observatorium.GetObservabilityConfigurationConfig(),
+		DataplaneClusterConfig: config.GetDataplaneClusterConfig(),
+	}
 }
 
 // GetDataPlaneClusterConfig ...

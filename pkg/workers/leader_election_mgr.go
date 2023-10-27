@@ -38,6 +38,24 @@ type leaderLeaseAcquisition struct {
 	currentLease *api.LeaderLease
 }
 
+var (
+	onceLeaderElectionManager sync.Once
+	leaderElectionManager     *LeaderElectionManager
+)
+
+// SingletonLeaderElectionManager returns the LeaderElectionManager
+// TODO: move workers to registry
+func SingletonLeaderElectionManager(workers []Worker) *LeaderElectionManager {
+	onceLeaderElectionManager.Do(func() {
+		leaderElectionManager = NewLeaderElectionManager(
+			workers,
+			db.SingletonConnectionFactory(),
+			server.GetServerConfig(),
+		)
+	})
+	return leaderElectionManager
+}
+
 // NewLeaderElectionManager ...
 func NewLeaderElectionManager(workers []Worker, connectionFactory *db.ConnectionFactory, serverConfig *server.ServerConfig) *LeaderElectionManager {
 	if serverConfig.ForceLeader {

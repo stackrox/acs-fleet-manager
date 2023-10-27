@@ -1,7 +1,6 @@
 package environments
 
 import (
-	"github.com/goava/di"
 	"github.com/gorilla/mux"
 	"github.com/spf13/pflag"
 )
@@ -27,14 +26,3 @@ type BootService interface {
 type RouteLoader interface {
 	AddRoutes(mainRouter *mux.Router) error
 }
-
-// EnvHook ...
-type EnvHook struct {
-	Func di.Invocation
-}
-
-// BeforeCreateServicesHook ...
-type BeforeCreateServicesHook EnvHook
-
-// AfterCreateServicesHook ...
-type AfterCreateServicesHook EnvHook

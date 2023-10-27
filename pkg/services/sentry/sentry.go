@@ -6,12 +6,12 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 )
 
 // Initialize ...
-func Initialize(envName environments.EnvName, c *Config) error {
+func Initialize(envName string) error {
 	options := sentry.ClientOptions{}
+	c := GetConfig()
 
 	if c.Enabled {
 		key := c.Key
@@ -31,7 +31,7 @@ func Initialize(envName environments.EnvName, c *Config) error {
 	}
 	options.Debug = c.Debug
 	options.AttachStacktrace = true
-	options.Environment = string(envName)
+	options.Environment = envName
 
 	hostname, err := os.Hostname()
 	if err != nil && hostname != "" {

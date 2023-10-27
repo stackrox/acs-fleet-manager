@@ -7,6 +7,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
+	"sync"
 )
 
 // Provider ...
@@ -39,10 +40,6 @@ type Provider interface {
 	GetCloudProviders() (*types.CloudProviderInfoList, error)
 	// GetCloudProviderRegions Get the regions information for the given cloud provider from the cluster provider
 	GetCloudProviderRegions(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error)
-	// Install the dinosaur operator in a given cluster
-	InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error)
-	// Install the cluster logging operator for a given cluster
-	InstallFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error)
 }
 
 // ProviderFactory used to return an instance of Provider implementation
@@ -55,6 +52,25 @@ type ProviderFactory interface {
 // DefaultProviderFactory the default implementation for ProviderFactory
 type DefaultProviderFactory struct {
 	providerContainer map[api.ClusterProviderType]Provider
+}
+
+var (
+	providerFactory     *DefaultProviderFactory
+	onceProviderFactory sync.Once
+)
+
+// SingletonProviderFactory returns a DefaultProviderFactory
+func SingletonProviderFactory() *DefaultProviderFactory {
+	onceProviderFactory.Do(func() {
+		providerFactory = NewDefaultProviderFactory(
+			ocm.SingletonClusterManagementClient(),
+			db.SingletonConnectionFactory(),
+			ocm.GetOCMConfig(),
+			config.GetAWSConfig(),
+			config.GetDataplaneClusterConfig(),
+		)
+	})
+	return providerFactory
 }
 
 // NewDefaultProviderFactory ...

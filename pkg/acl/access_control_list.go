@@ -3,6 +3,7 @@ package acl
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/spf13/pflag"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
@@ -27,12 +28,20 @@ type AccessControlListConfig struct {
 	EnableDenyList     bool
 }
 
-// NewAccessControlListConfig ...
-func NewAccessControlListConfig() *AccessControlListConfig {
-	return &AccessControlListConfig{
-		DenyListConfigFile: "config/deny-list-configuration.yaml",
-		EnableDenyList:     false,
-	}
+var (
+	onceAccessControlListConfig sync.Once
+	accessControlListConfig     *AccessControlListConfig
+)
+
+// GetAccessControlListConfig ...
+func GetAccessControlListConfig() *AccessControlListConfig {
+	onceAccessControlListConfig.Do(func() {
+		accessControlListConfig = &AccessControlListConfig{
+			DenyListConfigFile: "config/deny-list-configuration.yaml",
+			EnableDenyList:     false,
+		}
+	})
+	return accessControlListConfig
 }
 
 // AddFlags ...

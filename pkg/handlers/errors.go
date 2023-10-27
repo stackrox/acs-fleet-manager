@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"sync"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/compat"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -13,6 +14,19 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/shared"
 )
+
+var (
+	onceErrorsHandler    sync.Once
+	errorHandlerInstance *ErrorHandler
+)
+
+// SingletonErrorsHandler returns the ErrorHandler
+func SingletonErrorsHandler() *ErrorHandler {
+	onceErrorsHandler.Do(func() {
+		errorHandlerInstance = NewErrorsHandler()
+	})
+	return errorHandlerInstance
+}
 
 // NewErrorsHandler ...
 func NewErrorsHandler() *ErrorHandler {
