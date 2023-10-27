@@ -57,14 +57,6 @@ type CentralRequest struct {
 	// PlacementID field should be updated every time when a CentralRequest is assigned to an OSD cluster (even if it's the same one again).
 	PlacementID string `json:"placement_id"`
 
-	// Central schema is defined by dbapi.CentralSpec.
-	Central api.JSON `json:"central"`
-	// Scanner schema is defined by dbapi.ScannerSpec.
-	Scanner api.JSON `json:"scanner"`
-
-	// OperatorImage operator image which reconciles the Central instance
-	OperatorImage string `json:"desired_operator_image"`
-
 	// The type of central instance (eval or standard).
 	InstanceType string `json:"instance_type"`
 	// the quota service type for the central, e.g. ams, quota-management-list.
@@ -91,12 +83,6 @@ type CentralRequest struct {
 
 	// All we need to integrate Central with an IdP.
 	AuthConfig
-
-	// ForceReconcile will be set by the admin API to indicate to fleetshard-sync that this instance needs
-	// to be reconciled even if it has not changed and is in a state were reconciliation should be skipped.
-	// Set this to "always" to force reconcilation. Set it to any other string to force a
-	// one time reconcilation or to stop from reconciling always.
-	ForceReconcile string `json:"force_reconcile"`
 }
 
 // CentralList ...
@@ -185,54 +171,4 @@ func (k *CentralRequest) GetDataHost() string {
 		return ""
 	}
 	return fmt.Sprintf("acs-data-%s.%s", k.ID, k.Host)
-}
-
-// GetCentralSpec retrieves the CentralSpec from the CentralRequest in unmarshalled form.
-func (k *CentralRequest) GetCentralSpec() (*CentralSpec, error) {
-	var centralSpec = DefaultCentralSpec
-	if len(k.Central) > 0 {
-		err := json.Unmarshal(k.Central, &centralSpec)
-		if err != nil {
-			return nil, fmt.Errorf("unmarshalling CentralSpec: %w", err)
-		}
-	}
-	return &centralSpec, nil
-}
-
-// GetScannerSpec retrieves the ScannerSpec from the CentralRequest in unmarshalled form.
-func (k *CentralRequest) GetScannerSpec() (*ScannerSpec, error) {
-	var scannerSpec = DefaultScannerSpec
-	if len(k.Scanner) > 0 {
-		err := json.Unmarshal(k.Scanner, &scannerSpec)
-		if err != nil {
-			return nil, fmt.Errorf("unmarshalling ScannerSpec: %w", err)
-		}
-	}
-	return &scannerSpec, nil
-}
-
-// SetCentralSpec updates the CentralSpec within the CentralRequest.
-func (k *CentralRequest) SetCentralSpec(centralSpec *CentralSpec) error {
-	centralSpecBytes, err := json.Marshal(centralSpec)
-	if err != nil {
-		return fmt.Errorf("marshalling CentralSpec into JSON: %w", err)
-	}
-	err = k.Central.UnmarshalJSON(centralSpecBytes)
-	if err != nil {
-		return fmt.Errorf("updating CentralSpec within CentralRequest: %w", err)
-	}
-	return nil
-}
-
-// SetScannerSpec updates the ScannerSpec within the CentralRequest.
-func (k *CentralRequest) SetScannerSpec(scannerSpec *ScannerSpec) error {
-	scannerSpecBytes, err := json.Marshal(scannerSpec)
-	if err != nil {
-		return fmt.Errorf("marshalling ScannerSpec into JSON: %w", err)
-	}
-	err = k.Scanner.UnmarshalJSON(scannerSpecBytes)
-	if err != nil {
-		return fmt.Errorf("updating ScannerSpec within CentralRequest: %w", err)
-	}
-	return nil
 }

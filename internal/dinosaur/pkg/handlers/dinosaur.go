@@ -40,30 +40,6 @@ func NewDinosaurHandler(service services.DinosaurService, providerConfig *config
 	}
 }
 
-func validateCentralResourcesUnspecified(dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
-	return func() *errors.ServiceError {
-		if len(dinosaurRequest.Central.Resources.Limits) > 0 ||
-			len(dinosaurRequest.Central.Resources.Requests) > 0 {
-			return errors.Forbidden("not allowed to specify central resources")
-		}
-		return nil
-	}
-}
-
-func validateScannerResourcesUnspecified(dinosaurRequest *public.CentralRequestPayload) handlers.Validate {
-	return func() *errors.ServiceError {
-		if len(dinosaurRequest.Scanner.Analyzer.Resources.Limits) > 0 ||
-			len(dinosaurRequest.Scanner.Analyzer.Resources.Requests) > 0 {
-			return errors.Forbidden("not allowed to specify scanner analyzer resources")
-		}
-		if len(dinosaurRequest.Scanner.Db.Resources.Limits) > 0 ||
-			len(dinosaurRequest.Scanner.Db.Resources.Requests) > 0 {
-			return errors.Forbidden("not allowed to specify scanner db resources")
-		}
-		return nil
-	}
-}
-
 // Create ...
 func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var centralRequest public.CentralRequestPayload
@@ -80,8 +56,6 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateDinosaurClaims(ctx, &centralRequest, convCentral),
 			ValidateCloudProvider(&h.service, convCentral, h.providerConfig, "creating central requests"),
 			handlers.ValidateMultiAZEnabled(&centralRequest.MultiAz, "creating central requests"),
-			validateCentralResourcesUnspecified(&centralRequest),
-			validateScannerResourcesUnspecified(&centralRequest),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			// Set the central request as internal, **iff** the user agent used within the creation request is contained

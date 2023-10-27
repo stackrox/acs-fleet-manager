@@ -27,7 +27,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"github.com/stackrox/acs-fleet-manager/pkg/metrics"
 )
@@ -113,39 +112,37 @@ type DinosaurService interface {
 var _ DinosaurService = &dinosaurService{}
 
 type dinosaurService struct {
-	connectionFactory            *db.ConnectionFactory
-	clusterService               ClusterService
-	dinosaurConfig               *config.CentralConfig
-	awsConfig                    *config.AWSConfig
-	quotaServiceFactory          QuotaServiceFactory
-	mu                           sync.Mutex
-	awsClientFactory             aws.ClientFactory
-	dataplaneClusterConfig       *config.DataplaneClusterConfig
-	clusterPlacementStrategy     ClusterPlacementStrategy
-	amsClient                    ocm.AMSClient
-	centralDefaultVersionService CentralDefaultVersionService
-	iamConfig                    *iam.IAMConfig
-	rhSSODynamicClientsAPI       *dynamicClientAPI.AcsTenantsApiService
+	connectionFactory        *db.ConnectionFactory
+	clusterService           ClusterService
+	dinosaurConfig           *config.CentralConfig
+	awsConfig                *config.AWSConfig
+	quotaServiceFactory      QuotaServiceFactory
+	mu                       sync.Mutex
+	awsClientFactory         aws.ClientFactory
+	dataplaneClusterConfig   *config.DataplaneClusterConfig
+	clusterPlacementStrategy ClusterPlacementStrategy
+	amsClient                ocm.AMSClient
+	iamConfig                *iam.IAMConfig
+	rhSSODynamicClientsAPI   *dynamicClientAPI.AcsTenantsApiService
 }
 
 // NewDinosaurService ...
 func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService,
 	iamConfig *iam.IAMConfig, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
 	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory,
-	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, centralDefaultVersionService CentralDefaultVersionService) DinosaurService {
+	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient) DinosaurService {
 	return &dinosaurService{
-		connectionFactory:            connectionFactory,
-		clusterService:               clusterService,
-		iamConfig:                    iamConfig,
-		dinosaurConfig:               dinosaurConfig,
-		awsConfig:                    awsConfig,
-		quotaServiceFactory:          quotaServiceFactory,
-		awsClientFactory:             awsClientFactory,
-		dataplaneClusterConfig:       dataplaneClusterConfig,
-		clusterPlacementStrategy:     clusterPlacementStrategy,
-		amsClient:                    amsClient,
-		centralDefaultVersionService: centralDefaultVersionService,
-		rhSSODynamicClientsAPI:       dynamicclients.NewDynamicClientsAPI(iamConfig.RedhatSSORealm),
+		connectionFactory:        connectionFactory,
+		clusterService:           clusterService,
+		iamConfig:                iamConfig,
+		dinosaurConfig:           dinosaurConfig,
+		awsConfig:                awsConfig,
+		quotaServiceFactory:      quotaServiceFactory,
+		awsClientFactory:         awsClientFactory,
+		dataplaneClusterConfig:   dataplaneClusterConfig,
+		clusterPlacementStrategy: clusterPlacementStrategy,
+		amsClient:                amsClient,
+		rhSSODynamicClientsAPI:   dynamicclients.NewDynamicClientsAPI(iamConfig.RedhatSSORealm),
 	}
 }
 
@@ -274,14 +271,6 @@ func (k *dinosaurService) RegisterDinosaurJob(ctx context.Context, dinosaurReque
 	subscriptionID, err := k.reserveQuota(ctx, dinosaurRequest)
 	if err != nil {
 		return err
-	}
-
-	if features.TargetedOperatorUpgrades.Enabled() {
-		defaultVersion, serviceErr := k.centralDefaultVersionService.GetDefaultVersion()
-		if serviceErr != nil {
-			return err
-		}
-		dinosaurRequest.OperatorImage = defaultVersion
 	}
 
 	dbConn := k.connectionFactory.New()

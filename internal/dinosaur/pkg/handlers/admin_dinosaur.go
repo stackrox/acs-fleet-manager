@@ -12,8 +12,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/public"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/defaults"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/presenters"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
@@ -21,7 +19,6 @@ import (
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/strategicpatch"
 )
 
 // AdminCentralHandler is the interface for the admin central handler
@@ -32,16 +29,10 @@ type AdminCentralHandler interface {
 	Get(w http.ResponseWriter, r *http.Request)
 	// List all centrals
 	List(w http.ResponseWriter, r *http.Request)
-	// Update a central
-	Update(w http.ResponseWriter, r *http.Request)
 	// Delete a central
 	Delete(w http.ResponseWriter, r *http.Request)
 	// DbDelete deletes a central from the database
 	DbDelete(w http.ResponseWriter, r *http.Request)
-	// SetCentralDefaultVersion sets the default version for a central
-	SetCentralDefaultVersion(w http.ResponseWriter, r *http.Request)
-	// GetCentralDefaultVersion gets the default version for a central
-	GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request)
 	// Restore restores a tenant that was already marked as deleted
 	Restore(w http.ResponseWriter, r *http.Request)
 	// RotateSecrets rotates secrets within central
@@ -49,11 +40,10 @@ type AdminCentralHandler interface {
 }
 
 type adminCentralHandler struct {
-	service                      services.DinosaurService
-	accountService               account.AccountService
-	providerConfig               *config.ProviderConfig
-	telemetry                    *services.Telemetry
-	centralDefaultVersionService services.CentralDefaultVersionService
+	service        services.DinosaurService
+	accountService account.AccountService
+	providerConfig *config.ProviderConfig
+	telemetry      *services.Telemetry
 }
 
 var _ AdminCentralHandler = (*adminCentralHandler)(nil)
@@ -64,32 +54,18 @@ func NewAdminCentralHandler(
 	accountService account.AccountService,
 	providerConfig *config.ProviderConfig,
 	telemetry *services.Telemetry,
-	centralDefaultVersionService services.CentralDefaultVersionService) AdminCentralHandler {
+) AdminCentralHandler {
 	return &adminCentralHandler{
-		service:                      service,
-		accountService:               accountService,
-		providerConfig:               providerConfig,
-		telemetry:                    telemetry,
-		centralDefaultVersionService: centralDefaultVersionService,
+		service:        service,
+		accountService: accountService,
+		providerConfig: providerConfig,
+		telemetry:      telemetry,
 	}
 }
 
 // Create ...
 func (h adminCentralHandler) Create(w http.ResponseWriter, r *http.Request) {
-	centralRequest := public.CentralRequestPayload{
-		Central: public.CentralSpec{
-			Resources: converters.ConvertCoreV1ResourceRequirementsToPublic(&defaults.CentralResources),
-		},
-		Scanner: public.ScannerSpec{
-			Analyzer: public.ScannerSpecAnalyzer{
-				Resources: converters.ConvertCoreV1ResourceRequirementsToPublic(&defaults.ScannerAnalyzerResources),
-				Scaling:   converters.ConvertScalingToPublic(&dbapi.DefaultScannerAnalyzerScaling),
-			},
-			Db: public.ScannerSpecDb{
-				Resources: converters.ConvertCoreV1ResourceRequirementsToPublic(&defaults.ScannerDbResources),
-			},
-		},
-	}
+	centralRequest := public.CentralRequestPayload{}
 	ctx := r.Context()
 	convCentral := dbapi.CentralRequest{}
 
@@ -103,8 +79,6 @@ func (h adminCentralHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateDinosaurClaims(ctx, &centralRequest, &convCentral),
 			ValidateCloudProvider(&h.service, &convCentral, h.providerConfig, "creating central requests"),
 			handlers.ValidateMultiAZEnabled(&centralRequest.MultiAz, "creating central requests"),
-			ValidateCentralSpec(ctx, &centralRequest, &convCentral),
-			ValidateScannerSpec(ctx, &centralRequest, &convCentral),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterDinosaurJob(ctx, &convCentral)
@@ -279,149 +253,6 @@ func validateScannerSpec(s *dbapi.ScannerSpec) error {
 		return fmt.Errorf("updating resources within ScannerSpec DB: %w", err)
 	}
 	return nil
-}
-
-func updateCentralRequest(request *dbapi.CentralRequest, strategicPatch []byte) error {
-
-	var patchMap map[string]interface{}
-	err := json.Unmarshal(strategicPatch, &patchMap)
-	if err != nil {
-		return fmt.Errorf("unmarshalling strategic merge patch: %w", err)
-	}
-
-	patchBytes, err := json.Marshal(patchMap)
-	if err != nil {
-		return fmt.Errorf("marshalling strategic merge patch: %w", err)
-	}
-
-	var centralBytes = "{}"
-	if len(request.Central) > 0 {
-		centralBytes = string(request.Central)
-	}
-	var scannerBytes = "{}"
-	if len(request.Scanner) > 0 {
-		scannerBytes = string(request.Scanner)
-	}
-
-	var originalBytes = fmt.Sprintf("{\"central\":%s,\"scanner\":%s,\"force_reconcile\":\"%s\"}", centralBytes, scannerBytes, request.ForceReconcile)
-
-	type Original struct {
-		Central        *dbapi.CentralSpec `json:"central,omitempty"`
-		Scanner        *dbapi.ScannerSpec `json:"scanner,omitempty"`
-		ForceReconcile string             `json:"force_reconcile,omitempty"`
-	}
-
-	// apply the patch
-	mergedBytes, err := strategicpatch.StrategicMergePatch([]byte(originalBytes), patchBytes, Original{})
-	if err != nil {
-		return fmt.Errorf("applying strategic merge patch: %w", err)
-	}
-	var merged Original
-	if err := json.Unmarshal(mergedBytes, &merged); err != nil {
-		return fmt.Errorf("unmarshalling merged CentralRequest: %w", err)
-	}
-
-	if merged.Central == nil {
-		merged.Central = &dbapi.CentralSpec{}
-	}
-
-	if merged.Scanner == nil {
-		merged.Scanner = &dbapi.ScannerSpec{}
-	}
-
-	err = validateCentralSpec(merged.Central)
-	if err != nil {
-		return fmt.Errorf("updating CentralSpec from CentralUpdateRequest: %w", err)
-	}
-	err = validateScannerSpec(merged.Scanner)
-	if err != nil {
-		return fmt.Errorf("updating ScannerSpec from CentralUpdateRequest: %w", err)
-	}
-
-	newCentralBytes, err := json.Marshal(merged.Central)
-	if err != nil {
-		return fmt.Errorf("marshalling CentralSpec: %w", err)
-	}
-	newScannerBytes, err := json.Marshal(merged.Scanner)
-	if err != nil {
-		return fmt.Errorf("marshalling ScannerSpec: %w", err)
-	}
-
-	request.Central = newCentralBytes
-	request.Scanner = newScannerBytes
-	request.ForceReconcile = merged.ForceReconcile
-
-	return nil
-
-}
-
-// Update a Central instance.
-func (h adminCentralHandler) Update(w http.ResponseWriter, r *http.Request) {
-	cfg := &handlers.HandlerConfig{
-		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			id := mux.Vars(r)["id"]
-			ctx := r.Context()
-			centralRequest, svcErr := h.service.Get(ctx, id)
-			if svcErr != nil {
-				return nil, svcErr
-			}
-
-			updateBytes, err := io.ReadAll(r.Body)
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Reading request body: %s", err.Error())
-			}
-
-			// unmarshal the update into a private.CentralUpdateRequest to ensure that it is well-formed
-			if err := json.Unmarshal(updateBytes, &private.CentralUpdateRequest{}); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Unmarshalling request body: %s", err.Error())
-			}
-
-			err = updateCentralRequest(centralRequest, updateBytes)
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, "Updating CentralRequest: %s", err.Error())
-			}
-
-			svcErr = h.service.VerifyAndUpdateDinosaurAdmin(ctx, centralRequest)
-			if svcErr != nil {
-				return nil, svcErr
-			}
-			return presenters.PresentDinosaurRequestAdminEndpoint(centralRequest, h.accountService)
-		},
-	}
-	handlers.Handle(w, r, cfg, http.StatusOK)
-}
-
-func (h adminCentralHandler) SetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
-	centralDefaultVersion := &private.CentralDefaultVersion{}
-	cfg := &handlers.HandlerConfig{
-		MarshalInto: centralDefaultVersion,
-		Validate: []handlers.Validate{
-			ValidateCentralDefaultVersion(centralDefaultVersion),
-		},
-		Action: func() (interface{}, *errors.ServiceError) {
-			if err := h.centralDefaultVersionService.SetDefaultVersion(centralDefaultVersion.Version); err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Set CentralDefaultVersion requests: %s", err.Error())
-			}
-
-			return nil, nil
-		},
-	}
-
-	handlers.Handle(w, r, cfg, http.StatusOK)
-}
-
-func (h adminCentralHandler) GetCentralDefaultVersion(w http.ResponseWriter, r *http.Request) {
-	cfg := &handlers.HandlerConfig{
-		Action: func() (interface{}, *errors.ServiceError) {
-			version, err := h.centralDefaultVersionService.GetDefaultVersion()
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Get CentralDefaultVersion requests: %s", err.Error())
-			}
-			return &private.CentralDefaultVersion{Version: version}, nil
-		},
-	}
-
-	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
 func (h adminCentralHandler) RotateSecrets(w http.ResponseWriter, r *http.Request) {
