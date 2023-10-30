@@ -5,7 +5,6 @@ package clusters
 
 import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
-	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 	"sync"
 )
 
@@ -45,12 +44,6 @@ var _ Provider = &ProviderMock{}
 //			},
 //			GetComputeNodesFunc: func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
 //				panic("mock out the GetComputeNodes method")
-//			},
-//			InstallDinosaurOperatorFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
-//				panic("mock out the InstallDinosaurOperator method")
-//			},
-//			InstallFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
-//				panic("mock out the InstallFleetshard method")
 //			},
 //			ScaleDownFunc: func(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
 //				panic("mock out the ScaleDown method")
@@ -94,12 +87,6 @@ type ProviderMock struct {
 
 	// GetComputeNodesFunc mocks the GetComputeNodes method.
 	GetComputeNodesFunc func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error)
-
-	// InstallDinosaurOperatorFunc mocks the InstallDinosaurOperator method.
-	InstallDinosaurOperatorFunc func(clusterSpec *types.ClusterSpec) (bool, error)
-
-	// InstallFleetshardFunc mocks the InstallFleetshard method.
-	InstallFleetshardFunc func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error)
 
 	// ScaleDownFunc mocks the ScaleDown method.
 	ScaleDownFunc func(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error)
@@ -159,18 +146,6 @@ type ProviderMock struct {
 			// Spec is the spec argument value.
 			Spec *types.ClusterSpec
 		}
-		// InstallDinosaurOperator holds details about calls to the InstallDinosaurOperator method.
-		InstallDinosaurOperator []struct {
-			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types.ClusterSpec
-		}
-		// InstallFleetshard holds details about calls to the InstallFleetshard method.
-		InstallFleetshard []struct {
-			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types.ClusterSpec
-			// Params is the params argument value.
-			Params []ocm.Parameter
-		}
 		// ScaleDown holds details about calls to the ScaleDown method.
 		ScaleDown []struct {
 			// ClusterSpec is the clusterSpec argument value.
@@ -202,8 +177,6 @@ type ProviderMock struct {
 	lockGetCloudProviders       sync.RWMutex
 	lockGetClusterDNS           sync.RWMutex
 	lockGetComputeNodes         sync.RWMutex
-	lockInstallDinosaurOperator sync.RWMutex
-	lockInstallFleetshard       sync.RWMutex
 	lockScaleDown               sync.RWMutex
 	lockScaleUp                 sync.RWMutex
 	lockSetComputeNodes         sync.RWMutex
@@ -497,74 +470,6 @@ func (mock *ProviderMock) GetComputeNodesCalls() []struct {
 	mock.lockGetComputeNodes.RLock()
 	calls = mock.calls.GetComputeNodes
 	mock.lockGetComputeNodes.RUnlock()
-	return calls
-}
-
-// InstallDinosaurOperator calls InstallDinosaurOperatorFunc.
-func (mock *ProviderMock) InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error) {
-	if mock.InstallDinosaurOperatorFunc == nil {
-		panic("ProviderMock.InstallDinosaurOperatorFunc: method is nil but Provider.InstallDinosaurOperator was just called")
-	}
-	callInfo := struct {
-		ClusterSpec *types.ClusterSpec
-	}{
-		ClusterSpec: clusterSpec,
-	}
-	mock.lockInstallDinosaurOperator.Lock()
-	mock.calls.InstallDinosaurOperator = append(mock.calls.InstallDinosaurOperator, callInfo)
-	mock.lockInstallDinosaurOperator.Unlock()
-	return mock.InstallDinosaurOperatorFunc(clusterSpec)
-}
-
-// InstallDinosaurOperatorCalls gets all the calls that were made to InstallDinosaurOperator.
-// Check the length with:
-//
-//	len(mockedProvider.InstallDinosaurOperatorCalls())
-func (mock *ProviderMock) InstallDinosaurOperatorCalls() []struct {
-	ClusterSpec *types.ClusterSpec
-} {
-	var calls []struct {
-		ClusterSpec *types.ClusterSpec
-	}
-	mock.lockInstallDinosaurOperator.RLock()
-	calls = mock.calls.InstallDinosaurOperator
-	mock.lockInstallDinosaurOperator.RUnlock()
-	return calls
-}
-
-// InstallFleetshard calls InstallFleetshardFunc.
-func (mock *ProviderMock) InstallFleetshard(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
-	if mock.InstallFleetshardFunc == nil {
-		panic("ProviderMock.InstallFleetshardFunc: method is nil but Provider.InstallFleetshard was just called")
-	}
-	callInfo := struct {
-		ClusterSpec *types.ClusterSpec
-		Params      []ocm.Parameter
-	}{
-		ClusterSpec: clusterSpec,
-		Params:      params,
-	}
-	mock.lockInstallFleetshard.Lock()
-	mock.calls.InstallFleetshard = append(mock.calls.InstallFleetshard, callInfo)
-	mock.lockInstallFleetshard.Unlock()
-	return mock.InstallFleetshardFunc(clusterSpec, params)
-}
-
-// InstallFleetshardCalls gets all the calls that were made to InstallFleetshard.
-// Check the length with:
-//
-//	len(mockedProvider.InstallFleetshardCalls())
-func (mock *ProviderMock) InstallFleetshardCalls() []struct {
-	ClusterSpec *types.ClusterSpec
-	Params      []ocm.Parameter
-} {
-	var calls []struct {
-		ClusterSpec *types.ClusterSpec
-		Params      []ocm.Parameter
-	}
-	mock.lockInstallFleetshard.RLock()
-	calls = mock.calls.InstallFleetshard
-	mock.lockInstallFleetshard.RUnlock()
 	return calls
 }
 
