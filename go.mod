@@ -41,7 +41,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/prometheus/client_model v0.5.0
-	github.com/prometheus/common v0.44.0
+	github.com/prometheus/common v0.45.0
 	github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt v0.0.0-20230323122535-49460b57cc45
 	github.com/rs/xid v1.5.0
 	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0
@@ -127,7 +127,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
+	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.23 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
