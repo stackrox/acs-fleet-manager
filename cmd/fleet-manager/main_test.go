@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
+	environmentsDino "github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/environments"
 	"os"
 	"testing"
 
@@ -31,7 +32,7 @@ func TestInjections(t *testing.T) {
 	// Run env.CreateServices() via command to make use of --central-idp-client-secret-file flag.
 	command := createServicesCommand(env)
 	Expect(err).To(BeNil())
-	err = env.AddFlags(command.Flags(), config.GetConfigs())
+	err = env.AddFlags(command.Flags(), config.GetConfigs(), environmentsDino.GetEnvironmentLoader(env.Name))
 	Expect(err).To(BeNil())
 	command.SetArgs([]string{"--central-idp-client-secret-file", file.Name()})
 	err = command.Execute()

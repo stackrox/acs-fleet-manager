@@ -32,7 +32,7 @@ func TestPlacementStrategyType(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.description, func(t *testing.T) {
-			strategy := NewClusterPlacementStrategy(tc.createClusterService())
+			strategy := &FirstReadyPlacementStrategy{clusterService: tc.createClusterService()}
 
 			require.IsType(t, tc.expectedType, strategy)
 		})
