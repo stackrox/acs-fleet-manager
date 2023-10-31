@@ -131,7 +131,6 @@ OCM_PAYLOAD=$(cat << EOF
             { "id": "cloudwatchAwsSecretAccessKey", "value": "${CLOUDWATCH_EXPORTER_AWS_SECRET_ACCESS_KEY:-}" },
             { "id": "fleetshardSyncAuthType", "value": "RHSSO" },
             { "id": "fleetshardSyncImageTag", "value": "quay.io/${FLEETSHARD_SYNC_ORG}/${FLEETSHARD_SYNC_IMAGE}:${FLEETSHARD_SYNC_TAG}" },
-            { "id": "fleetshardSyncAwsRoleArn", "value": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/FleetshardSyncServiceRole" },
             { "id": "fleetshardSyncAwsRegion", "value": "${CLUSTER_REGION}" },
             { "id": "fleetshardSyncFleetManagerEndpoint", "value": "${FM_ENDPOINT}" },
             { "id": "fleetshardSyncManagedDbEnabled", "value": "true" },

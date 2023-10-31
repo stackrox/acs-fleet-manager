@@ -169,7 +169,6 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set fleetshardSync.managedDB.securityGroup="${CLUSTER_MANAGED_DB_SECURITY_GROUP}" \
   --set fleetshardSync.managedDB.performanceInsights=true \
   --set fleetshardSync.aws.region="${CLUSTER_REGION}" \
-  --set fleetshardSync.aws.roleARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/FleetshardSyncServiceRole" \
   --set fleetshardSync.gitops.enabled="${RHACS_GITOPS_ENABLED:-}" \
   --set fleetshardSync.targetedOperatorUpgrades.enabled="${RHACS_TARGETED_OPERATOR_UPGRADES:-}" \
   --set fleetshardSync.resources.requests.cpu="${FLEETSHARD_SYNC_CPU_REQUEST}" \
