@@ -6,7 +6,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=scripts/lib/external_config.sh
 source "$SCRIPT_DIR/../../scripts/lib/external_config.sh"
 
-
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
     echo "Known environments: dev integration stage prod"
@@ -26,8 +25,6 @@ load_external_config logging LOGGING_
 load_external_config observability OBSERVABILITY_
 load_external_config secured-cluster SECURED_CLUSTER_
 load_external_config quay/rhacs-eng QUAY_
-
-AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-$(aws sts get-caller-identity --query "Account" --output text)}"
 
 case $ENVIRONMENT in
   dev)
@@ -114,6 +111,9 @@ escape_linebreaks() {
 
 # Allows to load an external cluster config (e.g. acs-dev-dp-01) and apply it to a different cluster with override
 OCM_CLUSTER_ID="${OVERRIDE_CLUSTER_ID:-${CLUSTER_ID}}"
+
+OCM_SUBSCRIPTION_ID=$(ocm get cluster "$OCM_CLUSTER_ID" | jq -r '.subscription.id')
+AWS_ACCOUNT_ID=$(ocm get "/api/accounts_mgmt/v1/subscriptions/${OCM_SUBSCRIPTION_ID}" | jq -r '.cloud_account_id')
 
 OCM_COMMAND="patch"
 OCM_ENDPOINT="/api/clusters_mgmt/v1/clusters/${OCM_CLUSTER_ID}/addons/acs-fleetshard"
