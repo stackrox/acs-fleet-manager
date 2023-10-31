@@ -30,6 +30,7 @@ spec:
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443
+            - --http2-disable
             - --upstream=http://127.0.0.1:8080/
             - --logtostderr=true
             - --v=0
@@ -40,7 +41,7 @@ spec:
               value: quay.io/rhacs-eng
             - name: OPERATOR_CONDITION_NAME
               value: rhacs-operator.v3.74.0
-          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+          image: registry.redhat.io/openshift4/ose-kube-rbac-proxy:v4.13
           imagePullPolicy: IfNotPresent
           name: kube-rbac-proxy
           ports:
