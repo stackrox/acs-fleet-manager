@@ -57,6 +57,21 @@ env:
   TEST_TIMEOUT: 30m
 
 jobs:
+  # This runs all pre-commit hooks defined within .pre-commit-config.yaml.
+  pre-commit:
+    name: "Run pre-commit hooks"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: "1.20"
+      - uses: pre-commit/action@v3.0.0
+      - uses: pre-commit/action@v3.0.0
+        name: Verify generated files are up-to-date
+        with:
+          extra_args: --hook-stage=manual --all-files
   verify-test:
     name: "Verify & Test"
     runs-on: ubuntu-latest
@@ -106,12 +121,23 @@ jobs:
           export PATH=${PATH}:$GOPATH/bin
           make verify binary test test/integration
         timeout-minutes: 14
-      - name: Build and publish fleet-manager-tools image to quay.io
+  build-push-images:
+    name: "Build and push fleet* images to quay.io"
+    runs-on: ubuntu-latest
+    needs: [pre-commit, verify-test]
+    # Skip for external contributions.
+    if: |
+      github.event_name == 'push' || !github.event.pull_request.head.repo.fork
+    steps:
+      - name: Login to Quay.io
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.QUAY_RHACS_ENG_FM_RW_USERNAME }}
+          password: ${{ secrets.QUAY_RHACS_ENG_FM_RW_PASSWORD }}
+      - name: Build and push fleet-manager-tools image to quay.io
         if: github.event_name == 'push'
         env:
-          QUAY_USER: ${{ secrets.QUAY_RHACS_ENG_FM_RW_USERNAME }}
-          QUAY_TOKEN: ${{ secrets.QUAY_RHACS_ENG_FM_RW_PASSWORD }}
-          QUAY_IMAGE_REPOSITORY: rhacs-eng/fleet-manager-tools
-        run: |
-          chmod +x ./build_push_fleet_manager_tools.sh
-          ./build_push_fleet_manager_tools.sh
+          TAG: ${{ github.ref_name }}
+        run: make image/push/fleet-manager-tools
+      - name: Build and push fleetshard-operator image to quay.io
+        run: make image/push/fleetshard-operator
