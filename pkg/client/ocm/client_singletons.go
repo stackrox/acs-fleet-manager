@@ -1,6 +1,7 @@
 package ocm
 
 import (
+	"github.com/golang/glog"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 	"sync"
 )
@@ -11,13 +12,13 @@ var (
 
 	onceClusterManagmentClient sync.Once
 	ocmClusterManagmentClient  ClusterManagementClient
-
-	ocmConfig = GetOCMConfig()
 )
 
 // SingletonAMSClient returns AMSClient
 func SingletonAMSClient() AMSClient {
+	ocmConfig := GetOCMConfig()
 	onceAMSClient.Do(func() {
+		glog.Infof("ACM OCM Client config: %+v", ocmConfig)
 		if ocmConfig.EnableMock {
 			ocmAMSClient = NewMockClient()
 		}
@@ -34,6 +35,7 @@ func SingletonAMSClient() AMSClient {
 // SingletonClusterManagementClient returns ClusterManagementClient
 func SingletonClusterManagementClient() ClusterManagementClient {
 	onceClusterManagmentClient.Do(func() {
+		ocmConfig := GetOCMConfig()
 		if ocmConfig.EnableMock {
 			ocmClusterManagmentClient = NewMockClient()
 		}
