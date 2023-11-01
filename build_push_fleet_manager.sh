@@ -31,20 +31,20 @@
 # the built images can be pushed to quay.io.
 # =====================================================================================================================
 
-# Set image repository to default value if it is not passed via env
-IMAGE_REPOSITORY="${QUAY_IMAGE_REPOSITORY:-app-sre/acs-fleet-manager}"
+# Set the quay organization to default value if it is not passed via env
+QUAY_ORG=${QUAY_ORG:-app-sre}
 
 source ./scripts/build_setup.sh
 
 # Push the image:
-echo "Quay.io user and token is set, will push images to $IMAGE_REPOSITORY"
+echo "Quay.io user and token is set, will push images to $QUAY_ORG"
 make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
   QUAY_TOKEN="${QUAY_TOKEN}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="${IMAGE_REPOSITORY}" \
+  image_repository="${QUAY_ORG}/acs-fleet-manager" \
   docker/login/fleet-manager \
   image/push/fleet-manager
 
@@ -55,6 +55,17 @@ make \
   TAG="${BRANCH}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="${IMAGE_REPOSITORY}" \
+  image_repository="${QUAY_ORG}/acs-fleet-manager" \
   docker/login/fleet-manager \
   image/push/fleet-manager
+
+make \
+  DOCKER_CONFIG="${DOCKER_CONFIG}" \
+  QUAY_USER="${QUAY_USER}" \
+  QUAY_TOKEN="${QUAY_TOKEN}" \
+  TAG="${VERSION}" \
+  external_image_registry="quay.io" \
+  internal_image_registry="quay.io" \
+  image_repository="${QUAY_ORG}/acs-fleetshard-operator" \
+  docker/login/fleet-manager \
+  image/push/fleetshard-operator

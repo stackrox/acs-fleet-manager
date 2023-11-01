@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # Set the directory for docker configuration:
-export DOCKER_CONFIG="${PWD}/.docker"
+export DOCKER_CONFIG="${DOCKER_CONFIG:-${PWD}/.docker}"
 
 # Log in to the image registry:
 if [ -z "${QUAY_USER}" ]; then

@@ -565,7 +565,11 @@ image/push/internal: docker/login/internal
 
 image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/$(image_repository):$(image_tag)"
 image/build/fleetshard-operator:
-TODO implement me
+	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) ${PROJECT_PATH}/dp-terraform/helm
+.PHONY: image/build/fleetshard-operator
+
+image/push/fleetshard-operator: image/build/fleetshard-operator
+.PHONY: image/push/fleetshard-operator
 
 # Run the probe based e2e test in container
 test/e2e/probe/run: image/build/probe
