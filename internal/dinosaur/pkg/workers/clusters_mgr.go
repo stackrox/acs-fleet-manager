@@ -8,11 +8,9 @@ import (
 	"time"
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/observatorium"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
-	"github.com/stackrox/acs-fleet-manager/pkg/constants"
 	"github.com/stackrox/acs-fleet-manager/pkg/logger"
 
 	"github.com/goava/di"
@@ -37,26 +35,19 @@ import (
 
 // TODO change these constants to match your own
 const (
-	observabilityNamespace           = "managed-application-services-observability"
-	observabilityCatalogSourceImage  = "quay.io/rhoas/observability-operator-index:v3.0.8"
-	observabilityOperatorGroupName   = "observability-operator-group-name"
-	observabilityCatalogSourceName   = "observability-operator-manifests"
-	observabilitySubscriptionName    = "observability-operator"
-	observatoriumSSOSecretName       = "observatorium-configuration-red-hat-sso" // pragma: allowlist secret
-	observatoriumAuthType            = "redhat"
-	syncsetName                      = "ext-managedservice-cluster-mgr"
-	imagePullSecretName              = "rhoas-image-pull-secret" // pragma: allowlist secret
-	dinosaurOperatorAddonNamespace   = constants.CentralOperatorNamespace
-	dinosaurOperatorQEAddonNamespace = "redhat-managed-dinosaur-operator-qe"
-	fleetshardAddonNamespace         = constants.FleetShardOperatorNamespace
-	fleetshardQEAddonNamespace       = "redhat-fleetshard-operator-qe"
-	openIDIdentityProviderName       = "Dinosaur_SRE"
-	mkReadOnlyGroupName              = "mk-readonly-access"
-	mkSREGroupName                   = "dinosaur-sre"
-	mkReadOnlyRoleBindingName        = "mk-dedicated-readers"
-	mkSRERoleBindingName             = "dinosaur-sre-cluster-admin"
-	dedicatedReadersRoleBindingName  = "dedicated-readers"
-	clusterAdminRoleName             = "cluster-admin"
+	observabilityNamespace          = "managed-application-services-observability"
+	observabilityCatalogSourceImage = "quay.io/rhoas/observability-operator-index:v3.0.8"
+	observabilityOperatorGroupName  = "observability-operator-group-name"
+	observabilityCatalogSourceName  = "observability-operator-manifests"
+	observabilitySubscriptionName   = "observability-operator"
+	observatoriumSSOSecretName      = "observatorium-configuration-red-hat-sso" // pragma: allowlist secret
+	observatoriumAuthType           = "redhat"
+	mkReadOnlyGroupName             = "mk-readonly-access"
+	mkSREGroupName                  = "dinosaur-sre"
+	mkReadOnlyRoleBindingName       = "mk-dedicated-readers"
+	mkSRERoleBindingName            = "dinosaur-sre-cluster-admin"
+	dedicatedReadersRoleBindingName = "dedicated-readers"
+	clusterAdminRoleName            = "cluster-admin"
 )
 
 var (
@@ -423,12 +414,6 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 		return errors.WithMessagef(err, "failed to reconcile instance type ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
-	// TODO: Install necessary OSD cluster resources.
-	//// resources update if needed
-	// if err := c.reconcileClusterResources(cluster); err != nil {
-	//	return errors.WithMessagef(err, "failed to reconcile ready cluster resources %s ", cluster.ClusterID)
-	//}
-
 	// TODO: Register what is necessary for SSO authn/authz.
 	// err = c.reconcileClusterIdentityProvider(cluster)
 	// if err != nil {
@@ -530,13 +515,6 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 		return err
 	}
 
-	// TODO: Install necessary OSD cluster resources.
-	//// SyncSet creation step
-	// syncSetErr := c.reconcileClusterResources(cluster) //OSD cluster itself
-	// if syncSetErr != nil {
-	//	return errors.WithMessagef(syncSetErr, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
-	//}
-
 	// Addon installation step
 	// TODO this is currently the responsible of setting the status of the cluster
 	// and it is setting it to a different value depending on the addon being
@@ -561,15 +539,6 @@ func (c *ClusterManager) reconcileClusterDNS(cluster api.Cluster) error {
 	_, dnsErr := c.ClusterService.GetClusterDNS(cluster.ClusterID)
 	if dnsErr != nil {
 		return errors.WithMessagef(dnsErr, "failed to reconcile cluster %s: GetClusterDNS %s", cluster.ClusterID, dnsErr.Error())
-	}
-
-	return nil
-}
-
-func (c *ClusterManager) reconcileClusterResources(cluster api.Cluster) error {
-	resourceSet := c.buildResourceSet()
-	if err := c.ClusterService.ApplyResources(&cluster, resourceSet); err != nil {
-		return errors.Wrapf(err, "failed to apply resources for cluster %s", cluster.ClusterID)
 	}
 
 	return nil
@@ -787,40 +756,6 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 	return errs
 }
 
-func (c *ClusterManager) buildResourceSet() types.ResourceSet {
-	r := []interface{}{
-		// c.buildReadOnlyGroupResource(),
-		// c.buildDedicatedReaderClusterRoleBindingResource(),
-		// c.buildSREGroupResource(),
-		// c.buildDinosaurSREClusterRoleBindingResource(),
-		// c.buildObservabilityNamespaceResource(),
-		// c.buildObservatoriumSSOSecretResource(),
-		// c.buildObservabilityCatalogSourceResource(),
-		// c.buildObservabilityOperatorGroupResource(),
-		// c.buildObservabilitySubscriptionResource(),
-	}
-
-	managedDinosaurOperatorNamespace := dinosaurOperatorAddonNamespace
-	if c.OCMConfig.CentralOperatorAddonID == "managed-central-qe" {
-		managedDinosaurOperatorNamespace = dinosaurOperatorQEAddonNamespace
-	}
-	fleetshardNS := fleetshardAddonNamespace
-	if c.OCMConfig.FleetshardAddonID == "fleetshard-operator-qe" {
-		fleetshardNS = fleetshardQEAddonNamespace
-	}
-
-	if s := c.buildImagePullSecret(managedDinosaurOperatorNamespace); s != nil {
-		r = append(r, s)
-	}
-	if s := c.buildImagePullSecret(fleetshardNS); s != nil {
-		r = append(r, s)
-	}
-	return types.ResourceSet{
-		Name:      syncsetName,
-		Resources: r,
-	}
-}
-
 func (c *ClusterManager) buildObservabilityNamespaceResource() *k8sCoreV1.Namespace {
 	return &k8sCoreV1.Namespace{
 		TypeMeta: metav1.TypeMeta{
@@ -910,30 +845,6 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 			Package:                observabilitySubscriptionName,
 		},
-	}
-}
-
-func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secret {
-	content := c.DataplaneClusterConfig.ImagePullDockerConfigContent
-	if strings.TrimSpace(content) == "" {
-		return nil
-	}
-
-	dataMap := map[string][]byte{
-		k8sCoreV1.DockerConfigKey: []byte(content),
-	}
-
-	return &k8sCoreV1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: metav1.SchemeGroupVersion.Version,
-			Kind:       "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      imagePullSecretName,
-			Namespace: namespace,
-		},
-		Type: k8sCoreV1.SecretTypeDockercfg,
-		Data: dataMap,
 	}
 }
 
