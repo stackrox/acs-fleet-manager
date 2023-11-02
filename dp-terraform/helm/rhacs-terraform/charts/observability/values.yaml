@@ -43,7 +43,6 @@ observabilityOperator:
       cpu: "500m"
       memory: "2048Mi"
     limits:
-      cpu: "500m"
       memory: "2048Mi"
 
 prometheus:
@@ -52,7 +51,6 @@ prometheus:
       cpu: 1500m
       memory: 18Gi
     limits:
-      cpu: 1500m
       memory: 18Gi
 
 prometheusOperator:
@@ -61,7 +59,6 @@ prometheusOperator:
       cpu: 200m
       memory: 256Mi
     limits:
-      cpu: 200m
       memory: 256Mi
 
 grafana:
@@ -70,7 +67,6 @@ grafana:
       cpu: 500m
       memory: 1024Mi
     limits:
-      cpu: 500m
       memory: 1024Mi
 
 grafanaOperator:
@@ -79,7 +75,6 @@ grafanaOperator:
       cpu: 200m
       memory: 256Mi
     limits:
-      cpu: 200m
       memory: 256Mi
 
 alertManager:
@@ -88,5 +83,4 @@ alertManager:
       cpu: 200m
       memory: 256Mi
     limits:
-      cpu: 200m
       memory: 256Mi
