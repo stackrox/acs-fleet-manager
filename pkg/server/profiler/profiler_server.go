@@ -2,6 +2,7 @@ package profiler
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"net"
@@ -43,8 +44,15 @@ func (p *PprofServer) Serve(listener net.Listener) {
 }
 
 func (p *PprofServer) Run() {
-	handler := pprof.Handler("pprof")
-	err := http.ListenAndServe("localhost:6060", handler)
+	router := mux.NewRouter()
+	router.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+	router.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
+	router.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+	router.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+	router.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
+	router.Handle("/debug/pprof/{cmd}", http.HandlerFunc(pprof.Index)) // special handling for Gorilla mux
+
+	err := http.ListenAndServe("localhost:6060", router)
 	if err != nil {
 		panic(fmt.Sprintf("starting pprof server failed %s", err))
 	}
