@@ -16,6 +16,9 @@ spec:
     - name: metrics
       port: 8080
       targetPort: 8080
+    - name: pprof
+      port: 6060
+      targetPort: 6060
   selector:
     application: fleet-manager
 status:

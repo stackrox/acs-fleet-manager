@@ -14,4 +14,4 @@ clusters:
    provider_type: standalone
    supported_instance_type: "eval,standard"
    cluster_dns: kubernetes.docker.internal
-   central_instance_limit: 5
+   central_instance_limit: 99999
