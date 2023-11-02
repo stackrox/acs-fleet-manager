@@ -12,7 +12,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"sigs.k8s.io/yaml"
 )
 
 // ManagedCentralPresenter helper service which converts Central DB representation to the private API representation
@@ -32,14 +31,9 @@ func NewManagedCentralPresenter(config *config.CentralConfig, gitopsService gito
 // PresentManagedCentral converts DB representation of Central to the private API representation
 func (c *ManagedCentralPresenter) PresentManagedCentral(from *dbapi.CentralRequest) (private.ManagedCentral, error) {
 
-	centralCR, err := c.gitopsService.GetCentral(centralParamsFromRequest(from))
+	centralYaml, err := c.gitopsService.GetCentral(centralParamsFromRequest(from))
 	if err != nil {
 		return private.ManagedCentral{}, errors.Wrap(err, "failed to apply GitOps overrides to Central")
-	}
-
-	centralYaml, err := yaml.Marshal(centralCR)
-	if err != nil {
-		return private.ManagedCentral{}, errors.Wrap(err, "failed to marshal Central CR")
 	}
 
 	res := private.ManagedCentral{

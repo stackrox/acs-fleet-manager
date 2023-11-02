@@ -2,7 +2,10 @@ package gitops
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -11,9 +14,14 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+var (
+	centralCRYAMLCache = make(map[string]string)
+	centralCacheMutex  = sync.RWMutex{}
+)
+
 // Service applies GitOps configuration to Central instances.
 type Service interface {
-	GetCentral(ctx CentralParams) (v1alpha1.Central, error)
+	GetCentral(ctx CentralParams) (string, error)
 }
 
 type service struct {
@@ -26,12 +34,74 @@ func NewService(configProvider ConfigProvider) Service {
 }
 
 // GetCentral returns a Central instance with the given parameters.
-func (s *service) GetCentral(params CentralParams) (v1alpha1.Central, error) {
+func (s *service) GetCentral(params CentralParams) (string, error) {
 	cfg, err := s.configProvider.Get()
 	if err != nil {
-		return v1alpha1.Central{}, errors.Wrap(err, "failed to get GitOps configuration")
+		return "", errors.Wrap(err, "failed to get GitOps configuration")
 	}
-	return renderCentral(params, cfg)
+
+	result, err := readFromCache(params, cfg)
+	if err != nil {
+		return "", err
+	}
+	if result != "" {
+		return result, nil
+	}
+
+	centralCR, err := renderCentral(params, cfg)
+	if err != nil {
+		return "", err
+	}
+
+	centralYaml, err := yaml.Marshal(centralCR)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to marshal Central CR")
+	}
+
+	centralYAMLString := string(centralYaml)
+	err = addCache(params, cfg, centralYAMLString)
+	if err != nil {
+		return "", err
+	}
+	return centralYAMLString, nil
+}
+
+// getCacheKey returns a key in the format of "<params_hash>:<config_hash>"
+func getCacheKey(params CentralParams, config Config) (string, error) {
+	paramsHash, err := util.MD5SumFromJSONStruct(params)
+	if err != nil {
+		return "", fmt.Errorf("could not create MD5 from CentralParams name: %s, id: %s, %w", params.Name, params.ID, err)
+	}
+	configHash, err := util.MD5SumFromJSONStruct(config)
+	if err != nil {
+		return "", fmt.Errorf("could not create MD5 from gitops Configame: %s, id: %s, %w", params.Name, params.ID, err)
+	}
+	return fmt.Sprintf("%s:%s", string(paramsHash[:]), string(configHash[:])), nil
+}
+
+func addCache(params CentralParams, config Config, centralYAML string) error {
+	centralCacheMutex.Lock()
+	defer centralCacheMutex.Unlock()
+	key, err := getCacheKey(params, config)
+	if err != nil {
+		return fmt.Errorf("could not add to cache: %w", err)
+	}
+
+	centralCRYAMLCache[key] = centralYAML
+	return nil
+}
+
+// readFromCache returns a CentralYAML from the cache
+func readFromCache(params CentralParams, config Config) (string, error) {
+	cacheKey, err := getCacheKey(params, config)
+	if err != nil {
+		return "", fmt.Errorf("Could not get cache key: %w", err)
+	}
+
+	if val, ok := centralCRYAMLCache[cacheKey]; ok {
+		return val, nil
+	}
+	return "", nil
 }
 
 func renderCentral(params CentralParams, config Config) (v1alpha1.Central, error) {
