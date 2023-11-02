@@ -175,16 +175,16 @@ external-secrets:
     repository: quay.io/app-sre/external-secrets
     tag: v0.9.5
   securityContext:
-    runAsUser: 1001130000
+    runAsUser: null
   webhook:
     securityContext:
-      runAsUser: 1001130001
+      runAsUser: null
     image:
       repository: quay.io/app-sre/external-secrets
       tag: v0.9.5
   certController:
     securityContext:
-      runAsUser: 1001130002
+      runAsUser: null
     image:
       repository: quay.io/app-sre/external-secrets
       tag: v0.9.5
