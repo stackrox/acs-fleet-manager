@@ -13,7 +13,7 @@ data:
         provider_type: standalone
         supported_instance_type: "eval,standard"
         cluster_dns: "$CLUSTER_DNS"
-        central_instance_limit: 5
+        central_instance_limit: 99999
   fleetshard-authz-org-ids-development.yaml: |-
     # RH ACS Organization (returned for personal tokens obtained by ocm token).
     - "11009103"

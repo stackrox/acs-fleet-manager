@@ -14,4 +14,9 @@ shift
 # Normalize
 resource=$(echo "$resource" | sed -e 's/^\///;')
 FM_URL="${FM_URL:-http://localhost:8000}"
-curl -LH "Authorization: Bearer ${OCM_TOKEN}" "$FM_URL/api/${resource}" "$@" | jq .
+
+if [[ "$resource" != "metrics" ]]; then
+  resource="api/$resource"
+fi
+
+curl -LH "Authorization: Bearer ${OCM_TOKEN}" "$FM_URL/${resource}" "$@" | jq .
