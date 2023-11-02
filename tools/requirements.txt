@@ -1,1 +1,2 @@
 git+https://gitlab.corp.redhat.com/compute/aws-automation.git@dc044fef
+awscli==1.29.74

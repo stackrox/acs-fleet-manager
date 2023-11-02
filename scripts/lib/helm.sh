@@ -6,9 +6,9 @@ function invoke_helm() {
     local -r release="${1}"
     shift
 
-    helm repo add vector "https://helm.vector.dev"
+    helm repo add external-secrets "https://charts.external-secrets.io/"
 
-    # Build the external dependencies like the vector helm chart bundle.
+    # Build the external dependencies like the external-secrets helm chart bundle.
     helm dependencies build "${dir}"
 
     if [[ "${ENVIRONMENT}" == "dev" ]]; then
