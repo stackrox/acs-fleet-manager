@@ -83,11 +83,17 @@ spec:
         - name: AWS_REGION
           value: {{ .Values.fleetshardSync.aws.region }}
         - name: AWS_ROLE_ARN
-          value: {{ .Values.fleetshardSync.aws.roleARN }}
+          valueFrom:
+            secretKeyRef:
+              name: fleetshard-sync-parameters
+              key: "aws-role-arn"
         - name: TELEMETRY_STORAGE_ENDPOINT
           value: {{ .Values.fleetshardSync.telemetry.storage.endpoint | quote }}
         - name: TELEMETRY_STORAGE_KEY
-          value: {{ .Values.fleetshardSync.telemetry.storage.key | quote }}
+          valueFrom:
+            secretKeyRef:
+              name: fleetshard-sync
+              key: "telemetry-storage-key"
         {{- if .Values.fleetshardSync.aws.enableTokenAuth }}
         - name: AWS_WEB_IDENTITY_TOKEN_FILE
           value: "/var/run/secrets/tokens/aws-token"

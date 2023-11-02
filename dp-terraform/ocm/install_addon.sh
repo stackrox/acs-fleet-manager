@@ -6,7 +6,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=scripts/lib/external_config.sh
 source "$SCRIPT_DIR/../../scripts/lib/external_config.sh"
 
-
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
     echo "Known environments: dev integration stage prod"
@@ -21,7 +20,6 @@ export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-saml}"
 
 init_chamber
 
-load_external_config fleetshard-sync FLEETSHARD_SYNC_
 load_external_config cloudwatch-exporter CLOUDWATCH_EXPORTER_
 load_external_config logging LOGGING_
 load_external_config observability OBSERVABILITY_
@@ -114,6 +112,9 @@ escape_linebreaks() {
 # Allows to load an external cluster config (e.g. acs-dev-dp-01) and apply it to a different cluster with override
 OCM_CLUSTER_ID="${OVERRIDE_CLUSTER_ID:-${CLUSTER_ID}}"
 
+OCM_SUBSCRIPTION_ID=$(ocm get cluster "$OCM_CLUSTER_ID" | jq -r '.subscription.id')
+AWS_ACCOUNT_ID=$(ocm get "/api/accounts_mgmt/v1/subscriptions/${OCM_SUBSCRIPTION_ID}" | jq -r '.cloud_account_id')
+
 OCM_COMMAND="patch"
 OCM_ENDPOINT="/api/clusters_mgmt/v1/clusters/${OCM_CLUSTER_ID}/addons/acs-fleetshard"
 OCM_PAYLOAD=$(cat << EOF
@@ -131,17 +132,11 @@ OCM_PAYLOAD=$(cat << EOF
             { "id": "fleetshardSyncAuthType", "value": "RHSSO" },
             { "id": "fleetshardSyncImageTag", "value": "quay.io/${FLEETSHARD_SYNC_ORG}/${FLEETSHARD_SYNC_IMAGE}:${FLEETSHARD_SYNC_TAG}" },
             { "id": "fleetshardSyncAwsRegion", "value": "${CLUSTER_REGION}" },
-            { "id": "fleetshardSyncAwsRoleArn", "value": "${FLEETSHARD_SYNC_AWS_ROLE_ARN}" },
             { "id": "fleetshardSyncFleetManagerEndpoint", "value": "${FM_ENDPOINT}" },
-            { "id": "fleetshardSyncImageCredentialsPassword", "value": "${QUAY_READ_ONLY_PASSWORD}" },
-            { "id": "fleetshardSyncImageCredentialsRegistry", "value": "quay.io" },
-            { "id": "fleetshardSyncImageCredentialsUsername", "value": "${QUAY_READ_ONLY_USERNAME}" },
             { "id": "fleetshardSyncManagedDbEnabled", "value": "true" },
             { "id": "fleetshardSyncManagedDbPerformanceInsights", "value": "true" },
             { "id": "fleetshardSyncManagedDbSecurityGroup", "value": "${CLUSTER_MANAGED_DB_SECURITY_GROUP}" },
             { "id": "fleetshardSyncManagedDbSubnetGroup", "value": "${CLUSTER_MANAGED_DB_SUBNET_GROUP}" },
-            { "id": "fleetshardSyncRedHatSsoClientId", "value": "${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_ID}" },
-            { "id": "fleetshardSyncRedHatSsoClientSecret", "value": "${FLEETSHARD_SYNC_RHSSO_SERVICE_ACCOUNT_CLIENT_SECRET}" },
             { "id": "fleetshardSyncRedHatSsoEndpoint", "value": "https://sso.redhat.com" },
             { "id": "fleetshardSyncRedHatSsoRealm", "value": "redhat-external" },
             { "id": "fleetshardSyncResourcesLimitsCpu", "value": "${FLEETSHARD_SYNC_CPU_LIMIT}" },
@@ -150,8 +145,6 @@ OCM_PAYLOAD=$(cat << EOF
             { "id": "fleetshardSyncResourcesRequestsMemory", "value": "${FLEETSHARD_SYNC_MEMORY_REQUEST}" },
             { "id": "fleetshardSyncSecretEncryptionKeyId", "value": "${CLUSTER_SECRET_ENCRYPTION_KEY_ID}" },
             { "id": "fleetshardSyncSecretEncryptionType", "value": "kms" },
-            { "id": "fleetshardSyncTelemetryStorageEndpoint", "value": "${FLEETSHARD_SYNC_TELEMETRY_STORAGE_ENDPOINT:-}" },
-            { "id": "fleetshardSyncTelemetryStorageKey", "value": "${FLEETSHARD_SYNC_TELEMETRY_STORAGE_KEY:-}" },
             { "id": "loggingAwsAccessKeyId", "value": "${LOGGING_AWS_ACCESS_KEY_ID}" },
             { "id": "loggingAwsRegion", "value": "us-east-1" },
             { "id": "loggingAwsSecretAccessKey", "value": "${LOGGING_AWS_SECRET_ACCESS_KEY}" },
@@ -176,7 +169,8 @@ OCM_PAYLOAD=$(cat << EOF
             { "id": "securedClusterCollectorServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_COLLECTOR_KEY}")" },
             { "id": "securedClusterEnabled", "value": "${SECURED_CLUSTER_ENABLED}" },
             { "id": "securedClusterSensorServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_SENSOR_CERT}")" },
-            { "id": "securedClusterSensorServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_SENSOR_KEY}")" }
+            { "id": "securedClusterSensorServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_SENSOR_KEY}")" },
+            { "id": "externalSecretsAwsRoleArn", "value": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ExternalSecretsServiceRole" }
         ]
     }
 }
