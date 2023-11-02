@@ -119,9 +119,54 @@ func TestService_GetCentral(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := NewService(newMockProvider(tt.config))
 			got, err := svc.GetCentral(tt.params)
-			tt.assert(t, got, err)
+			centralGot := v1alpha1.Central{}
+			errUnmarshal := yaml.Unmarshal([]byte(got), &centralGot)
+			require.NoError(t, errUnmarshal)
+			tt.assert(t, centralGot, err)
 		})
 	}
+}
+
+func TestServiceGetCache(t *testing.T) {
+	c := Config{
+		Centrals: CentralsConfig{
+			Overrides: []CentralOverride{
+				{
+					InstanceIDs: []string{"*"},
+					Patch:       `metadata: {"labels": {"foo": "bar"}}`,
+				},
+			},
+		},
+	}
+	params := CentralParams{
+		ID:   "id-123",
+		Name: "Central-Name",
+	}
+
+	gitOpsService := NewService(newMockProvider(c))
+	centralYAML, err := gitOpsService.GetCentral(params)
+	require.NoError(t, err)
+
+	central := v1alpha1.Central{}
+	err = yaml.Unmarshal([]byte(centralYAML), &central)
+	require.NoError(t, err)
+
+	// assert that the rendered Central is present in the cache
+	require.Len(t, centralCRYAMLCache, 1)
+	key, err := getCacheKey(params, c)
+	assert.Equal(t, centralYAML, centralCRYAMLCache[key])
+	require.NoError(t, err)
+
+	// assert that the Central is returned correctly from the cache
+	centralYAMLFromCache, err := readFromCache(params, c)
+	require.NoError(t, err)
+	assert.Equal(t, centralYAML, centralYAMLFromCache)
+
+	// assert that the Central is NOT returned with a different config
+	c.Centrals = CentralsConfig{}
+	result, err := readFromCache(params, c)
+	require.NoError(t, err)
+	assert.Empty(t, result)
 }
 
 // TestDefaultTemplateIsValid tests that the default template is valid and
