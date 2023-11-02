@@ -162,9 +162,7 @@ var (
 			Namespace: testNamespace,
 		},
 		Data: map[string][]byte{
-			"ca.pem": {'T', 'h', 'i', 's', ' ', 'i', 's', ' ', 'a', ' ',
-				'd', 'u', 'm', 'm', 'y', ' ', 'n', 'o', 'n', '-', 'p', 'e', 'm', ' ',
-				'p', 'a', 'y', 'l', 'o', 'a', 'd', ' ', 'f', 'o', 'r', ' ', 'C', 'A'},
+			"ca.pem": []byte("This is a dummy non-pem payload for CA"),
 		},
 	}
 
