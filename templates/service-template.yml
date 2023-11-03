@@ -1479,3 +1479,17 @@ objects:
       - port: 9000
         targetPort: 9000
         name: metrics-envoy
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: fleet-manager-pprof
+      labels:
+        app: fleet-manager
+        port: pprof
+    spec:
+      selector:
+        app: fleet-manager
+      ports:
+        - port: 6060
+          targetPort: 6060
