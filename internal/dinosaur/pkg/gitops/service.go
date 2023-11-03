@@ -3,12 +3,12 @@ package gitops
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"strings"
 	"sync"
 	"text/template"
 
 	"github.com/pkg/errors"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"sigs.k8s.io/yaml"
