@@ -10,6 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	dynamicClientAPI "github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
