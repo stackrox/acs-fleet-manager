@@ -87,6 +87,12 @@ var (
 		AuditLogTargetPort: 8888,
 		SkipTLSVerify:      false,
 	}
+
+	defaultRouteConfig = config.RouteConfig{
+		ConcurrentTCP: 32,
+		RateHTTP:      128,
+		RateTCP:       16,
+	}
 )
 
 var simpleManagedCentral = private.ManagedCentral{
@@ -1119,7 +1125,7 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 				nil,
 				useRoutesReconcilerOptions,
 			)
-			r.routeService = k8s.NewRouteService(fakeClient)
+			r.routeService = k8s.NewRouteService(fakeClient, &defaultRouteConfig)
 			central := simpleManagedCentral
 
 			// create the initial reencrypt route
@@ -1538,7 +1544,7 @@ func TestEnsureSecretExists(t *testing.T) {
 			initialSecret := getSecret(tc.secretName, centralNamespace, tc.initialData)
 			assert.NoError(t, fakeClient.Create(ctx, initialSecret))
 			assert.NoError(t, r.ensureSecretExists(ctx, centralNamespace, tc.secretName, secretModifyFunc))
-			fakeClient.Get(ctx, client.ObjectKey{Namespace: centralNamespace, Name: tc.secretName}, fetchedSecret)
+			assert.NoError(t, fakeClient.Get(ctx, client.ObjectKey{Namespace: centralNamespace, Name: tc.secretName}, fetchedSecret))
 			compareSecret(t, getSecret(tc.secretName, centralNamespace, tc.expectedData), fetchedSecret, false)
 		})
 	}
@@ -1551,7 +1557,7 @@ func TestEnsureSecretExists(t *testing.T) {
 		ctx := context.TODO()
 		fetchedSecret := &v1.Secret{}
 		assert.NoError(t, r.ensureSecretExists(ctx, centralNamespace, secretName, secretModifyFunc))
-		fakeClient.Get(ctx, client.ObjectKey{Namespace: centralNamespace, Name: secretName}, fetchedSecret)
+		assert.NoError(t, fakeClient.Get(ctx, client.ObjectKey{Namespace: centralNamespace, Name: secretName}, fetchedSecret))
 		compareSecret(t, getSecret(secretName, centralNamespace, expectedData), fetchedSecret, true)
 	})
 }
