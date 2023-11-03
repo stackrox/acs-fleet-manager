@@ -2,6 +2,7 @@ package gitops
 
 import (
 	"reflect"
+	"sync"
 	"sync/atomic"
 
 	"github.com/golang/glog"
@@ -19,6 +20,7 @@ type ConfigProvider interface {
 type validationFn func(config Config) error
 
 type provider struct {
+	lock              sync.Mutex
 	reader            Reader
 	lastWorkingConfig atomic.Pointer[Config]
 	validationFn      validationFn
@@ -46,6 +48,8 @@ func NewProvider() ConfigProvider {
 // Get implements ConfigProvider.Get
 func (p *provider) Get() (Config, error) {
 	// Load the config from the reader
+	p.lock.Lock()
+	defer p.lock.Unlock()
 	cfg, err := p.reader.Read()
 	if err != nil {
 		p.increaseErrorCount()

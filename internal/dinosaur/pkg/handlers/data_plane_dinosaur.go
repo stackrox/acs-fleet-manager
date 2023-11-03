@@ -11,6 +11,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
+	"golang.org/x/sync/errgroup"
 )
 
 type dataPlaneDinosaurHandler struct {
@@ -80,12 +81,28 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 				managedDinosaurList.RhacsOperators = gitopsConfig.RHACSOperators.ToAPIResponse()
 			}
 
+			managedDinosaurList.Items = make([]private.ManagedCentral, len(centralRequests))
+			g, ctx := errgroup.WithContext(r.Context())
+			const maxParallel = 50
+			locks := make(chan struct{}, maxParallel)
 			for i := range centralRequests {
-				converted, err := h.presenter.PresentManagedCentral(centralRequests[i])
-				if err != nil {
-					return nil, errors.GeneralError("failed to convert central request to managed central: %v", err)
-				}
-				managedDinosaurList.Items = append(managedDinosaurList.Items, converted)
+				index := i
+				g.Go(func() error {
+					select {
+					case locks <- struct{}{}:
+					case <-ctx.Done():
+						//nolint:wrapcheck
+						return ctx.Err()
+					}
+					var err error
+					managedDinosaurList.Items[index], err = h.presenter.PresentManagedCentral(centralRequests[index])
+					<-locks
+					//nolint:wrapcheck
+					return err
+				})
+			}
+			if err := g.Wait(); err != nil {
+				return nil, errors.GeneralError("failed to convert central request to managed central: %v", err)
 			}
 			return managedDinosaurList, nil
 		},
