@@ -82,12 +82,21 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 			}
 
 			managedDinosaurList.Items = make([]private.ManagedCentral, len(centralRequests))
-			g, _ := errgroup.WithContext(r.Context())
+			g, ctx := errgroup.WithContext(r.Context())
+			const maxParallel = 50
+			locks := make(chan struct{}, maxParallel)
 			for i := range centralRequests {
 				index := i
 				g.Go(func() error {
+					select {
+					case locks <- struct{}{}:
+					case <-ctx.Done():
+						//nolint:wrapcheck
+						return ctx.Err()
+					}
 					var err error
 					managedDinosaurList.Items[index], err = h.presenter.PresentManagedCentral(centralRequests[index])
+					<-locks
 					//nolint:wrapcheck
 					return err
 				})
