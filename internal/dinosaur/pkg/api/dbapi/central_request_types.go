@@ -88,9 +88,6 @@ type CentralRequest struct {
 // CentralList ...
 type CentralList []*CentralRequest
 
-// CentralIndex ...
-type CentralIndex map[string]*CentralRequest
-
 // AuthConfig keeps all we need to set up IdP for a Central instance.
 type AuthConfig struct {
 	// OIDC client ID. It is used for authenticating users in Central via connected IdP.
@@ -104,15 +101,6 @@ type AuthConfig struct {
 	// or
 	// 2) We reuse static OIDC client
 	ClientOrigin string `json:"client_origin"`
-}
-
-// Index ...
-func (l CentralList) Index() CentralIndex {
-	index := CentralIndex{}
-	for _, o := range l {
-		index[o.ID] = o
-	}
-	return index
 }
 
 // BeforeCreate ...

@@ -3,7 +3,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -18,7 +17,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/handlers"
 	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/account"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // AdminCentralHandler is the interface for the admin central handler
@@ -201,58 +199,6 @@ func (h adminCentralHandler) DbDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.HandleDelete(w, r, cfg, http.StatusOK)
-}
-
-func validateResourcesList(rl *corev1.ResourceList) error {
-	if rl == nil {
-		return nil
-	}
-	for name := range *rl {
-		_, isSupported := validateResourceName(name)
-		if !isSupported {
-			return fmt.Errorf("resource type %q is not supported", name)
-		}
-	}
-	return nil
-}
-
-func validateCoreV1Resources(to *corev1.ResourceRequirements) error {
-	newResources := to.DeepCopy()
-
-	err := validateResourcesList(&newResources.Limits)
-	if err != nil {
-		return err
-	}
-	err = validateResourcesList(&newResources.Requests)
-	if err != nil {
-		return err
-	}
-
-	*to = *newResources
-	return nil
-}
-
-// validateCentralSpec validates the CentralSpec using the non-zero fields from the API's CentralSpec.
-func validateCentralSpec(c *dbapi.CentralSpec) error {
-	err := validateCoreV1Resources(&c.Resources)
-	if err != nil {
-		return fmt.Errorf("updating resources within CentralSpec: %w", err)
-	}
-	return nil
-}
-
-// validateScannerSpec validates the ScannerSpec using the non-zero fields from the API's ScannerSpec.
-func validateScannerSpec(s *dbapi.ScannerSpec) error {
-	var err error
-	err = validateCoreV1Resources(&s.Analyzer.Resources)
-	if err != nil {
-		return fmt.Errorf("updating resources within ScannerSpec Analyzer: %w", err)
-	}
-	err = validateCoreV1Resources(&s.Db.Resources)
-	if err != nil {
-		return fmt.Errorf("updating resources within ScannerSpec DB: %w", err)
-	}
-	return nil
 }
 
 func (h adminCentralHandler) RotateSecrets(w http.ResponseWriter, r *http.Request) {
