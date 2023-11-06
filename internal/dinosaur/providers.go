@@ -78,7 +78,6 @@ func ServiceProviders() di.Option {
 		di.Provide(dinosaurmgrs.NewCentralAuthConfigManager, di.As(new(workers.Worker))),
 		di.Provide(gitops.NewEmptyReader),
 		di.Provide(gitops.NewProvider),
-		di.Provide(gitops.NewService),
 		di.Provide(presenters.NewManagedCentralPresenter),
 	)
 }
