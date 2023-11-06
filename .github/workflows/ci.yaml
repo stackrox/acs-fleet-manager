@@ -49,34 +49,35 @@ jobs:
         name: Verify generated files are up-to-date
         with:
           extra_args: --hook-stage=manual --all-files
-  # This runs checks to verify if code is properly formatted and that tests (unit and integration against a mocked environment) are passing.
+
   verify-test:
     name: "Verify & Test"
     runs-on: ubuntu-latest
+    env:
+      # TODO make sure that the secrets are configured for your repository
+      # set ocm env to integration
+      OCM_ENV: integration
+      # Dummy SSO variables
+      SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
+      SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
+      OSD_IDP_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_SSO_CLIENT_ID }}
+      OSD_IDP_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_SSO_CLIENT_SECRET }}
+      # Dummy AWS credentials
+      AWS_ACCOUNT_ID: aws_accountid
+      AWS_ACCESS_KEY: aws_accesskey
+      AWS_SECRET_ACCESS_KEY: aws_secretaccesskey # pragma: allowlist secret - dummy value
+      ROUTE53_ACCESS_KEY: aws_route53_access_key # pragma: allowlist secret - dummy value
+      ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key # pragma: allowlist secret - dummy value
+      # Dummy Central TLS env variables
+      CENTRAL_TLS_CERT: central_tls_cert # pragma: allowlist secret - dummy value
+      CENTRAL_TLS_KEY: central_tls_key # pragma: allowlist secret - dummy value
+      # So that OCM secrets are initialised
+      DOCKER_PR_CHECK: true
+      TEST_TIMEOUT: 30m
     services:
       postgres:
         image: postgres:11
         env:
-          # TODO make sure that the secrets are configured for your repository
-          # set ocm env to integration
-          OCM_ENV: integration
-          # Dummy SSO variables
-          SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
-          SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
-          OSD_IDP_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_SSO_CLIENT_ID }}
-          OSD_IDP_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_SSO_CLIENT_SECRET }}
-          # Dummy AWS credentials
-          AWS_ACCOUNT_ID: aws_accountid
-          AWS_ACCESS_KEY: aws_accesskey
-          AWS_SECRET_ACCESS_KEY: aws_secretaccesskey # pragma: allowlist secret - dummy value
-          ROUTE53_ACCESS_KEY: aws_route53_access_key # pragma: allowlist secret - dummy value
-          ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key # pragma: allowlist secret - dummy value
-          # Dummy Central TLS env variables
-          CENTRAL_TLS_CERT: central_tls_cert # pragma: allowlist secret - dummy value
-          CENTRAL_TLS_KEY: central_tls_key # pragma: allowlist secret - dummy value
-          # So that OCM secrets are initialised
-          DOCKER_PR_CHECK: true
-          TEST_TIMEOUT: 30m
           POSTGRES_PASSWORD: foobar-bizz-buzz # pragma: allowlist secret - dummy value
           POSTGRES_USER: fleet_manager
           POSTGRES_DB: serviceapitests
