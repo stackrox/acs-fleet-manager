@@ -295,7 +295,7 @@ func newHashes(gitopsConfig gitops.Config, params gitops.CentralParams) (central
 // keyedMutex is a mutex that can be locked by a key
 type keyedMutex struct {
 	locks map[string]*sync.Mutex
-	mLock sync.RWMutex
+	mLock sync.Mutex
 }
 
 func newKeyedMutex() *keyedMutex {
