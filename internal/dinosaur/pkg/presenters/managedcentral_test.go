@@ -12,7 +12,7 @@ func TestShouldNotRenderTwiceForSameParams(t *testing.T) {
 	var gitopsConfig = gitops.Config{}
 	var params = gitops.CentralParams{}
 	var renderCount = 0
-	renderFn = func(params gitops.CentralParams, config gitops.Config) (v1alpha1.Central, error) {
+	renderFn := func(params gitops.CentralParams, config gitops.Config) (v1alpha1.Central, error) {
 		renderCount++
 		return v1alpha1.Central{}, nil
 	}
@@ -50,7 +50,7 @@ func TestShouldNotCacheOnError(t *testing.T) {
 	var params = gitops.CentralParams{}
 	var renderCount = 0
 	var shouldThrow = false
-	renderFn = func(params gitops.CentralParams, config gitops.Config) (v1alpha1.Central, error) {
+	renderFn := func(params gitops.CentralParams, config gitops.Config) (v1alpha1.Central, error) {
 		renderCount++
 		if shouldThrow {
 			return v1alpha1.Central{}, assert.AnError
