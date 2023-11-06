@@ -135,6 +135,8 @@ jobs:
           registry: quay.io
           username: ${{ secrets.QUAY_RHACS_ENG_FM_RW_USERNAME }}
           password: ${{ secrets.QUAY_RHACS_ENG_FM_RW_PASSWORD }}
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: Build and push fleet-manager-tools image to quay.io
         if: github.event_name == 'push'
         env:
