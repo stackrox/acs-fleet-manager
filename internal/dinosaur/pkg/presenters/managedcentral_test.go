@@ -19,29 +19,29 @@ func TestShouldNotRenderTwiceForSameParams(t *testing.T) {
 	assert.Equal(t, 0, renderCount)
 
 	// first call should render once
-	getCentralYaml(gitopsConfig, params)
+	getCentralYaml(renderFn, gitopsConfig, params)
 	assert.Equal(t, 1, renderCount)
 
 	// second call should not render again
-	getCentralYaml(gitopsConfig, params)
+	getCentralYaml(renderFn, gitopsConfig, params)
 	assert.Equal(t, 1, renderCount)
 
 	// third call with different params should render again
 	params = gitops.CentralParams{ID: "foo"}
-	getCentralYaml(gitopsConfig, params)
+	getCentralYaml(renderFn, gitopsConfig, params)
 	assert.Equal(t, 2, renderCount)
 
 	// fourth call with same params should not render again
-	getCentralYaml(gitopsConfig, params)
+	getCentralYaml(renderFn, gitopsConfig, params)
 	assert.Equal(t, 2, renderCount)
 
 	// fifth call with different params should render again
 	gitopsConfig = gitops.Config{Centrals: gitops.CentralsConfig{Overrides: []gitops.CentralOverride{{InstanceIDs: []string{"foo"}}}}}
-	getCentralYaml(gitopsConfig, params)
+	getCentralYaml(renderFn, gitopsConfig, params)
 	assert.Equal(t, 3, renderCount)
 
 	// sixth call with same params should not render again
-	getCentralYaml(gitopsConfig, params)
+	getCentralYaml(renderFn, gitopsConfig, params)
 	assert.Equal(t, 3, renderCount)
 }
 
@@ -60,17 +60,17 @@ func TestShouldNotCacheOnError(t *testing.T) {
 	assert.Equal(t, 0, renderCount)
 
 	shouldThrow = true
-	getCentralYaml(gitopsConfig, params)
+	getCentralYaml(renderFn, gitopsConfig, params)
 	assert.Equal(t, 1, renderCount)
 
-	getCentralYaml(gitopsConfig, params)
+	getCentralYaml(renderFn, gitopsConfig, params)
 	assert.Equal(t, 2, renderCount)
 
 	shouldThrow = false
-	getCentralYaml(gitopsConfig, params)
+	getCentralYaml(renderFn, gitopsConfig, params)
 	assert.Equal(t, 3, renderCount)
 
-	getCentralYaml(gitopsConfig, params)
+	getCentralYaml(renderFn, gitopsConfig, params)
 	assert.Equal(t, 3, renderCount)
 }
 
