@@ -3,7 +3,6 @@ package presenters
 import (
 	"context"
 	"fmt"
-	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"sort"
 	"sync"
 	"time"
@@ -15,6 +14,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/gitops"
+	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
 	"golang.org/x/sync/errgroup"
 	"sigs.k8s.io/yaml"
 )
@@ -304,14 +304,11 @@ func newKeyedMutex() *keyedMutex {
 
 // getLockBy returns the lock for the given key. If the lock does not exist, it is created.
 func (k *keyedMutex) getLockBy(key string) *sync.Mutex {
-	k.mLock.RLock()
-	if ret, ok := k.locks[key]; ok {
-		k.mLock.RUnlock()
-		return ret
-	}
-	k.mLock.RUnlock()
 	k.mLock.Lock()
 	defer k.mLock.Unlock()
+	if ret, ok := k.locks[key]; ok {
+		return ret
+	}
 	lock := &sync.Mutex{}
 	k.locks[key] = lock
 	return lock
