@@ -42,7 +42,6 @@ make \
   DOCKER_CONFIG="${DOCKER_CONFIG}" \
   QUAY_USER="${QUAY_USER}" \
   QUAY_TOKEN="${QUAY_TOKEN}" \
-  TAG="${VERSION}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
   image_repository="${IMAGE_REPOSITORY}" \
