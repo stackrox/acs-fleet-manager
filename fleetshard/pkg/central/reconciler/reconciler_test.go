@@ -2010,8 +2010,82 @@ func Test_getCentralConfig_telemetry(t *testing.T) {
 	}
 }
 
-func TestReconciler_applyRoutes(t *testing.T) {
+func Test_getCentralConfig_monitoring(t *testing.T) {
+	type args struct {
+		isInternal bool
+		central    *v1alpha1.Central
+	}
 
+	tcs := []struct {
+		name   string
+		args   args
+		assert func(t *testing.T, c *v1alpha1.Central)
+	}{
+		{
+			name: "should disable OpenShift monitoring when Central is internal",
+			args: args{
+				isInternal: true,
+				central: &v1alpha1.Central{
+					Spec: v1alpha1.CentralSpec{
+						Monitoring: &v1alpha1.GlobalMonitoring{
+							OpenShiftMonitoring: &v1alpha1.OpenShiftMonitoring{
+								Enabled: true,
+							},
+						},
+					},
+				},
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.False(t, c.Spec.Monitoring.OpenShiftMonitoring.Enabled)
+			},
+		},
+		{
+			name: "should disable OpenShift monitoring when not defined and Central is internal",
+			args: args{
+				isInternal: true,
+				central: &v1alpha1.Central{
+					Spec: v1alpha1.CentralSpec{},
+				},
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.False(t, c.Spec.Monitoring.OpenShiftMonitoring.Enabled)
+			},
+		},
+		{
+			name: "should leave OpenShift monitoring enabled when Central is not internal",
+			args: args{
+				isInternal: false,
+				central: &v1alpha1.Central{
+					Spec: v1alpha1.CentralSpec{
+						Monitoring: &v1alpha1.GlobalMonitoring{
+							OpenShiftMonitoring: &v1alpha1.OpenShiftMonitoring{
+								Enabled: true,
+							},
+						},
+					},
+				},
+			},
+			assert: func(t *testing.T, c *v1alpha1.Central) {
+				assert.True(t, c.Spec.Monitoring.OpenShiftMonitoring.Enabled)
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			r := &CentralReconciler{}
+			mc := &private.ManagedCentral{
+				Metadata: private.ManagedCentralAllOfMetadata{
+					Internal: tc.args.isInternal,
+				},
+			}
+			r.applyMonitoring(mc, tc.args.central)
+			tc.assert(t, tc.args.central)
+		})
+	}
+}
+
+func TestReconciler_applyRoutes(t *testing.T) {
 	type args struct {
 		useRoutes bool
 	}
