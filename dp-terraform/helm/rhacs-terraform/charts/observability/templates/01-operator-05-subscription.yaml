@@ -18,5 +18,4 @@ spec:
         cpu: {{ .Values.observabilityOperator.resources.requests.cpu | quote }}
         memory: {{ .Values.observabilityOperator.resources.requests.memory | quote }}
       limits:
-        cpu: {{ .Values.observabilityOperator.resources.limits.cpu | quote }}
         memory: {{ .Values.observabilityOperator.resources.limits.memory | quote }}
