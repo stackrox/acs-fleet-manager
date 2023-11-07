@@ -13,7 +13,7 @@ import (
 )
 
 func TestDefaultCentral(t *testing.T) {
-	p := getDummyCentralParams(false)
+	p := getDummyCentralParams()
 	central, err := renderDefaultCentral(p)
 	assert.NoError(t, err)
 
@@ -121,7 +121,8 @@ func TestDefaultCentral(t *testing.T) {
 }
 
 func TestInternalCentral(t *testing.T) {
-	p := getDummyCentralParams(true)
+	p := getDummyCentralParams()
+	p.IsInternal = true
 	central, err := renderDefaultCentral(p)
 	assert.NoError(t, err)
 
