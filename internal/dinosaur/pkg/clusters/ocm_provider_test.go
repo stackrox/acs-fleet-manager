@@ -3,7 +3,6 @@ package clusters
 import (
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
@@ -12,13 +11,8 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"github.com/operator-framework/api/pkg/operators/v1alpha2"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	apiErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
-	k8sCorev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestOCMProvider_Create(t *testing.T) {
@@ -475,155 +469,6 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 			RegisterTestingT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.AddIdentityProvider(test.args.clusterSpec, test.args.identityProviderInfo)
-			Expect(resp).To(Equal(test.want))
-			if test.wantErr {
-				Expect(err).NotTo(BeNil())
-			}
-		})
-	}
-}
-
-func TestOCMProvider_ApplyResources(t *testing.T) {
-	type fields struct {
-		ocmClient ocm.Client
-	}
-	type args struct {
-		clusterSpec *types.ClusterSpec
-		resources   types.ResourceSet
-	}
-
-	internalID := "test-internal-id"
-
-	spec := &types.ClusterSpec{
-		InternalID:     internalID,
-		ExternalID:     "",
-		Status:         "",
-		AdditionalInfo: nil,
-	}
-
-	name := "test-resource-set"
-	resources := types.ResourceSet{
-		Name:      name,
-		Resources: []interface{}{sampleProjectCR(), sampleOperatorGroup()},
-	}
-
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *types.ResourceSet
-		wantErr bool
-	}{
-		{
-			name: "should create resource set",
-			fields: fields{
-				ocmClient: &ocm.ClientMock{
-					GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
-						return nil, apiErrors.NotFound("not found error")
-					},
-					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						Expect(syncset.ID()).To(Equal(resources.Name))
-						Expect(syncset.Resources()).To(Equal(resources.Resources))
-						return nil, nil
-					},
-					UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						return nil, errors.Errorf("UpdateSyncSet should not be called")
-					},
-				},
-			},
-			args: args{
-				clusterSpec: spec,
-				resources:   resources,
-			},
-			want: &types.ResourceSet{
-				Name:      name,
-				Resources: []interface{}{sampleProjectCR(), sampleOperatorGroup()},
-			},
-			wantErr: false,
-		},
-		{
-			name: "should update resource set if ResourceSet is changed",
-			fields: fields{
-				ocmClient: &ocm.ClientMock{
-					GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
-						p, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(sampleProjectCR())
-						return clustersmgmtv1.NewSyncset().ID(name).Resources(p).Build()
-					},
-					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						return nil, errors.New("CreateSyncSet should not be called")
-					},
-					UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						Expect(syncset.Resources()).To(Equal(resources.Resources))
-						return nil, nil
-					},
-				},
-			},
-			args: args{
-				clusterSpec: spec,
-				resources:   resources,
-			},
-			want: &types.ResourceSet{
-				Name:      name,
-				Resources: []interface{}{sampleProjectCR(), sampleOperatorGroup()},
-			},
-			wantErr: false,
-		},
-		{
-			name: "should not update resource set if ResourceSet is not changed",
-			fields: fields{
-				ocmClient: &ocm.ClientMock{
-					GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
-						p, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(sampleProjectCR())
-						g, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(sampleOperatorGroup())
-						return clustersmgmtv1.NewSyncset().ID(name).Resources(p, g).Build()
-					},
-					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						return nil, errors.New("CreateSyncSet should not be called")
-					},
-					UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						return nil, errors.New("UpdateSyncSetFunc should not be called")
-					},
-				},
-			},
-			args: args{
-				clusterSpec: spec,
-				resources:   resources,
-			},
-			want: &types.ResourceSet{
-				Name:      name,
-				Resources: []interface{}{sampleProjectCR(), sampleOperatorGroup()},
-			},
-			wantErr: false,
-		},
-		{
-			name: "should return error when get resources failed",
-			fields: fields{
-				ocmClient: &ocm.ClientMock{
-					GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
-						return nil, errors.Errorf("error")
-					},
-					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						return nil, errors.Errorf("CreateSyncSet should not be called")
-					},
-					UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						return nil, errors.Errorf("UpdateSyncSet should not be called")
-					},
-				},
-			},
-			args: args{
-				clusterSpec: spec,
-				resources:   resources,
-			},
-			want:    nil,
-			wantErr: false,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
-			resp, err := p.ApplyResources(test.args.clusterSpec, test.args.resources)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
 				Expect(err).NotTo(BeNil())
@@ -1322,37 +1167,5 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 				Expect(err).NotTo(BeNil())
 			}
 		})
-	}
-}
-
-func sampleProjectCR() *k8sCorev1.Namespace {
-	return &k8sCorev1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: k8sCorev1.SchemeGroupVersion.String(),
-			Kind:       "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-project",
-		},
-	}
-}
-
-func sampleOperatorGroup() *v1alpha2.OperatorGroup {
-	t := metav1.NewTime(time.Unix(0, 0))
-	return &v1alpha2.OperatorGroup{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "operators.coreos.com/v1alpha2",
-			Kind:       "OperatorGroup",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-operator-group-name",
-			Namespace: "test-project",
-		},
-		Spec: v1alpha2.OperatorGroupSpec{
-			TargetNamespaces: []string{"test-project"},
-		},
-		Status: v1alpha2.OperatorGroupStatus{
-			LastUpdated: &t,
-		},
 	}
 }

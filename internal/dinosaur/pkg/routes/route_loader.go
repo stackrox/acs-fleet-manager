@@ -41,18 +41,17 @@ type options struct {
 	IAMConfig            *iam.IAMConfig
 	CentralRequestConfig *config.CentralRequestConfig
 
-	AMSClient                    ocm.AMSClient
-	Central                      services.DinosaurService
-	CentralDefaultVersionService services.CentralDefaultVersionService
-	CloudProviders               services.CloudProvidersService
-	Observatorium                services.ObservatoriumService
-	IAM                          sso.IAMService
-	DataPlaneCluster             services.DataPlaneClusterService
-	DataPlaneCentralService      services.DataPlaneCentralService
-	AccountService               account.AccountService
-	AuthService                  authorization.Authorization
-	DB                           *db.ConnectionFactory
-	Telemetry                    *services.Telemetry
+	AMSClient               ocm.AMSClient
+	Central                 services.DinosaurService
+	CloudProviders          services.CloudProvidersService
+	Observatorium           services.ObservatoriumService
+	IAM                     sso.IAMService
+	DataPlaneCluster        services.DataPlaneClusterService
+	DataPlaneCentralService services.DataPlaneCentralService
+	AccountService          account.AccountService
+	AuthService             authorization.Authorization
+	DB                      *db.ConnectionFactory
+	Telemetry               *services.Telemetry
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
@@ -227,7 +226,7 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	auth.UseFleetShardAuthorizationMiddleware(apiV1DataPlaneRequestsRouter,
 		s.IAMConfig.RedhatSSORealm.ValidIssuerURI, s.FleetShardAuthZConfig)
 
-	adminCentralHandler := handlers.NewAdminCentralHandler(s.Central, s.AccountService, s.ProviderConfig, s.Telemetry, s.CentralDefaultVersionService)
+	adminCentralHandler := handlers.NewAdminCentralHandler(s.Central, s.AccountService, s.ProviderConfig, s.Telemetry)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(
@@ -241,13 +240,6 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 		Name(logger.NewLogEvent("admin-db-delete-central", "[admin] delete central by id").ToString()).
 		Methods(http.MethodDelete)
 
-	adminCentralsRouter.HandleFunc("/default-version", adminCentralHandler.SetCentralDefaultVersion).
-		Name(logger.NewLogEvent("admin-set-centrals-default-version", "[admin] set centrals default version").ToString()).
-		Methods(http.MethodPost)
-	adminCentralsRouter.HandleFunc("/default-version", adminCentralHandler.GetCentralDefaultVersion).
-		Name(logger.NewLogEvent("admin-get-centrals-default-version", "[admin] get centrals default version").ToString()).
-		Methods(http.MethodGet)
-
 	adminCentralsRouter.HandleFunc("", adminCentralHandler.List).
 		Name(logger.NewLogEvent("admin-list-centrals", "[admin] list all centrals").ToString()).
 		Methods(http.MethodGet)
@@ -257,9 +249,6 @@ func (s *options) buildAPIBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminCentralsRouter.HandleFunc("/{id}", adminCentralHandler.Delete).
 		Name(logger.NewLogEvent("admin-delete-central", "[admin] delete central by id").ToString()).
 		Methods(http.MethodDelete)
-	adminCentralsRouter.HandleFunc("/{id}", adminCentralHandler.Update).
-		Name(logger.NewLogEvent("admin-update-central", "[admin] update central by id").ToString()).
-		Methods(http.MethodPatch)
 	adminCentralsRouter.HandleFunc("/{id}/restore", adminCentralHandler.Restore).
 		Name(logger.NewLogEvent("admin-restore-central", "[admin] restore central by id").ToString()).
 		Methods(http.MethodPost)

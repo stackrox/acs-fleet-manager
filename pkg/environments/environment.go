@@ -7,12 +7,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/goava/di"
-	"github.com/pkg/errors"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/defaults"
-
 	sentryGo "github.com/getsentry/sentry-go"
+	"github.com/goava/di"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 )
 
@@ -133,9 +131,6 @@ func (env *Env) CreateServices() error {
 	if err != nil {
 		return fmt.Errorf("modifying configuration: %w", err)
 	}
-	glog.Info("Active defaults for new Central tenants:")
-	tryPrettyPrintDefaults(defaults.Central, "CentralDefaults")
-	tryPrettyPrintDefaults(defaults.Scanner, "ScannerDefaults")
 
 	type injections struct {
 		di.Inject
@@ -277,16 +272,4 @@ func setConfigDefaults(flags *pflag.FlagSet, defaults map[string]string) error {
 		}
 	}
 	return nil
-}
-
-func tryPrettyPrintDefaults(obj interface{}, label string) {
-	prettyPrintedDefaults, err := defaults.PrettyPrintDefaults(obj, label)
-	if err != nil {
-		glog.Errorf("Failed to pretty-print %s: %v", label, err)
-		glog.Errorf("%s: %+v", label, obj)
-	} else {
-		for _, line := range prettyPrintedDefaults {
-			glog.Info("  " + line)
-		}
-	}
 }

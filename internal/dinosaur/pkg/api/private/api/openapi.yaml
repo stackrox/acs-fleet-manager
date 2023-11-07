@@ -323,21 +323,6 @@ components:
         kind:
           type: string
       type: object
-    ResourceList:
-      additionalProperties:
-        type: string
-      type: object
-    ResourceRequirements:
-      properties:
-        requests:
-          additionalProperties:
-            type: string
-          type: object
-        limits:
-          additionalProperties:
-            type: string
-          type: object
-      type: object
     ManagedCentral:
       allOf:
       - $ref: '#/components/schemas/PrivateObjectReference'
@@ -492,51 +477,13 @@ components:
       properties:
         host:
           type: string
-    ManagedCentral_allOf_spec_central:
+    ManagedCentral_allOf_spec:
       properties:
         instanceType:
           enum:
           - eval
           - standard
           type: string
-        resources:
-          $ref: '#/components/schemas/ResourceRequirements'
-    ManagedCentral_allOf_spec_scanner_analyzer_scaling:
-      properties:
-        autoScaling:
-          type: string
-        replicas:
-          format: int32
-          minimum: 1
-          type: integer
-        minReplicas:
-          format: int32
-          minimum: 1
-          type: integer
-        maxReplicas:
-          format: int32
-          minimum: 1
-          type: integer
-    ManagedCentral_allOf_spec_scanner_analyzer:
-      properties:
-        scaling:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner_analyzer_scaling'
-        resources:
-          $ref: '#/components/schemas/ResourceRequirements'
-    ManagedCentral_allOf_spec_scanner_db:
-      properties:
-        host:
-          type: string
-        resources:
-          $ref: '#/components/schemas/ResourceRequirements'
-    ManagedCentral_allOf_spec_scanner:
-      properties:
-        analyzer:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner_analyzer'
-        db:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner_db'
-    ManagedCentral_allOf_spec:
-      properties:
         centralCRYAML:
           type: string
         owners:
@@ -549,12 +496,6 @@ components:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_uiEndpoint'
         dataEndpoint:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec_dataEndpoint'
-        operatorImage:
-          type: string
-        central:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_central'
-        scanner:
-          $ref: '#/components/schemas/ManagedCentral_allOf_spec_scanner'
     ManagedCentral_allOf:
       properties:
         metadata:
@@ -562,8 +503,6 @@ components:
         spec:
           $ref: '#/components/schemas/ManagedCentral_allOf_spec'
         requestStatus:
-          type: string
-        forceReconcile:
           type: string
     ManagedCentralList_allOf:
       example: '{"kind":"ManagedCentralList","items":{"$ref":"#/components/examples/ManagedCentralExample"}}'

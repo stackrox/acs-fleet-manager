@@ -3,7 +3,6 @@ package clusters
 import (
 	"fmt"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
@@ -13,8 +12,6 @@ import (
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
-	svcErrors "github.com/stackrox/acs-fleet-manager/pkg/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -116,35 +113,6 @@ func (o *OCMProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identi
 		return &identityProviderInfo, nil
 	}
 	return nil, nil
-}
-
-// ApplyResources ...
-func (o *OCMProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
-	existingSyncset, err := o.ocmClient.GetSyncSet(clusterSpec.InternalID, resources.Name)
-	syncSetFound := true
-	if err != nil {
-		svcErr := svcErrors.ToServiceError(err)
-		if !svcErr.Is404() {
-			return nil, fmt.Errorf("retrieving SyncSet %s for cluster %s: %w", resources.Name, clusterSpec.InternalID, svcErr)
-		}
-		syncSetFound = false
-	}
-
-	if !syncSetFound {
-		glog.V(10).Infof("SyncSet for cluster %s not found. Creating it...", clusterSpec.InternalID)
-		_, syncsetErr := o.createSyncSet(clusterSpec.InternalID, resources)
-		if syncsetErr != nil {
-			return nil, errors.Wrapf(syncsetErr, "failed to create syncset for cluster %s", clusterSpec.InternalID)
-		}
-	} else {
-		glog.V(10).Infof("SyncSet for cluster %s already created", clusterSpec.InternalID)
-		_, syncsetErr := o.updateSyncSet(clusterSpec.InternalID, resources, existingSyncset)
-		if syncsetErr != nil {
-			return nil, errors.Wrapf(syncsetErr, "failed to update syncset for cluster %s", clusterSpec.InternalID)
-		}
-	}
-
-	return &resources, nil
 }
 
 // ScaleUp ...
@@ -351,62 +319,6 @@ func (o *OCMProvider) addOpenIDIdentityProvider(clusterSpec *types.ClusterSpec, 
 		return "", errors.WithStack(createIdentityProviderErr)
 	}
 	return createdIdentityProvider.ID(), nil
-}
-
-func (o *OCMProvider) createSyncSet(clusterID string, resourceSet types.ResourceSet) (*clustersmgmtv1.Syncset, error) {
-	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().ID(resourceSet.Name).Resources(resourceSet.Resources...).Build()
-
-	if sysnsetBuilderErr != nil {
-		return nil, errors.WithStack(sysnsetBuilderErr)
-	}
-
-	syncset, err := o.ocmClient.CreateSyncSet(clusterID, syncset)
-	if err != nil {
-		return syncset, fmt.Errorf("creating SyncSet for cluster %q: %w", clusterID, err)
-	}
-	return syncset, nil
-}
-
-func (o *OCMProvider) updateSyncSet(clusterID string, resourceSet types.ResourceSet, existingSyncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().Resources(resourceSet.Resources...).Build()
-	if sysnsetBuilderErr != nil {
-		return nil, errors.WithStack(sysnsetBuilderErr)
-	}
-	if syncsetResourcesChanged(existingSyncset, syncset) {
-		glog.V(5).Infof("SyncSet for cluster %s is changed, will update", clusterID)
-		updatedSyncSet, err := o.ocmClient.UpdateSyncSet(clusterID, resourceSet.Name, syncset)
-		if err != nil {
-			return updatedSyncSet, fmt.Errorf("updating SyncSet %q for cluster %q: %w", resourceSet.Name, clusterID, err)
-		}
-		return updatedSyncSet, nil
-	}
-	glog.V(10).Infof("SyncSet for cluster %s is not changed, no update needed", clusterID)
-	return syncset, nil
-}
-
-func syncsetResourcesChanged(existing *clustersmgmtv1.Syncset, new *clustersmgmtv1.Syncset) bool {
-	if len(existing.Resources()) != len(new.Resources()) {
-		return true
-	}
-	// Here we will convert values in the Resources slice to the same type, and then compare the values.
-	// This is needed because when you use ocm.GetSyncset(), the Resources in the returned object only contains a slice of map[string]interface{} objects, because it can't convert them to concrete typed objects.
-	// So the compare if there changes, we need to make sure they are the same type first.
-	// If the type conversion doesn't work, or the converted values doesn't match, then they are not equal.
-	// This assumes that the order of objects in the Resources slice are the same in the exiting and new Syncset (which is the case as the OCM API returns the syncset resources in the same order as they posted)
-	for i, r := range new.Resources() {
-		obj := reflect.New(reflect.TypeOf(r).Elem()).Interface()
-		// Here we convert the unstructured type to the concrete type, as there is a bug in OperatorGroup type to convert it to the unstructured type
-		err := runtime.DefaultUnstructuredConverter.FromUnstructured(existing.Resources()[i].(map[string]interface{}), obj)
-		// if we can't do the type conversion, it likely means the resource has changed
-		if err != nil {
-			return true
-		}
-		if !reflect.DeepEqual(obj, r) {
-			return true
-		}
-	}
-
-	return false
 }
 
 func buildIdentityProvider(idpInfo types.OpenIDIdentityProviderInfo) (*clustersmgmtv1.IdentityProvider, error) {

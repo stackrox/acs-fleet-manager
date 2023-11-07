@@ -389,66 +389,6 @@ parameters:
   description: SupportedProviders configuration file, that it's passed to the fleet manager executable in the flag --providers-config-file
   value: /config/provider-configuration.yaml
 
-- name: CENTRAL_CPU_REQUEST
-  displayName: Default Central CPU request
-  description: Default CPU request for central deployments for newly created tenants
-  value: "50m"
-
-- name: CENTRAL_MEMORY_REQUEST
-  displayName: Default Central memory request
-  description: Default memory request for central deployments for newly created tenants
-  value: "250Mi"
-
-- name: CENTRAL_CPU_LIMIT
-  displayName: Default Central CPU limit
-  description: Default CPU limit for central deployments for newly created tenants
-  value: "250m"
-
-- name: CENTRAL_MEMORY_LIMIT
-  displayName: Default Central memory limit
-  description: Default memory limit for central deployments for newly created tenants
-  value: "4G"
-
-- name: SCANNER_ANALYZER_CPU_REQUEST
-  displayName: Default Scanner CPU request
-  description: Default CPU request for scanner deployments for newly created tenants
-  value: "5m"
-
-- name: SCANNER_ANALYZER_MEMORY_REQUEST
-  displayName: Default Scanner memory request
-  description: Default memory request for scanner deployments for newly created tenants
-  value: "100M"
-
-- name: SCANNER_ANALYZER_CPU_LIMIT
-  displayName: Default Scanner CPU limit
-  description: Default CPU limit for scanner deployments for newly created tenants
-  value: "250m"
-
-- name: SCANNER_ANALYZER_MEMORY_LIMIT
-  displayName: Default Scanner memory limit
-  description: Default memory limit for scanner deployments for newly created tenants
-  value: "2500M"
-
-- name: SCANNER_DB_CPU_REQUEST
-  displayName: Default Scanner DB CPU request
-  description: Default CPU request for scanner-db deployments for newly created tenants
-  value: "10m"
-
-- name: SCANNER_DB_MEMORY_REQUEST
-  displayName: Default Scanner DB memory request
-  description: Default memory request for scanner-db deployments for newly created tenants
-  value: "500M"
-
-- name: SCANNER_DB_CPU_LIMIT
-  displayName: Default Scanner DB CPU limit
-  description: Default CPU limit for scanner-db deployments for newly created tenants
-  value: "250m"
-
-- name: SCANNER_DB_MEMORY_LIMIT
-  displayName: Default Scanner DB memory limit
-  description: Default memory limit for scanner-db deployments for newly created tenants
-  value: "2500M"
-
 - name: CENTRAL_REQUEST_EXPIRATION_TIMEOUT
   displayName: Central request expiration timeout
   description: Maximum interval after which central request is canceled
@@ -708,7 +648,6 @@ objects:
       aws.route53accesskey: badger
       aws.route53secretaccesskey: badger
       observability-config-access.token: badger
-      image-pull.dockerconfigjson: badger
       kubeconfig: badger
   - apiVersion: v1
     kind: ConfigMap
@@ -1178,33 +1117,6 @@ objects:
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
-
-              - name: CENTRAL_CPU_REQUEST
-                value: "${CENTRAL_CPU_REQUEST}"
-              - name: CENTRAL_MEMORY_REQUEST
-                value: "${CENTRAL_MEMORY_REQUEST}"
-              - name: CENTRAL_CPU_LIMIT
-                value: "${CENTRAL_CPU_LIMIT}"
-              - name: CENTRAL_MEMORY_LIMIT
-                value: "${CENTRAL_MEMORY_LIMIT}"
-
-              - name: SCANNER_ANALYZER_CPU_REQUEST
-                value: "${SCANNER_ANALYZER_CPU_REQUEST}"
-              - name: SCANNER_ANALYZER_MEMORY_REQUEST
-                value: "${SCANNER_ANALYZER_MEMORY_REQUEST}"
-              - name: SCANNER_ANALYZER_CPU_LIMIT
-                value: "${SCANNER_ANALYZER_CPU_LIMIT}"
-              - name: SCANNER_ANALYZER_MEMORY_LIMIT
-                value: "${SCANNER_ANALYZER_MEMORY_LIMIT}"
-
-              - name: SCANNER_DB_CPU_REQUEST
-                value: "${SCANNER_DB_CPU_REQUEST}"
-              - name: SCANNER_DB_MEMORY_REQUEST
-                value: "${SCANNER_DB_MEMORY_REQUEST}"
-              - name: SCANNER_DB_CPU_LIMIT
-                value: "${SCANNER_DB_CPU_LIMIT}"
-              - name: SCANNER_DB_MEMORY_LIMIT
-                value: "${SCANNER_DB_MEMORY_LIMIT}"
               - name: RHACS_GITOPS_ENABLED
                 value: "${RHACS_GITOPS_ENABLED}"
               - name: RHACS_TARGETED_OPERATOR_UPGRADES
@@ -1296,7 +1208,6 @@ objects:
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}
             - --observability-config-access-token-file=/secrets/service/observability-config-access.token
             - --observability-config-tag=${OBSERVABILITY_CONFIG_TAG}
-            - --image-pull-docker-config-file=/secrets/service/image-pull.dockerconfigjson
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
             - --central-operator-index-image=${CENTRAL_OPERATOR_OLM_INDEX_IMAGE}
             - --fleetshard-operator-index-image=${FLEETSHARD_OLM_INDEX_IMAGE}
