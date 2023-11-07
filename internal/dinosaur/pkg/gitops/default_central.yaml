@@ -55,3 +55,6 @@ spec:
           memory: 2Gi
     monitoring:
       exposeEndpoint: Enabled
+  monitoring:
+    openshift:
+      enabled:  {{ not .IsInternal }}

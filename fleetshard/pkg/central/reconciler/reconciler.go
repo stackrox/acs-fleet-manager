@@ -286,7 +286,6 @@ func (r *CentralReconciler) applyCentralConfig(remoteCentral *private.ManagedCen
 	r.applyProxyConfig(central)
 	r.applyDeclarativeConfig(central)
 	r.applyAnnotations(central)
-	r.applyMonitoring(remoteCentral, central)
 	return nil
 }
 
@@ -358,22 +357,6 @@ func (r *CentralReconciler) applyTelemetry(remoteCentral *private.ManagedCentral
 		},
 	}
 	central.Spec.Central.Telemetry = telemetry
-}
-
-func (r *CentralReconciler) applyMonitoring(remoteCentral *private.ManagedCentral, central *v1alpha1.Central) {
-	if central.Spec.Central == nil {
-		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
-	}
-	// Disable OpenShift monitoring for internal Centrals to avoid overloading Telemeter with probe service metrics.
-	if remoteCentral.Metadata.Internal {
-		if central.Spec.Monitoring == nil {
-			central.Spec.Monitoring = &v1alpha1.GlobalMonitoring{}
-		}
-		if central.Spec.Monitoring.OpenShiftMonitoring == nil {
-			central.Spec.Monitoring.OpenShiftMonitoring = &v1alpha1.OpenShiftMonitoring{}
-		}
-		central.Spec.Monitoring.OpenShiftMonitoring.Enabled = false
-	}
 }
 
 func (r *CentralReconciler) restoreCentralSecrets(ctx context.Context, remoteCentral private.ManagedCentral) error {

@@ -72,7 +72,7 @@ func validatePatch(path *field.Path, patch string) field.ErrorList {
 // tryRenderDummyCentralWithPatch renders a dummy Central instance with the given patch.
 // useful to test that a patch is valid.
 func tryRenderDummyCentralWithPatch(patch string) error {
-	var dummyParams = getDummyCentralParams()
+	var dummyParams = getDummyCentralParams(false)
 	dummyConfig := Config{
 		Centrals: CentralsConfig{
 			Overrides: []CentralOverride{
@@ -89,7 +89,7 @@ func tryRenderDummyCentralWithPatch(patch string) error {
 	return nil
 }
 
-func getDummyCentralParams() CentralParams {
+func getDummyCentralParams(isInternal bool) CentralParams {
 	return CentralParams{
 		ID:               "id",
 		Name:             "name",
@@ -106,7 +106,7 @@ func getDummyCentralParams() CentralParams {
 		OrganizationID:   "organizationId",
 		OrganizationName: "organizationName",
 		InstanceType:     "instanceType",
-		IsInternal:       false,
+		IsInternal:       isInternal,
 	}
 }
 
