@@ -493,9 +493,6 @@ var _ AdminAPI = &AdminAPIMock{}
 //			GetCentralsFunc: func(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error) {
 //				panic("mock out the GetCentrals method")
 //			},
-//			UpdateCentralByIdFunc: func(ctx context.Context, id string, centralUpdateRequest admin.CentralUpdateRequest) (admin.Central, *http.Response, error) {
-//				panic("mock out the UpdateCentralById method")
-//			},
 //		}
 //
 //		// use mockedAdminAPI in code that requires AdminAPI
@@ -511,9 +508,6 @@ type AdminAPIMock struct {
 
 	// GetCentralsFunc mocks the GetCentrals method.
 	GetCentralsFunc func(ctx context.Context, localVarOptionals *admin.GetCentralsOpts) (admin.CentralList, *http.Response, error)
-
-	// UpdateCentralByIdFunc mocks the UpdateCentralById method.
-	UpdateCentralByIdFunc func(ctx context.Context, id string, centralUpdateRequest admin.CentralUpdateRequest) (admin.Central, *http.Response, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -540,20 +534,10 @@ type AdminAPIMock struct {
 			// LocalVarOptionals is the localVarOptionals argument value.
 			LocalVarOptionals *admin.GetCentralsOpts
 		}
-		// UpdateCentralById holds details about calls to the UpdateCentralById method.
-		UpdateCentralById []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// ID is the id argument value.
-			ID string
-			// CentralUpdateRequest is the centralUpdateRequest argument value.
-			CentralUpdateRequest admin.CentralUpdateRequest
-		}
 	}
 	lockCreateCentral       sync.RWMutex
 	lockDeleteDbCentralById sync.RWMutex
 	lockGetCentrals         sync.RWMutex
-	lockUpdateCentralById   sync.RWMutex
 }
 
 // CreateCentral calls CreateCentralFunc.
@@ -665,45 +649,5 @@ func (mock *AdminAPIMock) GetCentralsCalls() []struct {
 	mock.lockGetCentrals.RLock()
 	calls = mock.calls.GetCentrals
 	mock.lockGetCentrals.RUnlock()
-	return calls
-}
-
-// UpdateCentralById calls UpdateCentralByIdFunc.
-func (mock *AdminAPIMock) UpdateCentralById(ctx context.Context, id string, centralUpdateRequest admin.CentralUpdateRequest) (admin.Central, *http.Response, error) {
-	if mock.UpdateCentralByIdFunc == nil {
-		panic("AdminAPIMock.UpdateCentralByIdFunc: method is nil but AdminAPI.UpdateCentralById was just called")
-	}
-	callInfo := struct {
-		Ctx                  context.Context
-		ID                   string
-		CentralUpdateRequest admin.CentralUpdateRequest
-	}{
-		Ctx:                  ctx,
-		ID:                   id,
-		CentralUpdateRequest: centralUpdateRequest,
-	}
-	mock.lockUpdateCentralById.Lock()
-	mock.calls.UpdateCentralById = append(mock.calls.UpdateCentralById, callInfo)
-	mock.lockUpdateCentralById.Unlock()
-	return mock.UpdateCentralByIdFunc(ctx, id, centralUpdateRequest)
-}
-
-// UpdateCentralByIdCalls gets all the calls that were made to UpdateCentralById.
-// Check the length with:
-//
-//	len(mockedAdminAPI.UpdateCentralByIdCalls())
-func (mock *AdminAPIMock) UpdateCentralByIdCalls() []struct {
-	Ctx                  context.Context
-	ID                   string
-	CentralUpdateRequest admin.CentralUpdateRequest
-} {
-	var calls []struct {
-		Ctx                  context.Context
-		ID                   string
-		CentralUpdateRequest admin.CentralUpdateRequest
-	}
-	mock.lockUpdateCentralById.RLock()
-	calls = mock.calls.UpdateCentralById
-	mock.lockUpdateCentralById.RUnlock()
 	return calls
 }

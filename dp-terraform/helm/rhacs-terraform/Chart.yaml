@@ -36,8 +36,10 @@ dependencies:
     condition: logging.enabled
   - name: audit-logs
     version: "0.1.0"
-    repository: ""
     condition: audit-logs.enabled
   - name: secured-cluster
     version: "0.1.0"
     condition: secured-cluster.enabled
+  - name: external-secrets
+    version: "0.9.5"
+    repository: https://charts.external-secrets.io/

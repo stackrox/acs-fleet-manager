@@ -115,22 +115,6 @@ In the Data Plane cluster, the Central Operator and the FleetShard Deployments
 might reference container images that are located in authenticated container
 image registries.
 
-Fleet Manager can be configured to send this authenticated
-container image registry information as a K8s Secret in [`kubernetes.io/.dockerconfigjson` format](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#registry-secret-existing-credentials).
-
-In order for the Fleet Manager to be able to start, create the following file:
-```
-touch secrets/image-pull.dockerconfigjson
-```
-
-If you don't need to make use of this functionality you can skip this section.
-Otherwise, keep reading below.
-
-To configure the Fleet Manager with this authenticated registry information so
-the previously mentioned Data Plane elements can pull container images from it:
-* Base-64 encode your [Docker configuration file](https://docs.docker.com/engine/reference/commandline/cli/#docker-cli-configuration-file-configjson-properties).
-* Copy the contents generated from the previous point into the `secrets/image-pull.dockerconfigjson` file
-
 ## Setup the Observability stack secrets
 See [Obsevability](./observability/README.md) to learn more about Observatorium and the observability stack.
 The following command is used to setup the various secrets needed by the Observability stack.

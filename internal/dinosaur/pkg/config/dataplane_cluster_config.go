@@ -20,10 +20,8 @@ import (
 
 // DataplaneClusterConfig ...
 type DataplaneClusterConfig struct {
-	OpenshiftVersion             string `json:"cluster_openshift_version"`
-	ComputeMachineType           string `json:"cluster_compute_machine_type"`
-	ImagePullDockerConfigContent string `json:"image_pull_docker_config_content"`
-	ImagePullDockerConfigFile    string `json:"image_pull_docker_config_file"`
+	OpenshiftVersion   string `json:"cluster_openshift_version"`
+	ComputeMachineType string `json:"cluster_compute_machine_type"`
 	// Possible values are:
 	// 'manual' to use OSD Cluster configuration file,
 	// 'auto' to use dynamic scaling
@@ -72,8 +70,6 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	return &DataplaneClusterConfig{
 		OpenshiftVersion:                      "",
 		ComputeMachineType:                    "m5.2xlarge",
-		ImagePullDockerConfigContent:          "",
-		ImagePullDockerConfigFile:             "secrets/image-pull.dockerconfigjson",
 		DataPlaneClusterConfigFile:            "config/dataplane-cluster-configuration.yaml",
 		ReadOnlyUserListFile:                  "config/read-only-user-list.yaml",
 		DataPlaneClusterScalingType:           ManualScaling,
@@ -298,7 +294,6 @@ func (c *DataplaneClusterConfig) addKubeconfigFlag(fs *pflag.FlagSet) {
 func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OpenshiftVersion, "cluster-openshift-version", c.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
 	fs.StringVar(&c.ComputeMachineType, "cluster-compute-machine-type", c.ComputeMachineType, "The compute machine type")
-	fs.StringVar(&c.ImagePullDockerConfigFile, "image-pull-docker-config-file", c.ImagePullDockerConfigFile, "The file that contains the docker config content for pulling MK operator images on clusters")
 	fs.StringVar(&c.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", c.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
 	fs.StringVar(&c.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", c.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
 	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")
@@ -318,13 +313,6 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 
 // ReadFiles ...
 func (c *DataplaneClusterConfig) ReadFiles() error {
-	if c.ImagePullDockerConfigContent == "" && c.ImagePullDockerConfigFile != "" {
-		err := shared.ReadFileValueString(c.ImagePullDockerConfigFile, &c.ImagePullDockerConfigContent)
-		if err != nil {
-			return fmt.Errorf("reading image pull docker config file: %w", err)
-		}
-	}
-
 	if c.IsDataPlaneManualScalingEnabled() {
 		list, err := readDataPlaneClusterConfig(c.DataPlaneClusterConfigFile)
 		if err == nil {

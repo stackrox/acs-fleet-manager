@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"reflect"
 	"sort"
-	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -27,7 +26,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/fleetshard/pkg/util"
 	centralConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/converters"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/fleetmanager"
 	"github.com/stackrox/acs-fleet-manager/pkg/features"
 	"github.com/stackrox/rox/operator/apis/platform/v1alpha1"
@@ -102,6 +100,7 @@ type CentralReconcilerOptions struct {
 	Environment           string
 	AuditLogging          config.AuditLogging
 	TenantImagePullSecret string
+	RouteParameters       config.RouteConfig
 }
 
 // CentralReconciler is a reconciler tied to a one Central instance. It installs, updates and deletes Central instances
@@ -156,7 +155,7 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 	if err != nil {
 		return nil, errors.Wrap(err, "checking if central changed")
 	}
-	needsReconcile := r.needsReconcile(changed, remoteCentral, central)
+	needsReconcile := r.needsReconcile(changed, central)
 
 	if !needsReconcile && r.shouldSkipReadyCentral(remoteCentral) {
 		return nil, ErrCentralNotChanged
@@ -271,113 +270,13 @@ func (r *CentralReconciler) Reconcile(ctx context.Context, remoteCentral private
 }
 
 func (r *CentralReconciler) getInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
-	var central *v1alpha1.Central
-	var err error
-	if r.shouldUseGitopsConfig(remoteCentral) {
-		if central, err = r.getInstanceConfigWithGitops(remoteCentral); err != nil {
-			return nil, err
-		}
-	} else {
-		if central, err = r.getLegacyInstanceConfig(remoteCentral); err != nil {
-			return nil, err
-		}
-	}
-	if err := r.applyCentralConfig(remoteCentral, central); err != nil {
-		return nil, err
-	}
-	return central, nil
-}
-
-func (r *CentralReconciler) shouldUseGitopsConfig(remoteCentral *private.ManagedCentral) bool {
-	return features.GitOpsCentrals.Enabled() && len(remoteCentral.Spec.CentralCRYAML) > 0
-}
-
-func (r *CentralReconciler) getInstanceConfigWithGitops(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
 	var central = new(v1alpha1.Central)
 	if err := yaml2.Unmarshal([]byte(remoteCentral.Spec.CentralCRYAML), central); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal central yaml")
 	}
-	return central, nil
-}
-
-func (r *CentralReconciler) getLegacyInstanceConfig(remoteCentral *private.ManagedCentral) (*v1alpha1.Central, error) {
-	if remoteCentral == nil {
-		return nil, errInvalidArguments
+	if err := r.applyCentralConfig(remoteCentral, central); err != nil {
+		return nil, err
 	}
-
-	remoteCentralName := remoteCentral.Metadata.Name
-	remoteCentralNamespace := remoteCentral.Metadata.Namespace
-
-	monitoringExposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
-	centralResources, err := converters.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Central.Resources)
-	if err != nil {
-		return nil, errors.Wrap(err, "converting Central resources")
-	}
-	scannerAnalyzerResources, err := converters.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Scanner.Analyzer.Resources)
-	if err != nil {
-		return nil, errors.Wrap(err, "converting Scanner Analyzer resources")
-	}
-	scannerAnalyzerScaling := converters.ConvertPrivateScalingToV1(&remoteCentral.Spec.Scanner.Analyzer.Scaling)
-	scannerDbResources, err := converters.ConvertPrivateResourceRequirementsToCoreV1(&remoteCentral.Spec.Scanner.Db.Resources)
-	if err != nil {
-		return nil, errors.Wrap(err, "converting Scanner DB resources")
-	}
-
-	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
-
-	central := &v1alpha1.Central{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      remoteCentralName,
-			Namespace: remoteCentralNamespace,
-			Labels: map[string]string{
-				k8s.ManagedByLabelKey: k8s.ManagedByFleetshardValue,
-				tenantIDLabelKey:      remoteCentral.Id,
-				instanceTypeLabelKey:  remoteCentral.Spec.Central.InstanceType,
-				orgIDLabelKey:         remoteCentral.Spec.Auth.OwnerOrgId,
-			},
-			Annotations: map[string]string{
-				centralPVCAnnotationKey:   strconv.FormatBool(r.managedDBEnabled),
-				managedServicesAnnotation: "true",
-				orgNameAnnotationKey:      remoteCentral.Spec.Auth.OwnerOrgName,
-			},
-		},
-		Spec: v1alpha1.CentralSpec{
-			Central: &v1alpha1.CentralComponentSpec{
-				Monitoring: &v1alpha1.Monitoring{
-					ExposeEndpoint: &monitoringExposeEndpointEnabled,
-				},
-				DeploymentSpec: v1alpha1.DeploymentSpec{
-					Resources: &centralResources,
-				},
-			},
-			Scanner: &v1alpha1.ScannerComponentSpec{
-				Analyzer: &v1alpha1.ScannerAnalyzerComponent{
-					DeploymentSpec: v1alpha1.DeploymentSpec{
-						Resources: &scannerAnalyzerResources,
-					},
-					Scaling: &scannerAnalyzerScaling,
-				},
-				DB: &v1alpha1.DeploymentSpec{
-					Resources: &scannerDbResources,
-				},
-				Monitoring: &v1alpha1.Monitoring{
-					ExposeEndpoint: &monitoringExposeEndpointEnabled,
-				},
-				ScannerComponent: &scannerComponentEnabled,
-			},
-			Customize: &v1alpha1.CustomizeSpec{
-				Annotations: map[string]string{
-					orgNameAnnotationKey: remoteCentral.Spec.Auth.OwnerOrgName,
-				},
-				Labels: map[string]string{
-					orgIDLabelKey:        remoteCentral.Spec.Auth.OwnerOrgId,
-					tenantIDLabelKey:     remoteCentral.Id,
-					instanceTypeLabelKey: remoteCentral.Spec.Central.InstanceType,
-				},
-			},
-		},
-	}
-
 	return central, nil
 }
 
@@ -1691,15 +1590,12 @@ func (r *CentralReconciler) shouldSkipReadyCentral(remoteCentral private.Managed
 		isRemoteCentralReady(&remoteCentral)
 }
 
-func (r *CentralReconciler) needsReconcile(changed bool, remoteCentral private.ManagedCentral, central *v1alpha1.Central) bool {
+func (r *CentralReconciler) needsReconcile(changed bool, central *v1alpha1.Central) bool {
 	if changed {
 		return true
 	}
-	if r.shouldUseGitopsConfig(&remoteCentral) {
-		forceReconcile, ok := central.Labels["rhacs.redhat.com/force-reconcile"]
-		return ok && forceReconcile == "true"
-	}
-	return remoteCentral.ForceReconcile == "always"
+	forceReconcile, ok := central.Labels["rhacs.redhat.com/force-reconcile"]
+	return ok && forceReconcile == "true"
 }
 
 var resourcesChart = charts.MustGetChart("tenant-resources", nil)
@@ -1781,7 +1677,7 @@ func NewCentralReconciler(k8sClient ctrlClient.Client, fleetmanagerClient *fleet
 		status:                 pointer.Int32(FreeStatus),
 		useRoutes:              opts.UseRoutes,
 		wantsAuthProvider:      opts.WantsAuthProvider,
-		routeService:           k8s.NewRouteService(k8sClient),
+		routeService:           k8s.NewRouteService(k8sClient, &opts.RouteParameters),
 		secretBackup:           k8s.NewSecretBackup(k8sClient, opts.ManagedDBEnabled),
 		secretCipher:           secretCipher, // pragma: allowlist secret
 		egressProxyImage:       opts.EgressProxyImage,

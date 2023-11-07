@@ -54,13 +54,18 @@ func RenderChart(operators OperatorConfigs) ([]*unstructured.Unstructured, error
 	for _, operator := range operators.Configs {
 		valuesArr = append(valuesArr, chartutil.Values(operator))
 	}
+
+	resourcesChart, err := charts.GetChart("rhacs-operator", operators.CRDURLs)
+	operatorValues := resourcesChart.Values["operator"].(map[string]interface{})
+	defaultValues := operatorValues["default"].(map[string]interface{})
+
 	chartVals := chartutil.Values{
 		"operator": chartutil.Values{
-			"images": valuesArr,
+			"images":  valuesArr,
+			"default": chartutil.Values(defaultValues),
 		},
 	}
 
-	resourcesChart, err := charts.GetChart("rhacs-operator", operators.CRDURLs)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting chart: %w", err)
 	}

@@ -22,9 +22,6 @@ var _ Provider = &ProviderMock{}
 //			AddIdentityProviderFunc: func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
 //				panic("mock out the AddIdentityProvider method")
 //			},
-//			ApplyResourcesFunc: func(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
-//				panic("mock out the ApplyResources method")
-//			},
 //			CheckClusterStatusFunc: func(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
 //				panic("mock out the CheckClusterStatus method")
 //			},
@@ -71,9 +68,6 @@ type ProviderMock struct {
 	// AddIdentityProviderFunc mocks the AddIdentityProvider method.
 	AddIdentityProviderFunc func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error)
 
-	// ApplyResourcesFunc mocks the ApplyResources method.
-	ApplyResourcesFunc func(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error)
-
 	// CheckClusterStatusFunc mocks the CheckClusterStatus method.
 	CheckClusterStatusFunc func(spec *types.ClusterSpec) (*types.ClusterSpec, error)
 
@@ -118,13 +112,6 @@ type ProviderMock struct {
 			ClusterSpec *types.ClusterSpec
 			// IdentityProvider is the identityProvider argument value.
 			IdentityProvider types.IdentityProviderInfo
-		}
-		// ApplyResources holds details about calls to the ApplyResources method.
-		ApplyResources []struct {
-			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types.ClusterSpec
-			// Resources is the resources argument value.
-			Resources types.ResourceSet
 		}
 		// CheckClusterStatus holds details about calls to the CheckClusterStatus method.
 		CheckClusterStatus []struct {
@@ -194,7 +181,6 @@ type ProviderMock struct {
 		}
 	}
 	lockAddIdentityProvider     sync.RWMutex
-	lockApplyResources          sync.RWMutex
 	lockCheckClusterStatus      sync.RWMutex
 	lockCreate                  sync.RWMutex
 	lockDelete                  sync.RWMutex
@@ -242,42 +228,6 @@ func (mock *ProviderMock) AddIdentityProviderCalls() []struct {
 	mock.lockAddIdentityProvider.RLock()
 	calls = mock.calls.AddIdentityProvider
 	mock.lockAddIdentityProvider.RUnlock()
-	return calls
-}
-
-// ApplyResources calls ApplyResourcesFunc.
-func (mock *ProviderMock) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
-	if mock.ApplyResourcesFunc == nil {
-		panic("ProviderMock.ApplyResourcesFunc: method is nil but Provider.ApplyResources was just called")
-	}
-	callInfo := struct {
-		ClusterSpec *types.ClusterSpec
-		Resources   types.ResourceSet
-	}{
-		ClusterSpec: clusterSpec,
-		Resources:   resources,
-	}
-	mock.lockApplyResources.Lock()
-	mock.calls.ApplyResources = append(mock.calls.ApplyResources, callInfo)
-	mock.lockApplyResources.Unlock()
-	return mock.ApplyResourcesFunc(clusterSpec, resources)
-}
-
-// ApplyResourcesCalls gets all the calls that were made to ApplyResources.
-// Check the length with:
-//
-//	len(mockedProvider.ApplyResourcesCalls())
-func (mock *ProviderMock) ApplyResourcesCalls() []struct {
-	ClusterSpec *types.ClusterSpec
-	Resources   types.ResourceSet
-} {
-	var calls []struct {
-		ClusterSpec *types.ClusterSpec
-		Resources   types.ResourceSet
-	}
-	mock.lockApplyResources.RLock()
-	calls = mock.calls.ApplyResources
-	mock.lockApplyResources.RUnlock()
 	return calls
 }
 

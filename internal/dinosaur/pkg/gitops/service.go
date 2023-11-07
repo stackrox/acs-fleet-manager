@@ -11,30 +11,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// Service applies GitOps configuration to Central instances.
-type Service interface {
-	GetCentral(ctx CentralParams) (v1alpha1.Central, error)
-}
-
-type service struct {
-	configProvider ConfigProvider
-}
-
-// NewService returns a new Service.
-func NewService(configProvider ConfigProvider) Service {
-	return &service{configProvider: configProvider}
-}
-
-// GetCentral returns a Central instance with the given parameters.
-func (s *service) GetCentral(params CentralParams) (v1alpha1.Central, error) {
-	cfg, err := s.configProvider.Get()
-	if err != nil {
-		return v1alpha1.Central{}, errors.Wrap(err, "failed to get GitOps configuration")
-	}
-	return renderCentral(params, cfg)
-}
-
-func renderCentral(params CentralParams, config Config) (v1alpha1.Central, error) {
+// RenderCentral renders a Central instance for the given GitOps configuration and parameters.
+func RenderCentral(params CentralParams, config Config) (v1alpha1.Central, error) {
 	central, err := renderDefaultCentral(params)
 	if err != nil {
 		return v1alpha1.Central{}, errors.Wrap(err, "failed to get default Central instance")

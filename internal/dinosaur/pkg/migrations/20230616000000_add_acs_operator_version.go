@@ -8,7 +8,6 @@ package migrations
 import (
 	"fmt"
 	"github.com/go-gormigrate/gormigrate/v2"
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"gorm.io/gorm"
@@ -52,6 +51,11 @@ func addOperatorImageFields() *gormigrate.Migration {
 		Scanner                       api.JSON   `json:"scanner"`
 		OperatorImage                 string     `json:"operator_image"`
 	}
+	type CentralDefaultVersion struct {
+		ID        uint64
+		CreatedAt time.Time
+		Version   string `json:"version"`
+	}
 	migrationID := "20230616000000"
 
 	return &gormigrate.Migration{
@@ -79,8 +83,7 @@ func addOperatorImageFields() *gormigrate.Migration {
 			if err := dropIfColumnExists(tx, &CentralRequest{}, "central_upgrading"); err != nil {
 				return err
 			}
-
-			if err := tx.Create(&dbapi.CentralDefaultVersion{Version: updatedDefaultVersion}).Error; err != nil {
+			if err := tx.Create(&CentralDefaultVersion{Version: updatedDefaultVersion}).Error; err != nil {
 				return fmt.Errorf("migrating %s: %w", migrationID, err)
 			}
 
