@@ -46,7 +46,6 @@ func validateCRDUrls(path *field.Path, urls []string) field.ErrorList {
 func validateCRDURL(path *field.Path, urlStr string) field.ErrorList {
 	var errs field.ErrorList
 	if _, err := url.ParseRequestURI(urlStr); err != nil {
-		println("KEK FAILED")
 		errs = append(errs, field.Invalid(path, urlStr, fmt.Sprintf("invalid url: %s", err.Error())))
 	}
 	return errs
