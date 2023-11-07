@@ -4,8 +4,6 @@ metadata:
   annotations:
     kubernetes.io/description: custom-acscs-ephemeral-volumes allows pods to use the node's ephemeral storage. This is needed until the clusters are upgraded to 4.12 where the anyuid SCC allows using ephemeral volumes by default
   name: custom-acscs-ephemeral-volumes
-volumes:
-  - ephemeral
 runAsUser:
   type: RunAsAny
 seLinuxContext:
@@ -19,3 +17,16 @@ allowHostPID: false
 allowHostPorts: false
 allowPrivilegedContainer: false
 readOnlyRootFilesystem: false
+allowPrivilegeEscalation: true
+requiredDropCapabilities:
+  - MKNOD
+supplementalGroups:
+  type: RunAsAny
+volumes:
+  - configMap
+  - downwardAPI
+  - emptyDir
+  - persistentVolumeClaim
+  - projected
+  - secret
+  - ephemeral
