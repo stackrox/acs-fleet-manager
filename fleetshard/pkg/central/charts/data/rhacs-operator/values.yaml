@@ -1,20 +1,21 @@
 operator:
   # default values for resources. These values will be used if there is no gitops overrides
-  resources:
-    limits:
-      cpu: "2"
-      memory: "1Gi"
-    requests:
-      cpu: "1"
-      memory: "200Mi"
-  rbac:
+  default:
     resources:
       limits:
         cpu: "2"
-        memory: "1Gi"
+        memory: "2Gi"
       requests:
         cpu: "1"
-        memory: "200Mi"
+        memory: "1Gi"
+    rbac:
+      resources:
+        limits:
+          cpu: "2"
+          memory: "1Gi"
+        requests:
+          cpu: "1"
+          memory: "200Mi"
 
   # Each item in this list will install an operator deployment.
   # images:
