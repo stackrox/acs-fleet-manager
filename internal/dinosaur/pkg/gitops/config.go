@@ -83,7 +83,7 @@ func tryRenderDummyCentralWithPatch(patch string) error {
 			},
 		},
 	}
-	if _, err := renderCentral(dummyParams, dummyConfig); err != nil {
+	if _, err := RenderCentral(dummyParams, dummyConfig); err != nil {
 		return err
 	}
 	return nil

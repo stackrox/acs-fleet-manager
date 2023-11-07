@@ -14,5 +14,8 @@ dependencies:
 - name: secured-cluster
   repository: ""
   version: 0.1.0
-digest: sha256:4b3301d2cdd6907207fb21ad741b6fa1e5302aaff1ce6fe5315cab8519908d61
-generated: "2023-07-06T21:15:28.778426+02:00"
+- name: external-secrets
+  repository: https://charts.external-secrets.io/
+  version: 0.9.5
+digest: sha256:4d1257d43daeda9d4f956f141edaba7f708838cbd2de86048f37261e9627f9cc
+generated: "2023-10-30T11:48:03.686258+01:00"

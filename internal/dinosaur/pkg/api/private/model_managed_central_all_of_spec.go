@@ -12,12 +12,10 @@ package private
 
 // ManagedCentralAllOfSpec struct for ManagedCentralAllOfSpec
 type ManagedCentralAllOfSpec struct {
+	InstanceType  string                              `json:"instanceType,omitempty"`
 	CentralCRYAML string                              `json:"centralCRYAML,omitempty"`
 	Owners        []string                            `json:"owners,omitempty"`
 	Auth          ManagedCentralAllOfSpecAuth         `json:"auth,omitempty"`
 	UiEndpoint    ManagedCentralAllOfSpecUiEndpoint   `json:"uiEndpoint,omitempty"`
 	DataEndpoint  ManagedCentralAllOfSpecDataEndpoint `json:"dataEndpoint,omitempty"`
-	OperatorImage string                              `json:"operatorImage,omitempty"`
-	Central       ManagedCentralAllOfSpecCentral      `json:"central,omitempty"`
-	Scanner       ManagedCentralAllOfSpecScanner      `json:"scanner,omitempty"`
 }

@@ -102,6 +102,5 @@ func ServiceProviders() di.Option {
 		di.Provide(workers.NewLeaderElectionManager, di.As(new(environments.BootService))),
 		di.Provide(services.NewTelemetry, di.As(new(environments.BootService))),
 		di.Provide(services.NewDataMigration, di.As(new(environments.BootService))),
-		di.Provide(services.NewCentralDefaultVersionService, di.As(new(environments.BootService))),
 	)
 }

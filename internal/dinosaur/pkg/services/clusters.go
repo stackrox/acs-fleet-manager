@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"errors"
+
 	constants2 "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters"
@@ -64,7 +65,6 @@ type ClusterService interface {
 	// Delete will delete the cluster from the provider
 	Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
-	ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
 	// Install the dinosaur operator in a given cluster
 	InstallDinosaurOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error)
@@ -690,18 +690,6 @@ func (c clusterService) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, i
 		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster")
 	}
 	return cluster, nil
-}
-
-// ApplyResources ...
-func (c clusterService) ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
-	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-	if _, err := p.ApplyResources(buildClusterSpec(cluster), resources); err != nil {
-		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to apply resources %s", resources.Name)
-	}
-	return nil
 }
 
 // InstallDinosaurOperator ...

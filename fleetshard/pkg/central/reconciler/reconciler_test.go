@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -56,8 +55,6 @@ const (
 	conditionTypeReady        = "Ready"
 	clusterName               = "test-cluster"
 	environment               = "test"
-	operatorVersion           = "4.0.1"
-	operatorImage             = "quay.io/rhacs-eng/stackrox-operator:" + operatorVersion
 )
 
 var (
@@ -90,6 +87,12 @@ var (
 		AuditLogTargetPort: 8888,
 		SkipTLSVerify:      false,
 	}
+
+	defaultRouteConfig = config.RouteConfig{
+		ConcurrentTCP: 32,
+		RateHTTP:      128,
+		RateTCP:       16,
+	}
 )
 
 var simpleManagedCentral = private.ManagedCentral{
@@ -113,10 +116,12 @@ var simpleManagedCentral = private.ManagedCentral{
 		DataEndpoint: private.ManagedCentralAllOfSpecDataEndpoint{
 			Host: fmt.Sprintf("acs-data-%s.acs.rhcloud.test", centralID),
 		},
-		Central: private.ManagedCentralAllOfSpecCentral{
-			InstanceType: "standard",
-		},
-		OperatorImage: operatorImage,
+		InstanceType: "standard",
+		CentralCRYAML: `
+metadata:
+  name: ` + centralName + `
+  namespace: ` + centralNamespace + `
+`,
 	},
 }
 
@@ -206,16 +211,7 @@ func TestReconcileCreate(t *testing.T) {
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
 	assert.Equal(t, centralName, central.GetName())
-	assert.Equal(t, simpleManagedCentral.Id, central.GetLabels()[tenantIDLabelKey])
-	assert.Equal(t, simpleManagedCentral.Id, central.Spec.Customize.Labels[tenantIDLabelKey])
-	assert.Equal(t, environment, central.Spec.Customize.Annotations[envAnnotationKey])
-	assert.Equal(t, clusterName, central.Spec.Customize.Annotations[clusterNameAnnotationKey])
-	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgName, central.Spec.Customize.Annotations[orgNameAnnotationKey])
-	assert.Equal(t, simpleManagedCentral.Spec.Auth.OwnerOrgId, central.Spec.Customize.Labels[orgIDLabelKey])
-	assert.Equal(t, simpleManagedCentral.Spec.Central.InstanceType, central.Spec.Customize.Labels[instanceTypeLabelKey])
 	assert.Equal(t, "1", central.GetAnnotations()[util.RevisionAnnotationKey])
-	assert.Equal(t, "false", central.GetAnnotations()[centralPVCAnnotationKey])
-	assert.Equal(t, "true", central.GetAnnotations()[managedServicesAnnotation])
 	assert.Equal(t, true, *central.Spec.Central.Exposure.Route.Enabled)
 
 	route := &openshiftRouteV1.Route{}
@@ -261,7 +257,6 @@ func TestReconcileCreateWithManagedDB(t *testing.T) {
 	central := &v1alpha1.Central{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralName, Namespace: centralNamespace}, central)
 	require.NoError(t, err)
-	assert.Equal(t, "true", central.GetAnnotations()[centralPVCAnnotationKey])
 
 	route := &openshiftRouteV1.Route{}
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Name: centralReencryptRouteName, Namespace: centralNamespace}, route)
@@ -478,7 +473,13 @@ func TestIgnoreCacheForCentralForceReconcileAlways(t *testing.T) {
 
 	managedCentral := simpleManagedCentral
 	managedCentral.RequestStatus = centralConstants.CentralRequestStatusReady.String()
-	managedCentral.ForceReconcile = "always"
+	managedCentral.Spec.CentralCRYAML = `
+metadata:
+  name: ` + centralName + `
+  namespace: ` + centralNamespace + `
+  labels:
+    rhacs.redhat.com/force-reconcile: "true"
+`
 
 	expectedHash, err := util.MD5SumFromJSONStruct(&managedCentral)
 	require.NoError(t, err)
@@ -1124,7 +1125,7 @@ func TestReconcileUpdatesRoutes(t *testing.T) {
 				nil,
 				useRoutesReconcilerOptions,
 			)
-			r.routeService = k8s.NewRouteService(fakeClient)
+			r.routeService = k8s.NewRouteService(fakeClient, &defaultRouteConfig)
 			central := simpleManagedCentral
 
 			// create the initial reencrypt route
@@ -1543,7 +1544,7 @@ func TestEnsureSecretExists(t *testing.T) {
 			initialSecret := getSecret(tc.secretName, centralNamespace, tc.initialData)
 			assert.NoError(t, fakeClient.Create(ctx, initialSecret))
 			assert.NoError(t, r.ensureSecretExists(ctx, centralNamespace, tc.secretName, secretModifyFunc))
-			fakeClient.Get(ctx, client.ObjectKey{Namespace: centralNamespace, Name: tc.secretName}, fetchedSecret)
+			assert.NoError(t, fakeClient.Get(ctx, client.ObjectKey{Namespace: centralNamespace, Name: tc.secretName}, fetchedSecret))
 			compareSecret(t, getSecret(tc.secretName, centralNamespace, tc.expectedData), fetchedSecret, false)
 		})
 	}
@@ -1556,7 +1557,7 @@ func TestEnsureSecretExists(t *testing.T) {
 		ctx := context.TODO()
 		fetchedSecret := &v1.Secret{}
 		assert.NoError(t, r.ensureSecretExists(ctx, centralNamespace, secretName, secretModifyFunc))
-		fakeClient.Get(ctx, client.ObjectKey{Namespace: centralNamespace, Name: secretName}, fetchedSecret)
+		assert.NoError(t, fakeClient.Get(ctx, client.ObjectKey{Namespace: centralNamespace, Name: secretName}, fetchedSecret))
 		compareSecret(t, getSecret(secretName, centralNamespace, expectedData), fetchedSecret, true)
 	})
 }
@@ -2137,7 +2138,7 @@ func TestReconciler_applyAnnotations(t *testing.T) {
 	}, c.Spec.Customize.Annotations)
 }
 
-func TestReconciler_getInstanceConfigWithGitops(t *testing.T) {
+func TestReconciler_getInstanceConfig(t *testing.T) {
 
 	tcs := []struct {
 		name          string
@@ -2157,7 +2158,6 @@ kind: Central
 metadata:
   name: central
   namespace: rhacs
-spec: {}
 `,
 			expectCentral: &v1alpha1.Central{
 				TypeMeta: metav1.TypeMeta{
@@ -2167,6 +2167,64 @@ spec: {}
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "central",
 					Namespace: "rhacs",
+				},
+				Spec: v1alpha1.CentralSpec{
+					Central: &v1alpha1.CentralComponentSpec{
+						Exposure: &v1alpha1.Exposure{
+							Route: &v1alpha1.ExposureRoute{
+								Enabled: pointer.Bool(false),
+							},
+						},
+						DeclarativeConfiguration: &v1alpha1.DeclarativeConfiguration{
+							Secrets: []v1alpha1.LocalSecretReference{
+								{
+									Name: "cloud-service-sensible-declarative-configs",
+								}, {
+									Name: "cloud-service-manual-declarative-configs",
+								},
+							},
+						},
+						Telemetry: &v1alpha1.Telemetry{
+							Enabled: pointer.Bool(false),
+							Storage: &v1alpha1.TelemetryStorage{
+								Endpoint: pointer.String(""),
+								Key:      pointer.String(""),
+							},
+						},
+					},
+					Customize: &v1alpha1.CustomizeSpec{
+						Annotations: map[string]string{
+							"rhacs.redhat.com/environment":  "",
+							"rhacs.redhat.com/cluster-name": "",
+						},
+						EnvVars: []v1.EnvVar{
+							{
+								Name:  "http_proxy",
+								Value: "http://egress-proxy.rhacs.svc:3128",
+							}, {
+								Name:  "HTTP_PROXY",
+								Value: "http://egress-proxy.rhacs.svc:3128",
+							}, {
+								Name:  "https_proxy",
+								Value: "http://egress-proxy.rhacs.svc:3128",
+							}, {
+								Name:  "HTTPS_PROXY",
+								Value: "http://egress-proxy.rhacs.svc:3128",
+							}, {
+								Name:  "all_proxy",
+								Value: "http://egress-proxy.rhacs.svc:3128",
+							}, {
+								Name:  "ALL_PROXY",
+								Value: "http://egress-proxy.rhacs.svc:3128",
+							}, {
+								Name:  "no_proxy",
+								Value: ":0,central.rhacs.svc:443,central.rhacs:443,central:443,kubernetes.default.svc.cluster.local.:443,scanner-db.rhacs.svc:5432,scanner-db.rhacs:5432,scanner-db:5432,scanner.rhacs.svc:8080,scanner.rhacs.svc:8443,scanner.rhacs:8080,scanner.rhacs:8443,scanner:8080,scanner:8443",
+							}, {
+								Name:  "NO_PROXY",
+								Value: ":0,central.rhacs.svc:443,central.rhacs:443,central:443,kubernetes.default.svc.cluster.local.:443,scanner-db.rhacs.svc:5432,scanner-db.rhacs:5432,scanner-db:5432,scanner.rhacs.svc:8080,scanner.rhacs.svc:8443,scanner.rhacs:8080,scanner.rhacs:8443,scanner:8080,scanner:8443",
+							},
+						},
+					},
 				},
 			},
 		},
@@ -2180,7 +2238,7 @@ spec: {}
 					CentralCRYAML: tc.yaml,
 				},
 			}
-			c, err := r.getInstanceConfigWithGitops(mc)
+			c, err := r.getInstanceConfig(mc)
 			if tc.expectErr {
 				assert.Error(t, err)
 			} else {
@@ -2190,50 +2248,4 @@ spec: {}
 		})
 	}
 
-}
-
-func TestReconciler_shouldUseGitopsConfig(t *testing.T) {
-	tcs := []struct {
-		name               string
-		managedCentral     *private.ManagedCentral
-		featureFlagEnabled bool
-		expect             bool
-	}{
-		{
-			name: "should return true when centralCRYAML is set and feature flag is enabled",
-			managedCentral: &private.ManagedCentral{
-				Spec: private.ManagedCentralAllOfSpec{
-					CentralCRYAML: "foo",
-				},
-			},
-			featureFlagEnabled: true,
-			expect:             true,
-		}, {
-			name: "should return false when centralCRYAML is set and feature flag is disabled",
-			managedCentral: &private.ManagedCentral{
-				Spec: private.ManagedCentralAllOfSpec{
-					CentralCRYAML: "foo",
-				},
-			},
-			featureFlagEnabled: false,
-			expect:             false,
-		}, {
-			name: "should return false when centralCRYAML is not set and feature flag is enabled",
-			managedCentral: &private.ManagedCentral{
-				Spec: private.ManagedCentralAllOfSpec{
-					CentralCRYAML: "",
-				},
-			},
-			featureFlagEnabled: true,
-			expect:             false,
-		},
-	}
-
-	for _, tc := range tcs {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Setenv("RHACS_GITOPS_ENABLED", strconv.FormatBool(tc.featureFlagEnabled))
-			r := &CentralReconciler{}
-			assert.Equal(t, tc.expect, r.shouldUseGitopsConfig(tc.managedCentral))
-		})
-	}
 }

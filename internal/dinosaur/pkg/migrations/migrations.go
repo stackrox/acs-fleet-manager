@@ -48,6 +48,7 @@ func getMigrations() []*gormigrate.Migration {
 		addOperatorImageFields(),
 		removeAvailableOperatorField(),
 		addSecretFieldToCentralRequests(),
+		removeCentralAndScannerOverrides(),
 	}
 }
 

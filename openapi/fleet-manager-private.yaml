@@ -232,19 +232,6 @@ components:
         kind:
           type: string
 
-    ResourceList:
-      type: object
-      additionalProperties:
-        type: string
-
-    ResourceRequirements:
-      type: object
-      properties:
-        requests:
-          $ref: "#/components/schemas/ResourceList"
-        limits:
-          $ref: "#/components/schemas/ResourceList"
-
     ManagedCentral:
       allOf:
         - $ref: "#/components/schemas/PrivateObjectReference"
@@ -285,6 +272,9 @@ components:
             spec:
               type: object
               properties:
+                instanceType:
+                  type: string
+                  enum: [ eval, standard ]
                 centralCRYAML:
                   type: string
                 owners:
@@ -327,51 +317,7 @@ components:
                   properties:
                     host:
                       type: string
-                operatorImage:
-                  type: string
-                central:
-                  type: object
-                  properties:
-                    instanceType:
-                      type: string
-                      enum: [eval, standard]
-                    resources:
-                      $ref: "#/components/schemas/ResourceRequirements"
-                scanner:
-                  type: object
-                  properties:
-                    analyzer:
-                      type: object
-                      properties:
-                        scaling:
-                          type: object
-                          properties:
-                            autoScaling:
-                              type: string
-                            replicas:
-                              type: integer
-                              format: int32
-                              minimum: 1
-                            minReplicas:
-                              type: integer
-                              format: int32
-                              minimum: 1
-                            maxReplicas:
-                              type: integer
-                              format: int32
-                              minimum: 1
-                        resources:
-                          $ref: "#/components/schemas/ResourceRequirements"
-                    db:
-                      type: object
-                      properties:
-                        host:
-                          type: string
-                        resources:
-                          $ref: "#/components/schemas/ResourceRequirements"
             requestStatus:
-              type: string
-            forceReconcile:
               type: string
 
     ManagedCentralList:

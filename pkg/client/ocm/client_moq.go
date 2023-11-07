@@ -38,17 +38,11 @@ var _ Client = &ClientMock{}
 //			CreateIdentityProviderFunc: func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
 //				panic("mock out the CreateIdentityProvider method")
 //			},
-//			CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-//				panic("mock out the CreateSyncSet method")
-//			},
 //			DeleteClusterFunc: func(clusterID string) (int, error) {
 //				panic("mock out the DeleteCluster method")
 //			},
 //			DeleteSubscriptionFunc: func(id string) (int, error) {
 //				panic("mock out the DeleteSubscription method")
-//			},
-//			DeleteSyncSetFunc: func(clusterID string, syncsetID string) (int, error) {
-//				panic("mock out the DeleteSyncSet method")
 //			},
 //			FindSubscriptionsFunc: func(query string) (*amsv1.SubscriptionsListResponse, error) {
 //				panic("mock out the FindSubscriptions method")
@@ -95,9 +89,6 @@ var _ Client = &ClientMock{}
 //			GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
 //				panic("mock out the GetRequiresTermsAcceptance method")
 //			},
-//			GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
-//				panic("mock out the GetSyncSet method")
-//			},
 //			ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
 //				panic("mock out the ScaleDownComputeNodes method")
 //			},
@@ -109,9 +100,6 @@ var _ Client = &ClientMock{}
 //			},
 //			UpdateAddonParametersFunc: func(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 //				panic("mock out the UpdateAddonParameters method")
-//			},
-//			UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-//				panic("mock out the UpdateSyncSet method")
 //			},
 //		}
 //
@@ -138,17 +126,11 @@ type ClientMock struct {
 	// CreateIdentityProviderFunc mocks the CreateIdentityProvider method.
 	CreateIdentityProviderFunc func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
 
-	// CreateSyncSetFunc mocks the CreateSyncSet method.
-	CreateSyncSetFunc func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
-
 	// DeleteClusterFunc mocks the DeleteCluster method.
 	DeleteClusterFunc func(clusterID string) (int, error)
 
 	// DeleteSubscriptionFunc mocks the DeleteSubscription method.
 	DeleteSubscriptionFunc func(id string) (int, error)
-
-	// DeleteSyncSetFunc mocks the DeleteSyncSet method.
-	DeleteSyncSetFunc func(clusterID string, syncsetID string) (int, error)
 
 	// FindSubscriptionsFunc mocks the FindSubscriptions method.
 	FindSubscriptionsFunc func(query string) (*amsv1.SubscriptionsListResponse, error)
@@ -195,9 +177,6 @@ type ClientMock struct {
 	// GetRequiresTermsAcceptanceFunc mocks the GetRequiresTermsAcceptance method.
 	GetRequiresTermsAcceptanceFunc func(username string) (bool, string, error)
 
-	// GetSyncSetFunc mocks the GetSyncSet method.
-	GetSyncSetFunc func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error)
-
 	// ScaleDownComputeNodesFunc mocks the ScaleDownComputeNodes method.
 	ScaleDownComputeNodesFunc func(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
 
@@ -209,9 +188,6 @@ type ClientMock struct {
 
 	// UpdateAddonParametersFunc mocks the UpdateAddonParameters method.
 	UpdateAddonParametersFunc func(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
-
-	// UpdateSyncSetFunc mocks the UpdateSyncSet method.
-	UpdateSyncSetFunc func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -251,13 +227,6 @@ type ClientMock struct {
 			// IdentityProvider is the identityProvider argument value.
 			IdentityProvider *clustersmgmtv1.IdentityProvider
 		}
-		// CreateSyncSet holds details about calls to the CreateSyncSet method.
-		CreateSyncSet []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// Syncset is the syncset argument value.
-			Syncset *clustersmgmtv1.Syncset
-		}
 		// DeleteCluster holds details about calls to the DeleteCluster method.
 		DeleteCluster []struct {
 			// ClusterID is the clusterID argument value.
@@ -267,13 +236,6 @@ type ClientMock struct {
 		DeleteSubscription []struct {
 			// ID is the id argument value.
 			ID string
-		}
-		// DeleteSyncSet holds details about calls to the DeleteSyncSet method.
-		DeleteSyncSet []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// SyncsetID is the syncsetID argument value.
-			SyncsetID string
 		}
 		// FindSubscriptions holds details about calls to the FindSubscriptions method.
 		FindSubscriptions []struct {
@@ -356,13 +318,6 @@ type ClientMock struct {
 			// Username is the username argument value.
 			Username string
 		}
-		// GetSyncSet holds details about calls to the GetSyncSet method.
-		GetSyncSet []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// SyncSetID is the syncSetID argument value.
-			SyncSetID string
-		}
 		// ScaleDownComputeNodes holds details about calls to the ScaleDownComputeNodes method.
 		ScaleDownComputeNodes []struct {
 			// ClusterID is the clusterID argument value.
@@ -393,15 +348,6 @@ type ClientMock struct {
 			// Parameters is the parameters argument value.
 			Parameters []Parameter
 		}
-		// UpdateSyncSet holds details about calls to the UpdateSyncSet method.
-		UpdateSyncSet []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// SyncSetID is the syncSetID argument value.
-			SyncSetID string
-			// Syncset is the syncset argument value.
-			Syncset *clustersmgmtv1.Syncset
-		}
 	}
 	lockClusterAuthorization          sync.RWMutex
 	lockConnection                    sync.RWMutex
@@ -409,10 +355,8 @@ type ClientMock struct {
 	lockCreateAddonWithParams         sync.RWMutex
 	lockCreateCluster                 sync.RWMutex
 	lockCreateIdentityProvider        sync.RWMutex
-	lockCreateSyncSet                 sync.RWMutex
 	lockDeleteCluster                 sync.RWMutex
 	lockDeleteSubscription            sync.RWMutex
-	lockDeleteSyncSet                 sync.RWMutex
 	lockFindSubscriptions             sync.RWMutex
 	lockGetAddon                      sync.RWMutex
 	lockGetCloudProviders             sync.RWMutex
@@ -428,12 +372,10 @@ type ClientMock struct {
 	lockGetQuotaCostsForProduct       sync.RWMutex
 	lockGetRegions                    sync.RWMutex
 	lockGetRequiresTermsAcceptance    sync.RWMutex
-	lockGetSyncSet                    sync.RWMutex
 	lockScaleDownComputeNodes         sync.RWMutex
 	lockScaleUpComputeNodes           sync.RWMutex
 	lockSetComputeNodes               sync.RWMutex
 	lockUpdateAddonParameters         sync.RWMutex
-	lockUpdateSyncSet                 sync.RWMutex
 }
 
 // ClusterAuthorization calls ClusterAuthorizationFunc.
@@ -639,42 +581,6 @@ func (mock *ClientMock) CreateIdentityProviderCalls() []struct {
 	return calls
 }
 
-// CreateSyncSet calls CreateSyncSetFunc.
-func (mock *ClientMock) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-	if mock.CreateSyncSetFunc == nil {
-		panic("ClientMock.CreateSyncSetFunc: method is nil but Client.CreateSyncSet was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-		Syncset   *clustersmgmtv1.Syncset
-	}{
-		ClusterID: clusterID,
-		Syncset:   syncset,
-	}
-	mock.lockCreateSyncSet.Lock()
-	mock.calls.CreateSyncSet = append(mock.calls.CreateSyncSet, callInfo)
-	mock.lockCreateSyncSet.Unlock()
-	return mock.CreateSyncSetFunc(clusterID, syncset)
-}
-
-// CreateSyncSetCalls gets all the calls that were made to CreateSyncSet.
-// Check the length with:
-//
-//	len(mockedClient.CreateSyncSetCalls())
-func (mock *ClientMock) CreateSyncSetCalls() []struct {
-	ClusterID string
-	Syncset   *clustersmgmtv1.Syncset
-} {
-	var calls []struct {
-		ClusterID string
-		Syncset   *clustersmgmtv1.Syncset
-	}
-	mock.lockCreateSyncSet.RLock()
-	calls = mock.calls.CreateSyncSet
-	mock.lockCreateSyncSet.RUnlock()
-	return calls
-}
-
 // DeleteCluster calls DeleteClusterFunc.
 func (mock *ClientMock) DeleteCluster(clusterID string) (int, error) {
 	if mock.DeleteClusterFunc == nil {
@@ -736,42 +642,6 @@ func (mock *ClientMock) DeleteSubscriptionCalls() []struct {
 	mock.lockDeleteSubscription.RLock()
 	calls = mock.calls.DeleteSubscription
 	mock.lockDeleteSubscription.RUnlock()
-	return calls
-}
-
-// DeleteSyncSet calls DeleteSyncSetFunc.
-func (mock *ClientMock) DeleteSyncSet(clusterID string, syncsetID string) (int, error) {
-	if mock.DeleteSyncSetFunc == nil {
-		panic("ClientMock.DeleteSyncSetFunc: method is nil but Client.DeleteSyncSet was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-		SyncsetID string
-	}{
-		ClusterID: clusterID,
-		SyncsetID: syncsetID,
-	}
-	mock.lockDeleteSyncSet.Lock()
-	mock.calls.DeleteSyncSet = append(mock.calls.DeleteSyncSet, callInfo)
-	mock.lockDeleteSyncSet.Unlock()
-	return mock.DeleteSyncSetFunc(clusterID, syncsetID)
-}
-
-// DeleteSyncSetCalls gets all the calls that were made to DeleteSyncSet.
-// Check the length with:
-//
-//	len(mockedClient.DeleteSyncSetCalls())
-func (mock *ClientMock) DeleteSyncSetCalls() []struct {
-	ClusterID string
-	SyncsetID string
-} {
-	var calls []struct {
-		ClusterID string
-		SyncsetID string
-	}
-	mock.lockDeleteSyncSet.RLock()
-	calls = mock.calls.DeleteSyncSet
-	mock.lockDeleteSyncSet.RUnlock()
 	return calls
 }
 
@@ -1266,42 +1136,6 @@ func (mock *ClientMock) GetRequiresTermsAcceptanceCalls() []struct {
 	return calls
 }
 
-// GetSyncSet calls GetSyncSetFunc.
-func (mock *ClientMock) GetSyncSet(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
-	if mock.GetSyncSetFunc == nil {
-		panic("ClientMock.GetSyncSetFunc: method is nil but Client.GetSyncSet was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-		SyncSetID string
-	}{
-		ClusterID: clusterID,
-		SyncSetID: syncSetID,
-	}
-	mock.lockGetSyncSet.Lock()
-	mock.calls.GetSyncSet = append(mock.calls.GetSyncSet, callInfo)
-	mock.lockGetSyncSet.Unlock()
-	return mock.GetSyncSetFunc(clusterID, syncSetID)
-}
-
-// GetSyncSetCalls gets all the calls that were made to GetSyncSet.
-// Check the length with:
-//
-//	len(mockedClient.GetSyncSetCalls())
-func (mock *ClientMock) GetSyncSetCalls() []struct {
-	ClusterID string
-	SyncSetID string
-} {
-	var calls []struct {
-		ClusterID string
-		SyncSetID string
-	}
-	mock.lockGetSyncSet.RLock()
-	calls = mock.calls.GetSyncSet
-	mock.lockGetSyncSet.RUnlock()
-	return calls
-}
-
 // ScaleDownComputeNodes calls ScaleDownComputeNodesFunc.
 func (mock *ClientMock) ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
 	if mock.ScaleDownComputeNodesFunc == nil {
@@ -1447,45 +1281,5 @@ func (mock *ClientMock) UpdateAddonParametersCalls() []struct {
 	mock.lockUpdateAddonParameters.RLock()
 	calls = mock.calls.UpdateAddonParameters
 	mock.lockUpdateAddonParameters.RUnlock()
-	return calls
-}
-
-// UpdateSyncSet calls UpdateSyncSetFunc.
-func (mock *ClientMock) UpdateSyncSet(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-	if mock.UpdateSyncSetFunc == nil {
-		panic("ClientMock.UpdateSyncSetFunc: method is nil but Client.UpdateSyncSet was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-		SyncSetID string
-		Syncset   *clustersmgmtv1.Syncset
-	}{
-		ClusterID: clusterID,
-		SyncSetID: syncSetID,
-		Syncset:   syncset,
-	}
-	mock.lockUpdateSyncSet.Lock()
-	mock.calls.UpdateSyncSet = append(mock.calls.UpdateSyncSet, callInfo)
-	mock.lockUpdateSyncSet.Unlock()
-	return mock.UpdateSyncSetFunc(clusterID, syncSetID, syncset)
-}
-
-// UpdateSyncSetCalls gets all the calls that were made to UpdateSyncSet.
-// Check the length with:
-//
-//	len(mockedClient.UpdateSyncSetCalls())
-func (mock *ClientMock) UpdateSyncSetCalls() []struct {
-	ClusterID string
-	SyncSetID string
-	Syncset   *clustersmgmtv1.Syncset
-} {
-	var calls []struct {
-		ClusterID string
-		SyncSetID string
-		Syncset   *clustersmgmtv1.Syncset
-	}
-	mock.lockUpdateSyncSet.RLock()
-	calls = mock.calls.UpdateSyncSet
-	mock.lockUpdateSyncSet.RUnlock()
 	return calls
 }

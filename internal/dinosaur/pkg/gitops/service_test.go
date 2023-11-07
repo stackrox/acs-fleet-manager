@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func TestService_GetCentral(t *testing.T) {
+func TestRenderCentral(t *testing.T) {
 	tests := []struct {
 		name   string
 		config Config
@@ -117,8 +117,7 @@ func TestService_GetCentral(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewService(newMockProvider(tt.config))
-			got, err := svc.GetCentral(tt.params)
+			got, err := RenderCentral(tt.params, tt.config)
 			tt.assert(t, got, err)
 		})
 	}
