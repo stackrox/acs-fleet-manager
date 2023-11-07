@@ -80,13 +80,12 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 				managedDinosaurList.RhacsOperators = gitopsConfig.RHACSOperators.ToAPIResponse()
 			}
 
-			for i := range centralRequests {
-				converted, err := h.presenter.PresentManagedCentral(centralRequests[i])
-				if err != nil {
-					return nil, errors.GeneralError("failed to convert central request to managed central: %v", err)
-				}
-				managedDinosaurList.Items = append(managedDinosaurList.Items, converted)
+			managedCentrals, presentErr := h.presenter.PresentManagedCentrals(r.Context(), centralRequests)
+			if presentErr != nil {
+				return nil, errors.GeneralError("failed to convert central request to managed central: %v", presentErr)
 			}
+			managedDinosaurList.Items = managedCentrals
+
 			return managedDinosaurList, nil
 		},
 	}

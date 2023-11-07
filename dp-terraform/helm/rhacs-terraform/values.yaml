@@ -21,8 +21,6 @@ fleetshardSync:
   # Red Hat SSO secrets, only required in combination with authType=RHSSO. The client credentials can be found within
   # Bitwarden (ACS RH SSO Fleet* serviceaccount).
   redHatSSO:
-    clientId: ""
-    clientSecret: ""
     endpoint: "https://sso.redhat.com"
     realm: "redhat-external"
   egressProxy:
@@ -36,19 +34,14 @@ fleetshardSync:
     securityGroup: ""
     performanceInsights: true
   secretEncryption:
-    type: "" # local or kms
+    type: kms # local or kms
     keyID: ""
   aws:
     region: "us-east-1" # TODO(2023-05-01): Remove the default value here as we now set it explicitly
-    roleARN: ""
     enableTokenAuth: true
-    accessKeyId: ""
-    secretAccessKey: ""
   telemetry:
     storage:
       endpoint: ""
-      # API key to push telemetry data to a remote backend. Leaving it empty disables telemetry.
-      key: ""
   resources:
     requests:
       cpu: "500m"
@@ -56,11 +49,6 @@ fleetshardSync:
     limits:
       cpu: "500m"
       memory: "512Mi"
-  imageCredentials:
-    registry: quay.io
-    username: ""
-    password: ""
-    email: "quayuser@example.com"
   gitops:
     enabled: false
   targetedOperatorUpgrades:
@@ -179,3 +167,35 @@ secured-cluster:
     serviceTLS:
       cert: ""
       key: ""
+
+external-secrets:
+  fullnameOverride: rhacs-external-secrets
+  installCRDs: false
+  image:
+    repository: quay.io/app-sre/external-secrets
+    tag: v0.9.5
+  securityContext:
+    runAsUser: null
+  webhook:
+    securityContext:
+      runAsUser: null
+    image:
+      repository: quay.io/app-sre/external-secrets
+      tag: v0.9.5
+  certController:
+    securityContext:
+      runAsUser: null
+    image:
+      repository: quay.io/app-sre/external-secrets
+      tag: v0.9.5
+
+secretStore:
+  aws:
+    region: "us-east-1"
+    enableTokenAuth: true
+    # used only when enableTokenAuth == false
+    secretName: aws-access-keys # pragma: allowlist secret
+    accessKeyId: ""
+    secretAccessKey: ""
+    secretsManagerSecretStoreName: secrets-manager-secret-store # pragma: allowlist secret
+    parameterStoreSecretStoreName: parameter-store-secret-store # pragma: allowlist secret

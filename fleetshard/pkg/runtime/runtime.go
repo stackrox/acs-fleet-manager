@@ -139,6 +139,7 @@ func (r *Runtime) Start() error {
 		Environment:           r.config.Environment,
 		AuditLogging:          r.config.AuditLogging,
 		TenantImagePullSecret: r.config.TenantImagePullSecret, // pragma: allowlist secret
+		RouteParameters:       r.config.RouteParameters,
 	}
 
 	ticker := concurrency.NewRetryTicker(func(ctx context.Context) (timeToNextTick time.Duration, err error) {

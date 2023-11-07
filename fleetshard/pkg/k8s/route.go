@@ -3,6 +3,8 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/fleetshard/config"
+	"github.com/stackrox/rox/pkg/errox"
 
 	openshiftRouteV1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
@@ -17,8 +19,19 @@ const (
 	centralReencryptRouteName   = "managed-central-reencrypt"
 	centralPassthroughRouteName = "managed-central-passthrough"
 
-	centralReencryptTimeoutAnnotationKey   = "haproxy.router.openshift.io/timeout"
+	routeAnnotationKeyRoot = "haproxy.router.openshift.io/"
+
+	centralReencryptTimeoutAnnotationKey   = routeAnnotationKeyRoot + "timeout"
 	centralReencryptTimeoutAnnotationValue = "10m"
+
+	// Documentation for the route annotations to configure DDoS protection:
+	// https://docs.openshift.com/container-platform/4.13/networking/routes/route-configuration.html#nw-route-specific-annotations_route-configuration
+	rateLimitConnectionAnnotationKeyRoot = routeAnnotationKeyRoot + "rate-limit-connections"
+
+	enableRateLimitAnnotationKey      = rateLimitConnectionAnnotationKeyRoot
+	concurrentConnectionAnnotationKey = rateLimitConnectionAnnotationKeyRoot + ".concurrent-tcp"
+	rateHTTPAnnotationKey             = rateLimitConnectionAnnotationKeyRoot + ".rate-http"
+	rateTCPAnnotationKey              = rateLimitConnectionAnnotationKeyRoot + ".rate-tcp"
 )
 
 // ErrCentralTLSSecretNotFound returned when central-tls secret is not found
@@ -28,11 +41,33 @@ var ErrCentralTLSSecretNotFound = errors.New("central-tls secret not found")
 // This service is specific to ACS Managed Services and provides methods to work on specific routes.
 type RouteService struct {
 	client ctrlClient.Client
+
+	routeConfig *config.RouteConfig
 }
 
 // NewRouteService creates a new instance of RouteService.
-func NewRouteService(client ctrlClient.Client) *RouteService {
-	return &RouteService{client: client}
+func NewRouteService(client ctrlClient.Client, routeConfig *config.RouteConfig) *RouteService {
+	return &RouteService{
+		client:      client,
+		routeConfig: routeConfig,
+	}
+}
+
+func routeConfigAsAnnotationMap(routeConfig *config.RouteConfig) map[string]string {
+	asAnnotationMap := make(map[string]string)
+	asAnnotationMap[enableRateLimitAnnotationKey] = boolAsString(routeConfig.ThrottlingEnabled)
+	asAnnotationMap[concurrentConnectionAnnotationKey] = intAsString(routeConfig.ConcurrentTCP)
+	asAnnotationMap[rateHTTPAnnotationKey] = intAsString(routeConfig.RateHTTP)
+	asAnnotationMap[rateTCPAnnotationKey] = intAsString(routeConfig.RateTCP)
+	return asAnnotationMap
+}
+
+func boolAsString(boolValue bool) string {
+	return fmt.Sprintf("%t", boolValue)
+}
+
+func intAsString(intValue int) string {
+	return fmt.Sprintf("%d", intValue)
 }
 
 // FindReencryptRoute returns central reencrypt route or error if not found.
@@ -78,46 +113,94 @@ func isAdmitted(ingress openshiftRouteV1.RouteIngress) bool {
 	return false
 }
 
-// CreateReencryptRoute creates a new managed central reencrypt route.
-func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral private.ManagedCentral) error {
+type configureRouteFunc = func(context.Context, *openshiftRouteV1.Route, private.ManagedCentral) (*openshiftRouteV1.Route, error)
+
+func (s *RouteService) hasExpectedTrafficLimitAnnotations(route *openshiftRouteV1.Route) bool {
+	if route.ObjectMeta.Annotations == nil {
+		return false
+	}
+	configAsAnnotations := routeConfigAsAnnotationMap(s.routeConfig)
+	for k, v := range configAsAnnotations {
+		if route.ObjectMeta.Annotations[k] != v {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *RouteService) annotateRouteWithTrafficLimiters(route *openshiftRouteV1.Route) (*openshiftRouteV1.Route, error) {
+	if route.ObjectMeta.Annotations == nil {
+		route.ObjectMeta.Annotations = make(map[string]string)
+	}
+	configAsAnnotations := routeConfigAsAnnotationMap(s.routeConfig)
+	for k, v := range configAsAnnotations {
+		route.ObjectMeta.Annotations[k] = v
+	}
+	return route, nil
+}
+
+func (s *RouteService) configureReencryptRoute(ctx context.Context, route *openshiftRouteV1.Route, remoteCentral private.ManagedCentral) (*openshiftRouteV1.Route, error) {
+	if route == nil {
+		return nil, errox.InvalidArgs
+	}
+	annotatedRoute, annotationError := s.annotateRouteWithTrafficLimiters(route)
+	if annotationError != nil {
+		return nil, annotationError
+	}
+	annotatedRoute.ObjectMeta.Annotations[centralReencryptTimeoutAnnotationKey] = centralReencryptTimeoutAnnotationValue
+
+	annotatedRoute.Spec.Host = remoteCentral.Spec.UiEndpoint.Host
+
 	namespace := remoteCentral.Metadata.Namespace
-	centralTLSSecret, err := getSecret(ctx, s.client, centralTLSSecretName, namespace)
-	if err != nil {
-		return fmt.Errorf("getting central-tls secret for tenant %s: %w", remoteCentral.Metadata.Name, err)
+	centralTLSSecret, retrievalErr := getSecret(ctx, s.client, centralTLSSecretName, namespace)
+	if retrievalErr != nil {
+		wrappedErr := fmt.Errorf(
+			"getting central-tls secret for tenant %s: %w",
+			remoteCentral.Metadata.Name,
+			retrievalErr,
+		)
+		return nil, wrappedErr
 	}
 	centralCA, ok := centralTLSSecret.Data["ca.pem"]
 	if !ok {
-		return fmt.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
+		return nil, fmt.Errorf("could not find centrals ca certificate 'ca.pem' in secret/%s", centralTLSSecretName)
 	}
 
-	annotations := map[string]string{
-		centralReencryptTimeoutAnnotationKey: centralReencryptTimeoutAnnotationValue,
+	if annotatedRoute.Spec.TLS == nil {
+		annotatedRoute.Spec.TLS = &openshiftRouteV1.TLSConfig{}
 	}
+	annotatedRoute.Spec.TLS.Termination = openshiftRouteV1.TLSTerminationReencrypt
+	annotatedRoute.Spec.TLS.Key = remoteCentral.Spec.UiEndpoint.Tls.Key
+	annotatedRoute.Spec.TLS.Certificate = remoteCentral.Spec.UiEndpoint.Tls.Cert
+	annotatedRoute.Spec.TLS.DestinationCACertificate = string(centralCA)
 
+	return annotatedRoute, nil
+}
+
+// CreateReencryptRoute creates a new managed central reencrypt route.
+func (s *RouteService) CreateReencryptRoute(ctx context.Context, remoteCentral private.ManagedCentral) error {
 	return s.createCentralRoute(ctx,
 		centralReencryptRouteName,
 		remoteCentral.Metadata.Namespace,
 		remoteCentral.Spec.UiEndpoint.Host,
-		&openshiftRouteV1.TLSConfig{
-			Termination:              openshiftRouteV1.TLSTerminationReencrypt,
-			Key:                      remoteCentral.Spec.UiEndpoint.Tls.Key,
-			Certificate:              remoteCentral.Spec.UiEndpoint.Tls.Cert,
-			DestinationCACertificate: string(centralCA),
-		},
-		annotations)
+		remoteCentral, s.configureReencryptRoute)
 }
 
 // UpdateReencryptRoute updates configuration of the given reencrytp route to match the TLS configuration of remoteCentral.
 func (s *RouteService) UpdateReencryptRoute(ctx context.Context, route *openshiftRouteV1.Route, remoteCentral private.ManagedCentral) error {
+	if route == nil {
+		return errox.InvalidArgs
+	}
 
-	if s.reencryptConfigMatchesCentral(route, remoteCentral) {
+	if s.reencryptConfigMatchesCentral(route, remoteCentral) &&
+		s.hasExpectedTrafficLimitAnnotations(route) {
 		return nil
 	}
 
-	updatedRoute := route.DeepCopy()
-	updatedRoute.Spec.TLS.Certificate = remoteCentral.Spec.UiEndpoint.Tls.Cert
-	updatedRoute.Spec.TLS.Key = remoteCentral.Spec.UiEndpoint.Tls.Key
-	updatedRoute.Spec.Host = remoteCentral.Spec.UiEndpoint.Host
+	updatedRoute, updateRouteErr := s.configureReencryptRoute(ctx, route.DeepCopy(), remoteCentral)
+	if updateRouteErr != nil {
+		return updateRouteErr
+	}
 
 	if err := s.client.Update(ctx, updatedRoute); err != nil {
 		return errors.Wrapf(err, "updating reencrypt route")
@@ -126,15 +209,35 @@ func (s *RouteService) UpdateReencryptRoute(ctx context.Context, route *openshif
 	return nil
 }
 
+func (s *RouteService) configurePassthroughRoute(_ context.Context, route *openshiftRouteV1.Route, remoteCentral private.ManagedCentral) (*openshiftRouteV1.Route, error) {
+	annotatedRoute, annotationErr := s.annotateRouteWithTrafficLimiters(route)
+	if annotationErr != nil {
+		return nil, annotationErr
+	}
+	annotatedRoute.Spec.Host = remoteCentral.Spec.DataEndpoint.Host
+	if annotatedRoute.Spec.TLS == nil {
+		annotatedRoute.Spec.TLS = &openshiftRouteV1.TLSConfig{}
+	}
+	annotatedRoute.Spec.TLS.Termination = openshiftRouteV1.TLSTerminationPassthrough
+
+	return annotatedRoute, nil
+}
+
 // UpdatePassthroughRoute updates configuration of the given passthrough route to match remoteCentral.
 func (s *RouteService) UpdatePassthroughRoute(ctx context.Context, route *openshiftRouteV1.Route, remoteCentral private.ManagedCentral) error {
+	if route == nil {
+		return errox.InvalidArgs
+	}
 
-	if route.Spec.Host == remoteCentral.Spec.DataEndpoint.Host {
+	if route.Spec.Host == remoteCentral.Spec.DataEndpoint.Host &&
+		s.hasExpectedTrafficLimitAnnotations(route) {
 		return nil
 	}
 
-	updatedRoute := route.DeepCopy()
-	updatedRoute.Spec.Host = remoteCentral.Spec.DataEndpoint.Host
+	updatedRoute, updateRouteErr := s.configurePassthroughRoute(ctx, route.DeepCopy(), remoteCentral)
+	if updateRouteErr != nil {
+		return updateRouteErr
+	}
 
 	if err := s.client.Update(ctx, updatedRoute); err != nil {
 		return errors.Wrapf(err, "updating passthrough route")
@@ -149,18 +252,20 @@ func (s *RouteService) CreatePassthroughRoute(ctx context.Context, remoteCentral
 		centralPassthroughRouteName,
 		remoteCentral.Metadata.Namespace,
 		remoteCentral.Spec.DataEndpoint.Host,
-		&openshiftRouteV1.TLSConfig{
-			Termination: openshiftRouteV1.TLSTerminationPassthrough,
-		}, nil)
+		remoteCentral, s.configurePassthroughRoute)
 }
 
-func (s *RouteService) createCentralRoute(ctx context.Context, name, namespace, host string, tls *openshiftRouteV1.TLSConfig, annotations map[string]string) error {
+func (s *RouteService) createCentralRoute(
+	ctx context.Context,
+	name, namespace, host string,
+	remoteCentral private.ManagedCentral,
+	configureRoute configureRouteFunc,
+) error {
 	route := &openshiftRouteV1.Route{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   namespace,
-			Labels:      map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
-			Annotations: annotations,
+			Name:      name,
+			Namespace: namespace,
+			Labels:    map[string]string{ManagedByLabelKey: ManagedByFleetshardValue},
 		},
 		Spec: openshiftRouteV1.RouteSpec{
 			Host: host,
@@ -171,11 +276,14 @@ func (s *RouteService) createCentralRoute(ctx context.Context, name, namespace, 
 				Kind: "Service",
 				Name: "central",
 			},
-			TLS: tls,
 		},
 	}
+	configuredRoute, configureErr := configureRoute(ctx, route, remoteCentral)
+	if configureErr != nil {
+		return configureErr
+	}
 
-	if err := s.client.Create(ctx, route); err != nil {
+	if err := s.client.Create(ctx, configuredRoute); err != nil {
 		return fmt.Errorf("creating route %s/%s: %w", namespace, name, err)
 	}
 	return nil

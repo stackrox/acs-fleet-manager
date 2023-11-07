@@ -17,11 +17,11 @@ func TestGetOperatorConfigFailsValidation(t *testing.T) {
 		"should fail with invalid crd url": {
 			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {
 				config.CRDURLs = []string{
-					"invalid url",
+					"broken url",
 				}
 				return config
 			},
-			contains: "failed downloading chart files",
+			contains: "invalid url",
 		},
 		"should fail with empty deployment name": {
 			getConfig: func(t *testing.T, config OperatorConfigs) OperatorConfigs {

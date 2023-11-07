@@ -42,7 +42,4 @@ type Central struct {
 	RoutesCreated  bool                 `json:"routes_created,omitempty"`
 	ClusterId      string               `json:"cluster_id,omitempty"`
 	Namespace      string               `json:"namespace,omitempty"`
-	Central        CentralSpec          `json:"central,omitempty"`
-	Scanner        ScannerSpec          `json:"scanner,omitempty"`
-	ForceReconcile string               `json:"force_reconcile,omitempty"`
 }

@@ -20,9 +20,6 @@ var _ ClusterService = &ClusterServiceMock{}
 //
 //		// make and configure a mocked ClusterService
 //		mockedClusterService := &ClusterServiceMock{
-//			ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *serviceError.ServiceError {
-//				panic("mock out the ApplyResources method")
-//			},
 //			CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError) {
 //				panic("mock out the CheckClusterStatus method")
 //			},
@@ -114,9 +111,6 @@ var _ ClusterService = &ClusterServiceMock{}
 //
 //	}
 type ClusterServiceMock struct {
-	// ApplyResourcesFunc mocks the ApplyResources method.
-	ApplyResourcesFunc func(cluster *api.Cluster, resources types.ResourceSet) *serviceError.ServiceError
-
 	// CheckClusterStatusFunc mocks the CheckClusterStatus method.
 	CheckClusterStatusFunc func(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError)
 
@@ -203,13 +197,6 @@ type ClusterServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// ApplyResources holds details about calls to the ApplyResources method.
-		ApplyResources []struct {
-			// Cluster is the cluster argument value.
-			Cluster *api.Cluster
-			// Resources is the resources argument value.
-			Resources types.ResourceSet
-		}
 		// CheckClusterStatus holds details about calls to the CheckClusterStatus method.
 		CheckClusterStatus []struct {
 			// Cluster is the cluster argument value.
@@ -373,7 +360,6 @@ type ClusterServiceMock struct {
 			Values map[string]interface{}
 		}
 	}
-	lockApplyResources                      sync.RWMutex
 	lockCheckClusterStatus                  sync.RWMutex
 	lockCheckDinosaurOperatorVersionReady   sync.RWMutex
 	lockConfigureAndSaveIdentityProvider    sync.RWMutex
@@ -402,42 +388,6 @@ type ClusterServiceMock struct {
 	lockUpdateMultiClusterStatus            sync.RWMutex
 	lockUpdateStatus                        sync.RWMutex
 	lockUpdates                             sync.RWMutex
-}
-
-// ApplyResources calls ApplyResourcesFunc.
-func (mock *ClusterServiceMock) ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *serviceError.ServiceError {
-	if mock.ApplyResourcesFunc == nil {
-		panic("ClusterServiceMock.ApplyResourcesFunc: method is nil but ClusterService.ApplyResources was just called")
-	}
-	callInfo := struct {
-		Cluster   *api.Cluster
-		Resources types.ResourceSet
-	}{
-		Cluster:   cluster,
-		Resources: resources,
-	}
-	mock.lockApplyResources.Lock()
-	mock.calls.ApplyResources = append(mock.calls.ApplyResources, callInfo)
-	mock.lockApplyResources.Unlock()
-	return mock.ApplyResourcesFunc(cluster, resources)
-}
-
-// ApplyResourcesCalls gets all the calls that were made to ApplyResources.
-// Check the length with:
-//
-//	len(mockedClusterService.ApplyResourcesCalls())
-func (mock *ClusterServiceMock) ApplyResourcesCalls() []struct {
-	Cluster   *api.Cluster
-	Resources types.ResourceSet
-} {
-	var calls []struct {
-		Cluster   *api.Cluster
-		Resources types.ResourceSet
-	}
-	mock.lockApplyResources.RLock()
-	calls = mock.calls.ApplyResources
-	mock.lockApplyResources.RUnlock()
-	return calls
 }
 
 // CheckClusterStatus calls CheckClusterStatusFunc.

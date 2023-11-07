@@ -30,6 +30,7 @@ spec:
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443
+            - --http2-disable
             - --upstream=http://127.0.0.1:8080/
             - --logtostderr=true
             - --v=0
@@ -40,7 +41,7 @@ spec:
               value: quay.io/rhacs-eng
             - name: OPERATOR_CONDITION_NAME
               value: rhacs-operator.v3.74.0
-          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+          image: registry.redhat.io/openshift4/ose-kube-rbac-proxy:v4.13
           imagePullPolicy: IfNotPresent
           name: kube-rbac-proxy
           ports:
@@ -49,11 +50,11 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 2
-              memory: 1Gi
+              cpu: {{ ((((.rbac).resources).limits).cpu) | default $.Values.operator.default.rbac.resources.limits.cpu }}
+              memory: {{ ((((.rbac).resources).limits).memory) | default $.Values.operator.default.rbac.resources.limits.memory }}
             requests:
-              cpu: 1
-              memory: 200Mi
+              cpu: {{ ((((.rbac).resources).requests).cpu) | default $.Values.operator.default.rbac.resources.requests.cpu }}
+              memory: {{ ((((.rbac).resources).requests).memory) | default $.Values.operator.default.rbac.resources.requests.memory }}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         - args:
@@ -126,11 +127,11 @@ spec:
             timeoutSeconds: 1
           resources:
             limits:
-              cpu: 2
-              memory: 1Gi
+              cpu: {{ (((.resources).limits).cpu) | default $.Values.operator.default.resources.limits.cpu }}
+              memory: {{ (((.resources).limits).memory) | default $.Values.operator.default.resources.limits.memory }}
             requests:
-              cpu: 1
-              memory: 200Mi
+              cpu: {{ (((.resources).requests).cpu) | default $.Values.operator.default.resources.requests.cpu }}
+              memory: {{ (((.resources).requests).memory) | default $.Values.operator.default.resources.requests.memory }}
           securityContext:
             allowPrivilegeEscalation: false
           terminationMessagePath: /dev/termination-log
