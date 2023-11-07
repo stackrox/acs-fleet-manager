@@ -13,10 +13,8 @@ spec:
   sourceNamespace: {{ include "observability.namespace" . }}
   startingCSV: observability-operator.{{ .Values.observabilityOperatorVersion }}
   config:
+    # set the resources if they are provided
+    {{- if ((.Values.observabilityOperator).resources) }}
     resources:
-      requests:
-        cpu: {{ .Values.observabilityOperator.resources.requests.cpu | quote }}
-        memory: {{ .Values.observabilityOperator.resources.requests.memory | quote }}
-      limits:
-        cpu: {{ .Values.observabilityOperator.resources.limits.cpu | quote }}
-        memory: {{ .Values.observabilityOperator.resources.limits.memory | quote }}
+      {{ .Values.observabilityOperator.resources | toYaml | nindent 6 }}
+    {{- end }}
