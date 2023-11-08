@@ -10,18 +10,10 @@ SHELL = bash
 binary:=fleet-manager
 
 # The image tag for building and pushing comes from TAG environment variable by default.
-# If there is no TAG env than CI_TAG is used instead.
-# Otherwise image tag is generated based on git tags.
+# Otherwise image tag is generated based on current commit hash.
+# The version should be a 7-char hash from git. This is what the deployment process in app-interface expects.
 ifeq ($(TAG),)
-ifeq (,$(wildcard CI_TAG))
-ifeq ($(IGNORE_REPOSITORY_DIRTINESS),true)
-TAG=$(shell git describe --tags --abbrev=10 --long)
-else
-TAG=$(shell git describe --tags --abbrev=10 --dirty --long)
-endif
-else
-TAG=$(shell cat CI_TAG)
-endif
+TAG=$(shell git rev-parse --short=7 HEAD)
 endif
 image_tag = $(TAG)
 
@@ -49,9 +41,6 @@ probe_image_repository:=$(PROBE_IMAGE_NAME)
 # internal name to pull it.
 external_image_registry:= $(IMAGE_REGISTRY)
 internal_image_registry:=image-registry.openshift-image-registry.svc:5000
-
-# Test image name that will be used for PR checks
-test_image:=test/$(IMAGE_NAME)
 
 DOCKER ?= docker
 DOCKER_CONFIG ?= "${HOME}/.docker"
