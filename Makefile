@@ -534,7 +534,7 @@ image/push/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-mana
 image/push/fleet-manager-tools: image/build/fleet-manager-tools
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
 	@echo
-	@echo "Image fleet-manager tools was pushed as $(IMAGE_REF)."
+	@echo "Image fleet-manager-tools was pushed as $(IMAGE_REF)."
 .PHONY: image/push/fleet-manager-tools
 
 # Build and push the image

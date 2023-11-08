@@ -55,7 +55,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # TODO make sure that the secrets are configured for your repository
-      # set ocm env to integration
       OCM_ENV: integration
       # Dummy SSO variables
       SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
@@ -145,3 +144,5 @@ jobs:
         run: make image/push/fleet-manager-tools
       - name: Build and push fleetshard-operator image to quay.io
         run: make image/push/fleetshard-operator
+      - name: Build and push fleet-manager image to quay.io
+        run: make image/push/fleet-manager

@@ -1,4 +1,4 @@
-- group: fleet.stackrox.io
+- group: cloud.stackrox.io
   version: v1alpha1
   kind: Fleetshard
   chart: rhacs-terraform
