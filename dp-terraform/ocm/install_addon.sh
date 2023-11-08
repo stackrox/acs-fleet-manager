@@ -2,9 +2,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$SCRIPT_DIR/../.."
 
 # shellcheck source=scripts/lib/external_config.sh
-source "$SCRIPT_DIR/../../scripts/lib/external_config.sh"
+source "$ROOT_DIR/scripts/lib/external_config.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
@@ -89,13 +90,12 @@ fi
 
 FLEETSHARD_SYNC_ORG="app-sre"
 FLEETSHARD_SYNC_IMAGE="acs-fleet-manager"
-# Get HEAD for both main and production. This is the latest merged commit.
-FLEETSHARD_SYNC_TAG="$(git rev-parse --short=7 HEAD)"
+FLEETSHARD_SYNC_TAG="$(make -C "${ROOT_DIR}" tag)"
 
 if [[ "${ADDON_DRY_RUN:-}" == "true" ]]; then
-    "${SCRIPT_DIR}/../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
+    "${ROOT_DIR}/scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
 else
-    "${SCRIPT_DIR}/../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
+    "${ROOT_DIR}/scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
 fi
 
 echo "Loading external config: audit-logs/${CLUSTER_NAME}"
