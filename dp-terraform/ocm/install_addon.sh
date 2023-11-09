@@ -90,7 +90,7 @@ fi
 
 FLEETSHARD_SYNC_ORG="app-sre"
 FLEETSHARD_SYNC_IMAGE="acs-fleet-manager"
-FLEETSHARD_SYNC_TAG="$(make -C "${ROOT_DIR}" tag)"
+FLEETSHARD_SYNC_TAG="$(make --quiet --no-print-directory -C "${ROOT_DIR}" tag)"
 
 if [[ "${ADDON_DRY_RUN:-}" == "true" ]]; then
     "${ROOT_DIR}/scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."

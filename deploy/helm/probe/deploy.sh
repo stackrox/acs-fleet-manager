@@ -20,7 +20,7 @@ ENVIRONMENT=$1
 CLUSTER_NAME=$2
 PROBE_IMAGE_ORG="rhacs-eng"
 PROBE_IMAGE_NAME="blackbox-monitoring-probe-service"
-PROBE_IMAGE_TAG="$(make -C "${ROOT_DIR}" tag)"
+PROBE_IMAGE_TAG="$(make --quiet --no-print-directory -C "${ROOT_DIR}" tag)"
 PROBE_IMAGE="quay.io/${PROBE_IMAGE_ORG}/${PROBE_IMAGE_NAME}:${PROBE_IMAGE_TAG}"
 
 init_chamber
