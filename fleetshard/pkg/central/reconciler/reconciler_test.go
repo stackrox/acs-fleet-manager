@@ -2011,7 +2011,6 @@ func Test_getCentralConfig_telemetry(t *testing.T) {
 }
 
 func TestReconciler_applyRoutes(t *testing.T) {
-
 	type args struct {
 		useRoutes bool
 	}
