@@ -525,7 +525,7 @@ func (k *dinosaurService) DeprovisionExpiredDinosaurs(dinosaurAgeInHours int) *e
 	dbConn = dbConn.Where(dbConn.
 		Where("instance_type = ?", types.EVAL.String()).
 		Where("created_at  <=  ?", now.Add(-1*time.Duration(dinosaurAgeInHours)*time.Hour)).
-		Or("grace_from IS NOT NULL").Where("grace_from < ?", now.Add(-gracePeriod))).
+		Or("expired_at IS NOT NULL").Where("expired_at < ?", now.Add(-gracePeriod))).
 		Where("status NOT IN (?)", dinosaurDeletionStatuses)
 
 	db := dbConn.Updates(map[string]interface{}{

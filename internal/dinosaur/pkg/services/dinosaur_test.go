@@ -177,7 +177,7 @@ func Test_dinosaurService_Get(t *testing.T) {
 func Test_dinosaurService_DeprovisionExpiredDinosaursQuery(t *testing.T) {
 	m := mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "central_requests" ` +
 		`SET "deletion_timestamp"=$1,"status"=$2,"updated_at"=$3 WHERE ` +
-		`(instance_type = $4 AND created_at  <=  $5 OR grace_from IS NOT NULL AND grace_from < $6) ` +
+		`(instance_type = $4 AND created_at  <=  $5 OR expired_at IS NOT NULL AND expired_at < $6) ` +
 		`AND status NOT IN ($7,$8) AND "central_requests"."deleted_at" IS NULL`).
 		OneTime()
 	k := &dinosaurService{
