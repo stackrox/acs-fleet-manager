@@ -84,12 +84,6 @@ type CentralRequest struct {
 	// All we need to integrate Central with an IdP.
 	AuthConfig
 
-	// ForceReconcile will be set by the admin API to indicate to fleetshard-sync that this instance needs
-	// to be reconciled even if it has not changed and is in a state were reconciliation should be skipped.
-	// Set this to "always" to force reconcilation. Set it to any other string to force a
-	// one time reconcilation or to stop from reconciling always.
-	ForceReconcile string `json:"force_reconcile"`
-
 	// ExpiredAt contains the timestamp of when a Central instance expired the quota allowance.
 	// After a grace period, the Central instance will be marked for deletion, its status will be set to 'deprovision'.
 	ExpiredAt *time.Time `json:"expired_at"`
