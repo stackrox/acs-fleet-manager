@@ -1069,11 +1069,15 @@ func TestTelemetryOptionsAreSetInCR(t *testing.T) {
 			require.NoError(t, err)
 
 			require.NotNil(t, central.Spec.Central.Telemetry.Enabled)
-			assert.Equal(t, tc.enabled, *central.Spec.Central.Telemetry.Enabled)
+			assert.True(t, *central.Spec.Central.Telemetry.Enabled)
 			require.NotNil(t, central.Spec.Central.Telemetry.Storage.Endpoint)
 			assert.Equal(t, tc.telemetry.StorageEndpoint, *central.Spec.Central.Telemetry.Storage.Endpoint)
 			require.NotNil(t, central.Spec.Central.Telemetry.Storage.Key)
-			assert.Equal(t, tc.telemetry.StorageKey, *central.Spec.Central.Telemetry.Storage.Key)
+			if tc.telemetry.StorageKey == "" {
+				assert.Equal(t, "DISABLED", *central.Spec.Central.Telemetry.Storage.Key)
+			} else {
+				assert.Equal(t, tc.telemetry.StorageKey, *central.Spec.Central.Telemetry.Storage.Key)
+			}
 		})
 	}
 }
