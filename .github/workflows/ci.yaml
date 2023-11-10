@@ -125,7 +125,7 @@ jobs:
     needs: [pre-commit, verify-test]
     # Skip for external contributions.
     if: |
-      github.event_name == 'push' || !github.event.pull_request.head.repo.fork
+      github.event_name == 'push' || (!github.event.pull_request.head.repo.fork && github.actor != 'dependabot[bot]')
     steps:
       - name: Login to Quay.io
         uses: docker/login-action@v3
