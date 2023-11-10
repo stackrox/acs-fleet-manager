@@ -5,7 +5,8 @@ WORKDIR ${HOME}
 
 RUN curl -L --retry 10 --silent --show-error --fail -o /usr/local/bin/helm \
     "https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64" && \
-    chmod +x /usr/local/bin/helm
+    chmod +x /usr/local/bin/helm && \
+    helm version
 
 RUN helm repo add external-secrets "https://charts.external-secrets.io/" && \
     helm dependencies build ${HOME}/rhacs-terraform
