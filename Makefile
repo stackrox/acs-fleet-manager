@@ -524,17 +524,17 @@ image/build/probe:
 .PHONY: image/build/probe
 
 image/build/fleet-manager-tools: GOOS=linux
-image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/rhacs-eng/fleet-manager-tools:$(image_tag)"
+image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-manager-tools:$(image_tag)"
 image/build/fleet-manager-tools: fleet-manager fleetshard-sync acsfleetctl
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.tools .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) fleet-manager-tools:$(image_tag)
 .PHONY: image/build/multi-target/fleet-manager-tools
 
-image/push/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/rhacs-eng/fleet-manager-tools:$(image_tag)"
+image/push/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-manager-tools:$(image_tag)"
 image/push/fleet-manager-tools: image/build/fleet-manager-tools
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
 	@echo
-	@echo "Image fleet-manager tools was pushed as $(IMAGE_REF)."
+	@echo "Image fleet-manager-tools was pushed as $(IMAGE_REF)."
 .PHONY: image/push/fleet-manager-tools
 
 # Build and push the image
@@ -562,6 +562,16 @@ image/push/internal: docker/login/internal
 	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)"
 	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(probe_image_repository):$(IMAGE_TAG)"
 .PHONY: image/push/internal
+
+image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
+image/build/fleetshard-operator:
+	$(DOCKER) build -t $(IMAGE_REF) ${PROJECT_PATH}/dp-terraform/helm
+.PHONY: image/build/fleetshard-operator
+
+image/push/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
+image/push/fleetshard-operator: image/build/fleetshard-operator
+	$(DOCKER) push $(IMAGE_REF)
+.PHONY: image/push/fleetshard-operator
 
 # Run the probe based e2e test in container
 test/e2e/probe/run: image/build/probe
