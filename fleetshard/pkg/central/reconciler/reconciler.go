@@ -346,14 +346,16 @@ func (r *CentralReconciler) applyTelemetry(remoteCentral *private.ManagedCentral
 	if central.Spec.Central == nil {
 		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
 	}
-	// Telemetry will only be enabled if the storage key is set _and_ the central is not an "internal" central created
-	// from internal clients such as probe service or others.
-	telemetryEnabled := r.telemetry.StorageKey != "" && !remoteCentral.Metadata.Internal
+	// Telemetry is always enabled, but the key is set to DISABLED for probe and other internal instances.
+	key := r.telemetry.StorageKey
+	if remoteCentral.Metadata.Internal {
+		key = "DISABLED"
+	}
 	telemetry := &v1alpha1.Telemetry{
-		Enabled: pointer.Bool(telemetryEnabled),
+		Enabled: pointer.Bool(true),
 		Storage: &v1alpha1.TelemetryStorage{
 			Endpoint: &r.telemetry.StorageEndpoint,
-			Key:      &r.telemetry.StorageKey,
+			Key:      &key,
 		},
 	}
 	central.Spec.Central.Telemetry = telemetry
