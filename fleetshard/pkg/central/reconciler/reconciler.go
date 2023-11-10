@@ -347,8 +347,9 @@ func (r *CentralReconciler) applyTelemetry(remoteCentral *private.ManagedCentral
 		central.Spec.Central = &v1alpha1.CentralComponentSpec{}
 	}
 	// Telemetry is always enabled, but the key is set to DISABLED for probe and other internal instances.
+	// Cloud-service specificity: empty key also disables telemetry to prevent reporting to the self-managed bucket.
 	key := r.telemetry.StorageKey
-	if remoteCentral.Metadata.Internal {
+	if remoteCentral.Metadata.Internal || key == "" {
 		key = "DISABLED"
 	}
 	telemetry := &v1alpha1.Telemetry{
