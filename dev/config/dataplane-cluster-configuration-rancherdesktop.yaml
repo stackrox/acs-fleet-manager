@@ -24,7 +24,7 @@ clusters:
    region: standalone
    schedulable: true
    status: ready
-   central_instance_limit: 5
+   central_instance_limit: 9999
    provider_type: standalone
    supported_instance_type: "eval,standard"
    cluster_dns: cluster.local

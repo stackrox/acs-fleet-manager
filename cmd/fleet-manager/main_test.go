@@ -38,15 +38,15 @@ func TestInjections(t *testing.T) {
 
 	var bootList []environments.BootService
 	env.MustResolve(&bootList)
-	Expect(len(bootList)).To(Equal(6))
+	Expect(len(bootList)).To(Equal(7))
 
 	_, ok := bootList[0].(*server.APIServer)
 	Expect(ok).To(Equal(true))
 	_, ok = bootList[1].(*server.MetricsServer)
 	Expect(ok).To(Equal(true))
-	_, ok = bootList[2].(*server.HealthCheckServer)
+	_, ok = bootList[3].(*server.HealthCheckServer)
 	Expect(ok).To(Equal(true))
-	_, ok = bootList[3].(*workers.LeaderElectionManager)
+	_, ok = bootList[4].(*workers.LeaderElectionManager)
 	Expect(ok).To(Equal(true))
 
 	var workerList []workers.Worker
