@@ -55,7 +55,7 @@ func (k *ExpirationDateManager) Stop() {
 
 // Reconcile ...
 func (k *ExpirationDateManager) Reconcile() []error {
-	glog.Infoln("reconciling grace period start date for central instances")
+	glog.Infoln("reconciling expiration date for central instances")
 	var encounteredErrors []error
 
 	centrals, svcErr := k.centralService.ListByStatus(constants.ActiveStatuses...)
