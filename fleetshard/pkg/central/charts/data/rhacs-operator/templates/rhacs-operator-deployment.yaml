@@ -67,7 +67,6 @@ spec:
               value: /dump
             - name: PROFILING_THRESHOLD_FRACTION
               value: '0.50'
-            - name:
             - name: ENABLE_WEBHOOKS
               value: "false"
             - name: RELATED_IMAGE_MAIN
