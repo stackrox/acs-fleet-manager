@@ -29,10 +29,10 @@ spec:
     {{- if .Values.sensor.resources }}
     resources: {{ toYaml .Values.sensor.resources | nindent 6 }}
     {{- end }}
-    {{-if .Values.sensor.tolerations }}
+    {{- if .Values.sensor.tolerations }}
     tolerations: {{ toYaml .Values.sensor.tolerations | nindent 6 }}
     {{- end }}
-    {{-if .Values.sensor.nodeSelector }}
+    {{- if .Values.sensor.nodeSelector }}
     nodeSelector: {{ toYaml .Values.sensor.nodeSelector | nindent 6 }}
     {{- end }}
   perNode:
@@ -49,19 +49,19 @@ spec:
       {{- if .Values.scanner.analyzer.resources }}
       resources: {{ toYaml .Values.scanner.analyzer.resources | nindent 8 }}
       {{- end }}
-      {{-if .Values.scanner.analyzer.tolerations }}
+      {{- if .Values.scanner.analyzer.tolerations }}
       tolerations: {{ toYaml .Values.scanner.analyzer.tolerations | nindent 8 }}
       {{- end }}
-      {{-if .Values.scanner.analyzer.nodeSelector }}
+      {{- if .Values.scanner.analyzer.nodeSelector }}
       nodeSelector: {{ toYaml .Values.scanner.analyzer.nodeSelector | nindent 8 }}
       {{- end }}
       db:
         {{- if .Values.scanner.analyzer.db.resources }}
         resources: {{ toYaml .Values.scanner.analyzer.db.resources | nindent 10 }}
         {{- end }}
-        {{-if .Values.scanner.analyzer.db.tolerations }}
+        {{- if .Values.scanner.analyzer.db.tolerations }}
         tolerations: {{ toYaml .Values.scanner.analyzer.db.tolerations | nindent 10 }}
         {{- end }}
-        {{-if .Values.scanner.analyzer.db.nodeSelector }}
+        {{- if .Values.scanner.analyzer.db.nodeSelector }}
         nodeSelector: {{ toYaml .Values.scanner.analyzer.db.nodeSelector | nindent 10 }}
         {{- end }}
