@@ -92,14 +92,18 @@ func (k CentralStatus) CompareTo(k1 CentralStatus) int {
 }
 
 // ActiveStatuses are the centrals statuses, that precede deprovisioning.
-var ActiveStatuses = func() []CentralStatus {
-	active := []CentralStatus{}
-	d := ordinals[CentralRequestStatusDeprovision.String()]
-	for status, ordinal := range ordinals {
-		if ordinal >= d {
-			break
+var ActiveStatuses []CentralStatus
+
+func init() {
+	ActiveStatuses = func() []CentralStatus {
+		active := []CentralStatus{}
+		d := ordinals[CentralRequestStatusDeprovision.String()]
+		for status, ordinal := range ordinals {
+			if ordinal >= d {
+				continue
+			}
+			active = append(active, CentralStatus(status))
 		}
-		active = append(active, CentralStatus(status))
-	}
-	return active
-}()
+		return active
+	}()
+}
