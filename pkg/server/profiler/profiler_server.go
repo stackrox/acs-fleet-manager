@@ -1,21 +1,25 @@
+// Package profiler provides profiling tools for debugging.
 package profiler
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/stackrox/acs-fleet-manager/pkg/environments"
-	"github.com/stackrox/acs-fleet-manager/pkg/server"
 	"net"
 	"net/http"
 	"net/http/pprof"
 	"sync"
+
+	"github.com/gorilla/mux"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
+	"github.com/stackrox/acs-fleet-manager/pkg/server"
 )
 
 var _ server.Server = &PprofServer{}
 var _ environments.BootService = &PprofServer{}
 
+// PprofServer ...
 type PprofServer struct{}
 
+// Start ...
 func (p *PprofServer) Start() {
 	go p.Run()
 }
@@ -33,16 +37,20 @@ func SingletonPprofServer() *PprofServer {
 	return pprofServerInstance
 }
 
+// Stop ...
 func (p *PprofServer) Stop() {
 }
 
+// Listen ...
 func (p *PprofServer) Listen() (net.Listener, error) {
 	return nil, nil
 }
 
+// Serve ...
 func (p *PprofServer) Serve(listener net.Listener) {
 }
 
+// Run ...
 func (p *PprofServer) Run() {
 	router := mux.NewRouter()
 	router.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
