@@ -27,6 +27,15 @@ spec:
         app: rhacs-operator
         control-plane: controller-manager
     spec:
+      {{- if .affinity }}
+      affinity: {{ .affinity | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .nodeSelector }}
+      nodeSelector: {{ .nodeSelector | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .tolerations }}
+      tolerations: {{ .tolerations | toYaml | nindent 8 }}
+      {{- end }}
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443

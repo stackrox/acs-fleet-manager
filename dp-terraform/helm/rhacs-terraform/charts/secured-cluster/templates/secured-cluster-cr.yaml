@@ -16,23 +16,52 @@ spec:
   clusterName: {{ required "clusterName is required when secured-cluster is enabled" .Values.clusterName }}
   centralEndpoint: {{ required "centralEndpoint is required when secured-cluster is enabled" .Values.centralEndpoint }}
   admissionControl:
-    resources:
-      requests:
-        memory: 100Mi
-        cpu: 100m
+    {{- if .Values.admissionControl.resources }}
+    resources: {{ toYaml .Values.admissionControl.resources | nindent 6 }}
+    {{- end }}
+    {{- if .Values.admissionControl.tolerations }}
+    tolerations: {{ toYaml .Values.admissionControl.tolerations | nindent 6 }}
+    {{- end }}
+    {{- if .Values.admissionControl.nodeSelector }}
+    nodeSelector: {{ toYaml .Values.admissionControl.nodeSelector | nindent 6 }}
+    {{- end }}
   sensor:
-    resources:
-      requests:
-        memory: 100Mi
-        cpu: 100m
+    {{- if .Values.sensor.resources }}
+    resources: {{ toYaml .Values.sensor.resources | nindent 6 }}
+    {{- end }}
+    {{-if .Values.sensor.tolerations }}
+    tolerations: {{ toYaml .Values.sensor.tolerations | nindent 6 }}
+    {{- end }}
+    {{-if .Values.sensor.nodeSelector }}
+    nodeSelector: {{ toYaml .Values.sensor.nodeSelector | nindent 6 }}
+    {{- end }}
   perNode:
     collector:
-      resources:
-        requests:
-          memory: 100Mi
-          cpu: 100m
+      {{- if .Values.collector.resources }}
+      resources: {{ toYaml .Values.collector.resources | nindent 8 }}
+      {{- end }}
     compliance:
-      resources:
-        requests:
-          memory: 100Mi
-          cpu: 100m
+      {{- if .Values.compliance.resources }}
+      resources: {{ toYaml .Values.compliance.resources | nindent 8 }}
+      {{- end }}
+  scanner:
+    analyzer:
+      {{- if .Values.scanner.analyzer.resources }}
+      resources: {{ toYaml .Values.scanner.analyzer.resources | nindent 8 }}
+      {{- end }}
+      {{-if .Values.scanner.analyzer.tolerations }}
+      tolerations: {{ toYaml .Values.scanner.analyzer.tolerations | nindent 8 }}
+      {{- end }}
+      {{-if .Values.scanner.analyzer.nodeSelector }}
+      nodeSelector: {{ toYaml .Values.scanner.analyzer.nodeSelector | nindent 8 }}
+      {{- end }}
+      db:
+        {{- if .Values.scanner.analyzer.db.resources }}
+        resources: {{ toYaml .Values.scanner.analyzer.db.resources | nindent 10 }}
+        {{- end }}
+        {{-if .Values.scanner.analyzer.db.tolerations }}
+        tolerations: {{ toYaml .Values.scanner.analyzer.db.tolerations | nindent 10 }}
+        {{- end }}
+        {{-if .Values.scanner.analyzer.db.nodeSelector }}
+        nodeSelector: {{ toYaml .Values.scanner.analyzer.db.nodeSelector | nindent 10 }}
+        {{- end }}
