@@ -6,3 +6,9 @@ aws:
 clusterName: ""
 environment: ""
 image: "ghcr.io/nerdswords/yet-another-cloudwatch-exporter:v0.55.0"
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
