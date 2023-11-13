@@ -9,6 +9,8 @@ import (
 	"net/http/pprof"
 	"sync"
 
+	"github.com/pkg/errors"
+
 	"github.com/golang/glog"
 
 	"github.com/gorilla/mux"
@@ -76,7 +78,7 @@ func (p *PprofServer) Serve(listener net.Listener) {
 // Run ...
 func (p *PprofServer) Run() {
 	err := p.httpServer.ListenAndServe()
-	if err != nil {
-		panic(fmt.Sprintf("starting pprof server failed %s", err))
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		glog.Fatalf(fmt.Sprintf("starting pprof server failed %s", err))
 	}
 }
