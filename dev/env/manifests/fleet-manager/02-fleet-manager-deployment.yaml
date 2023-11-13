@@ -47,10 +47,21 @@ spec:
             value: "$RHACS_GITOPS_ENABLED"
           - name: RHACS_TARGETED_OPERATOR_UPGRADES
             value: "true"
-          readinessProbe:
+          livenessProbe:
             httpGet:
               path: /healthcheck
               port: 8083
+              scheme: HTTPS
+              httpHeaders:
+                - name: User-Agent
+                  value: Probe
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /api/rhacs/v1/centrals
+              port: 8000
+            initialDelaySeconds: 20
             periodSeconds: 5
           resources: $FLEET_MANAGER_RESOURCES
           volumeMounts:

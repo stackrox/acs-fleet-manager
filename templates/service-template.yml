@@ -1228,7 +1228,6 @@ objects:
               limits:
                 cpu: ${CPU_LIMIT}
                 memory: ${MEMORY_LIMIT}
-            # TODO ROX-11309 Use /api based endpoint for livenessProbe
             livenessProbe:
               httpGet:
                 path: /healthcheck
@@ -1241,12 +1240,8 @@ objects:
               periodSeconds: 5
             readinessProbe:
               httpGet:
-                path: /healthcheck
-                port: 8083
-                scheme: HTTPS
-                httpHeaders:
-                - name: User-Agent
-                  value: Probe
+                path: /api/rhacs/v1/centrals
+                port: 8000
               initialDelaySeconds: 20
               periodSeconds: 10
           - name: envoy-sidecar
