@@ -50,6 +50,9 @@ spec:
         - "-N"
         - "-f"
         - "/etc/squid/squid.conf"
+        securityContext:
+          runAsGroup: 0
+          runAsUser: 500
         ports:
         - containerPort: 3128
           protocol: TCP
