@@ -267,5 +267,9 @@ secretStore:
     secretName: aws-access-keys # pragma: allowlist secret
     accessKeyId: ""
     secretAccessKey: ""
-    secretsManagerSecretStoreName: secrets-manager-secret-store # pragma: allowlist secret
-    parameterStoreSecretStoreName: parameter-store-secret-store # pragma: allowlist secret
+
+global:
+  secretStore:
+    aws:
+      secretsManagerSecretStoreName: secrets-manager-secret-store # pragma: allowlist secret
+      parameterStoreSecretStoreName: parameter-store-secret-store # pragma: allowlist secret

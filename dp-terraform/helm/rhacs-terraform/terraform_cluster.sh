@@ -23,7 +23,6 @@ export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-saml}"
 
 init_chamber
 
-load_external_config cloudwatch-exporter CLOUDWATCH_EXPORTER_
 load_external_config logging LOGGING_
 load_external_config observability OBSERVABILITY_
 load_external_config secured-cluster SECURED_CLUSTER_
@@ -182,8 +181,6 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set fleetshardSync.resources.limits.memory="${FLEETSHARD_SYNC_MEMORY_LIMIT}" \
   --set fleetshardSync.secretEncryption.type="kms" \
   --set fleetshardSync.secretEncryption.keyID="${CLUSTER_SECRET_ENCRYPTION_KEY_ID}" \
-  --set cloudwatch.aws.accessKeyId="${CLOUDWATCH_EXPORTER_AWS_ACCESS_KEY_ID:-}" \
-  --set cloudwatch.aws.secretAccessKey="${CLOUDWATCH_EXPORTER_AWS_SECRET_ACCESS_KEY:-}" \
   --set cloudwatch.clusterName="${CLUSTER_NAME}" \
   --set cloudwatch.environment="${ENVIRONMENT}" \
   --set logging.groupPrefix="${CLUSTER_NAME}" \

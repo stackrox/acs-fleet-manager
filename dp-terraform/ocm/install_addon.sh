@@ -127,8 +127,6 @@ OCM_PAYLOAD=$(cat << EOF
             { "id": "acscsEnvironment", "value": "${ENVIRONMENT}" },
             { "id": "auditLogsLogGroupName", "value": "${AUDIT_LOGS_LOG_GROUP_NAME:-}" },
             { "id": "auditLogsRoleArn", "value": "${AUDIT_LOGS_ROLE_ARN:-}" },
-            { "id": "cloudwatchAwsAccessKeyId", "value": "${CLOUDWATCH_EXPORTER_AWS_ACCESS_KEY_ID:-}" },
-            { "id": "cloudwatchAwsSecretAccessKey", "value": "${CLOUDWATCH_EXPORTER_AWS_SECRET_ACCESS_KEY:-}" },
             { "id": "fleetshardSyncAuthType", "value": "RHSSO" },
             { "id": "fleetshardSyncImageTag", "value": "quay.io/${FLEETSHARD_SYNC_ORG}/${FLEETSHARD_SYNC_IMAGE}:${FLEETSHARD_SYNC_TAG}" },
             { "id": "fleetshardSyncAwsRegion", "value": "${CLUSTER_REGION}" },
