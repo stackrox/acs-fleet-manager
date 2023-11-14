@@ -23,7 +23,6 @@ export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-saml}"
 
 init_chamber
 
-load_external_config logging LOGGING_
 load_external_config observability OBSERVABILITY_
 load_external_config secured-cluster SECURED_CLUSTER_
 
@@ -184,8 +183,6 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set cloudwatch.clusterName="${CLUSTER_NAME}" \
   --set cloudwatch.environment="${ENVIRONMENT}" \
   --set logging.groupPrefix="${CLUSTER_NAME}" \
-  --set logging.aws.accessKeyId="${LOGGING_AWS_ACCESS_KEY_ID}" \
-  --set logging.aws.secretAccessKey="${LOGGING_AWS_SECRET_ACCESS_KEY}" \
   --set observability.clusterName="${CLUSTER_NAME}" \
   --set observability.github.accessToken="${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" \
   --set observability.github.repository=https://api.github.com/repos/stackrox/rhacs-observability-resources/contents \
