@@ -23,7 +23,6 @@ export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-saml}"
 
 init_chamber
 
-load_external_config observability OBSERVABILITY_
 load_external_config secured-cluster SECURED_CLUSTER_
 
 AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-$(aws sts get-caller-identity --query "Account" --output text)}"
@@ -184,15 +183,9 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set cloudwatch.environment="${ENVIRONMENT}" \
   --set logging.groupPrefix="${CLUSTER_NAME}" \
   --set observability.clusterName="${CLUSTER_NAME}" \
-  --set observability.github.accessToken="${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" \
-  --set observability.github.repository=https://api.github.com/repos/stackrox/rhacs-observability-resources/contents \
   --set observability.github.tag="${OBSERVABILITY_GITHUB_TAG}" \
   --set observability.observabilityOperatorVersion="${OBSERVABILITY_OPERATOR_VERSION}" \
   --set observability.observatorium.gateway="${OBSERVABILITY_OBSERVATORIUM_GATEWAY}" \
-  --set observability.observatorium.metricsClientId="${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" \
-  --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
-  --set observability.pagerduty.key="${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" \
-  --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" \
   --set observability.prometheus.resources.limits.memory="${PROMETHEUS_MEMORY_LIMIT}" \
   --set observability.prometheus.resources.requests.memory="${PROMETHEUS_MEMORY_REQUEST}" \
   --set audit-logs.enabled=true \
@@ -203,13 +196,6 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set secured-cluster.enabled="${SECURED_CLUSTER_ENABLED}" \
   --set secured-cluster.clusterName="${CLUSTER_NAME}" \
   --set secured-cluster.centralEndpoint="${SECURED_CLUSTER_CENTRAL_ENDPOINT}" \
-  --set secured-cluster.ca.cert="${SECURED_CLUSTER_CA_CERT}" \
-  --set secured-cluster.admissionControl.serviceTLS.cert="${SECURED_CLUSTER_ADMISSION_CONTROL_CERT}" \
-  --set secured-cluster.admissionControl.serviceTLS.key="${SECURED_CLUSTER_ADMISSION_CONTROL_KEY}" \
-  --set secured-cluster.collector.serviceTLS.cert="${SECURED_CLUSTER_COLLECTOR_CERT}" \
-  --set secured-cluster.collector.serviceTLS.key="${SECURED_CLUSTER_COLLECTOR_KEY}" \
-  --set secured-cluster.sensor.serviceTLS.cert="${SECURED_CLUSTER_SENSOR_CERT}" \
-  --set secured-cluster.sensor.serviceTLS.key="${SECURED_CLUSTER_SENSOR_KEY}" \
   --set external-secrets.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn="arn:aws:iam::${AWS_ACCOUNT_ID}:role/ExternalSecretsServiceRole"
 # To uninstall an existing release:
 # helm uninstall rhacs-terraform --namespace rhacs

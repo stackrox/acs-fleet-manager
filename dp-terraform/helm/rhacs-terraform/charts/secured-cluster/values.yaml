@@ -5,21 +5,13 @@ pullSecret: ""
 clusterName: ""
 centralEndpoint: ""
 admissionControl:
-  serviceTLS:
-    cert: ""
-    key: ""
   resources:
     requests:
       memory: 100Mi
       cpu: 100m
   tolerations: []
   nodeSelector: {}
-ca:
-  cert: ""
 collector:
-  serviceTLS:
-    cert: ""
-    key: ""
   resources:
     requests:
       memory: 50Mi
@@ -46,9 +38,6 @@ scanner:
           memory: 100Mi
           cpu: 100m
 sensor:
-  serviceTLS:
-    cert: ""
-    key: ""
   resources:
     requests:
       memory: 100Mi

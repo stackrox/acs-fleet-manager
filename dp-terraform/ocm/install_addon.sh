@@ -21,11 +21,7 @@ export AWS_AUTH_HELPER="${AWS_AUTH_HELPER:-aws-saml}"
 
 init_chamber
 
-load_external_config cloudwatch-exporter CLOUDWATCH_EXPORTER_
-load_external_config logging LOGGING_
-load_external_config observability OBSERVABILITY_
 load_external_config secured-cluster SECURED_CLUSTER_
-load_external_config quay/rhacs-eng QUAY_
 
 case $ENVIRONMENT in
   dev)
@@ -145,27 +141,12 @@ OCM_PAYLOAD=$(cat << EOF
             { "id": "fleetshardSyncSecretEncryptionType", "value": "kms" },
             { "id": "loggingAwsRegion", "value": "us-east-1" },
             { "id": "loggingGroupPrefix", "value": "${CLUSTER_NAME}" },
-            { "id": "observabilityDeadMansSwitchUrl", "value": "${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" },
-            { "id": "observabilityGithubAccessToken", "value": "${OBSERVABILITY_GITHUB_ACCESS_TOKEN}" },
-            { "id": "observabilityGithubRepository", "value": "https://api.github.com/repos/stackrox/rhacs-observability-resources/contents" },
             { "id": "observabilityGithubTag", "value": "${OBSERVABILITY_GITHUB_TAG}" },
             { "id": "observabilityObservatoriumAuthType", "value": "redhat" },
             { "id": "observabilityObservatoriumGateway", "value": "${OBSERVABILITY_OBSERVATORIUM_GATEWAY}" },
-            { "id": "observabilityObservatoriumMetricsClientId", "value": "${OBSERVABILITY_OBSERVATORIUM_METRICS_CLIENT_ID}" },
-            { "id": "observabilityObservatoriumMetricsSecret", "value": "${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" },
-            { "id": "observabilityObservatoriumRedHatSsoAuthServerUrl", "value": "https://sso.redhat.com/auth/" },
-            { "id": "observabilityObservatoriumRedHatSsoRealm", "value": "redhat-external" },
             { "id": "observabilityOperatorVersion", "value": "${OBSERVABILITY_OPERATOR_VERSION}" },
-            { "id": "observabilityPagerdutyKey", "value": "${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" },
-            { "id": "securedClusterAdmissionControlServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_ADMISSION_CONTROL_CERT}")" },
-            { "id": "securedClusterAdmissionControlServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_ADMISSION_CONTROL_KEY}")" },
-            { "id": "securedClusterCaCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_CA_CERT}")" },
             { "id": "securedClusterCentralEndpoint", "value": "${SECURED_CLUSTER_CENTRAL_ENDPOINT}" },
-            { "id": "securedClusterCollectorServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_COLLECTOR_CERT}")" },
-            { "id": "securedClusterCollectorServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_COLLECTOR_KEY}")" },
             { "id": "securedClusterEnabled", "value": "${SECURED_CLUSTER_ENABLED}" },
-            { "id": "securedClusterSensorServiceTlsCert", "value": "$(escape_linebreaks "${SECURED_CLUSTER_SENSOR_CERT}")" },
-            { "id": "securedClusterSensorServiceTlsKey", "value": "$(escape_linebreaks "${SECURED_CLUSTER_SENSOR_KEY}")" },
             { "id": "externalSecretsAwsRoleArn", "value": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ExternalSecretsServiceRole" }
         ]
     }
