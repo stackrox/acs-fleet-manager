@@ -1069,11 +1069,15 @@ func TestTelemetryOptionsAreSetInCR(t *testing.T) {
 			require.NoError(t, err)
 
 			require.NotNil(t, central.Spec.Central.Telemetry.Enabled)
-			assert.Equal(t, tc.enabled, *central.Spec.Central.Telemetry.Enabled)
+			assert.True(t, *central.Spec.Central.Telemetry.Enabled)
 			require.NotNil(t, central.Spec.Central.Telemetry.Storage.Endpoint)
 			assert.Equal(t, tc.telemetry.StorageEndpoint, *central.Spec.Central.Telemetry.Storage.Endpoint)
 			require.NotNil(t, central.Spec.Central.Telemetry.Storage.Key)
-			assert.Equal(t, tc.telemetry.StorageKey, *central.Spec.Central.Telemetry.Storage.Key)
+			if tc.telemetry.StorageKey == "" {
+				assert.Equal(t, "DISABLED", *central.Spec.Central.Telemetry.Storage.Key)
+			} else {
+				assert.Equal(t, tc.telemetry.StorageKey, *central.Spec.Central.Telemetry.Storage.Key)
+			}
 		})
 	}
 }
@@ -1959,23 +1963,25 @@ func Test_getCentralConfig_telemetry(t *testing.T) {
 		assert func(t *testing.T, c *v1alpha1.Central)
 	}{
 		{
-			name: "should disable telemetry when no storage key is set",
+			name: "telemetry enabled, but DISABLED when no storage key is set",
 			args: args{
 				isInternal: false,
 				storageKey: "",
 			},
 			assert: func(t *testing.T, c *v1alpha1.Central) {
-				assert.False(t, *c.Spec.Central.Telemetry.Enabled)
+				assert.True(t, *c.Spec.Central.Telemetry.Enabled)
+				assert.Equal(t, "DISABLED", *c.Spec.Central.Telemetry.Storage.Key)
 			},
 		},
 		{
-			name: "should disable telemetry when managed central is internal",
+			name: "should DISABLE telemetry key when managed central is internal",
 			args: args{
 				isInternal: true,
 				storageKey: "foo",
 			},
 			assert: func(t *testing.T, c *v1alpha1.Central) {
-				assert.False(t, *c.Spec.Central.Telemetry.Enabled)
+				assert.True(t, *c.Spec.Central.Telemetry.Enabled)
+				assert.Equal(t, "DISABLED", *c.Spec.Central.Telemetry.Storage.Key)
 			},
 		},
 		{
@@ -1985,18 +1991,18 @@ func Test_getCentralConfig_telemetry(t *testing.T) {
 				storageKey: "foo",
 			},
 			assert: func(t *testing.T, c *v1alpha1.Central) {
-				assert.False(t, *c.Spec.Central.Telemetry.Enabled)
+				assert.True(t, *c.Spec.Central.Telemetry.Enabled)
+				assert.Equal(t, "foo", *c.Spec.Central.Telemetry.Storage.Key)
 			},
 		},
 	}
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			r := &CentralReconciler{}
-			if tc.args.isInternal {
-				r.telemetry = config.Telemetry{
+			r := &CentralReconciler{
+				telemetry: config.Telemetry{
 					StorageKey: tc.args.storageKey,
-				}
+				},
 			}
 			c := &v1alpha1.Central{}
 			mc := &private.ManagedCentral{
@@ -2184,10 +2190,10 @@ metadata:
 							},
 						},
 						Telemetry: &v1alpha1.Telemetry{
-							Enabled: pointer.Bool(false),
+							Enabled: pointer.Bool(true),
 							Storage: &v1alpha1.TelemetryStorage{
 								Endpoint: pointer.String(""),
-								Key:      pointer.String(""),
+								Key:      pointer.String("DISABLED"),
 							},
 						},
 					},
