@@ -44,6 +44,7 @@ spec:
               weight: 100
       containers:
       - name: egress-proxy
+        imagePullPolicy: Always
         image: {{ .Values.egressProxy.image }}
         command:
         - "squid"
