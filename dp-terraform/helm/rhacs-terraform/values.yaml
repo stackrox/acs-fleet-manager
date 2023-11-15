@@ -24,7 +24,7 @@ fleetshardSync:
     endpoint: "https://sso.redhat.com"
     realm: "redhat-external"
   egressProxy:
-    image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.11.0-202310101543.p0.gf1330f6.assembly.stream"
+    image: "registry.redhat.io/openshift4/ose-egress-http-proxy:v4.14"
   auditLogs:
     enabled: true
     skipTLSVerify: true
