@@ -16,7 +16,8 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/workers"
 )
 
-// ExpirationDateManager represents a central manager that manages the expiration date.
+// ExpirationDateManager set's the `expired_at` central request property to the
+// current time when the quota allowance returned from AMS equals to 0.
 type ExpirationDateManager struct {
 	workers.BaseWorker
 	centralService      services.DinosaurService
@@ -43,7 +44,7 @@ func (*ExpirationDateManager) GetRepeatInterval() time.Duration {
 	return 6 * time.Hour
 }
 
-// Start initializes the central manager to reconcile central requests
+// Start initializes the central manager to reconcile central requests.
 func (k *ExpirationDateManager) Start() {
 	k.StartWorker(k)
 }
@@ -58,7 +59,8 @@ func (k *ExpirationDateManager) Reconcile() []error {
 	glog.Infoln("reconciling expiration date for central instances")
 	var encounteredErrors []error
 
-	centrals, svcErr := k.centralService.ListByStatus(constants.ActiveStatuses...)
+	centrals, svcErr := k.centralService.ListByStatus(
+		append(constants.ActiveStatuses, constants.CentralRequestStatusFailed)...)
 	if svcErr != nil {
 		return append(encounteredErrors, svcErr)
 	}
@@ -86,13 +88,13 @@ func (k *ExpirationDateManager) reconcileCentralExpiredAt(centrals dbapi.Central
 		instanceType   string
 	}
 
-	quotaCostCache := make(map[quotaCostCacheKey]bool)
+	quotaCostCache := make(map[quotaCostCacheKey]bool, 0)
 	for _, central := range centrals {
 		key := quotaCostCacheKey{central.OrganisationID, central.CloudAccountID, central.InstanceType}
 		active, inCache := quotaCostCache[key]
 		if !inCache {
 			var svcErr *serviceErr.ServiceError
-			active, svcErr = quotaService.IsQuotaActive(central, types.DinosaurInstanceType(central.InstanceType))
+			active, svcErr = quotaService.HasQuotaAllowance(central, types.DinosaurInstanceType(central.InstanceType))
 			if svcErr != nil {
 				svcErrors = append(svcErrors, errors.Wrapf(svcErr, "failed to get quota entitlement status of central instance %q", central.ID))
 				continue
@@ -113,7 +115,7 @@ func (k *ExpirationDateManager) updateExpiredAtBasedOnQuotaEntitlement(central *
 	// if quota entitlement is active, ensure expired_at is set to null.
 	if isQuotaEntitlementActive && central.ExpiredAt != nil {
 		central.ExpiredAt = nil
-		glog.Infof("updating grace start date of central instance %q to NULL", central.ID)
+		glog.Infof("updating expiration date of central instance %q to NULL", central.ID)
 		return k.centralService.Update(central)
 	}
 

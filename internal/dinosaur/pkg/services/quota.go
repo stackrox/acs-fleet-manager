@@ -12,8 +12,8 @@ import (
 //
 //go:generate moq -out quotaservice_moq.go . QuotaService
 type QuotaService interface {
-	// IsQuotaActive checks if quota is active for the given instance type
-	IsQuotaActive(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError)
+	// HasQuotaAllowance checks if allowed quota is not zero for the given instance type
+	HasQuotaAllowance(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError)
 	// ReserveQuota reserves a quota for a user and return the reservation id or an error in case of failure
 	ReserveQuota(ctx context.Context, dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (string, *errors.ServiceError)
 	// DeleteQuota deletes a reserved quota

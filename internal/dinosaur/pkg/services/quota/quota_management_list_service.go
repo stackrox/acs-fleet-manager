@@ -18,8 +18,8 @@ type QuotaManagementListService struct {
 	quotaManagementList *quotamanagement.QuotaManagementListConfig
 }
 
-// IsQuotaActive ...
-func (q QuotaManagementListService) IsQuotaActive(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+// HasQuotaAllowance ...
+func (q QuotaManagementListService) HasQuotaAllowance(dinosaur *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 	username := dinosaur.Owner
 	orgID := dinosaur.OrganisationID
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetByID(orgID)

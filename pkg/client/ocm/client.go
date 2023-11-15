@@ -631,7 +631,7 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 	for page := 1; ; page++ {
 		quotaCostList, err := req.Page(page).Send()
 		if err != nil {
-			return nil, fmt.Errorf("retrieving relatedResources from the QuotaCosts service: %w", err)
+			return nil, fmt.Errorf("retrieving calling QuotaCosts service: %w", err)
 		}
 
 		quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {

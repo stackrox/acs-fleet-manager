@@ -16,10 +16,10 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/errors"
 )
 
-func TestGracePeriodManager(t *testing.T) {
+func TestExpirationDateManager(t *testing.T) {
 	withEntitlement := func(e bool) (*services.QuotaServiceMock, *services.QuotaServiceFactoryMock) {
 		qs := &services.QuotaServiceMock{
-			IsQuotaActiveFunc: func(central *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+			HasQuotaAllowanceFunc: func(central *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 				return e, nil
 			},
 		}
@@ -51,7 +51,7 @@ func TestGracePeriodManager(t *testing.T) {
 		require.Empty(t, errs)
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
 		assert.Empty(t, centralService.UpdateCalls())
-		assert.Empty(t, quotaSvc.IsQuotaActiveCalls())
+		assert.Empty(t, quotaSvc.HasQuotaAllowanceCalls())
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
 
@@ -65,7 +65,7 @@ func TestGracePeriodManager(t *testing.T) {
 		require.Empty(t, errs)
 		assert.Nil(t, central.ExpiredAt)
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
-		assert.Len(t, quotaSvc.IsQuotaActiveCalls(), 1)
+		assert.Len(t, quotaSvc.HasQuotaAllowanceCalls(), 1)
 		assert.Len(t, centralService.UpdateCalls(), 1)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
@@ -81,7 +81,7 @@ func TestGracePeriodManager(t *testing.T) {
 		require.NotNil(t, central.ExpiredAt)
 		assert.Less(t, now, *central.ExpiredAt)
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
-		assert.Len(t, quotaSvc.IsQuotaActiveCalls(), 1)
+		assert.Len(t, quotaSvc.HasQuotaAllowanceCalls(), 1)
 		assert.Len(t, centralService.UpdateCalls(), 1)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})
@@ -101,7 +101,7 @@ func TestGracePeriodManager(t *testing.T) {
 		assert.Nil(t, centralA.ExpiredAt)
 		assert.Nil(t, centralB.ExpiredAt)
 		assert.Len(t, centralService.ListByStatusCalls(), 1)
-		assert.Len(t, quotaSvc.IsQuotaActiveCalls(), 3)
+		assert.Len(t, quotaSvc.HasQuotaAllowanceCalls(), 3)
 		assert.Len(t, centralService.UpdateCalls(), 5)
 		assert.Len(t, quotaFactory.GetQuotaServiceCalls(), 1)
 	})

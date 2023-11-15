@@ -39,8 +39,8 @@ var supportedAMSBillingModels = map[string]struct{}{
 	string(amsv1.BillingModelMarketplaceAWS): {},
 }
 
-// IsQuotaActive ...
-func (q amsQuotaService) IsQuotaActive(central *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
+// HasQuotaAllowance checks if allowed quota is not zero for the given instance type.
+func (q amsQuotaService) HasQuotaAllowance(central *dbapi.CentralRequest, instanceType types.DinosaurInstanceType) (bool, *errors.ServiceError) {
 	org, err := q.amsClient.GetOrganisationFromExternalID(central.OrganisationID)
 	if err != nil {
 		return false, errors.OrganisationNotFound(central.OrganisationID, err)
@@ -51,7 +51,7 @@ func (q amsQuotaService) IsQuotaActive(central *dbapi.CentralRequest, instanceTy
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf(
 			"failed to get assigned quota of type %q for organization with external id %q and id %q",
-			string(quotaType), central.OrganisationID, org.ID()))
+			quotaType, central.OrganisationID, org.ID()))
 	}
 
 	quotaCostsByModel, unsupportedModels := mapAllowedQuotaCosts(quotaCosts)
