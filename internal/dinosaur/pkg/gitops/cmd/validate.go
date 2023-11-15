@@ -34,13 +34,13 @@ func newValidateCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 1 {
 				glog.Errorf("gitops file path expected as first argument")
-				return
+				os.Exit(1)
 			}
 
 			configs, err := operator.ReadConfigs(args[0])
 			if err != nil {
 				glog.Errorf("validation failed reading configs: %s", err)
-				return
+				os.Exit(1)
 			}
 
 			fieldPath := &field.Path{}
