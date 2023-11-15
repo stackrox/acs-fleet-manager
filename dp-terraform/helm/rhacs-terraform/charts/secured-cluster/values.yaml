@@ -30,6 +30,7 @@ compliance:
       memory: 100Mi
       cpu: 100m
 scanner:
+  scannerComponent: null
   analyzer:
     tolerations: []
     nodeSelector: {}

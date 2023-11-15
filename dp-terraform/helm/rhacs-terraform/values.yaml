@@ -216,6 +216,7 @@ secured-cluster:
     nodeSelector:
       node-role.kubernetes.io/acscs-infra: ""
   scanner:
+    scannerComponent: Disabled
     analyzer:
       tolerations:
         - key: node-role.kubernetes.io/acscs-infra
