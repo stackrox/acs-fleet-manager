@@ -100,11 +100,6 @@ load_external_config "audit-logs/${CLUSTER_NAME}" AUDIT_LOGS_
 echo "Loading external config: cluster-${CLUSTER_NAME}"
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_
 
-# Replace all the line breaks with \n
-escape_linebreaks() {
-    <<<"$1" sed '$ ! s/$/\\n/' | tr -d '\n'
-}
-
 # Allows to load an external cluster config (e.g. acs-dev-dp-01) and apply it to a different cluster with override
 OCM_CLUSTER_ID="${OVERRIDE_CLUSTER_ID:-${CLUSTER_ID}}"
 
