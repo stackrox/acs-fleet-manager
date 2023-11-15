@@ -45,6 +45,9 @@ spec:
       resources: {{ toYaml .Values.compliance.resources | nindent 8 }}
       {{- end }}
   scanner:
+    {{- if .Values.scanner.scannerComponent }}
+    scannerComponent: {{ .Values.scanner.scannerComponent }}
+    {{- end }}
     analyzer:
       {{- if .Values.scanner.analyzer.resources }}
       resources: {{ toYaml .Values.scanner.analyzer.resources | nindent 8 }}
