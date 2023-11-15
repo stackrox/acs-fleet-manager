@@ -30,6 +30,9 @@ load_external_config secured-cluster SECURED_CLUSTER_
 
 AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-$(aws sts get-caller-identity --query "Account" --output text)}"
 
+PROMETHEUS_MEMORY_LIMIT=${PROMETHEUS_MEMORY_LIMIT:-"20Gi"}
+PROMETHEUS_MEMORY_REQUEST=${PROMETHEUS_MEMORY_REQUEST:-"20Gi"}
+
 case $ENVIRONMENT in
   dev)
     FM_ENDPOINT="https://nonexistent.api.stage.openshift.com"
@@ -98,6 +101,8 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
+    PROMETHEUS_MEMORY_LIMIT="30Gi"
+    PROMETHEUS_MEMORY_REQUEST="30Gi"
     SECURED_CLUSTER_ENABLED="true"
     RHACS_GITOPS_ENABLED="true"
     RHACS_TARGETED_OPERATOR_UPGRADES="true"
@@ -194,6 +199,8 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" \
   --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" \
+  --set observability.prometheus.resources.limits.memory="${PROMETHEUS_MEMORY_LIMIT}" \
+  --set observability.prometheus.resources.requests.memory="${PROMETHEUS_MEMORY_REQUEST}" \
   --set audit-logs.enabled=true \
   --set audit-logs.annotations.rhacs\\.redhat\\.com/cluster-name="${CLUSTER_NAME}" \
   --set audit-logs.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}" \
