@@ -27,6 +27,15 @@ spec:
         app: rhacs-operator
         control-plane: controller-manager
     spec:
+      {{- if .affinity }}
+      affinity: {{ .affinity | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .nodeSelector }}
+      nodeSelector: {{ .nodeSelector | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .tolerations }}
+      tolerations: {{ .tolerations | toYaml | nindent 8 }}
+      {{- end }}
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443
@@ -61,6 +70,12 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=127.0.0.1:8080
           env:
+            - name: ENABLE_PROFILING
+              value: 'true'
+            - name: HEAP_DUMP_PARENT_DIR
+              value: /dump
+            - name: PROFILING_THRESHOLD_FRACTION
+              value: '0.50'
             - name: ENABLE_WEBHOOKS
               value: "false"
             - name: RELATED_IMAGE_MAIN
@@ -100,6 +115,9 @@ spec:
             {{- end }}
           image: "{{ .image }}"
           imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: dump-volume
+              mountPath: /dump
           livenessProbe:
             failureThreshold: 3
             httpGet:
@@ -143,6 +161,9 @@ spec:
         runAsNonRoot: true
       serviceAccount: rhacs-operator-controller-manager
       serviceAccountName: rhacs-operator-controller-manager
+      volumes:
+        - name: dump-volume
+          emptyDir: {}
       terminationGracePeriodSeconds: 10
 ---
 {{- end }}

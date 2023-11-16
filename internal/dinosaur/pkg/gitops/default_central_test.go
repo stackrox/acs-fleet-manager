@@ -12,16 +12,12 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func TestDefaultCentral(t *testing.T) {
-	p := getDummyCentralParams()
-	central, err := renderDefaultCentral(p)
-	assert.NoError(t, err)
-
+func wantCentralForDummyParams(p *CentralParams) *v1alpha1.Central {
 	exposeEndpointEnabled := v1alpha1.ExposeEndpointEnabled
 	autoScalingEnabled := v1alpha1.ScannerAutoScalingEnabled
 	scannerComponentEnabled := v1alpha1.ScannerComponentEnabled
 
-	wantCentral := v1alpha1.Central{
+	return &v1alpha1.Central{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.Name,
 			Namespace: p.Namespace,
@@ -102,16 +98,46 @@ func TestDefaultCentral(t *testing.T) {
 					ExposeEndpoint: &exposeEndpointEnabled,
 				},
 			},
-			Monitoring: nil,
+			Monitoring: &v1alpha1.GlobalMonitoring{
+				OpenShiftMonitoring: &v1alpha1.OpenShiftMonitoring{
+					Enabled: true,
+				},
+			},
 		},
 	}
+}
+
+func assertCentralEquality(t *testing.T, wantCentral *v1alpha1.Central, gotCentral *v1alpha1.Central) {
+	assert.Equal(t, wantCentral, gotCentral)
 
 	// compare yaml
 	wantBytes, err := yaml.Marshal(wantCentral)
 	assert.NoError(t, err)
 
-	gotBytes, err := yaml.Marshal(central)
+	gotBytes, err := yaml.Marshal(gotCentral)
 	assert.NoError(t, err)
 
 	assert.YAMLEq(t, string(wantBytes), string(gotBytes))
+}
+
+func TestDefaultCentral(t *testing.T) {
+	p := getDummyCentralParams()
+	gotCentral, err := renderDefaultCentral(p)
+	assert.NoError(t, err)
+
+	wantCentral := wantCentralForDummyParams(&p)
+
+	assertCentralEquality(t, wantCentral, &gotCentral)
+}
+
+func TestInternalCentral(t *testing.T) {
+	p := getDummyCentralParams()
+	p.IsInternal = true
+	gotCentral, err := renderDefaultCentral(p)
+	assert.NoError(t, err)
+
+	wantCentral := wantCentralForDummyParams(&p)
+	wantCentral.Spec.Monitoring.OpenShiftMonitoring.Enabled = false
+
+	assertCentralEquality(t, wantCentral, &gotCentral)
 }
