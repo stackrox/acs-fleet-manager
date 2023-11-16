@@ -626,29 +626,29 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 	var res []*amsv1.QuotaCost
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
-	const pageSize = 100
-	req := quotaCostClient.List().Parameter("fetchRelatedResources", true).Parameter("fetchCloudAccounts", true).Size(pageSize)
-	for page := 1; ; page++ {
-		quotaCostList, err := req.Page(page).Send()
-		if err != nil {
-			return nil, fmt.Errorf("retrieving calling QuotaCosts service: %w", err)
-		}
 
-		quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {
-			relatedResourcesList := qc.RelatedResources()
-			for _, relatedResource := range relatedResourcesList {
-				if relatedResource.ResourceName() == resourceName && relatedResource.Product() == product {
-					res = append(res, qc)
-					break
-				}
+	req := quotaCostClient.List().Parameter("fetchRelatedResources", true).Parameter("fetchCloudAccounts", true)
+
+	// TODO: go 1.21 can defer the following generic arguments from req
+	//       automatically, so this indirection becomes unnecessary.
+	fetchQuotaCosts := fetchPages[*amsv1.QuotaCostListRequest,
+		*amsv1.QuotaCostListResponse,
+		*amsv1.QuotaCostList,
+		*amsv1.QuotaCost,
+	]
+	err := fetchQuotaCosts(req, 100, 1000, func(qc *amsv1.QuotaCost) bool {
+		relatedResourcesList := qc.RelatedResources()
+		for _, relatedResource := range relatedResourcesList {
+			if relatedResource.ResourceName() == resourceName && relatedResource.Product() == product {
+				res = append(res, qc)
+				break
 			}
-			return true
-		})
-		if quotaCostList.Size() < pageSize {
-			break
 		}
+		return true
+	})
+	if err != nil {
+		return nil, pkgerrors.Wrap(err, "error listing QuotaCosts")
 	}
-
 	return res, nil
 }
 
