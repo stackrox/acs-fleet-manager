@@ -59,10 +59,14 @@ spec:
             periodSeconds: 5
           readinessProbe:
             httpGet:
-              path: /api/rhacs/v1/centrals
-              port: 8000
+              path: /healthcheck/ready
+              port: 8083
+              scheme: HTTPS
+              httpHeaders:
+                - name: User-Agent
+                  value: Probe
             initialDelaySeconds: 20
-            periodSeconds: 5
+            periodSeconds: 10
           resources: $FLEET_MANAGER_RESOURCES
           volumeMounts:
             - mountPath: /secrets

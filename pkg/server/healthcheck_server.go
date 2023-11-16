@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/stackrox/acs-fleet-manager/pkg/api"
+	"github.com/stackrox/acs-fleet-manager/pkg/db"
 	"github.com/stackrox/acs-fleet-manager/pkg/services/sentry"
 
 	health "github.com/docker/go-healthcheck"
@@ -26,28 +28,34 @@ type HealthCheckServer struct {
 	serverConfig      *ServerConfig
 	sentryTimeout     time.Duration
 	healthCheckConfig *HealthCheckConfig
+	dbConnection      *db.ConnectionFactory
 }
 
 // NewHealthCheckServer ...
-func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config) *HealthCheckServer {
+func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config, dbConnection *db.ConnectionFactory) *HealthCheckServer {
 	router := mux.NewRouter()
 	health.DefaultRegistry = health.NewRegistry()
 	health.Register("maintenance_status", updater)
-	router.HandleFunc("/healthcheck", health.StatusHandler).Methods(http.MethodGet)
-	router.HandleFunc("/healthcheck/down", downHandler).Methods(http.MethodPost)
-	router.HandleFunc("/healthcheck/up", upHandler).Methods(http.MethodPost)
 
 	srv := &http.Server{
 		Handler: router,
 		Addr:    healthCheckConfig.BindAddress,
 	}
 
-	return &HealthCheckServer{
+	healthServer := &HealthCheckServer{
 		httpServer:        srv,
 		serverConfig:      serverConfig,
 		healthCheckConfig: healthCheckConfig,
 		sentryTimeout:     sentryConfig.Timeout,
+		dbConnection:      dbConnection,
 	}
+
+	router.HandleFunc("/healthcheck", health.StatusHandler).Methods(http.MethodGet)
+	router.HandleFunc("/healthcheck/down", downHandler).Methods(http.MethodPost)
+	router.HandleFunc("/healthcheck/up", upHandler).Methods(http.MethodPost)
+	router.HandleFunc("/healthcheck/ready", healthServer.ready).Methods(http.MethodPost)
+
+	return healthServer
 }
 
 // Start ...
@@ -100,4 +108,11 @@ func upHandler(w http.ResponseWriter, r *http.Request) {
 
 func downHandler(w http.ResponseWriter, r *http.Request) {
 	updater.Update(fmt.Errorf("maintenance mode"))
+}
+
+func (s HealthCheckServer) ready(w http.ResponseWriter, r *http.Request) {
+	err := s.dbConnection.CheckConnection()
+	if err != nil {
+		api.SendPanic(w, r)
+	}
 }
