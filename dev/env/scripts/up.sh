@@ -21,17 +21,11 @@ else
     export CHAMBER_SECRET_BACKEND=null
 fi
 
-if [[ "$IGNORE_REPOSITORY_DIRTINESS" = "true" ]]; then
-    fleet_manager_image_info="${FLEET_MANAGER_IMAGE} (ignoring repository dirtiness)"
-else
-    fleet_manager_image_info="${FLEET_MANAGER_IMAGE}"
-fi
-
 cat <<EOF
 
 ** Bringing up ACSCS **
 
-Image: ${fleet_manager_image_info}
+Image: ${FLEET_MANAGER_IMAGE}
 Cluster Name: ${CLUSTER_NAME}
 Cluster Type: ${CLUSTER_TYPE}
 Namespace: ${ACSCS_NAMESPACE}

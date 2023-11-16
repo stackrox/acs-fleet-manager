@@ -84,3 +84,9 @@ alertManager:
       memory: 256Mi
     limits:
       memory: 256Mi
+
+affinity: {}
+
+tolerations: []
+
+# observability operator doesn't expose nodeSelector

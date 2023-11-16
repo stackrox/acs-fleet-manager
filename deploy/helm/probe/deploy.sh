@@ -2,11 +2,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$SCRIPT_DIR/../../.."
 
 # shellcheck source=scripts/lib/external_config.sh
-source "$SCRIPT_DIR/../../../scripts/lib/external_config.sh"
+source "$ROOT_DIR/scripts/lib/external_config.sh"
 # shellcheck source=scripts/lib/helm.sh
-source "$SCRIPT_DIR/../../../scripts/lib/helm.sh"
+source "$ROOT_DIR/scripts/lib/helm.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
@@ -19,8 +20,7 @@ ENVIRONMENT=$1
 CLUSTER_NAME=$2
 PROBE_IMAGE_ORG="rhacs-eng"
 PROBE_IMAGE_NAME="blackbox-monitoring-probe-service"
-# Get HEAD for both main and production. This is the latest merged commit.
-PROBE_IMAGE_TAG="$(git rev-parse --short=7 HEAD)"
+PROBE_IMAGE_TAG="$(make --quiet --no-print-directory -C "${ROOT_DIR}" tag)"
 PROBE_IMAGE="quay.io/${PROBE_IMAGE_ORG}/${PROBE_IMAGE_NAME}:${PROBE_IMAGE_TAG}"
 
 init_chamber
@@ -57,9 +57,9 @@ if [[ $CLUSTER_ENVIRONMENT != "$ENVIRONMENT" ]]; then
 fi
 
 if [[ "${HELM_DRY_RUN:-}" == "true" ]]; then
-    "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${PROBE_IMAGE_ORG}" "${PROBE_IMAGE_NAME}" "${PROBE_IMAGE_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
+    "${ROOT_DIR}/scripts/check_image_exists.sh" "${PROBE_IMAGE_ORG}" "${PROBE_IMAGE_NAME}" "${PROBE_IMAGE_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
 else
-    "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${PROBE_IMAGE_ORG}" "${PROBE_IMAGE_NAME}" "${PROBE_IMAGE_TAG}"
+    "${ROOT_DIR}/scripts/check_image_exists.sh" "${PROBE_IMAGE_ORG}" "${PROBE_IMAGE_NAME}" "${PROBE_IMAGE_TAG}"
 fi
 
 load_external_config "cluster-${CLUSTER_NAME}" CLUSTER_

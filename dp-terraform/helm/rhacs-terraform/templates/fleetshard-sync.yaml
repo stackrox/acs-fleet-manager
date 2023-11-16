@@ -20,6 +20,15 @@ spec:
       labels:
         app: fleetshard-sync
     spec:
+      {{- if .Values.fleetshardSync.affinity }}
+      affinity: {{ toYaml .Values.fleetshardSync.affinity | nindent 8 }}
+      {{- end }}
+      {{- if .Values.fleetshardSync.tolerations }}
+      tolerations: {{ toYaml .Values.fleetshardSync.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.fleetshardSync.nodeSelector }}
+      nodeSelector: {{ toYaml .Values.fleetshardSync.nodeSelector | nindent 8 }}
+      {{- end }}
       serviceAccountName: fleetshard-sync
       containers:
       - name: fleetshard-sync
