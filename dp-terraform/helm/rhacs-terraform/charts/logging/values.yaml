@@ -8,8 +8,12 @@ aws:
   accessKeyId: ""
   secretAccessKey: ""
 
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
+eventRouter:
+  image: "registry.redhat.io/openshift-logging/eventrouter-rhel8:v0.4"
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
