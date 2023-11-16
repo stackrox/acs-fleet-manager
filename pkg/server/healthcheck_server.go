@@ -53,7 +53,7 @@ func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *Se
 	router.HandleFunc("/healthcheck", health.StatusHandler).Methods(http.MethodGet)
 	router.HandleFunc("/healthcheck/down", downHandler).Methods(http.MethodPost)
 	router.HandleFunc("/healthcheck/up", upHandler).Methods(http.MethodPost)
-	router.HandleFunc("/healthcheck/ready", healthServer.ready).Methods(http.MethodPost)
+	router.HandleFunc("/healthcheck/ready", healthServer.ready).Methods(http.MethodGet)
 
 	return healthServer
 }

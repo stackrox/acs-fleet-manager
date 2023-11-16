@@ -51,7 +51,6 @@ spec:
             httpGet:
               path: /healthcheck
               port: 8083
-              scheme: HTTPS
               httpHeaders:
                 - name: User-Agent
                   value: Probe
@@ -61,7 +60,6 @@ spec:
             httpGet:
               path: /healthcheck/ready
               port: 8083
-              scheme: HTTPS
               httpHeaders:
                 - name: User-Agent
                   value: Probe
