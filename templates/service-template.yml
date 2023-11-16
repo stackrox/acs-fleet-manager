@@ -1234,8 +1234,8 @@ objects:
                 port: 8083
                 scheme: HTTPS
                 httpHeaders:
-                  - name: User-Agent
-                    value: Probe
+                - name: User-Agent
+                  value: Probe
               initialDelaySeconds: 15
               periodSeconds: 5
             readinessProbe:
@@ -1244,8 +1244,8 @@ objects:
                 port: 8083
                 scheme: HTTPS
                 httpHeaders:
-                  - name: User-Agent
-                    value: Probe
+                - name: User-Agent
+                  value: Probe
               initialDelaySeconds: 20
               periodSeconds: 10
           - name: envoy-sidecar
