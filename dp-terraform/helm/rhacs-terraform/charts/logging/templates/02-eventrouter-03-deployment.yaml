@@ -23,14 +23,22 @@ spec:
       name: eventrouter
     spec:
       serviceAccount: eventrouter
+      {{- if .Values.affinity }}
+      affinity: {{- toYaml .Values.affinity | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations: {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector: {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
       containers:
         - name: kube-eventrouter
-          image: "registry.redhat.io/openshift-logging/eventrouter-rhel8:v0.4"
+          image: {{ .Values.eventRouter.image }}
           imagePullPolicy: IfNotPresent
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
+          {{- if .Values.eventRouter.resources }}
+          resources: {{- toYaml .Values.eventRouter.resources | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: config-volume
               mountPath: /etc/eventrouter

@@ -113,6 +113,7 @@ observability:
     key: ""
   deadMansSwitch:
     url: ""
+  resyncPeriod: 10m
 
 # See available parameters in charts/logging/values.yaml
 # - enabled flag is used to completely enable/disable logging sub-chart
@@ -246,12 +247,24 @@ external-secrets:
     image:
       repository: quay.io/app-sre/external-secrets
       tag: v0.9.5
+    tolerations:
+      - key: node-role.kubernetes.io/acscs-infra
+        operator: Exists
+        effect: NoSchedule
+    nodeSelector:
+      node-role.kubernetes.io/acscs-infra: ""
   certController:
     securityContext:
       runAsUser: null
     image:
       repository: quay.io/app-sre/external-secrets
       tag: v0.9.5
+    tolerations:
+      - key: node-role.kubernetes.io/acscs-infra
+        operator: Exists
+        effect: NoSchedule
+    nodeSelector:
+      node-role.kubernetes.io/acscs-infra: ""
   tolerations:
     - key: node-role.kubernetes.io/acscs-infra
       operator: Exists
