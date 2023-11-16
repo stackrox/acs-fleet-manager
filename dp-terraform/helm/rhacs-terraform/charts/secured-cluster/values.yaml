@@ -38,13 +38,13 @@ scanner:
       requests:
         memory: 100Mi
         cpu: 100m
-    db:
-      tolerations: []
-      nodeSelector: {}
-      resources:
-        requests:
-          memory: 100Mi
-          cpu: 100m
+  db:
+    tolerations: []
+    nodeSelector: {}
+    resources:
+      requests:
+        memory: 100Mi
+        cpu: 100m
 sensor:
   serviceTLS:
     cert: ""

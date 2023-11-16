@@ -58,13 +58,13 @@ spec:
       {{- if .Values.scanner.analyzer.nodeSelector }}
       nodeSelector: {{ toYaml .Values.scanner.analyzer.nodeSelector | nindent 8 }}
       {{- end }}
-      db:
-        {{- if .Values.scanner.analyzer.db.resources }}
-        resources: {{ toYaml .Values.scanner.analyzer.db.resources | nindent 10 }}
-        {{- end }}
-        {{- if .Values.scanner.analyzer.db.tolerations }}
-        tolerations: {{ toYaml .Values.scanner.analyzer.db.tolerations | nindent 10 }}
-        {{- end }}
-        {{- if .Values.scanner.analyzer.db.nodeSelector }}
-        nodeSelector: {{ toYaml .Values.scanner.analyzer.db.nodeSelector | nindent 10 }}
-        {{- end }}
+    db:
+      {{- if .Values.scanner.db.resources }}
+      resources: {{ toYaml .Values.scanner.db.resources | nindent 8 }}
+      {{- end }}
+      {{- if .Values.scanner.db.tolerations }}
+      tolerations: {{ toYaml .Values.scanner.db.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.scanner.db.nodeSelector }}
+      nodeSelector: {{ toYaml .Values.scanner.db.nodeSelector | nindent 8 }}
+      {{- end }}
