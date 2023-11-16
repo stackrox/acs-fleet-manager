@@ -2,11 +2,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$SCRIPT_DIR/../../.."
 
 # shellcheck source=scripts/lib/external_config.sh
-source "$SCRIPT_DIR/../../../scripts/lib/external_config.sh"
+source "$ROOT_DIR/scripts/lib/external_config.sh"
 # shellcheck source=scripts/lib/helm.sh
-source "$SCRIPT_DIR/../../../scripts/lib/helm.sh"
+source "$ROOT_DIR/scripts/lib/helm.sh"
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 [environment] [cluster]" >&2
@@ -28,6 +29,9 @@ load_external_config observability OBSERVABILITY_
 load_external_config secured-cluster SECURED_CLUSTER_
 
 AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-$(aws sts get-caller-identity --query "Account" --output text)}"
+
+PROMETHEUS_MEMORY_LIMIT=${PROMETHEUS_MEMORY_LIMIT:-"20Gi"}
+PROMETHEUS_MEMORY_REQUEST=${PROMETHEUS_MEMORY_REQUEST:-"20Gi"}
 
 case $ENVIRONMENT in
   dev)
@@ -97,6 +101,8 @@ case $ENVIRONMENT in
     FLEETSHARD_SYNC_MEMORY_REQUEST="${FLEETSHARD_SYNC_MEMORY_REQUEST:-"1024Mi"}"
     FLEETSHARD_SYNC_CPU_LIMIT="${FLEETSHARD_SYNC_CPU_LIMIT:-"1000m"}"
     FLEETSHARD_SYNC_MEMORY_LIMIT="${FLEETSHARD_SYNC_MEMORY_LIMIT:-"1024Mi"}"
+    PROMETHEUS_MEMORY_LIMIT="30Gi"
+    PROMETHEUS_MEMORY_REQUEST="30Gi"
     SECURED_CLUSTER_ENABLED="true"
     RHACS_GITOPS_ENABLED="true"
     RHACS_TARGETED_OPERATOR_UPGRADES="true"
@@ -116,13 +122,12 @@ fi
 
 FLEETSHARD_SYNC_ORG="app-sre"
 FLEETSHARD_SYNC_IMAGE="acs-fleet-manager"
-# Get HEAD for both main and production. This is the latest merged commit.
-FLEETSHARD_SYNC_TAG="$(git rev-parse --short=7 HEAD)"
+FLEETSHARD_SYNC_TAG="$(make --quiet --no-print-directory -C "${ROOT_DIR}" tag)"
 
 if [[ "${HELM_DRY_RUN:-}" == "true" ]]; then
-    "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
+    "${ROOT_DIR}/scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}" 0 || echo >&2 "Ignoring failed image check in dry-run mode."
 else
-    "${SCRIPT_DIR}/../../../scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
+    "${ROOT_DIR}/scripts/check_image_exists.sh" "${FLEETSHARD_SYNC_ORG}" "${FLEETSHARD_SYNC_IMAGE}" "${FLEETSHARD_SYNC_TAG}"
 fi
 
 echo "Loading external config: audit-logs/${CLUSTER_NAME}"
@@ -194,6 +199,8 @@ invoke_helm "${SCRIPT_DIR}" rhacs-terraform \
   --set observability.observatorium.metricsSecret="${OBSERVABILITY_OBSERVATORIUM_METRICS_SECRET}" \
   --set observability.pagerduty.key="${OBSERVABILITY_PAGERDUTY_ROUTING_KEY}" \
   --set observability.deadMansSwitch.url="${OBSERVABILITY_DEAD_MANS_SWITCH_URL}" \
+  --set observability.prometheus.resources.limits.memory="${PROMETHEUS_MEMORY_LIMIT}" \
+  --set observability.prometheus.resources.requests.memory="${PROMETHEUS_MEMORY_REQUEST}" \
   --set audit-logs.enabled=true \
   --set audit-logs.annotations.rhacs\\.redhat\\.com/cluster-name="${CLUSTER_NAME}" \
   --set audit-logs.annotations.rhacs\\.redhat\\.com/environment="${ENVIRONMENT}" \

@@ -8,13 +8,50 @@ admissionControl:
   serviceTLS:
     cert: ""
     key: ""
+  resources:
+    requests:
+      memory: 100Mi
+      cpu: 100m
+  tolerations: []
+  nodeSelector: {}
 ca:
   cert: ""
 collector:
   serviceTLS:
     cert: ""
     key: ""
+  resources:
+    requests:
+      memory: 50Mi
+      cpu: 10m
+compliance:
+  resources:
+    requests:
+      memory: 100Mi
+      cpu: 100m
+scanner:
+  scannerComponent: null
+  analyzer:
+    tolerations: []
+    nodeSelector: {}
+    resources:
+      requests:
+        memory: 100Mi
+        cpu: 100m
+    db:
+      tolerations: []
+      nodeSelector: {}
+      resources:
+        requests:
+          memory: 100Mi
+          cpu: 100m
 sensor:
   serviceTLS:
     cert: ""
     key: ""
+  resources:
+    requests:
+      memory: 100Mi
+      cpu: 10m
+  tolerations: []
+  nodeSelector: {}

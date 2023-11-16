@@ -4,6 +4,12 @@ metadata:
   name: observability-stack
   namespace: {{ include "observability.namespace" . }}
 spec:
+  {{- if .Values.affinity }}
+  affinity: {{ .Values.affinity | toYaml | nindent 4 }}
+  {{- end }}
+  {{- if .Values.tolerations }}
+  tolerations: {{ .Values.tolerations | toYaml | nindent 4 }}
+  {{- end }}
   # The cluster ID is added as a label to all metrics when interacting with external services.
   clusterId: {{ .Values.clusterName | quote }}
   configurationSelector:

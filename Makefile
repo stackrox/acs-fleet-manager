@@ -10,18 +10,10 @@ SHELL = bash
 binary:=fleet-manager
 
 # The image tag for building and pushing comes from TAG environment variable by default.
-# If there is no TAG env than CI_TAG is used instead.
-# Otherwise image tag is generated based on git tags.
+# Otherwise image tag is generated based on current commit hash.
+# The version should be a 7-char hash from git. This is what the deployment process in app-interface expects.
 ifeq ($(TAG),)
-ifeq (,$(wildcard CI_TAG))
-ifeq ($(IGNORE_REPOSITORY_DIRTINESS),true)
-TAG=$(shell git describe --tags --abbrev=10 --long)
-else
-TAG=$(shell git describe --tags --abbrev=10 --dirty --long)
-endif
-else
-TAG=$(shell cat CI_TAG)
-endif
+TAG=$(shell git rev-parse --short=7 HEAD)
 endif
 image_tag = $(TAG)
 
@@ -49,9 +41,6 @@ probe_image_repository:=$(PROBE_IMAGE_NAME)
 # internal name to pull it.
 external_image_registry:= $(IMAGE_REGISTRY)
 internal_image_registry:=image-registry.openshift-image-registry.svc:5000
-
-# Test image name that will be used for PR checks
-test_image:=test/$(IMAGE_NAME)
 
 DOCKER ?= docker
 DOCKER_CONFIG ?= "${HOME}/.docker"
@@ -535,17 +524,17 @@ image/build/probe:
 .PHONY: image/build/probe
 
 image/build/fleet-manager-tools: GOOS=linux
-image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/rhacs-eng/fleet-manager-tools:$(image_tag)"
+image/build/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-manager-tools:$(image_tag)"
 image/build/fleet-manager-tools: fleet-manager fleetshard-sync acsfleetctl
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) build -t $(IMAGE_REF) -f Dockerfile.tools .
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) tag $(IMAGE_REF) fleet-manager-tools:$(image_tag)
 .PHONY: image/build/multi-target/fleet-manager-tools
 
-image/push/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/rhacs-eng/fleet-manager-tools:$(image_tag)"
+image/push/fleet-manager-tools: IMAGE_REF="$(external_image_registry)/fleet-manager-tools:$(image_tag)"
 image/push/fleet-manager-tools: image/build/fleet-manager-tools
 	DOCKER_CONFIG=${DOCKER_CONFIG} $(DOCKER) push $(IMAGE_REF)
 	@echo
-	@echo "Image fleet-manager tools was pushed as $(IMAGE_REF)."
+	@echo "Image fleet-manager-tools was pushed as $(IMAGE_REF)."
 .PHONY: image/push/fleet-manager-tools
 
 # Build and push the image
@@ -573,6 +562,16 @@ image/push/internal: docker/login/internal
 	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)"
 	$(DOCKER) push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(probe_image_repository):$(IMAGE_TAG)"
 .PHONY: image/push/internal
+
+image/build/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
+image/build/fleetshard-operator:
+	$(DOCKER) build -t $(IMAGE_REF) ${PROJECT_PATH}/dp-terraform/helm
+.PHONY: image/build/fleetshard-operator
+
+image/push/fleetshard-operator: IMAGE_REF="$(external_image_registry)/fleetshard-operator:$(image_tag)"
+image/push/fleetshard-operator: image/build/fleetshard-operator
+	$(DOCKER) push $(IMAGE_REF)
+.PHONY: image/push/fleetshard-operator
 
 # Run the probe based e2e test in container
 test/e2e/probe/run: image/build/probe

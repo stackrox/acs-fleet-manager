@@ -10,6 +10,7 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/iam"
 	dynamicClientAPI "github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/api"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
+	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
@@ -212,7 +213,8 @@ func (k *dinosaurService) DetectInstanceType(dinosaurRequest *dbapi.CentralReque
 
 // reserveQuota - reserves quota for the given dinosaur request. If a RHACS quota has been assigned, it will try to reserve RHACS quota, otherwise it will try with RHACSTrial
 func (k *dinosaurService) reserveQuota(ctx context.Context, dinosaurRequest *dbapi.CentralRequest) (subscriptionID string, err *errors.ServiceError) {
-	if dinosaurRequest.InstanceType == types.EVAL.String() {
+	if dinosaurRequest.InstanceType == types.EVAL.String() &&
+		(environments.GetEnvironmentStrFromEnv() == environments.DevelopmentEnv || environments.GetEnvironmentStrFromEnv() == environments.TestingEnv) == false {
 		if !k.dinosaurConfig.Quota.AllowEvaluatorInstance {
 			return "", errors.NewWithCause(errors.ErrorForbidden, err, "central eval instances are not allowed")
 		}

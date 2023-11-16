@@ -1,5 +1,4 @@
-# This runs checks to verify if code is properly formatted and that tests (unit and integration against a mocked environment) are passing.
-name: Verify & Test
+name: CI
 
 on:
   push:
@@ -34,32 +33,46 @@ on:
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
 
-# TODO make sure that the secrets are configured for your repository
-env:
-  # set ocm env to integration
-  OCM_ENV: integration
-  # Dummy SSO variables
-  SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
-  SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
-  OSD_IDP_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_SSO_CLIENT_ID }}
-  OSD_IDP_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_SSO_CLIENT_SECRET }}
-  # Dummy AWS credentials
-  AWS_ACCOUNT_ID: aws_accountid
-  AWS_ACCESS_KEY: aws_accesskey
-  AWS_SECRET_ACCESS_KEY: aws_secretaccesskey # pragma: allowlist secret - dummy value
-  ROUTE53_ACCESS_KEY: aws_route53_access_key # pragma: allowlist secret - dummy value
-  ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key # pragma: allowlist secret - dummy value
-  # Dummy Central TLS env variables
-  CENTRAL_TLS_CERT: central_tls_cert # pragma: allowlist secret - dummy value
-  CENTRAL_TLS_KEY: central_tls_key # pragma: allowlist secret - dummy value
-  # So that OCM secrets are initialised
-  DOCKER_PR_CHECK: true
-  TEST_TIMEOUT: 30m
-
 jobs:
+  # This runs all pre-commit hooks defined within .pre-commit-config.yaml.
+  pre-commit:
+    name: "Run pre-commit hooks"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: "1.20"
+      - uses: pre-commit/action@v3.0.0
+      - uses: pre-commit/action@v3.0.0
+        name: Verify generated files are up-to-date
+        with:
+          extra_args: --hook-stage=manual --all-files
+
   verify-test:
     name: "Verify & Test"
     runs-on: ubuntu-latest
+    env:
+      # TODO make sure that the secrets are configured for your repository
+      OCM_ENV: integration
+      # Dummy SSO variables
+      SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
+      SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
+      OSD_IDP_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_SSO_CLIENT_ID }}
+      OSD_IDP_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_SSO_CLIENT_SECRET }}
+      # Dummy AWS credentials
+      AWS_ACCOUNT_ID: aws_accountid
+      AWS_ACCESS_KEY: aws_accesskey
+      AWS_SECRET_ACCESS_KEY: aws_secretaccesskey # pragma: allowlist secret - dummy value
+      ROUTE53_ACCESS_KEY: aws_route53_access_key # pragma: allowlist secret - dummy value
+      ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key # pragma: allowlist secret - dummy value
+      # Dummy Central TLS env variables
+      CENTRAL_TLS_CERT: central_tls_cert # pragma: allowlist secret - dummy value
+      CENTRAL_TLS_KEY: central_tls_key # pragma: allowlist secret - dummy value
+      # So that OCM secrets are initialised
+      DOCKER_PR_CHECK: true
+      TEST_TIMEOUT: 30m
     services:
       postgres:
         image: postgres:11
@@ -106,21 +119,30 @@ jobs:
           export PATH=${PATH}:$GOPATH/bin
           make verify binary test test/integration
         timeout-minutes: 14
-      - name: Build and publish fleet-manager-tools image to quay.io
+  build-push-images:
+    name: "Build and push fleet* images to quay.io"
+    runs-on: ubuntu-latest
+    needs: [pre-commit, verify-test]
+    # Skip for external contributions.
+    if: |
+      github.event_name == 'push' || !github.event.pull_request.head.repo.fork
+    steps:
+      - name: Login to Quay.io
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_RHACS_ENG_FM_RW_USERNAME }}
+          password: ${{ secrets.QUAY_RHACS_ENG_FM_RW_PASSWORD }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Critical for correct image detection in Makefile
+      - name: Build and push fleet-manager-tools image to quay.io
         if: github.event_name == 'push'
         env:
-          QUAY_USER: ${{ secrets.QUAY_RHACS_ENG_FM_RW_USERNAME }}
-          QUAY_TOKEN: ${{ secrets.QUAY_RHACS_ENG_FM_RW_PASSWORD }}
-          QUAY_IMAGE_REPOSITORY: rhacs-eng/fleet-manager-tools
-        run: |
-          chmod +x ./build_push_fleet_manager_tools.sh
-          ./build_push_fleet_manager_tools.sh
-      - name: Build and publish fleet* image to quay.io
-        if: github.event_name == 'push'
-        env:
-          QUAY_USER: ${{ secrets.QUAY_RHACS_ENG_FM_RW_USERNAME }}
-          QUAY_TOKEN: ${{ secrets.QUAY_RHACS_ENG_FM_RW_PASSWORD }}
-          QUAY_IMAGE_REPOSITORY: rhacs-eng/fleet-manager
-        run: |
-          chmod +x ./build_push_fleet_manager.sh
-          ./build_push_fleet_manager.sh
+          TAG: ${{ github.ref_name }}
+        run: make image/push/fleet-manager-tools
+      - name: Build and push fleetshard-operator image to quay.io
+        run: make image/push/fleetshard-operator
+      - name: Build and push fleet-manager image to quay.io
+        run: make image/push/fleet-manager

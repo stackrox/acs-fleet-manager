@@ -21,3 +21,7 @@ updates:
     directory: "/probe"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/dp-terraform/helm"
+    schedule:
+      interval: "weekly"
