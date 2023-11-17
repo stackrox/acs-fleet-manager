@@ -5,8 +5,6 @@
 groupPrefix: ""
 aws:
   region: "us-east-1"
-  accessKeyId: ""
-  secretAccessKey: ""
 
 nodeSelector: {}
 
