@@ -25,7 +25,7 @@ type ExpirationDateManager struct {
 	centralConfig       *config.CentralConfig
 }
 
-// NewExpirationDateManager creates a new grace period manager
+// NewExpirationDateManager creates a new expiration date manager.
 func NewExpirationDateManager(centralService services.DinosaurService, quotaServiceFactory services.QuotaServiceFactory, centralConfig *config.CentralConfig) *ExpirationDateManager {
 	return &ExpirationDateManager{
 		BaseWorker: workers.BaseWorker{

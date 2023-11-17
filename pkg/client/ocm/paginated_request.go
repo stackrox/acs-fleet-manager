@@ -18,9 +18,9 @@ type paginatedRequest[RequestType any, ResponseType any] interface {
 }
 
 func fetchPages[RQ paginatedRequest[RQ, RS], RS paginatedResponse[I], I pageItem[Data], Data any](
-	r RQ, pageSize int, maxPages int, f func(Data) bool) error {
+	request RQ, pageSize int, maxPages int, f func(Data) bool) error {
 
-	req := r.Size(pageSize)
+	req := request.Size(pageSize)
 	for page := 1; page <= maxPages; page++ {
 		response, err := req.Page(page).Send()
 		if err != nil {

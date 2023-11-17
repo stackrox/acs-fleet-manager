@@ -946,8 +946,8 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 		CloudProvider:  awsCloudProvider,
 		CloudAccountID: "cloudAccountID",
 	}
-	const not_allowed = 0
-	const not_consumed = 0
+	const notAllowed = 0
+	const notConsumed = 0
 	const allowed = 1
 	const consumed = 1
 
@@ -965,7 +965,7 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			name: "returns true for single allowed quota cost",
 			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 				return []*v1.QuotaCost{
-					makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
 				}, nil
 			},
 			central: standardCentral,
@@ -976,7 +976,7 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			name: "returns true for single allowed quota cost for eval instance",
 			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 				return []*v1.QuotaCost{
-					makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
 				}, nil
 			},
 			central: &dbapi.CentralRequest{
@@ -998,8 +998,8 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			name: "returns true for several allowed quota costs",
 			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 				return []*v1.QuotaCost{
-					makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-					makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
 				}, nil
 			},
 			central: standardCentral,
@@ -1010,8 +1010,8 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			name: "returns true for one of several allowed quota costs",
 			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 				return []*v1.QuotaCost{
-					makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-					makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, notAllowed, consumed, t),
 				}, nil
 			},
 			central: standardCentral,
@@ -1034,8 +1034,8 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			name: "returns false for no quota cost allowed",
 			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 				return []*v1.QuotaCost{
-					makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, consumed, t),
-					makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, notAllowed, consumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, notAllowed, consumed, t),
 				}, nil
 			},
 			central: standardCentral,
@@ -1046,7 +1046,7 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			name: "returns false if cloud account has no allowed cost, but standard has",
 			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 				return []*v1.QuotaCost{
-					makeCloudTestQuotaCost(resourceName, organizationID, not_allowed, consumed, t),
+					makeCloudTestQuotaCost(resourceName, organizationID, notAllowed, consumed, t),
 					makeStandardTestQuotaCost(resourceName, organizationID, allowed, consumed, t),
 				}, nil
 			},
@@ -1058,8 +1058,8 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			name: "returns false if standard account has no allowed cost, but cloud has",
 			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 				return []*v1.QuotaCost{
-					makeCloudTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-					makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, not_consumed, t),
+					makeCloudTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, notAllowed, notConsumed, t),
 				}, nil
 			},
 			central: standardCentral,
@@ -1070,8 +1070,8 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			name: "returns false if cloud account has no allowed cost, neither standard has",
 			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 				return []*v1.QuotaCost{
-					makeCloudTestQuotaCost(resourceName, organizationID, not_allowed, not_consumed, t),
-					makeStandardTestQuotaCost(resourceName, organizationID, not_allowed, not_consumed, t),
+					makeCloudTestQuotaCost(resourceName, organizationID, notAllowed, notConsumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, notAllowed, notConsumed, t),
 				}, nil
 			},
 			central: cloudCentral,
@@ -1082,8 +1082,8 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			name: "returns true if cloud account has allowed cost, and standard has",
 			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 				return []*v1.QuotaCost{
-					makeCloudTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
-					makeStandardTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+					makeCloudTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
+					makeStandardTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
 				}, nil
 			},
 			central: cloudCentral,
@@ -1094,7 +1094,7 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			name: "returns false if cloud account has no active account",
 			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 				return []*v1.QuotaCost{
-					makeCloudTestQuotaCost(resourceName, organizationID, allowed, not_consumed, t),
+					makeCloudTestQuotaCost(resourceName, organizationID, allowed, notConsumed, t),
 				}, nil
 			},
 			central: &dbapi.CentralRequest{
@@ -1119,7 +1119,7 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			name: "returns an error when it finds only unsupported billing models",
 			getQuotaFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
 				rrbq := v1.NewRelatedResource().BillingModel("unsupported").Product(product).ResourceName(resourceName).Cost(1)
-				qcb, err := v1.NewQuotaCost().Allowed(allowed).Consumed(not_consumed).OrganizationID(organizationID).RelatedResources(rrbq).Build()
+				qcb, err := v1.NewQuotaCost().Allowed(allowed).Consumed(notConsumed).OrganizationID(organizationID).RelatedResources(rrbq).Build()
 				require.NoError(t, err)
 				return []*v1.QuotaCost{qcb}, nil
 			},
@@ -1135,7 +1135,7 @@ func Test_amsQuotaService_HasQuotaAllowance_Extra(t *testing.T) {
 			g := gomega.NewWithT(t)
 
 			var amsClient ocm.AMSClient = &ocm.ClientMock{
-				GetOrganisationFromExternalIDFunc: makeOrganizationFromExtID,
+				GetOrganisationFromExternalIDFunc: makeOrganizationFromExternalID,
 				GetQuotaCostsForProductFunc:       tt.getQuotaFunc,
 			}
 
@@ -1167,7 +1167,7 @@ func makeCloudTestQuotaCost(resourceName string, organizationID string, allowed 
 	return qcb
 }
 
-func makeOrganizationFromExtID(externalId string) (*v1.Organization, error) {
+func makeOrganizationFromExternalID(externalId string) (*v1.Organization, error) {
 	org, _ := v1.NewOrganization().ID(fmt.Sprintf("fake-org-id-%s", externalId)).Build()
 	return org, nil
 }

@@ -228,8 +228,6 @@ func mapAllowedQuotaCosts(quotaCosts []*amsv1.QuotaCost) (map[amsv1.BillingModel
 	var foundUnsupportedBillingModels []string
 	for _, qc := range quotaCosts {
 		// When an SKU entitlement expires in AMS, the allowed value for that quota cost is set back to 0.
-		// If the allowed value is 0 and consumed is greater than this, that denotes that the SKU entitlement
-		// has expired and is no longer active.
 		if qc.Allowed() == 0 {
 			continue
 		}
