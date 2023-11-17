@@ -74,9 +74,6 @@ acsOperator:
 # - enabled flag is used to completely enable/disable cloudwatch sub-chart
 cloudwatch:
   enabled: true
-  aws:
-    accessKeyId: ""
-    secretAccessKey: ""
   clusterName: ""
   environment: ""
   tolerations:
@@ -102,26 +99,14 @@ observability:
       effect: NoSchedule
   enabled: true
   clusterName: ""
-  github:
-    accessToken: ""
-    repository: ""
   observatorium:
     gateway: ""
-    metricsClientId: ""
-    metricsSecret: ""
-  pagerduty:
-    key: ""
-  deadMansSwitch:
-    url: ""
 
 # See available parameters in charts/logging/values.yaml
 # - enabled flag is used to completely enable/disable logging sub-chart
 logging:
   enabled: true
   groupPrefix: ""
-  aws:
-    accessKeyId: ""
-    secretAccessKey: ""
   tolerations:
     - key: node-role.kubernetes.io/acscs-infra
       operator: Exists
@@ -190,25 +175,13 @@ secured-cluster:
   clusterName: ""
   centralEndpoint: ""
   admissionControl:
-    serviceTLS:
-      cert: ""
-      key: ""
     tolerations:
       - key: node-role.kubernetes.io/acscs-infra
         operator: Exists
         effect: NoSchedule
     nodeSelector:
       node-role.kubernetes.io/acscs-infra: ""
-  ca:
-    cert: ""
-  collector:
-    serviceTLS:
-      cert: ""
-      key: ""
   sensor:
-    serviceTLS:
-      cert: ""
-      key: ""
     tolerations:
       - key: node-role.kubernetes.io/acscs-infra
         operator: Exists
@@ -267,5 +240,9 @@ secretStore:
     secretName: aws-access-keys # pragma: allowlist secret
     accessKeyId: ""
     secretAccessKey: ""
-    secretsManagerSecretStoreName: secrets-manager-secret-store # pragma: allowlist secret
-    parameterStoreSecretStoreName: parameter-store-secret-store # pragma: allowlist secret
+
+global:
+  secretStore:
+    aws:
+      secretsManagerSecretStoreName: secrets-manager-secret-store # pragma: allowlist secret
+      parameterStoreSecretStoreName: parameter-store-secret-store # pragma: allowlist secret
