@@ -11,6 +11,19 @@ RUN curl -L --retry 10 --silent --show-error --fail -o /usr/local/bin/helm \
 RUN helm repo add external-secrets "https://charts.external-secrets.io/" && \
     helm dependencies build ${HOME}/rhacs-terraform
 
+# Workaround for deleting securityContext.runAsUser from the dependent chart
+# see: https://github.com/operator-framework/operator-sdk/issues/6635
+RUN microdnf install gzip tar && \
+    curl -L --retry 10 --silent --show-error --fail -o /tmp/yq_linux_amd64.tar.gz \
+        "https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_amd64.tar.gz" && \
+        tar -xzf /tmp/yq_linux_amd64.tar.gz ./yq_linux_amd64 && \
+        mv yq_linux_amd64 /usr/local/bin/yq && \
+        chmod +x /usr/local/bin/yq && \
+        rm /tmp/yq_linux_amd64.tar.gz && \
+    cd rhacs-terraform/charts && for filename in *.tgz; do tar -xf "$filename" && rm -f "$filename"; done && \
+    yq -i 'del(.securityContext.runAsUser) | del(.webhook.securityContext.runAsUser) | del(.certController.securityContext.runAsUser)' external-secrets/values.yaml
+
+
 FROM quay.io/operator-framework/helm-operator:v1.32.0
 
 ENV HOME=/opt/helm
