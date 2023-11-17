@@ -9,7 +9,7 @@ import (
 func TestFetchPages(t *testing.T) {
 	testPager := NewMoqPager(make([]byte, 21))
 	n := 0
-	// TODO: go 1.21 can defer the generic parameters from testPager.
+	// TODO: go 1.21 can infer the generic parameters from testPager.
 	testFetcher := fetchPages[
 		*dataPagerMoqImpl[byte],
 		*paginatedResponseMoqImpl[byte],

@@ -629,7 +629,7 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 
 	req := quotaCostClient.List().Parameter("fetchRelatedResources", true).Parameter("fetchCloudAccounts", true)
 
-	// TODO: go 1.21 can defer the following generic arguments from req
+	// TODO: go 1.21 can infer the following generic arguments from req
 	//       automatically, so this indirection becomes unnecessary.
 	fetchQuotaCosts := fetchPages[*amsv1.QuotaCostListRequest,
 		*amsv1.QuotaCostListResponse,
