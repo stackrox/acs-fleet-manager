@@ -12,14 +12,12 @@ import (
 	"github.com/stackrox/acs-fleet-manager/pkg/client/redhatsso/dynamicclients"
 	"github.com/stackrox/acs-fleet-manager/pkg/environments"
 
+	"github.com/golang/glog"
 	dinosaurConstants "github.com/stackrox/acs-fleet-manager/internal/dinosaur/constants"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/dbapi"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/config"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/dinosaurs/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/services"
-	coreServices "github.com/stackrox/acs-fleet-manager/pkg/services/queryparser"
-
-	"github.com/golang/glog"
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
@@ -621,25 +619,6 @@ func (k *dinosaurService) List(ctx context.Context, listArgs *services.ListArgum
 			// filter dinosaur requests by owner as we are dealing with service accounts which may not have an org id
 			dbConn = dbConn.Where("owner = ?", user)
 		}
-	}
-
-	// Apply search query
-	if len(listArgs.Search) > 0 {
-		searchDbQuery, err := coreServices.NewQueryParser().Parse(listArgs.Search)
-		if err != nil {
-			return dinosaurRequestList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list central requests: %s", err.Error())
-		}
-		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
-	}
-
-	if len(listArgs.OrderBy) == 0 {
-		// default orderBy name
-		dbConn = dbConn.Order("name")
-	}
-
-	// Set the order by arguments if any
-	for _, orderByArg := range listArgs.OrderBy {
-		dbConn = dbConn.Order(orderByArg)
 	}
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
