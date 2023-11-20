@@ -73,9 +73,6 @@ var _ DinosaurService = &DinosaurServiceMock{}
 //			ListDinosaursWithRoutesNotCreatedFunc: func() ([]*dbapi.CentralRequest, *serviceError.ServiceError) {
 //				panic("mock out the ListDinosaursWithRoutesNotCreated method")
 //			},
-//			PrepareDinosaurRequestFunc: func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
-//				panic("mock out the PrepareDinosaurRequest method")
-//			},
 //			RegisterDinosaurDeprovisionJobFunc: func(ctx context.Context, id string) *serviceError.ServiceError {
 //				panic("mock out the RegisterDinosaurDeprovisionJob method")
 //			},
@@ -154,9 +151,6 @@ type DinosaurServiceMock struct {
 
 	// ListDinosaursWithRoutesNotCreatedFunc mocks the ListDinosaursWithRoutesNotCreated method.
 	ListDinosaursWithRoutesNotCreatedFunc func() ([]*dbapi.CentralRequest, *serviceError.ServiceError)
-
-	// PrepareDinosaurRequestFunc mocks the PrepareDinosaurRequest method.
-	PrepareDinosaurRequestFunc func(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError
 
 	// RegisterDinosaurDeprovisionJobFunc mocks the RegisterDinosaurDeprovisionJob method.
 	RegisterDinosaurDeprovisionJobFunc func(ctx context.Context, id string) *serviceError.ServiceError
@@ -266,11 +260,6 @@ type DinosaurServiceMock struct {
 		// ListDinosaursWithRoutesNotCreated holds details about calls to the ListDinosaursWithRoutesNotCreated method.
 		ListDinosaursWithRoutesNotCreated []struct {
 		}
-		// PrepareDinosaurRequest holds details about calls to the PrepareDinosaurRequest method.
-		PrepareDinosaurRequest []struct {
-			// DinosaurRequest is the dinosaurRequest argument value.
-			DinosaurRequest *dbapi.CentralRequest
-		}
 		// RegisterDinosaurDeprovisionJob holds details about calls to the RegisterDinosaurDeprovisionJob method.
 		RegisterDinosaurDeprovisionJob []struct {
 			// Ctx is the ctx argument value.
@@ -342,7 +331,6 @@ type DinosaurServiceMock struct {
 	lockListByStatus                      sync.RWMutex
 	lockListCentralsWithoutAuthConfig     sync.RWMutex
 	lockListDinosaursWithRoutesNotCreated sync.RWMutex
-	lockPrepareDinosaurRequest            sync.RWMutex
 	lockRegisterDinosaurDeprovisionJob    sync.RWMutex
 	lockRegisterDinosaurJob               sync.RWMutex
 	lockRestore                           sync.RWMutex
@@ -863,38 +851,6 @@ func (mock *DinosaurServiceMock) ListDinosaursWithRoutesNotCreatedCalls() []stru
 	mock.lockListDinosaursWithRoutesNotCreated.RLock()
 	calls = mock.calls.ListDinosaursWithRoutesNotCreated
 	mock.lockListDinosaursWithRoutesNotCreated.RUnlock()
-	return calls
-}
-
-// PrepareDinosaurRequest calls PrepareDinosaurRequestFunc.
-func (mock *DinosaurServiceMock) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *serviceError.ServiceError {
-	if mock.PrepareDinosaurRequestFunc == nil {
-		panic("DinosaurServiceMock.PrepareDinosaurRequestFunc: method is nil but DinosaurService.PrepareDinosaurRequest was just called")
-	}
-	callInfo := struct {
-		DinosaurRequest *dbapi.CentralRequest
-	}{
-		DinosaurRequest: dinosaurRequest,
-	}
-	mock.lockPrepareDinosaurRequest.Lock()
-	mock.calls.PrepareDinosaurRequest = append(mock.calls.PrepareDinosaurRequest, callInfo)
-	mock.lockPrepareDinosaurRequest.Unlock()
-	return mock.PrepareDinosaurRequestFunc(dinosaurRequest)
-}
-
-// PrepareDinosaurRequestCalls gets all the calls that were made to PrepareDinosaurRequest.
-// Check the length with:
-//
-//	len(mockedDinosaurService.PrepareDinosaurRequestCalls())
-func (mock *DinosaurServiceMock) PrepareDinosaurRequestCalls() []struct {
-	DinosaurRequest *dbapi.CentralRequest
-} {
-	var calls []struct {
-		DinosaurRequest *dbapi.CentralRequest
-	}
-	mock.lockPrepareDinosaurRequest.RLock()
-	calls = mock.calls.PrepareDinosaurRequest
-	mock.lockPrepareDinosaurRequest.RUnlock()
 	return calls
 }
 
