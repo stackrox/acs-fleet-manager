@@ -292,22 +292,26 @@ func (k *dinosaurService) RegisterDinosaurJob(ctx context.Context, dinosaurReque
 // AcceptCentralRequest sets any information about Central. CentralRequest is transitioned to 'Provisioning' status.
 func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	// Set namespace.
-	namespace, formatErr := FormatNamespace(centralRequest.ID)
-	if formatErr != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, formatErr, "invalid id format")
+	if centralRequest.Namespace == "" {
+		namespace, formatErr := FormatNamespace(centralRequest.ID)
+		if formatErr != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, formatErr, "invalid id format")
+		}
+		centralRequest.Namespace = namespace
 	}
-	centralRequest.Namespace = namespace
 
 	// Set host.
-	if k.dinosaurConfig.EnableCentralExternalCertificate {
-		// If we enable DinosaurTLS, the host should use the external domain name rather than the cluster domain
-		centralRequest.Host = k.dinosaurConfig.CentralDomainName
-	} else {
-		clusterDNS, err := k.clusterService.GetClusterDNS(centralRequest.ClusterID)
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
+	if centralRequest.Host == "" {
+		if k.dinosaurConfig.EnableCentralExternalCertificate {
+			// If we enable DinosaurTLS, the host should use the external domain name rather than the cluster domain
+			centralRequest.Host = k.dinosaurConfig.CentralDomainName
+		} else {
+			clusterDNS, err := k.clusterService.GetClusterDNS(centralRequest.ClusterID)
+			if err != nil {
+				return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
+			}
+			centralRequest.Host = clusterDNS
 		}
-		centralRequest.Host = clusterDNS
 	}
 
 	// Check IdP config is ready.
