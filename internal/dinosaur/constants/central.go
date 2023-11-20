@@ -16,6 +16,7 @@ const (
 	// CentralRequestStatusAccepted - central request status when accepted by central worker
 	CentralRequestStatusAccepted CentralStatus = "accepted"
 	// CentralRequestStatusPreparing - central request status of a preparing central
+	// Deprecated: Use CentralRequestStatusAccepted instead. Preparing state is now handled in accepted state.
 	CentralRequestStatusPreparing CentralStatus = "preparing"
 	// CentralRequestStatusProvisioning - central in provisioning state
 	CentralRequestStatusProvisioning CentralStatus = "provisioning"
@@ -88,15 +89,5 @@ func (k CentralStatus) CompareTo(k1 CentralStatus) int {
 		return 1
 	default:
 		return -1
-	}
-}
-
-// GetUpdateableStatuses ...
-func GetUpdateableStatuses() []string {
-	return []string{
-		CentralRequestStatusPreparing.String(),
-		CentralRequestStatusProvisioning.String(),
-		CentralRequestStatusFailed.String(),
-		CentralRequestStatusReady.String(),
 	}
 }
