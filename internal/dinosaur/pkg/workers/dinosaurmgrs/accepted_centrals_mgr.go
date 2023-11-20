@@ -62,8 +62,9 @@ var acceptedCentralCount int32
 func (k *AcceptedCentralManager) Reconcile() []error {
 	var encounteredErrors []error
 
-	// handle accepted central requests
-	acceptedCentralRequests, serviceErr := k.centralService.ListByStatus(constants2.CentralRequestStatusAccepted)
+	// handle accepted requests
+	// TODO: once released to production the `CentralRequestStatusPreparing` can be removed because the logic was moved to the accepted worker.
+	acceptedCentralRequests, serviceErr := k.centralService.ListByStatus(constants2.CentralRequestStatusAccepted, constants2.CentralRequestStatusPreparing)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list accepted centrals"))
 	}

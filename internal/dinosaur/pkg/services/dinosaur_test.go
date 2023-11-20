@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	JwtKeyFile         = "test/support/jwt_private_key.pem"
-	JwtCAFile          = "test/support/jwt_ca.pem"
-	MaxClusterCapacity = 1000
+	JwtKeyFile = "test/support/jwt_private_key.pem"
+	JwtCAFile  = "test/support/jwt_ca.pem"
 )
 
 var (

@@ -69,8 +69,6 @@ type DinosaurService interface {
 	HasAvailableCapacityInRegion(dinosaurRequest *dbapi.CentralRequest) (bool, *errors.ServiceError)
 	// AcceptCentralRequest transitions CentralRequest to 'Preparing'.
 	AcceptCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError
-	// PrepareDinosaurRequest transitions CentralRequest to 'Provisioning'.
-	PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError
 	// Get method will retrieve the dinosaurRequest instance that the give ctx has access to from the database.
 	// This should be used when you want to make sure the result is filtered based on the request context.
 	Get(ctx context.Context, id string) (*dbapi.CentralRequest, *errors.ServiceError)
@@ -291,10 +289,7 @@ func (k *dinosaurService) RegisterDinosaurJob(ctx context.Context, dinosaurReque
 	return nil
 }
 
-// AcceptCentralRequest sets any information about Central that does not
-// require blocking operations (deducing namespace or instance hostname). Upon
-// success, CentralRequest is transitioned to 'Preparing' status and might not
-// be fully prepared yet.
+// AcceptCentralRequest sets any information about Central. CentralRequest is transitioned to 'Provisioning' status.
 func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequest) *errors.ServiceError {
 	// Set namespace.
 	namespace, formatErr := FormatNamespace(centralRequest.ID)
@@ -315,53 +310,26 @@ func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequ
 		centralRequest.Host = clusterDNS
 	}
 
-	// Update the fields of the CentralRequest record in the database.
-	updatedDinosaurRequest := &dbapi.CentralRequest{
-		Meta: api.Meta{
-			ID: centralRequest.ID,
-		},
-		Host:        centralRequest.Host,
-		PlacementID: api.NewID(),
-		Status:      dinosaurConstants.CentralRequestStatusPreparing.String(),
-		Namespace:   centralRequest.Namespace,
-	}
-	if err := k.Update(updatedDinosaurRequest); err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update central request")
-	}
-
-	return nil
-}
-
-// PrepareDinosaurRequest ensures that any required information (e.g.,
-// CentralRequest's host, RHSSO auth config, etc) has been set. Upon success,
-// the request is transitioned to 'Provisioning' status.
-func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralRequest) *errors.ServiceError {
-	// Check if the request is ready to be transitioned to provisioning.
-
 	// Check IdP config is ready.
-	//
-	// TODO(alexr): Shall this go into "preparing_dinosaurs_mgr.go"? Ideally,
-	//     all CentralRequest updating logic is in one place, either in this
-	//     service or workers.
-	if dinosaurRequest.AuthConfig.ClientID == "" {
+	if centralRequest.AuthConfig.ClientID == "" {
 		// We can't provision this request, skip
 		return nil
 	}
 
 	// Obtain organisation name from AMS to store in central request.
-	org, err := k.amsClient.GetOrganisationFromExternalID(dinosaurRequest.OrganisationID)
+	org, err := k.amsClient.GetOrganisationFromExternalID(centralRequest.OrganisationID)
 	if err != nil {
-		return errors.OrganisationNotFound(dinosaurRequest.OrganisationID, err)
+		return errors.OrganisationNotFound(centralRequest.OrganisationID, err)
 	}
 	orgName := org.Name()
 	if orgName == "" {
-		return errors.OrganisationNameInvalid(dinosaurRequest.OrganisationID, orgName)
+		return errors.OrganisationNameInvalid(centralRequest.OrganisationID, orgName)
 	}
 
 	// Update the fields of the CentralRequest record in the database.
 	updatedCentralRequest := &dbapi.CentralRequest{
 		Meta: api.Meta{
-			ID: dinosaurRequest.ID,
+			ID: centralRequest.ID,
 		},
 		OrganisationName: orgName,
 		Status:           dinosaurConstants.CentralRequestStatusProvisioning.String(),
@@ -816,7 +784,7 @@ func (k *dinosaurService) Restore(ctx context.Context, id string) *errors.Servic
 	// this Update only changes columns listed in columnsToReset
 	resetRequest := &dbapi.CentralRequest{}
 	resetRequest.ID = centralRequest.ID
-	resetRequest.Status = dinosaurConstants.CentralRequestStatusPreparing.String()
+	resetRequest.Status = dinosaurConstants.CentralRequestStatusAccepted.String()
 	resetRequest.CreatedAt = time.Now()
 
 	if err := dbConn.Unscoped().Model(resetRequest).Select(columnsToReset).Updates(resetRequest).Error; err != nil {
@@ -900,10 +868,10 @@ func (k *dinosaurService) ListCentralsWithoutAuthConfig() ([]*dbapi.CentralReque
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list Central requests")
 	}
 
-	// Central requests beyond 'Preparing' should have already been augmented.
+	// Central requests beyond 'Accepted' should have already been augmented.
 	filteredResults := make([]*dbapi.CentralRequest, 0, len(results))
 	for _, r := range results {
-		if dinosaurConstants.CentralStatus(r.Status).CompareTo(dinosaurConstants.CentralRequestStatusPreparing) <= 0 {
+		if dinosaurConstants.CentralStatus(r.Status).CompareTo(dinosaurConstants.CentralRequestStatusAccepted) <= 0 {
 			filteredResults = append(filteredResults, r)
 		} else {
 			glog.Warningf("Central request %s in status %q lacks auth config which should have been set up earlier", r.ID, r.Status)
