@@ -125,14 +125,14 @@ type dinosaurService struct {
 	amsClient                ocm.AMSClient
 	iamConfig                *iam.IAMConfig
 	rhSSODynamicClientsAPI   *dynamicClientAPI.AcsTenantsApiService
-	centralAuthConfigManager rhsso.CentralAuthConfigManager
+	centralAuthConfigManager *rhsso.CentralAuthConfigManager
 }
 
 // NewDinosaurService ...
 func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService ClusterService,
 	iamConfig *iam.IAMConfig, dinosaurConfig *config.CentralConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
 	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory,
-	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient) DinosaurService {
+	clusterPlacementStrategy ClusterPlacementStrategy, amsClient ocm.AMSClient, centralAuthConfigManager *rhsso.CentralAuthConfigManager) DinosaurService {
 	return &dinosaurService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
@@ -145,6 +145,7 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		clusterPlacementStrategy: clusterPlacementStrategy,
 		amsClient:                amsClient,
 		rhSSODynamicClientsAPI:   dynamicclients.NewDynamicClientsAPI(iamConfig.RedhatSSORealm),
+		centralAuthConfigManager: centralAuthConfigManager,
 	}
 }
 
