@@ -2,6 +2,8 @@ package operator
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/api/private"
 	"sigs.k8s.io/yaml"
 )
@@ -22,6 +24,20 @@ func parseConfig(content []byte) (OperatorConfigs, error) {
 		return OperatorConfigs{}, fmt.Errorf("unmarshalling operator config %w", err)
 	}
 	return out, nil
+}
+
+// ReadConfigs reads OperatorConfigs from a given file path.
+func ReadConfigs(path string) (OperatorConfigs, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return OperatorConfigs{}, fmt.Errorf("Failed reading gitops config at path %s: %w", path, err)
+	}
+
+	configs, err := parseConfig(content)
+	if err != nil {
+		return OperatorConfigs{}, fmt.Errorf("Failed parsing configs: %w", err)
+	}
+	return configs, nil
 }
 
 // OperatorConfigs represents all operators and the CRD which should be installed in a data-plane cluster.
