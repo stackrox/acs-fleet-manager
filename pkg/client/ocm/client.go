@@ -42,9 +42,6 @@ type Client interface {
 	CreateAddon(clusterID string, addonID string) (*clustersmgmtv1.AddOnInstallation, error)
 	UpdateAddonParameters(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
 	GetClusterDNS(clusterID string) (string, error)
-	ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error)
-	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
-	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
 	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
 	GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 	DeleteCluster(clusterID string) (int, error)
@@ -460,72 +457,6 @@ func (c client) GetIdentityProviderList(clusterID string) (*clustersmgmtv1.Ident
 		return nil, serviceErrors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to get list of identity providers, err: %s", getIDPErr.Error())
 	}
 	return response.Items(), nil
-}
-
-// ScaleUpComputeNodes scales up compute nodes by increment value
-func (c client) ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error) {
-	return c.scaleComputeNodes(clusterID, increment)
-}
-
-// ScaleDownComputeNodes scales down compute nodes by decrement value
-func (c client) ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
-	return c.scaleComputeNodes(clusterID, -decrement)
-}
-
-// scaleComputeNodes scales the Compute nodes up or down by the value of `numNodes`
-func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
-	if c.connection == nil {
-		return nil, serviceErrors.InvalidOCMConnection()
-	}
-
-	clusterClient := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID)
-
-	cluster, err := clusterClient.Get().Send()
-	if err != nil {
-		return nil, fmt.Errorf("retrieving cluster: %w", err)
-	}
-
-	// get current number of compute nodes
-	currentNumOfNodes := cluster.Body().Nodes().Compute()
-
-	// create a cluster object with updated number of compute nodes
-	// NOTE - there is no need to handle whether the number of nodes is valid, as this is handled by OCM
-	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(currentNumOfNodes + numNodes)).
-		Build()
-	if err != nil {
-		return nil, fmt.Errorf("scaling compute nodes by %d nodes: %w", numNodes, err)
-	}
-
-	// patch cluster with updated number of compute nodes
-	resp, err := clusterClient.Update().Body(patch).Send()
-	if err != nil {
-		return nil, fmt.Errorf("patching cluster with updated number of compute nodes: %w", err)
-	}
-
-	return resp.Body(), nil
-}
-
-// SetComputeNodes ...
-func (c client) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
-	if c.connection == nil {
-		return nil, serviceErrors.InvalidOCMConnection()
-	}
-
-	clusterClient := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID)
-
-	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(numNodes)).
-		Build()
-	if err != nil {
-		return nil, fmt.Errorf("building %d compute nodes: %w", numNodes, err)
-	}
-
-	// patch cluster with updated number of compute nodes
-	resp, err := clusterClient.Update().Body(patch).Send()
-	if err != nil {
-		return nil, fmt.Errorf("patching cluster with updated number of compute nodes: %w", err)
-	}
-
-	return resp.Body(), nil
 }
 
 func newAddonParameterListBuilder(params []Parameter) *clustersmgmtv1.AddOnInstallationParameterListBuilder {
