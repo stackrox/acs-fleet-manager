@@ -90,18 +90,20 @@ func (k *AcceptedCentralManager) reconcileAcceptedCentral(centralRequest *dbapi.
 	if err := FailIfTimeoutExceeded(k.centralService, k.centralRequestTimeout, centralRequest); err != nil {
 		return err
 	}
-	cluster, err := k.clusterPlmtStrategy.FindCluster(centralRequest)
-	if err != nil {
-		return errors.Wrapf(err, "failed to find cluster for central request %s", centralRequest.ID)
-	}
+	if centralRequest.ClusterID == "" {
+		cluster, err := k.clusterPlmtStrategy.FindCluster(centralRequest)
+		if err != nil {
+			return errors.Wrapf(err, "failed to find cluster for central request %s", centralRequest.ID)
+		}
 
-	if cluster == nil {
-		logger.Logger.Warningf("No available cluster found for Central instance with id %s", centralRequest.ID)
-		return nil
-	}
+		if cluster == nil {
+			logger.Logger.Warningf("No available cluster found for Central instance with id %s", centralRequest.ID)
+			return nil
+		}
 
-	centralRequest.ClusterID = cluster.ClusterID
-	glog.Infof("Central instance with id %s is assigned to cluster with id %s", centralRequest.ID, centralRequest.ClusterID)
+		centralRequest.ClusterID = cluster.ClusterID
+		glog.Infof("Central instance with id %s is assigned to cluster with id %s", centralRequest.ID, centralRequest.ClusterID)
+	}
 
 	if err := k.centralService.AcceptCentralRequest(centralRequest); err != nil {
 		return errors.Wrapf(err, "failed to accept Central %s with cluster details", centralRequest.ID)
