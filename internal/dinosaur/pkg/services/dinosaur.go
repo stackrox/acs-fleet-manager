@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/workers/dinosaurmgrs"
 	"sync"
 	"time"
 
@@ -123,6 +124,7 @@ type dinosaurService struct {
 	amsClient                ocm.AMSClient
 	iamConfig                *iam.IAMConfig
 	rhSSODynamicClientsAPI   *dynamicClientAPI.AcsTenantsApiService
+	authConfigManager        dinosaurmgrs.CentralAuthConfigManager
 }
 
 // NewDinosaurService ...
@@ -314,10 +316,16 @@ func (k *dinosaurService) AcceptCentralRequest(centralRequest *dbapi.CentralRequ
 		}
 	}
 
-	// Check IdP config is ready.
+	// Add IdP config to Central
 	if centralRequest.AuthConfig.ClientID == "" {
 		// We can't provision this request, skip
-		return nil
+		if err := k.authConfigManager.AddAuthConfiguration(centralRequest); err != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
+		}
+		if centralRequest.AuthConfig.ClientID == "" {
+			glog.Infof("skipped, ClientID not set, central ID: %s", centralRequest.ID)
+			return nil
+		}
 	}
 
 	// Obtain organisation name from AMS to store in central request.

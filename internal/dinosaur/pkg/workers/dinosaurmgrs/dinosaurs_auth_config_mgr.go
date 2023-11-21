@@ -98,6 +98,26 @@ func (k *CentralAuthConfigManager) reconcileCentralRequest(cr *dbapi.CentralRequ
 	// CentralConfig. For 2), we need to request a dynamic client from the
 	// RHSSO API.
 
+	if err := k.AddAuthConfiguration(cr); err != nil {
+		return err
+	}
+
+	if err := k.centralService.Update(cr); err != nil {
+		return errors.Wrapf(err, "failed to update central request %s", cr.ID)
+	}
+
+	return nil
+}
+
+func (k *CentralAuthConfigManager) AddAuthConfiguration(cr *dbapi.CentralRequest) error {
+	glog.V(5).Infof("augmenting Central %q with auth config", cr.Meta.ID)
+	// Auth config can either be:
+	//   1) static, i.e., the same for all Centrals,
+	//   2) dynamic, i.e., each Central has its own.
+	// In case of 1), all necessary information should be provided in
+	// CentralConfig. For 2), we need to request a dynamic client from the
+	// RHSSO API.
+
 	var err error
 	if k.centralConfig.HasStaticAuth() {
 		glog.V(7).Infoln("static config found; no dynamic client will be requested the IdP")
@@ -112,10 +132,6 @@ func (k *CentralAuthConfigManager) reconcileCentralRequest(cr *dbapi.CentralRequ
 
 	cr.AuthConfig.ClientOrigin = ternary.String(k.centralConfig.HasStaticAuth(),
 		dbapi.AuthConfigStaticClientOrigin, dbapi.AuthConfigDynamicClientOrigin)
-
-	if err := k.centralService.Update(cr); err != nil {
-		return errors.Wrapf(err, "failed to update central request %s", cr.ID)
-	}
 
 	return nil
 }
