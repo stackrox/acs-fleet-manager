@@ -31,7 +31,6 @@ Cluster Type: ${CLUSTER_TYPE}
 Namespace: ${ACSCS_NAMESPACE}
 
 Inheriting ImagePullSecrets for Quay.io: ${INHERIT_IMAGEPULLSECRETS}
-Installing RHACS Operator: ${INSTALL_OPERATOR}
 Enable External Config: ${ENABLE_EXTERNAL_CONFIG}
 AWS Auth Helper: ${AWS_AUTH_HELPER:-none}
 

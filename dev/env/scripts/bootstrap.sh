@@ -15,7 +15,6 @@ cat <<EOF
 Image: ${FLEET_MANAGER_IMAGE}
 Namespace: ${ACSCS_NAMESPACE}
 Inheriting ImagePullSecrets for Quay.io: ${INHERIT_IMAGEPULLSECRETS}
-Installing RHACS Operator: ${INSTALL_OPERATOR}
 Operator Source: ${OPERATOR_SOURCE}
 Using OLM: ${INSTALL_OLM}
 Installing OpenShift Router: ${INSTALL_OPENSHIFT_ROUTER}
@@ -53,7 +52,7 @@ fi
 apply "${MANIFESTS_DIR}/monitoring"
 
 if is_local_cluster "$CLUSTER_TYPE"; then
-    if [[ ("$INSTALL_OPERATOR" == "true" && "$OPERATOR_SOURCE" == "quay") || "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
+    if [[  "$FLEET_MANAGER_IMAGE" =~ ^quay.io/ ]]; then
         if docker_logged_in "quay.io"; then
             log "Looks like we are already logged into Quay"
         else
