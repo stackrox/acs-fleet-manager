@@ -272,19 +272,6 @@ func (s *StandaloneProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (stri
 	return "", nil // NOOP for now
 }
 
-// AddIdentityProvider ...
-func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
-	// setup identity provider
-	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
-		Resources: []interface{}{
-			s.buildOpenIDPClientSecret(identityProvider),
-			s.buildIdentityProviderResource(identityProvider),
-		},
-	})
-
-	return &identityProvider, err
-}
-
 // buildOpenIDPClientSecret builds the k8s secret which holds OpenIDP clientSecret value
 // The clientSecret as indicated in https://docs.openshift.com/container-platform/4.7/authentication/identity_providers/configuring-oidc-identity-provider.html#identity-provider-creating-secret_configuring-oidc-identity-provider
 func (s *StandaloneProvider) buildOpenIDPClientSecret(identityProvider types.IdentityProviderInfo) *v1.Secret {
