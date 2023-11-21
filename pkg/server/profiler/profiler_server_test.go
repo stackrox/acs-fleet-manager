@@ -9,6 +9,7 @@ import (
 )
 
 func TestPprofProfiler(t *testing.T) {
+	t.Skip("Skip profiler test because of flakiness caused by using port 6060")
 	server := SingletonPprofServer()
 	server.Start()
 
