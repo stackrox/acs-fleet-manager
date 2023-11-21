@@ -6,7 +6,6 @@ import (
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
-	"github.com/golang/glog"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/pkg/errors"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
@@ -98,64 +97,6 @@ func (o *OCMProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (string, err
 		return "", errors.Wrapf(err, "failed to get dns for cluster %s", clusterSpec.InternalID)
 	}
 	return clusterDNS, nil
-}
-
-// InstallDinosaurOperator ...
-func (o *OCMProvider) InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error) {
-	return o.installAddon(clusterSpec, o.ocmConfig.CentralOperatorAddonID)
-}
-
-// InstallFleetshard ...
-func (o *OCMProvider) InstallFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
-	return o.installAddonWithParams(clusterSpec, o.ocmConfig.FleetshardAddonID, params)
-}
-
-func (o *OCMProvider) installAddon(clusterSpec *types.ClusterSpec, addonID string) (bool, error) {
-	clusterID := clusterSpec.InternalID
-	addonInstallation, err := o.ocmClient.GetAddon(clusterID, addonID)
-	if err != nil {
-		return false, errors.Wrapf(err, "failed to get addon %s for cluster %s", addonID, clusterSpec.InternalID)
-	}
-
-	// Addon needs to be installed if addonInstallation doesn't exist
-	if addonInstallation.ID() == "" {
-		addonInstallation, err = o.ocmClient.CreateAddon(clusterID, addonID)
-		if err != nil {
-			return false, errors.Wrapf(err, "failed to create addon %s for cluster %s", addonID, clusterSpec.InternalID)
-		}
-	}
-
-	// The cluster is ready when the state reports ready
-	if addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func (o *OCMProvider) installAddonWithParams(clusterSpec *types.ClusterSpec, addonID string, params []types.Parameter) (bool, error) {
-	addonInstallation, addonErr := o.ocmClient.GetAddon(clusterSpec.InternalID, addonID)
-	if addonErr != nil {
-		return false, errors.Wrapf(addonErr, "failed to get addon %s for cluster %s", addonID, clusterSpec.InternalID)
-	}
-
-	if addonInstallation != nil && addonInstallation.ID() == "" {
-		glog.V(5).Infof("No existing %s addon found, create a new one", addonID)
-		addonInstallation, addonErr = o.ocmClient.CreateAddonWithParams(clusterSpec.InternalID, addonID, params)
-		if addonErr != nil {
-			return false, errors.Wrapf(addonErr, "failed to create addon %s for cluster %s", addonID, clusterSpec.InternalID)
-		}
-	}
-
-	if addonInstallation != nil && addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
-		addonInstallation, addonErr = o.ocmClient.UpdateAddonParameters(clusterSpec.InternalID, addonInstallation.ID(), params)
-		if addonErr != nil {
-			return false, errors.Wrapf(addonErr, "failed to update parameters for addon %s on cluster %s", addonInstallation.ID(), clusterSpec.InternalID)
-		}
-		return true, nil
-	}
-
-	return false, nil
 }
 
 // GetCloudProviders ...
