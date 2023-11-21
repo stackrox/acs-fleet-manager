@@ -1,6 +1,8 @@
 package clusters
 
 import (
+	"net/http"
+
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
