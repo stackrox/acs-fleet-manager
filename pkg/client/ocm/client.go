@@ -43,7 +43,6 @@ type Client interface {
 	UpdateAddonParameters(clusterID string, addonID string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
 	GetClusterDNS(clusterID string) (string, error)
 	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
-	GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 	DeleteCluster(clusterID string) (int, error)
 	ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
 	DeleteSubscription(id string) (int, error)
@@ -439,24 +438,6 @@ func (c client) CreateIdentityProvider(clusterID string, identityProvider *clust
 		err = serviceErrors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to create identity provider: %s", identityProviderErr)
 	}
 	return response.Body(), err
-}
-
-// GetIdentityProviderList ...
-func (c client) GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
-	if c.connection == nil {
-		return nil, serviceErrors.InvalidOCMConnection()
-	}
-
-	clusterResource := c.connection.ClustersMgmt().V1().Clusters()
-	response, getIDPErr := clusterResource.Cluster(clusterID).
-		IdentityProviders().
-		List().
-		Send()
-
-	if getIDPErr != nil {
-		return nil, serviceErrors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to get list of identity providers, err: %s", getIDPErr.Error())
-	}
-	return response.Items(), nil
 }
 
 func newAddonParameterListBuilder(params []Parameter) *clustersmgmtv1.AddOnInstallationParameterListBuilder {

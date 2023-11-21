@@ -60,7 +60,6 @@ type ClusterService interface {
 	CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 	// Delete will delete the cluster from the provider
 	Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
-	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
 	// Install the dinosaur operator in a given cluster
 	InstallDinosaurOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error)
@@ -564,27 +563,6 @@ func (c clusterService) Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceEr
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to delete the cluster from the provider")
 	}
 	return removed, nil
-}
-
-// ConfigureAndSaveIdentityProvider ...
-func (c clusterService) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
-	if cluster.IdentityProviderID != "" {
-		return cluster, nil
-	}
-	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-	providerInfo, err := p.AddIdentityProvider(buildClusterSpec(cluster), identityProviderInfo)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to add identity provider")
-	}
-	// need to review this if multiple identity providers are supported
-	cluster.IdentityProviderID = providerInfo.OpenID.ID
-	if err := c.Update(*cluster); err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster")
-	}
-	return cluster, nil
 }
 
 // InstallDinosaurOperator ...

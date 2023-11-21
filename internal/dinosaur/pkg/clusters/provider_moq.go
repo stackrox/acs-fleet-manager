@@ -19,9 +19,6 @@ var _ Provider = &ProviderMock{}
 //
 //		// make and configure a mocked Provider
 //		mockedProvider := &ProviderMock{
-//			AddIdentityProviderFunc: func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
-//				panic("mock out the AddIdentityProvider method")
-//			},
 //			CheckClusterStatusFunc: func(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
 //				panic("mock out the CheckClusterStatus method")
 //			},
@@ -53,9 +50,6 @@ var _ Provider = &ProviderMock{}
 //
 //	}
 type ProviderMock struct {
-	// AddIdentityProviderFunc mocks the AddIdentityProvider method.
-	AddIdentityProviderFunc func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error)
-
 	// CheckClusterStatusFunc mocks the CheckClusterStatus method.
 	CheckClusterStatusFunc func(spec *types.ClusterSpec) (*types.ClusterSpec, error)
 
@@ -82,13 +76,6 @@ type ProviderMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// AddIdentityProvider holds details about calls to the AddIdentityProvider method.
-		AddIdentityProvider []struct {
-			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types.ClusterSpec
-			// IdentityProvider is the identityProvider argument value.
-			IdentityProvider types.IdentityProviderInfo
-		}
 		// CheckClusterStatus holds details about calls to the CheckClusterStatus method.
 		CheckClusterStatus []struct {
 			// Spec is the spec argument value.
@@ -130,7 +117,6 @@ type ProviderMock struct {
 			Params []ocm.Parameter
 		}
 	}
-	lockAddIdentityProvider     sync.RWMutex
 	lockCheckClusterStatus      sync.RWMutex
 	lockCreate                  sync.RWMutex
 	lockDelete                  sync.RWMutex
@@ -139,42 +125,6 @@ type ProviderMock struct {
 	lockGetClusterDNS           sync.RWMutex
 	lockInstallDinosaurOperator sync.RWMutex
 	lockInstallFleetshard       sync.RWMutex
-}
-
-// AddIdentityProvider calls AddIdentityProviderFunc.
-func (mock *ProviderMock) AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
-	if mock.AddIdentityProviderFunc == nil {
-		panic("ProviderMock.AddIdentityProviderFunc: method is nil but Provider.AddIdentityProvider was just called")
-	}
-	callInfo := struct {
-		ClusterSpec      *types.ClusterSpec
-		IdentityProvider types.IdentityProviderInfo
-	}{
-		ClusterSpec:      clusterSpec,
-		IdentityProvider: identityProvider,
-	}
-	mock.lockAddIdentityProvider.Lock()
-	mock.calls.AddIdentityProvider = append(mock.calls.AddIdentityProvider, callInfo)
-	mock.lockAddIdentityProvider.Unlock()
-	return mock.AddIdentityProviderFunc(clusterSpec, identityProvider)
-}
-
-// AddIdentityProviderCalls gets all the calls that were made to AddIdentityProvider.
-// Check the length with:
-//
-//	len(mockedProvider.AddIdentityProviderCalls())
-func (mock *ProviderMock) AddIdentityProviderCalls() []struct {
-	ClusterSpec      *types.ClusterSpec
-	IdentityProvider types.IdentityProviderInfo
-} {
-	var calls []struct {
-		ClusterSpec      *types.ClusterSpec
-		IdentityProvider types.IdentityProviderInfo
-	}
-	mock.lockAddIdentityProvider.RLock()
-	calls = mock.calls.AddIdentityProvider
-	mock.lockAddIdentityProvider.RUnlock()
-	return calls
 }
 
 // CheckClusterStatus calls CheckClusterStatusFunc.

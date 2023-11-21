@@ -1,10 +1,6 @@
 package clusters
 
 import (
-	"fmt"
-	"net/http"
-	"strings"
-
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/client/ocm"
 
@@ -100,19 +96,6 @@ func (o *OCMProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (string, err
 		return "", errors.Wrapf(err, "failed to get dns for cluster %s", clusterSpec.InternalID)
 	}
 	return clusterDNS, nil
-}
-
-// AddIdentityProvider ...
-func (o *OCMProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProviderInfo types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
-	if identityProviderInfo.OpenID != nil {
-		idpID, err := o.addOpenIDIdentityProvider(clusterSpec, *identityProviderInfo.OpenID)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to add identity provider for cluster %s", clusterSpec.InternalID)
-		}
-		identityProviderInfo.OpenID.ID = idpID
-		return &identityProviderInfo, nil
-	}
-	return nil, nil
 }
 
 // InstallDinosaurOperator ...
@@ -230,53 +213,4 @@ func newOCMProvider(ocmClient ocm.ClusterManagementClient, clusterBuilder Cluste
 		clusterBuilder: clusterBuilder,
 		ocmConfig:      ocmConfig,
 	}
-}
-
-func (o *OCMProvider) addOpenIDIdentityProvider(clusterSpec *types.ClusterSpec, openIDIdpInfo types.OpenIDIdentityProviderInfo) (string, error) {
-	provider, buildErr := buildIdentityProvider(openIDIdpInfo)
-	if buildErr != nil {
-		return "", errors.WithStack(buildErr)
-	}
-	createdIdentityProvider, createIdentityProviderErr := o.ocmClient.CreateIdentityProvider(clusterSpec.InternalID, provider)
-	if createIdentityProviderErr != nil {
-		// check to see if identity provider with name 'Dinosaur_SRE' already exists, if so use it.
-		if strings.Contains(createIdentityProviderErr.Error(), ipdAlreadyCreatedErrorToCheck) {
-			identityProvidersList, identityProviderListErr := o.ocmClient.GetIdentityProviderList(clusterSpec.InternalID)
-			if identityProviderListErr != nil {
-				return "", errors.WithStack(identityProviderListErr)
-			}
-
-			for _, identityProvider := range identityProvidersList.Slice() {
-				if identityProvider.Name() == openIDIdpInfo.Name {
-					return identityProvider.ID(), nil
-				}
-			}
-		}
-		return "", errors.WithStack(createIdentityProviderErr)
-	}
-	return createdIdentityProvider.ID(), nil
-}
-
-func buildIdentityProvider(idpInfo types.OpenIDIdentityProviderInfo) (*clustersmgmtv1.IdentityProvider, error) {
-	openIdentityBuilder := clustersmgmtv1.NewOpenIDIdentityProvider().
-		ClientID(idpInfo.ClientID).
-		ClientSecret(idpInfo.ClientSecret).
-		Claims(clustersmgmtv1.NewOpenIDClaims().
-			Email("email").
-			PreferredUsername("preferred_username").
-			Name("last_name", "preferred_username")).
-		Issuer(idpInfo.Issuer)
-
-	identityProviderBuilder := clustersmgmtv1.NewIdentityProvider().
-		Type("OpenIDIdentityProvider").
-		MappingMethod(clustersmgmtv1.IdentityProviderMappingMethodClaim).
-		OpenID(openIdentityBuilder).
-		Name(idpInfo.Name)
-
-	identityProvider, idpBuildErr := identityProviderBuilder.Build()
-	if idpBuildErr != nil {
-		return nil, fmt.Errorf("building identity provider: %w", idpBuildErr)
-	}
-
-	return identityProvider, nil
 }

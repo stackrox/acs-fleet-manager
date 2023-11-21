@@ -21,8 +21,6 @@ type Provider interface {
 	// It should set the status in the returned `ClusterSpec` to either `provisioning`, `ready` or `failed`.
 	// If there is additional data that needs to be preserved and passed between checks, add it to the returned `ClusterSpec` and it will be saved to the database and passed into this function again next time it is called.
 	CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error)
-	// AddIdentityProvider add an identity provider to the cluster
-	AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error)
 	// GetClusterDNS Get the dns of the cluster
 	GetClusterDNS(clusterSpec *types.ClusterSpec) (string, error)
 	// GetCloudProviders Get the information about supported cloud providers from the cluster provider

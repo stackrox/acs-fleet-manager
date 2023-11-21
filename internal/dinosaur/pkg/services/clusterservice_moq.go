@@ -4,7 +4,6 @@
 package services
 
 import (
-	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/clusters/types"
 	"github.com/stackrox/acs-fleet-manager/pkg/api"
 	serviceError "github.com/stackrox/acs-fleet-manager/pkg/errors"
 	"sync"
@@ -25,9 +24,6 @@ var _ ClusterService = &ClusterServiceMock{}
 //			},
 //			CheckDinosaurOperatorVersionReadyFunc: func(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error) {
 //				panic("mock out the CheckDinosaurOperatorVersionReady method")
-//			},
-//			ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *serviceError.ServiceError) {
-//				panic("mock out the ConfigureAndSaveIdentityProvider method")
 //			},
 //			CountByStatusFunc: func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, *serviceError.ServiceError) {
 //				panic("mock out the CountByStatus method")
@@ -105,9 +101,6 @@ type ClusterServiceMock struct {
 	// CheckDinosaurOperatorVersionReadyFunc mocks the CheckDinosaurOperatorVersionReady method.
 	CheckDinosaurOperatorVersionReadyFunc func(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error)
 
-	// ConfigureAndSaveIdentityProviderFunc mocks the ConfigureAndSaveIdentityProvider method.
-	ConfigureAndSaveIdentityProviderFunc func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *serviceError.ServiceError)
-
 	// CountByStatusFunc mocks the CountByStatus method.
 	CountByStatusFunc func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, *serviceError.ServiceError)
 
@@ -184,13 +177,6 @@ type ClusterServiceMock struct {
 			Cluster *api.Cluster
 			// DinosaurOperatorVersion is the dinosaurOperatorVersion argument value.
 			DinosaurOperatorVersion string
-		}
-		// ConfigureAndSaveIdentityProvider holds details about calls to the ConfigureAndSaveIdentityProvider method.
-		ConfigureAndSaveIdentityProvider []struct {
-			// Cluster is the cluster argument value.
-			Cluster *api.Cluster
-			// IdentityProviderInfo is the identityProviderInfo argument value.
-			IdentityProviderInfo types.IdentityProviderInfo
 		}
 		// CountByStatus holds details about calls to the CountByStatus method.
 		CountByStatus []struct {
@@ -312,7 +298,6 @@ type ClusterServiceMock struct {
 	}
 	lockCheckClusterStatus                  sync.RWMutex
 	lockCheckDinosaurOperatorVersionReady   sync.RWMutex
-	lockConfigureAndSaveIdentityProvider    sync.RWMutex
 	lockCountByStatus                       sync.RWMutex
 	lockCreate                              sync.RWMutex
 	lockDelete                              sync.RWMutex
@@ -401,42 +386,6 @@ func (mock *ClusterServiceMock) CheckDinosaurOperatorVersionReadyCalls() []struc
 	mock.lockCheckDinosaurOperatorVersionReady.RLock()
 	calls = mock.calls.CheckDinosaurOperatorVersionReady
 	mock.lockCheckDinosaurOperatorVersionReady.RUnlock()
-	return calls
-}
-
-// ConfigureAndSaveIdentityProvider calls ConfigureAndSaveIdentityProviderFunc.
-func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *serviceError.ServiceError) {
-	if mock.ConfigureAndSaveIdentityProviderFunc == nil {
-		panic("ClusterServiceMock.ConfigureAndSaveIdentityProviderFunc: method is nil but ClusterService.ConfigureAndSaveIdentityProvider was just called")
-	}
-	callInfo := struct {
-		Cluster              *api.Cluster
-		IdentityProviderInfo types.IdentityProviderInfo
-	}{
-		Cluster:              cluster,
-		IdentityProviderInfo: identityProviderInfo,
-	}
-	mock.lockConfigureAndSaveIdentityProvider.Lock()
-	mock.calls.ConfigureAndSaveIdentityProvider = append(mock.calls.ConfigureAndSaveIdentityProvider, callInfo)
-	mock.lockConfigureAndSaveIdentityProvider.Unlock()
-	return mock.ConfigureAndSaveIdentityProviderFunc(cluster, identityProviderInfo)
-}
-
-// ConfigureAndSaveIdentityProviderCalls gets all the calls that were made to ConfigureAndSaveIdentityProvider.
-// Check the length with:
-//
-//	len(mockedClusterService.ConfigureAndSaveIdentityProviderCalls())
-func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProviderCalls() []struct {
-	Cluster              *api.Cluster
-	IdentityProviderInfo types.IdentityProviderInfo
-} {
-	var calls []struct {
-		Cluster              *api.Cluster
-		IdentityProviderInfo types.IdentityProviderInfo
-	}
-	mock.lockConfigureAndSaveIdentityProvider.RLock()
-	calls = mock.calls.ConfigureAndSaveIdentityProvider
-	mock.lockConfigureAndSaveIdentityProvider.RUnlock()
 	return calls
 }
 
