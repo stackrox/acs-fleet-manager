@@ -125,6 +125,7 @@ type dinosaurService struct {
 	amsClient                ocm.AMSClient
 	iamConfig                *iam.IAMConfig
 	rhSSODynamicClientsAPI   *dynamicClientAPI.AcsTenantsApiService
+	centralAuthConfigManager rhsso.CentralAuthConfigManager
 }
 
 // NewDinosaurService ...
@@ -339,13 +340,10 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.CentralR
 	// Check if the request is ready to be transitioned to provisioning.
 
 	// Check IdP config is ready.
-	//
-	// TODO(alexr): Shall this go into "preparing_dinosaurs_mgr.go"? Ideally,
-	//     all CentralRequest updating logic is in one place, either in this
-	//     service or workers.
 	if dinosaurRequest.AuthConfig.ClientID == "" {
-		// We can't provision this request, skip
-		return nil
+		if err := k.centralAuthConfigManager.AddAuthConfig(dinosaurRequest); err != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to add clientid config")
+		}
 	}
 
 	// Obtain organisation name from AMS to store in central request.
