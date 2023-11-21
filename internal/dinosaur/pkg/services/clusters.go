@@ -40,10 +40,6 @@ type ClusterService interface {
 	// If the cluster has not been found nil is returned. If there has been an issue
 	// finding the cluster an error is set
 	FindClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
-	ScaleUpComputeNodes(clusterID string, increment int) (*types.ClusterSpec, *apiErrors.ServiceError)
-	ScaleDownComputeNodes(clusterID string, decrement int) (*types.ClusterSpec, *apiErrors.ServiceError)
-	SetComputeNodes(clusterID string, numNodes int) (*types.ClusterSpec, *apiErrors.ServiceError)
-	GetComputeNodes(clusterID string) (*types.ComputeNodesInfo, *apiErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
 	// DeleteByClusterID will delete the cluster from the database
@@ -64,7 +60,6 @@ type ClusterService interface {
 	CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 	// Delete will delete the cluster from the provider
 	Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
-	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
 	// Install the dinosaur operator in a given cluster
 	InstallDinosaurOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error)
@@ -331,107 +326,6 @@ func (c clusterService) FindClusterByID(clusterID string) (*api.Cluster, *apiErr
 	return cluster, nil
 }
 
-// ScaleUpComputeNodes adds three additional compute nodes to cluster specified by clusterID
-func (c clusterService) ScaleUpComputeNodes(clusterID string, increment int) (*types.ClusterSpec, *apiErrors.ServiceError) {
-	if clusterID == "" {
-		return nil, apiErrors.Validation("clusterID is undefined")
-	}
-
-	cluster, serviceErr := c.FindClusterByID(clusterID)
-	if serviceErr != nil {
-		return nil, serviceErr
-	}
-
-	if cluster == nil {
-		return nil, apiErrors.New(apiErrors.ErrorGeneral, "unable to find a cluster identified by '%s'", clusterID)
-	}
-
-	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-
-	// scale up compute nodes
-	clusterSpec, err := provider.ScaleUp(buildClusterSpec(cluster), increment)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to scale up cluster")
-	}
-	return clusterSpec, nil
-}
-
-// ScaleDownComputeNodes removes three compute nodes to cluster specified by clusterID
-func (c clusterService) ScaleDownComputeNodes(clusterID string, decrement int) (*types.ClusterSpec, *apiErrors.ServiceError) {
-	if clusterID == "" {
-		return nil, apiErrors.Validation("clusterID is undefined")
-	}
-
-	cluster, serviceErr := c.FindClusterByID(clusterID)
-	if serviceErr != nil {
-		return nil, serviceErr
-	}
-	if cluster == nil {
-		return nil, apiErrors.New(apiErrors.ErrorGeneral, "unable to find a cluster identified by '%s'", clusterID)
-	}
-
-	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-
-	// scale up compute nodes
-	clusterSpec, err := provider.ScaleDown(buildClusterSpec(cluster), decrement)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to scale down cluster")
-	}
-	return clusterSpec, nil
-}
-
-// SetComputeNodes ...
-func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*types.ClusterSpec, *apiErrors.ServiceError) {
-	if clusterID == "" {
-		return nil, apiErrors.Validation("clusterID is undefined")
-	}
-
-	cluster, serviceErr := c.FindClusterByID(clusterID)
-	if serviceErr != nil {
-		return nil, serviceErr
-	}
-
-	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-
-	// set number of compute nodes
-	clusterSpec, err := provider.SetComputeNodes(buildClusterSpec(cluster), numNodes)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to set compute nodes")
-	}
-	return clusterSpec, nil
-}
-
-// GetComputeNodes ...
-func (c clusterService) GetComputeNodes(clusterID string) (*types.ComputeNodesInfo, *apiErrors.ServiceError) {
-	if clusterID == "" {
-		return nil, apiErrors.Validation("clusterID is undefined")
-	}
-
-	cluster, serviceErr := c.FindClusterByID(clusterID)
-	if serviceErr != nil {
-		return nil, serviceErr
-	}
-
-	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-	nodesInfo, err := provider.GetComputeNodes(buildClusterSpec(cluster))
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get compute nodes info from provider")
-	}
-	return nodesInfo, nil
-}
-
 // DeleteByClusterID ...
 func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceError {
 	dbConn := c.connectionFactory.New()
@@ -669,27 +563,6 @@ func (c clusterService) Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceEr
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to delete the cluster from the provider")
 	}
 	return removed, nil
-}
-
-// ConfigureAndSaveIdentityProvider ...
-func (c clusterService) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
-	if cluster.IdentityProviderID != "" {
-		return cluster, nil
-	}
-	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-	providerInfo, err := p.AddIdentityProvider(buildClusterSpec(cluster), identityProviderInfo)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to add identity provider")
-	}
-	// need to review this if multiple identity providers are supported
-	cluster.IdentityProviderID = providerInfo.OpenID.ID
-	if err := c.Update(*cluster); err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster")
-	}
-	return cluster, nil
 }
 
 // InstallDinosaurOperator ...

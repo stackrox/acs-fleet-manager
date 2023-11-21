@@ -21,16 +21,6 @@ type Provider interface {
 	// It should set the status in the returned `ClusterSpec` to either `provisioning`, `ready` or `failed`.
 	// If there is additional data that needs to be preserved and passed between checks, add it to the returned `ClusterSpec` and it will be saved to the database and passed into this function again next time it is called.
 	CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error)
-	// AddIdentityProvider add an identity provider to the cluster
-	AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error)
-	// ScaleUp scale the cluster up with the number of additional nodes specified
-	ScaleUp(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error)
-	// ScaleDown scale the cluster down with the number of nodes specified
-	ScaleDown(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error)
-	// SetComputeNodes set the number of desired compute nodes for the cluster
-	SetComputeNodes(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error)
-	// GetComputeNodes get the number of compute nodes for the cluster
-	GetComputeNodes(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error)
 	// GetClusterDNS Get the dns of the cluster
 	GetClusterDNS(clusterSpec *types.ClusterSpec) (string, error)
 	// GetCloudProviders Get the information about supported cloud providers from the cluster provider
