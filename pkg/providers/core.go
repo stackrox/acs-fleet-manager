@@ -3,6 +3,7 @@ package providers
 
 import (
 	"github.com/goava/di"
+	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/rhsso"
 	"github.com/stackrox/acs-fleet-manager/internal/dinosaur/pkg/services"
 	"github.com/stackrox/acs-fleet-manager/pkg/acl"
 	"github.com/stackrox/acs-fleet-manager/pkg/auth"
@@ -62,6 +63,7 @@ func ServiceProviders() di.Option {
 		// provide the service constructors
 		di.Provide(db.NewConnectionFactory),
 		di.Provide(observatorium.NewObservatoriumClient),
+		di.Provide(rhsso.NewCentralAuthConfigManager),
 
 		di.Provide(func(config *ocm.OCMConfig) ocm.ClusterManagementClient {
 			if config.EnableMock {
