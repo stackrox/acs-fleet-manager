@@ -60,10 +60,6 @@ type ClusterService interface {
 	CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 	// Delete will delete the cluster from the provider
 	Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
-	// Install the dinosaur operator in a given cluster
-	InstallDinosaurOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
-	CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error)
-	IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error)
 }
 
 type clusterService struct {
@@ -565,19 +561,6 @@ func (c clusterService) Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceEr
 	return removed, nil
 }
 
-// InstallDinosaurOperator ...
-func (c clusterService) InstallDinosaurOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
-	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-	ready, err := p.InstallDinosaurOperator(buildClusterSpec(cluster))
-	if err != nil {
-		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install central for cluster %s", cluster.ClusterID)
-	}
-	return ready, nil
-}
-
 func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
 	return &types.ClusterSpec{
 		InternalID:     cluster.ClusterID,
@@ -585,14 +568,4 @@ func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
 		Status:         cluster.Status,
 		AdditionalInfo: cluster.ClusterSpec,
 	}
-}
-
-// CheckDinosaurOperatorVersionReady ...
-func (c clusterService) CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error) {
-	return true, nil
-}
-
-// IsDinosaurVersionAvailableInCluster ...
-func (c clusterService) IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error) {
-	return true, nil
 }
